@@ -1,0 +1,24 @@
+.twpe-edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .7em;
+  box-sizing: border-box;
+  min-height: 56px;
+  max-width: 100%;
+  padding: .7em 1.1em;
+  border: 2px solid #b8ddf7;
+  border-radius: 14px;
+  background: #e8f5ff;
+  color: #123e65;
+  font: 600 1rem/1.45 system-ui, sans-serif;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.twpe-edit-button img { flex: 0 0 36px; width: 36px; height: 36px; object-fit: contain; }
+.twpe-edit-button span { overflow-wrap: anywhere; }
+.twpe-edit-button:hover { background: #d8edff; border-color: #659cc4; color: #123e65; text-decoration: none; }
+.twpe-edit-button:focus-visible { outline: 3px solid #145a98; outline-offset: 4px; }
+@media (forced-colors: active) { .twpe-edit-button { border-color: ButtonText; } }

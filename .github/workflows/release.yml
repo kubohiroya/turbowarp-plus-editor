@@ -1,0 +1,88 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'kubohiroya/turbowarp-plus-editor'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:e2e:infrastructure
+      - name: Require a matching release tag on main
+        run: |
+          node -e 'if (process.env.GITHUB_REF_NAME !== "v" + JSON.parse(require("node:fs").readFileSync("package.json")).version) process.exit(1)'
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - name: Require successful normal integration CI before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_REVISION: ${{ github.sha }}
+        run: node scripts/ci/publication.mjs --release
+      - name: Pack the package
+        id: pack
+        run: |
+          npm pack --json > "$RUNNER_TEMP/package-pack.json"
+          node -e 'const p = JSON.parse(require("node:fs").readFileSync(process.env.RUNNER_TEMP + "/package-pack.json")); require("node:fs").appendFileSync(process.env.GITHUB_OUTPUT, "file=" + p[0].filename + "\n")'
+      - name: Attach the verified archive to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: ${{ steps.pack.outputs.file }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag --title "TurboWarp-Plus-Editor $GITHUB_REF_NAME" --generate-notes
+          fi
+          existing="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$GITHUB_REF_NAME" --jq '.assets[] | "\(.name)\t\(.digest)"')"
+          want="sha256:$(sha256sum "$ARCHIVE" | cut -d' ' -f1)"
+          have="$(printf '%s\n' "$existing" | awk -F'\t' -v n="$ARCHIVE" '$1 == n {print $2}')"
+          if [ -z "$have" ]; then
+            gh release upload "$GITHUB_REF_NAME" "$ARCHIVE"
+          elif [ "$have" != "$want" ]; then
+            echo 'The existing release archive differs from the verified package.' >&2
+            exit 1
+          fi
+      - name: Use npm with trusted publishing support
+        run: npm install --global npm@11.21.0
+      - name: Publish with npm trusted publishing
+        env:
+          ARCHIVE: ${{ steps.pack.outputs.file }}
+        run: |
+          set -euo pipefail
+          name="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json')).name")"
+          version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json')).version")"
+          want="$(sha1sum "$ARCHIVE" | cut -d' ' -f1)"
+          have="$(npm view "$name@$version" dist.shasum --prefer-online 2>/dev/null || true)"
+          if [ -n "$have" ]; then
+            [ "$have" = "$want" ] || { echo 'Existing npm version has different content.' >&2; exit 1; }
+          else
+            npm publish "$ARCHIVE" --access public --provenance
+          fi
+          for attempt in $(seq 1 30); do
+            have="$(npm view "$name@$version" dist.shasum --prefer-online 2>/dev/null || true)"
+            [ "$have" = "$want" ] && break
+            sleep 5
+          done
+          [ "$have" = "$want" ] || { echo 'The registry does not serve the verified archive.' >&2; exit 1; }
+          for tag in latest next; do
+            if [ "$(npm view "$name" "dist-tags.$tag" --prefer-online 2>/dev/null || true)" != "$version" ]; then
+              npm dist-tag add "$name@$version" "$tag"
+            fi
+          done
