@@ -1,0 +1,90 @@
+name: Publish TurboWarp-Plus-Editor
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: >-
+      github.repository == 'kubohiroya/turbowarp-plus-editor' &&
+      ((github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      revision: ${{ steps.identity.outputs.revision }}
+    steps:
+      - name: Select the checked main source
+        id: identity
+        env:
+          REVISION: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          node -e 'if (!/^[0-9a-f]{40}$/.test(process.env.REVISION)) process.exit(1)'
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.identity.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Require the latest successful normal CI for current main
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_REVISION: ${{ steps.identity.outputs.revision }}
+        run: node scripts/ci/publication.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: editor-site-${{ steps.identity.outputs.revision }}-${{ steps.gate.outputs.attempt }}
+          run-id: ${{ steps.gate.outputs.runId }}
+          github-token: ${{ github.token }}
+          path: site-artifact
+      - name: Verify the artifact source identity
+        env:
+          EXPECTED_REVISION: ${{ steps.identity.outputs.revision }}
+        run: node scripts/site/check-artifact.mjs site-artifact
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site-artifact
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Recheck source freshness and normal CI immediately before deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_REVISION: ${{ needs.prepare.outputs.revision }}
+        run: node scripts/ci/publication.mjs
+      - uses: actions/deploy-pages@v4
+        id: deployment
+  verify:
+    needs: [prepare, deploy]
+    uses: ./.github/workflows/verify.yml
+    with:
+      revision: ${{ needs.prepare.outputs.revision }}

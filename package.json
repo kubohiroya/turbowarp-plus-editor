@@ -1,0 +1,53 @@
+{
+  "name": "@kubohiroya/turbowarp-plus-editor",
+  "version": "0.1.0",
+  "description": "TurboWarp-Plus-Editorの配信、ブランド資産、作品を編集するボタン",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "author": {
+    "name": "Hiroya Kubo",
+    "email": "hiroya@cuc.ac.jp",
+    "url": "https://github.com/kubohiroya"
+  },
+  "homepage": "https://kubohiroya.github.io/turbowarp-plus-editor/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubohiroya/turbowarp-plus-editor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kubohiroya/turbowarp-plus-editor/issues"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./assets/icon.svg": "./assets/icon.svg",
+    "./assets/edit-button.css": "./assets/edit-button.css",
+    "./source.json": "./site/source.json"
+  },
+  "files": [
+    "src",
+    "assets",
+    "site/source.json",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "build:pages": "node scripts/site/build.mjs",
+    "test:e2e": "playwright test --config test/e2e/turbowarp/playwright.config.cjs",
+    "test:e2e:block-editor": "npm run test:e2e",
+    "test:e2e:fixed-inputs": "E2E_FIXED_INPUTS=1 npm run test:e2e",
+    "test:e2e:infrastructure": "node --test test/e2e/ci-gate.test.mjs test/e2e/turbowarp/infrastructure.test.cjs",
+    "test:e2e:native": "E2E_NATIVE=1 npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@turbowarp/jszip": "^3.12.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

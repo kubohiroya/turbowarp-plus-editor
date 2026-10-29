@@ -1,0 +1,67 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:e2e:infrastructure
+      - name: Read immutable integration sources
+        id: source
+        run: node scripts/site/source.mjs
+      - uses: actions/checkout@v4
+        with:
+          repository: kubohiroya/scratch-gui
+          ref: ${{ steps.source.outputs.guiRevision }}
+          path: .host/scratch-gui
+          persist-credentials: false
+      - name: Prepare and verify the pinned host
+        working-directory: .host/scratch-gui
+        run: |
+          npm ci --no-audit --no-fund
+          node scripts/prepublish.mjs
+          npm run test:block-editor
+      - name: Build TurboWarp-Plus-Editor
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: npm run build:pages
+      - run: npx playwright install --with-deps chromium
+      - name: Verify integrated editing, security, themes and SB3 round trips
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+          E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
+          E2E_EXPECT_CORE_REVISION: ${{ steps.source.outputs.coreRevision }}
+          E2E_FIXED_INPUTS: '1'
+          E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
+          E2E_EXPECT_SITE_REVISION: ${{ github.sha }}
+        run: npm run test:e2e:block-editor
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: editor-site-${{ github.sha }}-${{ github.run_attempt }}
+          path: .host/scratch-gui/build/
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+          if-no-files-found: warn

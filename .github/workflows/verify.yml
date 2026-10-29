@@ -1,0 +1,51 @@
+name: Verify deployed TurboWarp-Plus-Editor
+on:
+  workflow_call:
+    inputs:
+      revision:
+        type: string
+        required: true
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.repository == 'kubohiroya/turbowarp-plus-editor' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.revision || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Resolve expected identities from the selected source commit
+        id: source
+        env:
+          EXPECTED_REVISION: ${{ inputs.revision || github.sha }}
+        run: node test/e2e/turbowarp/public-target.cjs
+      - run: npx playwright install --with-deps chromium
+      - name: Wait for and verify the deployed source
+        env:
+          E2E_BASE_URL: ${{ steps.source.outputs.base_url }}
+          E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.gui_revision }}
+          E2E_EXPECT_CORE_REVISION: ${{ steps.source.outputs.core_revision }}
+          E2E_EXPECT_SITE_REVISION: ${{ steps.source.outputs.site_revision }}
+          E2E_FIXED_INPUTS: '1'
+          E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.security_version }}
+        run: |
+          node test/e2e/turbowarp/wait-public.cjs
+          npm run test:e2e:block-editor
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployed-editor-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+          if-no-files-found: warn
