@@ -22,6 +22,8 @@ turbowarp-extension-security-dialog┘
 
 配信元GUIのSHA、data-editorのSHA、security-dialogのバージョンは [`site/source.json`](site/source.json) で固定します。公開成果物の `build-info.json` で実際に組み合わせたGUI・ライブラリ・サイトの版を確認できます。旧data-editorのPagesは廃止対象であり、移行先には本サイトを使用してください。
 
+案内画面には `turbowarp-plus-site-header` の共通ヘッダーを読み込みます。エディター本体は全画面GUIとして表示します。
+
 ## 作品を開く
 
 ランディング画面の **TurboWarp-Plus-Editorで編集** ボタンを押すとエディターが開きます。手元のSB3ファイルはエディターの「ファイル」から開けます。URLから開く場合は、ブラウザーによる取得を許可したHTTPSのSB3を指定します。
@@ -35,7 +37,7 @@ https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&project_u
 <a id="edit-button"></a>
 ## 「TurboWarp-Plus-Editorで編集」ボタン
 
-既存のTurboWarp Plusブランドの＋印の右腕を鉛筆が描くSVGを、編集操作用のブランドバリエーションとして提供します。画像だけでなく操作名も表示し、キーボードでフォーカスできるリンクを使います。共通CSSは高さ56px以上、画像36px、明確なフォーカス表示を設定します。
+既存のTurboWarp Plusブランドの青いベースを青色鉛筆で塗るSVGを、編集操作用のブランドバリエーションとして提供します。画像だけでなく操作名も表示し、キーボードでフォーカスできるリンクを使います。共通CSSは高さ56px以上、画像36px、明確なフォーカス表示を設定します。
 
 HTMLページの `<head>` にスタイルシートを1回読み込み、ボタンを置きたい場所へ次を貼り付けます。
 

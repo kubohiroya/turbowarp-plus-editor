@@ -33,6 +33,6 @@ test('distribution identifies the new site owner and all pinned integrated compo
         const html=await readFile(path.join(dir,'index.html'),'utf8');
         assert.ok(html.includes('class="twpe-edit-button"'));
         assert.ok(!html.includes('turbowarp-extension-data-editor/editor.html'));
-        assert.ok((await readFile(path.join(dir,'assets/icon.svg'),'utf8')).includes('rotate(-45)'));
+        assert.ok((await readFile(path.join(dir,'assets/icon.svg'),'utf8')).includes('<title>TurboWarp-Plus-Editor</title>'));
     }finally{await rm(dir,{recursive:true,force:true});}
 });
