@@ -11,8 +11,8 @@
   border: 2px solid light-dark(#b8ddf7, #497f9e);
   border-radius: 14px;
   background: light-dark(#e8f5ff, #173d54);
-  color: light-dark(#123e65, #d8f1ff);
-  font: 600 1rem/1.45 system-ui, sans-serif;
+  color: light-dark(#123e65, #f2f2f2);
+  font: 400 1rem/1.45 system-ui, sans-serif;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -20,11 +20,12 @@
 }
 .twpe-edit-button img { flex: 0 0 36px; width: 36px; height: 36px; object-fit: contain; }
 .twpe-edit-button span { overflow-wrap: anywhere; }
-.twpe-edit-button:hover { background: light-dark(#d8edff, #20516f); border-color: light-dark(#659cc4, #78b3d4); color: light-dark(#123e65, #d8f1ff); text-decoration: none; }
+.twpe-edit-button:hover { background: light-dark(#d8edff, #20516f); border-color: light-dark(#659cc4, #78b3d4); color: light-dark(#123e65, #f2f2f2); text-decoration: none; }
 .twpe-edit-button:focus-visible { outline: 3px solid light-dark(#145a98, #a8d6ff); outline-offset: 4px; }
 :root[data-theme="light"] .twpe-edit-button { color-scheme: light; }
 :root[data-theme="dark"] .twpe-edit-button { color-scheme: dark; }
 .twpe-edit-button--small {
+  white-space: nowrap;
   gap: .4em;
   min-height: 36px;
   padding: .3em .65em;
