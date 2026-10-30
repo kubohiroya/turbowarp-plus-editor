@@ -12,6 +12,7 @@ async function identity(request, baseURL) {
     expect(info.revision).toBe(process.env.E2E_EXPECT_GUI_REVISION || pins.guiRevision);
     expect(info.coreRevision).toBe(process.env.E2E_EXPECT_CORE_REVISION || pins.coreRevision);
     expect(info.securityVersion).toBe(process.env.E2E_EXPECT_SECURITY_VERSION || pins.securityVersion);
+    expect(info.securityRevision).toBe(pins.securityRevision);
     if (process.env.E2E_EXPECT_SITE_REVISION) expect(info.siteRevision).toBe(process.env.E2E_EXPECT_SITE_REVISION);
     expect(info.extensionIntegration).toBeTruthy();
     for (const key of ['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) {

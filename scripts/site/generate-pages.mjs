@@ -1,15 +1,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {exactVersion} from './source.mjs';
+import {exactVersion, sha} from './source.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const escape = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
 
-export async function generatePages(output, revision, coreRevision, {siteRevision, coreVersion, licensePath, securityVersion = '0.3.3'} = {}) {
+export async function generatePages(output, revision, coreRevision, {siteRevision, coreVersion, licensePath, securityVersion = '0.3.3', securityRevision} = {}) {
     for (const value of [revision, coreRevision, siteRevision]) {
         if (!/^[a-f0-9]{40}$/.test(value || '')) throw new TypeError('Full GUI, core and site revisions are required');
     }
     if (!exactVersion(coreVersion)) throw new TypeError('An exact core version is required');
+    if (securityRevision !== undefined && !sha(securityRevision)) throw new TypeError('A full security revision is required');
     await fs.mkdir(path.join(output, 'assets'), {recursive:true});
     for (const file of ['icon.svg','edit-button.css']) await fs.copyFile(path.join(root,'assets',file),path.join(output,'assets',file));
     for (const file of ['style.css','app.js','preview-sample.js']) await fs.copyFile(path.join(root,'site',file),path.join(output,'assets',file));
@@ -36,6 +37,7 @@ export async function generatePages(output, revision, coreRevision, {siteRevisio
         repository:'https://github.com/kubohiroya/scratch-gui',revision,
         coreRepository:'https://github.com/kubohiroya/turbowarp-extension-data-editor',coreRevision,coreVersion,
         securityPackage:'@kubohiroya/turbowarp-extension-security-dialog',securityVersion,
+        ...(securityRevision === undefined ? {} : {securityRevision}),
         siteRepository:'https://github.com/kubohiroya/turbowarp-plus-editor',siteRevision
     },null,2)+'\n');
 }

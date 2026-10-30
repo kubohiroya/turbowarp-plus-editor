@@ -19,6 +19,7 @@ assert.equal(info.coreRevision, pins.coreRevision);
 assert.equal(info.coreVersion, pins.coreVersion);
 assert.equal(info.securityPackage, pins.securityPackage);
 assert.equal(info.securityVersion, pins.securityVersion);
+assert.equal(info.securityRevision, pins.securityRevision);
 await verifyPreviewSample(directory, info.previewSample);
 for (const file of ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg', 'assets/edit-button.css']) {
     assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing site file: ${file}`);
