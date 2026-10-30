@@ -31,8 +31,7 @@ async function treeDigest(directory) {
     return hash.digest('hex');
 }
 await buildPages(pins);
-for (const script of ['scripts/site/build-plus-scaffolding.cjs', 'scripts/site/build-extension-runtime.cjs',
-    'scripts/site/build-plus-packager.cjs', 'test/e2e/extension-loader/prepare-packaged.mjs']) {
+for (const script of ['test/e2e/extension-loader/prepare-packaged.mjs']) {
     const result = spawnSync(process.execPath, ['--openssl-legacy-provider', path.join(root, script)], {
         cwd: root, env: process.env, stdio: 'inherit'
     });

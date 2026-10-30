@@ -8,13 +8,13 @@ Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB
 
 | 構成 | 固定した基点 | ローカル変更 |
 |---|---|---|
-| scratch-gui | `a655d14dfff611c0cf6d040e0a312349ea712a75` | `.host/scratch-gui-issue4` の薄いアダプター・UI・出力画面 |
+| scratch-gui | `338bcb22508f248461d37d05578a17c9bb94d95e` | `.host/scratch-gui-issue4` の薄いアダプター・UI・出力画面 |
 | scratch-vm | `55fd9b7c9509827c9cec31482aa63f2d57ec564d` | `.host/scratch-vm-issue4` の所有サービスport（43行追加） |
 | Packager | `c115bdf525c5f49f0fb689a21b335ccb70fc22d2` / npm `3.14.0` | ソースを改変せず、上記VMを使ってscaffoldingをビルド |
 | data-editor | npm `0.5.0` / source `df1e78b6982ccc0c1ddb8a741a8d57848519c74d` | 変更なし |
 | security-dialog | npm `0.3.3` | 既存UI・通常カスタム拡張の方針を維持 |
 
-Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderとVMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` を分け、公開中の固定構成を変更せず検証できる。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
+Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderとVMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` は、ともにマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定OFF・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
 
 ## 起動と信頼境界
 
@@ -61,7 +61,9 @@ Desktopの本体や元のユーザープロファイルへ改変を加えてい�
 ```sh
 E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" \
 TW_PLUS_PACKAGER_ROOT="$PWD/.host/packager-issue4" \
-NODE_OPTIONS=--max-old-space-size=6144 npm run build:extension-preview
+NODE_OPTIONS=--max-old-space-size=6144 npm run build:pages
+
+E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" node test/e2e/extension-loader/prepare-packaged.mjs
 
 E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" npm run test:e2e:extension-loader
 node --test .host/scratch-gui-issue4/test/unit/extension-loader/*.test.mjs
@@ -70,7 +72,7 @@ npm test
 npm run test:extension-loader:desktop
 ```
 
-新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderとVMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。preview buildはscaffolding、runtime、ローカルbuilder、E2E用の単一HTMLまで生成する。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.localExtensionIntegration` に出所を記録する。通常の配信構成は維持する。
+新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderとVMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.mjsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定OFFを記録し、プレビューのみ作業ツリー情報も追加する。
 
 検証証跡は `test-results/extension-loader/results.json`、`.host/issue-4-artifacts/*tests.log`、`desktop-result.json` とDesktop screenshots。Embedded/Remote実行、拒否・Esc・改ざん・未知schema・信頼偽装・ID不一致、real TLSのCORS/redirect拒否、CSP、cache offline、URL/ローカルファイル、公式Bitwise/標準Pen、従来カスタム拡張の回帰を検証する。悪意あるZIP・キャッシュ汚染/失効・変換・compiler実行はcore/実VMの単体テストで検証する。
 
@@ -78,4 +80,4 @@ npm run test:extension-loader:desktop
 
 起動パラメーターを外すか0にして再起動すればOFFへ戻る。終了時はhost.disposeを待って登録を解除し、rollback/unload失敗時はVMを破棄する。Plus作品を保持非対応の状態で上書き保存しない。
 
-`site/source.json` の公開固定SHAと通常配信は維持する。Loader/VM → GUI → Editorの順にPRでレビューする。関連PRは本文で親Issue #4へ紐づけ、個別の依存と検証結果を記す。PR作成だけで親Issueを完了・closeしない。merge、リリース、npm公開は別の操作とする。
+通常配信は統合GUIの固定SHAへ切り替え、機能フラグは既定OFFを維持する。通常CIは既存24件と拡張15件のブラウザーE2E成功後だけ成果物を公開可能にする。公開後も固定された出所を照合して同じE2Eを実行し、単一HTMLのテストは配信されたbuilderから実際に生成したHTMLを使う。通常配信の切戻しは今回の切替コミット全体をrevertし、固定情報と対応するビルド/CI経路を一緒に以前の状態へ戻す。旧GUIへのpin変更だけでは新しいPackager資産の生成条件と一致しないため、単独では行わない。既定OFFまたはURLの0指定で拡張ロードを停止できる。検証済み成果物は通常のCI/Pages経路で再配信する。npm公開は本作業に含めない。
