@@ -9,7 +9,7 @@ import JSZip from '@turbowarp/jszip';
 import {createBlockPreviewSample} from '../scripts/samples/block-preview-project.mjs';
 
 const require = createRequire(import.meta.url);
-const root = path.dirname(require.resolve('@kubohiroya/turbowarp-kamishibai-app/package.json'));
+const root = path.dirname(require.resolve('@kubohiroya/turbowarp-kamishibai-preview-app/package.json'));
 const published = relative => import(pathToFileURL(path.join(root, relative)).href);
 let pending;
 const sample = () => pending ??= createBlockPreviewSample();

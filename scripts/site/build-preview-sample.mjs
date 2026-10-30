@@ -15,9 +15,10 @@ const samplePath = name => typeof name === 'string' && name.startsWith(`${previe
 
 async function expectedAppVersion() {
     const manifest = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
-    const version = manifest.devDependencies?.['@kubohiroya/turbowarp-kamishibai-app'];
-    assert.equal(version, '4.0.0-rc.77', 'The preview sample requires the exact published App rc.77');
-    return version;
+    const alias = manifest.devDependencies?.['@kubohiroya/turbowarp-kamishibai-preview-app'];
+    assert.equal(alias, 'npm:@kubohiroya/turbowarp-kamishibai-app@4.0.0-rc.77',
+        'The preview sample requires the exact published App rc.77 alias');
+    return '4.0.0-rc.77';
 }
 
 async function fileHashes(directory, prefix) {

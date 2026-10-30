@@ -90,7 +90,7 @@ export async function renderBlockPreview({container, model, getScratch, vm, sign
     const number = ++serial, prefix = `twpe_preview_${number}_`;
     const surface = doc.createElement('div');
     surface.className = 'twpe-yaml-block-surface';
-    surface.style.cssText = 'position:relative;width:100%;height:360px;min-width:180px;background:white;';
+    surface.style.cssText = 'position:relative;width:100%;height:100%;min-width:180px;background:white;';
     surface.dataset.twpeBlockPreview = String(number);
     const summary = doc.createElement('pre');
     summary.className = 'twpe-yaml-preview-accessible';

@@ -59,7 +59,7 @@ function blockIndex(target) {
 
 /** Build the user sample with published App APIs; callers decide where to publish its bytes. */
 export async function createBlockPreviewSample() {
-    const packageRoot = path.dirname(require.resolve('@kubohiroya/turbowarp-kamishibai-app/package.json'));
+    const packageRoot = path.dirname(require.resolve('@kubohiroya/turbowarp-kamishibai-preview-app/package.json'));
     const published = relative => import(pathToFileURL(path.join(packageRoot, relative)).href);
     const [manifest, source, runtimeSource, schema, author, frontendAPI, embedded, migration, graphViews, graphs,
         providerAPI] = await Promise.all([
