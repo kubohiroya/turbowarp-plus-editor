@@ -16,6 +16,7 @@ export function validatePins(pins) {
     assert.ok(exactVersion(pins.coreVersion), 'An exact core version is required');
     assert.equal(pins.securityPackage, '@kubohiroya/turbowarp-extension-security-dialog');
     assert.match(pins.securityVersion, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
+    if (pins.securityRevision !== undefined) assert.ok(sha(pins.securityRevision), 'A full security revision is required');
     if (['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'vmBaseRevision',
         'packagerRepository', 'packagerRevision'].some(key => pins[key] !== undefined)) {
         assert.equal(pins.loaderRepository, 'kubohiroya/turbowarp-extension-loader');
@@ -46,7 +47,15 @@ export async function verifyHost(gui, pins) {
     const hostRequire = createRequire(path.join(gui, 'package.json'));
     const {coreRevision, coreVersion} = await verifyInstalledCore(gui, pins);
     const manifest = JSON.parse(await fs.readFile(path.join(gui, 'package.json'), 'utf8'));
-    assert.equal(manifest.dependencies[pins.securityPackage], pins.securityVersion, 'GUI must pin the exact security package');
+    const securityDependency = pins.securityRevision ?
+        `github:kubohiroya/turbowarp-extension-security-dialog#${pins.securityRevision}` : pins.securityVersion;
+    assert.equal(manifest.dependencies[pins.securityPackage], securityDependency, 'GUI must pin the exact security package');
+    if (pins.securityRevision) {
+        const lock = JSON.parse(await fs.readFile(path.join(gui, 'package-lock.json'), 'utf8'));
+        assert.equal(lock.packages[`node_modules/${pins.securityPackage}`].resolved,
+            `git+ssh://git@github.com/kubohiroya/turbowarp-extension-security-dialog.git#${pins.securityRevision}`,
+            'Installed security source differs from the source pin');
+    }
     const securityEntry = hostRequire.resolve(pins.securityPackage);
     const securityManifest = JSON.parse(await fs.readFile(path.resolve(path.dirname(securityEntry), '../package.json'), 'utf8'));
     assert.equal(securityManifest.version, pins.securityVersion, 'Installed security package differs from the source pin');

@@ -39,6 +39,13 @@ const projectURL = async ({required = true, mixed = false} = {}) => {
 };
 const dialog = page => page.locator('.twextsec-modal');
 const executions = page => page.evaluate(() => globalThis.__securityFixtureStarted || 0);
+const expectSquarePreview = async page => {
+    const image = dialog(page).locator('article img').first();
+    await expect.poll(() => image.evaluate(img => img.naturalWidth > 0 && img.naturalHeight > 0)).toBe(true);
+    const box = await image.boundingBox();
+    expect(box.width).toBeGreaterThan(0);
+    expect(box.width).toBeCloseTo(box.height, 1);
+};
 const labels = {
     ja:{mode:'サンドボックスなし',cancel:'キャンセル',yes:'はい',no:'いいえ'},
     en:{mode:'Without sandbox',cancel:'Cancel',yes:'Yes',no:'No'}
@@ -82,8 +89,9 @@ for (const language of ['ja','en']) {
         await expect(dialog(page).locator('input[value="deny"]')).toBeDisabled();
         await expect(dialog(page).locator('input:checked')).toHaveCount(1);
         await expect(dialog(page).locator('.twextsec-intro')).toContainText(
-            language==='ja'?'「⚠️サンドボックスなし：必要」が表示されている拡張を':
+            language==='ja'?'機能拡張を読み込みます。機能拡張の製作者が「⚠️サンドボックスなし:必要」を指定しているものがあります。あなた自身でそれに従うかどうかを選択できます。':
                 'To make extensions marked ⚠️ work as their creators intended');
+        await expectSquarePreview(page);
         const requirement = dialog(page).locator('.twextsec-security-modes .twextsec-requirement');
         await expect(requirement).toHaveText(language==='ja' ?
             '⚠️サンドボックスなし：必要' : '⚠️Without sandbox: Required');
@@ -139,6 +147,10 @@ for (const language of ['ja','en']) {
         expect(await dialog(page).locator('.twextsec-bulk button').evaluateAll(items=>items.map(item=>item.value)))
             .toEqual(['deny','sandboxed','unsandboxed']);
         await expect(dialog(page).locator('.twextsec-bulk button:enabled')).toHaveCount(3);
+        if (language === 'ja') {
+            await expect(dialog(page).locator('.twextsec-bulk-note')).toHaveText('まとめて選択');
+            await expect(dialog(page).locator('.twextsec-columns > span').first()).toHaveText('機能拡張ごとに選択');
+        }
         await expect(rows.nth(1).locator('.twextsec-info')).toContainText('ID: securityordinary');
         await expect(dialog(page).locator('input:checked')).toHaveCount(0);
         await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeDisabled();
@@ -189,6 +201,7 @@ test('denying an extension without a required mode still requires confirmation a
 test('narrow security dialog retains ordered choices, reasons and a reachable confirmation button', async ({page,evidence}) => {
     evidence.stage('shared-security-narrow-modes');
     await page.setViewportSize({width:390,height:600});await open(page,'ja');
+    await expectSquarePreview(page);
     expect(await dialog(page).locator('article input').evaluateAll(items=>items.map(item=>item.value)))
         .toEqual(['deny','sandboxed','unsandboxed']);
     await expect(dialog(page).locator('input[value="sandboxed"]')).toBeDisabled();

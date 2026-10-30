@@ -27,7 +27,8 @@ export async function buildPages(pins) {
     if (result.error) throw result.error;
     if (result.status !== 0) process.exit(result.status || 1);
     await fs.rename(path.join(output, 'index.html'), path.join(output, 'player.html'));
-    await generatePages(output, revision, coreRevision, {siteRevision, coreVersion, securityVersion, licensePath: path.join(gui, 'LICENSE')});
+    await generatePages(output, revision, coreRevision, {siteRevision, coreVersion, securityVersion,
+        securityRevision: pins.securityRevision, licensePath: path.join(gui, 'LICENSE')});
     const info = JSON.parse(await fs.readFile(path.join(output, 'build-info.json'), 'utf8'));
     assert.equal(info.repository, `https://github.com/${pins.guiRepository}`);
     assert.equal(info.revision, revision);
