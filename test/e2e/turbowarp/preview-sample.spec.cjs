@@ -22,6 +22,16 @@ async function cancel(page) {
     await expect(hover(page)).toHaveCount(0);
 }
 
+async function expectSampleCode(page, metadata) {
+    await page.waitForFunction(({name, id}) => window.vm?.editingTarget?.getName() === name &&
+        window.ScratchBlocks?.getMainWorkspace()?.getBlockById(id),
+    {name: metadata.scriptTarget, id: metadata.ids.scene});
+    await expect(page.getByRole('tab', {name: 'コード', exact: true})).toHaveAttribute('aria-selected', 'true');
+    const scene = await icon(page, metadata.ids.scene);
+    await expect(scene).toBeInViewport({ratio: 1});
+    return scene;
+}
+
 test('the public preview sample opens from the landing page and uses its real published SB3', async ({page, request, baseURL, evidence}, testInfo) => {
     test.setTimeout(120_000);
     evidence.stage('public-preview-sample-assets');
@@ -38,13 +48,13 @@ test('the public preview sample opens from the landing page and uses its real pu
     const archive = await JSZip.loadAsync(bytes);
     const project = JSON.parse(await archive.file('project.json').async('string'));
     const actor = project.targets.find(target => !target.isStage);
-    expect(actor, 'The first actor explains how to select the script').toBeTruthy();
+    expect(actor, 'The first actor retains fallback instructions for other editors').toBeTruthy();
     expect(metadata.initialTarget).toBe(actor.name);
     const scriptTarget = project.targets.find(target => target.name === metadata.scriptTarget);
     expect(scriptTarget?.isStage, 'App rc.77 expects its named preview script on Stage').toBe(true);
     const instructions = Object.values(actor.comments).find(comment => !comment.minimized &&
         comment.text.includes('ステージ'));
-    expect(instructions, 'The initially selected actor must show the native target-selection instructions').toBeTruthy();
+    expect(instructions, 'The downloadable project must retain native target-selection instructions').toBeTruthy();
     const allowedExtensions = ['kubohiroyakamishibai4', 'kubohiroyakamishibaiauthoring4', 'kubohiroyaembeddedyaml'];
     expect(project.extensions.every(id => allowedExtensions.includes(id))).toBe(true);
     expect(project.extensions).not.toContain('blockpreviewprobe');
@@ -120,16 +130,8 @@ test('the public preview sample opens from the landing page and uses its real pu
     expect(loaded.ok()).toBe(true);
     expect(createHash('sha256').update(await loaded.body()).digest('hex')).toBe(sha256);
     await approveProjectExtensions(page, sources, 'ja');
-    await page.waitForFunction(name => window.vm?.editingTarget?.getName() === name &&
-        window.ScratchBlocks?.getMainWorkspace(), actor.name);
-    await expect(page.locator('textarea.scratchCommentTextarea')).toBeVisible();
-    await expect(page.locator('textarea.scratchCommentTextarea')).toHaveValue(instructions.text);
-    await page.locator('[class*="stage-selector_stage-selector_"]').click();
-    await page.waitForFunction(({name, id}) => window.vm?.editingTarget?.getName() === name &&
-        window.ScratchBlocks?.getMainWorkspace()?.getBlockById(id), {name: scriptTarget.name, id: metadata.ids.scene});
     evidence.stage('public-preview-sample-visible-blocks');
-    const scene = await icon(page, metadata.ids.scene);
-    await expect(scene).toBeInViewport();
+    const scene = await expectSampleCode(page, metadata);
     const show = await icon(page, metadata.ids.show);
     await expect(show).toBeVisible();
     const original = await page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}));
@@ -139,6 +141,14 @@ test('the public preview sample opens from the landing page and uses its real pu
     await expect(hover(page)).toHaveCount(0);
     await show.click();
     await expect(page.locator('[data-dsl4-actor-bounds]')).toBeVisible({timeout: 30_000});
+    await cancel(page);
+
+    evidence.stage('public-preview-sample-scene');
+    await scene.click();
+    await expect(visual(page).locator('canvas')).toBeVisible({timeout: 30_000});
+    await editorDialog(page).getByRole('button', {name: '停止', exact: true}).click();
+    await editorDialog(page).getByRole('button', {name: 'この場面を再生', exact: true}).click();
+    await expect(visual(page).locator('canvas')).toBeVisible();
     await cancel(page);
 
     evidence.stage('public-preview-sample-live-bubble');
@@ -153,8 +163,34 @@ test('the public preview sample opens from the landing page and uses its real pu
     expect(await page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}))).toBe(original);
     expect(await page.evaluate(() => Object.keys(JSON.parse(window.vm.toJSON()).extensionURLs).sort()))
         .toEqual(Object.keys(project.extensionURLs).sort());
+
+    evidence.stage('public-preview-sample-user-selection');
+    await page.locator('[class*="sprite-selector-item_sprite-name_"]').filter({hasText: actor.name}).click();
+    await page.waitForFunction(name => window.vm?.editingTarget?.getName() === name, actor.name);
+    await expect(page.locator('textarea.scratchCommentTextarea')).toHaveValue(instructions.text);
+    const costumes = page.getByRole('tab', {name: 'コスチューム', exact: true});
+    await costumes.click();
+    await expect(costumes).toHaveAttribute('aria-selected', 'true');
+    await page.waitForTimeout(250);
+    expect(await page.evaluate(() => window.vm.editingTarget.getName())).toBe(actor.name);
+    await expect(costumes).toHaveAttribute('aria-selected', 'true');
+
+    evidence.stage('public-preview-sample-reload');
+    await page.setViewportSize({width: 1280, height: 800});
+    const reloadedProject = page.waitForResponse(resource => resource.url() === projectURL);
+    await page.reload();
+    expect(createHash('sha256').update(await (await reloadedProject).body()).digest('hex')).toBe(sha256);
+    const security = page.locator('.twextsec-modal');
+    await expect.poll(async () => await security.isVisible() || page.evaluate(({name, id}) =>
+        window.vm?.editingTarget?.getName() === name &&
+        Boolean(window.ScratchBlocks?.getMainWorkspace()?.getBlockById(id)),
+    {name: metadata.scriptTarget, id: metadata.ids.scene})).toBe(true);
+    if (await security.isVisible()) await approveProjectExtensions(page, sources, 'ja');
+    await expectSampleCode(page, metadata);
+    await testInfo.attach('public-preview-sample-initial-code.png', {body: await page.screenshot(), contentType: 'image/png'});
     expect(failures, 'The actual published sample and its application assets must load successfully').toEqual([]);
     await testInfo.attach('public-preview-sample.json', {body: JSON.stringify({projectURL, sha256, metadata, guideLaunch: guideLaunch.href,
-        initialTarget: actor.name, extensions: project.extensions, failures, projectResponseReplaced: false}, null, 2),
+        initialTarget: scriptTarget.name, initialTab: 'code', reloadedInitialTarget: scriptTarget.name,
+        userSelectionRetained: true, extensions: project.extensions, failures, projectResponseReplaced: false}, null, 2),
     contentType: 'application/json'});
 });
