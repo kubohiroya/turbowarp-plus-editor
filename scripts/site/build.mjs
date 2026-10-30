@@ -8,7 +8,7 @@ import {brandEditor} from './brand-editor.mjs';
 import {buildYamlEditor} from './build-yaml-editor.mjs';
 import {root, readPins, verifyHost, sha} from './source.mjs';
 import {buildExtensionAssets} from './extension-assets.mjs';
-import {buildPreviewSample} from './build-preview-sample.mjs';
+import {buildPreviewSample, installPreviewSampleFocus} from './build-preview-sample.mjs';
 
 export async function buildPages(pins) {
     pins = pins || await readPins();
@@ -41,6 +41,7 @@ export async function buildPages(pins) {
     assert.equal(info.securityVersion, securityVersion);
     await brandEditor(output, prefix);
     info.previewSample = await buildPreviewSample(output);
+    await installPreviewSampleFocus(output, prefix);
     if (pins.loaderRepository) {
         info.extensionIntegration = await buildExtensionAssets(gui, pins);
     }

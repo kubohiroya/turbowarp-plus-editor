@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
-import {buildPreviewSample, verifyPreviewSample} from '../scripts/site/build-preview-sample.mjs';
+import {buildPreviewSample, verifyPreviewSample, installPreviewSampleFocus} from '../scripts/site/build-preview-sample.mjs';
 import {root} from '../scripts/site/source.mjs';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -13,7 +13,7 @@ async function fixture() {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twpe-sample-artifact-'));
     const sourceDirectory = path.join(directory, 'source'), output = path.join(directory, 'output');
     const inputs = {'index.html': '<h1>Sample guide</h1>', 'preview.k4.yml': "kamishibai: '4.0'\n",
-        LICENSE: 'CC0 sample assets', 'assets/actor.svg': '<svg/>'};
+        LICENSE: 'CC0 sample assets', 'assets/actor.svg': '<svg/>', 'focus.js': '// Sample initial view'};
     for (const [name, bytes] of Object.entries(inputs)) {
         await fs.mkdir(path.dirname(path.join(sourceDirectory, name)), {recursive: true});
         await fs.writeFile(path.join(sourceDirectory, name), bytes);
@@ -27,12 +27,26 @@ async function fixture() {
         cleanup: () => fs.rm(directory, {recursive: true, force: true})};
 }
 
+test('the sample initial-view module is installed once on the Editor document', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twpe-sample-focus-'));
+    try {
+        const filename = path.join(directory, 'editor.html');
+        await fs.writeFile(filename, '<!doctype html><html><head><title>Editor</title></head><body></body></html>');
+        await installPreviewSampleFocus(directory);
+        await installPreviewSampleFocus(directory);
+        const html = await fs.readFile(filename, 'utf8');
+        assert.equal((html.match(/data-twpe-preview-sample-focus/gu) || []).length, 1);
+        assert.match(html, /type="module" data-twpe-preview-sample-focus src="\/turbowarp-plus-editor\/samples\/block-preview\/focus\.js"/u);
+        await assert.rejects(installPreviewSampleFocus(directory, '/other/'), /canonical/);
+    } finally { await fs.rm(directory, {recursive: true, force: true}); }
+});
+
 test('builds a sample and inventories every authored input and generated download', async () => {
     const f = await fixture();
     try {
         assert.equal(f.sample.appVersion, '4.0.0-rc.77');
         assert.equal(f.sample.project, 'samples/block-preview/block-preview-rc77.sb3');
-        assert.equal(Object.keys(f.sample.files).length, 6);
+        assert.equal(Object.keys(f.sample.files).length, 7);
         assert.deepEqual(await fs.readFile(path.join(f.output, f.sample.project)), f.bytes);
         assert.deepEqual(await verifyPreviewSample(f.output, f.sample), f.metadata);
         for (const [name, bytes] of Object.entries(f.inputs)) {
@@ -44,7 +58,7 @@ test('builds a sample and inventories every authored input and generated downloa
 test('rejects missing, changed and unrecorded files, including the guide and license', async () => {
     const f = await fixture();
     try {
-        for (const name of ['index.html', 'LICENSE', 'assets/actor.svg', 'block-preview-rc77.sb3']) {
+        for (const name of ['index.html', 'LICENSE', 'focus.js', 'assets/actor.svg', 'block-preview-rc77.sb3']) {
             const filename = path.join(f.output, 'samples/block-preview', name), original = await fs.readFile(filename);
             await fs.writeFile(filename, 'changed');
             await assert.rejects(verifyPreviewSample(f.output, f.sample), /files changed/);

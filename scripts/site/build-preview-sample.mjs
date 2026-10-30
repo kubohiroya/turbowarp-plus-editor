@@ -13,6 +13,16 @@ const metadataPath = `${previewSampleDirectory}/metadata.json`;
 const samplePath = name => typeof name === 'string' && name.startsWith(`${previewSampleDirectory}/`) &&
     /^[A-Za-z0-9_./-]+$/.test(name) && name.split('/').every(part => part && part !== '.' && part !== '..');
 
+export async function installPreviewSampleFocus(output, prefix = '/turbowarp-plus-editor/') {
+    assert.equal(prefix, '/turbowarp-plus-editor/', 'Use the canonical Editor prefix');
+    const filename = path.join(output, 'editor.html');
+    let html = await fs.readFile(filename, 'utf8');
+    html = html.replace(/<script\b[^>]*\bdata-twpe-preview-sample-focus(?:="[^"]*")?[^>]*>[\s\S]*?<\/script>/gi, '');
+    assert.match(html, /<\/head>/i, 'The Editor document needs a head element');
+    html = html.replace(/<\/head>/i, `<script type="module" data-twpe-preview-sample-focus src="${prefix}${previewSampleDirectory}/focus.js"></script></head>`);
+    await fs.writeFile(filename, html);
+}
+
 async function expectedAppVersion() {
     const manifest = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
     const alias = manifest.devDependencies?.['@kubohiroya/turbowarp-kamishibai-preview-app'];
@@ -55,7 +65,7 @@ export async function verifyPreviewSample(output, sample) {
     const actual = await fileHashes(path.join(output, previewSampleDirectory), previewSampleDirectory);
     assert.deepEqual(actual, sample.files, 'Preview sample files changed, are missing or are unrecorded');
     for (const name of [projectPath, metadataPath, `${previewSampleDirectory}/index.html`,
-        `${previewSampleDirectory}/preview.k4.yml`, `${previewSampleDirectory}/LICENSE`]) {
+        `${previewSampleDirectory}/preview.k4.yml`, `${previewSampleDirectory}/focus.js`, `${previewSampleDirectory}/LICENSE`]) {
         assert.ok(Object.hasOwn(actual, name), `Missing preview sample file: ${name}`);
     }
     assert.ok(Object.keys(actual).some(name => name.startsWith(`${previewSampleDirectory}/assets/`) && name.endsWith('.svg')),
