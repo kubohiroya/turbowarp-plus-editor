@@ -22,6 +22,12 @@ const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({
 }[character]));
 
 export function renderEditButton(options = {}) {
+    const size = options.size ?? 'normal';
+    if (!['normal', 'small'].includes(size)) throw new TypeError('size must be normal or small');
+    const small = size === 'small';
     const label = options.language === 'en' ? 'Edit in TurboWarp-Plus-Editor' : 'TurboWarp-Plus-Editorで編集';
-    return `<a class="twpe-edit-button" href="${escapeHTML(createEditorURL(options))}"><img src="${iconURL}" width="36" height="36" alt="" aria-hidden="true"><span>${label}</span></a>`;
+    const text = small ? (options.language === 'en' ? 'Edit' : '編集') : label;
+    const attributes = small ? ` title="${label}" aria-label="${label}"` : '';
+    const iconSize = small ? 24 : 36;
+    return `<a class="twpe-edit-button${small ? ' twpe-edit-button--small' : ''}" href="${escapeHTML(createEditorURL(options))}"${attributes}><img src="${iconURL}" width="${iconSize}" height="${iconSize}" alt="" aria-hidden="true"><span>${text}</span></a>`;
 }

@@ -53,7 +53,23 @@ HTMLページの `<head>` にスタイルシートを1回読み込み、ボタ�
 </a>
 ```
 
-新しい作品用のボタンは `project_url` を省略します。英語では `lang=en` と `Edit in TurboWarp-Plus-Editor` を使います。GitHub READMEは外部CSSを適用できないため、次の画像付きリンクを使用できます。
+新しい作品用のボタンは `project_url` を省略します。英語では `lang=en` と `Edit in TurboWarp-Plus-Editor` を使います。
+
+通常版はアイコンと操作名を表示します。小サイズ版は `twpe-edit-button--small` を追加し、表示文言を「編集」、`title` と `aria-label` を「TurboWarp-Plus-Editorで編集」にします（英語は `Edit` / `Edit in TurboWarp-Plus-Editor`）。`title` がホバー時のツールチップです。
+
+```html
+<a class="twpe-edit-button twpe-edit-button--small"
+   href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja"
+   title="TurboWarp-Plus-Editorで編集" aria-label="TurboWarp-Plus-Editorで編集">
+  <img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg"
+       width="24" height="24" alt="" aria-hidden="true">
+  <span>編集</span>
+</a>
+```
+
+両サイズとも既定はOSの配色に追従（auto）します。`<html data-theme="light">` / `dark` で固定し、`auto` または属性の削除で自動へ戻せます。JavaScriptで生成する場合は `renderEditButton({size: 'small', language: 'ja', projectURL: 'https://example.com/story.sb3'})` を使います。省略時は通常版です。
+
+GitHub READMEは外部CSSを適用できないため、次の画像付きリンクを使用できます。
 
 ```html
 <a href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja">
@@ -105,7 +121,7 @@ GUIとPackagerは `site/source.json` に記録したSHAをチェックアウト�
 
 [Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3)と[共通化Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6)に対応する試験公開機能です。起動時に `twPlusYamlEditor=1` を指定したEditorで有効になります。既定OFFです。Visual Studio CodeとNode.jsをインストールした環境で、ローカル補助プロセスからEditorを開きます。上流GUIやライブラリに下流依存は追加しません。原文文書の保存・文書参照・提供元登録は `@kubohiroya/turbowarp-document-data`、ハット・YAMLアイコン・共通YAMLブロックは独立した `@kubohiroya/turbowarp-embedded-yaml` に置きます。各拡張が文書を登録し、Editorは共通契約を介してVSCodeとの連携・取込・SB3保存を担当します。
 
-紙芝居用の提供元はApp `4.0.0-rc.75` に置き、App所有の検証APIとSchemaを使用します。Editorのブラウザ用コードにはAppやそのparserを組み込みません。紙芝居では、新しい独立rootと名前付き文書を持つ作品が対象です。原文YAML・共通YAMLブロック・台本ブロックを表示・変換でき、既存の単一組み込み原文にも互換対応します。旧 `kamishibai` / `kamishibaiConfig` の作品はAppの `migrate-embedded-yaml` で別のSB3へ移行してから使用します。外部台本を開くメニューとコンパイル済みのみの作品は対象外です。
+紙芝居用の提供元はApp `4.0.0-rc.77` に置き、App所有の検証APIとSchemaを使用します。Editorのブラウザ用コードにはAppやそのparserを組み込みません。紙芝居では、新しい独立rootと名前付き文書を持つ作品が対象です。原文YAML・共通YAMLブロック・台本ブロックを表示・変換でき、既存の単一組み込み原文にも互換対応します。旧 `kamishibai` / `kamishibaiConfig` の作品はAppの `migrate-embedded-yaml` で別のSB3へ移行してから使用します。外部台本を開くメニューとコンパイル済みのみの作品は対象外です。
 
 準備済みのEditorビルドに機能を加え、ローカルで起動します。`build:pages`で新たにビルドした場合は、同じ追加処理を自動で実行します。
 
@@ -177,7 +193,7 @@ node --test test/yaml-multi-document.browser.mjs
 
 非紙芝居の原文文書はYAMLとJSONを利用でき、HTML/Markdownの既存APIは維持します。下位の文書形式判定を担当する `turbowarp-named-data` にもYAML/JSONを追加します。構造化データの既存の限定Schema解釈と、文書の完全なJSON Schema検証は別の契約として維持します。
 
-新しい文書保存・投影・表現変換は既定OFFです。対応するApp rc.75では `twPlusYamlEditor=1` によりEditorと提供元の文書操作を同じ起動条件で有効にします。各文書の変換能力は所有者が提供し、未対応の拡張へ変換機能を追加することはありません。旧ブロック台本に元のモジュールYAMLが保存されていない場合、コメント等を含む元ファイルを復元したとは扱いません。
+新しい文書保存・投影・表現変換は既定OFFです。対応するApp rc.77では `twPlusYamlEditor=1` によりEditorと提供元の文書操作を同じ起動条件で有効にします。各文書の変換能力は所有者が提供し、未対応の拡張へ変換機能を追加することはありません。旧ブロック台本に元のモジュールYAMLが保存されていない場合、コメント等を含む元ファイルを復元したとは扱いません。
 
 「DSLの説明」は提供元のWebサイトを開きます。独立した検証ボタンは置かず、右下の「表示されている形式に変換して検証・保存」で表示中の形式を検証して反映します。ブロック表現を編集中のVSCode操作は、原文へ反映するまで無効になります。原文がJSONの場合、VSCode標準のJSON支援とSchema関連付けを使います。
 
@@ -192,3 +208,7 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 ライセンス: GPL-3.0-or-later。統合GUIと同梱物については各ライセンス・NOTICEも参照してください。
 
 製作者: [Hiroya Kubo](https://github.com/kubohiroya)
+
+## ブロックアイコンのプレビュー
+
+[プレビューを有効にしてEditorを開く](https://kubohiroya.github.io/turbowarp-plus-editor/?twPlusBlockPreview=1&twPlusYamlEditor=1)。既定OFFで、App rc.77の編集用runtimeとscene/actionを持つ作品が対象です。hover静止画、scene再生、アクターのドラッグ配置、moveTo/Bubbleのライブ再生に対応します。操作・既存作品の扱いは[利用案内](docs/block-icon-preview.md)を参照してください。

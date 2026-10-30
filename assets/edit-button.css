@@ -1,4 +1,5 @@
 .twpe-edit-button {
+  color-scheme: light dark;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7,11 +8,11 @@
   min-height: 56px;
   max-width: 100%;
   padding: .7em 1.1em;
-  border: 2px solid #b8ddf7;
+  border: 2px solid light-dark(#b8ddf7, #497f9e);
   border-radius: 14px;
-  background: #e8f5ff;
-  color: #123e65;
-  font: 600 1rem/1.45 system-ui, sans-serif;
+  background: light-dark(#e8f5ff, #173d54);
+  color: light-dark(#123e65, #f2f2f2);
+  font: 400 1rem/1.45 system-ui, sans-serif;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -19,6 +20,18 @@
 }
 .twpe-edit-button img { flex: 0 0 36px; width: 36px; height: 36px; object-fit: contain; }
 .twpe-edit-button span { overflow-wrap: anywhere; }
-.twpe-edit-button:hover { background: #d8edff; border-color: #659cc4; color: #123e65; text-decoration: none; }
-.twpe-edit-button:focus-visible { outline: 3px solid #145a98; outline-offset: 4px; }
+.twpe-edit-button:hover { background: light-dark(#d8edff, #20516f); border-color: light-dark(#659cc4, #78b3d4); color: light-dark(#123e65, #f2f2f2); text-decoration: none; }
+.twpe-edit-button:focus-visible { outline: 3px solid light-dark(#145a98, #a8d6ff); outline-offset: 4px; }
+:root[data-theme="light"] .twpe-edit-button { color-scheme: light; }
+:root[data-theme="dark"] .twpe-edit-button { color-scheme: dark; }
+.twpe-edit-button--small {
+  white-space: nowrap;
+  gap: .4em;
+  min-height: 36px;
+  padding: .3em .65em;
+  border-width: 1px;
+  border-radius: 8px;
+  font-size: .875rem;
+}
+.twpe-edit-button--small img { flex-basis: 24px; width: 24px; height: 24px; }
 @media (forced-colors: active) { .twpe-edit-button { border-color: ButtonText; } }

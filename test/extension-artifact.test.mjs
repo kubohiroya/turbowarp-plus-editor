@@ -31,13 +31,18 @@ test('the deployment gate rejects changed builder assets and enabled-by-default 
         for (const name of ['plus-packager.html', 'plus-packager.js']) integration.assets[name] = contentHash('checked asset');
         const info = {siteRepository: 'https://github.com/kubohiroya/turbowarp-plus-editor', siteRevision: revision,
             repository: `https://github.com/${pins.guiRepository}`, revision: pins.guiRevision,
-            coreRepository: `https://github.com/${pins.coreRepository}`, coreRevision: pins.coreRevision,
+            coreRepository: `https://github.com/${pins.coreRepository}`, coreRevision: pins.coreRevision, coreVersion: pins.coreVersion,
             securityPackage: pins.securityPackage, securityVersion: pins.securityVersion, extensionIntegration: integration};
         const writeInfo = () => fs.writeFile(path.join(directory, 'build-info.json'), JSON.stringify(info));
         const check = () => spawnSync(process.execPath, [path.join(root, 'scripts/site/check-artifact.mjs'), directory], {
             env: {...process.env, EXPECTED_REVISION: revision}, encoding: 'utf8'});
         await writeInfo();
         assert.equal(check().status, 0);
+        info.coreVersion = '0.5.0';
+        await writeInfo();
+        assert.notEqual(check().status, 0);
+        info.coreVersion = pins.coreVersion;
+        await writeInfo();
         await fs.writeFile(path.join(directory, 'plus-packager.js'), 'unreviewed replacement');
         assert.notEqual(check().status, 0);
         await fs.writeFile(path.join(directory, 'plus-packager.js'), 'checked asset');

@@ -13,9 +13,9 @@
 
 ## 固定ソースと成果物
 
-`site/source.json` はGUI/coreの40桁SHAとセキュリティUIのnpm完全版を持ちます。ビルド前にGUI checkout、インストールされたcoreのbuild-info、GUIが宣言するsecurity完全版と実際のインストール版を照合します。
+`site/source.json` はGUI/coreの40桁SHA、coreとセキュリティUIのnpm完全版を持ちます。CIとローカル検証はGUIの固定lock導入後に `E2E_GUI_ROOT=<checkout> node scripts/site/prepare-core.mjs` を明示実行する。rootの固定lockで導入したcore配布物だけを隔離GUIへコピーする。依存・peer宣言の同一性、版・revision・内容SHAを検証し、GUIの他の依存とmanifest/lockを保持する。ビルド前にGUI checkout、インストールされたcoreのbuild-info、GUIが宣言するsecurity完全版と実際のインストール版を照合します。
 
-`build-info.json` の `revision` はGUI、`coreRevision` はdata-editor製品ソース、`siteRevision` は本サイトのソースです。`securityPackage` / `securityVersion` も記録します。製品の版とテストrunnerの版は区別し、配信された値を期待値へ自己採用しません。
+`build-info.json` の `revision` はGUI、`coreRevision` はdata-editor製品ソース、`coreVersion` は実際に導入した完全版、`siteRevision` は本サイトのソースです。`securityPackage` / `securityVersion` も記録します。製品の版とテストrunnerの版は区別し、配信された値を期待値へ自己採用しません。
 
 出力はGUI checkoutの `build/` です。`ROOT=/turbowarp-plus-editor/` に固定し、GUIのplayerを `player.html` に保持します。`editor.html`、ブロック編集サンプル、拡張セキュリティUI、GUIのLICENSEを同梱します。入口は `index.html`、共有資産は `assets/icon.svg` と `assets/edit-button.css` です。
 
