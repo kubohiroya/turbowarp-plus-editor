@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ブロックアイコンのプレビュー体験 — TurboWarp Plus Editor</title>
+  <link rel="icon" type="image/svg+xml" href="../../assets/icon.svg">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <script type="module" src="guide.js"></script>
+</head>
+<body>
+<div class="wrap sample-guide">
+  <header>
+    <a class="brand" href="../../" data-guide-home><img src="../../assets/icon.svg" width="48" height="48" alt=""><span>TurboWarp-Plus-Editor</span></a>
+    <nav aria-label="Language"><button type="button" data-language="ja" lang="ja">日本語</button><button type="button" data-language="en" lang="en">English</button></nav>
+  </header>
+  <main>
+    <p class="eyebrow">App 4.0.0-rc.77</p>
+    <div data-guide-language="ja">
+      <h1>ブロックアイコンのプレビューを試す</h1>
+      <p class="lead">2つのシーンが入った編集用作品です。アイコンにマウスを重ねて静止画を確認し、クリックして動かしたり、配置を編集したりできます。</p>
+    </div>
+    <div data-guide-language="en" hidden>
+      <h1>Try block icon previews</h1>
+      <p class="lead">This editable project contains two scenes. Hover over an action icon for a still preview, or click an icon to play a scene and edit actor placement or animation settings.</p>
+    </div>
+    <div class="actions">
+      <a class="twpe-edit-button" data-preview-sample href="../../editor.html?lang=ja&amp;twPlusBlockPreview=1&amp;twPlusYamlEditor=1&amp;project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-plus-editor%2Fsamples%2Fblock-preview%2Fblock-preview-rc77.sb3" data-guide-label="open">プレビュー体験サンプルを開く</a>
+      <a href="block-preview-rc77.sb3" download data-guide-label="download">サンプルSB3をダウンロード</a>
+    </div>
+    <article data-guide-language="ja">
+      <h2>まず開く</h2>
+      <p>上のボタンから開くと、プレビューと組み込みYAML編集が有効になります。拡張の確認画面が表示された場合は、内容を確認してこの作品の拡張を許可してください。緑の旗を押す前から、ブロックのプレビューを操作できます。</p>
+      <p><strong>右下の「ステージ」を選び、「コード」タブを開いてください。</strong>2つのsceneが見えます。最初に選ばれるスプライトには、この操作の案内も付けています。下にあるブロックへはコード領域をスクロールします。</p>
+      <h2>順番に試す</h2>
+      <table>
+        <thead><tr><th>対象</th><th>操作</th><th>確認すること</th></tr></thead>
+        <tbody>
+          <tr><td>scene内のaction</td><td>左端のアイコンにマウスを重ねる</td><td>そのシーンの、そのactionまで進めた静止画が現れます。マウスを離すと閉じます。</td></tr>
+          <tr><td>scene</td><td>アイコンをクリック</td><td>シーンを再生し、停止・再再生できます。</td></tr>
+          <tr><td>show</td><td>アイコンをクリックし、プレビュー内のアクター本体をドラッグ。枠のふちもドラッグ</td><td>本体で位置、枠のふちで表示スケールを変更できます。数値欄も連動します。</td></tr>
+          <tr><td>setSkin</td><td>アイコンをクリックし、枠のふちをドラッグ</td><td>衣装を変えた状態で表示スケールを調整できます。</td></tr>
+          <tr><td>moveTo</td><td>アイコンをクリックし、移動先・秒数・easingを変更</td><td>変更のたびに移動を再生します。アクターのドラッグで移動先を設定できます。拡縮はshowまたはsetSkinで指定します。</td></tr>
+          <tr><td>say / think</td><td>2つ目のsceneでアイコンをクリックし、文章・時間・stylesを変更</td><td>文字送りと吹き出しの表示アニメーションを、その場で再生し直します。</td></tr>
+          <tr><td>sayText / thinkText</td><td>文章の入力アイコンをクリックして文章・時間を変更</td><td>固定入力の吹き出しも、変更した内容ですぐに再生されます。</td></tr>
+        </tbody>
+      </table>
+      <h2>保存・キャンセル・Undo / Redo</h2>
+      <ol>
+        <li>showの位置やスケールを変えて保存し、ブロックの値が変わることを確認します。</li>
+        <li>コード領域を選び、Undo / Redoで保存した変更を戻したり再適用したりします。</li>
+        <li>別のプレビューで値を変え、キャンセルします。保存前のブロックの値が保たれることを確認します。</li>
+      </ol>
+      <p>編集した作品を残す場合はEditorの「ファイル」から別名で保存してください。元のサンプルを開き直すと、公開時の状態に戻ります。</p>
+      <h2>この作品について</h2>
+      <p>App rc.77の公開済み編集用runtimeと、オリジナルSVG素材から生成しています。元台本は<a href="preview.k4.yml">preview.k4.yml</a>、生成元とハッシュは<a href="metadata.json">metadata.json</a>、素材の利用条件は<a href="LICENSE">LICENSE</a>で確認できます。</p>
+      <p class="small">通常のEditorではプレビューは既定OFFです。この作品の起動リンクは<code>twPlusBlockPreview=1</code>と<code>twPlusYamlEditor=1</code>を指定します。</p>
+    </article>
+    <article data-guide-language="en" hidden>
+      <h2>Open the project</h2>
+      <p>The button enables block previews and embedded YAML editing. If an extension review dialog appears, review it and allow this project’s extensions. You can try previews before clicking the green flag.</p>
+      <p><strong>Select Stage in the lower right, then open the Code tab.</strong> It contains both scenes. The initially selected sprite also shows this instruction. Scroll the code area to reach later actions.</p>
+      <h2>Try these actions</h2>
+      <ol>
+        <li>Hover over an action’s left icon for a still image at that point in its scene. Move away to close it.</li>
+        <li>Click a scene icon to play, stop and replay that scene.</li>
+        <li>Click show. Drag the actor’s body to move it, and drag its bounding border to change its scale. The numeric fields update too.</li>
+        <li>Click setSkin. Drag the border to change the actor’s scale with its other costume.</li>
+        <li>Click moveTo. Change its destination, duration or easing to replay the motion immediately. You can drag the actor to set its destination. Use show or setSkin for scale.</li>
+        <li>In the second scene, click say or think. Change text, duration or styles to replay text reveal and bubble animation.</li>
+        <li>Click the text input icons for sayText or thinkText and edit text or duration to preview the fixed input immediately.</li>
+      </ol>
+      <h2>Save, cancel, undo and redo</h2>
+      <p>Save a placement change, then focus the code area and use Undo / Redo. Change another preview and cancel it to keep the original block values. Save your edited project under a new name from the File menu. Reopening the public sample starts from its original state.</p>
+      <h2>About this project</h2>
+      <p>Built with the published App rc.77 authoring runtime and original SVG assets. See the <a href="preview.k4.yml">source script</a>, <a href="metadata.json">generation metadata and hashes</a>, and <a href="LICENSE">asset license</a>.</p>
+      <p class="small">Previews remain off by default in the regular Editor. This sample link explicitly sets <code>twPlusBlockPreview=1</code> and <code>twPlusYamlEditor=1</code>.</p>
+    </article>
+  </main>
+  <footer><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a><a href="../../build-info.json" data-guide-label="build">配信バージョン</a></footer>
+</div>
+</body>
+</html>

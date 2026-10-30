@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {readPins, sha} from './source.mjs';
 import {contentHash} from './extension-assets.mjs';
+import {verifyPreviewSample} from './build-preview-sample.mjs';
 
 const pins = await readPins();
 assert.ok(sha(process.env.EXPECTED_REVISION), 'Full site revision required');
@@ -18,6 +19,7 @@ assert.equal(info.coreRevision, pins.coreRevision);
 assert.equal(info.coreVersion, pins.coreVersion);
 assert.equal(info.securityPackage, pins.securityPackage);
 assert.equal(info.securityVersion, pins.securityVersion);
+await verifyPreviewSample(directory, info.previewSample);
 for (const file of ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg', 'assets/edit-button.css']) {
     assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing site file: ${file}`);
 }

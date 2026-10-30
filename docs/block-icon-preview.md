@@ -1,5 +1,7 @@
 # ブロックアイコンのプレビューを使う
 
+すぐに試すには、[App rc.77の編集用サンプルを開く](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&twPlusBlockPreview=1&twPlusYamlEditor=1&project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-plus-editor%2Fsamples%2Fblock-preview%2Fblock-preview-rc77.sb3)を選び、右下の「ステージ」→「コード」を開いてください。[操作ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/)には、hover静止画、scene再生、配置・拡縮、moveTo/Bubbleのライブ編集と保存・キャンセル・Undo/Redoを試す手順があります。サンプルは[SB3を直接ダウンロード](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/block-preview-rc77.sb3)することもできます。
+
 対応版のTurboWarp Plus Editorを、次のリンクから起動してください。
 
 [プレビューと組み込みYAML編集を有効にして開く](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&twPlusBlockPreview=1&twPlusYamlEditor=1)
