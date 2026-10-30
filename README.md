@@ -53,7 +53,23 @@ HTMLページの `<head>` にスタイルシートを1回読み込み、ボタ�
 </a>
 ```
 
-新しい作品用のボタンは `project_url` を省略します。英語では `lang=en` と `Edit in TurboWarp-Plus-Editor` を使います。GitHub READMEは外部CSSを適用できないため、次の画像付きリンクを使用できます。
+新しい作品用のボタンは `project_url` を省略します。英語では `lang=en` と `Edit in TurboWarp-Plus-Editor` を使います。
+
+通常版はアイコンと操作名を表示します。小サイズ版は `twpe-edit-button--small` を追加し、表示文言を「編集」、`title` と `aria-label` を「TurboWarp-Plus-Editorで編集」にします（英語は `Edit` / `Edit in TurboWarp-Plus-Editor`）。`title` がホバー時のツールチップです。
+
+```html
+<a class="twpe-edit-button twpe-edit-button--small"
+   href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja"
+   title="TurboWarp-Plus-Editorで編集" aria-label="TurboWarp-Plus-Editorで編集">
+  <img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg"
+       width="24" height="24" alt="" aria-hidden="true">
+  <span>編集</span>
+</a>
+```
+
+両サイズとも既定はOSの配色に追従（auto）します。`<html data-theme="light">` / `dark` で固定し、`auto` または属性の削除で自動へ戻せます。JavaScriptで生成する場合は `renderEditButton({size: 'small', language: 'ja', projectURL: 'https://example.com/story.sb3'})` を使います。省略時は通常版です。
+
+GitHub READMEは外部CSSを適用できないため、次の画像付きリンクを使用できます。
 
 ```html
 <a href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja">
