@@ -3,3 +3,8 @@ The original TurboWarp Plus SVG brand is adapted from kubohiroya/turbowarp-plus-
 The blue colored-pencil variation identifies the TurboWarp-Plus-Editor editing action.
 Integrated GUI builds include kubohiroya/scratch-gui and its third-party notices.
 Library names identify independently licensed components; their licenses remain applicable.
+
+The optional embedded-YAML editor uses the independent turbowarp-embedded-yaml package (MPL-2.0).
+The generated yaml-editor/notices/ directory retains that package's license.
+App-specific document validation and updates are supplied by each owning extension through its provider.
+The local VSCode companion uses an existing Visual Studio Code installation, independently licensed by Microsoft.

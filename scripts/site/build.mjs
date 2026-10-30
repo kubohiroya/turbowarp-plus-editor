@@ -4,6 +4,7 @@ import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {generatePages} from './generate-pages.mjs';
 import {brandEditor} from './brand-editor.mjs';
+import {buildYamlEditor} from './build-yaml-editor.mjs';
 import {root, readPins, verifyHost, sha} from './source.mjs';
 
 const pins = await readPins();
@@ -33,4 +34,5 @@ assert.equal(info.siteRevision, siteRevision);
 assert.equal(info.securityPackage, pins.securityPackage);
 assert.equal(info.securityVersion, securityVersion);
 await brandEditor(output, prefix);
+await buildYamlEditor(output, prefix);
 console.log(`TurboWarp-Plus-Editor built: GUI ${revision}; core ${coreRevision}; security ${securityVersion}; site ${siteRevision}`);

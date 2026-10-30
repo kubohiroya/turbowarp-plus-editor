@@ -1,0 +1,5 @@
+# 組込YAML検証fixture
+
+公開tutorial-4.0.sb3（SHA256 3c2b29ace8157e92f0fe63faf699aba1a9766c845fc0d3ed33999f9d54504ed0）のproject.jsonから抽出。extensionURLsのみexample.invalidへ置換し、拡張コードを実行しない。台本・asset descriptor/payload・ブロックは実データを保持。元作品は kubohiroya/turbowarp-kamishibai-samples（MPL-2.0）、Appは @kubohiroya/turbowarp-kamishibai-app。
+
+単体テスト用に大型poseNet配布bundleを省き、各file payloadを先頭64byteへ縮小した。台本・manifest参照・ブロックは元実データを保持し、テストsetupで公式factoryがpayloadのsize/integrityとasset bundleを再構成する。画像/音声/モデルの再生はこのfixtureの用途ではない。実SB3全体のVM保存検証は別途行う。
