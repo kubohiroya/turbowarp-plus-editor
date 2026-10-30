@@ -159,11 +159,15 @@ export function mountYamlEditor({
   selectionLabel.htmlFor = selection.id;
   selectionLabel.textContent = `${text.document}: `;
   selectionRow.append(selectionLabel, selection);
-  const sourceName = paragraph(),
-    formatNote = paragraph(),
+  const sourceName = doc.createElement("strong"),
+    formatNote = doc.createElement("span"),
     schemaNote = paragraph();
-  for (const node of [sourceName, formatNote, schemaNote])
-    node.className = "twpe-yaml-source-name";
+  sourceName.className = "twpe-yaml-title-filename";
+  formatNote.className = "twpe-yaml-title-format";
+  schemaNote.className = "twpe-yaml-source-name";
+  const titlebar = doc.createElement("header");
+  titlebar.className = "twpe-yaml-titlebar";
+  titlebar.append(heading, sourceName, formatNote, closeButton);
   const actions = doc.createElement("div");
   actions.className = "twpe-yaml-actions";
   const docsLink = doc.createElement("a");
@@ -185,11 +189,14 @@ export function mountYamlEditor({
   tablist.className = "twpe-yaml-tabs";
   tablist.setAttribute("role", "tablist");
   tablist.setAttribute("aria-label", text.format);
+  const tabToolbar = doc.createElement("div");
+  tabToolbar.className = "twpe-yaml-tab-toolbar";
+  tabToolbar.append(tablist, actions);
   const panel = doc.createElement("div");
   panel.id = "twpe-yaml-tabpanel";
   panel.setAttribute("role", "tabpanel");
   panel.tabIndex = 0;
-  conversions.append(activeNote, representationHint, externalHint, tablist);
+  conversions.append(activeNote, representationHint, externalHint, tabToolbar);
   const status = paragraph();
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
@@ -218,7 +225,6 @@ export function mountYamlEditor({
   saveButton.className = "twpe-yaml-save";
   footer.append(cancelButton, saveButton);
   panel.append(
-    actions,
     status,
     error,
     previewLoading,
@@ -227,11 +233,8 @@ export function mountYamlEditor({
     blockPreview,
   );
   dialog.append(
-    heading,
-    closeButton,
+    titlebar,
     selectionRow,
-    sourceName,
-    formatNote,
     schemaNote,
     conversions,
     switchHint,
@@ -519,7 +522,7 @@ export function mountYamlEditor({
     switchHint.hidden = !hasWork() || listed.length < 2;
     sourceName.textContent = snapshot?.sourceName || entry?.filename || "";
     formatNote.textContent = entry?.format
-      ? `${text.format}: ${entry.format.toUpperCase()}`
+      ? `(${text.format}: ${entry.format.toUpperCase()})`
       : "";
     formatNote.hidden = !entry?.format;
     schemaNote.textContent = `Schema: ${entry?.schema?.id || text.noSchema}`;
