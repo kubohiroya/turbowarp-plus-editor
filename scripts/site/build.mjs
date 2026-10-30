@@ -12,7 +12,7 @@ import {buildExtensionAssets} from './extension-assets.mjs';
 export async function buildPages(pins) {
     pins = pins || await readPins();
     const gui = process.env.E2E_GUI_ROOT;
-    const {revision, coreRevision, securityVersion} = await verifyHost(gui, pins);
+    const {revision, coreRevision, coreVersion, securityVersion} = await verifyHost(gui, pins);
     const siteRevision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim();
     assert.ok(sha(siteRevision), 'Site source must have a full revision');
     const prefix = process.env.ROOT || '/turbowarp-plus-editor/';
@@ -26,12 +26,13 @@ export async function buildPages(pins) {
     if (result.error) throw result.error;
     if (result.status !== 0) process.exit(result.status || 1);
     await fs.rename(path.join(output, 'index.html'), path.join(output, 'player.html'));
-    await generatePages(output, revision, coreRevision, {siteRevision, securityVersion, licensePath: path.join(gui, 'LICENSE')});
+    await generatePages(output, revision, coreRevision, {siteRevision, coreVersion, securityVersion, licensePath: path.join(gui, 'LICENSE')});
     const info = JSON.parse(await fs.readFile(path.join(output, 'build-info.json'), 'utf8'));
     assert.equal(info.repository, `https://github.com/${pins.guiRepository}`);
     assert.equal(info.revision, revision);
     assert.equal(info.coreRepository, `https://github.com/${pins.coreRepository}`);
     assert.equal(info.coreRevision, coreRevision);
+    assert.equal(info.coreVersion, coreVersion);
     assert.equal(info.siteRepository, 'https://github.com/kubohiroya/turbowarp-plus-editor');
     assert.equal(info.siteRevision, siteRevision);
     assert.equal(info.securityPackage, pins.securityPackage);

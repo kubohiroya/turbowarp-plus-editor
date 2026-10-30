@@ -26,10 +26,11 @@ test('embed HTML escapes URL values and uses a visible named edit action',()=>{
 test('distribution identifies the new site owner and all pinned integrated components',async()=>{
     const dir=await mkdtemp(path.join(os.tmpdir(),'twpe-generate-'));
     try{
-        await generatePages(dir,'a'.repeat(40),'b'.repeat(40),{siteRevision:'c'.repeat(40),securityVersion:'0.3.3'});
+        await generatePages(dir,'a'.repeat(40),'b'.repeat(40),{siteRevision:'c'.repeat(40),coreVersion:'0.6.0',securityVersion:'0.3.3'});
         const info=JSON.parse(await readFile(path.join(dir,'build-info.json'),'utf8'));
         assert.equal(info.siteRepository,'https://github.com/kubohiroya/turbowarp-plus-editor');
         assert.equal(info.securityVersion,'0.3.3');
+        assert.equal(info.coreVersion,'0.6.0');
         const html=await readFile(path.join(dir,'index.html'),'utf8');
         assert.ok(html.includes('class="twpe-edit-button"'));
         assert.ok(!html.includes('turbowarp-extension-data-editor/editor.html'));

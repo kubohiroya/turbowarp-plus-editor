@@ -10,7 +10,8 @@ test('integration pins require exact GUI/core identities and an exact security v
     const {validatePins} = await import('../../../scripts/site/source.mjs');
     const pins = require('../../../site/source.json');
     assert.deepEqual(validatePins({...pins}), pins);
-    for (const patch of [{guiRevision:'main'}, {coreRevision:'abc123'}, {securityVersion:'^0.3.3'},
+    for (const patch of [{guiRevision:'main'}, {coreRevision:'abc123'}, {coreVersion:'^0.6.0'},
+        {coreVersion:undefined}, {securityVersion:'^0.3.3'},
         {guiRepository:'other/host'}, {coreRepository:'other/core'}, {securityPackage:'other-package'}]) {
         assert.throws(() => validatePins({...pins,...patch}));
     }
@@ -66,7 +67,8 @@ test('the full integration profile includes every fixed-input case without skips
     assert.equal(result.status,0,result.stderr);
     const collect=suite=>[...(suite.specs||[]),...(suite.suites||[]).flatMap(collect)];
     const cases=JSON.parse(result.stdout).suites.flatMap(collect).flatMap(spec=>spec.tests.map(entry=>({...entry,file:spec.file})));
-    assert.equal(cases.length,24);
+    assert.equal(cases.length,26);
     assert.equal(cases.filter(entry=>entry.file==='fixed-inputs.spec.cjs').length,5);
+    assert.equal(cases.filter(entry=>entry.file==='block-icon-preview.spec.cjs').length,2);
     for (const entry of cases) assert.equal(entry.expectedStatus,'passed');
 });
