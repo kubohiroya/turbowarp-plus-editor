@@ -211,4 +211,6 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 
 ## ブロックアイコンのプレビュー
 
+[App rc.77のプレビュー体験サンプルを開く](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&twPlusBlockPreview=1&twPlusYamlEditor=1&project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-plus-editor%2Fsamples%2Fblock-preview%2Fblock-preview-rc77.sb3)。右下の「ステージ」→「コード」から、配置と動き・吹き出しの2シーンを試せます。[操作ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/)・[SB3ダウンロード](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/block-preview-rc77.sb3)も公開しています。正本は`site/samples/block-preview/`のYAML・SVGで、公開済みApp rc.77から`build:pages`時に再生成します。生成元・runtime・SB3のハッシュを配信`metadata.json`に記録し、Pagesの成果物チェックで照合します。
+
 [プレビューを有効にしてEditorを開く](https://kubohiroya.github.io/turbowarp-plus-editor/?twPlusBlockPreview=1&twPlusYamlEditor=1)。既定OFFで、App rc.77の編集用runtimeとscene/actionを持つ作品が対象です。hover静止画、scene再生、アクターのドラッグ配置、moveTo/Bubbleのライブ再生に対応します。操作・既存作品の扱いは[利用案内](docs/block-icon-preview.md)を参照してください。
