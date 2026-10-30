@@ -64,6 +64,8 @@ HTMLページの `<head>` にスタイルシートを1回読み込み、ボタ�
 
 既存GUIの機能フラグは変更しません。TurboWarp Plusの機能拡張一覧を試す場合は、EditorのURLへ `twPlusExtensions=1` を指定して起動します。外すか `0` へ戻して再読込すれば無効になります。ボタンに渡したこのパラメーターも保持します。
 
+Issue #4 の拡張Loaderは、独立したLoaderコアと薄いGUI/VMアダプターで実装します。ローカル統合版では `twPlusExtensionLoader=1` でEmbedded/Remoteの検証・許可UIを有効にできます（起動時固定・既定OFF）。Plus作品のPackager操作はローカル出力画面へ進み、生成時と受け取り側の初回実行時に承認を確認します。公開中の固定GUIにはまだ反映していません。構成、検証、Desktopの制約、切戻しは [接続仕様](docs/extension-loader-integration.md) を参照してください。
+
 ## npmで利用する
 
 ```sh
