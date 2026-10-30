@@ -19,12 +19,15 @@
   },
   "exports": {
     ".": "./src/index.js",
+    "./extension-loader": "./src/extension-loader.js",
     "./assets/icon.svg": "./assets/icon.svg",
     "./assets/edit-button.css": "./assets/edit-button.css",
     "./source.json": "./site/source.json"
   },
   "files": [
     "src",
+    "config",
+    "docs/extension-loader-integration.md",
     "assets",
     "site/source.json",
     "README.md",
@@ -46,6 +49,9 @@
     "test:e2e:fixed-inputs": "E2E_FIXED_INPUTS=1 npm run test:e2e",
     "test:e2e:infrastructure": "node --test test/e2e/ci-gate.test.mjs test/e2e/turbowarp/infrastructure.test.cjs",
     "test:e2e:native": "E2E_NATIVE=1 npm run test:e2e",
+    "build:extension-preview": "node scripts/site/build-extension-preview.mjs",
+    "test:e2e:extension-loader": "playwright test --config test/e2e/extension-loader/playwright.config.cjs",
+    "test:extension-loader:desktop": "node test/e2e/extension-loader/desktop.cjs",
     "build:yaml-tools": "node scripts/site/build-yaml-editor.mjs",
     "editor:yaml": "node scripts/yaml-editor/cli.mjs",
     "test:yaml": "node --test test/yaml-document.test.mjs test/yaml-host.test.mjs test/yaml-build.test.mjs",
@@ -53,6 +59,9 @@
     "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@turbowarp/jszip": "^3.12.0",
+    "@turbowarp/packager": "3.14.0",
     "@kubohiroya/turbowarp-embedded-yaml": "0.1.0-rc.0",
     "@kubohiroya/turbowarp-extension-data-editor": "0.5.0",
     "@kubohiroya/turbowarp-kamishibai-app": "4.0.0-rc.72",
@@ -60,8 +69,6 @@
     "@kubohiroya/turbowarp-runtime-expression": "0.9.0",
     "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.0",
     "@kubohiroya/turbowarp-yaml-json": "0.8.0-rc.0",
-    "@playwright/test": "^1.64.1",
-    "@turbowarp/jszip": "^3.12.0",
     "ajv": "8.20.0",
     "esbuild": "0.25.12",
     "yaml": "2.9.1"

@@ -13,6 +13,15 @@ export function validatePins(pins) {
     assert.ok(sha(pins.guiRevision) && sha(pins.coreRevision), 'Full GUI/core revisions are required');
     assert.equal(pins.securityPackage, '@kubohiroya/turbowarp-extension-security-dialog');
     assert.match(pins.securityVersion, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
+    if (['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'vmBaseRevision',
+        'packagerRepository', 'packagerRevision'].some(key => pins[key] !== undefined)) {
+        assert.equal(pins.loaderRepository, 'kubohiroya/turbowarp-extension-loader');
+        assert.equal(pins.vmRepository, 'kubohiroya/scratch-vm');
+        assert.equal(pins.packagerRepository, 'TurboWarp/packager');
+        for (const key of ['loaderRevision', 'vmRevision', 'vmBaseRevision', 'packagerRevision']) {
+            assert.ok(sha(pins[key]), `Full ${key} is required`);
+        }
+    }
     return pins;
 }
 export async function readPins() {
@@ -30,6 +39,17 @@ export async function verifyHost(gui, pins) {
     const securityEntry = hostRequire.resolve(pins.securityPackage);
     const securityManifest = JSON.parse(await fs.readFile(path.resolve(path.dirname(securityEntry), '../package.json'), 'utf8'));
     assert.equal(securityManifest.version, pins.securityVersion, 'Installed security package differs from the source pin');
+    if (pins.loaderRepository) {
+        const lock = JSON.parse(await fs.readFile(path.join(gui, 'package-lock.json'), 'utf8'));
+        for (const [name, repository, revision] of [
+            ['@kubohiroya/turbowarp-extension-loader', pins.loaderRepository, pins.loaderRevision],
+            ['scratch-vm', pins.vmRepository, pins.vmRevision]
+        ]) {
+            assert.equal(manifest.dependencies[name], `git+https://github.com/${repository}.git#${revision}`);
+            assert.equal(lock.packages[`node_modules/${name}`].resolved,
+                `git+ssh://git@github.com/${repository}.git#${revision}`, `Lockfile differs for ${name}`);
+        }
+    }
     return {revision, coreRevision, securityVersion: securityManifest.version};
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

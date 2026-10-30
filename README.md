@@ -64,6 +64,8 @@ HTMLページの `<head>` にスタイルシートを1回読み込み、ボタ�
 
 既存GUIの機能フラグは変更しません。TurboWarp Plusの機能拡張一覧を試す場合は、EditorのURLへ `twPlusExtensions=1` を指定して起動します。外すか `0` へ戻して再読込すれば無効になります。ボタンに渡したこのパラメーターも保持します。
 
+Issue #4 の拡張Loaderは、独立したLoaderコアと薄いGUI/VMアダプターで実装します。通常配信でも `twPlusExtensionLoader=1` を起動URLに明示した場合だけ、Embedded/Remoteの検証・許可UIを有効にできます（起動時固定・既定OFF）。Plus作品のPackager操作はローカル出力画面へ進み、生成時と受け取り側の初回実行時に承認を確認します。指定がない通常の起動ではLoaderを有効にしません。構成、検証、Desktopの制約、切戻しは [接続仕様](docs/extension-loader-integration.md) を参照してください。
+
 ## npmで利用する
 
 ```sh
@@ -90,11 +92,12 @@ Node.js 26を使用します。
 ```sh
 npm ci
 npm test
-E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run build:pages
+E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
+TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
 E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 ```
 
-GUIは `site/source.json` に記録したSHAをチェックアウトして依存をインストールし、`node scripts/prepublish.mjs` で準備します。ビルドはGUIのSHA、実際にインストールされたdata-editorのSHA、security-dialogのバージョンが固定値と一致することを確認します。Pagesは統合検証に成功したmainから配信します。リリースのタグはnpmのバージョンと一致させます。
+GUIとPackagerは `site/source.json` に記録したSHAをチェックアウトします。GUIの依存をインストールし、`node scripts/prepublish.mjs` で準備します。ビルドはGUIのSHA、実際にインストールされたdata-editorのSHA、security-dialogのバージョンが固定値と一致することを確認します。Pagesは統合検証に成功したmainから配信します。リリースのタグはnpmのバージョンと一致させます。
 
 統合Editorの動作確認はこのリポジトリが担当します。既存の上流ライブラリの単体テストとGUIの機能フラグは維持します。新配信先の確認後、各参照先を移行し、旧data-editorのPagesを停止します。旧サイトへのリダイレクト配信は残しません。切戻しは直前のGUI固定SHA・サイト差分へのrevertと直前成果物の再配信で行います。
 
