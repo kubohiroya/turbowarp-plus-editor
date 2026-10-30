@@ -97,8 +97,11 @@ test('the real Pages artifact gate verifies the sample without npm dependencies 
         for (const name of ['source.mjs', 'extension-assets.mjs', 'build-preview-sample.mjs', 'check-artifact.mjs']) {
             await fs.copyFile(path.join(root, 'scripts/site', name), path.join(checkout, 'scripts/site', name));
         }
-        await fs.writeFile(path.join(checkout, 'package.json'), JSON.stringify({type: 'module',
-            devDependencies: {'@kubohiroya/turbowarp-kamishibai-app': '4.0.0-rc.77'}}));
+        const manifest = {type: 'module', devDependencies: {
+            '@kubohiroya/turbowarp-kamishibai-app': '4.0.0-rc.79',
+            '@kubohiroya/turbowarp-kamishibai-preview-app': 'npm:@kubohiroya/turbowarp-kamishibai-app@4.0.0-rc.77'}};
+        const writeManifest = () => fs.writeFile(path.join(checkout, 'package.json'), JSON.stringify(manifest));
+        await writeManifest();
         const pins = {guiRepository: 'kubohiroya/scratch-gui', guiRevision: 'a'.repeat(40),
             coreRepository: 'kubohiroya/turbowarp-extension-data-editor', coreRevision: 'b'.repeat(40),
             coreVersion: '0.6.0', securityPackage: '@kubohiroya/turbowarp-extension-security-dialog', securityVersion: '0.3.3'};
@@ -117,6 +120,16 @@ test('the real Pages artifact gate verifies the sample without npm dependencies 
             cwd: checkout, env: {...process.env, EXPECTED_REVISION: info.siteRevision}, encoding: 'utf8'});
         const result = check();
         assert.equal(result.status, 0, result.stderr);
+        manifest.devDependencies['@kubohiroya/turbowarp-kamishibai-app'] = '4.0.0-rc.78';
+        await writeManifest();
+        assert.equal(check().status, 0, 'The current App release must not change the fixed preview sample');
+        manifest.devDependencies['@kubohiroya/turbowarp-kamishibai-preview-app'] = 'npm:@kubohiroya/turbowarp-kamishibai-app@4.0.0-rc.78';
+        await writeManifest();
+        const wrongAlias = check();
+        assert.notEqual(wrongAlias.status, 0);
+        assert.match(wrongAlias.stderr, /exact published App rc.77 alias/u);
+        manifest.devDependencies['@kubohiroya/turbowarp-kamishibai-preview-app'] = 'npm:@kubohiroya/turbowarp-kamishibai-app@4.0.0-rc.77';
+        await writeManifest();
         await fs.rm(path.join(f.output, f.sample.project));
         assert.notEqual(check().status, 0);
     } finally { await f.cleanup(); }
