@@ -988,12 +988,28 @@ export function mountYamlEditor({
           render();
           await owner.commit(snapshot, prepared);
         } else {
-          if (typeof owner.prepareRepresentation !== "function")
+          if (
+            typeof owner.prepareRepresentation !== "function" ||
+            typeof owner.commitRepresentation !== "function"
+          )
             throw new Error(text.validationUnavailable);
-          await owner.prepareRepresentation(snapshot, {
+          const prepared = await owner.prepareRepresentation(snapshot, {
             kind: active,
-            direction: "to-source",
+            direction: "from-source",
           });
+          if (!current(generation, owner)) return;
+          commitLocked = true;
+          converting = true;
+          render();
+          closeDialog();
+          try {
+            await owner.commitRepresentation(snapshot, prepared);
+          } catch (cause) {
+            if (current(generation, owner) && !dialog.open) dialog.showModal();
+            throw cause;
+          } finally {
+            converting = false;
+          }
         }
         if (current(generation, owner)) finishSaved();
       }, text.saveFailed);

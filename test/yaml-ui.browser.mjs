@@ -22,8 +22,8 @@ const workspaceListeners=new Set();const workspace={options:{readOnly:false},isF
 const vm={editingTarget:{id:'stage',blocks:{getBlock:id=>{const b=blocks.find(b=>b.id===id);return b?{opcode:b.type,fields:{DOCUMENT:{value:encodeReference(references[id]||references['hat-one'])}}}:null}}},runtime:{on:(name,fn)=>on(listeners,name,fn),off:(name,fn)=>off(listeners,name,fn)},on:(name,fn)=>on(vmListeners,name,fn),off:(name,fn)=>off(vmListeners,name,fn),stopAll(){state.calls.push('stop')},async saveProjectSb3(){state.calls.push('save');return new Blob([JSON.stringify(state.docs)])}};
 const blockly={FieldImage,Extensions:{register(name,callback){(state.shapeRegistrations??=[]).push(name);state.shapeCallback=callback}},getMainWorkspace:()=>workspace};
 window.Scratch={vm,gui:{getBlockly:()=>new URLSearchParams(location.search).has('late')?new Promise(resolve=>{state.resolveBlocks=()=>resolve(blockly)}):Promise.resolve(blockly)}};
-const registry=getProviderRegistry(vm);const openDocument=(providerId,documentId)=>{const documentKey=providerId+':'+documentId;let disposed=false;const candidates=new WeakMap();return{inspect(){return{available:!disposed&&state.available,reason:'This test document is unavailable.'}},capture(){if(disposed)throw new Error('Document disposed');return Object.freeze({source:state.docs[documentKey],sourceName:'settings.yml',generation:state.generation})},...(state.noPreview?{}:{async previewRepresentation(snapshot,request){(state.previewCalls??=[]).push(request.kind);if(state.recordPreviewPaint){const loading=[...document.querySelectorAll('.twpe-yaml-dialog [role=status]')].find(node=>node.textContent==='プレビューを表示しています…');(state.previewObservations??=[]).push({kind:request.kind,frame:state.previewPaintFrame||0,selected:document.querySelector('[role=tab][aria-selected=true]')?.dataset.kind,loading:!!loading&&!loading.hidden&&loading.getClientRects().length>0,saveDisabled:document.querySelector('.twpe-yaml-save').disabled})}if(state.delayPreviewKind===request.kind)await new Promise(resolve=>(state.previewResolvers??={})[request.kind]=resolve);if(state.failPreviewKind===request.kind)throw Error('Preview unavailable');return{kind:request.kind,source:state.previewSource||state.docs[documentKey],blocks:{preview:{opcode:'fixture_preview',topLevel:true,parent:null,next:null,inputs:{},fields:{}}},rootIds:['preview'],blockDefinitions:[]}}}),async prepare(snapshot,source){state.calls.push('prepare:'+documentKey);if(state.delayPrepare)await new Promise(resolve=>state.resolvePrepare=resolve);if(source==='bad yaml')throw new Error('Invalid YAML at line 1');if(snapshot.generation!==state.generation)throw new Error('Project changed');return{source}},async commit(snapshot,prepared){state.commitStarted=true;if(state.delayCommit)await new Promise(resolve=>state.resolveCommit=resolve);vm.stopAll();state.calls.push('commit:'+documentKey);if(state.pendingOwnerMetadata){state.ownerMetadata=structuredClone(state.pendingOwnerMetadata);delete state.pendingOwnerMetadata;}state.docs[documentKey]=prepared.source;return{source:prepared.source}},async prepareRepresentation(snapshot,request){state.lastRepresentationRequest=request;state.calls.push('prepare-representation:'+documentKey);if(state.delayRepresentationPrepare)await new Promise(resolve=>state.resolveRepresentationPrepare=resolve);if(state.failRepresentationPrepare)throw Error('Invalid block structure');if(snapshot.generation!==state.generation)throw new Error('Project changed');const candidate=Object.freeze({summary:'YAML block view: '+request.direction});candidates.set(candidate,{snapshot,request});return candidate},async commitRepresentation(snapshot,candidate){const owned=candidates.get(candidate);if(!owned||owned.snapshot!==snapshot||snapshot.generation!==state.generation)throw new Error('Project changed before conversion');if(state.failRepresentation){candidates.delete(candidate);state.calls.push('failed-representation:'+documentKey);throw Object.assign(Error('Load failed and rolled back'),{rollbackSucceeded:state.rollbackSucceeded===true});}state.commitDialogOpen=document.querySelector('.twpe-yaml-dialog').open;if(state.requireSecurity)await new Promise(resolve=>{const button=document.createElement('button');button.textContent='Approve fixture extension';button.id='fixture-security-approval';button.onclick=()=>{button.remove();resolve()};document.body.append(button)});if(state.transientAvailability){state.available=false;window.ui.refresh();state.statusDuringCommit=document.querySelector('.twpe-yaml-dialog [role=status]').textContent;state.available=true;}state.calls.push('commit-representation:'+documentKey);state.activeKind=owned.request.direction==='from-source'?owned.request.kind:'source';if(state.moveTargetOnCommit)vm.editingTarget=vm.runtime.targets.find(t=>t.id==='sprite');state.generation++;emit(listeners,'RUNTIME_DISPOSED');emit(listeners,'PROJECT_LOADED');return{source:state.docs[documentKey]}},dispose(){disposed=true}}};
-state.unregisterNotes=registry.register({id:'notes',hatOpcodes:['notes_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'yaml',docsURL:'https://example.test/dsl/notes',activeRepresentation:state.activeKind||'source',representations:state.withoutRepresentations?[]:[{kind:'yaml-blocks',label:'共通YAMLブロック',fromSource:true,toSource:true,fromRepresentations:state.allowCross?['schema-blocks']:[]},{kind:'schema-blocks',label:'Owner schema label',fromSource:!state.crossOnly,toSource:true,fromRepresentations:state.allowCross?['yaml-blocks']:[]}],schema:{id:'urn:test:notes-schema',schema:{type:'object',properties:{theme:{type:'string'}}}}},{documentId:'two',filename:'settings.yml',format:'yaml'}],open:id=>openDocument('notes',id)});
+const registry=getProviderRegistry(vm);const openDocument=(providerId,documentId)=>{const documentKey=providerId+':'+documentId;let disposed=false;const candidates=new WeakMap();return{inspect(){return{available:!disposed&&state.available,reason:'This test document is unavailable.'}},capture(){if(disposed)throw new Error('Document disposed');return Object.freeze({source:state.docs[documentKey],sourceName:'settings.yml',generation:state.generation})},...(state.noPreview?{}:{async previewRepresentation(snapshot,request){(state.previewCalls??=[]).push(request.kind);if(state.recordPreviewPaint){const loading=[...document.querySelectorAll('.twpe-yaml-dialog [role=status]')].find(node=>node.textContent==='プレビューを表示しています…');(state.previewObservations??=[]).push({kind:request.kind,frame:state.previewPaintFrame||0,selected:document.querySelector('[role=tab][aria-selected=true]')?.dataset.kind,loading:!!loading&&!loading.hidden&&loading.getClientRects().length>0,saveDisabled:document.querySelector('.twpe-yaml-save').disabled})}if(state.delayPreviewKind===request.kind)await new Promise(resolve=>(state.previewResolvers??={})[request.kind]=resolve);if(state.failPreviewKind===request.kind)throw Error('Preview unavailable');return{kind:request.kind,source:state.previewSource||state.docs[documentKey],blocks:{preview:{opcode:'fixture_preview',topLevel:true,parent:null,next:null,inputs:{},fields:{}}},rootIds:['preview'],blockDefinitions:[]}}}),async prepare(snapshot,source){state.calls.push('prepare:'+documentKey);if(state.delayPrepare)await new Promise(resolve=>state.resolvePrepare=resolve);if(source==='bad yaml')throw new Error('Invalid YAML at line 1');if(snapshot.generation!==state.generation)throw new Error('Project changed');return{source}},async commit(snapshot,prepared){state.commitStarted=true;if(state.delayCommit)await new Promise(resolve=>state.resolveCommit=resolve);vm.stopAll();state.calls.push('commit:'+documentKey);if(state.pendingOwnerMetadata){state.ownerMetadata=structuredClone(state.pendingOwnerMetadata);delete state.pendingOwnerMetadata;}state.docs[documentKey]=prepared.source;return{source:prepared.source}},async prepareRepresentation(snapshot,request){state.lastRepresentationRequest=request;state.calls.push('prepare-representation:'+documentKey);if(state.delayRepresentationPrepare)await new Promise(resolve=>state.resolveRepresentationPrepare=resolve);if(state.failRepresentationPrepare)throw Error('Invalid block structure');if(snapshot.generation!==state.generation)throw new Error('Project changed');const candidate=Object.freeze({summary:'YAML block view: '+request.direction});candidates.set(candidate,{snapshot,request});return candidate},async commitRepresentation(snapshot,candidate){const owned=candidates.get(candidate);if(!owned||owned.snapshot!==snapshot||snapshot.generation!==state.generation)throw new Error('Project changed before conversion');if(state.failRepresentation){candidates.delete(candidate);state.calls.push('failed-representation:'+documentKey);throw Object.assign(Error('Load failed and rolled back'),{rollbackSucceeded:state.rollbackSucceeded===true});}state.commitDialogOpen=document.querySelector('.twpe-yaml-dialog').open;if(state.requireSecurity)await new Promise(resolve=>{const button=document.createElement('button');button.textContent='Approve fixture extension';button.id='fixture-security-approval';button.onclick=()=>{button.remove();resolve()};document.body.append(button)});if(state.failAfterSecurity)throw Error('Extension approval failed');if(state.transientAvailability){state.available=false;window.ui.refresh();state.statusDuringCommit=document.querySelector('.twpe-yaml-dialog [role=status]').textContent;state.available=true;}state.calls.push('commit-representation:'+documentKey);if(owned.request.direction==='from-source'&&owned.request.kind===state.activeKind&&state.blocksSource!==undefined)state.docs[documentKey]=state.blocksSource;state.activeKind=owned.request.direction==='from-source'?owned.request.kind:'source';if(state.moveTargetOnCommit)vm.editingTarget=vm.runtime.targets.find(t=>t.id==='sprite');state.generation++;emit(listeners,'RUNTIME_DISPOSED');emit(listeners,'PROJECT_LOADED');return{source:state.docs[documentKey]}},dispose(){disposed=true}}};
+state.unregisterNotes=registry.register({id:'notes',hatOpcodes:['notes_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'yaml',docsURL:'https://example.test/dsl/notes',activeRepresentation:state.activeKind||'source',representations:state.withoutRepresentations?[]:[{kind:'yaml-blocks',label:'共通YAMLブロック',fromSource:true,toSource:true,fromRepresentations:state.allowCross?['yaml-blocks','schema-blocks']:['yaml-blocks']},{kind:'schema-blocks',label:'Owner schema label',fromSource:!state.crossOnly,toSource:true,fromRepresentations:state.allowCross?['schema-blocks','yaml-blocks']:['schema-blocks']}],schema:{id:'urn:test:notes-schema',schema:{type:'object',properties:{theme:{type:'string'}}}}},{documentId:'two',filename:'settings.yml',format:'yaml'}],open:id=>openDocument('notes',id)});
 registry.register({id:'preferences',hatOpcodes:['preferences_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'json'}],open:id=>openDocument('preferences',id)});
 let nextId=0;
 const fetcher=async(route,options)=>{state.calls.push({route,method:options.method||'GET',headers:options.headers,...(options.body?{body:JSON.parse(options.body)}:{})});const json=value=>new Response(JSON.stringify(value),{status:200,headers:{'Content-Type':'application/json'}});if(route.endsWith('/config'))return json({available:true,token:'fixture-token',maxSourceBytes:4194304});if(options.method==='POST'){const id='session-'+(++nextId);state.sessions[id]={source:JSON.parse(options.body).source,closed:false};if(state.delayPost)return new Promise(resolve=>state.resolvePost=()=>resolve(json({id,revision:1,opened:true})));return json({id,revision:1,opened:true})}const id=route.split('/').at(-1);if(options.method==='DELETE'){state.sessions[id].closed=true;return json({closed:true})}if(state.delayed)return new Promise(resolve=>state.resolveSaved=()=>resolve(json({id,revision:2,source:state.sessions[id].source})));return json({id,revision:2,source:state.sessions[id].source})};
@@ -713,6 +713,102 @@ test("an unconfirmed conversion failure clears the request and does not silently
   await assertNoDownload(page);
   await page.close();
 });
+test("current block-format Save commits edited canonical text and retains its format without conversion confirmation", async () => {
+  for (const kind of ["yaml-blocks", "schema-blocks"]) {
+    const page = await browser.newPage();
+    await readyPage(page);
+    await page.evaluate((kind) => {
+      window.fixture.activeKind = kind;
+      window.fixture.blocksSource = "theme: edited blocks";
+      window.fixture.previewSource = window.fixture.blocksSource;
+      window.ui.refresh();
+    }, kind);
+    await open(page);
+    await page.waitForFunction(() => !document.querySelector(".twpe-yaml-save").disabled);
+    assert.equal(await page.evaluate(() => window.fixture.docs["notes:one"]), "theme: light");
+    await footerSave(page).click();
+    await closed(page);
+    assert.equal(await confirmation(page).isVisible(), false);
+    assert.deepEqual(await page.evaluate(() => window.fixture.lastRepresentationRequest), {kind, direction: "from-source"});
+    assert.equal(await page.evaluate(() => window.fixture.docs["notes:one"]), "theme: edited blocks");
+    assert.equal(await page.evaluate(() => window.fixture.activeKind), kind);
+    assert.deepEqual(await page.evaluate(() => window.fixture.calls.filter(call => typeof call === "string")), ["prepare-representation:notes:one", "commit-representation:notes:one"]);
+    assert.deepEqual(await page.evaluate(() => window.fixture.previewCalls), [kind]);
+    await assertNoDownload(page);
+    await page.close();
+  }
+});
+
+test("same-format Save releases its modal for extension approval and restores it after approval failure", async () => {
+  for (const reject of [false, true]) {
+    const page = await browser.newPage();
+    await readyPage(page);
+    await page.evaluate((reject) => {
+      window.fixture.activeKind = "yaml-blocks";
+      window.fixture.blocksSource = "theme: edited blocks";
+      window.fixture.previewSource = window.fixture.blocksSource;
+      window.fixture.requireSecurity = true;
+      window.fixture.failAfterSecurity = reject;
+      window.ui.refresh();
+    }, reject);
+    await open(page);
+    await page.waitForFunction(() => !document.querySelector(".twpe-yaml-save").disabled);
+    await footerSave(page).click();
+    const approval = page.getByRole("button", {name: "Approve fixture extension", exact: true});
+    await approval.waitFor();
+    assert.equal(await page.evaluate(() => window.fixture.commitDialogOpen), false);
+    assert.equal(await dialog(page).isVisible(), false);
+    await approval.click();
+    if (reject) {
+      await dialog(page).getByRole("alert").filter({hasText: "Extension approval failed"}).waitFor();
+      assert.equal(await dialog(page).isVisible(), true);
+      assert.equal(await cancel(page).isEnabled(), true);
+      assert.equal(await page.evaluate(() => window.fixture.docs["notes:one"]), "theme: light");
+      assert.equal(await page.evaluate(() => window.fixture.calls.includes("commit-representation:notes:one")), false);
+      await cancel(page).click();
+    } else {
+      await closed(page);
+      assert.equal(await page.evaluate(() => window.fixture.docs["notes:one"]), "theme: edited blocks");
+      assert.equal(await page.evaluate(() => window.fixture.activeKind), "yaml-blocks");
+    }
+    assert.equal(await page.evaluate(() => window.fixture.calls.includes("stop")), false);
+    await assertNoDownload(page);
+    await page.close();
+  }
+});
+
+test("same-format Save rejects invalid blocks and Cancel or project replacement during prepare prevents a commit", async () => {
+  for (const mode of ["failure", "cancel", "replaced"]) {
+    const page = await browser.newPage();
+    await readyPage(page);
+    await page.evaluate((mode) => {
+      window.fixture.activeKind = "yaml-blocks";
+      window.fixture.blocksSource = "theme: edited blocks";
+      window.fixture.delayRepresentationPrepare = mode !== "failure";
+      window.fixture.failRepresentationPrepare = mode === "failure";
+      window.ui.refresh();
+    }, mode);
+    await open(page);
+    await page.waitForFunction(() => !document.querySelector(".twpe-yaml-save").disabled);
+    await footerSave(page).click();
+    if (mode === "failure") {
+      await dialog(page).getByRole("alert").filter({hasText: "Invalid block structure"}).waitFor();
+      assert.equal(await dialog(page).isVisible(), true);
+      await cancel(page).click();
+    } else {
+      await page.waitForFunction(() => typeof window.fixture.resolveRepresentationPrepare === "function");
+      if (mode === "cancel") await cancel(page).click();
+      else await page.evaluate(() => window.replaceProject());
+      await page.evaluate(() => window.fixture.resolveRepresentationPrepare());
+    }
+    await page.waitForTimeout(30);
+    assert.equal(await page.evaluate(() => window.fixture.docs["notes:one"]), "theme: light");
+    assert.equal(await page.evaluate(() => window.fixture.calls.some(call => typeof call === "string" && call.includes("commit"))), false);
+    await assertNoDownload(page);
+    await page.close();
+  }
+});
+
 test("Save preparation failure retains the selection and Cancel during preparation prevents any owner commit", async () => {
   for (const mode of ["failure", "cancel"]) {
     const page = await browser.newPage();

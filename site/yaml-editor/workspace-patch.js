@@ -4,6 +4,15 @@ import {installProjectPatchWorkspaceAdapter} from '@kubohiroya/turbowarp-embedde
 export function attachDocumentWorkspacePatch(vm, B) {
     if (typeof B?.Xml?.domToWorkspace !== 'function' || typeof B.Xml.textToDom !== 'function') return () => {};
     return installProjectPatchWorkspaceAdapter(vm, {
+        hasBlockDefinition(type) {
+            if (typeof type !== 'string') return false;
+            try {
+                const definition = Object.getOwnPropertyDescriptor(B.Blocks ?? {}, type)?.value;
+                return typeof definition?.init === 'function';
+            } catch {
+                return false;
+            }
+        },
         prepare({targetChanges}) {
             const target = vm.editingTarget;
             const change = targetChanges.find(item => item.targetId === target?.id);
