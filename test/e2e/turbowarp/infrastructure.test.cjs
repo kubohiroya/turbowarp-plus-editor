@@ -67,8 +67,9 @@ test('the full integration profile includes every fixed-input case without skips
     assert.equal(result.status,0,result.stderr);
     const collect=suite=>[...(suite.specs||[]),...(suite.suites||[]).flatMap(collect)];
     const cases=JSON.parse(result.stdout).suites.flatMap(collect).flatMap(spec=>spec.tests.map(entry=>({...entry,file:spec.file})));
-    assert.equal(cases.length,26);
+    assert.equal(cases.length,27);
     assert.equal(cases.filter(entry=>entry.file==='fixed-inputs.spec.cjs').length,5);
     assert.equal(cases.filter(entry=>entry.file==='block-icon-preview.spec.cjs').length,2);
+    assert.equal(cases.filter(entry=>entry.file==='preview-sample.spec.cjs').length,1);
     for (const entry of cases) assert.equal(entry.expectedStatus,'passed');
 });

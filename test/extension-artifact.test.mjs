@@ -6,6 +6,7 @@ import os from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {readPins, validatePins, root} from '../scripts/site/source.mjs';
 import {contentHash} from '../scripts/site/extension-assets.mjs';
+import {buildPreviewSample} from '../scripts/site/build-preview-sample.mjs';
 
 test('production pins reject incomplete or unpinned extension dependency graphs', async () => {
     const pins = await readPins();
@@ -29,10 +30,20 @@ test('the deployment gate rejects changed builder assets and enabled-by-default 
             await fs.writeFile(path.join(directory, name), 'checked asset');
         }
         for (const name of ['plus-packager.html', 'plus-packager.js']) integration.assets[name] = contentHash('checked asset');
+        const sampleInputs = path.join(directory, '.sample-inputs');
+        for (const name of ['index.html', 'preview.k4.yml', 'LICENSE', 'assets/actor.svg']) {
+            await fs.mkdir(path.dirname(path.join(sampleInputs, name)), {recursive: true});
+            await fs.writeFile(path.join(sampleInputs, name), 'checked sample');
+        }
+        const bytes = Buffer.from('PK\x03\x04 checked sample archive');
+        const previewSample = await buildPreviewSample(directory, {sourceDirectory: sampleInputs,
+            createSample: async () => ({bytes, metadata: {appVersion: '4.0.0-rc.77', filename: 'block-preview-rc77.sb3',
+                sha256: contentHash(bytes), sourceSha256: contentHash('checked sample'), runtimeSha256: 'a'.repeat(64)}})});
         const info = {siteRepository: 'https://github.com/kubohiroya/turbowarp-plus-editor', siteRevision: revision,
             repository: `https://github.com/${pins.guiRepository}`, revision: pins.guiRevision,
             coreRepository: `https://github.com/${pins.coreRepository}`, coreRevision: pins.coreRevision, coreVersion: pins.coreVersion,
-            securityPackage: pins.securityPackage, securityVersion: pins.securityVersion, extensionIntegration: integration};
+            securityPackage: pins.securityPackage, securityVersion: pins.securityVersion, extensionIntegration: integration,
+            previewSample};
         const writeInfo = () => fs.writeFile(path.join(directory, 'build-info.json'), JSON.stringify(info));
         const check = () => spawnSync(process.execPath, [path.join(root, 'scripts/site/check-artifact.mjs'), directory], {
             env: {...process.env, EXPECTED_REVISION: revision}, encoding: 'utf8'});
