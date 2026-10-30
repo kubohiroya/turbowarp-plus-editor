@@ -32,7 +32,7 @@ test('the deployment gate rejects changed builder assets and enabled-by-default 
         }
         for (const name of ['plus-packager.html', 'plus-packager.js']) integration.assets[name] = contentHash('checked asset');
         const sampleInputs = path.join(directory, '.sample-inputs');
-        for (const name of ['index.html', 'preview.k4.yml', 'LICENSE', 'assets/actor.svg']) {
+        for (const name of ['index.html', 'preview.k4.yml', 'focus.js', 'LICENSE', 'assets/actor.svg']) {
             await fs.mkdir(path.dirname(path.join(sampleInputs, name)), {recursive: true});
             await fs.writeFile(path.join(sampleInputs, name), 'checked sample');
         }
