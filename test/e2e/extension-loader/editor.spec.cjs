@@ -1,4 +1,4 @@
-const {test, expect} = require('@playwright/test');
+const {test, expect} = require('./fixtures.cjs');
 const Zip = require('@turbowarp/jszip');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -116,8 +116,22 @@ test('remote cache reopens offline after approval; an uncached digest never exec
     expect(await executions(page)).toBe(2);
 });
 
-test('HTTPS redirects and CORS refusal do not open approval or execute JavaScript', async ({page}) => {
+test('HTTPS redirects and CORS refusal do not open approval or execute JavaScript', async ({page, baseURL}) => {
     await open(page);
+    if (process.env.E2E_BASE_URL) {
+        for (const [pathname, status, headers] of [
+            ['/redirect', 302, {'access-control-allow-origin': '*', location: 'https://other.invalid/changed.js'}],
+            ['/nocors', 200, {'access-control-allow-origin': 'https://different-origin.invalid'}]
+        ]) {
+            const url = `https://plus-fixture.invalid${pathname}`;
+            await page.route(url, route => route.fulfill({status, headers, body: bytes}));
+            expect((await load(page, await project({type: 'remote', url}))).code).toBe('LOAD_FAILED');
+            expect(await executions(page)).toBe(0);
+            await expect(permission(page)).toHaveCount(0);
+            await expect(page.getByTestId('tw-plus-extension-status').locator('[data-event="review"]')).toHaveCount(0);
+        }
+        return;
+    }
     const fixture = await createHTTPSFixture(bytes);
     try {
         for (const pathname of ['/redirect', '/nocors']) {

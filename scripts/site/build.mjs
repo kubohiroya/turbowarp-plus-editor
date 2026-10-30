@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {generatePages} from './generate-pages.mjs';
 import {brandEditor} from './brand-editor.mjs';
 import {root, readPins, verifyHost, sha} from './source.mjs';
+import {buildExtensionAssets} from './extension-assets.mjs';
 
 export async function buildPages(pins) {
     pins = pins || await readPins();
@@ -35,6 +36,10 @@ export async function buildPages(pins) {
     assert.equal(info.securityPackage, pins.securityPackage);
     assert.equal(info.securityVersion, securityVersion);
     await brandEditor(output, prefix);
+    if (pins.loaderRepository) {
+        info.extensionIntegration = await buildExtensionAssets(gui, pins);
+        await fs.writeFile(path.join(output, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
+    }
     console.log(`TurboWarp-Plus-Editor built: GUI ${revision}; core ${coreRevision}; security ${securityVersion}; site ${siteRevision}`);
 }
 

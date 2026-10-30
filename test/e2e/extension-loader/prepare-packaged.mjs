@@ -13,23 +13,8 @@ const output = path.resolve('.host/issue-4-artifacts');
 await mkdir(output, {recursive: true});
 const require = createRequire(import.meta.url);
 const {Packager} = require('@turbowarp/packager');
-const source = `(function(Scratch){
-if (!Scratch.extensions.unsandboxed) throw new Error('Unsandboxed execution required');
-Scratch.vm.__plusPackageExecutions = (Scratch.vm.__plusPackageExecutions || 0) + 1;
-Scratch.extensions.register({getInfo(){return {id:'sample',name:'Offline fixture',blocks:[
-{opcode:'value',blockType:Scratch.BlockType.REPORTER,text:'offline value'}]};},value(){return 42;}});
-})(Scratch);`;
-const bytes = new TextEncoder().encode(source);
-const sha256 = createHash('sha256').update(bytes).digest('hex');
-const project = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, blocks: {}, comments: {},
-    currentCostume: 0, costumes: [], sounds: [], volume: 100, layerOrder: 0, tempo: 60, videoTransparency: 50, videoState: 'on', textToSpeechLanguage: null}],
-    monitors: [], extensions: ['sample'], extensionURLs: {}, meta: {semver: '3.0.0', vm: '2.0.0', agent: 'Plus offline fixture'},
-    turboWarpPlus: {schemaVersion: 1, extensions: [{id: 'sample', execution: 'unsandboxed', sha256, source: {type: 'remote', url: 'https://fixture.invalid/code.js'}}]}};
-const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"><rect width="480" height="360" fill="#ffffff"/></svg>';
-const assetId = createHash('md5').update(svg).digest('hex');
-project.targets[0].costumes = [{assetId, name: 'backdrop1', bitmapResolution: 1, md5ext: `${assetId}.svg`,
-    dataFormat: 'svg', rotationCenterX: 240, rotationCenterY: 180}];
-const sb3 = await new Zip().file('project.json', JSON.stringify(project)).file(`${assetId}.svg`, svg).generateAsync({type: 'uint8array'});
+const {source, bytes, sha256, packagedProject} = require('./packaged-project.cjs');
+const sb3 = await packagedProject('remote');
 const prepared = await prepareOfflinePackage(sb3, {
     fetcher: {async fetch(url) { return {bytes, finalURL: url, redirects: []}; }},
     trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}

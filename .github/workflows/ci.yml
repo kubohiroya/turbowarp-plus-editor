@@ -28,17 +28,29 @@ jobs:
           ref: ${{ steps.source.outputs.guiRevision }}
           path: .host/scratch-gui
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.source.outputs.packagerRepository }}
+          ref: ${{ steps.source.outputs.packagerRevision }}
+          path: .host/packager
+          persist-credentials: false
       - name: Prepare and verify the pinned host
         working-directory: .host/scratch-gui
         run: |
           npm ci --no-audit --no-fund
           node scripts/prepublish.mjs
           npm run test:block-editor
+          npm run test:plus-extension-loader
       - name: Build TurboWarp-Plus-Editor
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+          TW_PLUS_PACKAGER_ROOT: ${{ github.workspace }}/.host/packager
           NODE_OPTIONS: --max-old-space-size=6144
         run: npm run build:pages
+      - name: Generate the packaged extension fixture from checked build assets
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+        run: node test/e2e/extension-loader/prepare-packaged.mjs
       - run: npx playwright install --with-deps chromium
       - name: Verify integrated editing, security, themes and SB3 round trips
         env:
@@ -49,6 +61,14 @@ jobs:
           E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
           E2E_EXPECT_SITE_REVISION: ${{ github.sha }}
         run: npm run test:e2e:block-editor
+      - name: Verify extension loader, default-off behavior and offline HTML output
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+          E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
+          E2E_EXPECT_CORE_REVISION: ${{ steps.source.outputs.coreRevision }}
+          E2E_EXPECT_SITE_REVISION: ${{ github.sha }}
+          E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
+        run: npm run test:e2e:extension-loader
       - uses: actions/upload-artifact@v4
         if: success()
         with:
