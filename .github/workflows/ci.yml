@@ -34,6 +34,10 @@ jobs:
           ref: ${{ steps.source.outputs.packagerRevision }}
           path: .host/packager
           persist-credentials: false
+      - name: Prepare pnpm for the security package's Git install
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.28.8
       - name: Install the pinned host dependencies
         working-directory: .host/scratch-gui
         run: |
