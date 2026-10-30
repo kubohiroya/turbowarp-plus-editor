@@ -34,11 +34,18 @@ jobs:
           ref: ${{ steps.source.outputs.packagerRevision }}
           path: .host/packager
           persist-credentials: false
-      - name: Prepare and verify the pinned host
+      - name: Install the pinned host dependencies
         working-directory: .host/scratch-gui
         run: |
           npm ci --no-audit --no-fund
           node scripts/prepublish.mjs
+      - name: Copy the pinned root core into the isolated host without resolving dependencies
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+        run: node scripts/site/prepare-core.mjs
+      - name: Verify the prepared host
+        working-directory: .host/scratch-gui
+        run: |
           npm run test:block-editor
           npm run test:plus-extension-loader
       - name: Build TurboWarp-Plus-Editor

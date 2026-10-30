@@ -8,10 +8,10 @@ Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB
 
 | 構成 | 固定した基点 | ローカル変更 |
 |---|---|---|
-| scratch-gui | `338bcb22508f248461d37d05578a17c9bb94d95e` | `.host/scratch-gui-issue4` の薄いアダプター・UI・出力画面 |
+| scratch-gui | `9868fa1f600a4ba60840699563b870b20d3e82ed` | `.host/scratch-gui` の薄いアダプター・UI・出力画面 |
 | scratch-vm | `55fd9b7c9509827c9cec31482aa63f2d57ec564d` | `.host/scratch-vm-issue4` の所有サービスport（43行追加） |
 | Packager | `c115bdf525c5f49f0fb689a21b335ccb70fc22d2` / npm `3.14.0` | ソースを改変せず、上記VMを使ってscaffoldingをビルド |
-| data-editor | npm `0.5.0` / source `df1e78b6982ccc0c1ddb8a741a8d57848519c74d` | 変更なし |
+| data-editor | npm `0.6.0` / source `91533dbbffa9eb9d3b50be8084b85dae5184f9dc` | 共通フォーム・固定入力・プレビュー登録API |
 | security-dialog | npm `0.3.3` | 既存UI・通常カスタム拡張の方針を維持 |
 
 Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderとVMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` は、ともにマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定OFF・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。

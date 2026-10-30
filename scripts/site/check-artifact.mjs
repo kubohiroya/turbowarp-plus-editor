@@ -15,6 +15,7 @@ assert.equal(info.repository, `https://github.com/${pins.guiRepository}`);
 assert.equal(info.revision, pins.guiRevision);
 assert.equal(info.coreRepository, `https://github.com/${pins.coreRepository}`);
 assert.equal(info.coreRevision, pins.coreRevision);
+assert.equal(info.coreVersion, pins.coreVersion);
 assert.equal(info.securityPackage, pins.securityPackage);
 assert.equal(info.securityVersion, pins.securityVersion);
 for (const file of ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg', 'assets/edit-button.css']) {
