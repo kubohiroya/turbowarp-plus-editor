@@ -1,0 +1,10 @@
+{
+  "name": "twpe-yaml-native-test-driver",
+  "displayName": "TurboWarp-Plus-Editor YAML native test driver",
+  "publisher": "twpe-test-only",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {"vscode": "^1.90.0"},
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.cjs"
+}

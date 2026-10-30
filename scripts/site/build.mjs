@@ -5,6 +5,7 @@ import {execFileSync, spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {generatePages} from './generate-pages.mjs';
 import {brandEditor} from './brand-editor.mjs';
+import {buildYamlEditor} from './build-yaml-editor.mjs';
 import {root, readPins, verifyHost, sha} from './source.mjs';
 import {buildExtensionAssets} from './extension-assets.mjs';
 
@@ -40,6 +41,7 @@ export async function buildPages(pins) {
         info.extensionIntegration = await buildExtensionAssets(gui, pins);
         await fs.writeFile(path.join(output, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
     }
+    await buildYamlEditor(output, prefix);
     console.log(`TurboWarp-Plus-Editor built: GUI ${revision}; core ${coreRevision}; security ${securityVersion}; site ${siteRevision}`);
 }
 

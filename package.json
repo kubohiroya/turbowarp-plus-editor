@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-plus-editor",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "TurboWarp-Plus-Editorの配信、ブランド資産、作品を編集するボタン",
   "type": "module",
   "license": "GPL-3.0-or-later",
@@ -32,7 +32,11 @@
     "site/source.json",
     "README.md",
     "LICENSE",
-    "NOTICE"
+    "NOTICE",
+    "scripts/yaml-editor/cli.mjs",
+    "scripts/yaml-editor/host.mjs",
+    "scripts/yaml-editor/schema.mjs",
+    "scripts/yaml-editor/vscode.mjs"
   ],
   "engines": {
     "node": ">=24"
@@ -47,14 +51,36 @@
     "test:e2e:native": "E2E_NATIVE=1 npm run test:e2e",
     "build:extension-preview": "node scripts/site/build-extension-preview.mjs",
     "test:e2e:extension-loader": "playwright test --config test/e2e/extension-loader/playwright.config.cjs",
-    "test:extension-loader:desktop": "node test/e2e/extension-loader/desktop.cjs"
+    "test:extension-loader:desktop": "node test/e2e/extension-loader/desktop.cjs",
+    "build:yaml-tools": "node scripts/site/build-yaml-editor.mjs",
+    "editor:yaml": "node scripts/yaml-editor/cli.mjs",
+    "test:yaml": "node --test test/yaml-document.test.mjs test/yaml-host.test.mjs test/yaml-build.test.mjs",
+    "test:yaml:browser": "node --test test/yaml-ui.browser.mjs",
+    "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "@turbowarp/jszip": "^3.12.0",
-    "@turbowarp/packager": "3.14.0"
+    "@turbowarp/packager": "3.14.0",
+    "@kubohiroya/turbowarp-embedded-yaml": "0.1.0-rc.2",
+    "@kubohiroya/turbowarp-extension-data-editor": "0.5.0",
+    "@kubohiroya/turbowarp-kamishibai-app": "4.0.0-rc.75",
+    "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",
+    "@kubohiroya/turbowarp-runtime-expression": "0.9.0",
+    "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.0",
+    "@kubohiroya/turbowarp-yaml-json": "0.8.0-rc.0",
+    "ajv": "8.20.0",
+    "esbuild": "0.25.12",
+    "yaml": "2.9.1"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "next"
+  },
+  "dependencies": {
+    "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1"
+  },
+  "bin": {
+    "turbowarp-plus-editor-yaml": "scripts/yaml-editor/cli.mjs"
   }
 }
