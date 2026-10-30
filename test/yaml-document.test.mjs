@@ -56,7 +56,7 @@ test('real tutorial-derived component edits text and both descriptors while pres
     assert.equal(component(after).artifact.sourceIntegrity,component(after).source.integrity);
     assert.equal((await loadDsl4RuntimeComponent(after,frontend,limits)).ok,true);
     delete component(before).source;delete component(before).artifact;delete component(after).source;delete component(after).artifact;
-    assert.deepEqual(after,before);assert.equal(JSON.stringify(f.component.assets),assets);assert.equal(f.runtime.dirty,1);assert.equal(f.vm.stops,1);f.adapter.dispose();
+    assert.deepEqual(after,before);assert.equal(JSON.stringify(f.component.assets),assets);assert.equal(f.runtime.dirty,1);assert.equal(f.vm.stops,0);f.adapter.dispose();
 });
 
 test('retains bundle/components identity and the existing nonenumerable runtime alias after replacement',async()=>{
@@ -86,14 +86,22 @@ test('changing an asset source path cannot silently discard or replace the bundl
     await assert.rejects(f.adapter.prepare(s,changed),e=>Boolean(e.code));assert.equal(f.vm.toJSON(),before);assert.equal(f.runtime.dirty,0);f.adapter.dispose();
 });
 
-test('block story, menu startup stub, compiled artifact, binary entries and ambiguous channels are unavailable',async()=>{
+test('menu startup stub, compiled artifact, binary entries and ambiguous channels are unavailable',async()=>{
     for(const [code,mutate]of [
-        ['BLOCK_SOURCE',f=>{f.runtime.targets[0].blocks.hat={opcode:'kubohiroyakamishibaiauthoring4_kamishibai'};}],
         ['MENU_SOURCE',f=>{f.component.application.mode='menu';}],
         ['COMPILED_SOURCE',f=>{f.component.compiled={formatVersion:1};}],
         ['ASSET_FORMAT',f=>{f.component.assets.formatVersion=3;}],
-        ['AMBIGUOUS_SOURCE',f=>{f.runtime.extensionStorage[COMPONENT]=structuredClone(f.component);}]
+        ['K4-ROOT-OWNER',f=>{f.runtime.extensionStorage[COMPONENT]=structuredClone(f.component);}]
     ]) {const f=await fixture();mutate(f);assert.equal(f.adapter.inspect().code,code);assert.throws(()=>f.adapter.capture(),e=>e.code===code);assert.equal(f.runtime.dirty,0);f.adapter.dispose();}
+});
+
+test('full capture rejects an unmigrated block story even when lightweight source metadata is available',async()=>{
+    const f=await fixture();
+    f.runtime.targets[0].blocks.hat={opcode:'kubohiroyakamishibaiauthoring4_kamishibai'};
+    assert.equal(f.adapter.inspect().available,true);
+    const before=f.vm.toJSON();
+    assert.throws(()=>f.adapter.capture(),failure=>failure.code==='BLOCK_SOURCE');
+    assert.equal(f.vm.toJSON(),before);assert.equal(f.runtime.dirty,0);assert.equal(f.vm.stops,0);f.adapter.dispose();
 });
 
 test('project reload with identical data invalidates captures, including during asynchronous validation',async()=>{
@@ -122,13 +130,13 @@ test('a failed dirty observer cannot report an already committed document as rej
 });
 
 
-test('normal VM stop may replace the target array and remove clones while retaining original targets',async()=>{
+test('source save preserves running clones and every target identity without calling a destructive VM stop',async()=>{
     const f=await fixture();
     f.runtime.targets.push({isOriginal:false,id:'temporary-clone',name:'clone',blocks:{}});
-    const original=f.runtime.targets.filter(target=>target.isOriginal!==false);
+    const original=[...f.runtime.targets];
     f.vm.stopAll=function(){this.stops++;this.runtime.targets=this.runtime.targets.filter(target=>target.isOriginal!==false);};
-    const oldArray=f.runtime.targets;const s=f.adapter.capture();const p=await f.adapter.prepare(s,s.source+'\n# stopping preserves project identity\n');
-    await f.adapter.commit(s,p);assert.notEqual(f.runtime.targets,oldArray);assert.deepEqual(f.runtime.targets,original);assert.equal(f.component.source.text,p.source);assert.equal(f.runtime.dirty,1);f.adapter.dispose();
+    const oldArray=f.runtime.targets;const s=f.adapter.capture();const p=await f.adapter.prepare(s,s.source+'\n# editing preserves running targets\n');
+    await f.adapter.commit(s,p);assert.equal(f.runtime.targets,oldArray);assert.equal(f.vm.stops,0);original.forEach((target,index)=>assert.equal(f.runtime.targets[index],target));assert.equal(f.component.source.text,p.source);assert.equal(f.runtime.dirty,1);f.adapter.dispose();
 });
 
 test('replacing original target objects with identical serialized targets still invalidates an editing session',async()=>{

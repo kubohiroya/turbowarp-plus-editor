@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import {realpathSync} from 'node:fs';
 import path from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {fileURLToPath} from 'node:url';
 import {startYamlEditorHost} from './host.mjs';
 
 export function parseArguments(args) {
@@ -39,6 +40,14 @@ export async function main(args = process.argv.slice(2)) {
     return host;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+function isMainModule() {
+    try {
+        return Boolean(process.argv[1]) && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+    } catch {
+        return false;
+    }
+}
+
+if (isMainModule()) {
     main().catch(error => { console.error(error.message); process.exitCode = 1; });
 }
