@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-plus-editor",
-  "version": "0.2.0-rc.0",
+  "version": "0.2.0-rc.1",
   "description": "TurboWarp-Plus-Editorの配信、ブランド資産、作品を編集するボタン",
   "type": "module",
   "license": "GPL-3.0-or-later",
@@ -64,7 +64,7 @@
     "@turbowarp/packager": "3.14.0",
     "@kubohiroya/turbowarp-embedded-yaml": "0.1.0-rc.2",
     "@kubohiroya/turbowarp-extension-data-editor": "0.6.0",
-    "@kubohiroya/turbowarp-kamishibai-app": "4.0.0-rc.77",
+    "@kubohiroya/turbowarp-kamishibai-app": "4.0.0-rc.78",
     "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",
     "@kubohiroya/turbowarp-runtime-expression": "0.9.0",
     "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.0",
