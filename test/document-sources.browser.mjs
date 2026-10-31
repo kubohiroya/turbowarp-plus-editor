@@ -27,7 +27,7 @@ async function fixture() {
 }
 
 const fixtureCode=`
-import {mountYamlEditor} from './site/yaml-editor/client.js';
+import {mountDocumentEditor} from '@kubohiroya/turbowarp-document-editor';
 import {registerKamishibaiDocumentSourceProvider} from '@kubohiroya/turbowarp-kamishibai-app/document-source';
 const project=await (await fetch('/fixture.json')).json();
 const listeners=new Map();const on=(name,fn)=>{if(!listeners.has(name))listeners.set(name,new Set());listeners.get(name).add(fn);};const off=(name,fn)=>listeners.get(name)?.delete(fn);
@@ -44,7 +44,7 @@ const workspace={options:{readOnly:false},getAllBlocks:()=>[block],getBlockById:
 const blockly={FieldImage,getMainWorkspace:()=>workspace,Extensions:{register(){}}};
 window.Scratch={vm,gui:{getBlockly:async()=>blockly}};
 registerKamishibaiDocumentSourceProvider(vm,{documentViewsEnabled:true,sourceFetch:window.fetch.bind(window)});
-window.fixture={vm,project,calls,ui:mountYamlEditor({vm,document,language:new URLSearchParams(location.search).get('lang')||'ja'})};
+window.fixture={vm,project,calls,ui:mountDocumentEditor({vm,document,documentSources:true,language:new URLSearchParams(location.search).get('lang')||'ja'})};
 `;
 
 test('real App owner: URL preview/cancel/save, fresh reload and embedded import are local differential transactions',async()=>{
@@ -53,12 +53,11 @@ test('real App owner: URL preview/cancel/save, fresh reload and embedded import 
     try {
         const project=await fixture();
         await fs.writeFile(path.join(directory,'fixture.json'),JSON.stringify(project));
-        await fs.copyFile(new URL('../site/yaml-editor/ui.css',import.meta.url),path.join(directory,'ui.css'));
         await build({stdin:{contents:fixtureCode,resolveDir:process.cwd(),loader:'js'},outfile:path.join(directory,'fixture.js'),bundle:true,platform:'browser',format:'esm',logLevel:'silent'});
         server=http.createServer(async(req,res)=>{
             if(req.url.startsWith('/__twpe_yaml')){res.writeHead(404);res.end('{}');return;}
             const filename=new URL(req.url,'http://localhost').pathname.slice(1);
-            if(!filename){res.setHeader('Content-Type','text/html');res.end('<!doctype html><html lang="ja"><head><meta charset="utf-8"><link rel="stylesheet" href="/ui.css"></head><body><h1>データソースのローカル操作検証</h1><svg width="500" height="80"><g id="hat"><rect x="10" y="10" width="300" height="60" rx="15" fill="#8a6230"/><text x="30" y="45" fill="white">YAML　台本データ main.k4.yml</text></g></svg><script type="module" src="/fixture.js"></script></body></html>');return;}
+            if(!filename){res.setHeader('Content-Type','text/html');res.end('<!doctype html><html lang="ja"><head><meta charset="utf-8"></head><body><h1>データソースのローカル操作検証</h1><svg width="500" height="80"><g id="hat"><rect x="10" y="10" width="300" height="60" rx="15" fill="#8a6230"/><text x="30" y="45" fill="white">YAML　台本データ main.k4.yml</text></g></svg><script type="module" src="/fixture.js"></script></body></html>');return;}
             try{res.setHeader('Content-Type',filename.endsWith('.js')?'text/javascript':filename.endsWith('.css')?'text/css':'application/json');res.end(await fs.readFile(path.join(directory,filename)));}catch{res.writeHead(404);res.end();}
         });
         await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));

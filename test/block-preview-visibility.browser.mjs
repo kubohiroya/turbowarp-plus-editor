@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cp, mkdir, mkdtemp, writeFile} from 'node:fs/promises';
@@ -18,7 +19,7 @@ test('native preview stays invisible until layout completes and cancelled render
         const site = path.join(owned, 'site');
         await cp(input, site, {recursive: true});
         await build({
-            entryPoints: [new URL('../site/yaml-editor/block-preview.js', import.meta.url).pathname],
+            entryPoints: [fileURLToPath(import.meta.resolve('@kubohiroya/turbowarp-document-editor/block-preview'))],
             outfile: path.join(site, 'static/preview-visibility.mjs'),
             bundle: true, platform: 'browser', format: 'esm', logLevel: 'silent'
         });

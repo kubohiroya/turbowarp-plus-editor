@@ -2,7 +2,7 @@
 
 関連: [Editor Issue #10](https://github.com/kubohiroya/turbowarp-plus-editor/issues/10)。作業ブランチは `fix/editor/document-window`。文書ダイアログとVSCode編集の既存実装に依存し、ウィンドウ操作→外部編集の再オープン→関連検証の順で進めます。ユーザーの追加承認に基づき、今回の差分をcommit・pushし、PRのCI成功後にSquash Merge・Release/npm・Pages公開を行います。
 
-`twPlusYamlEditor=1` で有効になる既存ダイアログに適用します。起動時固定・既定OFF、読み取り箇所は `site/yaml-editor/feature-flags.js` です。
+`twPlusYamlEditor=1` で有効になる既存ダイアログに適用します。起動時固定・既定OFF、読み取り箇所は scratch-guiの `config/feature-flags.js` です。
 
 - タイトル部分をドラッグすると画面内で移動します。
 - 四辺・四隅をドラッグするとサイズを変更します。最小サイズは360×280pxで、画面がそれより小さい場合は画面内に収めます。
@@ -43,3 +43,8 @@ node --test test/yaml-ui.browser.mjs
 - DoD: 両ダイアログの操作・VSCode再オープン、既存保存取消の維持、CI・Pages・npmの版とrevision一致。
 - ロールバック: 文書編集フラグOFF、または変更前のcore版・SHAと配信コミットへ揃えて切戻し。原文・SB3・外部作業ファイルを保持。
 - start: ユーザーが今回の2リポジトリの公開操作を明示承認。
+
+
+## 共通パッケージへの分離
+
+ウィンドウ・プレビュー・保存・外部編集の実装は `turbowarp-document-editor` に移し、scratch-guiフォークがマウントします。本配信パッケージはGUIの固定・ビルド・配信、ローカル連携の配信パス指定とライセンス通知を担当します。既存の移動・リサイズ・最大化・再オープンは共通UI側で維持します。

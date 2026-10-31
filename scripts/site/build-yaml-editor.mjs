@@ -3,9 +3,6 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const sharedPackage = '@kubohiroya/turbowarp-document-source';
-const documentPackage = '@kubohiroya/turbowarp-document-data';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 async function packageMetadata(packageName, entryName = packageName) {
@@ -15,39 +12,23 @@ async function packageMetadata(packageName, entryName = packageName) {
     const entry = fileURLToPath(import.meta.resolve(entryName));
     return {packageRoot, metadata: {package: packageName, version: manifest.version,
         entry: path.relative(packageRoot, entry), entrySha256: digest(await fs.readFile(entry)),
-        license: manifest.license, localOnly: manifest.version.includes('-local.') || Object.values(manifest.dependencies || {}).some(value => value.startsWith('file:'))}};
+        license: manifest.license, localOnly: Object.values(manifest.dependencies || {}).some(value => /^(?:file:|link:)/u.test(value))}};
 }
 
-export async function buildYamlEditor(output, prefix = '/turbowarp-plus-editor/') {
+// The GUI owns mounting and bundling. The distribution records provenance and licenses only.
+export async function buildDocumentEditorMetadata(output, prefix = '/turbowarp-plus-editor/') {
     if (prefix !== '/turbowarp-plus-editor/') throw new TypeError('Use the canonical Editor prefix.');
-    const {build} = await import('esbuild');
-    const shared = await packageMetadata(sharedPackage);
-    const documents = await packageMetadata(documentPackage, `${documentPackage}/composition`);
-    const destination = path.join(output, 'yaml-editor');
-    await fs.mkdir(destination, {recursive: true});
-    const result = await build({
-        absWorkingDir: root,
-        entryPoints: ['site/yaml-editor/client.js', 'site/yaml-editor/root-shape-bootstrap.js'],
-        outdir: destination,
-        bundle: true, platform: 'browser', format: 'esm', target: ['es2022'],
-        sourcemap: false, metafile: true, legalComments: 'eof', logLevel: 'silent'
-    });
-    const inputs = [...new Set(Object.values(result.metafile.outputs).flatMap(output => Object.entries(output.inputs).filter(([, contribution]) => contribution.bytesInOutput > 0).map(([name]) => name)))];
-    // The host discovers owner providers from the VM; it never embeds an App parser.
-    if (inputs.some(input => /(?:turbowarp-kamishibai-app|scratch-(?:vm|render|audio)|source-documents|yaml-json|node_modules\/(?:yaml|ajv)\/)/u.test(input))) {
-        throw new Error('The generic YAML Editor bundle must not depend on an App or GUI implementation.');
-    }
-    for (const name of ['feature-flags.js', 'bootstrap.js', 'ui.css']) {
-        await fs.copyFile(path.join(root, 'site/yaml-editor', name), path.join(destination, name));
-    }
+    const packages = await Promise.all([
+        packageMetadata('@kubohiroya/turbowarp-document-editor'),
+        packageMetadata('@kubohiroya/turbowarp-document-source'),
+        packageMetadata('@kubohiroya/turbowarp-document-data', '@kubohiroya/turbowarp-document-data/composition')
+    ]);
+    const destination = path.join(output, 'document-editor');
     const noticeRoot = path.join(destination, 'notices');
     await fs.mkdir(noticeRoot, {recursive: true});
-    // Remove only notices emitted by the superseded local App-specific implementation.
-    for (const name of ['kamishibai-app-LICENSE', 'kamishibai-app-LICENSES.md']) {
-        await fs.rm(path.join(noticeRoot, name), {force: true});
-    }
     const notices = [];
-    for (const [label, owner] of [['document-source', shared], ['document-data', documents]]) {
+    for (const owner of packages) {
+        const label = owner.metadata.package.split('/').at(-1);
         for (const name of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md']) {
             try {
                 await fs.copyFile(path.join(owner.packageRoot, name), path.join(noticeRoot, `${label}-${name}`));
@@ -55,17 +36,17 @@ export async function buildYamlEditor(output, prefix = '/turbowarp-plus-editor/'
             } catch (error) { if (error.code !== 'ENOENT' || name === 'LICENSE') throw error; }
         }
     }
-    await fs.writeFile(path.join(destination, 'build-info.json'), JSON.stringify({shared: shared.metadata, documents: documents.metadata, notices, metafile: result.metafile}, null, 2) + '\n');
+    const metadata = {mountOwner: 'scratch-gui', packages: packages.map(owner => owner.metadata), notices};
+    await fs.writeFile(path.join(destination, 'build-info.json'), JSON.stringify(metadata, null, 2) + '\n');
     const htmlPath = path.join(output, 'editor.html');
-    let html = await fs.readFile(htmlPath, 'utf8');
-    html = html.replace(/<script\b[^>]*\bdata-twpe-yaml-bootstrap(?:="[^"]*")?[^>]*>[\s\S]*?<\/script>/gi, '');
-    if (!/<\/head>/i.test(html)) throw new TypeError('The Editor document needs a head element.');
-    html = html.replace(/<\/head>/i,
-        `<script type="module" data-twpe-yaml-bootstrap src="${prefix}yaml-editor/bootstrap.js"></script></head>`);
-    await fs.writeFile(htmlPath, html);
-    return {output: destination, inputs, shared: shared.metadata, documents: documents.metadata, notices};
+    const html = await fs.readFile(htmlPath, 'utf8');
+    await fs.writeFile(htmlPath, html.replace(/<script\b[^>]*\bdata-twpe-yaml-bootstrap(?:="[^"]*")?[^>]*>[\s\S]*?<\/script>/gi, ''));
+    // Remove the old distribution-owned UI during incremental builds.
+    await fs.rm(path.join(output, 'yaml-editor'), {recursive: true, force: true});
+    return {output: destination, ...metadata};
 }
 
+export {buildDocumentEditorMetadata as buildYamlEditor};
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    await buildYamlEditor(process.argv[2]);
+    await buildDocumentEditorMetadata(process.argv[2]);
 }

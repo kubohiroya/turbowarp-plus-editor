@@ -55,8 +55,8 @@
     "test:extension-loader:desktop": "node test/e2e/extension-loader/desktop.cjs",
     "build:yaml-tools": "node scripts/site/build-yaml-editor.mjs",
     "editor:yaml": "node scripts/yaml-editor/cli.mjs",
-    "test:yaml": "node --test test/yaml-document.test.mjs test/yaml-host.test.mjs test/yaml-build.test.mjs",
-    "test:yaml:browser": "node --test test/yaml-ui.browser.mjs",
+    "test:yaml": "node --test test/yaml-document.test.mjs test/yaml-build.test.mjs test/yaml-cli.test.mjs",
+    "test:yaml:browser": "node --test test/document-sources.browser.mjs",
     "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.mjs"
   },
   "devDependencies": {
@@ -80,7 +80,8 @@
     "tag": "next"
   },
   "dependencies": {
-    "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1"
+    "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
+    "@kubohiroya/turbowarp-document-editor": "file:../document-editor"
   },
   "bin": {
     "turbowarp-plus-editor-yaml": "scripts/yaml-editor/cli.mjs"
