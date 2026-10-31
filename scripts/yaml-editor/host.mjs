@@ -193,8 +193,9 @@ export async function startYamlEditorHost({siteDirectory, dataDirectory, launchE
                 await mkdir(metadataDirectory, {mode: 0o700});
                 await writeFile(path.join(metadataDirectory, 'session.json'), JSON.stringify({id, sourceName: input.sourceName || filename, format, createdAt: new Date().toISOString(), vscodeProfile: profile.directory}), {mode: 0o600, flag: 'wx'});
                 const schemaWorkspace = await writeSchemaWorkspace(directory, schema, {format, filename});
-                const session = {filePath, source: input.source, revision: 1};
-                try { await launchEditor(filePath, {...profile, format, ...(schemaWorkspace || {})}); }
+                const launchOptions = {...profile, format, ...(schemaWorkspace || {})};
+                const session = {filePath, source: input.source, revision: 1, launchOptions};
+                try { await launchEditor(filePath, launchOptions); }
                 catch {
                     throw failure(503, 'EDITOR_LAUNCH_FAILED', 'VSCode could not be started. Your working YAML file was retained.');
                 }
@@ -209,12 +210,22 @@ export async function startYamlEditorHost({siteDirectory, dataDirectory, launchE
         if (!idPattern.test(id)) throw failure(400, 'INVALID_SESSION', 'The YAML session identifier is invalid.');
         const session = sessions.get(id);
         if (!session) throw failure(404, 'SESSION_NOT_FOUND', 'The YAML session is no longer active.');
+        if (request.method === 'POST') {
+            await readStableSource(session.filePath);
+            if (sessions.get(id) !== session) throw failure(404, 'SESSION_NOT_FOUND', 'The YAML session is no longer active.');
+            try { await launchEditor(session.filePath, session.launchOptions); }
+            catch { throw failure(503, 'EDITOR_LAUNCH_FAILED', 'VSCode could not be started. Your working file was retained.'); }
+            if (closing) throw failure(503, 'HOST_CLOSED', 'The local YAML host is closing. Your working file was retained.');
+            if (sessions.get(id) !== session) throw failure(404, 'SESSION_NOT_FOUND', 'The YAML session is no longer active.');
+            json(response, 200, {id, revision: session.revision, opened: true});
+            return;
+        }
         if (request.method === 'DELETE') {
             sessions.delete(id);
             json(response, 200, {id, closed: true, retained: true});
             return;
         }
-        if (request.method !== 'GET') throw failure(405, 'METHOD_NOT_ALLOWED', 'Use GET or DELETE for a YAML session.');
+        if (request.method !== 'GET') throw failure(405, 'METHOD_NOT_ALLOWED', 'Use GET, POST or DELETE for a YAML session.');
         const source = await readStableSource(session.filePath);
         if (sessions.get(id) !== session) throw failure(404, 'SESSION_NOT_FOUND', 'The YAML session is no longer active.');
         if (source !== session.source) { session.source = source; session.revision++; }

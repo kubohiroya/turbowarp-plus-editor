@@ -63,6 +63,8 @@ jobs:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
         run: node test/e2e/extension-loader/prepare-packaged.mjs
       - run: npx playwright install --with-deps chromium
+      - name: Verify embedded document window controls and VSCode session recovery
+        run: node --test test/yaml-ui.browser.mjs
       - name: Verify integrated editing, security, themes and SB3 round trips
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
