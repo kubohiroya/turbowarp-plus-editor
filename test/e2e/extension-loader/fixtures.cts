@@ -18,7 +18,7 @@ async function identity(request, baseURL) {
     for (const key of ['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) {
         expect(info.extensionIntegration[key], key).toBe(pins[key]);
     }
-    expect(info.extensionIntegration.featureDefault).toBe(false);
+    expect(info.extensionIntegration.featureDefault).toBe(true);
     return info;
 }
 

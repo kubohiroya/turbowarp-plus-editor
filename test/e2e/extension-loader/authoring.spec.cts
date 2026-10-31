@@ -31,7 +31,7 @@ const runs = (page, id) => page.evaluate(key => globalThis.__plusAuthoringRuns?.
 const projectJSON = page => page.evaluate(() => JSON.parse(vm.toJSON()));
 
 async function openEditor(page, enabled = true) {
-    await page.goto(`editor.html?lang=ja${enabled ? '&twPlusExtensionLoader=1' : ''}`);
+    await page.goto(`editor.html?lang=ja${enabled ? '' : '&twPlusExtensionLoader=0'}`);
     await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
     await page.evaluate(() => {
         const stage = vm.runtime.getTargetForStage();
@@ -280,7 +280,7 @@ test('authoring restores the original project when approved JavaScript registers
     expect((await projectJSON(page)).targets).toEqual(before.targets);
 });
 
-test('default-off Editor retains legacy custom input and cannot enable authoring after startup', async ({page}) => {
+test('explicit opt-out retains legacy custom input and cannot enable authoring after startup', async ({page}) => {
     await openEditor(page, false);
     await fileMenu(page);
     await expect(page.getByTestId('tw-plus-add-extension')).toHaveCount(0);
@@ -310,7 +310,7 @@ test('mobile viewport keeps authoring, consent and catalog controls visible and 
                 dependencies: [], unsandboxed: 'optional'}]},
                 headers: {'access-control-allow-origin': '*'}}));
         const page = await context.newPage();
-        await page.goto(new URL('editor.html?lang=ja&twPlusExtensionLoader=1', baseURL).href);
+        await page.goto(new URL('editor.html?lang=ja', baseURL).href);
         await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
         const before = await projectJSON(page);
         const withinViewport = async locator => {
@@ -347,6 +347,11 @@ test('mobile viewport keeps authoring, consent and catalog controls visible and 
         const selection = page.locator('.twextsec-selection');
         await expect(selection.locator('article')).toHaveCount(1);
         await withinViewport(selection);
+        const colors = await selection.evaluate(node => ({body: getComputedStyle(node).backgroundColor,
+            bulk: getComputedStyle(node.querySelector('.twextsec-bulk')).backgroundColor,
+            individual: getComputedStyle(node.querySelector('.twextsec-list')).backgroundColor}));
+        expect(colors.bulk).toBe(colors.body);
+        expect(colors.individual).not.toBe(colors.bulk);
         await selection.locator('button[data-execution="unsandboxed"]').click();
         await selection.locator('button[data-distribution="embedded"]').click();
         await selection.locator('article').getByRole('checkbox').check();
@@ -483,4 +488,33 @@ test('URL fetch failure retains the entered source and the original project for 
     await page.getByTestId('custom-extension-next').click();
     await expect(page.getByTestId('tw-plus-authoring-id')).toHaveValue(spec.id);
     await expect(page.getByTestId('tw-plus-authoring-mode')).toHaveValue('remote');
+});
+
+for (const suffix of ['', '&twPlusExtensionLoader=1']) {
+    test(`normal startup and legacy opt-in expose the same fixed extension features: ${suffix || 'no flag'}`, async ({page}) => {
+        await page.goto(`editor.html?lang=ja${suffix}`);
+        await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
+        await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
+        await expect(page.getByText('TurboWarp Plus', {exact: true})).toBeVisible();
+        await page.getByText('カスタム拡張機能', {exact: true}).click();
+        await expect(page.getByTestId('custom-extension-next')).toHaveText('次へ');
+        await closeCustom(page);
+        await page.evaluate(() => history.replaceState(null, '', `${location.pathname}?lang=ja&twPlusExtensionLoader=0`));
+        await openCustom(page);
+        await expect(page.getByTestId('custom-extension-next')).toHaveText('次へ');
+    });
+}
+
+test('bare editor.html exposes the verified custom addition flow without any query parameters', async ({page}) => {
+    await page.goto('editor.html');
+    await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
+    expect(new URL(page.url()).searchParams.has('twPlusExtensionLoader')).toBe(false);
+    await page.getByRole('button', {name: /^(拡張機能を追加|Add Extension)$/}).click();
+    await expect(page.getByText('TurboWarp Plus', {exact: true})).toBeVisible();
+    await page.getByText(/^(カスタム拡張機能|Custom Extension)$/).click();
+    await expect(page.getByTestId('custom-extension-next')).toHaveText(/^(次へ|Next)$/);
+    await page.getByTestId('custom-extension-url').fill('https://example.org/extension.js');
+    await page.getByTestId('custom-extension-next').click();
+    await expect(page.getByTestId('tw-plus-authoring')).toBeVisible();
+    await expect(page.getByTestId('tw-plus-authoring-execution')).toHaveValue('sandboxed');
 });

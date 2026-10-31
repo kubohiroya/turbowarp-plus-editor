@@ -30,7 +30,7 @@ if (pins.loaderRepository) {
     for (const key of ['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) {
         assert.equal(integration[key], pins[key], `Extension integration differs: ${key}`);
     }
-    assert.equal(integration.featureDefault, false, 'Extension loader must default off');
+    assert.equal(integration.featureDefault, true, 'Extension loader must default on');
     for (const name of ['plus-packager.html', 'plus-packager.js']) {
         assert.equal(contentHash(await fs.readFile(path.join(directory, name))), integration.assets[name], `Asset changed: ${name}`);
     }

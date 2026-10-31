@@ -36,7 +36,8 @@ test('the npm archive supports JS consumers, TypeScript declarations and the com
         import {bootstrapExtensionLoader} from '${packageName}/extension-loader';
         assert.equal(new URL(createEditorURL({language: 'en'})).searchParams.get('lang'), 'en');
         assert.match(renderEditButton({language: 'en'}), /Edit in TurboWarp-Plus-Editor/);
-        const loader = await bootstrapExtensionLoader();
+        await assert.rejects(bootstrapExtensionLoader(), TypeError);
+        const loader = await bootstrapExtensionLoader({startupSearch: '?twPlusExtensionLoader=0'});
         assert.equal(loader.enabled, false);
         await loader.dispose();
     `);
@@ -49,7 +50,7 @@ test('the npm archive supports JS consumers, TypeScript declarations and the com
         const options: EditButtonOptions = {language: 'en', projectURL: new URL('https://example.com/project.sb3')};
         const url: string = createEditorURL(options);
         const html: string = renderEditButton(options);
-        const loader: ExtensionLoaderHandle = await bootstrapExtensionLoader();
+        const loader: ExtensionLoaderHandle = await bootstrapExtensionLoader({startupSearch: '?twPlusExtensionLoader=0'});
         await loader.dispose();
     `);
     execFileSync(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '--strict',

@@ -90,6 +90,17 @@ test('direct editor URLs use shared security without adding a startup switch', a
     expect(await executions(page)).toBe(0);
 });
 
+const expectBulkAsPrimary = async page => {
+    const colors = await dialog(page).evaluate(node => {
+        const color = selector => getComputedStyle(node.querySelector(selector)).backgroundColor;
+        return {body: color('.twextsec-body'), bulk: color('.twextsec-bulk'),
+            individualHeading: color('.twextsec-columns'), individualList: color('.twextsec-list')};
+    });
+    expect(colors.bulk).toBe(colors.body);
+    expect(colors.individualHeading).toBe(colors.individualList);
+    expect(colors.individualList).not.toBe(colors.bulk);
+};
+
 for (const language of ['ja','en']) {
     test(`shared security from ${language} entry requires approval and retains bundle metadata`, async ({page,evidence}) => {
         evidence.stage('shared-security-approve');
@@ -170,6 +181,7 @@ for (const language of ['ja','en']) {
         const rows=dialog(page).locator('article');
         await expect(rows).toHaveCount(2);
         await expect(dialog(page).locator('.twextsec-bulk')).toBeVisible();
+        await expectBulkAsPrimary(page);
         expect(await dialog(page).locator('.twextsec-bulk button').evaluateAll(items=>items.map(item=>item.value)))
             .toEqual(['deny','sandboxed','unsandboxed']);
         await expect(dialog(page).locator('.twextsec-bulk button:enabled')).toHaveCount(3);
@@ -262,4 +274,36 @@ test('narrow security dialog retains ordered choices, reasons and a reachable co
     await ok.focus();await ok.press('Enter');
     await expect(dialog(page)).toHaveCount(0);
     await expect.poll(()=>executions(page)).toBe(1);
+});
+
+
+test('real mobile context keeps the shared review and bulk controls inside the visual viewport', async ({browser,baseURL}) => {
+    const {devices} = require('@playwright/test');
+    const context = await browser.newContext({...devices['Pixel 7'],viewport:{width:390,height:844},locale:'ja-JP'});
+    try {
+        const page = await context.newPage();
+        const target = new URL('editor.html',baseURL);
+        target.search = new URLSearchParams({lang:'ja',project_url:await projectURL({mixed:true})}).toString();
+        await page.goto(target.href);
+        await expect(dialog(page)).toBeVisible();
+        const checkBounds = async () => {
+            const rect = await dialog(page).evaluate(node => {
+                const r=node.getBoundingClientRect(),v=window.visualViewport;
+                return {left:r.left-v.offsetLeft,top:r.top-v.offsetTop,right:r.right-v.offsetLeft,
+                    bottom:r.bottom-v.offsetTop,width:v.width,height:v.height};
+            });
+            expect(rect.left).toBeGreaterThanOrEqual(0);
+            expect(rect.top).toBeGreaterThanOrEqual(0);
+            expect(rect.right).toBeLessThanOrEqual(rect.width);
+            expect(rect.bottom).toBeLessThanOrEqual(rect.height);
+        };
+        await checkBounds(); await expectCenteredHeading(page); await expectBulkAsPrimary(page);
+        await dialog(page).locator('.twextsec-bulk button[value="unsandboxed"]').click();
+        await expect(dialog(page).locator('input[value="unsandboxed"]:checked')).toHaveCount(2);
+        await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeEnabled();
+        const maximize=dialog(page).locator('.twextsec-window-button');
+        await maximize.click(); await checkBounds();
+        await maximize.click(); await checkBounds();
+        expect(await executions(page)).toBe(0);
+    } finally { await context.close(); }
 });

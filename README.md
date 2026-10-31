@@ -80,11 +80,11 @@ GitHub READMEs cannot apply external CSS. Use an image link instead:
 </a>
 ```
 
-Existing GUI feature flags remain unchanged. To try the TurboWarp Plus extension catalog, launch the Editor with `twPlusExtensions=1`. Remove it or set it to `0` and reload to disable it. The button also preserves this parameter.
+The TurboWarp Plus extension catalog is available on ordinary Editor URLs. To use the legacy catalog path, reload with `twPlusExtensionLoader=0&twPlusExtensions=1`. Other GUI feature flags remain unchanged, and the button preserves supplied parameters.
 
-The extension loader from Issue #4 consists of an independent loader core and thin GUI/VM adapters. In the regular distribution, the Embedded/Remote validation and permission UI is enabled only when the launch URL explicitly includes `twPlusExtensionLoader=1` (fixed at startup, off by default). The Packager action for Plus projects opens the local output screen and checks approval both when generating the output and on the recipient’s first run. Ordinary launches leave the loader disabled. See the [integration specification](docs/extension-loader-integration.md) for configuration, validation, Desktop limitations, and rollback.
+The extension loader from Issue #4 consists of an independent loader core and thin GUI/VM adapters. In the regular distribution, the Embedded/Remote validation and permission UI is enabled on ordinary launch URLs without a feature flag (fixed at startup, on by default). The Packager action for Plus projects opens the local output screen and checks approval both when generating the output and on the recipient’s first run. Reload with `twPlusExtensionLoader=0` to disable it. Explicit `=1` remains supported; invalid values disable it. See the [integration specification](docs/extension-loader-integration.md) for configuration, validation, Desktop limitations, and rollback.
 
-See the [Issue #11 authoring guide](docs/extension-authoring-ui.md) for bulk and individual Embedded/Remote settings in the extension catalog and for adding extensions from JS files or URLs. This UI also requires `twPlusExtensionLoader=1` at startup and is off by default.
+See the [Issue #11 authoring guide](docs/extension-authoring-ui.md) for bulk and individual Embedded/Remote settings in the extension catalog and for adding extensions from JS files or URLs. This UI is also on by default for ordinary launches; reload with `twPlusExtensionLoader=0` to restore the previous addition flow.
 
 ## Using the npm package
 

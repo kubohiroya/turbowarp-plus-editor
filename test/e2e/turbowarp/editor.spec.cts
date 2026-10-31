@@ -2,7 +2,7 @@ const fs = require('node:fs/promises');
 const {createHash} = require('node:crypto');
 const JSZip = require('@turbowarp/jszip');
 const {selectNativeProject} = require('./native-picker.cts');
-const {test, expect, editorDialog, approveProjectExtensions} = require('./fixtures.cts');
+const {test, expect, editorDialog} = require('./fixtures.cts');
 
 const savedValue = {duration: 9, label: '最新版「秋」 & "scene"'};
 const iconSelector = '[data-block-editor-icon]';
@@ -17,6 +17,19 @@ const start = async page => {
     await expect(page.getByRole('button', {name: '拡張機能を追加', exact: true})).toBeVisible();
 };
 
+const approveSample = async (page, source) => {
+    const permission = page.getByTestId('tw-plus-permission');
+    await expect(permission).toBeVisible();
+    await expect(permission.locator('[data-field="id"]')).toHaveText('blockeditordemo');
+    await expect(permission.locator('[data-field="sha256"]')).toHaveText(createHash('sha256').update(source).digest('hex'));
+    await page.getByTestId('tw-plus-allow').click();
+    await expect(permission).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => {
+        try { return JSON.parse(vm.toJSON()).turboWarpPlus?.extensions?.find(spec => spec.id === 'blockeditordemo')?.execution; }
+        catch { return null; }
+    })).toBe('unsandboxed');
+};
+
 const loadSample = async (page, baseURL) => {
     const response = await page.request.get(new URL('static/extensions/block-editor.js', baseURL).href);
     expect(response.ok()).toBeTruthy();
@@ -26,8 +39,11 @@ const loadSample = async (page, baseURL) => {
     const loader = page.getByRole('dialog');
     await loader.getByText('テキスト', {exact: true}).click();
     await loader.locator('textarea').fill(source);
-    await loader.getByRole('checkbox', {name: 'サンドボックスなしで実行する', exact: true}).check();
-    await loader.getByRole('button', {name: '読み込む', exact: true}).click();
+    await page.getByTestId('custom-extension-next').click();
+    await page.getByTestId('tw-plus-authoring-id').fill('blockeditordemo');
+    await page.getByTestId('tw-plus-authoring-execution').selectOption('unsandboxed');
+    await page.getByTestId('tw-plus-authoring-submit').click();
+    await approveSample(page, source);
     await expect(loader).toHaveCount(0);
     await page.locator('.scratchCategoryMenuItemLabel').filter({hasText: 'Block editor demo'})
         .click();
@@ -127,8 +143,10 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
     expect(scenes).toHaveLength(1);
     expect(JSON.parse(scenes[0].inputs.PROPERTIES[1][1])).toEqual(savedValue);
     for (const key of ['draft', 'schema', 'revision', 'editorId']) expect(scenes[0]).not.toHaveProperty(key);
-    const extensionURL = project.extensionURLs.blockeditordemo;
-    expect(decodeURIComponent(extensionURL.slice(extensionURL.indexOf(',') + 1))).toBe(source);
+    const extension = project.turboWarpPlus.extensions.find(spec => spec.id === 'blockeditordemo');
+    expect(extension).toMatchObject({execution: 'unsandboxed', source: {type: 'embedded'},
+        sha256: createHash('sha256').update(source).digest('hex')});
+    expect(await zip.file(extension.source.path).async('string')).toBe(source);
     await testInfo.attach('sb3-check.json', {body: JSON.stringify({
         size: bytes.length,
         sha256: createHash('sha256').update(bytes)
@@ -177,7 +195,7 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
             await reloaded.goto(url.href);
         }
         evidence.stage('extension-security');
-        await approveProjectExtensions(reloaded, [source], 'ja');
+        await approveSample(reloaded, source);
         await expect(reloaded.locator(iconSelector)).toHaveCount(1);
         evidence.stage('restored-form');
         await openEditor(reloaded);

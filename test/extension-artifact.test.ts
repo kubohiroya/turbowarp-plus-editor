@@ -17,12 +17,12 @@ test('production pins reject incomplete or unpinned extension dependency graphs'
     }
 });
 
-test('the deployment gate rejects changed builder assets and enabled-by-default metadata', async () => {
+test('the deployment gate rejects changed builder assets and disabled-by-default metadata', async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-deploy-gate-'));
     try {
         const pins = await readPins();
         const revision = 'a'.repeat(40);
-        const integration: {featureDefault: boolean; assets: Record<string, string>; loaderRevision?: string} = {featureDefault: false, assets: {}};
+        const integration: {featureDefault: boolean; assets: Record<string, string>; loaderRevision?: string} = {featureDefault: true, assets: {}};
         for (const key of ['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) integration[key] = pins[key];
         const files = ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg',
             'assets/edit-button.css', 'plus-packager.html', 'plus-packager.js'];
@@ -64,10 +64,10 @@ test('the deployment gate rejects changed builder assets and enabled-by-default 
         await fs.writeFile(path.join(directory, 'plus-packager.js'), 'unreviewed replacement');
         assert.notEqual(check().status, 0);
         await fs.writeFile(path.join(directory, 'plus-packager.js'), 'checked asset');
-        integration.featureDefault = true;
+        integration.featureDefault = false;
         await writeInfo();
         assert.notEqual(check().status, 0);
-        integration.featureDefault = false;
+        integration.featureDefault = true;
         integration.loaderRevision = 'b'.repeat(40);
         await writeInfo();
         assert.notEqual(check().status, 0);
