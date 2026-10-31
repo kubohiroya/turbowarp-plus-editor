@@ -271,3 +271,61 @@ test('default-off Editor omits the authoring entry and cannot enable it by chang
     await expect(page.getByTestId('tw-plus-add-extension')).toHaveCount(0);
     await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
 });
+
+test('mobile viewport keeps authoring, consent and catalog controls visible and operable', async ({browser, baseURL}, testInfo) => {
+    const context = await browser.newContext({...devices['Pixel 7'],
+        viewport: {width: 390, height: 844}, locale: 'ja-JP'});
+    try {
+        await context.route('https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json',
+            route => route.fulfill({json: {schemaVersion: 1, extensions: [{id: embedded.id,
+                name: 'Mobile authoring fixture', version: '1.0.0', url: embedded.url,
+                dependencies: [], unsandboxed: 'optional'}]},
+                headers: {'access-control-allow-origin': '*'}}));
+        const page = await context.newPage();
+        await page.goto(new URL('editor.html?lang=ja&twPlusExtensionLoader=1', baseURL).href);
+        await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
+        const before = await projectJSON(page);
+        const withinViewport = async locator => {
+            await expect.poll(() => locator.evaluate(node => {
+                const rect = node.getBoundingClientRect();
+                const viewport = window.visualViewport;
+                const left = rect.left - viewport.offsetLeft;
+                const top = rect.top - viewport.offsetTop;
+                return left >= -1 && top >= -1 && left + rect.width <= viewport.width + 1 &&
+                    top + rect.height <= viewport.height + 1 && node.scrollWidth <= node.clientWidth + 1;
+            })).toBe(true);
+        };
+        // Narrow hosts show a file icon while hiding its text label.
+        await page.getByText('ファイル', {exact: true}).locator('xpath=../..').click();
+        await page.getByTestId('tw-plus-add-extension').click();
+        await withinViewport(page.getByTestId('tw-plus-authoring'));
+        await testInfo.attach('mobile-authoring.png', {body: await page.screenshot({scale: 'css'}),
+            contentType: 'image/png'});
+        await page.getByTestId('tw-plus-authoring-id').fill(embedded.id);
+        await page.getByTestId('tw-plus-authoring-file').setInputFiles({name: 'mobile.js',
+            mimeType: 'application/javascript', buffer: embedded.bytes});
+        await page.getByTestId('tw-plus-authoring-submit').click();
+        await expect(permission(page)).toBeVisible();
+        await withinViewport(permission(page));
+        expect(await runs(page, embedded.id)).toBe(0);
+        await page.getByTestId('tw-plus-deny').click();
+        await expect(page.getByTestId('tw-plus-authoring-status')).toContainText(/TRUST_DENIED|許可/);
+        expect(await projectJSON(page)).toEqual(before);
+        await page.getByTestId('tw-plus-authoring-cancel').click();
+        await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
+        await page.getByText('TurboWarp Plus', {exact: true}).click();
+        const selection = page.locator('.twextsec-selection');
+        await expect(selection.locator('article')).toHaveCount(1);
+        await withinViewport(selection);
+        await selection.locator('button[data-execution="unsandboxed"]').click();
+        await selection.locator('button[data-distribution="embedded"]').click();
+        await selection.locator('article').getByRole('checkbox').check();
+        const apply = selection.getByRole('button', {name: '拡張の設定を適用', exact: true});
+        await expect(apply).toBeEnabled();
+        await withinViewport(apply);
+        await testInfo.attach('mobile-catalog.png', {body: await page.screenshot({scale: 'css'}),
+            contentType: 'image/png'});
+    } finally {
+        await context.close();
+    }
+});
