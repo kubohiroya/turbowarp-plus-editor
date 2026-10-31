@@ -36,7 +36,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_REVISION: ${{ github.sha }}
-        run: node scripts/ci/publication.mjs --release
+        run: node scripts/ci/publication.ts --release
       - name: Pack the package
         id: pack
         run: |

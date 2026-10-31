@@ -1,18 +1,20 @@
 # TurboWarp-Plus-Editor
 
+[日本語](README.ja.md)
+
 [![TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/)
 
-**[TurboWarp-Plus-Editorを開く](https://kubohiroya.github.io/turbowarp-plus-editor/)**
+**[Open TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/?lang=en)**
 
-TurboWarp Plusの作品をつくる・開くためのエディターです。kubohiroyaがフォークした[scratch-gui](https://github.com/kubohiroya/scratch-gui)を、固定したリビジョンからビルドしてGitHub Pagesで提供します。日本語と英語に対応します。
+An editor for creating and opening TurboWarp Plus projects. It builds kubohiroya’s [scratch-gui fork](https://github.com/kubohiroya/scratch-gui) from a pinned revision and serves it through GitHub Pages. Japanese and English are supported.
 
-- サイト: <https://kubohiroya.github.io/turbowarp-plus-editor/>
-- エディター: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja>
+- Site: <https://kubohiroya.github.io/turbowarp-plus-editor/>
+- Editor: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en>
 - npm: `@kubohiroya/turbowarp-plus-editor`
 
-## 配信の責務
+## Distribution responsibilities
 
-`turbowarp-extension-data-editor` と `turbowarp-extension-security-dialog` は上流のライブラリです。`scratch-gui` がこれらを利用し、さらに下流にある本パッケージが統合Editorを配信・検証します。上流のライブラリから下流GUIをビルドしません。
+`turbowarp-extension-data-editor` and `turbowarp-extension-security-dialog` are upstream libraries. `scratch-gui` consumes them, and this downstream package distributes and verifies the integrated Editor. The upstream libraries do not build the downstream GUI.
 
 ```text
 turbowarp-extension-data-editor ───┐
@@ -20,112 +22,117 @@ turbowarp-extension-data-editor ───┐
 turbowarp-extension-security-dialog┘
 ```
 
-配信元GUIのSHA、data-editorのSHA、security-dialogのバージョンは [`site/source.json`](site/source.json) で固定します。公開成果物の `build-info.json` で実際に組み合わせたGUI・ライブラリ・サイトの版を確認できます。旧data-editorのPagesは廃止対象であり、移行先には本サイトを使用してください。
+The GUI SHA, data-editor SHA, and security-dialog version are pinned in [`site/source.json`](site/source.json). The published `build-info.json` records the actual GUI, library, and site versions used together. The former data-editor Pages site is being retired; use this site as its replacement.
 
-案内画面には `turbowarp-plus-site-header` の共通ヘッダーを読み込みます。エディター本体は全画面GUIとして表示します。
+The landing page loads the shared `turbowarp-plus-site-header`. The Editor itself displays the GUI across the full screen.
 
-## 作品を開く
+## Opening projects
 
-ランディング画面の **TurboWarp-Plus-Editorで編集** ボタンを押すとエディターが開きます。手元のSB3ファイルはエディターの「ファイル」から開けます。URLから開く場合は、ブラウザーによる取得を許可したHTTPSのSB3を指定します。
+Choose **Edit in TurboWarp-Plus-Editor** on the landing page to open the Editor. Open a local SB3 file from the Editor’s **File** menu. To open a URL, provide an HTTPS SB3 file that allows browser fetching.
 
 ```text
-https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&project_url=https%3A%2F%2Fexample.com%2Fstory.sb3
+https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en&project_url=https%3A%2F%2Fexample.com%2Fstory.sb3
 ```
 
-`project_url` はURLエンコードしてください。`lang=ja` と `lang=en` を指定できます。ランディング画面へ指定した作品URLや他のEditorパラメーターも、編集ボタンでエディターに引き継ぎます。
+URL-encode `project_url`. Both `lang=ja` and `lang=en` are supported. The edit button forwards the project URL and other Editor parameters supplied to the landing page.
 
 <a id="edit-button"></a>
-## 「TurboWarp-Plus-Editorで編集」ボタン
+## “Edit in TurboWarp-Plus-Editor” button
 
-既存のTurboWarp Plusブランドの青いベースを青色鉛筆で塗るSVGを、編集操作用のブランドバリエーションとして提供します。画像だけでなく操作名も表示し、キーボードでフォーカスできるリンクを使います。共通CSSは高さ56px以上、画像36px、明確なフォーカス表示を設定します。
+The edit icon is a brand variant of the existing blue TurboWarp Plus base, drawn over with a blue pencil. Display the action label alongside the image and use a keyboard-focusable link. The shared CSS provides a minimum height of 56px, a 36px image, and a visible focus indicator.
 
-HTMLページの `<head>` にスタイルシートを1回読み込み、ボタンを置きたい場所へ次を貼り付けます。
+Load the stylesheet once in the page’s `<head>`, then place the following link where you want the button:
 
 ```html
 <link rel="stylesheet"
       href="https://kubohiroya.github.io/turbowarp-plus-editor/assets/edit-button.css">
 
 <a class="twpe-edit-button"
-   href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&amp;project_url=https%3A%2F%2Fexample.com%2Fstory.sb3">
+   href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en&amp;project_url=https%3A%2F%2Fexample.com%2Fstory.sb3">
   <img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg"
        width="36" height="36" alt="" aria-hidden="true">
-  <span>TurboWarp-Plus-Editorで編集</span>
+  <span>Edit in TurboWarp-Plus-Editor</span>
 </a>
 ```
 
-新しい作品用のボタンは `project_url` を省略します。英語では `lang=en` と `Edit in TurboWarp-Plus-Editor` を使います。
+Omit `project_url` to create a new project. For Japanese, use `lang=ja` and `TurboWarp-Plus-Editorで編集`.
 
-通常版はアイコンと操作名を表示します。小サイズ版は `twpe-edit-button--small` を追加し、表示文言を「編集」、`title` と `aria-label` を「TurboWarp-Plus-Editorで編集」にします（英語は `Edit` / `Edit in TurboWarp-Plus-Editor`）。`title` がホバー時のツールチップです。
+The regular button shows the icon and action label. For a small button, add `twpe-edit-button--small`, use **Edit** as the visible text, and set both `title` and `aria-label` to **Edit in TurboWarp-Plus-Editor**. The Japanese equivalents are `編集` and `TurboWarp-Plus-Editorで編集`. The `title` supplies the hover tooltip.
 
 ```html
 <a class="twpe-edit-button twpe-edit-button--small"
-   href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja"
-   title="TurboWarp-Plus-Editorで編集" aria-label="TurboWarp-Plus-Editorで編集">
+   href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en"
+   title="Edit in TurboWarp-Plus-Editor" aria-label="Edit in TurboWarp-Plus-Editor">
   <img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg"
        width="24" height="24" alt="" aria-hidden="true">
-  <span>編集</span>
+  <span>Edit</span>
 </a>
 ```
 
-両サイズとも既定はOSの配色に追従（auto）します。`<html data-theme="light">` / `dark` で固定し、`auto` または属性の削除で自動へ戻せます。JavaScriptで生成する場合は `renderEditButton({size: 'small', language: 'ja', projectURL: 'https://example.com/story.sb3'})` を使います。省略時は通常版です。
+Both sizes follow the OS color scheme by default (`auto`). Set `<html data-theme="light">` or `dark` to fix the theme; use `auto` or remove the attribute to restore automatic selection. To generate a button in code, use `renderEditButton({size: 'small', language: 'en', projectURL: 'https://example.com/story.sb3'})`. The default size is regular.
 
-GitHub READMEは外部CSSを適用できないため、次の画像付きリンクを使用できます。
+GitHub READMEs cannot apply external CSS. Use an image link instead:
 
 ```html
-<a href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja">
+<a href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en">
   <img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg"
-       width="36" height="36" alt=""> TurboWarp-Plus-Editorで編集
+       width="36" height="36" alt=""> Edit in TurboWarp-Plus-Editor
 </a>
 ```
 
-既存GUIの機能フラグは変更しません。TurboWarp Plusの機能拡張一覧を試す場合は、EditorのURLへ `twPlusExtensions=1` を指定して起動します。外すか `0` へ戻して再読込すれば無効になります。ボタンに渡したこのパラメーターも保持します。
+The TurboWarp Plus extension catalog is available on ordinary Editor URLs. To use the legacy catalog path, reload with `twPlusExtensionLoader=0&twPlusExtensions=1`. Other GUI feature flags remain unchanged, and the button preserves supplied parameters.
 
-Issue #4 の拡張Loaderは、独立したLoaderコアと薄いGUI/VMアダプターで実装します。通常配信では、URLフラグなしでEmbedded/Remoteの検証・許可UIを利用できます（起動時固定・既定ON）。Plus作品のPackager操作はローカル出力画面へ進み、生成時と受け取り側の初回実行時に承認を確認します。`twPlusExtensionLoader=0` を指定して再起動するとLoaderを無効にできます。従来の `=1` も利用でき、不正値はOFFです。構成、検証、Desktopの制約、切戻しは [接続仕様](docs/extension-loader-integration.md) を参照してください。
+The extension loader from Issue #4 consists of an independent loader core and thin GUI/VM adapters. In the regular distribution, the Embedded/Remote validation and permission UI is enabled on ordinary launch URLs without a feature flag (fixed at startup, on by default). The Packager action for Plus projects opens the local output screen and checks approval both when generating the output and on the recipient’s first run. Reload with `twPlusExtensionLoader=0` to disable it. Explicit `=1` remains supported; invalid values disable it. See the [integration specification](docs/extension-loader-integration.md) for configuration, validation, Desktop limitations, and rollback.
 
-機能拡張一覧でEmbedded／Remoteを一括・個別設定するUIと、JSファイル・URLからの追加は [Issue #11の操作・開発ガイド](docs/extension-authoring-ui.md) を参照してください。追加UIは通常起動から利用できます（既定ON）。`twPlusExtensionLoader=0` で従来の追加処理へ戻せます。
+See the [Issue #11 authoring guide](docs/extension-authoring-ui.md) for bulk and individual Embedded/Remote settings in the extension catalog and for adding extensions from JS files or URLs. This UI is also on by default for ordinary launches; reload with `twPlusExtensionLoader=0` to restore the previous addition flow.
 
-## npmで利用する
+## Using the npm package
 
 ```sh
 npm install @kubohiroya/turbowarp-plus-editor
 ```
 
-```js
+```ts
 import {createEditorURL, renderEditButton} from '@kubohiroya/turbowarp-plus-editor';
 
 const url = createEditorURL({
-    language: 'ja',
+    language: 'en',
     projectURL: 'https://example.com/story.sb3',
     parameters: {fps: 60}
 });
-const html = renderEditButton({language: 'ja', projectURL: 'https://example.com/story.sb3'});
+const html = renderEditButton({language: 'en', projectURL: 'https://example.com/story.sb3'});
 ```
 
-ブランドSVG、ボタンCSS、URL/HTML生成関数、配信元の固定情報をnpmに含めます。巨大なGUI生成物はnpmへ同梱せず、固定情報を使ってPages用にビルドします。HTTP(S)以外の作品URLと未対応言語はURL生成関数が拒否します。
+The package includes the brand SVG, button CSS, URL/HTML helpers, and pinned distribution metadata. It ships compiled JavaScript and TypeScript declarations. The large GUI output is built for Pages from the pins rather than included in npm. URL helpers reject project URLs outside HTTP(S) and unsupported languages.
 
-## 開発と配信
+## Development and deployment
 
-Node.js 26を使用します。
+Use Node.js 26. All maintained JavaScript sources, build scripts, configurations, and tests are authored in TypeScript (`.ts`, or `.cts` for CommonJS). Node.js runs development scripts directly with native type stripping. Browser modules are emitted as JavaScript with esbuild, and npm entry points and declarations are compiled into `dist/` with TypeScript.
 
 ```sh
 npm ci
+npm run typecheck
+npm run build
 npm test
+npm run test:package
 E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
 TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
 E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 ```
 
-GUIとPackagerは `site/source.json` に記録したSHAをチェックアウトします。GUIの依存をインストールし、`node scripts/prepublish.mjs` で準備します。ビルドはGUIのSHA、実際にインストールされたdata-editorのSHA、security-dialogのバージョンが固定値と一致することを確認します。Pagesは統合検証に成功したmainから配信します。リリースのタグはnpmのバージョンと一致させます。
+`npm run build` produces the npm JavaScript and declarations; `npm pack` runs it automatically. `npm run build:test-driver` compiles the optional VSCode test extension before native VSCode checks.
 
-統合Editorの動作確認はこのリポジトリが担当します。既存の上流ライブラリの単体テストとGUIの機能フラグは維持します。新配信先の確認後、各参照先を移行し、旧data-editorのPagesを停止します。旧サイトへのリダイレクト配信は残しません。切戻しは直前のGUI固定SHA・サイト差分へのrevertと直前成果物の再配信で行います。
+Check out the GUI and Packager SHAs recorded in `site/source.json`. Install the GUI dependencies and prepare that upstream checkout with `node scripts/prepublish.mjs`. The build verifies the GUI SHA, installed data-editor SHA, and security-dialog version against the pins. Pages deploys from main after successful integration checks. Release tags must match the npm version.
 
-## 組み込み文書を編集する（0.2.0-rc.1）
+This repository verifies the integrated Editor. Existing upstream unit tests and GUI feature flags are preserved. After verifying the new distribution, migrate references and stop the former data-editor Pages site without leaving a redirect deployment. To roll back, revert to the previous GUI pin and site changes, then redeploy the previous artifact. To undo the TypeScript migration, revert its changes and restore the previous JavaScript sources and package configuration.
 
-[Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3)と[共通化Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6)に対応する試験公開機能です。起動時に `twPlusYamlEditor=1` を指定したEditorで有効になります。既定OFFです。Visual Studio CodeとNode.jsをインストールした環境で、ローカル補助プロセスからEditorを開きます。編集UIと外部エディタ連携は `@kubohiroya/turbowarp-document-editor` に分離し、scratch-guiフォークが直接組み込みます。TurboWarp-Plus-EditorはGUIの固定・ビルド・配信を担当します。原文文書の保存・文書参照・提供元登録は `@kubohiroya/turbowarp-document-data`、ハット・YAMLアイコン・共通YAMLブロックは独立した `@kubohiroya/turbowarp-document-source` に置きます。各拡張が文書を登録し、共通編集UIは所有者の検証と差分適用を呼び出します。標準のSB3ファイル保存はGUIが担当します。
+## Editing embedded documents (0.2.0-rc.1)
 
-紙芝居用の提供元はApp `4.0.0-rc.79` に置き、App所有の検証APIとSchemaを使用します。Editorのブラウザ用コードにはAppやそのparserを組み込みません。紙芝居では、新しい独立rootと名前付き文書を持つ作品が対象です。原文YAML・共通YAMLブロック・台本ブロックを表示・変換でき、既存の単一組み込み原文にも互換対応します。旧 `kamishibai` / `kamishibaiConfig` の作品はAppの `migrate-embedded-yaml` で別のSB3へ移行してから使用します。外部台本を開くメニューとコンパイル済みのみの作品は対象外です。
+This experimental feature tracks [Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3) and [shared-package Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6). It requires `twPlusYamlEditor=1` at Editor startup and is off by default. Install Visual Studio Code and Node.js, then open the Editor through the local companion process. The shared `@kubohiroya/turbowarp-document-editor` package owns the editing UI and external-editor bridge, and the scratch-gui fork embeds it directly. This distribution pins, builds, and serves the GUI. `@kubohiroya/turbowarp-document-data` owns source persistence, document references, and provider registration; the independent `@kubohiroya/turbowarp-document-source` package owns hats, YAML icons, and shared YAML blocks. Extensions register documents, and the shared UI delegates validation and document updates to their owners. The GUI handles standard SB3 file saving.
 
-準備済みのEditorビルドに機能を加え、ローカルで起動します。`build:pages`で新たにビルドした場合は、同じ追加処理を自動で実行します。
+The Kamishibai provider lives in App `4.0.0-rc.79` and uses the App’s validation API and schema. The Editor’s browser code does not embed the App or its parser. Supported Kamishibai projects have the new independent roots and named documents. They can display and convert source YAML, shared YAML blocks, and script blocks, with compatibility for the former single embedded source. Migrate older `kamishibai` / `kamishibaiConfig` projects into a separate SB3 using the App’s `migrate-embedded-yaml` first. External-script menus and projects containing only compiled data are outside this feature’s scope.
+
+Add the tools to a prepared Editor build and start it locally. A new `build:pages` build performs the same addition automatically.
 
 ```sh
 npm ci --ignore-scripts
@@ -133,36 +140,36 @@ npm run build:yaml-tools -- /absolute/path/to/editor/build
 npm run editor:yaml -- --site-dir /absolute/path/to/editor/build --data-dir /absolute/path/to/work-files
 ```
 
-共有パッケージは公開rcへ固定しています。VSCodeとの連携には、ビルド済みEditorを配信するローカル補助プロセスが必要です。npmパッケージからも次のように起動できます。
+Shared packages are pinned to published release candidates. VSCode integration requires the local companion serving a built Editor. It can also be launched from npm:
 
 ```sh
 npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor-yaml --site-dir /absolute/path/to/editor/build --data-dir /absolute/path/to/work-files
 ```
 
-GitHub Pages上では文書の表示・変換・検証を利用できます。VSCodeを起動する操作は、上記のローカルURLで開いた場合に利用できます。
+GitHub Pages supports document display, conversion, and validation. Launching VSCode is available when opening the local URL above.
 
-表示されたローカルURLを開くと、起動時固定の `twPlusYamlEditor=1` が有効になります。読み取り箇所はscratch-guiの `config/feature-flags.js` です。
+The displayed local URL enables the startup-fixed `twPlusYamlEditor=1` flag. Its reader is `config/feature-flags.js` in the scratch-gui fork.
 
-1. 組み込み文書のSB3をEditorで開き、「データソース」ハットブロックのファイルアイコンを押します。文書ダイアログのYAMLテキストタブで「外部エディタで編集」を選びます。
-2. 開いたYAMLを編集してVSCodeで保存します。
-3. Editorへ戻って、ダイアログ右下の「表示されている形式に変換して検証・保存」を押します。VSCodeで保存済みの作業コピーを読み、書式・アセット参照・プロジェクトの同一性を検証して、Editor内の文書と整合性情報へ反映します。
-4. 作品ファイルを残すには、Editor標準の「ファイル」メニューまたは「コンピューターに保存する」でSB3を保存します。ダイアログの「保存」ではファイルをダウンロードしません。画像・音声の格納方式は変わりません。
+1. Open an SB3 containing an embedded document and select the file icon on its **Data source** hat. In the YAML text tab of the document dialog, choose **Edit in external editor**.
+2. Edit the YAML and save it in VSCode.
+3. Return to the Editor and choose **Convert, validate and save the displayed format** at the lower right. It reads the saved VSCode working copy, validates its format, asset references, and project identity, and applies the document and consistency metadata in the Editor.
+4. Save the SB3 using the Editor’s standard **File** menu or **Save to your computer**. Saving in the document dialog does not download a file. Image and audio storage remains unchanged.
 
-ハットブロックは組み込みYAMLへの入口です。ドロップダウンにファイル名を表示し、SB3には提供元IDと文書IDの参照を持ちます。台本文字列をブロックの引数に複製しません。複数文書は同じファイル名でもIDで区別し、別文書へ移るときは、現在のダイアログを「保存」または「キャンセル」で閉じます。実際の文書取得・検証・更新は、その文書を所有する提供元に委ねます。紙芝居以外にも同じ仕組みを利用できます。今回のローカルApp実装でハットブロックを付けたSB3が対象です。旧Appで生成されたハットのないSB3へ、Editorから未知のブロックや拡張コードを自動挿入することはありません。文書の提供元が変換能力を登録すると、同じダイアログから原文ファイル・共通YAMLブロック・スキーマ専用ブロックを変換できます。
+The hat is the entry point to embedded YAML. Its dropdown shows the filename, while the SB3 stores a provider ID and document ID reference rather than duplicating the script text in a block argument. IDs distinguish documents even when filenames match. Save or cancel the current dialog before switching documents. The owning provider handles retrieval, validation, and updates; the same mechanism works beyond Kamishibai. Supported SB3s contain hats added by the current App implementation. The Editor does not automatically inject unknown blocks or extension code into older hatless SB3s. When a provider registers conversion capabilities, the same dialog can convert between source files, shared YAML blocks, and schema-specific blocks.
 
-提供元は任意の `schema: {id, schema}` を文書ごとに指定できます。ローカル連携は所有者のSchemaと関連付けを作業フォルダへ保存し、YAML本文には設定用のコメントを挿入しません。Schema付き文書を初めて開くと、専用拡張領域へ公式のRed Hat YAML拡張 `redhat.vscode-yaml@2.0.0` を取得します。既存VSCodeの設定・拡張一覧は変更しません。初回取得には通信が必要です。Schemaがない文書は従来どおり所有者の検証で取り込みます。
+Providers may attach `schema: {id, schema}` to each document. Local integration writes the owner’s schema and associations to the working directory without inserting configuration comments into the YAML. The first opening of a document with a schema downloads the official Red Hat YAML extension, `redhat.vscode-yaml@2.0.0`, into a private extensions directory. Existing VSCode settings and extensions remain unchanged. The initial download requires network access. Documents without schemas continue to use owner validation when importing.
 
-VSCode側の補完と診断には[Red Hat YAMLのSchema関連付け](https://github.com/redhat-developer/vscode-yaml#associating-schemas)を使用します。紙芝居では生の台本を扱う編集用Schemaを供給し、取り込み時にはAppの構文・意味・アセット参照・実行データ整合性も検証します。
+VSCode completion and diagnostics use [Red Hat YAML schema associations](https://github.com/redhat-developer/vscode-yaml#associating-schemas). Kamishibai provides an authoring schema for raw scripts; import also checks App syntax, semantics, asset references, and runtime-data consistency.
 
-補助プロセスはこのローカルEditorからの認証付き操作だけを受け付けます。VSCodeには専用の作業ファイルと独立した設定領域を渡し、既存のウィンドウ・設定・拡張機能を変更しません。保存済みの作業ファイルは、接続終了やプロセス停止後も保持します。実行するコマンドや任意のローカルパスをWeb側から指定する機能はありません。
+The companion accepts only authenticated operations from its local Editor. VSCode receives dedicated working files and an isolated settings area, preserving existing windows, settings, and extensions. Saved working files remain after sessions close or the process stops. The web interface cannot specify executable commands or arbitrary local paths.
 
-YAMLが不正な場合や別作品へ切り替えた場合は、古い内容を上書きしません。反映できなかった草稿はVSCodeの作業ファイルに保持します。右上のXと「キャンセル」は、ダイアログ内の候補を破棄してEditorを書き換えずに閉じます。作業ファイルは削除しません。台本に新しいアセット参照を追加する操作は、既存のアセット一式で検証できる範囲に限ります。
+Invalid YAML and project switches do not overwrite the previous content. Drafts that could not be applied remain in VSCode’s working files. **X** and **Cancel** discard dialog candidates and close without changing the Editor or deleting working files. New script asset references must validate against the project’s existing asset set.
 
-macOSの内部通信パス上限を超える保存先では、作業ファイルを移動せず、VSCode設定領域だけを短い専用ディレクトリへ自動分離します。実際の保存先は作業領域の `host.json` に記録します。
+If a storage path exceeds macOS IPC path limits, only the VSCode settings area moves automatically into a short private directory; working files stay in place. The working area’s `host.json` records the actual locations.
 
-切戻しはフラグを外して再起動し、必要に応じて直前の検証済み版へ戻します。補助プロセスを停止しても作業ファイルは保持します。
+To roll back, remove the flag and restart; restore the previous verified version if needed. Stopping the companion preserves working files.
 
-関連検証:
+Relevant checks:
 
 ```sh
 npm run test:yaml
@@ -172,59 +179,53 @@ TWPE_YAML_FIXTURE=/absolute/path/to/tutorial-4.0.sb3 \
 TWPE_YAML_EVIDENCE=/absolute/path/to/evidence \
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
 npm run test:yaml:roundtrip
-# 非紙芝居2文書fixtureも同じ環境変数で検証できます。
-node --test test/yaml-multi-document.browser.mjs
+# The same environment variables support the non-Kamishibai two-document fixture.
+node --test test/yaml-multi-document.browser.ts
 ```
 
-自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
+Automated browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
 
-### 原文・共通YAMLブロック・スキーマ専用ブロック
+### Source, shared YAML blocks, and schema-specific blocks
 
-原文ファイル、キー・配列・値・コメントを表す共通YAMLブロック、紙芝居などのスキーマ専用ブロックを、同じ文書の3つの表現として扱います。原文を意味と変換の基準とし、ブロックを編集中はその内容もEditorの編集状態へ保持します。別のブロック表現へ移るときは、現在の編集を原文へ反映した上で変換する処理を、一つの保存操作の中で行います。変換先を選ぶだけでは作品を書き換えません。初期タブは現在の保存済み表現です。プレビューの上に「💽=保存済み形式」を表示します。別のタブで「保存」を押すと変換確認を表示し、OKで検証・変換してEditorへ反映します。Cancelは選択を保持してダイアログへ戻ります。Xと「キャンセル」は同じ取消操作です。未反映のブロックを原文から再生成して上書きする操作は拒否します。
+Source files, shared YAML blocks representing keys/arrays/values/comments, and schema-specific blocks such as Kamishibai scripts are three representations of the same document. Source is the reference for meaning and conversion, while block edits are retained in Editor state. Switching to another block representation applies the current edits to source before converting, within one save operation. Selecting a conversion target alone does not change the project. The initial tab is the currently stored representation; the label above the preview identifies it with 💽. Saving another tab asks for confirmation; **OK** validates, converts, and applies it to the Editor. **Cancel** returns to the dialog with the selection retained. **X** and **Cancel** perform the same cancellation. Regeneration from source is rejected when it would overwrite unapplied block edits.
 
-各タブには、その形式のプレビューを表示します。原文タブはテキスト、ブロックのタブは読み取り専用のScratchBlocksを表示し、表示だけでは作品を書き換えません。ブロックは移動・編集できず、スクロールと拡大縮小で確認できます。💽はEditor内で現在保存されている形式を表し、SB3ファイルをダウンロードしたことを表すものではありません。
+Each tab previews its format: text for source, read-only ScratchBlocks for block representations. Viewing does not change the project. Preview blocks cannot be moved or edited, but scrolling and zooming are available. 💽 identifies the representation currently stored in the Editor, not a downloaded SB3 file.
 
-共通YAMLブロックはコメントを1行ずつ、複数行の文字列を行と改行種別のブロックで扱います。標準の文字入力欄で改行が失われるのを防ぎます。未編集の原文は改行・引用符・コメントをそのまま保持します。編集した部分の出力書式は所有者とYAMLライブラリが決定します。JSONではコメントを許可しません。
+Shared YAML blocks represent comments one line at a time and multiline strings as line and line-break-kind blocks, avoiding newline loss in standard text fields. Unedited source preserves line breaks, quotes, and comments. The owner and YAML library determine formatting for edited content. JSON does not allow comments.
 
-- `turbowarp-yaml-json`: YAML/JSONの解析・出力、原文構文、Schema検証。
-- `turbowarp-document-data`: 原文・Schema・文書参照・提供元登録とSB3への永続化。
-- `turbowarp-structured-data`: 原文から実行時の値を生成する一時的な投影。原文を書き換えません。
-- `turbowarp-document-source`: 共通ハット・共通ブロック・変換候補と適用の契約。
-- 各App: DSL専用の検証、台本ブロック変換、実行データの再生成。
-- turbowarp-document-editor: 操作ダイアログ、外部エディタ連携、プレビューと保存の操作。
-- scratch-guiフォーク: 共通編集UIの組み込み、VM・Blockly接続、標準SB3ファイル保存。
-- TurboWarp-Plus-Editor: GUIの固定・ビルド・配信。
+- `turbowarp-yaml-json`: YAML/JSON parsing and serialization, source syntax, and schema validation.
+- `turbowarp-document-data`: Source, schemas, document references, provider registration, and SB3 persistence.
+- `turbowarp-structured-data`: Temporary projections from source into runtime values, without rewriting source.
+- `turbowarp-document-source`: Shared hats and blocks, conversion candidates, and application contracts.
+- Each App: DSL-specific validation, script-block conversion, and runtime-data regeneration.
+- `turbowarp-document-editor`: Dialogs, external-editor integration, previews, and document-save operations.
+- The scratch-gui fork: Shared UI mounting, VM/Blockly integration, and standard SB3 file saving.
+- TurboWarp-Plus-Editor: GUI pinning, builds, and distribution.
 
-非紙芝居の原文文書はYAMLとJSONを利用でき、HTML/Markdownの既存APIは維持します。下位の文書形式判定を担当する `turbowarp-named-data` にもYAML/JSONを追加します。構造化データの既存の限定Schema解釈と、文書の完全なJSON Schema検証は別の契約として維持します。
+Non-Kamishibai source documents support YAML and JSON while preserving existing HTML/Markdown APIs. YAML/JSON detection is also added to the lower-level `turbowarp-named-data` package. The limited schema interpretation for structured data remains a separate contract from complete JSON Schema document validation.
 
-新しい文書保存・投影・表現変換は既定OFFです。対応するApp rc.79では `twPlusYamlEditor=1` によりEditorと提供元の文書操作を同じ起動条件で有効にします。各文書の変換能力は所有者が提供し、未対応の拡張へ変換機能を追加することはありません。旧ブロック台本に元のモジュールYAMLが保存されていない場合、コメント等を含む元ファイルを復元したとは扱いません。
+New document persistence, projections, and representation conversion are off by default. In App rc.79, `twPlusYamlEditor=1` enables Editor and provider document operations under the same startup condition. Owners supply each document’s conversion capabilities; unsupported extensions do not acquire conversion automatically. If an older block script has no stored original module YAML, conversion does not claim to restore the original file and its comments.
 
-「ガイドを参照」は提供元のWebサイトを別タブで開きます。独立した検証ボタンは置かず、右下の「表示されている形式に変換して検証・保存」で表示中の形式を検証して反映します。ブロック表現を編集中のVSCode操作は、原文へ反映するまで無効になります。原文がJSONの場合、VSCode標準のJSON支援とSchema関連付けを使います。
+**View guide** opens the provider’s website in another tab. There is no separate validation button: **Convert, validate and save the displayed format** validates and applies the displayed format. VSCode actions are disabled while block edits await application to source. JSON source uses VSCode’s standard JSON support and schema associations.
 
-## English
+## License and author
 
-TurboWarp-Plus-Editor is an independent editor distribution by Hiroya Kubo. This downstream package builds the pinned `kubohiroya/scratch-gui` fork, verifies its library versions and integration, and deploys it to GitHub Pages. The upstream libraries do not build the GUI.
+License: GPL-3.0-or-later. See the individual licenses and NOTICE files for the integrated GUI and bundled components.
 
-Use the landing page to create a project, open an SB3 URL, or continue to the editor and open a local file. Embed the SVG edit icon with the visible label **Edit in TurboWarp-Plus-Editor** and `assets/edit-button.css`; use `lang=en` and an encoded `project_url`. The snippet above preserves the work’s URL and provides a large keyboard-accessible action.
+Author: [Hiroya Kubo](https://github.com/kubohiroya)
 
-## ライセンス・製作者
+## Block icon previews
 
-ライセンス: GPL-3.0-or-later。統合GUIと同梱物については各ライセンス・NOTICEも参照してください。
+[Open the App rc.77 preview sample](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en&twPlusBlockPreview=1&twPlusYamlEditor=1&project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-plus-editor%2Fsamples%2Fblock-preview%2Fblock-preview-rc77.sb3) to open the stage’s **Code** tab automatically and show the first scene. Try the two scenes covering placement and movement/speech bubbles. An [interactive guide](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/?lang=en) and [SB3 download](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/block-preview-rc77.sb3) are also available. The authored YAML and SVG files in `site/samples/block-preview/` are the source of truth; `build:pages` regenerates the sample from the published App rc.77. The deployed `metadata.json` records source, runtime, and SB3 hashes, which the Pages artifact gate verifies.
 
-製作者: [Hiroya Kubo](https://github.com/kubohiroya)
+[Open the Editor with previews enabled](https://kubohiroya.github.io/turbowarp-plus-editor/?lang=en&twPlusBlockPreview=1&twPlusYamlEditor=1). Previews are off by default and support projects with scene/action blocks in the App rc.79 editing runtime. Features include hover stills, scene playback, actor dragging, and live moveTo/Bubble playback. See the [usage guide](docs/block-icon-preview.md) for operations and existing-project compatibility.
 
-## ブロックアイコンのプレビュー
+## Local data-source migration candidate
 
-[App rc.77のプレビュー体験サンプルを開く](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&twPlusBlockPreview=1&twPlusYamlEditor=1&project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-plus-editor%2Fsamples%2Fblock-preview%2Fblock-preview-rc77.sb3)と、ステージの「コード」タブが自動的に開き、先頭のsceneが表示されます。配置と動き・吹き出しの2シーンをそのまま試せます。[操作ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/)・[SB3ダウンロード](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/block-preview-rc77.sb3)も公開しています。正本は`site/samples/block-preview/`のYAML・SVGで、公開済みApp rc.77から`build:pages`時に再生成します。生成元・runtime・SB3のハッシュを配信`metadata.json`に記録し、Pagesの成果物チェックで照合します。
+Launching with `twPlusYamlEditor=1&twPlusDocumentSource=1` enables **File inside SB3** and **External URL** source choices for compatible document providers. Source location is separate from the YAML text, YAML blocks, and script-block representations. Document names and references are preserved. The generic label is **Data source**; the Kamishibai provider supplies its own script-data label.
 
-[プレビューを有効にしてEditorを開く](https://kubohiroya.github.io/turbowarp-plus-editor/?twPlusBlockPreview=1&twPlusYamlEditor=1)。既定OFFで、App rc.79の編集用runtimeとscene/actionを持つ作品が対象です。hover静止画、scene再生、アクターのドラッグ配置、moveTo/Bubbleのライブ再生に対応します。操作・既存作品の扱いは[利用案内](docs/block-icon-preview.md)を参照してください。
+After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. The App fetches URL content again at runtime startup and does not silently fall back to stale cached data on failure.
 
-## データソース4形式のローカル移行候補
+The new flag is off by default. It is read in the scratch-gui fork’s `config/feature-flags.js` and the App’s `src/dsl4/document-source.ts`. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
 
-`twPlusYamlEditor=1&twPlusDocumentSource=1` を起動時に指定すると、互換性を持つ提供元の文書で「SB3内のファイル」「外部URL」を選択できます。参照元とYAMLテキスト/YAMLブロック/台本ブロックの表現を分けて扱います。文書の名前とreferenceは保持されます。汎用の表示名は「データソース」、紙芝居の提供元は「紙芝居台本データ」を指定します。
-
-参照元変更後は取得してプレビューし、画面下の保存で同じ検証済み候補を反映します。キャンセルは作品を変更しません。外部URLはCORSで取得できるHTTPSを指定します。外部の内容を編集・ブロック化するには、参照元を「SB3内のファイル」へ変更・保存して取り込みます。遠隔サイトへの書き戻しは行いません。Appは実行開始時にURLの内容を再取得し、失敗時に古いcacheへ黙って戻りません。
-
-新フラグは既定OFFです。読取箇所はscratch-guiの `config/feature-flags.js`、App側は `src/dsl4/document-source.ts`。切戻しは新フラグを外して再起動し、元SB3を利用します。現在の依存はローカル候補への参照であり、公開版への参照更新・新npm/リポジトリの公開は別途行います。
-
-この候補は、直前の未公開UI修正（プレビューの重なり表示防止、タブ内の保存形式表示、外部エディタのフローティングボタン、ガイド/Schemaリンク）を引き継いでいます。
+This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.

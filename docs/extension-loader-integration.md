@@ -18,7 +18,7 @@ Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/
 
 ## 起動と信頼境界
 
-通常起動（フラグ未指定）では既定ONとなる。`twPlusExtensionLoader=1` もON、`=0` および不正値はOFFとなる。起動後のURL変更から有効化せず、作品の設定を起動フラグとして使わない。Editor公開APIの読取は `config/feature-flags.js`、GUIの接続は `startupPlusExtensionHost` が担当する。既定ONで、従来の `twPlusExtensions` とは独立している。
+通常起動（フラグ未指定）では既定ONとなる。`twPlusExtensionLoader=1` もON、`=0` および不正値はOFFとなる。起動後のURL変更から有効化せず、作品の設定を起動フラグとして使わない。Editor公開APIの読取は `config/feature-flags.ts`、GUIの接続は `startupPlusExtensionHost` が担当する。既定ONで、従来の `twPlusExtensions` とは独立している。
 
 ホストが静的に組み込んだLoader、UI、VM registrarを接続する。作品からLoader・認可ポリシーを取得しない。coreが検証したexact bytesと取得元をUIへ渡し、id・取得元・発行者の未検証の申告・version・digest・unsandboxed要求・capabilityを表示する。拒否・Esc・閉じる・abortは拒否となる。承認はホストセッション内で要求の全情報に束縛し、破棄時に失効する。明示的な外部ホストポリシーをUI前に適用し、拒否をユーザー操作で上書きしない。
 
@@ -63,7 +63,7 @@ E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" \
 TW_PLUS_PACKAGER_ROOT="$PWD/.host/packager-issue4" \
 NODE_OPTIONS=--max-old-space-size=6144 npm run build:pages
 
-E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" node test/e2e/extension-loader/prepare-packaged.mjs
+E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" node test/e2e/extension-loader/prepare-packaged.ts
 
 E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" npm run test:e2e:extension-loader
 node --test .host/scratch-gui-issue4/test/unit/extension-loader/*.test.mjs
@@ -72,7 +72,7 @@ npm test
 npm run test:extension-loader:desktop
 ```
 
-新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderとVMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.mjsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定ONを記録し、プレビューのみ作業ツリー情報も追加する。
+新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderとVMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.tsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定ONを記録し、プレビューのみ作業ツリー情報も追加する。
 
 検証証跡は `test-results/extension-loader/results.json`、`.host/issue-4-artifacts/*tests.log`、`desktop-result.json` とDesktop screenshots。Embedded/Remote実行、拒否・Esc・改ざん・未知schema・信頼偽装・ID不一致、real TLSのCORS/redirect拒否、CSP、cache offline、URL/ローカルファイル、公式Bitwise/標準Pen、従来カスタム拡張の回帰を検証する。悪意あるZIP・キャッシュ汚染/失効・変換・compiler実行はcore/実VMの単体テストで検証する。
 
