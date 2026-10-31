@@ -32,5 +32,5 @@ export async function buildExtensionAssets(gui, pins) {
     return {loaderRepository: pins.loaderRepository, loaderRevision: pins.loaderRevision,
         vmRepository: pins.vmRepository, vmRevision: pins.vmRevision,
         packagerRepository: pins.packagerRepository, packagerRevision: pins.packagerRevision,
-        featureDefault: false, assets, scaffolding};
+        featureDefault: true, assets, scaffolding};
 }

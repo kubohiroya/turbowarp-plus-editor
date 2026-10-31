@@ -9,7 +9,7 @@ const executions = page => page.evaluate(() => globalThis.__plusFixtureStarted |
 
 async function open(page, {enabled = true, projectBytes} = {}) {
     const query = new URLSearchParams({lang: 'ja'});
-    if (enabled) query.set('twPlusExtensionLoader', '1');
+    if (!enabled) query.set('twPlusExtensionLoader', '0');
     if (projectBytes) query.set('project_url', `data:application/octet-stream;base64,${projectBytes.toString('base64')}`);
     await page.goto(`editor.html?${query}`);
     await page.waitForFunction(() => globalThis.vm && globalThis.vm.runtime);
@@ -161,7 +161,7 @@ test('CSP forbidding dynamic evaluation rejects approved execution without regis
     expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(false);
 });
 
-test('default-off Editor does not activate Plus bootstrap for a self-declared trusted project', async ({page}) => {
+test('explicit opt-out does not activate Plus bootstrap for a self-declared trusted project', async ({page}) => {
     await open(page, {enabled: false});
     const result = await load(page, await project());
     expect(result.ok).toBe(false);

@@ -1,10 +1,10 @@
 # 機能拡張一覧でEmbedded／Remoteを設定する
 
-追跡: [Editor Issue #11](https://github.com/kubohiroya/turbowarp-plus-editor/issues/11)。Issue #4のLoader・許可UI・SB3保存・単一HTML出力を、既存の機能拡張選択画面へ接続します。公開Editorでも起動時フラグを明示した場合に利用でき、通常起動では既定OFFです。配信する依存実装は完全SHAで固定します。
+追跡: [Editor Issue #11](https://github.com/kubohiroya/turbowarp-plus-editor/issues/11)。Issue #4のLoader・許可UI・SB3保存・単一HTML出力を、既存の機能拡張選択画面へ接続します。公開EditorでもURLフラグなしの通常起動で利用でき、既定ONです。配信する依存実装は完全SHAで固定します。
 
 ## 一覧からの操作
 
-1. この変更を含むEditorを `editor.html?lang=ja&twPlusExtensionLoader=1` で起動します。フラグは起動時固定・既定OFFです。
+1. この変更を含むEditorを `editor.html?lang=ja` で起動します。追加機能は起動時固定・既定ONで、URLフラグは不要です。
 2. 左下の「拡張機能を追加」ボタンを押し、「TurboWarp Plus」を選びます。Loader有効時は、この一覧を開くために別の `twPlusExtensions` フラグを指定する必要はありません。
 3. 必要なパッケージをチェックします。チェックしていないパッケージは追加対象外で、実行方法・配布方式の個別操作も無効です。依存パッケージは自動選択され、必要とするパッケージを表示します。依存先を外すには、必要としているパッケージのチェックを解除します。読み込み済みのパッケージはチェック済みで、現在の実行モードと配布方式を表示します。
 4. サンドボックスあり／なしと、Embedded／Remoteを、それぞれ独立して選びます。一括操作で全パッケージの配布方式を設定し、個別の行で上書きできます。サンドボックスなし必須のパッケージでは、サンドボックスありを選べません。
@@ -12,6 +12,8 @@
 6. 「ファイル」から通常どおりSB3を保存します。同じフラグ付きEditorで開き直すと、Embedded／Remote・実行モード・SHA-256・EmbeddedのJSを復元します。一覧を開き直した際も、読み込み済みのチェック・実行モード・配布方式が復元されます。
 7. 「ファイル」→「プロジェクトをパッケージ化する」で単一HTML出力画面へ進みます。外部依存がないことを確認してチェックを入れ、「確認してHTMLを生成」を押します。拡張を承認し、HTMLをダウンロードします。
 8. HTMLを開いた人にも実行許可を確認します。Remoteコードも生成時に検証・同梱し、サンドボックスあり／なしを維持します。外部依存のない作品はオフラインで動作します。
+
+一括指定は通常背景、個別の見出し・一覧は灰色背景で表示します。まず一括指定し、必要な拡張について個別設定で上書きできます。
 
 追加一覧の実行方法はサンドボックスあり／なしの2択です。「拒否」のラジオや一括ボタンは置かず、チェック解除で追加対象から外します。一括設定は、未選択のパッケージにも後で選択した際の設定として適用できます。作品を開く際やコード実行前の許可確認では、引き続き拒否できます。
 
@@ -69,7 +71,7 @@ E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" E2E_PORT=8744 \
   node test/e2e/turbowarp/serve.cjs
 ```
 
-起動後は `http://127.0.0.1:8744/turbowarp-plus-editor/editor.html?lang=ja&twPlusExtensionLoader=1` を開きます。プレビュービルドは実際のGUI・Loader・VM・Security Dialog・Editorの作業ツリーhashと `published: false` を記録します。対象の自動検証は次のコマンドで実行します。ブラウザーE2Eは専用サーバーを起動するため、手動の8744サーバーは終了してから実行してください。
+起動後は `http://127.0.0.1:8744/turbowarp-plus-editor/editor.html?lang=ja` を開きます。プレビュービルドは実際のGUI・Loader・VM・Security Dialog・Editorの作業ツリーhashと `published: false` を記録します。対象の自動検証は次のコマンドで実行します。ブラウザーE2Eは専用サーバーを起動するため、手動の8744サーバーは終了してから実行してください。
 
 ```sh
 (cd .host/scratch-gui-issue4 && npm run test:plus-extension-loader)
@@ -82,7 +84,7 @@ E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" npm run test:e2e:extension-loader
 
 ## 開発時の検証記録（2026-10-30）
 
-- 最終プレビュービルド成功。公開用の固定SHAと既定OFFは維持しています。
+- 最終プレビュービルド成功。当時の公開用の固定SHAと既定OFFを維持して検証しました（現在は既定ONです）。
 - Loader単体74件、GUI接続72件、VM所有境界17件、Editor単体14件・基盤33件が成功しました。Security Dialogは既存61件と追加のloaded-deny境界1件が成功しています。
 - 初期実装のブラウザーE2E26件が成功しました。追加11件と既存15件を同じビルドで実行しています。一覧からの4組合せ、複数選択の途中拒否、実SB3保存・再読込、読み込み済み状態の復元、実行モードの往復、従来native経路からの移行を含みます。
 - 配信資産と同じPackagerから実際に単一HTMLを生成し、file URL・オフラインで再承認と実ブロック実行を確認しました。sandboxedは `allow-scripts` だけのiframe、`Scratch.vm`なし。HTTP(S)通信は0件です。
@@ -94,4 +96,4 @@ E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" npm run test:e2e:extension-loader
 
 ## 切戻し
 
-フラグを外すか `twPlusExtensionLoader=0` にして再起動すると追加UIは無効です。従来のカタログだけを使う場合は `twPlusExtensions=1` を指定できます。元SB3とローカル成果を保持します。配信を戻す場合は、対応する旧GUI・Loader・VM・Security Dialogの固定SHAとビルド経路をまとめて戻します。
+`twPlusExtensionLoader=0` を指定して再起動すると追加UIは無効です。既定OFFへ戻す配信切戻しは既定ON変更をrevertし、対応するGUI固定を戻してCI後に再配信します。従来のカタログだけを使う場合は `twPlusExtensionLoader=0&twPlusExtensions=1` を指定できます。元SB3とローカル成果を保持します。配信を戻す場合は、対応する旧GUI・Loader・VM・Security Dialogの固定SHAとビルド経路をまとめて戻します。

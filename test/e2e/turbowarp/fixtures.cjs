@@ -120,7 +120,10 @@ const approveProjectExtensions = async (page, sources, locale = 'ja') => {
     await expect(security).toHaveCount(0);
     // Verify the actual loaded sources through project serialization after approval.
     await expect.poll(() => page.evaluate(async () => {
-        const urls = Object.values(JSON.parse(vm.toJSON()).extensionURLs || {});
+        let project;
+        try { project = JSON.parse(vm.toJSON()); }
+        catch (error) { if (error.code === 'PROJECT_BUSY') return null; throw error; }
+        const urls = Object.values(project.extensionURLs || {});
         return (await Promise.all(urls.map(async url => (await fetch(url)).text()))).sort();
     })).toEqual([...sources].sort());
 };

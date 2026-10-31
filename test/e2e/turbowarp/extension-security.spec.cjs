@@ -90,6 +90,17 @@ test('direct editor URLs use shared security without adding a startup switch', a
     expect(await executions(page)).toBe(0);
 });
 
+const expectBulkAsPrimary = async page => {
+    const colors = await dialog(page).evaluate(node => {
+        const color = selector => getComputedStyle(node.querySelector(selector)).backgroundColor;
+        return {body: color('.twextsec-body'), bulk: color('.twextsec-bulk'),
+            individualHeading: color('.twextsec-columns'), individualList: color('.twextsec-list')};
+    });
+    expect(colors.bulk).toBe(colors.body);
+    expect(colors.individualHeading).toBe(colors.individualList);
+    expect(colors.individualList).not.toBe(colors.bulk);
+};
+
 for (const language of ['ja','en']) {
     test(`shared security from ${language} entry requires approval and retains bundle metadata`, async ({page,evidence}) => {
         evidence.stage('shared-security-approve');
@@ -170,6 +181,7 @@ for (const language of ['ja','en']) {
         const rows=dialog(page).locator('article');
         await expect(rows).toHaveCount(2);
         await expect(dialog(page).locator('.twextsec-bulk')).toBeVisible();
+        await expectBulkAsPrimary(page);
         expect(await dialog(page).locator('.twextsec-bulk button').evaluateAll(items=>items.map(item=>item.value)))
             .toEqual(['deny','sandboxed','unsandboxed']);
         await expect(dialog(page).locator('.twextsec-bulk button:enabled')).toHaveCount(3);

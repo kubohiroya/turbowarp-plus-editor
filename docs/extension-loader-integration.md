@@ -14,11 +14,11 @@ Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB
 | data-editor | npm `0.6.0` / source `91533dbbffa9eb9d3b50be8084b85dae5184f9dc` | 共通フォーム・固定入力・プレビュー登録API |
 | security-dialog | npm `0.3.3` | 既存UI・通常カスタム拡張の方針を維持 |
 
-Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderとVMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` は、ともにマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定OFF・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
+Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderとVMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` は、ともにマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定ON・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
 
 ## 起動と信頼境界
 
-`twPlusExtensionLoader=1` の完全一致だけで起動する。起動後のURL変更から有効化せず、作品の設定を起動フラグとして使わない。Editor公開APIの読取は `config/feature-flags.js`、GUIの接続は `startupPlusExtensionHost` が担当する。既定OFFで、既存の `twPlusExtensions` とは独立している。
+通常起動（フラグ未指定）では既定ONとなる。`twPlusExtensionLoader=1` もON、`=0` および不正値はOFFとなる。起動後のURL変更から有効化せず、作品の設定を起動フラグとして使わない。Editor公開APIの読取は `config/feature-flags.js`、GUIの接続は `startupPlusExtensionHost` が担当する。既定ONで、従来の `twPlusExtensions` とは独立している。
 
 ホストが静的に組み込んだLoader、UI、VM registrarを接続する。作品からLoader・認可ポリシーを取得しない。coreが検証したexact bytesと取得元をUIへ渡し、id・取得元・発行者の未検証の申告・version・digest・unsandboxed要求・capabilityを表示する。拒否・Esc・閉じる・abortは拒否となる。承認はホストセッション内で要求の全情報に束縛し、破棄時に失効する。明示的な外部ホストポリシーをUI前に適用し、拒否をユーザー操作で上書きしない。
 
@@ -72,7 +72,7 @@ npm test
 npm run test:extension-loader:desktop
 ```
 
-新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderとVMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.mjsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定OFFを記録し、プレビューのみ作業ツリー情報も追加する。
+新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderとVMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.mjsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定ONを記録し、プレビューのみ作業ツリー情報も追加する。
 
 検証証跡は `test-results/extension-loader/results.json`、`.host/issue-4-artifacts/*tests.log`、`desktop-result.json` とDesktop screenshots。Embedded/Remote実行、拒否・Esc・改ざん・未知schema・信頼偽装・ID不一致、real TLSのCORS/redirect拒否、CSP、cache offline、URL/ローカルファイル、公式Bitwise/標準Pen、従来カスタム拡張の回帰を検証する。悪意あるZIP・キャッシュ汚染/失効・変換・compiler実行はcore/実VMの単体テストで検証する。
 
@@ -80,11 +80,11 @@ npm run test:extension-loader:desktop
 
 起動パラメーターを外すか0にして再起動すればOFFへ戻る。終了時はhost.disposeを待って登録を解除し、rollback/unload失敗時はVMを破棄する。Plus作品を保持非対応の状態で上書き保存しない。
 
-通常配信は統合GUIの固定SHAへ切り替え、機能フラグは既定OFFを維持する。通常CIは既存24件と拡張15件のブラウザーE2E成功後だけ成果物を公開可能にする。公開後も固定された出所を照合して同じE2Eを実行し、単一HTMLのテストは配信されたbuilderから実際に生成したHTMLを使う。通常配信の切戻しは今回の切替コミット全体をrevertし、固定情報と対応するビルド/CI経路を一緒に以前の状態へ戻す。旧GUIへのpin変更だけでは新しいPackager資産の生成条件と一致しないため、単独では行わない。既定OFFまたはURLの0指定で拡張ロードを停止できる。検証済み成果物は通常のCI/Pages経路で再配信する。npm公開は本作業に含めない。
+通常配信は統合GUIの固定SHAへ切り替え、機能フラグはユーザーの明示指示により既定ONとする。通常CIは既存24件と拡張15件のブラウザーE2E成功後だけ成果物を公開可能にする。公開後も固定された出所を照合して同じE2Eを実行し、単一HTMLのテストは配信されたbuilderから実際に生成したHTMLを使う。通常配信の切戻しは今回の切替コミット全体をrevertし、固定情報と対応するビルド/CI経路を一緒に以前の状態へ戻す。旧GUIへのpin変更だけでは新しいPackager資産の生成条件と一致しないため、単独では行わない。URLの `twPlusExtensionLoader=0` 指定で再起動すると拡張ロードを停止できる。既定OFFへ戻す場合は既定ON変更をrevertして対応するGUI固定を戻す。検証済み成果物は通常のCI/Pages経路で再配信する。npm公開は本作業に含めない。
 
 ## Issue #11の追加UI（起動時フラグで有効化）
 
-既存Security Dialogの機能拡張一覧に、全パッケージ一括／個別のEmbedded・Remote設定と実行モードを接続します。読み込み済みのチェック・実際の実行モード・保存された配布方式を復元します。Loaderの起動フラグは既定OFFを維持します。
+既存Security Dialogの機能拡張一覧に、全パッケージ一括／個別のEmbedded・Remote設定と実行モードを接続します。読み込み済みのチェック・実際の実行モード・保存された配布方式を復元します。Loaderは通常起動で既定ONです。`twPlusExtensionLoader=0` でOFFへ戻せます。
 
 追加実装はsandboxed／unsandboxedの4組合せに対応します。VM所有portのiframe経路は、検証済みJSを隔離実行し、ID・RPC応答・worker/service所有権を検査します。標準のlegacy経路で既に読み込んだ拡張も、所有権を一時detachしてからPlus登録へ移し、登録失敗時は元の状態へ復元します。旧resourceの不可逆なdispose後に失敗した場合は、元SB3を保存して回復するよう案内します。
 

@@ -73,7 +73,7 @@ jobs:
           E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
           E2E_EXPECT_SITE_REVISION: ${{ github.sha }}
         run: npm run test:e2e:block-editor
-      - name: Verify extension loader, default-off behavior and offline HTML output
+      - name: Verify extension loader defaults, opt-out and offline HTML output
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}

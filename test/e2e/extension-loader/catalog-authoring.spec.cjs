@@ -55,7 +55,7 @@ async function installFixtures(context) {
 }
 
 async function openEditor(page, enabled = true) {
-    await page.goto(`editor.html?lang=ja&${enabled ? 'twPlusExtensionLoader=1' : 'twPlusExtensions=1'}`);
+    await page.goto(`editor.html?lang=ja${enabled ? '' : '&twPlusExtensionLoader=0&twPlusExtensions=1'}`);
     await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
 }
 
@@ -307,7 +307,7 @@ test('catalog refusing the second extension leaves the complete original project
     await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
 });
 
-test('catalog keeps distribution controls off unless the Loader startup flag is enabled', async ({page, context}) => {
+test('catalog keeps distribution controls off when the Loader startup flag is explicitly disabled', async ({page, context}) => {
     await installFixtures(context);
     await openEditor(page, false);
     await openCatalog(page);
