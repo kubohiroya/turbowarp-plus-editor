@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-plus-editor",
-  "version": "0.2.0-rc.2",
+  "version": "0.2.0-rc.3",
   "description": "TurboWarp-Plus-Editorの配信、ブランド資産、作品を編集するボタン",
   "type": "module",
   "license": "GPL-3.0-or-later",
