@@ -96,6 +96,49 @@ test('launches only its private YAML file, imports saved changes and increments 
     assert.equal(await readFile(filePath, 'utf8'), changed);
 });
 
+test('reopens the same session with its schema and preserves unchanged and edited workfiles', async t => {
+    const f = await fixture(t);
+    const schema = {id: 'urn:reopen', schema: {type: 'object'}};
+    const created = await (await f.create('# comment\ntitle: original\n', {schema})).json();
+    const endpoint = `${f.host.apiOrigin}/__twpe_yaml/sessions/${created.id}`;
+    const originalLaunch = f.launches[0];
+    const [file] = originalLaunch;
+    for (const source of ['# comment\ntitle: original\n', '# retained\ntitle: changed\n']) {
+        await writeFile(file, source);
+        assert.equal((await fetch(endpoint, {method: 'POST', headers: f.headers})).status, 200);
+        assert.deepEqual(f.launches.at(-1), originalLaunch);
+        assert.equal(await readFile(file, 'utf8'), source);
+        assert.equal((await (await fetch(endpoint, {headers: f.headers})).json()).source, source);
+    }
+    assert.equal((await fetch(endpoint, {method: 'POST'})).status, 401);
+    assert.equal((await fetch(endpoint, {method: 'POST', headers: {...f.headers, Origin: 'https://untrusted.test'}})).status, 403);
+    assert.equal(f.launches.length, 3);
+    assert.equal((await fetch(endpoint, {method: 'DELETE', headers: f.headers})).status, 200);
+    assert.equal((await fetch(endpoint, {method: 'POST', headers: f.headers})).status, 404);
+});
+
+test('a failed reopen can be retried and an unsafe workfile is never launched', async t => {
+    let fail = false, launches = 0;
+    const f = await fixture(t, {launchEditor: async () => {
+        launches++;
+        if (fail) throw Error('Launch failed');
+    }});
+    const created = await (await f.create('title: retained')).json();
+    const endpoint = `${f.host.apiOrigin}/__twpe_yaml/sessions/${created.id}`;
+    const file = path.join(f.host.dataDirectory, 'sessions', created.id, 'story.k4.yml');
+    fail = true;
+    assert.equal((await fetch(endpoint, {method: 'POST', headers: f.headers})).status, 503);
+    assert.equal(await readFile(file, 'utf8'), 'title: retained');
+    fail = false;
+    assert.equal((await fetch(endpoint, {method: 'POST', headers: f.headers})).status, 200);
+    const outside = path.join(f.directory, 'outside.yml');
+    await writeFile(outside, 'private');
+    await unlink(file);
+    await symlink(outside, file);
+    assert.equal((await fetch(endpoint, {method: 'POST', headers: f.headers})).status, 403);
+    assert.equal(launches, 3);
+});
+
 test('rejects untrusted origins, fetch sites, hosts, absent tokens and modified tokens', async t => {
     const f = await fixture(t);
     const api = `${f.host.apiOrigin}/__twpe_yaml/config`;

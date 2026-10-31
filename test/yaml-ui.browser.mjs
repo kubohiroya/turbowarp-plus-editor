@@ -26,7 +26,7 @@ const registry=getProviderRegistry(vm);const openDocument=(providerId,documentId
 state.unregisterNotes=registry.register({id:'notes',hatOpcodes:['notes_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'yaml',docsURL:'https://example.test/dsl/notes',activeRepresentation:state.activeKind||'source',representations:state.withoutRepresentations?[]:[{kind:'yaml-blocks',label:'共通YAMLブロック',fromSource:true,toSource:true,fromRepresentations:state.allowCross?['yaml-blocks','schema-blocks']:['yaml-blocks']},{kind:'schema-blocks',label:'Owner schema label',fromSource:!state.crossOnly,toSource:true,fromRepresentations:state.allowCross?['schema-blocks','yaml-blocks']:['schema-blocks']}],schema:{id:'urn:test:notes-schema',schema:{type:'object',properties:{theme:{type:'string'}}}}},{documentId:'two',filename:'settings.yml',format:'yaml'}],open:id=>openDocument('notes',id)});
 registry.register({id:'preferences',hatOpcodes:['preferences_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'json'}],open:id=>openDocument('preferences',id)});
 let nextId=0;
-const fetcher=async(route,options)=>{state.calls.push({route,method:options.method||'GET',headers:options.headers,...(options.body?{body:JSON.parse(options.body)}:{})});const json=value=>new Response(JSON.stringify(value),{status:200,headers:{'Content-Type':'application/json'}});if(route.endsWith('/config'))return json({available:true,token:'fixture-token',maxSourceBytes:4194304});if(options.method==='POST'){const id='session-'+(++nextId);state.sessions[id]={source:JSON.parse(options.body).source,closed:false};if(state.delayPost)return new Promise(resolve=>state.resolvePost=()=>resolve(json({id,revision:1,opened:true})));return json({id,revision:1,opened:true})}const id=route.split('/').at(-1);if(options.method==='DELETE'){state.sessions[id].closed=true;return json({closed:true})}if(state.delayed)return new Promise(resolve=>state.resolveSaved=()=>resolve(json({id,revision:2,source:state.sessions[id].source})));return json({id,revision:2,source:state.sessions[id].source})};
+const fetcher=async(route,options)=>{state.calls.push({route,method:options.method||'GET',headers:options.headers,...(options.body?{body:JSON.parse(options.body)}:{})});const json=value=>new Response(JSON.stringify(value),{status:200,headers:{'Content-Type':'application/json'}});if(route.endsWith('/config'))return json({available:true,token:'fixture-token',maxSourceBytes:4194304});if(options.method==='POST'&&!route.endsWith('/sessions')){const id=route.split('/').at(-1);if(state.failReopen)throw Error('VSCode launch failed');return json({id,opened:true})}if(options.method==='POST'){const id='session-'+(++nextId);state.sessions[id]={source:JSON.parse(options.body).source,closed:false};if(state.delayPost)return new Promise(resolve=>state.resolvePost=()=>resolve(json({id,revision:1,opened:true})));return json({id,revision:1,opened:true})}const id=route.split('/').at(-1);if(options.method==='DELETE'){state.sessions[id].closed=true;return json({closed:true})}if(state.delayed)return new Promise(resolve=>state.resolveSaved=()=>resolve(json({id,revision:2,source:state.sessions[id].source})));return json({id,revision:2,source:state.sessions[id].source})};
 window.ui=mountYamlEditor({vm,fetch:fetcher,download:async(blob,name)=>{state.download={source:await blob.text(),name}}});state.setRemote=source=>{state.sessions[window.ui.getState().session.id].source=source};state.setReference=(id,reference)=>{references[id]=reference;window.ui.refresh()};window.replaceProject=()=>{state.generation++;emit(listeners,'RUNTIME_DISPOSED');emit(listeners,'PROJECT_LOADED');emit(vmListeners,'PROJECT_LOADED')};await window.ui.ready;window.fixtureReady=true;
 </script></body></html>`;
 
@@ -152,6 +152,114 @@ async function startFromIcon(page, id = "hat-icon") {
   await icon(page, id).click();
   await startSelected(page);
 }
+
+test("VSCode can reopen an unchanged session and retry without losing a saved draft", async () => {
+  const page = await browser.newPage();
+  await readyPage(page);
+  await startFromIcon(page);
+  await page.waitForFunction(() => !window.ui.getState().pending);
+  const id = await page.evaluate(() => window.ui.getState().session.id);
+  const edit = page.getByRole("button", {name: "VSCodeで編集", exact: true});
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await page.waitForFunction(() => !window.ui.getState().pending);
+  assert.equal(await edit.isEnabled(), true);
+  await edit.click();
+  await page.waitForFunction(() => !window.ui.getState().pending);
+  assert.equal(await page.evaluate(() => window.ui.getState().session.id), id);
+  assert.equal(await page.evaluate(() => Object.keys(window.fixture.sessions).length), 1);
+  await page.evaluate(() => {
+    window.fixture.setRemote("# retained comment\\ntheme: dark");
+    window.dispatchEvent(new Event("focus"));
+  });
+  await page.waitForFunction(() => !window.ui.getState().pending);
+  const draft = await page.locator("#twpe-yaml-preview").inputValue();
+  await page.evaluate(() => window.fixture.failReopen = true);
+  await edit.click();
+  await page.waitForFunction(() => !window.ui.getState().pending);
+  assert.equal(await edit.isEnabled(), true);
+  assert.equal(await page.evaluate(() => window.ui.getState().session.id), id);
+  assert.equal(await page.locator("#twpe-yaml-preview").inputValue(), draft);
+  await page.evaluate(() => window.fixture.failReopen = false);
+  await edit.click();
+  await page.waitForFunction(() => !window.ui.getState().pending);
+  assert.equal(await page.locator("#twpe-yaml-preview").inputValue(), draft);
+  assert.equal(await page.evaluate(() => window.fixture.docs['notes:one']), 'theme: light');
+  assert.equal(await page.evaluate(() => window.fixture.calls.filter(c => c.route?.endsWith('/sessions') && c.method === 'POST').length), 1);
+  await page.close();
+});
+
+async function drag(page, locator, dx, dy) {
+  const box = await locator.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + dx, box.y + box.height / 2 + dy, {steps: 6});
+  await page.mouse.up();
+}
+function near(actual, expected) { assert.ok(Math.abs(actual - expected) < 2, `${actual} should equal ${expected}`); }
+
+test("the title moves the dialog, all borders resize it, and maximize restores its geometry", async () => {
+  const page = await browser.newPage({viewport: {width: 1440, height: 1100}});
+  await readyPage(page);
+  await open(page);
+  const initial = await dialog(page).boundingBox();
+  await drag(page, dialog(page).getByRole('heading'), 60, 45);
+  let rect = await dialog(page).boundingBox();
+  near(rect.x, initial.x + 60); near(rect.y, initial.y + 45);
+  near(rect.width, initial.width); near(rect.height, initial.height);
+  for (const edge of ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw']) {
+    const before = await dialog(page).boundingBox();
+    const dx = edge.includes('e') ? 12 : edge.includes('w') ? -12 : 0;
+    const dy = edge.includes('s') ? 12 : edge.includes('n') ? -12 : 0;
+    await drag(page, dialog(page).locator(`[data-edge="${edge}"]`), dx, dy);
+    rect = await dialog(page).boundingBox();
+    near(rect.width, before.width + (dx ? 12 : 0));
+    near(rect.height, before.height + (dy ? 12 : 0));
+    near(rect.x, before.x + (edge.includes('w') ? -12 : 0));
+    near(rect.y, before.y + (edge.includes('n') ? -12 : 0));
+  }
+  const restored = rect;
+  await dialog(page).getByRole('button', {name: '全画面化', exact: true}).click();
+  rect = await dialog(page).boundingBox();
+  assert.deepEqual(rect, {x: 0, y: 0, width: 1440, height: 1100});
+  await drag(page, dialog(page).getByRole('heading'), 60, 30);
+  assert.deepEqual(await dialog(page).boundingBox(), rect);
+  await dialog(page).getByRole('button', {name: '元のサイズに戻す', exact: true}).click();
+  assert.deepEqual(await dialog(page).boundingBox(), restored);
+  assert.equal(await page.evaluate(() => window.fixture.calls.some(c => c.method === 'POST' || typeof c === 'string' && /prepare|commit/.test(c))), false);
+  await page.close();
+});
+
+test("window controls stay reachable at minimum size, on narrow screens and after viewport changes", async () => {
+  const page = await browser.newPage({viewport: {width: 1280, height: 900}});
+  await readyPage(page);
+  await open(page);
+  await drag(page, dialog(page).locator('[data-edge="se"]'), -1000, -1000);
+  let rect = await dialog(page).boundingBox();
+  near(rect.width, 360); near(rect.height, 280);
+  await drag(page, dialog(page).getByRole('heading'), -1000, -1000);
+  rect = await dialog(page).boundingBox();
+  near(rect.x, 0); near(rect.y, 0);
+  await page.setViewportSize({width: 390, height: 720});
+  const maximize = dialog(page).getByRole('button', {name: '全画面化', exact: true});
+  await maximize.click();
+  assert.deepEqual(await dialog(page).boundingBox(), {x: 0, y: 0, width: 390, height: 720});
+  await page.setViewportSize({width: 320, height: 500});
+  assert.deepEqual(await dialog(page).boundingBox(), {x: 0, y: 0, width: 320, height: 500});
+  await dialog(page).getByRole('button', {name: '元のサイズに戻す', exact: true}).click();
+  rect = await dialog(page).boundingBox();
+  assert.ok(rect.x >= 0 && rect.y >= 0 && rect.x + rect.width <= 320 && rect.y + rect.height <= 500);
+  const close = dialog(page).getByRole('button', {name: '閉じる', exact: true});
+  for (const control of [close, maximize, cancel(page), footerSave(page)]) {
+    const box = await control.boundingBox();
+    assert.ok(box.x >= rect.x && box.y >= rect.y && box.x + box.width <= rect.x + rect.width && box.y + box.height <= rect.y + rect.height);
+  }
+  await close.click();
+  await closed(page);
+  await open(page);
+  await page.keyboard.press('Escape');
+  await closed(page);
+  await page.close();
+});
 
 const dialog = (page) =>
   page.getByRole("dialog", { name: "組み込み文書", exact: true });
