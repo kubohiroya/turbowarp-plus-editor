@@ -1,6 +1,6 @@
 {
   "guiRepository": "kubohiroya/scratch-gui",
-  "guiRevision": "bf84fb8cf794851502d843de5a0045e97bb8b474",
+  "guiRevision": "d9009f63d73aee87ab52eaf624bc4ad57bfe12a5",
   "coreRepository": "kubohiroya/turbowarp-extension-data-editor",
   "coreRevision": "d96532a91bc6046d4a3fda878425b30d6d10483e",
   "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
@@ -14,6 +14,6 @@
   "packagerRevision": "c115bdf525c5f49f0fb689a21b335ccb70fc22d2",
   "coreVersion": "0.7.0",
   "documentEditorRepository": "kubohiroya/turbowarp-document-editor",
-  "documentEditorRevision": "107ba531ceb72925b2e7d1ddd2dab8cbc820df22",
+  "documentEditorRevision": "aa86fa32956d71cfc480d0006dbbdfe34898ca1a",
   "documentEditorVersion": "0.1.0-rc.0"
 }

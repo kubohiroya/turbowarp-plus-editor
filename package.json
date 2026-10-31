@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
-    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#107ba531ceb72925b2e7d1ddd2dab8cbc820df22"
+    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#aa86fa32956d71cfc480d0006dbbdfe34898ca1a"
   },
   "bin": {
     "turbowarp-plus-editor-yaml": "scripts/yaml-editor/cli.mjs"
