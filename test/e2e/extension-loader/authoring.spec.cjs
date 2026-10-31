@@ -44,21 +44,35 @@ async function fileMenu(page) {
     await page.getByText('ファイル', {exact: true}).click();
 }
 
-async function fillAddition(page, spec, mode) {
-    await fileMenu(page);
-    await page.getByTestId('tw-plus-add-extension').click();
+async function openCustom(page) {
+    await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
+    await page.getByText('カスタム拡張機能', {exact: true}).click();
+    await expect(page.getByTestId('custom-extension-next')).toBeVisible();
+}
+
+async function chooseFiles(page, specs) {
+    await page.getByTestId('custom-extension-file-tab').click();
+    const choosing = page.waitForEvent('filechooser');
+    await page.getByTestId('custom-extension-file').click();
+    await (await choosing).setFiles(specs.map(spec => ({
+        name: `${spec.id}.js`, mimeType: 'application/javascript', buffer: spec.bytes
+    })));
+}
+
+async function closeCustom(page) {
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', {name: 'カスタム拡張を追加', exact: true})).toHaveCount(0);
+}
+
+async function fillAddition(page, spec, mode, execution = 'unsandboxed') {
+    await openCustom(page);
+    if (mode === 'embedded') await chooseFiles(page, [spec]);
+    else await page.getByTestId('custom-extension-url').fill(spec.url);
+    await page.getByTestId('custom-extension-next').click();
     await expect(page.getByTestId('tw-plus-authoring')).toBeVisible();
-    await page.getByTestId('tw-plus-authoring-mode').selectOption(mode);
-    await expect(page.getByTestId(`tw-plus-authoring-${mode === 'embedded' ? 'file' : 'url'}`)).toBeVisible();
-    await expect(page.getByTestId(`tw-plus-authoring-${mode === 'embedded' ? 'url' : 'file'}`)).toBeHidden();
     await page.getByTestId('tw-plus-authoring-id').fill(spec.id);
-    if (mode === 'embedded') {
-        await page.getByTestId('tw-plus-authoring-file').setInputFiles({
-            name: `${spec.id}.js`, mimeType: 'application/javascript', buffer: spec.bytes
-        });
-    } else {
-        await page.getByTestId('tw-plus-authoring-url').fill(spec.url);
-    }
+    if (mode === 'remote') await page.getByTestId('tw-plus-authoring-mode').selectOption(mode);
+    await page.getByTestId('tw-plus-authoring-execution').selectOption(execution);
 }
 
 async function approveAddition(page, spec, mode) {
@@ -69,13 +83,11 @@ async function approveAddition(page, spec, mode) {
     await expect(permission(page).locator('[data-field="id"]')).toHaveText(spec.id);
     await expect(permission(page).locator('[data-field="sha256"]')).toHaveText(spec.sha256);
     await page.getByTestId('tw-plus-allow').click();
-    await expect(page.getByTestId('tw-plus-authoring-status')).toContainText('追加しました');
-    await expect(page.getByTestId('tw-plus-authoring-sha256')).toContainText(spec.sha256);
+    await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
     await expect.poll(() => page.evaluate(id => vm.extensionManager.isExtensionLoaded(id), spec.id)).toBe(true);
     expect(await runs(page, spec.id)).toBe(1);
     expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe(42);
-    await page.getByTestId('tw-plus-authoring-cancel').click();
-    await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
+    await expect(page.locator(`.scratchCategoryId-${spec.id}`)).toHaveClass(/categorySelected/);
 }
 
 async function downloadSB3(page) {
@@ -88,10 +100,18 @@ async function downloadSB3(page) {
 }
 
 async function reopenSB3(page, bytes) {
+    await page.evaluate(() => {
+        globalThis.__authoringReloadComplete = false;
+        vm.runtime.once('PROJECT_LOADED', () => { globalThis.__authoringReloadComplete = true; });
+    });
     await fileMenu(page);
     const choosing = page.waitForEvent('filechooser');
     await page.getByText('コンピューターから読み込む', {exact: true}).click();
     await (await choosing).setFiles({name: 'authored.sb3', mimeType: 'application/octet-stream', buffer: bytes});
+    await page.waitForFunction(() => {
+        if (!globalThis.__authoringReloadComplete) return false;
+        try { vm.toJSON(); return true; } catch { return false; }
+    });
 }
 
 for (const [mode, spec] of [['embedded', embedded], ['remote', remote]]) {
@@ -202,15 +222,15 @@ test('authoring denial, invalid URL and duplicate ID preserve the current projec
     await expect(page.getByTestId('tw-plus-authoring-status')).toContainText(/TRUST_DENIED|許可/);
     expect(await projectJSON(page)).toEqual(before);
     expect(await runs(page, embedded.id)).toBe(0);
-    await page.getByTestId('tw-plus-authoring-cancel').click();
+    await closeCustom(page);
 
-    await fillAddition(page, {...remote, url: 'http://authoring-fixture.invalid/code.js'}, 'remote');
-    await page.getByTestId('tw-plus-authoring-submit').click();
-    await expect(page.getByTestId('tw-plus-authoring-status')).toContainText(/INVALID_SOURCE|HTTPS/);
+    await openCustom(page);
+    await page.getByTestId('custom-extension-url').fill('http://authoring-fixture.invalid/code.js');
+    await expect(page.getByTestId('custom-extension-next')).toBeDisabled();
     await expect(permission(page)).toHaveCount(0);
     expect(await projectJSON(page)).toEqual(before);
     expect(await runs(page, remote.id)).toBe(0);
-    await page.getByTestId('tw-plus-authoring-cancel').click();
+    await closeCustom(page);
 
     await approveAddition(page, embedded, 'embedded');
     const after = await projectJSON(page);
@@ -250,7 +270,7 @@ test('authoring restores the original project when approved JavaScript registers
     expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('authormismatch'))).toBe(false);
     expect(await page.evaluate(id => vm.extensionManager.isExtensionLoaded(id), embedded.id)).toBe(false);
     await recoveryEvidence('recovery-before-retry.json');
-    await page.getByTestId('tw-plus-authoring-cancel').click();
+    await closeCustom(page);
     try {
         await approveAddition(page, remote, 'embedded');
     } catch (error) {
@@ -260,15 +280,23 @@ test('authoring restores the original project when approved JavaScript registers
     expect((await projectJSON(page)).targets).toEqual(before.targets);
 });
 
-test('default-off Editor omits the authoring entry and cannot enable it by changing the URL after startup', async ({page}) => {
+test('default-off Editor retains legacy custom input and cannot enable authoring after startup', async ({page}) => {
     await openEditor(page, false);
     await fileMenu(page);
     await expect(page.getByTestId('tw-plus-add-extension')).toHaveCount(0);
-    await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
-    await page.getByText('ファイル', {exact: true}).click();
+    await page.keyboard.press('Escape');
+    await openCustom(page);
+    await expect(page.getByTestId('custom-extension-next')).not.toHaveText('次へ');
+    await page.getByTestId('custom-extension-text-tab').click();
+    await page.getByTestId('custom-extension-text').fill(embedded.bytes.toString());
+    await page.getByRole('checkbox').check();
+    await page.getByTestId('custom-extension-next').click();
+    await expect.poll(() => page.evaluate(id => vm.extensionManager.isExtensionLoaded(id), embedded.id)).toBe(true);
+    expect((await projectJSON(page)).turboWarpPlus).toBeUndefined();
+    expect(await runs(page, embedded.id)).toBe(1);
     await page.evaluate(() => history.replaceState(null, '', `${location.pathname}?lang=ja&twPlusExtensionLoader=1`));
-    await fileMenu(page);
-    await expect(page.getByTestId('tw-plus-add-extension')).toHaveCount(0);
+    await openCustom(page);
+    await expect(page.getByTestId('custom-extension-next')).not.toHaveText('次へ');
     await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
 });
 
@@ -295,15 +323,17 @@ test('mobile viewport keeps authoring, consent and catalog controls visible and 
                     top + rect.height <= viewport.height + 1 && node.scrollWidth <= node.clientWidth + 1;
             })).toBe(true);
         };
-        // Narrow hosts show a file icon while hiding its text label.
-        await page.getByText('ファイル', {exact: true}).locator('xpath=../..').click();
-        await page.getByTestId('tw-plus-add-extension').click();
-        await withinViewport(page.getByTestId('tw-plus-authoring'));
+        await openCustom(page);
+        await withinViewport(page.getByRole('dialog', {name: 'カスタム拡張を追加', exact: true}));
+        await withinViewport(page.getByTestId('custom-extension-next'));
+        await chooseFiles(page, [embedded]);
+        await page.getByTestId('custom-extension-next').click();
+        await page.getByTestId('tw-plus-authoring-id').fill(embedded.id);
+        await page.getByTestId('tw-plus-authoring-execution').selectOption('unsandboxed');
+        await withinViewport(page.getByRole('dialog', {name: 'カスタム拡張を追加', exact: true}));
+        await withinViewport(page.getByTestId('tw-plus-authoring-submit'));
         await testInfo.attach('mobile-authoring.png', {body: await page.screenshot({scale: 'css'}),
             contentType: 'image/png'});
-        await page.getByTestId('tw-plus-authoring-id').fill(embedded.id);
-        await page.getByTestId('tw-plus-authoring-file').setInputFiles({name: 'mobile.js',
-            mimeType: 'application/javascript', buffer: embedded.bytes});
         await page.getByTestId('tw-plus-authoring-submit').click();
         await expect(permission(page)).toBeVisible();
         await withinViewport(permission(page));
@@ -311,7 +341,7 @@ test('mobile viewport keeps authoring, consent and catalog controls visible and 
         await page.getByTestId('tw-plus-deny').click();
         await expect(page.getByTestId('tw-plus-authoring-status')).toContainText(/TRUST_DENIED|許可/);
         expect(await projectJSON(page)).toEqual(before);
-        await page.getByTestId('tw-plus-authoring-cancel').click();
+        await closeCustom(page);
         await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
         await page.getByText('TurboWarp Plus', {exact: true}).click();
         const selection = page.locator('.twextsec-selection');
@@ -328,4 +358,129 @@ test('mobile viewport keeps authoring, consent and catalog controls visible and 
     } finally {
         await context.close();
     }
+});
+
+for (const distribution of ['embedded', 'remote']) {
+    for (const execution of ['sandboxed', 'unsandboxed']) {
+        test(`custom URL ${distribution}/${execution} uses common consent and survives SB3 save/reopen`, async ({page, context}) => {
+            const spec = extension(`custom${distribution}${execution}`);
+            await context.route(spec.url, route => route.fulfill({body: spec.bytes,
+                headers: {'access-control-allow-origin': '*', 'content-type': 'application/javascript'}}));
+            await openEditor(page);
+            const before = await projectJSON(page);
+            await openCustom(page);
+            await page.getByTestId('custom-extension-url').fill(spec.url);
+            await page.getByTestId('custom-extension-next').click();
+            await page.getByTestId('tw-plus-authoring-id').fill(spec.id);
+            await page.getByTestId('tw-plus-authoring-mode').selectOption(distribution);
+            await page.getByTestId('tw-plus-authoring-execution').selectOption(execution);
+            await page.getByTestId('tw-plus-authoring-submit').click();
+            await expect(permission(page)).toBeVisible();
+            await expect(permission(page).locator('[data-field="sha256"]')).toHaveText(spec.sha256);
+            await expect(permission(page).locator('[data-field="execution"]')).toHaveText(execution);
+            expect(await runs(page, spec.id)).toBe(0);
+            await page.getByTestId('tw-plus-allow').click();
+            await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
+            await expect.poll(() => page.evaluate(id => vm.extensionManager.isExtensionLoaded(id), spec.id)).toBe(true);
+            await expect(page.locator(`.scratchCategoryId-${spec.id}`)).toHaveClass(/categorySelected/);
+            const saved = await downloadSB3(page);
+            const zip = await Zip.loadAsync(saved);
+            const json = JSON.parse(await zip.file('project.json').async('string'));
+            expect(json.turboWarpPlus.extensions[0]).toMatchObject({id: spec.id, execution,
+                source: {type: distribution}, sha256: spec.sha256});
+            expect(json.targets).toEqual(before.targets);
+            if (distribution === 'embedded') {
+                expect(await zip.file(json.turboWarpPlus.extensions[0].source.path).async('nodebuffer')).toEqual(spec.bytes);
+            }
+            await reopenSB3(page, saved);
+            await expect.poll(() => page.evaluate(async id => {
+                const primitive = vm.runtime._primitives[`${id}_value`];
+                return primitive ? await primitive() : null;
+            }, spec.id))
+                .toBe(execution === 'sandboxed' ? -1 : 42);
+            expect((await projectJSON(page)).turboWarpPlus).toEqual(json.turboWarpPlus);
+        });
+    }
+}
+
+test('text input and settings survive Back and denial, then add through the same dialog', async ({page}) => {
+    const spec = extension('customtext');
+    await openEditor(page);
+    const before = await projectJSON(page);
+    await openCustom(page);
+    await page.getByTestId('custom-extension-text-tab').click();
+    await page.getByTestId('custom-extension-text').fill(spec.bytes.toString());
+    await page.getByTestId('custom-extension-next').click();
+    await page.getByTestId('tw-plus-authoring-id').fill(spec.id);
+    await page.getByTestId('tw-plus-authoring-execution').selectOption('unsandboxed');
+    await expect(page.getByTestId('tw-plus-authoring-mode')).toBeDisabled();
+    await page.getByRole('button', {name: '戻る', exact: true}).click();
+    await expect(page.getByTestId('custom-extension-text')).toHaveValue(spec.bytes.toString());
+    await page.getByTestId('custom-extension-next').click();
+    await expect(page.getByTestId('tw-plus-authoring-id')).toHaveValue(spec.id);
+    await page.getByTestId('tw-plus-authoring-submit').click();
+    await expect(permission(page)).toBeVisible();
+    await page.getByTestId('tw-plus-deny').click();
+    await expect(page.getByTestId('custom-extension-text')).toHaveValue(spec.bytes.toString());
+    expect(await projectJSON(page)).toEqual(before);
+    expect(await runs(page, spec.id)).toBe(0);
+    await page.getByTestId('custom-extension-next').click();
+    await expect(page.getByTestId('tw-plus-authoring-id')).toHaveValue(spec.id);
+    await page.getByTestId('tw-plus-authoring-submit').click();
+    await expect(permission(page)).toBeVisible();
+    await page.getByTestId('tw-plus-allow').click();
+    await expect.poll(() => runs(page, spec.id)).toBe(1);
+    await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
+});
+
+test('dropped multiple files require every approval before either extension executes or changes the project', async ({page}) => {
+    const specs = [extension('batchfirst'), extension('batchsecond')];
+    await openEditor(page);
+    const before = await projectJSON(page);
+    await openCustom(page);
+    await page.getByTestId('custom-extension-url').evaluate((node, files) => {
+        const transfer = new DataTransfer();
+        for (const file of files) transfer.items.add(new File([file.code], file.name, {type: 'application/javascript'}));
+        node.dispatchEvent(new DragEvent('drop', {bubbles: true, cancelable: true, dataTransfer: transfer}));
+    }, specs.map(spec => ({name: `${spec.id}.js`, code: spec.bytes.toString()})));
+    await expect(page.getByTestId('custom-extension-file')).toContainText('batchfirst.js');
+    await page.getByTestId('custom-extension-next').click();
+    for (let i = 0; i < specs.length; i++) await page.getByTestId('tw-plus-authoring-id').nth(i).fill(specs[i].id);
+    await page.getByTestId('tw-plus-authoring-execution').selectOption('unsandboxed');
+    await page.getByTestId('tw-plus-authoring-submit').click();
+    await expect(permission(page).locator('[data-field="id"]')).toHaveText(specs[0].id);
+    await page.getByTestId('tw-plus-allow').click();
+    await expect(permission(page).locator('[data-field="id"]')).toHaveText(specs[1].id);
+    for (const spec of specs) expect(await runs(page, spec.id)).toBe(0);
+    expect(await projectJSON(page)).toEqual(before);
+    await page.getByTestId('tw-plus-deny').click();
+    await expect(page.getByTestId('custom-extension-file')).toContainText('batchsecond.js');
+    expect(await projectJSON(page)).toEqual(before);
+    for (const spec of specs) expect(await runs(page, spec.id)).toBe(0);
+    await page.getByTestId('custom-extension-next').click();
+    await expect(page.getByTestId('tw-plus-authoring-id').nth(0)).toHaveValue(specs[0].id);
+    await page.getByTestId('tw-plus-authoring-submit').click();
+    await expect(permission(page).locator('[data-field="id"]')).toHaveText(specs[1].id);
+    await page.getByTestId('tw-plus-allow').click();
+    await expect(page.getByTestId('tw-plus-authoring')).toHaveCount(0);
+    for (const spec of specs) await expect.poll(() => runs(page, spec.id)).toBe(1);
+    expect((await projectJSON(page)).targets).toEqual(before.targets);
+});
+
+test('URL fetch failure retains the entered source and the original project for retry', async ({page, context}) => {
+    const spec = extension('fetchfailure');
+    await context.route(spec.url, route => route.fulfill({status: 503, body: 'Unavailable',
+        headers: {'access-control-allow-origin': '*'}}));
+    await openEditor(page);
+    const before = await projectJSON(page);
+    await fillAddition(page, spec, 'remote');
+    await page.getByTestId('tw-plus-authoring-submit').click();
+    await expect(page.getByTestId('custom-extension-url')).toHaveValue(spec.url);
+    await expect(page.getByTestId('tw-plus-authoring-status')).toContainText('追加できませんでした');
+    await expect(permission(page)).toHaveCount(0);
+    expect(await projectJSON(page)).toEqual(before);
+    expect(await runs(page, spec.id)).toBe(0);
+    await page.getByTestId('custom-extension-next').click();
+    await expect(page.getByTestId('tw-plus-authoring-id')).toHaveValue(spec.id);
+    await expect(page.getByTestId('tw-plus-authoring-mode')).toHaveValue('remote');
 });
