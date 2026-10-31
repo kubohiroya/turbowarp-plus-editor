@@ -48,6 +48,26 @@ test('host verification accepts exact npm or Git security sources and rejects mi
             `git+ssh://git@github.com/other/security.git#${pins.securityRevision}`;
         await writeLock();
         await assert.rejects(verifyHost(gui, pins), /security source/);
+        lock.packages[`node_modules/${securityPackage}`].resolved =
+            `git+ssh://git@github.com/kubohiroya/turbowarp-extension-security-dialog.git#${pins.securityRevision}`;
+        const name = '@kubohiroya/turbowarp-document-editor';
+        pins.documentEditorRepository = 'kubohiroya/turbowarp-document-editor';
+        pins.documentEditorRevision = 'e'.repeat(40);
+        pins.documentEditorVersion = '0.1.0-rc.0';
+        manifest.dependencies[name] = `git+https://github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`;
+        lock.packages[`node_modules/${name}`] = {
+            resolved: `git+ssh://git@github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`};
+        const uiRoot = path.join(gui, 'node_modules', name);
+        await fs.mkdir(uiRoot, {recursive: true});
+        await writeJSON(path.join(uiRoot, 'package.json'), {name, version: pins.documentEditorVersion,
+            exports: {'./package.json': './package.json'}});
+        await writeManifest(); await writeLock();
+        await verifyHost(gui, pins);
+        lock.packages[`node_modules/${name}`].resolved = 'git+ssh://git@github.com/other/editor.git#' + pins.documentEditorRevision;
+        await writeLock();
+        await assert.rejects(verifyHost(gui, pins), /shared document editor pin/);
+        await assert.rejects(verifyHost(gui, {...pins, documentEditorRevision: 'main'}), /full document editor revision/);
+
     } finally {
         await fs.rm(gui, {recursive: true, force: true});
     }

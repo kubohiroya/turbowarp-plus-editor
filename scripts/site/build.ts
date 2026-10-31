@@ -5,7 +5,7 @@ import {execFileSync, spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {generatePages} from './generate-pages.ts';
 import {brandEditor} from './brand-editor.ts';
-import {buildYamlEditor} from './build-yaml-editor.ts';
+import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
 import {root, readPins, verifyHost, sha} from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
 import {buildPreviewSample, installPreviewSampleFocus} from './build-preview-sample.ts';
@@ -45,8 +45,12 @@ export async function buildPages(pins = undefined) {
     if (pins.loaderRepository) {
         info.extensionIntegration = await buildExtensionAssets(gui, pins);
     }
+    const documents = await buildDocumentEditorMetadata(output, prefix);
+    info.documentEditor = {repository: `https://github.com/${pins.documentEditorRepository}`,
+        revision: pins.documentEditorRevision, version: pins.documentEditorVersion,
+        metadata: 'document-editor/build-info.json'};
+    assert.equal(documents.packages[0].version, pins.documentEditorVersion);
     await fs.writeFile(path.join(output, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
-    await buildYamlEditor(output, prefix);
     console.log(`TurboWarp-Plus-Editor built: GUI ${revision}; core ${coreRevision}; security ${securityVersion}; site ${siteRevision}`);
 }
 

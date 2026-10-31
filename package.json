@@ -59,8 +59,8 @@
     "test:extension-loader:desktop": "node test/e2e/extension-loader/desktop.cts",
     "build:yaml-tools": "node scripts/site/build-yaml-editor.ts",
     "editor:yaml": "node scripts/yaml-editor/cli.ts",
-    "test:yaml": "node --test test/yaml-document.test.ts test/yaml-host.test.ts test/yaml-build.test.ts",
-    "test:yaml:browser": "node --test test/yaml-ui.browser.ts",
+    "test:yaml": "node --test test/yaml-document.test.ts test/yaml-build.test.ts test/yaml-cli.test.ts",
+    "test:yaml:browser": "node --test test/document-sources.browser.ts",
     "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
@@ -69,7 +69,9 @@
     "test:package": "npm run build && node --test test/package/*.test.ts"
   },
   "devDependencies": {
-    "@kubohiroya/turbowarp-embedded-yaml": "0.1.0-rc.2",
+    "@playwright/test": "^1.64.1",
+    "@turbowarp/jszip": "^3.12.0",
+    "@turbowarp/packager": "3.14.0",
     "@kubohiroya/turbowarp-extension-data-editor": "0.7.0",
     "@kubohiroya/turbowarp-kamishibai-app": "4.0.0-rc.79",
     "@kubohiroya/turbowarp-kamishibai-preview-app": "npm:@kubohiroya/turbowarp-kamishibai-app@4.0.0-rc.77",
@@ -77,22 +79,21 @@
     "@kubohiroya/turbowarp-runtime-expression": "0.9.0",
     "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.0",
     "@kubohiroya/turbowarp-yaml-json": "0.8.0-rc.0",
-    "@playwright/test": "^1.64.1",
-    "@turbowarp/jszip": "^3.12.0",
-    "@turbowarp/packager": "3.14.0",
-    "@types/node": "^24.19.2",
-    "@types/vscode": "^1.144.0",
     "ajv": "8.20.0",
     "esbuild": "0.25.12",
+    "yaml": "2.9.1",
+    "@kubohiroya/turbowarp-document-source": "git+https://github.com/kubohiroya/turbowarp-document-source.git#0e05d816b089d972248c58e2019be906fcc02a59",
     "typescript": "^6.0.3",
-    "yaml": "2.9.1"
+    "@types/node": "^24.19.2",
+    "@types/vscode": "^1.144.0"
   },
   "publishConfig": {
     "access": "public",
     "tag": "next"
   },
   "dependencies": {
-    "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1"
+    "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
+    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#aa86fa32956d71cfc480d0006dbbdfe34898ca1a"
   },
   "bin": {
     "turbowarp-plus-editor-yaml": "dist/scripts/yaml-editor/cli.js"

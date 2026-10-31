@@ -107,7 +107,7 @@ const html = renderEditButton({language: 'ja', projectURL: 'https://example.com/
 
 ## 開発と配信
 
-Node.js 26を使用します。自作コード・スクリプト・設定・テストはTypeScript（`.ts` / CommonJSの`.cts`）で管理します。開発用スクリプトはNode.jsの型除去で実行し、ブラウザーへはesbuildでJavaScriptを出力します。`npm run build` は公開用JavaScriptと型定義を `dist/` へ生成し、`npm pack` でも自動実行されます。実VSCode検証の前に `npm run build:test-driver` でテスト専用拡張をビルドします。
+Node.js 26を使用します。自作コード・スクリプト・設定・テストはTypeScript（`.ts` / CommonJSの`.cts`）で管理します。開発用スクリプトはNode.jsの型除去で実行します。`npm run build` は公開用JavaScriptと型定義を `dist/` へ生成し、`npm pack` でも自動実行されます。実VSCode検証の前に `npm run build:test-driver` を実行します。
 
 ```sh
 npm ci
@@ -126,7 +126,7 @@ GUIとPackagerは `site/source.json` に記録したSHAをチェックアウト�
 
 ## 組み込み文書を編集する（0.2.0-rc.1）
 
-[Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3)と[共通化Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6)に対応する試験公開機能です。起動時に `twPlusYamlEditor=1` を指定したEditorで有効になります。既定OFFです。Visual Studio CodeとNode.jsをインストールした環境で、ローカル補助プロセスからEditorを開きます。上流GUIやライブラリに下流依存は追加しません。原文文書の保存・文書参照・提供元登録は `@kubohiroya/turbowarp-document-data`、ハット・YAMLアイコン・共通YAMLブロックは独立した `@kubohiroya/turbowarp-embedded-yaml` に置きます。各拡張が文書を登録し、Editorは共通契約を介してVSCodeとの連携・取込・SB3保存を担当します。
+[Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3)と[共通化Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6)に対応する試験公開機能です。起動時に `twPlusYamlEditor=1` を指定したEditorで有効になります。既定OFFです。Visual Studio CodeとNode.jsをインストールした環境で、ローカル補助プロセスからEditorを開きます。編集UIと外部エディタ連携は `@kubohiroya/turbowarp-document-editor` に分離し、scratch-guiフォークが直接組み込みます。TurboWarp-Plus-EditorはGUIの固定・ビルド・配信を担当します。原文文書の保存・文書参照・提供元登録は `@kubohiroya/turbowarp-document-data`、ハット・YAMLアイコン・共通YAMLブロックは独立した `@kubohiroya/turbowarp-document-source` に置きます。各拡張が文書を登録し、共通編集UIは所有者の検証と差分適用を呼び出します。標準のSB3ファイル保存はGUIが担当します。
 
 紙芝居用の提供元はApp `4.0.0-rc.79` に置き、App所有の検証APIとSchemaを使用します。Editorのブラウザ用コードにはAppやそのparserを組み込みません。紙芝居では、新しい独立rootと名前付き文書を持つ作品が対象です。原文YAML・共通YAMLブロック・台本ブロックを表示・変換でき、既存の単一組み込み原文にも互換対応します。旧 `kamishibai` / `kamishibaiConfig` の作品はAppの `migrate-embedded-yaml` で別のSB3へ移行してから使用します。外部台本を開くメニューとコンパイル済みのみの作品は対象外です。
 
@@ -146,9 +146,9 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages上では文書の表示・変換・検証を利用できます。VSCodeを起動する操作は、上記のローカルURLで開いた場合に利用できます。
 
-表示されたローカルURLを開くと、起動時固定の `twPlusYamlEditor=1` が有効になります。読み取り箇所は `site/yaml-editor/feature-flags.ts` です。
+表示されたローカルURLを開くと、起動時固定の `twPlusYamlEditor=1` が有効になります。読み取り箇所はscratch-guiの `config/feature-flags.js` です。
 
-1. 組み込み文書のSB3をEditorで開き、「embedded YAML」ハットブロックのファイルアイコンを押します。「組み込み文書」ダイアログで「VSCodeで編集」を選びます。
+1. 組み込み文書のSB3をEditorで開き、「データソース」ハットブロックのファイルアイコンを押します。文書ダイアログのYAMLテキストタブで「外部エディタで編集」を選びます。
 2. 開いたYAMLを編集してVSCodeで保存します。
 3. Editorへ戻って、ダイアログ右下の「表示されている形式に変換して検証・保存」を押します。VSCodeで保存済みの作業コピーを読み、書式・アセット参照・プロジェクトの同一性を検証して、Editor内の文書と整合性情報へ反映します。
 4. 作品ファイルを残すには、Editor標準の「ファイル」メニューまたは「コンピューターに保存する」でSB3を保存します。ダイアログの「保存」ではファイルをダウンロードしません。画像・音声の格納方式は変わりません。
@@ -185,7 +185,7 @@ node --test test/yaml-multi-document.browser.ts
 
 ### 原文・共通YAMLブロック・スキーマ専用ブロック
 
-原文ファイル、キー・配列・値・コメントを表す共通YAMLブロック、紙芝居などのスキーマ専用ブロックを、同じ文書の3つの表現として扱います。原文を意味と変換の基準とし、ブロックを編集中はその内容もEditorの編集状態へ保持します。別のブロック表現へ移るときは、現在の編集を原文へ反映した上で変換する処理を、一つの保存操作の中で行います。変換先を選ぶだけでは作品を書き換えません。初期タブは💽付きの現在の保存済み表現です。別のタブで「保存」を押すと変換確認を表示し、OKで検証・変換してEditorへ反映します。Cancelは選択を保持してダイアログへ戻ります。Xと「キャンセル」は同じ取消操作です。未反映のブロックを原文から再生成して上書きする操作は拒否します。
+原文ファイル、キー・配列・値・コメントを表す共通YAMLブロック、紙芝居などのスキーマ専用ブロックを、同じ文書の3つの表現として扱います。原文を意味と変換の基準とし、ブロックを編集中はその内容もEditorの編集状態へ保持します。別のブロック表現へ移るときは、現在の編集を原文へ反映した上で変換する処理を、一つの保存操作の中で行います。変換先を選ぶだけでは作品を書き換えません。初期タブは現在の保存済み表現です。プレビューの上に「💽=保存済み形式」を表示します。別のタブで「保存」を押すと変換確認を表示し、OKで検証・変換してEditorへ反映します。Cancelは選択を保持してダイアログへ戻ります。Xと「キャンセル」は同じ取消操作です。未反映のブロックを原文から再生成して上書きする操作は拒否します。
 
 各タブには、その形式のプレビューを表示します。原文タブはテキスト、ブロックのタブは読み取り専用のScratchBlocksを表示し、表示だけでは作品を書き換えません。ブロックは移動・編集できず、スクロールと拡大縮小で確認できます。💽はEditor内で現在保存されている形式を表し、SB3ファイルをダウンロードしたことを表すものではありません。
 
@@ -194,15 +194,17 @@ node --test test/yaml-multi-document.browser.ts
 - `turbowarp-yaml-json`: YAML/JSONの解析・出力、原文構文、Schema検証。
 - `turbowarp-document-data`: 原文・Schema・文書参照・提供元登録とSB3への永続化。
 - `turbowarp-structured-data`: 原文から実行時の値を生成する一時的な投影。原文を書き換えません。
-- `turbowarp-embedded-yaml`: 共通ハット・共通ブロック・変換候補と適用の契約。
+- `turbowarp-document-source`: 共通ハット・共通ブロック・変換候補と適用の契約。
 - 各App: DSL専用の検証、台本ブロック変換、実行データの再生成。
-- TurboWarp-Plus-Editor: 操作ダイアログ、VSCode連携、取込、標準SB3保存。
+- turbowarp-document-editor: 操作ダイアログ、外部エディタ連携、プレビューと保存の操作。
+- scratch-guiフォーク: 共通編集UIの組み込み、VM・Blockly接続、標準SB3ファイル保存。
+- TurboWarp-Plus-Editor: GUIの固定・ビルド・配信。
 
 非紙芝居の原文文書はYAMLとJSONを利用でき、HTML/Markdownの既存APIは維持します。下位の文書形式判定を担当する `turbowarp-named-data` にもYAML/JSONを追加します。構造化データの既存の限定Schema解釈と、文書の完全なJSON Schema検証は別の契約として維持します。
 
 新しい文書保存・投影・表現変換は既定OFFです。対応するApp rc.79では `twPlusYamlEditor=1` によりEditorと提供元の文書操作を同じ起動条件で有効にします。各文書の変換能力は所有者が提供し、未対応の拡張へ変換機能を追加することはありません。旧ブロック台本に元のモジュールYAMLが保存されていない場合、コメント等を含む元ファイルを復元したとは扱いません。
 
-「DSLの説明」は提供元のWebサイトを開きます。独立した検証ボタンは置かず、右下の「表示されている形式に変換して検証・保存」で表示中の形式を検証して反映します。ブロック表現を編集中のVSCode操作は、原文へ反映するまで無効になります。原文がJSONの場合、VSCode標準のJSON支援とSchema関連付けを使います。
+「ガイドを参照」は提供元のWebサイトを別タブで開きます。独立した検証ボタンは置かず、右下の「表示されている形式に変換して検証・保存」で表示中の形式を検証して反映します。ブロック表現を編集中のVSCode操作は、原文へ反映するまで無効になります。原文がJSONの場合、VSCode標準のJSON支援とSchema関連付けを使います。
 
 ## English
 
@@ -221,3 +223,13 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 [App rc.77のプレビュー体験サンプルを開く](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja&twPlusBlockPreview=1&twPlusYamlEditor=1&project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-plus-editor%2Fsamples%2Fblock-preview%2Fblock-preview-rc77.sb3)と、ステージの「コード」タブが自動的に開き、先頭のsceneが表示されます。配置と動き・吹き出しの2シーンをそのまま試せます。[操作ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/)・[SB3ダウンロード](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/block-preview-rc77.sb3)も公開しています。正本は`site/samples/block-preview/`のYAML・SVGで、公開済みApp rc.77から`build:pages`時に再生成します。生成元・runtime・SB3のハッシュを配信`metadata.json`に記録し、Pagesの成果物チェックで照合します。
 
 [プレビューを有効にしてEditorを開く](https://kubohiroya.github.io/turbowarp-plus-editor/?twPlusBlockPreview=1&twPlusYamlEditor=1)。既定OFFで、App rc.79の編集用runtimeとscene/actionを持つ作品が対象です。hover静止画、scene再生、アクターのドラッグ配置、moveTo/Bubbleのライブ再生に対応します。操作・既存作品の扱いは[利用案内](docs/block-icon-preview.md)を参照してください。
+
+## データソース4形式のローカル移行候補
+
+`twPlusYamlEditor=1&twPlusDocumentSource=1` を起動時に指定すると、互換性を持つ提供元の文書で「SB3内のファイル」「外部URL」を選択できます。参照元とYAMLテキスト/YAMLブロック/台本ブロックの表現を分けて扱います。文書の名前とreferenceは保持されます。汎用の表示名は「データソース」、紙芝居の提供元は「紙芝居台本データ」を指定します。
+
+参照元変更後は取得してプレビューし、画面下の保存で同じ検証済み候補を反映します。キャンセルは作品を変更しません。外部URLはCORSで取得できるHTTPSを指定します。外部の内容を編集・ブロック化するには、参照元を「SB3内のファイル」へ変更・保存して取り込みます。遠隔サイトへの書き戻しは行いません。Appは実行開始時にURLの内容を再取得し、失敗時に古いcacheへ黙って戻りません。
+
+新フラグは既定OFFです。読取箇所はscratch-guiの `config/feature-flags.js`、App側は `src/dsl4/document-source.ts`。切戻しは新フラグを外して再起動し、元SB3を利用します。現在の依存はローカル候補への参照であり、公開版への参照更新・新npm/リポジトリの公開は別途行います。
+
+この候補は、直前の未公開UI修正（プレビューの重なり表示防止、タブ内の保存形式表示、外部エディタのフローティングボタン、ガイド/Schemaリンク）を引き継いでいます。
