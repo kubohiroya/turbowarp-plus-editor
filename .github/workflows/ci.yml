@@ -17,11 +17,13 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:package
       - run: npm test
       - run: npm run test:e2e:infrastructure
       - name: Read immutable integration sources
         id: source
-        run: node scripts/site/source.mjs
+        run: node scripts/site/source.ts
       - uses: actions/checkout@v4
         with:
           repository: kubohiroya/scratch-gui
@@ -46,7 +48,7 @@ jobs:
       - name: Copy the pinned root core into the isolated host without resolving dependencies
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: node scripts/site/prepare-core.mjs
+        run: node scripts/site/prepare-core.ts
       - name: Verify the prepared host
         working-directory: .host/scratch-gui
         run: |
@@ -61,10 +63,10 @@ jobs:
       - name: Generate the packaged extension fixture from checked build assets
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: node test/e2e/extension-loader/prepare-packaged.mjs
+        run: node test/e2e/extension-loader/prepare-packaged.ts
       - run: npx playwright install --with-deps chromium
       - name: Verify embedded document window controls and VSCode session recovery
-        run: node --test test/yaml-ui.browser.mjs
+        run: node --test test/yaml-ui.browser.ts
       - name: Verify integrated editing, security, themes and SB3 round trips
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui

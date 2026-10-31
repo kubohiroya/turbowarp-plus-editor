@@ -27,7 +27,7 @@ jobs:
         id: source
         env:
           EXPECTED_REVISION: ${{ inputs.revision || github.sha }}
-        run: node test/e2e/turbowarp/public-target.cjs
+        run: node test/e2e/turbowarp/public-target.cts
       - run: npx playwright install --with-deps chromium
       - name: Wait for and verify the deployed source
         env:
@@ -38,7 +38,7 @@ jobs:
           E2E_FIXED_INPUTS: '1'
           E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.security_version }}
         run: |
-          node test/e2e/turbowarp/wait-public.cjs
+          node test/e2e/turbowarp/wait-public.cts
           npm run test:e2e:block-editor
           npm run test:e2e:extension-loader
       - uses: actions/upload-artifact@v4

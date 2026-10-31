@@ -2,7 +2,7 @@
 
 関連: [Editor Issue #10](https://github.com/kubohiroya/turbowarp-plus-editor/issues/10)。作業ブランチは `fix/editor/document-window`。文書ダイアログとVSCode編集の既存実装に依存し、ウィンドウ操作→外部編集の再オープン→関連検証の順で進めます。ユーザーの追加承認に基づき、今回の差分をcommit・pushし、PRのCI成功後にSquash Merge・Release/npm・Pages公開を行います。
 
-`twPlusYamlEditor=1` で有効になる既存ダイアログに適用します。起動時固定・既定OFF、読み取り箇所は `site/yaml-editor/feature-flags.js` です。
+`twPlusYamlEditor=1` で有効になる既存ダイアログに適用します。起動時固定・既定OFF、読み取り箇所は `site/yaml-editor/feature-flags.ts` です。
 
 - タイトル部分をドラッグすると画面内で移動します。
 - 四辺・四隅をドラッグするとサイズを変更します。最小サイズは360×280pxで、画面がそれより小さい場合は画面内に収めます。
@@ -21,8 +21,8 @@
 検証コマンド:
 
 ```sh
-node --test test/yaml-host.test.mjs test/yaml-build.test.mjs
-node --test test/yaml-ui.browser.mjs
+node --test test/yaml-host.test.ts test/yaml-build.test.ts
+node --test test/yaml-ui.browser.ts
 ```
 
 運用ログ（2026-10-31 JST）:
@@ -34,7 +34,7 @@ node --test test/yaml-ui.browser.mjs
 
 ## 切戻し
 
-`twPlusYamlEditor=0` またはフラグなしで再起動すると追加UIを無効化できます。今回の操作変更だけを戻す場合は、`client.js`・`dialog-window.js`・`ui.css`とHostのセッション再オープン処理を一緒に戻し、ローカル資産を再ビルドして補助プロセスを再起動します。元SB3とVSCodeの作業ファイルは保持します。
+`twPlusYamlEditor=0` またはフラグなしで再起動すると追加UIを無効化できます。今回の操作変更だけを戻す場合は、`client.ts`・`dialog-window.ts`・`ui.css`とHostのセッション再オープン処理を一緒に戻し、ローカル資産を再ビルドして補助プロセスを再起動します。元SB3とVSCodeの作業ファイルは保持します。
 
 ## 公開手順（2026-10-31 JST）
 

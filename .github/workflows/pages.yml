@@ -43,7 +43,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_REVISION: ${{ steps.identity.outputs.revision }}
-        run: node scripts/ci/publication.mjs
+        run: node scripts/ci/publication.ts
       - uses: actions/download-artifact@v4
         with:
           name: editor-site-${{ steps.identity.outputs.revision }}-${{ steps.gate.outputs.attempt }}
@@ -53,7 +53,7 @@ jobs:
       - name: Verify the artifact source identity
         env:
           EXPECTED_REVISION: ${{ steps.identity.outputs.revision }}
-        run: node scripts/site/check-artifact.mjs site-artifact
+        run: node scripts/site/check-artifact.ts site-artifact
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site-artifact
@@ -80,7 +80,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_REVISION: ${{ needs.prepare.outputs.revision }}
-        run: node scripts/ci/publication.mjs
+        run: node scripts/ci/publication.ts
       - uses: actions/deploy-pages@v4
         id: deployment
   verify:

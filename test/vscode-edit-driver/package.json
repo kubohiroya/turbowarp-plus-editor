@@ -6,5 +6,5 @@
   "private": true,
   "engines": {"vscode": "^1.90.0"},
   "activationEvents": ["onStartupFinished"],
-  "main": "./extension.cjs"
+  "main": "./dist/extension.cjs"
 }
