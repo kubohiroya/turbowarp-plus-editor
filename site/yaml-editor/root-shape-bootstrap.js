@@ -1,4 +1,4 @@
-import {registerEmbeddedYamlRootHatShape} from '@kubohiroya/turbowarp-embedded-yaml';
+import {registerEmbeddedYamlRootHatShape} from '@kubohiroya/turbowarp-document-source';
 
 // Stored root blocks must remain readable even when document editing is disabled.
 export async function initializeEmbeddedYamlRootShape({window: win = globalThis.window, timeoutMs = 30000} = {}) {

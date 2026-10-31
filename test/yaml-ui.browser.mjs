@@ -23,7 +23,7 @@ const vm={editingTarget:{id:'stage',blocks:{getBlock:id=>{const b=blocks.find(b=
 const blockly={FieldImage,Extensions:{register(name,callback){(state.shapeRegistrations??=[]).push(name);state.shapeCallback=callback}},getMainWorkspace:()=>workspace};
 window.Scratch={vm,gui:{getBlockly:()=>new URLSearchParams(location.search).has('late')?new Promise(resolve=>{state.resolveBlocks=()=>resolve(blockly)}):Promise.resolve(blockly)}};
 const registry=getProviderRegistry(vm);const openDocument=(providerId,documentId)=>{const documentKey=providerId+':'+documentId;let disposed=false;const candidates=new WeakMap();return{inspect(){return{available:!disposed&&state.available,reason:'This test document is unavailable.'}},capture(){if(disposed)throw new Error('Document disposed');return Object.freeze({source:state.docs[documentKey],sourceName:'settings.yml',generation:state.generation})},...(state.noPreview?{}:{async previewRepresentation(snapshot,request){(state.previewCalls??=[]).push(request.kind);if(state.recordPreviewPaint){const loading=[...document.querySelectorAll('.twpe-yaml-dialog [role=status]')].find(node=>node.textContent==='プレビューを表示しています…');(state.previewObservations??=[]).push({kind:request.kind,frame:state.previewPaintFrame||0,selected:document.querySelector('[role=tab][aria-selected=true]')?.dataset.kind,loading:!!loading&&!loading.hidden&&loading.getClientRects().length>0,saveDisabled:document.querySelector('.twpe-yaml-save').disabled})}if(state.delayPreviewKind===request.kind)await new Promise(resolve=>(state.previewResolvers??={})[request.kind]=resolve);if(state.failPreviewKind===request.kind)throw Error('Preview unavailable');return{kind:request.kind,source:state.previewSource||state.docs[documentKey],blocks:{preview:{opcode:'fixture_preview',topLevel:true,parent:null,next:null,inputs:{},fields:{}}},rootIds:['preview'],blockDefinitions:[]}}}),async prepare(snapshot,source){state.calls.push('prepare:'+documentKey);if(state.delayPrepare)await new Promise(resolve=>state.resolvePrepare=resolve);if(source==='bad yaml')throw new Error('Invalid YAML at line 1');if(snapshot.generation!==state.generation)throw new Error('Project changed');return{source}},async commit(snapshot,prepared){state.commitStarted=true;if(state.delayCommit)await new Promise(resolve=>state.resolveCommit=resolve);vm.stopAll();state.calls.push('commit:'+documentKey);if(state.pendingOwnerMetadata){state.ownerMetadata=structuredClone(state.pendingOwnerMetadata);delete state.pendingOwnerMetadata;}state.docs[documentKey]=prepared.source;return{source:prepared.source}},async prepareRepresentation(snapshot,request){state.lastRepresentationRequest=request;state.calls.push('prepare-representation:'+documentKey);if(state.delayRepresentationPrepare)await new Promise(resolve=>state.resolveRepresentationPrepare=resolve);if(state.failRepresentationPrepare)throw Error('Invalid block structure');if(snapshot.generation!==state.generation)throw new Error('Project changed');const candidate=Object.freeze({summary:'YAML block view: '+request.direction});candidates.set(candidate,{snapshot,request});return candidate},async commitRepresentation(snapshot,candidate){const owned=candidates.get(candidate);if(!owned||owned.snapshot!==snapshot||snapshot.generation!==state.generation)throw new Error('Project changed before conversion');if(state.failRepresentation){candidates.delete(candidate);state.calls.push('failed-representation:'+documentKey);throw Object.assign(Error('Load failed and rolled back'),{rollbackSucceeded:state.rollbackSucceeded===true});}state.commitDialogOpen=document.querySelector('.twpe-yaml-dialog').open;if(state.requireSecurity)await new Promise(resolve=>{const button=document.createElement('button');button.textContent='Approve fixture extension';button.id='fixture-security-approval';button.onclick=()=>{button.remove();resolve()};document.body.append(button)});if(state.failAfterSecurity)throw Error('Extension approval failed');if(state.transientAvailability){state.available=false;window.ui.refresh();state.statusDuringCommit=document.querySelector('.twpe-yaml-dialog [role=status]').textContent;state.available=true;}state.calls.push('commit-representation:'+documentKey);if(owned.request.direction==='from-source'&&owned.request.kind===state.activeKind&&state.blocksSource!==undefined)state.docs[documentKey]=state.blocksSource;state.activeKind=owned.request.direction==='from-source'?owned.request.kind:'source';if(state.moveTargetOnCommit)vm.editingTarget=vm.runtime.targets.find(t=>t.id==='sprite');state.generation++;emit(listeners,'RUNTIME_DISPOSED');emit(listeners,'PROJECT_LOADED');return{source:state.docs[documentKey]}},dispose(){disposed=true}}};
-state.unregisterNotes=registry.register({id:'notes',hatOpcodes:['notes_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'yaml',docsURL:'https://example.test/dsl/notes',activeRepresentation:state.activeKind||'source',representations:state.withoutRepresentations?[]:[{kind:'yaml-blocks',label:'共通YAMLブロック',fromSource:true,toSource:true,fromRepresentations:state.allowCross?['yaml-blocks','schema-blocks']:['yaml-blocks']},{kind:'schema-blocks',label:'Owner schema label',fromSource:!state.crossOnly,toSource:true,fromRepresentations:state.allowCross?['schema-blocks','yaml-blocks']:['schema-blocks']}],schema:{id:'urn:test:notes-schema',schema:{type:'object',properties:{theme:{type:'string'}}}}},{documentId:'two',filename:'settings.yml',format:'yaml'}],open:id=>openDocument('notes',id)});
+state.unregisterNotes=registry.register({id:'notes',hatOpcodes:['notes_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'yaml',docsURL:'https://example.test/dsl/notes',activeRepresentation:state.activeKind||'source',representations:state.withoutRepresentations?[]:[{kind:'yaml-blocks',label:'YAMLブロック',fromSource:true,toSource:true,fromRepresentations:state.allowCross?['yaml-blocks','schema-blocks']:['yaml-blocks']},{kind:'schema-blocks',label:'Owner schema label',fromSource:!state.crossOnly,toSource:true,fromRepresentations:state.allowCross?['schema-blocks','yaml-blocks']:['schema-blocks']}],schema:{id:state.schemaId||'urn:test:notes-schema',schema:{type:'object',properties:{theme:{type:'string'}}}}},{documentId:'two',filename:'settings.yml',format:'yaml'}],open:id=>openDocument('notes',id)});
 registry.register({id:'preferences',hatOpcodes:['preferences_embeddedYaml'],list:()=>[{documentId:'one',filename:'settings.yml',format:'json'}],open:id=>openDocument('preferences',id)});
 let nextId=0;
 const fetcher=async(route,options)=>{state.calls.push({route,method:options.method||'GET',headers:options.headers,...(options.body?{body:JSON.parse(options.body)}:{})});const json=value=>new Response(JSON.stringify(value),{status:200,headers:{'Content-Type':'application/json'}});if(route.endsWith('/config'))return json({available:true,token:'fixture-token',maxSourceBytes:4194304});if(options.method==='POST'&&!route.endsWith('/sessions')){const id=route.split('/').at(-1);if(state.failReopen)throw Error('VSCode launch failed');return json({id,opened:true})}if(options.method==='POST'){const id='session-'+(++nextId);state.sessions[id]={source:JSON.parse(options.body).source,closed:false};if(state.delayPost)return new Promise(resolve=>state.resolvePost=()=>resolve(json({id,revision:1,opened:true})));return json({id,revision:1,opened:true})}const id=route.split('/').at(-1);if(options.method==='DELETE'){state.sessions[id].closed=true;return json({closed:true})}if(state.delayed)return new Promise(resolve=>state.resolveSaved=()=>resolve(json({id,revision:2,source:state.sessions[id].source})));return json({id,revision:2,source:state.sessions[id].source})};
@@ -144,7 +144,7 @@ async function readyPage(page, language = "ja") {
 }
 async function startSelected(page) {
   await page
-    .getByRole("button", { name: /^(VSCodeで編集|Edit in VSCode)$/u })
+    .getByRole("button", { name: /^(外部エディタで編集|Edit in external editor)$/u })
     .click();
   await page.waitForFunction(() => window.ui.getState().session);
 }
@@ -262,7 +262,7 @@ test("window controls stay reachable at minimum size, on narrow screens and afte
 });
 
 const dialog = (page) =>
-  page.getByRole("dialog", { name: "組み込み文書", exact: true });
+  page.getByRole("dialog", { name: "紙芝居台本データ", exact: true });
 const footerSave = (page) =>
   dialog(page).getByRole("button", {
     name: "表示されている形式に変換して検証・保存",
@@ -288,7 +288,7 @@ async function assertNoDownload(page) {
 }
 async function selectConversion(page) {
   await page
-    .getByRole("tab", { name: "共通YAMLブロック", exact: true })
+    .getByRole("tab", { name: "YAMLブロック", exact: true })
     .click();
 }
 const confirmation = (page) =>
@@ -438,7 +438,7 @@ test("selecting a conversion only stages a request and Cancel/X discard without 
     await open(page);
     assert.equal(
       await page
-        .getByRole("tab", { name: "💽 原文YAML", exact: true })
+        .getByRole("tab", { name: "YAMLテキスト", exact: true })
         .getAttribute("aria-selected"),
       "true",
     );
@@ -457,7 +457,7 @@ test("external Save reads the latest workcopy, commits once to the Editor and cl
   );
   assert.equal(
     await page
-      .getByRole("tab", { name: "共通YAMLブロック", exact: true })
+      .getByRole("tab", { name: "YAMLブロック", exact: true })
       .isDisabled(),
     true,
   );
@@ -637,7 +637,7 @@ test("a delayed workcopy POST is closed on arrival after cancellation", async ()
   await readyPage(page);
   await open(page);
   await page.evaluate(() => (window.fixture.delayPost = true));
-  await page.getByRole("button", { name: "VSCodeで編集", exact: true }).click();
+  await page.getByRole("button", { name: "外部エディタで編集", exact: true }).click();
   await page.waitForFunction(() => window.fixture.resolvePost);
   await dialog(page)
     .getByRole("button", { name: "閉じる", exact: true })
@@ -716,9 +716,7 @@ test("footer Save prepares and applies the selected conversion once, permits ext
   );
   await open(page);
   assert.equal(
-    await page
-      .getByRole("button", { name: "VSCodeで編集", exact: true })
-      .isDisabled(),
+    await page.locator(".twpe-yaml-external-edit").isHidden(),
     true,
   );
   const commits = await page.evaluate(
@@ -1034,18 +1032,127 @@ test("a conversion capability removed before or during Save cannot execute a hid
   }
 });
 
+test("script data labels, saved-format notes and external editing stay inside their tab", async () => {
+  for (const width of [1280, 390]) {
+    const page = await browser.newPage({viewport: {width, height: 900}});
+    try {
+      await readyPage(page);
+      await open(page);
+      const current = dialog(page);
+      assert.deepEqual(await current.getByRole("tab").allTextContents(),
+        ["YAMLテキスト", "YAMLブロック", "台本ブロック"]);
+      assert.equal(await current.locator(".twpe-yaml-title-filename").textContent(), "settings.yml");
+      assert.equal(await current.locator(".twpe-yaml-title-format").count(), 0);
+      assert.equal(await current.locator(".twpe-yaml-actions button").count(), 0);
+      assert.equal(await current.getByText("保存されている原文（プレビュー）", {exact: true}).count(), 0);
+      const panel = current.getByRole("tabpanel");
+      assert.equal(await panel.getByText("💽=保存済み形式", {exact: true}).isVisible(), true);
+      const guide = current.locator(".twpe-yaml-guide");
+      assert.equal(await guide.textContent(), "ℹ️ガイドを参照");
+      assert.equal(await guide.getAttribute("target"), "_blank");
+      assert.equal(await guide.getAttribute("rel"), "noopener noreferrer");
+      assert.equal(await guide.locator("svg[aria-hidden=true]").count(), 1);
+      const edit = panel.getByRole("button", {name: "外部エディタで編集", exact: true});
+      assert.equal(await edit.isVisible(), true);
+      const layout = await edit.evaluate(button => {
+        const preview = button.parentElement.querySelector("textarea");
+        const a = button.getBoundingClientRect(), b = preview.getBoundingClientRect();
+        const dialog = button.closest("dialog");
+        return {
+          floating: getComputedStyle(button).position === "absolute",
+          firstLineSharesButtonRow: b.top + parseFloat(getComputedStyle(preview).borderTopWidth) +
+            parseFloat(getComputedStyle(preview).paddingTop) < a.bottom,
+          rightInset: b.right - a.right, topInset: a.top - b.top,
+          fits: a.left >= b.left && a.bottom <= b.bottom,
+          overflows: dialog.scrollWidth > dialog.clientWidth
+        };
+      });
+      assert(layout.floating && layout.fits && layout.firstLineSharesButtonRow && !layout.overflows);
+      assert(layout.rightInset >= 10 && layout.rightInset <= 14);
+      assert(layout.topInset >= 10 && layout.topInset <= 14);
+      await selectConversion(page);
+      assert.equal(await panel.getByText("このタブで表示されている形式に変換して保存できます", {exact: true}).isVisible(), true);
+      assert.equal(await panel.getByText("💽=保存済み形式", {exact: true}).count(), 0);
+      assert.equal(await edit.isVisible(), false);
+      await cancel(page).click();
+      await closed(page);
+    } finally {await page.close();}
+  }
+});
+
+test("Schema HTTPS links replace the URL row and follow the guide in a new tab", async () => {
+  for (const width of [1280, 390]) {
+    const page = await browser.newPage({viewport: {width, height: 900}});
+    try {
+      await readyPage(page);
+      await open(page);
+      const current = dialog(page), schema = current.locator(".twpe-yaml-schema");
+      assert.equal(await schema.isHidden(), true);
+      await page.evaluate(() => {
+        window.fixture.schemaId = "https://example.test/schema/notes.json";
+        window.ui.refresh();
+      });
+      assert.equal(await schema.textContent(), "スキーマを参照");
+      assert.equal(await schema.getAttribute("href"), "https://example.test/schema/notes.json");
+      assert.equal(await schema.getAttribute("target"), "_blank");
+      assert.equal(await schema.getAttribute("rel"), "noopener noreferrer");
+      assert.equal(await schema.getAttribute("aria-label"), "スキーマを参照（別タブで開く）");
+      assert.equal(await schema.locator("svg[aria-hidden=true]").count(), 1);
+      assert.equal(await current.locator(".twpe-yaml-source-name").count(), 0);
+      assert.equal((await current.innerText()).includes("https://example.test/schema/notes.json"), false);
+      const layout = await schema.evaluate(link => {
+        const guide = link.previousElementSibling;
+        const a = guide.getBoundingClientRect(), b = link.getBoundingClientRect();
+        const dialog = link.closest("dialog");
+        return {
+          followsGuide: guide.classList.contains("twpe-yaml-guide"),
+          toRight: b.left >= a.right,
+          sameLine: Math.abs(a.top - b.top) < 2,
+          noOverflow: dialog.scrollWidth <= dialog.clientWidth
+        };
+      });
+      assert(layout.followsGuide && layout.toRight && layout.sameLine && layout.noOverflow);
+      await page.evaluate(() => {
+        window.fixture.schemaId = "javascript:alert(1)";
+        window.ui.refresh();
+      });
+      assert.equal(await schema.isHidden(), true);
+      assert.equal(await schema.getAttribute("href"), null);
+      await cancel(page).click();
+    } finally {await page.close();}
+  }
+});
+
+test("English script data labels retain the same tab-local actions", async () => {
+  const page = await browser.newPage();
+  try {
+    await readyPage(page, "en");
+    await icon(page).click();
+    const current = page.getByRole("dialog", {name: "Kamishibai script data", exact: true});
+    await current.waitFor();
+    assert.deepEqual(await current.getByRole("tab").allTextContents(),
+      ["YAML text", "YAML blocks", "Script blocks"]);
+    assert.equal(await current.getByRole("tabpanel").getByText("💽=Saved format", {exact: true}).isVisible(), true);
+    assert.equal(await current.getByRole("button", {name: "Edit in external editor", exact: true}).isVisible(), true);
+    await current.getByRole("tab", {name: "YAML blocks", exact: true}).click();
+    assert.equal(await current.getByText("You can convert to the format shown in this tab and save it.", {exact: true}).isVisible(), true);
+    assert.equal(await current.locator(".twpe-yaml-external-edit").isHidden(), true);
+    await current.getByRole("button", {name: "Cancel", exact: true}).click();
+  } finally {await page.close();}
+});
+
 test("three accessible tabs mark the saved format, select by keyboard and confirm only on Save", async () => {
   const page = await browser.newPage();
   await readyPage(page);
   await open(page);
   assert.deepEqual(await dialog(page).getByRole("tab").allTextContents(), [
-    "💽 原文YAML",
-    "共通YAMLブロック",
+    "YAMLテキスト",
+    "YAMLブロック",
     "台本ブロック",
   ]);
   assert.equal(
     await dialog(page)
-      .getByRole("tab", { name: "💽 原文YAML", exact: true })
+      .getByRole("tab", { name: "YAMLテキスト", exact: true })
       .getAttribute("aria-selected"),
     "true",
   );
@@ -1053,12 +1160,12 @@ test("three accessible tabs mark the saved format, select by keyboard and confir
     await dialog(page).locator("[role=status]").first().isVisible(),
     false,
   );
-  const raw = page.getByRole("tab", { name: "💽 原文YAML", exact: true });
+  const raw = page.getByRole("tab", { name: "YAMLテキスト", exact: true });
   await raw.focus();
   await page.keyboard.press("ArrowRight");
   assert.equal(
     await page
-      .getByRole("tab", { name: "共通YAMLブロック", exact: true })
+      .getByRole("tab", { name: "YAMLブロック", exact: true })
       .getAttribute("aria-selected"),
     "true",
   );
@@ -1073,9 +1180,7 @@ test("three accessible tabs mark the saved format, select by keyboard and confir
   assert.equal(await raw.getAttribute("aria-selected"), "true");
   await selectConversion(page);
   assert.equal(
-    await page
-      .getByRole("button", { name: "VSCodeで編集", exact: true })
-      .isDisabled(),
+    await page.locator(".twpe-yaml-external-edit").isHidden(),
     true,
   );
   await page.locator("[data-fixture-preview-kind=yaml-blocks]").waitFor();
@@ -1097,7 +1202,7 @@ test("three accessible tabs mark the saved format, select by keyboard and confir
   assert.equal(await dialog(page).isVisible(), true);
   assert.equal(
     await page
-      .getByRole("tab", { name: "共通YAMLブロック", exact: true })
+      .getByRole("tab", { name: "YAMLブロック", exact: true })
       .getAttribute("aria-selected"),
     "true",
   );
@@ -1117,7 +1222,7 @@ test("three accessible tabs mark the saved format, select by keyboard and confir
   await open(page);
   assert.equal(
     await page
-      .getByRole("tab", { name: "💽 共通YAMLブロック", exact: true })
+      .getByRole("tab", { name: "YAMLブロック", exact: true })
       .getAttribute("aria-selected"),
     "true",
   );
@@ -1161,7 +1266,7 @@ test("three accessible tabs mark the saved format, select by keyboard and confir
   await open(page);
   assert.equal(
     await page
-      .getByRole("tab", { name: "💽 台本ブロック", exact: true })
+      .getByRole("tab", { name: "台本ブロック", exact: true })
       .getAttribute("aria-selected"),
     "true",
   );
@@ -1229,19 +1334,19 @@ test("tab previews display only the selected owner model and ignore an older asy
   );
   assert.equal(
     await page
-      .getByLabel("保存されている原文（プレビュー）", { exact: true })
+      .getByRole("textbox", { name: "YAMLテキスト", exact: true })
       .inputValue(),
     "theme: light",
   );
   assert.equal(
     await page
-      .getByText("💽=現在保存されている形式", { exact: true })
+      .getByText("💽=保存済み形式", { exact: true })
       .isVisible(),
     true,
   );
   await page.evaluate(() => (window.fixture.delayPreviewKind = "yaml-blocks"));
   await page
-    .getByRole("tab", { name: "共通YAMLブロック", exact: true })
+    .getByRole("tab", { name: "YAMLブロック", exact: true })
     .click();
   await page.waitForFunction(
     () =>
@@ -1284,7 +1389,7 @@ test("an obsolete block rendering is disposed without deleting the new tab previ
   await open(page);
   await page.evaluate(() => (window.fixture.delayRenderKind = "yaml-blocks"));
   await page
-    .getByRole("tab", { name: "共通YAMLブロック", exact: true })
+    .getByRole("tab", { name: "YAMLブロック", exact: true })
     .click();
   await page.waitForFunction(
     () => typeof window.fixture.renderResolvers?.["yaml-blocks"] === "function",
@@ -1326,7 +1431,7 @@ test("preview errors disable Save while Cancel works and returning from VSCode r
   await open(page);
   await page.evaluate(() => (window.fixture.failPreviewKind = "yaml-blocks"));
   await page
-    .getByRole("tab", { name: "共通YAMLブロック", exact: true })
+    .getByRole("tab", { name: "YAMLブロック", exact: true })
     .click();
   await dialog(page)
     .getByRole("alert")
@@ -1349,7 +1454,7 @@ test("preview errors disable Save while Cancel works and returning from VSCode r
   );
   assert.equal(
     await page
-      .getByLabel("VSCodeの保存内容（エディターへは未反映）", { exact: true })
+      .getByRole("textbox", { name: "YAMLテキスト", exact: true })
       .inputValue(),
     "theme: returned-from-vscode",
   );
@@ -1391,7 +1496,7 @@ test("legacy owners may preview current raw source but cannot show stale canonic
         .getByRole("alert")
         .filter({ hasText: "did not provide a preview" })
         .waitFor();
-      await page.getByRole("tab", { name: "原文YAML", exact: true }).click();
+      await page.getByRole("tab", { name: "YAMLテキスト", exact: true }).click();
       await dialog(page)
         .getByRole("alert")
         .filter({ hasText: "did not provide a preview" })

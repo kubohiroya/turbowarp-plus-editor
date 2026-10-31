@@ -1,5 +1,5 @@
 import {bindBlockEditorIcon} from '@kubohiroya/turbowarp-extension-data-editor/turbowarp';
-import {registerEmbeddedYamlRootHatShape} from '@kubohiroya/turbowarp-embedded-yaml';
+import {registerEmbeddedYamlRootHatShape} from '@kubohiroya/turbowarp-document-source';
 import {attachDocumentWorkspacePatch} from './workspace-patch.js';
 
 export function attachEmbeddedYamlHat({vm, registry, readReference, window: win, getScratch, label, canOpen, onOpen, onError = console.error}) {

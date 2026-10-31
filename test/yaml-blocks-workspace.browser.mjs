@@ -7,11 +7,11 @@ import { build } from 'esbuild';
 import { chromium, expect } from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
 import { createHash } from 'node:crypto';
-import { readYamlBlockView } from '@kubohiroya/turbowarp-embedded-yaml/yaml-blocks';
+import { readYamlBlockView } from '@kubohiroya/turbowarp-document-source/yaml-blocks';
 import {
     createYamlSourceBlockView,
     readYamlSourceBlockView
-} from '@kubohiroya/turbowarp-embedded-yaml/source-view';
+} from '@kubohiroya/turbowarp-document-source/source-view';
 import { startYamlEditorHost } from '../scripts/yaml-editor/host.mjs';
 const sourceRaw =
     '# Keep this YAML comment\r\nmessage: "Hello"\r\nvalues:\r\n  - 42\r\n  - false\r\n  - null\r\n';
@@ -46,7 +46,7 @@ test(
         await build({
             stdin: {
                 contents:
-                    "import {createYamlBlockRuntime} from '@kubohiroya/turbowarp-embedded-yaml/runtime'; Scratch.extensions.register(createYamlBlockRuntime(Scratch,{enabled:true}));",
+                    "import {createYamlBlockRuntime} from '@kubohiroya/turbowarp-document-source/runtime'; Scratch.extensions.register(createYamlBlockRuntime(Scratch,{enabled:true}));",
                 resolveDir: process.cwd()
             },
             bundle: true,
@@ -58,7 +58,7 @@ test(
         await build({
             stdin: {
                 contents:
-                    "import {createEmbeddedYamlHatDefinition,createEmbeddedYamlDocumentMenu} from '@kubohiroya/turbowarp-embedded-yaml'; const ref=" +
+                    "import {createEmbeddedYamlHatDefinition,createEmbeddedYamlDocumentMenu} from '@kubohiroya/turbowarp-document-source'; const ref=" +
                     JSON.stringify(reference) +
                     "; Scratch.extensions.register({getInfo(){return{id:'yamlproofowner',name:'YAML owner proof',blocks:[createEmbeddedYamlHatDefinition({BlockType:Scratch.BlockType,defaultReference:ref})],menus:{embeddedYamlDocuments:createEmbeddedYamlDocumentMenu([{reference:ref,filename:'document.yml'}])}}},embeddedYaml(){return false}});",
                 resolveDir: process.cwd()

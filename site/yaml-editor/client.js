@@ -7,7 +7,15 @@ import { attachDialogWindow } from "./dialog-window.js";
 
 const messages = {
   ja: {
-    title: "組み込み文書",
+    title: "紙芝居台本データ",
+    neutralTitle: "データソース",
+    location: "参照元",
+    embeddedFile: "SB3内のファイル",
+    urlSource: "外部URL",
+    previewSource: "取得してプレビュー",
+    sourceHint: "URLの内容を編集・ブロック化するには、参照元を「SB3内のファイル」に変更して保存してください。",
+    sourceSave: "参照元を検証・保存",
+    sourceNeedsPreview: "参照元をプレビューしてから保存してください。",
     close: "閉じる",
     maximize: "全画面化",
     restore: "元のサイズに戻す",
@@ -16,11 +24,12 @@ const messages = {
     document: "文書",
     selectOne: "文書を選択してください",
     format: "形式",
-    noSchema: "なし",
-    docs: "DSLの説明",
+    docs: "ℹ️ガイドを参照",
+    schema: "スキーマを参照",
+    newWindow: "別タブで開く",
     validate: "文書を検証",
     validateSchema: "JSON Schemaで検証",
-    edit: "VSCodeで編集",
+    edit: "外部エディタで編集",
     open: "文書を確認・編集",
     ready: "",
     localOnly:
@@ -32,8 +41,6 @@ const messages = {
       "VSCodeの内容を先にエディターへ反映してから形式を切り替えてください。",
     switchHint:
       "別の文書へ移るには、保存またはキャンセルでこの画面を閉じてください。",
-    preview: "保存されている原文（プレビュー）",
-    draft: "VSCodeの保存内容（エディターへは未反映）",
     validating: "文書を検証しています…",
     validated: "文書の検証が完了しました。作品は変更していません。",
     validationFailed: "文書の検証に失敗しました。作品は変更していません。",
@@ -49,9 +56,9 @@ const messages = {
     convert: "表現を変換",
     fromSource: "原文から",
     toSource: "原文へ反映",
-    rawYAML: "原文YAML",
-    rawJSON: "原文JSON",
-    yamlBlocks: "共通YAMLブロック",
+    rawYAML: "YAMLテキスト",
+    rawJSON: "JSONテキスト",
+    yamlBlocks: "YAMLブロック",
     schemaBlocks: "台本ブロック",
     conversionSource: "変換元の原文",
     confirmConversion: (label) => `${label}形式に変換しますか？`,
@@ -59,14 +66,23 @@ const messages = {
       "選択した変換は利用できなくなりました。変換先を選び直してください。",
     preparingConversion: "変換する内容を検証しています…",
     conversionFailed: "変換できませんでした。原文と作品を確認してください。",
-    active: "💽=現在保存されている形式",
+    active: "💽=保存済み形式",
+    convertHint: "このタブで表示されている形式に変換して保存できます",
     source: "原文",
     viaSource:
       "別の表現へ変換する前に、現在のブロックの変更を原文へ反映してください。",
     errorHeading: "エラー",
   },
   en: {
-    title: "Embedded document",
+    title: "Kamishibai script data",
+    neutralTitle: "Data source",
+    location: "Source location",
+    embeddedFile: "File inside SB3",
+    urlSource: "External URL",
+    previewSource: "Load preview",
+    sourceHint: "To edit or convert a URL source, choose “File inside SB3” and save it first.",
+    sourceSave: "Validate and save source location",
+    sourceNeedsPreview: "Preview the source location before saving.",
     close: "Close",
     maximize: "Maximize",
     restore: "Restore window",
@@ -75,11 +91,12 @@ const messages = {
     document: "Document",
     selectOne: "Select a document",
     format: "Format",
-    noSchema: "none",
-    docs: "DSL documentation",
+    docs: "ℹ️ Open guide",
+    schema: "Open schema",
+    newWindow: "Open in a new tab",
     validate: "Validate document",
     validateSchema: "Validate with JSON Schema",
-    edit: "Edit in VSCode",
+    edit: "Edit in external editor",
     open: "View or edit document",
     ready: "",
     localOnly:
@@ -90,8 +107,6 @@ const messages = {
     externalHint: "Apply the VSCode content with “Save” before converting.",
     switchHint:
       "Save or cancel and close this dialog before choosing another document.",
-    preview: "Stored source (preview)",
-    draft: "Saved VSCode content (not yet applied to the Editor)",
     validating: "Validating the document…",
     validated: "Document validation completed. The project is unchanged.",
     validationFailed: "Document validation failed. The project is unchanged.",
@@ -108,9 +123,9 @@ const messages = {
     convert: "Convert representation",
     fromSource: "From source",
     toSource: "Apply to source",
-    rawYAML: "YAML source",
-    rawJSON: "JSON source",
-    yamlBlocks: "Common YAML blocks",
+    rawYAML: "YAML text",
+    rawJSON: "JSON text",
+    yamlBlocks: "YAML blocks",
     schemaBlocks: "Script blocks",
     conversionSource: "Source for conversion",
     confirmConversion: (label) => `Convert to ${label}?`,
@@ -118,7 +133,8 @@ const messages = {
       "The selected conversion is no longer available. Choose a conversion again.",
     preparingConversion: "Validating the conversion…",
     conversionFailed: "Conversion failed. Check the source and project.",
-    active: "💽=Currently saved format",
+    active: "💽=Saved format",
+    convertHint: "You can convert to the format shown in this tab and save it.",
     source: "Source",
     viaSource:
       "Apply the current block changes to source before converting to another representation.",
@@ -134,12 +150,14 @@ export function mountYamlEditor({
   document: documentOption,
   fetch: fetchOption,
   language,
+  documentSources,
 } = {}) {
   if (!vm) throw new TypeError("An Editor VM is required.");
   const doc = documentOption || globalThis.document,
     win = doc.defaultView,
     fetcher = fetchOption || win.fetch.bind(win);
-  const providers = getYamlEditorProviders(vm),
+  const sourcesEnabled = documentSources ?? new URLSearchParams(win.location.search).get("twPlusDocumentSource") === "1";
+  const providers = getYamlEditorProviders(vm, {documentSources: sourcesEnabled}),
     registry = registryOption || providers.registry,
     readReference = readReferenceOption || providers.readReference;
   const locale =
@@ -169,30 +187,48 @@ export function mountYamlEditor({
   selectionLabel.htmlFor = selection.id;
   selectionLabel.textContent = `${text.document}: `;
   selectionRow.append(selectionLabel, selection);
-  const sourceName = doc.createElement("strong"),
-    formatNote = doc.createElement("span"),
-    schemaNote = paragraph();
+  const sourceName = doc.createElement("strong");
   sourceName.className = "twpe-yaml-title-filename";
-  formatNote.className = "twpe-yaml-title-format";
-  schemaNote.className = "twpe-yaml-source-name";
   const titlebar = doc.createElement("header");
   titlebar.className = "twpe-yaml-titlebar";
-  titlebar.append(heading, sourceName, formatNote, windowActions);
+  titlebar.append(heading, sourceName, windowActions);
   const actions = doc.createElement("div");
   actions.className = "twpe-yaml-actions";
   const docsLink = doc.createElement("a");
   docsLink.textContent = text.docs;
+  docsLink.className = "twpe-yaml-reference twpe-yaml-guide";
+  docsLink.title = text.newWindow;
+  docsLink.setAttribute("aria-label", text.docs + "（" + text.newWindow + "）");
+  const windowIcon = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+  windowIcon.classList.add("twpe-yaml-guide-icon");
+  windowIcon.setAttribute("viewBox", "0 0 24 24");
+  windowIcon.setAttribute("fill", "none");
+  windowIcon.setAttribute("stroke", "currentColor");
+  windowIcon.setAttribute("stroke-width", "2");
+  windowIcon.setAttribute("aria-hidden", "true");
+  const windowPath = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+  windowPath.setAttribute("d", "M14 3h7v7M21 3 10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5");
+  windowIcon.append(windowPath);
+  docsLink.append(windowIcon);
   docsLink.target = "_blank";
   docsLink.rel = "noopener noreferrer";
+  const schemaLink = doc.createElement("a");
+  schemaLink.className = "twpe-yaml-reference twpe-yaml-schema";
+  schemaLink.textContent = text.schema;
+  schemaLink.title = text.newWindow;
+  schemaLink.setAttribute("aria-label", text.schema + "（" + text.newWindow + "）");
+  schemaLink.append(windowIcon.cloneNode(true));
+  schemaLink.target = "_blank";
+  schemaLink.rel = "noopener noreferrer";
   const editButton = button(text.edit);
-  actions.append(docsLink, editButton);
+  editButton.className = "twpe-yaml-external-edit";
+  actions.append(docsLink, schemaLink);
   const conversions = doc.createElement("section");
   conversions.setAttribute("aria-label", text.convert);
   const activeNote = paragraph(),
-    representationHint = paragraph(),
     externalHint = paragraph(),
     switchHint = paragraph();
-  activeNote.className = "twpe-yaml-source-name";
+  activeNote.className = "twpe-yaml-format-note";
   externalHint.textContent = text.externalHint;
   switchHint.textContent = text.switchHint;
   const tablist = doc.createElement("div");
@@ -206,7 +242,7 @@ export function mountYamlEditor({
   panel.id = "twpe-yaml-tabpanel";
   panel.setAttribute("role", "tabpanel");
   panel.tabIndex = 0;
-  conversions.append(activeNote, representationHint, externalHint, tabToolbar);
+  conversions.append(externalHint, tabToolbar);
   const status = paragraph();
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
@@ -214,12 +250,13 @@ export function mountYamlEditor({
   error.className = "twpe-yaml-error";
   error.setAttribute("role", "alert");
   error.setAttribute("aria-label", text.errorHeading);
-  const previewLabel = doc.createElement("label");
-  previewLabel.htmlFor = "twpe-yaml-preview";
   const preview = doc.createElement("textarea");
-  preview.id = previewLabel.htmlFor;
+  preview.id = "twpe-yaml-preview";
   preview.readOnly = true;
   preview.spellcheck = false;
+  const sourcePreview = doc.createElement("div");
+  sourcePreview.className = "twpe-yaml-source-preview";
+  sourcePreview.append(preview, editButton);
   const blockPreview = doc.createElement("div");
   blockPreview.className = "twpe-yaml-block-preview";
   blockPreview.setAttribute("aria-label", "ブロックのプレビュー");
@@ -228,6 +265,22 @@ export function mountYamlEditor({
   previewLoading.textContent = String(locale).startsWith("ja")
     ? "プレビューを表示しています…"
     : "Loading preview…";
+  const sourceControls = doc.createElement("section");
+  sourceControls.className = "twpe-source-controls";
+  const sourceLocationLabel = doc.createElement("label"), sourceLocation = doc.createElement("select");
+  sourceLocation.id = "twpe-source-location";
+  sourceLocationLabel.htmlFor = sourceLocation.id;
+  sourceLocationLabel.textContent = text.location;
+  for (const [value, label] of [["embedded-file", text.embeddedFile], ["url", text.urlSource]]) {
+    const option = doc.createElement("option"); option.value = value; option.textContent = label; sourceLocation.append(option);
+  }
+  const sourceURL = doc.createElement("input");
+  sourceURL.type = "url";
+  sourceURL.setAttribute("aria-label", "HTTPS URL");
+  sourceURL.placeholder = "https://…/story.yaml";
+  const sourceLoad = button(text.previewSource), sourceHint = paragraph(text.sourceHint);
+  sourceLoad.className = "twpe-source-load";
+  sourceControls.append(sourceLocationLabel, sourceLocation, sourceURL, sourceLoad, sourceHint);
   const footer = doc.createElement("div");
   footer.className = "twpe-yaml-footer";
   const cancelButton = button(text.cancel),
@@ -235,18 +288,18 @@ export function mountYamlEditor({
   saveButton.className = "twpe-yaml-save";
   footer.append(cancelButton, saveButton);
   panel.append(
+    activeNote,
     status,
     error,
     previewLoading,
-    previewLabel,
-    preview,
+    sourcePreview,
     blockPreview,
   );
   const content = doc.createElement("div");
   content.className = "twpe-yaml-content";
   content.append(
     selectionRow,
-    schemaNote,
+    sourceControls,
     conversions,
     switchHint,
     panel,
@@ -285,7 +338,9 @@ export function mountYamlEditor({
     opener = null,
     hatEntry = null,
     replacementNotice = false,
-    actionStatus = "";
+    actionStatus = "",
+    sourceLocationDraft = null,
+    preparedSourceLocation = null;
   let previewGeneration = 0,
     previewAttempt = null,
     previewReady = null,
@@ -335,7 +390,7 @@ export function mountYamlEditor({
     }
   }
   function hasWork() {
-    return Boolean(session) || draft !== null || Boolean(conversionRequest);
+    return Boolean(session) || draft !== null || Boolean(conversionRequest) || Boolean(sourceLocationDraft);
   }
   function current(generation, owner = adapter) {
     return !disposed && epoch === generation && adapter === owner;
@@ -535,35 +590,43 @@ export function mountYamlEditor({
     selection.disabled = pending || hasWork();
     switchHint.hidden = !hasWork() || listed.length < 2;
     sourceName.textContent = snapshot?.sourceName || entry?.filename || "";
-    formatNote.textContent = entry?.format
-      ? `(${text.format}: ${entry.format.toUpperCase()})`
-      : "";
-    formatNote.hidden = !entry?.format;
-    schemaNote.textContent = `Schema: ${entry?.schema?.id || text.noSchema}`;
-
-    let docsURL = null;
-    try {
-      if (entry?.docsURL && new URL(entry.docsURL).protocol === "https:")
-        docsURL = entry.docsURL;
-    } catch {
-      /* Invalid metadata cannot create a navigation target. */
+    heading.textContent = sourcesEnabled ? (entry?.dialogTitle?.[String(locale).startsWith("ja") ? "ja" : "en"] || text.neutralTitle) : text.title;
+    const location = sourceLocationDraft || {kind: entry?.dataSource?.kind === "url" ? "url" : "embedded-file", url: entry?.dataSource?.url || ""};
+    sourceControls.hidden = !sourcesEnabled || !entry?.sourceLocationEditable;
+    sourceLocation.value = location.kind;
+    if (doc.activeElement !== sourceURL) sourceURL.value = location.url || "";
+    sourceURL.hidden = location.kind !== "url";
+    sourceLocation.disabled = pending || Boolean(session) || active !== "source" || selectedRepresentation !== "source";
+    sourceURL.disabled = sourceLocation.disabled;
+    sourceLoad.disabled = sourceLocation.disabled || !sourceLocationDraft;
+    sourceHint.hidden = entry?.dataSource?.kind !== "url" && location.kind !== "url";
+    saveButton.textContent = sourceLocationDraft || entry?.dataSource?.kind === "url" ? text.sourceSave : text.save;
+    for (const [link, value] of [[docsLink, entry?.docsURL], [schemaLink, entry?.schema?.id]]) {
+      let url = null;
+      try {
+        if (value && new URL(value).protocol === "https:") url = value;
+      } catch {
+        /* Invalid metadata cannot create a navigation target. */
+      }
+      link.hidden = !url;
+      if (url) link.href = url;
+      else link.removeAttribute("href");
     }
-    docsLink.hidden = !docsURL;
-    if (docsURL) docsLink.href = docsURL;
-    else docsLink.removeAttribute("href");
     editButton.disabled =
       pending ||
       !availability.available ||
       !bridge ||
       active !== "source" ||
-      Boolean(conversionRequest);
+      Boolean(conversionRequest) ||
+      Boolean(sourceLocationDraft) || entry?.dataSource?.kind === "url";
     closeButton.disabled = commitLocked;
     cancelButton.disabled = commitLocked;
     saveButton.disabled =
       pending ||
       !availability.available ||
       (!hasWork() && Boolean(error.textContent)) ||
-      !displayedPreviewMatches();
+      !displayedPreviewMatches() ||
+      (Boolean(sourceLocationDraft) && !preparedSourceLocation);
     representationOptions = formatOptions(entry);
     if (!selectedRepresentation) selectedRepresentation = active;
     const selectedOption = representationOptions.get(selectedRepresentation);
@@ -583,7 +646,7 @@ export function mountYamlEditor({
         : selectedOption?.request || null;
     tablist.replaceChildren(
       ...[...representationOptions].map(([kind, item], index) => {
-        const tab = button(`${kind === active ? "💽 " : ""}${item.label}`);
+        const tab = button(item.label);
         tab.id = `twpe-yaml-format-${index}`;
         tab.dataset.kind = kind;
         tab.setAttribute("role", "tab");
@@ -597,7 +660,8 @@ export function mountYamlEditor({
           pending ||
           !availability.available ||
           item.available === false ||
-          (Boolean(session) && kind !== active);
+          (Boolean(session) && kind !== active) ||
+          (Boolean(sourceLocationDraft) && kind !== "source");
         if (item.reason) tab.title = item.reason;
         return tab;
       }),
@@ -610,11 +674,11 @@ export function mountYamlEditor({
       [...tablist.children]
         .find((tab) => tab.dataset.kind === focusedTab && !tab.disabled)
         ?.focus();
-    activeNote.textContent = text.active;
-    representationHint.hidden = true;
+    activeNote.textContent =
+      selectedRepresentation === active ? text.active : text.convertHint;
     externalHint.hidden = !session;
-    previewLabel.textContent = draft !== null ? text.draft : text.preview;
-    previewLabel.hidden = selectedRepresentation !== "source";
+    preview.setAttribute("aria-label", formatLabel("source", entry));
+    sourcePreview.hidden = selectedRepresentation !== "source";
     preview.hidden = selectedRepresentation !== "source";
     blockPreview.hidden = selectedRepresentation === "source";
     previewLoading.hidden = !previewPending;
@@ -683,6 +747,8 @@ export function mountYamlEditor({
     session = null;
     draft = null;
     conversionRequest = null;
+    sourceLocationDraft = null;
+    preparedSourceLocation = null;
     snapshot = null;
     adapter?.dispose();
     adapter = null;
@@ -764,13 +830,19 @@ export function mountYamlEditor({
     clearWork();
     adapter = next;
     selected = reference;
+    const generation = epoch;
+    pending = true;
+    render();
     try {
+      await next.loadSource?.();
+      if (!current(generation, next)) return;
       capture();
       showStatus(text.ready);
     } catch (cause) {
-      showError(cause);
+      if (current(generation, next)) showError(cause);
+    } finally {
+      if (current(generation, next)) {pending = false; render();}
     }
-    render();
   }
   async function openFromHat(anchor) {
     if (disposed || pending || dialog.open) return;
@@ -983,7 +1055,41 @@ export function mountYamlEditor({
       }
     }
   }
+  const changeSourceLocation = () => {
+    sourceLocationDraft = {kind: sourceLocation.value, ...(sourceLocation.value === "url" ? {url: sourceURL.value} : {})};
+    preparedSourceLocation = null;
+    draft = null;
+    showStatus(text.sourceNeedsPreview);
+    resetPreview();
+    render();
+  };
+  sourceLocation.addEventListener("change", changeSourceLocation);
+  sourceURL.addEventListener("input", changeSourceLocation);
+  sourceLoad.addEventListener("click", () => {
+    if (!sourceLocationDraft || !adapter?.prepareDataSource) return;
+    const requested = {...sourceLocationDraft};
+    void operate(async (generation, owner) => {
+      const candidate = await owner.prepareDataSource(snapshot, requested);
+      if (!current(generation, owner) || JSON.stringify(requested) !== JSON.stringify(sourceLocationDraft)) return;
+      preparedSourceLocation = candidate;
+      draft = candidate.source;
+      resetPreview();
+      showStatus(text.ready);
+    });
+  });
   saveButton.addEventListener("click", () => {
+    if (sourceLocationDraft || metadata()?.dataSource?.kind === "url") {
+      if (sourceLocationDraft && !preparedSourceLocation) return;
+      void operate(async (generation, owner) => {
+        const candidate = preparedSourceLocation || await owner.prepareDataSource(snapshot, {kind: "url", url: metadata().dataSource.url});
+        if (!current(generation, owner)) return;
+        commitLocked = true;
+        render();
+        owner.commitDataSource(snapshot, candidate);
+        if (current(generation, owner)) finishSaved();
+      }, text.saveFailed);
+      return;
+    }
     if (conversionRequest) {
       if (pending || confirmation.open || !displayedPreviewMatches()) return;
       const target = formatOptions().get(selectedRepresentation);
@@ -1132,7 +1238,7 @@ export async function autostartYamlEditor({
     await new Promise((resolve) => win.setTimeout(resolve, 100));
   }
   if (typeof win.Scratch?.gui?.getBlockly === "function") {
-    const { registerEmbeddedYamlRootHatShape } = await import("@kubohiroya/turbowarp-embedded-yaml");
+    const { registerEmbeddedYamlRootHatShape } = await import("@kubohiroya/turbowarp-document-source");
     registerEmbeddedYamlRootHatShape(await win.Scratch.gui.getBlockly());
   }
   return mountYamlEditor({ vm: win.vm, document: win.document });

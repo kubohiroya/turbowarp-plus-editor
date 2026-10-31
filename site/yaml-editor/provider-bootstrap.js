@@ -1,7 +1,7 @@
 import {getSourceDocumentRegistry} from '@kubohiroya/turbowarp-document-data/composition';
-import {readReference} from '@kubohiroya/turbowarp-embedded-yaml';
+import {readReference, getDocumentSourceRegistry} from '@kubohiroya/turbowarp-document-source';
 
-// Runtime owners register themselves into the shared VM registry, including across bundles.
-export function getYamlEditorProviders(vm) {
-    return Object.freeze({registry: getSourceDocumentRegistry(vm), readReference});
+// Both APIs use one owner registry; source locations are enabled only at startup.
+export function getYamlEditorProviders(vm, {documentSources = false} = {}) {
+    return Object.freeze({registry: documentSources ? getDocumentSourceRegistry(vm) : getSourceDocumentRegistry(vm), readReference});
 }

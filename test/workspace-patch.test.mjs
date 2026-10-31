@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {projectPatchWorkspaceAdapterSymbol} from '@kubohiroya/turbowarp-embedded-yaml/project-views';
+import {projectPatchWorkspaceAdapterSymbol} from '@kubohiroya/turbowarp-document-source/project-views';
 import {attachDocumentWorkspacePatch} from '../site/yaml-editor/workspace-patch.js';
 
 test('the workspace capability recognizes only current own native block registrations', () => {

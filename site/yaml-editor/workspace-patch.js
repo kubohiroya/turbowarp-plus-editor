@@ -1,4 +1,4 @@
-import {installProjectPatchWorkspaceAdapter} from '@kubohiroya/turbowarp-embedded-yaml/project-views';
+import {installProjectPatchWorkspaceAdapter} from '@kubohiroya/turbowarp-document-source/project-views';
 
 /** Redraw only affected document scripts; retain the remaining workspace and its variables. */
 export function attachDocumentWorkspacePatch(vm, B) {

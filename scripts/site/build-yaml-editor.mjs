@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const sharedPackage = '@kubohiroya/turbowarp-embedded-yaml';
+const sharedPackage = '@kubohiroya/turbowarp-document-source';
 const documentPackage = '@kubohiroya/turbowarp-document-data';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -47,7 +47,7 @@ export async function buildYamlEditor(output, prefix = '/turbowarp-plus-editor/'
         await fs.rm(path.join(noticeRoot, name), {force: true});
     }
     const notices = [];
-    for (const [label, owner] of [['embedded-yaml', shared], ['document-data', documents]]) {
+    for (const [label, owner] of [['document-source', shared], ['document-data', documents]]) {
         for (const name of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md']) {
             try {
                 await fs.copyFile(path.join(owner.packageRoot, name), path.join(noticeRoot, `${label}-${name}`));

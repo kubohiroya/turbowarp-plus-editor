@@ -1,5 +1,5 @@
 // A separate read-only ScratchBlocks workspace; it never registers an extension with the VM.
-import {embeddedYamlRootHatShapeExtension, registerEmbeddedYamlRootHatShape} from '@kubohiroya/turbowarp-embedded-yaml';
+import {embeddedYamlRootHatShapeExtension, registerEmbeddedYamlRootHatShape} from '@kubohiroya/turbowarp-document-source';
 let serial = 0;
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const valueOf = field => Array.isArray(field) ? field[0] : record(field) ? field.value : field;
@@ -90,7 +90,8 @@ export async function renderBlockPreview({container, model, getScratch, vm, sign
     const number = ++serial, prefix = `twpe_preview_${number}_`;
     const surface = doc.createElement('div');
     surface.className = 'twpe-yaml-block-surface';
-    surface.style.cssText = 'position:relative;width:100%;height:100%;min-width:180px;background:white;';
+    // Keep layout measurable without painting intermediate, disconnected blocks between chunks.
+    surface.style.cssText = 'position:relative;width:100%;height:100%;min-width:180px;background:white;visibility:hidden;';
     surface.dataset.twpeBlockPreview = String(number);
     const summary = doc.createElement('pre');
     summary.className = 'twpe-yaml-preview-accessible';
@@ -240,6 +241,8 @@ export async function renderBlockPreview({container, model, getScratch, vm, sign
         const metrics = workspace.getMetrics();
         workspace.scrollbar?.set(bounds.x * workspace.scale - metrics.contentLeft - 24, bounds.y * workspace.scale - metrics.contentTop - 24);
         restoreMain();
+        cancelled();
+        surface.style.visibility = 'visible';
     } catch (cause) {
         cleanup();
         throw cause;

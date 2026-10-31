@@ -63,7 +63,6 @@
     "@playwright/test": "^1.64.1",
     "@turbowarp/jszip": "^3.12.0",
     "@turbowarp/packager": "3.14.0",
-    "@kubohiroya/turbowarp-embedded-yaml": "0.1.0-rc.2",
     "@kubohiroya/turbowarp-extension-data-editor": "0.7.0",
     "@kubohiroya/turbowarp-kamishibai-app": "4.0.0-rc.79",
     "@kubohiroya/turbowarp-kamishibai-preview-app": "npm:@kubohiroya/turbowarp-kamishibai-app@4.0.0-rc.77",
@@ -73,7 +72,8 @@
     "@kubohiroya/turbowarp-yaml-json": "0.8.0-rc.0",
     "ajv": "8.20.0",
     "esbuild": "0.25.12",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "@kubohiroya/turbowarp-document-source": "file:../document-source"
   },
   "publishConfig": {
     "access": "public",

@@ -57,7 +57,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
         await page.screenshot({path: path.join(output, '01-source-hats.png')});
         stage = 'pure-validation';
         await page.locator('[data-twpe-yaml-hat-icon]').first().click();
-        const dialog = page.getByRole('dialog', {name: '組み込み文書', exact: true});
+        const dialog = page.getByRole('dialog', {name: '紙芝居台本データ', exact: true});
         await expect(dialog).toBeVisible(); assert.equal(launches.length,0);
         await dialog.getByRole('button', {name: 'JSON Schemaで検証', exact: true}).click();
         await expect(dialog).toContainText('文書の検証が完了しました。');
