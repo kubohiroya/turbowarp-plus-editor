@@ -3,11 +3,14 @@ import { renderBlockPreview } from "./block-preview.js";
 import { focusDocumentReference } from "./focus-document.js";
 import { attachEmbeddedYamlHat } from "./hat-entry.js";
 import { getYamlEditorProviders } from "./provider-bootstrap.js";
+import { attachDialogWindow } from "./dialog-window.js";
 
 const messages = {
   ja: {
     title: "組み込み文書",
     close: "閉じる",
+    maximize: "全画面化",
+    restore: "元のサイズに戻す",
     cancel: "キャンセル",
     save: "表示されている形式に変換して検証・保存",
     document: "文書",
@@ -65,6 +68,8 @@ const messages = {
   en: {
     title: "Embedded document",
     close: "Close",
+    maximize: "Maximize",
+    restore: "Restore window",
     cancel: "Cancel",
     save: "Convert, validate and save the displayed format",
     document: "Document",
@@ -152,6 +157,11 @@ export function mountYamlEditor({
   closeButton.className = "twpe-yaml-close";
   closeButton.setAttribute("aria-label", text.close);
   closeButton.title = text.close;
+  const maximizeButton = button("⛶");
+  maximizeButton.className = "twpe-yaml-maximize";
+  const windowActions = doc.createElement("div");
+  windowActions.className = "twpe-yaml-window-actions";
+  windowActions.append(maximizeButton, closeButton);
   const selectionRow = paragraph(),
     selectionLabel = doc.createElement("label"),
     selection = doc.createElement("select");
@@ -167,7 +177,7 @@ export function mountYamlEditor({
   schemaNote.className = "twpe-yaml-source-name";
   const titlebar = doc.createElement("header");
   titlebar.className = "twpe-yaml-titlebar";
-  titlebar.append(heading, sourceName, formatNote, closeButton);
+  titlebar.append(heading, sourceName, formatNote, windowActions);
   const actions = doc.createElement("div");
   actions.className = "twpe-yaml-actions";
   const docsLink = doc.createElement("a");
@@ -232,15 +242,19 @@ export function mountYamlEditor({
     preview,
     blockPreview,
   );
-  dialog.append(
-    titlebar,
+  const content = doc.createElement("div");
+  content.className = "twpe-yaml-content";
+  content.append(
     selectionRow,
     schemaNote,
     conversions,
     switchHint,
     panel,
-    footer,
   );
+  dialog.append(titlebar, content, footer);
+  const dialogWindow = attachDialogWindow({
+    dialog, titlebar, maximizeButton, maximizeLabel: text.maximize, restoreLabel: text.restore,
+  });
   const confirmation = doc.createElement("dialog");
   confirmation.className = "twpe-yaml-dialog twpe-yaml-confirmation";
   const confirmationMessage = paragraph();
@@ -542,7 +556,6 @@ export function mountYamlEditor({
       !availability.available ||
       !bridge ||
       active !== "source" ||
-      Boolean(session) ||
       Boolean(conversionRequest);
     closeButton.disabled = commitLocked;
     cancelButton.disabled = commitLocked;
@@ -797,6 +810,12 @@ export function mountYamlEditor({
   });
   editButton.addEventListener("click", () =>
     operate(async (generation, owner) => {
+      if (session) {
+        showStatus(text.starting);
+        await request(`/sessions/${encodeURIComponent(session.id)}`, {method: "POST"});
+        if (current(generation, owner)) showStatus(text.editing);
+        return;
+      }
       capture();
       showStatus(text.starting);
       const entry = metadata(),
@@ -1095,6 +1114,7 @@ export function mountYamlEditor({
       projectEvents.off?.("PROJECT_LOADED", invalidate);
       vm.runtime?.off?.("RUNTIME_DISPOSED", invalidate);
       hatEntry.dispose();
+      dialogWindow.dispose();
       confirmation.remove();
       dialog.remove();
     },
