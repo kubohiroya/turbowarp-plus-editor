@@ -12,5 +12,8 @@
   "vmBaseRevision": "55fd9b7c9509827c9cec31482aa63f2d57ec564d",
   "packagerRepository": "TurboWarp/packager",
   "packagerRevision": "c115bdf525c5f49f0fb689a21b335ccb70fc22d2",
-  "coreVersion": "0.7.0"
+  "coreVersion": "0.7.0",
+  "documentEditorRepository": "kubohiroya/turbowarp-document-editor",
+  "documentEditorRevision": "107ba531ceb72925b2e7d1ddd2dab8cbc820df22",
+  "documentEditorVersion": "0.1.0-rc.0"
 }

@@ -73,7 +73,7 @@
     "ajv": "8.20.0",
     "esbuild": "0.25.12",
     "yaml": "2.9.1",
-    "@kubohiroya/turbowarp-document-source": "file:../document-source"
+    "@kubohiroya/turbowarp-document-source": "git+https://github.com/kubohiroya/turbowarp-document-source.git#0e05d816b089d972248c58e2019be906fcc02a59"
   },
   "publishConfig": {
     "access": "public",
@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
-    "@kubohiroya/turbowarp-document-editor": "file:../document-editor"
+    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#107ba531ceb72925b2e7d1ddd2dab8cbc820df22"
   },
   "bin": {
     "turbowarp-plus-editor-yaml": "scripts/yaml-editor/cli.mjs"
