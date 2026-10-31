@@ -50,6 +50,7 @@ jobs:
       - name: Verify the prepared host
         working-directory: .host/scratch-gui
         run: |
+          npm run test:document-editor
           npm run test:block-editor
           npm run test:plus-extension-loader
       - name: Build TurboWarp-Plus-Editor
@@ -63,8 +64,6 @@ jobs:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
         run: node test/e2e/extension-loader/prepare-packaged.mjs
       - run: npx playwright install --with-deps chromium
-      - name: Verify embedded document window controls and VSCode session recovery
-        run: node --test test/yaml-ui.browser.mjs
       - name: Verify integrated editing, security, themes and SB3 round trips
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui

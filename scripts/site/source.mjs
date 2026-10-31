@@ -16,6 +16,11 @@ export function validatePins(pins) {
     assert.ok(exactVersion(pins.coreVersion), 'An exact core version is required');
     assert.equal(pins.securityPackage, '@kubohiroya/turbowarp-extension-security-dialog');
     assert.match(pins.securityVersion, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
+    if (['documentEditorRepository', 'documentEditorRevision', 'documentEditorVersion'].some(key => pins[key] !== undefined)) {
+        assert.equal(pins.documentEditorRepository, 'kubohiroya/turbowarp-document-editor');
+        assert.ok(sha(pins.documentEditorRevision), 'A full document editor revision is required');
+        assert.ok(exactVersion(pins.documentEditorVersion), 'An exact document editor version is required');
+    }
     if (pins.securityRevision !== undefined) assert.ok(sha(pins.securityRevision), 'A full security revision is required');
     if (['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'vmBaseRevision',
         'packagerRepository', 'packagerRevision'].some(key => pins[key] !== undefined)) {
@@ -69,6 +74,17 @@ export async function verifyHost(gui, pins) {
             assert.equal(lock.packages[`node_modules/${name}`].resolved,
                 `git+ssh://git@github.com/${repository}.git#${revision}`, `Lockfile differs for ${name}`);
         }
+    }
+    if (pins.documentEditorRepository) {
+        const name = '@kubohiroya/turbowarp-document-editor';
+        const dependency = `git+https://github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`;
+        const lock = JSON.parse(await fs.readFile(path.join(gui, 'package-lock.json'), 'utf8'));
+        assert.equal(manifest.dependencies[name], dependency, 'GUI must pin the shared document editor');
+        assert.equal(lock.packages[`node_modules/${name}`].resolved,
+            `git+ssh://git@github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`,
+            'GUI lock differs from the shared document editor pin');
+        const ui = JSON.parse(await fs.readFile(hostRequire.resolve(`${name}/package.json`), 'utf8'));
+        assert.equal(ui.version, pins.documentEditorVersion, 'Installed document editor differs from the pin');
     }
     return {revision, coreRevision, coreVersion, securityVersion: securityManifest.version};
 }
