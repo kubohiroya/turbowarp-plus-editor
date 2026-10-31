@@ -18,15 +18,19 @@
     "url": "https://github.com/kubohiroya/turbowarp-plus-editor/issues"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./extension-loader": "./src/extension-loader.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./extension-loader": {
+      "types": "./dist/src/extension-loader.d.ts",
+      "default": "./dist/src/extension-loader.js"
+    },
     "./assets/icon.svg": "./assets/icon.svg",
     "./assets/edit-button.css": "./assets/edit-button.css",
     "./source.json": "./site/source.json"
   },
   "files": [
-    "src",
-    "config",
     "docs/extension-loader-integration.md",
     "docs/extension-authoring-ui.md",
     "assets",
@@ -34,30 +38,35 @@
     "README.md",
     "LICENSE",
     "NOTICE",
-    "scripts/yaml-editor/cli.mjs",
-    "scripts/yaml-editor/host.mjs",
-    "scripts/yaml-editor/schema.mjs",
-    "scripts/yaml-editor/vscode.mjs"
+    "dist/src",
+    "dist/config",
+    "dist/scripts/yaml-editor",
+    "README.ja.md"
   ],
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "build:pages": "node scripts/site/build.mjs",
-    "test:e2e": "playwright test --config test/e2e/turbowarp/playwright.config.cjs",
+    "test": "node --test test/*.test.ts",
+    "build:pages": "node scripts/site/build.ts",
+    "test:e2e": "playwright test --config test/e2e/turbowarp/playwright.config.cts",
     "test:e2e:block-editor": "npm run test:e2e",
     "test:e2e:fixed-inputs": "E2E_FIXED_INPUTS=1 npm run test:e2e",
-    "test:e2e:infrastructure": "node --test test/e2e/ci-gate.test.mjs test/e2e/turbowarp/infrastructure.test.cjs",
+    "test:e2e:infrastructure": "node --test test/e2e/ci-gate.test.ts test/e2e/turbowarp/infrastructure.test.cts",
     "test:e2e:native": "E2E_NATIVE=1 npm run test:e2e",
-    "build:extension-preview": "node scripts/site/build-extension-preview.mjs",
-    "test:e2e:extension-loader": "playwright test --config test/e2e/extension-loader/playwright.config.cjs",
-    "test:extension-loader:desktop": "node test/e2e/extension-loader/desktop.cjs",
-    "build:yaml-tools": "node scripts/site/build-yaml-editor.mjs",
-    "editor:yaml": "node scripts/yaml-editor/cli.mjs",
-    "test:yaml": "node --test test/yaml-document.test.mjs test/yaml-build.test.mjs test/yaml-cli.test.mjs",
-    "test:yaml:browser": "node --test test/document-sources.browser.mjs",
-    "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.mjs"
+    "build:extension-preview": "node scripts/site/build-extension-preview.ts",
+    "test:e2e:extension-loader": "playwright test --config test/e2e/extension-loader/playwright.config.cts",
+    "test:extension-loader:desktop": "node test/e2e/extension-loader/desktop.cts",
+    "build:yaml-tools": "node scripts/site/build-yaml-editor.ts",
+    "editor:yaml": "node scripts/yaml-editor/cli.ts",
+    "test:yaml": "node --test test/yaml-document.test.ts test/yaml-build.test.ts test/yaml-cli.test.ts",
+    "test:yaml:browser": "node --test test/document-sources.browser.ts",
+    "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "build:test-driver": "tsc -p test/vscode-edit-driver/tsconfig.json",
+    "test:package": "npm run build && node --test test/package/*.test.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
@@ -73,7 +82,10 @@
     "ajv": "8.20.0",
     "esbuild": "0.25.12",
     "yaml": "2.9.1",
-    "@kubohiroya/turbowarp-document-source": "git+https://github.com/kubohiroya/turbowarp-document-source.git#0e05d816b089d972248c58e2019be906fcc02a59"
+    "@kubohiroya/turbowarp-document-source": "git+https://github.com/kubohiroya/turbowarp-document-source.git#0e05d816b089d972248c58e2019be906fcc02a59",
+    "typescript": "^6.0.3",
+    "@types/node": "^24.19.2",
+    "@types/vscode": "^1.144.0"
   },
   "publishConfig": {
     "access": "public",
@@ -84,6 +96,7 @@
     "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#aa86fa32956d71cfc480d0006dbbdfe34898ca1a"
   },
   "bin": {
-    "turbowarp-plus-editor-yaml": "scripts/yaml-editor/cli.mjs"
-  }
+    "turbowarp-plus-editor-yaml": "dist/scripts/yaml-editor/cli.js"
+  },
+  "types": "./dist/src/index.d.ts"
 }

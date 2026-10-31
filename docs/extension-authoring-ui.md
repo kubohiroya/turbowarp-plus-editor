@@ -59,14 +59,14 @@ Node 26とpnpm 11.28.8を用意し、`site/extension-source.json` の完全SHA�
 ```sh
 npm ci
 (cd .host/scratch-gui-issue4 && npm ci && node scripts/prepublish.mjs)
-E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" node scripts/site/prepare-core.mjs
+E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" node scripts/site/prepare-core.ts
 
 E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" \
 TW_PLUS_PACKAGER_ROOT="$PWD/.host/packager-issue4" \
 NODE_OPTIONS=--max-old-space-size=6144 npm run build:extension-preview
 
 E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" E2E_PORT=8744 \
-  node test/e2e/turbowarp/serve.cjs
+  node test/e2e/turbowarp/serve.cts
 ```
 
 起動後は `http://127.0.0.1:8744/turbowarp-plus-editor/editor.html?lang=ja&twPlusExtensionLoader=1` を開きます。プレビュービルドは実際のGUI・Loader・VM・Security Dialog・Editorの作業ツリーhashと `published: false` を記録します。対象の自動検証は次のコマンドで実行します。ブラウザーE2Eは専用サーバーを起動するため、手動の8744サーバーは終了してから実行してください。

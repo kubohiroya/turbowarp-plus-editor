@@ -21,8 +21,8 @@
 検証コマンド:
 
 ```sh
-node --test test/yaml-host.test.mjs test/yaml-build.test.mjs
-node --test test/yaml-ui.browser.mjs
+node --test test/yaml-build.test.ts test/yaml-cli.test.ts
+npm run test:yaml:browser
 ```
 
 運用ログ（2026-10-31 JST）:
@@ -34,7 +34,7 @@ node --test test/yaml-ui.browser.mjs
 
 ## 切戻し
 
-`twPlusYamlEditor=0` またはフラグなしで再起動すると追加UIを無効化できます。今回の操作変更だけを戻す場合は、`client.js`・`dialog-window.js`・`ui.css`とHostのセッション再オープン処理を一緒に戻し、ローカル資産を再ビルドして補助プロセスを再起動します。元SB3とVSCodeの作業ファイルは保持します。
+`twPlusYamlEditor=0` またはフラグなしで再起動すると追加UIを無効化できます。今回の操作変更だけを戻す場合は、`client.ts`・`dialog-window.ts`・`ui.css`とHostのセッション再オープン処理を一緒に戻し、ローカル資産を再ビルドして補助プロセスを再起動します。元SB3とVSCodeの作業ファイルは保持します。
 
 ## 公開手順（2026-10-31 JST）
 

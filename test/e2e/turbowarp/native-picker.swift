@@ -138,7 +138,22 @@ func main() throws {
     try waitFor("go-to-folder: accepted") {
         !panelVisible() || (focusedWithin(panel) && !descendants(panel).contains { CFEqual($0, locationDialog) })
     }
-    if panelVisible() { try key(36) }
+    if panelVisible() {
+        var openButton: AXUIElement?
+        try waitFor("native-open-panel: Open ready") {
+            let defaultButton = attribute(panel, kAXDefaultButtonAttribute).map { $0 as! AXUIElement }
+            let candidates = defaultButton.map { [$0] } ?? descendants(panel).filter {
+                role($0) == kAXButtonRole &&
+                    ["Open", "開く"].contains(attribute($0, kAXTitleAttribute) as? String ?? "")
+            }
+            openButton = candidates.first { (attribute($0, kAXEnabledAttribute) as? Bool) == true }
+            return openButton != nil
+        }
+        try requireFocus()
+        guard let openButton, AXUIElementPerformAction(openButton, kAXPressAction as CFString) == .success else {
+            throw PickerError.message("Could not confirm the owned native Open panel")
+        }
+    }
     try waitFor("native-open-panel: closed") { !panelVisible() }
 }
 
