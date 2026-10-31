@@ -39,6 +39,24 @@ const projectURL = async ({required = true, mixed = false} = {}) => {
 };
 const dialog = page => page.locator('.twextsec-modal');
 const executions = page => page.evaluate(() => globalThis.__securityFixtureStarted || 0);
+const expectCenteredHeading = async page => {
+    const header = dialog(page).locator('.twextsec-frame-header');
+    await expect(header).toBeVisible();
+    const bounds = await header.evaluate(element => {
+        const range = document.createRange();
+        range.selectNodeContents(element.firstElementChild);
+        const title = range.getBoundingClientRect();
+        const frame = element.getBoundingClientRect();
+        return {offset: (title.left + title.right - frame.left - frame.right) / 2,
+            left: title.left, right: title.right, top: title.top, bottom: title.bottom,
+            frameLeft: frame.left, frameRight: frame.right, frameTop: frame.top, frameBottom: frame.bottom};
+    });
+    expect(Math.abs(bounds.offset)).toBeLessThan(1);
+    expect(bounds.left).toBeGreaterThanOrEqual(bounds.frameLeft);
+    expect(bounds.right).toBeLessThanOrEqual(bounds.frameRight);
+    expect(bounds.top).toBeGreaterThanOrEqual(bounds.frameTop);
+    expect(bounds.bottom).toBeLessThanOrEqual(bounds.frameBottom);
+};
 const expectSquarePreview = async page => {
     const image = dialog(page).locator('article img').first();
     await expect.poll(() => image.evaluate(img => img.naturalWidth > 0 && img.naturalHeight > 0)).toBe(true);
@@ -92,6 +110,14 @@ for (const language of ['ja','en']) {
             language==='ja'?'機能拡張を読み込みます。機能拡張の製作者が「⚠️サンドボックスなし:必要」を指定しているものがあります。あなた自身でそれに従うかどうかを選択できます。':
                 'To make extensions marked ⚠️ work as their creators intended');
         await expectSquarePreview(page);
+        await expectCenteredHeading(page);
+        await expect(dialog(page).locator('.twextsec-intro [aria-live]')).toHaveCount(0);
+        if (language === 'ja') {
+            await expect(dialog(page).locator('.twextsec-note')).toHaveText(
+                '機能拡張の説明や属性情報は、それぞれの機能拡張の製作者により記述されたものです。');
+            await expect(dialog(page).locator('.twextsec-footer [aria-live]')).toHaveText(
+                '拒否 0 · サンドボックスあり 0 · サンドボックスなし 1 · 未指定 0');
+        }
         const requirement = dialog(page).locator('.twextsec-security-modes .twextsec-requirement');
         await expect(requirement).toHaveText(language==='ja' ?
             '⚠️サンドボックスなし：必要' : '⚠️Without sandbox: Required');
@@ -148,9 +174,12 @@ for (const language of ['ja','en']) {
             .toEqual(['deny','sandboxed','unsandboxed']);
         await expect(dialog(page).locator('.twextsec-bulk button:enabled')).toHaveCount(3);
         if (language === 'ja') {
-            await expect(dialog(page).locator('.twextsec-bulk-note')).toHaveText('まとめて選択');
-            await expect(dialog(page).locator('.twextsec-columns > span').first()).toHaveText('機能拡張ごとに選択');
+            await expect(dialog(page).locator('.twextsec-bulk > span')).toHaveText('すべての機能拡張を一括で指定');
+            await expect(dialog(page).locator('.twextsec-columns > span').first()).toHaveText('それぞれの機能拡張について個別で指定');
+            await expect(dialog(page).locator('.twextsec-footer [aria-live]')).toHaveText(
+                '拒否 0 · サンドボックスあり 0 · サンドボックスなし 0 · 未指定 2');
         }
+        await expect(dialog(page).locator('.twextsec-bulk-note')).toHaveCount(0);
         await expect(rows.nth(1).locator('.twextsec-info')).toContainText('ID: securityordinary');
         await expect(dialog(page).locator('input:checked')).toHaveCount(0);
         await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeDisabled();
@@ -201,6 +230,7 @@ test('denying an extension without a required mode still requires confirmation a
 test('narrow security dialog retains ordered choices, reasons and a reachable confirmation button', async ({page,evidence}) => {
     evidence.stage('shared-security-narrow-modes');
     await page.setViewportSize({width:390,height:600});await open(page,'ja');
+    await expectCenteredHeading(page);
     await expectSquarePreview(page);
     expect(await dialog(page).locator('article input').evaluateAll(items=>items.map(item=>item.value)))
         .toEqual(['deny','sandboxed','unsandboxed']);
@@ -224,6 +254,10 @@ test('narrow security dialog retains ordered choices, reasons and a reachable co
         expect(box.x).toBeGreaterThanOrEqual(modalBounds.x);
         expect(box.x+box.width).toBeLessThanOrEqual(modalBounds.x+modalBounds.width);
     }
+    await page.setViewportSize({width:320,height:568});
+    await expectCenteredHeading(page);
+    const smallButton = await ok.boundingBox();
+    expect(smallButton.y + smallButton.height).toBeLessThanOrEqual(568);
     expect(await executions(page)).toBe(0);
     await ok.focus();await ok.press('Enter');
     await expect(dialog(page)).toHaveCount(0);
