@@ -1,6 +1,6 @@
 # 組み込み文書のウィンドウ操作
 
-関連: [Editor Issue #10](https://github.com/kubohiroya/turbowarp-plus-editor/issues/10)。作業ブランチは `fix/editor/document-window`。文書ダイアログとVSCode編集の既存実装に依存し、ウィンドウ操作→外部編集の再オープン→関連検証の順で進めます。今回の変更はローカル実装・検証までです。
+関連: [Editor Issue #10](https://github.com/kubohiroya/turbowarp-plus-editor/issues/10)。作業ブランチは `fix/editor/document-window`。文書ダイアログとVSCode編集の既存実装に依存し、ウィンドウ操作→外部編集の再オープン→関連検証の順で進めます。ユーザーの追加承認に基づき、今回の差分をcommit・pushし、PRのCI成功後にSquash Merge・Release/npm・Pages公開を行います。
 
 `twPlusYamlEditor=1` で有効になる既存ダイアログに適用します。起動時固定・既定OFF、読み取り箇所は `site/yaml-editor/feature-flags.js` です。
 
@@ -35,3 +35,11 @@ node --test test/yaml-ui.browser.mjs
 ## 切戻し
 
 `twPlusYamlEditor=0` またはフラグなしで再起動すると追加UIを無効化できます。今回の操作変更だけを戻す場合は、`client.js`・`dialog-window.js`・`ui.css`とHostのセッション再オープン処理を一緒に戻し、ローカル資産を再ビルドして補助プロセスを再起動します。元SB3とVSCodeの作業ファイルは保持します。
+
+## 公開手順（2026-10-31 JST）
+
+- branch: `fix/editor/document-window` / base: `main`。既存mainのサンプル・セキュリティ・配信更新を保持。
+- 直列: data-editor 0.7.0のCI・main統合・公開→core版とSHAを固定→文書UI29件と通常統合CI→Squash Merge→main CI・Pages公開後検証→v0.2.0-rc.2のRelease/npm公開。
+- DoD: 両ダイアログの操作・VSCode再オープン、既存保存取消の維持、CI・Pages・npmの版とrevision一致。
+- ロールバック: 文書編集フラグOFF、または変更前のcore版・SHAと配信コミットへ揃えて切戻し。原文・SB3・外部作業ファイルを保持。
+- start: ユーザーが今回の2リポジトリの公開操作を明示承認。
