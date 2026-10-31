@@ -82,6 +82,8 @@ GitHub READMEは外部CSSを適用できないため、次の画像付きリン�
 
 Issue #4 の拡張Loaderは、独立したLoaderコアと薄いGUI/VMアダプターで実装します。通常配信でも `twPlusExtensionLoader=1` を起動URLに明示した場合だけ、Embedded/Remoteの検証・許可UIを有効にできます（起動時固定・既定OFF）。Plus作品のPackager操作はローカル出力画面へ進み、生成時と受け取り側の初回実行時に承認を確認します。指定がない通常の起動ではLoaderを有効にしません。構成、検証、Desktopの制約、切戻しは [接続仕様](docs/extension-loader-integration.md) を参照してください。
 
+機能拡張一覧でEmbedded／Remoteを一括・個別設定するUIと、JSファイル・URLからの追加は [Issue #11の操作・開発ガイド](docs/extension-authoring-ui.md) を参照してください。追加UIは起動時に `twPlusExtensionLoader=1` を指定した場合に利用できます（既定OFF）。
+
 ## npmで利用する
 
 ```sh
