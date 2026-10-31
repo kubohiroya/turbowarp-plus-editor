@@ -81,3 +81,11 @@ npm run test:extension-loader:desktop
 起動パラメーターを外すか0にして再起動すればOFFへ戻る。終了時はhost.disposeを待って登録を解除し、rollback/unload失敗時はVMを破棄する。Plus作品を保持非対応の状態で上書き保存しない。
 
 通常配信は統合GUIの固定SHAへ切り替え、機能フラグは既定OFFを維持する。通常CIは既存24件と拡張15件のブラウザーE2E成功後だけ成果物を公開可能にする。公開後も固定された出所を照合して同じE2Eを実行し、単一HTMLのテストは配信されたbuilderから実際に生成したHTMLを使う。通常配信の切戻しは今回の切替コミット全体をrevertし、固定情報と対応するビルド/CI経路を一緒に以前の状態へ戻す。旧GUIへのpin変更だけでは新しいPackager資産の生成条件と一致しないため、単独では行わない。既定OFFまたはURLの0指定で拡張ロードを停止できる。検証済み成果物は通常のCI/Pages経路で再配信する。npm公開は本作業に含めない。
+
+## Issue #11の追加UI（起動時フラグで有効化）
+
+既存Security Dialogの機能拡張一覧に、全パッケージ一括／個別のEmbedded・Remote設定と実行モードを接続します。読み込み済みのチェック・実際の実行モード・保存された配布方式を復元します。Loaderの起動フラグは既定OFFを維持します。
+
+追加実装はsandboxed／unsandboxedの4組合せに対応します。VM所有portのiframe経路は、検証済みJSを隔離実行し、ID・RPC応答・worker/service所有権を検査します。標準のlegacy経路で既に読み込んだ拡張も、所有権を一時detachしてからPlus登録へ移し、登録失敗時は元の状態へ復元します。旧resourceの不可逆なdispose後に失敗した場合は、元SB3を保存して回復するよう案内します。
+
+機能拡張一覧からSB3保存・単一HTML出力までの操作とローカル再現は [追加UIガイド](extension-authoring-ui.md) を参照してください。通常配信の依存は `site/source.json` とGUIのlockfileで完全SHAを固定します。ローカルカタログの差し替えは明示プレビュー限定です。

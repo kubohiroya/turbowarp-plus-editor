@@ -16,6 +16,7 @@ if (execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--',
 const hostRequire = createRequire(path.join(gui, 'package.json'));
 const webpack = hostRequire('webpack');
 const vmRoot = path.dirname(hostRequire.resolve('scratch-vm/package.json'));
+const vmSource = fs.realpathSync(path.join(vmRoot, 'src'));
 const manager = fs.readFileSync(path.join(vmRoot, 'src/extension-support/extension-manager.js'), 'utf8');
 if (!manager.includes('getExtensionServicePort ()')) throw new Error('VM extension service port patch is required');
 const output = path.resolve(process.env.TW_PLUS_SCAFFOLDING_ROOT || '.host/issue-4-artifacts/scaffolding');
@@ -49,7 +50,7 @@ const config = {
     }},
     resolveLoader: {modules: [path.join(packager, 'src/build/inline-worker-loader'), path.join(gui, 'node_modules'), 'node_modules']},
     module: {rules: [
-        {test: /\.jsx?$/, include: [path.join(packager, 'src'), /node_modules[\\/]scratch-[^\\/]+[\\/]src/],
+        {test: /\.jsx?$/, include: [path.join(packager, 'src'), vmSource, /node_modules[\\/]scratch-[^\\/]+[\\/]src/],
             loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
                 presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}},
         {test: /\.(svg|png|mp3)$/i, loader: hostRequire.resolve('url-loader'), options: {limit: true, esModule: false}},

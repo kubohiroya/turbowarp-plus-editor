@@ -28,6 +28,7 @@
     "src",
     "config",
     "docs/extension-loader-integration.md",
+    "docs/extension-authoring-ui.md",
     "assets",
     "site/source.json",
     "README.md",

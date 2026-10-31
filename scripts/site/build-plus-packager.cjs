@@ -16,6 +16,7 @@ if (execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--',
     throw new Error('Packager source checkout must be clean');
 }
 const hostRequire = createRequire(path.join(gui, 'package.json'));
+const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 const rootRequire = createRequire(path.resolve('package.json'));
 const webpack = hostRequire('webpack');
 const {withExtensionLoaderWebpack4} = hostRequire('@kubohiroya/turbowarp-extension-loader/webpack4');
@@ -47,7 +48,7 @@ const config = withExtensionLoaderWebpack4({
     resolve: {modules: [path.join(gui, 'node_modules'), path.resolve('node_modules'), 'node_modules'],
         alias: {'@turbowarp/packager-web$': path.join(packager, 'src/packager/web/export.js')}},
     module: {rules: [
-        {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src')],
+        {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src'), vmSource],
             loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
                 presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}},
         {test: /\.png$/, loader: hostRequire.resolve('url-loader'), options: {limit: 1000000}}

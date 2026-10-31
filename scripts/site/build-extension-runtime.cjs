@@ -6,6 +6,7 @@ const {createRequire} = require('node:module');
 const gui = process.env.E2E_GUI_ROOT;
 if (!gui || !path.isAbsolute(gui)) throw new Error('E2E_GUI_ROOT must be an absolute GUI checkout');
 const hostRequire = createRequire(path.join(gui, 'package.json'));
+const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 const webpack = hostRequire('webpack');
 const {withExtensionLoaderWebpack4} = hostRequire('@kubohiroya/turbowarp-extension-loader/webpack4');
 const output = path.resolve(process.env.TW_PLUS_RUNTIME_OUTPUT || '.host/issue-4-artifacts/extension-runtime.js');
@@ -17,7 +18,7 @@ const config = withExtensionLoaderWebpack4({
         library: 'TurboWarpPlusExtensionHost', libraryTarget: 'window'},
     optimization: {minimize: false},
     resolve: {modules: [path.join(gui, 'node_modules'), 'node_modules']},
-    module: {rules: [{test: /\.js$/, include: [path.join(gui, 'src')],
+    module: {rules: [{test: /\.js$/, include: [path.join(gui, 'src'), vmSource],
         loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
             presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}}]}
 }, {hostRoot: gui});
