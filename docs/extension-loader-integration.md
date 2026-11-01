@@ -42,7 +42,7 @@ Plus作品のPackager操作は同一originの `plus-packager.html` へ進む。�
 
 生成時はcoreの同一検証・認可APIでRemoteをEmbeddedへ変換する。外部依存が無いことの明示確認を要求し、未同梱の依存資源やlegacy custom URLが残る作品を拒否する。Packager 3.14.0へ完全なSB3をblobとして渡し、作品ロード前に信頼済みLoader/hostを起動する。JSONへ分解して埋め込みコードを失わない。
 
-Editorと別のVMバンドルでdispatchを二重保持しないため、追加したVM portを使うscaffoldingを公式ソースから作る。runtime/scaffoldingを静的なローカルbuilderへ組み込み、生成HTMLへ全て同梱する。生成時の承認を受け取り側の承認として埋め込まず、HTMLで再確認する。ただしカタログに載っている拡張は、Editorと同じく信頼済みとする。HTMLは実行時にカタログを読めないので、生成時にカタログと照合した拡張のSHA-256だけをHTMLに埋め込み、受け取り側は実際のバイト列がそれと一致するコードを確認なしで実行する。CSPはconnect-src none等を指定し、実行時の外部取得に依存しない。依存資源がある拡張の自動バンドルは初期版では行わず拒否する。
+Editorと別のVMバンドルでdispatchを二重保持しないため、追加したVM portを使うscaffoldingを公式ソースから作る。runtime/scaffoldingを静的なローカルbuilderへ組み込み、生成HTMLへ全て同梱する。生成時の承認をHTMLに埋め込まず、HTMLを開くたびに再確認する（承認はそのページを開いている間だけ有効）。ただしカタログに載っている拡張は、Editorと同じく信頼済みとする。HTMLは実行時にカタログを読めないので、生成時にカタログと照合した拡張のSHA-256だけをHTMLに埋め込み、HTMLを開いたときは、実際のバイト列がそれと一致するコードだけを確認なしで実行する。CSPはconnect-src none等を指定し、実行時の外部取得に依存しない。依存資源がある拡張の自動バンドルは初期版では行わず拒否する。
 
 ## 実行環境
 
@@ -50,7 +50,7 @@ Editorと別のVMバンドルでdispatchを二重保持しないため、追加�
 |---|---|
 | ローカル統合Editor online | Embedded/Remote、許可UI、実VMアクセス、保存・再読込 |
 | 同Editor offline | Embedded、検証済みcache hit、cache miss拒否 |
-| 単一HTML | 公式Packager生成、カタログにない拡張の受け取り側の再承認、カタログの拡張の確認なし実行、file URLとoffline、実ブロック実行 |
+| 単一HTML | 公式Packager生成、カタログにない拡張の、HTMLを開くたびの再承認、カタログの拡張の確認なし実行、file URLとoffline、実ブロック実行 |
 | TurboWarp Desktop 1.17.0 / Electron 43.8.3 | 専用プロファイルで生成HTMLを実行。標準EditorはLoader無しで自己申告JSを実行せず、未知Manifest/ZIP entriesを保存時に破棄 |
 | 標準TurboWarp / 非対応ホスト | 事前bootstrap無しに本機構の特権を得られない。未知情報の保持は保証しない |
 
