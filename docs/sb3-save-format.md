@@ -75,7 +75,7 @@ export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): strin
 
 ## 実装の状況（2026-11-02）
 
-ユーザーの指示により、このパッケージを作成し、[kubohiroya/turbowarp-sb3-save-format](https://github.com/kubohiroya/turbowarp-sb3-save-format) へpushした（初回コミット `65ba6d2`、`main`）。他の同族パッケージと違い**private**で作成している。publicでの作成がこのセッションの権限で拒否されたため、公開面を作らないprivateにした。publicへの変更はユーザーの操作を待つ。`@kubohiroya/turbowarp-extension-manifest` と同じ構成（MPL-2.0、pnpm、vitest、`dist` と `src` を同梱、英語README.mdと日本語README.ja.md）。
+ユーザーの指示により、このパッケージを作成し、[kubohiroya/turbowarp-sb3-save-format](https://github.com/kubohiroya/turbowarp-sb3-save-format) へpushした（初回コミット `65ba6d2`、`main`）。他の同族パッケージと同じくpublic。作成時はpublicでの作成がこのセッションの権限で拒否されたため一度privateで作り、ユーザーが `gh repo edit --visibility public` でpublicへ変更した。`@kubohiroya/turbowarp-extension-manifest` と同じ構成（MPL-2.0、pnpm、vitest、`dist` と `src` を同梱、英語README.mdと日本語README.ja.md）。
 
 - `pnpm run typecheck` 成功、`vitest run` 19件成功、`tsc -p tsconfig.build.json` 成功、`pnpm pack --dry-run` 成功。
 - テストには移植元の拒否表を要約したfixtureを置き、`describeSb3SaveFormats` が切り出し前と同じ `extensions: remote|cached|embedded-file|embedded-data; source: kept as built; assets: kept as built` を返すことを確認している。
