@@ -72,7 +72,7 @@ npm test
 npm run test:extension-loader:desktop
 ```
 
-新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderとVMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.tsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定ONを記録し、プレビューのみ作業ツリー情報も追加する。
+新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderはGUIが固定したnpmの完全一致版、VMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.tsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定ONを記録し、プレビューのみ作業ツリー情報も追加する。
 
 検証証跡は `test-results/extension-loader/results.json`、`.host/issue-4-artifacts/*tests.log`、`desktop-result.json` とDesktop screenshots。Embedded/Remote実行、拒否・Esc・改ざん・未知schema・信頼偽装・ID不一致、real TLSのCORS/redirect拒否、CSP、cache offline、URL/ローカルファイル、公式Bitwise/標準Pen、従来カスタム拡張の回帰を検証する。悪意あるZIP・キャッシュ汚染/失効・変換・compiler実行はcore/実VMの単体テストで検証する。
 
