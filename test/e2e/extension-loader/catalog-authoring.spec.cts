@@ -215,7 +215,7 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         await expect(builder.getByTestId('plus-package-download')).toBeVisible();
         await expect(permission(builder)).toHaveCount(0);
         await expect(builder.getByTestId('plus-package-status'))
-            .toHaveText('HTMLを生成しました。拡張はすべてカタログに載っているので、受け取った人に許可は求めません。');
+            .toHaveText('HTMLを生成しました。拡張はすべてカタログに載っているので、このHTMLを開いても許可の確認は出ません。');
         const downloading = builder.waitForEvent('download');
         await builder.getByTestId('plus-package-download').click();
         const output = path.join(directory, 'catalog-authored.html');

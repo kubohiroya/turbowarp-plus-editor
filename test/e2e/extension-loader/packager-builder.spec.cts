@@ -5,7 +5,7 @@ const path = require('node:path');
 const {pathToFileURL} = require('node:url');
 const {project, digest} = require('./project.cts');
 
-test('local Packager asks permission, downloads one HTML and executes it offline only after recipient approval', async ({page, context}) => {
+test('local Packager asks permission, downloads one HTML and executes it offline only after approval, asking again each time it is opened', async ({page, context}) => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'tw-plus-package-e2e-'));
     try {
         await page.goto('plus-packager.html');
@@ -20,6 +20,8 @@ test('local Packager asks permission, downloads one HTML and executes it offline
         await expect(page.getByTestId('tw-plus-permission').locator('[data-field="sha256"]')).toHaveText(digest);
         await page.getByTestId('tw-plus-allow').click();
         await expect(page.getByTestId('plus-package-download')).toBeVisible();
+        await expect(page.getByTestId('plus-package-status'))
+            .toHaveText('HTMLを生成しました。カタログにない拡張があるので、このHTMLを開くたびに、その拡張を許可するか確認します。');
         expect(await page.evaluate(() => globalThis.__plusFixtureStarted || 0)).toBe(0);
         const downloading = page.waitForEvent('download');
         await page.getByTestId('plus-package-download').click();
@@ -42,6 +44,12 @@ test('local Packager asks permission, downloads one HTML and executes it offline
         await expect(packaged.locator('#error')).toBeHidden();
         expect(external).toEqual([]);
         await packaged.close();
+        // The approval lasts only while the page is open, so opening the HTML again asks again.
+        const reopened = await context.newPage();
+        await reopened.goto(pathToFileURL(output).href);
+        await expect(reopened.getByTestId('tw-plus-permission')).toBeVisible();
+        expect(await reopened.evaluate(() => globalThis.__plusFixtureStarted || 0)).toBe(0);
+        await reopened.close();
     } finally {
         await context.setOffline(false);
         await rm(directory, {recursive: true, force: true});
