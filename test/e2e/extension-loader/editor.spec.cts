@@ -7,6 +7,8 @@ const {createHTTPSFixture} = require('./https-fixture.cts');
 const {createHash} = require('node:crypto');
 const permission = page => page.getByTestId('tw-plus-permission');
 const executions = page => page.evaluate(() => globalThis.__plusFixtureStarted || 0);
+// DEFAULT_FETCH_RETRY in the Loader: two retries, so one URL is asked at most three times.
+const ATTEMPTS = 3;
 
 async function open(page, {enabled = true, projectBytes}: {enabled?: boolean; projectBytes?: Buffer} = {}) {
     const query = new URLSearchParams({lang: 'ja'});
@@ -168,7 +170,29 @@ test('HTTPS redirects and CORS refusal do not open approval or execute JavaScrip
             await expect(permission(page)).toHaveCount(0);
             await expect(page.getByTestId('tw-plus-extension-status').locator('[data-event="review"]')).toHaveCount(0);
         }
-        expect(fixture.seen).toEqual(['/redirect', '/nocors']);
+        // Chromium rejects a redirect and a CORS refusal with the same TypeError it raises when
+        // it could not connect, so the port cannot tell them apart and asks the full ATTEMPTS.
+        expect(fixture.seen).toEqual([
+            ...Array(ATTEMPTS).fill('/redirect'), ...Array(ATTEMPTS).fill('/nocors')
+        ]);
+    } finally { await fixture.close(); }
+});
+
+test('a transient failure is retried, the panel names the attempt, and the load still succeeds', async ({page}) => {
+    await open(page);
+    const fixture = await createHTTPSFixture(bytes);
+    try {
+        fixture.failNext(ATTEMPTS - 1);
+        const loading = load(page, await project({type: 'remote', url: `${fixture.url}/flaky`}));
+        const retries = page.getByTestId('tw-plus-extension-status').locator('[data-event="retry"]');
+        // Waiting in silence reads as a frozen editor, so each wait must be visible while it happens.
+        await expect(retries).toHaveCount(ATTEMPTS - 1);
+        await expect(retries.first()).toContainText('再試行しています');
+        await expect(retries.first()).toContainText(`(2/${ATTEMPTS})`);
+        await expect(retries.last()).toContainText(`(${ATTEMPTS}/${ATTEMPTS})`);
+        await expect(page.getByTestId('tw-plus-extension-status')).toHaveAttribute('open', '');
+        await allow(page, loading);
+        expect(fixture.seen.filter(pathname => pathname === '/flaky')).toHaveLength(ATTEMPTS);
     } finally { await fixture.close(); }
 });
 
