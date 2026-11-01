@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {project, bytes, digest, remoteURL} = require('./project.cts');
 const {createHTTPSFixture} = require('./https-fixture.cts');
+const {createHash} = require('node:crypto');
 const permission = page => page.getByTestId('tw-plus-permission');
 const executions = page => page.evaluate(() => globalThis.__plusFixtureStarted || 0);
 
@@ -97,6 +98,32 @@ test('approved code claiming another ID cannot register either ID', async ({page
     expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('otherfixture') ||
         vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(false);
     expect(await page.evaluate(() => Boolean(vm.runtime._primitives.plusfixture_value))).toBe(false);
+});
+
+// An extension that fails while registering, such as one that requires unsandboxed but is run sandboxed.
+const failingCode = Buffer.from(`globalThis.__plusFixtureStarted=(globalThis.__plusFixtureStarted||0)+1;
+throw new Error('Fixture must run unsandboxed.');`);
+const failingProject = () => project({code: failingCode, sha256: createHash('sha256').update(failingCode).digest('hex')});
+async function expectFailureReported(page) {
+    await expect(permission(page)).toBeVisible();
+    await page.getByTestId('tw-plus-allow').click();
+    const dialog = page.getByRole('dialog').filter({hasText: 'プロジェクトを読み込めませんでした'});
+    await expect(dialog).toBeVisible();
+    const message = await dialog.locator('textarea').inputValue();
+    expect(message).toContain('Extension plusfixture could not be loaded, so the project was not opened.');
+    expect(message).toContain('Fixture must run unsandboxed.');
+    expect(await executions(page)).toBe(1);
+    // The Editor stays usable: it returns to the default project, as when approval is cancelled.
+    await expect(page.getByText(/うわっ|Oops/)).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => vm.runtime.targets.some(target => target.isOriginal && !target.isStage)))
+        .toBe(true);
+    expect(new URL(page.url()).searchParams.has('project_url')).toBe(false);
+    expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(false);
+}
+
+test('an extension that fails while registering is reported without crashing the Editor', async ({page}) => {
+    await open(page, {projectBytes: await failingProject()});
+    await expectFailureReported(page);
 });
 
 test('remote cache reopens offline after approval; an uncached digest never executes offline', async ({page, context}) => {
@@ -201,5 +228,13 @@ test.describe('local file input', () => {
         await page.getByTestId('tw-plus-allow').click();
         await expect.poll(() => page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(true);
         expect(await executions(page)).toBe(1);
+    });
+    test('a local SB3 whose extension fails while registering is reported without crashing the Editor', async ({page}) => {
+        await open(page);
+        await page.getByText('ファイル', {exact: true}).click();
+        const choosing = page.waitForEvent('filechooser');
+        await page.getByText('コンピューターから読み込む', {exact: true}).click();
+        await (await choosing).setFiles({name: 'failing.sb3', mimeType: 'application/octet-stream', buffer: await failingProject()});
+        await expectFailureReported(page);
     });
 });
