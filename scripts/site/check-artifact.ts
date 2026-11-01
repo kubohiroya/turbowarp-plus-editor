@@ -25,9 +25,10 @@ for (const file of ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTI
 if (pins.loaderRepository) {
     const integration = info.extensionIntegration;
     assert.ok(integration, 'Missing published extension integration identity');
-    for (const key of ['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) {
+    for (const key of ['loaderRepository', 'loaderRevision', 'loaderVersion', 'loaderIntegrity', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) {
         assert.equal(integration[key], pins[key], `Extension integration differs: ${key}`);
     }
+    assert.equal(integration.loaderSource, pins.loaderSource || 'git', 'Extension integration differs: loaderSource');
     assert.equal(integration.featureDefault, true, 'Extension loader must default on');
     for (const name of ['plus-packager.html', 'plus-packager.js']) {
         assert.equal(contentHash(await fs.readFile(path.join(directory, name))), integration.assets[name], `Asset changed: ${name}`);

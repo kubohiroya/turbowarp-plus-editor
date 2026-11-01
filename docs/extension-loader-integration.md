@@ -14,7 +14,7 @@ Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB
 | data-editor | npm `0.6.0` / source `91533dbbffa9eb9d3b50be8084b85dae5184f9dc` | 共通フォーム・固定入力・プレビュー登録API |
 | security-dialog | npm `0.3.3` | 既存UI・通常カスタム拡張の方針を維持 |
 
-Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderとVMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` は、ともにマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定ON・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
+Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderをnpmの完全一致版（`site/source.json` の `loaderVersion` と `loaderIntegrity`、公開元コミットは `loaderRevision`）で、VMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` は、ともにマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定ON・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
 
 ## 起動と信頼境界
 
