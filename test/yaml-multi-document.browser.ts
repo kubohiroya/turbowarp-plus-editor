@@ -12,7 +12,7 @@ const documents = project => project.extensionStorage.twpeyamlsettings.documents
 const withoutDocuments = project => {const p = structuredClone(project); delete p.extensionStorage.twpeyamlsettings.documents; return p;};
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 
-test('real SB3 edits two same-named non-Kamishibai YAML documents with independent schemas and saves both', {timeout: 180000}, async () => {
+test('real SB3 edits two same-named test-owner YAML documents with independent schemas and saves both', {timeout: 180000}, async () => {
     const siteInput = process.env.TWPE_YAML_SITE, fixture = process.env.TWPE_YAML_FIXTURE;
     assert(siteInput && fixture);
     const output = process.env.TWPE_YAML_EVIDENCE || await mkdtemp(path.join(tmpdir(), 'twpe-multi-proof-'));
@@ -91,7 +91,7 @@ test('real SB3 edits two same-named non-Kamishibai YAML documents with independe
         await load(reload, 'two-saved.sb3');
         assert.deepEqual(await reload.evaluate(() => window.vm.runtime.extensionStorage.twpeyamlsettings.documents), {settings: first, labels: second});
         assert.deepEqual(errors, []);
-        await writeFile(path.join(output, 'result.json'), JSON.stringify({result: 'passed', browser: browser.version(), provider: 'non-Kamishibai settings test extension', documents: ['settings', 'labels'], filename: 'settings.yml', schemasIsolated: true, invalidSchemaRetained: true, guardedSwitch: true, sourceBodiesNotInBlocks: !JSON.stringify(savedProject.targets.map(target => target.blocks)).includes(first), nonDocumentProjectDataPreserved: true, assetEntriesPreserved: assets.length, reloaded: true, nativeLauncher: 'injected; actual VSCode tested separately', greenFlagExecuted: false, errors}, null, 2));
+        await writeFile(path.join(output, 'result.json'), JSON.stringify({result: 'passed', browser: browser.version(), provider: 'twpeyamlsettings test extension', documents: ['settings', 'labels'], filename: 'settings.yml', schemasIsolated: true, invalidSchemaRetained: true, guardedSwitch: true, sourceBodiesNotInBlocks: !JSON.stringify(savedProject.targets.map(target => target.blocks)).includes(first), nonDocumentProjectDataPreserved: true, assetEntriesPreserved: assets.length, reloaded: true, nativeLauncher: 'injected; actual VSCode tested separately', greenFlagExecuted: false, errors}, null, 2));
     } catch (error) {
         await page.screenshot({path: path.join(output, 'failure.png')}).catch(() => {});
         await writeFile(path.join(output, 'failure.json'), JSON.stringify({stage, message: error.message, errors}, null, 2)); throw error;

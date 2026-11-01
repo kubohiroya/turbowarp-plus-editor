@@ -12,7 +12,7 @@ const within = (root, filename) => {
 
 async function validate(spec) {
     if (!spec || typeof spec !== 'object' || Array.isArray(spec) ||
-        Object.keys(spec).some(key => !['workingFile', 'marker', 'resultPath', 'kamishibaiSchemaChecks', 'settingsJsonSchemaChecks'].includes(key))) {
+        Object.keys(spec).some(key => !['workingFile', 'marker', 'resultPath', 'settingsYamlSchemaChecks', 'settingsJsonSchemaChecks'].includes(key))) {
         throw new Error('The native test spec is invalid.');
     }
     if (typeof spec.marker !== 'string' || !spec.marker.trim() || spec.marker.length > 160 || /[\r\n\0]/.test(spec.marker)) {
@@ -60,9 +60,9 @@ async function verifySchema(document, before, format = 'yaml') {
     const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     const labels = result => (result?.items || result || []).map(item => typeof item.label === 'string' ? item.label : item.label.label);
     try {
-        const completionSource = format === 'json' ? '{"theme": ' : 'kamishibai: ';
-        const completionNeedle = format === 'json' ? 'night' : '4.0';
-        const diagnosticPattern = format === 'json' ? /night|day|string/iu : /4\.0|not accepted|constant/iu;
+        const completionSource = format === 'json' ? '{"theme": ' : 'mode: ';
+        const completionNeedle = format === 'json' ? 'night' : 'production';
+        const diagnosticPattern = format === 'json' ? /night|day|string/iu : /integer|incorrect type/iu;
         await replace(completionSource);
         let completionLabels = [];
         for (let attempt = 0; attempt < 80; attempt++) {
@@ -71,15 +71,15 @@ async function verifySchema(document, before, format = 'yaml') {
             if (completionLabels.some(label => label.includes(completionNeedle))) break;
             await pause(250);
         }
-        if (!completionLabels.some(label => label.includes(completionNeedle))) throw new Error('Schema-based DSL version completion was not offered.');
-        await replace(format === 'json' ? '{"enabled": true, "theme": 42}' : "kamishibai: 'wrong-version'\nscenes: []\n");
+        if (!completionLabels.some(label => label.includes(completionNeedle))) throw new Error('Schema-based value completion was not offered.');
+        await replace(format === 'json' ? '{"enabled": true, "theme": 42}' : 'volume: loud\nmode: rehearsal\n');
         let diagnostics = [];
         for (let attempt = 0; attempt < 80; attempt++) {
             diagnostics = vscode.languages.getDiagnostics(document.uri);
             if (diagnostics.some(item => item.range.start.line === 0 && diagnosticPattern.test(item.message))) break;
             await pause(250);
         }
-        if (!diagnostics.some(item => item.range.start.line === 0 && diagnosticPattern.test(item.message))) throw new Error('The invalid DSL version was not diagnosed from the schema.');
+        if (!diagnostics.some(item => item.range.start.line === 0 && diagnosticPattern.test(item.message))) throw new Error('The invalid value was not diagnosed from the schema.');
         return {extensionId: extension.id, extensionVersion: extension.packageJSON.version,
             completionLabels, diagnostics: diagnostics.map(item => ({message: item.message, source: item.source, line: item.range.start.line})),
             settings: vscode.workspace.getConfiguration(format, document.uri).get('schemas')};
@@ -98,7 +98,7 @@ async function perform(spec) {
     const beforeVersion = document.version;
     const diskBefore = await fs.readFile(spec.workingFile, 'utf8');
     if (before !== diskBefore || document.isDirty) throw new Error('The native test document already has unsaved changes.');
-    const schemaChecks = spec.kamishibaiSchemaChecks ? await verifySchema(document, before) : spec.settingsJsonSchemaChecks ? await verifySchema(document, before, 'json') : undefined;
+    const schemaChecks = spec.settingsYamlSchemaChecks ? await verifySchema(document, before) : spec.settingsJsonSchemaChecks ? await verifySchema(document, before, 'json') : undefined;
     const comment = spec.marker.trimStart().startsWith('#') ? spec.marker : `# ${spec.marker}`;
     const addition = `${before.endsWith('\n') ? '' : '\n'}${comment}\n`;
     const expectedAfter = spec.settingsJsonSchemaChecks ? before.replace('"theme": "day"', '"theme": "night"') : before + addition;

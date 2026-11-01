@@ -130,7 +130,7 @@ This repository verifies the integrated Editor. Existing upstream unit tests and
 
 This experimental feature tracks [Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3) and [shared-package Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6). It requires `twPlusYamlEditor=1` at Editor startup and is off by default. Install Visual Studio Code and Node.js, then open the Editor through the local companion process. The shared `@kubohiroya/turbowarp-document-editor` package owns the editing UI and external-editor bridge, and the scratch-gui fork embeds it directly. This distribution pins, builds, and serves the GUI. `@kubohiroya/turbowarp-document-data` owns source persistence, document references, and provider registration; the independent `@kubohiroya/turbowarp-document-source` package owns hats, YAML icons, and shared YAML blocks. Extensions register documents, and the shared UI delegates validation and document updates to their owners. The GUI handles standard SB3 file saving.
 
-The Kamishibai provider lives in App `4.0.0-rc.79` and uses the App’s validation API and schema. The Editor’s browser code does not embed the App or its parser. Supported Kamishibai projects have the new independent roots and named documents. They can display and convert source YAML, shared YAML blocks, and script blocks, with compatibility for the former single embedded source. Migrate older `kamishibai` / `kamishibaiConfig` projects into a separate SB3 using the App’s `migrate-embedded-yaml` first. External-script menus and projects containing only compiled data are outside this feature’s scope.
+Providers live in the extensions that own their documents and use those extensions’ own validation APIs and schemas. The Editor’s browser code embeds no App or App parser, and the Editor has no App among its dependencies. Each App documents which of its projects are supported and how to migrate older ones.
 
 Add the tools to a prepared Editor build and start it locally. A new `build:pages` build performs the same addition automatically.
 
@@ -155,15 +155,15 @@ The displayed local URL enables the startup-fixed `twPlusYamlEditor=1` flag. Its
 3. Return to the Editor and choose **Convert, validate and save the displayed format** at the lower right. It reads the saved VSCode working copy, validates its format, asset references, and project identity, and applies the document and consistency metadata in the Editor.
 4. Save the SB3 using the Editor’s standard **File** menu or **Save to your computer**. Saving in the document dialog does not download a file. Image and audio storage remains unchanged.
 
-The hat is the entry point to embedded YAML. Its dropdown shows the filename, while the SB3 stores a provider ID and document ID reference rather than duplicating the script text in a block argument. IDs distinguish documents even when filenames match. Save or cancel the current dialog before switching documents. The owning provider handles retrieval, validation, and updates; the same mechanism works beyond Kamishibai. Supported SB3s contain hats added by the current App implementation. The Editor does not automatically inject unknown blocks or extension code into older hatless SB3s. When a provider registers conversion capabilities, the same dialog can convert between source files, shared YAML blocks, and schema-specific blocks.
+The hat is the entry point to embedded YAML. Its dropdown shows the filename, while the SB3 stores a provider ID and document ID reference rather than duplicating the script text in a block argument. IDs distinguish documents even when filenames match. Save or cancel the current dialog before switching documents. The owning provider handles retrieval, validation, and updates; the mechanism does not depend on any particular App. Supported SB3s contain hats added by their owning extension. The Editor does not automatically inject unknown blocks or extension code into older hatless SB3s. When a provider registers conversion capabilities, the same dialog can convert between source files, shared YAML blocks, and schema-specific blocks.
 
 Providers may attach `schema: {id, schema}` to each document. Local integration writes the owner’s schema and associations to the working directory without inserting configuration comments into the YAML. The first opening of a document with a schema downloads the official Red Hat YAML extension, `redhat.vscode-yaml@2.0.0`, into a private extensions directory. Existing VSCode settings and extensions remain unchanged. The initial download requires network access. Documents without schemas continue to use owner validation when importing.
 
-VSCode completion and diagnostics use [Red Hat YAML schema associations](https://github.com/redhat-developer/vscode-yaml#associating-schemas). Kamishibai provides an authoring schema for raw scripts; import also checks App syntax, semantics, asset references, and runtime-data consistency.
+VSCode completion and diagnostics use [Red Hat YAML schema associations](https://github.com/redhat-developer/vscode-yaml#associating-schemas). An owner may supply an authoring schema for its source; import also runs the owner’s own validation.
 
 The companion accepts only authenticated operations from its local Editor. VSCode receives dedicated working files and an isolated settings area, preserving existing windows, settings, and extensions. Saved working files remain after sessions close or the process stops. The web interface cannot specify executable commands or arbitrary local paths.
 
-Invalid YAML and project switches do not overwrite the previous content. Drafts that could not be applied remain in VSCode’s working files. **X** and **Cancel** discard dialog candidates and close without changing the Editor or deleting working files. New script asset references must validate against the project’s existing asset set.
+Invalid YAML and project switches do not overwrite the previous content. Drafts that could not be applied remain in VSCode’s working files. **X** and **Cancel** discard dialog candidates and close without changing the Editor or deleting working files. New asset references in a document must validate against the project’s existing asset set.
 
 If a storage path exceeds macOS IPC path limits, only the VSCode settings area moves automatically into a short private directory; working files stay in place. The working area’s `host.json` records the actual locations.
 
@@ -174,20 +174,23 @@ Relevant checks:
 ```sh
 npm run test:yaml
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:yaml:browser
+# Build the test-only fixtures from any SB3 that contains assets.
+node scripts/yaml-editor/build-settings-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/settings.sb3
+node scripts/yaml-editor/build-document-source-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/document-source.sb3
 TWPE_YAML_SITE=/absolute/path/to/editor/build \
-TWPE_YAML_FIXTURE=/absolute/path/to/tutorial-4.0.sb3 \
+TWPE_YAML_FIXTURE=/absolute/path/to/settings.sb3 \
 TWPE_YAML_EVIDENCE=/absolute/path/to/evidence \
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
 npm run test:yaml:roundtrip
-# The same environment variables support the non-Kamishibai two-document fixture.
-node --test test/yaml-multi-document.browser.ts
+# Representation previews use the document-source fixture with the same variables.
+node --test test/representation-preview.browser.ts
 ```
 
 Automated browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
 
 ### Source, shared YAML blocks, and schema-specific blocks
 
-Source files, shared YAML blocks representing keys/arrays/values/comments, and schema-specific blocks such as Kamishibai scripts are three representations of the same document. Source is the reference for meaning and conversion, while block edits are retained in Editor state. Switching to another block representation applies the current edits to source before converting, within one save operation. Selecting a conversion target alone does not change the project. The initial tab is the currently stored representation; the label above the preview identifies it with 💽. Saving another tab asks for confirmation; **OK** validates, converts, and applies it to the Editor. **Cancel** returns to the dialog with the selection retained. **X** and **Cancel** perform the same cancellation. Regeneration from source is rejected when it would overwrite unapplied block edits.
+Source files, shared YAML blocks representing keys/arrays/values/comments, and schema-specific blocks supplied by an owning App are three representations of the same document. Source is the reference for meaning and conversion, while block edits are retained in Editor state. Switching to another block representation applies the current edits to source before converting, within one save operation. Selecting a conversion target alone does not change the project. The initial tab is the currently stored representation; the label above the preview identifies it with 💽. Saving another tab asks for confirmation; **OK** validates, converts, and applies it to the Editor. **Cancel** returns to the dialog with the selection retained. **X** and **Cancel** perform the same cancellation. Regeneration from source is rejected when it would overwrite unapplied block edits.
 
 Each tab previews its format: text for source, read-only ScratchBlocks for block representations. Viewing does not change the project. Preview blocks cannot be moved or edited, but scrolling and zooming are available. 💽 identifies the representation currently stored in the Editor, not a downloaded SB3 file.
 
@@ -197,14 +200,14 @@ Shared YAML blocks represent comments one line at a time and multiline strings a
 - `turbowarp-document-data`: Source, schemas, document references, provider registration, and SB3 persistence.
 - `turbowarp-structured-data`: Temporary projections from source into runtime values, without rewriting source.
 - `turbowarp-document-source`: Shared hats and blocks, conversion candidates, and application contracts.
-- Each App: DSL-specific validation, script-block conversion, and runtime-data regeneration.
+- Each App: DSL-specific validation, schema-specific block conversion, and runtime-data regeneration.
 - `turbowarp-document-editor`: Dialogs, external-editor integration, previews, and document-save operations.
 - The scratch-gui fork: Shared UI mounting, VM/Blockly integration, and standard SB3 file saving.
 - TurboWarp-Plus-Editor: GUI pinning, builds, and distribution.
 
-Non-Kamishibai source documents support YAML and JSON while preserving existing HTML/Markdown APIs. YAML/JSON detection is also added to the lower-level `turbowarp-named-data` package. The limited schema interpretation for structured data remains a separate contract from complete JSON Schema document validation.
+`turbowarp-document-data` source documents support YAML and JSON while preserving existing HTML/Markdown APIs. YAML/JSON detection is also added to the lower-level `turbowarp-named-data` package. The limited schema interpretation for structured data remains a separate contract from complete JSON Schema document validation.
 
-New document persistence, projections, and representation conversion are off by default. In App rc.79, `twPlusYamlEditor=1` enables Editor and provider document operations under the same startup condition. Owners supply each document’s conversion capabilities; unsupported extensions do not acquire conversion automatically. If an older block script has no stored original module YAML, conversion does not claim to restore the original file and its comments.
+New document persistence, projections, and representation conversion are off by default. `twPlusYamlEditor=1` enables the Editor’s document operations; providers may read the same startup condition for their own. Owners supply each document’s conversion capabilities; unsupported extensions do not acquire conversion automatically. If an older block script has no stored original module YAML, conversion does not claim to restore the original file and its comments.
 
 **View guide** opens the provider’s website in another tab. There is no separate validation button: **Convert, validate and save the displayed format** validates and applies the displayed format. VSCode actions are disabled while block edits await application to source. JSON source uses VSCode’s standard JSON support and schema associations.
 
@@ -216,16 +219,16 @@ Author: [Hiroya Kubo](https://github.com/kubohiroya)
 
 ## Block icon previews
 
-[Open the App rc.77 preview sample](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en&twPlusBlockPreview=1&twPlusYamlEditor=1&project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-plus-editor%2Fsamples%2Fblock-preview%2Fblock-preview-rc77.sb3) to open the stage’s **Code** tab automatically and show the first scene. Try the two scenes covering placement and movement/speech bubbles. An [interactive guide](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/?lang=en) and [SB3 download](https://kubohiroya.github.io/turbowarp-plus-editor/samples/block-preview/block-preview-rc77.sb3) are also available. The authored YAML and SVG files in `site/samples/block-preview/` are the source of truth; `build:pages` regenerates the sample from the published App rc.77. The deployed `metadata.json` records source, runtime, and SB3 hashes, which the Pages artifact gate verifies.
+The integrated data editor provides the optional `Scratch.gui.blockEditors.registerPreview` API, documented in `docs/block-preview.md` of `@kubohiroya/turbowarp-extension-data-editor`. An extension registers previews for its own blocks. A preview shares the existing form’s draft, and the form’s Save remains the only persistence path, so one save is one undo step. `Scratch.gui.createPreviewVm()` creates an isolated VM that cannot load extensions.
 
-[Open the Editor with previews enabled](https://kubohiroya.github.io/turbowarp-plus-editor/?lang=en&twPlusBlockPreview=1&twPlusYamlEditor=1). Previews are off by default and support projects with scene/action blocks in the App rc.79 editing runtime. Features include hover stills, scene playback, actor dragging, and live moveTo/Bubble playback. See the [usage guide](docs/block-icon-preview.md) for operations and existing-project compatibility.
+Extensions own their previews and any switch that enables them. The Editor ships no previews or preview samples of its own. `test/e2e/turbowarp/block-icon-preview.spec.cts` verifies this host contract with a test-only extension.
 
 ## Local data-source migration candidate
 
-Launching with `twPlusYamlEditor=1&twPlusDocumentSource=1` enables **File inside SB3** and **External URL** source choices for compatible document providers. Source location is separate from the YAML text, YAML blocks, and script-block representations. Document names and references are preserved. The generic label is **Data source**; the Kamishibai provider supplies its own script-data label.
+Launching with `twPlusYamlEditor=1&twPlusDocumentSource=1` enables **File inside SB3** and **External URL** source choices for compatible document providers. Source location is separate from the YAML text, YAML blocks, and schema-specific block representations. Document names and references are preserved. The generic label is **Data source**; a provider may supply its own label.
 
-After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. The App fetches URL content again at runtime startup and does not silently fall back to stale cached data on failure.
+After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. Fetching URL content again at runtime is the provider’s responsibility, and a provider must not silently fall back to stale cached data on failure.
 
-The new flag is off by default. It is read in the scratch-gui fork’s `config/feature-flags.js` and the App’s `src/dsl4/document-source.ts`. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
+The new flag is off by default. The scratch-gui fork reads it in `config/feature-flags.js`, and providers that support source locations read it themselves. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
 
 This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.

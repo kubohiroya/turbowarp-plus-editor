@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import JSZip from '@turbowarp/jszip';
-import {createEmbeddedYamlMarker} from '@kubohiroya/turbowarp-embedded-yaml';
+import {createEmbeddedYamlMarker} from '@kubohiroya/turbowarp-document-source';
 
 export const fixtureSources = {
     'yaml-settings': '# User settings\r\nvolume: 50 # percent\r\nmode: rehearsal\r\n',
@@ -17,7 +17,7 @@ const schemas = {
 export async function buildDocumentSourceFixture(input, output) {
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
     // Separate inert block declarations are preloaded only in this explicit test composition.
-    const companion = await build({absWorkingDir: root, stdin: {contents: "import {createYamlBlockRuntime} from '@kubohiroya/turbowarp-embedded-yaml/runtime'; Scratch.extensions.register(createYamlBlockRuntime(Scratch,{enabled:true}));", resolveDir: root, sourcefile: 'document-source-companion.js'}, bundle: true, platform: 'browser', format: 'iife', target: 'es2022', write: false, minify: true, legalComments: 'eof'});
+    const companion = await build({absWorkingDir: root, stdin: {contents: "import {createYamlBlockRuntime} from '@kubohiroya/turbowarp-document-source/runtime'; Scratch.extensions.register(createYamlBlockRuntime(Scratch,{enabled:true}));", resolveDir: root, sourcefile: 'document-source-companion.js'}, bundle: true, platform: 'browser', format: 'iife', target: 'es2022', write: false, minify: true, legalComments: 'eof'});
     const companionURL = `data:application/javascript;base64,${Buffer.from(companion.outputFiles[0].contents).toString('base64')}`;
     const compiled = await build({absWorkingDir: root, define: {__TWPE_COMPANION_URL__: JSON.stringify(companionURL)}, entryPoints: ['test/fixtures/document-source/runtime.ts'], bundle: true, platform: 'browser', format: 'iife', target: 'es2022', write: false, minify: true, legalComments: 'eof'});
     const zip = await JSZip.loadAsync(await fs.readFile(input));
@@ -32,6 +32,6 @@ export async function buildDocumentSourceFixture(input, output) {
     zip.file('project.json', JSON.stringify(p));
     const bytes = await zip.generateAsync({type: 'nodebuffer', compression: 'DEFLATE'});
     await fs.mkdir(path.dirname(output), {recursive: true}); await fs.writeFile(output, bytes);
-    return {output, sha256: createHash('sha256').update(bytes).digest('hex'), runtimeBytes: compiled.outputFiles[0].contents.length, companionBytes: companion.outputFiles[0].contents.length, companionSha256: createHash('sha256').update(companion.outputFiles[0].contents).digest('hex'), views: ['source', 'yaml-blocks'], documents: Object.keys(fixtureSources), packages: ['document-data', 'yaml-json', 'structured-data', 'embedded-yaml'], flags: 'Explicitly enabled only in this test composition'};
+    return {output, sha256: createHash('sha256').update(bytes).digest('hex'), runtimeBytes: compiled.outputFiles[0].contents.length, companionBytes: companion.outputFiles[0].contents.length, companionSha256: createHash('sha256').update(companion.outputFiles[0].contents).digest('hex'), views: ['source', 'yaml-blocks'], documents: Object.keys(fixtureSources), packages: ['document-data', 'yaml-json', 'structured-data', 'document-source'], flags: 'Explicitly enabled only in this test composition'};
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.stdout.write(JSON.stringify(await buildDocumentSourceFixture(process.argv[2], process.argv[3])) + '\n');
