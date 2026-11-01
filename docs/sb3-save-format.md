@@ -81,7 +81,23 @@ export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): strin
 - テストには移植元の拒否表を要約したfixtureを置き、`describeSb3SaveFormats` が切り出し前と同じ `extensions: remote|cached|embedded-file|embedded-data; source: kept as built; assets: kept as built` を返すことを確認している。
 - 依存はdevDependenciesの `typescript` と `vitest` だけで、実行時依存はゼロ。
 
-新しいremote repositoryの作成とnpm公開は未実施で、ユーザーの明示承認を待つ。それまで語彙の正本は紙芝居App の `sb3-save-format.ts` に置いたままにし、本Editorからは参照しない。紙芝居App側の差し替え（現在の `unsupported` 表と `projectAssetReason` を `sb3SaveCapabilities` へ渡す）も、公開後の別作業とする。
+## 公開（2026-11-02）
+
+ユーザーの承認により npm へ公開した。公開操作自体は、ワンタイムパスワードを求められるためユーザーが実行した。
+
+| 項目 | 値 |
+|---|---|
+| version | `0.1.0-rc.0` |
+| dist-tag | `latest` と `next` の両方（他の同族パッケージと同じ） |
+| tag | `v0.1.0-rc.0`（`65ba6d2`） |
+| gitHead | `65ba6d26a5e8a7d2f238cfee4a65a13040141dc7` |
+| integrity | `sha512-WDAY/FSkaLJgi3RgrVxZjNChXYTcwEXn8jytqwoYDxWzk/JCYb15JY5juilwdsSYgz2xeX04kqCYM1UQdhkH6A==` |
+| license | MPL-2.0 |
+| 同梱 | 8ファイル、展開後 48,549 bytes |
+
+公開版の `gitHead` はタグを付けたコミットと一致する。
+
+本Editorはまだこのパッケージを参照していない。語彙の正本は引き続き紙芝居App の `sb3-save-format.ts` にあり、現在の `unsupported` 表と `projectAssetReason` を `sb3SaveCapabilities` へ渡す差し替えは別作業とする。PR [kamishibai-app#1109](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1109) が凍結済み rc.79 の `sb3:check` で止まっている間は、差し替えを足しても検証できない。
 
 ## 決定3: `embedded-file` の二つの意味を混ぜない
 
