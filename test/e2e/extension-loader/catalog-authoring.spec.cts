@@ -307,6 +307,52 @@ test('catalog refusing the second extension leaves the complete original project
     await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
 });
 
+test('mobile viewport keeps catalog, distribution and consent controls visible and operable', async ({browser, baseURL}, testInfo) => {
+    const context = await browser.newContext({...devices['Pixel 7'],
+        viewport: {width: 390, height: 844}, locale: 'ja-JP'});
+    try {
+        await installFixtures(context);
+        const page = await context.newPage();
+        await page.goto(new URL('editor.html?lang=ja', baseURL).href);
+        await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
+        const before = await projectJSON(page);
+        const withinViewport = async locator => {
+            await expect.poll(() => locator.evaluate(node => {
+                const rect = node.getBoundingClientRect();
+                const viewport = window.visualViewport;
+                const left = rect.left - viewport.offsetLeft;
+                const top = rect.top - viewport.offsetTop;
+                return left >= -1 && top >= -1 && left + rect.width <= viewport.width + 1 &&
+                    top + rect.height <= viewport.height + 1 && node.scrollWidth <= node.clientWidth + 1;
+            })).toBe(true);
+        };
+        await openCatalog(page);
+        await withinViewport(selection(page));
+        const colors = await selection(page).evaluate(node => ({body: getComputedStyle(node).backgroundColor,
+            bulk: getComputedStyle(node.querySelector('.twextsec-bulk')).backgroundColor,
+            individual: getComputedStyle(node.querySelector('.twextsec-list')).backgroundColor}));
+        expect(colors.bulk).toBe(colors.body);
+        expect(colors.individual).not.toBe(colors.bulk);
+        await selection(page).locator('button[data-execution="unsandboxed"]').click();
+        await selection(page).locator('button[data-distribution="embedded"]').click();
+        await row(page, specifications[0]).getByRole('checkbox').check();
+        const apply = selection(page).getByRole('button', {name: '拡張の設定を適用', exact: true});
+        await expect(apply).toBeEnabled();
+        await withinViewport(apply);
+        await testInfo.attach('mobile-catalog.png', {body: await page.screenshot({scale: 'css'}),
+            contentType: 'image/png'});
+        await applySettings(page);
+        await expect(permission(page)).toBeVisible();
+        await withinViewport(permission(page));
+        expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
+        await page.getByTestId('tw-plus-deny').click();
+        await expect(permission(page)).toHaveCount(0);
+        expect(await projectJSON(page)).toEqual(before);
+    } finally {
+        await context.close();
+    }
+});
+
 test('catalog keeps distribution controls off when the Loader startup flag is explicitly disabled', async ({page, context}) => {
     await installFixtures(context);
     await openEditor(page, false);

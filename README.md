@@ -84,7 +84,7 @@ The TurboWarp Plus extension catalog is available on ordinary Editor URLs. To us
 
 The extension loader from Issue #4 consists of an independent loader core and thin GUI/VM adapters. In the regular distribution, the Embedded/Remote validation and permission UI is enabled on ordinary launch URLs without a feature flag (fixed at startup, on by default). The Packager action for Plus projects opens the local output screen and checks approval both when generating the output and on the recipient’s first run. Reload with `twPlusExtensionLoader=0` to disable it. Explicit `=1` remains supported; invalid values disable it. See the [integration specification](docs/extension-loader-integration.md) for configuration, validation, Desktop limitations, and rollback.
 
-See the [Issue #11 authoring guide](docs/extension-authoring-ui.md) for bulk and individual Embedded/Remote settings in the extension catalog and for adding extensions from JS files or URLs. This UI is also on by default for ordinary launches; reload with `twPlusExtensionLoader=0` to restore the previous addition flow.
+See the [Issue #11 authoring guide](docs/extension-authoring-ui.md) for bulk and individual Embedded/Remote settings in the extension catalog. This UI is on by default for ordinary launches; reload with `twPlusExtensionLoader=0` to turn it off. "Custom Extension" is the same screen as in TurboWarp and does not go through the loader.
 
 ## Using the npm package
 

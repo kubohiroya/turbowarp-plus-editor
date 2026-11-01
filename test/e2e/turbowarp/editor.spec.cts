@@ -30,21 +30,29 @@ const approveSample = async (page, source) => {
     })).toBe('unsandboxed');
 };
 
+const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json';
+const sampleURL = 'https://block-editor-sample.invalid/block-editor.js';
+
+// The TurboWarp Plus catalog is the only Loader entry, so serve the bundled sample as a catalog item.
 const loadSample = async (page, baseURL) => {
     const response = await page.request.get(new URL('static/extensions/block-editor.js', baseURL).href);
     expect(response.ok()).toBeTruthy();
     const source = await response.text();
+    await page.context().route(catalogURL, route => route.fulfill({json: {schemaVersion: 1, extensions: [{
+        id: 'blockeditordemo', name: 'Block editor demo', version: '1.0.0', url: sampleURL,
+        dependencies: [], unsandboxed: 'required'}]}, headers: {'access-control-allow-origin': '*'}}));
+    await page.context().route(sampleURL, route => route.fulfill({body: source,
+        headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}));
     await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
-    await page.getByText('カスタム拡張機能', {exact: true}).click();
-    const loader = page.getByRole('dialog');
-    await loader.getByText('テキスト', {exact: true}).click();
-    await loader.locator('textarea').fill(source);
-    await page.getByTestId('custom-extension-next').click();
-    await page.getByTestId('tw-plus-authoring-id').fill('blockeditordemo');
-    await page.getByTestId('tw-plus-authoring-execution').selectOption('unsandboxed');
-    await page.getByTestId('tw-plus-authoring-submit').click();
+    await page.getByText('TurboWarp Plus', {exact: true}).click();
+    const selection = page.locator('.twextsec-selection');
+    const row = selection.locator('article[data-extension-id="blockeditordemo"]');
+    await row.getByRole('checkbox').check();
+    await row.locator('input[type="radio"][value="unsandboxed"]').check();
+    await row.locator('input[data-distribution="embedded"]').check();
+    await selection.getByRole('button', {name: '拡張の設定を適用', exact: true}).click();
     await approveSample(page, source);
-    await expect(loader).toHaveCount(0);
+    await expect(selection).toHaveCount(0);
     await page.locator('.scratchCategoryMenuItemLabel').filter({hasText: 'Block editor demo'})
         .click();
     const block = page.locator('.blocklyFlyout .blocklyDraggable').filter({hasText: 'scene properties'});
