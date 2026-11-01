@@ -183,7 +183,9 @@ npm run test:yaml:roundtrip
 node --test test/yaml-multi-document.browser.ts
 ```
 
-Automated browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
+`test:yaml:browser` uses the pinned shared document editor and document-source registry with a test provider and VM fixture. It checks URL preview, cancellation, saving, fresh retrieval, and conversion to an embedded file without requiring an App-specific API. CI runs this check in Playwright Chromium; `TWPE_CHROME_EXECUTABLE` selects an installed browser locally (`CHROME_PATH` is also supported).
+
+SB3 round-trip browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
 
 ### Source, shared YAML blocks, and schema-specific blocks
 

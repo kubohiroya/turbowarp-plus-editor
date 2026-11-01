@@ -66,6 +66,10 @@ jobs:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
         run: node test/e2e/extension-loader/prepare-packaged.ts
       - run: npx playwright install --with-deps chromium
+      - name: Verify document source preview, cancellation and differential saving
+        env:
+          TW_SOURCE_EVIDENCE: test-results/document-sources
+        run: npm run test:yaml:browser
       - name: Verify integrated editing, security, themes and SB3 round trips
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
