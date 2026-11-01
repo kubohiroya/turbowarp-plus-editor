@@ -68,7 +68,8 @@ test('test-only owner: URL preview/cancel/save, fresh reload and embedded import
         });
         await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
         const url='http://127.0.0.1:'+server.address().port+'/?twPlusDocumentSource=1';
-        browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+        const executablePath=process.env.TWPE_CHROME_EXECUTABLE||process.env.CHROME_PATH;
+        browser=await chromium.launch({headless:true,...(executablePath?{executablePath}:{})});
         const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
         page.on('pageerror',error=>errors.push(error.message));
         let remote=source(20),requests=0;

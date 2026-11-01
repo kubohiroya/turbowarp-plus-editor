@@ -180,11 +180,15 @@ TWPE_YAML_FIXTURE=/absolute/path/to/settings.sb3 \
 TWPE_YAML_EVIDENCE=/absolute/path/to/evidence \
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
 npm run test:yaml:roundtrip
+# 同じ環境変数で、2文書のsettings fixtureも検証できます。
+node --test test/yaml-multi-document.browser.ts
 # 表現プレビューは同じ環境変数で、document-source fixtureを指定して検証します。
 node --test test/representation-preview.browser.ts
 ```
 
-自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
+`test:yaml:browser` は固定済みの共通document-editorとdocument-source registryに試験用の提供元・VMを接続し、URLプレビュー・取消・保存・再取得・埋め込みファイルへの変換を検証します。App固有APIは必要ありません。CIではPlaywrightのChromiumで実行し、ローカルの既存ブラウザーは `TWPE_CHROME_EXECUTABLE`（互換用に `CHROME_PATH` も可）で指定できます。
+
+SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
 
 ### 原文・共通YAMLブロック・スキーマ専用ブロック
 
