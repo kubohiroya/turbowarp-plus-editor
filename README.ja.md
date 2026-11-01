@@ -82,7 +82,7 @@ GitHub READMEは外部CSSを適用できないため、次の画像付きリン�
 
 TurboWarp Plusの機能拡張一覧は通常のEditor URLから利用できます。従来のカタログ経路を使う場合は `twPlusExtensionLoader=0&twPlusExtensions=1` を指定して再起動します。その他のGUI機能フラグは変更せず、ボタンに渡したパラメーターも保持します。
 
-Issue #4 の拡張Loaderは、独立したLoaderコアと薄いGUI/VMアダプターで実装します。通常配信では、URLフラグなしでEmbedded/Remoteの検証・許可UIを利用できます（起動時固定・既定ON）。Plus作品のPackager操作はローカル出力画面へ進み、生成時と受け取り側の初回実行時に承認を確認します。`twPlusExtensionLoader=0` を指定して再起動するとLoaderを無効にできます。従来の `=1` も利用でき、不正値はOFFです。構成、検証、Desktopの制約、切戻しは [接続仕様](docs/extension-loader-integration.md) を参照してください。
+Issue #4 の拡張Loaderは、独立したLoaderコアと薄いGUI/VMアダプターで実装します。通常配信では、URLフラグなしでEmbedded/Remoteの検証・許可UIを利用できます（起動時固定・既定ON）。Plus作品のPackager操作はローカル出力画面へ進みます。カタログに載っている拡張はEditorと同じく確認なしで動き、カタログにない拡張だけ、生成時と受け取り側の初回実行時に承認を確認します。`twPlusExtensionLoader=0` を指定して再起動するとLoaderを無効にできます。従来の `=1` も利用でき、不正値はOFFです。構成、検証、Desktopの制約、切戻しは [接続仕様](docs/extension-loader-integration.md) を参照してください。
 
 機能拡張一覧でEmbedded／Remoteを一括・個別設定するUIは [Issue #11の操作・開発ガイド](docs/extension-authoring-ui.md) を参照してください。このUIは通常起動から利用できます（既定ON）。`twPlusExtensionLoader=0` で無効にできます。「カスタム拡張機能」は本家TurboWarpと同じ画面で、ローダーを通しません。
 

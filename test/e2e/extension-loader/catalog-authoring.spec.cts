@@ -115,27 +115,6 @@ async function expectTrusted(page, specs) {
     await expect(permission(page)).toHaveCount(0);
 }
 
-// Single-HTML output asks its recipient, because it does not read the catalog.
-async function approveAll(page, specs, {beforeEvaluation = false} = {}) {
-    const seen = new Set();
-    for (let i = 0; i < specs.length; i++) {
-        await expect(permission(page)).toBeVisible();
-        const id = await permission(page).locator('[data-field="id"]').textContent();
-        const spec = specs.find(item => item.id === id);
-        expect(spec, `Unexpected permission ID ${id}`).toBeTruthy();
-        expect(seen.has(id)).toBe(false);
-        seen.add(id);
-        await expect(permission(page).locator('[data-field="sha256"]')).toHaveText(spec.sha256);
-        await expect(permission(page).locator('[data-field="execution"]')).toHaveText(spec.execution);
-        if (beforeEvaluation) {
-            expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
-            await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
-        }
-        await page.getByTestId('tw-plus-allow').click();
-    }
-    await expect(permission(page)).toHaveCount(0);
-}
-
 async function assertModes(page) {
     await expect.poll(() => page.evaluate(ids => ids.every(id => vm.extensionManager.isExtensionLoaded(id)),
         specifications.map(spec => spec.id))).toBe(true);
@@ -232,8 +211,11 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         await expect(builder.getByTestId('plus-package-generate')).toBeEnabled();
         await builder.getByTestId('plus-package-resources').check();
         await builder.getByTestId('plus-package-generate').click();
-        await approveAll(builder, specifications, {beforeEvaluation: true});
+        // The builder reads the same catalog, so building asks nobody either.
         await expect(builder.getByTestId('plus-package-download')).toBeVisible();
+        await expect(permission(builder)).toHaveCount(0);
+        await expect(builder.getByTestId('plus-package-status'))
+            .toHaveText('HTMLを生成しました。拡張はすべてカタログに載っているので、受け取った人に許可は求めません。');
         const downloading = builder.waitForEvent('download');
         await builder.getByTestId('plus-package-download').click();
         const output = path.join(directory, 'catalog-authored.html');
@@ -253,7 +235,8 @@ test('catalog selects all four execution/source combinations, restores loaded ch
             if (/^https?:/.test(request.url())) external.push(request.url());
         });
         await packaged.goto(pathToFileURL(output).href);
-        await approveAll(packaged, specifications, {beforeEvaluation: true});
+        // The offline HTML cannot read the catalog; it trusts the listed digests its builder embedded.
+        await expectTrusted(packaged, specifications);
         try {
             await assertModes(packaged);
         } catch (error) {
