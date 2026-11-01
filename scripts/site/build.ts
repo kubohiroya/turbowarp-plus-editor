@@ -8,7 +8,6 @@ import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
 import {root, readPins, verifyHost, sha} from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
-import {buildPreviewSample, installPreviewSampleFocus} from './build-preview-sample.ts';
 
 export async function buildPages(pins = undefined) {
     pins = pins || await readPins();
@@ -40,8 +39,6 @@ export async function buildPages(pins = undefined) {
     assert.equal(info.securityPackage, pins.securityPackage);
     assert.equal(info.securityVersion, securityVersion);
     await brandEditor(output, prefix);
-    info.previewSample = await buildPreviewSample(output);
-    await installPreviewSampleFocus(output, prefix);
     if (pins.loaderRepository) {
         info.extensionIntegration = await buildExtensionAssets(gui, pins);
     }

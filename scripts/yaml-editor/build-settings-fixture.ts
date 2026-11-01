@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import JSZip from '@turbowarp/jszip';
-import {installEmbeddedYamlMarker} from '@kubohiroya/turbowarp-embedded-yaml';
+import {installEmbeddedYamlMarker} from '@kubohiroya/turbowarp-document-source';
 
 // Build a real test extension; the product Editor never installs a synthetic owner.
 export async function buildSettingsFixture(input, output) {

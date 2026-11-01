@@ -1,5 +1,5 @@
-// Test-only owner: two same-named YAML files, no Kamishibai code or storage.
-import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu, getProviderRegistry} from '@kubohiroya/turbowarp-embedded-yaml';
+// Test-only owner: two same-named YAML files, no App code or storage.
+import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu, getProviderRegistry} from '@kubohiroya/turbowarp-document-source';
 import YAML from 'yaml';
 import {Ajv2020} from 'ajv/dist/2020.js';
 

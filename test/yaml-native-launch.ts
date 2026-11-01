@@ -7,7 +7,7 @@ import {findVSCodeExecutable, launchVSCode} from '../scripts/yaml-editor/vscode.
 
 const driverPath = fileURLToPath(new URL('./vscode-edit-driver/', import.meta.url));
 
-export function createNativeYamlTestLauncher({marker, resultPath, timeoutMs = 90_000, kamishibaiSchemaChecks = false, settingsJsonSchemaChecks = false}) {
+export function createNativeYamlTestLauncher({marker, resultPath, timeoutMs = 90_000, settingsYamlSchemaChecks = false, settingsJsonSchemaChecks = false}) {
     if (!path.isAbsolute(resultPath || '') || typeof marker !== 'string' || !marker.trim() || /[\r\n\0]/.test(marker)) {
         throw new TypeError('Supply an absolute test resultPath and a one-line marker.');
     }
@@ -22,7 +22,7 @@ export function createNativeYamlTestLauncher({marker, resultPath, timeoutMs = 90
         if (sockets.some(name => name.endsWith('-main.sock'))) throw new Error('Use a fresh private VSCode profile for the native test driver.');
         try { await lstat(resultPath); throw new Error('The native test result already exists.'); }
         catch (error) { if (error.code !== 'ENOENT') throw error; }
-        const spec = JSON.stringify({workingFile: filename, marker, resultPath, ...(kamishibaiSchemaChecks ? {kamishibaiSchemaChecks: true} : {}), ...(settingsJsonSchemaChecks ? {settingsJsonSchemaChecks: true} : {})});
+        const spec = JSON.stringify({workingFile: filename, marker, resultPath, ...(settingsYamlSchemaChecks ? {settingsYamlSchemaChecks: true} : {}), ...(settingsJsonSchemaChecks ? {settingsJsonSchemaChecks: true} : {})});
         await launchVSCode(filename, profile, {
             findExecutable: findVSCodeExecutable,
             spawnProcess(executable, args, options) {

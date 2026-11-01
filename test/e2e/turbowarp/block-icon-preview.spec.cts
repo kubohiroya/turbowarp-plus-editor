@@ -1,205 +1,113 @@
 const {test, expect, editorDialog, approveProjectExtensions} = require('./fixtures.cts');
-const {fixture} = require('./block-preview-project.cts');
+const fixture = require('./preview-project.cts');
 
-const visual = page => page.locator('[data-dsl4-block-preview]');
-const hover = page => page.locator('[data-dsl4-block-preview-hover]');
-const field = (page, name) => editorDialog(page).locator(`[data-fixed-argument="${name}"] input`);
+const icon = (page, id) => page.locator(`.blocklyBlockCanvas [data-id="${id}"] [data-block-editor-icon]`);
+const hover = page => page.locator('[data-preview-fixture-hover]');
+const visual = page => editorDialog(page).locator('[data-block-preview-visual]');
+const shown = page => visual(page).locator('[data-preview-fixture-value]');
+const add = page => visual(page).getByRole('button', {name: 'Add 5', exact: true});
+const number = page => editorDialog(page).getByRole('textbox', {name: 'NUMBER', exact: true});
+const project = page => page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}));
+const counts = page => page.evaluate(() => {
+    const {hovers, hoverReleases, mounts, unmounts, quits} = globalThis.__previewFixture;
+    return {hovers, hoverReleases, mounts, unmounts, quits};
+});
+const native = (page, blockId) => page.evaluate(id => {
+    const blocks = window.vm.editingTarget.blocks;
+    return blocks.getBlock(blocks.getBlock(id).inputs.NUMBER.block).fields.NUM.value;
+}, blockId);
+const listeners = page => page.evaluate(() => Object.fromEntries(window.vm.runtime.eventNames()
+    .map(name => [String(name), window.vm.runtime.listenerCount(name)])));
 
-async function load(page, baseURL, enabled, testInfo) {
-    const sample = await fixture();
-    await testInfo.attach('published-fixture.json', {body: JSON.stringify(sample.metadata, null, 2),
-        contentType: 'application/json'});
-    await page.setViewportSize({width: 1560, height: 1040});
-    const sourceURL = new URL('preview-authoring-fixture.sb3', baseURL).href;
-    await page.route(sourceURL, route => route.fulfill({body: sample.bytes, contentType: 'application/octet-stream'}));
+async function load(page, baseURL) {
     const url = new URL('editor.html', baseURL);
-    url.search = new URLSearchParams({lang: 'ja', twPlusYamlEditor: '1', project_url: sourceURL,
-        ...(enabled ? {twPlusBlockPreview: '1'} : {})}).toString();
+    url.search = new URLSearchParams({lang: 'en', project_url: await fixture.project()}).toString();
     await page.goto(url.href);
-    await approveProjectExtensions(page, sample.sources, 'ja');
-    await expect.poll(() => page.evaluate(() => globalThis.__blockPreviewHostCapabilities)).toEqual({
+    await approveProjectExtensions(page, [fixture.source], 'en');
+    await expect(icon(page, 'preview-root')).toHaveCount(1);
+    await expect(icon(page, 'plain-root')).toHaveCount(1);
+    expect(await page.evaluate(() => globalThis.__previewFixture.capabilities)).toEqual({
         preview: true, fixed: true, isolatedVm: true
     });
-    await page.locator('[class*="stage-selector_stage-selector_"]').click();
-    await page.waitForFunction(id => window.ScratchBlocks?.getMainWorkspace()?.getBlockById(id), sample.ids.scene);
-    return sample;
-}
-
-async function icon(page, id) {
-    await page.evaluate(blockId => {
-        const block = window.ScratchBlocks.getMainWorkspace().getBlockById(blockId);
-        block.inputList[0].fieldRow[0].fieldGroup_.setAttribute('data-preview-test-block', blockId);
-    }, id);
-    return page.locator(`[data-preview-test-block="${id}"]`);
 }
 
 async function close(page) {
-    await editorDialog(page).getByRole('button', {name: 'キャンセル', exact: true}).click();
+    await editorDialog(page).getByRole('button', {name: 'Cancel', exact: true}).click();
     await expect(editorDialog(page)).toHaveCount(0);
+    // Focus returns to the icon, which may legitimately start a new hover.
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
-    await page.mouse.move(10, 10);
+    await page.mouse.move(5, 5);
     await expect(hover(page)).toHaveCount(0);
 }
 
-const actor = page => page.evaluate(() => {
-    const canvas = document.querySelector<HTMLElement>('[data-dsl4-block-preview] canvas');
-    const preview = window.__blockPreviewVms?.find(vm => vm.runtime.renderer?.canvas === canvas);
-    const target = preview?.runtime.targets.find(t => !t.isStage && t.getName() === 'Hero');
-    return target ? {x: target.x, y: target.y, size: target.size, visible: target.visible} : null;
-});
-const clones = page => page.evaluate(() => window.__blockPreviewVms.length);
-const listeners = page => page.evaluate(() => Object.fromEntries(window.vm.runtime.eventNames()
-    .map(name => [String(name), window.vm.runtime.listenerCount(name)])));
-const nativeTransform = (page, blockId) => page.evaluate(id => {
-    const blocks = window.vm.editingTarget.blocks;
-    const block = blocks.getBlock(id);
-    const value = name => {
-        const shadow = blocks.getBlock(block.inputs[name].block);
-        return Number(shadow.fields.NUM?.value ?? shadow.fields.TEXT?.value);
-    };
-    return {x: value('X'), y: value('Y'), scale: value('SCALE')};
-}, blockId);
-
-test('block previews default off while the named scene keeps its existing form', async ({page, baseURL, evidence}, testInfo) => {
-    evidence.stage('block-preview-default-off');
-    const sample = await load(page, baseURL, false, testInfo);
-    const original = await page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}));
-    const scene = await icon(page, sample.ids.scene);
-    await scene.hover();
-    // Observe beyond the hover-intent delay, rather than asserting absence before its timer runs.
-    await page.waitForTimeout(400);
+test('blocks without a registered preview keep their existing form and never start a preview', async ({page, baseURL, evidence}) => {
+    evidence.stage('block-preview-unregistered');
+    await load(page, baseURL);
+    const original = await project(page);
+    await icon(page, 'plain-root').hover();
     await expect(hover(page)).toHaveCount(0);
-    await scene.click();
+    await icon(page, 'plain-root').click();
     await expect(editorDialog(page)).toBeVisible();
-    await expect(visual(page)).toHaveCount(0);
+    await expect(number(page)).toHaveValue('10');
+    await expect(editorDialog(page).locator('[data-block-preview-layout]')).toHaveCount(0);
     await close(page);
-    expect(await page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}))).toBe(original);
-    expect(new URL(page.url()).searchParams.has('twPlusBlockPreview')).toBe(false);
+    expect(await counts(page)).toEqual({hovers: 0, hoverReleases: 0, mounts: 0, unmounts: 0, quits: 0});
+    expect(await project(page)).toBe(original);
 });
 
-test('opt-in previews use real scenes, live actor and Bubble settings, atomic saves and isolated cleanup', async ({page, baseURL, evidence}, testInfo) => {
-    test.setTimeout(120_000);
-    evidence.stage('block-preview-opt-in');
-    const sample = await load(page, baseURL, true, testInfo);
-    await page.evaluate(() => {
-        window.__blockPreviewVms = [];
-        const VM = window.vm.constructor;
-        Object.defineProperty(window.vm, 'constructor', {configurable: true,
-            value: new Proxy(VM, {construct(target, args, newTarget) {
-                const preview = Reflect.construct(target, args, newTarget);
-                window.__blockPreviewVms.push(preview);
-                return preview;
-            }})});
-    });
-    const original = await page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}));
+test('registered previews share the form draft, save atomically and release every preview resource', async ({page, baseURL, evidence}, testInfo) => {
+    evidence.stage('block-preview-hover');
+    await load(page, baseURL);
+    const original = await project(page);
     const beforeListeners = await listeners(page);
-    const show = await icon(page, sample.ids.show);
-    await show.hover();
-    await expect(hover(page).locator('canvas')).toBeVisible({timeout: 30_000});
-    await page.mouse.move(10, 10);
+    await icon(page, 'preview-root').hover();
+    await expect(hover(page)).toHaveText('NUMBER 10');
+    await page.mouse.move(5, 5);
     await expect(hover(page)).toHaveCount(0);
-    await show.click();
-    const bounds = page.locator('[data-dsl4-actor-bounds]');
-    await expect(bounds).toBeVisible({timeout: 30_000});
-    await expect.poll(() => actor(page)).toEqual({x: -100, y: -20, size: 100, visible: true});
-    evidence.stage('block-preview-drag-and-save');
-    let rectangle = await bounds.boundingBox();
-    const canvas = await visual(page).locator('canvas').boundingBox();
-    const beforeDrag = await clones(page);
-    await page.mouse.move(rectangle.x + rectangle.width / 2, rectangle.y + rectangle.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(rectangle.x + rectangle.width / 2 + 40 * canvas.width / 480,
-        rectangle.y + rectangle.height / 2 + 20 * canvas.height / 360, {steps: 6});
-    await page.mouse.up();
-    await expect.poll(async () => Math.abs(Number(await field(page, 'X').inputValue()) + 60) < 2).toBe(true);
-    await expect.poll(async () => Math.abs(Number(await field(page, 'Y').inputValue()) + 40) < 2).toBe(true);
-    await expect.poll(() => clones(page)).toBeGreaterThan(beforeDrag);
-    await expect(bounds).toBeVisible();
-    await expect.poll(async () => Math.abs((await actor(page))?.x + 60) < 2).toBe(true);
-    rectangle = await bounds.boundingBox();
-    await page.mouse.move(rectangle.x + rectangle.width - 1, rectangle.y + rectangle.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(rectangle.x + rectangle.width + 24, rectangle.y + rectangle.height / 2, {steps: 6});
-    await page.mouse.up();
-    await expect.poll(async () => Number(await field(page, 'SCALE').inputValue())).toBeGreaterThan(100);
-    const saved = {x: Number(await field(page, 'X').inputValue()), y: Number(await field(page, 'Y').inputValue()),
-        scale: Number(await field(page, 'SCALE').inputValue())};
-    expect(await page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}))).toBe(original);
+    expect(await counts(page)).toMatchObject({hovers: 1, hoverReleases: 1});
+
+    evidence.stage('block-preview-shared-draft');
+    await icon(page, 'preview-root').click();
+    await expect(shown(page)).toHaveText('10');
+    await expect(hover(page)).toHaveCount(0);
+    await expect(editorDialog(page).locator('[data-block-preview-form]')).toBeVisible();
+    await number(page).fill('20');
+    await expect(shown(page)).toHaveText('20');
+    await add(page).click();
+    await expect(number(page)).toHaveValue('25');
+    await expect(shown(page)).toHaveText('25');
+    // Previews and forms only stage drafts; the existing Save remains the sole persistence path.
+    expect(await project(page)).toBe(original);
+    expect(await page.evaluate(() => {
+        const preview = globalThis.__previewFixture.previewVms.at(-1);
+        return {separate: preview !== window.vm && preview.runtime !== window.vm.runtime,
+            previewHasFixture: typeof preview.runtime._primitives.previewfixture_place === 'function',
+            hostHasFixture: typeof window.vm.runtime._primitives.previewfixture_place === 'function'};
+    })).toEqual({separate: true, previewHasFixture: false, hostHasFixture: true});
+    await testInfo.attach('block-preview-dialog.png', {body: await page.screenshot(), contentType: 'image/png'});
+
+    evidence.stage('block-preview-atomic-save');
     await editorDialog(page).locator('[data-block-editor-save]').click();
     await expect(editorDialog(page)).toHaveCount(0);
-    await expect.poll(() => nativeTransform(page, sample.ids.show)).toEqual(saved);
+    await expect.poll(() => native(page, 'preview-root')).toBe('25');
+    expect(await counts(page)).toMatchObject({mounts: 1, unmounts: 1, quits: 1});
     await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
-    await expect.poll(() => nativeTransform(page, sample.ids.show)).toEqual({x: -100, y: -20, scale: 100});
+    await expect.poll(() => native(page, 'preview-root')).toBe('10');
     await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(true));
-    await expect.poll(() => nativeTransform(page, sample.ids.show)).toEqual(saved);
+    await expect.poll(() => native(page, 'preview-root')).toBe('25');
     await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
-    await expect.poll(() => nativeTransform(page, sample.ids.show)).toEqual({x: -100, y: -20, scale: 100});
+    await expect.poll(() => native(page, 'preview-root')).toBe('10');
 
-    evidence.stage('block-preview-live-movement');
-    await (await icon(page, sample.ids.moveTo)).click();
-    await expect(bounds).toBeVisible({timeout: 30_000});
-    const beforeMoveChange = await clones(page);
-    await field(page, 'SECONDS').fill('2');
-    await field(page, 'X').fill('160');
-    await expect.poll(() => clones(page)).toBeGreaterThan(beforeMoveChange);
-    await expect.poll(async () => Boolean((await actor(page))?.visible)).toBe(true);
-    const moveStart = await actor(page);
-    // Two real rendered samples must move towards the edited endpoint before it is reached.
-    await page.waitForTimeout(250);
-    const moveMiddle = await actor(page);
-    expect(moveMiddle.x).toBeGreaterThan(moveStart.x + 2);
-    expect(moveMiddle.x).toBeLessThan(160);
-    const beforeEasing = await clones(page);
-    await editorDialog(page).locator('[data-fixed-argument="EASING"] select').selectOption({label: 'linear'});
-    await expect.poll(() => clones(page)).toBeGreaterThan(beforeEasing);
-    await close(page);
-
-    evidence.stage('block-preview-live-bubbles');
-    for (const [command, text] of [['say', '設定をすぐ確認'], ['think', '心の声もすぐ確認']]) {
-        await (await icon(page, sample.ids[command])).click();
-        await expect(visual(page).locator('canvas')).toBeVisible({timeout: 30_000});
-        const beforeTextChange = await clones(page);
-        await editorDialog(page).locator('input[id$="_seconds"]').fill('3');
-        if (command === 'say') await editorDialog(page).locator('input[id$="_styles_0"]').fill('alternate');
-        await editorDialog(page).locator('input[id$="_text"],textarea[id$="_text"]').fill(text);
-        await expect.poll(() => clones(page)).toBeGreaterThan(beforeTextChange);
-        await expect(visual(page)).toContainText(text, {timeout: 15_000});
-        // Rapid edits may overlap an aborted startup briefly; geometry belongs to the sole surviving stage.
-        await expect(visual(page).locator('canvas')).toHaveCount(1, {timeout: 15_000});
-        await expect(visual(page)).toContainText(text);
-        const previewRect = await visual(page).locator('canvas').boundingBox();
-        const formRect = await page.locator('[data-block-preview-form]').boundingBox();
-        expect(previewRect.x + previewRect.width).toBeLessThanOrEqual(formRect.x - 8);
-        if (command === 'say') await testInfo.attach('live-bubble.png', {body: await page.screenshot(), contentType: 'image/png'});
-        await close(page);
-    }
-
-    evidence.stage('block-preview-scene-and-cleanup');
-    await (await icon(page, sample.ids.scene)).click();
-    await expect(visual(page).locator('canvas')).toBeVisible({timeout: 30_000});
-    await expect.poll(async () => Boolean((await actor(page))?.visible)).toBe(true);
-    await editorDialog(page).getByRole('button', {name: '停止', exact: true}).click();
-    const stopped = await actor(page);
-    await page.waitForTimeout(200);
-    expect(await actor(page)).toEqual(stopped);
-    const beforeReplay = await clones(page);
-    await editorDialog(page).getByRole('button', {name: 'この場面を再生', exact: true}).click();
-    await expect.poll(() => clones(page)).toBeGreaterThan(beforeReplay);
-    await expect.poll(async () => Boolean((await actor(page))?.visible)).toBe(true);
+    evidence.stage('block-preview-cancel-cleanup');
+    const beforeCancel = await project(page);
+    await icon(page, 'preview-root').click();
+    await add(page).click();
+    await expect(number(page)).toHaveValue('15');
     await close(page);
     await expect(visual(page)).toHaveCount(0);
+    expect(await project(page)).toBe(beforeCancel);
+    const released = await counts(page);
+    expect(released.hoverReleases).toBe(released.hovers);
+    expect(released).toMatchObject({mounts: 2, unmounts: 2, quits: 2});
     await expect.poll(() => listeners(page)).toEqual(beforeListeners);
-    const host = await page.evaluate(async () => {
-        globalThis.__blockPreviewProbeLabel = 'after previews';
-        await window.vm.extensionManager.refreshBlocks('blockpreviewprobe');
-        const category = window.vm.runtime._blockInfo.find(info => info.id === 'blockpreviewprobe');
-        const mainActor = window.vm.runtime.targets.find(target => !target.isStage && target.getName() === 'Hero');
-        return {probeText: category.blocks[0].info.text,
-            previewHasProbe: window.__blockPreviewVms.some(vm => typeof vm.runtime._primitives.blockpreviewprobe_value === 'function'),
-            actor: {x: mainActor.x, y: mainActor.y, size: mainActor.size, visible: mainActor.visible}};
-    });
-    expect(host).toEqual({probeText: 'after previews', previewHasProbe: false,
-        actor: {x: -160, y: 0, size: 100, visible: false}});
-    await testInfo.attach('preview-results.json', {body: JSON.stringify({saved, moveStart, moveMiddle,
-        stopped, host, previewsCreated: await clones(page)}, null, 2), contentType: 'application/json'});
 });

@@ -2,8 +2,8 @@
 import {createSourceDocumentStore} from '@kubohiroya/turbowarp-document-data/source-documents';
 import {getSourceDocumentRegistry, encodeSourceDocumentReference, decodeSourceDocumentReference} from '@kubohiroya/turbowarp-document-data/composition';
 import {createExtension as createStructuredDataExtension} from '@kubohiroya/turbowarp-structured-data/bundle-module';
-import {createEmbeddedDocumentProvider} from '@kubohiroya/turbowarp-embedded-yaml/document-views';
-import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu} from '@kubohiroya/turbowarp-embedded-yaml';
+import {createEmbeddedDocumentProvider} from '@kubohiroya/turbowarp-document-source/document-views';
+import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu} from '@kubohiroya/turbowarp-document-source';
 
 globalThis.STRUCTURED_DATA_MVP = true;
 globalThis.STRUCTURED_DOCUMENT_SOURCE = true;
