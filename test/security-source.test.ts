@@ -6,7 +6,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {verifyHost} from '../scripts/site/source.ts';
 
-test('host verification accepts exact npm or Git security sources and rejects mismatched declarations', async () => {
+test('host verification checks exact npm/Git security and document editor sources', async () => {
     const gui = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-security-source-'));
     const securityPackage = '@kubohiroya/turbowarp-extension-security-dialog';
     const securityRoot = path.join(gui, 'node_modules', securityPackage);
@@ -33,7 +33,8 @@ test('host verification accepts exact npm or Git security sources and rejects mi
         assert.equal((await verifyHost(gui, pins)).securityVersion, '0.4.0');
         pins.securityRevision = 'd'.repeat(40);
         manifest.dependencies[securityPackage] = `github:kubohiroya/turbowarp-extension-security-dialog#${pins.securityRevision}`;
-        const lock = {packages: {[`node_modules/${securityPackage}`]: {
+        const lock: {packages: Record<string, {resolved?: string; version?: string; integrity?: string;
+            dependencies?: Record<string, string>}>} = {packages: {[`node_modules/${securityPackage}`]: {
             resolved: `git+ssh://git@github.com/kubohiroya/turbowarp-extension-security-dialog.git#${pins.securityRevision}`}}};
         const writeLock = () => writeJSON(path.join(gui, 'package-lock.json'), lock);
         await writeManifest();
@@ -67,7 +68,44 @@ test('host verification accepts exact npm or Git security sources and rejects mi
         await writeLock();
         await assert.rejects(verifyHost(gui, pins), /shared document editor pin/);
         await assert.rejects(verifyHost(gui, {...pins, documentEditorRevision: 'main'}), /full document editor revision/);
-
+        pins.documentEditorSource = 'npm';
+        pins.documentEditorVersion = '0.1.0-rc.1';
+        pins.documentEditorIntegrity = 'sha512-' + Buffer.alloc(64, 1).toString('base64');
+        manifest.dependencies[name] = pins.documentEditorVersion;
+        const npmEntry = {version: pins.documentEditorVersion,
+            resolved: `https://registry.npmjs.org/${name}/-/turbowarp-document-editor-${pins.documentEditorVersion}.tgz`,
+            integrity: pins.documentEditorIntegrity};
+        lock.packages[''] = {dependencies: {...manifest.dependencies}};
+        lock.packages[`node_modules/${name}`] = {...npmEntry};
+        await writeJSON(path.join(uiRoot, 'package.json'), {name, version: pins.documentEditorVersion,
+            exports: {'./package.json': './package.json'}});
+        await writeManifest(); await writeLock();
+        await verifyHost(gui, pins);
+        manifest.dependencies[name] = '^' + pins.documentEditorVersion;
+        await writeManifest();
+        await assert.rejects(verifyHost(gui, pins), /exact npm document editor version/);
+        manifest.dependencies[name] = pins.documentEditorVersion;
+        await writeManifest();
+        lock.packages[''].dependencies[name] = '0.1.0-rc.0';
+        await writeLock();
+        await assert.rejects(verifyHost(gui, pins), /Root lock/);
+        lock.packages[''].dependencies[name] = pins.documentEditorVersion;
+        for (const [property, value, message] of [
+            ['version', '0.1.0-rc.0', /Locked document editor version/],
+            ['resolved', npmEntry.resolved.replace('registry.npmjs.org', 'example.test'), /published npm tarball/],
+            ['integrity', 'sha512-' + Buffer.alloc(64, 2).toString('base64'), /tarball integrity/]
+        ] as const) {
+            lock.packages[`node_modules/${name}`] = {...npmEntry, [property]: value};
+            await writeLock();
+            await assert.rejects(verifyHost(gui, pins), message);
+        }
+        lock.packages[`node_modules/${name}`] = {...npmEntry};
+        await writeLock();
+        await writeJSON(path.join(uiRoot, 'package.json'), {name, version: '0.1.0-rc.0',
+            exports: {'./package.json': './package.json'}});
+        await assert.rejects(verifyHost(gui, pins), /Installed document editor/);
+        await assert.rejects(verifyHost(gui, {...pins, documentEditorSource: 'local'}), /source must be git or npm/);
+        await assert.rejects(verifyHost(gui, {...pins, documentEditorIntegrity: 'unknown'}), /published document editor integrity/);
     } finally {
         await fs.rm(gui, {recursive: true, force: true});
     }

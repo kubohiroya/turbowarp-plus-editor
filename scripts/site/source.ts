@@ -20,6 +20,12 @@ export function validatePins(pins) {
         assert.equal(pins.documentEditorRepository, 'kubohiroya/turbowarp-document-editor');
         assert.ok(sha(pins.documentEditorRevision), 'A full document editor revision is required');
         assert.ok(exactVersion(pins.documentEditorVersion), 'An exact document editor version is required');
+        assert.ok(pins.documentEditorSource === undefined || ['git', 'npm'].includes(pins.documentEditorSource),
+            'Document editor source must be git or npm');
+        if (pins.documentEditorSource === 'npm') {
+            assert.match(pins.documentEditorIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
+                'The published document editor integrity is required');
+        }
     }
     if (pins.securityRevision !== undefined) assert.ok(sha(pins.securityRevision), 'A full security revision is required');
     if (['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'vmBaseRevision',
@@ -43,6 +49,34 @@ export async function verifyInstalledCore(gui, pins) {
     assert.equal(info.version, pins.coreVersion, 'Installed core version differs from the source pin');
     assert.equal(info.revision, pins.coreRevision, 'Installed core differs from the source pin');
     return {coreRevision: info.revision, coreVersion: info.version};
+}
+export async function verifyDocumentEditorDependency(directory, pins) {
+    const name = '@kubohiroya/turbowarp-document-editor';
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
+    const entry = lock.packages[`node_modules/${name}`];
+    if (pins.documentEditorSource === 'npm') {
+        assert.equal(manifest.dependencies[name], pins.documentEditorVersion,
+            'Host must pin the exact npm document editor version');
+        assert.equal(lock.packages[''].dependencies[name], pins.documentEditorVersion,
+            'Root lock differs from the npm document editor pin');
+        assert.equal(entry.version, pins.documentEditorVersion, 'Locked document editor version differs from the pin');
+        assert.equal(entry.resolved,
+            `https://registry.npmjs.org/${name}/-/turbowarp-document-editor-${pins.documentEditorVersion}.tgz`,
+            'Document editor must resolve to the published npm tarball');
+        assert.equal(entry.integrity, pins.documentEditorIntegrity,
+            'Document editor tarball integrity differs from the source pin');
+    } else {
+        assert.equal(manifest.dependencies[name],
+            `git+https://github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`,
+            'GUI must pin the shared document editor');
+        assert.equal(entry.resolved,
+            `git+ssh://git@github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`,
+            'GUI lock differs from the shared document editor pin');
+    }
+    const require = createRequire(path.join(directory, 'package.json'));
+    const ui = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
+    assert.equal(ui.version, pins.documentEditorVersion, 'Installed document editor differs from the pin');
 }
 export async function verifyHost(gui, pins) {
     validatePins(pins);
@@ -76,15 +110,7 @@ export async function verifyHost(gui, pins) {
         }
     }
     if (pins.documentEditorRepository) {
-        const name = '@kubohiroya/turbowarp-document-editor';
-        const dependency = `git+https://github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`;
-        const lock = JSON.parse(await fs.readFile(path.join(gui, 'package-lock.json'), 'utf8'));
-        assert.equal(manifest.dependencies[name], dependency, 'GUI must pin the shared document editor');
-        assert.equal(lock.packages[`node_modules/${name}`].resolved,
-            `git+ssh://git@github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`,
-            'GUI lock differs from the shared document editor pin');
-        const ui = JSON.parse(await fs.readFile(hostRequire.resolve(`${name}/package.json`), 'utf8'));
-        assert.equal(ui.version, pins.documentEditorVersion, 'Installed document editor differs from the pin');
+        await verifyDocumentEditorDependency(gui, pins);
     }
     return {revision, coreRevision, coreVersion, securityVersion: securityManifest.version};
 }
