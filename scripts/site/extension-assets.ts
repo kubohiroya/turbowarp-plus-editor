@@ -30,6 +30,7 @@ export async function buildExtensionAssets(gui, pins) {
         assets[name] = contentHash(await fs.readFile(path.join(gui, 'build', name)));
     }
     return {loaderRepository: pins.loaderRepository, loaderRevision: pins.loaderRevision,
+        loaderSource: pins.loaderSource || 'git', loaderVersion: pins.loaderVersion, loaderIntegrity: pins.loaderIntegrity,
         vmRepository: pins.vmRepository, vmRevision: pins.vmRevision,
         packagerRepository: pins.packagerRepository, packagerRevision: pins.packagerRevision,
         featureDefault: true, assets, scaffolding};

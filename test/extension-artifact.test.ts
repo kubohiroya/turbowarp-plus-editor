@@ -11,7 +11,9 @@ test('production pins reject incomplete or unpinned extension dependency graphs'
     const pins = await readPins();
     for (const changes of [{loaderRevision: 'main'}, {vmRevision: 'develop'}, {packagerRevision: 'latest'},
         {loaderRepository: undefined}, {vmRepository: 'TurboWarp/scratch-vm'},
-        {securityRevision: 'main'}, {securityRevision: '0.4.0'}]) {
+        {securityRevision: 'main'}, {securityRevision: '0.4.0'},
+        {loaderSource: 'local'}, {loaderSource: 'npm', loaderVersion: 'latest'},
+        {loaderSource: 'npm', loaderIntegrity: 'unknown'}]) {
         assert.throws(() => validatePins({...pins, ...changes}));
     }
 });
@@ -21,8 +23,10 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
     try {
         const pins = await readPins();
         const revision = 'a'.repeat(40);
-        const integration: {featureDefault: boolean; assets: Record<string, string>; loaderRevision?: string} = {featureDefault: true, assets: {}};
-        for (const key of ['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) integration[key] = pins[key];
+        const integration: {featureDefault: boolean; assets: Record<string, string>; loaderRevision?: string;
+            loaderSource?: string; loaderIntegrity?: string} = {featureDefault: true, assets: {}};
+        for (const key of ['loaderRepository', 'loaderRevision', 'loaderVersion', 'loaderIntegrity', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) integration[key] = pins[key];
+        integration.loaderSource = pins.loaderSource || 'git';
         const files = ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg',
             'assets/edit-button.css', 'plus-packager.html', 'plus-packager.js'];
         for (const name of files) {
@@ -60,5 +64,18 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         integration.loaderRevision = 'b'.repeat(40);
         await writeInfo();
         assert.notEqual(check().status, 0);
+        integration.loaderRevision = pins.loaderRevision;
+        // A published loader identity must match the tarball and source the pins name.
+        integration.loaderIntegrity = 'sha512-' + Buffer.alloc(64, 3).toString('base64');
+        await writeInfo();
+        assert.notEqual(check().status, 0);
+        integration.loaderIntegrity = pins.loaderIntegrity;
+        assert.equal(pins.loaderSource, 'npm', 'production pins the published npm loader');
+        integration.loaderSource = 'git';
+        await writeInfo();
+        assert.notEqual(check().status, 0);
+        integration.loaderSource = 'npm';
+        await writeInfo();
+        assert.equal(check().status, 0);
     } finally { await fs.rm(directory, {recursive: true, force: true}); }
 });

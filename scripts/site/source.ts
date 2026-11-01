@@ -36,6 +36,14 @@ export function validatePins(pins) {
         for (const key of ['loaderRevision', 'vmRevision', 'vmBaseRevision', 'packagerRevision']) {
             assert.ok(sha(pins[key]), `Full ${key} is required`);
         }
+        // An npm loader keeps loaderRevision as the commit it was published from.
+        assert.ok(pins.loaderSource === undefined || ['git', 'npm'].includes(pins.loaderSource),
+            'Loader source must be git or npm');
+        if (pins.loaderSource === 'npm') {
+            assert.ok(exactVersion(pins.loaderVersion), 'An exact npm loader version is required');
+            assert.match(pins.loaderIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
+                'The published loader integrity is required');
+        }
     }
     return pins;
 }
@@ -78,6 +86,22 @@ export async function verifyDocumentEditorDependency(directory, pins) {
     const ui = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
     assert.equal(ui.version, pins.documentEditorVersion, 'Installed document editor differs from the pin');
 }
+/** The GUI must resolve the loader to exactly the published tarball the pins name. */
+async function verifyNpmLoader(hostRequire, manifest, lock, pins) {
+    const name = '@kubohiroya/turbowarp-extension-loader';
+    const entry = lock.packages[`node_modules/${name}`];
+    assert.equal(manifest.dependencies[name], pins.loaderVersion, 'Host must pin the exact npm loader version');
+    assert.equal(lock.packages[''].dependencies[name], pins.loaderVersion, 'Root lock differs from the npm loader pin');
+    assert.equal(entry.version, pins.loaderVersion, 'Locked loader version differs from the pin');
+    assert.equal(entry.resolved,
+        `https://registry.npmjs.org/${name}/-/turbowarp-extension-loader-${pins.loaderVersion}.tgz`,
+        'Loader must resolve to the published npm tarball');
+    assert.equal(entry.integrity, pins.loaderIntegrity, 'Loader tarball integrity differs from the source pin');
+    // The loader does not export its package.json, so read the one beside its built entry.
+    const installed = JSON.parse(await fs.readFile(
+        path.resolve(path.dirname(hostRequire.resolve(name)), '../package.json'), 'utf8'));
+    assert.equal(installed.version, pins.loaderVersion, 'Installed loader differs from the pin');
+}
 export async function verifyHost(gui, pins) {
     validatePins(pins);
     assert.ok(gui && path.isAbsolute(gui), 'E2E_GUI_ROOT must be an absolute GUI checkout');
@@ -100,10 +124,10 @@ export async function verifyHost(gui, pins) {
     assert.equal(securityManifest.version, pins.securityVersion, 'Installed security package differs from the source pin');
     if (pins.loaderRepository) {
         const lock = JSON.parse(await fs.readFile(path.join(gui, 'package-lock.json'), 'utf8'));
-        for (const [name, repository, revision] of [
-            ['@kubohiroya/turbowarp-extension-loader', pins.loaderRepository, pins.loaderRevision],
-            ['scratch-vm', pins.vmRepository, pins.vmRevision]
-        ]) {
+        const gitPins = [['scratch-vm', pins.vmRepository, pins.vmRevision]];
+        if (pins.loaderSource === 'npm') await verifyNpmLoader(hostRequire, manifest, lock, pins);
+        else gitPins.unshift(['@kubohiroya/turbowarp-extension-loader', pins.loaderRepository, pins.loaderRevision]);
+        for (const [name, repository, revision] of gitPins) {
             assert.equal(manifest.dependencies[name], `git+https://github.com/${repository}.git#${revision}`);
             assert.equal(lock.packages[`node_modules/${name}`].resolved,
                 `git+ssh://git@github.com/${repository}.git#${revision}`, `Lockfile differs for ${name}`);
