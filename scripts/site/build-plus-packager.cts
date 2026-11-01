@@ -15,6 +15,15 @@ if (execFileSync('git', ['rev-parse', 'HEAD'], {cwd: packager, encoding: 'utf8'}
 if (execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', 'src', 'webpack.config.js'], {cwd: packager, encoding: 'utf8'}).trim()) {
     throw new Error('Packager source checkout must be clean');
 }
+// The builder trusts the same catalog as the Editor; only the explicit preview build replaces it.
+const localCatalogFile = process.env.TW_PLUS_LOCAL_CATALOG_INPUT;
+let localCatalog = null;
+if (localCatalogFile) {
+    if (!path.isAbsolute(localCatalogFile) || process.env.TW_PLUS_CATALOG_PREVIEW !== '1') {
+        throw new Error('Local catalog input is supported only by the explicit preview build');
+    }
+    localCatalog = JSON.parse(fs.readFileSync(localCatalogFile, 'utf8'));
+}
 const hostRequire = createRequire(path.join(gui, 'package.json'));
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 const rootRequire = createRequire(path.resolve('package.json'));
@@ -54,7 +63,8 @@ const config = withExtensionLoaderWebpack4({
         {test: /\.png$/, loader: hostRequire.resolve('url-loader'), options: {limit: 1000000}}
     ]},
     plugins: [new webpack.DefinePlugin({'process.env.SCAFFOLDING_BUILD_ID': JSON.stringify(buildId),
-        '__TW_PLUS_PACKAGER_ASSETS__': JSON.stringify(assets), '__TW_PLUS_EXTENSION_RUNTIME__': JSON.stringify(runtime)}),
+        '__TW_PLUS_PACKAGER_ASSETS__': JSON.stringify(assets), '__TW_PLUS_EXTENSION_RUNTIME__': JSON.stringify(runtime),
+        '__TW_PLUS_LOCAL_CATALOG__': JSON.stringify(localCatalog)}),
         new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1})],
     node: {fs: 'empty'}
 }, {hostRoot: gui});
