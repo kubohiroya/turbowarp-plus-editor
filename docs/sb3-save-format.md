@@ -37,16 +37,26 @@ export const sb3SaveFormats: readonly Sb3SaveFormat[];
 export interface Sb3SaveSelection { /* 既存のまま */ }
 export interface Sb3SaveFormatSupport { readonly supported: boolean; readonly reason?: string; }
 
-/** 各実装が自分の対応可否を渡す。 */
-export type Sb3SaveFormatSupportTable =
-  (payload: Sb3SavePayload, format: Sb3SaveFormat) => Sb3SaveFormatSupport;
+/** 各実装が自分の対応可否を渡す。拒否には何が足りないかを必ず書かせる。 */
+export interface Sb3SaveCapabilities {
+  readonly format: (payload: Sb3SavePayload, format: Sb3SaveFormat) => Sb3SaveFormatSupport;
+  readonly projectAssets: () => Sb3SaveFormatSupport;
+}
 
+/** 既存の拒否表（`payload:format` → 理由）からcapabilitiesを組み立てる。 */
+export function sb3SaveCapabilities(refusals?: Sb3SaveRefusals): Sb3SaveCapabilities;
+
+export function sb3SaveFormatSupport(
+  payload: Sb3SavePayload, format: Sb3SaveFormat, capabilities: Sb3SaveCapabilities,
+): Sb3SaveFormatSupport;
 export function sb3SupportedSaveFormats(
-  payload: Sb3SavePayload, support: Sb3SaveFormatSupportTable): readonly Sb3SaveFormat[];
+  payload: Sb3SavePayload, capabilities: Sb3SaveCapabilities): readonly Sb3SaveFormat[];
 export function normalizeSb3SaveSelection(
-  input: unknown, support: Sb3SaveFormatSupportTable): Sb3SaveSelection;
-export function describeSb3SaveFormats(support: Sb3SaveFormatSupportTable): string;
+  input: unknown, capabilities: Sb3SaveCapabilities): Sb3SaveSelection;
+export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): string;
 ```
+
+`assetsAsProjectAssets` の拒否も実装固有（移植元の理由文は `convert-dsl4-assets --to project` を指す）なので、`projectAssets()` として同じ注入に載せる。
 
 紙芝居App側は現在の表をそのまま `support` として渡せば、CLIの振る舞いと診断文は変わらない。本Editorの保存UIは自分の表を渡す。
 
@@ -63,7 +73,15 @@ export function describeSb3SaveFormats(support: Sb3SaveFormatSupportTable): stri
 
 新パッケージ（候補名 `@kubohiroya/turbowarp-sb3-save-format`）は、SB3を保存する境界で3つのpayloadの格納形を言うという実際の層に一致し、5つの利用者すべてから読めて、どれにも依存しない。中身は上記のexportだけで、依存ゼロ・ランタイムなし。
 
-新しいremote repositoryの作成とnpm公開はこのIssueの範囲外なので、作成はユーザーの明示承認を待つ。それまで語彙の正本は `sb3-save-format.ts` に置いたままにし、本Editorからは参照しない。
+## 実装の状況（2026-11-02）
+
+ユーザーの指示により、このパッケージを `/Users/hiroya/Dev/turbowarp-sb3-save-format` にローカル作成した（`git init` 済み、初回コミット `65ba6d2`、remoteなし）。`@kubohiroya/turbowarp-extension-manifest` と同じ構成（MPL-2.0、pnpm、vitest、`dist` と `src` を同梱、英語README.mdと日本語README.ja.md）。
+
+- `pnpm run typecheck` 成功、`vitest run` 19件成功、`tsc -p tsconfig.build.json` 成功、`pnpm pack --dry-run` 成功。
+- テストには移植元の拒否表を要約したfixtureを置き、`describeSb3SaveFormats` が切り出し前と同じ `extensions: remote|cached|embedded-file|embedded-data; source: kept as built; assets: kept as built` を返すことを確認している。
+- 依存はdevDependenciesの `typescript` と `vitest` だけで、実行時依存はゼロ。
+
+新しいremote repositoryの作成とnpm公開は未実施で、ユーザーの明示承認を待つ。それまで語彙の正本は紙芝居App の `sb3-save-format.ts` に置いたままにし、本Editorからは参照しない。紙芝居App側の差し替え（現在の `unsupported` 表と `projectAssetReason` を `sb3SaveCapabilities` へ渡す）も、公開後の別作業とする。
 
 ## 決定3: `embedded-file` の二つの意味を混ぜない
 
