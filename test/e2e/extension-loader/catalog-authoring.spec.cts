@@ -44,7 +44,8 @@ const projectJSON = page => page.evaluate(() => JSON.parse(vm.toJSON()));
 async function installFixtures(context) {
     await context.route(catalogURL, route => route.fulfill({json: {schemaVersion: 1,
         extensions: specifications.map(spec => ({id: spec.id, name: spec.id, version: '1.0.0', url: spec.url,
-            dependencies: [], unsandboxed: 'optional', description: 'Catalog authoring browser fixture', license: 'MIT'}))},
+            sha256: spec.sha256, dependencies: [], unsandboxed: 'optional',
+            description: 'Catalog authoring browser fixture', license: 'MIT'}))},
         headers: {'access-control-allow-origin': '*'}}));
     await context.route('https://extensions.turbowarp.org/generated-metadata/extensions-v0.json',
         route => route.fulfill({json: {extensions: []}, headers: {'access-control-allow-origin': '*'}}));
@@ -73,7 +74,7 @@ test('catalog checkboxes alone exclude packages and dependencies stay selected w
     const unchecked = specifications[2];
     await context.route(catalogURL, route => route.fulfill({json: {schemaVersion: 1,
         extensions: specifications.map(spec => ({id: spec.id, name: spec.id, version: '1.0.0', url: spec.url,
-            dependencies: spec.id === parent.id ? [base.id] : [], unsandboxed: 'optional'}))},
+            sha256: spec.sha256, dependencies: spec.id === parent.id ? [base.id] : [], unsandboxed: 'optional'}))},
         headers: {'access-control-allow-origin': '*'}}));
     await openEditor(page);
     await openCatalog(page);
@@ -95,7 +96,7 @@ test('catalog checkboxes alone exclude packages and dependencies stay selected w
     await expect(selection(page).getByRole('button', {name: '拡張の設定を適用', exact: true})).toBeDisabled();
     await row(page, parent).getByRole('checkbox').check();
     await applySettings(page);
-    await approveAll(page, [base, parent], {beforeEvaluation: true});
+    await expectTrusted(page, [base, parent]);
     await expect(selection(page)).toHaveCount(0);
     const saved = (await projectJSON(page)).turboWarpPlus.extensions;
     expect(saved.map(spec => spec.id)).toEqual([base.id, parent.id]);
@@ -107,6 +108,14 @@ async function applySettings(page) {
     await selection(page).getByRole('button', {name: '拡張の設定を適用', exact: true}).click();
 }
 
+// Catalog-listed extensions are trusted like TurboWarp's official gallery: no per-extension approval.
+async function expectTrusted(page, specs) {
+    await expect.poll(() => page.evaluate(ids => ids.every(id => vm.extensionManager.isExtensionLoaded(id)),
+        specs.map(spec => spec.id))).toBe(true);
+    await expect(permission(page)).toHaveCount(0);
+}
+
+// Single-HTML output asks its recipient, because it does not read the catalog.
 async function approveAll(page, specs, {beforeEvaluation = false} = {}) {
     const seen = new Set();
     for (let i = 0; i < specs.length; i++) {
@@ -173,7 +182,7 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         }
         expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
         await applySettings(page);
-        await approveAll(page, specifications, {beforeEvaluation: true});
+        await expectTrusted(page, specifications);
         await expect(selection(page)).toHaveCount(0);
         await assertModes(page);
         expect((await projectJSON(page)).targets).toEqual(before.targets);
@@ -206,7 +215,7 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         const converted = specifications[1];
         await row(page, converted).locator('input[data-distribution="embedded"]').check();
         await applySettings(page);
-        await approveAll(page, [converted]);
+        await expectTrusted(page, [converted]);
         await expect(selection(page)).toHaveCount(0);
         await assertModes(page);
         const afterConversion = await Zip.loadAsync(await saveSB3(page));
@@ -281,33 +290,7 @@ test('catalog selects all four execution/source combinations, restores loaded ch
     }
 });
 
-test('catalog refusing the second extension leaves the complete original project and executes neither selection', async ({page, context}) => {
-    await installFixtures(context);
-    await openEditor(page);
-    const before = await projectJSON(page);
-    await openCatalog(page);
-    for (const spec of specifications.slice(0, 2)) {
-        await row(page, spec).getByRole('checkbox').check();
-        await row(page, spec).locator('input[type="radio"][value="unsandboxed"]').check();
-    }
-    await applySettings(page);
-    await expect(permission(page)).toBeVisible();
-    const firstID = await permission(page).locator('[data-field="id"]').textContent();
-    await page.getByTestId('tw-plus-allow').click();
-    await expect(permission(page)).toBeVisible();
-    await expect(permission(page).locator('[data-field="id"]')).not.toHaveText(firstID);
-    expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
-    await page.getByTestId('tw-plus-deny').click();
-    await expect(permission(page)).toHaveCount(0);
-    await expect(selection(page)).toBeVisible();
-    await expect(page.getByRole('alert')).toContainText(/読み込|許可|拒否/);
-    expect(await projectJSON(page)).toEqual(before);
-    expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
-    expect(await page.evaluate(ids => ids.some(id => vm.extensionManager.isExtensionLoaded(id)), specifications.map(spec => spec.id))).toBe(false);
-    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
-});
-
-test('mobile viewport keeps catalog, distribution and consent controls visible and operable', async ({browser, baseURL}, testInfo) => {
+test('mobile viewport keeps catalog and distribution controls visible and operable', async ({browser, baseURL}, testInfo) => {
     const context = await browser.newContext({...devices['Pixel 7'],
         viewport: {width: 390, height: 844}, locale: 'ja-JP'});
     try {
@@ -342,12 +325,9 @@ test('mobile viewport keeps catalog, distribution and consent controls visible a
         await testInfo.attach('mobile-catalog.png', {body: await page.screenshot({scale: 'css'}),
             contentType: 'image/png'});
         await applySettings(page);
-        await expect(permission(page)).toBeVisible();
-        await withinViewport(permission(page));
-        expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
-        await page.getByTestId('tw-plus-deny').click();
-        await expect(permission(page)).toHaveCount(0);
-        expect(await projectJSON(page)).toEqual(before);
+        await expectTrusted(page, [specifications[0]]);
+        await expect(selection(page)).toHaveCount(0);
+        expect((await projectJSON(page)).targets).toEqual(before.targets);
     } finally {
         await context.close();
     }
@@ -371,7 +351,7 @@ test('catalog changes a loaded extension execution mode with the same digest and
     await row(page, spec).getByRole('checkbox').check();
     await row(page, spec).locator('input[type="radio"][value="sandboxed"]').check();
     await applySettings(page);
-    await approveAll(page, [spec], {beforeEvaluation: true});
+    await expectTrusted(page, [spec]);
     await expect(selection(page)).toHaveCount(0);
     await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(1);
     expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('sandboxed:no-vm');
@@ -381,14 +361,9 @@ test('catalog changes a loaded extension execution mode with the same digest and
     await expect(row(page, spec).locator('input[type="radio"][value="sandboxed"]')).toBeChecked();
     await row(page, spec).locator('input[type="radio"][value="unsandboxed"]').check();
     await applySettings(page);
-    await expect(permission(page)).toBeVisible();
-    await expect(permission(page).locator('[data-field="execution"]')).toHaveText('unsandboxed');
-    await expect(permission(page).locator('[data-field="sha256"]')).toHaveText(spec.sha256);
-    // The running project is retained until permission for the new mode is granted.
-    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(1);
-    expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('sandboxed:no-vm');
-    await page.getByTestId('tw-plus-allow').click();
+    // The listed code needs no approval for the new mode either.
     await expect(selection(page)).toHaveCount(0);
+    await expect(permission(page)).toHaveCount(0);
     await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
     expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('unsandboxed:vm');
     expect((await projectJSON(page)).turboWarpPlus.extensions[0]).toMatchObject({
@@ -435,7 +410,7 @@ test('catalog adopts a previously native-loaded extension without losing its act
     await expect(row(page, spec).locator('input[type="radio"][value="sandboxed"]')).toBeChecked();
     await row(page, spec).locator('input[data-distribution="embedded"]').check();
     await applySettings(page);
-    await approveAll(page, [spec]);
+    await expectTrusted(page, [spec]);
     await expect(selection(page)).toHaveCount(0);
     await expect(page.locator(`iframe.tw-custom-extension-frame[data-id="${nativeFrameID}"]`)).toHaveCount(0);
     await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(1);

@@ -17,6 +17,14 @@ const start = async page => {
     await expect(page.getByRole('button', {name: '拡張機能を追加', exact: true})).toBeVisible();
 };
 
+const expectSampleLoaded = async page => {
+    await expect.poll(() => page.evaluate(() => {
+        try { return JSON.parse(vm.toJSON()).turboWarpPlus?.extensions?.find(spec => spec.id === 'blockeditordemo')?.execution; }
+        catch { return null; }
+    })).toBe('unsandboxed');
+};
+
+// A browser whose catalog does not list the sample asks before running it.
 const approveSample = async (page, source) => {
     const permission = page.getByTestId('tw-plus-permission');
     await expect(permission).toBeVisible();
@@ -24,10 +32,7 @@ const approveSample = async (page, source) => {
     await expect(permission.locator('[data-field="sha256"]')).toHaveText(createHash('sha256').update(source).digest('hex'));
     await page.getByTestId('tw-plus-allow').click();
     await expect(permission).toHaveCount(0);
-    await expect.poll(() => page.evaluate(() => {
-        try { return JSON.parse(vm.toJSON()).turboWarpPlus?.extensions?.find(spec => spec.id === 'blockeditordemo')?.execution; }
-        catch { return null; }
-    })).toBe('unsandboxed');
+    await expectSampleLoaded(page);
 };
 
 const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json';
@@ -40,6 +45,7 @@ const loadSample = async (page, baseURL) => {
     const source = await response.text();
     await page.context().route(catalogURL, route => route.fulfill({json: {schemaVersion: 1, extensions: [{
         id: 'blockeditordemo', name: 'Block editor demo', version: '1.0.0', url: sampleURL,
+        sha256: createHash('sha256').update(source).digest('hex'),
         dependencies: [], unsandboxed: 'required'}]}, headers: {'access-control-allow-origin': '*'}}));
     await page.context().route(sampleURL, route => route.fulfill({body: source,
         headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}));
@@ -51,7 +57,9 @@ const loadSample = async (page, baseURL) => {
     await row.locator('input[type="radio"][value="unsandboxed"]').check();
     await row.locator('input[data-distribution="embedded"]').check();
     await selection.getByRole('button', {name: '拡張の設定を適用', exact: true}).click();
-    await approveSample(page, source);
+    // A catalog-listed extension is trusted like TurboWarp's official gallery: no separate approval.
+    await expectSampleLoaded(page);
+    await expect(page.getByTestId('tw-plus-permission')).toHaveCount(0);
     await expect(selection).toHaveCount(0);
     await page.locator('.scratchCategoryMenuItemLabel').filter({hasText: 'Block editor demo'})
         .click();
