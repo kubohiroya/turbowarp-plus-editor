@@ -1,12 +1,15 @@
 {
   "guiRepository": "kubohiroya/scratch-gui",
-  "guiRevision": "2068ed59aaf0d67f699bb1d1a74975fc3819a9dc",
+  "guiRevision": "a887854798dcca815bb5925e2c2fed63ae6aa496",
   "coreRepository": "kubohiroya/turbowarp-extension-data-editor",
   "coreRevision": "d96532a91bc6046d4a3fda878425b30d6d10483e",
   "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
   "securityVersion": "0.5.0",
   "loaderRepository": "kubohiroya/turbowarp-extension-loader",
-  "loaderRevision": "3c0c9f08e1878812e43421ce9b3a94ab174c28a3",
+  "loaderRevision": "1640271c640be005237c99dcaef3213f3f79048b",
+  "loaderVersion": "0.2.1",
+  "loaderSource": "npm",
+  "loaderIntegrity": "sha512-FUE+Xv9ho4gD52qQRNTFniMr1bJlilnnp2/amBwl1Y+C5kpGSaLrtn/zVfVTRvxrN5X0cYP6J9/H4VeKfFlC+A==",
   "vmRepository": "kubohiroya/scratch-vm",
   "vmRevision": "cb04ce70af3b7b005e583dbdf652533f01371a3d",
   "vmBaseRevision": "55fd9b7c9509827c9cec31482aa63f2d57ec564d",
@@ -14,6 +17,8 @@
   "packagerRevision": "c115bdf525c5f49f0fb689a21b335ccb70fc22d2",
   "coreVersion": "0.7.0",
   "documentEditorRepository": "kubohiroya/turbowarp-document-editor",
-  "documentEditorRevision": "aa86fa32956d71cfc480d0006dbbdfe34898ca1a",
-  "documentEditorVersion": "0.1.0-rc.0"
+  "documentEditorRevision": "9be165cc5ade0a9722cea79fe58425a54cce9433",
+  "documentEditorVersion": "0.1.0-rc.1",
+  "documentEditorSource": "npm",
+  "documentEditorIntegrity": "sha512-vmzt87LZpsHHtUH19x/JEbULQAEPFanDGqTuO/356ozt+KDciVAxsv3bpp+Jcjq+sbdu7Mdle+8T8NWPXGfsfw=="
 }
