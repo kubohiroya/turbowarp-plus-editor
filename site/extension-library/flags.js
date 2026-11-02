@@ -22,7 +22,9 @@ export const readPlusFlags = (search = '') => {
     return {loader, library: loader || parameters.get('twPlusExtensions') === '1'};
 };
 
-const startup = readPlusFlags(typeof window === 'undefined' ? '' : window.location.search);
+// Read at module load, so this must not be able to throw: a build with no window, or one whose
+// window has no location yet, starts with every switch at its default instead of failing to load.
+const startup = readPlusFlags(typeof window === 'undefined' ? '' : window.location?.search || '');
 
 export const PLUS_EXTENSION_LOADER_ENABLED = startup.loader;
 export const PLUS_LIBRARY_ENABLED = startup.library;

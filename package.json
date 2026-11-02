@@ -50,7 +50,7 @@
   },
   "scripts": {
     "test": "node --test --import ./test/asset-hooks.mjs test/*.test.ts",
-    "test:extension-host": "node --test test/extension-host/*.test.mjs test/extension-library/*.test.mjs test/extension-library/*.test.cjs",
+    "test:extension-host": "node --test test/extension-host/*.test.mjs test/extension-library/*.test.mjs test/extension-library/*.test.cjs test/packager/*.test.mjs test/packager/*.test.cjs",
     "build:pages": "node scripts/site/build.ts",
     "test:e2e": "playwright test --config test/e2e/turbowarp/playwright.config.cts",
     "test:e2e:block-editor": "npm run test:e2e",

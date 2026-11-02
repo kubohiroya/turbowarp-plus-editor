@@ -57,13 +57,5 @@ test('the integration ships the catalog, so the GUI can ask for it', () => {
 
 // The builder has no editor chrome, so it is given only the catalog. Supplying the editor's
 // integration there would pull the document editor into a bundle that has no use for it.
-test('the builder is given the catalog, the trust it implies, the dialog, and nothing else', async () => {
-    const {plusIntegration: builder} = await import('../site/plus-integration.packager.js');
-    const supplied = builder() as Record<string, unknown>;
-    // Nothing of the editor: its integration would pull the document editor into this bundle, and
-    // the extension host with it, neither of which the builder page runs.
-    assert.deepEqual(Object.keys(supplied).sort(), ['createPermissionUI', 'extensionCatalog', 'trustedExtensions']);
-    assert.equal(typeof (supplied.extensionCatalog as {read: unknown}).read, 'function');
-    assert.equal(typeof (supplied.trustedExtensions as {listDigests: unknown}).listDigests, 'function');
-    assert.equal(typeof supplied.createPermissionUI, 'function');
-});
+// The builder page is this repository's own entry now, importing the catalog, the trust it implies
+// and the dialog directly, so there is no integration socket to fill in that bundle any more.

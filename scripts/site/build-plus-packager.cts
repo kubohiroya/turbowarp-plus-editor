@@ -28,7 +28,12 @@ const hostRequire = createRequire(path.join(gui, 'package.json'));
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 const rootRequire = createRequire(path.resolve('package.json'));
 const webpack = hostRequire('webpack');
-const {withExtensionLoaderWebpack4} = hostRequire('@kubohiroya/turbowarp-extension-loader/webpack4');
+// This repository's copy: the GUI no longer depends on the Loader at all. The helper's babel rule
+// covers exactly that copy, so the alias below pins resolution to it — the host's module path is
+// searched first, and a stale copy there would be bundled untranspiled.
+const {withExtensionLoaderWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-loader/webpack4');
+// The package does not export its own package.json, so its root is read from its built entry.
+const loaderRoot = path.resolve(path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-extension-loader')), '..');
 const published = path.dirname(rootRequire.resolve('@turbowarp/packager/package.json'));
 if (rootRequire('@turbowarp/packager/package.json').version !== '3.14.0') throw new Error('Packager 3.14.0 is required');
 const scaffoldRoot = path.resolve(process.env.TW_PLUS_SCAFFOLDING_ROOT || '.host/issue-4-artifacts/scaffolding');
@@ -51,11 +56,12 @@ for (const [name, file] of Object.entries({scaffolding: 'scaffolding-full.js', '
 }
 const config = withExtensionLoaderWebpack4({
     mode: 'production', context: gui,
-    entry: path.join(gui, 'src/playground/plus-packager.js'),
+    entry: path.resolve('site/packager/page.js'),
     output: {path: output, filename: 'plus-packager.js'},
     optimization: {minimize: false},
     resolve: {modules: [path.join(gui, 'node_modules'), path.resolve('node_modules'), 'node_modules'],
-        alias: {'@turbowarp/packager-web$': path.join(packager, 'src/packager/web/export.js')}},
+        alias: {'@turbowarp/packager-web$': path.join(packager, 'src/packager/web/export.js'),
+            '@kubohiroya/turbowarp-extension-loader': loaderRoot}},
     module: {rules: [
         {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src'), vmSource,
             path.resolve('site')],
@@ -63,15 +69,7 @@ const config = withExtensionLoaderWebpack4({
                 presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}},
         {test: /\.png$/, loader: hostRequire.resolve('url-loader'), options: {limit: 1000000}}
     ]},
-    // The builder is its own bundle, so the Plus integration socket has to be filled here too.
-    // Without it the builder reads no catalog, trusts nothing, and asks permission for extensions
-    // the editor loads without asking.
-    //
-    // It gets the builder's own integration, not the editor's: the editor's would pull the document
-    // editor and its packages into this bundle, where nothing needs them.
-    plugins: [new webpack.NormalModuleReplacementPlugin(/[\\/]src[\\/]lib[\\/]tw-plus-integration\.js$/,
-        path.resolve('site/plus-integration.packager.js')),
-        new webpack.DefinePlugin({'process.env.SCAFFOLDING_BUILD_ID': JSON.stringify(buildId),
+    plugins: [new webpack.DefinePlugin({'process.env.SCAFFOLDING_BUILD_ID': JSON.stringify(buildId),
         '__TW_PLUS_PACKAGER_ASSETS__': JSON.stringify(assets), '__TW_PLUS_EXTENSION_RUNTIME__': JSON.stringify(runtime),
         '__TW_PLUS_LOCAL_CATALOG__': JSON.stringify(localCatalog)}),
         new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1})],
