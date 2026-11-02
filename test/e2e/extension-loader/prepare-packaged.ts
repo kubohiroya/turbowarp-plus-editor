@@ -6,9 +6,10 @@ import {createRequire} from 'node:module';
 import Zip from '@turbowarp/jszip';
 const gui = process.env.E2E_GUI_ROOT;
 if (!gui || !path.isAbsolute(gui)) throw new Error('An absolute E2E_GUI_ROOT is required');
-const hostRequire = createRequire(path.join(gui, 'package.json'));
-const {prepareOfflinePackage} = await import(pathToFileURL(hostRequire.resolve('@kubohiroya/turbowarp-extension-loader/packager')).href);
-const {packagePlusHTML} = await import(pathToFileURL(path.join(gui, 'src/lib/tw-plus-packager.js')).href);
+// The Loader and the HTML writer are both this repository's now; only the GUI checkout's own
+// build assets below still come from there.
+const {prepareOfflinePackage} = await import('@kubohiroya/turbowarp-extension-loader/packager');
+const {packagePlusHTML} = await import('../../../site/packager/html.js');
 const output = path.resolve('.host/issue-4-artifacts');
 await mkdir(output, {recursive: true});
 const require = createRequire(import.meta.url);
