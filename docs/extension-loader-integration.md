@@ -14,7 +14,7 @@ Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB
 | data-editor | npm `0.6.0` / source `91533dbbffa9eb9d3b50be8084b85dae5184f9dc` | 共通フォーム・固定入力・プレビュー登録API |
 | security-dialog | npm `0.3.3` | 既存UI・通常カスタム拡張の方針を維持 |
 
-Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderをnpmの完全一致版（`site/source.json` の `loaderVersion` と `loaderIntegrity`、公開元コミットは `loaderRevision`）で、VMをGitの完全SHAで固定する。通常配信の `site/source.json` と、統合プレビューの `site/extension-source.json` は、ともにマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定ON・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
+Loaderは [kubohiroya/turbowarp-extension-loader](https://github.com/kubohiroya/turbowarp-extension-loader) が所有する。GUIのpackage/lockfileはLoaderをnpmの完全一致版（`site/source.json` の `loaderVersion` と `loaderIntegrity`、公開元コミットは `loaderRevision`）で、VMをGitの完全SHAで固定する。通常配信と統合プレビューは、ともに `site/source.json` でマージ済み統合GUIを固定する。通常ビルドがLoader入りscaffolding/runtime/ローカルPackager画面を生成し、artifact gateが依存SHA・既定ON・資産hashを検証する。既存のscratch-gui作業ツリーは変更せず専用checkoutを使う。
 
 ## 起動と信頼境界
 
@@ -72,7 +72,7 @@ npm test
 npm run test:extension-loader:desktop
 ```
 
-新しい環境では `site/extension-source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderはGUIが固定したnpmの完全一致版、VMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.tsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定ONを記録し、プレビューのみ作業ツリー情報も追加する。
+新しい環境では `site/source.json` のGUI revisionとPackager revisionを専用checkoutへ取得し、GUIで `npm ci` と `node scripts/prepublish.mjs` を実行する。LoaderはGUIが固定したnpmの完全一致版、VMはGUIの固定Git依存から取得されるため、ローカルの兄弟ディレクトリやnode_modulesへの手作業パッチは不要。VMパッチはレビュー資料として `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持する。通常buildがscaffolding、runtime、ローカルbuilderを生成する。E2E用の単一HTMLはprepare-packaged.tsで生成する。preview buildも同じ通常buildを呼ぶ。ソースの固定値と生成assets hashをビルドで検証し、`build-info.json.extensionIntegration` に通常配信の依存SHA・資産hash・既定ONを記録し、プレビューのみ作業ツリー情報も追加する。
 
 検証証跡は `test-results/extension-loader/results.json`、`.host/issue-4-artifacts/*tests.log`、`desktop-result.json` とDesktop screenshots。Embedded/Remote実行、拒否・Esc・改ざん・未知schema・信頼偽装・ID不一致、real TLSのCORS/redirect拒否、CSP、cache offline、URL/ローカルファイル、公式Bitwise/標準Pen、従来カスタム拡張の回帰を検証する。悪意あるZIP・キャッシュ汚染/失効・変換・compiler実行はcore/実VMの単体テストで検証する。
 

@@ -48,7 +48,7 @@ SHA-256は内容を固定する値で、発行者の本人性やコードの安�
 
 ## ローカルでの再現
 
-Node 26とpnpm 11.28.8を用意し、`site/extension-source.json` の完全SHAでGUIとPackagerをチェックアウトします。Loader・VM・Security DialogはGUIのlockfileから復元します。以下はGUIを `.host/scratch-gui-issue4`、Packagerを `.host/packager-issue4` に置いた例です。
+Node 26とpnpm 11.28.8を用意し、`site/source.json` の完全SHAでGUIとPackagerをチェックアウトします。Loader・VM・Security DialogはGUIのlockfileから復元します。以下はGUIを `.host/scratch-gui-issue4`、Packagerを `.host/packager-issue4` に置いた例です。
 
 ```sh
 npm ci

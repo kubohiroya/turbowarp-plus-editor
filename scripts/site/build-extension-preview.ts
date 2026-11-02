@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync, spawnSync} from 'node:child_process';
-import {root, validatePins, sha} from './source.ts';
+import {root, readPins, sha} from './source.ts';
 import {buildPages} from './build.ts';
 import {createRequire} from 'node:module';
 import {prepareLocalCatalogPreview} from './local-catalog-preview.ts';
@@ -15,8 +15,9 @@ const loader = await fs.realpath(hostRequirePath);
 const hostRequire = createRequire(path.join(gui, 'package.json'));
 const security = await fs.realpath(path.resolve(path.dirname(hostRequire.resolve('@kubohiroya/turbowarp-extension-security-dialog')), '..'));
 const vmSource = await fs.realpath(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
-const pins = JSON.parse(await fs.readFile(path.join(root, 'site/extension-source.json'), 'utf8'));
-validatePins(pins);
+// The preview builds the same Editor through the same webpack config, so it reads the pins the
+// normal build ships rather than a copy that drifts whenever only one of them is updated.
+const pins = await readPins();
 for (const name of ['loaderRevision', 'vmRevision', 'vmBaseRevision', 'packagerRevision']) {
     if (!sha(pins[name])) throw new Error(`A full ${name} is required`);
 }
