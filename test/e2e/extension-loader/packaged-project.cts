@@ -9,7 +9,8 @@ Scratch.extensions.register({getInfo(){return {id:'sample',name:'Offline fixture
 const bytes = new TextEncoder().encode(source);
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 
-async function packagedProject(type = 'embedded') {
+// The Loader's four forms: the carrier is part of the name now, so a fixture says which one it is.
+async function packagedProject(type = 'embedded-file') {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"><rect width="480" height="360" fill="#ffffff"/></svg>';
     const assetId = createHash('md5').update(svg).digest('hex');
     const project = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, blocks: {}, comments: {},
@@ -18,9 +19,10 @@ async function packagedProject(type = 'embedded') {
         tempo: 60, videoTransparency: 50, videoState: 'on', textToSpeechLanguage: null}],
         monitors: [], extensions: ['sample'], extensionURLs: {}, meta: {semver: '3.0.0', vm: '2.0.0', agent: 'Plus offline fixture'},
         turboWarpPlus: {schemaVersion: 1, extensions: [{id: 'sample', execution: 'unsandboxed', sha256,
-            source: type === 'remote' ? {type, url: 'https://fixture.invalid/code.js'} : {type, path: 'extensions/sample.js'}}]}};
+            source: type.startsWith('remote-') ? {type, url: 'https://fixture.invalid/code.js'} :
+                {type, path: 'extensions/sample.js'}}]}};
     const zip = new Zip().file('project.json', JSON.stringify(project)).file(`${assetId}.svg`, svg);
-    if (type === 'embedded') zip.file('extensions/sample.js', bytes);
+    if (type === 'embedded-file') zip.file('extensions/sample.js', bytes);
     return zip.generateAsync({type: 'nodebuffer'});
 }
 module.exports = {source, bytes, sha256, packagedProject};

@@ -19,18 +19,18 @@ test('a URL listed in the catalog is trusted and an unlisted URL is not', async 
 
 test('listed remote code must match the listed SHA-256 when the catalog has one', async () => {
     const trusted = createPlusTrustedCatalog({readCatalog: async () => catalog({sha256: digest})});
-    assert.equal(await trusted.isTrustedCode(code({type: 'remote', url: listed}, digest)), true);
-    assert.equal(await trusted.isTrustedCode(code({type: 'remote', url: listed}, 'b'.repeat(64))), false);
+    assert.equal(await trusted.isTrustedCode(code({type: 'remote-cacheable', url: listed}, digest)), true);
+    assert.equal(await trusted.isTrustedCode(code({type: 'remote-cacheable', url: listed}, 'b'.repeat(64))), false);
 });
 
 test('embedded code is trusted only by a listed SHA-256', async () => {
     const withDigest = createPlusTrustedCatalog({readCatalog: async () => catalog({sha256: digest})});
-    assert.equal(await withDigest.isTrustedCode(code({type: 'embedded', path: 'extensions/listed.js'}, digest)), true);
+    assert.equal(await withDigest.isTrustedCode(code({type: 'embedded-file', path: 'extensions/listed.js'}, digest)), true);
     assert.equal(await withDigest.isTrustedCode(
-        code({type: 'embedded', path: 'extensions/listed.js'}, 'c'.repeat(64))), false);
+        code({type: 'embedded-file', path: 'extensions/listed.js'}, 'c'.repeat(64))), false);
     const withoutDigest = createPlusTrustedCatalog({readCatalog: async () => catalog()});
     assert.equal(await withoutDigest.isTrustedCode(
-        code({type: 'embedded', path: 'extensions/listed.js'}, digest)), false);
+        code({type: 'embedded-file', path: 'extensions/listed.js'}, digest)), false);
 });
 
 test('an unreadable or invalid catalog trusts nothing and is read again on the next check', async () => {
@@ -51,8 +51,8 @@ test('an unreadable or invalid catalog trusts nothing and is read again on the n
 test('packaging embeds the digests of the project extensions that the catalog lists', async () => {
     const trusted = createPlusTrustedCatalog({readCatalog: async () => catalog({sha256: digest})});
     const manifest = {schemaVersion: 1, extensions: [
-        {id: 'listed', execution: 'unsandboxed', sha256: digest, source: {type: 'embedded', path: 'extensions/a.js'}},
-        {id: 'other', execution: 'sandboxed', sha256: 'b'.repeat(64), source: {type: 'embedded', path: 'extensions/b.js'}}
+        {id: 'listed', execution: 'unsandboxed', sha256: digest, source: {type: 'embedded-file', path: 'extensions/a.js'}},
+        {id: 'other', execution: 'sandboxed', sha256: 'b'.repeat(64), source: {type: 'embedded-file', path: 'extensions/b.js'}}
     ]};
     assert.deepEqual(await listTrustedDigests(trusted, manifest), [digest]);
     const unreadable = createPlusTrustedCatalog({readCatalog: async () => {

@@ -78,7 +78,9 @@ export const createPlusTrustedCatalog = ({
          */
         async isTrustedCode (code) {
             const {urls, digests, listedDigests} = await load();
-            if (code.source && code.source.type === 'remote' && urls.has(code.source.url)) {
+            // Both remote forms name a URL; which of them decides only whether a copy may be kept
+            // in the opener's browser, which has nothing to do with what this build stands behind.
+            if (code.source && code.source.type.startsWith('remote-') && urls.has(code.source.url)) {
                 const listed = digests.get(code.source.url);
                 return !listed || listed === code.actualSHA256;
             }

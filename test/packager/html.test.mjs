@@ -12,7 +12,7 @@ const sha256 = createHash('sha256').update(bytes).digest('hex');
 const project = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, blocks: {}, comments: {},
     currentCostume: 0, costumes: [], sounds: [], volume: 100, layerOrder: 0, tempo: 60, videoTransparency: 50, videoState: 'on', textToSpeechLanguage: null}],
     monitors: [], extensions: ['sample'], extensionURLs: {}, meta: {semver: '3.0.0', vm: '2.0.0', agent: 'Plus fixture'},
-    turboWarpPlus: {schemaVersion: 1, extensions: [{id: 'sample', execution: 'unsandboxed', sha256, source: {type: 'remote', url: 'https://example.test/code.js'}}]}};
+    turboWarpPlus: {schemaVersion: 1, extensions: [{id: 'sample', execution: 'unsandboxed', sha256, source: {type: 'remote-cacheable', url: 'https://example.test/code.js'}}]}};
 const ports = {
     fetcher: {async fetch(url) { return {bytes, finalURL: url, redirects: []}; }},
     trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}

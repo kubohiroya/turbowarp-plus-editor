@@ -11,7 +11,7 @@ const {JSDOM} = require('jsdom');
 const bytes = new TextEncoder().encode('(function(Scratch){Scratch.vm.plusHostExecuted=true;Scratch.extensions.register({getInfo(){return {id:"hostfixture",name:"Host fixture",blocks:[]}}});})(Scratch);');
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 const manifest = {schemaVersion: 1, extensions: [{id: 'hostfixture', execution: 'unsandboxed',
-    source: {type: 'remote', url: 'https://example.org/host-fixture.js'}, sha256}]};
+    source: {type: 'remote-cacheable', url: 'https://example.org/host-fixture.js'}, sha256}]};
 const project = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, blocks: {},
     comments: {}, currentCostume: 0, costumes: [], sounds: [], volume: 100, layerOrder: 0, tempo: 60,
     videoTransparency: 50, videoState: 'on', textToSpeechLanguage: null}], monitors: [], extensions: [],

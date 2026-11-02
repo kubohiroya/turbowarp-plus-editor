@@ -10,6 +10,10 @@ const Zip = require('@turbowarp/jszip');
 test.use({userAgent: devices['Pixel 7'].userAgent});
 
 const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json';
+// What the review screen calls a choice, and the form the Loader writes for it. The screen offers
+// two; the manifest names four, because the form also says which carrier holds the bytes.
+const SOURCE_FOR_CHOICE = {remote: 'remote-cacheable', embedded: 'embedded-file'};
+
 function fixture(id, execution, distribution) {
     const source = `// Name: ${id}\n// ID: ${id}\n// Version: 1.0.0\n// Unsandboxed: optional\n// License: MIT\n
 (function(Scratch) {
@@ -31,6 +35,8 @@ function fixture(id, execution, distribution) {
         url: `https://catalog-authoring.invalid/${id}.js`};
 }
 const specifications = [
+    // The third value is the review screen's own choice, which still has two names; what ends up
+    // in the manifest is the Loader's form, asserted further down.
     fixture('catembeddedunsandboxed', 'unsandboxed', 'embedded'),
     fixture('catremoteunsandboxed', 'unsandboxed', 'remote'),
     fixture('catembeddedsandboxed', 'sandboxed', 'embedded'),
@@ -172,7 +178,8 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         expect(json.turboWarpPlus.extensions).toHaveLength(4);
         for (const spec of specifications) {
             const stored = json.turboWarpPlus.extensions.find(item => item.id === spec.id);
-            expect(stored).toMatchObject({execution: spec.execution, sha256: spec.sha256, source: {type: spec.distribution}});
+            expect(stored).toMatchObject({execution: spec.execution, sha256: spec.sha256,
+                source: {type: SOURCE_FOR_CHOICE[spec.distribution]}});
             if (spec.distribution === 'embedded') {
                 expect(await zip.file(stored.source.path).async('nodebuffer')).toEqual(spec.bytes);
             } else expect(stored.source.url).toBe(spec.url);
@@ -200,7 +207,7 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         const afterConversion = await Zip.loadAsync(await saveSB3(page));
         const convertedJSON = JSON.parse(await afterConversion.file('project.json').async('string'));
         const stored = convertedJSON.turboWarpPlus.extensions.find(item => item.id === converted.id);
-        expect(stored).toMatchObject({execution: 'unsandboxed', sha256: converted.sha256, source: {type: 'embedded'}});
+        expect(stored).toMatchObject({execution: 'unsandboxed', sha256: converted.sha256, source: {type: 'embedded-file'}});
         expect(await afterConversion.file(stored.source.path).async('nodebuffer')).toEqual(converted.bytes);
 
         await page.getByText('ファイル', {exact: true}).click();
@@ -350,7 +357,7 @@ test('catalog changes a loaded extension execution mode with the same digest and
     await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
     expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('unsandboxed:vm');
     expect((await projectJSON(page)).turboWarpPlus.extensions[0]).toMatchObject({
-        id: spec.id, execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'remote', url: spec.url}
+        id: spec.id, execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'remote-cacheable', url: spec.url}
     });
 
     await openCatalog(page);
@@ -402,6 +409,6 @@ test('catalog adopts a previously native-loaded extension without losing its act
     const zip = await Zip.loadAsync(await saveSB3(page));
     const json = JSON.parse(await zip.file('project.json').async('string'));
     const stored = json.turboWarpPlus.extensions.find(entry => entry.id === spec.id);
-    expect(stored).toMatchObject({execution: 'sandboxed', sha256: spec.sha256, source: {type: 'embedded'}});
+    expect(stored).toMatchObject({execution: 'sandboxed', sha256: spec.sha256, source: {type: 'embedded-file'}});
     expect(await zip.file(stored.source.path).async('nodebuffer')).toEqual(spec.bytes);
 });

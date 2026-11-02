@@ -47,9 +47,9 @@ async function allow(page, loading) {
     expect(await page.evaluate(() => vm.runtime._primitives.plusfixture_value())).toBe('verified VM');
 }
 
-for (const type of ['embedded', 'remote']) {
+for (const type of ['embedded-file', 'remote-cacheable']) {
     test(`${type} requests approval at startup and preserves exact source/digest across SB3 save and reopen`, async ({page}) => {
-        if (type === 'remote') await page.route(remoteURL, route => route.fulfill({body: bytes,
+        if (type === 'remote-cacheable') await page.route(remoteURL, route => route.fulfill({body: bytes,
             headers: {'access-control-allow-origin': '*', 'content-type': 'application/javascript'}}));
         const input = await project({type});
         await open(page, {projectBytes: input});
@@ -64,7 +64,7 @@ for (const type of ['embedded', 'remote']) {
         const json = JSON.parse(await zip.file('project.json').async('string'));
         expect(json.turboWarpPlus.extensions[0].source.type).toBe(type);
         expect(json.turboWarpPlus.extensions[0].sha256).toBe(digest);
-        if (type === 'embedded') expect(await zip.file('extensions/plusfixture.js').async('nodebuffer')).toEqual(bytes);
+        if (type === 'embedded-file') expect(await zip.file('extensions/plusfixture.js').async('nodebuffer')).toEqual(bytes);
         expect(await load(page, saved)).toEqual({ok: true});
         expect(await executions(page)).toBe(2);
         await expect(permission(page)).toHaveCount(0);
@@ -93,7 +93,7 @@ test('digest mismatch, unknown schema and a forged trust field fail before appro
         [{code: Buffer.from('globalThis.__plusFixtureStarted=99')}, 'DIGEST_MISMATCH'],
         [{schemaVersion: 999}, 'UNSUPPORTED_SCHEMA'],
         [{extraManifest: {trusted: true}}, 'INVALID_MANIFEST'],
-        [{type: 'remote', url: 'http://untrusted.invalid/code.js'}, 'INVALID_SOURCE']
+        [{type: 'remote-cacheable', url: 'http://untrusted.invalid/code.js'}, 'INVALID_SOURCE']
     ]) {
         const result = await load(page, await project(options));
         expect(result.code).toBe(expected);
@@ -146,14 +146,14 @@ test('remote cache reopens offline after approval; an uncached digest never exec
     await page.route(remoteURL, route => { fetched++; return route.fulfill({body: bytes,
         headers: {'access-control-allow-origin': '*'}}); });
     await open(page);
-    const input = await project({type: 'remote'});
+    const input = await project({type: 'remote-cacheable'});
     await allow(page, load(page, input));
     expect(fetched).toBe(1);
     await context.setOffline(true);
     expect(await load(page, input)).toEqual({ok: true});
     expect(await executions(page)).toBe(2);
     expect(fetched).toBe(1);
-    const missed = await load(page, await project({type: 'remote', sha256: 'a'.repeat(64), url: 'https://offline.invalid/new.js'}));
+    const missed = await load(page, await project({type: 'remote-cacheable', sha256: 'a'.repeat(64), url: 'https://offline.invalid/new.js'}));
     expect(missed.ok).toBe(false);
     expect(await executions(page)).toBe(2);
 });
@@ -167,7 +167,7 @@ test('HTTPS redirects and CORS refusal do not open approval or execute JavaScrip
         ]) {
             const url = `https://plus-fixture.invalid${pathname}`;
             await page.route(url, route => route.fulfill({status, headers, body: bytes}));
-            expect((await load(page, await project({type: 'remote', url}))).code).toBe('LOAD_FAILED');
+            expect((await load(page, await project({type: 'remote-cacheable', url}))).code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
             await expect(page.getByTestId('tw-plus-extension-status').locator('[data-event="review"]')).toHaveCount(0);
@@ -177,7 +177,7 @@ test('HTTPS redirects and CORS refusal do not open approval or execute JavaScrip
     const fixture = await createHTTPSFixture(bytes);
     try {
         for (const pathname of ['/redirect', '/nocors']) {
-            const result = await load(page, await project({type: 'remote', url: fixture.url + pathname}));
+            const result = await load(page, await project({type: 'remote-cacheable', url: fixture.url + pathname}));
             expect(result.code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
@@ -243,7 +243,7 @@ test('a transient failure is retried and the panel names the attempt it is on', 
                 {status: 200, body: bytes, headers: {'access-control-allow-origin': '*',
                     'content-type': 'application/javascript'}});
         });
-        const loading = load(page, await project({type: 'remote', url}));
+        const loading = load(page, await project({type: 'remote-cacheable', url}));
         await expectRetryShown(url);
         await allow(page, loading);
         expect(served).toBe(2);
@@ -255,7 +255,7 @@ test('a transient failure is retried and the panel names the attempt it is on', 
         // resolves, so the attempt that succeeds is the one that has to answer slowly.
         fixture.failNext(1, {delayMs: 200, thenSlowMs: 1500});
         const url = `${fixture.url}/flaky`;
-        const loading = load(page, await project({type: 'remote', url}));
+        const loading = load(page, await project({type: 'remote-cacheable', url}));
         await expectRetryShown(url);
         await allow(page, loading);
         expect(fixture.seen.filter(pathname => pathname === '/flaky')).toHaveLength(2);

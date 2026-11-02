@@ -35,8 +35,8 @@ function setup({code = extension(), source = 'embedded', allow = true, registrar
     // The VM modules come from the checkout this VM came from, which is what the editor's GUI
     // passes through the integration: registration reaches the same central dispatch the VM uses.
     const registrar = createVMExtensionRegistrar(vm, {vmModules, ...registrarOptions});
-    const sourceSpec = source === 'remote' ? {type: 'remote', url: 'https://example.org/exact.js'} :
-        {type: 'embedded', path: 'extensions/realfixture.js'};
+    const sourceSpec = source === 'remote' ? {type: 'remote-cacheable', url: 'https://example.org/exact.js'} :
+        {type: 'embedded-file', path: 'extensions/realfixture.js'};
     const spec = {id: 'realfixture', source: sourceSpec, execution: 'unsandboxed', sha256: sha(bytes)};
     const loader = createExtensionLoader({
         registrar,
@@ -133,7 +133,7 @@ test('a later extension failure rolls earlier real VM registration back', async 
     });
     try {
         await assert.rejects(loader.load({schemaVersion: 1, extensions: [...scripts].map(([id, bytes]) => ({
-            id, source: {type: 'embedded', path: `extensions/${id}.js`}, execution: 'unsandboxed', sha256: sha(bytes)
+            id, source: {type: 'embedded-file', path: `extensions/${id}.js`}, execution: 'unsandboxed', sha256: sha(bytes)
         }))}));
         assert.equal(vm.extensionManager._loadedExtensions.size, 0);
         assert.equal(vm.runtime.getOpcodeFunction('first_value'), undefined);

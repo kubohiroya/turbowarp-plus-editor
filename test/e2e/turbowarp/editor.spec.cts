@@ -160,7 +160,7 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
     expect(JSON.parse(scenes[0].inputs.PROPERTIES[1][1])).toEqual(savedValue);
     for (const key of ['draft', 'schema', 'revision', 'editorId']) expect(scenes[0]).not.toHaveProperty(key);
     const extension = project.turboWarpPlus.extensions.find(spec => spec.id === 'blockeditordemo');
-    expect(extension).toMatchObject({execution: 'unsandboxed', source: {type: 'embedded'},
+    expect(extension).toMatchObject({execution: 'unsandboxed', source: {type: 'embedded-file'},
         sha256: createHash('sha256').update(source).digest('hex')});
     expect(await zip.file(extension.source.path).async('string')).toBe(source);
     await testInfo.attach('sb3-check.json', {body: JSON.stringify({
