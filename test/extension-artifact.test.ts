@@ -18,6 +18,14 @@ test('production pins reject incomplete or unpinned extension dependency graphs'
     }
 });
 
+// The integration preview builds the same Editor through the same webpack config, so it has to pin
+// the same GUI. A GUI older than the Plus integration socket stops that build, and one that is
+// merely older previews an Editor that is not the one being shipped.
+test('the integration preview pins the same sources as the normal build', async () => {
+    const preview = JSON.parse(await fs.readFile(path.join(root, 'site/extension-source.json'), 'utf8'));
+    assert.deepEqual(preview, await readPins());
+});
+
 test('the deployment gate rejects changed builder assets and disabled-by-default metadata', async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-deploy-gate-'));
     try {
