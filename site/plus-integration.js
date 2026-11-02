@@ -9,8 +9,8 @@
  *
  * Features move across that boundary one at a time. What is here now is the document editor's
  * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
- * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, and the
- * extension catalog this distribution ships.
+ * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, the
+ * extension catalog this distribution ships, and what that catalog makes it trust.
  */
 
 import {mountDocumentEditor, readDocumentEditorFlags} from '@kubohiroya/turbowarp-document-editor';
@@ -18,6 +18,7 @@ import {mountDocumentEditor, readDocumentEditorFlags} from '@kubohiroya/turbowar
 import {installControlsDock} from './controls-dock.js';
 import {plusCatalog} from './plus-catalog.js';
 import getStageControls from './stage-controls.js';
+import {plusTrustedExtensions} from './trusted-extensions.js';
 
 // Resolved once when the bundle starts, as the fork did: a project cannot enable document editing
 // by being opened, and a later URL change cannot turn it on either.
@@ -33,13 +34,20 @@ export const createPlusIntegration = ({
     mountEditor,
     flags,
     stageControls = getStageControls,
-    extensionCatalog = plusCatalog
+    extensionCatalog = plusCatalog,
+    trustedExtensions = plusTrustedExtensions
 }) => ({
     /**
      * The catalog this distribution ships. Its address, and whether a locally built one replaces
      * it while previewing, are decisions that belong here rather than in the GUI.
      */
     extensionCatalog,
+    /**
+     * What this distribution stands behind: an extension its catalog lists loads unsandboxed
+     * without a separate review, the way TurboWarp treats its own gallery. The GUI asks; which
+     * extensions are trusted that way is a decision about the distribution, so it is made here.
+     */
+    trustedExtensions,
     /**
      * The addons whose startup has to settle before anything reads what they patched.
      *
