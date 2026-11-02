@@ -19,7 +19,9 @@ const sb3 = await packagedProject('remote');
 const prepared = await prepareOfflinePackage(sb3, {
     fetcher: {async fetch(url) { return {bytes, finalURL: url, redirects: []}; }},
     trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}
-}, {zip: Zip, resourceDependencies: {sample: []}, metadata: {sample: {license: 'CC0-1.0', provenance: 'Local test fixture'}}});
+}, {zip: Zip, // The Loader's types are visible now that this is a plain import, and it asks for the dependency
+    // list as a readonly tuple; this fixture's extension depends on nothing.
+    resourceDependencies: {sample: [] as never[]}, metadata: {sample: {license: 'CC0-1.0', provenance: 'Local test fixture'}}});
 const assetRoot = pathToFileURL(path.resolve(process.env.TW_PLUS_SCAFFOLDING_ROOT || path.join(output, 'scaffolding')) + path.sep);
 const info = JSON.parse(await readFile(new URL('build-info.json', assetRoot), 'utf8'));
 const scaffoldingAssets = {};
