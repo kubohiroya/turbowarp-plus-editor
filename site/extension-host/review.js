@@ -25,6 +25,7 @@ import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
 import React from 'react';
 
 import {plusTrustedExtensions} from '../trusted-extensions.js';
+import {pendingPlusReview} from './review-channel.js';
 import styles from './review.css';
 
 const hex = bytes => Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
@@ -63,6 +64,31 @@ export const identifyProject = async input => {
         Object.fromEntries(Object.keys(value).sort().map(name => [name, value[name]])) : value));
     return `sha256:${hex(await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical)))}`;
 };
+
+/**
+ * A project's Plus manifest as rows of the open review.
+ *
+ * Each row carries the author's form as its source, which is how the screen knows the only thing
+ * left to ask about loading is whether a `remote-cacheable` copy is kept. A row the catalog lists —
+ * by its URL, or by the digest the manifest pins, which the Loader checks against the bytes before
+ * anything runs — is trusted and stated rather than asked about.
+ * @param {object} manifest The project's Plus manifest.
+ * @param {object} trusted The catalog's trust checks.
+ * @returns {Promise<Array<object>>} One `ReviewEntry` per manifest extension, keyed by its ID.
+ */
+export const plusReviewRows = (manifest, trusted) => Promise.all(manifest.extensions.map(async spec => {
+    const vouched = await trusted.isTrustedCode({source: spec.source, actualSHA256: spec.sha256});
+    const source = typeof spec.source.url === 'string' && spec.source.type.startsWith('remote-') ?
+        {kind: spec.source.type, url: spec.source.url, sha256: spec.sha256} : {kind: spec.source.type, sha256: spec.sha256};
+    return {key: spec.id,
+        ids: [spec.id],
+        metadata: {id: spec.id, ...(spec.version ? {version: spec.version} : {}),
+            ...(spec.publisher ? {author: spec.publisher} : {})},
+        source,
+        requestedExecution: spec.execution,
+        dependencies: [...spec.dependencies],
+        ...(vouched ? {state: {trusted: true}} : {})};
+}));
 
 const frames = new WeakMap();
 
@@ -114,7 +140,10 @@ export const createSecurityReview = ({
             // A trusted row is stated, not asked about: the screen gives it no choice.
             const rows = await Promise.all(entries.map(async entry => {
                 const url = entry.source.url;
-                const vouched = typeof url === 'string' && (isTrusted(url) || await trusted.isTrustedURL(url));
+                // Only an ordinary custom extension is trusted by its address alone. A Plus row
+                // arrives already judged by its address and pinned digest together.
+                const vouched = entry.source.kind === 'legacy' &&
+                    (isTrusted(url) || await trusted.isTrustedURL(url));
                 const banner = bannerFor({ids: entry.ids, url});
                 return {...entry,
                     ...(banner ? {metadata: {...entry.metadata, banner}} : {}),
@@ -123,7 +152,19 @@ export const createSecurityReview = ({
             const starting = initialDecisions(rows, 'open', {recorded: initial});
             if (!requiresReview(rows)) return starting;
             return showReview(rows, starting);
-        }, defaultURLs, storage, {identify});
+        }, defaultURLs, storage, {
+            identify,
+            // The Plus host opens a channel for the load it drives, so its rows are asked about on
+            // this same screen, and the answer goes back for it to hand the Loader.
+            collectEntries: async () => {
+                const channel = pendingPlusReview(vm);
+                return channel ? plusReviewRows(channel.manifest, trusted) : [];
+            },
+            applyDecisions: decisions => {
+                const channel = pendingPlusReview(vm);
+                if (channel) channel.decisions = decisions;
+            }
+        });
     },
     /**
      * Render the review inside the GUI's own modal frame, which arrives as `DialogFrame`.

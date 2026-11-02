@@ -25,6 +25,7 @@ import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader
 import {createPlusPermissionUI} from './permission-ui.js';
 import {installExtensionLoader} from './project-loader.js';
 import {createVMExtensionRegistrar} from './registrar.js';
+import {closePlusReview, openPlusReview} from './review-channel.js';
 
 const SHA256 = /^[0-9a-f]{64}$/;
 
@@ -70,10 +71,57 @@ export function installPlusExtensionHost (vm, {
     });
     const projectIO = createProjectIO({zip: JSZip, ...archiveOptions});
     const approve = requestApproval || ui.requestApproval;
-    const trustProvider = createSessionTrustProvider({hostPolicy,
+    // What the open review answered for the load in progress. The Loader asks about each row only
+    // after the review has, so its approval is read from here instead of being put to the person a
+    // second time; a row the review did not answer still gets the dialog.
+    let reviewed = null;
+    const answered = code => {
+        const decision = reviewed && reviewed.get(code.id);
+        if (!decision) return undefined;
+        if (decision.execution === 'deny') return false;
+        // The Loader runs a row the way its author asked. In the sandbox is within either answer;
+        // outside it only within an answer that allows that, so a person who chose the sandbox for
+        // a row its author runs outside does not have it run there.
+        return code.execution === 'sandboxed' || decision.execution === 'unsandboxed';
+    };
+    const sessionTrust = createSessionTrustProvider({hostPolicy,
         // Catalog-listed code is trusted like TurboWarp's official gallery and needs no separate approval.
-        requestApproval: async (code, options) =>
-            (trusted !== null && await trusted.isTrustedCode(code)) || approve(code, options)});
+        requestApproval: async (code, options) => {
+            if (trusted !== null && await trusted.isTrustedCode(code)) return true;
+            const answer = answered(code);
+            return answer === undefined ? approve(code, options) : answer;
+        }});
+    // The session remembers an approval for the rest of the visit, but what the person answers on
+    // this load's review is newer than anything it remembers: a refusal there is a refusal now,
+    // even for code an earlier load was allowed to run.
+    const trustProvider = Object.freeze({
+        ...sessionTrust,
+        authorize: (code, options) => (answered(code) === false ?
+            Promise.resolve(Object.freeze({allowed: false})) : sessionTrust.authorize(code, options))
+    });
+    /**
+     * Put a load's Plus rows in front of the person on the review that asks about its other
+     * extensions, and turn the answer into what the Loader takes.
+     * @param {object} manifest The project's Plus manifest.
+     * @param {Function} run Loads the project's other extensions, which is when the review asks.
+     * @returns {Promise<object>} `declineCaching` for `load()`, and `release` once it settles.
+     */
+    const review = async (manifest, run) => {
+        const channel = openPlusReview(vm, manifest);
+        try {
+            await run();
+        } finally {
+            closePlusReview(vm, channel);
+        }
+        const decisions = channel.decisions;
+        reviewed = decisions;
+        // The opener can only decline a copy the author allowed; any other form stays as written.
+        const declineCaching = new Set(decisions ? manifest.extensions
+            .filter(spec => spec.source.type === 'remote-cacheable' &&
+                decisions.get(spec.id)?.loading === 'remote-non-cacheable')
+            .map(spec => spec.id) : []);
+        return {declineCaching, release: () => { if (reviewed === decisions) reviewed = null; }};
+    };
     const ports = {
         embeddedReader: projectIO.embeddedReader,
         fetcher: createFetchPort(fetchImpl, {...fetchRetry, onRetry}),
@@ -91,7 +139,7 @@ export function installPlusExtensionHost (vm, {
     let uninstall;
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
-            onDiagnostic: diagnostics, markFailure: markLoadFailure,
+            onDiagnostic: diagnostics, markFailure: markLoadFailure, review,
             onProjectLoadStart: authoring ? authoring.projectLoadStarted : undefined}, loader);
     } catch (error) {
         authoring?.dispose();
