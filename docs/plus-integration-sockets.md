@@ -223,3 +223,44 @@ vmModules: {ScratchCommon, createTranslate, staticFetch, dispatch}
 - `tw-plus-extension-authoring.js`(162行) — 拡張ライブラリのUIが `getExtensionAuthoringHost` で読み戻す。作るのは配信側、持つのはフォーク。
 - `tw-plus-extension-load-failure.js`(45行) — 2つのHOCと取消経路が読む。印を付ける関数を口に渡す。
 - `src/config/` の2つ(14行) — `tw-packager-integration-hoc.jsx` と `feature-flags.js` が同じ値を読む。定義を1つに保つため、フォークが値を渡す側に回った（単一HTMLへはbootstrapが運ぶ）。
+
+## 拡張ライブラリの連鎖を配信側へ移す（2026-11-03）
+
+フォークの差分は **104ファイル/+6,196 → 95ファイル/+5,302**（本家 develop の最新との比較）。
+
+| 移したもの | 行数 | 置き場所 |
+| --- | --- | --- |
+| `containers/tw-plus-library.jsx` | 200 | `site/extension-library/plus-library.jsx` |
+| `components/tw-plus-library/` (css + icon) | 57+26 | `site/extension-library/` |
+| `lib/tw-plus-extension-authoring.js` | 164 | `site/extension-host/authoring.js` |
+| `lib/tw-plus-catalog-authoring.js` | 57 | `site/extension-library/catalog-settings.js` |
+| `lib/tw-plus-extension-loader.js` | 54 | `site/extension-library/load-extensions.js` |
+| `config/feature-flags.js` | 8 | `site/extension-library/flags.js` |
+
+### CSSは移せる。移せないのは「本家のクラス名を狙う」場合だけだった
+
+[段階5の取り消し](#cssに口を作らない理由2026-11-02-訂正)は「CSSモジュールのクラス名はビルド時にハッシュされるので、全域スタイルシートから狙えない」という理由だった。これは**本家のクラスを外から狙う**場合の話で、**自分のスタイルシートを連れて出る**場合には当てはまらない。確かめたところ、フォークのwebpack設定のCSS規則には `include` がなく、拡張子だけで一致する。つまり配信側のディレクトリから `import` したスタイルシートも、本家自身のものと同じようにCSSモジュールとして扱われる。
+
+実際のビルドで `plus-library_plus-tag_2NoE7` のようにハッシュされた名前が出ており、その文字列を口（`className`）でGUIへ渡している。GUIはその名前を知らないまま、タグに適用するだけ。画像も同じで、`url-loader` の規則にも `include` がない。JSXだけは本家の規則が `src` に限定されているので、こちらの babel 規則に `@babel/preset-react` を足した。
+
+### ビルドされない束に入れないために、importではなく引数で渡す
+
+`authoring.js`（作品の拡張を追加・設定・削除するコントローラ）を `host.js` が `import` したところ、単一HTML用のランタイム束が 540KB → 640KB に増えた。実行時に `authoring: false` と言っても、静的 importは束に残る。そこで入口を2つに分けた。
+
+- `site/extension-host/editor-host.js` — 結線＋コントローラ。エディタが使う。
+- `site/extension-host/runtime.js` — 結線のみ。単一HTMLが使う（540KBに戻った）。
+
+**何を渡すかではなく、どの入口が何をimportするかで束の中身が決まる。** 前段階の `vmModules` と同じ「引数で渡す」手が、ここでは束のサイズのために効いた。
+
+### テストは3つに分かれた
+
+- `test/extension-library/` — 移した実装。JSXを扱うため `harness.cjs` が pin した GUI の babel を使い、共有パッケージも GUI のコピーへ向ける（site側webpackのaliasと同じ向き）。レビュー記録の WeakMap はフォークに残るので、そこだけ pin した checkout から読む。
+- `test/*.test.ts`（ESM）— 統合の形。`--import ./test/asset-hooks.mjs` で `.css`/`.svg`/`.jsx` に代役を返す。node には webpack のローダがないので、ライブラリのタブが統合に加わった時点でここが落ちた。
+- フォーク側 — 残した汎用部分。`components/library/library.jsx` が「自分のものでないタグを1つ置ける」ことと、その中の検索がタグから外れないこと。
+
+### 残した理由
+
+- `components/library/library.jsx`(+37/-10) と `library.css`(+24) — 汎用の仕組み。本家へ送る候補。
+- `containers/extension-library.jsx`(+44/-2) — タブ1つ分の場所を空ける結線。中身は口の向こうへ出た。
+- `lib/tw-plus-extension-permissions.js`(23行) — レビュー記録の WeakMap。`tw-security-manager.jsx` の `getSandboxMode` が読み戻すので、書く側の2関数をタブへ渡す。
+- `css/extension-security-dialog.css` — 本家の変数でダイアログパッケージを整えるもの。security-manager も読むので、まだこちら。

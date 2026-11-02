@@ -38,7 +38,8 @@ config.plugins.push(new (hostRequire('webpack').NormalModuleReplacementPlugin)(
 // here: both sides pass Loader values, archives and catalog documents across the socket, and the
 // pin in site/source.json is what makes it one version. A second copy would be the same code with
 // its own module state.
-for (const name of ['react', 'react-dom', '@kubohiroya/turbowarp-extension-loader',
+for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall',
+    '@kubohiroya/turbowarp-extension-loader',
     '@kubohiroya/turbowarp-extension-security-dialog', '@turbowarp/jszip']) {
     const copy = path.join(gui, 'node_modules', name);
     if (!fs.existsSync(copy)) throw new Error(`The pinned GUI has no ${name} to resolve against`);
@@ -50,10 +51,17 @@ for (const name of ['react', 'react-dom', '@kubohiroya/turbowarp-extension-loade
 // whose parser predates optional chaining. One such module built anyway and the next did not,
 // which is the worst way to find this out: the syntax a file happens to use decided whether the
 // build worked. Give them the same treatment the host gives its own sources instead.
+//
+// JSX is included because this repository supplies React views too — the library tab the host
+// renders. The host's react-intl plugin is not: these views carry their own text, since what they
+// say is this distribution's rather than part of the editor's translations. CSS and images need no
+// rule of their own: the host's rules for those match by extension alone, so a stylesheet imported
+// from here becomes a CSS module exactly as one of its own does.
 const siteSource = path.join(__dirname, '..', '..', 'site');
-config.module.rules.push({test: /\.js$/, include: [siteSource], loader: hostRequire.resolve('babel-loader'),
+config.module.rules.push({test: /\.jsx?$/, include: [siteSource], loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
-        presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}});
+        presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}],
+            hostRequire.resolve('@babel/preset-react')]}});
 // Also transpile a local VM source checkout used by integration previews.
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
