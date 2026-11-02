@@ -28,6 +28,15 @@ const startupFlags = readDocumentEditorFlags(typeof window === 'undefined' ? '' 
  */
 export const createPlusIntegration = ({mountEditor, flags, stageControls = getStageControls}) => ({
     /**
+     * The addons whose startup has to settle before anything reads what they patched.
+     *
+     * `editor-searchable-dropdowns` replaces protected FieldDropdown methods, and the block editor
+     * this distribution mounts reads those methods. Without naming it here the runner would start
+     * the next userscript immediately and the block editor could attach to the old methods. The
+     * runner owns the running and the waiting; this is only the name.
+     */
+    awaitStartupAddons: ['editor-searchable-dropdowns'],
+    /**
      * The stage controls service for one VM. The fork asks for this from both the controls bar and
      * the `Scratch.gui` API, and both must receive the same service: a control registered through
      * the API has to appear in the bar. Keeping the per-VM map here is what guarantees that.

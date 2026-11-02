@@ -58,3 +58,11 @@ test('this distribution supplies the workspace attachment point', () => {
     assert.equal(typeof supplied, 'object');
     assert.equal(typeof supplied.attachToWorkspace, 'function');
 });
+
+// The runner waits only for the addons named here, so this list is what keeps the block editor
+// from attaching to FieldDropdown methods that are about to be replaced.
+test('this distribution names the addon whose startup the block editor depends on', () => {
+    assert.deepEqual(plusIntegration().awaitStartupAddons, ['editor-searchable-dropdowns']);
+    const built = createPlusIntegration({flags: {embeddedYamlEditor: false}, mountEditor: () => ({dispose () {}})});
+    assert.deepEqual(built.awaitStartupAddons, ['editor-searchable-dropdowns']);
+});
