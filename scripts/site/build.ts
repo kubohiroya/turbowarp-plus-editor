@@ -8,7 +8,7 @@ import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
 import {
     root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency,
-    verifySecurityDependency, sha
+    verifySecurityDependency, verifyInstalledCore, sha
 } from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
 import {buildFamilyNotices} from './family-notices.ts';
@@ -16,7 +16,8 @@ import {buildFamilyNotices} from './family-notices.ts';
 export async function buildPages(pins = undefined) {
     pins = pins || await readPins();
     const gui = process.env.E2E_GUI_ROOT;
-    const {revision, coreRevision, coreVersion} = await verifyHost(gui, pins);
+    const {revision} = await verifyHost(gui, pins);
+    const {coreRevision, coreVersion} = await verifyInstalledCore(root, pins);
     if (pins.documentEditorRepository) await verifyDocumentEditorDependency(root, pins);
     if (pins.loaderRepository) await verifyLoaderDependency(root, pins);
     const {version: securityVersion} = await verifySecurityDependency(root, pins);

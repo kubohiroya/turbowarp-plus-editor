@@ -9,23 +9,24 @@
  *
  * Features move across that boundary one at a time. What is here now is the document editor's
  * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
- * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, the
- * extension catalog this distribution ships, what that catalog makes it trust, the extension
+ * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, what this
+ * distribution's catalog makes it trust, the extension
  * host that loads a project's extensions, the library tab that offers them, where a project that
- * uses them goes to be packaged, and the review they go through before running.
+ * uses them goes to be packaged, the review they go through before running, and the form-based
+ * block editor.
  */
 
 import {
     mountDocumentEditor, readDocumentEditorFlags, registerDocumentSourceRootHatShape
 } from '@kubohiroya/turbowarp-document-editor';
 
+import {plusBlockEditor} from './block-editor/editor.js';
 import {installEditorExtensionHost} from './extension-host/editor-host.js';
 import {plusSecurityReview} from './extension-host/review.js';
 import {plusLibraryTab} from './extension-library/tab.js';
 import {plusProjectPackager} from './packager/handoff.js';
 
 import {installControlsDock} from './controls-dock.js';
-import {plusCatalog} from './plus-catalog.js';
 import getStageControls from './stage-controls.js';
 import {plusTrustedExtensions} from './trusted-extensions.js';
 
@@ -44,18 +45,13 @@ export const createPlusIntegration = ({
     flags,
     registerBlockShapes = registerDocumentSourceRootHatShape,
     stageControls = getStageControls,
-    extensionCatalog = plusCatalog,
     trustedExtensions = plusTrustedExtensions,
     installExtensionHost = installEditorExtensionHost,
     libraryTab = plusLibraryTab,
     projectPackager = plusProjectPackager,
-    securityReview = plusSecurityReview
+    securityReview = plusSecurityReview,
+    blockEditor = plusBlockEditor
 }) => ({
-    /**
-     * The catalog this distribution ships. Its address, and whether a locally built one replaces
-     * it while previewing, are decisions that belong here rather than in the GUI.
-     */
-    extensionCatalog,
     /**
      * What this distribution stands behind: an extension its catalog lists loads unsandboxed
      * without a separate review, the way TurboWarp treats its own gallery. The GUI asks; which
@@ -87,6 +83,12 @@ export const createPlusIntegration = ({
      * its lock and the extensions it already trusts, and hands all of that in.
      */
     securityReview,
+    /**
+     * The form-based block editor: the service that edits one VM's blocks, the editors attached to
+     * a workspace, and the dialog. The GUI supplies its translations, its workspace, its modal
+     * frame and its palette, because those are its own.
+     */
+    blockEditor,
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
      *
