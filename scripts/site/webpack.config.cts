@@ -38,6 +38,16 @@ for (const name of ['react', 'react-dom']) {
     if (!fs.existsSync(copy)) throw new Error(`The pinned GUI has no ${name} to resolve against`);
     config.resolve.alias[name] = copy;
 }
+// Transpile the modules this repository supplies to the GUI.
+//
+// The host's babel rule covers its own `src` only, so these were parsed as plain JS by webpack 4,
+// whose parser predates optional chaining. One such module built anyway and the next did not,
+// which is the worst way to find this out: the syntax a file happens to use decided whether the
+// build worked. Give them the same treatment the host gives its own sources instead.
+const siteSource = path.join(__dirname, '..', '..', 'site');
+config.module.rules.push({test: /\.js$/, include: [siteSource], loader: hostRequire.resolve('babel-loader'),
+    options: {babelrc: false, configFile: false,
+        presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}});
 // Also transpile a local VM source checkout used by integration previews.
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
