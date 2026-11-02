@@ -37,12 +37,11 @@ config.plugins.push(new (hostRequire('webpack').NormalModuleReplacementPlugin)(
 // the host's tree is the one that mounts. Fail loudly if the copy is missing rather than silently
 // bundling a second one.
 //
-// The other three are shared for the same reason, now that the extension host is supplied from
-// here: both sides pass Loader values, archives and catalog documents across the socket, and the
-// pin in site/source.json is what makes it one version. A second copy would be the same code with
-// its own module state.
+// The other two are shared for the same reason: both sides pass archives and catalog documents
+// across the socket, and the pin in site/source.json is what makes it one version. A second copy
+// would be the same code with its own module state. The Loader is not in this list any more — the
+// GUI does not depend on it at all, so this repository's copy is the only one.
 for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall',
-    '@kubohiroya/turbowarp-extension-loader',
     '@kubohiroya/turbowarp-extension-security-dialog', '@turbowarp/jszip']) {
     const copy = path.join(gui, 'node_modules', name);
     if (!fs.existsSync(copy)) throw new Error(`The pinned GUI has no ${name} to resolve against`);
@@ -77,4 +76,8 @@ if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
 // no longer does, so the side that imports the package is the side that configures it. The helper
 // resolves against the copy that provides it, which is this repository's install.
 const {withDocumentEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-document-editor/webpack4');
-module.exports = withDocumentEditorWebpack4(config);
+// The Loader's own helper, for the same reason: this repository imports the package, so it is the
+// side that transpiles it for webpack 4's parser. `hostRoot` is still the GUI, because that is
+// where babel-loader and preset-env are installed.
+const {withExtensionLoaderWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-loader/webpack4');
+module.exports = withExtensionLoaderWebpack4(withDocumentEditorWebpack4(config), {hostRoot: gui});

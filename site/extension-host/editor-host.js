@@ -5,9 +5,15 @@
  * extensions. A built single HTML plays a project and has no library, so its entry
  * (`runtime.js`) supplies none and never pulls the controller into its bundle. That is the whole
  * reason the factory is passed in rather than imported by `host.js`.
+ *
+ * Whether extension loading runs at all, and the archive limits it reads a project with, are also
+ * decided here: the GUI hands over the query it snapshotted before any project was opened, and
+ * this build says what that query means.
  */
 
+import {readPlusFlags} from '../extension-library/flags.js';
 import {createExtensionAuthoringController, setExtensionAuthoringHost} from './authoring.js';
+import {extensionProjectArchiveOptions} from './config.js';
 import {installPlusExtensionHost} from './host.js';
 
 /**
@@ -19,5 +25,7 @@ import {installPlusExtensionHost} from './host.js';
 export const installEditorExtensionHost = (vm, settings = {}) => installPlusExtensionHost(vm, {
     createAuthoring: createExtensionAuthoringController,
     setAuthoringHost: setExtensionAuthoringHost,
-    ...settings
+    archiveOptions: extensionProjectArchiveOptions,
+    ...settings,
+    enabled: settings.enabled === undefined ? readPlusFlags(settings.search || '').loader : settings.enabled
 });

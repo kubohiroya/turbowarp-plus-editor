@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {verifyDocumentEditorDependency, verifyHost} from '../scripts/site/source.ts';
+import {verifyDocumentEditorDependency, verifyHost, verifyLoaderDependency} from '../scripts/site/source.ts';
 
 test('host verification checks exact npm/Git security sources, and an install\'s document editor', async () => {
     const gui = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-security-source-'));
@@ -113,7 +113,7 @@ test('host verification checks exact npm/Git security sources, and an install\'s
     }
 });
 
-test('host verification checks an exact npm or Git extension loader source', async () => {
+test('an install\'s Loader is checked as an exact npm version or a full Git revision', async () => {
     const gui = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-loader-source-'));
     const loader = '@kubohiroya/turbowarp-extension-loader';
     const securityPackage = '@kubohiroya/turbowarp-extension-security-dialog';
@@ -159,16 +159,16 @@ test('host verification checks an exact npm or Git extension loader source', asy
         const writeManifest = () => writeJSON(path.join(gui, 'package.json'), manifest);
         const writeLock = () => writeJSON(path.join(gui, 'package-lock.json'), lock);
         await writeManifest(); await writeLock();
-        await verifyHost(gui, pins);
+        await verifyLoaderDependency(gui, pins);
 
         manifest.dependencies[loader] = '^0.2.0';
         await writeManifest();
-        await assert.rejects(verifyHost(gui, pins), /exact npm loader version/);
+        await assert.rejects(verifyLoaderDependency(gui, pins), /exact npm loader version/);
         manifest.dependencies[loader] = '0.2.0';
         await writeManifest();
         lock.packages[''].dependencies[loader] = '0.1.0';
         await writeLock();
-        await assert.rejects(verifyHost(gui, pins), /Root lock differs from the npm loader pin/);
+        await assert.rejects(verifyLoaderDependency(gui, pins), /Root lock differs from the npm loader pin/);
         lock.packages[''].dependencies[loader] = '0.2.0';
         for (const [property, value, message] of [
             ['version', '0.1.0', /Locked loader version/],
@@ -177,23 +177,23 @@ test('host verification checks an exact npm or Git extension loader source', asy
         ] as const) {
             lock.packages[`node_modules/${loader}`] = {...npmEntry, [property]: value};
             await writeLock();
-            await assert.rejects(verifyHost(gui, pins), message);
+            await assert.rejects(verifyLoaderDependency(gui, pins), message);
         }
         lock.packages[`node_modules/${loader}`] = {...npmEntry};
         await writeLock();
         await writeLoader('0.1.0');
-        await assert.rejects(verifyHost(gui, pins), /Installed loader differs/);
+        await assert.rejects(verifyLoaderDependency(gui, pins), /Installed loader differs/);
         await writeLoader('0.2.0');
         await assert.rejects(verifyHost(gui, {...pins, loaderSource: 'local'}), /source must be git or npm/);
         await assert.rejects(verifyHost(gui, {...pins, loaderIntegrity: 'unknown'}), /published loader integrity/);
 
         // A Git loader keeps the full-revision pin, and the npm form no longer satisfies it.
         const gitPins = {...pins, loaderSource: undefined, loaderVersion: undefined, loaderIntegrity: undefined};
-        await assert.rejects(verifyHost(gui, gitPins));
+        await assert.rejects(verifyLoaderDependency(gui, gitPins));
         manifest.dependencies[loader] = `git+https://github.com/${pins.loaderRepository}.git#${pins.loaderRevision}`;
         lock.packages[`node_modules/${loader}`] = {resolved: `git+ssh://git@github.com/${pins.loaderRepository}.git#${pins.loaderRevision}`};
         await writeManifest(); await writeLock();
-        await verifyHost(gui, gitPins);
+        await verifyLoaderDependency(gui, gitPins);
     } finally {
         await fs.rm(gui, {recursive: true, force: true});
     }

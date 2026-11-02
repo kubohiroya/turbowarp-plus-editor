@@ -11,7 +11,8 @@
  * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
  * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, the
  * extension catalog this distribution ships, what that catalog makes it trust, the extension
- * host that loads a project's extensions, and the library tab that offers them.
+ * host that loads a project's extensions, the library tab that offers them, and where a project
+ * that uses them goes to be packaged.
  */
 
 import {
@@ -20,6 +21,7 @@ import {
 
 import {installEditorExtensionHost} from './extension-host/editor-host.js';
 import {plusLibraryTab} from './extension-library/tab.js';
+import {plusProjectPackager} from './packager/handoff.js';
 
 import {installControlsDock} from './controls-dock.js';
 import {plusCatalog} from './plus-catalog.js';
@@ -44,7 +46,8 @@ export const createPlusIntegration = ({
     extensionCatalog = plusCatalog,
     trustedExtensions = plusTrustedExtensions,
     installExtensionHost = installEditorExtensionHost,
-    libraryTab = plusLibraryTab
+    libraryTab = plusLibraryTab,
+    projectPackager = plusProjectPackager
 }) => ({
     /**
      * The catalog this distribution ships. Its address, and whether a locally built one replaces
@@ -70,6 +73,12 @@ export const createPlusIntegration = ({
      * this returns, so the offer, the catalog behind it and the review are all decided here.
      */
     libraryTab,
+    /**
+     * Where a project that uses this distribution's extensions goes when the editor's Packager
+     * button is pressed: this build's own page rather than packager.turbowarp.org, which would
+     * produce an HTML without them. The GUI keeps the upstream protocol and asks this first.
+     */
+    projectPackager,
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
      *

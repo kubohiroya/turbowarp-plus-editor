@@ -294,3 +294,47 @@ import は `registerDocumentSourceRootHatShape(ScratchBlocks)` の1行で、**�
 `verifyHost` がフォークの manifest と lock を見ていた分（`verifyDocumentEditorDependency`）は消え、配信側が**自分の install に対して同じ検査を続ける**（`build.ts` は以前からそれも呼んでいた）。保証は弱まらず、二重に書いていた方だけが消えた形。
 
 残り3つの依存も同じ順序になる: **機能を移す → import が消える → 依存と検査の片側が消える。** 依存だけを先に外す道はない。
+
+## Packager: 本家のものと配信固有の結線を分ける（2026-11-03）
+
+「Packager」と呼んでいたものは3層あり、**動かせるのは1層だけ**だった。
+
+| 層 | 実体 | 扱い |
+| --- | --- | --- |
+| 本家の Packager | TurboWarp/packager。`source.json` で `packagerRevision` として固定し、ビルド時にチェックアウト。`@turbowarp/packager-web` はその `src/packager/web/export.js` へ alias | **上流依存のまま。動かさない** |
+| `lib/tw-packager-integration-hoc.jsx` | **本家 scratch-gui のファイル**（`git cat-file` で確認）。+51/-4 の改変 | **移せない。足された分岐だけ口へ** |
+| `playground/plus-packager.js`(109行) と `lib/tw-plus-packager.js`(94行) | フォークにしかない Plus 固有のファイル | **配信側へ移した** |
+
+### 移した2ファイル
+
+組み立て画面は、HTML（`site/plus-packager.html`）もビルド設定（`build-plus-packager.cts`）も以前から配信側にあり、**入口だけがフォークに残っていた**。移して `build-plus-packager.cts` のエントリをこちらへ向けた結果、あの束にフォークのコードが1行も入らなくなり、差し込み口を埋める `plus-integration.packager.js` そのものが不要になった。
+
+`tw-plus-packager.js`（単一HTMLを書き出す側）は、本家の Packager インスタンスを**引数で受け取る**形だったので、上流への依存を持たずに移せた。設定だけを決めていて、Packager 自体は import していない。
+
+### 本家のファイルに足した分岐の口
+
+```js
+export const hostProjectPackager = integration => integration?.projectPackager || null;
+```
+
+`{open, claim, handleMessage}` の3つ。境界の引き方はこうした。
+
+- **窓を開けるのはフォーク**（ユーザー操作の最中でなければ popup がブロックされる）。開いた窓をホストに渡す。
+- **p4 プロトコルはフォーク**。`cancel-import` の送信は上流の規約なので、ホストには「送る関数」を渡して呼ばせる。
+- **どの作品を引き取るか、どこへ送るか、バイト列をどう渡すかはホスト**。
+
+改変は +51/-4 → **+28/-6**。何も渡されなければ、あのファイルは上流とまったく同じ経路だけを通る。
+
+### import する側が設定する側（2度目）
+
+loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信側へ移った。文書エディタと同じ話だが、ここでは**罠が1つ**あった。ヘルパの babel 規則は `include: [__dirname]`、つまり**自分を提供したコピーだけ**を対象にする。一方で単一HTML用ランタイム束と組み立て画面の設定は `resolve.modules` でホストの `node_modules` を先に見る。ローカルにはフォークの古いコピーが残っているので、**解決先と babel 規則の対象がずれ、未変換のまま束に入りうる**（CIではフォークにコピーが無いので起きない）。両方の設定で loader を配信側のコピーへ alias して固定した。
+
+**ローカルとCIで解決先が変わる設定は、それ自体がバグの温床。** cwd 依存の `path.resolve` と同じ種類の間違いで、どちらも「ビルドは成功するが中身が違う」形で現れる。
+
+### family 依存の2つ目、そして検査の移し忘れ
+
+固定の検証も片側だけになる——はずだったが、**loader の分を移し忘れてCIが落ちた**。`verifyHost` はホストの package.json と lock に loader の固定を要求しており、GUIがその依存を手放した時点で `Host must pin the exact npm loader version: undefined` になる。文書エディタのときと同じ移動（`verifyLoaderDependency(directory, pins)` を配信側の install に向ける）を loader にも適用した。
+
+**機能・import・依存・検査の4つが動く。** 4つめを忘れるとCIが落ちるので、そこは安全側に倒れている。
+
+残りは security-dialog（レビューUI）と extension-data-editor（ブロックエディタ）。どちらも「機能を移す → import が消える → 依存が消える → 検査を移す」の順で、機能の側が大きい。

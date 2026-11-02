@@ -6,9 +6,10 @@ import {createRequire} from 'node:module';
 import Zip from '@turbowarp/jszip';
 const gui = process.env.E2E_GUI_ROOT;
 if (!gui || !path.isAbsolute(gui)) throw new Error('An absolute E2E_GUI_ROOT is required');
-const hostRequire = createRequire(path.join(gui, 'package.json'));
-const {prepareOfflinePackage} = await import(pathToFileURL(hostRequire.resolve('@kubohiroya/turbowarp-extension-loader/packager')).href);
-const {packagePlusHTML} = await import(pathToFileURL(path.join(gui, 'src/lib/tw-plus-packager.js')).href);
+// The Loader and the HTML writer are both this repository's now; only the GUI checkout's own
+// build assets below still come from there.
+const {prepareOfflinePackage} = await import('@kubohiroya/turbowarp-extension-loader/packager');
+const {packagePlusHTML} = await import('../../../site/packager/html.js');
 const output = path.resolve('.host/issue-4-artifacts');
 await mkdir(output, {recursive: true});
 const require = createRequire(import.meta.url);
@@ -18,7 +19,9 @@ const sb3 = await packagedProject('remote');
 const prepared = await prepareOfflinePackage(sb3, {
     fetcher: {async fetch(url) { return {bytes, finalURL: url, redirects: []}; }},
     trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}
-}, {zip: Zip, resourceDependencies: {sample: []}, metadata: {sample: {license: 'CC0-1.0', provenance: 'Local test fixture'}}});
+}, {zip: Zip, // The Loader's types are visible now that this is a plain import, and it asks for the dependency
+    // list as a readonly tuple; this fixture's extension depends on nothing.
+    resourceDependencies: {sample: [] as never[]}, metadata: {sample: {license: 'CC0-1.0', provenance: 'Local test fixture'}}});
 const assetRoot = pathToFileURL(path.resolve(process.env.TW_PLUS_SCAFFOLDING_ROOT || path.join(output, 'scaffolding')) + path.sep);
 const info = JSON.parse(await readFile(new URL('build-info.json', assetRoot), 'utf8'));
 const scaffoldingAssets = {};

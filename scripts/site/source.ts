@@ -90,21 +90,40 @@ export async function verifyDocumentEditorDependency(directory, pins) {
     const ui = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
     assert.equal(ui.version, pins.documentEditorVersion, 'Installed document editor differs from the pin');
 }
-/** The GUI must resolve the loader to exactly the published tarball the pins name. */
-async function verifyNpmLoader(hostRequire, manifest, lock, pins) {
+/**
+ * Check one install's Loader against the pins: the manifest, the lockfile and the installed bytes.
+ *
+ * The GUI does not depend on the Loader any more — the side that imports it is this repository — so
+ * this is pointed at whichever install owns it, the way the document editor's check is.
+ */
+export async function verifyLoaderDependency(directory, pins) {
     const name = '@kubohiroya/turbowarp-extension-loader';
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
     const entry = lock.packages[`node_modules/${name}`];
-    assert.equal(manifest.dependencies[name], pins.loaderVersion, 'Host must pin the exact npm loader version');
-    assert.equal(lock.packages[''].dependencies[name], pins.loaderVersion, 'Root lock differs from the npm loader pin');
-    assert.equal(entry.version, pins.loaderVersion, 'Locked loader version differs from the pin');
-    assert.equal(entry.resolved,
-        `https://registry.npmjs.org/${name}/-/turbowarp-extension-loader-${pins.loaderVersion}.tgz`,
-        'Loader must resolve to the published npm tarball');
-    assert.equal(entry.integrity, pins.loaderIntegrity, 'Loader tarball integrity differs from the source pin');
-    // The loader does not export its package.json, so read the one beside its built entry.
-    const installed = JSON.parse(await fs.readFile(
-        path.resolve(path.dirname(hostRequire.resolve(name)), '../package.json'), 'utf8'));
-    assert.equal(installed.version, pins.loaderVersion, 'Installed loader differs from the pin');
+    const dependencies = {...manifest.dependencies, ...manifest.devDependencies};
+    const rootLock = {...lock.packages[''].dependencies, ...lock.packages[''].devDependencies};
+    if (pins.loaderSource === 'npm') {
+        assert.equal(dependencies[name], pins.loaderVersion, 'Host must pin the exact npm loader version');
+        assert.equal(rootLock[name], pins.loaderVersion, 'Root lock differs from the npm loader pin');
+        assert.equal(entry.version, pins.loaderVersion, 'Locked loader version differs from the pin');
+        assert.equal(entry.resolved,
+            `https://registry.npmjs.org/${name}/-/turbowarp-extension-loader-${pins.loaderVersion}.tgz`,
+            'Loader must resolve to the published npm tarball');
+        assert.equal(entry.integrity, pins.loaderIntegrity, 'Loader tarball integrity differs from the source pin');
+        // The loader does not export its package.json, so read the one beside its built entry.
+        const require = createRequire(path.join(directory, 'package.json'));
+        const installed = JSON.parse(await fs.readFile(
+            path.resolve(path.dirname(require.resolve(name)), '../package.json'), 'utf8'));
+        assert.equal(installed.version, pins.loaderVersion, 'Installed loader differs from the pin');
+    } else {
+        assert.equal(dependencies[name],
+            `git+https://github.com/${pins.loaderRepository}.git#${pins.loaderRevision}`,
+            'Host must pin the shared Loader');
+        assert.equal(entry.resolved,
+            `git+ssh://git@github.com/${pins.loaderRepository}.git#${pins.loaderRevision}`,
+            `Lockfile differs for ${name}`);
+    }
 }
 export async function verifyHost(gui, pins) {
     validatePins(pins);
@@ -127,15 +146,14 @@ export async function verifyHost(gui, pins) {
     const securityManifest = JSON.parse(await fs.readFile(path.resolve(path.dirname(securityEntry), '../package.json'), 'utf8'));
     assert.equal(securityManifest.version, pins.securityVersion, 'Installed security package differs from the source pin');
     if (pins.loaderRepository) {
+        // The VM is still the GUI's own dependency. The Loader is not: `build.ts` checks it against
+        // this repository's install, which is the side that imports it.
         const lock = JSON.parse(await fs.readFile(path.join(gui, 'package-lock.json'), 'utf8'));
-        const gitPins = [['scratch-vm', pins.vmRepository, pins.vmRevision]];
-        if (pins.loaderSource === 'npm') await verifyNpmLoader(hostRequire, manifest, lock, pins);
-        else gitPins.unshift(['@kubohiroya/turbowarp-extension-loader', pins.loaderRepository, pins.loaderRevision]);
-        for (const [name, repository, revision] of gitPins) {
-            assert.equal(manifest.dependencies[name], `git+https://github.com/${repository}.git#${revision}`);
-            assert.equal(lock.packages[`node_modules/${name}`].resolved,
-                `git+ssh://git@github.com/${repository}.git#${revision}`, `Lockfile differs for ${name}`);
-        }
+        const name = 'scratch-vm';
+        assert.equal(manifest.dependencies[name],
+            `git+https://github.com/${pins.vmRepository}.git#${pins.vmRevision}`);
+        assert.equal(lock.packages[`node_modules/${name}`].resolved,
+            `git+ssh://git@github.com/${pins.vmRepository}.git#${pins.vmRevision}`, `Lockfile differs for ${name}`);
     }
     // The document editor is not the GUI's dependency any more: the side that imports it is this
     // repository, so `build.ts` verifies it against this repository's own manifest and lock.
