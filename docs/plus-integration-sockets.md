@@ -50,7 +50,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 本家ファイル | 行数 | 運ぶ口 |
 |---|---|---|
 | `reducers/modals.js` | +8 | `modals`。`blockEditorModal` の名前と初期値、open/close を名前の一覧から作る |
-| `reducers/project-state.js` | +9 | **口にしない。** case が `initialState` / `LoadingState` / `defaultProjectId` を要するのでホストには書けない（下の「段階7を取り消す理由」） |
+| `reducers/project-state.js` | +9 → +7 | `createCancelSecurityLoad`。必要な値を**引数で渡す**。既定はフォーク、ホストが上書き（[scratch-gui#114](https://github.com/kubohiroya/scratch-gui/pull/114)） |
 | `lib/tw-security-manager-constants.js` | +1 | `securityModals`。`LoadExtensions` を追加する |
 | `lib/themes/gui/light.js` | +4 | `themeTokens.light`。`block-editor-*` の3色 |
 | `lib/themes/gui/dark.js` | +4 | `themeTokens.dark`。同上 |
@@ -91,7 +91,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 4 | 表の口を一覧で足す: `modals` / `securityModals` / `themeTokens` / `translations` / `registerBlockShapes` / `shouldIgnoreKeyEvent`。いずれも数行で、互いに依存しない | 3 |
 | 5 | ~~CSS差し込み口~~ 取り消し。CSSは段階8・9と汎用変更へ振り分けた | — |
 | 6 | `alwaysMountedModals` と `TWDocumentEditor` の移送 | 4 |
-| 7 | ~~`reduceProjectState`~~ 取り消し。`CANCEL_SECURITY_LOAD` はフォークに残す | — |
+| 7 | `createCancelSecurityLoad`（値を引数で渡し、既定をホストが上書き） | 4 |
 | 8 | `stageControls` / `cameraControls` と `controls.jsx` 2件・`camera-control/*`・`tw-stage-controls.js`・`tw-camera-controls.js` の移送 | 4 |
 | 9 | `extensionLibrary` / `extensionGuiApi` / `addons` | 4 |
 | 10 | 独自34本の残り（registrar・project-loader・authoring・permission-ui・packager ほか）を1本ずつ | 4〜9 |
@@ -117,7 +117,22 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 
 口を作る前に中身を読んだので、使われない仕組みをフォークに足さずに済んだ。残りの段階でも、口を開ける前にその口が運ぶ差分を読む。
 
-## 段階7を取り消す理由（2026-11-02）
+## 段階7の取り消しを撤回する（2026-11-02）
+
+下の「段階7を取り消す理由」は誤りだった。ホストがGUI内部の値を **import** できないのは事実だが、**引数で渡せば答えは書ける**。case を次の形にすればよい。
+
+```js
+case CANCEL_SECURITY_LOAD:
+    return createCancelSecurityLoad(initialState, defaultProjectId, LoadingState, hostIntegration());
+```
+
+既定はフォークに置き、ホストが渡したときだけ上書きする。何も渡されなければ既定が走るので、フォークは単体でも今までどおり動く。既定をフォークから出す形も試したが、そちらは既存の取消テストがホストの用意を必要とし、素のフォークから機能が消える。実装は [scratch-gui#114](https://github.com/kubohiroya/scratch-gui/pull/114)。
+
+**この手は他の段階にも効く。** 「GUI内部の値が必要だから運べない」という理由は、値を引数で渡すことで解けるものが多い。残りの段階では、口を諦める前にこの形を先に検討する。段階5（CSS）の取り消しは理由が別（CSSモジュールのクラス名がビルド時にハッシュされ、全域スタイルシートから狙えない）なので変わらない。
+
+以下は撤回した判断の記録。残す理由は、同じ誤りを繰り返さないため。
+
+## 段階7を取り消す理由（2026-11-02、撤回済み）
 
 `reducers/project-state.js` の `CANCEL_SECURITY_LOAD` を口へ出す案も取り消す。case の中身がこれだった。
 
