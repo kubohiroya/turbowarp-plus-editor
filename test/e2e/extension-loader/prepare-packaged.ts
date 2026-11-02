@@ -15,7 +15,7 @@ await mkdir(output, {recursive: true});
 const require = createRequire(import.meta.url);
 const {Packager} = require('@turbowarp/packager');
 const {source, bytes, sha256, packagedProject} = require('./packaged-project.cts');
-const sb3 = await packagedProject('remote');
+const sb3 = await packagedProject('remote-cacheable');
 const prepared = await prepareOfflinePackage(sb3, {
     fetcher: {async fetch(url) { return {bytes, finalURL: url, redirects: []}; }},
     trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}

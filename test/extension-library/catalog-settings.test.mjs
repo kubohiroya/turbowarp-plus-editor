@@ -7,8 +7,12 @@ import {createExtensionAuthoringController, setExtensionAuthoringHost} from '../
 
 const entry = (id, dependencies = []) => ({id, ids: [id], url: `https://catalog.test/${id}.js`, dependencies,
     metadata: {name: id, version: '1.2.3'}});
-const spec = (id, type = 'remote', execution = 'unsandboxed') => ({id, execution, sha256: 'a'.repeat(64),
-    source: type === 'remote' ? {type, url: entry(id).url} : {type, path: `extensions/${id}.js`}});
+// The Loader's four forms: a source either names a URL or carries the bytes. The review screen's
+// own two choices ('remote' / 'embedded') are what `distributions` holds, and the translation
+// between the two is `catalog-settings.js`'s own — which is what several of these tests check.
+const spec = (id, type = 'remote-cacheable', execution = 'unsandboxed') => ({id, execution,
+    sha256: 'a'.repeat(64),
+    source: type.startsWith('remote-') ? {type, url: entry(id).url} : {type, path: `extensions/${id}.js`}});
 function vmFixture(services = [], loadedIds = services.map(([id]) => id)) {
     return {extensionManager: {_loadedExtensions: new Map(services),
         isExtensionLoaded(id) { return loadedIds.includes(id); }}};
@@ -29,7 +33,7 @@ async function plainSB3() {
 test('actual VM service prefixes restore execution while Loader manifest restores independent distribution', async () => {
     const entries = [entry('outside'), entry('inside')];
     const vm = vmFixture([['outside', 'unsandboxed.1.outside'], ['inside', 'extension.2.inside']]);
-    const manifest = {extensions: [spec('outside', 'embedded', 'sandboxed'), spec('inside', 'remote', 'unsandboxed')]};
+    const manifest = {extensions: [spec('outside', 'embedded-file', 'sandboxed'), spec('inside', 'remote-cacheable', 'unsandboxed')]};
     setExtensionAuthoringHost(vm, {inspect: async () => manifest});
     const settings = await readPlusCatalogSettings(vm, entries);
     assert.deepEqual([...settings.choices], [[entries[0].url, 'unsandboxed'], [entries[1].url, 'sandboxed']]);
@@ -47,7 +51,7 @@ test('legacy loaded entries default to Remote and a missing Loader host does not
 
 test('saved but unused Plus metadata restores distribution without treating its execution request as consent', async () => {
     const vm = vmFixture([['unused', 'unsandboxed.3.unused']], []);
-    const existing = spec('unused', 'embedded');
+    const existing = spec('unused', 'embedded-file');
     setExtensionAuthoringHost(vm, {inspect: async () => ({extensions: [existing]})});
     const settings = await readPlusCatalogSettings(vm, [entry('unused')]);
     assert.deepEqual([...settings.distributions], [['unused', 'embedded']]);
@@ -75,8 +79,8 @@ test('apply forwards every selected and loaded row together with execution, dist
     assert.deepEqual(result, ['base', 'parent']);
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0][0], [
-        {id: 'base', url: entries[0].url, execution: 'sandboxed', distribution: 'embedded', dependencies: [], version: '1.2.3'},
-        {id: 'parent', url: entries[1].url, execution: 'unsandboxed', distribution: 'remote', dependencies: ['base'], version: '1.2.3'}
+        {id: 'base', url: entries[0].url, execution: 'sandboxed', distribution: 'embedded-file', dependencies: [], version: '1.2.3'},
+        {id: 'parent', url: entries[1].url, execution: 'unsandboxed', distribution: 'remote-cacheable', dependencies: ['base'], version: '1.2.3'}
     ]);
     assert.equal(calls[0][1].signal, signal);
     setExtensionAuthoringHost(vm, null);
@@ -138,10 +142,10 @@ test('configure and inspect connect the real core batch API to one project apply
         trustProvider: {async authorize(code) { approvals.push([code.id, code.execution, code.source.type]); return {allowed: true, scope: 'digest', sha256: code.sha256}; }}
     }});
     const configured = await controller.configure([
-        {id: 'first', url: entry('first').url, distribution: 'embedded', execution: 'sandboxed', dependencies: [], version: '1.2.3'},
-        {id: 'second', url: entry('second').url, distribution: 'remote', execution: 'unsandboxed', dependencies: ['first'], version: '1.2.3'}
+        {id: 'first', url: entry('first').url, distribution: 'embedded-file', execution: 'sandboxed', dependencies: [], version: '1.2.3'},
+        {id: 'second', url: entry('second').url, distribution: 'remote-cacheable', execution: 'unsandboxed', dependencies: ['first'], version: '1.2.3'}
     ]);
-    assert.deepEqual(approvals, [['first', 'sandboxed', 'embedded'], ['second', 'unsandboxed', 'remote']]);
+    assert.deepEqual(approvals, [['first', 'sandboxed', 'embedded-file'], ['second', 'unsandboxed', 'remote-cacheable']]);
     assert.equal(loads.length, 1);
     assert.deepEqual(await controller.inspect(), configured);
     assert.equal(globalThis.__catalogAdapterExecuted, undefined);
@@ -162,7 +166,7 @@ test('inspect rejects pending configuration and project changes during asynchron
         fetcher: {async fetch(url) { fetching.resolve(); await resume.promise; return {bytes: new TextEncoder().encode('/* code */'), finalURL: url, redirects: []}; }},
         trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}
     }});
-    const pending = controller.configure([{id: 'sample', url: entry('sample').url, distribution: 'remote', execution: 'sandboxed'}]);
+    const pending = controller.configure([{id: 'sample', url: entry('sample').url, distribution: 'remote-cacheable', execution: 'sandboxed'}]);
     await fetching.promise;
     await assert.rejects(controller.inspect(), {code: 'PROJECT_BUSY'});
     resume.resolve();

@@ -16,7 +16,9 @@ const localRequire = createRequire(import.meta.url);
 const VM = require('scratch-vm');
 
 const {transformSync} = require('@babel/core');
-const loaderEntry = require.resolve('@kubohiroya/turbowarp-extension-loader');
+// This repository's copy, like the registrar below: the GUI does not depend on the Loader at all,
+// so resolving it from there would transpile whatever stale copy a local checkout happens to have.
+const loaderEntry = localRequire.resolve('@kubohiroya/turbowarp-extension-loader');
 const source = await readFile(loaderEntry, 'utf8');
 // Match the shared core's actual webpack 4 transpilation settings.
 const {code: transpiled} = transformSync(source, {babelrc: false, configFile: false,
@@ -35,7 +37,7 @@ const {createVMExtensionRegistrar: transpiledRegistrar} = await import(
 const bytes = new TextEncoder().encode('registration fixture');
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 const manifest = {schemaVersion: 1, extensions: [{id: 'sample', execution: 'unsandboxed',
-    source: {type: 'embedded', path: 'extensions/sample.js'}, sha256}]};
+    source: {type: 'embedded-file', path: 'extensions/sample.js'}, sha256}]};
 
 for (const [variant, createLoader] of [['native', nativeLoader], ['webpack4', transpiledLoader]]) {
     test(`${variant}: registration rejection with successful cleanup stays reusable`, async () => {
@@ -127,7 +129,7 @@ for (const execution of ['unsandboxed', 'sandboxed']) {
             trustProvider: {async authorize() { return {allowed: true, scope: 'digest', sha256}; }},
             registrar: transpiledRegistrar(vm, {vmModules})});
         const request = {schemaVersion: 1, extensions: [{id: 'sample', execution, sha256,
-            source: {type: 'embedded', path: 'extensions/sample.js'}}]};
+            source: {type: 'embedded-file', path: 'extensions/sample.js'}}]};
         try {
             await assert.rejects(loader.load(request), error => {
                 assert.equal(error.code, 'LOAD_FAILED');

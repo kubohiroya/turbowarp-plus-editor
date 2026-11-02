@@ -10,7 +10,7 @@ import {guiRequire} from './pinned-host.mjs';
 
 const bytes = new TextEncoder().encode('/* verified extension source; never evaluated by this test */');
 const sha256 = createHash('sha256').update(bytes).digest('hex');
-const spec = {id: 'plus', source: {type: 'remote', url: 'https://example.test/extension.js'}, execution: 'unsandboxed', sha256};
+const spec = {id: 'plus', source: {type: 'remote-cacheable', url: 'https://example.test/extension.js'}, execution: 'unsandboxed', sha256};
 const manifest = {schemaVersion: 1, extensions: [spec]};
 const Zip = guiRequire('@turbowarp/jszip');
 
@@ -83,7 +83,7 @@ test('core trust rejection cannot reach registration or legacy fallback', async 
 test('embedded ZIP bytes and source survive core verification, GUI ZIP save and reopen', async () => {
     const {vm, loader, dispose, events} = setup(true);
     const embeddedManifest = {schemaVersion: 1, extensions: [{...spec,
-        source: {type: 'embedded', path: 'extensions/plus.js'}}]};
+        source: {type: 'embedded-file', path: 'extensions/plus.js'}}]};
     const archive = new Zip().file('project.json', JSON.stringify({targets: [], extensions: ['plus', 'pen'],
         extensionURLs: {}, turboWarpPlus: embeddedManifest})).file('extensions/plus.js', bytes);
     await vm.loadProject(await archive.generateAsync({type: 'uint8array', compression: 'DEFLATE'}));
@@ -92,7 +92,7 @@ test('embedded ZIP bytes and source survive core verification, GUI ZIP save and 
     const saved = await Zip.loadAsync(savedBytes);
     assert.deepEqual(await saved.file('extensions/plus.js').async('uint8array'), bytes);
     const savedProject = JSON.parse(await saved.file('project.json').async('string'));
-    assert.equal(savedProject.turboWarpPlus.extensions[0].source.type, 'embedded');
+    assert.equal(savedProject.turboWarpPlus.extensions[0].source.type, 'embedded-file');
     assert.equal(savedProject.turboWarpPlus.extensions[0].sha256, sha256);
     await vm.loadProject(savedBytes);
     assert.equal(JSON.parse(vm.toJSON()).turboWarpPlus.extensions[0].sha256, sha256);

@@ -31,7 +31,7 @@ const transformed = babel.transformFileSync(source, {babelrc: false, configFile:
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const buffer = manifest => new TextEncoder().encode(JSON.stringify({targets: [], extensions: [], extensionURLs: {},
     ...(manifest ? {turboWarpPlus: {schemaVersion: 1, extensions: [{id: 'sample', execution: 'unsandboxed',
-        sha256: 'a'.repeat(64), source: {type: 'remote', url: 'https://example.test/code.js'}}]}} : {})})).buffer;
+        sha256: 'a'.repeat(64), source: {type: 'remote-cacheable', url: 'https://example.test/code.js'}}]}} : {})})).buffer;
 
 /**
  * Run the pinned GUI's integration with this repository's handoff behind it.

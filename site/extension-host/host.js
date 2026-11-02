@@ -17,7 +17,7 @@
  */
 
 import JSZip from '@turbowarp/jszip';
-import {createExtensionLoader, createFetchPort, DEFAULT_FETCH_RETRY} from '@kubohiroya/turbowarp-extension-loader';
+import {createExtensionLoader, createFetchPort} from '@kubohiroya/turbowarp-extension-loader';
 import {createMemoryContentCache} from '@kubohiroya/turbowarp-extension-loader/memory-cache';
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
@@ -58,13 +58,13 @@ export function installPlusExtensionHost (vm, {
         ui.diagnostics(event);
         if (report) report(event);
     };
-    // The host owns the retry settings, so only the host can say which attempt of how many this
-    // is. The Loader reports the retry it is about to wait for; the attempt it leads to is next.
-    const retry = {...DEFAULT_FETCH_RETRY, ...fetchRetry};
-    const onRetry = ({url, attempt, delayMs}) => diagnostics({
+    // The Loader reports the retry it is about to wait for, and how many attempts this fetch can
+    // make in all; the attempt the wait leads to is the next one. Counting them here from the retry
+    // settings is what this used to do, and it was wrong whenever a caller passed its own.
+    const onRetry = ({url, attempt, attempts, delayMs}) => diagnostics({
         type: 'retry',
         attempt: attempt + 1,
-        attempts: retry.retries + 1,
+        attempts,
         delayMs,
         message: url
     });
@@ -76,7 +76,7 @@ export function installPlusExtensionHost (vm, {
             (trusted !== null && await trusted.isTrustedCode(code)) || approve(code, options)});
     const ports = {
         embeddedReader: projectIO.embeddedReader,
-        fetcher: createFetchPort(fetchImpl, {...retry, onRetry}),
+        fetcher: createFetchPort(fetchImpl, {...fetchRetry, onRetry}),
         cache: cache || createMemoryContentCache(),
         trustProvider,
         registrar: createVMExtensionRegistrar(vm, {vmModules}),

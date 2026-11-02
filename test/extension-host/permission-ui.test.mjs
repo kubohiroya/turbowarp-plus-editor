@@ -8,7 +8,7 @@ const require = guiRequire;
 const VM = require('scratch-vm');
 const dispatch = require('scratch-vm/src/dispatch/central-dispatch.js');
 const {JSDOM} = require('jsdom');
-const code = {id: 'sample', source: {type: 'remote', url: 'https://example.org/sample.js'},
+const code = {id: 'sample', source: {type: 'remote-cacheable', url: 'https://example.org/sample.js'},
     sha256: 'a'.repeat(64), publisher: '<img src=x onerror=alert(1)>', capabilities: ['vm'], execution: 'unsandboxed'};
 function fixture(locale) {
     const dom = new JSDOM('<!DOCTYPE html><html><head></head><body><button id="previous">Before</button></body></html>');

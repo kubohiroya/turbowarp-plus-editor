@@ -37,22 +37,22 @@ test('real VM authoring preserves the project and restores prior extensions afte
     try {
         await vm.loadProject(input);
         const before = JSON.parse(vm.toJSON()).targets;
-        await assert.rejects(host.authoring.add({id: 'firstwrong', source: {type: 'embedded'}, bytes: bytes('actual')}));
+        await assert.rejects(host.authoring.add({id: 'firstwrong', source: {type: 'embedded-file'}, bytes: bytes('actual')}));
         assert.deepEqual(host.loader.getState(), {status: 'idle', ids: []});
-        await host.authoring.add({id: 'example', source: {type: 'embedded'}, bytes: bytes('example')});
+        await host.authoring.add({id: 'example', source: {type: 'embedded-file'}, bytes: bytes('example')});
         assert.equal(vm.extensionManager.isExtensionLoaded('example'), true);
         assert.deepEqual(JSON.parse(vm.toJSON()).targets, before);
         const saved = await vm.saveProjectSb3('arraybuffer');
         const zip = await Zip.loadAsync(saved);
         assert.ok(zip.file('extensions/example.js'));
         const prior = JSON.parse(vm.toJSON());
-        await assert.rejects(host.authoring.add({id: 'wrong', source: {type: 'embedded'}, bytes: bytes('actual')}));
+        await assert.rejects(host.authoring.add({id: 'wrong', source: {type: 'embedded-file'}, bytes: bytes('actual')}));
         assert.equal(vm.extensionManager.isExtensionLoaded('example'), true);
         assert.equal(vm.extensionManager.isExtensionLoaded('wrong'), false);
         assert.equal(vm.extensionManager.isExtensionLoaded('actual'), false);
         assert.deepEqual(JSON.parse(vm.toJSON()), prior);
         assert.deepEqual(host.loader.getState(), {status: 'loaded', ids: ['example']});
-        await host.authoring.add({id: 'second', source: {type: 'embedded'}, bytes: bytes('second')});
+        await host.authoring.add({id: 'second', source: {type: 'embedded-file'}, bytes: bytes('second')});
         assert.equal(vm.extensionManager.isExtensionLoaded('second'), true);
         assert.equal(approvals, 4);
     } finally {

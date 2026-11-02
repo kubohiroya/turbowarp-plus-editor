@@ -31,6 +31,8 @@ function fixture(id, execution, distribution) {
         url: `https://catalog-authoring.invalid/${id}.js`};
 }
 const specifications = [
+    // The third value is the review screen's own choice, which still has two names; what ends up
+    // in the manifest is the Loader's form, asserted further down.
     fixture('catembeddedunsandboxed', 'unsandboxed', 'embedded'),
     fixture('catremoteunsandboxed', 'unsandboxed', 'remote'),
     fixture('catembeddedsandboxed', 'sandboxed', 'embedded'),
@@ -200,7 +202,7 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         const afterConversion = await Zip.loadAsync(await saveSB3(page));
         const convertedJSON = JSON.parse(await afterConversion.file('project.json').async('string'));
         const stored = convertedJSON.turboWarpPlus.extensions.find(item => item.id === converted.id);
-        expect(stored).toMatchObject({execution: 'unsandboxed', sha256: converted.sha256, source: {type: 'embedded'}});
+        expect(stored).toMatchObject({execution: 'unsandboxed', sha256: converted.sha256, source: {type: 'embedded-file'}});
         expect(await afterConversion.file(stored.source.path).async('nodebuffer')).toEqual(converted.bytes);
 
         await page.getByText('ファイル', {exact: true}).click();
@@ -350,7 +352,7 @@ test('catalog changes a loaded extension execution mode with the same digest and
     await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
     expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('unsandboxed:vm');
     expect((await projectJSON(page)).turboWarpPlus.extensions[0]).toMatchObject({
-        id: spec.id, execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'remote', url: spec.url}
+        id: spec.id, execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'remote-cacheable', url: spec.url}
     });
 
     await openCatalog(page);
@@ -402,6 +404,6 @@ test('catalog adopts a previously native-loaded extension without losing its act
     const zip = await Zip.loadAsync(await saveSB3(page));
     const json = JSON.parse(await zip.file('project.json').async('string'));
     const stored = json.turboWarpPlus.extensions.find(entry => entry.id === spec.id);
-    expect(stored).toMatchObject({execution: 'sandboxed', sha256: spec.sha256, source: {type: 'embedded'}});
+    expect(stored).toMatchObject({execution: 'sandboxed', sha256: spec.sha256, source: {type: 'embedded-file'}});
     expect(await zip.file(stored.source.path).async('nodebuffer')).toEqual(spec.bytes);
 });

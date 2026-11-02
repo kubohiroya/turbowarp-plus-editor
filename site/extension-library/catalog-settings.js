@@ -8,6 +8,23 @@
 import {getExtensionAuthoringHost} from '../extension-host/authoring.js';
 
 /**
+ * The review screen offers two choices — fetch it, or carry it — while the Loader names four forms,
+ * because it also says whether a copy may be kept and which carrier holds the bytes.
+ *
+ * So the two are translated here, at the one boundary where both are visible. The screen's "remote"
+ * becomes the cacheable form, which is what the opener got before the choice existed, and its
+ * "embedded" becomes a file in the archive. This goes away when the review screen offers the four
+ * forms itself (kubohiroya/turbowarp-plus-editor#68).
+ */
+const SOURCE_FOR_CHOICE = {remote: 'remote-cacheable', embedded: 'embedded-file'};
+const CHOICE_FOR_SOURCE = {
+    'remote-cacheable': 'remote',
+    'remote-non-cacheable': 'remote',
+    'embedded-file': 'embedded',
+    'embedded-data': 'embedded'
+};
+
+/**
  * Read actual VM modes and Loader-owned persistence.
  * @param {object} vm Owning VM.
  * @param {Array<object>} entries Catalog entries.
@@ -21,7 +38,7 @@ export const readPlusCatalogSettings = async (vm, entries) => {
     const distributions = new Map();
     for (const entry of entries) {
         const spec = saved.get(entry.id);
-        if (spec) distributions.set(entry.id, spec.source.type);
+        if (spec) distributions.set(entry.id, CHOICE_FOR_SOURCE[spec.source.type] || 'remote');
         if (!vm.extensionManager.isExtensionLoaded(entry.id)) continue;
         // The VM adapter owns this service-name interpretation; UI state never decides privilege.
         const service = vm.extensionManager._loadedExtensions.get(entry.id);
@@ -54,7 +71,7 @@ export const applyPlusCatalogSettings = async (vm, selection, {signal} = {}) => 
         requests.push({id: entry.id,
             url: entry.url,
             execution,
-            distribution: selection.distributions.get(entry.id) || 'remote',
+            distribution: SOURCE_FOR_CHOICE[selection.distributions.get(entry.id)] || 'remote-cacheable',
             dependencies: entry.dependencies || [],
             version: entry.metadata?.version});
     }

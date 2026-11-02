@@ -19,7 +19,7 @@ const project = {
     extensionURLs: {reviewfixture: 'data:text/javascript,Scratch.vm.legacyBypass=true'},
     meta: {semver: '3.0.0', vm: '0.2.0', agent: 'independent security review'},
     turboWarpPlus: {schemaVersion: 1, extensions: [{id: 'reviewfixture', execution: 'unsandboxed', sha256,
-        source: {type: 'remote', url: 'https://example.org/review.js'}}]},
+        source: {type: 'remote-cacheable', url: 'https://example.org/review.js'}}]},
     trusted: true,
     approval: {allowed: true, scope: 'digest', sha256},
     turboWarpPlusLock: {approved: true, sha256}

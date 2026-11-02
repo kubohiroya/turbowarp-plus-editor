@@ -70,7 +70,7 @@ async function main() {
         const code = 'globalThis.__issue4DesktopExecution=true;';
         const sha256 = createHash('sha256').update(code).digest('hex');
         project.turboWarpPlus = {schemaVersion: 1, extensions: [{id: 'desktopfixture', execution: 'unsandboxed',
-            source: {type: 'embedded', path: 'extensions/desktopfixture.js'}, sha256}]};
+            source: {type: 'embedded-file', path: 'extensions/desktopfixture.js'}, sha256}]};
         project.plusManifestSentinel = 'issue-4-stock-desktop';
         zip.file('project.json', JSON.stringify(project));
         zip.file('extensions/desktopfixture.js', code);

@@ -10,12 +10,12 @@ Scratch.extensions.register({
 const bytes = Buffer.from(source);
 const digest = createHash('sha256').update(bytes).digest('hex');
 const remoteURL = 'https://plus-fixture.invalid/extension.js';
-async function project({type = 'embedded', code = bytes, sha256 = digest, id = 'plusfixture', url = remoteURL,
+async function project({type = 'embedded-file', code = bytes, sha256 = digest, id = 'plusfixture', url = remoteURL,
     schemaVersion = 1, extraManifest = {}, extensionURLs = {}} = {}) {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"></svg>';
     const assetId = createHash('md5').update(svg).digest('hex');
     const spec = {id, execution: 'unsandboxed', sha256,
-        source: type === 'remote' ? {type, url} : {type, path: 'extensions/plusfixture.js'}};
+        source: type.startsWith('remote-') ? {type, url} : {type, path: 'extensions/plusfixture.js'}};
     const json = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, comments: {},
         blocks: {fixture: {opcode: `${id}_value`, next: null, parent: null, inputs: {}, fields: {},
             shadow: false, topLevel: true, x: 40, y: 40}}, currentCostume: 0,
@@ -24,7 +24,7 @@ async function project({type = 'embedded', code = bytes, sha256 = digest, id = '
         monitors: [], extensions: [id], extensionURLs, meta: {semver: '3.0.0', vm: '2.0.0', agent: 'Plus loader E2E'},
         turboWarpPlus: {schemaVersion, extensions: [spec], ...extraManifest}};
     const zip = new Zip().file('project.json', JSON.stringify(json)).file(`${assetId}.svg`, svg);
-    if (type === 'embedded') zip.file('extensions/plusfixture.js', code);
+    if (type === 'embedded-file') zip.file('extensions/plusfixture.js', code);
     return zip.generateAsync({type: 'nodebuffer', compression: 'DEFLATE'});
 }
 module.exports = {project, source, bytes, digest, remoteURL};

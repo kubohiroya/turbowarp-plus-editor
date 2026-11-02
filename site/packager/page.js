@@ -7,7 +7,7 @@
  * the dialog that asks and the limits it accepts are all read from this side.
  */
 
-import {createFetchPort, DEFAULT_FETCH_RETRY} from '@kubohiroya/turbowarp-extension-loader';
+import {createFetchPort} from '@kubohiroya/turbowarp-extension-loader';
 import {prepareOfflinePackage} from '@kubohiroya/turbowarp-extension-loader/packager';
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
@@ -78,9 +78,10 @@ generate.addEventListener('click', async () => {
         const prepared = await io.prepare(input);
         if (!prepared.manifest) throw new Error('Plus Manifestがありません。通常の作品には標準Packagerを使用してください。');
         const resourceDependencies = Object.fromEntries(prepared.manifest.extensions.map(spec => [spec.id, []]));
-        // A transient failure is retried for a few seconds; say so instead of looking stuck.
-        const attempts = DEFAULT_FETCH_RETRY.retries + 1;
-        const onRetry = ({url, attempt, delayMs}) => {
+        // A transient failure is retried for a few seconds; say so instead of looking stuck. How
+        // many attempts there are in all comes from the Loader, so this page does not have to know
+        // the retry settings to say "2 of 3".
+        const onRetry = ({url, attempt, attempts, delayMs}) => {
             status.textContent = `接続できませんでした。再試行しています（${attempt + 1}/${attempts}）: ${url}`;
             ui.diagnostics({
                 type: 'retry',
