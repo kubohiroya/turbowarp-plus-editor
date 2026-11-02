@@ -67,15 +67,10 @@ jobs:
           # prepublish writes static/microbit and src/generated, which are outside node_modules,
           # so it runs whether or not the modules came from the cache.
           node scripts/prepublish.mjs
-      - name: Copy the pinned root core into the isolated host without resolving dependencies
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: node scripts/site/prepare-core.ts
       - name: Verify the prepared host
         working-directory: .host/scratch-gui
         run: |
           npm run test:document-editor
-          npm run test:block-editor
           npm run test:plus-extension-loader
       # The extension host is supplied from here, but what it installs on is the pinned GUI's VM,
       # and the registration it drives must use that VM's own modules. So these run against the

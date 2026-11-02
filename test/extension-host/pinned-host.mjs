@@ -24,6 +24,9 @@ if (!root) {
         'or check it out at .host/scratch-gui (see scripts/site/source.ts)');
 }
 
+/** The pinned checkout itself, for tests that read its installed browser artifacts by path. */
+export const guiRoot = root;
+
 /** Require a module from the pinned checkout, so the VM and its utilities are that VM's. */
 export const guiRequire = createRequire(path.join(root, 'package.json'));
 

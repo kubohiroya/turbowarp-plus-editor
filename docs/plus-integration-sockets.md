@@ -365,3 +365,34 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 文書エディタ・loader・security-dialog と、同じ移動を3回やった。`verifyHost` がホストの manifest / lock / 実体を見ていた分を、`verify〇〇Dependency(directory, pins)` として配信側の install に向ける。`verifyHost` に残るのは GUI 自身の依存（scratch-vm の git 固定、コアの build-info）だけになった。
 
 **依存を外す作業は4つ動く: 機能・import・依存・検査。** 4つめを忘れるとCIが落ちる(#86)ので、気づけるようにはなっている。
+
+## ブロックエディタ: family 依存が全て外れた（2026-11-03）
+
+拡張がブロックにスキーマを宣言したとき、それをフォームにして見せるのは配信物の仕事。`@kubohiroya/turbowarp-extension-data-editor` の入口3つ（サービス生成・ワークスペースへの接続・ダイアログ）を `site/block-editor/editor.js` に移した。フォークは **+65 / -1904行**、79ファイル/+3,383 まで下がり、lock の差分も +644 になった。
+
+**これで family の4依存が全て外れ、フォークは配信物のパッケージを1つも install しない。**
+
+### 翻訳文は動かせない
+
+ライブラリのタブは自前の2言語テーブルを持っていたので連れて出せた。ここは逆で、`tw.blockEditor.*` のidが**本家の翻訳抽出パイプライン**に乗っており、コミュニティ訳も付いている。フォークの2つのラッパー（127行）のうち83行がその文で、**文はフォークに残し、パッケージの入口だけを移す**のが正しい切り分けだった。配色（`block-editor.css`）も本家の `css/colors.css` の変数をビルド時に展開するので、本家のビルドでしか解決できない。
+
+### core を外すと配信側の仕組みが減る
+
+他の3依存と違い、これは `source.ts` の `corePackage` そのもので、`prepare-core.ts`(110行) が**GUIの node_modules の中身を差し替えていた**（フォークが `^0.5.0`、配信物が 0.7.0）。依存が無くなれば差し替える対象も無いので、`verifyInstalledCore` を配信側の install に向け、CIの「Copy the pinned root core」段階を外した。`prepare-core.ts` 自体の撤去は段階B。
+
+### Reactが2つあると、何を試しているのか分からなくなる
+
+移した `modal.test.mjs`（599行）が `activeElement.attachEvent is not a function` で落ちた。原因は**Reactが2つ**: 配信側には（他のパッケージ経由で）React 18 が入っており、パッケージの `react.js` がそれを読む一方、テストは pin した本家の React 16 を読んでいた。site側webpackが `react$` を alias しているのと同じ問題が、Nodeのテストで再現した形。
+
+`test/asset-hooks.mjs` に **resolve フック**を足し、`react` / `react-dom` / `prop-types` / `lodash.bindall` を pin した checkout へ向けた——ビルドの alias と同じ向き。**テストはビルドと同じ解決をする**のが原則で、これで揃った。
+
+同じファイルで `.css` の代役も直した。全てのプロパティに名前を返す Proxy を返していたため `styles.なんでも` が真になり、ブラウザでは通らない分岐に入っていた。ESM側は空オブジェクトを返し、クラス名を見たいテストは require フックのハーネスを使う。
+
+### テストは「何を試しているか」で分けた
+
+| | 件数 | |
+| --- | --- | --- |
+| 配信側 | 38 | パッケージの挙動（host / source-host / icon / appearance / bridge / descendant-host / modal と共有フィクスチャ） |
+| フォーク | 12 | フォークのラッパーと翻訳、VMごとのサービス、起動待ち、プレビューVM |
+
+移すかどうかは import 元ではなく**主題**で決まる。`preview-vm.test.mjs` はパッケージを1行も参照していないのでフォークに残り、`modal.test.mjs` はフォークのラッパーを**pin した checkout から読んで**配信側の実物と組み合わせる。
