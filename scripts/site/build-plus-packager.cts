@@ -57,12 +57,21 @@ const config = withExtensionLoaderWebpack4({
     resolve: {modules: [path.join(gui, 'node_modules'), path.resolve('node_modules'), 'node_modules'],
         alias: {'@turbowarp/packager-web$': path.join(packager, 'src/packager/web/export.js')}},
     module: {rules: [
-        {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src'), vmSource],
+        {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src'), vmSource,
+            path.resolve('site')],
             loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
                 presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}},
         {test: /\.png$/, loader: hostRequire.resolve('url-loader'), options: {limit: 1000000}}
     ]},
-    plugins: [new webpack.DefinePlugin({'process.env.SCAFFOLDING_BUILD_ID': JSON.stringify(buildId),
+    // The builder is its own bundle, so the Plus integration socket has to be filled here too.
+    // Without it the builder reads no catalog, trusts nothing, and asks permission for extensions
+    // the editor loads without asking.
+    //
+    // It gets the builder's own integration, not the editor's: the editor's would pull the document
+    // editor and its packages into this bundle, where nothing needs them.
+    plugins: [new webpack.NormalModuleReplacementPlugin(/[\\/]src[\\/]lib[\\/]tw-plus-integration\.js$/,
+        path.resolve('site/plus-integration.packager.js')),
+        new webpack.DefinePlugin({'process.env.SCAFFOLDING_BUILD_ID': JSON.stringify(buildId),
         '__TW_PLUS_PACKAGER_ASSETS__': JSON.stringify(assets), '__TW_PLUS_EXTENSION_RUNTIME__': JSON.stringify(runtime),
         '__TW_PLUS_LOCAL_CATALOG__': JSON.stringify(localCatalog)}),
         new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1})],

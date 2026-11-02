@@ -9,12 +9,14 @@
  *
  * Features move across that boundary one at a time. What is here now is the document editor's
  * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
- * `tw-stage-controls.js`), and the runtime controls dock those controls are reached through.
+ * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, and the
+ * extension catalog this distribution ships.
  */
 
 import {mountDocumentEditor, readDocumentEditorFlags} from '@kubohiroya/turbowarp-document-editor';
 
 import {installControlsDock} from './controls-dock.js';
+import {plusCatalog} from './plus-catalog.js';
 import getStageControls from './stage-controls.js';
 
 // Resolved once when the bundle starts, as the fork did: a project cannot enable document editing
@@ -27,7 +29,17 @@ const startupFlags = readDocumentEditorFlags(typeof window === 'undefined' ? '' 
  * @param {object} dependencies `mountEditor` and `flags`.
  * @returns {object} The integration this distribution supplies.
  */
-export const createPlusIntegration = ({mountEditor, flags, stageControls = getStageControls}) => ({
+export const createPlusIntegration = ({
+    mountEditor,
+    flags,
+    stageControls = getStageControls,
+    extensionCatalog = plusCatalog
+}) => ({
+    /**
+     * The catalog this distribution ships. Its address, and whether a locally built one replaces
+     * it while previewing, are decisions that belong here rather than in the GUI.
+     */
+    extensionCatalog,
     /**
      * The addons whose startup has to settle before anything reads what they patched.
      *
