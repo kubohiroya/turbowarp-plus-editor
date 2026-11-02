@@ -1,9 +1,17 @@
 name: CI
 on:
+  # A pull request branch is covered by the pull_request event alone. Without this filter a push
+  # to such a branch ran the whole job twice on the same commit, which doubled every PR's CI.
   push:
+    branches: [main]
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  # main must not be cancelled: Publish is chained to each main CI completing, and cancelling one
+  # would leave that commit undeployed.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -40,10 +48,24 @@ jobs:
         uses: pnpm/action-setup@v6
         with:
           version: 11.28.8
+      - name: Restore the pinned host's modules
+        id: host-modules
+        uses: actions/cache@v4
+        with:
+          path: .host/scratch-gui/node_modules
+          # The GUI revision and the core pin both decide what ends up in this tree: the install
+          # comes from the revision's lockfile, and prepare-core then replaces the core package
+          # inside it. A key that ignored the core version would restore a tree holding the wrong
+          # one.
+          key: host-modules-${{ runner.os }}-${{ steps.source.outputs.guiRevision }}-${{ steps.source.outputs.coreVersion }}-${{ hashFiles('.host/scratch-gui/package-lock.json') }}
       - name: Install the pinned host dependencies
         working-directory: .host/scratch-gui
         run: |
-          npm ci --no-audit --no-fund
+          if [ "${{ steps.host-modules.outputs.cache-hit }}" != "true" ]; then
+            npm ci --no-audit --no-fund
+          fi
+          # prepublish writes static/microbit and src/generated, which are outside node_modules,
+          # so it runs whether or not the modules came from the cache.
           node scripts/prepublish.mjs
       - name: Copy the pinned root core into the isolated host without resolving dependencies
         env:
