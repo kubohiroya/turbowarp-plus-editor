@@ -1,0 +1,18 @@
+/*
+ * The frame the GUI's modal gives the review when a project opens.
+ *
+ * The review package styles its own body and leaves the frame to the host, and the GUI's modal is
+ * transparent unless its caller says otherwise, so these are this distribution's.
+ */
+
+.frame {
+    width: min(760px, 94vw);
+    background: var(--ui-modal-background, white);
+    color: var(--ui-modal-foreground, #263145);
+}
+
+.body {
+    max-height: calc(100vh - 220px);
+    overflow: auto;
+    padding: 1rem;
+}
