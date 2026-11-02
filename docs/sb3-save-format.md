@@ -8,15 +8,15 @@ Issue #45 のDoD 1件目「語彙と変換を共通パッケージへ切り出�
 
 紙芝居App の PR [#1109](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1109) ブランチ `feat/sb3/plus-extension-loader` の `src/builder/sb3-save-format.ts`。import文を1つも持たない。
 
-| export | 種別 |
-|---|---|
-| `Sb3SavePayload` = `extensions` \| `source` \| `assets` | 語彙 |
-| `Sb3SaveFormat` = `remote-non-cacheable` \| `remote-cacheable` \| `embedded-file` \| `embedded-data` | 語彙 |
-| `sb3SavePayloads` / `sb3SaveFormats` | 語彙 |
-| `Sb3SaveSelection` / `Sb3SaveFormatSupport` | 語彙 |
-| `normalizeSb3SaveSelection` | 形の検証（共通）＋対応可否の拒否（実装固有） |
-| `sb3SaveFormatSupport` / `sb3SupportedSaveFormats` / `describeSb3SaveFormats` | 実装固有の表に依存 |
-| `unsupported` 表・`projectAssetReason`（非export） | 実装固有 |
+| export                                                                                               | 種別                                         |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `Sb3SavePayload` = `extensions` \| `source` \| `assets`                                              | 語彙                                         |
+| `Sb3SaveFormat` = `remote-non-cacheable` \| `remote-cacheable` \| `embedded-file` \| `embedded-data` | 語彙                                         |
+| `sb3SavePayloads` / `sb3SaveFormats`                                                                 | 語彙                                         |
+| `Sb3SaveSelection` / `Sb3SaveFormatSupport`                                                          | 語彙                                         |
+| `normalizeSb3SaveSelection`                                                                          | 形の検証（共通）＋対応可否の拒否（実装固有） |
+| `sb3SaveFormatSupport` / `sb3SupportedSaveFormats` / `describeSb3SaveFormats`                        | 実装固有の表に依存                           |
+| `unsupported` 表・`projectAssetReason`（非export）                                                   | 実装固有                                     |
 
 ## 決定1: 共有できるのは語彙と形の検証だけで、対応可否の表は共有しない
 
@@ -30,30 +30,49 @@ Issue #45 のDoD 1件目「語彙と変換を共通パッケージへ切り出�
 
 ```ts
 // 共通パッケージが持つもの
-export type Sb3SavePayload = 'extensions' | 'source' | 'assets';
-export type Sb3SaveFormat = 'remote' | 'cached' | 'embedded-file' | 'embedded-data';
+export type Sb3SavePayload = "extensions" | "source" | "assets";
+export type Sb3SaveFormat =
+  "remote" | "cached" | "embedded-file" | "embedded-data";
 export const sb3SavePayloads: readonly Sb3SavePayload[];
 export const sb3SaveFormats: readonly Sb3SaveFormat[];
-export interface Sb3SaveSelection { /* 既存のまま */ }
-export interface Sb3SaveFormatSupport { readonly supported: boolean; readonly reason?: string; }
+export interface Sb3SaveSelection {
+  /* 既存のまま */
+}
+export interface Sb3SaveFormatSupport {
+  readonly supported: boolean;
+  readonly reason?: string;
+}
 
 /** 各実装が自分の対応可否を渡す。拒否には何が足りないかを必ず書かせる。 */
 export interface Sb3SaveCapabilities {
-  readonly format: (payload: Sb3SavePayload, format: Sb3SaveFormat) => Sb3SaveFormatSupport;
+  readonly format: (
+    payload: Sb3SavePayload,
+    format: Sb3SaveFormat,
+  ) => Sb3SaveFormatSupport;
   readonly projectAssets: () => Sb3SaveFormatSupport;
 }
 
 /** 既存の拒否表（`payload:format` → 理由）からcapabilitiesを組み立てる。 */
-export function sb3SaveCapabilities(refusals?: Sb3SaveRefusals): Sb3SaveCapabilities;
+export function sb3SaveCapabilities(
+  refusals?: Sb3SaveRefusals,
+): Sb3SaveCapabilities;
 
 export function sb3SaveFormatSupport(
-  payload: Sb3SavePayload, format: Sb3SaveFormat, capabilities: Sb3SaveCapabilities,
+  payload: Sb3SavePayload,
+  format: Sb3SaveFormat,
+  capabilities: Sb3SaveCapabilities,
 ): Sb3SaveFormatSupport;
 export function sb3SupportedSaveFormats(
-  payload: Sb3SavePayload, capabilities: Sb3SaveCapabilities): readonly Sb3SaveFormat[];
+  payload: Sb3SavePayload,
+  capabilities: Sb3SaveCapabilities,
+): readonly Sb3SaveFormat[];
 export function normalizeSb3SaveSelection(
-  input: unknown, capabilities: Sb3SaveCapabilities): Sb3SaveSelection;
-export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): string;
+  input: unknown,
+  capabilities: Sb3SaveCapabilities,
+): Sb3SaveSelection;
+export function describeSb3SaveFormats(
+  capabilities: Sb3SaveCapabilities,
+): string;
 ```
 
 `assetsAsProjectAssets` の拒否も実装固有（移植元の理由文は `convert-dsl4-assets --to project` を指す）なので、`projectAssets()` として同じ注入に載せる。
@@ -64,12 +83,12 @@ export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): strin
 
 利用者は5箇所になる: 紙芝居AppのCLI（Node）、保存UI（`turbowarp-document-editor`、ブラウザ）、`turbowarp-extension-loader`（extensions変換）、`turbowarp-document-source`（source変換）、アセット所有側（assets変換）。既存パッケージを調べた結果、どれも層が合わない。
 
-| 候補 | 却下の理由 |
-|---|---|
-| `@kubohiroya/turbowarp-document-source` | AppとUIの両方が既に依存しているが、所有するのは**文書**の参照種別。extensionsとassetsは文書ではない。ローダーがこのパッケージへ依存することになり依存方向が逆。`embedded-file` が別の意味で衝突する（決定3）。 |
-| `@kubohiroya/turbowarp-extension-loader` | Manifest の source 形を所有するが拡張専用。document-sourceとアセット所有側がローダーへ依存することになる。 |
-| `@kubohiroya/sb3-toolchain` | SB3の層で、Appは既に依存している。しかしexportはroot1つだけで、`rolldown` / `music-metadata` / `yaml` に依存し `engines.node >= 24`。ブラウザの保存UIから読めない。 |
-| `@kubohiroya/turbowarp-extension-manifest` | 依存なしの契約パッケージだが、名前と目的が拡張manifest専用。 |
+| 候補                                       | 却下の理由                                                                                                                                                                                                     |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@kubohiroya/turbowarp-document-source`    | AppとUIの両方が既に依存しているが、所有するのは**文書**の参照種別。extensionsとassetsは文書ではない。ローダーがこのパッケージへ依存することになり依存方向が逆。`embedded-file` が別の意味で衝突する（決定3）。 |
+| `@kubohiroya/turbowarp-extension-loader`   | Manifest の source 形を所有するが拡張専用。document-sourceとアセット所有側がローダーへ依存することになる。                                                                                                     |
+| `@kubohiroya/sb3-toolchain`                | SB3の層で、Appは既に依存している。しかしexportはroot1つだけで、`rolldown` / `music-metadata` / `yaml` に依存し `engines.node >= 24`。ブラウザの保存UIから読めない。                                            |
+| `@kubohiroya/turbowarp-extension-manifest` | 依存なしの契約パッケージだが、名前と目的が拡張manifest専用。                                                                                                                                                   |
 
 新パッケージ（候補名 `@kubohiroya/turbowarp-sb3-save-format`）は、SB3を保存する境界で3つのpayloadの格納形を言うという実際の層に一致し、5つの利用者すべてから読めて、どれにも依存しない。中身は上記のexportだけで、依存ゼロ・ランタイムなし。
 
@@ -85,15 +104,15 @@ export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): strin
 
 ユーザーの承認により npm へ公開した。公開操作自体は、ワンタイムパスワードを求められるためユーザーが実行した。
 
-| 項目 | 値 |
-|---|---|
-| version | `0.1.0-rc.0` |
-| dist-tag | `latest` と `next` の両方（他の同族パッケージと同じ） |
-| tag | `v0.1.0-rc.0`（`65ba6d2`） |
-| gitHead | `65ba6d26a5e8a7d2f238cfee4a65a13040141dc7` |
+| 項目      | 値                                                                                                |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| version   | `0.1.0-rc.0`                                                                                      |
+| dist-tag  | `latest` と `next` の両方（他の同族パッケージと同じ）                                             |
+| tag       | `v0.1.0-rc.0`（`65ba6d2`）                                                                        |
+| gitHead   | `65ba6d26a5e8a7d2f238cfee4a65a13040141dc7`                                                        |
 | integrity | `sha512-WDAY/FSkaLJgi3RgrVxZjNChXYTcwEXn8jytqwoYDxWzk/JCYb15JY5juilwdsSYgz2xeX04kqCYM1UQdhkH6A==` |
-| license | MPL-2.0 |
-| 同梱 | 8ファイル、展開後 48,549 bytes |
+| license   | MPL-2.0                                                                                           |
+| 同梱      | 8ファイル、展開後 48,549 bytes                                                                    |
 
 公開版の `gitHead` はタグを付けたコミットと一致する。
 
@@ -105,12 +124,12 @@ export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): strin
 
 保存形式の `Sb3SaveFormat` は `location` を細かくしたもので、`representation` とは直交する。
 
-| `Sb3SaveFormat`（`source` payload） | document-source 側 |
-|---|---|
-| `remote-non-cacheable` | `location: https`、SB3にも控えにも何も残さない |
-| `remote-cacheable` | `location: https`、検証済みの控えをブラウザに持ってよい。対応する種別は今はない（[#1112](https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1112)） |
-| `embedded-file` | `location: sb3`、ZIP内のファイル |
-| `embedded-data` | `location: sb3`、`project.json` の中 |
+| `Sb3SaveFormat`（`source` payload） | document-source 側                                                                                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `remote-non-cacheable`              | `location: https`、SB3にも控えにも何も残さない                                                                                                                 |
+| `remote-cacheable`                  | `location: https`、検証済みの控えをブラウザに持ってよい。対応する種別は今はない（[#1112](https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1112)） |
+| `embedded-file`                     | `location: sb3`、ZIP内のファイル                                                                                                                               |
+| `embedded-data`                     | `location: sb3`、`project.json` の中                                                                                                                           |
 
 document-source は `sb3` と `https` を区別するが、`sb3` のバイト列を**どう**格納するかは区別しない。その区別がまさに保存形式の語彙が足すものなので、`DocumentSourceKind` と `Sb3SaveFormat` は別の型のままにし、片方をもう片方のaliasにしない。
 
@@ -122,15 +141,46 @@ document-source は `sb3` と `https` を区別するが、`sb3` のバイト列
 
 公開直後に、紙芝居App の [#1121](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1121)（main `5a4ffcbc`）が4形式を Loader の Manifest の source type と同じ綴りへ揃える破壊的変更を入れた。この文書の表はその新しい名前に更新済み。
 
-| 旧 | 新 |
-|---|---|
-| `remote` | `remote-non-cacheable` |
-| `cached` | `remote-cacheable` |
-| `embedded-file` | `embedded-file` |
-| `embedded-data` | `embedded-data` |
+| 旧              | 新                     |
+| --------------- | ---------------------- |
+| `remote`        | `remote-non-cacheable` |
+| `cached`        | `remote-cacheable`     |
+| `embedded-file` | `embedded-file`        |
+| `embedded-data` | `embedded-data`        |
 
 単なる改名ではない。旧 `cached` はここでは「ZIP内のバイト列＋URL」を意味していたが、1つ上の層では逆（SB3には何もなく、検証済みの控えをブラウザに持つ）を意味していた。自分でバイト列を持つ作品は embedded なので、この名前は誤りだった。`remote-cacheable` は参照だけを格納し、控えを持つかどうかは開く側に委ねる。`remote-non-cacheable` は作者が控えを禁じる形で、控えは「ピン留めしたバイト列を配信しなくなったURL」を控えが尽きるまで隠してしまうため。
 
 共通パッケージは 0.2.0-rc.0 でこれに追従した（`latest` と `next` を同じ版へ向ける）。0.1.0-rc.0 は旧名のままで、利用者はいなかった。紙芝居App 側のアダプターの差し替えは [#1123](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1123)。
 
 この改名そのものが決定1の根拠を補強している。語彙を1つにするのは、層をまたぐ翻訳をなくすためであり、この系統の欠陥はすべて翻訳から来ていた。
+
+## 所有の訂正（2026-11-03）
+
+この文書の上半分には、実態と合わなくなった前提が2つある。どちらも設計の正本（`turbowarp-plus-packages/docs/editor-architecture.ja.md`）を読み直して分かったことなので、ここで置き換える。
+
+### 訂正1: 形式を選ぶ画面は security-dialog の担当
+
+決定2の利用者の一覧に「保存UI（`turbowarp-document-editor`、ブラウザ）」と書いたが、違う。設計は「**一覧の画面はsecurity-dialogの担当です**」と明記しており、security-dialog は「共通の選択画面。実行（拒否・サンドボックスあり・なし）と**4つの形式**を、通常のカスタム拡張とPlus拡張の両方について指定する」とされている。追加するときと開くときで同じ画面を出す。
+
+形式は「**すべて作品の作者が決めます**」で Manifest に記録され、開く人に残る問いは「`remote-cacheable` の控えを自分のブラウザーに残すか」だけである。つまり保存操作のための専用ダイアログという形ではない。
+
+security-dialog `0.7.0` は既に公開済みで、4形式（`LoadingMode`）を持つ。画面が返すのは `ReviewDecisions = Map<string, {execution, loading?}>` で、これを本Editorの結合モジュールが受け取り、ローダーの許可・`declineCaching`・Manifest への記録の3方向へ分配する。接続は #68 で追う。
+
+**結果として、共通パッケージの `./react`（`Sb3SaveFormatDialog`）は security-dialog と重複する。** 語彙を切り出す判断（決定1・決定2）は設計の「層の間に対応表を作らない」という要求と一致しているので変わらないが、ダイアログを同じパッケージに足したのは置き場所を誤った。畳むかどうかは kamishibai-app#1124 で追う。
+
+### 訂正2: 書く処理も共通パッケージへ移った
+
+決定1では「共有できるのは語彙と形の検証だけ」と書いたが、**書く処理も移した**。語彙の唯一の writer が紙芝居App の中にあり、Editor の補助CLIからも同じ実装に届く必要があったため。
+
+- 共通パッケージ `0.4.0-rc.0` が **Node専用サブパス `./writer`** を持つ。root は依存ゼロのまま（`node:crypto` を使うので root には置けない）。
+- 紙芝居App 側は 58行のアダプターになった（kamishibai-app#1126）。残したのは、自分の拡張のうち unsandboxed を要求してよいID、このビルドが書ける範囲（capabilities）、そして `Sb3WriterError` を包み直して診断文を保つことだけ。
+- 対応可否を注入する設計（決定1）はそのまま効いている。writer は `capabilities` を必須オプションで受け取る。
+
+### writer が2つあるのは分担であって重複ではない
+
+|                             | 出所になり得るバイト列          | 置き場所                       |
+| --------------------------- | ------------------------------- | ------------------------------ |
+| Node（既存SB3の一括変換）   | ネットワークだけ                | 共通パッケージ `./writer`      |
+| ブラウザ（保存時の1件ずつ） | 控え（IndexedDB）とネットワーク | ローダー `./project-authoring` |
+
+分かれている理由は型に現れている。ローダー側は `AuthoringPorts = Pick<LoaderPorts, 'fetcher' | 'trustProvider' | 'cache' | 'diagnostics'>` で **cache port を持つ**が、`./writer` は持たない。だからCLIは「作品がどの形式を記録するか」は書けるが、**見る人のブラウザにある控えには関与できない**。`remote-cacheable` を書いた出力を「オフラインで動く」根拠にはできない。この限界はコマンド自身にも言わせた（kamishibai-app#1127）。
