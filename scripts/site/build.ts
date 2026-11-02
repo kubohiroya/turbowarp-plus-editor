@@ -6,16 +6,20 @@ import {fileURLToPath} from 'node:url';
 import {generatePages} from './generate-pages.ts';
 import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
-import {root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency, sha} from './source.ts';
+import {
+    root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency,
+    verifySecurityDependency, sha
+} from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
 import {buildFamilyNotices} from './family-notices.ts';
 
 export async function buildPages(pins = undefined) {
     pins = pins || await readPins();
     const gui = process.env.E2E_GUI_ROOT;
-    const {revision, coreRevision, coreVersion, securityVersion} = await verifyHost(gui, pins);
+    const {revision, coreRevision, coreVersion} = await verifyHost(gui, pins);
     if (pins.documentEditorRepository) await verifyDocumentEditorDependency(root, pins);
     if (pins.loaderRepository) await verifyLoaderDependency(root, pins);
+    const {version: securityVersion} = await verifySecurityDependency(root, pins);
     const siteRevision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim();
     assert.ok(sha(siteRevision), 'Site source must have a full revision');
     const prefix = process.env.ROOT || '/turbowarp-plus-editor/';
@@ -51,10 +55,12 @@ export async function buildPages(pins = undefined) {
         metadata: 'document-editor/build-info.json', source: pins.documentEditorSource || 'git',
         integrity: pins.documentEditorIntegrity};
     assert.equal(documents.packages[0].version, pins.documentEditorVersion);
-    // The GUI install bundles most family packages; this repository's own install supplies the
-    // modules site/plus-integration.js imports.
+    // The GUI install supplies the VM and its own tooling; this repository's install supplies every
+    // family package the site bundles. Its dev entries count: the Loader and the review dialog are
+    // devDependencies here and are bundled all the same, so their licenses have to be recorded.
     info.familyNotices = await buildFamilyNotices(output, [
-        {origin: 'scratch-gui', directory: gui}, {origin: 'turbowarp-plus-editor', directory: root}]);
+        {origin: 'scratch-gui', directory: gui},
+        {origin: 'turbowarp-plus-editor', directory: root, includeDev: true}]);
     await fs.writeFile(path.join(output, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
     console.log(`TurboWarp-Plus-Editor built: GUI ${revision}; core ${coreRevision}; security ${securityVersion}; site ${siteRevision}`);
 }

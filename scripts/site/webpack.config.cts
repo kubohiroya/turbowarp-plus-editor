@@ -37,12 +37,12 @@ config.plugins.push(new (hostRequire('webpack').NormalModuleReplacementPlugin)(
 // the host's tree is the one that mounts. Fail loudly if the copy is missing rather than silently
 // bundling a second one.
 //
-// The other two are shared for the same reason: both sides pass archives and catalog documents
-// across the socket, and the pin in site/source.json is what makes it one version. A second copy
-// would be the same code with its own module state. The Loader is not in this list any more — the
-// GUI does not depend on it at all, so this repository's copy is the only one.
-for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall',
-    '@kubohiroya/turbowarp-extension-security-dialog', '@turbowarp/jszip']) {
+// The other three are shared for the same reason: both sides pass React elements, props and
+// archives across the socket, and the pin in site/source.json is what makes it one version. A
+// second copy would be the same code with its own module state. Neither the Loader nor the review
+// dialog is in this list any more — the GUI depends on neither, so this repository's copies are the
+// only ones.
+for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip']) {
     const copy = path.join(gui, 'node_modules', name);
     if (!fs.existsSync(copy)) throw new Error(`The pinned GUI has no ${name} to resolve against`);
     config.resolve.alias[name] = copy;

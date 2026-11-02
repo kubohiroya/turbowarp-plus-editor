@@ -338,3 +338,30 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 **機能・import・依存・検査の4つが動く。** 4つめを忘れるとCIが落ちるので、そこは安全側に倒れている。
 
 残りは security-dialog（レビューUI）と extension-data-editor（ブロックエディタ）。どちらも「機能を移す → import が消える → 依存が消える → 検査を移す」の順で、機能の側が大きい。
+
+## レビューUIを配信側へ（2026-11-03）
+
+本家は未知の拡張を1つずつ尋ねる。この配信物は全部をまとめて尋ね、それぞれが何かを見せ、その読み込みの間だけ選択を覚えるレビューを持っている——`@kubohiroya/turbowarp-extension-security-dialog` パッケージで、あれは配信物のもの。
+
+**関係する3ファイルはいずれも本家のもの**（`tw-security-manager.jsx`、`vm-manager-hoc.jsx`、`sb-file-uploader-hoc.jsx`）。移さず、足されていた分だけを口へ出した。
+
+| | 改変 |
+| --- | --- |
+| `tw-security-manager.jsx` | +82/-7 → +77/-7 |
+| `sb-file-uploader-hoc.jsx` | +23/-3 → +22/-3 |
+| `vm-manager-hoc.jsx` | +13/-1 → +12/-1 |
+
+**行数はほとんど減らない。この段階で動いたのは所有である。** パッケージ由来のものがフォークから無くなり、依存も外れた（family の3つ目）。口の数が増えても行数が減らない段階はこの先もある。
+
+境界はこう引いた。
+
+- **ホスト** — VMへの差し込み、ダイアログ、そのCSS、「そもそも尋ねる必要がないものの判断」（カタログに載っているものは確認なし）
+- **フォーク** — モーダル、その排他、生存期間、`isTrustedExtension` が既に信頼している拡張、アイコンの出所。`render` には `DialogFrame` としてフォークの `Modal` を渡す
+
+2つのHOCでは、パッケージの `isExtensionSecurityCancelled` を `isPlusPermissionDenied` に統合した。**ホストのレビューが取り消されたことはホストしか判定できない**ので、そこだけ訊く形にした。
+
+### 検査の移動は3つめにしてようやく型になった
+
+文書エディタ・loader・security-dialog と、同じ移動を3回やった。`verifyHost` がホストの manifest / lock / 実体を見ていた分を、`verify〇〇Dependency(directory, pins)` として配信側の install に向ける。`verifyHost` に残るのは GUI 自身の依存（scratch-vm の git 固定、コアの build-info）だけになった。
+
+**依存を外す作業は4つ動く: 機能・import・依存・検査。** 4つめを忘れるとCIが落ちる(#86)ので、気づけるようにはなっている。

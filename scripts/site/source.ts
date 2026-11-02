@@ -96,6 +96,26 @@ export async function verifyDocumentEditorDependency(directory, pins) {
  * The GUI does not depend on the Loader any more — the side that imports it is this repository — so
  * this is pointed at whichever install owns it, the way the document editor's check is.
  */
+export async function verifySecurityDependency(directory, pins) {
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const dependencies = {...manifest.dependencies, ...manifest.devDependencies};
+    const expected = pins.securityRevision ?
+        `github:kubohiroya/turbowarp-extension-security-dialog#${pins.securityRevision}` : pins.securityVersion;
+    assert.equal(dependencies[pins.securityPackage], expected, 'Host must pin the exact security package');
+    if (pins.securityRevision) {
+        const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
+        assert.equal(lock.packages[`node_modules/${pins.securityPackage}`].resolved,
+            `git+ssh://git@github.com/kubohiroya/turbowarp-extension-security-dialog.git#${pins.securityRevision}`,
+            'Installed security source differs from the source pin');
+    }
+    // The package does not export its own package.json either, so read the one beside its entry.
+    const require = createRequire(path.join(directory, 'package.json'));
+    const installed = JSON.parse(await fs.readFile(
+        path.resolve(path.dirname(require.resolve(pins.securityPackage)), '../package.json'), 'utf8'));
+    assert.equal(installed.version, pins.securityVersion, 'Installed security package differs from the source pin');
+    return {version: installed.version};
+}
+
 export async function verifyLoaderDependency(directory, pins) {
     const name = '@kubohiroya/turbowarp-extension-loader';
     const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
@@ -133,18 +153,6 @@ export async function verifyHost(gui, pins) {
     const hostRequire = createRequire(path.join(gui, 'package.json'));
     const {coreRevision, coreVersion} = await verifyInstalledCore(gui, pins);
     const manifest = JSON.parse(await fs.readFile(path.join(gui, 'package.json'), 'utf8'));
-    const securityDependency = pins.securityRevision ?
-        `github:kubohiroya/turbowarp-extension-security-dialog#${pins.securityRevision}` : pins.securityVersion;
-    assert.equal(manifest.dependencies[pins.securityPackage], securityDependency, 'GUI must pin the exact security package');
-    if (pins.securityRevision) {
-        const lock = JSON.parse(await fs.readFile(path.join(gui, 'package-lock.json'), 'utf8'));
-        assert.equal(lock.packages[`node_modules/${pins.securityPackage}`].resolved,
-            `git+ssh://git@github.com/kubohiroya/turbowarp-extension-security-dialog.git#${pins.securityRevision}`,
-            'Installed security source differs from the source pin');
-    }
-    const securityEntry = hostRequire.resolve(pins.securityPackage);
-    const securityManifest = JSON.parse(await fs.readFile(path.resolve(path.dirname(securityEntry), '../package.json'), 'utf8'));
-    assert.equal(securityManifest.version, pins.securityVersion, 'Installed security package differs from the source pin');
     if (pins.loaderRepository) {
         // The VM is still the GUI's own dependency. The Loader is not: `build.ts` checks it against
         // this repository's install, which is the side that imports it.
@@ -155,9 +163,10 @@ export async function verifyHost(gui, pins) {
         assert.equal(lock.packages[`node_modules/${name}`].resolved,
             `git+ssh://git@github.com/${pins.vmRepository}.git#${pins.vmRevision}`, `Lockfile differs for ${name}`);
     }
-    // The document editor is not the GUI's dependency any more: the side that imports it is this
-    // repository, so `build.ts` verifies it against this repository's own manifest and lock.
-    return {revision, coreRevision, coreVersion, securityVersion: securityManifest.version};
+    // Neither the document editor, the Loader nor the review dialog is the GUI's dependency any
+    // more: the side that imports all three is this repository, so `build.ts` verifies them
+    // against this repository's own manifest, lock and installed bytes.
+    return {revision, coreRevision, coreVersion};
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
     const pins = await readPins();

@@ -4,9 +4,11 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {verifyDocumentEditorDependency, verifyHost, verifyLoaderDependency} from '../scripts/site/source.ts';
+import {
+    verifyDocumentEditorDependency, verifyHost, verifyLoaderDependency, verifySecurityDependency
+} from '../scripts/site/source.ts';
 
-test('host verification checks exact npm/Git security sources, and an install\'s document editor', async () => {
+test('an install\'s security package and document editor are checked against the pins', async () => {
     const gui = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-security-source-'));
     const securityPackage = '@kubohiroya/turbowarp-extension-security-dialog';
     const securityRoot = path.join(gui, 'node_modules', securityPackage);
@@ -30,7 +32,8 @@ test('host verification checks exact npm/Git security sources, and an install\'s
         const manifest = {dependencies: {[securityPackage]: pins.securityVersion}};
         const writeManifest = () => writeJSON(path.join(gui, 'package.json'), manifest);
         await writeManifest();
-        assert.equal((await verifyHost(gui, pins)).securityVersion, '0.4.0');
+        // The review dialog is this repository's dependency now, so it is checked per install.
+        assert.equal((await verifySecurityDependency(gui, pins)).version, '0.4.0');
         pins.securityRevision = 'd'.repeat(40);
         manifest.dependencies[securityPackage] = `github:kubohiroya/turbowarp-extension-security-dialog#${pins.securityRevision}`;
         const lock: {packages: Record<string, {resolved?: string; version?: string; integrity?: string;
@@ -39,16 +42,16 @@ test('host verification checks exact npm/Git security sources, and an install\'s
         const writeLock = () => writeJSON(path.join(gui, 'package-lock.json'), lock);
         await writeManifest();
         await writeLock();
-        assert.equal((await verifyHost(gui, pins)).securityVersion, '0.4.0');
+        assert.equal((await verifySecurityDependency(gui, pins)).version, '0.4.0');
         manifest.dependencies[securityPackage] = pins.securityVersion;
         await writeManifest();
-        await assert.rejects(verifyHost(gui, pins), /exact security package/);
+        await assert.rejects(verifySecurityDependency(gui, pins), /exact security package/);
         manifest.dependencies[securityPackage] = `github:kubohiroya/turbowarp-extension-security-dialog#${pins.securityRevision}`;
         await writeManifest();
         lock.packages[`node_modules/${securityPackage}`].resolved =
             `git+ssh://git@github.com/other/security.git#${pins.securityRevision}`;
         await writeLock();
-        await assert.rejects(verifyHost(gui, pins), /security source/);
+        await assert.rejects(verifySecurityDependency(gui, pins), /security source/);
         lock.packages[`node_modules/${securityPackage}`].resolved =
             `git+ssh://git@github.com/kubohiroya/turbowarp-extension-security-dialog.git#${pins.securityRevision}`;
         // The document editor is no longer the GUI's dependency: it is checked against whichever
