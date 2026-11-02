@@ -213,6 +213,16 @@ SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入�
 
 「ガイドを参照」は提供元のWebサイトを別タブで開きます。独立した検証ボタンは置かず、右下の「表示されている形式に変換して検証・保存」で表示中の形式を検証して反映します。ブロック表現を編集中のVSCode操作は、原文へ反映するまで無効になります。原文がJSONの場合、VSCode標準のJSON支援とSchema関連付けを使います。
 
+## 拡張の保存形式を書き換える
+
+保存済みSB3の拡張を、`remote-non-cacheable`・`remote-cacheable`・`embedded-file`・`embedded-data` のいずれかの形式で保存し直す補助CLIです。形式の語彙と書き込み処理は `@kubohiroya/turbowarp-sb3-save-format` の `./writer` を使い、ZIPの読み書きと既定値（確認なしでunsandboxedにする拡張はなし）はこのリポジトリが持ちます。`--extensions` には security-dialog の `ReviewDecision.loading` の値をそのまま渡せます。旧綴り（`embedded`・`remote`・`cached`）は受け付けません。
+
+```bash
+npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format --input in.sb3 --output out.sb3 --extensions embedded-file
+```
+
+`remote-cacheable` は「開く人のブラウザーが検証済みの控えを保持してよい」と記録するだけです。CLIはその控え（IndexedDB）を書くことも読むことも確かめることもできないため、オフラインで動く根拠にはなりません。オフラインで動かすには `embedded-file` か `embedded-data` を選びます。
+
 ## English
 
 TurboWarp-Plus-Editor is an independent editor distribution by Hiroya Kubo. This downstream package builds the pinned `kubohiroya/scratch-gui` fork, verifies its library versions and integration, and deploys it to GitHub Pages. The upstream libraries do not build the GUI.

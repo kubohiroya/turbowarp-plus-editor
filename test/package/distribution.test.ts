@@ -38,7 +38,7 @@ test('the npm archive supports JS consumers, TypeScript declarations and the com
     const entries = new Set<string>(packed.files.map((file: {path: string}) => file.path));
     for (const name of ['README.md', 'README.ja.md', 'dist/src/index.js', 'dist/src/index.d.ts',
         'dist/src/extension-loader.js', 'dist/src/extension-loader.d.ts', 'dist/config/feature-flags.js',
-        'dist/scripts/yaml-editor/cli.js']) assert(entries.has(name), `Missing published file: ${name}`);
+        'dist/scripts/yaml-editor/cli.js', 'dist/scripts/sb3-save-format/cli.js']) assert(entries.has(name), `Missing published file: ${name}`);
     assert(!entries.has('src/index.ts'));
     const packageRoot = path.join(directory, 'node_modules/@kubohiroya/turbowarp-plus-editor');
     await fs.mkdir(packageRoot, {recursive: true});
@@ -88,6 +88,9 @@ test('the npm archive supports JS consumers, TypeScript declarations and the com
     execFileSync(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '--strict',
         '--noEmit', '--module', 'NodeNext', '--target', 'ES2023', '--typeRoots', path.join(root, 'node_modules/@types'),
         path.join(directory, 'consumer.mts')], {cwd: directory, stdio: 'pipe'});
+    // The save-format CLI runs from its compiled form with only the declared dependencies.
+    assert.match(execFileSync(process.execPath, ['--no-experimental-strip-types',
+        path.join(packageRoot, 'dist/scripts/sb3-save-format/cli.js'), '--help'], {cwd: directory, encoding: 'utf8'}), /remote-cacheable only records/u);
     const site = path.join(directory, 'site');
     await fs.mkdir(site);
     await fs.writeFile(path.join(site, 'editor.html'), '<!doctype html><title>Package fixture</title>');

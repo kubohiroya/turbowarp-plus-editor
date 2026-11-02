@@ -7,5 +7,5 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "include": ["src/**/*.ts", "config/**/*.ts", "scripts/yaml-editor/cli.ts", "scripts/yaml-editor/host.ts", "scripts/yaml-editor/schema.ts", "scripts/yaml-editor/vscode.ts"]
+  "include": ["src/**/*.ts", "config/**/*.ts", "scripts/yaml-editor/cli.ts", "scripts/yaml-editor/host.ts", "scripts/yaml-editor/schema.ts", "scripts/yaml-editor/vscode.ts", "scripts/sb3-save-format/cli.ts"]
 }
