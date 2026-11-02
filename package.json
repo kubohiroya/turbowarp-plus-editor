@@ -3,7 +3,7 @@
   "version": "0.2.0-rc.3",
   "description": "TurboWarp-Plus-Editorの配信、ブランド資産、作品を編集するボタン",
   "type": "module",
-  "license": "GPL-3.0-or-later",
+  "license": "(GPL-3.0-or-later AND MPL-2.0)",
   "author": {
     "name": "Hiroya Kubo",
     "email": "hiroya@cuc.ac.jp",
@@ -37,6 +37,7 @@
     "site/source.json",
     "README.md",
     "LICENSE",
+    "LICENSE.MPL-2.0",
     "NOTICE",
     "dist/src",
     "dist/config",

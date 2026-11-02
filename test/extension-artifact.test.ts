@@ -6,6 +6,7 @@ import os from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {readPins, validatePins, root} from '../scripts/site/source.ts';
 import {contentHash} from '../scripts/site/extension-assets.ts';
+import {requiredFamilyPackages} from '../scripts/site/family-notices.ts';
 
 test('production pins reject incomplete or unpinned extension dependency graphs', async () => {
     const pins = await readPins();
@@ -38,8 +39,16 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
             repository: `https://github.com/${pins.guiRepository}`, revision: pins.guiRevision,
             coreRepository: `https://github.com/${pins.coreRepository}`, coreRevision: pins.coreRevision, coreVersion: pins.coreVersion,
             securityPackage: pins.securityPackage, securityVersion: pins.securityVersion, securityRevision: pins.securityRevision,
-            extensionIntegration: integration};
+            extensionIntegration: integration, familyNotices: {index: 'notices/family.json'}};
         const writeInfo = () => fs.writeFile(path.join(directory, 'build-info.json'), JSON.stringify(info));
+        const family = {packages: requiredFamilyPackages.map(name => ({package: name, version: '1.0.0',
+            files: [`notices/${name.split('/').at(-1)}/LICENSE`], source: {repository: 'https://github.com/kubohiroya/example'}}))};
+        for (const entry of family.packages) {
+            await fs.mkdir(path.join(directory, path.dirname(entry.files[0])), {recursive: true});
+            await fs.writeFile(path.join(directory, entry.files[0]), 'license text');
+        }
+        const writeFamily = () => fs.writeFile(path.join(directory, 'notices/family.json'), JSON.stringify(family));
+        await writeFamily();
         const check = () => spawnSync(process.execPath, [path.join(root, 'scripts/site/check-artifact.ts'), directory], {
             env: {...process.env, EXPECTED_REVISION: revision}, encoding: 'utf8'});
         await writeInfo();
@@ -77,5 +86,13 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         integration.loaderSource = 'npm';
         await writeInfo();
         assert.equal(check().status, 0);
+        // Every bundled family package keeps its license text and source in the published notices.
+        const removed = family.packages.shift();
+        await writeFamily();
+        assert.match(check().stderr, /Bundled family package without notices/);
+        family.packages.unshift(removed);
+        await fs.rm(path.join(directory, removed.files[0]));
+        await writeFamily();
+        assert.match(check().stderr, /Missing notice|ENOENT/);
     } finally { await fs.rm(directory, {recursive: true, force: true}); }
 });

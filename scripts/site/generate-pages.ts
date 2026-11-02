@@ -33,6 +33,7 @@ export async function generatePages(output, revision, coreRevision, {siteRevisio
 <footer><a href="https://github.com/kubohiroya/turbowarp-plus-editor" data-text="source">ソースコード</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor#edit-button" data-text="button">編集ボタンの設置方法</a><a href="build-info.json" data-text="build">配信バージョン</a><p class="small">GUI <a href="https://github.com/kubohiroya/scratch-gui/tree/${escape(revision)}">${revision.slice(0,7)}</a> · Site <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/${escape(siteRevision)}">${siteRevision.slice(0,7)}</a></p></footer></div></body></html>`);
     if (licensePath) await fs.copyFile(licensePath,path.join(output,'LICENSE'));
     await fs.copyFile(path.join(root,'NOTICE'),path.join(output,'NOTICE'));
+    await fs.copyFile(path.join(root,'LICENSE.MPL-2.0'),path.join(output,'LICENSE.MPL-2.0'));
     await fs.writeFile(path.join(output,'.nojekyll'),'');
     await fs.writeFile(path.join(output,'build-info.json'),JSON.stringify({
         repository:'https://github.com/kubohiroya/scratch-gui',revision,

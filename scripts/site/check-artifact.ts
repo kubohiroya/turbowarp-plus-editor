@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {readPins, sha} from './source.ts';
 import {contentHash} from './extension-assets.ts';
+import {requiredFamilyPackages} from './family-notices.ts';
 
 const pins = await readPins();
 assert.ok(sha(process.env.EXPECTED_REVISION), 'Full site revision required');
@@ -21,6 +22,15 @@ assert.equal(info.securityVersion, pins.securityVersion);
 assert.equal(info.securityRevision, pins.securityRevision);
 for (const file of ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg', 'assets/edit-button.css']) {
     assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing site file: ${file}`);
+}
+assert.equal(info.familyNotices?.index, 'notices/family.json', 'Missing family package notices');
+const family = JSON.parse(await fs.readFile(path.join(directory, info.familyNotices.index), 'utf8'));
+for (const name of requiredFamilyPackages) {
+    assert.ok(family.packages.some(entry => entry.package === name), `Bundled family package without notices: ${name}`);
+}
+for (const entry of family.packages) {
+    assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
+    for (const file of entry.files) assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing notice: ${file}`);
 }
 if (pins.loaderRepository) {
     const integration = info.extensionIntegration;
