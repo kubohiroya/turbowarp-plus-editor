@@ -55,10 +55,12 @@ export async function buildPages(pins = undefined) {
         metadata: 'document-editor/build-info.json', source: pins.documentEditorSource || 'git',
         integrity: pins.documentEditorIntegrity};
     assert.equal(documents.packages[0].version, pins.documentEditorVersion);
-    // The GUI install bundles most family packages; this repository's own install supplies the
-    // modules site/plus-integration.js imports.
+    // The GUI install supplies the VM and its own tooling; this repository's install supplies every
+    // family package the site bundles. Its dev entries count: the Loader and the review dialog are
+    // devDependencies here and are bundled all the same, so their licenses have to be recorded.
     info.familyNotices = await buildFamilyNotices(output, [
-        {origin: 'scratch-gui', directory: gui}, {origin: 'turbowarp-plus-editor', directory: root}]);
+        {origin: 'scratch-gui', directory: gui},
+        {origin: 'turbowarp-plus-editor', directory: root, includeDev: true}]);
     await fs.writeFile(path.join(output, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
     console.log(`TurboWarp-Plus-Editor built: GUI ${revision}; core ${coreRevision}; security ${securityVersion}; site ${siteRevision}`);
 }

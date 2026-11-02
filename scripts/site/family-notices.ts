@@ -37,12 +37,24 @@ export async function copyNoticeFiles(packageRoot: string, destination: string, 
     return names;
 }
 
-/** The family packages a production install contains, read from its lockfile. */
-export async function installedFamilyPackages(directory: string) {
+/**
+ * The family packages an install contains, read from its lockfile.
+ *
+ * `includeDev` is for this repository's own install. Whether a package reaches the distribution is
+ * decided by webpack, not by npm: the extension Loader and the review dialog are devDependencies
+ * here and are bundled into the site all the same, so skipping dev entries would leave the thing
+ * that is shipped without its license. It over-reports instead — a package used only at build time
+ * is recorded too — which is the safe direction for a licence record.
+ *
+ * The GUI's install keeps the opposite default: there, a devDependency is build tooling that never
+ * ships. An aliased install (`node_modules/<alias>`) is skipped by the scope test either way,
+ * because its directory name is not the package's name.
+ */
+export async function installedFamilyPackages(directory: string, {includeDev = false} = {}) {
     const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
     const found = [];
     for (const [location, entry] of Object.entries<any>(lock.packages || {})) {
-        if (!location || entry.dev) continue;
+        if (!location || (entry.dev && !includeDev)) continue;
         const name = location.slice(location.lastIndexOf('node_modules/') + 'node_modules/'.length);
         if (!isFamilyPackage(name)) continue;
         const packageRoot = path.resolve(directory, entry.link ? entry.resolved : location);
@@ -73,12 +85,13 @@ function sourceOf(name: string, manifest, lock) {
  * Record the license files and source of every family package the given installs bundle in
  * `${output}/notices/`, with `notices/family.json` as the index.
  */
-export async function buildFamilyNotices(output: string, installs: {origin: string; directory: string}[],
+export async function buildFamilyNotices(output: string,
+    installs: {origin: string; directory: string; includeDev?: boolean}[],
     {required = requiredFamilyPackages, warn = message => console.warn(message)} = {}) {
     const noticeRoot = path.join(output, 'notices');
     const packages = new Map();
-    for (const {origin, directory} of installs) {
-        for (const installed of await installedFamilyPackages(directory)) {
+    for (const {origin, directory, includeDev} of installs) {
+        for (const installed of await installedFamilyPackages(directory, {includeDev})) {
             const manifest = JSON.parse(await fs.readFile(path.join(installed.packageRoot, 'package.json'), 'utf8'));
             assert.equal(manifest.name, installed.name, `Unexpected package at ${installed.location}`);
             const key = `${manifest.name}@${manifest.version}`;

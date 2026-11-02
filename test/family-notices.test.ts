@@ -41,6 +41,7 @@ test('the Editor build records the license text and source of every bundled fami
         const output = path.join(directory, 'build');
         await fixture(gui);
         const warnings = [];
+        // No `includeDev`: in the GUI's install a devDependency is build tooling that never ships.
         const built = await buildFamilyNotices(output, [{origin: 'scratch-gui', directory: gui}],
             {warn: message => warnings.push(message)});
         const index = JSON.parse(await fs.readFile(path.join(output, built.index), 'utf8'));
@@ -87,16 +88,23 @@ test('the Editor build fails when a bundled family package would lack its notice
     } finally { await fs.rm(directory, {recursive: true, force: true}); }
 });
 
-test('this repository records the document editor packages it supplies to the Editor', async () => {
+test('this repository records every family package it supplies, dev entries included', async () => {
     const output = await fs.mkdtemp(path.join(os.tmpdir(), 'twpe-family-notices-'));
     try {
-        const built = await buildFamilyNotices(output, [{origin: 'turbowarp-plus-editor', directory: root}], {
-            required: ['@kubohiroya/turbowarp-document-editor', '@kubohiroya/turbowarp-document-data'], warn: () => {}});
+        const built = await buildFamilyNotices(output,
+            [{origin: 'turbowarp-plus-editor', directory: root, includeDev: true}], {
+                required: ['@kubohiroya/turbowarp-document-editor', '@kubohiroya/turbowarp-document-data',
+                    '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog'],
+                warn: () => {}});
         const index = JSON.parse(await fs.readFile(path.join(output, built.index), 'utf8'));
         for (const entry of index.packages) {
             assert.ok(entry.source.npm && entry.source.repository, `Missing source: ${entry.package}`);
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
-        assert.ok(!built.packages.some(name => name.startsWith('@kubohiroya/turbowarp-structured-data@')), 'dev-only packages are not bundled');
+        // The Loader and the review dialog are devDependencies here and are bundled by webpack all
+        // the same, so their licenses must be recorded; the `required` list above is what checks it.
+        // Recording a package that is only used at build time is the accepted cost of that.
+        assert.ok(built.packages.some(name => name.startsWith('@kubohiroya/turbowarp-structured-data@')),
+            'this install records its dev entries too');
     } finally { await fs.rm(output, {recursive: true, force: true}); }
 });
