@@ -43,7 +43,7 @@ export const plusIntegration = () => null;
 // }
 ```
 
-CSS はモジュールではないので、同じ仕組みでは運べない。空の `src/css/tw-plus-integration.css` をフォークに置き、配信側が `NormalModuleReplacementPlugin` で自分のスタイルシートへ差し替える。JSと同じく、置き換えはバンドル構築時に解決される。
+CSS には口を作らない。当初は空のスタイルシートを同じ仕組みで差し替える案だったが、5件の中身を読んで取り消した（下の「CSSに口を作らない理由」）。
 
 ## 23件の割り当て
 
@@ -65,11 +65,11 @@ CSS はモジュールではないので、同じ仕組みでは運べない。�
 | `addons/api.js` | +10 -3 | `addons` |
 | `addons/entry.js` | +9 | `addons` |
 | `addons/hooks.js` | +1 | `addons` |
-| `components/controls/controls.css` | +31 | CSS差し込み口 |
-| `components/library/library.css` | +24 | CSS差し込み口 |
-| `components/modal/modal.css` | +5 -2 | CSS差し込み口 |
-| `components/stage/stage.css` | +1 | CSS差し込み口 |
-| `components/tw-security-manager-modal/data-url.css` | +1 -1 | CSS差し込み口 |
+| `components/controls/controls.css` | +31 | 口にしない。フォーク独自UIの新クラスなので `controls.jsx` と一緒に移す（段階8） |
+| `components/library/library.css` | +24 | 口にしない。同じく新クラスなので library の変更と一緒に移す（段階9） |
+| `components/modal/modal.css` | +5 -2 | **口にしない。** モバイルでoverlayがはみ出すのを直す汎用修正。`modal.jsx` と同じ扱い |
+| `components/stage/stage.css` | +1 | `@import "./preview-reload.css"` の1行は残す。中身の `preview-reload.css` を差し替え対象にする（段階8） |
+| `components/tw-security-manager-modal/data-url.css` | +1 -1 | **口にしない。** textareaの高さを 5rem→10rem にする汎用修正。同上 |
 | `components/modal/modal.jsx` | +3 -2 | **口にしない。** `hideCloseButton` はPlus固有でない汎用prop。本家に出せる形なので、汎用変更として残すか上流へ送る |
 | `components/library/library.jsx` | +27 -10 | **口にしない。** `busy` 中の操作を抑える汎用変更。同上 |
 
@@ -89,7 +89,7 @@ CSS はモジュールではないので、同じ仕組みでは運べない。�
 |---|---|---|
 | 3 | `installExtensionHost` の口（#111）と、配信側の空モジュール差し替え | 済・[PR #57](https://github.com/kubohiroya/turbowarp-plus-editor/pull/57) |
 | 4 | 表の口を一覧で足す: `modals` / `securityModals` / `themeTokens` / `translations` / `registerBlockShapes` / `shouldIgnoreKeyEvent`。いずれも数行で、互いに依存しない | 3 |
-| 5 | CSS差し込み口と、CSS 5件の移送 | 3 |
+| 5 | ~~CSS差し込み口~~ 取り消し。CSSは段階8・9と汎用変更へ振り分けた | — |
 | 6 | `alwaysMountedModals` と `TWDocumentEditor` の移送 | 4 |
 | 7 | `reduceProjectState` と `CANCEL_SECURITY_LOAD` | 4 |
 | 8 | `stageControls` / `cameraControls` と `controls.jsx` 2件・`camera-control/*`・`tw-stage-controls.js`・`tw-camera-controls.js` の移送 | 4 |
@@ -104,3 +104,15 @@ CSS はモジュールではないので、同じ仕組みでは運べない。�
 各段階の期待する結果は「何も変わらない」こと。CIの統合E2E（GUIとpackagerのclone、`prepare-core`、`build:pages`、Playwright）とローダーE2Eが以前と同じに通れば、その口は通っている。口を足しただけで実装を載せていない段階では、フォーク側の実装がそのまま使われるので、動作は定義上変わらない。
 
 本リポジトリ側には、各段階で「まだ何も渡さない」または「この口にこれを渡す」ことを固定する単体テストを置く。段階3の `test/plus-integration.test.ts` がその最初の例。
+
+## CSSに口を作らない理由（2026-11-02 訂正）
+
+当初は空の `src/css/tw-plus-integration.css` を置いて差し替える案を書いたが、5件の差分を読んで取り消した。CSSはCSSモジュールで、クラス名はビルド時にハッシュされる。配信側が渡す全域スタイルシートからは、本家モジュールのクラスを狙えない。
+
+実際の5件は3種類だった。
+
+- `controls.css`(+31) と `library.css`(+24) は、`.extension-control` / `.custom-content` / `.custom-library` / `.extended-tags` といった**新しいクラスの追加**で、同じコンポーネントのフォーク独自JSXが `styles.extensionControl` のように参照している。全域スタイルシートではなく、そのコンポーネントの変更と一緒に移すのが正しい。
+- `stage.css`(+1) は `@import "./preview-reload.css"` の1行だけ。import文はフォークに残り、差し替えの対象になるのは中身の `preview-reload.css`（259行、フォーク独自）。
+- `modal.css`(+5 -2) と `data-url.css`(+1 -1) は Plus固有ではない。前者はモバイルで overlay が viewport からはみ出すのを `width/height: 100vw/100vh` で直すもの、後者は data URL を貼る textarea の高さを 5rem から 10rem にするもの。`modal.jsx` の `hideCloseButton` と `library.jsx` の `busy` と同じ「汎用変更として残すか上流へ送る」扱いにする。
+
+口を作る前に中身を読んだので、使われない仕組みをフォークに足さずに済んだ。残りの段階でも、口を開ける前にその口が運ぶ差分を読む。
