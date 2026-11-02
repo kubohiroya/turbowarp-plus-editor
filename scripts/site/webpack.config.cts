@@ -17,6 +17,15 @@ if (localCatalogFile) {
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog)
 }));
+// Fill the fork's Plus integration socket from this repository. The fork's own module is empty,
+// so a pin without the socket would leave this silently inert: fail instead of building a bundle
+// that looks wired and is not.
+const socket = path.join(gui, 'src', 'lib', 'tw-plus-integration.js');
+if (!fs.existsSync(socket)) throw new Error('The pinned GUI has no Plus integration socket to fill');
+config.plugins.push(new (hostRequire('webpack').NormalModuleReplacementPlugin)(
+    /[\\/]src[\\/]lib[\\/]tw-plus-integration\.js$/,
+    path.join(__dirname, '..', '..', 'site', 'plus-integration.js')
+));
 // Also transpile a local VM source checkout used by integration previews.
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
