@@ -53,11 +53,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .host/scratch-gui/node_modules
-          # The GUI revision and the core pin both decide what ends up in this tree: the install
-          # comes from the revision's lockfile, and prepare-core then replaces the core package
-          # inside it. A key that ignored the core version would restore a tree holding the wrong
-          # one.
-          key: host-modules-${{ runner.os }}-${{ steps.source.outputs.guiRevision }}-${{ steps.source.outputs.coreVersion }}-${{ hashFiles('.host/scratch-gui/package-lock.json') }}
+          # Keyed on the lockfile alone, because that is what decides this tree: the step below
+          # installs it with `npm ci`, which reads nothing else. The GUI revision used to be in the
+          # key as well, and this repository changes that revision in most of its pull requests —
+          # so the key changed while the lockfile had not, every such run missed and paid a two
+          # minute install, and each one left another copy behind (20 of them, 1.45 GiB, in a
+          # repository already at 9.71 GiB of its 10 GiB, where the overflow evicts other caches).
+          #
+          # The core pin is not in the key either: `prepare-core.ts` replaces that package after
+          # this restore, whatever the cache held, and `verifyInstalledCore` then asserts what the
+          # build actually uses. `prepublish.mjs` likewise runs below on a hit, because what it
+          # writes is outside node_modules.
+          #
+          # No `restore-keys`: a fallback hit leaves `cache-hit` false, so `npm ci` runs anyway and
+          # deletes the tree that was just restored — paying for the download to throw it away.
+          key: host-modules-${{ runner.os }}-${{ hashFiles('.host/scratch-gui/package-lock.json') }}
       - name: Install the pinned host dependencies
         working-directory: .host/scratch-gui
         run: |
