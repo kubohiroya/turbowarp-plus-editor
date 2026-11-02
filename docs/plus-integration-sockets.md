@@ -331,6 +331,10 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 
 **ローカルとCIで解決先が変わる設定は、それ自体がバグの温床。** cwd 依存の `path.resolve` と同じ種類の間違いで、どちらも「ビルドは成功するが中身が違う」形で現れる。
 
-### family 依存の2つ目
+### family 依存の2つ目、そして検査の移し忘れ
 
-残りは security-dialog（レビューUI）と extension-data-editor（ブロックエディタ）。どちらも「機能を移す → import が消える → 依存が消える」の順で、機能の側が大きい。
+固定の検証も片側だけになる——はずだったが、**loader の分を移し忘れてCIが落ちた**。`verifyHost` はホストの package.json と lock に loader の固定を要求しており、GUIがその依存を手放した時点で `Host must pin the exact npm loader version: undefined` になる。文書エディタのときと同じ移動（`verifyLoaderDependency(directory, pins)` を配信側の install に向ける）を loader にも適用した。
+
+**機能・import・依存・検査の4つが動く。** 4つめを忘れるとCIが落ちるので、そこは安全側に倒れている。
+
+残りは security-dialog（レビューUI）と extension-data-editor（ブロックエディタ）。どちらも「機能を移す → import が消える → 依存が消える → 検査を移す」の順で、機能の側が大きい。
