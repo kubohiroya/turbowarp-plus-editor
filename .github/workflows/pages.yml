@@ -23,6 +23,7 @@ jobs:
       actions: read
     outputs:
       revision: ${{ steps.identity.outputs.revision }}
+      superseded: ${{ steps.gate.outputs.superseded }}
     steps:
       - name: Select the checked main source
         id: identity
@@ -45,20 +46,24 @@ jobs:
           EXPECTED_REVISION: ${{ steps.identity.outputs.revision }}
         run: node scripts/ci/publication.ts
       - uses: actions/download-artifact@v4
+        if: steps.gate.outputs.superseded != 'true'
         with:
           name: editor-site-${{ steps.identity.outputs.revision }}-${{ steps.gate.outputs.attempt }}
           run-id: ${{ steps.gate.outputs.runId }}
           github-token: ${{ github.token }}
           path: site-artifact
       - name: Verify the artifact source identity
+        if: steps.gate.outputs.superseded != 'true'
         env:
           EXPECTED_REVISION: ${{ steps.identity.outputs.revision }}
         run: node scripts/site/check-artifact.ts site-artifact
       - uses: actions/upload-pages-artifact@v3
+        if: steps.gate.outputs.superseded != 'true'
         with:
           path: site-artifact
   deploy:
     needs: prepare
+    if: needs.prepare.outputs.superseded != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -85,6 +90,7 @@ jobs:
         id: deployment
   verify:
     needs: [prepare, deploy]
+    if: needs.prepare.outputs.superseded != 'true'
     uses: ./.github/workflows/verify.yml
     with:
       revision: ${{ needs.prepare.outputs.revision }}
