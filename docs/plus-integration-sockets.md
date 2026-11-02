@@ -50,7 +50,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 本家ファイル | 行数 | 運ぶ口 |
 |---|---|---|
 | `reducers/modals.js` | +8 | `modals`。`blockEditorModal` の名前と初期値、open/close を名前の一覧から作る |
-| `reducers/project-state.js` | +9 | `reduceProjectState`。`CANCEL_SECURITY_LOAD` の case を口へ出す |
+| `reducers/project-state.js` | +9 | **口にしない。** case が `initialState` / `LoadingState` / `defaultProjectId` を要するのでホストには書けない（下の「段階7を取り消す理由」） |
 | `lib/tw-security-manager-constants.js` | +1 | `securityModals`。`LoadExtensions` を追加する |
 | `lib/themes/gui/light.js` | +4 | `themeTokens.light`。`block-editor-*` の3色 |
 | `lib/themes/gui/dark.js` | +4 | `themeTokens.dark`。同上 |
@@ -91,7 +91,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 4 | 表の口を一覧で足す: `modals` / `securityModals` / `themeTokens` / `translations` / `registerBlockShapes` / `shouldIgnoreKeyEvent`。いずれも数行で、互いに依存しない | 3 |
 | 5 | ~~CSS差し込み口~~ 取り消し。CSSは段階8・9と汎用変更へ振り分けた | — |
 | 6 | `alwaysMountedModals` と `TWDocumentEditor` の移送 | 4 |
-| 7 | `reduceProjectState` と `CANCEL_SECURITY_LOAD` | 4 |
+| 7 | ~~`reduceProjectState`~~ 取り消し。`CANCEL_SECURITY_LOAD` はフォークに残す | — |
 | 8 | `stageControls` / `cameraControls` と `controls.jsx` 2件・`camera-control/*`・`tw-stage-controls.js`・`tw-camera-controls.js` の移送 | 4 |
 | 9 | `extensionLibrary` / `extensionGuiApi` / `addons` | 4 |
 | 10 | 独自34本の残り（registrar・project-loader・authoring・permission-ui・packager ほか）を1本ずつ | 4〜9 |
@@ -116,3 +116,29 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 - `modal.css`(+5 -2) と `data-url.css`(+1 -1) は Plus固有ではない。前者はモバイルで overlay が viewport からはみ出すのを `width/height: 100vw/100vh` で直すもの、後者は data URL を貼る textarea の高さを 5rem から 10rem にするもの。`modal.jsx` の `hideCloseButton` と `library.jsx` の `busy` と同じ「汎用変更として残すか上流へ送る」扱いにする。
 
 口を作る前に中身を読んだので、使われない仕組みをフォークに足さずに済んだ。残りの段階でも、口を開ける前にその口が運ぶ差分を読む。
+
+## 段階7を取り消す理由（2026-11-02）
+
+`reducers/project-state.js` の `CANCEL_SECURITY_LOAD` を口へ出す案も取り消す。case の中身がこれだった。
+
+```js
+case CANCEL_SECURITY_LOAD:
+    return Object.assign({}, initialState, {
+        loadingState: LoadingState.FETCHING_NEW_DEFAULT,
+        projectId: defaultProjectId
+    });
+```
+
+`initialState` も `LoadingState` も `defaultProjectId` もこの reducer の内部で、ホストからは触れない。つまりホストはこの case を書けない。口を開けても渡せるものがない。
+
+唯一の利用者 `lib/tw-extension-security-cancel.js`(35行) も移せない。6つの reducer（project-state / project-title / tw / modals / menus / mode）の action creator を dispatch していて、どれもGUI内部だからだ。呼び出し元は `sb-file-uploader-hoc.jsx` と `vm-manager-hoc.jsx` の2つで、こちらは family を import する改変ファイルなので別の段階で扱う。
+
+そもそも「読み込みを取り消して既定の作品へ戻る」という状態遷移自体に Plus 固有のものはない。Plus 固有なのは**きっかけ**（拡張の読み込みの取消・失敗）だけで、それは上の2つのHOCにある。`modal.jsx` の `hideCloseButton` と同じく、汎用変更として残すか上流へ送る側に分類する。
+
+## 段階1は完了していた（2026-11-02）
+
+`src/containers/tw-custom-extension-modal.jsx` と `src/components/tw-custom-extension-modal/` を本家と比べたところ差分がなかった。カスタム拡張画面の接続外しは済んでいる。
+
+## 取り消した2つの段階から言えること
+
+段階5と段階7は、どちらも「運ぶ対象を読む前に口の形を決めた」ために出てきた取り消しだった。段階8以降では、口を設計する前にその口が運ぶコードと、それがGUI内部の何に触れているかを先に読む。運べない理由はたいてい「GUI内部の値を必要とする」ことに集約される。
