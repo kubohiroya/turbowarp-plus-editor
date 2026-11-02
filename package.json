@@ -69,7 +69,7 @@
     "test:package": "npm run build && node --test test/package/*.test.ts"
   },
   "devDependencies": {
-    "@kubohiroya/turbowarp-document-source": "git+https://github.com/kubohiroya/turbowarp-document-source.git#0e05d816b089d972248c58e2019be906fcc02a59",
+    "@kubohiroya/turbowarp-document-source": "0.1.0-rc.0",
     "@kubohiroya/turbowarp-extension-data-editor": "0.7.0",
     "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",
     "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.0",
@@ -95,5 +95,8 @@
   "bin": {
     "turbowarp-plus-editor-yaml": "dist/scripts/yaml-editor/cli.js"
   },
-  "types": "./dist/src/index.d.ts"
+  "types": "./dist/src/index.d.ts",
+  "overrides": {
+    "@kubohiroya/turbowarp-document-source": "$@kubohiroya/turbowarp-document-source"
+  }
 }

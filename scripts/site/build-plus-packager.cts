@@ -66,8 +66,11 @@ const config = withExtensionLoaderWebpack4({
     // The builder is its own bundle, so the Plus integration socket has to be filled here too.
     // Without it the builder reads no catalog, trusts nothing, and asks permission for extensions
     // the editor loads without asking.
+    //
+    // It gets the builder's own integration, not the editor's: the editor's would pull the document
+    // editor and its packages into this bundle, where nothing needs them.
     plugins: [new webpack.NormalModuleReplacementPlugin(/[\\/]src[\\/]lib[\\/]tw-plus-integration\.js$/,
-        path.resolve('site/plus-integration.js')),
+        path.resolve('site/plus-integration.packager.js')),
         new webpack.DefinePlugin({'process.env.SCAFFOLDING_BUILD_ID': JSON.stringify(buildId),
         '__TW_PLUS_PACKAGER_ASSETS__': JSON.stringify(assets), '__TW_PLUS_EXTENSION_RUNTIME__': JSON.stringify(runtime),
         '__TW_PLUS_LOCAL_CATALOG__': JSON.stringify(localCatalog)}),
