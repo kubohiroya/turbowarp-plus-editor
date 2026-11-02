@@ -100,7 +100,10 @@ test('the GUI modal frames the screen under its own prop names, as one stable co
     assert.equal(element.type, Modal);
     assert.equal(element.props.contentLabel, '拡張機能の確認');
     assert.equal(element.props.onRequestClose, cancel);
-    assert.equal(element.props.className, 'frame');
-    assert.equal(element.props.children.props.className, 'body');
+    // Whatever class names the stylesheet resolves to — a test stub answers with its own — the
+    // frame and its body are the ones `review.css` defines.
+    const {default: styles} = await import('../../site/extension-host/review.css');
+    assert.equal(element.props.className, styles.frame);
+    assert.equal(element.props.children.props.className, styles.body);
     assert.equal(element.props.children.props.children, 'body');
 });
