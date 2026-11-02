@@ -215,6 +215,16 @@ New document persistence, projections, and representation conversion are off by 
 
 **View guide** opens the provider’s website in another tab. There is no separate validation button: **Convert, validate and save the displayed format** validates and applies the displayed format. VSCode actions are disabled while block edits await application to source. JSON source uses VSCode’s standard JSON support and schema associations.
 
+## Rewriting how extensions are saved
+
+A helper CLI saves the extensions of a built SB3 again as `remote-non-cacheable`, `remote-cacheable`, `embedded-file` or `embedded-data`. The vocabulary and the writer come from `@kubohiroya/turbowarp-sb3-save-format` and its `./writer`; reading and writing the ZIP, and the defaults (no extension is requested unsandboxed unless named), stay here. `--extensions` takes the security dialog's `ReviewDecision.loading` as it is; the old spellings `embedded`, `remote` and `cached` are refused.
+
+```bash
+npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format --input in.sb3 --output out.sb3 --extensions embedded-file
+```
+
+`remote-cacheable` only records that the opener's browser may keep a verified copy. The CLI cannot write, read or check that copy (IndexedDB), so it is no reason the saved SB3 runs offline; choose `embedded-file` or `embedded-data` for that.
+
 ## License and author
 
 License: GPL-3.0-or-later, except the edit-button snippet, which is MPL-2.0. See the individual licenses and NOTICE files for the integrated GUI and bundled components.
