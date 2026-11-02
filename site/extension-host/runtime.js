@@ -16,4 +16,8 @@ import * as vmModules from './vm-modules.js';
  * @param {object} [options] What the build embedded: enabled, locale, digests, archive limits.
  * @returns {object} The installed host.
  */
-export const installPlusExtensionHost = (vm, options = {}) => install(vm, {vmModules, ...options});
+export const installPlusExtensionHost = (vm, options = {}) =>
+    // No authoring controller is supplied: a built HTML plays a project, and the library that would
+    // add an extension to one is not in it. That absence is what keeps the controller, and the
+    // packages behind it, out of this bundle.
+    install(vm, {vmModules, ...options});

@@ -1,0 +1,57 @@
+.root {
+    height: 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.root > div:not([hidden]) {
+    height: 100%;
+    min-width: 0;
+}
+
+.root > :global(.twextsec-modal) {
+    height: 100%;
+    max-height: 100%;
+    margin: 0 auto;
+}
+
+.root :global(.twextsec-selection) {
+    height: 100%;
+    min-width: 0;
+}
+
+.root :global(.twextsec-intro) {
+    overflow-wrap: anywhere;
+}
+
+.root :global(.twextsec-selection) input[type="checkbox"] {
+    width: 32px;
+    height: 32px;
+}
+
+@media (max-width: 580px) {
+    .root :global(.twextsec-selection) :global(.twextsec-row-main) {
+        grid-template-columns: minmax(0, 1fr) 44px;
+    }
+}
+
+.message {
+    padding: 1rem;
+    background: white;
+    border-radius: .5rem;
+}
+
+.error {
+    color: #9b2020;
+}
+
+.plus-tag {
+    background: #d8f3ff;
+    color: #16465e;
+}
+
+.plus-tag[aria-pressed="true"] {
+    background: #a5e3ff;
+}

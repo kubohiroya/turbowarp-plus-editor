@@ -2,19 +2,16 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import Zip from '@turbowarp/jszip';
-import {installPlusExtensionHost} from '../../site/extension-host/host.js';
+import {installEditorExtensionHost} from '../../site/extension-host/editor-host.js';
 
 /**
- * What the installed host does with the GUI's authoring controller: it makes one, hands the VM's
- * project lifecycle to it, and restores the project when a candidate turns out to register the
- * wrong ID. The controller's own behaviour is the GUI's suite; this is the pairing.
+ * What the installed host does with the authoring controller: it makes one, hands the VM's project
+ * lifecycle to it, and restores the project when a candidate turns out to register the wrong ID.
+ * The controller's own behaviour is `authoring-controller.test.mjs`; this is the pairing with a
+ * real VM and a real project.
  */
 
-import {guiImport, guiRequire, vmModules} from './pinned-host.mjs';
-
-// The authoring controller stays in the GUI: its extension library reads the controller back
-// through the fork's own map. The host installed from here only makes one and hands it over.
-const {createExtensionAuthoringController} = await guiImport('src/lib/tw-plus-extension-authoring.js');
+import {guiRequire, vmModules} from './pinned-host.mjs';
 
 const require = guiRequire;
 const VM = require('scratch-vm');
@@ -24,10 +21,8 @@ test('real VM authoring preserves the project and restores prior extensions afte
     const vm = new VM();
     vm.attachStorage(new Storage());
     let approvals = 0;
-    // The GUI hands the controller factory over; a built single HTML supplies none and runs
-    // without one, which is why the host only makes one when it is asked to.
-    const host = installPlusExtensionHost(vm, {enabled: true, document: undefined, vmModules,
-        createAuthoring: createExtensionAuthoringController,
+    // The editor's entry is what adds the controller; a built HTML's entry supplies none.
+    const host = installEditorExtensionHost(vm, {enabled: true, document: undefined, vmModules,
         requestApproval: async () => { approvals++; return true; }});
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"></svg>';
     const assetId = createHash('md5').update(svg).digest('hex');

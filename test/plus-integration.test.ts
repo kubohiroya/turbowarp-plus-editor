@@ -127,3 +127,18 @@ test('every attachment is released even when one throws', () => {
     assert.deepEqual(released, ['editor']);
     assert.equal(doc[DOCK], undefined, 'the dock was still removed');
 });
+
+test('this distribution supplies the extension host and the library tab the GUI renders', async () => {
+    const {plusIntegration} = await import('../site/plus-integration.js');
+    const supplied = plusIntegration() as Record<string, unknown>;
+    // The GUI installs loading through this and renders the tab; what either does is decided here,
+    // so a build that supplies neither leaves the editor with upstream's own library.
+    assert.equal(typeof supplied.installExtensionHost, 'function');
+    const tab = supplied.libraryTab as {tag: string; label: string; render: unknown};
+    assert.equal(tab.tag, 'twplus');
+    assert.equal(tab.label, 'TurboWarp Plus');
+    assert.equal(typeof tab.render, 'function');
+    // Nothing is offered when this build says so, and the GUI then adds no tag at all.
+    const {createPlusLibraryTab} = await import('../site/extension-library/tab.js');
+    assert.equal(createPlusLibraryTab({enabled: false}), null);
+});

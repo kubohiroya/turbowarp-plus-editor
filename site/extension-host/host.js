@@ -6,10 +6,11 @@
  * often a fetch is retried, what asks the user, and what counts as already trusted. The GUI keeps
  * none of it — it calls the socket and disposes of what comes back.
  *
- * What still comes from the GUI is what only the GUI has. Marking an error as an extension failure
- * and making an authoring controller arrive as functions, because its project-error paths and its
- * extension library read both back; with neither supplied — a distributed single HTML — the loader
- * runs without them. Whether the loader runs at all, and the archive limits, arrive as values: the
+ * Marking an error as an extension failure arrives as a function from the GUI, because its
+ * project-error paths read that back. The authoring controller arrives as a factory from whoever
+ * installs this — the editor's entry supplies one, a built HTML's does not — which is what keeps it
+ * out of the bundle that does not use it. Whether the loader runs at all, and the archive limits,
+ * arrive as values: the
  * fork's own UI reads the same switch and the same limits, so they are defined in one place there
  * and a built HTML carries them in its bootstrap. The VM modules the registrar needs arrive the
  * same way, from whoever bundled the VM: see `registrar.js` for why they cannot be imported here.
@@ -46,7 +47,7 @@ const digestTrustedCatalog = digests => {
 export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
-    fetchRetry, markLoadFailure, createAuthoring, setAuthoringHost, archiveOptions = {}, vmModules
+    fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost
 } = {}) {
     if (enabled !== true) return Object.freeze({enabled: false, dispose: async () => {}});
     // A single HTML has no catalog to read; its build embeds the digests the catalog listed.
@@ -82,8 +83,9 @@ export function installPlusExtensionHost (vm, {
         diagnostics
     };
     const loader = createExtensionLoader(ports, loaderOptions);
-    // A player built as a single HTML has no library to add an extension from, so a build that
-    // supplies no controller simply runs without one.
+    // A player built as a single HTML has no library to add an extension from, so its entry
+    // supplies no controller: passing the factory in rather than importing it here is what keeps
+    // the controller, and everything it pulls in, out of that bundle.
     const authoring = typeof createAuthoring === 'function' ?
         createAuthoring(vm, {ports, diagnostics, loaderOptions, archiveOptions}) : null;
     let uninstall;
@@ -97,13 +99,13 @@ export function installPlusExtensionHost (vm, {
         trustProvider.revokeAll();
         throw error;
     }
-    if (authoring && typeof setAuthoringHost === 'function') setAuthoringHost(vm, authoring);
+    if (authoring) setAuthoringHost(vm, authoring);
     let disposal;
     return Object.freeze({
         enabled: true, loader, projectIO, authoring,
         dispose () {
             if (!disposal) {
-                if (authoring && typeof setAuthoringHost === 'function') setAuthoringHost(vm, null);
+                if (authoring) setAuthoringHost(vm, null);
                 authoring?.dispose();
                 ui.dispose();
                 trustProvider.revokeAll();
