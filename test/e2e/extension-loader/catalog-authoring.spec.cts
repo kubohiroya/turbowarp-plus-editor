@@ -10,6 +10,10 @@ const Zip = require('@turbowarp/jszip');
 test.use({userAgent: devices['Pixel 7'].userAgent});
 
 const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json';
+// What the review screen calls a choice, and the form the Loader writes for it. The screen offers
+// two; the manifest names four, because the form also says which carrier holds the bytes.
+const SOURCE_FOR_CHOICE = {remote: 'remote-cacheable', embedded: 'embedded-file'};
+
 function fixture(id, execution, distribution) {
     const source = `// Name: ${id}\n// ID: ${id}\n// Version: 1.0.0\n// Unsandboxed: optional\n// License: MIT\n
 (function(Scratch) {
@@ -174,7 +178,8 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         expect(json.turboWarpPlus.extensions).toHaveLength(4);
         for (const spec of specifications) {
             const stored = json.turboWarpPlus.extensions.find(item => item.id === spec.id);
-            expect(stored).toMatchObject({execution: spec.execution, sha256: spec.sha256, source: {type: spec.distribution}});
+            expect(stored).toMatchObject({execution: spec.execution, sha256: spec.sha256,
+                source: {type: SOURCE_FOR_CHOICE[spec.distribution]}});
             if (spec.distribution === 'embedded') {
                 expect(await zip.file(stored.source.path).async('nodebuffer')).toEqual(spec.bytes);
             } else expect(stored.source.url).toBe(spec.url);
