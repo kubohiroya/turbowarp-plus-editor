@@ -11,7 +11,7 @@ Issue #45 のDoD 1件目「語彙と変換を共通パッケージへ切り出�
 | export | 種別 |
 |---|---|
 | `Sb3SavePayload` = `extensions` \| `source` \| `assets` | 語彙 |
-| `Sb3SaveFormat` = `remote` \| `cached` \| `embedded-file` \| `embedded-data` | 語彙 |
+| `Sb3SaveFormat` = `remote-non-cacheable` \| `remote-cacheable` \| `embedded-file` \| `embedded-data` | 語彙 |
 | `sb3SavePayloads` / `sb3SaveFormats` | 語彙 |
 | `Sb3SaveSelection` / `Sb3SaveFormatSupport` | 語彙 |
 | `normalizeSb3SaveSelection` | 形の検証（共通）＋対応可否の拒否（実装固有） |
@@ -22,7 +22,7 @@ Issue #45 のDoD 1件目「語彙と変換を共通パッケージへ切り出�
 
 `unsupported` 表の理由文は紙芝居AppのCLIを指している（`--source` を省く、`build-dsl4 --asset-config`、`convert-dsl4-assets --to project`、`saveProjectSb3DontZip` がVM経由で落とす話）。本Editorの保存UIの対応可否はこれと一致しない。
 
-- `extensions: cached` は拡張ローダー 0.2.0 の `cached` source形で初めて可能になった。配信中は 0.2.1（#44、#46、#48）。
+- `extensions: remote-cacheable` は拡張ローダーの対応する source 形で初めて可能になった。配信中は 0.2.1（#44、#46、#48）。npm の最新は 0.5.0。
 - `source` の形式変換は `@kubohiroya/turbowarp-document-source` が所有する。
 - `assets` の形式変換はアセット所有側（[#1113](https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1113)）。
 
@@ -67,7 +67,7 @@ export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): strin
 | 候補 | 却下の理由 |
 |---|---|
 | `@kubohiroya/turbowarp-document-source` | AppとUIの両方が既に依存しているが、所有するのは**文書**の参照種別。extensionsとassetsは文書ではない。ローダーがこのパッケージへ依存することになり依存方向が逆。`embedded-file` が別の意味で衝突する（決定3）。 |
-| `@kubohiroya/turbowarp-extension-loader` | `cached` source形を所有するが拡張専用。document-sourceとアセット所有側がローダーへ依存することになる。 |
+| `@kubohiroya/turbowarp-extension-loader` | Manifest の source 形を所有するが拡張専用。document-sourceとアセット所有側がローダーへ依存することになる。 |
 | `@kubohiroya/sb3-toolchain` | SB3の層で、Appは既に依存している。しかしexportはroot1つだけで、`rolldown` / `music-metadata` / `yaml` に依存し `engines.node >= 24`。ブラウザの保存UIから読めない。 |
 | `@kubohiroya/turbowarp-extension-manifest` | 依存なしの契約パッケージだが、名前と目的が拡張manifest専用。 |
 
@@ -107,8 +107,8 @@ export function describeSb3SaveFormats(capabilities: Sb3SaveCapabilities): strin
 
 | `Sb3SaveFormat`（`source` payload） | document-source 側 |
 |---|---|
-| `remote` | `location: https`、SB3には何も残さない |
-| `cached` | `location: https` ＋ 検証済みバイト列をSB3に保持。対応する種別は今はない（[#1112](https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1112)） |
+| `remote-non-cacheable` | `location: https`、SB3にも控えにも何も残さない |
+| `remote-cacheable` | `location: https`、検証済みの控えをブラウザに持ってよい。対応する種別は今はない（[#1112](https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1112)） |
 | `embedded-file` | `location: sb3`、ZIP内のファイル |
 | `embedded-data` | `location: sb3`、`project.json` の中 |
 
@@ -117,3 +117,20 @@ document-source は `sb3` と `https` を区別するが、`sb3` のバイト列
 ## 本パッケージでの作業
 
 この決定の記録だけ。保存UIは `@kubohiroya/turbowarp-document-editor`、payloadごとの変換は各所有パッケージに置く方針（Issue #45 の範囲）を変えない。
+
+## 4形式の改名（2026-11-02）
+
+公開直後に、紙芝居App の [#1121](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1121)（main `5a4ffcbc`）が4形式を Loader の Manifest の source type と同じ綴りへ揃える破壊的変更を入れた。この文書の表はその新しい名前に更新済み。
+
+| 旧 | 新 |
+|---|---|
+| `remote` | `remote-non-cacheable` |
+| `cached` | `remote-cacheable` |
+| `embedded-file` | `embedded-file` |
+| `embedded-data` | `embedded-data` |
+
+単なる改名ではない。旧 `cached` はここでは「ZIP内のバイト列＋URL」を意味していたが、1つ上の層では逆（SB3には何もなく、検証済みの控えをブラウザに持つ）を意味していた。自分でバイト列を持つ作品は embedded なので、この名前は誤りだった。`remote-cacheable` は参照だけを格納し、控えを持つかどうかは開く側に委ねる。`remote-non-cacheable` は作者が控えを禁じる形で、控えは「ピン留めしたバイト列を配信しなくなったURL」を控えが尽きるまで隠してしまうため。
+
+共通パッケージは 0.2.0-rc.0 でこれに追従した（`latest` と `next` を同じ版へ向ける）。0.1.0-rc.0 は旧名のままで、利用者はいなかった。紙芝居App 側のアダプターの差し替えは [#1123](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1123)。
+
+この改名そのものが決定1の根拠を補強している。語彙を1つにするのは、層をまたぐ翻訳をなくすためであり、この系統の欠陥はすべて翻訳から来ていた。
