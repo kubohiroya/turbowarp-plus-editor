@@ -204,17 +204,43 @@ test('a transient failure is retried and the panel names the attempt it is on', 
         await expect(retries).toHaveCount(1);
         await expect(retries.first()).toContainText(url);
         await expect(retries.first()).toContainText(/\b2\s*\/\s*\d+/);
-        // Waiting in silence reads as a frozen editor, so the panel has to open itself.
-        await expect(status).toHaveAttribute('open', '');
+        // The panel stays a log. A blocked operation is said in the middle of the screen, where
+        // the approval dialog appears too, so the corner no longer opens itself for it.
+        await expect(status).not.toHaveAttribute('open', '');
+        const waiting = page.getByTestId('twextsec-wait');
+        await expect(waiting).toBeVisible();
+        await expect(waiting).toContainText(url);
+        await expect(waiting).toContainText(/\b2\s*\/\s*\d+/);
+        // Closing would not stop the fetch and stopping it has no rollback, so neither is offered.
+        await expect(waiting.locator('button')).toHaveCount(0);
+        // The dialog carries its own styles because the single-HTML runtime and the packager page
+        // build JavaScript only: 0.5.0 shipped it unstyled here, and the fix is what 0.5.2 adds.
+        // Being visible is not enough — an unstyled box sits in the flow and takes the page with
+        // it, so this checks it actually lands in the middle, above everything.
+        await expect(waiting).toHaveCSS('position', 'fixed');
+        const centred = await waiting.evaluate(element => {
+            const box = element.getBoundingClientRect();
+            return {
+                dx: Math.abs(box.left + box.width / 2 - window.innerWidth / 2),
+                dy: Math.abs(box.top + box.height / 2 - window.innerHeight / 2),
+                styles: document.querySelectorAll('[data-twextsec-wait-style]').length
+            };
+        });
+        expect(centred.dx).toBeLessThan(2);
+        expect(centred.dy).toBeLessThan(2);
+        expect(centred.styles).toBe(1);
     };
     if (process.env.E2E_BASE_URL) {
         // A published run has no GUI checkout and would reject the fixture's own certificate.
         const url = 'https://plus-fixture.invalid/flaky.js';
         let served = 0;
-        await page.route(url, route => route.fulfill(++served === 1 ?
-            {status: 503, headers: {'access-control-allow-origin': '*'}} :
-            {status: 200, body: bytes, headers: {'access-control-allow-origin': '*',
-                'content-type': 'application/javascript'}}));
+        await page.route(url, async route => {
+            if (++served === 1) await new Promise(resolve => setTimeout(resolve, 400));
+            return route.fulfill(served === 1 ?
+                {status: 503, headers: {'access-control-allow-origin': '*'}} :
+                {status: 200, body: bytes, headers: {'access-control-allow-origin': '*',
+                    'content-type': 'application/javascript'}});
+        });
         const loading = load(page, await project({type: 'remote', url}));
         await expectRetryShown(url);
         await allow(page, loading);
@@ -223,7 +249,8 @@ test('a transient failure is retried and the panel names the attempt it is on', 
     }
     const fixture = await createHTTPSFixture(bytes);
     try {
-        fixture.failNext(1);
+        // Answer slowly so the wait outlasts the dialog's own grace period by a clear margin.
+        fixture.failNext(1, {delayMs: 400});
         const url = `${fixture.url}/flaky`;
         const loading = load(page, await project({type: 'remote', url}));
         await expectRetryShown(url);
