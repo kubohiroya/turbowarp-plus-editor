@@ -58,6 +58,10 @@ export async function verifyInstalledCore(gui, pins) {
     assert.equal(info.revision, pins.coreRevision, 'Installed core differs from the source pin');
     return {coreRevision: info.revision, coreVersion: info.version};
 }
+/**
+ * Check one install's document editor against the pins: the manifest, the lockfile and the bytes
+ * that were installed. Only this repository has that dependency now.
+ */
 export async function verifyDocumentEditorDependency(directory, pins) {
     const name = '@kubohiroya/turbowarp-document-editor';
     const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
@@ -133,9 +137,8 @@ export async function verifyHost(gui, pins) {
                 `git+ssh://git@github.com/${repository}.git#${revision}`, `Lockfile differs for ${name}`);
         }
     }
-    if (pins.documentEditorRepository) {
-        await verifyDocumentEditorDependency(gui, pins);
-    }
+    // The document editor is not the GUI's dependency any more: the side that imports it is this
+    // repository, so `build.ts` verifies it against this repository's own manifest and lock.
     return {revision, coreRevision, coreVersion, securityVersion: securityManifest.version};
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

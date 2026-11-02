@@ -14,7 +14,9 @@
  * host that loads a project's extensions, and the library tab that offers them.
  */
 
-import {mountDocumentEditor, readDocumentEditorFlags} from '@kubohiroya/turbowarp-document-editor';
+import {
+    mountDocumentEditor, readDocumentEditorFlags, registerDocumentSourceRootHatShape
+} from '@kubohiroya/turbowarp-document-editor';
 
 import {installEditorExtensionHost} from './extension-host/editor-host.js';
 import {plusLibraryTab} from './extension-library/tab.js';
@@ -37,6 +39,7 @@ const startupFlags = readDocumentEditorFlags(typeof window === 'undefined' ? '' 
 export const createPlusIntegration = ({
     mountEditor,
     flags,
+    registerBlockShapes = registerDocumentSourceRootHatShape,
     stageControls = getStageControls,
     extensionCatalog = plusCatalog,
     trustedExtensions = plusTrustedExtensions,
@@ -67,6 +70,15 @@ export const createPlusIntegration = ({
      * this returns, so the offer, the catalog behind it and the review are all decided here.
      */
     libraryTab,
+    /**
+     * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
+     *
+     * The document editor's root hat is one: the GUI used to register it itself, which meant the
+     * GUI had to depend on the package. It calls this instead, right where it registered it.
+     * @param {object} ScratchBlocks The loaded ScratchBlocks.
+     * @returns {void}
+     */
+    registerBlockShapes,
     /**
      * The addons whose startup has to settle before anything reads what they patched.
      *

@@ -6,6 +6,9 @@ if (!process.env.E2E_GUI_ROOT || !path.isAbsolute(process.env.E2E_GUI_ROOT)) thr
 const gui = process.env.E2E_GUI_ROOT;
 const config = require(path.join(gui, 'webpack.config.js'))[0];
 const hostRequire = createRequire(path.join(gui, 'package.json'));
+// Resolved from this file, not the working directory: the site build runs with the GUI checkout as
+// its cwd, so `path.resolve` here would have reached the GUI's install instead of this one.
+const rootRequire = createRequire(path.join(__dirname, '..', '..', 'package.json'));
 const localCatalogFile = process.env.TW_PLUS_LOCAL_CATALOG_INPUT;
 let localCatalog = null;
 if (localCatalogFile) {
@@ -69,4 +72,9 @@ if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
         options: {babelrc: false, configFile: false,
             presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}});
 }
-module.exports = config;
+// Connect the document editor this repository supplies to the host's babel rule and its own
+// package exports. The pinned GUI applied this helper while it still depended on the package; it
+// no longer does, so the side that imports the package is the side that configures it. The helper
+// resolves against the copy that provides it, which is this repository's install.
+const {withDocumentEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-document-editor/webpack4');
+module.exports = withDocumentEditorWebpack4(config);
