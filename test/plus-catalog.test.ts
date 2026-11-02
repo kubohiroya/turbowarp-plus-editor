@@ -57,9 +57,11 @@ test('the integration ships the catalog, so the GUI can ask for it', () => {
 
 // The builder has no editor chrome, so it is given only the catalog. Supplying the editor's
 // integration there would pull the document editor into a bundle that has no use for it.
-test('the builder is given the catalog and nothing else', async () => {
+test('the builder is given the catalog, what it makes us trust, and nothing else', async () => {
     const {plusIntegration: builder} = await import('../site/plus-integration.packager.js');
     const supplied = builder() as Record<string, unknown>;
-    assert.deepEqual(Object.keys(supplied), ['extensionCatalog']);
+    // Nothing of the editor: its integration would pull the document editor into this bundle.
+    assert.deepEqual(Object.keys(supplied).sort(), ['extensionCatalog', 'trustedExtensions']);
     assert.equal(typeof (supplied.extensionCatalog as {read: unknown}).read, 'function');
+    assert.equal(typeof (supplied.trustedExtensions as {listDigests: unknown}).listDigests, 'function');
 });

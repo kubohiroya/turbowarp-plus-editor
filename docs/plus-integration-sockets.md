@@ -157,3 +157,28 @@ case CANCEL_SECURITY_LOAD:
 ## 取り消した2つの段階から言えること
 
 段階5と段階7は、どちらも「運ぶ対象を読む前に口の形を決めた」ために出てきた取り消しだった。段階8以降では、口を設計する前にその口が運ぶコードと、それがGUI内部の何に触れているかを先に読む。運べない理由はたいてい「GUI内部の値を必要とする」ことに集約される。
+
+## 信頼するカタログを配信側へ移す（2026-11-03）
+
+`src/lib/tw-plus-trusted-extensions.js`（104行）とそのテスト（60行）をフォークから外し、`site/trusted-extensions.js` としてこちらで持つようにした。「このカタログに載っている拡張は、TurboWarp が自分のギャラリーを扱うのと同じく、確認なしで非サンドボックスで動かす」という判断は、**配信物についての言明**であってエディタの機能ではない。誰が配信するかで答えが変わるものは、配信する側が持つ。
+
+フォークに残るのは口が2つだけになった。
+
+```js
+export const hostTrustedCatalog = integration => integration?.trustedExtensions?.catalog || trustsNothing;
+export const hostTrustedDigests = async (manifest, integration) =>
+    (await integration?.trustedExtensions?.listDigests?.(manifest)) || [];
+```
+
+既定は「何も信頼しない」。素のフォークでは全ての拡張がレビュー画面を通るだけで、壊れはしない。利用者3箇所（`containers/tw-security-manager.jsx`、`lib/tw-plus-extension-host.js`、`playground/plus-packager.js`）はこの口を1行で呼ぶ形になった。
+
+### ダイジェストの照合はフォークに残した
+
+当初は `createDigestTrustedCatalog`（単一HTMLが埋め込みダイジェストで信頼を決める部分）も一緒に移し、`forDigests` という3つめの口を開けた。これは**誤りで、テストが落ちて気づいた**。単一HTMLに埋め込まれるランタイムは `scripts/site/build-extension-runtime.cts` が `src/lib/tw-plus-extension-host.js` から作るが、この束だけは差し込み口を差し替えていない（差し替える必要がない: 配信物の中では誰にも訊けない）。だから移した先のホストには訊けず、配信されたHTMLでダイジェスト照合が全て失敗する——つまり受け取った人が毎回レビューを求められる回帰になる。
+
+境界はこう引いた。
+
+- **どのダイジェストを埋め込むか**（カタログに載っているものを選ぶ）= 配信側。`listDigests` の口で訊く。
+- **埋め込まれたダイジェストと実バイト列を照合するか**= フォーク。HTMLは誰にも訊けないので、判断は作った時点でダイジェストとして同梱され、照合だけがフォークで走る。
+
+**訊ける相手がいるかどうかが、口を開けられるかどうかを決める。** 段階7で「GUI内部の値は引数で渡せる」と分かったのと対になる制約で、残りの段階でも、口を開ける前に「その口を呼ぶコードは、どの束に入って誰に訊くのか」を先に確かめる。
