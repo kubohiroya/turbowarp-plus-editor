@@ -8,12 +8,13 @@
  * order, while a replacement is resolved when the bundle is built.
  *
  * Features move across that boundary one at a time. What is here now is the document editor's
- * wiring (the fork's `tw-document-editor.jsx`) and the stage controls an extension registers
- * (its `tw-stage-controls.js`).
+ * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
+ * `tw-stage-controls.js`), and the runtime controls dock those controls are reached through.
  */
 
 import {mountDocumentEditor, readDocumentEditorFlags} from '@kubohiroya/turbowarp-document-editor';
 
+import {installControlsDock} from './controls-dock.js';
 import getStageControls from './stage-controls.js';
 
 // Resolved once when the bundle starts, as the fork did: a project cannot enable document editing
@@ -52,14 +53,35 @@ export const createPlusIntegration = ({mountEditor, flags, stageControls = getSt
      * @returns {object|null} Something to dispose, or null when document editing is off.
      */
     attachToWorkspace: ({vm, locale, document: hostDocument, getBlockly}) => {
-        if (!flags.embeddedYamlEditor) return null;
-        return mountEditor({
-            vm,
-            document: hostDocument,
-            language: locale,
-            documentSources: flags.documentSources,
-            getScratch: () => ({vm, gui: {getBlockly}})
-        });
+        const attached = [];
+        // Say "use the Editor's bar" before any extension asks app-shell for a dock. Without this
+        // app-shell builds a floating one and a control registered through it would hover over the
+        // stage instead of sitting in the bar.
+        attached.push(installControlsDock(hostDocument, stageControls(vm)));
+        if (flags.embeddedYamlEditor) {
+            attached.push(mountEditor({
+                vm,
+                document: hostDocument,
+                language: locale,
+                documentSources: flags.documentSources,
+                getScratch: () => ({vm, gui: {getBlockly}})
+            }));
+        }
+        return {
+            dispose () {
+                // Each attachment is independent, so one that throws must not keep the others
+                // from being released.
+                const failures = [];
+                for (const attachment of attached.reverse()) {
+                    try {
+                        attachment?.dispose?.();
+                    } catch (error) {
+                        failures.push(error);
+                    }
+                }
+                if (failures.length) throw failures[0];
+            }
+        };
     }
 });
 

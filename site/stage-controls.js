@@ -49,8 +49,17 @@ export const createStageControlsService = () => {
             });
         }
     });
+    // What a control shows while it is expanded. The element belongs to whoever registered the
+    // control; this only carries it to the host, which mounts it and nothing more.
+    let panel = null;
     return {
         api,
+        placePanel (element) {
+            if (panel === element) return;
+            panel = element || null;
+            notify();
+        },
+        panel: () => panel,
         snapshot: () => Array.from(entries.values()).map(entry => ({...entry})),
         subscribe (listener) {
             listeners.add(listener);
@@ -58,6 +67,7 @@ export const createStageControlsService = () => {
         },
         clear () {
             entries.clear();
+            panel = null;
             notify();
         }
     };
