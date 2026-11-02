@@ -264,3 +264,33 @@ vmModules: {ScratchCommon, createTranslate, staticFetch, dispatch}
 - `containers/extension-library.jsx`(+44/-2) — タブ1つ分の場所を空ける結線。中身は口の向こうへ出た。
 - `lib/tw-plus-extension-permissions.js`(23行) — レビュー記録の WeakMap。`tw-security-manager.jsx` の `getSandboxMode` が読み戻すので、書く側の2関数をタブへ渡す。
 - `css/extension-security-dialog.css` — 本家の変数でダイアログパッケージを整えるもの。security-manager も読むので、まだこちら。
+
+## 段階11（依存を手放す）: 文書エディタから（2026-11-03）
+
+当初の段階11は「family の4依存をフォークの package.json / lock から外し、検査を配信側の lock を根拠にする」だった。**4つまとめては無理**で、理由は単純: フォークがまだそれらを import している。import を残したまま依存だけ外すと、フォーク自身の `npm ci` とビルドが壊れる。
+
+| 依存 | フォーク側の import 元 | 外せるか |
+| --- | --- | --- |
+| `turbowarp-document-editor` | `src/lib/blocks.js` の1行 | **外した** |
+| `turbowarp-extension-loader` | `lib/tw-plus-packager.js`、`playground/plus-packager.js`、`lib/tw-packager-integration-hoc.jsx` | Packager一式を移してから |
+| `turbowarp-extension-security-dialog` | `containers/tw-security-manager.jsx`、2つのHOC | レビューUIを移してから |
+| `turbowarp-extension-data-editor` | ブロックエディタ一式（7ファイル） | ブロックエディタを移してから |
+
+### 文書エディタ: 1行のためにパッケージ1つ
+
+import は `registerDocumentSourceRootHatShape(ScratchBlocks)` の1行で、**そのすぐ下に `registerHostBlockShapes` の口があった**。段階3で開けた口が、使われずに隣に座っていた。ホストが文書エディタを供給するのだから、その形状を登録するのもホストの仕事。
+
+- フォーク: import 1行、`webpack.config.js` の `withDocumentEditorWebpack4`、依存と lock の53エントリ（865行）が消えた（**+2 / -870**）
+- 配信側: `withDocumentEditorWebpack4` を自分の設定で適用し、`registerBlockShapes` を口へ渡す
+
+**パッケージを import する側が、そのパッケージを設定する側。** webpack ヘルパは自分を提供したコピーを基準に alias を張るので、どちらが適用するかで束に入るコピーが変わる。
+
+### cwd に依存する解決で一度間違えた
+
+`createRequire(path.resolve('package.json'))` と書いたところ、**site のビルドは GUI チェックアウトを cwd にして走る**ため、配信側ではなくフォークの install からヘルパを取ってしまった。ビルドは成功し、バンドルにはフォークのコピーが入る——気づけたのは stats でモジュールの解決先を見たからで、テストでは出ない。`__dirname` 基準に直した。この設定ファイルの他の箇所は元から `__dirname` 基準だった。
+
+### 検査は片側だけになった
+
+`verifyHost` がフォークの manifest と lock を見ていた分（`verifyDocumentEditorDependency`）は消え、配信側が**自分の install に対して同じ検査を続ける**（`build.ts` は以前からそれも呼んでいた）。保証は弱まらず、二重に書いていた方だけが消えた形。
+
+残り3つの依存も同じ順序になる: **機能を移す → import が消える → 依存と検査の片側が消える。** 依存だけを先に外す道はない。
