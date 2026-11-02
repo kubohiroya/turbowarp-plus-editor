@@ -11,8 +11,8 @@
  * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
  * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, the
  * extension catalog this distribution ships, what that catalog makes it trust, the extension
- * host that loads a project's extensions, the library tab that offers them, and where a project
- * that uses them goes to be packaged.
+ * host that loads a project's extensions, the library tab that offers them, where a project that
+ * uses them goes to be packaged, and the review they go through before running.
  */
 
 import {
@@ -20,6 +20,7 @@ import {
 } from '@kubohiroya/turbowarp-document-editor';
 
 import {installEditorExtensionHost} from './extension-host/editor-host.js';
+import {plusSecurityReview} from './extension-host/review.js';
 import {plusLibraryTab} from './extension-library/tab.js';
 import {plusProjectPackager} from './packager/handoff.js';
 
@@ -47,7 +48,8 @@ export const createPlusIntegration = ({
     trustedExtensions = plusTrustedExtensions,
     installExtensionHost = installEditorExtensionHost,
     libraryTab = plusLibraryTab,
-    projectPackager = plusProjectPackager
+    projectPackager = plusProjectPackager,
+    securityReview = plusSecurityReview
 }) => ({
     /**
      * The catalog this distribution ships. Its address, and whether a locally built one replaces
@@ -79,6 +81,12 @@ export const createPlusIntegration = ({
      * produce an HTML without them. The GUI keeps the upstream protocol and asks this first.
      */
     projectPackager,
+    /**
+     * The review a project's extensions go through before any of them runs: what it asks, what it
+     * shows and what needs no asking because this distribution lists it. The GUI keeps its modal,
+     * its lock and the extensions it already trusts, and hands all of that in.
+     */
+    securityReview,
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
      *

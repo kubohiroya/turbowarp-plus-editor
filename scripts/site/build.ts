@@ -6,16 +6,20 @@ import {fileURLToPath} from 'node:url';
 import {generatePages} from './generate-pages.ts';
 import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
-import {root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency, sha} from './source.ts';
+import {
+    root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency,
+    verifySecurityDependency, sha
+} from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
 import {buildFamilyNotices} from './family-notices.ts';
 
 export async function buildPages(pins = undefined) {
     pins = pins || await readPins();
     const gui = process.env.E2E_GUI_ROOT;
-    const {revision, coreRevision, coreVersion, securityVersion} = await verifyHost(gui, pins);
+    const {revision, coreRevision, coreVersion} = await verifyHost(gui, pins);
     if (pins.documentEditorRepository) await verifyDocumentEditorDependency(root, pins);
     if (pins.loaderRepository) await verifyLoaderDependency(root, pins);
+    const {version: securityVersion} = await verifySecurityDependency(root, pins);
     const siteRevision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim();
     assert.ok(sha(siteRevision), 'Site source must have a full revision');
     const prefix = process.env.ROOT || '/turbowarp-plus-editor/';
