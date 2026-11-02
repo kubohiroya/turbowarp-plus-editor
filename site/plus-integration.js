@@ -8,10 +8,13 @@
  * order, while a replacement is resolved when the bundle is built.
  *
  * Features move across that boundary one at a time. What is here now is the document editor's
- * wiring, which the fork used to hold as `tw-document-editor.jsx`.
+ * wiring (the fork's `tw-document-editor.jsx`) and the stage controls an extension registers
+ * (its `tw-stage-controls.js`).
  */
 
 import {mountDocumentEditor, readDocumentEditorFlags} from '@kubohiroya/turbowarp-document-editor';
+
+import getStageControls from './stage-controls.js';
 
 // Resolved once when the bundle starts, as the fork did: a project cannot enable document editing
 // by being opened, and a later URL change cannot turn it on either.
@@ -23,7 +26,15 @@ const startupFlags = readDocumentEditorFlags(typeof window === 'undefined' ? '' 
  * @param {object} dependencies `mountEditor` and `flags`.
  * @returns {object} The integration this distribution supplies.
  */
-export const createPlusIntegration = ({mountEditor, flags}) => ({
+export const createPlusIntegration = ({mountEditor, flags, stageControls = getStageControls}) => ({
+    /**
+     * The stage controls service for one VM. The fork asks for this from both the controls bar and
+     * the `Scratch.gui` API, and both must receive the same service: a control registered through
+     * the API has to appear in the bar. Keeping the per-VM map here is what guarantees that.
+     * @param {object} vm The VM the controls belong to.
+     * @returns {object} The service.
+     */
+    stageControls: vm => stageControls(vm),
     /**
      * Attach the document editor to a workspace. The fork owns when this runs and disposes of
      * what comes back; errors are left to propagate, because the fork logs them and keeping the
