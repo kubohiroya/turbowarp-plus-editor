@@ -52,7 +52,7 @@ export async function readPins() {
 }
 export async function verifyInstalledCore(directory, pins) {
     const require = createRequire(path.join(directory, 'package.json'));
-    // Read fresh bytes: a previous build may have left an older package in place.
+    // Read the bytes instead of importing them, so a second check in one process is not cached.
     const info = JSON.parse(await fs.readFile(require.resolve(`${corePackage}/build-info`), 'utf8'));
     assert.equal(info.version, pins.coreVersion, 'Installed core version differs from the source pin');
     assert.equal(info.revision, pins.coreRevision, 'Installed core differs from the source pin');
