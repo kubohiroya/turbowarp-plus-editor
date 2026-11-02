@@ -1,0 +1,211 @@
+/**
+ * The bridge that puts this loader in front of the VM's project lifecycle.
+ *
+ * Moved from the fork's `src/lib/tw-plus-project-loader.js`. It touches no GUI module: everything
+ * it needs about the VM arrives as `host.vm`, and marking a failure as an extension failure — the
+ * fork's own bookkeeping, read by its project-error paths — arrives as `host.markFailure`.
+ */
+
+const installations = new WeakSet();
+
+const failure = (code, message) => Object.assign(new Error(message), {code});
+
+/**
+ * Stage a GUI bridge around a host with transactional extension registration.
+ * Project decoding, validation, persistence and trust belong to the Loader core.
+ * This is deliberately not installed automatically on an arbitrary Scratch VM.
+ */
+export function installExtensionLoader(host, loader) {
+    const vm = host?.vm;
+    const io = host?.projectIO;
+    if (host?.transactionalRegistration !== true || !vm || !io ||
+        ['loadProject', '_loadExtensions', 'toJSON', '_saveProjectZip', 'saveProjectSb3DontZip']
+            .some(name => typeof vm[name] !== 'function') ||
+        ['prepare', 'restoreJSON', 'restoreFiles', 'restoreArchive'].some(name => typeof io[name] !== 'function') ||
+        !loader || typeof loader.load !== 'function' || typeof loader.unload !== 'function') {
+        throw failure('UNSUPPORTED_HOST', 'A transactional registrar and Loader project codec are required');
+    }
+    if (installations.has(vm)) throw failure('ALREADY_INSTALLED', 'The Loader bridge is already installed');
+
+    const originals = Object.fromEntries(
+        ['loadProject', '_loadExtensions', 'toJSON', '_saveProjectZip', 'saveProjectSb3DontZip']
+            .map(name => [name, vm[name]])
+    );
+    const descriptors = Object.fromEntries(Object.keys(originals).map(name => [name,
+        Object.getOwnPropertyDescriptor(vm, name)]));
+    for (const descriptor of Object.values(descriptors)) {
+        if (descriptor && (!Object.hasOwn(descriptor, 'value') || !descriptor.writable)) {
+            throw failure('UNSUPPORTED_HOST', 'VM lifecycle hooks must be writable data properties');
+        }
+        if (!descriptor && !Object.isExtensible(vm)) {
+            throw failure('UNSUPPORTED_HOST', 'VM lifecycle hooks cannot be installed on this host');
+        }
+    }
+    let disposed = false;
+    let pending = 0;
+    let queue = Promise.resolve();
+    let loading = null;
+    let savedContext = null;
+    let activeController = null;
+    let hasLoaded = false;
+    let drain = null;
+
+    const checkActive = () => {
+        if (disposed) throw failure('LOADER_DISPOSED', 'The Loader bridge was disposed');
+    };
+    const canSave = () => {
+        checkActive();
+        if (pending) throw failure('PROJECT_BUSY', 'Wait for project loading to finish before saving');
+    };
+    const restored = value => {
+        if (value === null || value === undefined || typeof value.then === 'function') {
+            throw failure('INVALID_PROJECT_CODEC', 'Project persistence must return a synchronous result');
+        }
+        return value;
+    };
+    const loadProject = function(input, ...args) {
+        checkActive();
+        if (host.onProjectLoadStart) host.onProjectLoadStart();
+        pending++;
+        const run = async () => {
+            checkActive();
+            const controller = new AbortController();
+            activeController = controller;
+            let touchedHost = false;
+            try {
+                const prepared = await io.prepare(input, {signal: controller.signal});
+                checkActive();
+                if (!prepared || !Object.hasOwn(prepared, 'manifest') || !Object.hasOwn(prepared, 'input')) {
+                    throw failure('INVALID_PROJECT_CODEC', 'The Loader project codec returned no project');
+                }
+                touchedHost = true;
+                savedContext = null;
+                if (hasLoaded) {
+                    await loader.unload();
+                    hasLoaded = false;
+                }
+                checkActive();
+                const context = prepared.context ?? null;
+                if (io.activate) io.activate(context);
+                loading = {manifest: prepared.manifest, signal: controller.signal, loaded: false, registration: null};
+                const result = await originals.loadProject.call(vm, prepared.input, ...args);
+                checkActive();
+                // A VM that never invokes the extension hook cannot load Plus projects.
+                if (prepared.manifest !== null && !loading.loaded) {
+                    throw failure('UNSUPPORTED_HOST', 'The VM did not invoke its extension loading hook');
+                }
+                savedContext = context;
+                return result;
+            } catch (error) {
+                if (typeof host.onDiagnostic === 'function') {
+                    try {
+                        host.onDiagnostic({type: 'project-error', code: error.code || 'LOAD_FAILED',
+                            message: error.message});
+                    } catch (diagnosticError) {
+                        // A presentation failure must not change the loading decision.
+                    }
+                }
+                if (touchedHost) savedContext = null;
+                if (touchedHost && hasLoaded) {
+                    await loader.unload();
+                    hasLoaded = false;
+                }
+                throw error;
+            } finally {
+                loading = null;
+                activeController = null;
+            }
+        };
+        const result = queue.then(run);
+        queue = result.catch(() => {});
+        return result.finally(() => { pending--; });
+    };
+
+    // The GUI reports extension failures instead of treating them as a broken Editor. Marking is
+    // the GUI's bookkeeping, so it is the GUI that hands the marker in; with none, the error still
+    // propagates unchanged and is reported as an ordinary project failure.
+    const markFailure = typeof host.markFailure === 'function' ? host.markFailure : error => error;
+    const extensionStep = async step => {
+        try {
+            return await step();
+        } catch (error) {
+            throw markFailure(error);
+        }
+    };
+    const loadExtensions = async function(ids, urls = new Map(), ...args) {
+        checkActive();
+        if (!loading || loading.manifest === null) {
+            return extensionStep(() => originals._loadExtensions.call(vm, ids, urls, ...args));
+        }
+        const context = loading;
+        const registration = context.registration ??= loader.load(context.manifest, {signal: context.signal});
+        const result = await extensionStep(() => registration);
+        hasLoaded = true;
+        checkActive();
+        if (!result || !Array.isArray(result.ids)) {
+            throw failure('INVALID_LOADER_RESULT', 'The Loader returned no registered extension IDs');
+        }
+        context.loaded = true;
+        const handled = new Set(result.ids);
+        const remaining = [...ids].filter(id => !handled.has(id));
+        const remainingURLs = new Map([...urls].filter(([id]) => !handled.has(id)));
+        return extensionStep(() => originals._loadExtensions.call(vm, remaining, remainingURLs, ...args));
+    };
+    const toJSON = function(...args) {
+        canSave();
+        const json = originals.toJSON.apply(vm, args);
+        // Standalone sprite export must not acquire a whole-project manifest.
+        return savedContext !== null && !args[0] ? restored(io.restoreJSON(json, savedContext)) : json;
+    };
+    const saveZip = function(...args) {
+        canSave();
+        const zip = originals._saveProjectZip.apply(vm, args);
+        return savedContext === null ? zip : restored(io.restoreArchive(zip, savedContext));
+    };
+    const saveFiles = function(...args) {
+        canSave();
+        const files = originals.saveProjectSb3DontZip.apply(vm, args);
+        return savedContext === null ? files : restored(io.restoreFiles(files, savedContext));
+    };
+
+    const wrappers = {loadProject, _loadExtensions: loadExtensions, toJSON,
+        _saveProjectZip: saveZip, saveProjectSb3DontZip: saveFiles};
+    const installed = [];
+    try {
+        for (const [name, wrapper] of Object.entries(wrappers)) {
+            Object.defineProperty(vm, name, descriptors[name] ? {...descriptors[name], value: wrapper} :
+                {value: wrapper, writable: true, configurable: true, enumerable: true});
+            installed.push(name);
+        }
+    } catch (error) {
+        disposed = true;
+        for (const name of installed.reverse()) {
+            if (descriptors[name]) Object.defineProperty(vm, name, descriptors[name]);
+            else delete vm[name];
+        }
+        throw failure('UNSUPPORTED_HOST', `VM lifecycle hook installation failed: ${error.message}`);
+    }
+    installations.add(vm);
+
+    return () => {
+        if (disposed) return drain;
+        disposed = true;
+        activeController?.abort();
+        // Keep the guarded extension hook until in-flight VM loading has ended.
+        drain = queue.then(async () => {
+            // Removing persistence hooks while registrations remain would lose project data.
+            if (hasLoaded) {
+                await loader.unload();
+                hasLoaded = false;
+            }
+            for (const [name, wrapper] of Object.entries(wrappers)) {
+                if (vm[name] === wrapper) {
+                    if (descriptors[name]) Object.defineProperty(vm, name, descriptors[name]);
+                    else delete vm[name];
+                }
+            }
+            installations.delete(vm);
+        });
+        return drain;
+    };
+}

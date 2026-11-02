@@ -182,3 +182,44 @@ export const hostTrustedDigests = async (manifest, integration) =>
 - **埋め込まれたダイジェストと実バイト列を照合するか**= フォーク。HTMLは誰にも訊けないので、判断は作った時点でダイジェストとして同梱され、照合だけがフォークで走る。
 
 **訊ける相手がいるかどうかが、口を開けられるかどうかを決める。** 段階7で「GUI内部の値は引数で渡せる」と分かったのと対になる制約で、残りの段階でも、口を開ける前に「その口を呼ぶコードは、どの束に入って誰に訊くのか」を先に確かめる。
+
+## 拡張ホスト一式を配信側へ移す（2026-11-03）
+
+フォークから出したもの（計830行）と、その先を分けた理由。
+
+| 移したもの | 行数 | 置き場所 |
+| --- | --- | --- |
+| `tw-plus-extension-host.js` の結線 | 114 | `site/extension-host/host.js` |
+| `tw-plus-extension-registrar.js` | 371 | `site/extension-host/registrar.js` |
+| `tw-plus-project-loader.js` | 202 | `site/extension-host/project-loader.js` |
+| `tw-plus-permission-ui.js` | 139 | `site/extension-host/permission-ui.js` |
+
+フォークに残るのは `startupPlusExtensionHost`（口を呼ぶ29行）と `isPlusPermissionDenied`（1行）だけになった。ホストを持たないフォークでは拡張の読み込みそのものが無くなる——本家と同じ挙動で、これが「最小限の差分」の意味するところ。
+
+### 「訊ける相手がいるか」を今回も先に確かめた
+
+[信頼カタログの段階](#信頼するカタログを配信側へ移す2026-11-03)で分かった制約をそのまま適用した。単一HTMLに同梱されるランタイム束は差し込み口を差し替えられないので、**束の作り方を変えた**: `scripts/site/build-extension-runtime.cts` のエントリをフォークの `src/lib/tw-plus-extension-host.js` から配信側の `site/extension-host/runtime.js` へ移した。配信物の中で訊く相手がいないなら、訊かずに済むように作る側を変えればよい。
+
+### VMのモジュールは引数で渡す
+
+`registrar.js` は `central-dispatch` を使う。これは**シングルトン**で、`dispatch.services.runtime !== vm.runtime` という検査が入っている。配信側で `import` すると解決先が別コピーになり、この検査が落ちて全ての拡張登録が失敗しうる。webpackのaliasで1コピーに寄せる手もあるが、**フォークが自分のインスタンスを引数で渡す**形にした。
+
+```js
+vmModules: {ScratchCommon, createTranslate, staticFetch, dispatch}
+```
+
+これで同一性が構造的に保証される。aliasの設定ミスという失敗モードが消え、Nodeのテストでも配信側のモジュールが（scratch-vm抜きで）そのまま読める。段階7の「GUI内部の値は引数で渡せる」と同じ手が、逆向き（ホスト→フォークではなくフォーク→ホスト）に効いた。
+
+共有パッケージについては別の証拠が出た。`@kubohiroya/turbowarp-extension-loader` が2コピーあると `isAuthorizedCode` が「別コピーが発行した許可記録」を拒否する——移したテストがまさにこれで落ちた。site側のwebpackで `react` と同じように1コピーへ寄せ、`@turbowarp/jszip` と security-dialog も揃えた。
+
+### テストはVMのある場所で動かす
+
+移した8ファイル（約1,250行）は配信側の `test/extension-host/` へ移し、`pinned-host.mjs` 経由で pin された `.host/scratch-gui` から VM・DOM・GUI自身のモジュールを取る。CIでは host を用意した直後の段階で `npm run test:extension-host` が走る。**skipはしない**: 黙って何もしないテストは、移行が検証済みに見えてしまう。
+
+フォークに残したものはフォークで試す。`startupPlusExtensionHost` には第3引数として integration を取らせ（`tw-plus-integration-points.js` の他の口と同じ作法）、「何を渡しているか」を `test/unit/plus/extension-host.test.mjs` で確かめる。
+
+### 残した理由
+
+- `tw-plus-extension-authoring.js`(162行) — 拡張ライブラリのUIが `getExtensionAuthoringHost` で読み戻す。作るのは配信側、持つのはフォーク。
+- `tw-plus-extension-load-failure.js`(45行) — 2つのHOCと取消経路が読む。印を付ける関数を口に渡す。
+- `src/config/` の2つ(14行) — `tw-packager-integration-hoc.jsx` と `feature-flags.js` が同じ値を読む。定義を1つに保つため、フォークが値を渡す側に回った（単一HTMLへはbootstrapが運ぶ）。

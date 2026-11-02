@@ -77,6 +77,13 @@ jobs:
           npm run test:document-editor
           npm run test:block-editor
           npm run test:plus-extension-loader
+      # The extension host is supplied from here, but what it installs on is the pinned GUI's VM,
+      # and the registration it drives must use that VM's own modules. So these run against the
+      # checkout above rather than this repository's dependencies, and only once it is prepared.
+      - name: Verify the extension host against the prepared VM
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+        run: npm run test:extension-host
       - name: Build TurboWarp-Plus-Editor
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui

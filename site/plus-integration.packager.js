@@ -11,10 +11,17 @@
  * the two separate is what keeps the builder's bundle about building.
  */
 
+import {createPlusPermissionUI} from './extension-host/permission-ui.js';
 import {plusCatalog} from './plus-catalog.js';
 import {plusTrustedExtensions} from './trusted-extensions.js';
 
-const integration = {extensionCatalog: plusCatalog, trustedExtensions: plusTrustedExtensions};
+const integration = {
+    extensionCatalog: plusCatalog,
+    trustedExtensions: plusTrustedExtensions,
+    // The builder verifies and approves extensions too, and what it shows while doing so is this
+    // distribution's, exactly as in the editor.
+    createPermissionUI: (document, locale) => createPlusPermissionUI(document, locale)
+};
 
 /**
  * This distribution's integration for the builder.
