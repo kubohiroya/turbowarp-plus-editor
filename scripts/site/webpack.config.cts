@@ -26,6 +26,18 @@ config.plugins.push(new (hostRequire('webpack').NormalModuleReplacementPlugin)(
     /[\\/]src[\\/]lib[\\/]tw-plus-integration\.js$/,
     path.join(__dirname, '..', '..', 'site', 'plus-integration.js')
 ));
+// Resolve React to the host's copy, once.
+//
+// A module this repository supplies is resolved from here, so `react` would come from this
+// repository's node_modules: React 18 against the host's 16 at the time of writing. Two copies in
+// one bundle break what they are for — hooks throw and context does not cross between them — and
+// the host's tree is the one that mounts. Fail loudly if the copy is missing rather than silently
+// bundling a second one.
+for (const name of ['react', 'react-dom']) {
+    const copy = path.join(gui, 'node_modules', name);
+    if (!fs.existsSync(copy)) throw new Error(`The pinned GUI has no ${name} to resolve against`);
+    config.resolve.alias[name] = copy;
+}
 // Also transpile a local VM source checkout used by integration previews.
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
