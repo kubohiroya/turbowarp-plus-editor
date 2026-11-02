@@ -10,10 +10,13 @@
  * Features move across that boundary one at a time. What is here now is the document editor's
  * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
  * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, the
- * extension catalog this distribution ships, and what that catalog makes it trust.
+ * extension catalog this distribution ships, what that catalog makes it trust, and the extension
+ * host that loads a project's extensions.
  */
 
 import {mountDocumentEditor, readDocumentEditorFlags} from '@kubohiroya/turbowarp-document-editor';
+
+import {installPlusExtensionHost} from './extension-host/host.js';
 
 import {installControlsDock} from './controls-dock.js';
 import {plusCatalog} from './plus-catalog.js';
@@ -35,7 +38,8 @@ export const createPlusIntegration = ({
     flags,
     stageControls = getStageControls,
     extensionCatalog = plusCatalog,
-    trustedExtensions = plusTrustedExtensions
+    trustedExtensions = plusTrustedExtensions,
+    installExtensionHost = installPlusExtensionHost
 }) => ({
     /**
      * The catalog this distribution ships. Its address, and whether a locally built one replaces
@@ -48,6 +52,13 @@ export const createPlusIntegration = ({
      * extensions are trusted that way is a decision about the distribution, so it is made here.
      */
     trustedExtensions,
+    /**
+     * Install extension loading for one VM: which Loader packages, which cache, how a fetch is
+     * retried, what asks the user. The GUI passes in what only it has — its own VM modules, the
+     * switch, the archive limits, how a failure is marked and how an authoring controller is made
+     * — and disposes of what comes back.
+     */
+    installExtensionHost,
     /**
      * The addons whose startup has to settle before anything reads what they patched.
      *
