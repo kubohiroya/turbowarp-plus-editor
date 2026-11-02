@@ -12,10 +12,17 @@
  * uses the pinned GUI's babel, as the real build does.
  */
 
-import {registerHooks} from 'node:module';
+import fs from 'node:fs';
+import {createRequire, registerHooks} from 'node:module';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 
 const stub = {
-    '.css': 'export default new Proxy({}, {get: (object, key) => (key === "__esModule" ? false : String(key))});',
+    // An empty map, not a Proxy answering every name: a stylesheet that claims to have every
+    // class makes `styles.anything` truthy, and code that branches on one then takes a path it
+    // never takes in a browser. A test that needs to see which class was asked for uses the
+    // require-hook harness instead.
+    '.css': 'export default {};',
     '.svg': 'export default import.meta.url;',
     '.png': 'export default import.meta.url;',
     '.jsx': 'export default function TestPlaceholderView () { return null; }'
@@ -25,7 +32,26 @@ const extensionOf = url => {
     return index === -1 ? '' : url.slice(index).toLowerCase();
 };
 
+// The packages both sides share, resolved to the pinned GUI's copies — the same thing the site
+// build's aliases do. Without this, a package that imports React would load this repository's own
+// React 18 beside the GUI's 16, and a dialog rendered through both breaks in ways that have nothing
+// to do with what is being tested.
+const configured = process.env.E2E_GUI_ROOT;
+const fallback = path.resolve('.host/scratch-gui');
+const guiRoot = configured && path.isAbsolute(configured) ? configured :
+    fs.existsSync(path.join(fallback, 'package.json')) ? fallback : null;
+const guiRequire = guiRoot ? createRequire(path.join(guiRoot, 'package.json')) : null;
+const shared = /^(?:react|react-dom|prop-types|lodash\.bindall)(?:\/.*)?$/u;
+
 registerHooks({
+    resolve (specifier, context, nextResolve) {
+        if (!guiRequire || !shared.test(specifier)) return nextResolve(specifier, context);
+        try {
+            return {url: pathToFileURL(guiRequire.resolve(specifier)).href, shortCircuit: true};
+        } catch {
+            return nextResolve(specifier, context);
+        }
+    },
     load (url, context, nextLoad) {
         const source = Object.hasOwn(stub, extensionOf(url)) ? stub[extensionOf(url)] : null;
         return source === null ? nextLoad(url, context) : {format: 'module', shortCircuit: true, source};
