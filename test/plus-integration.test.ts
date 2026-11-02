@@ -3,6 +3,15 @@ import test from 'node:test';
 
 import {createPlusIntegration, plusIntegration} from '../site/plus-integration.js';
 
+const service = () => ({
+    api: {},
+    placePanel: () => {},
+    panel: () => null,
+    snapshot: () => [],
+    subscribe: () => () => {},
+    clear: () => {}
+});
+
 const fixture = (flags: {embeddedYamlEditor: boolean; documentSources?: boolean}) => {
     const mounted: Record<string, unknown>[] = [];
     const disposals: string[] = [];
@@ -10,25 +19,34 @@ const fixture = (flags: {embeddedYamlEditor: boolean; documentSources?: boolean}
         flags,
         mountEditor: (options: Record<string, unknown>) => {
             mounted.push(options);
-            return {dispose: () => disposals.push('dispose')};
-        }
+            return {dispose: () => disposals.push('editor')};
+        },
+        stageControls: () => service()
     });
     return {integration, mounted, disposals};
 };
 
-const context = (vm: object = {}) => ({
+const DOCK = Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1');
+const hostDocument = () => ({} as unknown as Document & Record<symbol, unknown>);
+
+const context = (vm: object = {}, doc = hostDocument()) => ({
     vm,
     locale: 'ja',
-    document: {} as unknown as Document,
+    document: doc as unknown as Document,
     getBlockly: async () => ({blockly: true})
 });
 
 // The flag is read once when the bundle starts, so a project cannot enable document editing by
-// being opened. With it off nothing is mounted and there is nothing to dispose.
+// being opened. With it off nothing is mounted, but the dock is still installed: an extension's
+// control belongs in the Editor's bar whether or not document editing is on.
 test('document editing stays off unless the startup flag enabled it', () => {
     const {integration, mounted} = fixture({embeddedYamlEditor: false});
-    assert.equal(integration.attachToWorkspace(context()), null);
+    const doc = hostDocument();
+    const attachment = integration.attachToWorkspace(context({}, doc));
     assert.deepEqual(mounted, []);
+    assert.equal(typeof doc[DOCK], 'object');
+    attachment.dispose();
+    assert.equal(doc[DOCK], undefined);
 });
 
 test('the editor is mounted with the VM, the locale and the document the fork passed', async () => {
@@ -43,7 +61,7 @@ test('the editor is mounted with the VM, the locale and the document the fork pa
     assert.equal(getScratch().vm, vm);
     assert.deepEqual(await getScratch().gui.getBlockly(), {blockly: true});
     attachment!.dispose();
-    assert.deepEqual(disposals, ['dispose']);
+    assert.deepEqual(disposals, ['editor']);
 });
 
 test('the source data forms follow their own flag', () => {
@@ -65,4 +83,47 @@ test('this distribution names the addon whose startup the block editor depends o
     assert.deepEqual(plusIntegration().awaitStartupAddons, ['editor-searchable-dropdowns']);
     const built = createPlusIntegration({flags: {embeddedYamlEditor: false}, mountEditor: () => ({dispose () {}})});
     assert.deepEqual(built.awaitStartupAddons, ['editor-searchable-dropdowns']);
+});
+
+// app-shell shares one dock per document. The Editor says "use mine" before any extension asks,
+// and must leave an existing one alone rather than stranding the controls already on it.
+test('the dock is installed for the document and removed again on dispose', () => {
+    const {integration} = fixture({embeddedYamlEditor: false});
+    const doc = hostDocument();
+    const attachment = integration.attachToWorkspace(context({}, doc));
+    const dock = doc[DOCK] as {stageControls: unknown; placePanel: unknown; subscribe: unknown};
+    assert.equal(typeof dock.placePanel, 'function');
+    assert.equal(typeof dock.subscribe, 'function');
+    assert.ok(dock.stageControls);
+    attachment.dispose();
+    assert.equal(doc[DOCK], undefined);
+});
+
+test('a dock already on the document is left as it is', () => {
+    const {integration} = fixture({embeddedYamlEditor: false});
+    const doc = hostDocument();
+    const existing = {marker: true};
+    doc[DOCK] = existing;
+    const attachment = integration.attachToWorkspace(context({}, doc));
+    assert.equal(doc[DOCK], existing);
+    attachment.dispose();
+    assert.equal(doc[DOCK], existing, 'disposing must not remove a dock it did not install');
+});
+
+// One attachment failing must not keep the others from being released.
+test('every attachment is released even when one throws', () => {
+    const released: string[] = [];
+    const integration = createPlusIntegration({
+        flags: {embeddedYamlEditor: true, documentSources: true},
+        mountEditor: () => ({dispose () {
+            released.push('editor');
+            throw new Error('editor dispose failed');
+        }}),
+        stageControls: () => service()
+    });
+    const doc = hostDocument();
+    const attachment = integration.attachToWorkspace(context({}, doc));
+    assert.throws(() => attachment.dispose(), /editor dispose failed/);
+    assert.deepEqual(released, ['editor']);
+    assert.equal(doc[DOCK], undefined, 'the dock was still removed');
 });
