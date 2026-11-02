@@ -221,7 +221,11 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 
 ## ライセンス・製作者
 
-ライセンス: GPL-3.0-or-later。統合GUIと同梱物については各ライセンス・NOTICEも参照してください。
+ライセンス: GPL-3.0-or-later。ただし、編集ボタンのスニペットだけはMPL-2.0です。統合GUIと同梱物については各ライセンス・NOTICEも参照してください。
+
+- MPL-2.0の範囲は、EditorのURLと編集ボタンのHTMLを作る`src/index.ts`（`createEditorURL`・`renderEditButton`と定数。npmでは`dist/src/index.js`と`dist/src/index.d.ts`）と、編集ボタンのCSS（`assets/edit-button.css`）です。各ファイルに`SPDX-License-Identifier: MPL-2.0`を書いています。全文は[`LICENSE.MPL-2.0`](LICENSE.MPL-2.0)です。他のサイトのJavaScriptから読み込んでも、GPL-3.0の義務はかかりません。
+- アイコン（`assets/icon.svg`）、拡張ローダーの起動API（`./extension-loader`）、YAML編集のコマンドなど、ほかの部分はGPL-3.0-or-laterです。全文は[`LICENSE`](LICENSE)です。
+- Pagesで配信するEditorはGPL-3.0の作品です。同梱するturbowarp-plus familyのパッケージのライセンス文とソースの入手先（npmとGitHub）を、配信物の`notices/`に記録しています（一覧は`notices/family.json`）。
 
 製作者: [Hiroya Kubo](https://github.com/kubohiroya)
 

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {copyNoticeFiles} from './family-notices.ts';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -25,16 +26,12 @@ export async function buildDocumentEditorMetadata(output, prefix = '/turbowarp-p
     ]);
     const destination = path.join(output, 'document-editor');
     const noticeRoot = path.join(destination, 'notices');
-    await fs.mkdir(noticeRoot, {recursive: true});
     const notices = [];
     for (const owner of packages) {
         const label = owner.metadata.package.split('/').at(-1);
-        for (const name of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md']) {
-            try {
-                await fs.copyFile(path.join(owner.packageRoot, name), path.join(noticeRoot, `${label}-${name}`));
-                notices.push(`notices/${label}-${name}`);
-            } catch (error) { if (error.code !== 'ENOENT' || name === 'LICENSE') throw error; }
-        }
+        const names = await copyNoticeFiles(owner.packageRoot, noticeRoot, `${label}-`);
+        if (!names.includes('LICENSE')) throw new Error(`${owner.metadata.package} ships no LICENSE`);
+        notices.push(...names.map(name => `notices/${label}-${name}`));
     }
     const metadata = {mountOwner: 'scratch-gui', packages: packages.map(owner => owner.metadata), notices};
     await fs.writeFile(path.join(destination, 'build-info.json'), JSON.stringify(metadata, null, 2) + '\n');

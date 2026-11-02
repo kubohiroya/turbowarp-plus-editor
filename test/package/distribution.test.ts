@@ -8,6 +8,27 @@ import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+const mplHeader = /^(?:\/\/|\/\*) SPDX-License-Identifier: MPL-2\.0\b/u;
+// The edit-button snippet that other sites may load under MPL-2.0 alone (license rule 6).
+const snippetFiles = {source: ['src/index.ts', 'assets/edit-button.css'], published: ['dist/src/index.js', 'assets/edit-button.css']};
+
+test('the MPL-2.0 snippet carries its identifier and imports nothing from the GPL files', async () => {
+    const seen = new Set<string>();
+    async function visit(relative: string) {
+        if (seen.has(relative)) return;
+        seen.add(relative);
+        const text = await fs.readFile(path.join(root, relative), 'utf8');
+        assert.match(text, mplHeader, `${relative} is imported by the snippet but is not MPL-2.0`);
+        const specifiers = [...text.matchAll(/(?:\bimport\b[^'"]*?\bfrom\s*|\bexport\b[^'"]*?\bfrom\s*|\bimport\s*\(?\s*|@import\s+(?:url\()?)['"]([^'"]+)['"]/gu)]
+            .map(match => match[1]);
+        for (const specifier of specifiers) {
+            // A bare specifier would pull in another package, whose license this package cannot change.
+            assert.match(specifier, /^\.{1,2}\//u, `${relative} imports ${specifier} outside the snippet`);
+            await visit(path.relative(root, path.resolve(path.dirname(path.join(root, relative)), specifier)));
+        }
+    }
+    for (const name of snippetFiles.source) await visit(name);
+});
 
 test('the npm archive supports JS consumers, TypeScript declarations and the compiled CLI', {timeout: 30_000}, async t => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twpe-package-'));
@@ -22,6 +43,17 @@ test('the npm archive supports JS consumers, TypeScript declarations and the com
     const packageRoot = path.join(directory, 'node_modules/@kubohiroya/turbowarp-plus-editor');
     await fs.mkdir(packageRoot, {recursive: true});
     execFileSync('tar', ['-xzf', path.join(directory, packed.filename), '-C', packageRoot, '--strip-components=1']);
+    // The snippet is MPL-2.0 inside a GPL-3.0-or-later package, and both license texts ship with it.
+    assert.equal(JSON.parse(await fs.readFile(path.join(packageRoot, 'package.json'), 'utf8')).license,
+        '(GPL-3.0-or-later AND MPL-2.0)');
+    assert.match(await fs.readFile(path.join(packageRoot, 'LICENSE'), 'utf8'), /GNU GENERAL PUBLIC LICENSE\s+Version 3/u);
+    assert.match(await fs.readFile(path.join(packageRoot, 'LICENSE.MPL-2.0'), 'utf8'), /^Mozilla Public License Version 2\.0/u);
+    for (const name of snippetFiles.published) {
+        assert.match(await fs.readFile(path.join(packageRoot, name), 'utf8'), mplHeader, `${name} lacks the MPL-2.0 identifier`);
+    }
+    for (const name of ['dist/src/extension-loader.js', 'dist/scripts/yaml-editor/cli.js']) {
+        assert.doesNotMatch(await fs.readFile(path.join(packageRoot, name), 'utf8'), /SPDX-License-Identifier: MPL-2\.0/u);
+    }
     // Supply the package's declared runtime dependencies from the pinned installation.
     const manifest = JSON.parse(await fs.readFile(path.join(packageRoot, 'package.json'), 'utf8'));
     for (const name of Object.keys(manifest.dependencies || {})) {

@@ -1,7 +1,12 @@
 TurboWarp-Plus-Editor is an independent distribution by Hiroya Kubo.
+The package is licensed under GPL-3.0-or-later, except the edit-button snippet
+(src/index.ts and its compiled output, and assets/edit-button.css), which is
+licensed under MPL-2.0. See LICENSE and LICENSE.MPL-2.0.
 The original TurboWarp Plus SVG brand is adapted from kubohiroya/turbowarp-plus-packages.
 The blue colored-pencil variation identifies the TurboWarp-Plus-Editor editing action.
 Integrated GUI builds include kubohiroya/scratch-gui and its third-party notices.
+They also bundle turbowarp-plus family packages (MPL-2.0 unless stated otherwise) and the
+kubohiroya/scratch-vm fork (MPL-2.0); notices/family.json lists each one's license files and source.
 Library names identify independently licensed components; their licenses remain applicable.
 
 The optional embedded-YAML editor uses the independent turbowarp-embedded-yaml package (MPL-2.0).

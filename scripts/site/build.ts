@@ -8,6 +8,7 @@ import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
 import {root, readPins, verifyHost, verifyDocumentEditorDependency, sha} from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
+import {buildFamilyNotices} from './family-notices.ts';
 
 export async function buildPages(pins = undefined) {
     pins = pins || await readPins();
@@ -49,6 +50,10 @@ export async function buildPages(pins = undefined) {
         metadata: 'document-editor/build-info.json', source: pins.documentEditorSource || 'git',
         integrity: pins.documentEditorIntegrity};
     assert.equal(documents.packages[0].version, pins.documentEditorVersion);
+    // The GUI install bundles most family packages; this repository's own install supplies the
+    // modules site/plus-integration.js imports.
+    info.familyNotices = await buildFamilyNotices(output, [
+        {origin: 'scratch-gui', directory: gui}, {origin: 'turbowarp-plus-editor', directory: root}]);
     await fs.writeFile(path.join(output, 'build-info.json'), `${JSON.stringify(info, null, 2)}\n`);
     console.log(`TurboWarp-Plus-Editor built: GUI ${revision}; core ${coreRevision}; security ${securityVersion}; site ${siteRevision}`);
 }

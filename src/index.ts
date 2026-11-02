@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
+// the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// The edit-button snippet: the rest of this package is GPL-3.0-or-later. Keep this file free of
+// imports from the package's GPL files so other sites can use it under the MPL alone.
+
 export const editorBaseURL = 'https://kubohiroya.github.io/turbowarp-plus-editor/';
 export const iconURL = `${editorBaseURL}assets/icon.svg`;
 export const buttonStylesheetURL = `${editorBaseURL}assets/edit-button.css`;

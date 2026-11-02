@@ -217,7 +217,11 @@ New document persistence, projections, and representation conversion are off by 
 
 ## License and author
 
-License: GPL-3.0-or-later. See the individual licenses and NOTICE files for the integrated GUI and bundled components.
+License: GPL-3.0-or-later, except the edit-button snippet, which is MPL-2.0. See the individual licenses and NOTICE files for the integrated GUI and bundled components.
+
+- The MPL-2.0 part is `src/index.ts`, which builds the Editor URL and the edit-button HTML (`createEditorURL`, `renderEditButton` and their constants; `dist/src/index.js` and `dist/src/index.d.ts` in the npm package), and the button stylesheet `assets/edit-button.css`. Each file carries `SPDX-License-Identifier: MPL-2.0`; the full text is in [`LICENSE.MPL-2.0`](LICENSE.MPL-2.0). Other sites can load it from their JavaScript without taking on GPL-3.0 obligations.
+- Everything else, including the icon (`assets/icon.svg`), the extension loader bootstrap (`./extension-loader`) and the YAML editing command, is GPL-3.0-or-later; the full text is in [`LICENSE`](LICENSE).
+- The Editor served on Pages is a GPL-3.0 work. Its `notices/` directory records the license text and source location (npm and GitHub) of every bundled turbowarp-plus family package, indexed by `notices/family.json`.
 
 Author: [Hiroya Kubo](https://github.com/kubohiroya)
 

@@ -39,6 +39,7 @@ test('distribution identifies the new site owner and all pinned integrated compo
         assert.ok(html.includes('class="twpe-edit-button"'));
         assert.ok(!html.includes('turbowarp-extension-data-editor/editor.html'));
         assert.ok((await readFile(path.join(dir,'assets/icon.svg'),'utf8')).includes('<title>TurboWarp-Plus-Editor</title>'));
+        assert.match(await readFile(path.join(dir,'LICENSE.MPL-2.0'),'utf8'),/^Mozilla Public License Version 2\.0/);
     }finally{await rm(dir,{recursive:true,force:true});}
 });
 
