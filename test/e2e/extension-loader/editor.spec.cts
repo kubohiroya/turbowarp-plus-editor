@@ -235,7 +235,9 @@ test('a transient failure is retried and the panel names the attempt it is on', 
         const url = 'https://plus-fixture.invalid/flaky.js';
         let served = 0;
         await page.route(url, async route => {
-            if (++served === 1) await new Promise(resolve => setTimeout(resolve, 400));
+            // The retry has to be in flight long enough to be seen: the attempt that succeeds
+            // answers slowly, because the dialog comes down as soon as the fetch resolves.
+            await new Promise(resolve => setTimeout(resolve, ++served === 1 ? 200 : 1500));
             return route.fulfill(served === 1 ?
                 {status: 503, headers: {'access-control-allow-origin': '*'}} :
                 {status: 200, body: bytes, headers: {'access-control-allow-origin': '*',
@@ -249,8 +251,9 @@ test('a transient failure is retried and the panel names the attempt it is on', 
     }
     const fixture = await createHTTPSFixture(bytes);
     try {
-        // Answer slowly so the wait outlasts the dialog's own grace period by a clear margin.
-        fixture.failNext(1, {delayMs: 400});
+        // The dialog waits out a grace period before showing, and comes down when the fetch
+        // resolves, so the attempt that succeeds is the one that has to answer slowly.
+        fixture.failNext(1, {delayMs: 200, thenSlowMs: 1500});
         const url = `${fixture.url}/flaky`;
         const loading = load(page, await project({type: 'remote', url}));
         await expectRetryShown(url);
