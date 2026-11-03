@@ -27,9 +27,11 @@ const Storage = guiRequire('@turbowarp/scratch-storage');
 const URL_UNDER_TEST = 'https://example.test/code.js';
 const register = id => `Scratch.extensions.register({getInfo(){return {id:"${id}",name:"Sample",blocks:[]}}});`;
 // The fetch port refuses a response whose URL is not the one it asked for, which is how it rejects
-// a redirect; a constructed Response has no URL, so every acceptable one is given the asked URL.
-const respond = (url, body) => Object.defineProperty(
-    new Response(body, {status: 200, headers: {'content-type': 'text/javascript'}}), 'url', {value: url});
+// a redirect. A constructed Response has no URL at all, so every response that is meant to be
+// *read* has to carry the asked URL — including the error statuses, or they are refused as
+// redirects before their status is ever looked at, and the status is what decides the answer here.
+const respond = (url, body, status = 200) => Object.defineProperty(
+    new Response(body, {status, headers: {'content-type': 'text/javascript'}}), 'url', {value: url});
 const served = async url => respond(url, register('sample'));
 
 const emptyProject = async () => {
@@ -81,12 +83,16 @@ test('the library\'s own failures split into the ones a person could answer diff
             {code: 'LOAD_FAILED', worth: true}],
         ['timed out', {fetchImpl: () => new Promise(() => {}), loaderOptions: {timeoutMs: 60}},
             {code: 'TIMEOUT', worth: true}],
-        ['missing', {fetchImpl: async () => new Response('nope', {status: 404})},
+        ['missing', {fetchImpl: async url => respond(url, 'nope', 404)},
             {code: 'FETCH_FAILED', worth: false}],
-        // The port already retried this one and gave up; the operation still calls it permanent.
-        ['server error', {fetchImpl: async () => new Response('busy', {status: 503}), retries: 2},
-            {code: 'FETCH_FAILED', worth: false}],
-        // A denied redirect is not its own code: the port refuses the response it did not ask for.
+        // The port keeps the status on the cause, so a server that is down reads as transient even
+        // after the port retried it and gave up: asking again really can answer differently.
+        ['server error', {fetchImpl: async url => respond(url, 'busy', 503), retries: 2},
+            {code: 'FETCH_FAILED', worth: true}],
+        ['rate limited', {fetchImpl: async url => respond(url, 'slow down', 429)},
+            {code: 'FETCH_FAILED', worth: true}],
+        // A denied redirect is not its own code, and carries no status: the port refuses a response
+        // whose URL is not the one it asked for, which is also what `redirect: 'error'` produces.
         ['redirected', {fetchImpl: async () => new Response(null,
             {status: 302, headers: {location: 'https://elsewhere.test/code.js'}})},
         {code: 'FETCH_FAILED', worth: false}],
