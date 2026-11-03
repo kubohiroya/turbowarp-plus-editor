@@ -1,5 +1,6 @@
 import styles from './dialog.css';
 import {contactLink, descriptionParts} from './links.js';
+import {diagnosticText} from './diagnostics.js';
 
 const element = (document, tag, text, attributes = {}) => {
     const node = document.createElement(tag);
@@ -9,12 +10,16 @@ const element = (document, tag, text, attributes = {}) => {
 };
 
 /** Native modal dialogs keep focus and Escape handling in the browser, outside the stage. */
-export const createProjectDialogs = (document, properties, history) => {
+export const createProjectDialogs = (document, properties, history, diagnostics) => {
     let active = null;
     let returnFocus = null;
     let identity = 0;
+    let stopDiagnosticsView = null;
+    let notice = null;
+    let notifiedError = '';
     const close = () => {
         if (!active) return;
+        stopDiagnosticsView?.(); stopDiagnosticsView = null;
         active.remove(); active = null;
         if (returnFocus?.isConnected) returnFocus.focus();
     };
@@ -34,7 +39,24 @@ export const createProjectDialogs = (document, properties, history) => {
         // A form must never apply an old project's draft to the newly opened project.
         if (properties.loadState().phase === 'loading') close();
     });
-    return {
+    const stopNotice = diagnostics?.subscribe(() => {
+        const sessions = diagnostics.snapshot();
+        const error = sessions[0]?.events.filter(event => ['error', 'project-error'].includes(event.type)).at(-1);
+        const key = error ? `${sessions[0].id}:${error.time}:${error.code}:${error.type}` : '';
+        if (!key || key === notifiedError) return;
+        notifiedError = key;
+        notice?.remove();
+        const locale = document.documentElement.lang || 'en';
+        const ja = locale.startsWith('ja');
+        notice = element(document, 'aside', undefined, {class: styles.notice, role: 'status', 'data-project-tools': ''});
+        notice.appendChild(element(document, 'span', ja ? '作品の読み込みで問題が発生しました。' : 'A problem occurred while loading the project.'));
+        const show = element(document, 'button', ja ? '診断を表示' : 'View diagnostics', {type: 'button'});
+        show.addEventListener('click', () => { notice.remove(); api.showDiagnostics(locale, sessions[0].id); });
+        const dismiss = element(document, 'button', ja ? '閉じる' : 'Dismiss', {type: 'button'});
+        dismiss.addEventListener('click', () => notice.remove());
+        notice.append(show, dismiss); document.body.appendChild(notice);
+    });
+    const api = {
         showProperties(locale = 'en') {
             const {dialog, label} = open(locale.startsWith('ja') ? '作品のプロパティ' : 'Project Properties', locale);
             dialog.setAttribute('data-testid', 'project-properties');
@@ -122,7 +144,77 @@ export const createProjectDialogs = (document, properties, history) => {
             dialog.appendChild(form);
             dialog.showModal(); inputs.title.focus();
         },
+        showDiagnostics(locale = 'en', initialSession) {
+            const {dialog, label} = open(locale.startsWith('ja') ? '作品の診断' : 'Project Diagnostics', locale);
+            dialog.setAttribute('data-testid', 'project-diagnostics');
+            const selectorLabel = element(document, 'label', label('読み込みの記録', 'Load attempt'));
+            const selector = element(document, 'select', undefined, {'aria-label': label('読み込みの記録', 'Load attempt')});
+            selectorLabel.appendChild(selector); dialog.appendChild(selectorLabel);
+            const content = element(document, 'div'); dialog.appendChild(content);
+            const status = element(document, 'p', '', {role: 'status'}); dialog.appendChild(status);
+            const actions = element(document, 'div', undefined, {class: styles.actions});
+            const copy = element(document, 'button', label('診断をコピー', 'Copy diagnostics'), {type: 'button'});
+            const done = element(document, 'button', label('閉じる', 'Close'), {type: 'button'});
+            done.addEventListener('click', close); actions.append(copy, done); dialog.appendChild(actions);
+            let selected = initialSession;
+            let exported = '';
+            const states = {
+                loading: label('読み込み中', 'Loading'), loaded: label('読み込み完了', 'Loaded'),
+                failed: label('読み込み失敗・キャンセル', 'Failed or cancelled'),
+                verified: label('内容を検証済み', 'Content verified'), authorized: label('実行を許可済み', 'Execution approved'),
+                review: label('実行許可を確認中', 'Reviewing execution permission'),
+                retry: label('接続を再試行中', 'Retrying connection'), error: label('読み込みを拒否', 'Loading rejected'),
+                'project-error': label('作品を開けませんでした', 'Could not open project')
+            };
+            const render = () => {
+                const sessions = diagnostics?.snapshot() || [];
+                const session = sessions.find(value => value.id === selected) || sessions[0];
+                selected = session?.id;
+                selector.replaceChildren(...sessions.map(value => element(document, 'option',
+                    `${new Date(value.startedAt).toLocaleString(locale)} · ${value.title || label('タイトル未設定', 'Untitled')} · ${states[value.phase] || value.phase}`,
+                    {value: value.id})));
+                if (session) selector.value = String(session.id);
+                selector.disabled = sessions.length < 2; copy.disabled = !session;
+                exported = diagnosticText(session); content.replaceChildren();
+                if (!session || !session.events.length) {
+                    content.appendChild(element(document, 'p', label('診断イベントはまだありません。', 'No diagnostic events have been recorded.')));
+                }
+                if (!session) return;
+                for (const extension of session.extensions) {
+                    const details = element(document, 'details');
+                    details.appendChild(element(document, 'summary', extension.id));
+                    details.appendChild(element(document, 'pre', [extension.source, extension.execution,
+                        `SHA-256: ${extension.sha256}`].filter(Boolean).join('\n')));
+                    content.appendChild(details);
+                }
+                const list = element(document, 'ol');
+                for (const event of session.events) {
+                    const details = element(document, 'details');
+                    details.appendChild(element(document, 'summary',
+                        [states[event.type] || event.type, event.id, event.ids?.join(', '), event.code].filter(Boolean).join(' · ')));
+                    details.appendChild(element(document, 'pre', JSON.stringify(event, null, 2)));
+                    const item = element(document, 'li'); item.appendChild(details); list.appendChild(item);
+                }
+                content.appendChild(list);
+            };
+            selector.addEventListener('change', () => { selected = Number(selector.value); render(); });
+            copy.addEventListener('click', async () => {
+                try {
+                    await document.defaultView.navigator.clipboard.writeText(exported);
+                    status.textContent = label('コピーしました。', 'Copied.');
+                } catch (error) {
+                    // Clipboard permissions differ by browser; offer selectable text without opening a new window.
+                    const text = element(document, 'textarea', undefined, {readonly: '',
+                        'aria-label': label('コピーする診断内容', 'Diagnostics to copy')});
+                    text.value = exported; content.replaceChildren(text); text.focus(); text.select();
+                    status.textContent = label('選択した内容をコピーしてください。', 'Copy the selected text.');
+                }
+            });
+            stopDiagnosticsView = diagnostics?.subscribe(render);
+            render(); dialog.showModal(); done.focus();
+        },
         ownsKeyEvent: event => Boolean(event.target?.closest?.('[data-project-tools]')),
-        dispose () { unsubscribe(); close(); }
+        dispose () { unsubscribe(); stopNotice?.(); notice?.remove(); close(); }
     };
+    return api;
 };

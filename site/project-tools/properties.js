@@ -47,6 +47,8 @@ export function installProjectProperties(vm, {projectState = {}, now = () => new
     let loading = 0;
     let generation = 0;
     let transaction = null;
+    let saveSerial = 0;
+    let lastCommittedSave = 0;
     let disposed = false;
     let loadQueue = Promise.resolve();
     let loadState = {phase: 'idle', sequence: 0};
@@ -68,9 +70,10 @@ export function installProjectProperties(vm, {projectState = {}, now = () => new
         return JSON.stringify([json, fields.map(key => value[key])]);
     };
     const commit = receipt => {
-        if (disposed || receipt.generation !== generation) return;
+        if (disposed || receipt.generation !== generation || receipt.serial < lastCommittedSave) return;
+        lastCommittedSave = receipt.serial;
         // Applying properties or editing blocks during compression must remain unsaved.
-        if (JSON.stringify(info) === receipt.previous) info = receipt.info;
+        if (JSON.stringify(info) === receipt.previous || receipt.fingerprint === fingerprint()) info = receipt.info;
         baseline = receipt.fingerprint;
         notify();
     };
@@ -78,7 +81,7 @@ export function installProjectProperties(vm, {projectState = {}, now = () => new
         if (loading) throw new Error('Wait for project loading to finish before saving');
         const print = fingerprint();
         const value = info?.schemaVersion === 1 ? current() : info;
-        const receipt = {generation, fingerprint: print, previous: JSON.stringify(info),
+        const receipt = {generation, serial: ++saveSerial, fingerprint: print, previous: JSON.stringify(info),
             info: value ? {...value} : null};
         if (receipt.info?.schemaVersion === 1 && print !== baseline) receipt.info.updatedAt = now();
         transaction = receipt;
@@ -93,14 +96,17 @@ export function installProjectProperties(vm, {projectState = {}, now = () => new
     };
     const wrappers = {
         loadProject(input, ...args) {
+            if (disposed) return Promise.reject(new Error('Project properties were disposed'));
             loading++;
             const isNew = projectState.isNew?.() === true;
             const run = async () => {
+                if (disposed) throw new Error('Project properties were disposed');
                 const sequence = ++generation;
                 loadState = {phase: 'loading', sequence};
                 notify();
                 const loaded = await readInfo(input);
                 try {
+                    if (disposed) throw new Error('Project properties were disposed');
                     const result = await originals.loadProject.call(vm, input, ...args);
                     if (disposed) return result;
                     info = loaded || (isNew ? {...empty(), createdAt: now()} : null);
@@ -110,7 +116,8 @@ export function installProjectProperties(vm, {projectState = {}, now = () => new
                     notify();
                     return result;
                 } catch (error) {
-                    loadState = {phase: 'failed', sequence, code: error.code, message: error.message || String(error)};
+                    loadState = {phase: 'failed', sequence, title: loaded?.title,
+                        code: error.code, message: error.message || String(error)};
                     notify();
                     throw error;
                 }

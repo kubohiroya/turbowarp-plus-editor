@@ -13,6 +13,7 @@ const fixture = (isNew = false) => {
     let project = {targets: [], meta: {agent: 'test'}};
     let title = 'Native title';
     let time = '2026-11-04T01:00:00Z';
+    let failSave = false;
     const vm = {
         changes: 0,
         runtime: {emitProjectChanged: () => vm.changes++},
@@ -23,6 +24,7 @@ const fixture = (isNew = false) => {
         },
         toJSON(target) { return JSON.stringify(target ? {sprite: true} : {targets: project.targets, meta: project.meta}); },
         async saveProjectSb3() {
+            if (failSave) throw new Error('Compression failed');
             const zip = new JSZip(); zip.file('project.json', this.toJSON());
             return zip.generateAsync({type: 'uint8array'});
         },
@@ -33,7 +35,7 @@ const fixture = (isNew = false) => {
     const service = installProjectProperties(vm, {projectState: {getTitle: () => title,
         setTitle: value => { title = value; }, isNew: () => isNew}, now: () => time});
     return {vm, service, original, setTitle: value => { title = value; },
-        setTime: value => { time = value; }, project: () => project};
+        setTime: value => { time = value; }, failSave: () => { failSave = true; }, project: () => project};
 };
 
 test('project tools is off by default and cannot be enabled by arbitrary values', () => {
@@ -154,4 +156,23 @@ test('contact and description links allow only requested protocols and preserve 
     assert.equal(parts.map(part => part.text).join(''), text);
     assert.deepEqual(parts.filter(part => part.href).map(part => part.href),
         ['https://example.test/a', 'https://example.test/b']);
+    assert.equal(descriptionParts('(https://example.test/a_(b)).').find(part => part.href).href,
+        'https://example.test/a_(b)');
+});
+
+test('a rejected export does not advance the modification date', async () => {
+    const f = fixture(); await f.vm.loadProject({targets: [], [key]: data()});
+    f.service.apply({author: 'Pending'}); f.failSave();
+    await assert.rejects(f.vm.saveProjectSb3(), /Compression failed/);
+    assert.equal(f.service.snapshot().updatedAt, data().updatedAt);
+});
+
+test('out-of-order stream completion keeps the newest successful save date', async () => {
+    const f = fixture(); await f.vm.loadProject({targets: [], [key]: data()});
+    f.service.apply({author: 'Pending'});
+    const older = f.vm.saveProjectSb3Stream();
+    f.setTime('2026-11-05T00:00:00Z');
+    const newer = f.vm.saveProjectSb3Stream();
+    newer.emit('end'); older.emit('end');
+    assert.equal(f.service.snapshot().updatedAt, '2026-11-05T00:00:00Z');
 });

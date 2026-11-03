@@ -116,6 +116,8 @@ export function installExtensionLoader(host, loader) {
                 if (!prepared || !Object.hasOwn(prepared, 'manifest') || !Object.hasOwn(prepared, 'input')) {
                     throw failure('INVALID_PROJECT_CODEC', 'The Loader project codec returned no project');
                 }
+                // Optional presentation receives the manifest; it makes no authorization decision.
+                try { host.onProjectManifest?.(prepared.manifest); } catch (error) { /* Keep loading independent of diagnostics. */ }
                 touchedHost = true;
                 savedContext = null;
                 // Known before the VM loads, so what the Loader fetches for it is filed under it.

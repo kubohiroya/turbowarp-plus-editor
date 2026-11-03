@@ -4,6 +4,7 @@ import {installProjectProperties} from './properties.js';
 import {createAuthorHistory} from './history.js';
 import {createProjectDialogs} from './dialog.js';
 import {installEditorExtensionHost} from '../extension-host/editor-host.js';
+import {createProjectDiagnostics} from './diagnostics.js';
 
 const projects = new WeakMap();
 const storageFor = document => {
@@ -12,18 +13,32 @@ const storageFor = document => {
 
 /** Compose this host's project tools with its existing extension host. */
 export const installProjectToolsHost = (vm, settings = {}, enabled = PROJECT_TOOLS_ENABLED) => {
-    const host = installEditorExtensionHost(vm, settings);
-    if (!enabled) return host;
+    if (!enabled) return installEditorExtensionHost(vm, settings);
+    const diagnostics = createProjectDiagnostics();
+    const host = installEditorExtensionHost(vm, {...settings, showDiagnostics: false,
+        diagnostics: event => { diagnostics.record(event); settings.diagnostics?.(event); },
+        onProjectManifest: manifest => { diagnostics.describe(manifest); settings.onProjectManifest?.(manifest); }});
     const document = settings.document || globalThis.document;
     const properties = installProjectProperties(vm, settings);
     const history = createAuthorHistory(document ? storageFor(document) : undefined);
-    const dialogs = document?.body ? createProjectDialogs(document, properties, history) : null;
-    const tools = {properties, dialogs};
+    const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics) : null;
+    const tools = {properties, dialogs, diagnostics};
+    let lastPhase;
+    const unsubscribe = properties.subscribe(() => {
+        const state = properties.loadState();
+        const key = `${state.sequence}:${state.phase}`;
+        if (lastPhase === key) return;
+        lastPhase = key;
+        if (state.phase === 'loading') diagnostics.begin();
+        else if (state.phase === 'loaded' || state.phase === 'failed') {
+            diagnostics.finish(state, state.phase === 'failed' ? state.title || '' : properties.loadedTitle() || '');
+        }
+    });
     projects.set(vm, tools);
     let disposal;
     return {...host, enabled: true, dispose () {
         disposal ??= (async () => {
-            dialogs?.dispose(); properties.dispose(); projects.delete(vm);
+            unsubscribe(); dialogs?.dispose(); properties.dispose(); diagnostics.dispose(); projects.delete(vm);
             await host.dispose();
         })();
         return disposal;
@@ -37,14 +52,20 @@ export const restoreProjectTitle = vm => projects.get(vm)?.properties.restoreTit
 export const renderFileMenu = ({vm, locale = 'en', MenuSection, MenuItem, onRequestClose}) => {
     const tools = projects.get(vm);
     if (!tools?.dialogs) return null;
-    const open = () => {
+    const open = type => {
         onRequestClose();
-        tools.dialogs.showProperties(locale);
+        if (type === 'properties') tools.dialogs.showProperties(locale);
+        else tools.dialogs.showDiagnostics(locale);
     };
-    return React.createElement(MenuSection, null, React.createElement(MenuItem, {onClick: open},
+    return React.createElement(MenuSection, null, ...[
+        ['properties', '作品のプロパティ…', 'Project Properties…'],
+        ['diagnostics', '作品の診断…', 'Project Diagnostics…']
+    ].map(([type, ja, en]) => React.createElement(MenuItem, {key: type, onClick: () => open(type)},
         React.createElement('span', {role: 'button', tabIndex: 0, onKeyDown: event => {
-            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); open(); }
-        }}, locale.startsWith('ja') ? '作品のプロパティ…' : 'Project Properties…')));
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault(); event.stopPropagation(); open(type);
+            }
+        }}, locale.startsWith('ja') ? ja : en))));
 };
 
 export const projectToolsOwnKeyEvent = event => Boolean(event.target?.closest?.('[data-project-tools]'));
