@@ -37,14 +37,28 @@ function load(page, buffer) {
         catch (error) { return {ok: false, code: error.code, message: error.message, cause: error.cause && error.cause.message}; }
     }, [...buffer]);
 }
-async function allow(page, loading) {
-    await expect(permission(page)).toBeVisible();
-    expect(await executions(page)).toBe(0);
-    await expect(permission(page).locator('[data-field="sha256"]')).toHaveText(digest);
-    await page.getByTestId('tw-plus-allow').click();
+// A project's extensions are asked about on one review when it opens, before the Loader fetches or
+// registers anything, and the Loader acts on that answer: no per-extension prompt follows it.
+const review = page => page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
+async function answer(page, execution = 'unsandboxed', {key = 'plusfixture', sha256 = digest, ran = 0} = {}) {
+    await expect(review(page)).toBeVisible();
+    // Nothing of this load has run while the person is still being asked.
+    expect(await executions(page)).toBe(ran);
+    const row = review(page).locator(`.twextsec-row[data-key="${key}"]`);
+    if (sha256) await expect(row.locator('.twextsec-digest')).toContainText(sha256);
+    await row.locator(`input[name="execution-${key}"][value="${execution}"]`).check();
+    await review(page).getByRole('button', {name: 'OK', exact: true}).click();
+    await expect(review(page)).toHaveCount(0);
+}
+async function allowed(page, loading) {
     expect(await loading).toEqual({ok: true});
     await expect.poll(() => executions(page)).toBe(1);
     expect(await page.evaluate(() => vm.runtime._primitives.plusfixture_value())).toBe('verified VM');
+    await expect(permission(page)).toHaveCount(0);
+}
+async function allow(page, loading) {
+    await answer(page);
+    await allowed(page, loading);
 }
 
 for (const type of ['embedded-file', 'remote-cacheable']) {
@@ -53,9 +67,7 @@ for (const type of ['embedded-file', 'remote-cacheable']) {
             headers: {'access-control-allow-origin': '*', 'content-type': 'application/javascript'}}));
         const input = await project({type});
         await open(page, {projectBytes: input});
-        await expect(permission(page)).toBeVisible();
-        expect(await executions(page)).toBe(0);
-        await page.getByTestId('tw-plus-allow').click();
+        await answer(page);
         await expect.poll(() => executions(page)).toBe(1);
         expect(await page.evaluate(() => vm.runtime._primitives.plusfixture_value())).toBe('verified VM');
         const values = await page.evaluate(async () => [...new Uint8Array(await vm.saveProjectSb3('arraybuffer'))]);
@@ -65,7 +77,10 @@ for (const type of ['embedded-file', 'remote-cacheable']) {
         expect(json.turboWarpPlus.extensions[0].source.type).toBe(type);
         expect(json.turboWarpPlus.extensions[0].sha256).toBe(digest);
         if (type === 'embedded-file') expect(await zip.file('extensions/plusfixture.js').async('nodebuffer')).toEqual(bytes);
-        expect(await load(page, saved)).toEqual({ok: true});
+        // Opening the saved file is opening a project again, so it is asked about again.
+        const reopening = load(page, saved);
+        await answer(page, 'unsandboxed', {ran: 1});
+        expect(await reopening).toEqual({ok: true});
         expect(await executions(page)).toBe(2);
         await expect(permission(page)).toHaveCount(0);
     });
@@ -75,19 +90,20 @@ test('denial and dialog cancellation never evaluate project code or fall through
     await open(page);
     const input = await project({extensionURLs: {plusfixture: `data:text/javascript,${encodeURIComponent('globalThis.__legacyBypass=true')}`}});
     let loading = load(page, input);
-    await expect(permission(page)).toBeVisible();
-    await page.getByTestId('tw-plus-deny').click();
+    await answer(page, 'deny');
     expect((await loading).code).toBe('TRUST_DENIED');
     expect(await executions(page)).toBe(0);
     expect(await page.evaluate(() => Boolean(globalThis.__legacyBypass))).toBe(false);
+    // Closing the review is saying no to the whole project, before anything is fetched.
     loading = load(page, input);
-    await expect(permission(page)).toBeVisible();
+    await expect(review(page)).toBeVisible();
     await page.keyboard.press('Escape');
-    expect((await loading).code).toBe('TRUST_DENIED');
+    expect((await loading).code).toBe('EXTENSION_SECURITY_CANCELLED');
     expect(await executions(page)).toBe(0);
+    expect(await page.evaluate(() => Boolean(globalThis.__legacyBypass))).toBe(false);
 });
 
-test('digest mismatch, unknown schema and a forged trust field fail before approval or evaluation', async ({page}) => {
+test('digest mismatch, unknown schema and a forged trust field fail before evaluation', async ({page}) => {
     await open(page);
     for (const [options, expected] of [
         [{code: Buffer.from('globalThis.__plusFixtureStarted=99')}, 'DIGEST_MISMATCH'],
@@ -95,7 +111,11 @@ test('digest mismatch, unknown schema and a forged trust field fail before appro
         [{extraManifest: {trusted: true}}, 'INVALID_MANIFEST'],
         [{type: 'remote-cacheable', url: 'http://untrusted.invalid/code.js'}, 'INVALID_SOURCE']
     ]) {
-        const result = await load(page, await project(options));
+        const loading = load(page, await project(options));
+        // A manifest that cannot be read fails before anyone is asked. A digest is only known to
+        // be wrong once the bytes are fetched, which is after the review: they still never run.
+        if (expected === 'DIGEST_MISMATCH') await answer(page);
+        const result = await loading;
         expect(result.code).toBe(expected);
         expect(await executions(page)).toBe(0);
         await expect(permission(page)).toHaveCount(0);
@@ -106,9 +126,7 @@ test('digest mismatch, unknown schema and a forged trust field fail before appro
 test('approved code claiming another ID cannot register either ID', async ({page}) => {
     await open(page);
     const loading = load(page, await project({id: 'otherfixture'}));
-    await expect(permission(page)).toBeVisible();
-    expect(await executions(page)).toBe(0);
-    await page.getByTestId('tw-plus-allow').click();
+    await answer(page, 'unsandboxed', {key: 'otherfixture'});
     expect((await loading).ok).toBe(false);
     expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('otherfixture') ||
         vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(false);
@@ -120,8 +138,7 @@ const failingCode = Buffer.from(`globalThis.__plusFixtureStarted=(globalThis.__p
 throw new Error('Fixture must run unsandboxed.');`);
 const failingProject = () => project({code: failingCode, sha256: createHash('sha256').update(failingCode).digest('hex')});
 async function expectFailureReported(page) {
-    await expect(permission(page)).toBeVisible();
-    await page.getByTestId('tw-plus-allow').click();
+    await answer(page, 'unsandboxed', {sha256: null});
     const dialog = page.getByRole('dialog').filter({hasText: 'プロジェクトを読み込めませんでした'});
     await expect(dialog).toBeVisible();
     const message = await dialog.locator('textarea').inputValue();
@@ -150,15 +167,21 @@ test('remote cache reopens offline after approval; an uncached digest never exec
     await allow(page, load(page, input));
     expect(fetched).toBe(1);
     await context.setOffline(true);
-    expect(await load(page, input)).toEqual({ok: true});
+    const reopening = load(page, input);
+    // The same project is recognised, so the answer it was given is already chosen.
+    await expect(review(page).locator('input[name="execution-plusfixture"][value="unsandboxed"]')).toBeChecked();
+    await answer(page, 'unsandboxed', {ran: 1});
+    expect(await reopening).toEqual({ok: true});
     expect(await executions(page)).toBe(2);
     expect(fetched).toBe(1);
-    const missed = await load(page, await project({type: 'remote-cacheable', sha256: 'a'.repeat(64), url: 'https://offline.invalid/new.js'}));
+    const missing = load(page, await project({type: 'remote-cacheable', sha256: 'a'.repeat(64), url: 'https://offline.invalid/new.js'}));
+    await answer(page, 'unsandboxed', {sha256: 'a'.repeat(64), ran: 2});
+    const missed = await missing;
     expect(missed.ok).toBe(false);
     expect(await executions(page)).toBe(2);
 });
 
-test('HTTPS redirects and CORS refusal do not open approval or execute JavaScript', async ({page, baseURL}) => {
+test('HTTPS redirects and CORS refusal never execute JavaScript, even once the review allowed it', async ({page, baseURL}) => {
     await open(page);
     if (process.env.E2E_BASE_URL) {
         for (const [pathname, status, headers] of [
@@ -167,7 +190,9 @@ test('HTTPS redirects and CORS refusal do not open approval or execute JavaScrip
         ]) {
             const url = `https://plus-fixture.invalid${pathname}`;
             await page.route(url, route => route.fulfill({status, headers, body: bytes}));
-            expect((await load(page, await project({type: 'remote-cacheable', url}))).code).toBe('LOAD_FAILED');
+            const loading = load(page, await project({type: 'remote-cacheable', url}));
+            await answer(page);
+            expect((await loading).code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
             await expect(page.getByTestId('tw-plus-extension-status').locator('[data-event="review"]')).toHaveCount(0);
@@ -177,7 +202,9 @@ test('HTTPS redirects and CORS refusal do not open approval or execute JavaScrip
     const fixture = await createHTTPSFixture(bytes);
     try {
         for (const pathname of ['/redirect', '/nocors']) {
-            const result = await load(page, await project({type: 'remote-cacheable', url: fixture.url + pathname}));
+            const loading = load(page, await project({type: 'remote-cacheable', url: fixture.url + pathname}));
+            await answer(page);
+            const result = await loading;
             expect(result.code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
@@ -244,8 +271,9 @@ test('a transient failure is retried and the panel names the attempt it is on', 
                     'content-type': 'application/javascript'}});
         });
         const loading = load(page, await project({type: 'remote-cacheable', url}));
+        await answer(page);
         await expectRetryShown(url);
-        await allow(page, loading);
+        await allowed(page, loading);
         expect(served).toBe(2);
         return;
     }
@@ -256,8 +284,9 @@ test('a transient failure is retried and the panel names the attempt it is on', 
         fixture.failNext(1, {delayMs: 200, thenSlowMs: 1500});
         const url = `${fixture.url}/flaky`;
         const loading = load(page, await project({type: 'remote-cacheable', url}));
+        await answer(page);
         await expectRetryShown(url);
-        await allow(page, loading);
+        await allowed(page, loading);
         expect(fixture.seen.filter(pathname => pathname === '/flaky')).toHaveLength(2);
     } finally { await fixture.close(); }
 });
@@ -271,8 +300,7 @@ test('CSP forbidding dynamic evaluation rejects approved execution without regis
         document.head.appendChild(meta);
     });
     const loading = load(page, await project());
-    await expect(permission(page)).toBeVisible();
-    await page.getByTestId('tw-plus-allow').click();
+    await answer(page);
     expect((await loading).ok).toBe(false);
     expect(await executions(page)).toBe(0);
     expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(false);
@@ -313,9 +341,7 @@ test.describe('local file input', () => {
         const choosing = page.waitForEvent('filechooser');
         await page.getByText('コンピューターから読み込む', {exact: true}).click();
         await (await choosing).setFiles({name: 'plus-fixture.sb3', mimeType: 'application/octet-stream', buffer: await project()});
-        await expect(permission(page)).toBeVisible();
-        expect(await executions(page)).toBe(0);
-        await page.getByTestId('tw-plus-allow').click();
+        await answer(page);
         await expect.poll(() => page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(true);
         expect(await executions(page)).toBe(1);
     });
