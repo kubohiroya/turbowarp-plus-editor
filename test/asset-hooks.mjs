@@ -45,6 +45,10 @@ const shared = /^(?:react|react-dom|prop-types|lodash\.bindall)(?:\/.*)?$/u;
 
 registerHooks({
     resolve (specifier, context, nextResolve) {
+        if (specifier.endsWith('.json')) {
+            const resolved = nextResolve(specifier, context);
+            return {...resolved, importAttributes: {...resolved.importAttributes, type: 'json'}};
+        }
         if (!guiRequire || !shared.test(specifier)) return nextResolve(specifier, context);
         try {
             return {url: pathToFileURL(guiRequire.resolve(specifier)).href, shortCircuit: true};

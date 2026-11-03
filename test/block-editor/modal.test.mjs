@@ -2,8 +2,7 @@
  * The dialog as the editor actually mounts it.
  *
  * Moved from the fork's `test/unit/block-editor/modal.test.mjs`. It compiles the GUI's own wrapper
- * from the pinned checkout — the wrapper keeps the dialog's text, because those are the GUI's
- * translations — and renders it through this repository's real wiring and the package behind it.
+ * from the pinned checkout and renders it through this host's messages, styles and real package.
  *
  * React has to be the one the GUI mounts with: `test/asset-hooks.mjs` resolves it to the pinned
  * checkout's copy, the way the site build's alias does. Without that, this repository's own React
@@ -56,6 +55,8 @@ const {code} = babel.transformSync(fs.readFileSync(filename, 'utf8'), {
 });
 const imports = {
     'prop-types': guiRequire('prop-types'), react: React, 'react-intl': intl,
+    // The currently published GUI still imports these classes until its wrapper is reduced.
+    '../components/block-editor/block-editor.css': new Proxy({}, {get: (_, name) => String(name)}),
     // The wrapper reaches the dialog through the integration: the host supplies it, and what this
     // file is about is the wrapper's own messages and props.
     '../lib/tw-plus-integration-points.js': {
@@ -67,7 +68,6 @@ const imports = {
         onRequestClose: props.onRequestClose
     }, props.children),
     '../lib/log.js': {error: () => {}},
-    '../components/block-editor/block-editor.css': {}
 };
 const wrapper = {exports: {}};
 new Function('require', 'module', 'exports', code)(name => {

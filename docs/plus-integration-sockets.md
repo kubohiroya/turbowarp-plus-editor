@@ -478,3 +478,12 @@ GUIは `[data-gui-stage]` 上に配置情報をCSS変数として提供し、固
 ハッシュ済みクラス名、複製したGUI寸法、本家のビルド時変数には依存しない。
 旧レビュー専用の `extension-security-dialog.css` は、先行した0.7.1の新UI移行で参照先がなくなったため移管しない。
 キー操作は新UIの `.twextsec-review` をホストが判定する。旧Runtimeの互換表示は維持する。
+
+## GUI #137によるフォーム表示の所有更新（2026-11-03）
+
+旧結論「翻訳文は動かせない」を変更する。既存IDと日英翻訳を
+`site/block-editor/translations.json` に保持し、既存の `translations` 差し込み口でGUIのIntlへ登録する。
+GUIは現在のIntlコンテキストを渡し、配信側が文言を組み立てる。
+色はGUIが公開済みのCSS変数を参照するため、GUIのビルド時ファイルを移管先からimportしない。
+フォーム固有の追加色は既存の `themeTokens` で渡す。枠の2クラス詳細度は維持する。
+GUIのサービスはVM単位の同一性と現在のIntlへの接続を保持する。
