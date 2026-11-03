@@ -25,7 +25,9 @@ module.exports = defineConfig({
     outputDir: path.join(root, 'test-results/block-editor'),
     timeout: native ? 120_000 : 90_000,
     expect: {timeout: 15_000},
-    workers: 1,
+    // Each test opens its own browser context on a read-only static server, so they can run side by
+    // side. CI's runner has four cores; a local run stays serial unless E2E_WORKERS says otherwise.
+    workers: Number(process.env.E2E_WORKERS) || (process.env.CI ? 3 : 1),
     retries: 0,
     forbidOnly: Boolean(process.env.CI),
     reporter: [
