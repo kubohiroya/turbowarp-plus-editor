@@ -24,14 +24,19 @@ const expectSampleLoaded = async page => {
     })).toBe('unsandboxed');
 };
 
-// A browser whose catalog does not list the sample asks before running it.
+// A browser whose catalog does not list the sample asks before running it, on the one review a
+// project's extensions go through when it opens, and the Loader acts on that answer.
 const approveSample = async (page, source) => {
-    const permission = page.getByTestId('tw-plus-permission');
-    await expect(permission).toBeVisible();
-    await expect(permission.locator('[data-field="id"]')).toHaveText('blockeditordemo');
-    await expect(permission.locator('[data-field="sha256"]')).toHaveText(createHash('sha256').update(source).digest('hex'));
-    await page.getByTestId('tw-plus-allow').click();
-    await expect(permission).toHaveCount(0);
+    const review = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
+    await expect(review).toBeVisible();
+    const row = review.locator('.twextsec-row[data-key="blockeditordemo"]');
+    await expect(row.locator('.twextsec-id')).toHaveText('blockeditordemo');
+    await expect(row.locator('.twextsec-digest')).toContainText(createHash('sha256').update(source).digest('hex'));
+    await row.locator('input[name="execution-blockeditordemo"][value="unsandboxed"]').check();
+    await review.getByRole('button', {name: 'OK', exact: true}).click();
+    await expect(review).toHaveCount(0);
+    // No second, per-extension prompt follows the review.
+    await expect(page.getByTestId('tw-plus-permission')).toHaveCount(0);
     await expectSampleLoaded(page);
 };
 
