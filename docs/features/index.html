@@ -76,9 +76,9 @@
 </tbody></table></div>
 <div class="flow" role="img" aria-label="RemoteはSB3にURLを記録し配信元からコードを読む。EmbeddedはSB3にコードを同梱する。"><div>Remote<br><small>SB3：URL＋ハッシュ</small></div><span>→</span><div>配信元から取得<br><small>内容を照合</small></div><span class="divider">／</span><div>Embedded<br><small>SB3：コード＋ハッシュ</small></div><span>→</span><div>作品内から読込<br><small>内容を照合</small></div></div>
 <p>RemoteはURLが同じでも内容が変われば検証に失敗します。<strong>キャッシュを許す指定だけで、オフライン動作は保証されません。</strong>Embeddedでも、拡張が外部API・画像・モデル等を取得する場合は通信が必要です。標準TurboWarpでコードを読み込めても、このガイドのフォームや文書編集UIが追加されるわけではありません。</p>
-<h3>作品の住所と控えの整理</h3>
-<p>HTTPSで配信されたEditorでPlus形式の拡張を初めて追加するか、Plus形式の作品を初めて保存すると、その作品に住所（URI）を付けて作品と一緒に保存します。住所は「このEditorの配信元／turbowarp-plus-projects／…／UUID.sb3」の形で、作品を見分けるための名前です。そこへ作品を公開する操作ではありません。ダウンロードするファイル名は、これまでどおり作品のタイトルから付きます。</p>
-<p>拡張コードの控えは、この住所ごとに分けて記録します。カタログに載っている拡張の控えは、どの作品からも使う共有の控えになります。<code>http://localhost</code>などHTTPSでない場所で開いたEditorでは住所を付けず、控えはすべて共有として扱います。</p>
+<h3>作品のURIと控えの整理</h3>
+<p>HTTPSで配信されたEditorでPlus形式の拡張を初めて追加するか、Plus形式の作品を初めて保存すると、その作品にURIを付けて作品と一緒に保存します。URIは「このEditorの配信元／turbowarp-plus-projects／…／UUID.sb3」の形で、作品を見分けるための識別子です。そこへ作品を公開する操作ではありません。ダウンロードするファイル名は、これまでどおり作品のタイトルから付きます。</p>
+<p>拡張コードの控えは、このURIごとに分けて記録します。カタログに載っている拡張の控えは、どの作品からも使う共有の控えになります。<code>http://localhost</code>などHTTPSでない場所で開いたEditorではURIを付けず、控えはすべて共有として扱います。</p>
 <p>細かな制約・互換性は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3保存形式</a>と<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-authoring-ui.md">機能拡張一覧の仕様</a>を参照してください。</p>
 </section>
 
