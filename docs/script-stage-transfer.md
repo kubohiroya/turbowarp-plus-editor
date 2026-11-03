@@ -6,7 +6,7 @@
 
 ## 起動と操作
 
-既定はOFFです。起動URLに `?twPlusScriptTransfer=1` を付けて有効にします。既にクエリがある場合は `&twPlusScriptTransfer=1` を追加します。`config/feature-flags.ts` の値を起動時に一度だけ読み、プロジェクトの中身からは変更できません。
+常に有効です。起動URLの設定は不要で、無効にするフラグもありません。`site/plus-integration.js` が転送用の口を常にGUIへ渡します。
 
 - スクリプトの右クリック: 「スクリプトを書き出し」「コピー」。選択位置を含むスタック全体を扱います。
 - ワークスペースの右クリック: 「スクリプトを読み込み」「貼り付け」。Ctrl/Cmd+C・Vでもコピー・貼り付けできます。
@@ -35,10 +35,10 @@ GUI内部の値を実装パッケージからimportせず、すべて引数で�
 
 パッケージの `npm test`、Editorの `npm run test:script-transfer`、GUIの `test/unit/plus/transfer.test.mjs` がそれぞれの境界を検査します。Editor/GUIのテストには `E2E_GUI_ROOT` で固定したGUI checkoutを渡します。
 
-統合E2Eは `script-transfer.spec.cts` です。既定OFF、`.blocks3`の往復、2ウィンドウのメニュー/キーボード操作、権限拒否時のフォールバック、OSのJSONとテキスト、別オリジンからの読み取り、`.stage3`の背景・音・スクリプトを実ブラウザで検証します。
+統合E2Eは `script-transfer.spec.cts` です。クエリなしの通常起動でのメニュー表示、`.blocks3`の往復、2ウィンドウのメニュー/キーボード操作、権限拒否時のフォールバック、OSのJSONとテキスト、別オリジンからの読み取り、`.stage3`の背景・音・スクリプトを実ブラウザで検証します。
 
-公開前の順序は、実装パッケージの固定コミットのpush、GUIの口のpush/PR、Editorの固定値と統合のpush/PRです。IssueのDoDにある公開版での確認はEditorの公開後に行います。初期導入ではフラグを既定ONに変更しません。
+公開前の順序は、実装パッケージの固定コミットのpush、GUIの口のpush/PR、Editorの固定値と統合のpush/PRです。IssueのDoDにある公開版での確認はEditorの公開後に行います。
 
 ## 切り戻し
 
-URLから `twPlusScriptTransfer=1` を外して再読込すると、転送用の口を渡さなくなり元のメニューとクリップボードへ戻ります。配信上の切り戻しではEditorの統合コミットをrevertします。読み込み済みの内容は通常のSB3として保存できます。
+URLフラグによる無効化はありません。切り戻しはEditorの統合コミットをrevertして再公開します。口を渡さないGUIは元のメニューとクリップボードへ戻ります。読み込み済みの内容は通常のSB3として保存できます。

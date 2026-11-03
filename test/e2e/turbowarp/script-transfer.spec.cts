@@ -1,8 +1,9 @@
 const fs = require('node:fs/promises');
 const {test, expect} = require('./fixtures.cts');
 
-const startTransfer = async (page, enabled = true) => {
-    await page.goto(`editor.html?lang=en${enabled ? '&twPlusScriptTransfer=1' : ''}`);
+// Transfer is always on: the plain editor URL carries no switch for it.
+const startTransfer = async page => {
+    await page.goto('editor.html?lang=en');
     await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
     await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() && vm.editingTarget))).toBe(true);
 };
@@ -34,15 +35,16 @@ const countImported = page => page.evaluate(() => Object.values<any>(vm.editingT
     .filter(block => block.opcode === 'data_changevariableby').length);
 const menuItem = (page, text) => page.getByRole('menuitem', {name: text, exact: true});
 
-test('script file export/import and the default-off menus', async ({page}, info) => {
-    await startTransfer(page, false);
-    await seedScript(page);
-    await blockMenu(page);
-    await expect(menuItem(page, 'Export Script')).toHaveCount(0);
-    await page.keyboard.press('Escape');
+test('script file export/import from menus available by default without any query', async ({page}, info) => {
     await startTransfer(page);
+    expect(new URL(page.url()).search).toBe('?lang=en');
     await seedScript(page);
+    await workspaceMenu(page);
+    await expect(menuItem(page, 'Import Script')).toBeVisible();
+    await expect(menuItem(page, 'Paste')).toBeVisible();
+    await page.keyboard.press('Escape');
     await blockMenu(page);
+    await expect(menuItem(page, 'Copy')).toBeVisible();
     const pending = page.waitForEvent('download');
     await menuItem(page, 'Export Script').click();
     const download = await pending;
@@ -156,7 +158,7 @@ test('OS clipboard includes scratchblocks text and imports JSON across origins',
         await route.fulfill({response});
     });
     const other = await context.newPage(); evidence.observe(other);
-    const peerURL = new URL('editor.html?lang=en&twPlusScriptTransfer=1', baseURL);
+    const peerURL = new URL('editor.html?lang=en', baseURL);
     await other.goto(`${peerOrigin}${peerURL.pathname}${peerURL.search}`);
     expect(new URL(other.url()).origin).not.toBe(new URL(page.url()).origin);
     await expect(other.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();

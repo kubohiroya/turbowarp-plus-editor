@@ -12,7 +12,6 @@ import {
 } from '@kubohiroya/turbowarp-document-editor';
 
 import {attachScriptTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
-import {readStartupFeatureFlags} from '../config/feature-flags.ts';
 
 import {plusBlockEditor} from './block-editor/editor.js';
 import blockEditorTranslations from './block-editor/translations.json';
@@ -28,7 +27,6 @@ import {plusTrustedExtensions} from './trusted-extensions.js';
 
 // Resolved once when the bundle starts, as the fork did: a project cannot enable document editing
 // by being opened, and a later URL change cannot turn it on either.
-const transferFlags = readStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 const startupFlags = readDocumentEditorFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 /**
@@ -47,12 +45,12 @@ export const createPlusIntegration = ({
     libraryTab = plusLibraryTab,
     projectPackager = plusProjectPackager,
     securityReview = plusSecurityReview,
-    scriptTransfer = transferFlags.scriptTransfer ? {
+    scriptTransfer = {
         attach: attachScriptTransfer, stageMenu: stageTransferMenu, finalizeMenu: finalizeTransferMenu
-    } : null,
+    },
     blockEditor = plusBlockEditor
 }) => ({
-    // Transfer is supplied only when the startup flag explicitly enabled it.
+    // Transfer is always supplied: there is no startup switch, and rollback reverts the integration.
     scriptTransfer,
     /**
      * What this distribution stands behind: an extension its catalog lists loads unsandboxed

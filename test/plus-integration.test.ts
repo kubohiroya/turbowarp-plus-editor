@@ -144,8 +144,9 @@ test('this distribution supplies the extension host and the library tab the GUI 
 });
 
 
-test('script transfer is default-off and a host can explicitly supply its two entry points', () => {
-    assert.equal(plusIntegration().scriptTransfer, null);
+test('script transfer is always supplied and a host can supply its own entry points', () => {
+    const supplied = plusIntegration().scriptTransfer as Record<string, unknown>;
+    for (const name of ['attach', 'stageMenu', 'finalizeMenu']) assert.equal(typeof supplied[name], 'function');
     const scriptTransfer = {attach () {}, stageMenu () {}};
     const integration = createPlusIntegration({mountEditor: () => null, flags: {}, scriptTransfer});
     assert.equal(integration.scriptTransfer, scriptTransfer);
