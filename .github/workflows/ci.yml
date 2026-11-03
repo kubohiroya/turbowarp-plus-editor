@@ -28,7 +28,8 @@ jobs:
         uses: pnpm/action-setup@v6
         with:
           version: 11.28.8
-      - run: npm ci
+      - run: |
+          TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
       - run: npm run typecheck
       - run: npm run test:package
       - run: npm test
