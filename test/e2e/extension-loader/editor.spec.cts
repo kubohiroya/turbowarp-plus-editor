@@ -118,7 +118,11 @@ test('digest mismatch, unknown schema and a forged trust field fail before evalu
         expect(result.code).toBe(expected);
         expect(await executions(page)).toBe(0);
         await expect(permission(page)).toHaveCount(0);
-        await expect(page.getByTestId('tw-plus-extension-status')).toContainText(expected);
+        await expect(page.getByTestId('tw-plus-extension-status')).toHaveCount(0);
+        await page.getByTestId('project-diagnostics-snackbar')
+            .getByRole('button', {name: '詳細ログを表示', exact: true}).click();
+        await expect(page.getByTestId('project-diagnostics')).toContainText(expected);
+        await page.keyboard.press('Escape');
     }
 });
 
@@ -303,21 +307,14 @@ test('HTTPS redirects and CORS refusal never execute JavaScript, even once the r
     } finally { await fixture.close(); }
 });
 
-test('a transient failure is retried and the panel names the attempt it is on', async ({page}) => {
+test('a transient failure names its attempt centrally and retains it in Project Diagnostics', async ({page}) => {
     await open(page);
-    const status = page.getByTestId('tw-plus-extension-status');
-    const retries = status.locator('[data-event="retry"]');
     // One failure shows the behaviour whatever the Loader's retry count is: any policy that
     // retries at all recovers from a single transient one. The sentence around it belongs to the
     // GUI, so assert only what the person needs — which fetch is being repeated, and that the
     // attempt it leads to is named — and let the wording change upstream without failing here.
     const expectRetryShown = async url => {
-        await expect(retries).toHaveCount(1);
-        await expect(retries.first()).toContainText(url);
-        await expect(retries.first()).toContainText(/\b2\s*\/\s*\d+/);
-        // The panel stays a log. A blocked operation is said in the middle of the screen, where
-        // the approval dialog appears too, so the corner no longer opens itself for it.
-        await expect(status).not.toHaveAttribute('open', '');
+        await expect(page.getByTestId('tw-plus-extension-status')).toHaveCount(0);
         const waiting = page.getByTestId('twextsec-wait');
         await expect(waiting).toBeVisible();
         await expect(waiting).toContainText(url);
@@ -341,6 +338,16 @@ test('a transient failure is retried and the panel names the attempt it is on', 
         expect(centred.dy).toBeLessThan(2);
         expect(centred.styles).toBe(1);
     };
+    const expectRetryRecorded = async url => {
+        await expect(page.getByTestId('twextsec-wait')).toBeHidden();
+        await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
+        await page.getByRole('button', {name: '作品の診断…', exact: true}).click();
+        const retry = page.getByTestId('project-diagnostics').locator('li details')
+            .filter({hasText: '接続を再試行中'});
+        await expect(retry).toHaveCount(1);
+        await expect(retry).toContainText(url);
+        await expect(retry).toContainText(/"attempt":\s*"2"/);
+    };
     if (process.env.E2E_BASE_URL) {
         // A published run has no GUI checkout and would reject the fixture's own certificate.
         const url = 'https://plus-fixture.invalid/flaky.js';
@@ -358,6 +365,7 @@ test('a transient failure is retried and the panel names the attempt it is on', 
         await answer(page);
         await expectRetryShown(url);
         await allowed(page, loading);
+        await expectRetryRecorded(url);
         expect(served).toBe(2);
         return;
     }
@@ -371,6 +379,7 @@ test('a transient failure is retried and the panel names the attempt it is on', 
         await answer(page);
         await expectRetryShown(url);
         await allowed(page, loading);
+        await expectRetryRecorded(url);
         expect(fixture.seen.filter(pathname => pathname === '/flaky')).toHaveLength(2);
     } finally { await fixture.close(); }
 });
