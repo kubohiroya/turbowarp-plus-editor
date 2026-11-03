@@ -1,76 +1,21 @@
 const {test, expect} = require('./fixtures.cts');
 const {devices} = require('@playwright/test');
-const {createHash} = require('node:crypto');
-const {readFile, mkdtemp, rm} = require('node:fs/promises');
+const {mkdtemp, rm} = require('node:fs/promises');
 const {tmpdir} = require('node:os');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
 const Zip = require('@turbowarp/jszip');
+const {catalogURL, specifications, installFixtures, selection, row, form, openCatalog, saveSB3, reopenSB3} =
+    require('./catalog.cts');
 
 test.use({userAgent: devices['Pixel 7'].userAgent});
 
-const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json';
-
-// A catalog extension is trusted like TurboWarp's own gallery, so it always runs without the
-// sandbox and the screen states that instead of asking. What the author chooses is how it loads,
-// spelled the same way by the screen and the manifest.
-function fixture(id, distribution) {
-    const source = `// Name: ${id}\n// ID: ${id}\n// Version: 1.0.0\n// Unsandboxed: optional\n// License: MIT\n
-(function(Scratch) {
- const execution = Scratch.extensions.unsandboxed ? 'unsandboxed' : 'sandboxed';
- const vmAccess = typeof Scratch.vm !== 'undefined';
- if (Scratch.extensions.unsandboxed) {
-  globalThis.__catalogAuthoringRuns = globalThis.__catalogAuthoringRuns || {};
-  globalThis.__catalogAuthoringRuns['${id}'] = (globalThis.__catalogAuthoringRuns['${id}'] || 0) + 1;
- }
- Scratch.extensions.register({
-  getInfo() { return {id: '${id}', name: '${id}', blocks: [
-   {opcode: 'value', blockType: Scratch.BlockType.REPORTER, text: '${id} mode'}
-  ]}; },
-  value() { return execution + ':' + (vmAccess ? 'vm' : 'no-vm'); }
- });
-})(Scratch);\n`;
-    const bytes = Buffer.from(source);
-    return {id, distribution, bytes, sha256: createHash('sha256').update(bytes).digest('hex'),
-        url: `https://catalog-authoring.invalid/${id}.js`};
-}
-const specifications = [
-    fixture('catembeddedfile', 'embedded-file'),
-    fixture('catembeddeddata', 'embedded-data'),
-    fixture('catremotecacheable', 'remote-cacheable'),
-    fixture('catremotenoncacheable', 'remote-non-cacheable')
-];
 const permission = page => page.getByTestId('tw-plus-permission');
-const selection = page => page.locator('.twextsec-review');
-const row = (page, spec) => selection(page).locator(`.twextsec-row[data-key="${spec.id}"]`);
-const form = (page, spec, distribution = spec.distribution) =>
-    row(page, spec).locator(`input[name="loading-${spec.id}"][value="${distribution}"]`);
 const projectJSON = page => page.evaluate(() => JSON.parse(vm.toJSON()));
-
-async function installFixtures(context) {
-    await context.route(catalogURL, route => route.fulfill({json: {schemaVersion: 1,
-        extensions: specifications.map(spec => ({id: spec.id, name: spec.id, version: '1.0.0', url: spec.url,
-            sha256: spec.sha256, dependencies: [], unsandboxed: 'optional',
-            description: 'Catalog authoring browser fixture', license: 'MIT'}))},
-        headers: {'access-control-allow-origin': '*'}}));
-    await context.route('https://extensions.turbowarp.org/generated-metadata/extensions-v0.json',
-        route => route.fulfill({json: {extensions: []}, headers: {'access-control-allow-origin': '*'}}));
-    for (const spec of specifications) {
-        await context.route(spec.url, route => route.fulfill({body: spec.bytes,
-            headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}));
-    }
-}
 
 async function openEditor(page, enabled = true) {
     await page.goto(`editor.html?lang=ja${enabled ? '' : '&twPlusExtensionLoader=0&twPlusExtensions=1'}`);
     await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
-}
-
-async function openCatalog(page) {
-    await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
-    await page.getByText('TurboWarp Plus', {exact: true}).click();
-    await expect(selection(page)).toBeVisible();
-    await expect(selection(page).locator('.twextsec-row')).toHaveCount(specifications.length);
 }
 
 test('catalog checkboxes alone exclude packages, dependencies stay selected, and nothing asks how they run', async ({page, context}) => {
@@ -123,20 +68,6 @@ async function assertModes(page, specs = specifications) {
         const value = await page.evaluate(async id => vm.runtime._primitives[`${id}_value`](), spec.id);
         expect(value).toBe('unsandboxed:vm');
     }
-}
-
-async function saveSB3(page) {
-    await page.getByText('ファイル', {exact: true}).click();
-    const downloading = page.waitForEvent('download');
-    await page.getByRole('listitem').filter({hasText: /^コンピューターに保存する$/}).click();
-    return readFile(await (await downloading).path());
-}
-
-async function reopenSB3(page, bytes) {
-    await page.getByText('ファイル', {exact: true}).click();
-    const choosing = page.waitForEvent('filechooser');
-    await page.getByText('コンピューターから読み込む', {exact: true}).click();
-    await (await choosing).setFiles({name: 'catalog-authored.sb3', mimeType: 'application/octet-stream', buffer: bytes});
 }
 
 test('catalog writes all four loading forms, restores them, and packages one offline HTML', async ({page, context}, testInfo) => {
