@@ -29,6 +29,7 @@ import {plusBlockEditor} from './block-editor/editor.js';
 import blockEditorTranslations from './block-editor/translations.json';
 import {installEditorExtensionHost} from './extension-host/editor-host.js';
 import {plusSecurityReview} from './extension-host/review.js';
+import {extensionLoadErrors} from './extension-host/load-errors.js';
 import {plusLibraryTab} from './extension-library/tab.js';
 import {plusProjectPackager} from './packager/handoff.js';
 
@@ -95,6 +96,7 @@ export const createPlusIntegration = ({
      * its lock and the extensions it already trusts, and hands all of that in.
      */
     securityReview,
+    extensionLoadErrors,
     /**
      * Whether the editor should leave a key event alone because it happened inside this
      * distribution's own UI. The review is the only such UI, and the class it renders comes from
