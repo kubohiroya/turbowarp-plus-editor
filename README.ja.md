@@ -235,7 +235,7 @@ SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入�
 npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format --input in.sb3 --output out.sb3 --extensions embedded-file
 ```
 
-`remote-cacheable` は「開く人のブラウザーが検証済みの控えを保持してよい」と記録するだけです。CLIはその控え（IndexedDB）を書くことも読むことも確かめることもできないため、オフラインで動く根拠にはなりません。オフラインで動かすには `embedded-file` か `embedded-data` を選びます。
+`remote-cacheable` は「開く人のブラウザーが検証済みのキャッシュを保持してよい」と記録するだけです。CLIはそのキャッシュ（IndexedDB）を書くことも読むことも確かめることもできないため、オフラインで動く根拠にはなりません。オフラインで動かすには `embedded-file` か `embedded-data` を選びます。
 
 ## English
 
