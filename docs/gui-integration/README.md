@@ -38,6 +38,8 @@ GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` 
 
 ローカル確認には `E2E_GUI_ROOT=/absolute/path/to/scratch-gui npm run test:gui-integration` を使う。サーバーを実際にlistenする試験が含まれるため、127.0.0.1への接続が可能な環境で実行する。
 
+指すcheckoutは `site/source.json` の `guiRevision` に一致していなければならない。GUIの実装を取り込んで動かす試験なので、数commit進んだcheckoutでは読み込む側のmoduleが改名されており、検証しているつもりの組合せが別物になる。食い違っていれば、両方のrevisionを挙げて1件で止まる。
+
 ## 結果と受け入れ基準
 
 - [x] 本家に存在しないGUIの追跡ファイルは32件から0件。例外なし。

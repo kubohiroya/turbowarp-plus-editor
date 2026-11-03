@@ -124,7 +124,7 @@ The package includes the brand SVG, button CSS, URL/HTML helpers, and pinned dis
 Use Node.js 26. All maintained JavaScript sources, build scripts, configurations, and tests are authored in TypeScript (`.ts`, or `.cts` for CommonJS). Node.js runs development scripts directly with native type stripping. Browser modules are emitted as JavaScript with esbuild, and npm entry points and declarations are compiled into `dist/` with TypeScript.
 
 ```sh
-npm ci
+TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
 npm run typecheck
 npm run build
 npm test
@@ -133,6 +133,8 @@ E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
 TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
 E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 ```
+
+The review dialog is a Git dependency whose build reads its own revision, and npm installs it from an archive with no history to read it from — so a plain `npm ci` stops there. The pin is what it asks for, which is why the install carries it; this is the form the workflows use.
 
 `npm run build` produces the npm JavaScript and declarations; `npm pack` runs it automatically. `npm run build:test-driver` compiles the optional VSCode test extension before native VSCode checks.
 
