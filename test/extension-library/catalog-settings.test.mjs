@@ -7,9 +7,9 @@ import {createExtensionAuthoringController, setExtensionAuthoringHost} from '../
 
 const entry = (id, dependencies = []) => ({id, ids: [id], url: `https://catalog.test/${id}.js`, dependencies,
     metadata: {name: id, version: '1.2.3'}});
-// The Loader's four forms: a source either names a URL or carries the bytes. The review screen's
-// own two choices ('remote' / 'embedded') are what `distributions` holds, and the translation
-// between the two is `catalog-settings.js`'s own — which is what several of these tests check.
+// The Loader's four forms: a source either names a URL or carries the bytes. The review screen
+// spells them the same way, so what `readPlusCatalogSettings` returns and what
+// `applyPlusCatalogSettings` takes is the screen's `ReviewDecision` with no translation.
 const spec = (id, type = 'remote-cacheable', execution = 'unsandboxed') => ({id, execution,
     sha256: 'a'.repeat(64),
     source: type.startsWith('remote-') ? {type, url: entry(id).url} : {type, path: `extensions/${id}.js`}});
@@ -17,8 +17,9 @@ function vmFixture(services = [], loadedIds = services.map(([id]) => id)) {
     return {extensionManager: {_loadedExtensions: new Map(services),
         isExtensionLoaded(id) { return loadedIds.includes(id); }}};
 }
-const selection = (entries, choices, distributions = []) => ({entries,
-    choices: new Map(choices.map(([id, mode]) => [entry(id).url, mode])), distributions: new Map(distributions)});
+/** `decisions` as `[id, execution, loading]`; a missing loading stays missing. */
+const selection = (entries, decisions) => ({entries, decisions: new Map(decisions.map(([id, execution, loading]) =>
+    [id, loading === undefined ? {execution} : {execution, loading}]))});
 const deferred = () => {
     let resolve;
     const promise = new Promise(yes => { resolve = yes; });
@@ -30,57 +31,57 @@ async function plainSB3() {
         .generateAsync({type: 'uint8array', compression: 'STORE'});
 }
 
-test('actual VM service prefixes restore execution while Loader manifest restores independent distribution', async () => {
+test('actual VM service prefixes restore execution while the manifest restores the loading form', async () => {
     const entries = [entry('outside'), entry('inside')];
     const vm = vmFixture([['outside', 'unsandboxed.1.outside'], ['inside', 'extension.2.inside']]);
     const manifest = {extensions: [spec('outside', 'embedded-file', 'sandboxed'), spec('inside', 'remote-cacheable', 'unsandboxed')]};
     setExtensionAuthoringHost(vm, {inspect: async () => manifest});
-    const settings = await readPlusCatalogSettings(vm, entries);
-    assert.deepEqual([...settings.choices], [[entries[0].url, 'unsandboxed'], [entries[1].url, 'sandboxed']]);
-    assert.deepEqual([...settings.distributions], [['outside', 'embedded'], ['inside', 'remote']]);
+    const {decisions} = await readPlusCatalogSettings(vm, entries);
+    // What is running wins over what the manifest requested, and the form is read as it is spelled.
+    assert.deepEqual([...decisions], [['outside', {execution: 'unsandboxed', loading: 'embedded-file'}],
+        ['inside', {execution: 'sandboxed', loading: 'remote-cacheable'}]]);
     setExtensionAuthoringHost(vm, null);
 });
 
-test('legacy loaded entries default to Remote and a missing Loader host does not invent execution state', async () => {
-    const entries = [entry('legacy'), entry('newentry')];
+test('every one of the four forms passes through unchanged, and a running entry with no manifest has no form', async () => {
+    const forms = ['remote-non-cacheable', 'remote-cacheable', 'embedded-file', 'embedded-data'];
+    const entries = forms.map(form => entry(form));
     const vm = vmFixture([['legacy', 'extension.2.legacy']]);
-    const settings = await readPlusCatalogSettings(vm, entries);
-    assert.deepEqual([...settings.choices], [[entries[0].url, 'sandboxed']]);
-    assert.deepEqual([...settings.distributions], [['legacy', 'remote']]);
+    setExtensionAuthoringHost(vm, {inspect: async () => ({extensions: forms.map(form => spec(form, form))})});
+    const {decisions} = await readPlusCatalogSettings(vm, [...entries, entry('legacy')]);
+    assert.deepEqual(forms.map(form => decisions.get(form).loading), forms);
+    // The screen offers its own default form for a row the project has not recorded one for.
+    assert.deepEqual(decisions.get('legacy'), {execution: 'sandboxed'});
+    setExtensionAuthoringHost(vm, null);
 });
 
-test('saved but unused Plus metadata restores distribution without treating its execution request as consent', async () => {
-    const vm = vmFixture([['unused', 'unsandboxed.3.unused']], []);
-    const existing = spec('unused', 'embedded-file');
-    setExtensionAuthoringHost(vm, {inspect: async () => ({extensions: [existing]})});
-    const settings = await readPlusCatalogSettings(vm, [entry('unused')]);
-    assert.deepEqual([...settings.distributions], [['unused', 'embedded']]);
-    assert.equal(settings.choices.size, 0);
-    assert.equal(existing.execution, 'unsandboxed');
-    setExtensionAuthoringHost(vm, null);
+test('a missing Loader host does not invent a form, and an unrecorded entry gets no decision', async () => {
+    const vm = vmFixture([['legacy', 'extension.2.legacy']]);
+    const {decisions} = await readPlusCatalogSettings(vm, [entry('legacy'), entry('newentry')]);
+    assert.deepEqual([...decisions], [['legacy', {execution: 'sandboxed'}]]);
 });
 
 test('unknown or absent VM service names do not silently restore a sandbox mode', async () => {
     const entries = [entry('unknown'), entry('missing')];
     const vm = vmFixture([['unknown', 'unexpected-service']], ['unknown', 'missing']);
-    const settings = await readPlusCatalogSettings(vm, entries);
-    assert.equal(settings.choices.size, 0);
-    assert.deepEqual([...settings.distributions], [['unknown', 'remote'], ['missing', 'remote']]);
+    const {decisions} = await readPlusCatalogSettings(vm, entries);
+    // Nothing running can be read, so the default the screen shows stands for both.
+    assert.deepEqual([...decisions], []);
 });
 
-test('apply forwards every selected and loaded row together with execution, distribution, dependencies, version and signal', async () => {
+test('apply forwards every selected and loaded row together with execution, form, dependencies, version and signal', async () => {
     const vm = vmFixture([['base', 'extension.1.base']]);
     const entries = [entry('base'), entry('parent', ['base'])];
     const calls = [];
     const signal = new AbortController().signal;
     setExtensionAuthoringHost(vm, {configure: async (...args) => calls.push(args)});
     const result = await applyPlusCatalogSettings(vm, selection(entries,
-        [['base', 'sandboxed'], ['parent', 'unsandboxed']], [['base', 'embedded'], ['parent', 'remote']]), {signal});
+        [['base', 'sandboxed', 'embedded-data'], ['parent', 'unsandboxed', 'remote-non-cacheable']]), {signal});
     assert.deepEqual(result, ['base', 'parent']);
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0][0], [
-        {id: 'base', url: entries[0].url, execution: 'sandboxed', distribution: 'embedded-file', dependencies: [], version: '1.2.3'},
-        {id: 'parent', url: entries[1].url, execution: 'unsandboxed', distribution: 'remote-cacheable', dependencies: ['base'], version: '1.2.3'}
+        {id: 'base', url: entries[0].url, execution: 'sandboxed', distribution: 'embedded-data', dependencies: [], version: '1.2.3'},
+        {id: 'parent', url: entries[1].url, execution: 'unsandboxed', distribution: 'remote-non-cacheable', dependencies: ['base'], version: '1.2.3'}
     ]);
     assert.equal(calls[0][1].signal, signal);
     setExtensionAuthoringHost(vm, null);
@@ -93,7 +94,8 @@ test('an empty selection does not call configure and forged deny choices reject 
     setExtensionAuthoringHost(vm, {configure: async requests => calls.push(requests)});
     assert.deepEqual(await applyPlusCatalogSettings(vm, selection([], [])), []);
     await assert.rejects(applyPlusCatalogSettings(vm,
-        selection(entries, [['denied', 'deny'], ['allowed', 'sandboxed']])), {code: 'MISSING_EXECUTION'});
+        selection(entries, [['denied', 'deny', 'remote-cacheable'], ['allowed', 'sandboxed', 'remote-cacheable']])),
+    {code: 'MISSING_EXECUTION'});
     assert.equal(calls.length, 0);
     setExtensionAuthoringHost(vm, null);
 });
@@ -102,7 +104,8 @@ test('denial of an already-loaded extension is rejected instead of claiming it s
     const vm = vmFixture([['loaded', 'extension.1.loaded']]);
     let calls = 0;
     setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
-    await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('loaded')], [['loaded', 'deny']])), {code: 'MISSING_EXECUTION'});
+    await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('loaded')], [['loaded', 'deny', 'remote-cacheable']])),
+        {code: 'MISSING_EXECUTION'});
     assert.equal(calls, 0);
     assert.equal(vm.extensionManager.isExtensionLoaded('loaded'), true);
     setExtensionAuthoringHost(vm, null);
@@ -114,14 +117,26 @@ test('missing or unknown execution prevents the entire batch from reaching confi
         let calls = 0;
         setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
         await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('first'), entry('second')],
-            [['first', 'sandboxed'], ['second', mode]])), {code: 'MISSING_EXECUTION'});
+            [['first', 'sandboxed', 'remote-cacheable'], ['second', mode, 'remote-cacheable']])), {code: 'MISSING_EXECUTION'});
+        assert.equal(calls, 0);
+        setExtensionAuthoringHost(vm, null);
+    }
+});
+
+test('a missing form, or a retired spelling, is refused rather than defaulted or translated', async () => {
+    for (const loading of [undefined, 'remote', 'embedded', 'cached', 'automatic']) {
+        const vm = vmFixture();
+        let calls = 0;
+        setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
+        await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('first')], [['first', 'sandboxed', loading]])),
+            {code: 'MISSING_LOADING'}, String(loading));
         assert.equal(calls, 0);
         setExtensionAuthoringHost(vm, null);
     }
 });
 
 test('the disabled Loader host refuses distribution writes', async () => {
-    await assert.rejects(applyPlusCatalogSettings(vmFixture(), selection([entry('sample')], [['sample', 'sandboxed']])), {code: 'LOADER_DISABLED'});
+    await assert.rejects(applyPlusCatalogSettings(vmFixture(), selection([entry('sample')], [['sample', 'sandboxed', 'remote-cacheable']])), {code: 'LOADER_DISABLED'});
 });
 
 test('configure and inspect connect the real core batch API to one project apply without executing JS', async () => {
