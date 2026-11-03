@@ -106,6 +106,25 @@ jobs:
         env:
           TW_SOURCE_EVIDENCE: test-results/document-sources
         run: npm run test:yaml:browser
+      # These two run the built Editor's real GUI, VM and SB3 against the test-only owner
+      # `twpeyamlsettings`; only the native VSCode launcher is replaced. The base SB3 is generated
+      # here so no binary fixture is checked in or borrowed from the pinned GUI.
+      - name: Build the document editor's SB3 fixtures
+        run: |
+          node test/fixtures/yaml-editor/base-project.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3"
+          node scripts/yaml-editor/build-settings-fixture.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3" "$RUNNER_TEMP/yaml-fixtures/settings.sb3"
+      - name: Verify YAML import, invalid YAML, project replacement and the SB3 round trip
+        env:
+          TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
+          TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
+          TWPE_YAML_EVIDENCE: test-results/yaml-roundtrip
+        run: npm run test:yaml:roundtrip
+      - name: Verify two documents with separate schemas, a guarded switch and saving both
+        env:
+          TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
+          TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
+          TWPE_YAML_EVIDENCE: test-results/yaml-multi-document
+        run: npm run test:yaml:multi-document
       - name: Verify integrated editing, security, themes and SB3 round trips
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui

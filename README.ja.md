@@ -172,7 +172,8 @@ macOSの内部通信パス上限を超える保存先では、作業ファイル
 ```sh
 npm run test:yaml
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:yaml:browser
-# アセットを含む任意のSB3から、テスト専用fixtureを生成します。
+# アセットを含む任意のSB3から、テスト専用fixtureを生成します
+# （CIでは `node test/fixtures/yaml-editor/base-project.ts /absolute/path/to/base.sb3` で生成したものを使います）。
 node scripts/yaml-editor/build-settings-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/settings.sb3
 node scripts/yaml-editor/build-document-source-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/document-source.sb3
 TWPE_YAML_SITE=/absolute/path/to/editor/build \
@@ -181,14 +182,14 @@ TWPE_YAML_EVIDENCE=/absolute/path/to/evidence \
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
 npm run test:yaml:roundtrip
 # 同じ環境変数で、2文書のsettings fixtureも検証できます。
-node --test test/yaml-multi-document.browser.ts
+npm run test:yaml:multi-document
 # 表現プレビューは同じ環境変数で、document-source fixtureを指定して検証します。
 node --test test/representation-preview.browser.ts
 ```
 
 `test:yaml:browser` は固定済みの共通document-editorとdocument-source registryに試験用の提供元・VMを接続し、URLプレビュー・取消・保存・再取得・埋め込みファイルへの変換を検証します。App固有APIは必要ありません。CIではPlaywrightのChromiumで実行し、ローカルの既存ブラウザーは `TWPE_CHROME_EXECUTABLE`（互換用に `CHROME_PATH` も可）で指定できます。
 
-SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
+SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。CIはビルドしたEditorで `test:yaml:roundtrip` と `test:yaml:multi-document` を実行し、画面と `result.json` を `integration-evidence-*` の `test-results/yaml-roundtrip/`・`test-results/yaml-multi-document/` に残します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
 
 ### 原文・共通YAMLブロック・スキーマ専用ブロック
 
