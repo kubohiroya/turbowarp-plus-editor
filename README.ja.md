@@ -256,6 +256,6 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 この候補は、直前の未公開UI修正（プレビューの重なり表示防止、タブ内の保存形式表示、外部エディタのフローティングボタン、ガイド/Schemaリンク）を引き継いでいます。
 
 
-### スクリプト・ステージの転送（実験機能）
+## スクリプト・ステージの転送（実験機能）
 
 起動URLに `twPlusScriptTransfer=1` を付けると、スクリプトの `.blocks3` 書き出し・読み込み、ウィンドウ間のコピー・貼り付け、ステージの `.stage3` 書き出し・追加読み込みを有効にできます。既定はOFFです。操作と切り戻しは [転送の仕様](docs/script-stage-transfer.md) を参照してください。

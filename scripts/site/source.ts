@@ -162,7 +162,7 @@ export async function verifyScriptTransferDependency(directory, pins) {
         'Script transfer lock differs from the pin');
     assert.equal(entry.version, pins.scriptTransferVersion, 'Script transfer lock version differs from the pin');
     const require = createRequire(path.join(directory, 'package.json'));
-    const installed = JSON.parse(await fs.readFile(path.join(path.dirname(require.resolve(name)), 'package.json'), 'utf8'));
+    const installed = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
     assert.equal(installed.version, pins.scriptTransferVersion, 'Installed script transfer differs from the pin');
 }
 
