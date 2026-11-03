@@ -55,6 +55,8 @@ const {code} = babel.transformSync(fs.readFileSync(filename, 'utf8'), {
 });
 const imports = {
     'prop-types': guiRequire('prop-types'), react: React, 'react-intl': intl,
+    // The currently published GUI still imports these classes until its wrapper is reduced.
+    '../components/block-editor/block-editor.css': new Proxy({}, {get: (_, name) => String(name)}),
     // The wrapper reaches the dialog through the integration: the host supplies it, and what this
     // file is about is the wrapper's own messages and props.
     '../lib/tw-plus-integration-points.js': {
