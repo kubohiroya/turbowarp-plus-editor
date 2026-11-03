@@ -118,6 +118,17 @@ export const frameFor = Modal => {
  * @param {object} [parts] `trusted`, `screen`, `install`, `storage` and `identify` for tests.
  * @returns {object} `installBatchLoader`, `render` and `isCancelled`.
  */
+/**
+ * The review's own markup, which is the dialog package's rather than the GUI's.
+ *
+ * The editor turns a bare space into "run" and the arrows into sprite nudges; inside the review
+ * those keys belong to its checkboxes and buttons. The GUI asks before acting, through the
+ * `shouldIgnoreKeyEvent` socket, and only this side can answer — the class comes from the package
+ * this distribution depends on. The fork still carries a hard-coded `.twextsec-modal`, which the
+ * 0.7 screen no longer renders, so the socket is what makes this work at all.
+ */
+const REVIEW_ROOT = '.twextsec-review';
+
 export const createSecurityReview = ({
     trusted = plusTrustedExtensions.catalog,
     screen = ExtensionReview,
@@ -179,6 +190,15 @@ export const createSecurityReview = ({
         loadInfo: loadExtensionInfo,
         onComplete
     }),
+    /**
+     * Whether a key event happened inside the review, so the editor leaves that key alone.
+     * @param {object} event The key event the GUI received.
+     * @returns {boolean} True when the event belongs to the review.
+     */
+    ownsKeyEvent: event => {
+        const target = event?.target;
+        return typeof target?.closest === 'function' && target.closest(REVIEW_ROOT) !== null;
+    },
     /**
      * Whether an error means someone declined, rather than something failing.
      * @param {object} error The rejection from loading.

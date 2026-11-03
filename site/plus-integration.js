@@ -93,6 +93,14 @@ export const createPlusIntegration = ({
      */
     securityReview,
     /**
+     * Whether the editor should leave a key event alone because it happened inside this
+     * distribution's own UI. The review is the only such UI, and the class it renders comes from
+     * the package this repository depends on, so the fork cannot name it.
+     * @param {object} event The key event the GUI received.
+     * @returns {boolean} True when the editor should not act on it.
+     */
+    shouldIgnoreKeyEvent: event => securityReview.ownsKeyEvent(event),
+    /**
      * The form-based block editor: the service that edits one VM's blocks, the editors attached to
      * a workspace, and the dialog. The GUI supplies its translations, its workspace, its modal
      * frame and its palette, because those are its own.
