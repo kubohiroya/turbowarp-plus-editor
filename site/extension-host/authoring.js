@@ -8,13 +8,34 @@
 
 /* global AggregateError */
 import JSZip from '@turbowarp/jszip';
-import {prepareExtensionAddition} from '@kubohiroya/turbowarp-extension-loader/project-authoring';
+import {
+    createProjectUUID, defaultProjectURI, prepareExtensionAddition
+} from '@kubohiroya/turbowarp-extension-loader/project-authoring';
 import {
     prepareCatalogExtensionChanges, readProjectAuthoringState
 } from '@kubohiroya/turbowarp-extension-loader/project-catalog';
 
 const hosts = new WeakMap();
 const failure = (code, message) => Object.assign(new Error(message), {code});
+
+/**
+ * The origin a project's default address is made from, or null when this one cannot make any.
+ *
+ * Project addresses are HTTPS only, so an editor opened over plain HTTP (the local preview and the
+ * E2E server on `http://localhost`) or from a file names nothing: its projects stay unaddressed,
+ * which files them in the shared bucket rather than under a name this editor cannot claim.
+ * @param {string|undefined} origin Where the editor was opened, as `location.origin`.
+ * @returns {string|null} The origin, when it can carry project addresses.
+ */
+const addressingOrigin = origin => {
+    if (typeof origin !== 'string') return null;
+    try {
+        const url = new URL(origin);
+        return url.protocol === 'https:' && !url.username && !url.password ? url.origin : null;
+    } catch {
+        return null;
+    }
+};
 
 /**
  * Keep project mutations outside the presentation layer and inside the active host.
@@ -25,8 +46,13 @@ export const createExtensionAuthoringController = (vm, {
     ports, diagnostics = () => {}, prepareAddition = prepareExtensionAddition, zip = JSZip, loaderOptions,
     // What the host accepts when reading a project's embedded extensions. The limits belong to the
     // distribution, so the host that installs this controller passes them in.
-    archiveOptions = {}
+    archiveOptions = {},
+    // Where the editor was opened (`location.origin`, no path). A project that gets its first
+    // manifest here is given its default address under this origin; the editor entry reads it
+    // from the page and passes it in, so nothing in here looks at `location`.
+    origin, createUUID = createProjectUUID
 } = {}) => {
+    const projectOrigin = addressingOrigin(origin);
     let revision = 0;
     let pending;
     let ownLoad = false;
@@ -71,13 +97,28 @@ export const createExtensionAuthoringController = (vm, {
                     }
                 };
                 assertCurrent();
+                let state;
+                const readState = async () => {
+                    if (state === undefined) state = await readProjectAuthoringState(original, {zip, archiveOptions});
+                    return state;
+                };
+                // A project is addressed when its manifest is first written: adding an extension,
+                // or a catalog selection that keeps at least one. One that already has an address
+                // keeps it, because the Loader keeps the current one when it is given none. A
+                // selection that leaves nothing never introduces an address.
+                const writesManifest = Array.isArray(request) ? request.length > 0 : true;
+                let uri;
+                if (projectOrigin && writesManifest) {
+                    const current = await readState();
+                    assertCurrent();
+                    if (typeof current?.uri !== 'string') uri = defaultProjectURI(projectOrigin, createUUID());
+                }
                 const prepared = await prepare(original, request, ports,
                     {zip, signal: operation.controller.signal, loaderOptions,
-                        archiveOptions});
+                        archiveOptions, ...(uri === undefined ? {} : {uri})});
                 assertCurrent();
                 onPrepared(prepared.spec || prepared.manifest);
-                const oldManifest = prepared.manifest ?
-                    await readProjectAuthoringState(original, {zip, archiveOptions}) : null;
+                const oldManifest = prepared.manifest ? await readState() : null;
                 assertCurrent();
                 const priorIds = new Set((oldManifest?.extensions || []).map(spec => spec.id));
                 const legacyIds = (prepared.manifest?.extensions || []).map(spec => spec.id)
