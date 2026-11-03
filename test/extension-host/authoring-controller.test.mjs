@@ -124,7 +124,8 @@ test('a change the Loader could not prepare is reported, so a waiting indicator 
     const controller = createExtensionAuthoringController(vm, {ports: {}, zip: {},
         prepareAddition: async () => { throw failed; }, diagnostics: event => events.push(event)});
     await assert.rejects(controller.add({id: 'example'}), error => error === failed);
-    assert.deepEqual(events, [{type: 'error', code: 'LOAD_FAILED', id: 'example'}]);
+    assert.deepEqual(events, [{type: 'error', code: 'LOAD_FAILED', id: 'example',
+        message: 'Catalog extension could not be fetched'}]);
     controller.dispose();
     // Showing it cannot change the outcome.
     const quiet = createExtensionAuthoringController(vm, {ports: {}, zip: {},

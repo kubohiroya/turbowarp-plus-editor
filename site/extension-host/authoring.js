@@ -105,7 +105,8 @@ export const createExtensionAuthoringController = (vm, {
                             archiveOptions, ...(uri === undefined ? {} : {uri})});
                 } catch (error) {
                     try {
-                        diagnostics({type: 'error', code: error?.code || 'LOAD_FAILED', id: error?.extensionId});
+                        diagnostics({type: 'error', code: error?.code || 'LOAD_FAILED',
+                            id: error?.extensionId, message: error?.message});
                     } catch (diagnosticError) {
                         // A presentation failure must not change the operation's outcome.
                     }

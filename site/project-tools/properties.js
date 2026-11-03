@@ -38,8 +38,12 @@ async function readInfo(input) {
  * Install after the extension persistence bridge and release before it. Serialization reads the
  * latest native title; only completed whole-project exports advance the modification date.
  */
-export function installProjectProperties(vm, {projectState = {}, now = () => new Date().toISOString()} = {}) {
-    const names = ['loadProject', 'toJSON', 'saveProjectSb3', 'saveProjectSb3Stream', 'saveProjectSb3DontZip'];
+export function installProjectProperties(vm, {
+    projectState = {}, now = () => new Date().toISOString(), metadataEnabled = true
+} = {}) {
+    // Diagnostics observes loads even when metadata editing and serialization are disabled.
+    const names = ['loadProject', ...(metadataEnabled ?
+        ['toJSON', 'saveProjectSb3', 'saveProjectSb3Stream', 'saveProjectSb3DontZip'] : [])];
     const originals = Object.fromEntries(names.filter(name => typeof vm[name] === 'function').map(name => [name, vm[name]]));
     const descriptors = Object.fromEntries(Object.keys(originals).map(name => [name, Object.getOwnPropertyDescriptor(vm, name)]));
     let info = null;
@@ -104,14 +108,16 @@ export function installProjectProperties(vm, {projectState = {}, now = () => new
                 const sequence = ++generation;
                 loadState = {phase: 'loading', sequence};
                 notify();
-                const loaded = await readInfo(input);
+                const loaded = metadataEnabled ? await readInfo(input) : null;
                 try {
                     if (disposed) throw new Error('Project properties were disposed');
                     const result = await originals.loadProject.call(vm, input, ...args);
                     if (disposed) return result;
-                    info = loaded || (isNew ? {...empty(), createdAt: now()} : null);
-                    if (info?.schemaVersion === 1 && info.title) projectState.setTitle?.(info.title);
-                    baseline = fingerprint();
+                    if (metadataEnabled) {
+                        info = loaded || (isNew ? {...empty(), createdAt: now()} : null);
+                        if (info?.schemaVersion === 1 && info.title) projectState.setTitle?.(info.title);
+                        baseline = fingerprint();
+                    }
                     loadState = {phase: 'loaded', sequence};
                     notify();
                     return result;
@@ -145,7 +151,9 @@ export function installProjectProperties(vm, {projectState = {}, now = () => new
         loadedTitle: () => info?.schemaVersion === 1 && typeof info.title === 'string' && info.title ? info.title : undefined,
         restoreTitle () { const title = this.loadedTitle(); if (title !== undefined) projectState.setTitle?.(title); },
         apply (draft) {
-            if (disposed || loading || (info && info.schemaVersion !== 1)) throw new Error('Project properties are not editable');
+            if (!metadataEnabled || disposed || loading || (info && info.schemaVersion !== 1)) {
+                throw new Error('Project properties are not editable');
+            }
             const previous = current();
             const next = {...previous, ...Object.fromEntries(fields.map(key =>
                 [key, String(draft[key] ?? previous[key])]))};

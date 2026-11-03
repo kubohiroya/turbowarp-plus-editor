@@ -7,6 +7,7 @@ const VM = guiRequire('scratch-vm');
 const JSZip = guiRequire('@turbowarp/jszip');
 const {installProjectToolsHost, renderFileMenu, loadedProjectTitle} = require('../../site/project-tools/index.js');
 const {PROJECT_INFO_KEY} = require('../../site/project-tools/properties.js');
+const {getExtensionAuthoringHost} = require('../../site/extension-host/authoring.js');
 const vmModules = {
     ScratchCommon: guiRequire('scratch-vm/src/extension-support/tw-extension-api-common.js'),
     createTranslate: guiRequire('scratch-vm/src/extension-support/tw-l10n.js'),
@@ -66,13 +67,47 @@ test('real VM and extension codec preserve project properties and embedded code 
         assert.equal(renderFileMenu({vm}), null);
     } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
 });
-test('with project tools off the legacy diagnostic panel and serializers remain, even when a project requests tools', async () => {
+test('normal startup removes the corner log and opens failed-load diagnostics without enabling project properties', async () => {
     const vm = new VM();
     const dom = new JSDOM('<html><head></head><body></body></html>');
+    dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+    let title = 'Native title';
     const host = installProjectToolsHost(vm, {enabled: true, document: dom.window.document, vmModules,
+        projectState: {getTitle: () => title, setTitle: value => { title = value; }},
+        fetchImpl: async () => new Response('Not found', {status: 404}),
         cache: {async get() {}, async put() {}}}, false);
     try {
-        assert.ok(dom.window.document.querySelector('[data-testid="tw-plus-extension-status"]'));
-        assert.equal(renderFileMenu({vm}), null);
+        assert.equal(dom.window.document.querySelector('[data-testid="tw-plus-extension-status"]'), null);
+        const MenuItem = () => null; const MenuSection = () => null;
+        const menu = renderFileMenu({vm, MenuItem, MenuSection, onRequestClose() {}});
+        assert.equal(menu.props.children.key, 'diagnostics');
+        const plain = {...project, turboWarpPlus: undefined, extensions: []};
+        await vm.loadProject(JSON.stringify(plain));
+        assert.equal(title, 'Native title');
+        assert.equal(loadedProjectTitle(vm), undefined);
+        assert.equal(JSON.parse(vm.toJSON())[PROJECT_INFO_KEY], undefined);
+        assert.equal(dom.window.document.querySelector('aside'), null);
+        let prepareFailure;
+        await assert.rejects(getExtensionAuthoringHost(vm).configure([{id: 'unavailable',
+            url: 'https://example.test/missing.js', execution: 'unsandboxed', distribution: 'embedded-file'}]),
+        error => { prepareFailure = error; return true; });
+        const preparationNotice = dom.window.document.querySelector('[data-testid="project-diagnostics-snackbar"]');
+        assert.match(preparationNotice.textContent, /Could not load the extension/);
+        preparationNotice.querySelector('button').click();
+        const preparationDialog = dom.window.document.querySelector('[data-testid="project-diagnostics"]');
+        assert.ok(preparationDialog.textContent.includes(prepareFailure.message));
+        preparationDialog.dispatchEvent(new dom.window.Event('cancel', {cancelable: true}));
+        const bad = {...project, turboWarpPlus: {schemaVersion: 1,
+            extensions: [{...manifest.extensions[0], sha256: 'b'.repeat(64)}]}};
+        const zip = new JSZip(); zip.file('project.json', JSON.stringify(bad)); zip.file('extensions/test.js', bytes);
+        await assert.rejects(vm.loadProject(await zip.generateAsync({type: 'uint8array'})));
+        const notice = dom.window.document.querySelector('[data-testid="project-diagnostics-snackbar"]');
+        assert.ok(notice);
+        assert.equal(dom.window.document.querySelector('[data-testid="tw-plus-extension-status"]'), null);
+        [...notice.querySelectorAll('button')].find(button => button.textContent === 'View detailed log').click();
+        const dialog = dom.window.document.querySelector('[data-testid="project-diagnostics"]');
+        assert.match(dialog.textContent, /DIGEST_MISMATCH/);
+        assert.equal(dom.window.document.querySelector('aside'), null);
+        assert.equal(title, 'Native title');
     } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
 });

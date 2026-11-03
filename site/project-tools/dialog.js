@@ -10,12 +10,13 @@ const element = (document, tag, text, attributes = {}) => {
 };
 
 /** Native modal dialogs keep focus and Escape handling in the browser, outside the stage. */
-export const createProjectDialogs = (document, properties, history, diagnostics) => {
+export const createProjectDialogs = (document, properties, history, diagnostics, {locale: hostLocale} = {}) => {
     let active = null;
     let returnFocus = null;
     let identity = 0;
     let stopDiagnosticsView = null;
     let notice = null;
+    let noticeReturnFocus = null;
     let notifiedError = '';
     const close = () => {
         if (!active) return;
@@ -45,15 +46,28 @@ export const createProjectDialogs = (document, properties, history, diagnostics)
         const key = error ? `${sessions[0].id}:${error.time}:${error.code}:${error.type}` : '';
         if (!key || key === notifiedError) return;
         notifiedError = key;
+        if (!notice?.contains(document.activeElement)) noticeReturnFocus = document.activeElement;
         notice?.remove();
-        const locale = document.documentElement.lang || 'en';
+        const locale = hostLocale || document.documentElement.lang || 'en';
         const ja = locale.startsWith('ja');
-        notice = element(document, 'aside', undefined, {class: styles.notice, role: 'status', 'data-project-tools': ''});
-        notice.appendChild(element(document, 'span', ja ? '作品の読み込みで問題が発生しました。' : 'A problem occurred while loading the project.'));
-        const show = element(document, 'button', ja ? '診断を表示' : 'View diagnostics', {type: 'button'});
-        show.addEventListener('click', () => { notice.remove(); api.showDiagnostics(locale, sessions[0].id); });
+        notice = element(document, 'aside', undefined, {class: styles.notice, 'data-project-tools': '',
+            'data-testid': 'project-diagnostics-snackbar'});
+        const message = error.type === 'project-error' ?
+            (ja ? '作品を開けませんでした。' : 'Could not open the project.') :
+            (ja ? '拡張機能を読み込めませんでした。' : 'Could not load the extension.');
+        notice.appendChild(element(document, 'span', message, {role: 'status', 'aria-atomic': 'true'}));
+        const show = element(document, 'button', ja ? '詳細ログを表示' : 'View detailed log', {type: 'button'});
+        show.addEventListener('click', () => {
+            api.showDiagnostics(locale, sessions[0].id);
+            returnFocus = noticeReturnFocus;
+            notice.remove();
+        });
         const dismiss = element(document, 'button', ja ? '閉じる' : 'Dismiss', {type: 'button'});
-        dismiss.addEventListener('click', () => notice.remove());
+        dismiss.addEventListener('click', () => {
+            const restore = notice.contains(document.activeElement);
+            notice.remove();
+            if (restore && noticeReturnFocus?.isConnected) noticeReturnFocus.focus();
+        });
         notice.append(show, dismiss); document.body.appendChild(notice);
     });
     const api = {

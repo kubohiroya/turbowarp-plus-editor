@@ -6,7 +6,7 @@ const {createProjectDialogs} = require('../../site/project-tools/dialog.js');
 const {createAuthorHistory} = require('../../site/project-tools/history.js');
 const {createProjectDiagnostics} = require('../../site/project-tools/diagnostics.js');
 
-const fixture = () => {
+const fixture = (options) => {
     const dom = new JSDOM('<button id="origin">File</button>', {url: 'https://example.test/'});
     const document = dom.window.document;
     dom.window.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
@@ -21,7 +21,7 @@ const fixture = () => {
     history.remember('Recent author', 'https://contact.test');
     document.querySelector('button').focus();
     const diagnostics = createProjectDiagnostics();
-    const dialogs = createProjectDialogs(document, properties, history, diagnostics);
+    const dialogs = createProjectDialogs(document, properties, history, diagnostics, options);
     return {dom, document, dialogs, history, changes, diagnostics, load() { phase = 'loading'; listener(); }};
 };
 test('properties has editable recent combobox values, plain-text link preview and cancel without storing', () => {
@@ -50,7 +50,7 @@ test('diagnostics shows empty state, literal errors and earlier attempts with a 
     assert.ok(f.document.querySelector('aside button'));
     f.diagnostics.begin('Current'); f.diagnostics.finish({phase: 'loaded'}, 'Current');
     // A notice for a failed attempt must open that attempt even after a different project loads.
-    [...f.document.querySelectorAll('aside button')].find(button => button.textContent === 'View diagnostics').click();
+    [...f.document.querySelectorAll('aside button')].find(button => button.textContent === 'View detailed log').click();
     assert.equal(f.document.querySelector('dialog select').value, '1');
     const select = f.document.querySelector('dialog select');
     select.value = '1'; select.dispatchEvent(new f.dom.window.Event('change'));
@@ -63,6 +63,37 @@ test('diagnostics shows empty state, literal errors and earlier attempts with a 
     f.dialogs.dispose();
     assert.equal(f.document.querySelector('aside'), null);
     assert.equal(f.document.querySelector('dialog'), null);
+});
+test('a failure snackbar uses the host locale, preserves focus and leaves the selected project unchanged', () => {
+    const f = fixture({locale: 'ja'});
+    f.document.documentElement.lang = 'en';
+    f.diagnostics.begin('Current');
+    f.diagnostics.record({type: 'verified', id: 'sample'});
+    assert.equal(f.document.querySelector('aside'), null);
+    f.diagnostics.record({type: 'error', code: 'DIGEST_MISMATCH', message: '<img onerror=bad>'});
+    const notice = f.document.querySelector('[data-testid="project-diagnostics-snackbar"]');
+    assert.match(notice.querySelector('[role="status"]').textContent, /拡張機能を読み込めませんでした/);
+    assert.equal(notice.querySelector('img'), null);
+    const show = [...notice.querySelectorAll('button')].find(button => button.textContent === '詳細ログを表示');
+    show.focus(); show.click();
+    assert.equal(f.document.querySelector('aside'), null);
+    const dialog = f.document.querySelector('[data-testid="project-diagnostics"]');
+    assert.match(dialog.textContent, /DIGEST_MISMATCH/);
+    dialog.dispatchEvent(new f.dom.window.Event('cancel', {cancelable: true}));
+    assert.equal(f.document.activeElement.id, 'origin');
+    assert.deepEqual(f.changes, []);
+    f.dialogs.dispose(); f.dom.window.close();
+});
+test('dismissing a snackbar does not clear diagnostics or announce the same failure again', () => {
+    const f = fixture();
+    f.diagnostics.record({type: 'project-error', code: 'LOAD_FAILED'});
+    const dismiss = [...f.document.querySelectorAll('aside button')].find(button => button.textContent === 'Dismiss');
+    dismiss.focus(); dismiss.click();
+    assert.equal(f.document.activeElement.id, 'origin');
+    f.diagnostics.record({type: 'verified', id: 'another'});
+    assert.equal(f.document.querySelector('aside'), null);
+    assert.equal(f.diagnostics.snapshot()[0].events[0].code, 'LOAD_FAILED');
+    f.dialogs.dispose(); f.dom.window.close();
 });
 test('apply submits new values and remembers them; project loading discards a stale form', () => {
     const f = fixture(); f.dialogs.showProperties('ja');
