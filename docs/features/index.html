@@ -79,7 +79,7 @@
 
 <section id="documents"><h2>5. 文書をテキスト・ブロックで編集する <span class="badge optional">実験機能・既定OFF</span></h2>
 <p>文書を登録する対応拡張では、「データソース」の帽子ブロックのファイルアイコンから文書編集を開けます。提供元が対応する場合、YAML/JSON原文、YAMLブロック、Schema専用ブロックの表現を選び、変換・検証して作品へ反映できます。既存の任意SB3を自動的に文書化する機能ではありません。</p>
-<p><a href="../editor.html?lang=ja&amp;twPlusYamlEditor=1">文書編集を有効にして起動</a>（<code>twPlusYamlEditor=1</code>）。SB3内のファイルと外部URLの参照元切替も試す場合は、<a href="../editor.html?lang=ja&amp;twPlusYamlEditor=1&amp;twPlusDocumentSource=1">2つの設定を有効にして起動</a>します。これらは起動時に読み、対応する提供元にも同じ設定が必要です。</p>
+<p><a href="../editor.html?lang=ja&amp;twPlusYamlEditor=1">文書編集を有効にして起動</a>（<code>twPlusYamlEditor=1</code>）。この設定は起動時に読みます。提供元が参照元を変更可能としている文書では、SB3内のファイルと外部URLの参照元切替も使えます。</p>
 <div class="flow" role="img" aria-label="対応拡張が登録した文書を原文またはブロックで編集し、所有拡張が変換と検証を行う。文書へ保存後、SB3を保存する。"><div>対応する文書<br><small>ファイルアイコン</small></div><span>→</span><div>原文／ブロック<br><small>提供元が対応する表現</small></div><span>→</span><div>変換・検証・保存<br><small>作品の文書へ反映</small></div><span>→</span><div>SB3を保存</div></div>
 <p>外部URLはCORSで取得できるHTTPSが必要です。外部内容を編集・ブロック化するには、まずSB3内のファイルへ取り込みます。遠隔サイトへの書き戻しはしません。利用できる変換は各提供元が定義し、対応しない形式を勝手に変換しません。</p>
 <h3>VSCodeで原文を編集する</h3>
@@ -111,7 +111,7 @@
 <tr><td>普通の作品を作る・開く</td><td><a href="../editor.html?lang=ja">通常のEditor</a></td><td>追加設定なし。手元のSB3は「ファイル」から開く</td></tr>
 <tr><td>フォームを試す</td><td>対応拡張のブロックのアイコン</td><td>対応拡張。作者向けサンプルはリポジトリのexamples/extensions/</td></tr>
 <tr><td>Plus拡張を追加する</td><td>「拡張機能を追加」→「TurboWarp Plus」</td><td>通常起動。追加前に読込・保存方法を選択</td></tr>
-<tr><td>文書を編集する</td><td>文書編集を有効にして、対応する帽子のアイコン</td><td>twPlusYamlEditor=1＋対応提供元。参照元切替はtwPlusDocumentSource=1も必要</td></tr>
+<tr><td>文書を編集する</td><td>文書編集を有効にして、対応する帽子のアイコン</td><td>twPlusYamlEditor=1＋対応提供元。参照元切替は提供元が許す文書のみ</td></tr>
 <tr><td>スクリプトを別作品へ移す</td><td>スクリプト・コード領域・ステージの右クリック</td><td>追加設定なし</td></tr>
 </tbody></table></div>
 <p>起動設定はURLを変えて再読込します。Plusローダーは通常起動で有効です。<code>twPlusExtensionLoader=0</code>を付けて再読込すると無効になり、このガイドのPlusカタログ・Plus形式の読込経路は使えなくなります。無効化は保存済み作品を標準形式へ変換する操作ではありません。</p>
