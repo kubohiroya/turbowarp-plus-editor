@@ -72,6 +72,7 @@
     "build:test-driver": "tsc -p test/vscode-edit-driver/tsconfig.json",
     "test:package": "npm run build && node --test test/package/*.test.ts",
     "test:script-transfer": "node --test test/script-transfer/*.test.mjs",
+    "test:project-tools": "node --test test/project-tools/*.test.mjs && node --test test/project-tools/*.test.cjs",
     "test:gui-integration": "node --test --import ./test/asset-hooks.mjs \"test/gui-integration/**/*.test.mjs\" \"test/gui-integration/**/*.test.cjs\"",
     "preview:security": "node scripts/local-security-preview.cjs"
   },
