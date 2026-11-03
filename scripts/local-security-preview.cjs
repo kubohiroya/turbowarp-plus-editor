@@ -17,6 +17,9 @@ const required = [
     `${fixturePath}/previewbanner.js`, `${fixturePath}/previewgithub.js`,
     `${fixturePath}/previewcommon.js`, `${fixturePath}/extension-banner.png`
 ];
+// A synchronously imported iframe worker is carried by the editor chunk instead of a lazy chunk.
+const requiredFiles = manifest => required.map(name => name === 'js/iframe-extension-worker.js' ?
+    manifest.iframeWorkerAsset || name : name);
 const digest = data => crypto.createHash('sha256').update(data).digest('hex');
 const contentTypes = {
     '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -92,7 +95,7 @@ async function createManifest (directory, port) {
 
 async function validateSnapshot (directory, manifest) {
     if (manifest.version !== 1 || !manifest.files) throw new Error('配信マニフェストが不正です。再ビルドしてください。');
-    for (const name of required) {
+    for (const name of requiredFiles(manifest)) {
         if (!manifest.files[name]) throw new Error(`必要なファイルがありません: ${name}`);
     }
     for (const [name, hash] of Object.entries(manifest.files)) {
@@ -119,6 +122,22 @@ async function buildSnapshot (port) {
     const HtmlWebpackPlugin = guiRequire('html-webpack-plugin');
     process.env.E2E_GUI_ROOT = repo;
     const config = require('./site/webpack.config.cts');
+    // A local package is opt-in here; published site builds keep their pinned dependency.
+    const securityRoot = process.env.TW_PLUS_SECURITY_PREVIEW_ROOT;
+    let securityPreview;
+    if (securityRoot) {
+        if (!path.isAbsolute(securityRoot)) throw new Error('TW_PLUS_SECURITY_PREVIEW_ROOTは絶対パスで指定してください。');
+        const pkg = JSON.parse(await fs.readFile(path.join(securityRoot, 'package.json'), 'utf8'));
+        if (pkg.name !== '@kubohiroya/turbowarp-extension-security-dialog') throw new Error('確認用パッケージが一致しません。');
+        for (const [subpath, file] of [['', 'dist/index.mjs'], ['/react', 'dist/react.mjs'],
+            ['/turbowarp', 'dist/turbowarp.mjs'], ['/webpack4.css', 'webpack4.css']]) {
+            const target = path.join(securityRoot, file);
+            if (!(await fs.stat(target)).isFile()) throw new Error(`確認用ビルドがありません: ${target}`);
+            config.resolve.alias[pkg.name + subpath + '$'] = target;
+        }
+        securityPreview = {root: securityRoot,
+            ...JSON.parse(await fs.readFile(path.join(securityRoot, 'dist/build-info.json'), 'utf8'))};
+    }
     config.entry = {editor: './src/playground/editor.jsx'};
     config.output.path = directory;
     config.plugins = config.plugins.filter(plugin => !(plugin instanceof HtmlWebpackPlugin) ||
@@ -134,6 +153,12 @@ async function buildSnapshot (port) {
     if (stats.hasWarnings()) console.warn(stats.toString({all: false, warnings: true}));
     await createFixture(directory, port);
     const manifest = await createManifest(directory, port);
+    const iframeWorker = stats.compilation.modules.find(module => module.resource &&
+        module.resource.endsWith('/extension-support/tw-iframe-extension-worker.js'));
+    if (iframeWorker && [...iframeWorker.chunksIterable].some(chunk => chunk.files.includes('js/editor.js'))) {
+        manifest.iframeWorkerAsset = 'js/editor.js';
+    }
+    if (securityPreview) manifest.securityPreview = securityPreview;
     manifest.commit = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: repo, encoding: 'utf8'}).trim();
     manifest.dirty = Boolean(execFileSync('git', ['status', '--porcelain'], {cwd: repo, encoding: 'utf8'}).trim());
     manifest.hostCommit = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: hostRoot, encoding: 'utf8'}).trim();
@@ -214,7 +239,7 @@ async function checkHttp (port, expected) {
     const manifest = JSON.parse((await get(`${base}preview-manifest.json`)).data);
     if (manifest.version !== 1 || manifest.port !== port || !manifest.files) throw new Error('確認対象サーバーが一致しません。');
     if (expected && JSON.stringify(manifest) !== JSON.stringify(expected)) throw new Error('配信ビルドが一致しません。');
-    const names = [...new Set([...required, ...Object.keys(manifest.files).filter(name => /\.(js|html)$/.test(name))])];
+    const names = [...new Set([...requiredFiles(manifest), ...Object.keys(manifest.files).filter(name => /\.(js|html)$/.test(name))])];
     for (const name of names) {
         const {data, headers} = await get(`${base}${name}`);
         if (digest(data) !== manifest.files[name] || headers['cache-control'] !== 'no-store') {
@@ -230,7 +255,7 @@ async function checkHttp (port, expected) {
 async function main () {
     const args = process.argv.slice(2);
     if (args.includes('--help')) {
-        console.log('npm run preview:security -- [start|build|serve|check] [--port 8601]\n既定はstart（ビルドして配信）。停止はCtrl+C。');
+        console.log('npm run preview:security -- [start|build|serve|check] [--port 8601]\n既定はstart（ビルドして配信）。停止はCtrl+C。\nTW_PLUS_SECURITY_PREVIEW_ROOTでビルド済み共通パッケージの絶対パスを指定できます。');
         return;
     }
     const command = args[0] && !args[0].startsWith('--') ? args.shift() : 'start';
