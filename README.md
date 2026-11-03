@@ -250,3 +250,8 @@ After changing the source location, fetch and preview it, then save to apply the
 The new flag is off by default. The scratch-gui fork reads it in `config/feature-flags.js`, and providers that support source locations read it themselves. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
 
 This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.
+
+
+## Script and stage transfer (experimental)
+
+Add `twPlusScriptTransfer=1` to the startup URL to enable `.blocks3` script export/import, copying and pasting scripts between windows, and `.stage3` stage export/import. The feature is off by default. Importing a stage adds its contents to the current stage. See the [transfer specification (Japanese)](docs/script-stage-transfer.md) for operations, dependency handling, limits, and rollback instructions.
