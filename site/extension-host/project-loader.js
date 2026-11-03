@@ -4,7 +4,13 @@
  * Moved from the fork's `src/lib/tw-plus-project-loader.js`. It touches no GUI module: everything
  * it needs about the VM arrives as `host.vm`, and marking a failure as an extension failure — the
  * fork's own bookkeeping, read by its project-error paths — arrives as `host.markFailure`.
+ *
+ * Whether opening again could end differently is asked of the Loader here, the one place that
+ * holds the error, and travels on the `project-error` diagnostic as `retryable` for whatever
+ * screen states the failure.
  */
+
+import {isWorthAskingAgain} from '@kubohiroya/turbowarp-extension-loader';
 
 const installations = new WeakSet();
 
@@ -46,6 +52,10 @@ export function installExtensionLoader(host, loader) {
     let queue = Promise.resolve();
     let loading = null;
     let savedContext = null;
+    // The address of the project open now, as its manifest names it, or undefined: none, or no
+    // manifest. The host is told each time it changes, which is how the cache knows whose bucket
+    // a fetched extension is filed under.
+    let projectURI;
     let activeController = null;
     let hasLoaded = false;
     let drain = null;
@@ -56,6 +66,34 @@ export function installExtensionLoader(host, loader) {
     const canSave = () => {
         checkActive();
         if (pending) throw failure('PROJECT_BUSY', 'Wait for project loading to finish before saving');
+    };
+    const tellProjectURI = uri => {
+        projectURI = uri;
+        if (typeof host.onProjectURI === 'function') {
+            try {
+                host.onProjectURI(uri);
+            } catch (error) {
+                // Bookkeeping must not change the loading or saving decision.
+            }
+        }
+    };
+    /**
+     * The context a whole-project save restores, given its address first if it has none yet.
+     *
+     * A project opened with a manifest but no address gets one on its first serialization, kept in
+     * `savedContext` so every later save carries the same one. One that has an address keeps it,
+     * a project without a manifest gets nothing, and neither does a host that makes no address
+     * (an editor not opened over HTTPS, or a built HTML, which supplies no `addressProject`).
+     * @returns {object|null} The context to restore with.
+     */
+    const contextForSave = () => {
+        if (savedContext === null || projectURI !== undefined || typeof host.addressProject !== 'function' ||
+            typeof io.assignProjectURI !== 'function') return savedContext;
+        const uri = host.addressProject();
+        if (typeof uri !== 'string') return savedContext;
+        savedContext = io.assignProjectURI(savedContext, uri);
+        tellProjectURI(uri);
+        return savedContext;
     };
     const restored = value => {
         if (value === null || value === undefined || typeof value.then === 'function') {
@@ -80,6 +118,8 @@ export function installExtensionLoader(host, loader) {
                 }
                 touchedHost = true;
                 savedContext = null;
+                // Known before the VM loads, so what the Loader fetches for it is filed under it.
+                tellProjectURI(typeof prepared.manifest?.uri === 'string' ? prepared.manifest.uri : undefined);
                 if (hasLoaded) {
                     await loader.unload();
                     hasLoaded = false;
@@ -100,7 +140,7 @@ export function installExtensionLoader(host, loader) {
                 if (typeof host.onDiagnostic === 'function') {
                     try {
                         host.onDiagnostic({type: 'project-error', code: error.code || 'LOAD_FAILED',
-                            message: error.message});
+                            message: error.message, retryable: isWorthAskingAgain(error)});
                     } catch (diagnosticError) {
                         // A presentation failure must not change the loading decision.
                     }
@@ -171,18 +211,19 @@ export function installExtensionLoader(host, loader) {
     const toJSON = function(...args) {
         canSave();
         const json = originals.toJSON.apply(vm, args);
-        // Standalone sprite export must not acquire a whole-project manifest.
-        return savedContext !== null && !args[0] ? restored(io.restoreJSON(json, savedContext)) : json;
+        // Standalone sprite export must not acquire a whole-project manifest, nor an address.
+        if (savedContext === null || args[0]) return json;
+        return restored(io.restoreJSON(json, contextForSave()));
     };
     const saveZip = function(...args) {
         canSave();
         const zip = originals._saveProjectZip.apply(vm, args);
-        return savedContext === null ? zip : restored(io.restoreArchive(zip, savedContext));
+        return savedContext === null ? zip : restored(io.restoreArchive(zip, contextForSave()));
     };
     const saveFiles = function(...args) {
         canSave();
         const files = originals.saveProjectSb3DontZip.apply(vm, args);
-        return savedContext === null ? files : restored(io.restoreFiles(files, savedContext));
+        return savedContext === null ? files : restored(io.restoreFiles(files, contextForSave()));
     };
 
     const wrappers = {loadProject, _loadExtensions: loadExtensions, toJSON,

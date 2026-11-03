@@ -316,3 +316,72 @@ test('catalog adopts a previously native-loaded extension, runs it as a catalog 
     expect(stored).toMatchObject({execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'embedded-file'}});
     expect(await zip.file(stored.source.path).async('nodebuffer')).toEqual(spec.bytes);
 });
+
+// How a failed add is stated is the review screen's; whether asking again could end differently
+// is the Loader's `isWorthAskingAgain`. These check that the two meet on the real screen: a
+// failure the network could undo offers "Try again", which repeats the same answer, and a refusal
+// is stated with its code and message and offers nothing to repeat.
+const failure = page => selection(page).locator('.twextsec-failed');
+const retry = page => failure(page).getByRole('button', {name: 'もう一度試す', exact: true});
+
+test('a fetch that keeps failing offers to try again, and trying again adds with the same answer', async ({page, context}) => {
+    const spec = specifications[0];
+    await installFixtures(context, [spec]);
+    // The fetch port retries a transport failure by itself, so the failure has to outlast every
+    // attempt it makes, however many that is, before the operation fails and the screen is told.
+    let offline = true;
+    let refused = 0;
+    await context.route(spec.url, route => {
+        if (!offline) return route.fallback();
+        refused++;
+        return route.abort('internetdisconnected');
+    });
+    await openEditor(page);
+    await openCatalog(page, 1);
+    await row(page, spec).getByRole('checkbox').check();
+    // Not the screen's default form, so the retry is seen to keep the answer rather than reset it.
+    await form(page, spec, 'remote-cacheable').check();
+    await applySettings(page);
+    await expect(failure(page)).toBeVisible();
+    await expect(failure(page)).toContainText('LOAD_FAILED');
+    await expect(retry(page)).toBeVisible();
+    // The fetch port's own retries are over, and what said so comes down with them.
+    await expect(page.getByTestId('twextsec-wait')).toBeHidden();
+    expect(refused).toBeGreaterThan(1);
+    expect(await page.evaluate(id => vm.extensionManager.isExtensionLoaded(id), spec.id)).toBe(false);
+    offline = false;
+    await retry(page).click();
+    await expectTrusted(page, [spec]);
+    await expect(selection(page)).toHaveCount(0);
+    const saved = (await projectJSON(page)).turboWarpPlus.extensions;
+    expect(saved).toEqual([expect.objectContaining({id: spec.id, execution: 'unsandboxed',
+        sha256: spec.sha256, source: {type: 'remote-cacheable', url: spec.url}})]);
+});
+
+for (const [name, serve, code, decline] of [
+    ['a missing file', route => route.fulfill({status: 404, body: 'missing',
+        headers: {'access-control-allow-origin': '*'}}), 'FETCH_FAILED', false],
+    // Code that is not what the catalog pinned loses the catalog's trust, so the person is asked
+    // about it like any other code; saying no is an answer asking again would only repeat.
+    ['code the catalog did not pin, once declined', route => route.fulfill({body: 'Scratch.extensions.register({});',
+        headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}), 'TRUST_DENIED', true]
+]) {
+    test(`${name} is stated with its code and message, and nothing offers to repeat it`, async ({page, context}) => {
+        const spec = specifications[0];
+        await installFixtures(context, [spec]);
+        await context.route(spec.url, serve);
+        await openEditor(page);
+        await openCatalog(page, 1);
+        await row(page, spec).getByRole('checkbox').check();
+        await applySettings(page);
+        if (decline) await page.getByTestId('tw-plus-deny').click();
+        await expect(failure(page)).toBeVisible();
+        await expect(failure(page)).toContainText(code);
+        await expect(failure(page).getByRole('button')).toHaveCount(0);
+        await expect(selection(page).getByTestId('twextsec-retry')).toHaveCount(0);
+        await expect(page.getByTestId('twextsec-wait')).toBeHidden();
+        expect(await page.evaluate(id => vm.extensionManager.isExtensionLoaded(id), spec.id)).toBe(false);
+        // The answer is still on the screen, to change or to cancel.
+        await expect(row(page, spec).getByRole('checkbox')).toBeChecked();
+    });
+}

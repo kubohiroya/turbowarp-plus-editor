@@ -7,7 +7,7 @@ import {guiRequire, vmModules} from './pinned-host.mjs';
 
 const require = guiRequire;
 const VM = require('scratch-vm');
-const {JSDOM} = require('jsdom');
+import {JSDOM} from 'jsdom';
 
 const bytes = new TextEncoder().encode('Scratch.vm.reviewExecuted=true;Scratch.extensions.register({getInfo(){return {id:"reviewfixture",blocks:[]}}});');
 const sha256 = createHash('sha256').update(bytes).digest('hex');

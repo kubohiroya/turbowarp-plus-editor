@@ -56,7 +56,17 @@ test('an install\'s core, security package and document editor are checked again
         const writeLock = () => writeJSON(path.join(gui, 'package-lock.json'), lock);
         await writeManifest();
         await writeLock();
+        const buildInfo = {name: securityPackage, version: pins.securityVersion,
+            revision: pins.securityRevision, sourceState: 'git-archive'};
+        const buildInfoFile = path.join(securityRoot, 'dist/build-info.json');
+        await writeJSON(buildInfoFile, buildInfo);
         assert.equal((await verifySecurityDependency(gui, pins)).version, '0.4.0');
+        await writeJSON(buildInfoFile, {...buildInfo, revision: 'a'.repeat(40)});
+        await assert.rejects(verifySecurityDependency(gui, pins), /Security build revision/);
+        await writeJSON(buildInfoFile, {...buildInfo, sourceState: 'working-tree'});
+        await assert.rejects(verifySecurityDependency(gui, pins), /committed checkout or pinned archive/);
+        await writeJSON(buildInfoFile, buildInfo);
+
         manifest.dependencies[securityPackage] = pins.securityVersion;
         await writeManifest();
         await assert.rejects(verifySecurityDependency(gui, pins), /exact security package/);

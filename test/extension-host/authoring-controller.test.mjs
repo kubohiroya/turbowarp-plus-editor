@@ -113,3 +113,22 @@ test('abort and disposal invalidate prepared candidates', async () => {
     }
 });
 
+
+test('a change the Loader could not prepare is reported, so a waiting indicator comes down', async () => {
+    const events = [];
+    const vm = new EventEmitter();
+    vm.saveProjectSb3 = async () => new Uint8Array([1]);
+    vm.loadProject = async () => assert.fail('nothing is loaded');
+    const failed = Object.assign(new Error('Catalog extension could not be fetched'),
+        {code: 'LOAD_FAILED', extensionId: 'example'});
+    const controller = createExtensionAuthoringController(vm, {ports: {}, zip: {},
+        prepareAddition: async () => { throw failed; }, diagnostics: event => events.push(event)});
+    await assert.rejects(controller.add({id: 'example'}), error => error === failed);
+    assert.deepEqual(events, [{type: 'error', code: 'LOAD_FAILED', id: 'example'}]);
+    controller.dispose();
+    // Showing it cannot change the outcome.
+    const quiet = createExtensionAuthoringController(vm, {ports: {}, zip: {},
+        prepareAddition: async () => { throw failed; }, diagnostics: () => { throw new Error('presentation'); }});
+    await assert.rejects(quiet.add({id: 'example'}), error => error === failed);
+    quiet.dispose();
+});

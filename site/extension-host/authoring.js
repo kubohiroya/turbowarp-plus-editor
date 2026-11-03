@@ -8,34 +8,15 @@
 
 /* global AggregateError */
 import JSZip from '@turbowarp/jszip';
-import {
-    createProjectUUID, defaultProjectURI, prepareExtensionAddition
-} from '@kubohiroya/turbowarp-extension-loader/project-authoring';
+import {createProjectUUID, prepareExtensionAddition} from '@kubohiroya/turbowarp-extension-loader/project-authoring';
 import {
     prepareCatalogExtensionChanges, readProjectAuthoringState
 } from '@kubohiroya/turbowarp-extension-loader/project-catalog';
 
+import {createProjectAddresser} from './project-address.js';
+
 const hosts = new WeakMap();
 const failure = (code, message) => Object.assign(new Error(message), {code});
-
-/**
- * The origin a project's default address is made from, or null when this one cannot make any.
- *
- * Project addresses are HTTPS only, so an editor opened over plain HTTP (the local preview and the
- * E2E server on `http://localhost`) or from a file names nothing: its projects stay unaddressed,
- * which files them in the shared bucket rather than under a name this editor cannot claim.
- * @param {string|undefined} origin Where the editor was opened, as `location.origin`.
- * @returns {string|null} The origin, when it can carry project addresses.
- */
-const addressingOrigin = origin => {
-    if (typeof origin !== 'string') return null;
-    try {
-        const url = new URL(origin);
-        return url.protocol === 'https:' && !url.username && !url.password ? url.origin : null;
-    } catch {
-        return null;
-    }
-};
 
 /**
  * Keep project mutations outside the presentation layer and inside the active host.
@@ -52,7 +33,8 @@ export const createExtensionAuthoringController = (vm, {
     // from the page and passes it in, so nothing in here looks at `location`.
     origin, createUUID = createProjectUUID
 } = {}) => {
-    const projectOrigin = addressingOrigin(origin);
+    // Null where no address can be made: the origin is not HTTPS (see `project-address.js`).
+    const addressProject = createProjectAddresser(origin, createUUID);
     let revision = 0;
     let pending;
     let ownLoad = false;
@@ -108,14 +90,27 @@ export const createExtensionAuthoringController = (vm, {
                 // selection that leaves nothing never introduces an address.
                 const writesManifest = Array.isArray(request) ? request.length > 0 : true;
                 let uri;
-                if (projectOrigin && writesManifest) {
+                if (addressProject && writesManifest) {
                     const current = await readState();
                     assertCurrent();
-                    if (typeof current?.uri !== 'string') uri = defaultProjectURI(projectOrigin, createUUID());
+                    if (typeof current?.uri !== 'string') uri = addressProject();
                 }
-                const prepared = await prepare(original, request, ports,
-                    {zip, signal: operation.controller.signal, loaderOptions,
-                        archiveOptions, ...(uri === undefined ? {} : {uri})});
+                // The Loader reports a failure of its own `load()`, but not one of preparing a
+                // change, so the end of a fetch it was still retrying would go unsaid and the
+                // waiting indicator would stay up. Say it here, in the event shape `load()` uses.
+                let prepared;
+                try {
+                    prepared = await prepare(original, request, ports,
+                        {zip, signal: operation.controller.signal, loaderOptions,
+                            archiveOptions, ...(uri === undefined ? {} : {uri})});
+                } catch (error) {
+                    try {
+                        diagnostics({type: 'error', code: error?.code || 'LOAD_FAILED', id: error?.extensionId});
+                    } catch (diagnosticError) {
+                        // A presentation failure must not change the operation's outcome.
+                    }
+                    throw error;
+                }
                 assertCurrent();
                 onPrepared(prepared.spec || prepared.manifest);
                 const oldManifest = prepared.manifest ? await readState() : null;

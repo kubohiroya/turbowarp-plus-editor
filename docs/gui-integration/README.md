@@ -1,0 +1,66 @@
+# GUI追加ファイルの全面移設
+
+2026-11-03の指示により、TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。GUI側に残す追加ファイルの例外はない。
+
+比較元は `TurboWarp/scratch-gui:3c017c528c853af3111df9641914704745c1fdf6`、移設前のGUIは `c24b587ec49b871e9cbdc7530d54635a521a5d6e`、公開時の受け側の基準は `121e1eae083d3abdedd03ae19a725eeb3bf95c04`。
+
+## 配置と責務
+
+32ファイルの旧パスと移設先は [relocation.json](relocation.json) に記録する。
+
+| 移設前のGUI | 移設先・扱い |
+| --- | --- |
+| 追加した `src/lib/` の10ファイル | `site/gui-integration/lib/`。空の `tw-plus-integration.js` は既存の `site/plus-integration.js` とGUIの任意getterに置換 |
+| 追加した `src/containers/` の2ファイル | `site/gui-integration/containers/` |
+| 追加したテスト・helperの15ファイル | `test/gui-integration/unit/` |
+| ローカル確認ツール1ファイル | `scripts/local-security-preview.cjs` |
+| 文書4ファイル | `docs/gui-integration/` |
+
+GUIのREADMEと `.gitignore` は本家相当へ戻した。テストrunnerと専用CI呼出しをGUIから撤去し、`jsdom` と関連lockエントリも受け側のdevDependencyへ移した。GUIの `package-lock.json` は引き続き保持し、本家との差はVM固定元に関する追加3行・削除3行だけとなった。
+
+## ビルド時の接続
+
+GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` と、そのgetterを使う既存ファイル内の呼出し箇所を残す。追加のモジュールパスをGUIからimportしない。
+
+配信ビルドの `scripts/site/webpack.config.cts` はwebpackの `ProvidePlugin` で `__TW_GUI_HOST__` を `site/gui-integration/index.js` に結び付ける。ランタイムglobalへの代入や起動順に依存しない。GUI単体では値が存在せず、getterは `null` を返す。追加のローダー・フォーム・プレビューVM等は設置されず、通常のGUIが起動する。
+
+共有するReact、React DOM、Redux/Intl、VMとcentral dispatchは、配信ビルドが固定GUIの実体に解決する。GUIのModal・遅延ScratchBlocks・logger・Redux action creatorは呼出し時に渡す。受け側の接続モジュールがGUIのreducerやUIを直接importして初期化の循環を作らない。
+
+機能の有効化条件・既存の起動時フラグ・保存形式は変更しない。独立プレビューVMのdispatch退避、VM単位のサービス同一性、workspaceの差替え・破棄、権限拒否時の初期状態への復帰と失敗表示も受け側の接続実装が保持する。
+
+## 検証
+
+- `test:gui-integration` は本家にないGUIファイルが0件であること、削除したモジュールへの参照とrunnerが残っていないことを確認する。32ファイルの移設先の存在も照合する。
+- CIは固定GUIを用意し、比較元の本家コミットをfetchした後、GUIの標準unitと受け側の接続テストを実行する。
+- GUI標準unit 33件、受け側の既存境界182件、移設分と配置監査54件が成功。受け側の型検査と変更GUIソースのeslintも成功。
+- GUI単体と配信ホストの両方で、production設定のブラウザー6エントリーをビルド。ローカル検証ではminifyのみOFF。micro:bitの通常生成物は同一基準の既存インストールから使用した。
+- 実Chromium 156で、GUI単体の起動と通常の拡張一覧、Plusカタログからの追加、フォームの取消・保存・再表示、独立プレビューVM作成、保存SB3を別ページで開いてフォームを再編集する経路が成功。未処理のブラウザー例外は0件。
+
+ローカル確認には `E2E_GUI_ROOT=/absolute/path/to/scratch-gui npm run test:gui-integration` を使う。サーバーを実際にlistenする試験が含まれるため、127.0.0.1への接続が可能な環境で実行する。
+
+## 結果と受け入れ基準
+
+- [x] 本家に存在しないGUIの追跡ファイルは32件から0件。例外なし。
+- [x] 文書・ツール・専用テスト・接続実装の所有先が受け側に統一されている。
+- [x] GUI単体と配信ビルドの両方が起動する。
+- [x] 機能とSB3の互換を対象テストと実ブラウザーで確認した。
+- [x] 移設したテストが受け側のrunner・CIから実行される。
+- [x] 旧GUI・旧ホストの組合せへ戻す手順を記録した。
+
+本家との直接差分は、68ファイル・追加3,080/削除53行から、34ファイル・追加636/削除55行へ縮小した。残る34ファイルはすべて本家にも存在するファイルの変更であり、追加ファイルを別名で残していない。
+
+## 統合順とロールバック
+
+GUIの撤去コミット `b4a575aad956147de1db416b89ab2decdaa0f612` を先に公開し、受け側の `site/source.json` はその完全SHAを固定する。受け側のCI・実ブラウザー検証が完了した組合せを配信する。単体GUIは引き続き利用できるが、旧ホストのビルド設定と新GUI、または新ホストの設定と旧GUIを混ぜない。
+
+問題時は受け側を移設差分を載せる前のホスト基準 `121e1eae083d3abdedd03ae19a725eeb3bf95c04` へ戻し、その `site/source.json` が指す移設前GUI `c24b587ec49b871e9cbdc7530d54635a521a5d6e` を使う。sourceを戻す場合は両リポジトリの今回の変更を組としてrevertする。GUIの履歴・default branchは書き換えず、既存の完全SHAを取得可能なまま保持する。SB3・利用者データ・公開済みnpmは書き換えない。
+
+公開前に受け側の最新mainへ載せ直し、security 0.8.1（`5c816492b39831a7c4ffeaabde01536046104c6a`）の固定と既存修正を保持した。この組合せでも既存境界182件・移設と配置監査54件、型検査と関連12件が成功した。
+
+## 記録と公開範囲
+
+先行整理の履歴は [scratch-gui #133](https://github.com/kubohiroya/scratch-gui/issues/133) と [#140](https://github.com/kubohiroya/scratch-gui/issues/140)。先行Issueの完了は、今回の全面移設が当時完了していたことを意味しない。
+
+この変更はユーザーの追加指示に基づくローカル実装・検証。Issue投稿、push、PR作成、merge、Pages配信は、この文書の作成では実行していない。公開用のIssue・PR本文は別途草案として用意する。
+
+CIと同じ入れ子checkoutで、テスト補助のresolverがGUI自身の依存解決まで再転送する問題を修正した。転送対象を配信側のsite/testに限定し、入れ子配置の独立プロセス回帰テストを追加した。この配置で既存182件・移設と配置監査54件が成功した。

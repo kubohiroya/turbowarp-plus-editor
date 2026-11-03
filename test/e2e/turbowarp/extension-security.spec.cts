@@ -7,7 +7,7 @@ const {test, expect} = require('./fixtures.cts');
  *
  * The screen is security-dialog 0.7.0's `ExtensionReview` in its `open` mode, framed by the GUI's
  * own modal. What it guarantees: nothing runs until the person answers; an extension's own claims
- * are shown as claims; nothing starts outside the sandbox on an extension's say-so; saying no, or
+ * are shown as claims; an all-required batch presets the sole required mode; saying no, or
  * cancelling, runs nothing; and the answer is remembered for the same project.
  */
 
@@ -101,15 +101,18 @@ for (const language of ['ja','en']) {
         await expect(row.locator('.twextsec-claim')).toContainText(`${labels[language].creator}: Fixture Author`);
         await expect(row).not.toContainText('Nested description');
         await expect(dialog(page).locator('textarea')).toHaveCount(0);
-        // The extension says it needs to run outside the sandbox. That is shown as its claim, and it
-        // still starts in the sandbox: only the catalog, or the person, puts it outside.
+        // A complete all-required batch presets its sole execution choice, but still awaits OK.
         await expect(row.locator('.twextsec-requirement')).toHaveText(labels[language].required);
-        await expect(choice(page,row,language,'sandboxed')).toBeChecked();
-        await expect(dialog(page).locator('.twextsec-warning')).toHaveCount(0);
-        expect(await executions(page)).toBe(0);
-        await choice(page,row,language,'unsandboxed').check();
-        // Choosing it outside the sandbox is the person's own decision, and the screen warns.
+        await expect(row.locator('input[name^="execution-"]')).toHaveCount(1);
+        await expect(choice(page,row,language,'unsandboxed')).toBeChecked();
+        await expect(choice(page,row,language,'deny')).toHaveCount(0);
+        await expect(choice(page,row,language,'sandboxed')).toHaveCount(0);
+        await expect(dialog(page).locator('input[name="execution-all"]')).toHaveCount(0);
+        await expect(dialog(page).locator('.twextsec-bulk')).toHaveCount(0);
+        await expect(dialog(page).locator('.twextsec-intro')).toContainText(
+            language==='ja'?'選択済み':'already selected');
         await expect(dialog(page).locator('.twextsec-warning')).toBeVisible();
+        expect(await executions(page)).toBe(0);
         const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
         await expect(ok).toBeEnabled();
         await ok.click();
@@ -191,10 +194,9 @@ test('narrow security dialog keeps the choices and a reachable confirmation butt
     await page.setViewportSize({width:390,height:600});await open(page,'ja');
     const row = rows(page).first();
     expect(await row.locator('input[name^="execution-"]').evaluateAll(items=>items.map(item=>item.value)))
-        .toEqual(['deny','sandboxed','unsandboxed']);
+        .toEqual(['unsandboxed']);
     await expectInside(page,390,600);
     const unsandboxed = choice(page,row,'ja','unsandboxed');
-    await unsandboxed.check();
     await expect(unsandboxed).toBeChecked();
     await page.setViewportSize({width:320,height:568});
     await expectInside(page,320,568);

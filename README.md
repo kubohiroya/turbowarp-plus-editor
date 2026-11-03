@@ -1,5 +1,8 @@
 # TurboWarp-Plus-Editor
 
+GUI-only implementation files, tools, documentation and tests are owned here. See the [relocation inventory and build contract](docs/gui-integration/README.md).
+
+
 [日本語](README.ja.md)
 
 [![TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/)

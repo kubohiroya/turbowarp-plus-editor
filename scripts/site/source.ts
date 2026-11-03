@@ -118,6 +118,15 @@ export async function verifySecurityDependency(directory, pins) {
     const installed = JSON.parse(await fs.readFile(
         path.resolve(path.dirname(require.resolve(pins.securityPackage)), '../package.json'), 'utf8'));
     assert.equal(installed.version, pins.securityVersion, 'Installed security package differs from the source pin');
+    if (pins.securityRevision) {
+        const info = JSON.parse(await fs.readFile(
+            path.join(path.dirname(require.resolve(pins.securityPackage)), 'build-info.json'), 'utf8'));
+        assert.equal(info.name, pins.securityPackage, 'Security build info identifies another package');
+        assert.equal(info.version, pins.securityVersion, 'Security build version differs from the pin');
+        assert.equal(info.revision, pins.securityRevision, 'Security build revision differs from the pin');
+        assert.ok(['commit', 'git-archive'].includes(info.sourceState),
+            'Security build must come from a committed checkout or pinned archive');
+    }
     return {version: installed.version};
 }
 

@@ -1,15 +1,15 @@
 {
   "guiRepository": "kubohiroya/scratch-gui",
-  "guiRevision": "c24b587ec49b871e9cbdc7530d54635a521a5d6e",
+  "guiRevision": "0def6f3b044fe04b173e2d442804d15360b69547",
   "coreRepository": "kubohiroya/turbowarp-extension-data-editor",
   "coreRevision": "d96532a91bc6046d4a3fda878425b30d6d10483e",
   "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
-  "securityVersion": "0.7.1",
+  "securityVersion": "0.8.1",
   "loaderRepository": "kubohiroya/turbowarp-extension-loader",
-  "loaderRevision": "4f105ce0d0749aa955928711c68836e296c87f06",
-  "loaderVersion": "0.7.0",
+  "loaderRevision": "3d27ff926cdfbc73cf9e7a198f4d804f219fc1a4",
+  "loaderVersion": "0.8.0",
   "loaderSource": "npm",
-  "loaderIntegrity": "sha512-HfSUm5iPbEgXqc9aQeWXBX4ehT+G9rIGqa4aDAiekJqX+LHjhquOSzH7OzXIHs5cw4wYbmtZ44JlmZCgnp1CZw==",
+  "loaderIntegrity": "sha512-DMeJoSErRDUUfK/JPIOVEV3W82BKHHtVXjNUd0lTMg7TsYI91/hmakuOZUDKBqv/y+T9dmaZRWlf4ab/3JP9sg==",
   "vmRepository": "kubohiroya/scratch-vm",
   "vmRevision": "e6a8e1e9bda2f4763958617ed45b7d9754baea07",
   "vmBaseRevision": "0cb82afe62506f3d9f2ff849c95593f0473b5d2c",
@@ -23,5 +23,6 @@
   "documentEditorIntegrity": "sha512-gy4VwGlHDrESmYMvYpSbLdX6If3UIfANYDhwHgLA2S0ZGpDxsB3W49x38gP/eeEXBzKe73XZJdy7nUatL4yGzw==",
   "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
   "scriptTransferRevision": "6f6f9c3f0e7a6c601a8046777ae8289968d36800",
-  "scriptTransferVersion": "0.1.0"
+  "scriptTransferVersion": "0.1.0",
+  "securityRevision": "5c816492b39831a7c4ffeaabde01536046104c6a"
 }

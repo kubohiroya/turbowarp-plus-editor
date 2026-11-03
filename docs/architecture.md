@@ -1,5 +1,8 @@
 # TurboWarp-Plus-Editorの責務と配信
 
+現在の配置は[GUI追加ファイルの全面移設](gui-integration/README.md)を参照してください。以下の旧パス・GUI側に残す判断は、各時点の履歴です。現在は本家に存在しなかったファイルをGUIからすべて撤去し、接続実装・文書・ツール・テストを本リポジトリが所有します。
+
+
 本リポジトリは、kubohiroyaのscratch-guiフォークに上流ライブラリを組み込んだEditorの統合・検証・GitHub Pages配信を所有します。名称は **TurboWarp-Plus-Editor** で統一します。
 
 ## 依存方向

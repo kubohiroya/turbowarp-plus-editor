@@ -27,7 +27,7 @@ const babel = guiRequire('@babel/core');
 const site = path.resolve('site');
 
 /** The packages the site build resolves to the host's copies; tests follow the build. */
-const shared = new Set(['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip']);
+const shared = new Set(['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip', 'scratch-vm', 'react-intl', 'react-redux']);
 const previousLoad = Module._load;
 Module._load = function (request, ...rest) {
     // Resolved to a path first: requiring through the host's own require would come back here and

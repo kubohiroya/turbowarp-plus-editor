@@ -2,12 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {installExtensionLoader} from '../../site/extension-host/project-loader.js';
 
-import {guiImport} from './pinned-host.mjs';
 
 // Marking a failure as an extension failure is the GUI's own bookkeeping, read back by its
 // project-error paths, so the host passes the marker in and so does this test.
 const {isExtensionLoadFailure, markExtensionLoadFailure} =
-    await guiImport('src/lib/tw-plus-extension-load-failure.js');
+    await import('../../site/gui-integration/lib/tw-plus-extension-load-failure.js');
 
 function fixture({manifest = {schemaVersion: 1, extensions: []}, failLoad = false} = {}) {
     const events = [];
@@ -251,4 +250,34 @@ test('refuses double installation and a VM that skips the extension lifecycle', 
     assert.throws(() => installExtensionLoader(f.host, f.loader), {code: 'ALREADY_INSTALLED'});
     await assert.rejects(f.vm.loadProject('input'), {code: 'UNSUPPORTED_HOST'});
     await dispose();
+});
+
+test('the project-error diagnostic carries the Loader\'s judgement of asking again, and showing it changes nothing', async () => {
+    const {LoaderError, isWorthAskingAgain} = await import('@kubohiroya/turbowarp-extension-loader');
+    const cases = [
+        [new LoaderError('TIMEOUT', 'The operation timed out'), true],
+        [new LoaderError('DIGEST_MISMATCH', 'Digest mismatch', 'plus'), false],
+        // The same code on both sides: what it wraps decides, so this side never reads the code.
+        [new LoaderError('LOAD_FAILED', 'Wrapped', 'plus', new LoaderError('TIMEOUT', 'late')), true],
+        [new LoaderError('LOAD_FAILED', 'Wrapped', 'plus', new Error('registered the wrong ID')), false],
+        [new Error('not the Loader\'s'), false]
+    ];
+    for (const [error, retryable] of cases) {
+        assert.equal(isWorthAskingAgain(error), retryable);
+        const f = fixture();
+        const events = [];
+        f.host.onDiagnostic = event => events.push(event);
+        f.loader.load = async () => { throw error; };
+        installExtensionLoader(f.host, f.loader);
+        await assert.rejects(f.vm.loadProject('input'), caught => caught === error && isExtensionLoadFailure(caught));
+        assert.deepEqual(events, [{type: 'project-error', code: error.code || 'LOAD_FAILED',
+            message: error.message, retryable}]);
+    }
+    // A screen that fails to show the diagnostic does not change what loading decided.
+    const f = fixture();
+    const error = new LoaderError('TIMEOUT', 'The operation timed out');
+    f.host.onDiagnostic = () => { throw new Error('presentation failed'); };
+    f.loader.load = async () => { throw error; };
+    installExtensionLoader(f.host, f.loader);
+    await assert.rejects(f.vm.loadProject('input'), caught => caught === error && isExtensionLoadFailure(caught));
 });
