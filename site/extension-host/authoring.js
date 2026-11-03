@@ -38,6 +38,7 @@ export const createExtensionAuthoringController = (vm, {
     let revision = 0;
     let pending;
     let ownLoad = false;
+    const ownInputs = new Set();
     let disposed = false;
     const disposalListeners = new Set();
     const changed = () => {
@@ -46,15 +47,24 @@ export const createExtensionAuthoringController = (vm, {
     };
     vm.on('PROJECT_CHANGED', changed);
     const load = bytes => {
+        // The diagnostics/metadata wrapper can defer the host's load-start callback. Claim this
+        // input now so a delayed callback neither cancels this operation nor changes its revision.
+        revision++;
+        ownInputs.add(bytes);
         ownLoad = true;
         try {
-            return vm.loadProject(bytes);
+            return Promise.resolve(vm.loadProject(bytes)).finally(() => ownInputs.delete(bytes));
+        } catch (error) {
+            ownInputs.delete(bytes);
+            throw error;
         } finally {
             ownLoad = false;
         }
     };
     return Object.freeze({
-        projectLoadStarted: changed,
+        projectLoadStarted (input) {
+            if (!ownInputs.has(input)) changed();
+        },
         onDispose (callback) {
             disposalListeners.add(callback);
             return () => disposalListeners.delete(callback);

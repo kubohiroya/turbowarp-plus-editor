@@ -17,7 +17,7 @@ function fixture(prepareAddition = async () => prepared, loadResult = async () =
     let controller;
     vm.saveProjectSb3 = async () => original;
     vm.loadProject = bytes => {
-        controller.projectLoadStarted();
+        controller.projectLoadStarted(bytes);
         loads.push(bytes);
         return loadResult(bytes, loads.length);
     };
@@ -46,6 +46,30 @@ test('denied approval never mutates the VM', async () => {
     await assert.rejects(controller.add({id: 'example'}), {code: 'TRUST_DENIED'});
     assert.equal(loads.length, 0);
     controller.dispose();
+});
+
+test('a deferred own load stays authorized while a different deferred project still cancels it', async () => {
+    for (const replace of [false, true]) {
+        const loading = deferred();
+        const {vm, loads, controller} = fixture(undefined, () => loading.promise);
+        const original = vm.loadProject;
+        vm.loadProject = bytes => Promise.resolve().then(() => original(bytes));
+        const adding = controller.add({id: 'example'});
+        while (!loads.length) await Promise.resolve();
+        if (replace) {
+            const replacing = vm.loadProject(new Uint8Array([9]));
+            await Promise.resolve();
+            loading.resolve();
+            await replacing;
+            await assert.rejects(adding, {code: 'PROJECT_CHANGED'});
+            assert.equal(loads.length, 2);
+        } else {
+            loading.resolve();
+            assert.equal(await adding, spec);
+            assert.deepEqual(loads, [prepared.projectBytes]);
+        }
+        controller.dispose();
+    }
 });
 
 test('registration failure restores the original SB3', async () => {

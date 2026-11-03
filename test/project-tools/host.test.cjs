@@ -111,3 +111,22 @@ test('normal startup removes the corner log and opens failed-load diagnostics wi
         assert.equal(title, 'Native title');
     } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
 });
+
+for (const metadata of [false, true]) {
+    test(`catalog additions complete through diagnostic load monitoring with project properties ${metadata ? 'on' : 'off'}`, async () => {
+        const vm = new VM();
+        const dom = new JSDOM('<html lang="en"><head></head><body></body></html>');
+        const host = installProjectToolsHost(vm, {enabled: true, document: dom.window.document, vmModules,
+            fetchImpl: async url => Object.defineProperty(new Response(bytes), 'url', {value: url}),
+            requestApproval: async () => true,
+            cache: {async get() {}, async put() {}}}, metadata);
+        try {
+            await vm.loadProject(JSON.stringify({...project, turboWarpPlus: undefined, extensions: []}));
+            const controller = getExtensionAuthoringHost(vm);
+            await controller.configure([{id: 'propertiestest', url: 'https://example.test/test.js',
+                execution: 'unsandboxed', distribution: 'embedded-file'}]);
+            assert.equal(vm.extensionManager.isExtensionLoaded('propertiestest'), true);
+            assert.equal(dom.window.document.querySelector('[data-testid="project-diagnostics-snackbar"]'), null);
+        } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
+    });
+}
