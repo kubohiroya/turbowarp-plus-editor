@@ -15,12 +15,19 @@
  * row from the rows it was first given, and narrowing them while someone types would drop a chosen
  * extension's dependency out of a selection it is still completing.
  *
+ * A failed load is stated by the screen, not here: the failure goes to `ExtensionReview` as its
+ * `failure`, and whether asking again could end differently is the Loader's `isWorthAskingAgain`,
+ * passed through as `retryable`. "Try again" repeats the last answer as it was. With the Loader
+ * switched off the failure comes from the VM's own extension loading, which no fetch port of the
+ * Loader produced, so the Loader cannot vouch for it and the screen offers no retry.
+ *
  * The GUI's own `src/css/extension-security-dialog.css` is not imported here: its security manager
  * imports it already, and that is what themes the dialog package against the GUI's own variables.
  */
 
 import {ExtensionReview} from '@kubohiroya/turbowarp-extension-security-dialog/react';
 import {parseExtensionCatalog} from '@kubohiroya/turbowarp-extension-security-dialog';
+import {isWorthAskingAgain} from '@kubohiroya/turbowarp-extension-loader';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
@@ -36,18 +43,13 @@ const text = {
     en: {
         loading: 'Loading TurboWarp Plus extensions…',
         failed: 'The extension catalog could not be loaded.',
-        loadFailed: 'An extension could not be loaded. Extensions already loaded remain available. ' +
-            'Retry your selection.',
         denied: 'No extensions were loaded. Review the selected extensions and their permissions.',
-        applyFailed: 'Extension settings could not be applied.',
         retry: 'Retry'
     },
     ja: {
         loading: 'TurboWarp Plusの機能拡張を取得しています…',
         failed: '機能拡張の一覧を取得できませんでした。',
-        loadFailed: '機能拡張を読み込めませんでした。読み込み済みの拡張は利用できます。選択を確認して再試行してください。',
         denied: '機能拡張は読み込まれませんでした。選択と読み込み許可を確認してください。',
-        applyFailed: '拡張の設定を適用できませんでした。検証・許可の結果を確認してください。',
         retry: '再試行'
     }
 };
@@ -74,12 +76,15 @@ export const reviewRows = (entries, vm, loader = PLUS_EXTENSION_LOADER_ENABLED) 
 class PlusLibrary extends React.PureComponent {
     constructor (props) {
         super(props);
-        bindAll(this, ['handleFetchCatalog', 'handleComplete']);
+        bindAll(this, ['handleFetchCatalog', 'handleComplete', 'handleRetry']);
         this.state = {entries: null,
             fetchError: false,
-            loadError: null,
+            denied: false,
+            failure: null,
             busy: false,
             decisions: new Map()};
+        // The last answer the screen gave, which "Try again" repeats unchanged.
+        this.answered = null;
     }
     componentDidMount () {
         this.alive = true;
@@ -125,10 +130,23 @@ class PlusLibrary extends React.PureComponent {
             this.props.onRequestClose();
             return;
         }
+        this.answered = decisions;
+        await this.apply(decisions);
+    }
+    /**
+     * Ask again with the answer that just failed, as the screen's "Try again" requests.
+     */
+    async handleRetry () {
+        if (this.answered && !this.state.busy) await this.apply(this.answered);
+    }
+    /**
+     * Load the chosen rows as answered, and keep how it failed for the screen to state.
+     * @param {Map<string, object>} decisions The answer by extension ID.
+     */
+    async apply (decisions) {
         const chosen = this.state.entries.filter(entry => decisions.has(entry.id));
-        this.setState({busy: true, loadError: null});
+        this.setState({busy: true, denied: false, failure: null});
         this.props.onBusyChange(true);
-        const t = text[this.props.locale.startsWith('ja') ? 'ja' : 'en'];
         try {
             const loaded = PLUS_EXTENSION_LOADER_ENABLED ?
                 await applyPlusCatalogSettings(this.props.vm, {entries: chosen, decisions},
@@ -140,12 +158,12 @@ class PlusLibrary extends React.PureComponent {
             if (loaded.length) {
                 this.props.onCategorySelected(loaded[loaded.length - 1]);
                 this.props.onRequestClose();
-            } else this.setState({loadError: 'denied'});
+            } else this.setState({denied: true});
         } catch (error) {
             console.error(error);
             if (this.alive) {
-                this.setState({loadError: PLUS_EXTENSION_LOADER_ENABLED ?
-                    `${t.applyFailed} ${error.code || 'LOAD_FAILED'}: ${error.message}` : 'loadFailed'});
+                this.setState({failure: {code: error?.code || 'LOAD_FAILED', message: error?.message || String(error),
+                    retryable: isWorthAskingAgain(error)}});
             }
         } finally {
             if (this.alive) {
@@ -156,7 +174,7 @@ class PlusLibrary extends React.PureComponent {
     }
     render () {
         const t = text[this.props.locale.startsWith('ja') ? 'ja' : 'en'];
-        const {entries, busy, loadError, fetchError, decisions} = this.state;
+        const {entries, busy, denied, failure, fetchError, decisions} = this.state;
         if (!entries) {
             return (<div
                 className={styles.message}
@@ -170,16 +188,18 @@ class PlusLibrary extends React.PureComponent {
             </div>);
         }
         return (<div className={styles.root}>
-            {loadError && <p
+            {denied && <p
                 className={styles.error}
                 role="alert"
-            >{t[loadError] || loadError}</p>}
+            >{t.denied}</p>}
             <div hidden={busy}>
                 <ExtensionReview
                     mode="add"
                     entries={reviewRows(entries, this.props.vm)}
                     initialDecisions={decisions}
                     locale={this.props.locale}
+                    failure={failure}
+                    onRetry={this.handleRetry}
                     onComplete={this.handleComplete}
                 />
             </div>
