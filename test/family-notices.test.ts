@@ -98,7 +98,7 @@ test('this repository records every family package it supplies, dev entries incl
                 warn: () => {}});
         const index = JSON.parse(await fs.readFile(path.join(output, built.index), 'utf8'));
         for (const entry of index.packages) {
-            assert.ok(entry.source.npm && entry.source.repository, `Missing source: ${entry.package}`);
+            assert.ok((entry.source.npm || entry.source.revision) && entry.source.repository, `Missing source: ${entry.package}`);
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
         // The Loader and the review dialog are devDependencies here and are bundled by webpack all

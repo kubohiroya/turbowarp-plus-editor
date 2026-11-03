@@ -8,7 +8,7 @@ import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
 import {
     root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency,
-    verifySecurityDependency, verifyInstalledCore, sha
+    verifySecurityDependency, verifyInstalledCore, verifyScriptTransferDependency, sha
 } from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
 import {buildFamilyNotices} from './family-notices.ts';
@@ -20,6 +20,7 @@ export async function buildPages(pins = undefined) {
     const {coreRevision, coreVersion} = await verifyInstalledCore(root, pins);
     if (pins.documentEditorRepository) await verifyDocumentEditorDependency(root, pins);
     if (pins.loaderRepository) await verifyLoaderDependency(root, pins);
+    if (pins.scriptTransferRepository) await verifyScriptTransferDependency(root, pins);
     const {version: securityVersion} = await verifySecurityDependency(root, pins);
     const siteRevision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim();
     assert.ok(sha(siteRevision), 'Site source must have a full revision');
@@ -59,6 +60,10 @@ export async function buildPages(pins = undefined) {
     // The GUI install supplies the VM and its own tooling; this repository's install supplies every
     // family package the site bundles. Its dev entries count: the Loader and the review dialog are
     // devDependencies here and are bundled all the same, so their licenses have to be recorded.
+    if (pins.scriptTransferRepository) info.scriptTransfer = {
+        repository: `https://github.com/${pins.scriptTransferRepository}`,
+        revision: pins.scriptTransferRevision, version: pins.scriptTransferVersion, featureDefault: false
+    };
     info.familyNotices = await buildFamilyNotices(output, [
         {origin: 'scratch-gui', directory: gui},
         {origin: 'turbowarp-plus-editor', directory: root, includeDev: true}]);

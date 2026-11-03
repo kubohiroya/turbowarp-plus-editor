@@ -142,3 +142,11 @@ test('this distribution supplies the extension host and the library tab the GUI 
     const {createPlusLibraryTab} = await import('../site/extension-library/tab.js');
     assert.equal(createPlusLibraryTab({enabled: false}), null);
 });
+
+
+test('script transfer is default-off and a host can explicitly supply its two entry points', () => {
+    assert.equal(plusIntegration().scriptTransfer, null);
+    const scriptTransfer = {attach () {}, stageMenu () {}};
+    const integration = createPlusIntegration({mountEditor: () => null, flags: {}, scriptTransfer});
+    assert.equal(integration.scriptTransfer, scriptTransfer);
+});

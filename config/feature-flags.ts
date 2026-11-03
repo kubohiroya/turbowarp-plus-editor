@@ -2,6 +2,7 @@
 export function readStartupFeatureFlags(search = '') {
     const value = new URLSearchParams(search).get('twPlusExtensionLoader');
     return Object.freeze({
-        extensionLoader: value === null || value === '1'
+        extensionLoader: value === null || value === '1',
+        scriptTransfer: new URLSearchParams(search).get('twPlusScriptTransfer') === '1'
     });
 }
