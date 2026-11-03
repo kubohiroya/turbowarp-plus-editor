@@ -105,6 +105,7 @@ jobs:
           npm run test:extension-host
           npm run test:gui-integration
           npm run test:script-transfer
+          npm run test:project-tools
       - name: Build TurboWarp-Plus-Editor
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
