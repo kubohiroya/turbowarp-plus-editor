@@ -51,11 +51,11 @@ const rows = page => dialog(page).locator('.twextsec-row');
 const executions = page => page.evaluate(() => globalThis.__securityFixtureStarted || 0);
 const labels = {
     ja:{title:'この作品は機能拡張を使います',deny:'動かさない',sandboxed:'サンドボックスの中で',
-        unsandboxed:'サンドボックスなしで',cancel:'キャンセル',required:'サンドボックスなしが必要と申告しています',
-        unknown:'サンドボックスについて申告がありません',creator:'製作者'},
+        unsandboxed:'サンドボックスなしで',cancel:'キャンセル',required:'❓ カタログ記載なし：サンドボックスなしが必要と申告',
+        unknown:'❓ カタログ記載なし：サンドボックスについて申告なし',creator:'製作者（未検証の申告）'},
     en:{title:'This project wants to run extensions',deny:'Do not run',sandboxed:'In the sandbox',
-        unsandboxed:'Without the sandbox',cancel:'Cancel',required:'Says it needs to run without the sandbox',
-        unknown:'Says nothing about the sandbox',creator:'Creator'}
+        unsandboxed:'Without the sandbox',cancel:'Cancel',required:'❓ Not in the catalog: says it needs to run without the sandbox',
+        unknown:'❓ Not in the catalog: says nothing about the sandbox',creator:'Creator (unverified claim)'}
 };
 const choice = (page, row, language, execution) =>
     row.getByRole('radio', {name: labels[language][execution], exact: true});

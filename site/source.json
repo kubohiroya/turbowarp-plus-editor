@@ -4,7 +4,7 @@
   "coreRepository": "kubohiroya/turbowarp-extension-data-editor",
   "coreRevision": "d96532a91bc6046d4a3fda878425b30d6d10483e",
   "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
-  "securityVersion": "0.8.1",
+  "securityVersion": "0.8.2",
   "loaderRepository": "kubohiroya/turbowarp-extension-loader",
   "loaderRevision": "3d27ff926cdfbc73cf9e7a198f4d804f219fc1a4",
   "loaderVersion": "0.8.0",
@@ -23,6 +23,5 @@
   "documentEditorIntegrity": "sha512-1uyeBKBxDNCsQozkeSwY8Da1aqh5DwI79jN/3si4q6IlgLUvSlpbBO4zhtyZlJnGI6rc1tNgBLMcEszOsuBi6A==",
   "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
   "scriptTransferRevision": "6f6f9c3f0e7a6c601a8046777ae8289968d36800",
-  "scriptTransferVersion": "0.1.0",
-  "securityRevision": "5c816492b39831a7c4ffeaabde01536046104c6a"
+  "scriptTransferVersion": "0.1.0"
 }

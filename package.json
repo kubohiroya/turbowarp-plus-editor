@@ -79,7 +79,7 @@
     "@kubohiroya/turbowarp-document-source": "0.1.0-rc.0",
     "@kubohiroya/turbowarp-extension-data-editor": "0.7.0",
     "@kubohiroya/turbowarp-extension-loader": "0.8.0",
-    "@kubohiroya/turbowarp-extension-security-dialog": "github:kubohiroya/turbowarp-extension-security-dialog#5c816492b39831a7c4ffeaabde01536046104c6a",
+    "@kubohiroya/turbowarp-extension-security-dialog": "0.8.2",
     "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",
     "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.0",
     "@kubohiroya/turbowarp-yaml-json": "0.8.0-rc.0",

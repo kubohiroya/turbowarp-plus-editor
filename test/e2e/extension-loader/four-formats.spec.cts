@@ -78,7 +78,7 @@ for (const distribution of forms) {
         // forbids a copy fetches from the recorded URL again.
         expect(fetched.get(spec.id) - before).toBe(distribution === 'remote-non-cacheable' ? 1 : 0);
         await openCatalog(page, 1);
-        await expect(row(page, spec).locator('.twextsec-state')).toHaveText('読み込み済み');
+        await expect(row(page, spec).locator('.twextsec-state')).toHaveText('▶️ 読み込み済み');
         for (const other of forms) {
             if (other === distribution) await expect(form(page, spec, other)).toBeChecked();
             else await expect(form(page, spec, other)).not.toBeChecked();
