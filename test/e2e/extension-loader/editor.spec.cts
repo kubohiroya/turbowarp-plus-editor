@@ -7,16 +7,15 @@ const {createHTTPSFixture} = require('./https-fixture.cts');
 const {createHash} = require('node:crypto');
 const {createRequire} = require('node:module');
 const {pathToFileURL} = require('node:url');
-const guiRoot = require('../turbowarp/gui-root.cts');
 const permission = page => page.getByTestId('tw-plus-permission');
 const executions = page => page.evaluate(() => globalThis.__plusFixtureStarted || 0);
 // How many times one URL may be asked is the Loader's decision, not this repository's, so read it
-// from the exact build the GUI pins rather than copying the number here. The Loader is ESM and is
-// installed in the GUI checkout, so resolve and import it the way prepare-packaged.ts does.
+// from the exact build the site bundles rather than copying the number here. The Loader is ESM and
+// is this repository's own dependency (the GUI no longer installs it), so resolve it from here.
 let retryDefaults;
 async function fetchAttempts() {
     if (!retryDefaults) {
-        const entry = createRequire(path.join(guiRoot(), 'package.json'))
+        const entry = createRequire(path.join(__dirname, '../../../package.json'))
             .resolve('@kubohiroya/turbowarp-extension-loader');
         ({DEFAULT_FETCH_RETRY: retryDefaults} = await import(pathToFileURL(entry).href));
     }
@@ -180,6 +179,91 @@ test('remote cache reopens offline after approval; an uncached digest never exec
     expect(missed.ok).toBe(false);
     expect(await executions(page)).toBe(2);
 });
+
+// How an extension loads is the author's choice, recorded in the project. What is left to the
+// person opening it is whether a remote-cacheable copy is kept, and they can only decline it.
+// The bulk row above offers the same labels for all rows at once, so read the extension's own row.
+const entry = page => review(page).locator('.twextsec-row[data-key="plusfixture"]');
+const keep = page => entry(page).locator('input[name="loading-plusfixture"]');
+
+test('the opener may decline the copy of a remote-cacheable extension, and then nothing is kept', async ({page}) => {
+    let fetched = 0;
+    await page.route(remoteURL, route => { fetched++; return route.fulfill({body: bytes,
+        headers: {'access-control-allow-origin': '*'}}); });
+    await open(page);
+    const input = await project({type: 'remote-cacheable'});
+    let loading = load(page, input);
+    await expect(review(page)).toBeVisible();
+    await expect(keep(page)).toHaveCount(2);
+    await expect(keep(page).and(page.locator('[value="remote-cacheable"]'))).toBeChecked();
+    await entry(page).getByRole('radio', {name: '毎回取得する', exact: true}).check();
+    await answer(page);
+    await allowed(page, loading);
+    expect(fetched).toBe(1);
+
+    // The same project is recognised, so the copy it was refused is still refused, and the code is
+    // fetched again rather than read from this browser.
+    loading = load(page, input);
+    await expect(keep(page).and(page.locator('[value="remote-non-cacheable"]'))).toBeChecked();
+    await answer(page, 'unsandboxed', {ran: 1});
+    expect(await loading).toEqual({ok: true});
+    expect(fetched).toBe(2);
+
+    // With the address no longer answering, there is no copy in this browser to fall back on.
+    await page.unroute(remoteURL);
+    loading = load(page, input);
+    await answer(page, 'unsandboxed', {ran: 2});
+    expect((await loading).ok).toBe(false);
+    expect(await executions(page)).toBe(2);
+});
+
+for (const type of ['remote-non-cacheable', 'embedded-file', 'embedded-data']) {
+    test(`a ${type} extension opens as its author recorded it, with no copy to decline`, async ({page}) => {
+        let fetched = 0;
+        await page.route(remoteURL, route => { fetched++; return route.fulfill({body: bytes,
+            headers: {'access-control-allow-origin': '*'}}); });
+        await open(page);
+        const loading = load(page, await project({type}));
+        await expect(review(page)).toBeVisible();
+        await expect(keep(page)).toHaveCount(0);
+        await answer(page);
+        await allowed(page, loading);
+        expect(fetched).toBe(type === 'remote-non-cacheable' ? 1 : 0);
+        const json = await page.evaluate(() => JSON.parse(vm.toJSON()));
+        expect(json.turboWarpPlus.extensions[0].source.type).toBe(type);
+    });
+}
+
+test('the three retired spellings are refused before anyone is asked, never read as a current form', async ({page}) => {
+    await page.route(remoteURL, route => route.fulfill({body: bytes, headers: {'access-control-allow-origin': '*'}}));
+    await open(page);
+    for (const source of [{type: 'remote', url: remoteURL}, {type: 'cached', url: remoteURL},
+        {type: 'embedded', path: 'extensions/plusfixture.js'}]) {
+        const result = await load(page, await project({type: 'embedded-file', source}));
+        expect(result.code, source.type).toBe('INVALID_SOURCE');
+        await expect(review(page)).toHaveCount(0);
+        expect(await executions(page)).toBe(0);
+    }
+});
+
+for (const [lang, words] of Object.entries({
+    ja: {title: 'この作品は機能拡張を使います', keep: '控えを残す（既定）', fetch: '毎回取得する', ok: 'OK', cancel: 'キャンセル'},
+    en: {title: 'This project wants to run extensions', keep: 'Keep a copy (default)', fetch: 'Fetch each time', ok: 'OK', cancel: 'Cancel'}
+})) {
+    test(`the open review is worded in ${lang === 'ja' ? 'Japanese' : 'English'}`, async ({page}) => {
+        await page.goto(`editor.html?lang=${lang}`);
+        await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
+        const loading = load(page, await project({type: 'remote-cacheable'}));
+        await expect(review(page)).toBeVisible();
+        await expect(review(page)).toContainText(words.title);
+        await expect(entry(page).getByRole('radio', {name: words.keep, exact: true})).toBeChecked();
+        await expect(entry(page).getByRole('radio', {name: words.fetch, exact: true})).toBeVisible();
+        await expect(review(page).getByRole('button', {name: words.ok, exact: true})).toBeVisible();
+        await review(page).getByRole('button', {name: words.cancel, exact: true}).click();
+        expect((await loading).code).toBe('EXTENSION_SECURITY_CANCELLED');
+        expect(await executions(page)).toBe(0);
+    });
+}
 
 test('HTTPS redirects and CORS refusal never execute JavaScript, even once the review allowed it', async ({page, baseURL}) => {
     await open(page);
