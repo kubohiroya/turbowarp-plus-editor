@@ -1,21 +1,10 @@
 import './styles/preview-reload.css';
 
 /**
- * What this distribution plugs into the GUI's Plus integration socket.
- *
- * The fork keeps an empty `src/lib/tw-plus-integration.js` and the hooks that consult it; this
- * file is what the site build puts in its place, so the family's packages belong to this
- * repository rather than to the fork. The build replaces the module instead of setting a global:
- * a global would have to be written before the GUI mounts, which makes the wiring depend on load
- * order, while a replacement is resolved when the bundle is built.
- *
- * Features move across that boundary one at a time. What is here now is the document editor's
- * wiring (the fork's `tw-document-editor.jsx`), the stage controls an extension registers (its
- * `tw-stage-controls.js`), the runtime controls dock those controls are reached through, what this
- * distribution's catalog makes it trust, the extension
- * host that loads a project's extensions, the library tab that offers them, where a project that
- * uses them goes to be packaged, the review they go through before running, and the form-based
- * block editor.
+ * This distribution's features, consumed by its own GUI bridge.
+ * The build injects site/gui-integration/index.js through the existing GUI addon hooks module.
+ * The fork contains no additional source files, views, tools, documents or tests.
+ * No global is assigned: webpack resolves the optional value when it builds the bundle.
  */
 
 import {

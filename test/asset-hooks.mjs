@@ -41,10 +41,16 @@ const fallback = path.resolve('.host/scratch-gui');
 const guiRoot = configured && path.isAbsolute(configured) ? configured :
     fs.existsSync(path.join(fallback, 'package.json')) ? fallback : null;
 const guiRequire = guiRoot ? createRequire(path.join(guiRoot, 'package.json')) : null;
-const shared = /^(?:react|react-dom|prop-types|lodash\.bindall)(?:\/.*)?$/u;
+const shared = /^(?:react|react-dom|prop-types|lodash\.bindall|scratch-vm|react-intl|react-redux)(?:\/.*)?$/u;
 
 registerHooks({
     resolve (specifier, context, nextResolve) {
+        if (/^\.\.?\//.test(specifier)) {
+            try { nextResolve(specifier, context); } catch (error) {
+                if (error.code !== 'ERR_MODULE_NOT_FOUND') throw error;
+                specifier = `${specifier}.js`;
+            }
+        }
         if (specifier.endsWith('.json')) {
             const resolved = nextResolve(specifier, context);
             return {...resolved, importAttributes: {...resolved.importAttributes, type: 'json'}};

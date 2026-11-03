@@ -3,8 +3,8 @@ import {test} from 'node:test';
 import exposeBlockEditorAPI from '../../site/block-editor/capabilities.js';
 import {readFileSync} from 'node:fs';
 import {fixedMessages} from '../../site/block-editor/messages.js';
-import {guiImport, guiRequire} from '../extension-host/pinned-host.mjs';
-const {default: getBlockEditorService} = await guiImport('src/lib/tw-block-editor-service.js');
+import {guiRequire} from '../extension-host/pinned-host.mjs';
+const {default: getBlockEditorService} = await import('../../site/gui-integration/lib/tw-block-editor-service.js');
 // The editor itself is the host's. What this file is about is this fork's side: one service per VM,
 // and the strings it supplies, so the host's part is a stub that answers with the real shape.
 const integration = {blockEditor: {createService: ({getIntl}) => {

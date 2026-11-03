@@ -32,7 +32,7 @@ export const guiRequire = createRequire(path.join(root, 'package.json'));
 
 /**
  * Import a module of the pinned GUI's own source by repository path.
- * @param {string} file Path inside the checkout, such as `src/lib/tw-plus-extension-host.js`.
+ * @param {string} file Path inside the checkout, such as `src/reducers/modals.js`.
  * @returns {Promise<object>} The module.
  */
 export const guiImport = file => import(pathToFileURL(path.join(root, file)).href);

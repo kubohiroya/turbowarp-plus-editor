@@ -6,3 +6,4 @@ scratch-gui/
 .host/
 build/
 dist/
+.local-preview/

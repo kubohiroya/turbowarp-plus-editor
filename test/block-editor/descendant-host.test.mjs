@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import {BlockEditorConflictError, BlockEditorStructureError} from '@kubohiroya/turbowarp-extension-data-editor';
 import {fixture, makeDefinition, ScratchBlocks} from './helpers.mjs';
 
-import {guiImport, guiRequire} from '../extension-host/pinned-host.mjs';
+import {guiRequire} from '../extension-host/pinned-host.mjs';
 
 
 const require = guiRequire;

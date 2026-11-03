@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import {readBlockEditorAppearance} from '@kubohiroya/turbowarp-extension-data-editor/turbowarp';
 import {fixture, ScratchBlocks} from './helpers.mjs';
 
-import {guiImport, guiRequire} from '../extension-host/pinned-host.mjs';
+import {guiRequire} from '../extension-host/pinned-host.mjs';
 
 
 test('appearance follows each real block instance and does not mutate block or VM data', t => {

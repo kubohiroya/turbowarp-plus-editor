@@ -25,15 +25,15 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [{
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog)
 }));
-// Fill the fork's Plus integration socket from this repository. The fork's own module is empty,
-// so a pin without the socket would leave this silently inert: fail instead of building a bundle
-// that looks wired and is not.
-const socket = path.join(gui, 'src', 'lib', 'tw-plus-integration.js');
-if (!fs.existsSync(socket)) throw new Error('The pinned GUI has no Plus integration socket to fill');
-config.plugins.push(new (hostRequire('webpack').NormalModuleReplacementPlugin)(
-    /[\\/]src[\\/]lib[\\/]tw-plus-integration\.js$/,
-    path.join(__dirname, '..', '..', 'site', 'plus-integration.js')
-));
+// The host owns every additional module; the fork only consults this optional build-time value.
+const bridge = path.join(__dirname, '..', '..', 'site', 'gui-integration', 'index.js');
+const hookSource = fs.readFileSync(path.join(gui, 'src', 'addons', 'hooks.js'), 'utf8');
+if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI_HOST__')) {
+    throw new Error('The pinned GUI does not expose the optional host bridge');
+}
+config.plugins.push(new (hostRequire('webpack').ProvidePlugin)({
+    __TW_GUI_HOST__: bridge
+}));
 // Resolve shared packages to the host's copies, once.
 //
 // A module this repository supplies is resolved from here, so `react` would come from this
@@ -47,7 +47,7 @@ config.plugins.push(new (hostRequire('webpack').NormalModuleReplacementPlugin)(
 // second copy would be the same code with its own module state. Neither the Loader nor the review
 // dialog is in this list any more — the GUI depends on neither, so this repository's copies are the
 // only ones.
-for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip']) {
+for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip', 'scratch-vm', 'react-intl', 'react-redux']) {
     const copy = path.join(gui, 'node_modules', name);
     if (!fs.existsSync(copy)) throw new Error(`The pinned GUI has no ${name} to resolve against`);
     config.resolve.alias[name] = copy;

@@ -14,7 +14,7 @@ import {createTurboWarpBlockEditorHost as createBlockEditorHost} from '@kubohiro
 
 import {guiRequire, guiRoot} from '../extension-host/pinned-host.mjs';
 
-const {JSDOM} = guiRequire('jsdom');
+import {JSDOM} from 'jsdom';
 
 export const dom = new JSDOM('<!doctype html><html><body></body></html>', {
     url: 'http://localhost/', runScripts: 'outside-only'

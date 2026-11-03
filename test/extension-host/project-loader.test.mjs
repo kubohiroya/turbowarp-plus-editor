@@ -2,12 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {installExtensionLoader} from '../../site/extension-host/project-loader.js';
 
-import {guiImport} from './pinned-host.mjs';
 
 // Marking a failure as an extension failure is the GUI's own bookkeeping, read back by its
 // project-error paths, so the host passes the marker in and so does this test.
 const {isExtensionLoadFailure, markExtensionLoadFailure} =
-    await guiImport('src/lib/tw-plus-extension-load-failure.js');
+    await import('../../site/gui-integration/lib/tw-plus-extension-load-failure.js');
 
 function fixture({manifest = {schemaVersion: 1, extensions: []}, failLoad = false} = {}) {
     const events = [];
