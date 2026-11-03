@@ -49,6 +49,13 @@ export function validatePins(pins) {
         assert.equal(pins.scriptTransferRepository, 'kubohiroya/turbowarp-script-transfer');
         assert.ok(sha(pins.scriptTransferRevision), 'A full script transfer revision is required');
         assert.ok(exactVersion(pins.scriptTransferVersion), 'An exact script transfer version is required');
+        // An npm script transfer keeps scriptTransferRevision as the commit it was published from.
+        assert.ok(pins.scriptTransferSource === undefined || ['git', 'npm'].includes(pins.scriptTransferSource),
+            'Script transfer source must be git or npm');
+        if (pins.scriptTransferSource === 'npm') {
+            assert.match(pins.scriptTransferIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
+                'The published script transfer integrity is required');
+        }
     }
     return pins;
 }
@@ -163,12 +170,22 @@ export async function verifyScriptTransferDependency(directory, pins) {
     const name = '@kubohiroya/turbowarp-script-transfer';
     const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
     const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
-    const source = `git+https://github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`;
-    assert.equal(manifest.dependencies[name], source, 'Script transfer source differs from the pin');
-    assert.equal(lock.packages[''].dependencies[name], source, 'Script transfer root lock differs from the pin');
     const entry = lock.packages[`node_modules/${name}`];
-    assert.equal(entry.resolved, `git+ssh://git@github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`,
-        'Script transfer lock differs from the pin');
+    if (pins.scriptTransferSource === 'npm') {
+        assert.equal(manifest.dependencies[name], pins.scriptTransferVersion, 'Script transfer source differs from the pin');
+        assert.equal(lock.packages[''].dependencies[name], pins.scriptTransferVersion,
+            'Script transfer root lock differs from the pin');
+        assert.equal(entry.resolved,
+            `https://registry.npmjs.org/${name}/-/turbowarp-script-transfer-${pins.scriptTransferVersion}.tgz`,
+            'Script transfer must resolve to the published npm tarball');
+        assert.equal(entry.integrity, pins.scriptTransferIntegrity, 'Script transfer tarball integrity differs from the pin');
+    } else {
+        const source = `git+https://github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`;
+        assert.equal(manifest.dependencies[name], source, 'Script transfer source differs from the pin');
+        assert.equal(lock.packages[''].dependencies[name], source, 'Script transfer root lock differs from the pin');
+        assert.equal(entry.resolved, `git+ssh://git@github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`,
+            'Script transfer lock differs from the pin');
+    }
     assert.equal(entry.version, pins.scriptTransferVersion, 'Script transfer lock version differs from the pin');
     const require = createRequire(path.join(directory, 'package.json'));
     const installed = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
