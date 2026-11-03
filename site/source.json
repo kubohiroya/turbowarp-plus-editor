@@ -22,6 +22,6 @@
   "documentEditorSource": "npm",
   "documentEditorIntegrity": "sha512-vmzt87LZpsHHtUH19x/JEbULQAEPFanDGqTuO/356ozt+KDciVAxsv3bpp+Jcjq+sbdu7Mdle+8T8NWPXGfsfw==",
   "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
-  "scriptTransferRevision": "441497b18748321bef3b9f02eedddf24f32bfb06",
+  "scriptTransferRevision": "a2839710b6771dbe49540baf56d9fda6b756ed37",
   "scriptTransferVersion": "0.1.0"
 }
