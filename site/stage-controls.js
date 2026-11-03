@@ -1,9 +1,8 @@
 /**
  * The stage controls an extension registered, which this distribution owns.
  *
- * The GUI fork asks for this through its integration socket and draws whatever the snapshot holds:
- * extensions describe controls, React owns their placement and DOM lifetime. The service came from
- * the fork's `src/lib/tw-stage-controls.js`; the behaviour is unchanged.
+ * The distribution's view subscribes to the service and is placed in the GUI's optional slot.
+ * Extensions describe controls; the view owns their markup, styling and DOM lifetime.
  *
  * One service per VM, because two callers need the same one. The controls bar reads the snapshot
  * and `Scratch.gui.stageControls` hands the API to extensions: if those were different services, a

@@ -1,0 +1,31 @@
+.control {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    height: 2rem;
+    min-width: 2rem;
+    padding: 0 0.375rem;
+    margin: 0 0.125rem;
+    border: 1px solid var(--ui-black-transparent);
+    border-radius: 0.25rem;
+    background: var(--ui-primary);
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.control:focus-visible {
+    outline: 2px solid var(--looks-secondary);
+    outline-offset: 1px;
+}
+
+.label {
+    font: 0.75rem/1 sans-serif;
+    white-space: nowrap;
+}
+
+.panel {
+    display: contents;
+}

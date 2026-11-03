@@ -1,3 +1,7 @@
+import React from 'react';
+import StageControlsView from '../stage-controls/view.jsx';
+import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.js';
+
 export * from './lib/tw-plus-integration-points.js';
 export * from './lib/tw-plus-transfer.js';
 export * from './lib/tw-plus-extension-host.js';
@@ -10,3 +14,8 @@ export {default as afterNativeFieldStartup} from './lib/tw-block-editor-startup.
 export {default as createPreviewVm} from './lib/tw-preview-vm.js';
 export {default as BlockEditorModal} from './containers/tw-block-editor-modal.jsx';
 export {createWorkspaceAttachment} from './containers/tw-plus-workspace-attachment.jsx';
+
+export const renderStageControls = ({vm, isSmall}) => {
+    const service = hostStageControls(vm, hostIntegration());
+    return service ? React.createElement(StageControlsView, {service, isSmall}) : null;
+};
