@@ -126,8 +126,8 @@ export function describeSb3SaveFormats(
 
 | `Sb3SaveFormat`（`source` payload） | document-source 側                                                                                                                                             |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `remote-non-cacheable`              | `location: https`、SB3にも控えにも何も残さない                                                                                                                 |
-| `remote-cacheable`                  | `location: https`、検証済みの控えをブラウザに持ってよい。対応する種別は今はない（[#1112](https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1112)） |
+| `remote-non-cacheable`              | `location: https`、SB3にもキャッシュにも何も残さない                                                                                                                 |
+| `remote-cacheable`                  | `location: https`、検証済みのキャッシュをブラウザに持ってよい。対応する種別は今はない（[#1112](https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1112)） |
 | `embedded-file`                     | `location: sb3`、ZIP内のファイル                                                                                                                               |
 | `embedded-data`                     | `location: sb3`、`project.json` の中                                                                                                                           |
 
@@ -148,7 +148,7 @@ document-source は `sb3` と `https` を区別するが、`sb3` のバイト列
 | `embedded-file` | `embedded-file`        |
 | `embedded-data` | `embedded-data`        |
 
-単なる改名ではない。旧 `cached` はここでは「ZIP内のバイト列＋URL」を意味していたが、1つ上の層では逆（SB3には何もなく、検証済みの控えをブラウザに持つ）を意味していた。自分でバイト列を持つ作品は embedded なので、この名前は誤りだった。`remote-cacheable` は参照だけを格納し、控えを持つかどうかは開く側に委ねる。`remote-non-cacheable` は作者が控えを禁じる形で、控えは「ピン留めしたバイト列を配信しなくなったURL」を控えが尽きるまで隠してしまうため。
+単なる改名ではない。旧 `cached` はここでは「ZIP内のバイト列＋URL」を意味していたが、1つ上の層では逆（SB3には何もなく、検証済みのキャッシュをブラウザに持つ）を意味していた。自分でバイト列を持つ作品は embedded なので、この名前は誤りだった。`remote-cacheable` は参照だけを格納し、控えを持つかどうかは開く側に委ねる。`remote-non-cacheable` は作者が控えを禁じる形で、控えは「ピン留めしたバイト列を配信しなくなったURL」を控えが尽きるまで隠してしまうため。
 
 共通パッケージは 0.2.0-rc.0 でこれに追従した（`latest` と `next` を同じ版へ向ける）。0.1.0-rc.0 は旧名のままで、利用者はいなかった。紙芝居App 側のアダプターの差し替えは [#1123](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1123)。
 
@@ -162,7 +162,7 @@ document-source は `sb3` と `https` を区別するが、`sb3` のバイト列
 
 決定2の利用者の一覧に「保存UI（`turbowarp-document-editor`、ブラウザ）」と書いたが、違う。設計は「**一覧の画面はsecurity-dialogの担当です**」と明記しており、security-dialog は「共通の選択画面。実行（拒否・サンドボックスあり・なし）と**4つの形式**を、通常のカスタム拡張とPlus拡張の両方について指定する」とされている。追加するときと開くときで同じ画面を出す。
 
-形式は「**すべて作品の作者が決めます**」で Manifest に記録され、開く人に残る問いは「`remote-cacheable` の控えを自分のブラウザーに残すか」だけである。つまり保存操作のための専用ダイアログという形ではない。
+形式は「**すべて作品の作者が決めます**」で Manifest に記録され、開く人に残る問いは「`remote-cacheable` のキャッシュを自分のブラウザーに残すか」だけである。つまり保存操作のための専用ダイアログという形ではない。
 
 security-dialog `0.7.0` は既に公開済みで、4形式（`LoadingMode`）を持つ。画面が返すのは `ReviewDecisions = Map<string, {execution, loading?}>` で、これを本Editorの結合モジュールが受け取り、ローダーの許可・`declineCaching`・Manifest への記録の3方向へ分配する。接続は #68 で追う。
 
@@ -181,6 +181,6 @@ security-dialog `0.7.0` は既に公開済みで、4形式（`LoadingMode`）を
 |                             | 出所になり得るバイト列          | 置き場所                       |
 | --------------------------- | ------------------------------- | ------------------------------ |
 | Node（既存SB3の一括変換）   | ネットワークだけ                | 共通パッケージ `./writer`      |
-| ブラウザ（保存時の1件ずつ） | 控え（IndexedDB）とネットワーク | ローダー `./project-authoring` |
+| ブラウザ（保存時の1件ずつ） | キャッシュ（IndexedDB）とネットワーク | ローダー `./project-authoring` |
 
 分かれている理由は型に現れている。ローダー側は `AuthoringPorts = Pick<LoaderPorts, 'fetcher' | 'trustProvider' | 'cache' | 'diagnostics'>` で **cache port を持つ**が、`./writer` は持たない。だからCLIは「作品がどの形式を記録するか」は書けるが、**見る人のブラウザにある控えには関与できない**。`remote-cacheable` を書いた出力を「オフラインで動く」根拠にはできない。この限界はコマンド自身にも言わせた（kamishibai-app#1127）。
