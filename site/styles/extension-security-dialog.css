@@ -1,0 +1,14 @@
+/* Present bulk choices as the primary path and individual overrides as secondary. */
+:global(.twextsec-body) :global(.twextsec-bulk) {
+    background: var(--ui-modal-background, #fff);
+}
+
+:global(.twextsec-body) :global(.twextsec-columns),
+:global(.twextsec-body) :global(.twextsec-list) {
+    background: var(--ui-secondary, #f7f8fb);
+}
+
+/* Keep host positioning stronger than package defaults regardless of injection order. */
+:global(.twextsec-modal)[data-twextsec-window]:not([hidden]) {
+    left: 50vw;
+}

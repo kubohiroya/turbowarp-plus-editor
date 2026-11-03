@@ -1,3 +1,6 @@
+import './styles/preview-reload.css';
+import './styles/extension-security-dialog.css';
+
 /**
  * What this distribution plugs into the GUI's Plus integration socket.
  *
@@ -61,6 +64,7 @@ export const createPlusIntegration = ({
 }) => ({
     // Transfer is supplied only when the startup flag explicitly enabled it.
     scriptTransfer,
+    shouldIgnoreKeyEvent: event => Boolean(event.target?.closest?.('.twextsec-modal')),
     /**
      * What this distribution stands behind: an extension its catalog lists loads unsandboxed
      * without a separate review, the way TurboWarp treats its own gallery. The GUI asks; which

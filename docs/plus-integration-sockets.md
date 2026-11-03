@@ -469,3 +469,11 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 | 独自の道具・例・文書・テスト | `scripts/local-security-preview.cjs`(273行)、`src/examples/extensions/*`、`docs/*`、`test/unit/*` |
 
 **この一覧がこの文書の現在の結論である。** フォークの差分を「まだ移せるもの」と読んではいけない。移せるものは上の取りこぼし2件だけで、他は口の呼び出しか、本家側に残すと決めたものである。
+
+## GUI #136によるCSS境界の更新（2026-11-03）
+
+既存文書の「preview-reload.cssも移さない」という結論は、GUI #136で変更する。
+GUIは `[data-gui-stage]` 上に配置情報をCSS変数として提供し、固有IDのスタイルは
+`site/styles/preview-reload.css` が所有する。色はGUIが既に公開するテーマ変数を参照する。
+ハッシュ済みクラス名、複製したGUI寸法、本家のビルド時変数には依存しない。
+`extension-security-dialog.css` も配信側へ移す。表示順の詳細度は保持し、旧Runtimeの互換表示も維持する。
