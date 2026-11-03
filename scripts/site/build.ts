@@ -62,7 +62,7 @@ export async function buildPages(pins = undefined) {
     // devDependencies here and are bundled all the same, so their licenses have to be recorded.
     if (pins.scriptTransferRepository) info.scriptTransfer = {
         repository: `https://github.com/${pins.scriptTransferRepository}`,
-        revision: pins.scriptTransferRevision, version: pins.scriptTransferVersion, featureDefault: false
+        revision: pins.scriptTransferRevision, version: pins.scriptTransferVersion, featureDefault: true
     };
     info.familyNotices = await buildFamilyNotices(output, [
         {origin: 'scratch-gui', directory: gui},

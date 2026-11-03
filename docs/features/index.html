@@ -34,7 +34,7 @@
 <tr><th>作品を開く際の確認</th><td>カスタム拡張の実行確認</td><td>Plus拡張と通常のカスタム拡張を同じ画面で確認。取得元・SHA-256・実行条件を表示</td><td><span class="badge">通常起動</span> 確認対象の拡張を含む作品</td></tr>
 <tr><th>拡張の保存</th><td>主にURL参照。data URLも扱える</td><td>4つの保存形式を選択し、内容のハッシュと実行条件を作品と一緒に保持</td><td><span class="badge">通常起動</span> Plus形式の拡張</td></tr>
 <tr><th>文書の編集</th><td>この文書編集UIはない</td><td>対応文書のYAML/JSON原文、ブロック表現、所有拡張による検証・変換</td><td><span class="badge optional">既定OFF</span> 起動設定＋対応する文書提供元</td></tr>
-<tr><th>スクリプト・ステージの転送</th><td>標準のバックパック等</td><td>.blocks3 / .stage3、ウィンドウ間コピー・貼り付け</td><td><span class="badge optional">既定OFF</span> 起動設定</td></tr>
+<tr><th>スクリプト・ステージの転送</th><td>標準のバックパック等</td><td>.blocks3 / .stage3、ウィンドウ間コピー・貼り付け</td><td><span class="badge">通常起動</span> 追加設定なし</td></tr>
 <tr><th>編集プレビュー・ステージ操作</th><td>標準の実行・停止・表示操作</td><td>拡張が登録する編集プレビュー、操作ボタン、操作ドックの接続</td><td><span class="badge">作品依存</span> 対応拡張が提供する場合</td></tr>
 <tr><th>単一HTMLの出力</th><td>標準Packager</td><td>Plus形式の拡張コードと実行条件を引き継ぐ出力経路</td><td><span class="badge">通常起動</span> Plus形式の作品</td></tr>
 </tbody></table></div></section>
@@ -87,11 +87,11 @@
 <p>起動コマンドと対応範囲は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/README.ja.md">READMEの文書編集手順</a>、ウィンドウ操作は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/document-window.md">文書ウィンドウの仕様</a>を参照してください。設定を外して再起動すれば、文書編集の追加操作を無効にできます。</p>
 </section>
 
-<section id="transfer"><h2>6. スクリプトとステージを別作品へ転送する <span class="badge optional">実験機能・既定OFF</span></h2>
-<p><a href="../editor.html?lang=ja&amp;twPlusScriptTransfer=1">転送機能を有効にして起動</a>（<code>twPlusScriptTransfer=1</code>）すると、スクリプトの右クリックに書き出し・コピー、コード領域の右クリックに読み込み・貼り付けを追加します。Ctrl/Cmd+C・Vも使えます。</p>
-<figure><a href="images/transfer.png"><img src="images/transfer.png" width="1440" height="1000" alt="英語UIのスクリプト右クリックメニュー。CopyとExport Scriptが追加されている。" loading="lazy"></a><figcaption>英語表示での追加メニュー例。Export Scriptは選んだスタックを.blocks3へ書き出します。通常起動ではこの実験機能は無効です。</figcaption></figure>
+<section id="transfer"><h2>6. スクリプトとステージを別作品へ転送する <span class="badge">通常起動</span></h2>
+<p><a href="../editor.html?lang=ja">通常のEditor</a>で、スクリプトの右クリックに書き出し・コピー、コード領域の右クリックに読み込み・貼り付けを追加します。起動設定は不要です。Ctrl/Cmd+C・Vも使えます。</p>
+<figure><a href="images/transfer.png"><img src="images/transfer.png" width="1440" height="1000" alt="英語UIのスクリプト右クリックメニュー。CopyとExport Scriptが追加されている。" loading="lazy"></a><figcaption>英語表示での追加メニュー例。Export Scriptは選んだスタックを.blocks3へ書き出します。通常起動で表示されます。</figcaption></figure>
 <ul><li><strong>.blocks3</strong>：スクリプトと必要なブロック定義・変数・リスト・メッセージ・拡張参照を移します。OSクリップボードへの許可がなくても、同じサイトのウィンドウ間でコピー・貼り付けできます。</li><li><strong>.stage3</strong>：ステージの右クリックから書き出し、背景の「選ぶ」メニューから「ステージを読み込み（追加）」を選びます。背景・音・スクリプトを既存のステージへ追加します。</li><li>同名の変数等はスコープ・種類が合う既存データを使い、読み込み先の値を保持します。名前が競合する定義やアセットは必要に応じて改名します。式で生成する背景・音の名前や番号までは自動変換しません。</li><li>転送元の拡張の承認は引き継ぎません。別サイトへのクリップボード転送には対応ブラウザーと読取許可が必要です。同じサイト内の最後のコピーはlocalStorageにも残ります。</li></ul>
-<p>無効にするにはURLから設定を外し、再読込します。詳しくは<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a>を参照してください。</p>
+<p>URLの設定で無効にすることはできません。詳しくは<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a>を参照してください。</p>
 </section>
 
 <section id="runtime"><h2>7. 拡張が提供するプレビュー・ステージ操作</h2>
@@ -112,7 +112,7 @@
 <tr><td>フォームを試す</td><td>対応拡張のブロックのアイコン</td><td>対応拡張。作者向けサンプルはリポジトリのexamples/extensions/</td></tr>
 <tr><td>Plus拡張を追加する</td><td>「拡張機能を追加」→「TurboWarp Plus」</td><td>通常起動。追加前に読込・保存方法を選択</td></tr>
 <tr><td>文書を編集する</td><td>文書編集を有効にして、対応する帽子のアイコン</td><td>twPlusYamlEditor=1＋対応提供元。参照元切替はtwPlusDocumentSource=1も必要</td></tr>
-<tr><td>スクリプトを別作品へ移す</td><td>転送を有効にして右クリック</td><td>twPlusScriptTransfer=1</td></tr>
+<tr><td>スクリプトを別作品へ移す</td><td>スクリプト・コード領域・ステージの右クリック</td><td>追加設定なし</td></tr>
 </tbody></table></div>
 <p>起動設定はURLを変えて再読込します。Plusローダーは通常起動で有効です。<code>twPlusExtensionLoader=0</code>を付けて再読込すると無効になり、このガイドのPlusカタログ・Plus形式の読込経路は使えなくなります。無効化は保存済み作品を標準形式へ変換する操作ではありません。</p>
 <aside><strong>保存の区切り</strong>：フォームや文書の「保存」は、開いている作品へ変更を反映します。手元にファイルを残すには、最後にSB3を保存してください。Plus固有の形式や専用UIを使う作品を標準TurboWarpへ渡す場合は、元のSB3を保持し、コピーで互換性を確認してください。</aside>

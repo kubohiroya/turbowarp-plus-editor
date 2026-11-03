@@ -116,9 +116,8 @@ test('teardown retains the first unload failure when host recovery also fails', 
 });
 
 
-test('script transfer requires its own explicit startup opt-in', () => {
-    for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=true']) {
-        assert.equal(readStartupFeatureFlags(query).scriptTransfer, false);
+test('startup flags carry only the extension loader switch', () => {
+    for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
+        assert.deepEqual(Object.keys(readStartupFeatureFlags(query)), ['extensionLoader']);
     }
-    assert.equal(readStartupFeatureFlags('?twPlusScriptTransfer=1').scriptTransfer, true);
 });

@@ -19,7 +19,8 @@ An editor for creating and opening TurboWarp Plus projects. It builds kubohiroya
 
 - Edit supported block data in forms, with validation, save/cancel, and Undo.
 - Review Plus extensions and choose how their code is stored: remote references or embedded in the SB3.
-- Enable experimental document editing and script/stage transfer through startup options.
+- Enable experimental document editing through startup options.
+- Transfer scripts and stages to other projects with `.blocks3` / `.stage3` files and cross-window copy/paste.
 
 The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) includes six real screenshots, workflow diagrams, a comparison table, activation conditions, and saving/compatibility details. Forms, documents, and previews require extensions that provide them.
 
@@ -266,6 +267,6 @@ The new flag is off by default. `readDocumentEditorFlags` from `@kubohiroya/turb
 This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.
 
 
-## Script and stage transfer (experimental)
+## Script and stage transfer
 
-Add `twPlusScriptTransfer=1` to the startup URL to enable `.blocks3` script export/import, copying and pasting scripts between windows, and `.stage3` stage export/import. The feature is off by default. Importing a stage adds its contents to the current stage. See the [transfer specification (Japanese)](docs/script-stage-transfer.md) for operations, dependency handling, limits, and rollback instructions.
+`.blocks3` script export/import, copying and pasting scripts between windows, and `.stage3` stage export/import are always available. No startup option is needed, and there is no flag to turn them off. Importing a stage adds its contents to the current stage. See the [transfer specification (Japanese)](docs/script-stage-transfer.md) for operations, dependency handling, limits, and rollback instructions.
