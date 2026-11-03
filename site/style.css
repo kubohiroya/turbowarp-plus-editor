@@ -11,3 +11,6 @@ h2 { font-size:1.35rem; line-height:1.45; margin:0 0 12px; } input { width:100%;
 .error { color:#ac2830; } footer { padding:24px 0 40px; border-top:1px solid var(--line); color:var(--muted); } footer a { margin-right:16px; } .skip { position:absolute; top:-100px; left:12px; padding:10px; background:white; } .skip:focus { top:8px; }
 @media(max-width:650px) { .wrap { width:calc(100% - 28px); } header { align-items:flex-start; flex-direction:column; gap:6px; padding:16px 0; } main { padding-top:28px; } .hero { grid-template-columns:1fr; gap:12px; } .hero>img { width:120px; order:-1; } .cards { grid-template-columns:1fr; margin-top:28px; } section.panel { padding:20px; } .actions .twpe-edit-button { width:100%; } }
 @media(prefers-color-scheme:dark) { :root { --ink:#e9f1fb; --muted:#bdcada; --surface:#18283d; --line:#34485f; background:#101c2b; } a { color:#a8d6ff; } .eyebrow { color:#9fcdf3; } .error { color:#ffadb3; } }
+
+.cards { align-items:start; }
+.feature-shot { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:10px; margin-top:20px; }

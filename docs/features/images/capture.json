@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-03",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "gui": "7deadb1aae4a0a7f06d7d9fa2a309bb6fdb64ef3",
+  "host": "1c9a0284d55009075425bc15f7edec32c16d6fac",
+  "security": "0.7.1",
+  "sample": "examples/extensions/block-editor.js",
+  "reviewViewport": {
+    "width": 1440,
+    "height": 1200
+  },
+  "note": "Local integrated candidate. Catalog sample is supplied by the browser test fixture; not a public catalog entry."
+}
