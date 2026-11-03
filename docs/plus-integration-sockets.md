@@ -70,7 +70,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | `components/controls/controls.css` | +40 | **口にしない。移さない**（下の「いま残っている差分」。当初は段階8で移す予定だった） |
 | `components/library/library.css` | +24 | **口にしない。移さない**（同上。当初は段階9で移す予定だった） |
 | `components/modal/modal.css` | +5 -2 | **口にしない。** モバイルでoverlayがはみ出すのを直す汎用修正。`modal.jsx` と同じ扱い |
-| `components/stage/stage.css` | +1 | `@import "./preview-reload.css"` の1行は残す。中身の `preview-reload.css`(259行) も**残す**（同上） |
+| `components/stage/stage.css` | +1 | `@import` の1行は残り、中身の `preview-reload.css`(259行) は**配信側へ移った**（下の「台帳の訂正」。GUI #136 / [#105](https://github.com/kubohiroya/turbowarp-plus-editor/pull/105)） |
 | `components/tw-security-manager-modal/data-url.css` | +1 -1 | **口にしない。** textareaの高さを 5rem→10rem にする汎用修正。同上 |
 | `components/modal/modal.jsx` | +3 -2 | **口にしない。** `hideCloseButton` はPlus固有でない汎用prop。本家に出せる形なので、汎用変更として残すか上流へ送る |
 | `components/library/library.jsx` | +27 -10 | **口にしない。** `busy` 中の操作を抑える汎用変更。同上 |
@@ -114,7 +114,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 実際の5件は3種類だった。
 
 - `controls.css`(+31) と `library.css`(+24) は、`.extension-control` / `.custom-content` / `.custom-library` / `.extended-tags` といった**新しいクラスの追加**で、同じコンポーネントのフォーク独自JSXが `styles.extensionControl` のように参照している。全域スタイルシートではなく、そのコンポーネントの変更と一緒に移すのが正しい——と当時は書いたが、描く側が本家に残る形に落ち着いたので移さない（下の「いま残っている差分」）。
-- `stage.css`(+1) は `@import "./preview-reload.css"` の1行だけ。import文はフォークに残り、中身の `preview-reload.css`（259行、フォーク独自）も残す（同上）。
+- `stage.css`(+1) は `@import "./preview-reload.css"` の1行だけ。import文はフォークに残り、中身は配信側の `site/styles/preview-reload.css` へ移った（下の「台帳の訂正」）。
 - `modal.css`(+5 -2) と `data-url.css`(+1 -1) は Plus固有ではない。前者はモバイルで overlay が viewport からはみ出すのを `width/height: 100vw/100vh` で直すもの、後者は data URL を貼る textarea の高さを 5rem から 10rem にするもの。`modal.jsx` の `hideCloseButton` と `library.jsx` の `busy` と同じ「汎用変更として残すか上流へ送る」扱いにする。
 
 口を作る前に中身を読んだので、使われない仕組みをフォークに足さずに済んだ。残りの段階でも、口を開ける前にその口が運ぶ差分を読む。
@@ -465,7 +465,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 | --- | --- |
 | 口そのもの | `lib/tw-plus-integration-points.js`(231行)、`lib/tw-plus-integration.js`(20行、空) |
 | フォーク側に残す判断をした実装 | ダイジェストの照合（`tw-plus-extension-host.js`)、レビューの記録（`tw-plus-extension-permissions.js`)、作品エラーの巻き戻し（`tw-extension-security-cancel.js`)、`tw.blockEditor.*` の翻訳文 |
-| フォークが描く要素のCSS | `controls.css`・`library.css`・`preview-reload.css`・`block-editor.css` |
+| フォークが描く要素のCSS | `controls.css`・`library.css`（`preview-reload.css` と `block-editor.css` は移った。下の「台帳の訂正」） |
 | 汎用変更（上流へ出せる形） | `modal.jsx` の `hideCloseButton`、`library.jsx` の `busy`、`modal.css` のモバイル修正、`data-url.css` の高さ |
 | インフラ | `webpack.config.js`・CI workflow・README・.gitignore |
 | 独自の道具・例・文書・テスト | `scripts/local-security-preview.cjs`(273行)、`src/examples/extensions/*`、`docs/*`、`test/unit/*` |
@@ -480,6 +480,29 @@ GUIは `[data-gui-stage]` 上に配置情報をCSS変数として提供し、固
 ハッシュ済みクラス名、複製したGUI寸法、本家のビルド時変数には依存しない。
 旧レビュー専用の `extension-security-dialog.css` は、先行した0.7.1の新UI移行で参照先がなくなったため移管しない。
 キー操作は新UIの `.twextsec-review` をホストが判定する。旧Runtimeの互換表示は維持する。
+
+## 台帳の訂正（2026-11-03、同日の後刻）
+
+半日のあいだに、上の台帳の数と結論の両方が動いた。数え直すと **69ファイル・+3,095 / -57**（lockfile除外で **68・+2,545 / -52**）で、13ファイル・700行ほど減っている。`origin/develop` は `cb0972665`、上流より20コミット遅れという条件は同じ。
+
+### 取りこぼし2件は両方とも解消した
+
+| | どこで |
+| --- | --- |
+| レビューUIのクラス名の直書き | [kubohiroya/scratch-gui#143](https://github.com/kubohiroya/scratch-gui/pull/143) が `vm-listener-hoc.jsx` の直書き・`extension-security-dialog.css`・その import の3件を削除。`git grep twextsec origin/develop -- src test` は0件。配信側は [#106](https://github.com/kubohiroya/turbowarp-plus-editor/pull/106) が口 `shouldIgnoreKeyEvent` を埋め、[#111](https://github.com/kubohiroya/turbowarp-plus-editor/pull/111) が [#105](https://github.com/kubohiroya/turbowarp-plus-editor/pull/105) との重複を1つに戻した |
+| 死んだプレビュー導線 | [kubohiroya/scratch-gui#132](https://github.com/kubohiroya/scratch-gui/pull/132) |
+
+### この文書の結論2つが覆された
+
+**1. 「CSSは移さない」は、2件について間違いだった。** `preview-reload.css`(259行) と `block-editor.css`(38行) はフォークから出た。通った理由は、配信側が本家のハッシュ済みクラス名を狙うのを諦め、**本家が値を渡す**形に替えたこと——GUI #136 が `[data-gui-stage]` に配置情報をCSS変数として出し、固有IDのスタイルは `site/styles/preview-reload.css` が持つ。色は本家が既に公開しているテーマ変数を読む。
+
+つまり移送の条件は「CSSかどうか」ではなく、**本家が必要な値を安定した属性セレクタ上の変数として公開できるか**である。残るのは `controls.css`(+40) と `library.css`(+24) で、こちらは本家のJSXが `styles.extensionControl` のようにハッシュ済みクラスを参照しているので、同じ手を使うには描く側も動かすことになる。
+
+**2. 「翻訳文は動かせない」も、形を変えれば動いた。** ブロックエディタの `tw-translations/block-editor.json`(40行) と theme tokens は [kubohiroya/scratch-gui#145](https://github.com/kubohiroya/scratch-gui/pull/145) でフォークから出た。文を移したのではなく、**フォークが自分の `intl` を口に渡す**形に替えた（`tw-block-editor-modal.jsx` が `intl` / `nodeAppearances` / `nodeLabels` を渡し、配信側が描く）。整形は本家の `intl` を通る。idと日英の文そのものは配信側の `site/block-editor/translations.json` が持ち、既存の `translations` の口から本家のIntlへ登録される——次の節がその仕組みを書いている。
+
+### 読み方
+
+**「移せない」と書いた結論のうち2つが、半日で覆った。** どちらも同じ替え方で通っている——配信側が本家のものを狙う形を捨て、本家が値を渡す形にする。この文書に「移さない」と書いてあっても、その替え方が見つかれば覆る。数も結論も、見た日付とともに読むこと。
 
 ## GUI #137によるフォーム表示の所有更新（2026-11-03）
 
