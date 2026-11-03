@@ -33,7 +33,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
     const base = `${host.apiOrigin}/turbowarp-plus-editor/`;
     let stage = 'load';
     async function load(p, filename) {
-        await p.goto(`${base}editor.html?lang=ja&twPlusYamlEditor=1&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
+        await p.goto(`${base}editor.html?lang=ja&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
         const security = p.locator('.twextsec-modal'); await security.waitFor({timeout: 60000});
         await security.getByRole('button', {name: 'サンドボックスなし', exact: true}).click();
         await security.getByRole('button', {name: 'OK', exact: true}).click(); await security.waitFor({state: 'hidden'});

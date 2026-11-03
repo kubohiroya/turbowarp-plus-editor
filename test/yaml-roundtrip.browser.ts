@@ -44,7 +44,7 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
     let stage = 'load';
     try {
         async function load(p, name) {
-            await p.goto(`${base}editor.html?lang=ja&twPlusYamlEditor=1&project_url=${encodeURIComponent(`${base}static/${name}`)}`);
+            await p.goto(`${base}editor.html?lang=ja&project_url=${encodeURIComponent(`${base}static/${name}`)}`);
             // The shared review (security-dialog 0.7) offers one choice for every row.
             const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')});
             await security.waitFor({timeout: 60000});

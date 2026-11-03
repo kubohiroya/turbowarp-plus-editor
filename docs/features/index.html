@@ -9,7 +9,7 @@
 <body>
 <header><a href="../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
-<p class="eyebrow">機能ガイド · 2026年11月</p>
+<p class="eyebrow">機能ガイド · 2026年11月3日更新</p>
 <h1>標準のTurboWarpから<br>何が増える？</h1>
 <p class="lead">ブロックに入れる複雑なデータをフォームで編集する。作品で使う機能拡張の内容・実行方法・保存方法を確認する。対応する作品では、文書やスクリプトも扱える。いつものエディターを土台に、これらの操作を追加しています。</p>
 <p>比較対象は <a href="https://turbowarp.org/editor">TurboWarpの標準エディター</a>です。Scratchとの比較ではありません。高速実行、アドオン、カスタム拡張のURL読込、標準Packagerなど、TurboWarpが元から備える機能は追加機能に数えていません。</p>
@@ -27,13 +27,13 @@
 </ol></nav>
 
 <section id="comparison"><h2>1. 追加機能の一覧</h2>
-<p>「通常起動」は追加URLパラメーターが不要という意味です。フォームや文書の内容は、その機能を登録した拡張・作品がある場合に現れます。標準ブロックすべてに専用フォームが付くわけではありません。</p>
+<p>どの機能も<strong>通常の起動URLのまま</strong>使えます。機能ごとに有効・無効を切り替えるURLの設定はありません。フォームや文書の操作は、その機能を登録した拡張・作品がある場合にだけ現れます。対応する拡張を使わない作品は、標準TurboWarpと同じ見た目です。標準ブロックすべてに専用フォームが付くわけではありません。</p>
 <div class="table-scroll"><table><caption>標準TurboWarpとPlus Editorの違い</caption><thead><tr><th>操作</th><th>標準TurboWarp</th><th>このEditorで増えること</th><th>利用条件</th></tr></thead><tbody>
 <tr><th>ブロックの入力</th><td>ブロック上の入力欄・メニュー</td><td>拡張が定義したフォーム、入力検証、入れ子の一括編集</td><td><span class="badge">通常起動</span> 対応拡張</td></tr>
-<tr><th>拡張の追加</th><td>標準一覧・カスタム拡張</td><td>TurboWarp Plusカタログ、依存拡張の選択、読込・保存方法の指定</td><td><span class="badge">通常起動</span> Plusローダー有効時</td></tr>
+<tr><th>拡張の追加</th><td>標準一覧・カスタム拡張</td><td>TurboWarp Plusカタログ、依存拡張の選択、読込・保存方法の指定。通信の失敗なら同じ選択のままやり直せる</td><td><span class="badge">通常起動</span> 追加設定なし</td></tr>
 <tr><th>作品を開く際の確認</th><td>カスタム拡張の実行確認</td><td>Plus拡張と通常のカスタム拡張を同じ画面で確認。取得元・SHA-256・実行条件を表示</td><td><span class="badge">通常起動</span> 確認対象の拡張を含む作品</td></tr>
-<tr><th>拡張の保存</th><td>主にURL参照。data URLも扱える</td><td>4つの保存形式を選択し、内容のハッシュと実行条件を作品と一緒に保持</td><td><span class="badge">通常起動</span> Plus形式の拡張</td></tr>
-<tr><th>文書の編集</th><td>この文書編集UIはない</td><td>対応文書のYAML/JSON原文、ブロック表現、所有拡張による検証・変換</td><td><span class="badge optional">既定OFF</span> 起動設定＋対応する文書提供元</td></tr>
+<tr><th>拡張の保存</th><td>主にURL参照。data URLも扱える</td><td>4つの保存形式を選択し、内容のハッシュと実行条件を作品と一緒に保持。控えを許す形式は、再読込後もブラウザーに残る</td><td><span class="badge">通常起動</span> Plus形式の拡張</td></tr>
+<tr><th>文書の編集</th><td>この文書編集UIはない</td><td>対応文書のYAML/JSON原文、ブロック表現、所有拡張による検証・変換</td><td><span class="badge">通常起動</span> 対応する文書提供元</td></tr>
 <tr><th>スクリプト・ステージの転送</th><td>標準のバックパック等</td><td>.blocks3 / .stage3、ウィンドウ間コピー・貼り付け</td><td><span class="badge">通常起動</span> 追加設定なし</td></tr>
 <tr><th>編集プレビュー・ステージ操作</th><td>標準の実行・停止・表示操作</td><td>拡張が登録する編集プレビュー、操作ボタン、操作ドックの接続</td><td><span class="badge">作品依存</span> 対応拡張が提供する場合</td></tr>
 <tr><th>単一HTMLの出力</th><td>標準Packager</td><td>Plus形式の拡張コードと実行条件を引き継ぐ出力経路</td><td><span class="badge">通常起動</span> Plus形式の作品</td></tr>
@@ -61,6 +61,8 @@
 <p>確認が必要な拡張を含む作品では、実行前に一覧を表示します。Plus形式と通常のカスタム拡張をまとめて確認し、動かすかどうか、サンドボックス内か外かを選びます。作品がサンドボックス外での実行を必要とし、その条件を許可しなければ、その作品は開きません。作者の指定がサンドボックス内なら、外での実行を選んでも内側で動きます。</p>
 <figure><a href="images/review.png"><img src="images/review.png" width="1440" height="1200" alt="作品を開く際の機能拡張の確認画面。サンプルのID、埋め込み取得元、SHA-256、動かさない・サンドボックス内・サンドボックスなしの選択肢が並ぶ。" loading="lazy"></a><figcaption>追加時のサンプルを、カタログに載っていない別の閲覧環境で開き直した例。拡張のID・取得元・SHA-256と実行方法を一画面で確認できます。</figcaption></figure>
 <p>カタログ掲載の拡張は標準TurboWarpのギャラリーと同様に扱い、追加後に別の承認画面を重ねません。SHA-256は「同じ内容か」を確かめる値で、作者の本人性やコードの安全性を証明する値ではありません。「サンドボックスなし」はエディター側の権限で動くため、内容と提供元を確認して選びます。</p>
+<h3>取得に失敗したとき</h3>
+<p>拡張コードの取得が通信の問題で失敗したときは、一覧に「もう一度試す」が出ます。押すと、直前に選んだ読込・保存方法のまま取得し直します。内容のハッシュが合わない、配信元にない（404）、承認しなかった、など繰り返しても結果が変わらない失敗では、理由のコードとメッセージだけを表示し、やり直しは勧めません。</p>
 <p>標準の「カスタム拡張機能」は従来どおりの入口です。その画面からのURL追加を、Plusカタログへの登録や4形式の選択と同じ操作とは扱いません。</p>
 </section>
 
@@ -68,23 +70,26 @@
 <p>「どう実行するか」と「どこからコードを読むか」は別の設定です。Plus形式では、選んだ形式、検証するSHA-256、実行条件をSB3と一緒に保存できます。</p>
 <div class="table-scroll"><table><thead><tr><th>形式</th><th>保存するもの・開くときの動作</th><th>向いている場面</th></tr></thead><tbody>
 <tr><th>remote-non-cacheable</th><td>HTTPS URLを記録。開くたびに取得し、ブラウザーにコードの控えを残さない。</td><td>配信元から毎回取得したい</td></tr>
-<tr><th>remote-cacheable</th><td>URLを記録し、検証済みコードの控えをそのブラウザーに保持してよいと指定。開く人は保持を断れる。</td><td>再利用のための控えを許容する</td></tr>
+<tr><th>remote-cacheable</th><td>URLを記録し、検証済みコードの控えをそのブラウザーに保持してよいと指定。控えはブラウザーのIndexedDBに入り、ページを読み直しても残る。開く人は保持を断れる。</td><td>再利用のための控えを許容する</td></tr>
 <tr><th>embedded-file</th><td>コードをSB3内のファイルとして同梱。</td><td>作品とコードを1ファイルで渡したい</td></tr>
 <tr><th>embedded-data</th><td>コードをdata URLとして作品文書に同梱。標準TurboWarpでも読める形式。</td><td>data URLで渡す既存の仕組みを使いたい</td></tr>
 </tbody></table></div>
 <div class="flow" role="img" aria-label="RemoteはSB3にURLを記録し配信元からコードを読む。EmbeddedはSB3にコードを同梱する。"><div>Remote<br><small>SB3：URL＋ハッシュ</small></div><span>→</span><div>配信元から取得<br><small>内容を照合</small></div><span class="divider">／</span><div>Embedded<br><small>SB3：コード＋ハッシュ</small></div><span>→</span><div>作品内から読込<br><small>内容を照合</small></div></div>
 <p>RemoteはURLが同じでも内容が変われば検証に失敗します。<strong>キャッシュを許す指定だけで、オフライン動作は保証されません。</strong>Embeddedでも、拡張が外部API・画像・モデル等を取得する場合は通信が必要です。標準TurboWarpでコードを読み込めても、このガイドのフォームや文書編集UIが追加されるわけではありません。</p>
+<h3>作品の住所と控えの整理</h3>
+<p>HTTPSで配信されたEditorでPlus形式の拡張を初めて追加するか、Plus形式の作品を初めて保存すると、その作品に住所（URI）を付けて作品と一緒に保存します。住所は「このEditorの配信元／turbowarp-plus-projects／…／UUID.sb3」の形で、作品を見分けるための名前です。そこへ作品を公開する操作ではありません。ダウンロードするファイル名は、これまでどおり作品のタイトルから付きます。</p>
+<p>拡張コードの控えは、この住所ごとに分けて記録します。カタログに載っている拡張の控えは、どの作品からも使う共有の控えになります。<code>http://localhost</code>などHTTPSでない場所で開いたEditorでは住所を付けず、控えはすべて共有として扱います。</p>
 <p>細かな制約・互換性は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3保存形式</a>と<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-authoring-ui.md">機能拡張一覧の仕様</a>を参照してください。</p>
 </section>
 
-<section id="documents"><h2>5. 文書をテキスト・ブロックで編集する <span class="badge optional">実験機能・既定OFF</span></h2>
+<section id="documents"><h2>5. 文書をテキスト・ブロックで編集する <span class="badge">通常起動</span></h2>
 <p>文書を登録する対応拡張では、「データソース」の帽子ブロックのファイルアイコンから文書編集を開けます。提供元が対応する場合、YAML/JSON原文、YAMLブロック、Schema専用ブロックの表現を選び、変換・検証して作品へ反映できます。既存の任意SB3を自動的に文書化する機能ではありません。</p>
-<p><a href="../editor.html?lang=ja&amp;twPlusYamlEditor=1">文書編集を有効にして起動</a>（<code>twPlusYamlEditor=1</code>）。この設定は起動時に読みます。提供元が参照元を変更可能としている文書では、SB3内のファイルと外部URLの参照元切替も使えます。</p>
+<p><a href="../editor.html?lang=ja">通常のEditor</a>で使えます。起動設定はありません。ファイルアイコンが付くのは、対応する拡張（文書の提供元）が文書を登録した帽子ブロックだけです。提供元が参照元を変更可能としている文書では、SB3内のファイルと外部URLの参照元切替も使えます。</p>
 <div class="flow" role="img" aria-label="対応拡張が登録した文書を原文またはブロックで編集し、所有拡張が変換と検証を行う。文書へ保存後、SB3を保存する。"><div>対応する文書<br><small>ファイルアイコン</small></div><span>→</span><div>原文／ブロック<br><small>提供元が対応する表現</small></div><span>→</span><div>変換・検証・保存<br><small>作品の文書へ反映</small></div><span>→</span><div>SB3を保存</div></div>
 <p>外部URLはCORSで取得できるHTTPSが必要です。外部内容を編集・ブロック化するには、まずSB3内のファイルへ取り込みます。遠隔サイトへの書き戻しはしません。利用できる変換は各提供元が定義し、対応しない形式を勝手に変換しません。</p>
 <h3>VSCodeで原文を編集する</h3>
 <p>GitHub Pagesでは文書の表示・変換・検証を行えます。VSCodeを起動して編集する場合は、Node.jsとVSCodeを入れ、ローカルのコンパニオンからEditorを開きます。「外部エディタで編集」→VSCodeで保存→Editorへ戻って「表示されている形式に変換して検証・保存」→SB3保存、という順です。VSCodeで保存しただけでは作品ファイルは更新されません。</p>
-<p>起動コマンドと対応範囲は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/README.ja.md">READMEの文書編集手順</a>、ウィンドウ操作は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/document-window.md">文書ウィンドウの仕様</a>を参照してください。設定を外して再起動すれば、文書編集の追加操作を無効にできます。</p>
+<p>起動コマンドと対応範囲は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/README.ja.md">READMEの文書編集手順</a>、ウィンドウ操作は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/document-window.md">文書ウィンドウの仕様</a>を参照してください。URLの設定で無効にすることはできません。</p>
 </section>
 
 <section id="transfer"><h2>6. スクリプトとステージを別作品へ転送する <span class="badge">通常起動</span></h2>
@@ -111,10 +116,10 @@
 <tr><td>普通の作品を作る・開く</td><td><a href="../editor.html?lang=ja">通常のEditor</a></td><td>追加設定なし。手元のSB3は「ファイル」から開く</td></tr>
 <tr><td>フォームを試す</td><td>対応拡張のブロックのアイコン</td><td>対応拡張。作者向けサンプルはリポジトリのexamples/extensions/</td></tr>
 <tr><td>Plus拡張を追加する</td><td>「拡張機能を追加」→「TurboWarp Plus」</td><td>通常起動。追加前に読込・保存方法を選択</td></tr>
-<tr><td>文書を編集する</td><td>文書編集を有効にして、対応する帽子のアイコン</td><td>twPlusYamlEditor=1＋対応提供元。参照元切替は提供元が許す文書のみ</td></tr>
+<tr><td>文書を編集する</td><td>対応する帽子ブロックのファイルアイコン</td><td>対応する提供元の文書。参照元切替は提供元が許す文書のみ</td></tr>
 <tr><td>スクリプトを別作品へ移す</td><td>スクリプト・コード領域・ステージの右クリック</td><td>追加設定なし</td></tr>
 </tbody></table></div>
-<p>起動設定はURLを変えて再読込します。Plusローダーは通常起動で有効です。<code>twPlusExtensionLoader=0</code>を付けて再読込すると無効になり、このガイドのPlusカタログ・Plus形式の読込経路は使えなくなります。無効化は保存済み作品を標準形式へ変換する操作ではありません。</p>
+<p>URLで切り替えられる設定は、Plusローダーを外す<code>twPlusExtensionLoader=0</code>だけです。Plusローダーは通常起動で有効です。<code>twPlusExtensionLoader=0</code>を付けて再読込すると無効になり、このガイドのPlusカタログ・Plus形式の読込経路は使えなくなります。無効化は保存済み作品を標準形式へ変換する操作ではありません。</p>
 <aside><strong>保存の区切り</strong>：フォームや文書の「保存」は、開いている作品へ変更を反映します。手元にファイルを残すには、最後にSB3を保存してください。Plus固有の形式や専用UIを使う作品を標準TurboWarpへ渡す場合は、元のSB3を保持し、コピーで互換性を確認してください。</aside>
 </section>
 </main>
