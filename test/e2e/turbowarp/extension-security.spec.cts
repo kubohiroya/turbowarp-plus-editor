@@ -145,7 +145,7 @@ for (const language of ['ja','en']) {
         await open(page,language,{mixed:true});
         await expect(rows(page)).toHaveCount(2);
         await expect(rows(page).nth(1).locator('.twextsec-id')).toHaveText('securityordinary');
-        // Only an extension that says it must leave the sandbox is marked; one that says nothing is not.
+        // An extension that says nothing about the sandbox runs inside it by default, so it carries no warning.
         await expect(rows(page).nth(1).locator('.twextsec-requirement')).toHaveCount(0);
         // Both start in the sandbox; nothing is chosen outside it for the person.
         for (const index of [0,1]) await expect(choice(page,rows(page).nth(index),language,'sandboxed')).toBeChecked();
