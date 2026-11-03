@@ -21,7 +21,7 @@ import {createBlockEditorErrorSession} from '@kubohiroya/turbowarp-extension-dat
 import {createPlusBlockEditor} from '../../site/block-editor/editor.js';
 import {guiRequire, guiRoot} from '../extension-host/pinned-host.mjs';
 
-const {JSDOM} = guiRequire('jsdom');
+import {JSDOM} from 'jsdom';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', {
     url: 'http://localhost/', pretendToBeVisual: true
@@ -46,7 +46,7 @@ const schemaRequire = createRequire(import.meta.resolve('@kubohiroya/turbowarp-e
 const {act: schemaAct, Simulate: schemaSimulate} = schemaRequire('react-dom/test-utils');
 const intl = guiRequire('react-intl');
 const babel = guiRequire('@babel/core');
-const filename = path.join(guiRoot, 'src/containers/tw-block-editor-modal.jsx');
+const filename = path.resolve('site/gui-integration/containers/tw-block-editor-modal.jsx');
 // Reuse the project's JSX compiler. Keep the real ReactModal portal, replacing only its GUI/Redux wrapper.
 const {code} = babel.transformSync(fs.readFileSync(filename, 'utf8'), {
     filename, babelrc: false, configFile: false,
@@ -74,7 +74,9 @@ new Function('require', 'module', 'exports', code)(name => {
     assert.ok(Object.hasOwn(imports, name), `Unexpected component dependency: ${name}`);
     return imports[name];
 }, wrapper, wrapper.exports);
-const Component = wrapper.exports.default;
+const NativeComponent = wrapper.exports.default;
+const Component = props => React.createElement(NativeComponent, {...props,
+    ModalComponent: imports['./modal.jsx'], onError: imports['../lib/log.js'].error});
 
 async function fixture(t, {validate = () => []} = {}) {
     const registry = new core.EditorRegistry();

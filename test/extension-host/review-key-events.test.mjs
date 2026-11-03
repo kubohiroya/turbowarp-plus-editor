@@ -16,7 +16,7 @@ import {plusSecurityReview} from '../../site/extension-host/review.js';
 
 import {guiRequire} from './pinned-host.mjs';
 
-const {JSDOM} = guiRequire('jsdom');
+import {JSDOM} from 'jsdom';
 
 test('a key pressed inside the review is the review\'s, and one outside it is the editor\'s', () => {
     const dom = new JSDOM('<div class="twextsec-review"><input type="checkbox" id="pick">' +

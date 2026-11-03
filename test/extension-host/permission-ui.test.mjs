@@ -7,7 +7,7 @@ import {guiRequire} from './pinned-host.mjs';
 const require = guiRequire;
 const VM = require('scratch-vm');
 const dispatch = require('scratch-vm/src/dispatch/central-dispatch.js');
-const {JSDOM} = require('jsdom');
+import {JSDOM} from 'jsdom';
 const code = {id: 'sample', source: {type: 'remote-cacheable', url: 'https://example.org/sample.js'},
     sha256: 'a'.repeat(64), publisher: '<img src=x onerror=alert(1)>', capabilities: ['vm'], execution: 'unsandboxed'};
 function fixture(locale) {

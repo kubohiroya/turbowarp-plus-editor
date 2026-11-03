@@ -67,9 +67,9 @@ function fixture (enabled = true, plus = true) {
         if (name === '../reducers/project-state') return {getIsShowingProject: () => true};
         // The socket: the GUI reads the integration through this module, and the integration is
         // what this repository supplies.
-        if (name === './tw-plus-integration-points.js') {
-            return {hostIntegration: () => ({projectPackager}), hostProjectPackager: integration =>
-                integration?.projectPackager || null};
+        if (name === '../addons/hooks.js') {
+            return {getHostIntegration: () => ({hostIntegration: () => ({projectPackager}),
+                hostProjectPackager: integration => integration?.projectPackager || null})};
         }
         return guiRequire(name);
     };

@@ -3,13 +3,12 @@ import {test} from 'node:test';
 import {bindBlockEditorIcon} from '@kubohiroya/turbowarp-extension-data-editor/turbowarp';
 
 import {plusBlockEditor} from '../../site/block-editor/editor.js';
-import {guiImport} from '../extension-host/pinned-host.mjs';
 
 import {guiRequire} from '../extension-host/pinned-host.mjs';
 
-const {JSDOM} = guiRequire('jsdom');
+import {JSDOM} from 'jsdom';
 
-const {default: getBlockEditorService} = await guiImport('src/lib/tw-block-editor-service.js');
+const {default: getBlockEditorService} = await import('../../site/gui-integration/lib/tw-block-editor-service.js');
 
 // The GUI keeps one service per VM and the strings for it; the service itself is this
 // distribution's, so it is handed in the way the integration hands it in a real editor.

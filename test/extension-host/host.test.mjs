@@ -7,7 +7,7 @@ import {guiRequire, vmModules} from './pinned-host.mjs';
 
 const require = guiRequire;
 const VM = require('scratch-vm');
-const {JSDOM} = require('jsdom');
+import {JSDOM} from 'jsdom';
 const bytes = new TextEncoder().encode('(function(Scratch){Scratch.vm.plusHostExecuted=true;Scratch.extensions.register({getInfo(){return {id:"hostfixture",name:"Host fixture",blocks:[]}}});})(Scratch);');
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 const manifest = {schemaVersion: 1, extensions: [{id: 'hostfixture', execution: 'unsandboxed',

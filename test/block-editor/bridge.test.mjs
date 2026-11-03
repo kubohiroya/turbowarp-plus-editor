@@ -5,7 +5,7 @@ import {attachTurboWarpBlockEditors as createBlockEditorBridge, openBlockEditorS
 import {BlockEditorStructureError} from '@kubohiroya/turbowarp-extension-data-editor';
 import {fixture, makeDefinition, ScratchBlocks, dom} from './helpers.mjs';
 
-import {guiImport, guiRequire} from '../extension-host/pinned-host.mjs';
+import {guiRequire} from '../extension-host/pinned-host.mjs';
 
 
 function bridgeFixture(t, overrides = {}, descendants = false) {

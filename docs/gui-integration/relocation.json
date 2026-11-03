@@ -1,0 +1,168 @@
+{
+  "upstream": "3c017c528c853af3111df9641914704745c1fdf6",
+  "guiBefore": "c24b587ec49b871e9cbdc7530d54635a521a5d6e",
+  "hostBefore": "121e1eae083d3abdedd03ae19a725eeb3bf95c04",
+  "files": [
+    {
+      "from": "docs/extension-preview-vm.md",
+      "to": "docs/gui-integration/extension-preview-vm.md",
+      "disposition": "moved"
+    },
+    {
+      "from": "docs/extension-stage-controls.md",
+      "to": "docs/gui-integration/extension-stage-controls.md",
+      "disposition": "moved"
+    },
+    {
+      "from": "docs/local-security-preview.ja.md",
+      "to": "docs/gui-integration/local-security-preview.ja.md",
+      "disposition": "moved"
+    },
+    {
+      "from": "docs/plus-extension-host.md",
+      "to": "docs/gui-integration/plus-extension-host.md",
+      "disposition": "moved"
+    },
+    {
+      "from": "scripts/local-security-preview.cjs",
+      "to": "scripts/local-security-preview.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/containers/tw-block-editor-modal.jsx",
+      "to": "site/gui-integration/containers/tw-block-editor-modal.jsx",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/containers/tw-plus-workspace-attachment.jsx",
+      "to": "site/gui-integration/containers/tw-plus-workspace-attachment.jsx",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-block-editor-service.js",
+      "to": "site/gui-integration/lib/tw-block-editor-service.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-block-editor-startup.js",
+      "to": "site/gui-integration/lib/tw-block-editor-startup.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-extension-security-cancel.js",
+      "to": "site/gui-integration/lib/tw-extension-security-cancel.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-plus-extension-host.js",
+      "to": "site/gui-integration/lib/tw-plus-extension-host.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-plus-extension-load-failure.js",
+      "to": "site/gui-integration/lib/tw-plus-extension-load-failure.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-plus-extension-permissions.js",
+      "to": "site/gui-integration/lib/tw-plus-extension-permissions.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-plus-integration-points.js",
+      "to": "site/gui-integration/lib/tw-plus-integration-points.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-plus-integration.js",
+      "to": "site/gui-integration/lib/tw-plus-integration.js",
+      "disposition": "replaced by existing addons/hooks.js optional build-time getter"
+    },
+    {
+      "from": "src/lib/tw-plus-transfer.js",
+      "to": "site/gui-integration/lib/tw-plus-transfer.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "src/lib/tw-preview-vm.js",
+      "to": "site/gui-integration/lib/tw-preview-vm.js",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/block-editor/preview-vm.test.mjs",
+      "to": "test/gui-integration/unit/block-editor/preview-vm.test.mjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/block-editor/service.test.mjs",
+      "to": "test/gui-integration/unit/block-editor/service.test.mjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/block-editor/startup.test.mjs",
+      "to": "test/gui-integration/unit/block-editor/startup.test.mjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/components/controls.test.cjs",
+      "to": "test/gui-integration/unit/components/controls.test.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/document-editor/attachment.test.cjs",
+      "to": "test/gui-integration/unit/document-editor/attachment.test.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/extension-loader/load-failure.test.mjs",
+      "to": "test/gui-integration/unit/extension-loader/load-failure.test.mjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/extension-security/cancel.test.cjs",
+      "to": "test/gui-integration/unit/extension-security/cancel.test.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/extension-security/helpers.cjs",
+      "to": "test/gui-integration/unit/extension-security/helpers.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/extension-security/keyboard.test.cjs",
+      "to": "test/gui-integration/unit/extension-security/keyboard.test.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/extension-security/local-preview.test.cjs",
+      "to": "test/gui-integration/unit/extension-security/local-preview.test.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/extension-security/plus-library.test.cjs",
+      "to": "test/gui-integration/unit/extension-security/plus-library.test.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/extension-security/runtime-disposed.test.cjs",
+      "to": "test/gui-integration/unit/extension-security/runtime-disposed.test.cjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/plus/extension-host.test.mjs",
+      "to": "test/gui-integration/unit/plus/extension-host.test.mjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/plus/integration-points.test.mjs",
+      "to": "test/gui-integration/unit/plus/integration-points.test.mjs",
+      "disposition": "moved"
+    },
+    {
+      "from": "test/unit/plus/transfer.test.mjs",
+      "to": "test/gui-integration/unit/plus/transfer.test.mjs",
+      "disposition": "moved"
+    }
+  ],
+  "originalHostBase": "673ca342cb59829d3385d7c635657a8c847896c1"
+}

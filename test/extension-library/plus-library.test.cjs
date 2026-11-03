@@ -1,19 +1,14 @@
 /**
- * Loading a reviewed selection, and the view that reviews it.
- *
- * Moved from the fork's `test/unit/extension-security/plus-library.test.cjs`. The review
- * bookkeeping it pairs with stays in the GUI — a WeakMap on the VM's security manager, which that
- * side's `getSandboxMode` reads back — so it is required from the pinned checkout, which is also
- * how the real editor pairs the two.
+ * Loading a reviewed selection uses the same host-owned permission registry that the GUI calls.
+ * The VM and rendering dependencies still come from the prepared GUI checkout.
  */
 
 const {guiRequire} = require('./harness.cjs');
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const path = require('node:path');
 const load = require('../../site/extension-library/load-extensions.js').default;
 const {beginPlusReview, canLoadPlusExtension, getPlusReviewedMode, setPlusHostPolicy} =
-    guiRequire(path.join(guiRequire.resolve('./package.json'), '..', 'src/lib/tw-plus-extension-permissions.js'));
+    require('../../site/gui-integration/lib/tw-plus-extension-permissions.js');
 const permissions = {beginReview: beginPlusReview, canLoad: canLoadPlusExtension};
 
 const entries = [

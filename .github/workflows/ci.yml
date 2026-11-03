@@ -81,8 +81,8 @@ jobs:
       - name: Verify the prepared host
         working-directory: .host/scratch-gui
         run: |
-          npm run test:document-editor
-          npm run test:plus-extension-loader
+          git fetch --no-tags --depth=1 https://github.com/TurboWarp/scratch-gui.git 3c017c528c853af3111df9641914704745c1fdf6
+          npm run test:unit
       # The extension host is supplied from here, but what it installs on is the pinned GUI's VM,
       # and the registration it drives must use that VM's own modules. So these run against the
       # checkout above rather than this repository's dependencies, and only once it is prepared.
@@ -91,6 +91,7 @@ jobs:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
         run: |
           npm run test:extension-host
+          npm run test:gui-integration
           npm run test:script-transfer
       - name: Build TurboWarp-Plus-Editor
         env:
