@@ -4,7 +4,7 @@
   "coreRepository": "kubohiroya/turbowarp-extension-data-editor",
   "coreRevision": "d96532a91bc6046d4a3fda878425b30d6d10483e",
   "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
-  "securityVersion": "0.8.2",
+  "securityVersion": "0.8.4",
   "loaderRepository": "kubohiroya/turbowarp-extension-loader",
   "loaderRevision": "3d27ff926cdfbc73cf9e7a198f4d804f219fc1a4",
   "loaderVersion": "0.8.0",

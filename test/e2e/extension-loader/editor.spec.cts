@@ -247,7 +247,7 @@ test('the three retired spellings are refused before anyone is asked, never read
 });
 
 for (const [lang, words] of Object.entries({
-    ja: {title: 'この作品は機能拡張を使います', keep: '控えを残す（既定）', fetch: '毎回取得する', ok: 'OK', cancel: 'キャンセル'},
+    ja: {title: 'この作品は機能拡張を使います', keep: 'キャッシュを残す（既定）', fetch: '毎回取得する', ok: 'OK', cancel: 'キャンセル'},
     en: {title: 'This project wants to run extensions', keep: 'Keep a copy (default)', fetch: 'Fetch each time', ok: 'OK', cancel: 'Cancel'}
 })) {
     test(`the open review is worded in ${lang === 'ja' ? 'Japanese' : 'English'}`, async ({page}) => {

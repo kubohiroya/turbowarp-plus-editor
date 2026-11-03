@@ -51,11 +51,11 @@ const rows = page => dialog(page).locator('.twextsec-row');
 const executions = page => page.evaluate(() => globalThis.__securityFixtureStarted || 0);
 const labels = {
     ja:{title:'この作品は機能拡張を使います',deny:'動かさない',sandboxed:'サンドボックスの中で',
-        unsandboxed:'サンドボックスなしで',cancel:'キャンセル',required:'❓ カタログ記載なし：サンドボックスなしが必要と申告',
-        unknown:'❓ カタログ記載なし：サンドボックスについて申告なし',creator:'製作者（未検証の申告）'},
+        unsandboxed:'サンドボックスなしで',cancel:'キャンセル',required:'⚠️ サンドボックスなしが必要',
+        creator:'製作者（未検証の申告）'},
     en:{title:'This project wants to run extensions',deny:'Do not run',sandboxed:'In the sandbox',
-        unsandboxed:'Without the sandbox',cancel:'Cancel',required:'❓ Not in the catalog: says it needs to run without the sandbox',
-        unknown:'❓ Not in the catalog: says nothing about the sandbox',creator:'Creator (unverified claim)'}
+        unsandboxed:'Without the sandbox',cancel:'Cancel',required:'⚠️ Needs to run without the sandbox',
+        creator:'Creator (unverified claim)'}
 };
 const choice = (page, row, language, execution) =>
     row.getByRole('radio', {name: labels[language][execution], exact: true});
@@ -145,7 +145,8 @@ for (const language of ['ja','en']) {
         await open(page,language,{mixed:true});
         await expect(rows(page)).toHaveCount(2);
         await expect(rows(page).nth(1).locator('.twextsec-id')).toHaveText('securityordinary');
-        await expect(rows(page).nth(1).locator('.twextsec-requirement')).toHaveText(labels[language].unknown);
+        // Only an extension that says it must leave the sandbox is marked; one that says nothing is not.
+        await expect(rows(page).nth(1).locator('.twextsec-requirement')).toHaveCount(0);
         // Both start in the sandbox; nothing is chosen outside it for the person.
         for (const index of [0,1]) await expect(choice(page,rows(page).nth(index),language,'sandboxed')).toBeChecked();
         const bulk = dialog(page).locator('.twextsec-bulk');

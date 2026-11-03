@@ -15,7 +15,7 @@ const forms = ['remote-non-cacheable', 'remote-cacheable', 'embedded-file', 'emb
 const labels = {
     ja: {add: '拡張機能を追加', addButton: '追加', loading: '読み込み元', openTitle: 'この作品は機能拡張を使います',
         ok: 'OK', cancel: 'キャンセル', forms: {
-            'remote-cacheable': '控えを残す（既定）', 'remote-non-cacheable': '毎回取得する',
+            'remote-cacheable': 'キャッシュを残す（既定）', 'remote-non-cacheable': '毎回取得する',
             'embedded-file': '作品の中から', 'embedded-data': '作品の中の data: アドレスから'}},
     en: {add: 'Add Extension', addButton: 'Add', loading: 'Where it loads from', openTitle: 'This project wants to run extensions',
         ok: 'OK', cancel: 'Cancel', forms: {
