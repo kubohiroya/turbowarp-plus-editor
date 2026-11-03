@@ -148,7 +148,7 @@ document-source は `sb3` と `https` を区別するが、`sb3` のバイト列
 | `embedded-file` | `embedded-file`        |
 | `embedded-data` | `embedded-data`        |
 
-単なる改名ではない。旧 `cached` はここでは「ZIP内のバイト列＋URL」を意味していたが、1つ上の層では逆（SB3には何もなく、検証済みのキャッシュをブラウザに持つ）を意味していた。自分でバイト列を持つ作品は embedded なので、この名前は誤りだった。`remote-cacheable` は参照だけを格納し、控えを持つかどうかは開く側に委ねる。`remote-non-cacheable` は作者が控えを禁じる形で、控えは「ピン留めしたバイト列を配信しなくなったURL」を控えが尽きるまで隠してしまうため。
+単なる改名ではない。旧 `cached` はここでは「ZIP内のバイト列＋URL」を意味していたが、1つ上の層では逆（SB3には何もなく、検証済みのキャッシュをブラウザに持つ）を意味していた。自分でバイト列を持つ作品は embedded なので、この名前は誤りだった。`remote-cacheable` は参照だけを格納し、キャッシュを持つかどうかは開く側に委ねる。`remote-non-cacheable` は作者がキャッシュを禁じる形で、キャッシュは「ピン留めしたバイト列を配信しなくなったURL」をキャッシュが尽きるまで隠してしまうため。
 
 共通パッケージは 0.2.0-rc.0 でこれに追従した（`latest` と `next` を同じ版へ向ける）。0.1.0-rc.0 は旧名のままで、利用者はいなかった。紙芝居App 側のアダプターの差し替えは [#1123](https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/1123)。
 
@@ -183,4 +183,4 @@ security-dialog `0.7.0` は既に公開済みで、4形式（`LoadingMode`）を
 | Node（既存SB3の一括変換）   | ネットワークだけ                | 共通パッケージ `./writer`      |
 | ブラウザ（保存時の1件ずつ） | キャッシュ（IndexedDB）とネットワーク | ローダー `./project-authoring` |
 
-分かれている理由は型に現れている。ローダー側は `AuthoringPorts = Pick<LoaderPorts, 'fetcher' | 'trustProvider' | 'cache' | 'diagnostics'>` で **cache port を持つ**が、`./writer` は持たない。だからCLIは「作品がどの形式を記録するか」は書けるが、**見る人のブラウザにある控えには関与できない**。`remote-cacheable` を書いた出力を「オフラインで動く」根拠にはできない。この限界はコマンド自身にも言わせた（kamishibai-app#1127）。
+分かれている理由は型に現れている。ローダー側は `AuthoringPorts = Pick<LoaderPorts, 'fetcher' | 'trustProvider' | 'cache' | 'diagnostics'>` で **cache port を持つ**が、`./writer` は持たない。だからCLIは「作品がどの形式を記録するか」は書けるが、**見る人のブラウザにあるキャッシュには関与できない**。`remote-cacheable` を書いた出力を「オフラインで動く」根拠にはできない。この限界はコマンド自身にも言わせた（kamishibai-app#1127）。

@@ -70,7 +70,7 @@
 <p>「どう実行するか」と「どこからコードを読むか」は別の設定です。Plus形式では、選んだ形式、検証するSHA-256、実行条件をSB3と一緒に保存できます。</p>
 <div class="table-scroll"><table><thead><tr><th>形式</th><th>保存するもの・開くときの動作</th><th>向いている場面</th></tr></thead><tbody>
 <tr><th>remote-non-cacheable</th><td>HTTPS URLを記録。開くたびに取得し、ブラウザーにコードのキャッシュを残さない。</td><td>配信元から毎回取得したい</td></tr>
-<tr><th>remote-cacheable</th><td>URLを記録し、検証済みコードのキャッシュをそのブラウザーに保持してよいと指定。キャッシュはブラウザーのIndexedDBに入り、ページを読み直しても残る。開く人は保持を断れる。</td><td>再利用のための控えを許容する</td></tr>
+<tr><th>remote-cacheable</th><td>URLを記録し、検証済みコードのキャッシュをそのブラウザーに保持してよいと指定。キャッシュはブラウザーのIndexedDBに入り、ページを読み直しても残る。開く人は保持を断れる。</td><td>再利用のためのキャッシュを許容する</td></tr>
 <tr><th>embedded-file</th><td>コードをSB3内のファイルとして同梱。</td><td>作品とコードを1ファイルで渡したい</td></tr>
 <tr><th>embedded-data</th><td>コードをdata URLとして作品文書に同梱。標準TurboWarpでも読める形式。</td><td>data URLで渡す既存の仕組みを使いたい</td></tr>
 </tbody></table></div>
