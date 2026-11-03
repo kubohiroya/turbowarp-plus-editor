@@ -40,6 +40,9 @@ export const createPlusTrustedCatalog = ({
     timeoutMs = 15000
 } = {}) => {
     let pending = null;
+    // The digests the catalog lists, filled each time it is read and kept between reads: the
+    // editor's cache files these as shared (no one project's), and reads this set at each write.
+    const listedDigests = new Set();
     const load = () => {
         if (!pending) {
             const controller = new AbortController();
@@ -54,6 +57,8 @@ export const createPlusTrustedCatalog = ({
                             digests.set(new URL(item.url).href, item.sha256);
                         }
                     }
+                    listedDigests.clear();
+                    for (const digest of digests.values()) listedDigests.add(digest);
                     return {urls, digests, listedDigests: new Set(digests.values())};
                 })
                 .catch(() => {
@@ -65,6 +70,19 @@ export const createPlusTrustedCatalog = ({
         return pending;
     };
     return Object.freeze({
+        /**
+         * What the catalog lists by digest, as one live set: empty until the catalog is first
+         * read, then refilled on each read. A failed read leaves the last one in place.
+         */
+        listedDigests,
+        /**
+         * Wait for the catalog's read, starting it if no trust check has yet, so `listedDigests`
+         * is filled. A read that fails settles too, and the next check reads again.
+         * @returns {Promise<void>} Settles once the read has.
+         */
+        async ready () {
+            await load();
+        },
         /**
          * @param {string} url Extension URL from a project.
          * @returns {Promise<boolean>} True for a URL listed in the catalog.
