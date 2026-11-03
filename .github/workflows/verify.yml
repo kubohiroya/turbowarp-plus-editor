@@ -22,6 +22,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Prepare pnpm for the security package's Git install
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.28.8
       - run: npm ci
       - name: Resolve expected identities from the selected source commit
         id: source
