@@ -7,6 +7,8 @@ on:
   pull_request:
 permissions:
   contents: read
+  # Read-only, to find the pull request run that already verified a merged tree.
+  actions: read
 concurrency:
   group: ci-${{ github.ref }}
   # main must not be cancelled: Publish is chained to each main CI completing, and cancelling one
@@ -34,6 +36,16 @@ jobs:
       - run: npm run test:package
       - run: npm test
       - run: npm run test:e2e:infrastructure
+      # A squash merge onto an unchanged base is the tree its pull request's CI already put through
+      # every browser check below. main still builds, because the deployed site must carry main's
+      # own revision, but it does not run those same checks a second time. Anything that cannot be
+      # confirmed runs them all.
+      - name: Find a pull request run that verified this tree
+        id: reuse
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: TREE=$(git rev-parse 'HEAD^{tree}') node scripts/ci/reuse-pr-verification.ts
       - name: Read immutable integration sources
         id: source
         run: node scripts/site/source.ts
@@ -100,30 +112,36 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=6144
         run: npm run build:pages
       - name: Generate the packaged extension fixture from checked build assets
+        if: steps.reuse.outputs.verified != 'true'
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
         run: node test/e2e/extension-loader/prepare-packaged.ts
       - run: npx playwright install --with-deps chromium
+        if: steps.reuse.outputs.verified != 'true'
       # These two run the built Editor's real GUI, VM and SB3 against the test-only owner
       # `twpeyamlsettings`; only the native VSCode launcher is replaced. The base SB3 is generated
       # here so no binary fixture is checked in or borrowed from the pinned GUI.
       - name: Build the document editor's SB3 fixtures
+        if: steps.reuse.outputs.verified != 'true'
         run: |
           node test/fixtures/yaml-editor/base-project.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3"
           node scripts/yaml-editor/build-settings-fixture.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3" "$RUNNER_TEMP/yaml-fixtures/settings.sb3"
       - name: Verify YAML import, invalid YAML, project replacement and the SB3 round trip
+        if: steps.reuse.outputs.verified != 'true'
         env:
           TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
           TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
           TWPE_YAML_EVIDENCE: test-results/yaml-roundtrip
         run: npm run test:yaml:roundtrip
       - name: Verify two documents with separate schemas, a guarded switch and saving both
+        if: steps.reuse.outputs.verified != 'true'
         env:
           TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
           TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
           TWPE_YAML_EVIDENCE: test-results/yaml-multi-document
         run: npm run test:yaml:multi-document
       - name: Verify integrated editing, security, themes and SB3 round trips
+        if: steps.reuse.outputs.verified != 'true'
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
@@ -133,6 +151,7 @@ jobs:
           E2E_EXPECT_SITE_REVISION: ${{ github.sha }}
         run: npm run test:e2e:block-editor
       - name: Verify extension loader defaults, opt-out and offline HTML output
+        if: steps.reuse.outputs.verified != 'true'
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
@@ -140,6 +159,16 @@ jobs:
           E2E_EXPECT_SITE_REVISION: ${{ github.sha }}
           E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
         run: npm run test:e2e:extension-loader
+      - name: Name the tree these checks verified
+        id: tree
+        if: success() && github.event_name == 'pull_request'
+        run: echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: success() && github.event_name == 'pull_request'
+        with:
+          name: ci-verified-tree-${{ steps.tree.outputs.tree }}
+          path: site/source.json
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: success()
         with:
