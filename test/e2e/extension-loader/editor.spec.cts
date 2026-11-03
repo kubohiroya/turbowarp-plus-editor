@@ -7,16 +7,15 @@ const {createHTTPSFixture} = require('./https-fixture.cts');
 const {createHash} = require('node:crypto');
 const {createRequire} = require('node:module');
 const {pathToFileURL} = require('node:url');
-const guiRoot = require('../turbowarp/gui-root.cts');
 const permission = page => page.getByTestId('tw-plus-permission');
 const executions = page => page.evaluate(() => globalThis.__plusFixtureStarted || 0);
 // How many times one URL may be asked is the Loader's decision, not this repository's, so read it
-// from the exact build the GUI pins rather than copying the number here. The Loader is ESM and is
-// installed in the GUI checkout, so resolve and import it the way prepare-packaged.ts does.
+// from the exact build the site bundles rather than copying the number here. The Loader is ESM and
+// is this repository's own dependency (the GUI no longer installs it), so resolve it from here.
 let retryDefaults;
 async function fetchAttempts() {
     if (!retryDefaults) {
-        const entry = createRequire(path.join(guiRoot(), 'package.json'))
+        const entry = createRequire(path.join(__dirname, '../../../package.json'))
             .resolve('@kubohiroya/turbowarp-extension-loader');
         ({DEFAULT_FETCH_RETRY: retryDefaults} = await import(pathToFileURL(entry).href));
     }
