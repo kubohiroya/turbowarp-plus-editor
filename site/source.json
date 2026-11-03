@@ -25,5 +25,6 @@
   "scriptTransferRevision": "6f6f9c3f0e7a6c601a8046777ae8289968d36800",
   "scriptTransferVersion": "0.1.0",
   "scriptTransferSource": "npm",
-  "scriptTransferIntegrity": "sha512-CXnaBJ78YbAeHqYIqXk0Fp4AT3IzuB+FFtABomFHXAkrxllTSKAFt+pa+7tmIWR/j09DOEARUh0f5JBdXZAlCg=="
+  "scriptTransferIntegrity": "sha512-CXnaBJ78YbAeHqYIqXk0Fp4AT3IzuB+FFtABomFHXAkrxllTSKAFt+pa+7tmIWR/j09DOEARUh0f5JBdXZAlCg==",
+  "securityRevision": "67dbe996d92c8dbb3d954c2c4253cdd82eedb888"
 }
