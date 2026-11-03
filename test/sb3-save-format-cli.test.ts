@@ -9,7 +9,7 @@ import JSZip from '@turbowarp/jszip';
 import {sb3SaveFormats} from '@kubohiroya/turbowarp-sb3-save-format';
 // The security dialog this repository will move to in #68. Until then it is installed under an
 // alias, for this test only, so the value it decides can be passed to the CLI as it is.
-import {loadingModes, type LoadingMode, type ReviewDecision} from 'turbowarp-extension-security-dialog-0.7';
+import {loadingModes, type LoadingMode, type ReviewDecision} from '@kubohiroya/turbowarp-extension-security-dialog';
 import {remoteCacheableNote, saveSb3Format, type Sb3SaveFormatOptions} from '../scripts/sb3-save-format/cli.ts';
 
 const cli = fileURLToPath(new URL('../scripts/sb3-save-format/cli.ts', import.meta.url));

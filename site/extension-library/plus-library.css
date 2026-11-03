@@ -11,30 +11,22 @@
     min-width: 0;
 }
 
-.root > :global(.twextsec-modal) {
-    height: 100%;
-    max-height: 100%;
-    margin: 0 auto;
-}
-
-.root :global(.twextsec-selection) {
+.root :global(.twextsec-review) {
     height: 100%;
     min-width: 0;
+    overflow: auto;
+    padding: 1rem;
+    background: var(--ui-modal-background, white);
+    border-radius: .5rem;
 }
 
 .root :global(.twextsec-intro) {
     overflow-wrap: anywhere;
 }
 
-.root :global(.twextsec-selection) input[type="checkbox"] {
+.root :global(.twextsec-pick) input[type="checkbox"] {
     width: 32px;
     height: 32px;
-}
-
-@media (max-width: 580px) {
-    .root :global(.twextsec-selection) :global(.twextsec-row-main) {
-        grid-template-columns: minmax(0, 1fr) 44px;
-    }
 }
 
 .message {

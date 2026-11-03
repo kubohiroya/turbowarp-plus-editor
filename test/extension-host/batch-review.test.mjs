@@ -25,7 +25,7 @@ test('a declined extension still opens its project and keeps its blocks and sour
         defaultURLs: {},
         isTrusted: () => false,
         bannerFor: () => undefined,
-        showReview: entries => new Map(entries.map(entry => [entry.url, 'deny']))
+        showReview: entries => new Map(entries.map(entry => [entry.key, {execution: 'deny'}]))
     });
     const project = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, comments: {},
         blocks: {retained: {opcode: 'refused_test', next: null, parent: null, inputs: {}, fields: {},
@@ -52,4 +52,58 @@ test('a cancelled review is a refusal, not a failure', () => {
     const review = createSecurityReview();
     assert.equal(review.isCancelled(Object.assign(new Error('x'), {code: 'OTHER'})), false);
     assert.equal(typeof review.render, 'function');
+});
+
+test('a project is named by its address when it has one, else by its content without volatile metadata', async () => {
+    const {identifyProject} = await import('../../site/extension-host/review.js');
+    const base = {targets: [], extensions: [], meta: {agent: 'one'}};
+    const sameContent = {...base, meta: {agent: 'two'}, projectVersion: 3};
+    assert.match(await identifyProject(base), /^sha256:[0-9a-f]{64}$/);
+    assert.equal(await identifyProject(JSON.stringify(sameContent)), await identifyProject(base));
+    assert.notEqual(await identifyProject({...base, extensions: ['pen']}), await identifyProject(base));
+    const uri = 'https://example.test/turbowarp-plus-projects/aa/aaaa/0193f0a1-2b3c-7d4e-8f01-2233445566aa.sb3';
+    const addressed = {...base, turboWarpPlus: {schemaVersion: 1, uri, extensions: []}};
+    assert.equal(await identifyProject(addressed), uri);
+});
+
+test('rows the catalog or the GUI vouches for are decided without the screen, and the rest are asked', async () => {
+    const asked = [];
+    let review;
+    const install = (vm, callback) => { review = callback; return () => {}; };
+    const security = createSecurityReview({install, storage: null, identify: async () => null,
+        trusted: {isTrustedURL: async url => url === 'https://catalog.test/listed.js'}});
+    security.installBatchLoader({vm: {}, defaultURLs: {},
+        isTrusted: url => url === 'https://gui.test/own.js',
+        bannerFor: ({ids}) => (ids.includes('shown') ? 'banner.svg' : undefined),
+        showReview: async (entries, initial) => { asked.push(entries, initial); return new Map(); }});
+    const row = (key, url) => ({key: url, ids: [key], source: {kind: 'legacy', url}});
+    const trustedOnly = await review([row('listed', 'https://catalog.test/listed.js'), row('own', 'https://gui.test/own.js')], new Map());
+    assert.deepEqual([...trustedOnly.values()], [{execution: 'unsandboxed'}, {execution: 'unsandboxed'}]);
+    assert.equal(asked.length, 0, 'nothing to ask, so the screen never opened');
+    await review([row('listed', 'https://catalog.test/listed.js'), row('shown', 'https://elsewhere.test/x.js')], new Map());
+    const [entries, initial] = asked;
+    assert.deepEqual(entries.map(entry => Boolean(entry.state?.trusted)), [true, false]);
+    assert.equal(entries[1].metadata.banner, 'banner.svg');
+    assert.deepEqual(initial.get('https://elsewhere.test/x.js'), {execution: 'sandboxed'});
+});
+
+test('the GUI modal frames the screen under its own prop names, as one stable component', async () => {
+    const {frameFor} = await import('../../site/extension-host/review.js');
+    const received = [];
+    const Modal = props => { received.push(props); return null; };
+    const Frame = frameFor(Modal);
+    assert.equal(frameFor(Modal), Frame, 'the same adapter on every render');
+    const cancel = () => {};
+    Frame({title: '拡張機能の確認', onCancel: cancel, children: 'body'});
+    assert.equal(received.length, 0, 'the adapter returns an element; React renders the modal');
+    const element = Frame({title: '拡張機能の確認', onCancel: cancel, children: 'body'});
+    assert.equal(element.type, Modal);
+    assert.equal(element.props.contentLabel, '拡張機能の確認');
+    assert.equal(element.props.onRequestClose, cancel);
+    // Whatever class names the stylesheet resolves to — a test stub answers with its own — the
+    // frame and its body are the ones `review.css` defines.
+    const {default: styles} = await import('../../site/extension-host/review.css');
+    assert.equal(element.props.className, styles.frame);
+    assert.equal(element.props.children.props.className, styles.body);
+    assert.equal(element.props.children.props.children, 'body');
 });

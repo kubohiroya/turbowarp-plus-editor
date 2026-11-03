@@ -87,26 +87,79 @@ test('missing decisions and incorrect registered IDs fail before a dependent loa
     assert.deepEqual(calls, [entries[0].url]);
 });
 
-test('a disposed Plus view does not navigate or update its parent after a delayed load finishes', async () => {
+test('a disposed Plus view does not navigate or update its parent after a delayed apply finishes', async () => {
     const PlusLibrary = require('../../site/extension-library/plus-library.jsx').default;
-    const {vm, loaded} = fixture();
+    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.js');
+    const {vm} = fixture();
     let finish;
-    vm.extensionManager.loadExtensionURL = () => new Promise(resolve => {finish = () => {
-        loaded.add('base');
-        resolve();
-    };});
+    setExtensionAuthoringHost(vm, {configure: () => new Promise(resolve => { finish = resolve; })});
     const callbacks = [];
     const view = new PlusLibrary({vm, locale: 'en', permissions,
         onCategorySelected: () => callbacks.push('category'),
         onRequestClose: () => callbacks.push('close'),
         onBusyChange: () => callbacks.push('busy')});
     view.alive = true;
-    view.state.reviewing = [entries[0]];
+    view.controller = new AbortController();
+    view.state.entries = [entries[0]];
     view.setState = update => Object.assign(view.state, update);
-    const pending = view.handleReview(decisions());
+    const pending = view.handleComplete(new Map([['base', {execution: 'unsandboxed', loading: 'remote-cacheable'}]]));
     await new Promise(resolve => setImmediate(resolve));
     view.componentWillUnmount();
     finish();
     await pending;
-    assert.deepEqual(callbacks, []);
+    // Only the busy flag went up before the view went away; nothing after it reached the parent.
+    assert.deepEqual(callbacks, ['busy']);
+    setExtensionAuthoringHost(vm, null);
+});
+
+test('saying no on the screen closes the library and loads nothing', async () => {
+    const PlusLibrary = require('../../site/extension-library/plus-library.jsx').default;
+    const {vm, calls} = fixture();
+    const callbacks = [];
+    const view = new PlusLibrary({vm, locale: 'ja', permissions,
+        onCategorySelected: () => callbacks.push('category'),
+        onRequestClose: () => callbacks.push('close'),
+        onBusyChange: () => callbacks.push('busy')});
+    view.alive = true;
+    view.state.entries = entries;
+    await view.handleComplete(null);
+    assert.deepEqual(callbacks, ['close']);
+    assert.deepEqual(calls, []);
+});
+
+test('the screen\'s answer configures exactly the chosen rows, with the form it chose, in dependency order', async () => {
+    const PlusLibrary = require('../../site/extension-library/plus-library.jsx').default;
+    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.js');
+    const {vm} = fixture();
+    const requests = [];
+    setExtensionAuthoringHost(vm, {configure: async received => { requests.push(...received); }});
+    const callbacks = [];
+    const view = new PlusLibrary({vm, locale: 'en', permissions,
+        onCategorySelected: id => callbacks.push(['category', id]),
+        onRequestClose: () => callbacks.push('close'),
+        onBusyChange: () => {}});
+    view.alive = true;
+    view.controller = new AbortController();
+    view.state.entries = entries;
+    view.setState = update => Object.assign(view.state, update);
+    // `app` is not chosen, so it is not in the answer and is not configured.
+    await view.handleComplete(new Map([['base', {execution: 'unsandboxed', loading: 'embedded-data'}],
+        ['middle', {execution: 'unsandboxed', loading: 'remote-non-cacheable'}]]));
+    assert.deepEqual(requests.map(request => [request.id, request.execution, request.distribution]),
+        [['base', 'unsandboxed', 'embedded-data'], ['middle', 'unsandboxed', 'remote-non-cacheable']]);
+    assert.deepEqual(callbacks, [['category', 'middle'], 'close']);
+    setExtensionAuthoringHost(vm, null);
+});
+
+test('with the Loader on the screen offers the four forms; with it off it offers none', () => {
+    const {reviewRows} = require('../../site/extension-library/plus-library.jsx');
+    const {executionChoices, loadingChoices} = require('@kubohiroya/turbowarp-extension-security-dialog');
+    const {vm} = fixture();
+    const on = reviewRows([entries[0]], vm, true)[0];
+    const off = reviewRows([entries[0]], vm, false)[0];
+    assert.deepEqual(loadingChoices(on), ['remote-cacheable', 'remote-non-cacheable', 'embedded-file', 'embedded-data']);
+    assert.deepEqual(loadingChoices(off), []);
+    // Either way a catalog row is trusted: how it runs is stated, not asked.
+    assert.deepEqual(executionChoices(on, 'add'), []);
+    assert.deepEqual(executionChoices(off, 'add'), []);
 });

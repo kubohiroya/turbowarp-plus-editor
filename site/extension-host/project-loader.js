@@ -138,6 +138,22 @@ export function installExtensionLoader(host, loader) {
             return extensionStep(() => originals._loadExtensions.call(vm, ids, urls, ...args));
         }
         const context = loading;
+        const listed = new Set(context.manifest.extensions.map(spec => spec.id));
+        let othersLoaded = false;
+        if (!context.registration && typeof host.review === 'function') {
+            // Ask first, about everything: the review sees the Plus rows beside the project's other
+            // extensions and answers once, before the Loader fetches or registers anything. The other
+            // extensions load as that review's own step, so they are not loaded a second time below.
+            const others = [...ids].filter(id => !listed.has(id));
+            const otherURLs = new Map([...urls].filter(([id]) => !listed.has(id)));
+            const answer = await extensionStep(() => host.review(context.manifest,
+                () => originals._loadExtensions.call(vm, others, otherURLs, ...args)));
+            checkActive();
+            othersLoaded = true;
+            context.registration = loader.load(context.manifest,
+                {signal: context.signal, declineCaching: answer.declineCaching});
+            context.registration.then(answer.release, answer.release);
+        }
         const registration = context.registration ??= loader.load(context.manifest, {signal: context.signal});
         const result = await extensionStep(() => registration);
         hasLoaded = true;
@@ -146,6 +162,7 @@ export function installExtensionLoader(host, loader) {
             throw failure('INVALID_LOADER_RESULT', 'The Loader returned no registered extension IDs');
         }
         context.loaded = true;
+        if (othersLoaded) return undefined;
         const handled = new Set(result.ids);
         const remaining = [...ids].filter(id => !handled.has(id));
         const remainingURLs = new Map([...urls].filter(([id]) => !handled.has(id)));
