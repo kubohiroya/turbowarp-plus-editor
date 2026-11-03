@@ -146,8 +146,19 @@ test('OS clipboard includes scratchblocks text and imports JSON across origins',
         return items.flatMap(item => [...item.types]);
     })).toContain('web application/x.turbowarp.blocks3+json');
     expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/change.*Transfer counter.*by.*1/);
+    // Serve the same checked build at a second origin without assuming a loopback deployment.
+    // Published verification uses a GitHub Pages baseURL, so replacing 127.0.0.1 would do nothing.
+    const peerOrigin = 'https://script-transfer-peer.invalid';
+    await context.route(`${peerOrigin}/**`, async route => {
+        const peerURL = new URL(route.request().url());
+        const sourceURL = new URL(`${peerURL.pathname}${peerURL.search}`, baseURL);
+        const response = await route.fetch({url: sourceURL.href});
+        await route.fulfill({response});
+    });
     const other = await context.newPage(); evidence.observe(other);
-    await other.goto(new URL('editor.html?lang=en&twPlusScriptTransfer=1', baseURL.replace('127.0.0.1', 'localhost')).href);
+    const peerURL = new URL('editor.html?lang=en&twPlusScriptTransfer=1', baseURL);
+    await other.goto(`${peerOrigin}${peerURL.pathname}${peerURL.search}`);
+    expect(new URL(other.url()).origin).not.toBe(new URL(page.url()).origin);
     await expect(other.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
     expect(await other.evaluate(() => localStorage.getItem('tw-plus-script-clipboard-v1'))).toBeNull();
     await workspaceMenu(other);
