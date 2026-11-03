@@ -185,7 +185,6 @@ macOSの内部通信パス上限を超える保存先では、作業ファイル
 
 ```sh
 npm run test:yaml
-TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:yaml:browser
 # アセットを含む任意のSB3から、テスト専用fixtureを生成します
 # （CIでは `node test/fixtures/yaml-editor/base-project.ts /absolute/path/to/base.sb3` で生成したものを使います）。
 node scripts/yaml-editor/build-settings-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/settings.sb3
@@ -201,7 +200,7 @@ npm run test:yaml:multi-document
 node --test test/representation-preview.browser.ts
 ```
 
-`test:yaml:browser` は固定済みの共通document-editorとdocument-source registryに試験用の提供元・VMを接続し、URLプレビュー・取消・保存・再取得・埋め込みファイルへの変換を検証します。App固有APIは必要ありません。CIではPlaywrightのChromiumで実行し、ローカルの既存ブラウザーは `TWPE_CHROME_EXECUTABLE`（互換用に `CHROME_PATH` も可）で指定できます。
+参照元のプレビュー・取消・保存・再取得・埋め込みファイルへの変換は、`@kubohiroya/turbowarp-document-editor` が自身の試験用提供元で検証します。本リポジトリは、それがビルドしたEditorまで届くことを確かめます。`test/e2e/turbowarp/document-source.spec.cts` は `twpeyamlsettings` のfixtureを `twPlusDocumentSource=1` の有無で開き、`document-refusal.spec.cts` は提供元が登録されていないハットと、所有者が開くのを拒む文書を開いて、「この文書は現在利用できません。」が出て作品が変わらないことを見ます。どちらも `npm run test:e2e` でビルドしたEditorに対して実行します。
 
 SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。CIはビルドしたEditorで `test:yaml:roundtrip` と `test:yaml:multi-document` を実行し、画面と `result.json` を `integration-evidence-*` の `test-results/yaml-roundtrip/`・`test-results/yaml-multi-document/` に残します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
 

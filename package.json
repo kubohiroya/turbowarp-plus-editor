@@ -63,7 +63,6 @@
     "build:yaml-tools": "node scripts/site/build-yaml-editor.ts",
     "editor:yaml": "node scripts/yaml-editor/cli.ts",
     "test:yaml": "node --test test/yaml-build.test.ts test/yaml-cli.test.ts",
-    "test:yaml:browser": "node --test test/document-sources.browser.ts",
     "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.ts",
     "test:yaml:multi-document": "node --test test/yaml-multi-document.browser.ts",
     "editor:sb3-format": "node scripts/sb3-save-format/cli.ts",
@@ -101,7 +100,7 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
-    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.1",
+    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.2",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.1",
     "@turbowarp/jszip": "^3.12.0",
     "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#6f6f9c3f0e7a6c601a8046777ae8289968d36800"
@@ -112,7 +111,6 @@
   },
   "types": "./dist/src/index.d.ts",
   "overrides": {
-    "@kubohiroya/turbowarp-document-source": "$@kubohiroya/turbowarp-document-source",
     "@kubohiroya/turbowarp-extension-loader": "$@kubohiroya/turbowarp-extension-loader"
   }
 }

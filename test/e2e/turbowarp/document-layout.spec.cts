@@ -1,36 +1,10 @@
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
-const {spawnSync} = require('node:child_process');
 const {test, expect, approveProjectExtensions} = require('./fixtures.cts');
+const {settingsProject, extensionSource, settingsHat: hat} = require('./settings-project.cts');
 
 // The document editor must not change the Editor's own layout: the standard menu bar keeps its
 // height, the page never grows past the window, and without the startup flag nothing of the
 // editor is attached at all (#6). The project is the test-only `twpeyamlsettings` owner, built by
 // the same scripts the browser regressions use, so the hats exist whether or not the flag is set.
-const root = path.resolve(__dirname, '../../..');
-const run = (script, ...args) => {
-    const result = spawnSync(process.execPath, [path.join(root, script), ...args], {cwd: root, encoding: 'utf8'});
-    if (result.status !== 0) throw new Error(`${script} failed: ${result.stderr}`);
-};
-const settingsProject = () => {
-    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'twpe-document-layout-'));
-    try {
-        const base = path.join(directory, 'base.sb3'), settings = path.join(directory, 'settings.sb3');
-        run('test/fixtures/yaml-editor/base-project.ts', base);
-        run('scripts/yaml-editor/build-settings-fixture.ts', base, settings);
-        return fs.readFileSync(settings);
-    } finally {
-        fs.rmSync(directory, {recursive: true, force: true});
-    }
-};
-const extensionSource = async bytes => {
-    const JSZip = require('@turbowarp/jszip');
-    const project = JSON.parse(await (await JSZip.loadAsync(bytes)).file('project.json').async('string'));
-    const url = project.extensionURLs.twpeyamlsettings;
-    return Buffer.from(url.slice(url.indexOf(',') + 1), 'base64').toString('utf8');
-};
-const hat = 'twpeyamlsettings_embeddedYaml';
 
 const layout = page => page.evaluate(() => {
     const bar = document.querySelector('[class*="menu-bar_menu-bar_"]');
@@ -47,7 +21,7 @@ const scrolledBy = page => page.evaluate(() => {
 });
 
 test('the startup flag adds hat icons and a dialog without changing the menu bar or page height', async ({page, baseURL, evidence}, testInfo) => {
-    const bytes = settingsProject();
+    const bytes = await settingsProject();
     const source = await extensionSource(bytes);
     const projectURL = new URL('static/document-layout.sb3', baseURL).href;
     await page.route(projectURL, route => route.fulfill({status: 200, contentType: 'application/octet-stream', body: bytes}));
