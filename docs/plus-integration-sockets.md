@@ -453,7 +453,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 | | 内容 | 進められる条件 |
 | --- | --- | --- |
 | レビューUIのクラス名 | `lib/vm-listener-hoc.jsx:205` が `.twextsec-modal` を直書きしている。口（`shouldIgnoreKeyEvent`）は開いているが、**配信側が何も渡していない**。`src/css/extension-security-dialog.css`(14行) も同じパッケージのグローバルクラスを狙っている | [#92](https://github.com/kubohiroya/turbowarp-plus-editor/pull/92) がレビューUIを `ExtensionReview` に書き換え中で、**その markup のクラス名が変わりうる**。#92 のマージ後に、配信側が `shouldIgnoreKeyEvent` を埋め、フォークの直書きを外す |
-| 死んだプレビュー導線 | `scripts/local-plus-preview.cjs`(47行) が `@kubohiroya/turbowarp-extension-security-dialog` をフォークのビルドに alias する。フォークはもうその依存を持たないので、alias 先を import するモジュールが無く、素のGUIが出るだけ。フォークで family に触れている最後の1ファイル | すぐ。別セッションで撤去中 |
+| 死んだプレビュー導線 | `scripts/local-plus-preview.cjs`(47行) が `@kubohiroya/turbowarp-extension-security-dialog` をフォークのビルドに alias する。フォークはもうその依存を持たないので、alias 先を import するモジュールが無く、素のGUIが出るだけ。フォークで family に触れている最後の1ファイル | [kubohiroya/scratch-gui#132](https://github.com/kubohiroya/scratch-gui/pull/132) で撤去（文書と合わせて160行減、`develop` 向け） |
 
 ### 残りの内訳（移す対象ではないもの）
 
