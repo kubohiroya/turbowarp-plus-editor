@@ -17,6 +17,11 @@ if (localCatalogFile) {
     }
     localCatalog = JSON.parse(fs.readFileSync(localCatalogFile, 'utf8'));
 }
+// Keep historical demo URLs while this host owns the sample sources.
+config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [{
+    from: path.join(__dirname, '..', '..', 'examples', 'extensions'),
+    to: 'static/extensions'
+}]}));
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog)
 }));
