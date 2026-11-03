@@ -16,7 +16,10 @@ export const descriptionParts = value => {
     const pattern = /https:\/\/[^\s<>"'\u3000]+/g;
     let previous = 0;
     for (const match of text.matchAll(pattern)) {
-        const url = match[0].replace(/[.,;:!?\)\]\}\u3001\u3002\uff09\u300d\u300f]+$/u, '');
+        let url = match[0].replace(/[.,;:!?\u3001\u3002]+$/u, '');
+        for (const [open, close] of [['(', ')'], ['[', ']'], ['{', '}'], ['（', '）'], ['「', '」'], ['『', '』']]) {
+            while (url.endsWith(close) && url.split(close).length > url.split(open).length) url = url.slice(0, -1);
+        }
         const href = contactLink(url);
         if (!href || !href.startsWith('https:')) continue;
         parts.push({text: text.slice(previous, match.index)}, {text: url, href});

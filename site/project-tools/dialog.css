@@ -13,7 +13,7 @@
 .dialog::backdrop { background: #111827a6; }
 .dialog h2 { margin-top: 0; }
 .dialog label { display: block; margin: 12px 0; font-weight: 600; }
-.dialog input, .dialog textarea {
+.dialog input, .dialog textarea, .dialog select {
     box-sizing: border-box;
     display: block;
     width: 100%;
@@ -35,3 +35,9 @@
 .dialog :focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
 .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
 .preview { white-space: pre-wrap; overflow-wrap: anywhere; }
+.dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.dialog summary { cursor: pointer; }
+.notice { position: fixed; bottom: 12px; right: 12px; z-index: 10000; max-width: min(500px, 94vw);
+    padding: 12px; border: 1px solid #64748b; border-radius: 8px; background: var(--ui-primary, white);
+    color: var(--text-primary, #172033); font: 14px/1.5 system-ui, sans-serif; box-shadow: 0 2px 12px #0004; }
+.notice button { margin-left: 8px; cursor: pointer; }

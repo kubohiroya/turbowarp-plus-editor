@@ -15,7 +15,7 @@ const text = (document, tag, value, attributes = {}) => {
 };
 
 /** Display host permission requests without treating any project strings as markup. */
-export function createPlusPermissionUI (document, locale = 'ja') {
+export function createPlusPermissionUI (document, locale = 'ja', {showDiagnostics = true, onDiagnostic} = {}) {
     const japanese = locale.startsWith('ja');
     const label = (ja, en) => japanese ? ja : en;
     // A retry blocks the whole operation, so the package says so in the middle of the screen,
@@ -33,17 +33,20 @@ export function createPlusPermissionUI (document, locale = 'ja') {
         // Keep the full accessible name while avoiding narrow editor header overlap.
         style.textContent += '@media(max-width:580px){.tw-plus-diagnostics:not([open]) summary{font-size:0}.tw-plus-diagnostics:not([open]) summary::after{content:"ⓘ";font-size:18px;line-height:1}}';
         if (!document.querySelector('[data-tw-plus-permission-style]')) document.head.appendChild(style);
-        status = document.createElement('details');
-        status.className = 'tw-plus-diagnostics';
-        status.setAttribute('data-testid', 'tw-plus-extension-status');
-        status.appendChild(text(document, 'summary', label('拡張の検証・許可', 'Extension verification and permission')));
-        log = document.createElement('ol');
-        log.setAttribute('aria-live', 'polite');
-        status.appendChild(log);
-        document.body.appendChild(status);
+        if (showDiagnostics) {
+            status = document.createElement('details');
+            status.className = 'tw-plus-diagnostics';
+            status.setAttribute('data-testid', 'tw-plus-extension-status');
+            status.appendChild(text(document, 'summary', label('拡張の検証・許可', 'Extension verification and permission')));
+            log = document.createElement('ol');
+            log.setAttribute('aria-live', 'polite');
+            status.appendChild(log);
+            document.body.appendChild(status);
+        }
     }
     const diagnostics = event => {
         if (disposed) return;
+        if (onDiagnostic) onDiagnostic(event);
         // Any other event means the fetch resolved, one way or the other.
         if (event.type === 'retry') {
             waiting.show({url: event.message, attempt: event.attempt, attempts: event.attempts});
@@ -75,7 +78,8 @@ export function createPlusPermissionUI (document, locale = 'ja') {
         diagnostics,
         requestApproval (code, {signal} = {}) {
             if (disposed || !document || !document.body || (signal && signal.aborted)) return Promise.resolve(false);
-            diagnostics({type: 'review', id: code.id, sha256: code.sha256});
+            diagnostics({type: 'review', id: code.id, sha256: code.sha256,
+                source: code.source, execution: code.execution});
             return new Promise(resolve => {
                 const dialog = document.createElement('dialog');
                 dialog.className = 'tw-plus-permission';
