@@ -113,9 +113,22 @@ export const createExtensionAuthoringController = (vm, {
                     assertCurrent();
                     if (typeof current?.uri !== 'string') uri = defaultProjectURI(projectOrigin, createUUID());
                 }
-                const prepared = await prepare(original, request, ports,
-                    {zip, signal: operation.controller.signal, loaderOptions,
-                        archiveOptions, ...(uri === undefined ? {} : {uri})});
+                // The Loader reports a failure of its own `load()`, but not one of preparing a
+                // change, so the end of a fetch it was still retrying would go unsaid and the
+                // waiting indicator would stay up. Say it here, in the event shape `load()` uses.
+                let prepared;
+                try {
+                    prepared = await prepare(original, request, ports,
+                        {zip, signal: operation.controller.signal, loaderOptions,
+                            archiveOptions, ...(uri === undefined ? {} : {uri})});
+                } catch (error) {
+                    try {
+                        diagnostics({type: 'error', code: error?.code || 'LOAD_FAILED', id: error?.extensionId});
+                    } catch (diagnosticError) {
+                        // A presentation failure must not change the operation's outcome.
+                    }
+                    throw error;
+                }
                 assertCurrent();
                 onPrepared(prepared.spec || prepared.manifest);
                 const oldManifest = prepared.manifest ? await readState() : null;

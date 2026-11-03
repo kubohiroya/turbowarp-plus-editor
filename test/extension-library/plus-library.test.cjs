@@ -158,3 +158,102 @@ test('with the Loader on the screen offers the four forms; with it off it offers
     assert.deepEqual(executionChoices(on, 'add'), []);
     assert.deepEqual(executionChoices(off, 'add'), []);
 });
+
+/**
+ * A view on the given authoring host, with state updates applied in place as the tests above do.
+ * @param {object} vm The fixture VM.
+ * @param {string} [locale] The screen's language.
+ * @returns {object} The view and what it told its parent.
+ */
+function retryView(vm, locale = 'en') {
+    const PlusLibrary = require('../../site/extension-library/plus-library.jsx').default;
+    const callbacks = [];
+    const view = new PlusLibrary({vm, locale, permissions,
+        onCategorySelected: id => callbacks.push(['category', id]),
+        onRequestClose: () => callbacks.push('close'),
+        onBusyChange: () => {}});
+    view.alive = true;
+    view.controller = new AbortController();
+    view.state.entries = entries;
+    view.setState = update => Object.assign(view.state, update);
+    return {view, callbacks};
+}
+
+/**
+ * The `ExtensionReview` element a render produced.
+ * @param {object} node A rendered element.
+ * @returns {object|null} The review element.
+ */
+function findReview(node) {
+    const {ExtensionReview} = require('@kubohiroya/turbowarp-extension-security-dialog/react');
+    if (!node || typeof node !== 'object') return null;
+    if (node.type === ExtensionReview) return node;
+    for (const child of [].concat(node.props?.children ?? [])) {
+        const found = findReview(child);
+        if (found) return found;
+    }
+    return null;
+}
+
+const markup = view => require('react-dom/server').renderToStaticMarkup(view.render());
+
+test('a failure worth asking again offers to try again, and trying again repeats the same answer', async () => {
+    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.js');
+    const {LoaderError} = require('@kubohiroya/turbowarp-extension-loader');
+    const {vm} = fixture();
+    const attempts = [];
+    setExtensionAuthoringHost(vm, {configure: async received => {
+        attempts.push(received.map(request => [request.id, request.execution, request.distribution]));
+        if (attempts.length === 1) throw new LoaderError('TIMEOUT', 'The operation timed out');
+    }});
+    const {view, callbacks} = retryView(vm, 'ja');
+    await view.handleComplete(new Map([['base', {execution: 'unsandboxed', loading: 'remote-cacheable'}]]));
+    assert.deepEqual(view.state.failure, {code: 'TIMEOUT', message: 'The operation timed out', retryable: true});
+    assert.deepEqual(callbacks, []);
+    const review = findReview(view.render());
+    assert.equal(review.props.failure, view.state.failure);
+    assert.equal(review.props.onRetry, view.handleRetry);
+    // The words and the button are the screen's own; this side only hands them the judgement.
+    assert.match(markup(view), /もう一度試す/u);
+    await review.props.onRetry();
+    assert.deepEqual(attempts, [[['base', 'unsandboxed', 'remote-cacheable']], [['base', 'unsandboxed', 'remote-cacheable']]]);
+    assert.equal(view.state.failure, null);
+    assert.deepEqual(callbacks, [['category', 'base'], 'close']);
+    setExtensionAuthoringHost(vm, null);
+});
+
+test('a refusal is stated with its code and message, and nothing offers to repeat it', async () => {
+    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.js');
+    const {LoaderError} = require('@kubohiroya/turbowarp-extension-loader');
+    for (const error of [
+        new LoaderError('DIGEST_MISMATCH', 'Digest mismatch', 'base'),
+        new LoaderError('CANCELLED', 'Cancelled'),
+        // An offline fetch and a wrong registered ID share this code; only what it wraps decides.
+        new LoaderError('LOAD_FAILED', 'Registered a different ID', 'base', new Error('catalog ID')),
+        // What the VM's own loading throws with the Loader switched off: no fetch port of the Loader
+        // produced it, so the Loader cannot vouch for asking again.
+        new Error('network')
+    ]) {
+        const {vm} = fixture();
+        let calls = 0;
+        setExtensionAuthoringHost(vm, {configure: async () => { calls++; throw error; }});
+        const {view, callbacks} = retryView(vm);
+        await view.handleComplete(new Map([['base', {execution: 'unsandboxed', loading: 'embedded-data'}]]));
+        assert.deepEqual(view.state.failure, {code: error.code || 'LOAD_FAILED', message: error.message,
+            retryable: false});
+        const html = markup(view);
+        assert.ok(html.includes(error.code || 'LOAD_FAILED') && html.includes(error.message));
+        assert.doesNotMatch(html, /twextsec-retry/u);
+        assert.deepEqual(callbacks, []);
+        assert.equal(calls, 1);
+        setExtensionAuthoringHost(vm, null);
+    }
+});
+
+test('this side writes no failure wording of its own and passes no failure before one happens', () => {
+    const {vm} = fixture();
+    const {view} = retryView(vm);
+    assert.equal(findReview(view.render()).props.failure, null);
+    const source = require('node:fs').readFileSync(require.resolve('../../site/extension-library/plus-library.jsx'), 'utf8');
+    assert.doesNotMatch(source, /loadFailed|applyFailed|再試行してください/u);
+});

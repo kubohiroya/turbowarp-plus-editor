@@ -4,7 +4,13 @@
  * Moved from the fork's `src/lib/tw-plus-project-loader.js`. It touches no GUI module: everything
  * it needs about the VM arrives as `host.vm`, and marking a failure as an extension failure — the
  * fork's own bookkeeping, read by its project-error paths — arrives as `host.markFailure`.
+ *
+ * Whether opening again could end differently is asked of the Loader here, the one place that
+ * holds the error, and travels on the `project-error` diagnostic as `retryable` for whatever
+ * screen states the failure.
  */
+
+import {isWorthAskingAgain} from '@kubohiroya/turbowarp-extension-loader';
 
 const installations = new WeakSet();
 
@@ -100,7 +106,7 @@ export function installExtensionLoader(host, loader) {
                 if (typeof host.onDiagnostic === 'function') {
                     try {
                         host.onDiagnostic({type: 'project-error', code: error.code || 'LOAD_FAILED',
-                            message: error.message});
+                            message: error.message, retryable: isWorthAskingAgain(error)});
                     } catch (diagnosticError) {
                         // A presentation failure must not change the loading decision.
                     }
