@@ -33,8 +33,9 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
     let stage = 'load';
     async function load(p, filename) {
         await p.goto(`${base}editor.html?lang=ja&twPlusYamlEditor=1&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
-        const security = p.locator('.twextsec-modal'); await security.waitFor({timeout: 60000});
-        await security.getByRole('button', {name: 'サンドボックスなし', exact: true}).click();
+        // The shared review (security-dialog 0.7) offers one choice for every row.
+        const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')}); await security.waitFor({timeout: 60000});
+        await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
         await security.getByRole('button', {name: 'OK', exact: true}).click();
         await security.waitFor({state: 'hidden'});
         await p.locator('[class*="stage-selector_stage-selector"]').click();

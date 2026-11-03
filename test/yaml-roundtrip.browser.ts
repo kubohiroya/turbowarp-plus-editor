@@ -45,11 +45,10 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
     try {
         async function load(p, name) {
             await p.goto(`${base}editor.html?lang=ja&twPlusYamlEditor=1&project_url=${encodeURIComponent(`${base}static/${name}`)}`);
-            const security = p.locator('.twextsec-modal');
+            // The shared review (security-dialog 0.7) offers one choice for every row.
+            const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')});
             await security.waitFor({timeout: 60000});
-            const bulk = security.getByRole('button', {name: 'サンドボックスなし', exact: true});
-            if (await bulk.count()) await bulk.click();
-            else await expect(security.locator('input[type=radio]:checked')).toHaveCount(1);
+            await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
             await security.getByRole('button', {name: 'OK', exact: true}).click();
             await security.waitFor({state: 'hidden', timeout: 60000});
             await p.locator('[class*="stage-selector_stage-selector"]').click();
