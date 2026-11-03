@@ -1,6 +1,6 @@
 {
   "guiRepository": "kubohiroya/scratch-gui",
-  "guiRevision": "0a778db6f6d328a59c0e4d404dba08885531ab4f",
+  "guiRevision": "a19635efcffecfcc77ce96332e6863ae8a70090e",
   "coreRepository": "kubohiroya/turbowarp-extension-data-editor",
   "coreRevision": "d96532a91bc6046d4a3fda878425b30d6d10483e",
   "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
@@ -20,5 +20,8 @@
   "documentEditorRevision": "9be165cc5ade0a9722cea79fe58425a54cce9433",
   "documentEditorVersion": "0.1.0-rc.1",
   "documentEditorSource": "npm",
-  "documentEditorIntegrity": "sha512-vmzt87LZpsHHtUH19x/JEbULQAEPFanDGqTuO/356ozt+KDciVAxsv3bpp+Jcjq+sbdu7Mdle+8T8NWPXGfsfw=="
+  "documentEditorIntegrity": "sha512-vmzt87LZpsHHtUH19x/JEbULQAEPFanDGqTuO/356ozt+KDciVAxsv3bpp+Jcjq+sbdu7Mdle+8T8NWPXGfsfw==",
+  "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
+  "scriptTransferRevision": "441497b18748321bef3b9f02eedddf24f32bfb06",
+  "scriptTransferVersion": "0.1.0"
 }

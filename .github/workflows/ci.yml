@@ -88,7 +88,9 @@ jobs:
       - name: Verify the extension host against the prepared VM
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: npm run test:extension-host
+        run: |
+          npm run test:extension-host
+          npm run test:script-transfer
       - name: Build TurboWarp-Plus-Editor
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui

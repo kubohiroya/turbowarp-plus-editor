@@ -59,8 +59,10 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // say is this distribution's rather than part of the editor's translations. CSS and images need no
 // rule of their own: the host's rules for those match by extension alone, so a stylesheet imported
 // from here becomes a CSS module exactly as one of its own does.
+const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
+config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
 const siteSource = path.join(__dirname, '..', '..', 'site');
-config.module.rules.push({test: /\.jsx?$/, include: [siteSource], loader: hostRequire.resolve('babel-loader'),
+config.module.rules.push({test: /\.jsx?$/, include: [siteSource, transferSource], loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}],
             hostRequire.resolve('@babel/preset-react')]}});

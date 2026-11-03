@@ -45,6 +45,11 @@ export function validatePins(pins) {
                 'The published loader integrity is required');
         }
     }
+    if (['scriptTransferRepository', 'scriptTransferRevision', 'scriptTransferVersion'].some(key => pins[key] !== undefined)) {
+        assert.equal(pins.scriptTransferRepository, 'kubohiroya/turbowarp-script-transfer');
+        assert.ok(sha(pins.scriptTransferRevision), 'A full script transfer revision is required');
+        assert.ok(exactVersion(pins.scriptTransferVersion), 'An exact script transfer version is required');
+    }
     return pins;
 }
 export async function readPins() {
@@ -145,6 +150,22 @@ export async function verifyLoaderDependency(directory, pins) {
             `Lockfile differs for ${name}`);
     }
 }
+export async function verifyScriptTransferDependency(directory, pins) {
+    const name = '@kubohiroya/turbowarp-script-transfer';
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
+    const source = `git+https://github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`;
+    assert.equal(manifest.dependencies[name], source, 'Script transfer source differs from the pin');
+    assert.equal(lock.packages[''].dependencies[name], source, 'Script transfer root lock differs from the pin');
+    const entry = lock.packages[`node_modules/${name}`];
+    assert.equal(entry.resolved, `git+ssh://git@github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`,
+        'Script transfer lock differs from the pin');
+    assert.equal(entry.version, pins.scriptTransferVersion, 'Script transfer lock version differs from the pin');
+    const require = createRequire(path.join(directory, 'package.json'));
+    const installed = JSON.parse(await fs.readFile(path.join(path.dirname(require.resolve(name)), 'package.json'), 'utf8'));
+    assert.equal(installed.version, pins.scriptTransferVersion, 'Installed script transfer differs from the pin');
+}
+
 export async function verifyHost(gui, pins) {
     validatePins(pins);
     assert.ok(gui && path.isAbsolute(gui), 'E2E_GUI_ROOT must be an absolute GUI checkout');

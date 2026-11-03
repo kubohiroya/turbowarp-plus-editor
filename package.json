@@ -70,7 +70,8 @@
     "build": "tsc -p tsconfig.build.json",
     "prepack": "npm run build",
     "build:test-driver": "tsc -p test/vscode-edit-driver/tsconfig.json",
-    "test:package": "npm run build && node --test test/package/*.test.ts"
+    "test:package": "npm run build && node --test test/package/*.test.ts",
+    "test:script-transfer": "node --test test/script-transfer/*.test.mjs"
   },
   "devDependencies": {
     "@kubohiroya/turbowarp-document-source": "0.1.0-rc.0",
@@ -99,7 +100,8 @@
     "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
     "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.1",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.0",
-    "@turbowarp/jszip": "^3.12.0"
+    "@turbowarp/jszip": "^3.12.0",
+    "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#441497b18748321bef3b9f02eedddf24f32bfb06"
   },
   "bin": {
     "turbowarp-plus-editor-yaml": "dist/scripts/yaml-editor/cli.js",
