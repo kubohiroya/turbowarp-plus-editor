@@ -95,13 +95,13 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 8 | `stageControls` / `cameraControls` と `controls.jsx` 2件・`camera-control/*`・`tw-stage-controls.js`・`tw-camera-controls.js` の移送 | 4 |
 | 9 | `extensionLibrary` / `extensionGuiApi` / `addons` | 4 |
 | 10 | 独自34本の残り（registrar・project-loader・authoring・permission-ui・packager ほか）を1本ずつ | 4〜9 |
-| 11 | `package.json` / `package-lock.json` から family 4依存を外す。`prepare-core.ts` のコピーと `verifyHost` の照合を、本リポジトリの lock 基準の確認へ置き換える | 10 |
+| 11 | `package.json` / `package-lock.json` から family 4依存を外す。`prepare-core.ts` のコピーと `verifyHost` の照合を、本リポジトリの lock 基準の確認へ置き換える | 済 |
 
 段階4は6つの口をまとめて足すが、どれも「一覧を受け取って混ぜる」だけで互いに依存しないので、1つのPRで足しても壊れ方が分かれない。段階8と9は実装の移送を伴うので、口を開ける変更と移送を別のPRに分ける。
 
 ## 検証
 
-各段階の期待する結果は「何も変わらない」こと。CIの統合E2E（GUIとpackagerのclone、`prepare-core`、`build:pages`、Playwright）とローダーE2Eが以前と同じに通れば、その口は通っている。口を足しただけで実装を載せていない段階では、フォーク側の実装がそのまま使われるので、動作は定義上変わらない。
+各段階の期待する結果は「何も変わらない」こと。CIの統合E2E（GUIとpackagerのclone、`build:pages`、Playwright）とローダーE2Eが以前と同じに通れば、その口は通っている。口を足しただけで実装を載せていない段階では、フォーク側の実装がそのまま使われるので、動作は定義上変わらない。
 
 本リポジトリ側には、各段階で「まだ何も渡さない」または「この口にこれを渡す」ことを固定する単体テストを置く。段階3の `test/plus-integration.test.ts` がその最初の例。
 
@@ -378,7 +378,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 
 ### core を外すと配信側の仕組みが減る
 
-他の3依存と違い、これは `source.ts` の `corePackage` そのもので、`prepare-core.ts`(110行) が**GUIの node_modules の中身を差し替えていた**（フォークが `^0.5.0`、配信物が 0.7.0）。依存が無くなれば差し替える対象も無いので、`verifyInstalledCore` を配信側の install に向け、CIの「Copy the pinned root core」段階を外した。`prepare-core.ts` 自体の撤去は段階B。
+他の3依存と違い、これは `source.ts` の `corePackage` そのもので、`prepare-core.ts`(110行) が**GUIの node_modules の中身を差し替えていた**（フォークが `^0.5.0`、配信物が 0.7.0）。依存が無くなれば差し替える対象も無いので、`verifyInstalledCore` を配信側の install に向け、CIの「Copy the pinned root core」段階を外した。`prepare-core.ts` 自体の撤去は段階B（この文書の末尾）。
 
 ### Reactが2つあると、何を試しているのか分からなくなる
 
@@ -418,3 +418,11 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 4. 規則の**出現位置**をバイト単位で比較 → 入れ替わりを発見
 
 3で「同じ」と分かった時点で原因を順序に絞れた。**同じものが違う結果を出すなら、違うのは順序か文脈。**
+
+## 段階B: 差し替える機構を撤去する（2026-11-03）
+
+段階Aで `@kubohiroya/turbowarp-extension-data-editor` がフォークの依存から外れた時点で、`scripts/site/prepare-core.ts`(110行) は**差し替える相手を失っていた**。CIからその段階を外したあとも、呼び出し元は自分のCLIエントリだけで、他には `family-notices.ts` のコメント1行しか残っていなかった。段階Bで、そのスクリプトと `test/prepare-core.test.ts`(107行) を撤去した。
+
+残したのは `verifyInstalledCore` だけ。コピーも入れ替えも検証も要らなくなり、**「導入された core が固定値か」を読むだけ**になって、`build.ts` が毎回それを呼ぶ。撤去したテストが唯一押さえていたその拒否（`/core version/`）は、同じ固定値を組み立てている `test/security-source.test.ts` へ移し、合格側と revision 不一致も足した。
+
+**消す前に、消すものが押さえていた検査を数える。** 110行のうち100行は「GUIの node_modules を安全に入れ替える」ための手順で、依存が無くなれば意味も無い。残る10行分の意味——固定値との照合——だけが他所へ移る。
