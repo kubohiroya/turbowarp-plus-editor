@@ -146,7 +146,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages上では文書の表示・変換・検証を利用できます。VSCodeを起動する操作は、上記のローカルURLで開いた場合に利用できます。
 
-表示されたローカルURLを開くと、起動時固定の `twPlusYamlEditor=1` が有効になります。読み取り箇所はscratch-guiの `config/feature-flags.js` です。
+表示されたローカルURLを開くと、起動時固定の `twPlusYamlEditor=1` が有効になります。読み取るのは `@kubohiroya/turbowarp-document-editor` の `readDocumentEditorFlags` で、`site/plus-integration.js` が起動時に一度だけ呼びます。
 
 1. 組み込み文書のSB3をEditorで開き、「データソース」ハットブロックのファイルアイコンを押します。文書ダイアログのYAMLテキストタブで「外部エディタで編集」を選びます。
 2. 開いたYAMLを編集してVSCodeで保存します。
@@ -172,7 +172,8 @@ macOSの内部通信パス上限を超える保存先では、作業ファイル
 ```sh
 npm run test:yaml
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:yaml:browser
-# アセットを含む任意のSB3から、テスト専用fixtureを生成します。
+# アセットを含む任意のSB3から、テスト専用fixtureを生成します
+# （CIでは `node test/fixtures/yaml-editor/base-project.ts /absolute/path/to/base.sb3` で生成したものを使います）。
 node scripts/yaml-editor/build-settings-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/settings.sb3
 node scripts/yaml-editor/build-document-source-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/document-source.sb3
 TWPE_YAML_SITE=/absolute/path/to/editor/build \
@@ -181,14 +182,14 @@ TWPE_YAML_EVIDENCE=/absolute/path/to/evidence \
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
 npm run test:yaml:roundtrip
 # 同じ環境変数で、2文書のsettings fixtureも検証できます。
-node --test test/yaml-multi-document.browser.ts
+npm run test:yaml:multi-document
 # 表現プレビューは同じ環境変数で、document-source fixtureを指定して検証します。
 node --test test/representation-preview.browser.ts
 ```
 
 `test:yaml:browser` は固定済みの共通document-editorとdocument-source registryに試験用の提供元・VMを接続し、URLプレビュー・取消・保存・再取得・埋め込みファイルへの変換を検証します。App固有APIは必要ありません。CIではPlaywrightのChromiumで実行し、ローカルの既存ブラウザーは `TWPE_CHROME_EXECUTABLE`（互換用に `CHROME_PATH` も可）で指定できます。
 
-SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
+SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。CIはビルドしたEditorで `test:yaml:roundtrip` と `test:yaml:multi-document` を実行し、画面と `result.json` を `integration-evidence-*` の `test-results/yaml-roundtrip/`・`test-results/yaml-multi-document/` に残します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
 
 ### 原文・共通YAMLブロック・スキーマ専用ブロック
 
@@ -251,7 +252,7 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 
 参照元変更後は取得してプレビューし、画面下の保存で同じ検証済み候補を反映します。キャンセルは作品を変更しません。外部URLはCORSで取得できるHTTPSを指定します。外部の内容を編集・ブロック化するには、参照元を「SB3内のファイル」へ変更・保存して取り込みます。遠隔サイトへの書き戻しは行いません。実行時のURL再取得は提供元が担当し、失敗時に古いcacheへ黙って戻ってはいけません。
 
-新フラグは既定OFFです。scratch-guiは `config/feature-flags.js` で読み取り、参照元の切り替えに対応する提供元はそれぞれ自身で読み取ります。切戻しは新フラグを外して再起動し、元SB3を利用します。現在の依存はローカル候補への参照であり、公開版への参照更新・新npm/リポジトリの公開は別途行います。
+新フラグは既定OFFです。`@kubohiroya/turbowarp-document-editor` の `readDocumentEditorFlags` が起動時に一度だけ読み取り（呼び出しは `site/plus-integration.js`）、参照元の切り替えに対応する提供元はそれぞれ自身で読み取ります。切戻しは新フラグを外して再起動し、元SB3を利用します。現在の依存はローカル候補への参照であり、公開版への参照更新・新npm/リポジトリの公開は別途行います。
 
 この候補は、直前の未公開UI修正（プレビューの重なり表示防止、タブ内の保存形式表示、外部エディタのフローティングボタン、ガイド/Schemaリンク）を引き継いでいます。
 

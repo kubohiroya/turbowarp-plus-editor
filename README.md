@@ -148,7 +148,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages supports document display, conversion, and validation. Launching VSCode is available when opening the local URL above.
 
-The displayed local URL enables the startup-fixed `twPlusYamlEditor=1` flag. Its reader is `config/feature-flags.js` in the scratch-gui fork.
+The displayed local URL enables the startup-fixed `twPlusYamlEditor=1` flag. It is read by `readDocumentEditorFlags` from `@kubohiroya/turbowarp-document-editor`, which `site/plus-integration.js` calls once at startup.
 
 1. Open an SB3 containing an embedded document and select the file icon on its **Data source** hat. In the YAML text tab of the document dialog, choose **Edit in external editor**.
 2. Edit the YAML and save it in VSCode.
@@ -174,7 +174,8 @@ Relevant checks:
 ```sh
 npm run test:yaml
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:yaml:browser
-# Build the test-only fixtures from any SB3 that contains assets.
+# Build the test-only fixtures from any SB3 that contains assets
+# (CI generates one with `node test/fixtures/yaml-editor/base-project.ts /absolute/path/to/base.sb3`).
 node scripts/yaml-editor/build-settings-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/settings.sb3
 node scripts/yaml-editor/build-document-source-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/document-source.sb3
 TWPE_YAML_SITE=/absolute/path/to/editor/build \
@@ -183,14 +184,14 @@ TWPE_YAML_EVIDENCE=/absolute/path/to/evidence \
 TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
 npm run test:yaml:roundtrip
 # The same variables also check the two-document settings fixture.
-node --test test/yaml-multi-document.browser.ts
+npm run test:yaml:multi-document
 # Representation previews use the document-source fixture with the same variables.
 node --test test/representation-preview.browser.ts
 ```
 
 `test:yaml:browser` uses the pinned shared document editor and document-source registry with a test provider and VM fixture. It checks URL preview, cancellation, saving, fresh retrieval, and conversion to an embedded file without requiring an App-specific API. CI runs this check in Playwright Chromium; `TWPE_CHROME_EXECUTABLE` selects an installed browser locally (`CHROME_PATH` is also supported).
 
-SB3 round-trip browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
+SB3 round-trip browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. CI runs `test:yaml:roundtrip` and `test:yaml:multi-document` against the built Editor and keeps their screenshots and `result.json` under `test-results/yaml-roundtrip/` and `test-results/yaml-multi-document/` in the `integration-evidence-*` artifact. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
 
 ### Source, shared YAML blocks, and schema-specific blocks
 
@@ -247,7 +248,7 @@ Launching with `twPlusYamlEditor=1&twPlusDocumentSource=1` enables **File inside
 
 After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. Fetching URL content again at runtime is the provider’s responsibility, and a provider must not silently fall back to stale cached data on failure.
 
-The new flag is off by default. The scratch-gui fork reads it in `config/feature-flags.js`, and providers that support source locations read it themselves. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
+The new flag is off by default. `readDocumentEditorFlags` from `@kubohiroya/turbowarp-document-editor` reads it once at startup (called from `site/plus-integration.js`), and providers that support source locations read it themselves. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
 
 This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.
 

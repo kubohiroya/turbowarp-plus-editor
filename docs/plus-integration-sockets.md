@@ -32,7 +32,7 @@ export const plusIntegration = () => null;
 //   themeTokens?: {light?: object, dark?: object}       // lib/themes/gui/*.js
 //   translations?: Readonly<Record<string, object>>     // lib/tw-translations/index.js
 //   registerBlockShapes?(ScratchBlocks): void           // lib/blocks.js
-//   alwaysMountedModals?: readonly React.ComponentType[] // components/gui/gui.jsx
+//   attachToWorkspace?(context): {dispose()}|null       // containers/tw-plus-workspace-attachment.jsx（gui.jsx が常時マウント）
 //   shouldIgnoreKeyEvent?(event): boolean               // lib/vm-listener-hoc.jsx
 //   reduceProjectState?(state, action): object|null     // reducers/project-state.js
 //   stageControls?(vm): ControlsService                 // containers/controls.jsx
@@ -42,6 +42,8 @@ export const plusIntegration = () => null;
 //   addons?: object                                     // addons/api.js, entry.js, hooks.js
 // }
 ```
+
+`attachToWorkspace` の `context` は `{vm, locale, document, getBlockly}`。フォークはVMが替わるたびに前の戻り値を `dispose()` してから呼び直し、戻り値の中は見ない。当初この行には `alwaysMountedModals`（Reactコンポーネントの一覧を `gui.jsx` に常時マウントさせる口）を置いていたが、開けなかった。段階6を参照。
 
 CSS には口を作らない。当初は空のスタイルシートを同じ仕組みで差し替える案だったが、5件の中身を読んで取り消した（下の「CSSに口を作らない理由」）。
 
@@ -57,7 +59,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | `lib/tw-translations/index.js` | +2 | `translations`。`block-editor.json` の読み込みを口へ |
 | `lib/blocks.js` | +2 | `registerBlockShapes`。文書ソースのハット形状の登録 |
 | `lib/vm-listener-hoc.jsx` | +2 | `shouldIgnoreKeyEvent`。`.twextsec-modal` 内のキー操作を本家に渡さない判定 |
-| `components/gui/gui.jsx` | +2 | `alwaysMountedModals`。`TWDocumentEditor` の常時マウント |
+| `components/gui/gui.jsx` | +2 | `attachToWorkspace`。描画しないコンテナ `TWPlusWorkspaceAttachment` の常時マウント（当初案は `alwaysMountedModals` で `TWDocumentEditor` を常時マウント） |
 | `containers/controls.jsx` | +22 | `stageControls` / `cameraControls` |
 | `components/controls/controls.jsx` | +36 | 同上（受け取った service を描く部分） |
 | `containers/extension-library.jsx` | +40 -2 | `extensionLibrary` |
@@ -90,7 +92,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 3 | `installExtensionHost` の口（#111）と、配信側の空モジュール差し替え | 済・[PR #57](https://github.com/kubohiroya/turbowarp-plus-editor/pull/57) |
 | 4 | 表の口を一覧で足す: `modals` / `securityModals` / `themeTokens` / `translations` / `registerBlockShapes` / `shouldIgnoreKeyEvent`。いずれも数行で、互いに依存しない | 3 |
 | 5 | ~~CSS差し込み口~~ 取り消し。CSSは段階8・9と汎用変更へ振り分けた | — |
-| 6 | `alwaysMountedModals` と `TWDocumentEditor` の移送 | 4 |
+| 6 | 文書エディタの結線の移送。開けた口は `attachToWorkspace`（[scratch-gui#113](https://github.com/kubohiroya/scratch-gui/pull/113)）で、結線は本リポジトリの `site/plus-integration.js` に置いた（[PR #61](https://github.com/kubohiroya/turbowarp-plus-editor/pull/61)）。当初案の `alwaysMountedModals` と `TWDocumentEditor` の移送は取らなかった: 文書エディタはモーダルではなくVM・言語・ScratchBlocksに付くもので、フォークが渡すべきは描画先ではなくそれらだった | 済 |
 | 7 | `createCancelSecurityLoad`（値を引数で渡し、既定をホストが上書き） | 4 |
 | 8 | `stageControls` / `cameraControls` と `controls.jsx` 2件・`camera-control/*`・`tw-stage-controls.js`・`tw-camera-controls.js` の移送 | 4 |
 | 9 | `extensionLibrary` / `extensionGuiApi` / `addons` | 4 |
