@@ -23,6 +23,7 @@ import {readPlusFlags} from '../extension-library/flags.js';
 import {createExtensionAuthoringController, setExtensionAuthoringHost} from './authoring.js';
 import {extensionProjectArchiveOptions} from './config.js';
 import {installPlusExtensionHost} from './host.js';
+import {createProjectAddresser} from './project-address.js';
 
 /**
  * The editor's persistent cache, or undefined where the browser offers no IndexedDB, in which case
@@ -58,8 +59,9 @@ export const installEditorExtensionHost = (vm, settings = {}) => {
         archiveOptions: extensionProjectArchiveOptions
     };
     if (enabled !== true) return installPlusExtensionHost(vm, {...base, ...rest, enabled});
-    // The project open now, as the bridge reports it on each load; undefined files a write as
-    // shared. Read by the cache at each write, so one cache serves every project this VM opens.
+    // The project open now, as the bridge reports it on each load and on the save that addresses
+    // it; undefined files a write as shared. Read by the cache at each write, so one cache serves
+    // every project this VM opens.
     let projectURI;
     // What the catalog lists belongs to no one project. It is the set the trust check reads, filled
     // as the catalog loads. The Loader writes a fetched copy before it asks whether the code is
@@ -76,6 +78,9 @@ export const installEditorExtensionHost = (vm, settings = {}) => {
         }}) : created;
     const host = installPlusExtensionHost(vm, {
         ...base,
+        // A project whose manifest has no address gets one when first saved, under the same rule
+        // as one whose manifest is written by the library: HTTPS origins only.
+        addressProject: createProjectAddresser(origin),
         ...rest,
         enabled,
         ...(cache ? {cache} : {}),

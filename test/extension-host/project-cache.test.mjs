@@ -6,15 +6,20 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import Zip from '@turbowarp/jszip';
+import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import {installEditorExtensionHost} from '../../site/extension-host/editor-host.js';
+import {installExtensionLoader} from '../../site/extension-host/project-loader.js';
+import {identifyProject} from '../../site/extension-host/review.js';
 import {createPlusTrustedCatalog} from '../../site/trusted-extensions.js';
 import {guiRequire, guiRoot, vmModules} from './pinned-host.mjs';
 
 /**
- * Issue #55, stage 3: the editor keeps fetched extensions in one IndexedDB cache per host, filed
- * under the project open at each write.
+ * Issue #55, stages 3 and 4: the editor keeps fetched extensions in one IndexedDB cache per host,
+ * filed under the project open at each write, and a project whose manifest has no address is
+ * given one the first time it is saved.
  */
 
+const SHAPE = /^https:\/\/editor\.example\/turbowarp-plus-projects\/[0-9a-f]{2}\/[0-9a-f]{4}\/[0-9a-f-]{36}\.sb3$/;
 const kept = 'https://published.example/works/kept.sb3';
 const other = 'https://published.example/works/other.sb3';
 const url = 'https://cdn.example.test/npm/@owner/example@1.0.0/dist/example.js';
@@ -88,6 +93,117 @@ const editor = async (origin, settings = {}) => {
         }};
 };
 
+// ---- Stage 4: the bridge assigns at the first save, through the real codec ------------------
+
+function bridge({manifest, addressProject}) {
+    const projectIO = createProjectIO({zip: Zip});
+    let serialized;
+    const vm = {
+        async loadProject(project) {
+            const archive = await Zip.loadAsync(project);
+            serialized = JSON.parse(await archive.file('project.json').async('string'));
+            await this._loadExtensions(new Set(serialized.extensions), new Map());
+        },
+        async _loadExtensions() {},
+        toJSON(target) { return target ? '{"sprite":true}' : JSON.stringify(serialized); },
+        _saveProjectZip() { return new Zip().file('project.json', this.toJSON()); },
+        saveProjectSb3DontZip() { return {'project.json': new TextEncoder().encode(this.toJSON())}; }
+    };
+    const loader = {async load (input) { return {ids: input.extensions.map(item => item.id)}; }, async unload () {}};
+    const told = [];
+    let issued = 0;
+    installExtensionLoader({vm, projectIO, transactionalRegistration: true, onProjectURI: uri => told.push(uri),
+        addressProject: addressProject && (() => {
+            issued++;
+            return addressProject(issued);
+        })}, loader);
+    const uriOf = json => JSON.parse(json).turboWarpPlus?.uri;
+    return {vm, told, issued: () => issued, uriOf, load: async () => vm.loadProject(await sb3(manifest))};
+}
+
+const address = n => `https://editor.example/turbowarp-plus-projects/aa/00aa/0193f0a1-2b3c-7d4e-8f01-00000000000${n}.sb3`;
+
+test('a manifest without an address is given one at the first save, and keeps it on the next', async () => {
+    const f = bridge({manifest: remote(), addressProject: address});
+    await f.load();
+    assert.deepEqual(f.told, [undefined]);
+    assert.equal(f.issued(), 0, 'opening a project names nothing');
+    const first = f.uriOf(f.vm.toJSON());
+    assert.equal(first, address(1));
+    assert.equal(f.uriOf(f.vm.toJSON()), first);
+    // The ZIP and file saves serialize through toJSON and restore with the same context.
+    const zip = await Zip.loadAsync(await f.vm._saveProjectZip().generateAsync({type: 'uint8array'}));
+    assert.equal(f.uriOf(await zip.file('project.json').async('string')), first);
+    assert.equal(f.uriOf(new TextDecoder().decode(f.vm.saveProjectSb3DontZip()['project.json'])), first);
+    assert.equal(f.issued(), 1);
+    assert.deepEqual(f.told, [undefined, first], 'the cache hears the new address once');
+});
+
+test('the first save may be a ZIP or file save; a sprite export is never addressed', async () => {
+    const f = bridge({manifest: remote(), addressProject: address});
+    await f.load();
+    assert.equal(f.vm.toJSON('sprite'), '{"sprite":true}');
+    assert.equal(f.issued(), 0);
+    const files = f.vm.saveProjectSb3DontZip();
+    assert.equal(f.uriOf(new TextDecoder().decode(files['project.json'])), address(1));
+    assert.equal(f.uriOf(f.vm.toJSON()), address(1));
+    assert.equal(f.issued(), 1);
+});
+
+test('an address the project already has is never overwritten', async () => {
+    const f = bridge({manifest: remote(kept), addressProject: address});
+    await f.load();
+    assert.equal(f.uriOf(f.vm.toJSON()), kept);
+    assert.equal(f.uriOf(f.vm.toJSON()), kept);
+    assert.equal(f.issued(), 0);
+    assert.deepEqual(f.told, [kept]);
+});
+
+test('a project without a manifest is given nothing, and neither is one on a host that makes no address', async () => {
+    const plain = bridge({manifest: null, addressProject: address});
+    await plain.load();
+    assert.equal(plain.uriOf(plain.vm.toJSON()), undefined);
+    assert.equal(JSON.parse(plain.vm.toJSON()).turboWarpPlus, undefined);
+    assert.equal(plain.issued(), 0);
+    const none = bridge({manifest: remote(), addressProject: null});
+    await none.load();
+    assert.equal(none.uriOf(none.vm.toJSON()), undefined);
+});
+
+test('reopening forgets the address given to the previous project', async () => {
+    const f = bridge({manifest: remote(), addressProject: address});
+    await f.load();
+    assert.equal(f.uriOf(f.vm.toJSON()), address(1));
+    await f.load();
+    assert.equal(f.told.at(-1), undefined);
+    assert.equal(f.uriOf(f.vm.toJSON()), address(2), 'a different project opened later is its own');
+});
+
+test('the real editor host addresses at save over HTTPS only, once, and the address survives reopening', async () => {
+    const unaddressed = await sb3(remote());
+    // http://localhost — the local preview and the E2E server — names nothing.
+    const local = await editor('http://localhost:8080');
+    try {
+        await local.vm.loadProject(unaddressed);
+        // With no address the review names the project by its content instead.
+        assert.match(await identifyProject(await local.vm.saveProjectSb3('arraybuffer')), /^sha256:/);
+    } finally {
+        await local.dispose();
+    }
+    const served = await editor('https://editor.example');
+    try {
+        await served.vm.loadProject(unaddressed);
+        const saved = await served.vm.saveProjectSb3('arraybuffer');
+        const first = await identifyProject(saved);
+        assert.match(first, SHAPE);
+        assert.equal(await identifyProject(await served.vm.saveProjectSb3('arraybuffer')), first);
+        await served.vm.loadProject(new Uint8Array(saved));
+        assert.equal(await identifyProject(await served.vm.saveProjectSb3('arraybuffer')), first);
+    } finally {
+        await served.dispose();
+    }
+});
+
 // ---- Stage 3: one cache per host, filed under the project open at each write ----------------
 
 test('each write is filed under the project open then, and reopening switches the bucket', async () => {
@@ -100,6 +216,10 @@ test('each write is filed under the project open then, and reopening switches th
         await f.vm.loadProject(await sb3(remote()));
         assert.deepEqual(cache.writes.map(write => write.bucket), [kept, other, 'shared']);
         assert.equal(cache.made.length, 1);
+        // Saving the unaddressed one gives it an address, and its next write goes there.
+        const named = await identifyProject(await f.vm.saveProjectSb3('arraybuffer'));
+        assert.match(named, SHAPE);
+        assert.equal(cache.made[0].appURI(), named);
         await f.vm.loadProject(await sb3(null));
         assert.equal(cache.made[0].appURI(), undefined, 'a project without a manifest names no bucket');
     } finally {
@@ -150,7 +270,7 @@ test('without IndexedDB the editor keeps the memory cache, and other failures ar
     }}), /maxBytes must be positive/);
 });
 
-test('a built single HTML does not bundle the IndexedDB cache', () => {
+test('a built single HTML does not bundle the IndexedDB cache or the save-time addressing', () => {
     const out = fs.mkdtempSync(path.join(os.tmpdir(), 'plus-runtime-'));
     try {
         const output = path.join(out, 'extension-runtime.js');
@@ -159,9 +279,9 @@ test('a built single HTML does not bundle the IndexedDB cache', () => {
         const bundle = fs.readFileSync(output, 'utf8');
         const modules = [...bundle.matchAll(/CONCATENATED MODULE: (\S+)/g)].map(match => match[1]);
         assert.ok(modules.some(file => file.endsWith('/turbowarp-extension-loader/dist/memory-cache.js')), 'sanity');
-        assert.equal(modules.filter(file => /indexeddb-cache|editor-host/.test(file)).length, 0,
+        assert.equal(modules.filter(file => /indexeddb-cache|project-address|editor-host/.test(file)).length, 0,
             modules.join('\n'));
-        assert.doesNotMatch(bundle, /createIndexedDBContentCache|IndexedDB unavailable/);
+        assert.doesNotMatch(bundle, /createIndexedDBContentCache|IndexedDB unavailable|defaultProjectURI/);
     } finally {
         fs.rmSync(out, {recursive: true, force: true});
     }
