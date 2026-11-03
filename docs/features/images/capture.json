@@ -4,13 +4,14 @@
     "width": 1440,
     "height": 1000
   },
-  "gui": "7deadb1aae4a0a7f06d7d9fa2a309bb6fdb64ef3",
-  "host": "1c9a0284d55009075425bc15f7edec32c16d6fac",
-  "security": "0.7.1",
-  "sample": "examples/extensions/block-editor.js",
   "reviewViewport": {
     "width": 1440,
     "height": 1200
   },
-  "note": "Local integrated candidate. Catalog sample is supplied by the browser test fixture; not a public catalog entry."
+  "site": "https://kubohiroya.github.io/turbowarp-plus-editor/",
+  "siteRevision": "bf04ce65a504526da0794785d55018624965db44",
+  "gui": "0def6f3b044fe04b173e2d442804d15360b69547",
+  "security": "0.8.3",
+  "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
+  "note": "Captured from the public Editor. catalog.png chooses TurboWarp-Markdown from the public catalog. review.png opens a project that adds two extensions outside the catalog as data: URLs, one declaring 'Unsandboxed: required'; the catalog extension in the same project needs no review and is not listed."
 }
