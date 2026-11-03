@@ -9,9 +9,9 @@
     "height": 1200
   },
   "site": "https://kubohiroya.github.io/turbowarp-plus-editor/",
-  "siteRevision": "bf04ce65a504526da0794785d55018624965db44",
+  "siteRevision": "80933d53f294dedfec3e1ce380bc3874ebc5c264",
   "gui": "0def6f3b044fe04b173e2d442804d15360b69547",
-  "security": "0.8.3",
+  "security": "0.8.4",
   "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
   "note": "Captured from the public Editor. catalog.png chooses TurboWarp-Markdown from the public catalog. review.png opens a project that adds two extensions outside the catalog as data: URLs, one declaring 'Unsandboxed: required'; the catalog extension in the same project needs no review and is not listed."
 }
