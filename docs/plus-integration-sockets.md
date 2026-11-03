@@ -111,8 +111,8 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 
 実際の5件は3種類だった。
 
-- `controls.css`(+31) と `library.css`(+24) は、`.extension-control` / `.custom-content` / `.custom-library` / `.extended-tags` といった**新しいクラスの追加**で、同じコンポーネントのフォーク独自JSXが `styles.extensionControl` のように参照している。全域スタイルシートではなく、そのコンポーネントの変更と一緒に移すのが正しい。
-- `stage.css`(+1) は `@import "./preview-reload.css"` の1行だけ。import文はフォークに残り、差し替えの対象になるのは中身の `preview-reload.css`（259行、フォーク独自）。
+- `controls.css`(+31) と `library.css`(+24) は、`.extension-control` / `.custom-content` / `.custom-library` / `.extended-tags` といった**新しいクラスの追加**で、同じコンポーネントのフォーク独自JSXが `styles.extensionControl` のように参照している。全域スタイルシートではなく、そのコンポーネントの変更と一緒に移すのが正しい——と当時は書いたが、描く側が本家に残る形に落ち着いたので移さない（下の「いま残っている差分」）。
+- `stage.css`(+1) は `@import "./preview-reload.css"` の1行だけ。import文はフォークに残り、中身の `preview-reload.css`（259行、フォーク独自）も残す（同上）。
 - `modal.css`(+5 -2) と `data-url.css`(+1 -1) は Plus固有ではない。前者はモバイルで overlay が viewport からはみ出すのを `width/height: 100vw/100vh` で直すもの、後者は data URL を貼る textarea の高さを 5rem から 10rem にするもの。`modal.jsx` の `hideCloseButton` と `library.jsx` の `busy` と同じ「汎用変更として残すか上流へ送る」扱いにする。
 
 口を作る前に中身を読んだので、使われない仕組みをフォークに足さずに済んだ。残りの段階でも、口を開ける前にその口が運ぶ差分を読む。
