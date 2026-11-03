@@ -476,4 +476,5 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 GUIは `[data-gui-stage]` 上に配置情報をCSS変数として提供し、固有IDのスタイルは
 `site/styles/preview-reload.css` が所有する。色はGUIが既に公開するテーマ変数を参照する。
 ハッシュ済みクラス名、複製したGUI寸法、本家のビルド時変数には依存しない。
-`extension-security-dialog.css` も配信側へ移す。表示順の詳細度は保持し、旧Runtimeの互換表示も維持する。
+旧レビュー専用の `extension-security-dialog.css` は、先行した0.7.1の新UI移行で参照先がなくなったため移管しない。
+キー操作は新UIの `.twextsec-review` をホストが判定する。旧Runtimeの互換表示は維持する。
