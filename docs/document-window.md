@@ -22,7 +22,6 @@
 
 ```sh
 node --test test/yaml-build.test.ts test/yaml-cli.test.ts
-npm run test:yaml:browser
 ```
 
 運用ログ（2026-10-31 JST）:

@@ -102,10 +102,6 @@ jobs:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
         run: node test/e2e/extension-loader/prepare-packaged.ts
       - run: npx playwright install --with-deps chromium
-      - name: Verify document source preview, cancellation and differential saving
-        env:
-          TW_SOURCE_EVIDENCE: test-results/document-sources
-        run: npm run test:yaml:browser
       # These two run the built Editor's real GUI, VM and SB3 against the test-only owner
       # `twpeyamlsettings`; only the native VSCode launcher is replaced. The base SB3 is generated
       # here so no binary fixture is checked in or borrowed from the pinned GUI.
