@@ -142,7 +142,7 @@ This repository verifies the integrated Editor. Existing upstream unit tests and
 
 ## Editing embedded documents (0.2.0-rc.1)
 
-This experimental feature tracks [Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3) and [shared-package Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6). It requires `twPlusYamlEditor=1` at Editor startup and is off by default. Install Visual Studio Code and Node.js, then open the Editor through the local companion process. The shared `@kubohiroya/turbowarp-document-editor` package owns the editing UI and external-editor bridge, and the scratch-gui fork embeds it directly. This distribution pins, builds, and serves the GUI. `@kubohiroya/turbowarp-document-data` owns source persistence, document references, and provider registration; the independent `@kubohiroya/turbowarp-document-source` package owns hats, YAML icons, and shared YAML blocks. Extensions register documents, and the shared UI delegates validation and document updates to their owners. The GUI handles standard SB3 file saving.
+This feature tracks [Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3) and [shared-package Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6). It has no startup switch: a hat gets its file icon only when a registered provider owns its document, so a project without such a provider looks like upstream TurboWarp. To edit in VSCode, install Visual Studio Code and Node.js, then open the Editor through the local companion process. The shared `@kubohiroya/turbowarp-document-editor` package owns the editing UI and external-editor bridge, and the scratch-gui fork embeds it directly. This distribution pins, builds, and serves the GUI. `@kubohiroya/turbowarp-document-data` owns source persistence, document references, and provider registration; the independent `@kubohiroya/turbowarp-document-source` package owns hats, YAML icons, and shared YAML blocks. Extensions register documents, and the shared UI delegates validation and document updates to their owners. The GUI handles standard SB3 file saving.
 
 Providers live in the extensions that own their documents and use those extensions’ own validation APIs and schemas. The Editor’s browser code embeds no App or App parser, and the Editor has no App among its dependencies. Each App documents which of its projects are supported and how to migrate older ones.
 
@@ -162,7 +162,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages supports document display, conversion, and validation. Launching VSCode is available when opening the local URL above.
 
-The displayed local URL enables the startup-fixed `twPlusYamlEditor=1` flag. It is read by `readDocumentEditorFlags` from `@kubohiroya/turbowarp-document-editor`, which `site/plus-integration.js` calls once at startup.
+The displayed local URL opens the same Editor; no URL parameter is added. `site/plus-integration.js` always mounts the document editor when the fork attaches to a workspace.
 
 1. Open an SB3 containing an embedded document and select the file icon on its **Data source** hat. In the YAML text tab of the document dialog, choose **Edit in external editor**.
 2. Edit the YAML and save it in VSCode.
@@ -181,7 +181,7 @@ Invalid YAML and project switches do not overwrite the previous content. Drafts 
 
 If a storage path exceeds macOS IPC path limits, only the VSCode settings area moves automatically into a short private directory; working files stay in place. The working area’s `host.json` records the actual locations.
 
-To roll back, remove the flag and restart; restore the previous verified version if needed. Stopping the companion preserves working files.
+To roll back, revert the integration commit and redeploy, or restore the previous verified version. Stopping the companion preserves working files.
 
 Relevant checks:
 
@@ -202,7 +202,7 @@ npm run test:yaml:multi-document
 node --test test/representation-preview.browser.ts
 ```
 
-Source previews, cancellation, saving, fresh retrieval and conversion to an embedded file are tested in `@kubohiroya/turbowarp-document-editor` with its own test provider. This repository checks that they reach the built Editor: `test/e2e/turbowarp/document-source.spec.cts` opens the `twpeyamlsettings` fixture with `twPlusYamlEditor=1` alone and expects the source controls, a preview that fetches only when asked, and a save. `document-refusal.spec.cts` opens a hat whose provider is not registered and a document its owner refuses, expecting the unavailable message and no project change. Both run in `npm run test:e2e` against the built Editor.
+Source previews, cancellation, saving, fresh retrieval and conversion to an embedded file are tested in `@kubohiroya/turbowarp-document-editor` with its own test provider. This repository checks that they reach the built Editor: `test/e2e/turbowarp/document-source.spec.cts` opens the `twpeyamlsettings` fixture without any URL switch and expects the source controls, a preview that fetches only when asked, and a save; setting the removed URL switches to `0` changes nothing. `document-refusal.spec.cts` opens a hat whose provider is not registered and a document its owner refuses, expecting the unavailable message and no project change. Both run in `npm run test:e2e` against the built Editor.
 
 SB3 round-trip browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. CI runs `test:yaml:roundtrip` and `test:yaml:multi-document` against the built Editor and keeps their screenshots and `result.json` under `test-results/yaml-roundtrip/` and `test-results/yaml-multi-document/` in the `integration-evidence-*` artifact. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
 
@@ -225,7 +225,7 @@ Shared YAML blocks represent comments one line at a time and multiline strings a
 
 `turbowarp-document-data` source documents support YAML and JSON while preserving existing HTML/Markdown APIs. YAML/JSON detection is also added to the lower-level `turbowarp-named-data` package. The limited schema interpretation for structured data remains a separate contract from complete JSON Schema document validation.
 
-New document persistence, projections, and representation conversion are off by default. `twPlusYamlEditor=1` enables the Editor’s document operations; providers may read the same startup condition for their own. Owners supply each document’s conversion capabilities; unsupported extensions do not acquire conversion automatically. If an older block script has no stored original module YAML, conversion does not claim to restore the original file and its comments.
+Document persistence, projections, and representation conversion have no startup switch; they are available for documents a registered provider owns. Owners supply each document’s conversion capabilities; unsupported extensions do not acquire conversion automatically. If an older block script has no stored original module YAML, conversion does not claim to restore the original file and its comments.
 
 **View guide** opens the provider’s website in another tab. There is no separate validation button: **Convert, validate and save the displayed format** validates and applies the displayed format. VSCode actions are disabled while block edits await application to source. JSON source uses VSCode’s standard JSON support and schema associations.
 
@@ -257,11 +257,11 @@ Extensions own their previews and any switch that enables them. The Editor ships
 
 ## Local data-source migration candidate
 
-With `twPlusYamlEditor=1`, documents whose provider marks their source location as editable offer **File inside SB3** and **External URL** source choices; there is no separate flag for them. Source location is separate from the YAML text, YAML blocks, and schema-specific block representations. Document names and references are preserved. The generic label is **Data source**; a provider may supply its own label.
+Documents whose provider marks their source location as editable offer **File inside SB3** and **External URL** source choices; there is no flag for them. Source location is separate from the YAML text, YAML blocks, and schema-specific block representations. Document names and references are preserved. The generic label is **Data source**; a provider may supply its own label.
 
 After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. Fetching URL content again at runtime is the provider’s responsibility, and a provider must not silently fall back to stale cached data on failure.
 
-The new flag is off by default. `readDocumentEditorFlags` from `@kubohiroya/turbowarp-document-editor` reads it once at startup (called from `site/plus-integration.js`), and providers that support source locations read it themselves. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
+There is no startup switch; the provider decides per document. To roll back, revert the integration commit and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
 
 This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.
 

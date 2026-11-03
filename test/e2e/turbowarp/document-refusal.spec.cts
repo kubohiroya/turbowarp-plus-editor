@@ -32,7 +32,7 @@ const load = async (page, baseURL) => {
     const projectURL = new URL('static/document-refusal.sb3', baseURL).href;
     await page.route(projectURL, route => route.fulfill({status: 200, contentType: 'application/octet-stream', body: bytes}));
     const url = new URL('editor.html', baseURL);
-    url.search = new URLSearchParams({lang: 'ja', twPlusYamlEditor: '1', project_url: projectURL}).toString();
+    url.search = new URLSearchParams({lang: 'ja', project_url: projectURL}).toString();
     await page.goto(url.href);
     await approveProjectExtensions(page, [await extensionSource(bytes)], 'ja');
     await page.locator('[class*="stage-selector_stage-selector"]').click();

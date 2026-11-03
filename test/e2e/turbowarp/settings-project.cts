@@ -29,6 +29,17 @@ const settingsProject = async (edit = null) => {
         fs.rmSync(directory, {recursive: true, force: true});
     }
 };
+// The same small SB3 without any extension: nothing in it is owned by a provider.
+const plainProject = () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'twpe-plain-project-'));
+    try {
+        const base = path.join(directory, 'base.sb3');
+        run('test/fixtures/yaml-editor/base-project.ts', base);
+        return fs.readFileSync(base);
+    } finally {
+        fs.rmSync(directory, {recursive: true, force: true});
+    }
+};
 // What the security review shows and the loaded project must report back.
 const extensionSource = async bytes => {
     const JSZip = require('@turbowarp/jszip');
@@ -38,4 +49,4 @@ const extensionSource = async bytes => {
 };
 const settingsHat = 'twpeyamlsettings_embeddedYaml';
 
-module.exports = {settingsProject, extensionSource, settingsHat};
+module.exports = {settingsProject, plainProject, extensionSource, settingsHat};

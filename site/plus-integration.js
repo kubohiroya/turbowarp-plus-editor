@@ -8,7 +8,7 @@ import './styles/preview-reload.css';
  */
 
 import {
-    mountDocumentEditor, readDocumentEditorFlags, registerDocumentSourceRootHatShape
+    mountDocumentEditor, registerDocumentSourceRootHatShape
 } from '@kubohiroya/turbowarp-document-editor';
 
 import {attachScriptTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
@@ -25,19 +25,14 @@ import {installControlsDock} from './controls-dock.js';
 import getStageControls from './stage-controls.js';
 import {plusTrustedExtensions} from './trusted-extensions.js';
 
-// Resolved once when the bundle starts, as the fork did: a project cannot enable document editing
-// by being opened, and a later URL change cannot turn it on either.
-const startupFlags = readDocumentEditorFlags(typeof window === 'undefined' ? '' : window.location.search);
-
 /**
  * Build the integration from what it depends on, so a test can hand in its own. The exported
- * `plusIntegration` is this applied to the real package and the startup flags.
- * @param {object} dependencies `mountEditor` and `flags`.
+ * `plusIntegration` is this applied to the real package.
+ * @param {object} dependencies `mountEditor` and the services below.
  * @returns {object} The integration this distribution supplies.
  */
 export const createPlusIntegration = ({
     mountEditor,
-    flags,
     registerBlockShapes = registerDocumentSourceRootHatShape,
     stageControls = getStageControls,
     trustedExtensions = plusTrustedExtensions,
@@ -135,8 +130,12 @@ export const createPlusIntegration = ({
      * Attach the document editor to a workspace. The fork owns when this runs and disposes of
      * what comes back; errors are left to propagate, because the fork logs them and keeping the
      * editor open matters more than this attachment succeeding.
+     *
+     * There is no startup switch: the editor is always mounted, and a hat gets its file icon only
+     * when a registered provider owns its document, so a project without one looks like upstream.
+     * Rollback reverts this integration.
      * @param {object} context `vm`, `locale`, `document` and `getBlockly` from the fork.
-     * @returns {object|null} Something to dispose, or null when document editing is off.
+     * @returns {object} Something to dispose.
      */
     attachToWorkspace: ({vm, locale, document: hostDocument, getBlockly}) => {
         const attached = [];
@@ -144,14 +143,12 @@ export const createPlusIntegration = ({
         // app-shell builds a floating one and a control registered through it would hover over the
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
-        if (flags.embeddedYamlEditor) {
-            attached.push(mountEditor({
-                vm,
-                document: hostDocument,
-                language: locale,
-                getScratch: () => ({vm, gui: {getBlockly}})
-            }));
-        }
+        attached.push(mountEditor({
+            vm,
+            document: hostDocument,
+            language: locale,
+            getScratch: () => ({vm, gui: {getBlockly}})
+        }));
         return {
             dispose () {
                 // Each attachment is independent, so one that throws must not keep the others
@@ -170,7 +167,7 @@ export const createPlusIntegration = ({
     }
 });
 
-const integration = createPlusIntegration({mountEditor: mountDocumentEditor, flags: startupFlags});
+const integration = createPlusIntegration({mountEditor: mountDocumentEditor});
 
 /**
  * This distribution's integration, read by the fork through the module it replaced.

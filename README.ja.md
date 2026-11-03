@@ -140,7 +140,7 @@ GUIとPackagerは `site/source.json` に記録したSHAをチェックアウト�
 
 ## 組み込み文書を編集する（0.2.0-rc.1）
 
-[Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3)と[共通化Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6)に対応する試験公開機能です。起動時に `twPlusYamlEditor=1` を指定したEditorで有効になります。既定OFFです。Visual Studio CodeとNode.jsをインストールした環境で、ローカル補助プロセスからEditorを開きます。編集UIと外部エディタ連携は `@kubohiroya/turbowarp-document-editor` に分離し、scratch-guiフォークが直接組み込みます。TurboWarp-Plus-EditorはGUIの固定・ビルド・配信を担当します。原文文書の保存・文書参照・提供元登録は `@kubohiroya/turbowarp-document-data`、ハット・YAMLアイコン・共通YAMLブロックは独立した `@kubohiroya/turbowarp-document-source` に置きます。各拡張が文書を登録し、共通編集UIは所有者の検証と差分適用を呼び出します。標準のSB3ファイル保存はGUIが担当します。
+[Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3)と[共通化Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6)に対応する機能です。起動設定はありません。登録された提供元が文書を所有するハットにだけファイルアイコンが付くため、そうした提供元のない作品は上流のTurboWarpと同じ見た目です。VSCodeで編集するには、Visual Studio CodeとNode.jsをインストールした環境で、ローカル補助プロセスからEditorを開きます。編集UIと外部エディタ連携は `@kubohiroya/turbowarp-document-editor` に分離し、scratch-guiフォークが直接組み込みます。TurboWarp-Plus-EditorはGUIの固定・ビルド・配信を担当します。原文文書の保存・文書参照・提供元登録は `@kubohiroya/turbowarp-document-data`、ハット・YAMLアイコン・共通YAMLブロックは独立した `@kubohiroya/turbowarp-document-source` に置きます。各拡張が文書を登録し、共通編集UIは所有者の検証と差分適用を呼び出します。標準のSB3ファイル保存はGUIが担当します。
 
 提供元は文書を所有する各拡張に置き、その拡張の検証APIとSchemaを使用します。Editorのブラウザ用コードにはAppやそのparserを組み込まず、依存パッケージにもAppを含めません。対象となる作品と旧作品の移行手順は、各Appの文書を参照してください。
 
@@ -160,7 +160,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages上では文書の表示・変換・検証を利用できます。VSCodeを起動する操作は、上記のローカルURLで開いた場合に利用できます。
 
-表示されたローカルURLを開くと、起動時固定の `twPlusYamlEditor=1` が有効になります。読み取るのは `@kubohiroya/turbowarp-document-editor` の `readDocumentEditorFlags` で、`site/plus-integration.js` が起動時に一度だけ呼びます。
+表示されたローカルURLは同じEditorを開きます。URLパラメーターは付けません。`site/plus-integration.js` は、フォークがworkspaceへ接続するときに常に文書エディターをマウントします。
 
 1. 組み込み文書のSB3をEditorで開き、「データソース」ハットブロックのファイルアイコンを押します。文書ダイアログのYAMLテキストタブで「外部エディタで編集」を選びます。
 2. 開いたYAMLを編集してVSCodeで保存します。
@@ -179,7 +179,7 @@ YAMLが不正な場合や別作品へ切り替えた場合は、古い内容を�
 
 macOSの内部通信パス上限を超える保存先では、作業ファイルを移動せず、VSCode設定領域だけを短い専用ディレクトリへ自動分離します。実際の保存先は作業領域の `host.json` に記録します。
 
-切戻しはフラグを外して再起動し、必要に応じて直前の検証済み版へ戻します。補助プロセスを停止しても作業ファイルは保持します。
+切戻しは統合のコミットをrevertして配信し直すか、直前の検証済み版へ戻します。補助プロセスを停止しても作業ファイルは保持します。
 
 関連検証:
 
@@ -200,7 +200,7 @@ npm run test:yaml:multi-document
 node --test test/representation-preview.browser.ts
 ```
 
-参照元のプレビュー・取消・保存・再取得・埋め込みファイルへの変換は、`@kubohiroya/turbowarp-document-editor` が自身の試験用提供元で検証します。本リポジトリは、それがビルドしたEditorまで届くことを確かめます。`test/e2e/turbowarp/document-source.spec.cts` は `twpeyamlsettings` のfixtureを `twPlusYamlEditor=1` だけで開き、参照元の切替が現れること、明示的にプレビューするまで何も取得しないこと、保存できることを見ます。`document-refusal.spec.cts` は提供元が登録されていないハットと、所有者が開くのを拒む文書を開いて、「この文書は現在利用できません。」が出て作品が変わらないことを見ます。どちらも `npm run test:e2e` でビルドしたEditorに対して実行します。
+参照元のプレビュー・取消・保存・再取得・埋め込みファイルへの変換は、`@kubohiroya/turbowarp-document-editor` が自身の試験用提供元で検証します。本リポジトリは、それがビルドしたEditorまで届くことを確かめます。`test/e2e/turbowarp/document-source.spec.cts` は `twpeyamlsettings` のfixtureをURLの切替なしで開き、参照元の切替が現れること、明示的にプレビューするまで何も取得しないこと、保存できることを見ます。廃止したURLの切替を `0` にしても何も変わらないことも確かめます。`document-refusal.spec.cts` は提供元が登録されていないハットと、所有者が開くのを拒む文書を開いて、「この文書は現在利用できません。」が出て作品が変わらないことを見ます。どちらも `npm run test:e2e` でビルドしたEditorに対して実行します。
 
 SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。CIはビルドしたEditorで `test:yaml:roundtrip` と `test:yaml:multi-document` を実行し、画面と `result.json` を `integration-evidence-*` の `test-results/yaml-roundtrip/`・`test-results/yaml-multi-document/` に残します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
 
@@ -223,7 +223,7 @@ SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入�
 
 `turbowarp-document-data` の原文文書はYAMLとJSONを利用でき、HTML/Markdownの既存APIは維持します。下位の文書形式判定を担当する `turbowarp-named-data` にもYAML/JSONを追加します。構造化データの既存の限定Schema解釈と、文書の完全なJSON Schema検証は別の契約として維持します。
 
-新しい文書保存・投影・表現変換は既定OFFです。`twPlusYamlEditor=1` でEditorの文書操作を有効にします。提供元も同じ起動条件で自身の文書操作を切り替えられます。各文書の変換能力は所有者が提供し、未対応の拡張へ変換機能を追加することはありません。旧ブロック表現に元のモジュールYAMLが保存されていない場合、コメント等を含む元ファイルを復元したとは扱いません。
+文書保存・投影・表現変換に起動設定はなく、登録された提供元が所有する文書で利用できます。各文書の変換能力は所有者が提供し、未対応の拡張へ変換機能を追加することはありません。旧ブロック表現に元のモジュールYAMLが保存されていない場合、コメント等を含む元ファイルを復元したとは扱いません。
 
 「ガイドを参照」は提供元のWebサイトを別タブで開きます。独立した検証ボタンは置かず、右下の「表示されている形式に変換して検証・保存」で表示中の形式を検証して反映します。ブロック表現を編集中のVSCode操作は、原文へ反映するまで無効になります。原文がJSONの場合、VSCode標準のJSON支援とSchema関連付けを使います。
 
@@ -261,11 +261,11 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 
 ## データソース4形式のローカル移行候補
 
-`twPlusYamlEditor=1` を起動時に指定すると、提供元が参照元を変更可能としている文書で「SB3内のファイル」「外部URL」を選択できます。参照元のための別の起動設定はありません。参照元とYAMLテキスト/YAMLブロック/スキーマ専用ブロックの表現を分けて扱います。文書の名前とreferenceは保持されます。汎用の表示名は「データソース」で、提供元が独自の表示名を指定することもできます。
+提供元が参照元を変更可能としている文書では「SB3内のファイル」「外部URL」を選択できます。参照元のための起動設定はありません。参照元とYAMLテキスト/YAMLブロック/スキーマ専用ブロックの表現を分けて扱います。文書の名前とreferenceは保持されます。汎用の表示名は「データソース」で、提供元が独自の表示名を指定することもできます。
 
 参照元変更後は取得してプレビューし、画面下の保存で同じ検証済み候補を反映します。キャンセルは作品を変更しません。外部URLはCORSで取得できるHTTPSを指定します。外部の内容を編集・ブロック化するには、参照元を「SB3内のファイル」へ変更・保存して取り込みます。遠隔サイトへの書き戻しは行いません。実行時のURL再取得は提供元が担当し、失敗時に古いcacheへ黙って戻ってはいけません。
 
-新フラグは既定OFFです。`@kubohiroya/turbowarp-document-editor` の `readDocumentEditorFlags` が起動時に一度だけ読み取り（呼び出しは `site/plus-integration.js`）、参照元の切り替えに対応する提供元はそれぞれ自身で読み取ります。切戻しは新フラグを外して再起動し、元SB3を利用します。現在の依存はローカル候補への参照であり、公開版への参照更新・新npm/リポジトリの公開は別途行います。
+起動設定はなく、提供元が文書ごとに決めます。切戻しは統合のコミットをrevertし、元SB3を利用します。現在の依存はローカル候補への参照であり、公開版への参照更新・新npm/リポジトリの公開は別途行います。
 
 この候補は、直前の未公開UI修正（プレビューの重なり表示防止、タブ内の保存形式表示、外部エディタのフローティングボタン、ガイド/Schemaリンク）を引き継いでいます。
 
