@@ -17,10 +17,10 @@
   "packagerRevision": "c115bdf525c5f49f0fb689a21b335ccb70fc22d2",
   "coreVersion": "0.7.0",
   "documentEditorRepository": "kubohiroya/turbowarp-document-editor",
-  "documentEditorRevision": "9be165cc5ade0a9722cea79fe58425a54cce9433",
-  "documentEditorVersion": "0.1.0-rc.1",
+  "documentEditorRevision": "5ad4ad1929651372710b025d85f2eb7850ec8d0d",
+  "documentEditorVersion": "0.1.0-rc.2",
   "documentEditorSource": "npm",
-  "documentEditorIntegrity": "sha512-vmzt87LZpsHHtUH19x/JEbULQAEPFanDGqTuO/356ozt+KDciVAxsv3bpp+Jcjq+sbdu7Mdle+8T8NWPXGfsfw==",
+  "documentEditorIntegrity": "sha512-gy4VwGlHDrESmYMvYpSbLdX6If3UIfANYDhwHgLA2S0ZGpDxsB3W49x38gP/eeEXBzKe73XZJdy7nUatL4yGzw==",
   "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
   "scriptTransferRevision": "6f6f9c3f0e7a6c601a8046777ae8289968d36800",
   "scriptTransferVersion": "0.1.0"

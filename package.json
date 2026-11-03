@@ -98,7 +98,7 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
-    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.1",
+    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.2",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.1",
     "@turbowarp/jszip": "^3.12.0",
     "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#6f6f9c3f0e7a6c601a8046777ae8289968d36800"
@@ -107,8 +107,5 @@
     "turbowarp-plus-editor-yaml": "dist/scripts/yaml-editor/cli.js",
     "turbowarp-plus-editor-sb3-format": "dist/scripts/sb3-save-format/cli.js"
   },
-  "types": "./dist/src/index.d.ts",
-  "overrides": {
-    "@kubohiroya/turbowarp-document-source": "$@kubohiroya/turbowarp-document-source"
-  }
+  "types": "./dist/src/index.d.ts"
 }
