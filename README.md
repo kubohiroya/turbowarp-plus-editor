@@ -148,7 +148,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages supports document display, conversion, and validation. Launching VSCode is available when opening the local URL above.
 
-The displayed local URL enables the startup-fixed `twPlusYamlEditor=1` flag. Its reader is `config/feature-flags.js` in the scratch-gui fork.
+The displayed local URL enables the startup-fixed `twPlusYamlEditor=1` flag. It is read by `readDocumentEditorFlags` from `@kubohiroya/turbowarp-document-editor`, which `site/plus-integration.js` calls once at startup.
 
 1. Open an SB3 containing an embedded document and select the file icon on its **Data source** hat. In the YAML text tab of the document dialog, choose **Edit in external editor**.
 2. Edit the YAML and save it in VSCode.
@@ -247,7 +247,7 @@ Launching with `twPlusYamlEditor=1&twPlusDocumentSource=1` enables **File inside
 
 After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. Fetching URL content again at runtime is the provider’s responsibility, and a provider must not silently fall back to stale cached data on failure.
 
-The new flag is off by default. The scratch-gui fork reads it in `config/feature-flags.js`, and providers that support source locations read it themselves. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
+The new flag is off by default. `readDocumentEditorFlags` from `@kubohiroya/turbowarp-document-editor` reads it once at startup (called from `site/plus-integration.js`), and providers that support source locations read it themselves. To roll back, remove the new flag, restart, and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
 
 This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.
 

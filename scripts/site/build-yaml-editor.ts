@@ -16,7 +16,9 @@ async function packageMetadata(packageName, entryName = packageName) {
         license: manifest.license, localOnly: Object.values(manifest.dependencies || {}).some(value => typeof value === 'string' && /^(?:file:|link:)/u.test(value))}};
 }
 
-// The GUI owns mounting and bundling. The distribution records provenance and licenses only.
+// This distribution mounts the editor (`site/plus-integration.js`, through the fork's
+// `attachToWorkspace` socket) and bundles it (`withDocumentEditorWebpack4` in
+// `scripts/site/webpack.config.cts`). This records which packages went in and their licenses.
 export async function buildDocumentEditorMetadata(output, prefix = '/turbowarp-plus-editor/') {
     if (prefix !== '/turbowarp-plus-editor/') throw new TypeError('Use the canonical Editor prefix.');
     const packages = await Promise.all([
@@ -33,7 +35,7 @@ export async function buildDocumentEditorMetadata(output, prefix = '/turbowarp-p
         if (!names.includes('LICENSE')) throw new Error(`${owner.metadata.package} ships no LICENSE`);
         notices.push(...names.map(name => `notices/${label}-${name}`));
     }
-    const metadata = {mountOwner: 'scratch-gui', packages: packages.map(owner => owner.metadata), notices};
+    const metadata = {mountOwner: 'turbowarp-plus-editor', packages: packages.map(owner => owner.metadata), notices};
     await fs.writeFile(path.join(destination, 'build-info.json'), JSON.stringify(metadata, null, 2) + '\n');
     const htmlPath = path.join(output, 'editor.html');
     const html = await fs.readFile(htmlPath, 'utf8');
