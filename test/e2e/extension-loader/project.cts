@@ -11,11 +11,17 @@ const bytes = Buffer.from(source);
 const digest = createHash('sha256').update(bytes).digest('hex');
 const remoteURL = 'https://plus-fixture.invalid/extension.js';
 async function project({type = 'embedded-file', code = bytes, sha256 = digest, id = 'plusfixture', url = remoteURL,
-    schemaVersion = 1, extraManifest = {}, extensionURLs = {}} = {}) {
+    schemaVersion = 1, extraManifest = {}, extensionURLs = {}, source = undefined} = {}) {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"></svg>';
     const assetId = createHash('md5').update(svg).digest('hex');
+    // `embedded-data` carries its bytes as the address a standard TurboWarp host loads; `source`
+    // writes a manifest source as given, for spellings this helper does not build.
+    if (type === 'embedded-data' && !extensionURLs[id]) {
+        extensionURLs = {...extensionURLs, [id]: `data:text/javascript;base64,${code.toString('base64')}`};
+    }
     const spec = {id, execution: 'unsandboxed', sha256,
-        source: type.startsWith('remote-') ? {type, url} : {type, path: 'extensions/plusfixture.js'}};
+        source: source || (type.startsWith('remote-') ? {type, url} :
+            type === 'embedded-data' ? {type} : {type, path: 'extensions/plusfixture.js'})};
     const json = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, comments: {},
         blocks: {fixture: {opcode: `${id}_value`, next: null, parent: null, inputs: {}, fields: {},
             shadow: false, topLevel: true, x: 40, y: 40}}, currentCostume: 0,
