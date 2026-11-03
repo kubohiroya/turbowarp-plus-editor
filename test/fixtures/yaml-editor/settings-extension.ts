@@ -2,7 +2,7 @@
 // `locked`, which the owner lists but refuses to open, so the refusal can be checked through the
 // built Editor. The owner also marks its source locations editable, so the Editor offers the
 // source controls for its documents.
-import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu, getDocumentSourceRegistry} from '@kubohiroya/turbowarp-document-source';
+import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu, getDocumentSourceRegistry} from '@kubohiroya/turbowarp-document-data/document-source';
 import YAML from 'yaml';
 import {Ajv2020} from 'ajv/dist/2020.js';
 

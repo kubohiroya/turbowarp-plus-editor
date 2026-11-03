@@ -10,7 +10,7 @@ const refusal = 'The settings owner keeps this document locked.';
 const project = page => page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}));
 
 const lockedProject = () => settingsProject(async value => {
-    const {createEmbeddedYamlMarker} = await import('@kubohiroya/turbowarp-document-source');
+    const {createEmbeddedYamlMarker} = await import('@kubohiroya/turbowarp-document-data/document-source');
     value.extensionStorage.twpeyamlsettings.documents.locked = 'state: locked\n';
     const stage = value.targets.find(target => target.isStage);
     stage.blocks['locked-hat'] = createEmbeddedYamlMarker({opcode: settingsHat,
