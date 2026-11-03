@@ -72,3 +72,11 @@ GUIのcontrols viewは任意の `afterStop` nodeを配置し、containerは既�
 `Scratch.gui.stageControls` と同じVM単位のserviceを使い、登録APIと表示条件は維持します。
 GUI単体は任意の描画部品がなければ標準の操作列を表示します。CSSはGUIの公開テーマ変数を使います。
 切戻しはGUI/hostを移管前の互換なpinへ戻して行います。作品の形式は変更しません。
+
+## Issue #127：拡張一覧の追加レイアウトをホストで所有する
+
+`libraryTab.classes` がlibrary/content/tagsのCSS Modulesクラスを提供し、GUIは任意の `customClasses` として受け取ります。
+追加の幅・余白・スクロール規則は `site/extension-library/plus-library.css` が所有します。
+ホストのrootと追加クラスを組み合わせた規則で、GUIの基本レイアウトとの注入順に依存しません。
+標準の検索・タグ選択・busy・closeの状態管理はGUIに残します。
+切戻しはGUIの受渡しとホストCSSを既知のpin組合せへ戻して行います。
