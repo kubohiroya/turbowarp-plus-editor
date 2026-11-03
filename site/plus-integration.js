@@ -15,7 +15,7 @@ import {attachScriptTransfer, stageTransferMenu, finalizeTransferMenu} from '@ku
 
 import {plusBlockEditor} from './block-editor/editor.js';
 import blockEditorTranslations from './block-editor/translations.json';
-import {installEditorExtensionHost} from './extension-host/editor-host.js';
+import {installProjectToolsHost, projectToolsOwnKeyEvent} from './project-tools/index.js';
 import {plusSecurityReview} from './extension-host/review.js';
 import {extensionLoadErrors} from './extension-host/load-errors.js';
 import {plusLibraryTab} from './extension-library/tab.js';
@@ -36,7 +36,7 @@ export const createPlusIntegration = ({
     registerBlockShapes = registerDocumentSourceRootHatShape,
     stageControls = getStageControls,
     trustedExtensions = plusTrustedExtensions,
-    installExtensionHost = installEditorExtensionHost,
+    installExtensionHost = installProjectToolsHost,
     libraryTab = plusLibraryTab,
     projectPackager = plusProjectPackager,
     securityReview = plusSecurityReview,
@@ -86,7 +86,7 @@ export const createPlusIntegration = ({
      * @param {object} event The key event the GUI received.
      * @returns {boolean} True when the editor should not act on it.
      */
-    shouldIgnoreKeyEvent: event => securityReview.ownsKeyEvent(event),
+    shouldIgnoreKeyEvent: event => projectToolsOwnKeyEvent(event) || securityReview.ownsKeyEvent(event),
     /**
      * The form-based block editor: the service that edits one VM's blocks, the editors attached to
      * a workspace, and the dialog. The GUI supplies its translations, its workspace, its modal

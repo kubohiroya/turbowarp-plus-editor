@@ -1,0 +1,37 @@
+.dialog {
+    box-sizing: border-box;
+    width: min(640px, 94vw);
+    max-height: 90vh;
+    overflow: auto;
+    border: 1px solid var(--ui-black-transparent, #64748b);
+    border-radius: 12px;
+    padding: 24px;
+    color: var(--text-primary, #172033);
+    background: var(--ui-primary, white);
+    font: 14px/1.5 system-ui, sans-serif;
+}
+.dialog::backdrop { background: #111827a6; }
+.dialog h2 { margin-top: 0; }
+.dialog label { display: block; margin: 12px 0; font-weight: 600; }
+.dialog input, .dialog textarea {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 8px;
+    border: 1px solid #64748b;
+    border-radius: 5px;
+    color: inherit;
+    background: var(--ui-secondary, #f7f8fa);
+    font: inherit;
+}
+.dialog textarea { resize: vertical; }
+.dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; }
+.dialog dd { margin: 0; }
+.dialog a { color: var(--looks-secondary, #1d4ed8); text-decoration: underline; }
+.dialog button { padding: 8px 16px; border: 1px solid #64748b; border-radius: 5px;
+    color: inherit; background: var(--ui-secondary, #f7f8fa); font: inherit; cursor: pointer; }
+.dialog button:disabled { opacity: .5; cursor: default; }
+.dialog :focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+.preview { white-space: pre-wrap; overflow-wrap: anywhere; }
