@@ -433,9 +433,11 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 
 | | ファイル | 行 |
 | --- | --- | --- |
-| 全体 | 80 | +4,008 / -56 |
-| lockfile を除く | 79 | +3,363 / -51 |
+| 全体 | 82 | +3,937 / -57 |
+| lockfile を除く | 81 | +3,292 / -52 |
 | うち本家ファイルへの改変 | 33 | — |
+
+`git diff upstream/develop origin/develop` の実測で、[kubohiroya/scratch-gui#132](https://github.com/kubohiroya/scratch-gui/pull/132)（`develop` の `a98d56cd9`）のあとの値。**この数は上流が動くだけでも変わる**——いまフォークは上流より20コミット遅れており、`package.json` / `webpack.config.js` / `addons/api.js` / `tw-security-manager.jsx` の4件は上流側の変更も混ざっている。数そのものより、下の内訳を見ること。
 
 **「23件の割り当て」の本家ファイルは、すべて口の呼び出しだけになった。** 読んで確かめた: `reducers/modals.js`・`lib/themes/gui/light.js`・`lib/blocks.js`・`lib/vm-listener-hoc.jsx`・`containers/extension-library.jsx`・`containers/controls.jsx`・`addons/api.js`・`lib/tw-extension-gui-api.js` のどれも、足されている行は `hostIntegration()` と口の関数を import して呼ぶ数行である。つまり残っている33件の改変は、**設計どおり残すもの**で、消す対象ではない。
 
