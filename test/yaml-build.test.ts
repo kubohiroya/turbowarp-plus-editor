@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import {buildDocumentEditorMetadata} from '../scripts/site/build-yaml-editor.ts';
 
-test('distribution keeps licenses and provenance while GUI owns the document editor bootstrap', async () => {
+test('distribution keeps licenses and provenance and records that it mounts the document editor', async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twpe-document-build-'));
     try {
         const html = '<!doctype html><html><head><title>Editor</title><script src="gui.js"></script></head><body><div id="app"></div></body></html>';
@@ -15,7 +15,7 @@ test('distribution keeps licenses and provenance while GUI owns the document edi
         const built = await buildDocumentEditorMetadata(directory);
         await buildDocumentEditorMetadata(directory);
         assert.equal(await fs.readFile(path.join(directory, 'editor.html'), 'utf8'), html);
-        assert.equal(built.mountOwner, 'scratch-gui');
+        assert.equal(built.mountOwner, 'turbowarp-plus-editor');
         assert.equal(built.packages.length, 3);
         for (const name of ['document-editor', 'document-source', 'document-data']) {
             const metadata = built.packages.find(item => item.package === `@kubohiroya/turbowarp-${name}`);

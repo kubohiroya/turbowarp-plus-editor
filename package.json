@@ -65,6 +65,7 @@
     "test:yaml": "node --test test/yaml-build.test.ts test/yaml-cli.test.ts",
     "test:yaml:browser": "node --test test/document-sources.browser.ts",
     "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.ts",
+    "test:yaml:multi-document": "node --test test/yaml-multi-document.browser.ts",
     "editor:sb3-format": "node scripts/sb3-save-format/cli.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",

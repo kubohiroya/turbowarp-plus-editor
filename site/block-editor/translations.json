@@ -1,0 +1,40 @@
+{
+  "ja": {
+    "tw.blockEditor.open": "ブロックを編集",
+    "tw.blockEditor.title": "ブロックを編集",
+    "tw.blockEditor.conflict": "ブロックが変更されています。閉じて、もう一度開いてください。",
+    "tw.blockEditor.failed": "ブロックを編集できませんでした。閉じて、もう一度試してください。",
+    "tw.blockEditor.cancel": "キャンセル",
+    "tw.blockEditor.save": "保存",
+    "tw.blockEditor.saving": "保存中…",
+    "tw.blockEditor.saveAll": "すべて保存",
+    "tw.blockEditor.structuralNode": "このブロックにフォームはありません。内側のブロックは編集対象に含まれます。",
+    "tw.blockEditor.structureError": "不正な階層、または500ブロック・深さ32の上限超過のため開けません。保存は行われていません。",
+    "tw.blockEditor.fixed.reset": "リセット",
+    "tw.blockEditor.fixed.readOnly": "この入力は編集できません。",
+    "tw.blockEditor.fixed.unverified": "式の実行時の有効性は未検証です。",
+    "tw.blockEditor.fixed.currentValue": "現在の値",
+    "tw.blockEditor.fixed.colorPicker": "色を選択",
+    "tw.blockEditor.fixed.invalidValue": "保存する前に値を確認してください。",
+    "tw.blockEditor.fixed.inactiveDraft": "非表示の編集内容はこの画面で保持されます。非表示のまま保存しても反映されません。"
+  },
+  "en": {
+    "tw.blockEditor.open": "Edit block",
+    "tw.blockEditor.title": "Edit block",
+    "tw.blockEditor.conflict": "This block changed. Close this dialog and open it again.",
+    "tw.blockEditor.failed": "The block could not be edited. Close this dialog and try again.",
+    "tw.blockEditor.cancel": "Cancel",
+    "tw.blockEditor.save": "Save",
+    "tw.blockEditor.saving": "Saving…",
+    "tw.blockEditor.saveAll": "Save all",
+    "tw.blockEditor.structuralNode": "No form for this block; its nested blocks are included.",
+    "tw.blockEditor.structureError": "This hierarchy is invalid or exceeds 500 blocks or 32 levels. No blocks were saved.",
+    "tw.blockEditor.fixed.reset": "Reset",
+    "tw.blockEditor.fixed.readOnly": "This input cannot be edited safely.",
+    "tw.blockEditor.fixed.unverified": "The expression is retained without evaluation. Its runtime validity has not been checked.",
+    "tw.blockEditor.fixed.currentValue": "Current value",
+    "tw.blockEditor.fixed.colorPicker": "color picker",
+    "tw.blockEditor.fixed.invalidValue": "Check this value before saving.",
+    "tw.blockEditor.fixed.inactiveDraft": "Hidden edits are retained in this dialog and will not be saved while hidden."
+  }
+}

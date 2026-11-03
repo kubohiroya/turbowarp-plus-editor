@@ -26,6 +26,7 @@ import {attachScriptTransfer, stageTransferMenu, finalizeTransferMenu} from '@ku
 import {readStartupFeatureFlags} from '../config/feature-flags.ts';
 
 import {plusBlockEditor} from './block-editor/editor.js';
+import blockEditorTranslations from './block-editor/translations.json';
 import {installEditorExtensionHost} from './extension-host/editor-host.js';
 import {plusSecurityReview} from './extension-host/review.js';
 import {plusLibraryTab} from './extension-library/tab.js';
@@ -108,6 +109,13 @@ export const createPlusIntegration = ({
      * frame and its palette, because those are its own.
      */
     blockEditor,
+    translations: blockEditorTranslations,
+    themeTokens: {
+        light: {'block-editor-error-border': '#c62828', 'block-editor-error-text': '#a61b1b',
+            'block-editor-error-tint': 'rgba(198, 40, 40, 0.08)'},
+        dark: {'block-editor-error-border': '#ff8a8a', 'block-editor-error-text': '#ffb3b3',
+            'block-editor-error-tint': 'rgba(255, 138, 138, 0.12)'}
+    },
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
      *
