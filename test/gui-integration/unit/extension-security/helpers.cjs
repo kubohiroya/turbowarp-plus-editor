@@ -28,7 +28,9 @@ for (const extension of ['.svg', '.png', '.jpg', '.wav', '.gif']) {
 }
 const resolve = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, ...rest) {
-    if (parent?.filename.startsWith(hostRoot)) {
+    const filename = parent?.filename || '';
+    // Do not redirect the GUI's own resolver when its checkout lives inside this repository.
+    if (filename.startsWith(`${hostRoot}/site/`) || filename.startsWith(`${hostRoot}/test/`)) {
         if (request.startsWith('../../../src/')) {
             const relative = request.slice('../../../src/'.length);
             const moved = path.join(hostRoot, 'site/gui-integration', relative);
