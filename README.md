@@ -202,7 +202,7 @@ npm run test:yaml:multi-document
 node --test test/representation-preview.browser.ts
 ```
 
-Source previews, cancellation, saving, fresh retrieval and conversion to an embedded file are tested in `@kubohiroya/turbowarp-document-editor` with its own test provider. This repository checks that they reach the built Editor: `test/e2e/turbowarp/document-source.spec.cts` opens the `twpeyamlsettings` fixture with and without `twPlusDocumentSource=1`, and `document-refusal.spec.cts` opens a hat whose provider is not registered and a document its owner refuses, expecting the unavailable message and no project change. Both run in `npm run test:e2e` against the built Editor.
+Source previews, cancellation, saving, fresh retrieval and conversion to an embedded file are tested in `@kubohiroya/turbowarp-document-editor` with its own test provider. This repository checks that they reach the built Editor: `test/e2e/turbowarp/document-source.spec.cts` opens the `twpeyamlsettings` fixture with `twPlusYamlEditor=1` alone and expects the source controls, a preview that fetches only when asked, and a save. `document-refusal.spec.cts` opens a hat whose provider is not registered and a document its owner refuses, expecting the unavailable message and no project change. Both run in `npm run test:e2e` against the built Editor.
 
 SB3 round-trip browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. CI runs `test:yaml:roundtrip` and `test:yaml:multi-document` against the built Editor and keeps their screenshots and `result.json` under `test-results/yaml-roundtrip/` and `test-results/yaml-multi-document/` in the `integration-evidence-*` artifact. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
 
@@ -257,7 +257,7 @@ Extensions own their previews and any switch that enables them. The Editor ships
 
 ## Local data-source migration candidate
 
-Launching with `twPlusYamlEditor=1&twPlusDocumentSource=1` enables **File inside SB3** and **External URL** source choices for compatible document providers. Source location is separate from the YAML text, YAML blocks, and schema-specific block representations. Document names and references are preserved. The generic label is **Data source**; a provider may supply its own label.
+With `twPlusYamlEditor=1`, documents whose provider marks their source location as editable offer **File inside SB3** and **External URL** source choices; there is no separate flag for them. Source location is separate from the YAML text, YAML blocks, and schema-specific block representations. Document names and references are preserved. The generic label is **Data source**; a provider may supply its own label.
 
 After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. Fetching URL content again at runtime is the provider’s responsibility, and a provider must not silently fall back to stale cached data on failure.
 

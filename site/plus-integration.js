@@ -149,7 +149,6 @@ export const createPlusIntegration = ({
                 vm,
                 document: hostDocument,
                 language: locale,
-                documentSources: flags.documentSources,
                 getScratch: () => ({vm, gui: {getBlockly}})
             }));
         }

@@ -1,7 +1,7 @@
 // Test-only owner: two same-named YAML files, no App code or storage. A project may add a third,
 // `locked`, which the owner lists but refuses to open, so the refusal can be checked through the
-// built Editor. The owner also accepts source locations, which the Editor offers only when
-// `twPlusDocumentSource=1` is set.
+// built Editor. The owner also marks its source locations editable, so the Editor offers the
+// source controls for its documents.
 import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu, getDocumentSourceRegistry} from '@kubohiroya/turbowarp-document-source';
 import YAML from 'yaml';
 import {Ajv2020} from 'ajv/dist/2020.js';

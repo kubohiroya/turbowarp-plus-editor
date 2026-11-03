@@ -200,7 +200,7 @@ npm run test:yaml:multi-document
 node --test test/representation-preview.browser.ts
 ```
 
-参照元のプレビュー・取消・保存・再取得・埋め込みファイルへの変換は、`@kubohiroya/turbowarp-document-editor` が自身の試験用提供元で検証します。本リポジトリは、それがビルドしたEditorまで届くことを確かめます。`test/e2e/turbowarp/document-source.spec.cts` は `twpeyamlsettings` のfixtureを `twPlusDocumentSource=1` の有無で開き、`document-refusal.spec.cts` は提供元が登録されていないハットと、所有者が開くのを拒む文書を開いて、「この文書は現在利用できません。」が出て作品が変わらないことを見ます。どちらも `npm run test:e2e` でビルドしたEditorに対して実行します。
+参照元のプレビュー・取消・保存・再取得・埋め込みファイルへの変換は、`@kubohiroya/turbowarp-document-editor` が自身の試験用提供元で検証します。本リポジトリは、それがビルドしたEditorまで届くことを確かめます。`test/e2e/turbowarp/document-source.spec.cts` は `twpeyamlsettings` のfixtureを `twPlusYamlEditor=1` だけで開き、参照元の切替が現れること、明示的にプレビューするまで何も取得しないこと、保存できることを見ます。`document-refusal.spec.cts` は提供元が登録されていないハットと、所有者が開くのを拒む文書を開いて、「この文書は現在利用できません。」が出て作品が変わらないことを見ます。どちらも `npm run test:e2e` でビルドしたEditorに対して実行します。
 
 SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。CIはビルドしたEditorで `test:yaml:roundtrip` と `test:yaml:multi-document` を実行し、画面と `result.json` を `integration-evidence-*` の `test-results/yaml-roundtrip/`・`test-results/yaml-multi-document/` に残します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
 
@@ -261,7 +261,7 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 
 ## データソース4形式のローカル移行候補
 
-`twPlusYamlEditor=1&twPlusDocumentSource=1` を起動時に指定すると、互換性を持つ提供元の文書で「SB3内のファイル」「外部URL」を選択できます。参照元とYAMLテキスト/YAMLブロック/スキーマ専用ブロックの表現を分けて扱います。文書の名前とreferenceは保持されます。汎用の表示名は「データソース」で、提供元が独自の表示名を指定することもできます。
+`twPlusYamlEditor=1` を起動時に指定すると、提供元が参照元を変更可能としている文書で「SB3内のファイル」「外部URL」を選択できます。参照元のための別の起動設定はありません。参照元とYAMLテキスト/YAMLブロック/スキーマ専用ブロックの表現を分けて扱います。文書の名前とreferenceは保持されます。汎用の表示名は「データソース」で、提供元が独自の表示名を指定することもできます。
 
 参照元変更後は取得してプレビューし、画面下の保存で同じ検証済み候補を反映します。キャンセルは作品を変更しません。外部URLはCORSで取得できるHTTPSを指定します。外部の内容を編集・ブロック化するには、参照元を「SB3内のファイル」へ変更・保存して取り込みます。遠隔サイトへの書き戻しは行いません。実行時のURL再取得は提供元が担当し、失敗時に古いcacheへ黙って戻ってはいけません。
 

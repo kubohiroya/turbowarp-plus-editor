@@ -12,7 +12,7 @@ const service = () => ({
     clear: () => {}
 });
 
-const fixture = (flags: {embeddedYamlEditor: boolean; documentSources?: boolean}) => {
+const fixture = (flags: {embeddedYamlEditor: boolean}) => {
     const mounted: Record<string, unknown>[] = [];
     const disposals: string[] = [];
     const integration = createPlusIntegration({
@@ -50,13 +50,12 @@ test('document editing stays off unless the startup flag enabled it', () => {
 });
 
 test('the editor is mounted with the VM, the locale and the document the fork passed', async () => {
-    const {integration, mounted, disposals} = fixture({embeddedYamlEditor: true, documentSources: true});
+    const {integration, mounted, disposals} = fixture({embeddedYamlEditor: true});
     const vm = {};
     const attachment = integration.attachToWorkspace(context(vm));
     assert.equal(mounted.length, 1);
     assert.equal(mounted[0]!.vm, vm);
     assert.equal(mounted[0]!.language, 'ja');
-    assert.equal(mounted[0]!.documentSources, true);
     const getScratch = mounted[0]!.getScratch as () => {vm: object; gui: {getBlockly: () => Promise<unknown>}};
     assert.equal(getScratch().vm, vm);
     assert.deepEqual(await getScratch().gui.getBlockly(), {blockly: true});
@@ -64,10 +63,12 @@ test('the editor is mounted with the VM, the locale and the document the fork pa
     assert.deepEqual(disposals, ['editor']);
 });
 
-test('the source data forms follow their own flag', () => {
-    const {integration, mounted} = fixture({embeddedYamlEditor: true, documentSources: false});
+// Whether a document's source location can be changed is the provider's decision, made inside the
+// document editor; the Editor passes no flag of its own for it.
+test('the editor is mounted without a source-location flag', () => {
+    const {integration, mounted} = fixture({embeddedYamlEditor: true});
     integration.attachToWorkspace(context());
-    assert.equal(mounted[0]!.documentSources, false);
+    assert.equal('documentSources' in mounted[0]!, false);
 });
 
 // The real integration is the same shape, built from the package and the startup flags.
@@ -114,7 +115,7 @@ test('a dock already on the document is left as it is', () => {
 test('every attachment is released even when one throws', () => {
     const released: string[] = [];
     const integration = createPlusIntegration({
-        flags: {embeddedYamlEditor: true, documentSources: true},
+        flags: {embeddedYamlEditor: true},
         mountEditor: () => ({dispose () {
             released.push('editor');
             throw new Error('editor dispose failed');

@@ -2,8 +2,9 @@ const {test, expect, approveProjectExtensions} = require('./fixtures.cts');
 const {settingsProject, extensionSource, settingsHat} = require('./settings-project.cts');
 
 // Source locations reach the built Editor through the same socket as the document editor
-// (`attachToWorkspace` passing `documentSources`), and only with `twPlusDocumentSource=1` (#27).
-// The owner is the test-only `twpeyamlsettings`, which accepts source locations. What a fetch may
+// (`attachToWorkspace`), with `twPlusYamlEditor=1` alone: whether a document's location can be
+// changed is its provider's decision, not a startup flag (#27). The owner is the test-only
+// `twpeyamlsettings`, which marks its source locations editable. What a fetch may
 // do, cancellation and reuse of the previewed source are the document editor's own tests; this only
 // shows that the controls arrive, that a preview goes through the real VM untouched, and that a
 // save patches the real VM.
@@ -40,10 +41,10 @@ const openDocument = async page => {
     return dialog;
 };
 
-test('with the source flag the dialog offers source locations and previews a URL without changing the project', async ({page, baseURL, evidence}, testInfo) => {
+test('the dialog offers source locations and previews a URL without changing the project', async ({page, baseURL, evidence}, testInfo) => {
     const bytes = await settingsProject();
     const {projectURL, requests} = await prepare(page, baseURL, bytes);
-    await open(page, baseURL, projectURL, {twPlusYamlEditor: '1', twPlusDocumentSource: '1'}, await extensionSource(bytes));
+    await open(page, baseURL, projectURL, {twPlusYamlEditor: '1'}, await extensionSource(bytes));
     const before = await project(page);
 
     evidence.stage('source-controls');
@@ -72,17 +73,21 @@ test('with the source flag the dialog offers source locations and previews a URL
     expect(requests).toEqual([sourceURL]);
 });
 
-test('without the source flag the dialog has no source controls and fetches nothing', async ({page, baseURL, evidence}) => {
+// The abolished flag is not read any more: turning it off leaves the controls where they are, and
+// still nothing is fetched until a preview is asked for.
+test('twPlusDocumentSource=0 changes nothing and nothing is fetched before a preview', async ({page, baseURL, evidence}) => {
     const bytes = await settingsProject();
     const {projectURL, requests} = await prepare(page, baseURL, bytes);
-    await open(page, baseURL, projectURL, {twPlusYamlEditor: '1'}, await extensionSource(bytes));
+    await open(page, baseURL, projectURL, {twPlusYamlEditor: '1', twPlusDocumentSource: '0'}, await extensionSource(bytes));
     const before = await project(page);
 
-    evidence.stage('no-source-controls');
+    evidence.stage('source-controls-regardless');
     const dialog = await openDocument(page);
-    await expect(dialog.getByLabel('参照元', {exact: true})).toBeHidden();
-    await expect(dialog.getByRole('textbox', {name: 'HTTPS URL', exact: true})).toBeHidden();
-    await expect(dialog.getByRole('button', {name: '取得してプレビュー', exact: true})).toBeHidden();
+    const location = dialog.getByLabel('参照元', {exact: true});
+    await expect(location).toBeVisible();
+    await location.selectOption('url');
+    await dialog.getByRole('textbox', {name: 'HTTPS URL', exact: true}).fill(sourceURL);
+    await expect(dialog.getByRole('button', {name: '取得してプレビュー', exact: true})).toBeVisible();
     await dialog.getByRole('button', {name: 'キャンセル', exact: true}).click();
     await expect(dialog).toBeHidden();
     expect(requests).toEqual([]);

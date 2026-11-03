@@ -5,7 +5,7 @@
 この配信物は `site/block-editor/editor.js` の `plusBlockEditor` をGUIの `blockEditor` 差し込み口へ渡します。
 共通エディターの依存と、Schema・SOURCE・固定入力の対応は配信側で管理します。
 GUIはworkspace、VM、ScratchBlocks、現在の言語とモーダルの接続を提供します。
-文書ソース編集の起動設定（`twPlusYamlEditor` / `twPlusDocumentSource`）は共通文書エディターの `readDocumentEditorFlags` が読み、`site/plus-integration.js` が起動時に一度だけ呼びます。`config/feature-flags.ts` が読むのは拡張ローダーの起動設定です。スクリプト転送には起動設定がありません。
+文書編集の起動設定（`twPlusYamlEditor`）は共通文書エディターの `readDocumentEditorFlags` が読み、`site/plus-integration.js` が起動時に一度だけ呼びます。参照元を切り替えられるかは提供元が文書ごとに決め、起動設定はありません。`config/feature-flags.ts` が読むのは拡張ローダーの起動設定です。スクリプト転送には起動設定がありません。
 過去の `blockEditorDialogs` 等のGUI URLフラグを現行の有効化手順として使用しないでください。
 
 ## 例
