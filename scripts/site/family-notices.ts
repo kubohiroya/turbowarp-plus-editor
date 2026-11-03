@@ -70,8 +70,8 @@ const githubURL = (value: unknown) => {
 };
 
 function sourceOf(name: string, manifest, lock) {
-    // A git dependency records its commit; prepare-core may have replaced a package after install,
-    // so trust the lock's source only while it still describes the installed version.
+    // A git dependency records its commit, but the lock only says what the install declared:
+    // trust its source only while it still matches the version the installed package reports.
     const git = lock.version === manifest.version && typeof lock.resolved === 'string' &&
         lock.resolved.match(/^git\+(?:ssh:\/\/git@|https:\/\/)github\.com[/:]([^/]+\/[^/#]+?)(?:\.git)?#([0-9a-f]{40})$/u);
     if (git) return {npm: null, repository: `https://github.com/${git[1]}`, revision: git[2]};

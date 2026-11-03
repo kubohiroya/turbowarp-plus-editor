@@ -114,3 +114,11 @@ test('teardown retains the first unload failure when host recovery also fails', 
         return true;
     });
 });
+
+
+test('script transfer requires its own explicit startup opt-in', () => {
+    for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=true']) {
+        assert.equal(readStartupFeatureFlags(query).scriptTransfer, false);
+    }
+    assert.equal(readStartupFeatureFlags('?twPlusScriptTransfer=1').scriptTransfer, true);
+});

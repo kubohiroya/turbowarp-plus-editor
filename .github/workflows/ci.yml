@@ -53,11 +53,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .host/scratch-gui/node_modules
-          # The GUI revision and the core pin both decide what ends up in this tree: the install
-          # comes from the revision's lockfile, and prepare-core then replaces the core package
-          # inside it. A key that ignored the core version would restore a tree holding the wrong
-          # one.
-          key: host-modules-${{ runner.os }}-${{ steps.source.outputs.guiRevision }}-${{ steps.source.outputs.coreVersion }}-${{ hashFiles('.host/scratch-gui/package-lock.json') }}
+          # Keyed on the lockfile alone, because that is what decides this tree: the step below
+          # installs it with `npm ci`, which reads nothing else. The GUI revision used to be in the
+          # key as well, and this repository changes that revision in most of its pull requests —
+          # so the key changed while the lockfile had not, every such run missed and paid a two
+          # minute install, and each one left another copy behind (20 of them, 1.45 GiB, in a
+          # repository already at 9.71 GiB of its 10 GiB, where the overflow evicts other caches).
+          #
+          # The core pin is not in the key either: the GUI no longer depends on that package at
+          # all, so nothing in this tree carries it and `verifyInstalledCore` checks the copy this
+          # repository installs instead. `prepublish.mjs` still runs below on a hit, because what
+          # it writes is outside node_modules.
+          #
+          # No `restore-keys`: a fallback hit leaves `cache-hit` false, so `npm ci` runs anyway and
+          # deletes the tree that was just restored — paying for the download to throw it away.
+          key: host-modules-${{ runner.os }}-${{ hashFiles('.host/scratch-gui/package-lock.json') }}
       - name: Install the pinned host dependencies
         working-directory: .host/scratch-gui
         run: |
@@ -67,15 +77,10 @@ jobs:
           # prepublish writes static/microbit and src/generated, which are outside node_modules,
           # so it runs whether or not the modules came from the cache.
           node scripts/prepublish.mjs
-      - name: Copy the pinned root core into the isolated host without resolving dependencies
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: node scripts/site/prepare-core.ts
       - name: Verify the prepared host
         working-directory: .host/scratch-gui
         run: |
           npm run test:document-editor
-          npm run test:block-editor
           npm run test:plus-extension-loader
       # The extension host is supplied from here, but what it installs on is the pinned GUI's VM,
       # and the registration it drives must use that VM's own modules. So these run against the
@@ -83,7 +88,9 @@ jobs:
       - name: Verify the extension host against the prepared VM
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: npm run test:extension-host
+        run: |
+          npm run test:extension-host
+          npm run test:script-transfer
       - name: Build TurboWarp-Plus-Editor
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui

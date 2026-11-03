@@ -51,8 +51,9 @@ test('the integration ships the catalog, so the GUI can ask for it', () => {
         flags: {embeddedYamlEditor: false},
         mountEditor: () => ({dispose () {}})
     });
-    assert.equal(typeof shipped.extensionCatalog.read, 'function');
-    assert.equal(shipped.extensionCatalog.url, CATALOG_URL);
+    // The catalog is not handed through the integration any more: the GUI stopped reading it when
+    // the library tab and the trusted catalog moved here, so both read `plus-catalog.js` directly.
+    assert.equal(shipped.extensionCatalog, undefined);
 });
 
 // The builder has no editor chrome, so it is given only the catalog. Supplying the editor's

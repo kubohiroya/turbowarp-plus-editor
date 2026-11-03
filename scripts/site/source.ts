@@ -45,15 +45,20 @@ export function validatePins(pins) {
                 'The published loader integrity is required');
         }
     }
+    if (['scriptTransferRepository', 'scriptTransferRevision', 'scriptTransferVersion'].some(key => pins[key] !== undefined)) {
+        assert.equal(pins.scriptTransferRepository, 'kubohiroya/turbowarp-script-transfer');
+        assert.ok(sha(pins.scriptTransferRevision), 'A full script transfer revision is required');
+        assert.ok(exactVersion(pins.scriptTransferVersion), 'An exact script transfer version is required');
+    }
     return pins;
 }
 export async function readPins() {
     return validatePins(JSON.parse(await fs.readFile(path.join(root, 'site/source.json'), 'utf8')));
 }
-export async function verifyInstalledCore(gui, pins) {
-    const hostRequire = createRequire(path.join(gui, 'package.json'));
-    // Read fresh bytes: preparation may have replaced the previously installed package.
-    const info = JSON.parse(await fs.readFile(hostRequire.resolve(`${corePackage}/build-info`), 'utf8'));
+export async function verifyInstalledCore(directory, pins) {
+    const require = createRequire(path.join(directory, 'package.json'));
+    // Read the bytes instead of importing them, so a second check in one process is not cached.
+    const info = JSON.parse(await fs.readFile(require.resolve(`${corePackage}/build-info`), 'utf8'));
     assert.equal(info.version, pins.coreVersion, 'Installed core version differs from the source pin');
     assert.equal(info.revision, pins.coreRevision, 'Installed core differs from the source pin');
     return {coreRevision: info.revision, coreVersion: info.version};
@@ -145,13 +150,29 @@ export async function verifyLoaderDependency(directory, pins) {
             `Lockfile differs for ${name}`);
     }
 }
+export async function verifyScriptTransferDependency(directory, pins) {
+    const name = '@kubohiroya/turbowarp-script-transfer';
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
+    const source = `git+https://github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`;
+    assert.equal(manifest.dependencies[name], source, 'Script transfer source differs from the pin');
+    assert.equal(lock.packages[''].dependencies[name], source, 'Script transfer root lock differs from the pin');
+    const entry = lock.packages[`node_modules/${name}`];
+    assert.equal(entry.resolved, `git+ssh://git@github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`,
+        'Script transfer lock differs from the pin');
+    assert.equal(entry.version, pins.scriptTransferVersion, 'Script transfer lock version differs from the pin');
+    const require = createRequire(path.join(directory, 'package.json'));
+    const installed = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
+    assert.equal(installed.version, pins.scriptTransferVersion, 'Installed script transfer differs from the pin');
+}
+
 export async function verifyHost(gui, pins) {
     validatePins(pins);
     assert.ok(gui && path.isAbsolute(gui), 'E2E_GUI_ROOT must be an absolute GUI checkout');
     const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: gui, encoding: 'utf8'}).trim();
     assert.equal(revision, pins.guiRevision, 'GUI checkout differs from the source pin');
-    const hostRequire = createRequire(path.join(gui, 'package.json'));
-    const {coreRevision, coreVersion} = await verifyInstalledCore(gui, pins);
+    // The core is not the GUI's dependency any more either: `build.ts` verifies the copy this
+    // repository installs, which is the one its modules import.
     const manifest = JSON.parse(await fs.readFile(path.join(gui, 'package.json'), 'utf8'));
     if (pins.loaderRepository) {
         // The VM is still the GUI's own dependency. The Loader is not: `build.ts` checks it against
@@ -163,10 +184,10 @@ export async function verifyHost(gui, pins) {
         assert.equal(lock.packages[`node_modules/${name}`].resolved,
             `git+ssh://git@github.com/${pins.vmRepository}.git#${pins.vmRevision}`, `Lockfile differs for ${name}`);
     }
-    // Neither the document editor, the Loader nor the review dialog is the GUI's dependency any
-    // more: the side that imports all three is this repository, so `build.ts` verifies them
-    // against this repository's own manifest, lock and installed bytes.
-    return {revision, coreRevision, coreVersion};
+    // None of the family packages is the GUI's dependency any more: the side that imports them is
+    // this repository, so `build.ts` verifies each against this repository's own manifest, lock and
+    // installed bytes. What is left here is the GUI's own: its revision and its VM.
+    return {revision};
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
     const pins = await readPins();

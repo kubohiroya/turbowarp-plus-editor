@@ -10,10 +10,15 @@ import {prepareLocalCatalogPreview} from './local-catalog-preview.ts';
 // Local integration builds retain immutable base pins and record the actual overlay.
 const gui = process.env.E2E_GUI_ROOT;
 if (!gui || !path.isAbsolute(gui)) throw new Error('E2E_GUI_ROOT must be absolute');
-const hostRequirePath = path.join(gui, 'node_modules/@kubohiroya/turbowarp-extension-loader');
-const loader = await fs.realpath(hostRequirePath);
+// The Loader and the review dialog are this repository's dependencies now, and the GUI declares
+// neither: resolving them over there found only what an older install had left behind, and a fresh
+// `npm ci` in the checkout leaves nothing to resolve at all. A preview that overlays a local
+// checkout of either links it in here, so this is also the tree these digests describe. The VM is
+// still the GUI's own dependency, so it stays resolved from there.
+const familyRoot = name => fs.realpath(path.join(root, 'node_modules', name));
+const loader = await familyRoot('@kubohiroya/turbowarp-extension-loader');
+const security = await familyRoot('@kubohiroya/turbowarp-extension-security-dialog');
 const hostRequire = createRequire(path.join(gui, 'package.json'));
-const security = await fs.realpath(path.resolve(path.dirname(hostRequire.resolve('@kubohiroya/turbowarp-extension-security-dialog')), '..'));
 const vmSource = await fs.realpath(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 // The preview builds the same Editor through the same webpack config, so it reads the pins the
 // normal build ships rather than a copy that drifts whenever only one of them is updated.

@@ -62,7 +62,6 @@ Node 26とpnpm 11.28.8を用意し、`site/source.json` の完全SHAでGUIとPac
 ```sh
 npm ci
 (cd .host/scratch-gui-issue4 && npm ci && node scripts/prepublish.mjs)
-E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" node scripts/site/prepare-core.ts
 
 E2E_GUI_ROOT="$PWD/.host/scratch-gui-issue4" \
 TW_PLUS_PACKAGER_ROOT="$PWD/.host/packager-issue4" \

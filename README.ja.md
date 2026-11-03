@@ -254,3 +254,8 @@ Use the landing page to create a project, open an SB3 URL, or continue to the ed
 新フラグは既定OFFです。scratch-guiは `config/feature-flags.js` で読み取り、参照元の切り替えに対応する提供元はそれぞれ自身で読み取ります。切戻しは新フラグを外して再起動し、元SB3を利用します。現在の依存はローカル候補への参照であり、公開版への参照更新・新npm/リポジトリの公開は別途行います。
 
 この候補は、直前の未公開UI修正（プレビューの重なり表示防止、タブ内の保存形式表示、外部エディタのフローティングボタン、ガイド/Schemaリンク）を引き継いでいます。
+
+
+## スクリプト・ステージの転送（実験機能）
+
+起動URLに `twPlusScriptTransfer=1` を付けると、スクリプトの `.blocks3` 書き出し・読み込み、ウィンドウ間のコピー・貼り付け、ステージの `.stage3` 書き出し・追加読み込みを有効にできます。既定はOFFです。操作と切り戻しは [転送の仕様](docs/script-stage-transfer.md) を参照してください。

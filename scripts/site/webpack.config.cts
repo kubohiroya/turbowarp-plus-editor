@@ -59,8 +59,10 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // say is this distribution's rather than part of the editor's translations. CSS and images need no
 // rule of their own: the host's rules for those match by extension alone, so a stylesheet imported
 // from here becomes a CSS module exactly as one of its own does.
+const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
+config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
 const siteSource = path.join(__dirname, '..', '..', 'site');
-config.module.rules.push({test: /\.jsx?$/, include: [siteSource], loader: hostRequire.resolve('babel-loader'),
+config.module.rules.push({test: /\.jsx?$/, include: [siteSource, transferSource], loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}],
             hostRequire.resolve('@babel/preset-react')]}});
@@ -80,4 +82,9 @@ const {withDocumentEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-document
 // side that transpiles it for webpack 4's parser. `hostRoot` is still the GUI, because that is
 // where babel-loader and preset-env are installed.
 const {withExtensionLoaderWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-loader/webpack4');
-module.exports = withExtensionLoaderWebpack4(withDocumentEditorWebpack4(config), {hostRoot: gui});
+// And the block editor's, which aliases the package's subpaths to the precompiled entries beside
+// the copy that provides the helper. That is why it matters that this is this repository's copy:
+// the GUI no longer depends on the package, and these are the bytes its modules import.
+const {withBlockEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-data-editor/webpack4');
+module.exports = withBlockEditorWebpack4(
+    withExtensionLoaderWebpack4(withDocumentEditorWebpack4(config), {hostRoot: gui}), {hostRoot: gui});

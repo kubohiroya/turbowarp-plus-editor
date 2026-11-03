@@ -5,10 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {
-    verifyDocumentEditorDependency, verifyHost, verifyLoaderDependency, verifySecurityDependency
+    verifyDocumentEditorDependency, verifyHost, verifyInstalledCore, verifyLoaderDependency,
+    verifySecurityDependency
 } from '../scripts/site/source.ts';
 
-test('an install\'s security package and document editor are checked against the pins', async () => {
+test('an install\'s core, security package and document editor are checked against the pins', async () => {
     const gui = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-security-source-'));
     const securityPackage = '@kubohiroya/turbowarp-extension-security-dialog';
     const securityRoot = path.join(gui, 'node_modules', securityPackage);
@@ -32,6 +33,19 @@ test('an install\'s security package and document editor are checked against the
         const manifest = {dependencies: {[securityPackage]: pins.securityVersion}};
         const writeManifest = () => writeJSON(path.join(gui, 'package.json'), manifest);
         await writeManifest();
+        // Nothing copies a core into the GUI any more, so this is the only check that the core
+        // actually installed is the pinned one; `build.ts` runs it before every build.
+        assert.deepEqual(await verifyInstalledCore(gui, pins),
+            {coreRevision: pins.coreRevision, coreVersion: pins.coreVersion});
+        for (const [info, message] of [
+            [{version: '0.5.0', revision: pins.coreRevision}, /core version/],
+            [{version: pins.coreVersion, revision: 'f'.repeat(40)}, /core differs/]
+        ] as const) {
+            await writeJSON(path.join(coreRoot, 'build-info.json'), info);
+            await assert.rejects(verifyInstalledCore(gui, pins), message);
+        }
+        await writeJSON(path.join(coreRoot, 'build-info.json'),
+            {version: pins.coreVersion, revision: pins.coreRevision});
         // The review dialog is this repository's dependency now, so it is checked per install.
         assert.equal((await verifySecurityDependency(gui, pins)).version, '0.4.0');
         pins.securityRevision = 'd'.repeat(40);
