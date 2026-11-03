@@ -26,6 +26,14 @@ test('incomplete or modified snapshots are rejected before serving', async t => 
     await assert.rejects(validateSnapshot(directory, await createManifest(directory, 8601)), /iframe-extension-worker/);
     await fs.writeFile(worker, '<html>wrong build</html>');
     await assert.rejects(validateSnapshot(directory, manifest), /ビルド時と一致/);
+    // A worker compiled into the editor needs no separate lazy chunk, but still needs its bytes.
+    await fs.rm(worker);
+    const editor = path.join(directory, 'js/editor.js');
+    await fs.writeFile(editor, '/* editor with the inline iframe worker */');
+    const inlineManifest = {...await createManifest(directory, 8601), iframeWorkerAsset: 'js/editor.js'};
+    await validateSnapshot(directory, inlineManifest);
+    await fs.rm(editor);
+    await assert.rejects(validateSnapshot(directory, inlineManifest), {code: 'ENOENT'});
 });
 
 test('HTTP serves the selected snapshot without cache or fallback and detects missing chunks', async t => {
