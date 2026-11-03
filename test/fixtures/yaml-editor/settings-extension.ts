@@ -1,5 +1,8 @@
-// Test-only owner: two same-named YAML files, no App code or storage.
-import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu, getProviderRegistry} from '@kubohiroya/turbowarp-document-source';
+// Test-only owner: two same-named YAML files, no App code or storage. A project may add a third,
+// `locked`, which the owner lists but refuses to open, so the refusal can be checked through the
+// built Editor. The owner also accepts source locations, which the Editor offers only when
+// `twPlusDocumentSource=1` is set.
+import {createEmbeddedYamlHatDefinition, createEmbeddedYamlDocumentMenu, getDocumentSourceRegistry} from '@kubohiroya/turbowarp-document-source';
 import YAML from 'yaml';
 import {Ajv2020} from 'ajv/dist/2020.js';
 
@@ -8,8 +11,10 @@ const schemas = {
     settings: {$schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object', required: ['volume'], additionalProperties: false,
         properties: {volume: {type: 'integer', minimum: 0, maximum: 100}, mode: {enum: ['rehearsal', 'production']}}},
     labels: {$schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object', required: ['title'], additionalProperties: false,
-        properties: {title: {type: 'string'}}}
+        properties: {title: {type: 'string'}}},
+    locked: {$schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object'}
 };
+const refusals = {locked: 'The settings owner keeps this document locked.'};
 const validators = Object.fromEntries(Object.entries<any>(schemas).map(([key, schema]) => [key, new Ajv2020().compile(schema)]));
 const ref = documentId => ({providerId: id, documentId});
 class SettingsExtension {
@@ -34,8 +39,12 @@ class SettingsExtension {
                     if (!saved || saved.generation !== generation || saved.source !== current() || saved.project !== vm.toJSON(undefined, {allowOptimization: false})) throw new Error('The project changed.');
                 };
                 const adapter = {
-                    inspect() { try { current(); return {available: true}; } catch (error) { return {available: false, reason: error.message}; } },
+                    inspect() {
+                        if (Object.hasOwn(refusals, documentId)) return {available: false, reason: refusals[documentId]};
+                        try { current(); return {available: true}; } catch (error) { return {available: false, reason: error.message}; }
+                    },
                     capture() {
+                        if (Object.hasOwn(refusals, documentId)) throw new Error(refusals[documentId]);
                         const snapshot = Object.freeze({source: current(), sourceName: 'settings.yml'});
                         snapshots.set(snapshot, {source: snapshot.source, generation, project: vm.toJSON(undefined, {allowOptimization: false})});
                         return snapshot;
@@ -59,7 +68,17 @@ class SettingsExtension {
         };
         const loaded = () => { generation++; };
         runtime.on('PROJECT_LOADED', loaded);
-        const unregister = getProviderRegistry(vm).register(provider);
+        const check = (documentId, source) => {
+            checkId(documentId);
+            if (Object.hasOwn(refusals, documentId)) throw new Error(refusals[documentId]);
+            if (!validators[documentId](YAML.parse(source))) throw new Error('JSON Schema validation failed for this document.');
+        };
+        const unregister = getDocumentSourceRegistry(vm).register(provider, {sourceStorageId: id, fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
+            buildSourceCandidate({project, reference, source}) {
+                check(reference.documentId, source);
+                project.extensionStorage[id].documents[reference.documentId] = source;
+                return {project, source};
+            }});
         runtime.once('RUNTIME_DISPOSED', unregister);
         this.provider = provider;
     }

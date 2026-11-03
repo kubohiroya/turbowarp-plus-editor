@@ -183,7 +183,6 @@ Relevant checks:
 
 ```sh
 npm run test:yaml
-TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:yaml:browser
 # Build the test-only fixtures from any SB3 that contains assets
 # (CI generates one with `node test/fixtures/yaml-editor/base-project.ts /absolute/path/to/base.sb3`).
 node scripts/yaml-editor/build-settings-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/settings.sb3
@@ -199,7 +198,7 @@ npm run test:yaml:multi-document
 node --test test/representation-preview.browser.ts
 ```
 
-`test:yaml:browser` uses the pinned shared document editor and document-source registry with a test provider and VM fixture. It checks URL preview, cancellation, saving, fresh retrieval, and conversion to an embedded file without requiring an App-specific API. CI runs this check in Playwright Chromium; `TWPE_CHROME_EXECUTABLE` selects an installed browser locally (`CHROME_PATH` is also supported).
+Source previews, cancellation, saving, fresh retrieval and conversion to an embedded file are tested in `@kubohiroya/turbowarp-document-editor` with its own test provider. This repository checks that they reach the built Editor: `test/e2e/turbowarp/document-source.spec.cts` opens the `twpeyamlsettings` fixture with and without `twPlusDocumentSource=1`, and `document-refusal.spec.cts` opens a hat whose provider is not registered and a document its owner refuses, expecting the unavailable message and no project change. Both run in `npm run test:e2e` against the built Editor.
 
 SB3 round-trip browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. CI runs `test:yaml:roundtrip` and `test:yaml:multi-document` against the built Editor and keeps their screenshots and `result.json` under `test-results/yaml-roundtrip/` and `test-results/yaml-multi-document/` in the `integration-evidence-*` artifact. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
 
