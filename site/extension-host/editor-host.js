@@ -10,7 +10,14 @@
  * decided here: the GUI hands over the query it snapshotted before any project was opened, and
  * this build says what that query means. So is the origin a project's default address is made
  * from: the page this editor was opened at.
+ *
+ * So is the cache a fetched extension is kept in (issue #55): the editor keeps one in IndexedDB so
+ * a copy its author allowed survives a reload, filed under the project open when it was fetched.
+ * A built HTML carries its code with it, needs no copy, and keeps the memory cache `host.js` makes;
+ * this is the only module that imports the IndexedDB adapter, so it stays out of that bundle.
  */
+
+import {createIndexedDBContentCache} from '@kubohiroya/turbowarp-extension-loader/indexeddb-cache';
 
 import {readPlusFlags} from '../extension-library/flags.js';
 import {createExtensionAuthoringController, setExtensionAuthoringHost} from './authoring.js';
@@ -18,18 +25,71 @@ import {extensionProjectArchiveOptions} from './config.js';
 import {installPlusExtensionHost} from './host.js';
 
 /**
+ * The editor's persistent cache, or undefined where the browser offers no IndexedDB, in which case
+ * `host.js` keeps a copy only for this visit, as it did before.
+ * @param {Function} create `createIndexedDBContentCache` or a stand-in.
+ * @param {object} options What the cache is made with.
+ * @returns {object|undefined} The cache.
+ */
+const persistentCache = (create, options) => {
+    try {
+        return create(options);
+    } catch (error) {
+        if (error?.message === 'IndexedDB unavailable') return undefined;
+        throw error;
+    }
+};
+
+/**
  * Install extension loading for the editor's VM.
  * @param {object} vm The VM the GUI passed.
  * @param {object} [settings] What the GUI handed through the socket.
  * @returns {object} The installed host.
  */
-export const installEditorExtensionHost = (vm, settings = {}) => installPlusExtensionHost(vm, {
+export const installEditorExtensionHost = (vm, settings = {}) => {
+    const {createContentCache = createIndexedDBContentCache, ...rest} = settings;
+    const enabled = settings.enabled === undefined ? readPlusFlags(settings.search || '').loader : settings.enabled;
     // A project's default address is made from where this editor was opened, never from a
     // constant, so a copy served elsewhere names its projects under its own origin.
-    createAuthoring: (target, options) => createExtensionAuthoringController(target,
-        {...options, origin: globalThis.location?.origin}),
-    setAuthoringHost: setExtensionAuthoringHost,
-    archiveOptions: extensionProjectArchiveOptions,
-    ...settings,
-    enabled: settings.enabled === undefined ? readPlusFlags(settings.search || '').loader : settings.enabled
-});
+    const origin = globalThis.location?.origin;
+    const base = {
+        createAuthoring: (target, options) => createExtensionAuthoringController(target, {...options, origin}),
+        setAuthoringHost: setExtensionAuthoringHost,
+        archiveOptions: extensionProjectArchiveOptions
+    };
+    if (enabled !== true) return installPlusExtensionHost(vm, {...base, ...rest, enabled});
+    // The project open now, as the bridge reports it on each load; undefined files a write as
+    // shared. Read by the cache at each write, so one cache serves every project this VM opens.
+    let projectURI;
+    // What the catalog lists belongs to no one project. It is the set the trust check reads, filled
+    // as the catalog loads. The Loader writes a fetched copy before it asks whether the code is
+    // trusted, so a write waits for the catalog's read — the one that check would make anyway, and
+    // made no earlier: the editor reads no catalog at startup that it did not read before.
+    const catalog = settings.trustedCatalog;
+    const sharedDigests = catalog?.listedDigests instanceof Set ? catalog.listedDigests : new Set();
+    const created = settings.cache ? undefined :
+        persistentCache(createContentCache, {appURI: () => projectURI, sharedDigests});
+    const cache = created && typeof catalog?.ready === 'function' ? Object.freeze({...created,
+        async put (key, bytes, options) {
+            await catalog.ready();
+            return created.put(key, bytes, options);
+        }}) : created;
+    const host = installPlusExtensionHost(vm, {
+        ...base,
+        ...rest,
+        enabled,
+        ...(cache ? {cache} : {}),
+        onProjectURI: uri => { projectURI = uri; }
+    });
+    if (!cache) return host;
+    // Nothing is released here: a project's copies stay until the person removes them, and closing
+    // the editor only closes the connection.
+    let disposal;
+    return Object.freeze({
+        ...host,
+        dispose () {
+            disposal ??= Promise.resolve(host.dispose()).finally(() => cache.close());
+            return disposal;
+        }
+    });
+};

@@ -9,11 +9,12 @@
  * Marking an error as an extension failure arrives as a function from the GUI, because its
  * project-error paths read that back. The authoring controller arrives as a factory from whoever
  * installs this — the editor's entry supplies one, a built HTML's does not — which is what keeps it
- * out of the bundle that does not use it. Whether the loader runs at all, and the archive limits,
- * arrive as values: the
- * fork's own UI reads the same switch and the same limits, so they are defined in one place there
- * and a built HTML carries them in its bootstrap. The VM modules the registrar needs arrive the
- * same way, from whoever bundled the VM: see `registrar.js` for why they cannot be imported here.
+ * out of the bundle that does not use it. The same goes for the editor's persistent cache: `cache`
+ * and `onProjectURI` arrive from the editor's entry, and a built HTML passes neither. Whether the
+ * loader runs at all, and the archive limits, arrive as values: the fork's own UI reads the same
+ * switch and the same limits, so they are defined in one place there and a built HTML carries them
+ * in its bootstrap. The VM modules the registrar needs arrive the same way, from whoever bundled
+ * the VM: see `registrar.js` for why they cannot be imported here.
  */
 
 import JSZip from '@turbowarp/jszip';
@@ -48,7 +49,8 @@ const digestTrustedCatalog = digests => {
 export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
-    fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost
+    fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
+    onProjectURI
 } = {}) {
     if (enabled !== true) return Object.freeze({enabled: false, dispose: async () => {}});
     // A single HTML has no catalog to read; its build embeds the digests the catalog listed.
@@ -139,7 +141,7 @@ export function installPlusExtensionHost (vm, {
     let uninstall;
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
-            onDiagnostic: diagnostics, markFailure: markLoadFailure, review,
+            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI,
             onProjectLoadStart: authoring ? authoring.projectLoadStarted : undefined}, loader);
     } catch (error) {
         authoring?.dispose();

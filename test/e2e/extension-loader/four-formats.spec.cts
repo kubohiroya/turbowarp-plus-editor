@@ -73,8 +73,10 @@ for (const distribution of forms) {
         const before = fetched.get(spec.id);
         await reopenSB3(page, saved, `${distribution}.sb3`);
         await expect.poll(() => loaded(page, spec.id)).toBe(true);
-        // The embedded forms open without the network; the remote ones fetch from the recorded URL.
-        expect(fetched.get(spec.id) - before).toBe(distribution.startsWith('embedded-') ? 0 : 1);
+        // The embedded forms open without the network, and so does the remote-cacheable one: the
+        // copy the first page kept is in this browser's IndexedDB (issue #55). Only the form that
+        // forbids a copy fetches from the recorded URL again.
+        expect(fetched.get(spec.id) - before).toBe(distribution === 'remote-non-cacheable' ? 1 : 0);
         await openCatalog(page, 1);
         await expect(row(page, spec).locator('.twextsec-state')).toHaveText('読み込み済み');
         for (const other of forms) {

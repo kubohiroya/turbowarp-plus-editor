@@ -57,6 +57,18 @@ export function installExtensionLoader(host, loader) {
         checkActive();
         if (pending) throw failure('PROJECT_BUSY', 'Wait for project loading to finish before saving');
     };
+    // The host is told the address of the project open now, as its manifest names it, or
+    // undefined (none, or no manifest): that is how the cache knows whose bucket a fetched
+    // extension is filed under.
+    const tellProjectURI = uri => {
+        if (typeof host.onProjectURI === 'function') {
+            try {
+                host.onProjectURI(uri);
+            } catch (error) {
+                // Bookkeeping must not change the loading or saving decision.
+            }
+        }
+    };
     const restored = value => {
         if (value === null || value === undefined || typeof value.then === 'function') {
             throw failure('INVALID_PROJECT_CODEC', 'Project persistence must return a synchronous result');
@@ -80,6 +92,8 @@ export function installExtensionLoader(host, loader) {
                 }
                 touchedHost = true;
                 savedContext = null;
+                // Known before the VM loads, so what the Loader fetches for it is filed under it.
+                tellProjectURI(typeof prepared.manifest?.uri === 'string' ? prepared.manifest.uri : undefined);
                 if (hasLoaded) {
                     await loader.unload();
                     hasLoaded = false;
