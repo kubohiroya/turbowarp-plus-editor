@@ -11,18 +11,11 @@
  */
 
 import {createRequire} from 'node:module';
-import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import resolvePinnedGui from '../pinned-gui.cjs';
 
-const configured = process.env.E2E_GUI_ROOT;
-const fallback = path.resolve('.host/scratch-gui');
-const root = configured && path.isAbsolute(configured) ? configured :
-    fs.existsSync(path.join(fallback, 'package.json')) ? fallback : null;
-if (!root) {
-    throw new Error('The extension host tests need the pinned GUI: set E2E_GUI_ROOT, ' +
-        'or check it out at .host/scratch-gui (see scripts/site/source.ts)');
-}
+const root = resolvePinnedGui('The extension host tests need the pinned GUI');
 
 /** The pinned checkout itself, for tests that read its installed browser artifacts by path. */
 export const guiRoot = root;
