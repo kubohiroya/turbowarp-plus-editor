@@ -12,6 +12,16 @@ An editor for creating and opening TurboWarp Plus projects. It builds kubohiroya
 - Editor: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en>
 - npm: `@kubohiroya/turbowarp-plus-editor`
 
+## Added features compared with standard TurboWarp
+
+- Edit supported block data in forms, with validation, save/cancel, and Undo.
+- Review Plus extensions and choose how their code is stored: remote references or embedded in the SB3.
+- Enable experimental document editing and script/stage transfer through startup options.
+
+The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) includes six real screenshots, workflow diagrams, a comparison table, activation conditions, and saving/compatibility details. Forms, documents, and previews require extensions that provide them.
+
+[![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
+
 ## Distribution responsibilities
 
 `turbowarp-extension-data-editor` and `turbowarp-extension-security-dialog` are upstream libraries. `scratch-gui` consumes them, and this downstream package distributes and verifies the integrated Editor. The upstream libraries do not build the downstream GUI.

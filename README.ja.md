@@ -12,6 +12,16 @@ TurboWarp Plusの作品をつくる・開くためのエディターです。kub
 - エディター: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja>
 - npm: `@kubohiroya/turbowarp-plus-editor`
 
+## 標準TurboWarpから増える機能
+
+- 対応ブロックのデータをフォームで編集し、入力検証・保存・取消・Undoを利用できます。
+- TurboWarp Plus拡張の取得元・内容・実行条件を確認し、URL参照／SB3への同梱など4つの保存形式を選べます。
+- 対応文書のYAML/JSON編集と、スクリプト・ステージの転送は実験機能です。起動設定で有効にします。
+
+[実画面6点と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)では、標準版との比較、操作手順、有効化条件、保存と互換性を説明しています。フォーム・文書・プレビューの内容は対応する拡張が提供します。
+
+[![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
+
 ## 配信の責務
 
 `turbowarp-extension-data-editor` と `turbowarp-extension-security-dialog` は上流のライブラリです。`scratch-gui` がこれらを利用し、さらに下流にある本パッケージが統合Editorを配信・検証します。上流のライブラリから下流GUIをビルドしません。
