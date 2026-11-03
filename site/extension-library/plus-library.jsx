@@ -54,15 +54,19 @@ const text = {
 
 /**
  * The catalog as rows of the review screen.
+ *
+ * With the Loader switched off there is nothing to write a form into — the extension loads by its
+ * address, as a custom extension does — so the rows say so and the screen offers no form.
  * @param {Array<object>} entries Parsed catalog entries.
  * @param {object} vm The VM, to say which are already running.
+ * @param {boolean} [loader] Whether the Loader writes the chosen form into the project.
  * @returns {Array<object>} One `ReviewEntry` per catalog entry, keyed by its extension ID.
  */
-const reviewRows = (entries, vm) => entries.map(entry => ({
+export const reviewRows = (entries, vm, loader = PLUS_EXTENSION_LOADER_ENABLED) => entries.map(entry => ({
     key: entry.id,
     ids: [entry.id],
     metadata: entry.metadata,
-    source: {kind: 'catalog', url: entry.url},
+    source: {kind: loader ? 'catalog' : 'legacy', url: entry.url},
     dependencies: entry.dependencies || [],
     state: {trusted: true, loaded: vm.extensionManager.isExtensionLoaded(entry.id)}
 }));

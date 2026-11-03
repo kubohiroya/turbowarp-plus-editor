@@ -10,11 +10,11 @@ const Zip = require('@turbowarp/jszip');
 test.use({userAgent: devices['Pixel 7'].userAgent});
 
 const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json';
-// What the review screen calls a choice, and the form the Loader writes for it. The screen offers
-// two; the manifest names four, because the form also says which carrier holds the bytes.
-const SOURCE_FOR_CHOICE = {remote: 'remote-cacheable', embedded: 'embedded-file'};
 
-function fixture(id, execution, distribution) {
+// A catalog extension is trusted like TurboWarp's own gallery, so it always runs without the
+// sandbox and the screen states that instead of asking. What the author chooses is how it loads,
+// spelled the same way by the screen and the manifest.
+function fixture(id, distribution) {
     const source = `// Name: ${id}\n// ID: ${id}\n// Version: 1.0.0\n// Unsandboxed: optional\n// License: MIT\n
 (function(Scratch) {
  const execution = Scratch.extensions.unsandboxed ? 'unsandboxed' : 'sandboxed';
@@ -31,20 +31,20 @@ function fixture(id, execution, distribution) {
  });
 })(Scratch);\n`;
     const bytes = Buffer.from(source);
-    return {id, execution, distribution, bytes, sha256: createHash('sha256').update(bytes).digest('hex'),
+    return {id, distribution, bytes, sha256: createHash('sha256').update(bytes).digest('hex'),
         url: `https://catalog-authoring.invalid/${id}.js`};
 }
 const specifications = [
-    // The third value is the review screen's own choice, which still has two names; what ends up
-    // in the manifest is the Loader's form, asserted further down.
-    fixture('catembeddedunsandboxed', 'unsandboxed', 'embedded'),
-    fixture('catremoteunsandboxed', 'unsandboxed', 'remote'),
-    fixture('catembeddedsandboxed', 'sandboxed', 'embedded'),
-    fixture('catremotesandboxed', 'sandboxed', 'remote')
+    fixture('catembeddedfile', 'embedded-file'),
+    fixture('catembeddeddata', 'embedded-data'),
+    fixture('catremotecacheable', 'remote-cacheable'),
+    fixture('catremotenoncacheable', 'remote-non-cacheable')
 ];
 const permission = page => page.getByTestId('tw-plus-permission');
-const selection = page => page.locator('.twextsec-selection');
-const row = (page, spec) => selection(page).locator(`article[data-extension-id="${spec.id}"]`);
+const selection = page => page.locator('.twextsec-review');
+const row = (page, spec) => selection(page).locator(`.twextsec-row[data-key="${spec.id}"]`);
+const form = (page, spec, distribution = spec.distribution) =>
+    row(page, spec).locator(`input[name="loading-${spec.id}"][value="${distribution}"]`);
 const projectJSON = page => page.evaluate(() => JSON.parse(vm.toJSON()));
 
 async function installFixtures(context) {
@@ -70,10 +70,10 @@ async function openCatalog(page) {
     await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
     await page.getByText('TurboWarp Plus', {exact: true}).click();
     await expect(selection(page)).toBeVisible();
-    await expect(selection(page).locator('article')).toHaveCount(specifications.length);
+    await expect(selection(page).locator('.twextsec-row')).toHaveCount(specifications.length);
 }
 
-test('catalog checkboxes alone exclude packages and dependencies stay selected without a deny mode', async ({page, context}) => {
+test('catalog checkboxes alone exclude packages, dependencies stay selected, and nothing asks how they run', async ({page, context}) => {
     await installFixtures(context);
     const base = specifications[0];
     const parent = specifications[1];
@@ -84,22 +84,15 @@ test('catalog checkboxes alone exclude packages and dependencies stay selected w
         headers: {'access-control-allow-origin': '*'}}));
     await openEditor(page);
     await openCatalog(page);
-    await expect(selection(page).locator('input[value="deny"], button[data-execution="deny"]')).toHaveCount(0);
-    await expect(row(page, unchecked).locator('input[type="radio"]:enabled')).toHaveCount(0);
-    await selection(page).locator('button[data-execution="unsandboxed"]').click();
-    await selection(page).locator('button[data-distribution="embedded"]').click();
-    await row(page, unchecked).getByRole('checkbox').check();
-    await expect(row(page, unchecked).locator('input[value="unsandboxed"]')).toBeEnabled();
-    await row(page, unchecked).getByRole('checkbox').uncheck();
+    // Trusted rows are stated, not asked: no execution choice, and no way to refuse them here.
+    await expect(selection(page).locator('.twextsec-row input[name^="execution-"]')).toHaveCount(0);
+    await expect(row(page, unchecked).locator('.twextsec-trusted')).toBeVisible();
     await row(page, parent).getByRole('checkbox').check();
-    await expect(row(page, base)).toHaveAttribute('data-selection-state', 'dependency');
+    await expect(row(page, base).locator('.twextsec-state')).toContainText(parent.id);
     await expect(row(page, base).getByRole('checkbox')).toBeChecked();
     await expect(row(page, base).getByRole('checkbox')).toBeDisabled();
-    await expect(row(page, base)).toContainText(parent.id);
     await row(page, parent).getByRole('checkbox').uncheck();
     await expect(row(page, base).getByRole('checkbox')).not.toBeChecked();
-    await expect(row(page, base).locator('input[type="radio"]:enabled')).toHaveCount(0);
-    await expect(selection(page).getByRole('button', {name: '拡張の設定を適用', exact: true})).toBeDisabled();
     await row(page, parent).getByRole('checkbox').check();
     await applySettings(page);
     await expectTrusted(page, [base, parent]);
@@ -111,7 +104,7 @@ test('catalog checkboxes alone exclude packages and dependencies stay selected w
 });
 
 async function applySettings(page) {
-    await selection(page).getByRole('button', {name: '拡張の設定を適用', exact: true}).click();
+    await selection(page).getByRole('button', {name: '追加', exact: true}).click();
 }
 
 // Catalog-listed extensions are trusted like TurboWarp's official gallery: no per-extension approval.
@@ -121,16 +114,14 @@ async function expectTrusted(page, specs) {
     await expect(permission(page)).toHaveCount(0);
 }
 
-async function assertModes(page) {
+async function assertModes(page, specs = specifications) {
     await expect.poll(() => page.evaluate(ids => ids.every(id => vm.extensionManager.isExtensionLoaded(id)),
-        specifications.map(spec => spec.id))).toBe(true);
-    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(2);
-    for (const frame of await page.getByTestId('tw-plus-sandbox-frame').all()) {
-        await expect(frame).toHaveAttribute('sandbox', 'allow-scripts');
-    }
-    for (const spec of specifications) {
+        specs.map(spec => spec.id))).toBe(true);
+    // Every catalog extension runs without the sandbox, with the VM in reach.
+    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
+    for (const spec of specs) {
         const value = await page.evaluate(async id => vm.runtime._primitives[`${id}_value`](), spec.id);
-        expect(value).toBe(`${spec.execution}:${spec.execution === 'sandboxed' ? 'no-vm' : 'vm'}`);
+        expect(value).toBe('unsandboxed:vm');
     }
 }
 
@@ -148,7 +139,7 @@ async function reopenSB3(page, bytes) {
     await (await choosing).setFiles({name: 'catalog-authored.sb3', mimeType: 'application/octet-stream', buffer: bytes});
 }
 
-test('catalog selects all four execution/source combinations, restores loaded choices, and packages one offline HTML', async ({page, context}, testInfo) => {
+test('catalog writes all four loading forms, restores them, and packages one offline HTML', async ({page, context}, testInfo) => {
     test.setTimeout(150_000);
     const directory = await mkdtemp(path.join(tmpdir(), 'tw-plus-catalog-authoring-'));
     try {
@@ -156,14 +147,11 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         await openEditor(page);
         const before = await projectJSON(page);
         await openCatalog(page);
-        await selection(page).locator('button[data-distribution="embedded"]').click();
-        await selection(page).locator('button[data-execution="unsandboxed"]').click();
+        await selection(page).locator('.twextsec-bulk').getByRole('radio', {name: '作品の中から', exact: true}).click();
         for (const spec of specifications) {
-            await expect(row(page, spec)).toHaveAttribute('data-distribution', 'embedded');
-            await expect(row(page, spec).locator('input[type="radio"][value="unsandboxed"]')).toBeChecked();
+            await expect(form(page, spec, 'embedded-file')).toBeChecked();
             await row(page, spec).getByRole('checkbox').check();
-            await row(page, spec).locator(`input[type="radio"][value="${spec.execution}"]`).check();
-            await row(page, spec).locator(`input[data-distribution="${spec.distribution}"]`).check();
+            await form(page, spec).check();
         }
         expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
         await applySettings(page);
@@ -178,10 +166,13 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         expect(json.turboWarpPlus.extensions).toHaveLength(4);
         for (const spec of specifications) {
             const stored = json.turboWarpPlus.extensions.find(item => item.id === spec.id);
-            expect(stored).toMatchObject({execution: spec.execution, sha256: spec.sha256,
-                source: {type: SOURCE_FOR_CHOICE[spec.distribution]}});
-            if (spec.distribution === 'embedded') {
+            expect(stored).toMatchObject({execution: 'unsandboxed', sha256: spec.sha256,
+                source: {type: spec.distribution}});
+            if (spec.distribution === 'embedded-file') {
                 expect(await zip.file(stored.source.path).async('nodebuffer')).toEqual(spec.bytes);
+            } else if (spec.distribution === 'embedded-data') {
+                // The bytes are the address a standard TurboWarp host loads, in the project document.
+                expect(json.extensionURLs[spec.id].startsWith('data:')).toBe(true);
             } else expect(stored.source.url).toBe(spec.url);
         }
         await testInfo.attach('catalog-authored-manifest.json', {body: JSON.stringify(json.turboWarpPlus, null, 2), contentType: 'application/json'});
@@ -190,16 +181,15 @@ test('catalog selects all four execution/source combinations, restores loaded ch
         await assertModes(page);
         await openCatalog(page);
         for (const spec of specifications) {
-            await expect(row(page, spec)).toHaveAttribute('data-selection-state', 'loaded');
+            await expect(row(page, spec).locator('.twextsec-state')).toHaveText('読み込み済み');
             await expect(row(page, spec).getByRole('checkbox')).toBeChecked();
             await expect(row(page, spec).getByRole('checkbox')).toBeDisabled();
-            await expect(row(page, spec).locator(`input[type="radio"][value="${spec.execution}"]`)).toBeChecked();
-            await expect(row(page, spec).locator(`input[data-distribution="${spec.distribution}"]`)).toBeChecked();
+            await expect(form(page, spec)).toBeChecked();
         }
 
         // Changing a loaded extension's distribution preserves the reviewed code digest.
-        const converted = specifications[1];
-        await row(page, converted).locator('input[data-distribution="embedded"]').check();
+        const converted = specifications[2];
+        await form(page, converted, 'embedded-file').check();
         await applySettings(page);
         await expectTrusted(page, [converted]);
         await expect(selection(page)).toHaveCount(0);
@@ -301,15 +291,10 @@ test('mobile viewport keeps catalog and distribution controls visible and operab
         };
         await openCatalog(page);
         await withinViewport(selection(page));
-        const colors = await selection(page).evaluate(node => ({body: getComputedStyle(node).backgroundColor,
-            bulk: getComputedStyle(node.querySelector('.twextsec-bulk')).backgroundColor,
-            individual: getComputedStyle(node.querySelector('.twextsec-list')).backgroundColor}));
-        expect(colors.bulk).toBe(colors.body);
-        expect(colors.individual).not.toBe(colors.bulk);
-        await selection(page).locator('button[data-execution="unsandboxed"]').click();
-        await selection(page).locator('button[data-distribution="embedded"]').click();
+        await selection(page).locator('.twextsec-bulk').getByRole('radio', {name: '作品の中から', exact: true}).click();
         await row(page, specifications[0]).getByRole('checkbox').check();
-        const apply = selection(page).getByRole('button', {name: '拡張の設定を適用', exact: true});
+        const apply = selection(page).getByRole('button', {name: '追加', exact: true});
+        await apply.scrollIntoViewIfNeeded();
         await expect(apply).toBeEnabled();
         await withinViewport(apply);
         await testInfo.attach('mobile-catalog.png', {body: await page.screenshot({scale: 'css'}),
@@ -327,52 +312,40 @@ test('catalog keeps distribution controls off when the Loader startup flag is ex
     await installFixtures(context);
     await openEditor(page, false);
     await openCatalog(page);
-    await expect(selection(page).locator('[data-distribution]')).toHaveCount(0);
-    await expect(selection(page).locator('input[type="radio"]')).toHaveCount(0);
+    // Without the Loader there is no form to write, so none is offered, and how it runs is stated.
+    await expect(selection(page).locator('.twextsec-row input[type="radio"]')).toHaveCount(0);
+    await expect(selection(page).locator('.twextsec-trusted').first()).toBeVisible();
     await expect(page.getByTestId('tw-plus-permission')).toHaveCount(0);
     expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
 });
 
-test('catalog changes a loaded extension execution mode with the same digest and disposes its old sandbox', async ({page, context}) => {
+test('catalog changes a loaded extension form with the same digest and asks nobody', async ({page, context}) => {
     await installFixtures(context);
     await openEditor(page);
     const spec = specifications[3];
     await openCatalog(page);
     await row(page, spec).getByRole('checkbox').check();
-    await row(page, spec).locator('input[type="radio"][value="sandboxed"]').check();
+    await form(page, spec, 'remote-non-cacheable').check();
     await applySettings(page);
     await expectTrusted(page, [spec]);
     await expect(selection(page)).toHaveCount(0);
-    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(1);
-    expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('sandboxed:no-vm');
+    await assertModes(page, [spec]);
 
     await openCatalog(page);
-    await expect(row(page, spec).getByRole('checkbox')).toBeChecked();
-    await expect(row(page, spec).locator('input[type="radio"][value="sandboxed"]')).toBeChecked();
-    await row(page, spec).locator('input[type="radio"][value="unsandboxed"]').check();
+    await expect(form(page, spec, 'remote-non-cacheable')).toBeChecked();
+    await form(page, spec, 'embedded-data').check();
     await applySettings(page);
-    // The listed code needs no approval for the new mode either.
     await expect(selection(page)).toHaveCount(0);
     await expect(permission(page)).toHaveCount(0);
-    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(0);
-    expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('unsandboxed:vm');
-    expect((await projectJSON(page)).turboWarpPlus.extensions[0]).toMatchObject({
-        id: spec.id, execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'remote-cacheable', url: spec.url}
+    await assertModes(page, [spec]);
+    const json = await projectJSON(page);
+    expect(json.turboWarpPlus.extensions[0]).toMatchObject({
+        id: spec.id, execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'embedded-data'}
     });
-
-    await openCatalog(page);
-    await expect(row(page, spec).locator('input[type="radio"][value="unsandboxed"]')).toBeChecked();
-    await row(page, spec).locator('input[type="radio"][value="sandboxed"]').check();
-    await applySettings(page);
-    // Exact content, source and sandboxed mode were already approved in this host session.
-    await expect(selection(page)).toHaveCount(0);
-    await expect(permission(page)).toHaveCount(0);
-    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(1);
-    expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('sandboxed:no-vm');
-    expect((await projectJSON(page)).turboWarpPlus.extensions[0]).toMatchObject({execution: 'sandboxed', sha256: spec.sha256});
+    expect(json.extensionURLs[spec.id].startsWith('data:')).toBe(true);
 });
 
-test('catalog adopts a previously native-loaded extension without losing its actual mode or leaving its old iframe', async ({page, context}) => {
+test('catalog adopts a previously native-loaded extension, runs it as a catalog extension and leaves no old iframe', async ({page, context}) => {
     await installFixtures(context);
     await openEditor(page);
     const spec = specifications[3];
@@ -394,21 +367,21 @@ test('catalog adopts a previously native-loaded extension without losing its act
     expect(nativeFrameID).toBeTruthy();
 
     await openCatalog(page);
-    await expect(row(page, spec)).toHaveAttribute('data-selection-state', 'loaded');
+    await expect(row(page, spec).locator('.twextsec-state')).toHaveText('読み込み済み');
     await expect(row(page, spec).getByRole('checkbox')).toBeChecked();
     await expect(row(page, spec).getByRole('checkbox')).toBeDisabled();
-    await expect(row(page, spec).locator('input[type="radio"][value="sandboxed"]')).toBeChecked();
-    await row(page, spec).locator('input[data-distribution="embedded"]').check();
+    await form(page, spec, 'embedded-file').check();
     await applySettings(page);
     await expectTrusted(page, [spec]);
     await expect(selection(page)).toHaveCount(0);
+    // Taken into the manifest it is a catalog extension: it runs without the sandbox, and the
+    // iframe it had been loaded into is gone.
     await expect(page.locator(`iframe.tw-custom-extension-frame[data-id="${nativeFrameID}"]`)).toHaveCount(0);
-    await expect(page.getByTestId('tw-plus-sandbox-frame')).toHaveCount(1);
-    expect(await page.evaluate(id => vm.runtime._primitives[`${id}_value`](), spec.id)).toBe('sandboxed:no-vm');
+    await assertModes(page, [spec]);
 
     const zip = await Zip.loadAsync(await saveSB3(page));
     const json = JSON.parse(await zip.file('project.json').async('string'));
     const stored = json.turboWarpPlus.extensions.find(entry => entry.id === spec.id);
-    expect(stored).toMatchObject({execution: 'sandboxed', sha256: spec.sha256, source: {type: 'embedded-file'}});
+    expect(stored).toMatchObject({execution: 'unsandboxed', sha256: spec.sha256, source: {type: 'embedded-file'}});
     expect(await zip.file(stored.source.path).async('nodebuffer')).toEqual(spec.bytes);
 });

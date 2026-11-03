@@ -150,3 +150,16 @@ test('the screen\'s answer configures exactly the chosen rows, with the form it 
     assert.deepEqual(callbacks, [['category', 'middle'], 'close']);
     setExtensionAuthoringHost(vm, null);
 });
+
+test('with the Loader on the screen offers the four forms; with it off it offers none', () => {
+    const {reviewRows} = require('../../site/extension-library/plus-library.jsx');
+    const {executionChoices, loadingChoices} = require('@kubohiroya/turbowarp-extension-security-dialog');
+    const {vm} = fixture();
+    const on = reviewRows([entries[0]], vm, true)[0];
+    const off = reviewRows([entries[0]], vm, false)[0];
+    assert.deepEqual(loadingChoices(on), ['remote-cacheable', 'remote-non-cacheable', 'embedded-file', 'embedded-data']);
+    assert.deepEqual(loadingChoices(off), []);
+    // Either way a catalog row is trusted: how it runs is stated, not asked.
+    assert.deepEqual(executionChoices(on, 'add'), []);
+    assert.deepEqual(executionChoices(off, 'add'), []);
+});

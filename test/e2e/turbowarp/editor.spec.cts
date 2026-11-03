@@ -51,12 +51,13 @@ const loadSample = async (page, baseURL) => {
         headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}));
     await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
     await page.getByText('TurboWarp Plus', {exact: true}).click();
-    const selection = page.locator('.twextsec-selection');
-    const row = selection.locator('article[data-extension-id="blockeditordemo"]');
+    const selection = page.locator('.twextsec-review');
+    const row = selection.locator('.twextsec-row[data-key="blockeditordemo"]');
     await row.getByRole('checkbox').check();
-    await row.locator('input[type="radio"][value="unsandboxed"]').check();
-    await row.locator('input[data-distribution="embedded"]').check();
-    await selection.getByRole('button', {name: '拡張の設定を適用', exact: true}).click();
+    // A catalog row is trusted, so how it runs is stated rather than asked; how it loads is chosen.
+    await expect(row.locator('.twextsec-trusted')).toBeVisible();
+    await row.locator('input[name="loading-blockeditordemo"][value="embedded-file"]').check();
+    await selection.getByRole('button', {name: '追加', exact: true}).click();
     // A catalog-listed extension is trusted like TurboWarp's official gallery: no separate approval.
     await expectSampleLoaded(page);
     await expect(page.getByTestId('tw-plus-permission')).toHaveCount(0);

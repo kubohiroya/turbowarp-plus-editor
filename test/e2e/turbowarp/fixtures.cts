@@ -109,13 +109,14 @@ const test = base.extend({
 // The accessible title identifies the block and changes with its appearance metadata.
 const editorDialog = page => page.getByRole('dialog').filter({has: page.locator('[data-block-editor-save]')});
 const approveProjectExtensions = async (page, sources, locale = 'ja') => {
-    const security = page.locator('.twextsec-modal');
+    const security = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
     await expect(security).toBeVisible();
-    const rows = security.locator('article');
+    const rows = security.locator('.twextsec-row');
     await expect(rows).toHaveCount(sources.length);
     await expect(security.locator('textarea')).toHaveCount(0);
-    await expect(security.getByRole('button', {name:locale === 'ja' ? '詳細' : 'Details',exact:true})).toHaveCount(0);
-    await security.getByRole('button', {name:locale === 'ja' ? 'サンドボックスなし' : 'Without sandbox',exact:true}).click();
+    // Every row runs without the sandbox, chosen once for all of them.
+    await security.locator('.twextsec-bulk').getByRole('radio',
+        {name:locale === 'ja' ? 'サンドボックスなしで' : 'Without the sandbox',exact:true}).click();
     await security.getByRole('button', {name:'OK',exact:true}).click();
     await expect(security).toHaveCount(0);
     // Verify the actual loaded sources through project serialization after approval.

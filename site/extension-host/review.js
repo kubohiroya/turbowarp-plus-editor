@@ -15,7 +15,7 @@
 import JSZip from '@turbowarp/jszip';
 import {discoverManifest} from '@kubohiroya/turbowarp-extension-loader';
 import {
-    createDecisionStorage, initialDecisions, requiresReview
+    createDecisionStorage, initialDecisions, loadExtensionInfo, requiresReview
 } from '@kubohiroya/turbowarp-extension-security-dialog';
 import {ExtensionReview} from '@kubohiroya/turbowarp-extension-security-dialog/react';
 import {
@@ -132,7 +132,11 @@ export const createSecurityReview = ({
      */
     render: ({entries, initialChoices, locale, DialogFrame, onComplete}) => React.createElement(screen, {
         mode: 'open', entries, initialDecisions: initialChoices, locale,
-        DialogFrame: DialogFrame && frameFor(DialogFrame), onComplete
+        DialogFrame: DialogFrame && frameFor(DialogFrame),
+        // A custom extension's name, description, creator and licence are its own leading comment,
+        // read without running it, so the row says what it is and labels each part a claim.
+        loadInfo: loadExtensionInfo,
+        onComplete
     }),
     /**
      * Whether an error means someone declined, rather than something failing.
