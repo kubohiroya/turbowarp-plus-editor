@@ -96,6 +96,8 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
 }));
 config.resolve.alias['@kubohiroya/turbowarp-editor-layout/targets.css$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-editor-layout/targets.css');
+config.resolve.alias['@kubohiroya/turbowarp-editor-views/target-combobox$'] =
+    rootRequire.resolve('@kubohiroya/turbowarp-editor-views/target-combobox');
 const siteSource = path.join(__dirname, '..', '..', 'site');
 // Override the addon default in Plus without changing the pinned GUI sources.
 const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';

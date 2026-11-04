@@ -2,7 +2,13 @@
   "name": "@kubohiroya/turbowarp-editor-views",
   "version": "0.1.0",
   "type": "module",
-  "exports": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./target-combobox": "./target-combobox.jsx"
+  },
+  "peerDependencies": {
+    "react": ">=16.8"
+  },
   "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",

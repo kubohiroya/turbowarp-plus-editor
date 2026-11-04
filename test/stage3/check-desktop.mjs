@@ -10,10 +10,10 @@ import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
 const testMode = [
-    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-popout', '--target-panels-popout',
+    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-popout', '--target-panels-popout',
     '--stage-popout', '--stage-panel', '--internal'
 ].find(flag => process.argv.includes(flag));
-const usesSystemInput = !['--code-backpack', '--code-popout', '--stage-panel'].includes(testMode);
+const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-popout', '--stage-panel'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -465,7 +465,100 @@ async function checkNativeCodeBackpack ({editor, context, control}, a, b, target
     report.checks.push('Trusted macOS HID dock click closes the Backpack window and returns its item to the editor');
 }
 
-async function checkCodePopouts ({editor, context, control}, withBackpack = false, native = false) {
+async function checkCodeTargetSync ({editor, a, b, focus, parent, sprites}) {
+    const [first, second] = sprites;
+    const combo = view => view.child.getByRole('combobox', {name: /^(Editing target|編集対象)$/});
+    const block = (view, sprite) => view.child.locator(`[data-id="${sprite.blockId}"]`).first();
+    const targetIs = (view, sprite) => until(async () => await combo(view).innerText() === sprite.name &&
+        await block(view, sprite).isVisible(), `code window shows ${sprite.name}`);
+    const listName = sprite => editor.getByText(sprite.name, {exact: true})
+        .and(editor.locator('[class*="sprite-selector-item_sprite-name_"]'));
+    const listSelected = sprite => until(() => listName(sprite).evaluate(node =>
+        Boolean(node.closest('[class*="sprite-selector-item_is-selected_"]'))), `sprite list selects ${sprite.name}`);
+    const position = sprite => editor.evaluate(({id, blockId}) => {
+        const {x, y} = vm.runtime.getTargetById(id).blocks.getBlock(blockId);
+        return {x, y};
+    }, sprite);
+    const editable = async view => {
+        await focus(view.child, view.id);
+        await until(() => combo(view).isEnabled(), 'target selector owns the edit lease');
+    };
+    const move = async (view, sprite) => {
+        const before = await position(sprite);
+        const rect = await block(view, sprite).boundingBox();
+        assert.ok(rect);
+        await view.child.mouse.move(rect.x + 14, rect.y + 10);
+        await view.child.mouse.down();
+        await view.child.mouse.move(rect.x + 77, rect.y + 55, {steps: 8});
+        await view.child.mouse.up();
+        await until(async () => (await position(sprite)).x > before.x, 'moved block is reflected in the parent VM');
+        return position(sprite);
+    };
+    const history = (view, name) => view.child.getByRole('button', {name, exact: true});
+
+    await editable(b);
+    assert.equal(await combo(a).isDisabled(), true);
+    const firstOriginal = await position(first);
+    const firstEdited = await move(b, first);
+    await until(async () => await block(a, first).getAttribute('transform') ===
+        await block(b, first).getAttribute('transform'), 'the back view shows the shared edit');
+    const selectedThumbnail = combo(b).locator('img');
+    await until(() => selectedThumbnail.evaluate(image => image.naturalWidth > 0), 'selected costume is visible');
+    await combo(b).click();
+    const option = b.child.getByRole('option', {name: second.name, exact: true});
+    await until(() => option.locator('img').evaluate(image => image.naturalWidth > 0), 'option has a costume thumbnail');
+    const secondThumbnail = await option.locator('img').getAttribute('src');
+    assert.ok(secondThumbnail !== await selectedThumbnail.getAttribute('src'), 'the two costume images differ');
+    await option.click();
+    await targetIs(b, second);
+    await listSelected(second);
+    await targetIs(a, first);
+    assert.equal(await selectedThumbnail.getAttribute('src'), secondThumbnail);
+    assert.equal(await history(b, 'Undo').isDisabled(), true);
+    const secondOriginal = await position(second);
+    const secondEdited = await move(b, second);
+    await history(b, 'Undo').click();
+    await until(async () => (await position(second)).x === secondOriginal.x, 'second sprite undo');
+
+    await focus(editor, parent.id);
+    await listName(first).click();
+    await targetIs(b, first);
+    assert.equal(await combo(a).isDisabled(), true);
+    assert.equal(await combo(b).isDisabled(), true);
+    await listName(second).click();
+    await targetIs(b, second);
+    await targetIs(a, first);
+    assert.equal(await block(a, second).count(), 0);
+    assert.deepEqual(await position(first), firstEdited);
+    await editable(b);
+    await history(b, 'Redo').click();
+    await until(async () => (await position(second)).x === secondEdited.x, 'second sprite redo survives two target switches');
+    await combo(b).press('ArrowUp');
+    const options = await b.child.getByRole('option').allTextContents();
+    const distance = options.indexOf(first.name) - options.indexOf(second.name);
+    assert.notEqual(distance, 0);
+    for (let step = 0; step < Math.abs(distance); step++) {
+        await combo(b).press(distance > 0 ? 'ArrowDown' : 'ArrowUp');
+    }
+    await combo(b).press('Enter');
+    await targetIs(b, first);
+    await listSelected(first);
+    await history(b, 'Undo').click();
+    await until(async () => (await position(first)).x === firstOriginal.x &&
+        await block(a, first).getAttribute('transform') === await block(b, first).getAttribute('transform'),
+    'first sprite undo reaches both views');
+    await editable(a);
+    await history(a, 'Redo').click();
+    await until(async () => (await position(first)).x === firstEdited.x, 'another view restores the first sprite');
+    assert.deepEqual(await position(second), secondEdited);
+    await focus(editor, parent.id);
+    await listName(second).click();
+    await targetIs(a, second);
+    await targetIs(b, first);
+    report.checks.push('Thumbnail combobox and sprite list sync only the last active code window; each sprite keeps shared undo/redo');
+}
+
+async function checkCodePopouts ({editor, context, control}, {withBackpack = false, native = false, targetSync = false} = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
     await control('layout', parent.id);
@@ -476,14 +569,28 @@ async function checkCodePopouts ({editor, context, control}, withBackpack = fals
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const targetId = await editor.evaluate(blockId => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync}) => {
+        const first = vm.editingTarget;
+        const seeded = [{id: first.id, name: first.getName(), blockId}];
+        if (targetSync) {
+            await vm.duplicateSprite(first.id);
+            const second = vm.editingTarget;
+            second.getCostumes().push({...vm.runtime.getTargetForStage().getCostumes()[0]});
+            second.setCostume(second.getCostumes().length - 1);
+            const secondBlock = `${blockId}-second`;
+            second.blocks.createBlock({id: secondBlock, opcode: 'looks_show', next: null, parent: null,
+                topLevel: true, shadow: false, inputs: {}, fields: {}, x: 100, y: 110});
+            seeded.push({id: second.id, name: second.getName(), blockId: secondBlock});
+            vm.setEditingTarget(first.id);
+        }
         vm.editingTarget.blocks.createBlock({
             id: blockId, opcode: 'looks_hide', next: null, parent: null, topLevel: true, shadow: false,
             inputs: {}, fields: {}, x: 90, y: 100
         });
         vm.refreshWorkspace();
-        return vm.editingTarget.id;
-    }, id);
+        return seeded;
+    }, {blockId: id, targetSync});
+    const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
         return {x, y};
@@ -522,6 +629,10 @@ async function checkCodePopouts ({editor, context, control}, withBackpack = fals
     assert.equal((await control('windows')).filter(window => window.kind === 'code').length, 2);
     if (native) {
         await checkNativeCodeBackpack({editor, context, control}, a, b, backpackTargets, id);
+        return;
+    }
+    if (targetSync) {
+        await checkCodeTargetSync({editor, a, b, focus, parent, sprites});
         return;
     }
     assert.equal(await editor.evaluate(() =>
@@ -1106,8 +1217,9 @@ try {
     });
 
     if (testMode === '--sprite-properties') await run('sprite', checkSpriteProperties);
-    else if (testMode === '--code-backpack-native') await run('code-backpack', env => checkCodePopouts(env, true, true));
-    else if (testMode === '--code-backpack') await run('code-backpack', env => checkCodePopouts(env, true));
+    else if (testMode === '--code-backpack-native') await run('code-backpack', env => checkCodePopouts(env, {withBackpack: true, native: true}));
+    else if (testMode === '--code-backpack') await run('code-backpack', env => checkCodePopouts(env, {withBackpack: true}));
+    else if (testMode === '--code-target-sync') await run('code-popout', env => checkCodePopouts(env, {targetSync: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
     else if (testMode === '--stage-popout') await run('stage-popout', checkStagePopout);

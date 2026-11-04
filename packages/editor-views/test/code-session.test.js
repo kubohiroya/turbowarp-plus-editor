@@ -27,13 +27,14 @@ function fixture(receiveBackpackDrop) {
             resetCache() {},
             emitProjectChanged() {}
         };
-        return {id, blocks, variables: {}, comments: {}, getName: () => id};
+        return {id, isOriginal: true, blocks, variables: {}, comments: {}, getName: () => id};
     };
     const target = makeTarget('first');
     const other = makeTarget('other');
     const vm = Object.assign(new EventEmitter(), {
         editingTarget: target,
         runtime: {
+            targets: [target, other],
             getTargetForStage: () => ({variables: {}}),
             getTargetById: id => [target, other].find(sprite => sprite.id === id),
             getEditingTarget: () => vm.editingTarget
@@ -41,6 +42,7 @@ function fixture(receiveBackpackDrop) {
         setEditingTarget(id) {
             this.editingTarget = this.runtime.getTargetById(id);
             this.emit('targetsUpdate');
+            this.emit('workspaceUpdate');
         }
     });
     const session = createCodeSession({
@@ -103,6 +105,48 @@ test('a focused window gets a lease after release and stale edits do not enter t
     b.close();
     session.dispose();
     assert.equal(workspace.undo, nativeUndo);
+});
+
+test('target changes follow only the last active view and drain edits into the old history', () => {
+    const {session, connect, target, other, vm, focusParent} = fixture();
+    const a = connect(target);
+    const b = connect(target);
+    const last = view => view.messages.at(-1);
+    const select = (view, lease, from, to) =>
+        view.send({type: 'select-target', lease, targetId: from.id, nextTargetId: to.id});
+    const edit = (view, lease, sprite, x) => view.send({type: 'edits', lease, targetId: sprite.id,
+        events: [{type: 'move', blockId: 'block', newCoordinate: {x, y: 0}}]});
+
+    b.focus();
+    const oldLease = last(b).lease;
+    select(a, oldLease, target, other);
+    assert.equal(vm.editingTarget, target);
+    select(b, oldLease, target, other);
+    assert.equal(last(b).type, 'revoke');
+    edit(b, oldLease, target, 21);
+    b.send({type: 'release', lease: oldLease});
+    assert.equal(vm.editingTarget, other);
+    assert.equal(last(a).type, 'update');
+    assert.equal(last(b).type, 'grant');
+    assert.equal(last(b).canUndo, false);
+    assert.equal(other.blocks._blocks.block.x, 0);
+
+    const otherLease = last(b).lease;
+    focusParent();
+    vm.setEditingTarget(target.id);
+    b.send({type: 'edits', lease: otherLease, targetId: other.id,
+        events: [{type: 'change', blockId: 'block', element: 'field', name: 'VARIABLE', newValue: 'stale'}]});
+    edit(b, otherLease, other, 35);
+    b.send({type: 'release', lease: otherLease});
+    assert.equal(last(b).targetId, target.id);
+    assert.equal(last(b).canUndo, true);
+    assert.equal(target.blocks._blocks.block.x, 21);
+    assert.equal(other.blocks._blocks.block.x, 35);
+    vm.setEditingTarget(other.id);
+    assert.equal(last(b).targetId, other.id);
+    assert.equal(last(b).canUndo, true);
+    assert.equal(a.messages.some(message => message.targetId === other.id), false);
+    session.dispose();
 });
 
 test('a background drop keeps its target while foreground edits drain', async () => {
