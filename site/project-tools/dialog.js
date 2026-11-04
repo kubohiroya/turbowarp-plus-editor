@@ -1,4 +1,5 @@
 import styles from './dialog.css';
+import snackbarStyles from '../styles/snackbar.css';
 import {contactLink, descriptionParts} from './links.js';
 import {diagnosticText} from './diagnostics.js';
 
@@ -50,7 +51,7 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
         notice?.remove();
         const locale = hostLocale || document.documentElement.lang || 'en';
         const ja = locale.startsWith('ja');
-        notice = element(document, 'aside', undefined, {class: styles.notice, 'data-project-tools': '',
+        notice = element(document, 'aside', undefined, {class: snackbarStyles.snackbar, 'data-project-tools': '',
             'data-testid': 'project-diagnostics-snackbar'});
         const message = error.type === 'project-error' ?
             (ja ? '作品を開けませんでした。' : 'Could not open the project.') :
