@@ -2,11 +2,13 @@
 export function readStartupFeatureFlags({
     twPlusExtensionLoader: loader = null,
     twPlusProjectTools: projectTools = null,
+    twPlusSplitter: splitter = null,
     twPlusWindowLayout: layout = null
 } = {}) {
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
         projectTools: projectTools === null || projectTools === '1',
+        splitter: splitter === null || splitter === '1',
         windowLayout: layout === '1'
     });
 }
