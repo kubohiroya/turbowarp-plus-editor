@@ -28,7 +28,17 @@ test('catalog checkboxes alone exclude packages, dependencies stay selected, and
             sha256: spec.sha256, dependencies: spec.id === parent.id ? [base.id] : [], unsandboxed: 'optional'}))},
         headers: {'access-control-allow-origin': '*'}}));
     await openEditor(page);
-    await openCatalog(page);
+    await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
+    const plusTab = page.getByRole('button', {name: 'TurboWarp Plus', exact: true});
+    await plusTab.press('Enter');
+    await expect(plusTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(selection(page)).toBeVisible();
+    await page.getByRole('button', {name: 'すべて', exact: true}).click();
+    await expect(plusTab).toHaveAttribute('aria-pressed', 'false');
+    await expect(selection(page)).toHaveCount(0);
+    await plusTab.press('Space');
+    await expect(plusTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(selection(page).locator('.twextsec-row')).toHaveCount(specifications.length);
     // Trusted rows are stated, not asked: no execution choice, and no way to refuse them here.
     await expect(selection(page).locator('.twextsec-row input[name^="execution-"]')).toHaveCount(0);
     await expect(row(page, unchecked).locator('.twextsec-trusted')).toBeVisible();

@@ -178,7 +178,8 @@ export const installHostExtensionHost = (vm, settings, integration) =>
  * before anything runs are all the distributor's, so this fork takes a description and renders it.
  * With none supplied the library is exactly the one upstream ships.
  * @param {object} [integration] The host's integration.
- * @returns {object|null} `tag`, `label`, `iconSrc`, `className` and `render(props)`, or null.
+ * @returns {object|null} `tagProps`, optional layout `classes` and
+ * `render(filterQuery, context, onBusyChange)`, or null.
  */
 export const hostLibraryTab = integration => integration?.libraryTab || null;
 

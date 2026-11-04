@@ -134,9 +134,9 @@ test('this distribution supplies the extension host and the library tab the GUI 
     // The GUI installs loading through this and renders the tab; what either does is decided here,
     // so a build that supplies neither leaves the editor with upstream's own library.
     assert.equal(typeof supplied.installExtensionHost, 'function');
-    const tab = supplied.libraryTab as {tag: string; label: string; render: unknown};
-    assert.equal(tab.tag, 'twplus');
-    assert.equal(tab.label, 'TurboWarp Plus');
+    const tab = supplied.libraryTab as {tagProps: {tag: string; intlLabel: string}; render: unknown};
+    assert.equal(tab.tagProps.tag, 'twplus');
+    assert.equal(tab.tagProps.intlLabel, 'TurboWarp Plus');
     assert.equal(typeof tab.render, 'function');
     // Nothing is offered when this build says so, and the GUI then adds no tag at all.
     const {createPlusLibraryTab} = await import('../site/extension-library/tab.js');

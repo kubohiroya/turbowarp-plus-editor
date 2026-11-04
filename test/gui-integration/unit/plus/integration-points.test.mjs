@@ -167,11 +167,10 @@ test('with no tab supplied the extension library stays upstream\'s own', () => {
 });
 
 test('the tab arrives as a description the library renders, name and icon included', () => {
-    const tab = {tag: 'twplus', label: 'TurboWarp Plus', iconSrc: 'icon.svg', className: 'tag_x',
-        render: props => props};
+    const tagProps = {tag: 'twplus', intlLabel: 'TurboWarp Plus', iconSrc: 'icon.svg', className: 'tag_x'};
+    const tab = {tagProps, render: (query, context) => ({filterQuery: query, vm: context.vm})};
     assert.equal(hostLibraryTab({libraryTab: tab}), tab);
-    // Rendering is the host's: this fork hands over the filter, the locale, the VM, its review
-    // bookkeeping and the callbacks, and renders whatever comes back.
-    const rendered = hostLibraryTab({libraryTab: tab}).render({filterQuery: 'x', vm: 'vm'});
+    // Rendering is the host's: the GUI hands over the current filter and library context.
+    const rendered = hostLibraryTab({libraryTab: tab}).render('x', {vm: 'vm'});
     assert.deepEqual(rendered, {filterQuery: 'x', vm: 'vm'});
 });

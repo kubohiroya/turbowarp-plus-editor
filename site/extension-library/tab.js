@@ -15,6 +15,16 @@ import {PLUS_LIBRARY_ENABLED} from './flags.js';
 import icon from './icon.svg';
 import PlusLibrary from './plus-library.jsx';
 import styles from './plus-library.css';
+import {beginPlusReview, canLoadPlusExtension} from '../gui-integration/lib/tw-plus-extension-permissions.js';
+
+const activateTab = event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        event.currentTarget.click();
+    }
+};
+
+const permissions = {beginReview: beginPlusReview, canLoad: canLoadPlusExtension};
 
 /**
  * Build the tab, so a test can hand in its own view.
@@ -22,14 +32,15 @@ import styles from './plus-library.css';
  * @returns {object|null} The tab, or null when this build offers none.
  */
 export const createPlusLibraryTab = ({view = PlusLibrary, enabled = PLUS_LIBRARY_ENABLED} = {}) => enabled ? {
-    /** The tag the GUI puts beside its own, and selects this tab by. */
-    tag: 'twplus',
-    /** Shown on the tag. Not translated: it is the name of this distribution. */
-    label: 'TurboWarp Plus',
-    iconSrc: icon,
-    // The class name is this stylesheet's, hashed when this bundle is built, so the GUI cannot
-    // name it: it styles the tag through whatever string arrives here.
-    className: styles.plusTag,
+    /** A native library tag supplied beside the GUI's standard tags. */
+    tagProps: {
+        tag: 'twplus',
+        intlLabel: 'TurboWarp Plus',
+        iconSrc: icon,
+        className: styles.plusTag,
+        tabIndex: 0,
+        onKeyDown: activateTab
+    },
     classes: {
         library: styles.customLibrary,
         content: styles.customContent,
@@ -37,11 +48,20 @@ export const createPlusLibraryTab = ({view = PlusLibrary, enabled = PLUS_LIBRARY
     },
     /**
      * Render the tab's contents.
-     * @param {object} props What the GUI passes: the filter, the locale, the VM, its review
-     * bookkeeping and the callbacks for busy state, category selection and closing.
+     * @param {string} filterQuery The library's current search text.
+     * @param {object} context Current library props containing Intl, VM and the native callbacks.
+     * @param {Function} onBusyChange Update the GUI's library busy state.
      * @returns {object} The element to render.
      */
-    render: props => React.createElement(view, props)
+    render: (filterQuery, {intl, vm, onCategorySelected, onRequestClose}, onBusyChange) => React.createElement(view, {
+        filterQuery,
+        locale: intl.locale,
+        vm,
+        permissions,
+        onBusyChange,
+        onCategorySelected,
+        onRequestClose
+    })
 } : null;
 
 export const plusLibraryTab = createPlusLibraryTab();
