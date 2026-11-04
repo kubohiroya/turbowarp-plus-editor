@@ -6,7 +6,10 @@ const output = resolve(process.argv[2] || '/private/tmp/tw151-stage2/build');
 const fixture = import.meta.dirname;
 await mkdir(output, {recursive: true});
 await build({
-    entryPoints: [resolve(fixture, 'editor.ts'), resolve(fixture, '../../site/editor-backpack/child.ts')],
+    entryPoints: {
+        editor: resolve(fixture, 'editor.ts'),
+        child: resolve(fixture, '../../site/editor-backpack/child.ts')
+    },
     outdir: output,
     bundle: true,
     platform: 'browser'
