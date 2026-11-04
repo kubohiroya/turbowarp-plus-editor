@@ -48,7 +48,6 @@ test('a cancelled preview read says so instead of answering', async () => {
 
 test('the integration ships the catalog, so the GUI can ask for it', () => {
     const shipped = createPlusIntegration({
-        flags: {embeddedYamlEditor: false},
         mountEditor: () => ({dispose () {}})
     });
     // The catalog is not handed through the integration any more: the GUI stopped reading it when

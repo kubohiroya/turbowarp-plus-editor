@@ -42,10 +42,16 @@ jobs:
           E2E_EXPECT_SITE_REVISION: ${{ steps.source.outputs.site_revision }}
           E2E_FIXED_INPUTS: '1'
           E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.security_version }}
+        # The same commit already passed every browser check in CI before it was deployed. What is
+        # left to show is that the deployed site is that build and still works where it is served:
+        # its pinned identities (every test checks build-info.json), the landing page, opening and
+        # saving a project, the extension review, and the catalog's loading forms and offline HTML.
         run: |
           node test/e2e/turbowarp/wait-public.cts
-          npm run test:e2e:block-editor
-          npm run test:e2e:extension-loader
+          ./node_modules/.bin/playwright test --config test/e2e/turbowarp/playwright.config.cts --project=chromium-project-url \
+            landing.spec.cts editor.spec.cts extension-security.spec.cts --grep-invert 'cancels|mixed|without a required|denying|narrow|mobile|direct editor'
+          ./node_modules/.bin/playwright test --config test/e2e/extension-loader/playwright.config.cts \
+            catalog-authoring.spec.cts --grep 'writes all four loading forms'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

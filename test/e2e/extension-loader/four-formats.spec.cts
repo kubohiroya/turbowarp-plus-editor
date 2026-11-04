@@ -15,7 +15,7 @@ const forms = ['remote-non-cacheable', 'remote-cacheable', 'embedded-file', 'emb
 const labels = {
     ja: {add: '拡張機能を追加', addButton: '追加', loading: '読み込み元', openTitle: 'この作品は機能拡張を使います',
         ok: 'OK', cancel: 'キャンセル', forms: {
-            'remote-cacheable': '控えを残す（既定）', 'remote-non-cacheable': '毎回取得する',
+            'remote-cacheable': 'キャッシュを残す（既定）', 'remote-non-cacheable': '毎回取得する',
             'embedded-file': '作品の中から', 'embedded-data': '作品の中の data: アドレスから'}},
     en: {add: 'Add Extension', addButton: 'Add', loading: 'Where it loads from', openTitle: 'This project wants to run extensions',
         ok: 'OK', cancel: 'Cancel', forms: {
@@ -78,7 +78,7 @@ for (const distribution of forms) {
         // forbids a copy fetches from the recorded URL again.
         expect(fetched.get(spec.id) - before).toBe(distribution === 'remote-non-cacheable' ? 1 : 0);
         await openCatalog(page, 1);
-        await expect(row(page, spec).locator('.twextsec-state')).toHaveText('読み込み済み');
+        await expect(row(page, spec).locator('.twextsec-state')).toHaveText('▶️ 読み込み済み');
         for (const other of forms) {
             if (other === distribution) await expect(form(page, spec, other)).toBeChecked();
             else await expect(form(page, spec, other)).not.toBeChecked();
@@ -188,7 +188,10 @@ test('an SB3 whose Manifest uses a retired spelling fails to open with INVALID_S
         expect(await executions(page)).toBe(0);
         expect(await loaded(page, 'plusfixture')).toBe(false);
     }
-    await expect(page.getByTestId('tw-plus-extension-status')).toContainText('INVALID_SOURCE');
+    await expect(page.getByTestId('tw-plus-extension-status')).toHaveCount(0);
+    await page.getByTestId('project-diagnostics-snackbar')
+        .getByRole('button', {name: '詳細ログを表示', exact: true}).click();
+    await expect(page.getByTestId('project-diagnostics')).toContainText('INVALID_SOURCE');
 });
 
 for (const lang of ['ja', 'en']) {

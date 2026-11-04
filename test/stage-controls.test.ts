@@ -67,7 +67,6 @@ test('one service per VM, cleared when that VM loads another project', () => {
 test('this distribution hands the service to the fork through the integration', () => {
     const asked: unknown[] = [];
     const integration = createPlusIntegration({
-        flags: {embeddedYamlEditor: false},
         mountEditor: () => ({dispose () {}}),
         stageControls: (vm: unknown) => {
             asked.push(vm);

@@ -14,14 +14,7 @@ const fs = require('node:fs');
 const Module = require('node:module');
 const path = require('node:path');
 
-const configured = process.env.E2E_GUI_ROOT;
-const fallback = path.resolve('.host/scratch-gui');
-const root = configured && path.isAbsolute(configured) ? configured :
-    fs.existsSync(path.join(fallback, 'package.json')) ? fallback : null;
-if (!root) {
-    throw new Error('These tests need the pinned GUI: set E2E_GUI_ROOT, ' +
-        'or check it out at .host/scratch-gui (see scripts/site/source.ts)');
-}
+const root = require('../pinned-gui.cjs')('These tests need the pinned GUI');
 const guiRequire = Module.createRequire(path.join(root, 'package.json'));
 const babel = guiRequire('@babel/core');
 const site = path.resolve('site');

@@ -112,7 +112,7 @@ test('catalog writes all four loading forms, restores them, and packages one off
         await assertModes(page);
         await openCatalog(page);
         for (const spec of specifications) {
-            await expect(row(page, spec).locator('.twextsec-state')).toHaveText('読み込み済み');
+            await expect(row(page, spec).locator('.twextsec-state')).toHaveText('▶️ 読み込み済み');
             await expect(row(page, spec).getByRole('checkbox')).toBeChecked();
             await expect(row(page, spec).getByRole('checkbox')).toBeDisabled();
             await expect(form(page, spec)).toBeChecked();
@@ -298,7 +298,7 @@ test('catalog adopts a previously native-loaded extension, runs it as a catalog 
     expect(nativeFrameID).toBeTruthy();
 
     await openCatalog(page);
-    await expect(row(page, spec).locator('.twextsec-state')).toHaveText('読み込み済み');
+    await expect(row(page, spec).locator('.twextsec-state')).toHaveText('▶️ 読み込み済み');
     await expect(row(page, spec).getByRole('checkbox')).toBeChecked();
     await expect(row(page, spec).getByRole('checkbox')).toBeDisabled();
     await form(page, spec, 'embedded-file').check();

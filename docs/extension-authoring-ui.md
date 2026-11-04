@@ -20,7 +20,7 @@
 作品を開くときは、その作品の Plus 拡張と通常のカスタム拡張を、同じ `mode="open"` の画面1つでまとめて尋ねます。尋ねるのは Loader が取得・登録する前で、Loader はその答えで許可します（同じ拡張をもう一度尋ねません）。Plus 拡張について開く人が決められるのは次の2つです。
 
 - 動かすかどうか。作者がサンドボックスなしで動かす拡張に「サンドボックスの中で」と答えた場合は、作者の指定どおりには動かせないので、作品を開きません（`TRUST_DENIED`）。作者がサンドボックスの中で動かす拡張は、どちらの答えでもサンドボックスの中で動きます。
-- `remote-cacheable` の拡張の控えを、このブラウザーに残すかどうか。断ることしかできず、作品に記録された形式は変わりません（Loader の `declineCaching`）。
+- `remote-cacheable` の拡張のキャッシュを、このブラウザーに残すかどうか。断ることしかできず、作品に記録された形式は変わりません（Loader の `declineCaching`）。
 
 この画面での拒否は、同じ訪問のうちに以前の読み込みで許可した拡張にも優先します。確認画面を持たないホスト（単一HTMLなど）では、従来どおり拡張ごとの許可ダイアログが出ます。
 
@@ -34,8 +34,8 @@
 
 | 設定 | 動作 |
 |---|---|
-| `remote-non-cacheable` | HTTPS、資格情報・fragment・redirectなし、CORS取得可能なJS URLを保存。開くたびに取得し、このブラウザーに控えを残さない |
-| `remote-cacheable` | 同じURLを保存し、検証済みの控えをこのブラウザーに残してよい（開く人は断れる） |
+| `remote-non-cacheable` | HTTPS、資格情報・fragment・redirectなし、CORS取得可能なJS URLを保存。開くたびに取得し、このブラウザーにキャッシュを残さない |
+| `remote-cacheable` | 同じURLを保存し、検証済みのキャッシュをこのブラウザーに残してよい（開く人は断れる） |
 | `embedded-file` | UTF-8のJSをSB3内の `extensions/` にファイルとして同梱 |
 | `embedded-data` | JSを `data:` の値として作品文書に同梱。標準TurboWarpでも開ける |
 | サンドボックスあり | VM所有の隔離iframeで実行。`Scratch.vm`を渡さず、`Scratch.extensions.unsandboxed`はfalse |
