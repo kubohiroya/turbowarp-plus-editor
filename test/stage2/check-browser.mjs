@@ -97,15 +97,29 @@ async function nativeDrag(bounds, from, source, to, destination) {
     const coordinates = [a.x + first.x + first.width / 2, a.y + first.y + first.height / 2,
         b.x + last.x + last.width / 2, b.y + last.y + last.height / 2];
     const button = from.locator(source);
+    const target = to.locator(destination);
     await button.evaluate(element => {
-        element.dataset.nativeDrag = 'pending';
-        element.addEventListener('dragstart', () => {element.dataset.nativeDrag = 'started';}, {once: true});
+        element.addEventListener('dragstart', event => {
+            if (event.isTrusted) element.dataset.nativeDrag = 'started';
+        });
     });
-    for (let attempt = 0; attempt < 2; attempt++) {
+    await target.evaluate(element => {
+        delete element.dataset.nativeDrop;
+        element.addEventListener('drop', event => {
+            if (event.isTrusted) element.dataset.nativeDrop = 'received';
+        }, {once: true});
+    });
+    // Retry only a missing OS input. The caller still asserts the result of every delivered drop.
+    for (let attempt = 0; attempt < 3; attempt++) {
+        await button.evaluate(element => {element.dataset.nativeDrag = 'pending';});
         await promisify(execFile)('python3', [join(import.meta.dirname, 'native-mouse.py'), ...coordinates.map(String)]);
-        if (await button.getAttribute('data-native-drag') === 'started') return coordinates;
+        if (await target.getAttribute('data-native-drop') === 'received') {
+            assert.equal(await button.getAttribute('data-native-drag'), 'started');
+            return coordinates;
+        }
+        await sleep(300);
     }
-    throw new Error(`The OS did not start a drag at ${coordinates.slice(0, 2).join(', ')}`);
+    throw new Error(`The OS did not deliver a drop at ${coordinates.slice(2).join(', ')}`);
 }
 
 try {
