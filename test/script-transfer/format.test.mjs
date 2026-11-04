@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {guiRequire as require} from '../extension-host/pinned-host.mjs';
-import {exportScript, importScript, parseScript, validateScript} from '@kubohiroya/turbowarp-script-transfer';
+import {exportScript, importScript, importScriptWithReceipt, parseScript, validateScript} from '@kubohiroya/turbowarp-script-transfer';
 const VM = require('scratch-vm');
 const blank = isStage => ({isStage, name: isStage ? 'Stage' : 'Sprite', variables: {}, lists: {}, broadcasts: {},
     blocks: {}, comments: {}, costumes: [], sounds: [], currentCostume: 0, volume: 100, layerOrder: isStage ? 0 : 1});
@@ -113,4 +113,27 @@ test('concurrent pastes serialize variable and procedure conflict resolution', a
     assert.equal(Object.values(b.editingTarget.variables).filter(v => v.name === 'items').length, 1);
     const definitions = Object.values(b.editingTarget.blocks._blocks).filter(b => b.opcode === 'procedures_prototype');
     assert.deepEqual(definitions.map(b => b.mutation.proccode).sort(), ['work', 'work (2)']);
+});
+
+
+test('receipt import uses the VM-assigned IDs without selecting the destination', async t => {
+    const vm = await makeVM(t);
+    const sprite = source(vm);
+    const stage = vm.runtime.getTargetForStage();
+    const input = exportScript(vm, sprite, 'call');
+    const sourceIds = Object.keys(sprite.blocks._blocks);
+    let committed;
+    const result = await importScriptWithReceipt(vm, stage, input, {
+        onCommitted(receipt) {
+            committed = receipt;
+            assert.deepEqual(new Set(receipt.blockIds), new Set(Object.keys(stage.blocks._blocks)));
+        }
+    });
+    assert.equal(result, committed);
+    assert.deepEqual(result.rootBlockIds, stage.blocks.getScripts());
+    assert.equal(result.blockIds.length, input.blocks.length);
+    assert.ok(result.blockIds.every(id => !sourceIds.includes(id)));
+    assert.deepEqual(Object.keys(sprite.blocks._blocks), sourceIds);
+    assert.equal(vm.editingTarget, sprite);
+    assert.equal(vm.runtime.getEditingTarget(), sprite);
 });

@@ -31,7 +31,7 @@ function AnchorButton({label, pressed, onClick}) {
     </button>;
 }
 
-const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
+const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
     const [showUndock, setShowUndock] = React.useState(false);
     const [plusSelected, setPlusSelected] = React.useState(layoutFlags.standardLayout);
     const [showStage, setShowStage] = React.useState(true);
@@ -120,6 +120,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
     const render = layout => {
         const configured = applyStandardLayout(layout);
         return layoutFlags.internalWindows ? <EditorTabLayout
+            vm={vm}
             activeEditorTab={activeEditorTab}
             editorTargetIsStage={editorTargetIsStage}
             showUndock={showUndock}

@@ -84,7 +84,7 @@
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
     "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",
     "@kubohiroya/turbowarp-editor-views": "file:packages/editor-views",
-    "@kubohiroya/turbowarp-editor-windows": "file:vendor/turbowarp-editor-windows-0.4.0.tgz",
+    "@kubohiroya/turbowarp-editor-windows": "file:vendor/turbowarp-editor-windows-0.5.0.tgz",
     "@kubohiroya/turbowarp-extension-data-editor": "0.8.0",
     "@kubohiroya/turbowarp-extension-loader": "0.8.0",
     "@kubohiroya/turbowarp-extension-security-dialog": "0.8.5",
@@ -110,7 +110,7 @@
     "@kubohiroya/turbowarp-document-data": "0.6.0-rc.0",
     "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.4",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
-    "@kubohiroya/turbowarp-script-transfer": "0.1.0",
+    "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#b8192730b1d9bc93d3067153b6c41df4f6ad4e0c",
     "@turbowarp/jszip": "^3.12.0"
   },
   "bin": {

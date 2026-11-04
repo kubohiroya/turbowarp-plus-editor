@@ -31,7 +31,7 @@ const messages = {
     }
 };
 
-export function createBackpackIntegration({host, importScript, decorateSurface, readScript = readBackpackScript}) {
+export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
     function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel}) {
@@ -154,25 +154,32 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         );
     }
 
-    async function receiveBackpackDrop({vm, target, raw, position, canUse, onError,
+    async function receiveBackpackDrop({vm, target, raw, position, canUse, onError, receipt,
         commit = apply => apply(), accept = () => true}) {
         const active = sessions.get(vm);
         if (!active) return;
-        const result = await active.transfer.receive(raw, {session: active.id, id: target.id},
-            async (destination, script) => {
-                if (!accept(script)) throw new Error('Unsupported script for this workspace');
-                return commit(async () => {
-                    if (!canUse() || sessions.get(vm) !== active ||
-                        vm.runtime.getTargetById(destination.id) !== target) return false;
-                    await importScript(vm, target, script, {position});
-                    return true;
-                });
+        const canCommit = () => canUse() && sessions.get(vm) === active &&
+            vm.runtime.getTargetById(target.id) === target;
+        const result = await active.transfer.receive(raw, {session: active.id, id: target.id}, async (_, script) => {
+            if (!accept(script)) throw new Error('Unsupported script for this workspace');
+            return commit(async () => {
+                if (!canCommit()) return false;
+                if (receipt) {
+                    const imported = await importScriptWithReceipt(vm, target, script, {
+                        position, canCommit, beforeCommit: receipt.beforeCommit, onCommitted: receipt.onCommitted
+                    });
+                    return imported !== null;
+                }
+                await importScript(vm, target, script, {position});
+                return true;
             });
+        });
         if (result === 'failed' && canUse()) onError?.(new Error(active.copyFailed.current));
     }
 
-    function attachBackpackDrop({vm, workspace, canUse, onError}) {
-        const node = workspace.getParentSvg();
+    function attachBackpackDrop({vm, workspace, canUse, onError, dropElement, destination}) {
+        const svg = workspace.getParentSvg();
+        const node = dropElement ?? svg;
         let disposed = false;
         const allowed = event => sessions.has(vm) && canUse() &&
             Array.from(event.dataTransfer?.types ?? []).includes(transferMime);
@@ -184,15 +191,18 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         function drop(event) {
             if (!allowed(event)) return;
             event.preventDefault();
-            const target = vm.editingTarget;
+            const target = destination?.target ?? vm.editingTarget;
             const raw = event.dataTransfer.getData(transferMime);
             const matrix = workspace.getCanvas().getScreenCTM();
             if (!target || !matrix) return;
-            const point = node.createSVGPoint();
+            const point = svg.createSVGPoint();
             point.x = event.clientX;
             point.y = event.clientY;
             const {x, y} = point.matrixTransform(matrix.inverse());
-            void receiveBackpackDrop({vm, target, raw, position: {x, y}, canUse: () => !disposed, onError});
+            void receiveBackpackDrop({
+                vm, target, raw, position: {x, y}, onError, receipt: destination,
+                canUse: destination ? destination.canCommit : () => !disposed
+            });
         }
         node.addEventListener('dragover', over);
         node.addEventListener('drop', drop);
