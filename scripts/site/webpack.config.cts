@@ -85,7 +85,7 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'backpack'].map(feature => {
+const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'backpack', 'views'].map(feature => {
     const name = `@kubohiroya/turbowarp-editor-${feature}`;
     const entry = rootRequire.resolve(name);
     config.resolve.alias[`${name}$`] = entry;
@@ -122,7 +122,7 @@ config.module.rules.push({test: /\.ts$/, include: [
     backpackSurface, editorEntries.surfaces, editorEntries.transfer
 ], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
 config.module.rules.push({test: /\.jsx?$/, include: [
-    siteSource, transferSource, editorEntries.layout, editorEntries.backpack
+    siteSource, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
