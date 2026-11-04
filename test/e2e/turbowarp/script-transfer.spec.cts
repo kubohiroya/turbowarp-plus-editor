@@ -116,16 +116,16 @@ test('the stage menus round-trip backdrops, sounds and scripts into another proj
             topLevel: true, shadow: false, parent: null, next: null, x: 40, y: 40});
         vm.emitTargetsUpdate();
     });
-    await page.locator('[class*="stage-selector_stage-selector"]').click({button: 'right'});
+    await page.getByRole('button', {name: 'Backdrops', exact: true}).click({button: 'right'});
     const pending = page.waitForEvent('download');
     await page.getByText('Export Stage', {exact: true}).click();
     const filename = info.outputPath('stage.stage3');
     await (await pending).saveAs(filename);
     const other = await context.newPage(); evidence.observe(other);
     await startTransfer(other);
-    await other.locator('[class*="stage-selector_add-button"]').hover();
+    await other.getByRole('button', {name: 'Backdrops', exact: true}).click({button: 'right'});
     const chooser = other.waitForEvent('filechooser');
-    await other.getByRole('button', {name: 'Import Stage (add)', exact: true}).click();
+    await other.getByText('Import Stage (add)', {exact: true}).click();
     await (await chooser).setFiles(filename);
     await expect.poll(() => other.evaluate(() => {
         const stage = vm.runtime.getTargetForStage();

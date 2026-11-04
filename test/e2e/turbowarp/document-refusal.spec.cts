@@ -35,7 +35,7 @@ const load = async (page, baseURL) => {
     url.search = new URLSearchParams({lang: 'ja', project_url: projectURL}).toString();
     await page.goto(url.href);
     await approveProjectExtensions(page, [await extensionSource(bytes)], 'ja');
-    await page.locator('[class*="stage-selector_stage-selector"]').click();
+    await page.getByRole('button', {name: '背景', exact: true}).click();
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(4);
     // Count the VM's own change notifications from here on; a refusal must not emit one.
     await page.evaluate(() => {

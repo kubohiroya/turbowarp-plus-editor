@@ -322,5 +322,12 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     await expect(anchor).toBeInViewport();
     await expect(stage).toBeInViewport({ratio: 1});
     assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 2);
+
+    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await page.getByRole('tab', {name: 'Backdrops', exact: true}).click();
+    const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
+    await expect(backdropActions).toBeVisible();
+    await anchor.click();
+    await expect(backdropActions).toHaveCount(0);
     assert.deepEqual(errors, []);
 });

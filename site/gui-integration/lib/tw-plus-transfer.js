@@ -20,9 +20,10 @@ export const hostStageTransferMenu = (context, integration) => {
     const {contextItems, backdropItems} = menu;
     return {
         backdropButtons: icon => backdropItems.map(({label, onClick}) => ({title: label, img: icon, onClick})),
-        wrap (content, {ContextMenuTrigger, ContextMenu, MenuItem}) {
-            if (!contextItems.length) return content;
-            const items = contextItems.map(({label, onClick}) => React.createElement(MenuItem,
+        wrap (content, {ContextMenuTrigger, ContextMenu, MenuItem}, {includeBackdropItems = false} = {}) {
+            const entries = includeBackdropItems ? [...contextItems, ...backdropItems] : contextItems;
+            if (!entries.length) return content;
+            const items = entries.map(({label, onClick}) => React.createElement(MenuItem,
                 {key: label, onClick}, label));
             const contextMenu = React.createElement(ContextMenu, {id: stageTransferMenuId}, items);
             return React.createElement(ContextMenuTrigger,

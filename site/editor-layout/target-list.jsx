@@ -17,7 +17,7 @@ function useJapaneseLabels() {
 
 function TargetLayout({render}) {
     const {plusLayout} = React.useContext(WindowLayoutContext);
-    return render(plusLayout || layoutFlags.targetList);
+    return render(plusLayout || layoutFlags.targetList, plusLayout);
 }
 
 function StandardSpriteGrid(props) {
@@ -34,8 +34,10 @@ function DockableTargetList({children}) {
     </BasicPanel>;
 }
 
-function BackdropActions({buttons}) {
+function BackdropActions({buttons, children}) {
     const japanese = useJapaneseLabels();
+    const {plusLayout} = React.useContext(WindowLayoutContext);
+    if (!plusLayout && !layoutFlags.targetList) return children;
     const unique = buttons.filter(({title}, index) => buttons.findIndex(button => button.title === title) === index);
     return <views.BackdropFooter buttons={unique} label={japanese ? '背景を追加' : 'Add a backdrop'} />;
 }
