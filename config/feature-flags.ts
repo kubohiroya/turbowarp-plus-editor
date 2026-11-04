@@ -9,7 +9,9 @@ export function readStartupFeatureFlags({
     twPlusInternalWindows: internal = null,
     twPlusStagePanel: stagePanel = null,
     twPlusTargetList: targetList = null,
-    twPlusPaletteDeletePreview: paletteDeletePreview = null
+    twPlusStandardLayout: standardLayout = null,
+    twPlusPaletteDeletePreview: paletteDeletePreview = null,
+    twPlusHorizontalBlockPalette: horizontalBlockPalette = null
 } = {}) {
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
@@ -21,6 +23,8 @@ export function readStartupFeatureFlags({
         internalWindows: layout === '1' && internal === '1',
         stagePanel: layout === '1' && internal === '1' && stagePanel === '1',
         targetList: layout === '1' && internal === '1' && targetList === '1',
-        paletteDeletePreview: paletteDeletePreview === '1'
+        standardLayout: standardLayout === '1',
+        paletteDeletePreview: paletteDeletePreview === '1',
+        horizontalBlockPalette: horizontalBlockPalette === '1'
     });
 }

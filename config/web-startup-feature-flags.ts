@@ -12,6 +12,8 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusInternalWindows: params.get('twPlusInternalWindows'),
         twPlusStagePanel: params.get('twPlusStagePanel'),
         twPlusTargetList: params.get('twPlusTargetList'),
-        twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview')
+        twPlusStandardLayout: params.get('twPlusStandardLayout'),
+        twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview'),
+        twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette')
     });
 }

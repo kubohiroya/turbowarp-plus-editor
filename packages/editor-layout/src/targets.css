@@ -11,6 +11,10 @@
     overflow: visible;
 }
 
+.grid[data-fixed-columns] {
+    padding-block-end: 4rem;
+}
+
 .grid[data-backdrop-placement] > * {
     width: auto;
     max-width: none;

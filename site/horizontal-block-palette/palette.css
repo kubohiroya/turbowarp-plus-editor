@@ -1,0 +1,39 @@
+.horizontal:global(.blocklyToolboxDiv)[data-horizontal-block-palette] {
+    inset: 0 var(--plus-stage-overlap, 0px) auto 0;
+    height: auto !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.horizontal:global(.blocklyToolboxDiv)::-webkit-scrollbar {
+    display: initial;
+}
+
+.horizontal :global(.scratchCategoryMenu) {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+}
+
+.horizontal :global(.scratchCategoryMenuItem) {
+    padding-inline: 0.65rem;
+    white-space: nowrap;
+}
+
+.horizontal :global(.scratchCategoryMenuItem.categorySelected)[aria-expanded="false"] {
+    background: transparent;
+}
+
+.panel:global(.blocklyFlyout) {
+    z-index: 29;
+    filter: drop-shadow(0 3px 6px rgb(0 0 0 / 25%));
+}
+
+.panel :global(.blocklyFlyoutBackground) {
+    fill-opacity: 1;
+}
+
+.scrollbar:global(.blocklyFlyoutScrollbar) {
+    z-index: 31;
+}

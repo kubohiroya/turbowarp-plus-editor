@@ -16,7 +16,13 @@ function useJapaneseLabels() {
 }
 
 function TargetLayout({render}) {
-    return render(true);
+    const {plusLayout} = React.useContext(WindowLayoutContext);
+    return render(plusLayout || layoutFlags.targetList);
+}
+
+function StandardSpriteGrid(props) {
+    const {plusLayout} = React.useContext(WindowLayoutContext);
+    return <views.SpriteGrid {...props} fixedColumns={plusLayout ? 2 : undefined} />;
 }
 
 function DockableTargetList({children}) {
@@ -34,8 +40,8 @@ function BackdropActions({buttons}) {
     return <views.BackdropFooter buttons={unique} label={japanese ? '背景を追加' : 'Add a backdrop'} />;
 }
 
-export const TargetListLayout = layoutFlags.targetList ? TargetLayout : undefined;
+export const TargetListLayout = layoutFlags.targetList || layoutFlags.standardLayout ? TargetLayout : undefined;
 export const TargetListPanel = layoutFlags.targetList ? DockableTargetList : undefined;
-export const SpriteGrid = layoutFlags.targetList ? views.SpriteGrid : undefined;
-export const BackdropTile = layoutFlags.targetList ? views.BackdropTile : undefined;
-export const BackdropListActions = layoutFlags.targetList ? BackdropActions : undefined;
+export const SpriteGrid = layoutFlags.targetList || layoutFlags.standardLayout ? StandardSpriteGrid : undefined;
+export const BackdropTile = layoutFlags.targetList || layoutFlags.standardLayout ? views.BackdropTile : undefined;
+export const BackdropListActions = layoutFlags.targetList || layoutFlags.standardLayout ? BackdropActions : undefined;

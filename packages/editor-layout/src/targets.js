@@ -6,11 +6,11 @@ const padding = gap * 2;
 export function createTargetList(React, styles) {
     const {createElement: element, useLayoutEffect, useRef, useState} = React;
 
-    function SpriteGrid({className, compact, stageTile, children}) {
+    function SpriteGrid({className, compact, fixedColumns, stageTile, children}) {
         const grid = useRef(null);
         const [size, setSize] = useState({width: 0, height: 0});
         useLayoutEffect(() => {
-            if (!compact) return;
+            if (!compact || fixedColumns) return;
             const viewport = grid.current.parentElement;
             const measure = () => {
                 const {clientWidth: width, clientHeight: height} = viewport;
@@ -20,15 +20,16 @@ export function createTargetList(React, styles) {
             const observer = new ResizeObserver(measure);
             observer.observe(viewport);
             return () => observer.disconnect();
-        }, [compact]);
+        }, [compact, fixedColumns]);
 
-        const columns = Math.max(1, Math.floor((size.width - padding + gap) / (minTileWidth + gap)));
+        const columns = fixedColumns || Math.max(1, Math.floor((size.width - padding + gap) / (minTileWidth + gap)));
         const visibleRows = Math.floor((size.height - padding + gap) / (tileHeight + gap));
-        const placement = size.width >= size.height && columns >= 2 ? 'top-right' :
+        const placement = fixedColumns ? 'inline' : size.width >= size.height && columns >= 2 ? 'top-right' :
             (visibleRows >= 2 ? 'bottom-left' : 'inline');
         const rows = Math.max(visibleRows, Math.ceil((React.Children.count(children) + 1) / columns));
         return element('div', {
             className: compact ? `${className} ${styles.grid}` : className,
+            'data-fixed-columns': fixedColumns,
             'data-backdrop-placement': compact ? placement : undefined,
             ref: grid,
             style: compact ? {'--target-columns': columns, '--target-rows-before-last': rows - 1} : undefined
