@@ -1,3 +1,5 @@
+export {attachExternalMonitorDrag} from './monitor-drag.js';
+
 const separatorSize = 8;
 const keyboardStep = 16;
 

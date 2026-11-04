@@ -6,12 +6,14 @@ import {chromium} from 'playwright';
 const build = process.argv[2];
 assert.ok(path.isAbsolute(build), 'Pass the absolute Editor webpack output directory');
 const origin = 'http://localhost:15175';
+const prefix = process.env.SPRITE_PROPERTIES_PREFIX || '/';
 const browser = await chromium.launch({executablePath: process.env.SPRITE_PROPERTIES_CHROME});
 const context = await browser.newContext({viewport: {width: 1280, height: 850}});
 await context.route('**/*', async route => {
     const url = new URL(route.request().url());
-    const file = path.resolve(build, `.${decodeURIComponent(url.pathname)}`);
-    if (url.origin !== origin || !file.startsWith(build + path.sep)) return route.abort();
+    if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+    const file = path.resolve(build, decodeURIComponent(url.pathname.slice(prefix.length)));
+    if (!file.startsWith(build + path.sep)) return route.abort();
     if (!(await stat(file).catch(() => null))?.isFile()) return route.fulfill({status: 404});
     return route.fulfill({path: file});
 });
@@ -20,7 +22,7 @@ const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 
 async function start(search = '') {
-    await page.goto(`${origin}/editor.html?lang=en${search}`);
+    await page.goto(`${origin}${prefix}editor.html?lang=en${search}`);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
 }
 

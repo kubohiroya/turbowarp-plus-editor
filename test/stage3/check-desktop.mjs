@@ -85,7 +85,8 @@ async function run (enabled, test) {
         assert.equal(await editor.evaluate(() => typeof EditorPreload.getInitialFile), 'function');
         await test({editor, context, control});
     } catch (error) {
-        report.diagnostics = {stderr, urls: context?.pages().map(page => page.url())};
+        report.diagnostics = {stderr, urls: context?.pages().map(page => page.url()),
+            windows: await control('windows').catch(() => null)};
         report.diagnostics.editor = await editor?.evaluate(() => ({
             url: location.href, text: document.body.innerText.slice(-1000), events: window.nativeEvidence,
             focus: document.hasFocus(), ready: !!window.vm?.editingTarget
@@ -348,6 +349,28 @@ async function checkStagePopout ({editor, context, control}) {
     const stageAction = editor.locator('[class*="basic-panel-overlay-action_"]').getByRole('button', {
         name: /^(Open in another window|別画面で開く)$/
     });
+    const focus = async (page, id) => {
+        await until(async () => {
+            if (await page.evaluate(() => document.hasFocus())) return true;
+            await control('focus', id);
+            return false;
+        }, 'native window focus');
+    };
+    const monitorId = 'stage-popout-monitor';
+    await editor.evaluate(async id => {
+        const project = JSON.parse(vm.toJSON());
+        const stage = project.targets.find(target => target.isStage);
+        stage.variables[id] = ['Stage monitor', 42];
+        stage.blocks['stage-popout-flag'] = {opcode: 'event_whenflagclicked', next: 'stage-popout-ask',
+            parent: null, inputs: {}, fields: {}, shadow: false, topLevel: true, x: 40, y: 40};
+        stage.blocks['stage-popout-ask'] = {opcode: 'sensing_askandwait', next: null, parent: 'stage-popout-flag',
+            inputs: {QUESTION: [1, [10, 'Stage popout question']]}, fields: {}, shadow: false, topLevel: false};
+        project.monitors.push({id, mode: 'default', opcode: 'data_variable', params: {VARIABLE: 'Stage monitor'},
+            spriteName: null, value: 42, width: 0, height: 0, x: 24, y: 24, visible: true});
+        await vm.loadProject(project);
+    }, monitorId);
+    const monitor = page => page.locator(`[data-id="${monitorId}"][data-opcode="data_variable"]`);
+    await monitor(editor).waitFor();
     await canvas.evaluate(node => {
         window.stage155 = {vm, loop: vm.runtime.frameLoop, renderer: vm.renderer, canvas: node, lost: 0, input: [], frames: 0};
         node.addEventListener('webglcontextlost', () => window.stage155.lost++);
@@ -390,8 +413,8 @@ async function checkStagePopout ({editor, context, control}) {
     assert.equal(await editor.evaluate(() =>
         window.open('stage-popout.html', `tw-plus-stage-${crypto.randomUUID()}`) === null), true);
     await control('layout', native.id);
-    await control('focus', native.id);
-    await child.waitForFunction(() => document.hasFocus());
+    await click(control, 'stage', screenCanvas);
+    await focus(child, native.id);
     const first = await screenCanvas.screenshot();
     const before = await editor.evaluate(() => stage155.frames);
     await editor.evaluate(() => vm.editingTarget.setXY(110, -30));
@@ -434,6 +457,70 @@ async function checkStagePopout ({editor, context, control}) {
     await editor.waitForFunction(() => !vm.runtime.ioDevices.keyboard.getKeyIsDown('a'));
     report.checks.push('One VM, renderer and WebGL canvas; live pixels changed in the child, native mouse and keyboard reached the VM after resize');
 
+    const monitorPosition = () => editor.evaluate(id => {
+        const {x, y} = vm.runtime.getMonitorState().get(id);
+        return {x, y};
+    }, monitorId);
+    const checkMonitorDisplay = (page, position) => monitor(page).evaluate((element, expected) => {
+        const overlay = element.closest('.monitor-overlay');
+        const rect = overlay.getBoundingClientRect();
+        const monitorRect = element.getBoundingClientRect();
+        const x = (monitorRect.left - rect.left) * overlay.clientWidth / rect.width;
+        const y = (monitorRect.top - rect.top) * overlay.clientHeight / rect.height;
+        if (Math.abs(x - expected.x) > 1 || Math.abs(y - expected.y) > 1) {
+            throw new Error(`Monitor displayed at ${x}, ${y}; VM expected ${expected.x}, ${expected.y}`);
+        }
+    }, position);
+    const initialPosition = await monitorPosition();
+    await focus(child, native.id);
+    await editor.evaluate(() => {
+        const owner = stage155.canvas.ownerDocument;
+        stage155.monitorEvents = [];
+        for (const name of ['pointerdown', 'pointerup']) {
+            owner.addEventListener(name, event => stage155.monitorEvents.push({
+                name, trusted: event.isTrusted, target: event.target.closest?.('[data-opcode]')?.dataset.id,
+                belongsToChildRealm: event.target instanceof owner.defaultView.Node
+            }), {capture: true, once: true});
+        }
+    });
+    const [monitorX, monitorY] = await screenPoint(control, 'stage', monitor(child));
+    await launcher('python3', [mousePath, monitorX, monitorY, monitorX + 48, monitorY + 35].map(String));
+    report.monitorEvents = await editor.evaluate(() => stage155.monitorEvents);
+    assert.ok(report.monitorEvents.some(event => event.name === 'pointerdown' && event.trusted &&
+        event.target === monitorId));
+    await until(async () => {
+        const moved = await monitorPosition();
+        return moved.x > initialPosition.x && moved.y > initialPosition.y;
+    }, 'Stage monitor moves in the parent VM');
+    const movedMonitor = await monitorPosition();
+    await checkMonitorDisplay(child, movedMonitor);
+
+    report.checks.push('Native monitor drag moved the variable monitor in the parent VM');
+
+    const greenFlag = editor.locator('[class*="green-flag_green-flag_"]').first();
+    const stop = editor.locator('[class*="stop-all_stop-all_"]').first();
+    const question = child.getByRole('textbox');
+    await focus(editor, parent.id);
+    await click(control, 'editor', greenFlag);
+    await question.waitFor();
+    await focus(child, native.id);
+    await click(control, 'stage', question);
+    await until(() => question.evaluate(input => input.ownerDocument.activeElement === input), 'question input focus');
+    await launcher('python3', [mousePath, '--key-down', '18']);
+    await launcher('python3', [mousePath, '--key-up', '18']);
+    const answer = await until(() => question.inputValue(), 'native answer is entered');
+    const submit = child.locator('[class*="question_question-submit-button_"]');
+    await click(control, 'stage', submit);
+    await question.waitFor({state: 'hidden'});
+    await until(() => editor.evaluate(value => vm.runtime.getOpcodeFunction('sensing_answer')() === value, answer),
+        'answer reaches the parent VM');
+    await focus(editor, parent.id);
+    await click(control, 'editor', greenFlag);
+    await question.waitFor();
+    await click(control, 'editor', stop);
+    await question.waitFor({state: 'hidden'});
+    report.checks.push('Parent green flag and stop control the VM; native question submission works in the child');
+
     const anchor = editor.getByRole('button', {name: modeLabel});
     await anchor.click();
     assert.equal(await anchor.getAttribute('aria-pressed'), 'false');
@@ -445,6 +532,9 @@ async function checkStagePopout ({editor, context, control}) {
     await canvas.waitFor();
     assert.ok(await canvas.evaluate(node => node === stage155.canvas && !stage155.lost));
     assert.equal(await stageAction.count(), 0);
+    await monitor(editor).waitFor();
+    assert.deepEqual(await monitorPosition(), movedMonitor);
+    await checkMonitorDisplay(editor, movedMonitor);
 
     await anchor.click();
     const secondOpen = await open();

@@ -1,4 +1,5 @@
 import React from 'react';
+import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-editor-layout';
 import {BasicPanel} from './basic-panel.jsx';
 import {createBrowserHost} from '../editor-backpack/browser-host.ts';
 import {decorateSurface} from '../editor-backpack/surface-styles.js';
@@ -42,3 +43,5 @@ function AppStagePanel({aspect, width, defaultWidth, render}) {
 }
 
 export const StagePanel = layoutFlags.stagePanel ? AppStagePanel : undefined;
+export const attachStageMonitorDrag = desktopPopout && layoutFlags.stagePanel ?
+    (element, onMove, isDraggable) => attachExternalMonitorDrag(element, onMove, isDraggable, document) : undefined;

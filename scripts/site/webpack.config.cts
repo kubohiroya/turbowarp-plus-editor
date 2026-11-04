@@ -31,7 +31,7 @@ const hookSource = fs.readFileSync(path.join(gui, 'src', 'addons', 'hooks.js'), 
 if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI_HOST__')) {
     throw new Error('The pinned GUI does not expose the optional host bridge');
 }
-const injections: Record<string, string | string[]> = {__TW_GUI_HOST__: bridge};
+const injections = {__TW_GUI_HOST__: bridge};
 const {spritePropertiesPackage, spritePropertiesVersion} = rootRequire('./site/source.json');
 if (spritePropertiesPackage) {
     const spriteProperties = path.join(__dirname, '..', '..', 'node_modules', spritePropertiesPackage);
@@ -48,9 +48,9 @@ if (spritePropertiesPackage) {
     cssModules.exclude = css;
     config.module.rules.push({test: /\.css$/, include: css,
         use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
-    injections.__TW_SPRITE_PROPERTIES_PANEL__ = [
+    Object.assign(injections, {__TW_SPRITE_PROPERTIES_PANEL__: [
         path.join(path.dirname(bridge), 'lib', 'tw-sprite-properties-panel.js'), 'SpritePropertiesPanel'
-    ];
+    ]});
 }
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 // Resolve shared packages to the host's copies, once.
