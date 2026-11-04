@@ -1,7 +1,12 @@
 """Small macOS HID driver used by the stage 2 integration test."""
 import ctypes as c
+import os
 import sys
 import time
+
+
+if os.environ.get("TW_PLUS_NATIVE_INPUT") != "1":
+    raise SystemExit("Set TW_PLUS_NATIVE_INPUT=1 to send macOS system input.")
 
 
 class Point(c.Structure):

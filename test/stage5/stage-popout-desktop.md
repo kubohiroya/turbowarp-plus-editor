@@ -27,8 +27,10 @@ stage_trial=$(mktemp -d)
 )
 python3 scripts/desktop/prepare-app.py "$stage_trial/Stage.app" \
   --source "$desktop_app" --build "$stage_trial/build" --test-control
-node test/stage3/check-desktop.mjs "$stage_trial/Stage.app" --stage-popout
+TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs "$stage_trial/Stage.app" --stage-popout
 ```
+
+日常のアプリ内ステージのドック・アンドック確認にはヘッドレスの `test/stage5/stage.mjs` を使う。実マウス・キーの検証は、ネイティブ入力、別ウィンドウへの接続、または対象の Desktop 環境が変わった場合に実施する。これらの前提が同じなら既存の結果を使う。
 
 テストは使い捨てプロファイルを用いる。macOS の CoreGraphics でポインターとキーを入力し、CDP は状態の観測、キャンバスの画像取得、ウィンドウを開く操作と親側のドックボタンに使用する。サイズの変更とネイティブ閉鎖はテスト専用 main コマンドから BrowserWindow を操作する。テストは結果と診断を標準出力へ出す。
 
