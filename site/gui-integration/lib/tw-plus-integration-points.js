@@ -35,14 +35,6 @@ export const hostModalDefaults = integration =>
     Object.fromEntries(hostModalNames(integration).map(name => [name, false]));
 
 /**
- * Extra security prompts the host owns.
- * @param {object} modals The prompts this fork defines.
- * @param {object} [integration] The host's integration.
- * @returns {object} The prompts with the host's added.
- */
-export const withHostSecurityModals = (modals, integration) => ({...modals, ...(integration?.securityModals || {})});
-
-/**
  * The host's messages for one locale. Locales match in lower case, as tw translations do.
  * @param {string} locale The locale being filled.
  * @param {object} [integration] The host's integration.

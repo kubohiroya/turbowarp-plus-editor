@@ -17,8 +17,10 @@ import ScratchCommon from 'scratch-vm/src/extension-support/tw-extension-api-com
 import createTranslate from 'scratch-vm/src/extension-support/tw-l10n.js';
 import staticFetch from 'scratch-vm/src/util/tw-static-fetch.js';
 import dispatch from 'scratch-vm/src/dispatch/central-dispatch.js';
+import defaultExtensionURLs from 'scratch-vm/src/extension-support/tw-default-extension-urls.js';
 
 import {markExtensionLoadFailure} from './tw-plus-extension-load-failure.js';
+import {setPlusHostPolicy} from './tw-plus-extension-permissions.js';
 import {
     hostExtensionLoadErrors, hostIntegration, hostSecurityReview, hostTrustedCatalog, installHostExtensionHost
 } from './tw-plus-integration-points.js';
@@ -45,6 +47,65 @@ export function startupPlusExtensionHost (vm, options = {}, integration = hostIn
         markLoadFailure: markExtensionLoadFailure,
         ...options
     }, integration);
+}
+
+/**
+ * Mount the review beneath the project loader. The GUI has already installed its native policy
+ * and supplies a modal queue, its trusted sources and the built-in library metadata.
+ */
+export function installSecurityHost (vm, {
+    securityManager, locale, projectState, extensionLibrary, isTrusted, DialogFrame, requestModal
+}, integration = hostIntegration()) {
+    const security = vm.extensionManager.securityManager;
+    const {canLoadExtensionFromProject, getSandboxMode} = securityManager;
+    const review = hostSecurityReview(integration);
+    const hostPolicy = {};
+    if (canLoadExtensionFromProject) {
+        hostPolicy.canLoadExtensionFromProject = canLoadExtensionFromProject.bind(security);
+    }
+    if (getSandboxMode) hostPolicy.getSandboxMode = getSandboxMode.bind(security);
+
+    let active = true;
+    let restoreBatchLoader;
+    let host;
+    setPlusHostPolicy(security, canLoadExtensionFromProject);
+    try {
+        // Custom policies keep their native loading path.
+        if (review && !canLoadExtensionFromProject && !getSandboxMode) {
+            restoreBatchLoader = review.installBatchLoader({
+                vm, defaultURLs: defaultExtensionURLs, isTrusted,
+                bannerFor: ({ids, url}) => extensionLibrary.find(item => ids.includes(item.extensionId) ||
+                    (item.extensionURL && item.extensionURL === url))?.iconURL,
+                showReview: (entries, initialChoices) => active ? requestModal(
+                    (onComplete, currentLocale) => review.render({
+                        entries, initialChoices, locale: currentLocale, DialogFrame, onComplete
+                    }), null
+                ) : null
+            });
+        }
+        host = startupPlusExtensionHost(vm, {locale, projectState, hostPolicy}, integration);
+    } catch (error) {
+        active = false;
+        setPlusHostPolicy(security, null);
+        restoreBatchLoader?.();
+        throw error;
+    }
+
+    let disposal;
+    return () => {
+        if (disposal) return disposal;
+        active = false;
+        setPlusHostPolicy(security, null);
+        disposal = (async () => {
+            try {
+                // The project tools can be installed even with the Plus loader switched off.
+                await host.dispose();
+            } finally {
+                restoreBatchLoader?.();
+            }
+        })();
+        return disposal;
+    };
 }
 
 /**

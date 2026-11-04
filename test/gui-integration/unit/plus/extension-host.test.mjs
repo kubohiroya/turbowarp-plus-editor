@@ -1,7 +1,10 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 
-import {isPlusPermissionDenied, startupPlusExtensionHost} from '../../../../site/gui-integration/lib/tw-plus-extension-host.js';
+import {
+    installSecurityHost, isPlusPermissionDenied, startupPlusExtensionHost
+} from '../../../../site/gui-integration/lib/tw-plus-extension-host.js';
+import {canLoadPlusExtension} from '../../../../site/gui-integration/lib/tw-plus-extension-permissions.js';
 
 const forbidden = () => new Proxy({}, {get () {
     throw new Error('A VM must not be touched when no host installs extension loading');
@@ -90,4 +93,81 @@ test('loader refusal classification is supplied by the host rather than inferred
     const integration = {extensionLoadErrors: {isCancelled: error => error === declined}};
     assert.equal(isPlusPermissionDenied(declined, integration), true);
     assert.equal(isPlusPermissionDenied(new Error('different'), integration), false);
+});
+
+test('the host installs the batch review under the loader and restores it after disposal', async () => {
+    const order = [];
+    const vm = {extensionManager: {securityManager: {}}};
+    const DialogFrame = () => null;
+    const isTrusted = () => false;
+    const entries = [];
+    const initialChoices = new Map();
+    const onComplete = () => {};
+    let review;
+    const dispose = installSecurityHost(vm, {
+        securityManager: {}, locale: 'ja', DialogFrame, isTrusted,
+        extensionLibrary: [{extensionId: 'music', iconURL: 'native-icon'}],
+        requestModal (render, cancelled) {
+            assert.equal(cancelled, null);
+            return render(onComplete, 'en');
+        }
+    }, {
+        securityReview: {
+            installBatchLoader (options) {
+                order.push('batch');
+                assert.equal(options.vm, vm);
+                assert.equal(options.isTrusted, isTrusted);
+                assert.equal(options.bannerFor({ids: ['music']}), 'native-icon');
+                review = options.showReview;
+                return () => order.push('restore');
+            },
+            render (props) {
+                assert.deepEqual(props, {entries, initialChoices, DialogFrame, onComplete, locale: 'en'});
+                return 'review';
+            }
+        },
+        installExtensionHost (target, settings) {
+            assert.equal(target, vm);
+            assert.equal(settings.locale, 'ja');
+            order.push('loader');
+            // Project tools still need disposal when the loader flag is off.
+            return {enabled: false, async dispose () {
+                await Promise.resolve();
+                order.push('dispose');
+            }};
+        }
+    });
+    assert.equal(review(entries, initialChoices), 'review');
+    const first = dispose();
+    assert.equal(dispose(), first);
+    assert.equal(review(entries, initialChoices), null);
+    await first;
+    assert.deepEqual(order, ['batch', 'loader', 'dispose', 'restore']);
+});
+
+test('a supplied native loading policy bypasses the batch review and stays bound to its VM', async () => {
+    const security = {};
+    const vm = {extensionManager: {securityManager: security}};
+    const securityManager = {
+        canLoadExtensionFromProject () {
+            assert.equal(this, security);
+            return false;
+        },
+        getSandboxMode () {
+            assert.equal(this, security);
+            return 'iframe';
+        }
+    };
+    const dispose = installSecurityHost(vm, {securityManager}, {
+        securityReview: {installBatchLoader: () => assert.fail('Native policy should own this load')},
+        installExtensionHost (target, {hostPolicy}) {
+            assert.equal(target, vm);
+            assert.equal(hostPolicy.canLoadExtensionFromProject(), false);
+            assert.equal(hostPolicy.getSandboxMode(), 'iframe');
+            return {enabled: true, dispose () {}};
+        }
+    });
+    assert.equal(canLoadPlusExtension(security, 'https://example.test/x.js'), false);
+    await dispose();
+    assert.equal(canLoadPlusExtension(security, 'https://example.test/x.js'), true);
 });
