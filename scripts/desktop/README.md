@@ -4,7 +4,7 @@
 
 ## 起動と権限
 
-- 起動時にホスト設定を固定する。ローカルコピーでは `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1` と `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` の両方を明示し、⚓ で自由配置モードに入った場合にバックパックの操作が出る。両フラグの既定は OFF。
+- 起動時にホスト設定を固定する。ローカルコピーでは `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1` と `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` の両方を明示し、⚓ を押すとバックパックのアンドックボタンが出る。両フラグの既定は OFF。
 - main は予約したフレーム名と `about:blank` の組を検査し、1つだけ許可する。初期化が完了した子ウィンドウに固定のパッケージ内 URL をロードする。子は sandbox と context isolation を有効にし、preload、Node、追加ウィンドウや許可外ページへの遷移を許可しない。
 - レンダラーが同一オリジン・起動チケット・接続元を検証して MessagePort を確立した後、子の `opener` を切る。表示は親から同一オリジンの固定資産へ React Portal で渡す。
 
@@ -36,6 +36,6 @@ node test/stage3/check-desktop.mjs /private/tmp/tw151-desktop23/TurboWarp-Plus-B
 
 ## 切り戻し
 
-⚓ を解除すると受け付けを止め、保留の読込を取り消してドックへ戻る。Desktop の別窓機能を切り戻す場合は `TW_PLUS_DESKTOP_BACKPACK_POPOUT` を外して再起動する。確定した作品内のスクリプトは維持する。
+⚓ でアンドックボタンを非表示にしても、開いているウィンドウはそのまま使える。ドック操作で元に戻し、保留の読込を取り消す。Desktop の別窓機能を切り戻す場合は `TW_PLUS_DESKTOP_BACKPACK_POPOUT` を外して再起動する。確定した作品内のスクリプトは維持する。
 
 検証対象は macOS のローカルアプリでの実バックパックからメインコード画面への、対応する組み込みスクリプトの一方向コピーとドック復帰。正式配布、Windows／Linux、外部コード画面、逆方向、他のアイテムと依存付きスクリプトは後続。

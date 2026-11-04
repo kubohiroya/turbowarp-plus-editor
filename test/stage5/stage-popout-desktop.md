@@ -8,20 +8,26 @@ Desktop の main は、明示的な起動設定がある場合に限り `tw-plus
 
 ## 再現
 
-`site/source.json` が指す scratch-gui と公式 TurboWarp Desktop 1.17.1 のソースを用意する。
+`site/source.json` が指す scratch-gui と、公式 TurboWarp Desktop 1.17.1 のソースおよび macOS アプリを用意する。
 
 ```sh
-# scratch-gui 作業ツリー
-CI=1 NODE_ENV=production ROOT= E2E_GUI_ROOT="$PWD" \
-  TW_PLUS_DESKTOP_SOURCE=/private/tmp/tw151-desktop23-official \
-  node --openssl-legacy-provider node_modules/webpack/bin/webpack.js \
-  --config ../editor-external-stage/scripts/desktop/webpack.config.cjs \
-  --output-path /private/tmp/tw-external-stage-build --bail
-
-# Editor 作業ツリー
-python3 scripts/desktop/prepare-app.py /private/tmp/tw-external-stage.app \
-  --build /private/tmp/tw-external-stage-build --test-control
-node test/stage3/check-desktop.mjs /private/tmp/tw-external-stage.app --stage-popout
+# Editor 作業ツリーで実行する。GUI の依存はインストール済みとする。
+editor_checkout="$PWD"
+gui_checkout=/absolute/path/to/scratch-gui
+desktop_source=/absolute/path/to/official-desktop-source
+desktop_app=/Applications/TurboWarp.app
+stage_trial=$(mktemp -d)
+(
+  cd "$gui_checkout"
+  CI=1 NODE_ENV=production ROOT= E2E_GUI_ROOT="$PWD" \
+    TW_PLUS_DESKTOP_SOURCE="$desktop_source" \
+    node --openssl-legacy-provider node_modules/webpack/bin/webpack.js \
+    --config "$editor_checkout/scripts/desktop/webpack.config.cjs" \
+    --output-path "$stage_trial/build" --bail
+)
+python3 scripts/desktop/prepare-app.py "$stage_trial/Stage.app" \
+  --source "$desktop_app" --build "$stage_trial/build" --test-control
+node test/stage3/check-desktop.mjs "$stage_trial/Stage.app" --stage-popout
 ```
 
 テストは使い捨てプロファイルを用いる。macOS の CoreGraphics でポインターとキーを入力し、CDP は状態の観測、キャンバスの画像取得、ウィンドウを開く操作と親側のドックボタンに使用する。サイズの変更とネイティブ閉鎖はテスト専用 main コマンドから BrowserWindow を操作する。テストは結果と診断を標準出力へ出す。
