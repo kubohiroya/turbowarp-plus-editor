@@ -15,6 +15,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusTargetList: params.get('twPlusTargetList'),
         twPlusStandardLayout: standardLayout === null ? '1' : standardLayout,
         twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview'),
-        twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette')
+        twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette'),
+        twPlusContextMenuIcons: params.get('twPlusContextMenuIcons')
     });
 }

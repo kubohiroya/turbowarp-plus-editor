@@ -26,6 +26,7 @@ import getStageControls from './stage-controls.js';
 import {plusTrustedExtensions} from './trusted-extensions.js';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 import {installHorizontalBlockPalette} from './horizontal-block-palette/index.js';
+import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.js';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.js';
 
 const {paletteDeletePreview, horizontalBlockPalette, standardLayout} = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
@@ -136,15 +137,16 @@ export const createPlusIntegration = ({
      * There is no startup switch: the editor is always mounted, and a hat gets its file icon only
      * when a registered provider owns its document, so a project without one looks like upstream.
      * Rollback reverts this integration.
-     * @param {object} context `vm`, `locale`, `document` and `getBlockly` from the fork.
+     * @param {object} context The VM, document, locale and accessors for Blockly and current messages.
      * @returns {object} Something to dispose.
      */
-    attachToWorkspace: ({vm, locale, document: hostDocument, getBlockly}) => {
+    attachToWorkspace: ({vm, locale, document: hostDocument, getBlockly, getMessages}) => {
         const attached = [];
         // Say "use the Editor's bar" before any extension asks app-shell for a dock. Without this
         // app-shell builds a floating one and a control registered through it would hover over the
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
+        attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
         attached.push(mountEditor({
             vm,
             document: hostDocument,
@@ -177,6 +179,7 @@ const integration = createPlusIntegration({
         if (horizontalBlockPalette || standardLayout) {
             installHorizontalBlockPalette(ScratchBlocks, {allowManualToggle: horizontalBlockPalette});
         }
+        installBlockContextMenuIcons(ScratchBlocks);
     }
 });
 

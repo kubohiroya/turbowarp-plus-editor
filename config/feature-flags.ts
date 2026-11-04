@@ -11,7 +11,8 @@ export function readStartupFeatureFlags({
     twPlusTargetList: targetList = null,
     twPlusStandardLayout: standardLayout = null,
     twPlusPaletteDeletePreview: paletteDeletePreview = null,
-    twPlusHorizontalBlockPalette: horizontalBlockPalette = null
+    twPlusHorizontalBlockPalette: horizontalBlockPalette = null,
+    twPlusContextMenuIcons: contextMenuIcons = null
 } = {}) {
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
@@ -25,6 +26,7 @@ export function readStartupFeatureFlags({
         targetList: layout === '1' && internal === '1' && targetList === '1',
         standardLayout: standardLayout === '1',
         paletteDeletePreview: paletteDeletePreview === '1',
-        horizontalBlockPalette: horizontalBlockPalette === '1'
+        horizontalBlockPalette: horizontalBlockPalette === '1',
+        contextMenuIcons: contextMenuIcons === '1'
     });
 }
