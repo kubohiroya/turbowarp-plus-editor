@@ -69,6 +69,25 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect(anchor).toHaveCount(0);
     await start('&twPlusWindowLayout=1');
     await expect(anchor).toHaveAttribute('aria-pressed', 'false');
+    const themeColor = property => page.evaluate(token => {
+        const sample = document.createElement('span');
+        sample.style.color = `var(${token})`;
+        document.body.append(sample);
+        const color = getComputedStyle(sample).color;
+        sample.remove();
+        return color;
+    }, property);
+    const checkDividerColor = async () => {
+        await columns.hover();
+        await expect(columns).toHaveCSS('background-color', await themeColor('--looks-secondary'));
+    };
+    const originalAccent = await themeColor('--looks-secondary');
+    await checkDividerColor();
+    await page.getByText('Settings', {exact: true}).click();
+    await page.getByText('Accent', {exact: true}).click();
+    await page.getByText('Blue', {exact: true}).click();
+    assert.notEqual(await themeColor('--looks-secondary'), originalAccent);
+    await checkDividerColor();
     await anchor.focus();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', {name: 'Switch to small stage', exact: true})).toBeFocused();
@@ -88,6 +107,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const moved = await position(columns);
     await anchor.click();
     await expect(anchor).toHaveAttribute('aria-pressed', 'true');
+    await expect(anchor).toHaveCSS('border-top-color', await themeColor('--looks-secondary'));
     assert.equal(await position(columns), moved);
     await columns.press('ArrowLeft');
     assert.equal(await position(columns), moved - 16);
