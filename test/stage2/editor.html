@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>Stage 2 Editor fixture</title>
+<style>body{font:16px sans-serif} .lane{margin:12px;padding:12px;border:1px solid} [draggable]{cursor:grab} .drop{padding:16px;background:#e7efff;margin-top:12px}</style>
+<button id="undock">Undock test panel</button>
+<select id="open-mode" aria-label="Popup mode"><option value="normal">Normal</option><option value="blocked">Blocked</option><option value="failed">Failed readiness</option></select>
+<output id="surface-state">docked</output>
+<section class="lane"><button id="editor-source" draggable="true">Editor fixture</button><div class="drop" id="editor-drop">Drop to editor</div></section>
+<div id="dock"><section id="panel" class="lane"><button id="dock-button">Dock panel</button>
+<button id="panel-source" draggable="true">Panel fixture</button><div class="drop" id="panel-drop">Drop to panel</div></section></div>
+<output id="copies">{"editor":0,"panel":0}</output>
+<script src="editor.js"></script>
