@@ -3,7 +3,7 @@ import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
 import {createCodeSession} from '../index.js';
 
-function fixture() {
+function fixture(receiveBackpackDrop) {
     const document = {defaultView: new EventTarget(), hasFocus: () => focused === document};
     let focused = document;
     const node = {inert: false};
@@ -44,7 +44,7 @@ function fixture() {
         }
     });
     const session = createCodeSession({
-        vm, workspace, document, canUse: () => true,
+        vm, workspace, document, canUse: () => true, receiveBackpackDrop,
         ScratchBlocks: {hideChaff() {}, Events: {disable() {}, enable() {}, fireNow_() {}}}
     });
     function connect(sprite) {
@@ -103,4 +103,43 @@ test('a focused window gets a lease after release and stale edits do not enter t
     b.close();
     session.dispose();
     assert.equal(workspace.undo, nativeUndo);
+});
+
+test('a background drop keeps its target while foreground edits drain', async () => {
+    let drop;
+    const {session, connect, target, other, vm, node} = fixture(request => {
+        drop = request.commit(async () => {
+            assert.equal(request.canUse(), true);
+            assert.equal(request.target, target);
+            assert.equal(vm.editingTarget, other);
+            target.blocks._blocks.copied = {x: 40};
+            target.blocks._scripts.push('copied');
+            return true;
+        });
+    });
+    const a = connect(target);
+    const b = connect(other);
+    b.focus();
+    const lease = b.messages.at(-1).lease;
+    const message = {type: 'backpack-drop', raw: 'reference', position: {x: 40, y: 50}};
+    a.send({...message, targetId: other.id});
+    assert.equal(drop, undefined);
+    a.send({...message, targetId: target.id});
+    assert.equal(b.messages.at(-1).type, 'revoke');
+    assert.equal(target.blocks._blocks.copied, undefined);
+    assert.equal(node.inert, true);
+    b.send({type: 'edits', lease, targetId: other.id,
+        events: [{type: 'move', blockId: 'block', newCoordinate: {x: 20, y: 0}}]});
+    b.send({type: 'release', lease});
+    assert.equal(await drop, true);
+    assert.equal(b.messages.at(-1).type, 'grant');
+    assert.equal(vm.editingTarget, other);
+    assert.equal(a.messages.at(-1).canUndo, true);
+
+    a.focus();
+    b.send({type: 'release', lease: b.messages.at(-1).lease});
+    a.send({type: 'step', lease: a.messages.at(-1).lease, targetId: target.id, redo: false});
+    assert.deepEqual(target.blocks.getScripts(), ['block']);
+    assert.equal(other.blocks._blocks.block.x, 20);
+    session.dispose();
 });

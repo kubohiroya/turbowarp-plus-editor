@@ -1,6 +1,6 @@
 import React from 'react';
 import StageControlsView from '../stage-controls/view.jsx';
-import {attachBackpackDrop} from '../editor-backpack/index.jsx';
+import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.jsx';
 import {attachDesktopCode} from '../editor-views/desktop-code.js';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.js';
 import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.js';
@@ -25,7 +25,7 @@ export const renderStageControls = ({vm, isSmall}) => {
 
 export const attachHostScriptTransfer = (context, integration) => {
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);
-    const code = attachDesktopCode(context);
+    const code = attachDesktopCode({...context, receiveBackpackDrop});
     if (!code) return transfer;
     return {dispose() {
         code.dispose();

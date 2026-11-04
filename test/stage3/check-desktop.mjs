@@ -45,12 +45,13 @@ async function run (enabled, test) {
     delete processEnv.TW_PLUS_DESKTOP_CODE_POPOUT;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        if (['internal', 'sprite', 'stage', 'stage-popout', 'target-panels', 'code-popout'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        if (['internal', 'sprite', 'stage', 'stage-popout', 'target-panels', 'code-popout', 'code-backpack'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
         else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'sprite' || enabled === 'target-panels') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
         if (enabled === 'stage' || enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
         if (enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT = '1';
-        if (enabled === 'code-popout') processEnv.TW_PLUS_DESKTOP_CODE_POPOUT = '1';
+        if (enabled === 'code-popout' || enabled === 'code-backpack') processEnv.TW_PLUS_DESKTOP_CODE_POPOUT = '1';
+        if (enabled === 'code-backpack') processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'target-panels') {
             processEnv.TW_PLUS_DESKTOP_TARGET_LIST = '1';
             processEnv.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT = '1';
@@ -352,7 +353,7 @@ async function checkStagePanel ({editor, control}) {
     report.checks.push('Desktop retains the live stage canvas when moving between the dock and the in-app window');
 }
 
-async function checkCodePopouts ({editor, context, control}) {
+async function checkCodePopouts ({editor, context, control}, withBackpack = false) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
     await control('layout', parent.id);
@@ -362,6 +363,7 @@ async function checkCodePopouts ({editor, context, control}) {
             return page.evaluate(() => document.hasFocus());
         }, 'native window focus');
     };
+    const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
     const targetId = await editor.evaluate(blockId => {
         vm.editingTarget.blocks.createBlock({
             id: blockId, opcode: 'looks_hide', next: null, parent: null, topLevel: true, shadow: false,
@@ -471,6 +473,103 @@ async function checkCodePopouts ({editor, context, control}) {
     await added(a.child).waitFor({state: 'detached'});
     await history(b, 'Redo');
     await added(a.child).waitFor();
+    if (backpackTargets) {
+        await focus(editor, parent.id);
+        await editor.locator('[class*="backpack_backpack-header"]').click();
+        await editor.getByText(itemName, {exact: true}).waitFor();
+        await editor.getByRole('button', {name: /^(Undock Backpack|バックパックを別画面で開く)$/}).click();
+        const frame = editor.getByRole('region', {name: /^(Backpack|バックパック)$/});
+        const opened = context.waitForEvent('page');
+        await frame.getByRole('button', {name: /^(Move to browser window|別ウィンドウへ移す)$/}).click();
+        const backpack = await opened;
+        await backpack.waitForURL(/\/backpack-popout\.html#/);
+        backpack.on('pageerror', error => report.errors.push(error.message));
+        const source = (await control('windows')).find(window => window.kind === 'backpack');
+        await focus(backpack, source.id);
+        const handle = backpack.getByTestId('backpack-script-drag');
+        await handle.waitFor();
+        const sourceCDP = await context.newCDPSession(backpack);
+        await sourceCDP.send('Input.setInterceptDrags', {enabled: true});
+        const grip = await handle.boundingBox();
+        assert.ok(grip);
+        const drag = once(sourceCDP, 'Input.dragIntercepted', {signal: AbortSignal.timeout(10000)});
+        const x = grip.x + grip.width / 2;
+        const y = grip.y + grip.height / 2;
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mouseMoved', x, y});
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mousePressed', x, y,
+            button: 'left', buttons: 1, clickCount: 1});
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mouseMoved', x: x + 24, y,
+            button: 'left', buttons: 1});
+        const [{data}] = await drag;
+        assert.ok(data.items.some(item => item.mimeType === mime));
+        await sourceCDP.send('Input.dispatchDragEvent', {type: 'dragCancel', x, y, data});
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mouseReleased', x: x + 24, y,
+            button: 'left', clickCount: 1});
+        await sourceCDP.detach();
+
+        await control('layout', a.id);
+        await focus(b.child, b.id);
+        await until(async () => await inert(a) && !(await inert(b)), 'only B edits before the drop');
+        const dropCDP = await context.newCDPSession(a.child);
+        const drop = async () => {
+            const zone = a.child.locator('#drop-zone');
+            await zone.waitFor();
+            const box = await zone.boundingBox();
+            assert.ok(box);
+            for (const type of ['dragEnter', 'dragOver', 'drop']) {
+                await dropCDP.send('Input.dispatchDragEvent', {type, x: box.x + box.width * 0.8, y: box.y + 160, data});
+            }
+        };
+        const imported = () => editor.evaluate(targets => {
+            const getBlocks = id => vm.runtime.getTargetById(id).blocks;
+            const blocks = getBlocks(targets.a);
+            const first = blocks.getScripts().map(id => blocks.getBlock(id))
+                .find(block => block.opcode === 'looks_hide' && blocks.getBlock(block.next)?.opcode === 'looks_show');
+            return {id: first?.id, next: first?.next, scripts: blocks.getScripts().length,
+                other: getBlocks(targets.b).getScripts().length, selected: vm.editingTarget.id};
+        }, backpackTargets);
+        assert.deepEqual(await imported(), {id: undefined, next: undefined, scripts: 2, other: 0, selected: targetId});
+        await drop();
+        const copy = await until(async () => {
+            const state = await imported();
+            return state.id && state;
+        }, 'Backpack stack reaches the back code window');
+        assert.equal(copy.scripts, 3);
+        assert.equal(copy.other, 0);
+        assert.equal(copy.selected, targetId);
+        const showCopy = (page, blockId) => page.locator(`[data-id="${blockId}"]`).first();
+        for (const {child} of [a, b]) {
+            await showCopy(child, copy.id).waitFor();
+            await showCopy(child, copy.next).waitFor();
+        }
+        assert.equal(await inert(a), true);
+        assert.equal(await a.child.evaluate(() => document.hasFocus()), false);
+        assert.equal(await b.child.evaluate(() => document.hasFocus()), true);
+        await until(async () => !(await inert(b)), 'B keeps editing after the back window drop');
+        const undoCopy = b.child.getByRole('button', {name: 'Undo', exact: true});
+        assert.equal(await undoCopy.isEnabled(), true, 'the drop publishes undo history');
+        await drop();
+        assert.equal(await undoCopy.isEnabled(), true, 'a replay keeps the existing undo history');
+        await dropCDP.detach();
+        await history(b, 'Undo');
+        await until(async () => (await imported()).scripts === 2, 'one shared undo removes the entire copied stack');
+        assert.deepEqual(await imported(), {id: undefined, next: undefined, scripts: 2, other: 0, selected: targetId});
+        assert.deepEqual(await coordinates(), parentEdit);
+        await added(a.child).waitFor();
+        await added(b.child).waitFor();
+        await showCopy(a.child, copy.id).waitFor({state: 'detached'});
+        await showCopy(b.child, copy.id).waitFor({state: 'detached'});
+        await history(b, 'Redo');
+        await showCopy(a.child, copy.next).waitFor();
+        await showCopy(b.child, copy.next).waitFor();
+        assert.deepEqual(await imported(), copy);
+        await history(b, 'Undo');
+        await showCopy(a.child, copy.id).waitFor({state: 'detached'});
+        await focus(backpack, source.id);
+        await Promise.all([backpack.waitForEvent('close'), backpack.getByRole('button', {name: dockLabel}).press('Enter')]);
+        await editor.getByText(itemName, {exact: true}).waitFor();
+        report.checks.push('Real Backpack to background code window via CDP drag: both views update, no lease or target change, one undo removes both imported blocks, redo restores them, replay is rejected and Backpack docks');
+    }
     await Promise.all([b.child.waitForEvent('close'), b.child.getByRole('button', {name: 'Return to editor'}).click()]);
     await Promise.all([a.child.waitForEvent('close'), control('close', a.id)]);
     await focus(editor, parent.id);
@@ -886,6 +985,7 @@ try {
     });
 
     if (process.argv.includes('--sprite-properties')) await run('sprite', checkSpriteProperties);
+    else if (process.argv.includes('--code-backpack')) await run('code-backpack', env => checkCodePopouts(env, true));
     else if (process.argv.includes('--code-popout')) await run('code-popout', checkCodePopouts);
     else if (process.argv.includes('--target-panels-popout')) await run('target-panels', checkExternalTargetPanels);
     else if (process.argv.includes('--stage-popout')) await run('stage-popout', checkStagePopout);

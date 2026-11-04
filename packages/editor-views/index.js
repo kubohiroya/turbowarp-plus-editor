@@ -3,7 +3,11 @@ import {decodeEdit, isBlockEdit} from './protocol.js';
 
 export {encodeEdit} from './protocol.js';
 
-export function createCodeSession({vm, workspace, ScratchBlocks, document, canUse, onError}) {
+// Shared history captures blocks, so a drop must not create variables or load extensions.
+const supportsSharedHistory = script => !script.variables.length && !script.extensionIDs?.length &&
+    !Object.keys(script.extensionURLs).length;
+
+export function createCodeSession({vm, workspace, ScratchBlocks, document, canUse, onError, receiveBackpackDrop}) {
     const parent = document.defaultView;
     const container = workspace.getParentSvg().parentElement;
     const originalInert = container.inert;
@@ -15,6 +19,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     const dirty = new Set();
     let owner;
     let pending;
+    let dropJob;
     let lease = 0;
     let projecting = false;
     let disposed = false;
@@ -23,7 +28,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     const parentFocused = () => document.hasFocus();
     const viewFocused = view => view.document.hasFocus();
     const updateInput = () => {
-        container.inert = originalInert || Boolean(owner || pending);
+        container.inert = originalInert || Boolean(owner || pending || dropJob);
     };
     const projection = target => ({...histories.get(target).state, xml: workspaceXML(vm, target)});
     const send = (view, message) => view.port.postMessage(message);
@@ -54,7 +59,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     }
 
     function observeParent(event) {
-        if (projecting || disposed) return;
+        if (projecting || disposed || dropJob?.running) return;
         const target = vm.editingTarget;
         if (isBlockEdit(event) && histories.has(target)) {
             dirty.add(target);
@@ -75,6 +80,10 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
 
     function grant() {
         if (disposed || owner) return;
+        if (dropJob) {
+            if (!dropJob.running) void runDrop(dropJob);
+            return;
+        }
         const view = pending;
         pending = undefined;
         if (!view || !views.has(view) || !viewFocused(view) || !exists(view.target)) {
@@ -110,6 +119,43 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
             exists(view.target) && vm.editingTarget === view.target && vm.runtime.getEditingTarget() === view.target;
     }
 
+    async function runDrop(job) {
+        try {
+            workspace.cancelCurrentGesture();
+            ScratchBlocks.hideChaff();
+            ScratchBlocks.Events.fireNow_();
+            flushParent();
+            job.running = true;
+            const applied = await job.apply();
+            // The importer refreshes the docked workspace. Drain its queued projection events
+            // while the drop still owns the transaction so they cannot reset shared history.
+            ScratchBlocks.Events.fireNow_();
+            if (applied && !disposed && exists(job.target) && histories.get(job.target)?.commit()) {
+                publish(job.target, null, true);
+            }
+            job.resolve(applied);
+        } catch (error) {
+            job.reject(error);
+        } finally {
+            dropJob = undefined;
+            grant();
+        }
+    }
+
+    function queueDrop(target, apply) {
+        if (disposed || dropJob) return false;
+        return new Promise((resolve, reject) => {
+            dropJob = {target, apply, resolve, reject, running: false};
+            updateInput();
+            if (owner) {
+                if (!pending && viewFocused(owner)) pending = owner;
+                revoke();
+            } else {
+                grant();
+            }
+        });
+    }
+
     function receive(view, message) {
         if (!views.has(view) || !message || typeof message !== 'object') return;
         if (message.type === 'focus') {
@@ -128,6 +174,16 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
         }
         if (message.type === 'dock' || message.type === 'failed') {
             view.close();
+            return;
+        }
+        if (message.type === 'backpack-drop' && receiveBackpackDrop) {
+            const {targetId, raw, position} = message;
+            const {target} = view;
+            const valid = () => !disposed && views.has(view) && exists(target);
+            if (targetId !== target.id || typeof raw !== 'string' || !valid() ||
+                !Number.isFinite(position?.x) || !Number.isFinite(position?.y)) return;
+            void receiveBackpackDrop({vm, target, raw, position, canUse: valid, onError,
+                accept: supportsSharedHistory, commit: apply => queueDrop(target, apply)});
             return;
         }
         if (!owns(view, message)) return;
@@ -168,7 +224,8 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
         views.add(view);
         port.addEventListener('message', listener);
         port.start();
-        send(view, {type: 'snapshot', targetId: target.id, name: target.getName(), ...projection(target)});
+        send(view, {type: 'snapshot', targetId: target.id, name: target.getName(),
+            backpackDrop: Boolean(receiveBackpackDrop), ...projection(target)});
         return () => {
             views.delete(view);
             port.removeEventListener('message', listener);
@@ -180,7 +237,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
 
     workspace.undo = function (redo) {
         const target = vm.editingTarget;
-        if (!parentFocused() || owner || pending || !canUse()) return;
+        if (!parentFocused() || owner || pending || dropJob || !canUse()) return;
         const history = histories.get(target);
         if (!history) return nativeUndo.call(this, redo);
         ScratchBlocks.Events.fireNow_();
@@ -199,6 +256,10 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
 
     return {attach, dispose() {
         disposed = true;
+        if (dropJob && !dropJob.running) {
+            dropJob.resolve(false);
+            dropJob = undefined;
+        }
         for (const view of views) view.close();
         views.clear();
         workspace.removeChangeListener(observeParent);

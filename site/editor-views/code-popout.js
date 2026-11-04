@@ -1,8 +1,11 @@
 import ScratchBlocks from 'scratch-blocks';
+import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {encodeEdit} from '@kubohiroya/turbowarp-editor-views';
 
 const ticket = location.hash.slice(1);
 const mount = document.getElementById('mount');
+const workspaceArea = document.getElementById('workspace-area');
+const dropZone = document.getElementById('drop-zone');
 const status = document.getElementById('status');
 const undo = document.getElementById('undo');
 const redo = document.getElementById('redo');
@@ -17,6 +20,7 @@ const workspace = ScratchBlocks.inject(mount, {
 });
 let port;
 let targetId;
+let backpackDrop = false;
 let lease;
 let editable = false;
 let history = {canUndo: false, canRedo: false};
@@ -31,6 +35,7 @@ function buttons() {
 function setEditable(value) {
     editable = value;
     mount.inert = !value;
+    dropZone.hidden = value || !backpackDrop;
     status.textContent = value ? 'Editing' : 'Read only';
     buttons();
 }
@@ -87,6 +92,7 @@ function receive({data: message}) {
         switch (message.type) {
         case 'snapshot':
             targetId = message.targetId;
+            backpackDrop = message.backpackDrop;
             document.title = `Code · ${message.name}`;
             snapshot(message);
             dock.disabled = false;
@@ -145,6 +151,28 @@ redo.addEventListener('click', () => step(true));
 dock.addEventListener('click', () => {
     release();
     port.postMessage({type: 'dock'});
+});
+
+function acceptsBackpack(event) {
+    return backpackDrop && event.dataTransfer?.types.includes(transferMime);
+}
+
+workspaceArea.addEventListener('dragover', event => {
+    if (!acceptsBackpack(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+});
+workspaceArea.addEventListener('drop', event => {
+    if (!acceptsBackpack(event)) return;
+    event.preventDefault();
+    const matrix = workspace.getCanvas().getScreenCTM();
+    if (!matrix) return;
+    const point = workspace.getParentSvg().createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+    const {x, y} = point.matrixTransform(matrix.inverse());
+    port.postMessage({type: 'backpack-drop', targetId, position: {x, y},
+        raw: event.dataTransfer.getData(transferMime)});
 });
 window.addEventListener('focus', focus);
 window.addEventListener('blur', () => release());
