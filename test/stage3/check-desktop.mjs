@@ -11,7 +11,7 @@ import {chromium} from 'playwright';
 
 const testMode = ['--sprite-properties', '--target-panels-popout', '--stage-popout', '--stage-panel', '--internal']
     .find(flag => process.argv.includes(flag));
-const usesSystemInput = testMode !== '--sprite-properties' && testMode !== '--stage-panel';
+const usesSystemInput = testMode !== '--stage-panel';
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
