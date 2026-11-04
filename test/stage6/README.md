@@ -13,6 +13,7 @@
 ```sh
 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-popout
 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-backpack
+TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-backpack-native
 node --test packages/editor-views/test/code-session.test.js
 ```
 
@@ -20,8 +21,12 @@ node --test packages/editor-views/test/code-session.test.js
 
 `--code-backpack` は実バックパックのドラッグを CDP で捕捉し、背面のコード別窓にドロップする。前面が操作可能な状態に戻り、コピーした2ブロックが親の VM と同じ対象の両ビューに表示され、別のスプライトに変更が入らないことを照合する。再送が拒否されること、前面の共有 Undo／Redo でコピー全体を1回で戻せること、バックパックがドックに復帰することも確認する。
 
+`--code-backpack-native` は macOS の CoreGraphics HID 経由でドラッグとボタンのクリックを行う。CDP はテストデータの用意と状態観測に使う。ドラッグ開始とドロップが信頼されたイベントであること、背面のコード画面が途中も編集不可のままであること、前面の Undo と Redo を各1回押すとコピーした2ブロック全体が消え、復元されることを確認する。バックパックのドックボタンを押すと別窓が閉じ、元の項目がエディター内に戻る。
+
+2026年11月5日に、TurboWarp Desktop 1.17.1 の macOS ローカルコピー（Electron 43.8.4）で `--code-backpack-native` の全項目が通過した。
+
 ## 今回の範囲と切り戻し
 
-Desktop のコード欄から、選択中の対象を固定した別窓を最大2枚開ける。初期パレットは動きと見た目の一部。コードの基本ブロック編集、前面への編集権の移動、対象別履歴、閉鎖時の親コード画面への復帰を対象とする。背面へのドロップを OS の物理マウス入力で行う検証、全パレット、変数・コメント・定義・拡張ブロックの共有履歴、対象セレクター、Web 外部表示、他 OS は個別に検証する。
+Desktop のコード欄から、選択中の対象を固定した別窓を最大2枚開ける。初期パレットは動きと見た目の一部。コードの基本ブロック編集、前面への編集権の移動、対象別履歴、閉鎖時の親コード画面への復帰を対象とする。全パレット、変数・コメント・定義・拡張ブロックの共有履歴、対象セレクター、Web 外部表示、他 OS は個別に検証する。
 
 起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1`、`TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1`、`TW_PLUS_DESKTOP_CODE_POPOUT=1` を指定する。バックパックも OS の別窓で開く場合は `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` を加える。⚓ で操作を表示し、コード行の「別画面で開く」を押す。フラグは既定 OFF。子を閉じ、作品を保存してから `TW_PLUS_DESKTOP_CODE_POPOUT` を外して再起動すると、既存のコード画面とアプリ内表示に戻る。

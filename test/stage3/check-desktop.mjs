@@ -10,7 +10,7 @@ import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
 const testMode = [
-    '--sprite-properties', '--code-backpack', '--code-popout', '--target-panels-popout',
+    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-popout', '--target-panels-popout',
     '--stage-popout', '--stage-panel', '--internal'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-popout', '--stage-panel'].includes(testMode);
@@ -123,7 +123,7 @@ async function run (enabled, test) {
 }
 
 async function screenPoint (control, kind, locator, horizontal = 0.5) {
-    const window = (await control('windows')).find(window => window.kind === kind);
+    const window = (await control('windows')).find(window => window.kind === kind || window.id === kind);
     assert.ok(window, `Missing native ${kind} bounds`);
     const box = await locator.boundingBox();
     assert.ok(box, `Missing visible ${kind} control`);
@@ -362,7 +362,110 @@ async function checkStagePanel ({editor, control}) {
     report.checks.push('Desktop retains the live stage canvas when moving between the dock and the in-app window');
 }
 
-async function checkCodePopouts ({editor, context, control}, withBackpack = false) {
+async function checkNativeCodeBackpack ({editor, context, control}, a, b, targets, originalId) {
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    const inert = view => view.child.locator('#mount').evaluate(node => node.inert);
+    await control('layout', a.id);
+    await click(control, b.id, b.child.locator('#status'));
+    await until(async () => await inert(a) && !(await inert(b)), 'B is the front code editor');
+    await observeNative(a.child);
+    await a.child.evaluate(() => {
+        const mount = document.getElementById('mount');
+        window.everEditable = false;
+        new MutationObserver(records => {
+            if (!mount.inert || records.some(record => record.oldValue === null)) window.everEditable = true;
+        }).observe(mount, {attributes: true, attributeFilter: ['inert'], attributeOldValue: true});
+    });
+
+    await control('focus', parent.id);
+    await click(control, parent.id, editor.locator('[class*="backpack_backpack-header"]'));
+    await editor.getByText(itemName, {exact: true}).waitFor();
+    await click(control, parent.id,
+        editor.getByRole('button', {name: /^(Undock Backpack|バックパックを別画面で開く)$/}));
+    const frame = editor.getByRole('region', {name: /^(Backpack|バックパック)$/});
+    const [backpack] = await Promise.all([context.waitForEvent('page'),
+        click(control, parent.id, frame.getByRole('button', {name: /^(Move to browser window|別ウィンドウへ移す)$/}))]);
+    await backpack.waitForURL(/\/backpack-popout\.html#/);
+    backpack.on('pageerror', error => report.errors.push(error.message));
+    const source = (await control('windows')).find(window => window.url === backpack.url());
+    await observeNative(backpack);
+    const handle = backpack.getByTestId('backpack-script-drag');
+    const zone = a.child.locator('#drop-zone');
+    await handle.waitFor();
+    await zone.waitFor();
+    const points = [...await screenPoint(control, source.id, handle),
+        ...await screenPoint(control, a.id, zone, 0.7)];
+    report.drag = points;
+    await launcher('python3', [mousePath, ...points.map(String)]);
+    const read = () => editor.evaluate(({a, b}) => {
+        const blocks = vm.runtime.getTargetById(a).blocks;
+        const scripts = blocks.getScripts();
+        const copy = scripts.map(id => blocks.getBlock(id))
+            .find(block => block.opcode === 'looks_hide' && blocks.getBlock(block.next)?.opcode === 'looks_show');
+        return {scripts, copy: copy && [copy.id, copy.next], selected: vm.editingTarget.id,
+            other: vm.runtime.getTargetById(b).blocks.getScripts()};
+    }, targets);
+    const copied = await until(async () => {
+        const state = await read();
+        return state.copy && state;
+    }, 'HID drop copies the Backpack stack to the back code view');
+    const drag = (await backpack.evaluate(() => window.nativeEvidence)).find(event => event.type === 'dragstart');
+    const drop = (await a.child.evaluate(() => window.nativeEvidence)).find(event => event.type === 'drop');
+    assert.ok(drag?.trusted);
+    assert.ok(drop?.trusted && drop.mime.includes(mime));
+    assert.equal(copied.selected, targets.a);
+    assert.deepEqual(copied.other, []);
+    assert.deepEqual([...copied.scripts].sort(), [originalId, copied.copy[0]].sort());
+    const block = (view, id) => view.child.locator(`[data-id=${JSON.stringify(id)}]`).first();
+    for (const view of [a, b]) {
+        for (const id of copied.copy) await block(view, id).waitFor();
+    }
+    assert.equal(await a.child.evaluate(() => window.everEditable), false);
+    assert.equal(await inert(a), true);
+    assert.equal(await a.child.evaluate(() => document.hasFocus()), false);
+    report.checks.push('Trusted macOS HID dragstart and drop copy a whole stack to the back view without granting it editing');
+
+    // The drag source takes focus. Raise B through the native window controller before clicking.
+    await until(async () => {
+        if (!(await inert(b))) return true;
+        await control('focus', b.id);
+        return false;
+    }, 'B owns the edit lease for shared undo');
+    await observeNative(b.child);
+    const undo = b.child.getByRole('button', {name: 'Undo', exact: true});
+    assert.equal(await undo.isEnabled(), true);
+    await click(control, b.id, undo);
+    for (const view of [a, b]) {
+        for (const id of copied.copy) await block(view, id).waitFor({state: 'detached'});
+        await block(view, originalId).waitFor();
+    }
+    assert.deepEqual(await read(), {scripts: [originalId], copy: undefined, selected: targets.a, other: []});
+    const redo = b.child.getByRole('button', {name: 'Redo', exact: true});
+    assert.equal(await redo.isEnabled(), true);
+    await click(control, b.id, redo);
+    for (const view of [a, b]) {
+        for (const id of copied.copy) await block(view, id).waitFor();
+    }
+    assert.deepEqual(await read(), copied);
+    assert.equal(await a.child.evaluate(() => window.everEditable), false);
+    assert.deepEqual((await b.child.evaluate(() => window.nativeEvidence)).filter(event => event.type === 'click')
+        .map(({label, trusted}) => ({label, trusted})), [{label: 'Undo', trusted: true}, {label: 'Redo', trusted: true}]);
+    report.checks.push('One native click on Undo and one on Redo in the front view remove and restore the whole copy in both views');
+
+    const dock = backpack.getByRole('button', {name: dockLabel});
+    await dock.evaluate(button => button.addEventListener('click',
+        event => localStorage.setItem('tw-stage6-native-dock', String(event.isTrusted)), {once: true}));
+    await control('focus', source.id);
+    const closed = backpack.waitForEvent('close');
+    await click(control, source.id, dock);
+    await closed;
+    await editor.getByText(itemName, {exact: true}).waitFor();
+    assert.equal(await editor.evaluate(() => localStorage.getItem('tw-stage6-native-dock')), 'true');
+    assert.equal((await control('windows')).some(window => window.id === source.id), false);
+    report.checks.push('Trusted macOS HID dock click closes the Backpack window and returns its item to the editor');
+}
+
+async function checkCodePopouts ({editor, context, control}, withBackpack = false, native = false) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
     await control('layout', parent.id);
@@ -389,16 +492,21 @@ async function checkCodePopouts ({editor, context, control}, withBackpack = fals
     const original = await coordinates();
     await block(editor).waitFor();
     await focus(editor, parent.id);
-    await editor.getByRole('button', {name: modeLabel}).click();
+    const mode = editor.getByRole('button', {name: modeLabel});
+    const editorClick = locator => native ? click(control, parent.id, locator) : locator.click();
+    await editorClick(mode);
+    if (native && await mode.getAttribute('aria-pressed') !== 'true') {
+        await focus(editor, parent.id);
+        await editorClick(mode);
+    }
     const action = editor.locator('[class*="layout_tab-action_"]').getByRole('button', {
         name: /^(Open in another window|別画面で開く)$/
     });
 
     async function open() {
         await focus(editor, parent.id);
-        const newPage = context.waitForEvent('page');
-        await action.click();
-        const child = await newPage;
+        await action.waitFor();
+        const [child] = await Promise.all([context.waitForEvent('page'), editorClick(action)]);
         await child.waitForURL(/\/code-popout\.html#/);
         child.on('pageerror', error => report.errors.push(error.message));
         const native = await until(async () => (await control('windows')).find(window => window.url === child.url()),
@@ -412,6 +520,10 @@ async function checkCodePopouts ({editor, context, control}, withBackpack = fals
     const a = await open();
     const b = await open();
     assert.equal((await control('windows')).filter(window => window.kind === 'code').length, 2);
+    if (native) {
+        await checkNativeCodeBackpack({editor, context, control}, a, b, backpackTargets, id);
+        return;
+    }
     assert.equal(await editor.evaluate(() =>
         window.open('about:blank', `tw-plus-code-${crypto.randomUUID()}`) === null), true);
     const inert = view => view.child.locator('#mount').evaluate(element => element.inert);
@@ -994,6 +1106,7 @@ try {
     });
 
     if (testMode === '--sprite-properties') await run('sprite', checkSpriteProperties);
+    else if (testMode === '--code-backpack-native') await run('code-backpack', env => checkCodePopouts(env, true, true));
     else if (testMode === '--code-backpack') await run('code-backpack', env => checkCodePopouts(env, true));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
