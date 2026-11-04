@@ -112,22 +112,26 @@ export function createLayout (React) {
         const observe = React.useCallback(node => {
             element.current = node;
         }, []);
+        const active = enabled && !fullscreen;
         React.useLayoutEffect(() => {
             const node = element.current;
-            if (!node) return;
+            const ResizeObserver = node?.ownerDocument.defaultView.ResizeObserver;
+            if (!active || !ResizeObserver) return;
             const measure = () => {
                 const {clientWidth: width, clientHeight: height} = node;
                 setSize(previous => previous?.width === width && previous.height === height ?
                     previous : {width, height});
             };
             measure();
-            const observer = new node.ownerDocument.defaultView.ResizeObserver(measure);
+            const observer = new ResizeObserver(measure);
             observer.observe(node);
             return () => observer.disconnect();
-        }, [observe]);
+        }, [active]);
 
         const base = {observe, stageTools};
-        if (!enabled || fullscreen || !size?.width || !size.height) return render(base);
+        if (!active || !size ||
+            size.width < minimumEditor + separatorSize + minimumStageColumn ||
+            size.height < minimumStageRow + separatorSize + minimumTargets) return render(base);
 
         const columns = splitAxis(size.width, ratios.columns,
             size.width - separatorSize - Math.max(minimumStageColumn, defaultStageWidth + horizontalInset),

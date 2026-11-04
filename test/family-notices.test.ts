@@ -101,6 +101,11 @@ test('this repository records every family package it supplies, dev entries incl
             assert.ok((entry.source.npm || entry.source.revision) && entry.source.repository, `Missing source: ${entry.package}`);
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
+        const layout = index.packages.find(entry => entry.package === '@kubohiroya/turbowarp-editor-layout');
+        assert.equal(layout.source.npm, null);
+        assert.equal(layout.source.repository, 'https://github.com/kubohiroya/turbowarp-plus-editor');
+        assert.equal(layout.source.directory, 'packages/editor-layout');
+        assert.match(layout.source.revision, /^[0-9a-f]{40}$/u);
         // The Loader and the review dialog are devDependencies here and are bundled by webpack all
         // the same, so their licenses must be recorded; the `required` list above is what checks it.
         // Recording a package that is only used at build time is the accepted cost of that.

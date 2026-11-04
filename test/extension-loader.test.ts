@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readStartupFeatureFlags, readWebStartupFeatureFlags} from '../config/feature-flags.ts';
+import {readStartupFeatureFlags} from '../config/feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 import {bootstrapExtensionLoader} from '../src/extension-loader.ts';
 
 test('startup defaults on, supports explicit opt-in/out, rejects invalid values and is immutable', () => {

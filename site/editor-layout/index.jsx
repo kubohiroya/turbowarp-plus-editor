@@ -1,6 +1,6 @@
 import React from 'react';
-import {readWebStartupFeatureFlags} from '../../config/feature-flags.ts';
-import {createLayout} from '../../packages/editor-layout/src/index.js';
+import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {createLayout} from '@kubohiroya/turbowarp-editor-layout';
 import styles from './layout.css';
 
 const layoutEnabled = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search).windowLayout;

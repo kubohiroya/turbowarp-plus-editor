@@ -66,9 +66,11 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
+const layoutEntry = rootRequire.resolve('@kubohiroya/turbowarp-editor-layout');
+config.resolve.alias['@kubohiroya/turbowarp-editor-layout$'] = layoutEntry;
 const siteSource = path.join(__dirname, '..', '..', 'site');
-config.module.rules.push({test: /\.jsx?$/, include: [siteSource, transferSource,
-    path.join(__dirname, '..', '..', 'packages', 'editor-layout', 'src')], loader: hostRequire.resolve('babel-loader'),
+config.module.rules.push({test: /\.jsx?$/, include: [siteSource, transferSource, path.dirname(layoutEntry)],
+    loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}],
             hostRequire.resolve('@babel/preset-react')]}});

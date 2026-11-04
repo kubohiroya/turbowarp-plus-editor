@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -58,7 +59,9 @@ export async function installedFamilyPackages(directory: string, {includeDev = f
         const name = location.slice(location.lastIndexOf('node_modules/') + 'node_modules/'.length);
         if (!isFamilyPackage(name)) continue;
         const packageRoot = path.resolve(directory, entry.link ? entry.resolved : location);
-        found.push({name, location, packageRoot, lock: entry});
+        const local = entry.link ? lock.packages[entry.resolved] : null;
+        if (local?.dev && !includeDev) continue;
+        found.push({name, location, packageRoot, lock: entry, local});
     }
     return found;
 }
@@ -69,7 +72,15 @@ const githubURL = (value: unknown) => {
     return match ? `https://github.com/${match[1]}` : null;
 };
 
-function sourceOf(name: string, manifest, lock) {
+function sourceOf(name: string, manifest, {lock, local}, directory: string) {
+    if (lock.link) {
+        const repository = githubURL(manifest.repository);
+        assert.ok(repository && manifest.repository.directory === lock.resolved,
+            `${name} must declare its directory in the source repository`);
+        assert.equal(manifest.version, local?.version, `${name} differs from its lockfile version`);
+        const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: directory, encoding: 'utf8'}).trim();
+        return {npm: null, repository, revision, directory: manifest.repository.directory};
+    }
     // A git dependency records its commit, but the lock only says what the install declared:
     // trust its source only while it still matches the version the installed package reports.
     const git = lock.version === manifest.version && typeof lock.resolved === 'string' &&
@@ -101,7 +112,7 @@ export async function buildFamilyNotices(output: string,
             const files = await copyNoticeFiles(installed.packageRoot, path.join(noticeRoot, label));
             const entry: Record<string, unknown> = {package: manifest.name, version: manifest.version,
                 license: manifest.license ?? null, files: files.map(name => `notices/${label}/${name}`),
-                source: sourceOf(manifest.name, manifest, installed.lock), installedIn: [where]};
+                source: sourceOf(manifest.name, manifest, installed, directory), installedIn: [where]};
             if (!files.some(name => licenseFile.test(name)) || !manifest.license) {
                 assert.ok(undeclaredLicenseReleases[manifest.name]?.includes(manifest.version),
                     `${key} has no license declaration or license file`);

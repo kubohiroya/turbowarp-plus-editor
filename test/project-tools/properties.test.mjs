@@ -4,7 +4,7 @@ import JSZip from '@turbowarp/jszip';
 import {installProjectProperties, PROJECT_INFO_KEY as key} from '../../site/project-tools/properties.js';
 import {createAuthorHistory} from '../../site/project-tools/history.js';
 import {contactLink, descriptionParts} from '../../site/project-tools/links.js';
-import {readWebStartupFeatureFlags} from '../../config/feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {EventEmitter} from 'node:events';
 
 const data = () => ({schemaVersion: 1, title: 'Saved title', description: 'Example', author: 'Author',

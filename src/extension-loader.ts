@@ -1,4 +1,4 @@
-import {readWebStartupFeatureFlags} from '../config/feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 
 export interface ExtensionLoader {
     unload(): void | Promise<void>;
