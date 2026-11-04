@@ -1,6 +1,7 @@
 import React from 'react';
 import {importScript} from '@kubohiroya/turbowarp-script-transfer';
 import {createBackpackIntegration} from '@kubohiroya/turbowarp-editor-backpack';
+import {useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {layoutFlags, WindowLayoutContext} from '../editor-layout/index.jsx';
 import {createBrowserHost} from './browser-host.ts';
 
@@ -25,15 +26,16 @@ function decorateSurface(doc) {
     return () => observer.disconnect();
 }
 
-const feature = layoutFlags.backpackPopout ? createBackpackIntegration({
-    host: createBrowserHost(window, (url, ticket) =>
-        window.open(url, `tw-plus-backpack-${ticket}`, 'popup,width=560,height=320'), 'backpack-popout.html'),
+const feature = (layoutFlags.backpackPopout || layoutFlags.internalWindows) ? createBackpackIntegration({
+    host: layoutFlags.backpackPopout ? createBrowserHost(window, (url, ticket) =>
+        window.open(url, `tw-plus-backpack-${ticket}`, 'popup,width=560,height=320'), 'backpack-popout.html') : null,
     importScript, decorateSurface
 }) : null;
 
 function WebBackpackSurface(props) {
     const {enabled, locale} = React.useContext(WindowLayoutContext);
-    return <feature.BackpackSurface {...props} enabled={enabled} locale={locale} />;
+    const internalHost = useWindowHost();
+    return <feature.BackpackSurface {...props} enabled={enabled} locale={locale} internalHost={internalHost} />;
 }
 
 export const BackpackSurface = feature ? WebBackpackSurface : undefined;

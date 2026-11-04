@@ -74,6 +74,11 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
 }));
 const siteSource = path.join(__dirname, '..', '..', 'site');
 const backpackSurface = path.join(siteSource, 'editor-backpack');
+const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
+config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
+config.module.rules.find(rule => rule.test?.test('styles.css')).exclude = windowStyles;
+config.module.rules.push({test: /\.css$/, include: windowStyles,
+    use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
 config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     chunks: ['backpack-popout'], filename: 'backpack-popout.html',

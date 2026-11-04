@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'windowLayout', 'backpackPopout']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'windowLayout', 'backpackPopout', 'internalWindows']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, windowLayout: true, backpackPopout: false});
+        {extensionLoader: false, projectTools: true, windowLayout: true, backpackPopout: false, internalWindows: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -139,4 +139,14 @@ test('Backpack popout requires both startup opt-ins', () => {
         assert.equal(readWebStartupFeatureFlags(query).backpackPopout, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusBackpackPopout=1').backpackPopout, true);
+});
+
+test('in-app windows require flexible layout and are independent of Backpack popouts', () => {
+    for (const query of ['', '?twPlusInternalWindows=1', '?twPlusWindowLayout=1&twPlusInternalWindows=0',
+        '?twPlusWindowLayout=1&twPlusInternalWindows=true', '?twPlusWindowLayout=1&twPlusBackpackPopout=1']) {
+        assert.equal(readWebStartupFeatureFlags(query).internalWindows, false);
+    }
+    const flags = readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusInternalWindows=1');
+    assert.equal(flags.internalWindows, true);
+    assert.equal(flags.backpackPopout, false);
 });
