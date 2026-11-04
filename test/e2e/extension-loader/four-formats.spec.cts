@@ -1,4 +1,4 @@
-const {test, expect} = require('./fixtures.cts');
+const {test, expect, showProjectDiagnostics} = require('./fixtures.cts');
 const {devices} = require('@playwright/test');
 const Zip = require('@turbowarp/jszip');
 const {specifications, installFixtures, selection, row, form, openCatalog, saveSB3, reopenSB3} =
@@ -188,7 +188,7 @@ test('an SB3 whose Manifest uses a retired spelling fails to open with INVALID_S
         expect(await executions(page)).toBe(0);
         expect(await loaded(page, 'plusfixture')).toBe(false);
     }
-    await expect(page.getByTestId('tw-plus-extension-status')).toContainText('INVALID_SOURCE');
+    await expect(await showProjectDiagnostics(page)).toContainText('INVALID_SOURCE');
 });
 
 for (const lang of ['ja', 'en']) {
