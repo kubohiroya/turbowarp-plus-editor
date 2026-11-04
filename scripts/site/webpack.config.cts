@@ -31,7 +31,10 @@ const hookSource = fs.readFileSync(path.join(gui, 'src', 'addons', 'hooks.js'), 
 if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI_HOST__')) {
     throw new Error('The pinned GUI does not expose the optional host bridge');
 }
-const injections = {__TW_GUI_HOST__: bridge};
+const injections = {
+    __TW_GUI_HOST__: bridge,
+    __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json')
+};
 const {spritePropertiesPackage, spritePropertiesVersion} = rootRequire('./site/source.json');
 if (spritePropertiesPackage) {
     const spriteProperties = path.join(__dirname, '..', '..', 'node_modules', spritePropertiesPackage);

@@ -1,4 +1,5 @@
 import React from 'react';
+import {renderContextMenuIcon} from '../../context-menu-icons/index.js';
 import styles from './tw-stage-transfer-menu.css';
 
 // Optional transfer sockets. With no host, the GUI keeps its own menus and clipboard.
@@ -22,8 +23,9 @@ export const hostStageTransferMenu = (context, integration) => {
         backdropButtons: icon => backdropItems.map(({label, onClick}) => ({title: label, img: icon, onClick})),
         wrap (content, {ContextMenuTrigger, ContextMenu, MenuItem}) {
             if (!contextItems.length) return content;
+            const icon = renderContextMenuIcon('export');
             const items = contextItems.map(({label, onClick}) => React.createElement(MenuItem,
-                {key: label, onClick}, label));
+                {key: label, onClick}, icon ? React.createElement(React.Fragment, null, icon, label) : label));
             const contextMenu = React.createElement(ContextMenu, {id: stageTransferMenuId}, items);
             return React.createElement(ContextMenuTrigger,
                 {id: stageTransferMenuId, attributes: {className: styles.contextMenuWrapper}}, content, contextMenu);
