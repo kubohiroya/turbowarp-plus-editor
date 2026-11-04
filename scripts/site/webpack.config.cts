@@ -31,7 +31,7 @@ const hookSource = fs.readFileSync(path.join(gui, 'src', 'addons', 'hooks.js'), 
 if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI_HOST__')) {
     throw new Error('The pinned GUI does not expose the optional host bridge');
 }
-const injections = {__TW_GUI_HOST__: bridge};
+const injections: Record<string, string | string[]> = {__TW_GUI_HOST__: bridge};
 const {spritePropertiesPackage, spritePropertiesVersion} = rootRequire('./site/source.json');
 if (spritePropertiesPackage) {
     const spriteProperties = path.join(__dirname, '..', '..', 'node_modules', spritePropertiesPackage);
@@ -106,6 +106,11 @@ config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     chunks: ['backpack-popout'], filename: 'backpack-popout.html',
     template: path.join(backpackSurface, 'backpack-popout.html')
+}));
+config.entry['stage-popout'] = config.entry['backpack-popout'];
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: ['stage-popout'], filename: 'stage-popout.html',
+    template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
 }));
 config.module.rules.push({test: /\.ts$/, include: [
     backpackSurface, editorEntries.surfaces, editorEntries.transfer

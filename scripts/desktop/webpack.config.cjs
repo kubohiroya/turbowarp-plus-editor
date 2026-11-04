@@ -15,7 +15,8 @@ const template = fs.readFileSync(path.join(editor, 'gui.html'), 'utf8');
 const oldEntry = '<script src="index.js" onerror="webpackScriptError(event)"></script>';
 if (!template.includes(oldEntry)) throw new Error('Desktop editor template has changed');
 
-config.entry = {editor: path.join(editor, 'index.jsx'), 'backpack-popout': config.entry['backpack-popout']};
+config.entry = {editor: path.join(editor, 'index.jsx'), 'backpack-popout': config.entry['backpack-popout'],
+    'stage-popout': config.entry['stage-popout']};
 config.resolve.modules = [path.join(E2E_GUI_ROOT, 'node_modules'), 'node_modules'];
 config.resolve.alias['scratch-gui$'] = path.join(E2E_GUI_ROOT, 'src/index.js');
 config.resolve.alias['scratch-gui'] = E2E_GUI_ROOT;
@@ -31,7 +32,7 @@ config.module.rules.push({
     }
 });
 config.plugins = config.plugins.filter(plugin =>
-    !(plugin instanceof HtmlWebpackPlugin) || plugin.options.filename === 'backpack-popout.html'
+    !(plugin instanceof HtmlWebpackPlugin) || ['backpack-popout.html', 'stage-popout.html'].includes(plugin.options.filename)
 );
 config.plugins.push(new HtmlWebpackPlugin({
     chunks: ['editor'],

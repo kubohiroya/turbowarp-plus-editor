@@ -5,6 +5,7 @@ const kind = window => {
     const url = window.webContents.getURL();
     if (url.startsWith('tw-editor://./gui/gui.html')) return 'editor';
     if (url.startsWith('tw-editor://./gui/backpack-popout.html#')) return 'backpack';
+    if (url.startsWith('tw-editor://./gui/stage-popout.html#')) return 'stage';
     return null;
 };
 
@@ -31,6 +32,16 @@ function execute ({operation, windowId}) {
     if (operation === 'focus') {
         app.focus({steal: true});
         window.focus();
+        return observe(window);
+    }
+    if (operation === 'close') {
+        window.close();
+        return null;
+    }
+    if (operation === 'layout-tall' && kind(window) === 'stage') {
+        const area = screen.getPrimaryDisplay().workArea;
+        window.setBounds({x: area.x + Math.round(area.width * 0.65), y: area.y + 100,
+            width: Math.round(area.width * 0.17), height: Math.round(area.height * 0.72)});
         return observe(window);
     }
     if (operation !== 'layout') throw new Error('Unknown test command');

@@ -1,15 +1,37 @@
 import React from 'react';
+import {flushSync} from 'react-dom';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {WindowLayoutContext} from './index.jsx';
 import styles from './layout.css';
 
-function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight, className}) {
+function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight, className, externalHost, decorate}) {
     const {showUndock, locale} = React.useContext(WindowLayoutContext);
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
-    const surface = React.useMemo(() => createSurface(host, setState), [host]);
-    React.useLayoutEffect(() => () => surface.dock(), [surface]);
+    const undecorate = React.useRef(null);
+    const unmounting = React.useRef(false);
+    const surface = React.useMemo(() => createSurface(externalHost ?? host, next => {
+        if (!externalHost) {
+            setState(next);
+            return;
+        }
+        if (next.kind === 'external') undecorate.current = decorate(next.target.mount.ownerDocument);
+        if (next.kind === 'docked' && undecorate.current) {
+            if (!unmounting.current) flushSync(() => setState(next));
+            undecorate.current();
+            undecorate.current = null;
+            return;
+        }
+        if (!unmounting.current) setState(next);
+    }), [host, externalHost, decorate]);
+    React.useLayoutEffect(() => {
+        unmounting.current = false;
+        return () => {
+            unmounting.current = true;
+            surface.dock();
+        };
+    }, [surface]);
     React.useLayoutEffect(() => {
         if (!showUndock || state.kind !== 'docked' || state.reason !== 'returned' && state.reason !== 'disconnected') return;
         const frame = requestAnimationFrame(() => action.current?.querySelector('button')?.focus({preventScroll: true}));
@@ -33,7 +55,7 @@ function DockableBasicPanel({host, id, title, children, render, overlayAction, d
             dockLabel={japanese ? 'ここに戻す' : 'Return here'}
             mount={mount}
             onDock={() => surface.dock()}
-        >{render ? render(Boolean(mount)) : children}</DockablePanel>
+        >{render ? render(Boolean(mount), mount) : children}</DockablePanel>
     </div>;
 }
 

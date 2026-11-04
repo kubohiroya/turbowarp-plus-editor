@@ -14,6 +14,8 @@ cg.CGPreflightPostEventAccess.restype = c.c_bool
 cg.CGEventCreateMouseEvent.argtypes = [c.c_void_p, c.c_uint, Point, c.c_uint]
 cg.CGEventCreateMouseEvent.restype = c.c_void_p
 cg.CGEventSetIntegerValueField.argtypes = [c.c_void_p, c.c_uint, c.c_int64]
+cg.CGEventCreateKeyboardEvent.argtypes = [c.c_void_p, c.c_ushort, c.c_bool]
+cg.CGEventCreateKeyboardEvent.restype = c.c_void_p
 cg.CGEventPost.argtypes = [c.c_uint, c.c_void_p]
 cf.CFRelease.argtypes = [c.c_void_p]
 
@@ -30,6 +32,13 @@ def mouse(kind, point):
 
 if not cg.CGPreflightPostEventAccess():
     raise SystemExit("macOS cannot post mouse events")
+if sys.argv[1] in ('--key-down', '--key-up'):
+    event = cg.CGEventCreateKeyboardEvent(None, int(sys.argv[2]), sys.argv[1] == '--key-down')
+    if not event:
+        raise RuntimeError("Could not create keyboard event")
+    cg.CGEventPost(0, event)
+    cf.CFRelease(event)
+    raise SystemExit(0)
 if sys.argv[1] == '--click':
     point = tuple(map(float, sys.argv[2:]))
     mouse(5, point)
