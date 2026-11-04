@@ -25,6 +25,8 @@ import {installControlsDock} from './controls-dock.js';
 import getStageControls from './stage-controls.js';
 import {plusTrustedExtensions} from './trusted-extensions.js';
 
+export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
+
 /**
  * Build the integration from what it depends on, so a test can hand in its own. The exported
  * `plusIntegration` is this applied to the real package.
@@ -93,6 +95,7 @@ export const createPlusIntegration = ({
      * frame and its palette, because those are its own.
      */
     blockEditor,
+    modals: blockEditor ? [BLOCK_EDITOR_MODAL] : [],
     translations: blockEditorTranslations,
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
