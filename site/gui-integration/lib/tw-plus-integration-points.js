@@ -11,6 +11,7 @@
  */
 
 import {plusIntegration} from '../../plus-integration.js';
+import {connectProjectPackager} from '../../packager/handoff.js';
 
 /**
  * What the host supplied, or an empty integration.
@@ -32,14 +33,6 @@ export const hostModalNames = integration => [...(integration?.modals || [])];
  */
 export const hostModalDefaults = integration =>
     Object.fromEntries(hostModalNames(integration).map(name => [name, false]));
-
-/**
- * Extra security prompts the host owns.
- * @param {object} modals The prompts this fork defines.
- * @param {object} [integration] The host's integration.
- * @returns {object} The prompts with the host's added.
- */
-export const withHostSecurityModals = (modals, integration) => ({...modals, ...(integration?.securityModals || {})});
 
 /**
  * The host's messages for one locale. Locales match in lower case, as tw translations do.
@@ -191,10 +184,13 @@ export const hostLibraryTab = integration => integration?.libraryTab || null;
  * without them — so it may claim the ones it recognises and open its own page instead. Which
  * projects those are, and where they go, is the distributor's; the protocol with the upstream
  * Packager stays here, because it is upstream's.
+ * @param {Function} getVM The current editor VM.
+ * @param {Function} getTitle The current project title.
  * @param {object} [integration] The host's integration.
  * @returns {object|null} `open`, `claim` and `handleMessage`, or null when the host claims none.
  */
-export const hostProjectPackager = integration => integration?.projectPackager || null;
+export const hostProjectPackager = (getVM, getTitle, integration = hostIntegration()) =>
+    connectProjectPackager(integration?.projectPackager, getVM, getTitle);
 
 /**
  * The review a project's extensions go through before any of them runs.

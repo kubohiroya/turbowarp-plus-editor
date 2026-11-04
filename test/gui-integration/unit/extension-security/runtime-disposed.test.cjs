@@ -36,23 +36,55 @@ test('closing the project denies an open permission prompt and forgets earlier g
 
 test('closing the project cancels an open extension review with null instead of a boolean', async () => {
     const {runtime, manager, settle} = fixture();
+    const render = callback => callback(new Map([['https://example.test/a.js', 'sandboxed']]));
     const {showModal} = await manager.acquireModalLock();
-    const review = showModal(SecurityModals.LoadExtensions, {entries: [], initialChoices: new Map()});
+    const review = showModal(render, undefined, null);
     await settle();
-    assert.equal(manager.state.type, SecurityModals.LoadExtensions);
+    assert.equal(manager.state.type, render);
     runtime.emit('RUNTIME_DISPOSED');
     assert.equal(await review, null);
 
     // A review that was queued for the closed project is not shown at all.
     const stale = await manager.acquireModalLock();
     runtime.emit('RUNTIME_DISPOSED');
-    assert.equal(await stale.showModal(SecurityModals.LoadExtensions, {entries: []}), null);
+    assert.equal(await stale.showModal(render, undefined, null), null);
 
     // Choices made for the current project still come back unchanged.
     const current = await manager.acquireModalLock();
     const choices = new Map([['https://example.test/a.js', 'sandboxed']]);
-    const answered = current.showModal(SecurityModals.LoadExtensions, {entries: []});
+    const answered = current.showModal(callback => callback(choices), undefined, null);
     await settle();
-    manager.handleBatchComplete(choices);
+    manager.render();
     assert.equal(await answered, choices);
+});
+
+test('unmount cancels queued reviews and releases the VM that installed them after a props change', async () => {
+    const {runtime, manager, settle} = fixture();
+    runtime.off('RUNTIME_DISPOSED', manager.handleRuntimeDisposed);
+    const oldVM = manager.props.vm;
+    oldVM.extensionManager = {securityManager: {}};
+    let requestModal;
+    const released = [];
+    const previous = globalThis.__TW_GUI_HOST__;
+    globalThis.__TW_GUI_HOST__ = {installSecurityHost: (vm, options) => {
+        requestModal = options.requestModal;
+        return async () => { released.push(vm); };
+    }};
+    try {
+        manager.componentDidMount();
+        const render = () => 'review';
+        const shown = requestModal(render, null);
+        await settle();
+        assert.equal(manager.render(), 'review');
+        const queued = requestModal(() => assert.fail('Stale review was shown'), null);
+        manager.props = {...manager.props, vm: {runtime: new EventEmitter()}};
+        manager.componentWillUnmount();
+        assert.equal(await shown, null);
+        assert.equal(await queued, null);
+        assert.equal(await requestModal(render, null), null);
+        assert.equal(runtime.listenerCount('RUNTIME_DISPOSED'), 0);
+        assert.deepEqual(released, [oldVM]);
+    } finally {
+        globalThis.__TW_GUI_HOST__ = previous;
+    }
 });

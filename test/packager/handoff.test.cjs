@@ -31,7 +31,7 @@ const buffer = manifest => new TextEncoder().encode(JSON.stringify({targets: [],
  * @param {boolean} plus Whether the project the VM saves uses Plus extensions.
  * @returns {object} The component and what its windows saw.
  */
-function fixture (enabled = true, plus = true) {
+function fixture (enabled = true, plus = true, blockPopup = false) {
     const opened = [];
     const posted = [];
     let saves = 0;
@@ -43,14 +43,14 @@ function fixture (enabled = true, plus = true) {
     const location = {href: 'https://editor.test/turbowarp-plus-editor/editor.html', origin: 'https://editor.test'};
     const window = {location, open (url) {
         opened.push(url);
-        return popup;
+        return blockPopup ? null : popup;
     }, alert () {}, addEventListener () {}, removeEventListener () {}};
     // The handoff reads these as globals when it is called, as it does in a browser.
     const previous = {location: globalThis.location, window: globalThis.window, root: process.env.ROOT};
     globalThis.location = location;
     globalThis.window = window;
     process.env.ROOT = '/turbowarp-plus-editor/';
-    const {createProjectPackager} = require('../../site/packager/handoff.js');
+    const {connectProjectPackager, createProjectPackager} = require('../../site/packager/handoff.js');
     const projectPackager = createProjectPackager({enabled});
     const module = {exports: {}};
     const requireMock = name => {
@@ -60,8 +60,9 @@ function fixture (enabled = true, plus = true) {
         // The socket: the GUI reads the integration through this module, and the integration is
         // what this repository supplies.
         if (name === '../addons/hooks.js') {
-            return {getHostIntegration: () => ({hostIntegration: () => ({projectPackager}),
-                hostProjectPackager: integration => integration?.projectPackager || null})};
+            return {getHostIntegration: () => ({
+                hostProjectPackager: (getVM, getTitle) => connectProjectPackager(projectPackager, getVM, getTitle)
+            })};
         }
         return guiRequire(name);
     };
@@ -103,6 +104,17 @@ test('a project that uses this distribution\'s extensions opens this build\'s ow
         await tick();
         assert.equal(f.popup.location.href, 'https://editor.test/turbowarp-plus-editor/plus-packager.html');
         assert.equal(f.saves(), 1);
+    } finally {
+        f.restore();
+    }
+});
+
+test('a blocked native popup does not start serializing the project', () => {
+    const f = fixture(true, true, true);
+    try {
+        f.component.handleClickPackager();
+        assert.deepEqual(f.opened, ['about:blank']);
+        assert.equal(f.saves(), 0);
     } finally {
         f.restore();
     }
@@ -157,5 +169,29 @@ test('a project without them keeps the upstream path, and an import rechecks tha
         assert.equal(plus.popup.location.href, 'https://editor.test/turbowarp-plus-editor/plus-packager.html');
     } finally {
         plus.restore();
+    }
+});
+
+test('the native protocol checks the sender before serializing and transfers ordinary projects unchanged', async () => {
+    const f = fixture(true, false);
+    const data = {p4: {type: 'ready-for-import'}};
+    const origin = 'https://packager.turbowarp.org';
+    try {
+        f.component.handleMessage({origin: 'https://attacker.test', source: f.popup, data});
+        f.component.handleMessage({origin, source: null, data});
+        assert.equal(f.saves(), 0);
+        assert.deepEqual(f.posted, []);
+        f.component.handleMessage({origin, source: f.popup, data});
+        f.component.props = {...f.component.props, reduxProjectTitle: 'Updated'};
+        await tick();
+        await tick();
+        assert.equal(f.saves(), 1);
+        assert.deepEqual(f.posted.map(args => args[0].p4.type), ['start-import', 'finish-import']);
+        const [[message, targetOrigin, transfer]] = f.posted.slice(-1);
+        assert.equal(message.p4.name, 'Updated.sb3');
+        assert.equal(targetOrigin, origin);
+        assert.equal(transfer[0], message.p4.data);
+    } finally {
+        f.restore();
     }
 });

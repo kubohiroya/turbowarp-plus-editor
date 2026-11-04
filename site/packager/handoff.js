@@ -108,3 +108,14 @@ export const createProjectPackager = ({
 };
 
 export const plusProjectPackager = createProjectPackager();
+
+/** Keep the live project getters on the host side of the native Packager protocol. */
+export const connectProjectPackager = (packager, getVM, getTitle) => {
+    if (!packager) return null;
+    const name = () => `${getTitle()}.sb3`;
+    return {
+        open: (popup, fallbackURL) => packager.open({popup, fallbackURL, vm: getVM(), name}),
+        claim: (source, buffer, cancelImport) => packager.claim({source, buffer, cancelImport, name}),
+        handleMessage: event => packager.handleMessage(event)
+    };
+};
