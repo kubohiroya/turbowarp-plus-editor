@@ -1,8 +1,15 @@
 import styles from './palette.css';
 
 const installed = new WeakSet();
+const palettes = new Set();
+let horizontalLayout = false;
 
-const attach = (ScratchBlocks, toolbox) => {
+export const setHorizontalBlockPalette = horizontal => {
+    horizontalLayout = horizontal;
+    for (const setMode of palettes) setMode(horizontal);
+};
+
+const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
     const workspace = toolbox.workspace_;
     const flyout = toolbox.flyout_;
     const menu = toolbox.HtmlDiv;
@@ -114,7 +121,7 @@ const attach = (ScratchBlocks, toolbox) => {
 
     flyout.getWidth = () => {
         const width = original.getFlyoutWidth.call(flyout);
-        return horizontal ? Math.min(width, Math.max(1, surface.clientWidth - 8)) : width;
+        return horizontal ? Math.min(width, Math.max(1, menu.clientWidth - 8)) : width;
     };
     flyout.position = () => {
         if (!horizontal) {
@@ -131,7 +138,7 @@ const attach = (ScratchBlocks, toolbox) => {
         const offset = surface.getBoundingClientRect();
         const anchor = category.item_.getBoundingClientRect();
         const preferredLeft = workspace.RTL ? anchor.right - offset.left - width : anchor.left - offset.left;
-        const left = Math.min(Math.max(0, preferredLeft), surface.clientWidth - width);
+        const left = Math.min(Math.max(0, preferredLeft), menu.clientWidth - width);
 
         flyout.width_ = width;
         flyout.height_ = height;
@@ -155,12 +162,13 @@ const attach = (ScratchBlocks, toolbox) => {
         return created;
     };
 
-    const toggle = () => {
+    const setMode = next => {
+        if (next === horizontal) return;
         const category = toolbox.getSelectedItem();
         workspace.cancelCurrentGesture();
         close();
         flyout.scrollTarget = null;
-        horizontal = !horizontal;
+        horizontal = next;
         workspace.toolboxPosition = horizontal ? ScratchBlocks.TOOLBOX_AT_TOP : verticalPosition;
         menu.classList.toggle(styles.horizontal, horizontal);
         menu.toggleAttribute('data-horizontal-block-palette', horizontal);
@@ -188,19 +196,21 @@ const attach = (ScratchBlocks, toolbox) => {
             enabled: true,
             callback: () => {
                 WidgetDiv.hideIfOwner(toolbox);
-                toggle();
+                setMode(!horizontal);
             }
         }], workspace.RTL);
         WidgetDiv.show(toolbox, workspace.RTL, () => popup.dispose());
         ContextMenu.position_(popup, event, workspace.RTL);
     };
-    menu.addEventListener('contextmenu', showContextMenu, capture);
-    panel.addEventListener('contextmenu', event => {
-        // Keep each block's own context menu.
-        if (event.target === panel || event.target === flyout.svgBackground_) showContextMenu(event);
-    }, capture);
+    if (allowManualToggle) {
+        menu.addEventListener('contextmenu', showContextMenu, capture);
+        panel.addEventListener('contextmenu', event => {
+            // Keep each block's own context menu.
+            if (event.target === panel || event.target === flyout.svgBackground_) showContextMenu(event);
+        }, capture);
+    }
     menu.addEventListener('mouseup', event => {
-        if (event.button === 2 || (event.button === 0 && event.ctrlKey)) event.stopPropagation();
+        if (allowManualToggle && (event.button === 2 || (event.button === 0 && event.ctrlKey))) event.stopPropagation();
     }, capture);
     menu.addEventListener('keydown', event => {
         if (!horizontal || !['Enter', ' '].includes(event.key)) return;
@@ -230,13 +240,16 @@ const attach = (ScratchBlocks, toolbox) => {
         else if (!WidgetDiv.isVisible() && !DropDownDiv.isVisible()) close();
     }, capture);
     toolbox.dispose = () => {
+        palettes.delete(setMode);
         events.abort();
         WidgetDiv.hideIfOwner(toolbox);
         original.dispose.call(toolbox);
     };
+    palettes.add(setMode);
+    setMode(horizontalLayout);
 };
 
-export const installHorizontalBlockPalette = ScratchBlocks => {
+export const installHorizontalBlockPalette = (ScratchBlocks, {allowManualToggle = false} = {}) => {
     const toolbox = ScratchBlocks.Toolbox?.prototype;
     if (!toolbox?.init || installed.has(toolbox)) return;
     installed.add(toolbox);
@@ -244,7 +257,7 @@ export const installHorizontalBlockPalette = ScratchBlocks => {
     const {init} = toolbox;
     toolbox.init = function (...args) {
         const result = init.apply(this, args);
-        attach(ScratchBlocks, this);
+        attach(ScratchBlocks, this, allowManualToggle);
         return result;
     };
 };

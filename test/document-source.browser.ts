@@ -37,7 +37,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
         const security = p.locator('.twextsec-modal'); await security.waitFor({timeout: 60000});
         await security.getByRole('button', {name: 'サンドボックスなし', exact: true}).click();
         await security.getByRole('button', {name: 'OK', exact: true}).click(); await security.waitFor({state: 'hidden'});
-        await p.locator('[class*="stage-selector_stage-selector"]').click();
+        await p.getByRole('button', {name: '背景', exact: true}).click();
         await expect(p.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2, {timeout: 60000});
     }
     async function open(blockId) {

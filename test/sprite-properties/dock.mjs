@@ -22,7 +22,7 @@ const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 
 async function start(search = '') {
-    await page.goto(`${origin}${prefix}editor.html?lang=en${search}`);
+    await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusStandardLayout=0${search}`);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
 }
 

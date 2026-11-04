@@ -9,6 +9,7 @@ import styles from './layout.css';
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 
 function StageViewport({aspect, width, defaultWidth, floating, render, inputDocument}) {
+    const {stageHidden} = React.useContext(WindowLayoutContext);
     const viewport = React.useRef(null);
     const [floatingWidth, setFloatingWidth] = React.useState(null);
     const [externalBounds, setExternalBounds] = React.useState(Boolean(inputDocument));
@@ -35,7 +36,7 @@ function StageViewport({aspect, width, defaultWidth, floating, render, inputDocu
         return () => observer.disconnect();
     }, [aspect, floating, inputDocument]);
 
-    return <div className={styles.stageViewport} data-floating={floating} ref={viewport}>
+    return <div className={styles.stageViewport} data-floating={floating} data-stage-hidden={stageHidden || undefined} ref={viewport}>
         {render(floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width,
             floating || externalBounds, inputDocument)}
     </div>;

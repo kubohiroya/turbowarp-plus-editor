@@ -49,7 +49,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const start = async query => {
-        await page.goto(origin + buildPrefix + 'editor.html?lang=en' + query);
+        await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStandardLayout=0' + query);
         await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
         await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() &&
             window.vm?.editingTarget))).toBe(true);
@@ -214,4 +214,120 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.locator('[data-gui-stage] canvas').first()).toBeVisible();
     await expect(page.getByRole('button', {name: 'Show undock buttons'})).toHaveCount(0);
     await expect(page.getByRole('separator')).toHaveCount(0);
+});
+
+test('the anchor switches layouts without replacing the workspace or stopping the hidden stage', {timeout: 90_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    const start = query => page.goto(origin + buildPrefix + 'editor.html?lang=en' + query);
+    const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
+    const stageToggle = page.getByRole('button', {name: 'Show stage', exact: true});
+    const stage = page.locator('[data-gui-stage] canvas').first();
+    const grid = page.locator('[data-fixed-columns="2"]');
+    const toolbox = page.locator('.blocklyToolboxDiv').first();
+    await start('&twPlusStandardLayout=0');
+    await expect(stage).toBeVisible();
+    await expect(anchor).toHaveCount(0);
+    await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
+    await start('&twPlusWindowLayout=1');
+    await expect(anchor).toHaveAttribute('aria-pressed', 'true');
+    await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+    await expect(stage).toBeVisible();
+    await expect(grid).toBeVisible();
+    const columns = await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' '));
+    assert.equal(columns.length, 2);
+    const gridBounds = await grid.boundingBox();
+    const editorBounds = await page.locator('.blocklySvg').first().boundingBox();
+    const stageBounds = await stage.boundingBox();
+    assert.ok(gridBounds.x < editorBounds.x && stageBounds.x > editorBounds.x);
+    assert.ok(stageBounds.x + stageBounds.width <= 1360 && stageBounds.y < 200);
+    assert.equal(await stage.evaluate(canvas => {
+        const rect = canvas.getBoundingClientRect();
+        return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === canvas;
+    }), true);
+    await expect(page.getByText('Sprite properties', {exact: true})).toBeVisible();
+    await expect(page.getByRole('textbox', {name: 'Sprite name'})).toBeHidden();
+
+    await expect.poll(() => page.evaluate(() => Boolean(vm.editingTarget))).toBe(true);
+    const spriteId = await page.evaluate(async () => {
+        const id = vm.editingTarget.id;
+        for (let index = 0; index < 16; index++) await vm.duplicateSprite(id);
+        vm.setEditingTarget(id);
+        window.layoutWorkspace = ScratchBlocks.getMainWorkspace();
+        window.layoutCanvas = document.querySelector('[data-gui-stage] canvas');
+        return id;
+    });
+    await expect.poll(() => grid.evaluate(node => node.parentElement.scrollHeight > node.parentElement.clientHeight))
+        .toBe(true);
+    await grid.evaluate(node => { node.parentElement.scrollTop = node.parentElement.scrollHeight; });
+    assert.ok(await grid.evaluate(node => node.parentElement.scrollTop > 0));
+    await expect(page.getByRole('button', {name: 'Choose a Sprite', exact: true}).first()).toBeVisible();
+
+    await toolbox.locator('.scratchCategoryId-motion').click();
+    const source = page.locator('.blocklyFlyout .blocklyDraggable')
+        .filter({has: page.getByText('move', {exact: true})});
+    await expect(source).toBeVisible();
+    const from = await source.boundingBox();
+    await page.mouse.move(from.x + 12, from.y + 12);
+    await page.mouse.down();
+    await page.mouse.move(from.x + 12, from.y + 34, {steps: 4});
+    await page.mouse.move(editorBounds.x + 340, editorBounds.y + 300, {steps: 14});
+    await page.mouse.up();
+    await expect.poll(() => page.evaluate(() => Object.values(vm.editingTarget.blocks._blocks)
+        .some(block => block.opcode === 'motion_movesteps'))).toBe(true);
+
+    await page.evaluate(() => {
+        const blocks = vm.editingTarget.blocks;
+        const startBlock = {id: 'layout-start', opcode: 'event_whenflagclicked', fields: {}, inputs: {}, shadow: false,
+            topLevel: true, parent: null, next: 'layout-loop', x: 160, y: 140};
+        const loop = {id: 'layout-loop', opcode: 'control_forever', fields: {}, inputs: {}, shadow: false,
+            topLevel: false, parent: 'layout-start', next: null};
+        blocks.createBlock(startBlock);
+        blocks.createBlock(loop);
+        vm.refreshWorkspace();
+        vm.greenFlag();
+    });
+    const running = () => page.evaluate(() => vm.runtime.threads.some(thread => thread.topBlock === 'layout-start'));
+    await expect.poll(running).toBe(true);
+    await stageToggle.click();
+    await expect(stage).toBeHidden();
+    await expect(anchor).toBeVisible();
+    await expect.poll(running).toBe(true);
+
+    const costumes = page.getByRole('tab', {name: 'Costumes'});
+    await costumes.click();
+    await anchor.click();
+    await expect(costumes).toHaveAttribute('aria-selected', 'true');
+    await expect(anchor).toHaveAttribute('aria-pressed', 'false');
+    await expect(stage).toBeVisible();
+    await expect(grid).toHaveCount(0);
+    await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
+    await page.getByLabel('Layout options').click();
+    await page.getByRole('button', {name: 'Show undock buttons'}).click();
+    await anchor.click();
+    await expect(stage).toBeHidden();
+    await expect(costumes).toHaveAttribute('aria-selected', 'true');
+    await stageToggle.click();
+    await expect(stage).toBeVisible();
+    await page.getByRole('tab', {name: 'Code'}).click();
+    assert.deepEqual(await page.evaluate(() => ({
+        sameWorkspace: window.layoutWorkspace === ScratchBlocks.getMainWorkspace(),
+        sameCanvas: window.layoutCanvas === document.querySelector('[data-gui-stage] canvas'),
+        target: vm.editingTarget.id,
+        addedBlock: Object.values(vm.editingTarget.blocks._blocks).some(block => block.opcode === 'motion_movesteps')
+    })), {sameWorkspace: true, sameCanvas: true, target: spriteId, addedBlock: true});
+    await expect.poll(running).toBe(true);
+    await page.setViewportSize({width: 1050, height: 660});
+    await expect(anchor).toBeInViewport();
+    await expect(stage).toBeInViewport({ratio: 1});
+    assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 2);
+
+    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await page.getByRole('tab', {name: 'Backdrops', exact: true}).click();
+    const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
+    await expect(backdropActions).toBeVisible();
+    await anchor.click();
+    await expect(backdropActions).toHaveCount(0);
+    assert.deepEqual(errors, []);
 });

@@ -14,7 +14,7 @@ context.on('page', page => page.on('pageerror', error => errors.push(error.messa
 const page = await context.newPage();
 
 async function start(flags) {
-    await page.goto(origin + '/editor.html?lang=en&twPlusWindowLayout=1' + flags);
+    await page.goto(origin + '/editor.html?lang=en&twPlusStandardLayout=0&twPlusWindowLayout=1' + flags);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
     await page.getByRole('button', {name: 'Show undock buttons'}).click();
 }

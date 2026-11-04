@@ -15,7 +15,7 @@ page.on('pageerror', error => errors.push(error.message));
 context.setDefaultTimeout(10000);
 
 async function start(search) {
-    await page.goto(origin + prefix + 'editor.html?lang=en&twPlusWindowLayout=1&twPlusInternalWindows=1' + search);
+    await page.goto(origin + prefix + 'editor.html?lang=en&twPlusStandardLayout=0&twPlusWindowLayout=1&twPlusInternalWindows=1' + search);
     await page.waitForFunction(() => window.vm?.renderer?.canvas && window.vm?.editingTarget?.isOriginal);
 }
 

@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'targetList', 'paletteDeletePreview', 'contextMenuIcons', 'horizontalBlockPalette']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'targetList', 'standardLayout', 'paletteDeletePreview', 'horizontalBlockPalette', 'contextMenuIcons']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, paletteDeletePreview: false, contextMenuIcons: false, horizontalBlockPalette: false});
+        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,7 +156,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, paletteDeletePreview: false, contextMenuIcons: false, horizontalBlockPalette: false});
+        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -191,11 +191,13 @@ test('the palette delete preview requires explicit startup opt-in', () => {
     assert.equal(readWebStartupFeatureFlags('?twPlusPaletteDeletePreview=1').paletteDeletePreview, true);
 });
 
-test('context menu icons require explicit startup opt-in', () => {
-    for (const search of ['', '?twPlusContextMenuIcons=0', '?twPlusContextMenuIcons=true']) {
-        assert.equal(readWebStartupFeatureFlags(search).contextMenuIcons, false);
+test('the web editor defaults to Plus layout and supports startup rollback', () => {
+    assert.equal(readWebStartupFeatureFlags().standardLayout, true);
+    assert.equal(readStartupFeatureFlags().standardLayout, false);
+    for (const search of ['?twPlusStandardLayout=0', '?twPlusStandardLayout=', '?twPlusStandardLayout=true']) {
+        assert.equal(readWebStartupFeatureFlags(search).standardLayout, false);
     }
-    assert.equal(readWebStartupFeatureFlags('?twPlusContextMenuIcons=1').contextMenuIcons, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=1').standardLayout, true);
 });
 
 test('the horizontal block palette is opt-in at startup', () => {
@@ -203,4 +205,11 @@ test('the horizontal block palette is opt-in at startup', () => {
         assert.equal(readWebStartupFeatureFlags(search).horizontalBlockPalette, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusHorizontalBlockPalette=1').horizontalBlockPalette, true);
+});
+
+test('context menu icons require explicit startup opt-in', () => {
+    for (const search of ['', '?twPlusContextMenuIcons=0', '?twPlusContextMenuIcons=true']) {
+        assert.equal(readWebStartupFeatureFlags(search).contextMenuIcons, false);
+    }
+    assert.equal(readWebStartupFeatureFlags('?twPlusContextMenuIcons=1').contextMenuIcons, true);
 });

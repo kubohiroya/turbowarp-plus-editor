@@ -37,7 +37,8 @@ export {EditorLayout} from '../editor-layout/index.jsx';
 
 /* global __TW_SPRITE_PROPERTIES_PANEL__ */
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
-export const SpritePropertiesPanel = readWebStartupFeatureFlags(startupSearch).spriteProperties &&
+const {spriteProperties, standardLayout} = readWebStartupFeatureFlags(startupSearch);
+export const SpritePropertiesPanel = (spriteProperties || standardLayout) &&
     typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
 
 export {BackpackSurface} from '../editor-backpack/index.jsx';
