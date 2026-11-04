@@ -1,0 +1,13 @@
+{
+  "name": "@kubohiroya/turbowarp-editor-surfaces",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubohiroya/turbowarp-plus-editor.git",
+    "directory": "packages/editor-surfaces"
+  },
+  "exports": "./index.ts"
+}

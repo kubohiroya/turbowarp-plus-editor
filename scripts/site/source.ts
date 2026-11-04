@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 
@@ -55,6 +56,18 @@ export function validatePins(pins) {
         if (pins.scriptTransferSource === 'npm') {
             assert.match(pins.scriptTransferIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
                 'The published script transfer integrity is required');
+        }
+    }
+    const spritePropertiesIntegrities = ['spritePropertiesIntegrity', 'spritePropertiesEntryIntegrity', 'spritePropertiesStylesIntegrity'];
+    if (['spritePropertiesPackage', 'spritePropertiesVersion', 'spritePropertiesRevision', 'spritePropertiesArtifact',
+        ...spritePropertiesIntegrities].some(key => pins[key] !== undefined)) {
+        assert.equal(pins.spritePropertiesPackage, '@kubohiroya/turbowarp-editor-sprite-properties');
+        assert.ok(exactVersion(pins.spritePropertiesVersion), 'An exact sprite properties version is required');
+        assert.ok(sha(pins.spritePropertiesRevision), 'A full sprite properties source revision is required');
+        assert.equal(pins.spritePropertiesArtifact,
+            `vendor/turbowarp-editor-sprite-properties-${pins.spritePropertiesVersion}.tgz`);
+        for (const key of spritePropertiesIntegrities) {
+            assert.match(pins[key], /^sha512-[A-Za-z0-9+/]{86}==$/, `A fixed ${key} is required`);
         }
     }
     return pins;
@@ -190,6 +203,38 @@ export async function verifyScriptTransferDependency(directory, pins) {
     const require = createRequire(path.join(directory, 'package.json'));
     const installed = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
     assert.equal(installed.version, pins.scriptTransferVersion, 'Installed script transfer differs from the pin');
+}
+
+export async function verifySpritePropertiesDependency(directory, pins) {
+    const name = pins.spritePropertiesPackage;
+    const version = pins.spritePropertiesVersion;
+    const artifact = pins.spritePropertiesArtifact;
+    const dependency = `file:${artifact}`;
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
+    const entry = lock.packages[`node_modules/${name}`];
+    assert.equal(manifest.devDependencies[name], dependency, 'Sprite properties dependency differs from the source pin');
+    assert.equal(lock.packages[''].devDependencies[name], dependency, 'Sprite properties root lock differs from the source pin');
+    assert.equal(entry?.resolved, dependency, 'Sprite properties lock must resolve to the pinned artifact');
+    assert.equal(entry.version, version, 'Sprite properties lock version differs from the source pin');
+    assert.equal(entry.integrity, pins.spritePropertiesIntegrity, 'Sprite properties lock integrity differs from the source pin');
+
+    const installedRoot = path.join(directory, 'node_modules', name);
+    const installed = JSON.parse(await fs.readFile(path.join(installedRoot, 'package.json'), 'utf8'));
+    assert.equal(installed.name, name, 'Installed sprite properties package name differs from the source pin');
+    assert.equal(installed.version, version, 'Installed sprite properties version differs from the source pin');
+    assert.equal(installed.module, './dist/index.js', 'Unexpected sprite properties module path');
+    assert.equal(installed.exports['./styles.css'], './dist/styles.css', 'Unexpected sprite properties stylesheet path');
+    for (const [file, expected] of [
+        [path.join(directory, artifact), pins.spritePropertiesIntegrity],
+        [path.join(installedRoot, installed.module), pins.spritePropertiesEntryIntegrity],
+        [path.join(installedRoot, installed.exports['./styles.css']), pins.spritePropertiesStylesIntegrity]
+    ]) {
+        const integrity = `sha512-${createHash('sha512').update(await fs.readFile(file)).digest('base64')}`;
+        assert.equal(integrity, expected, `Sprite properties bytes differ from the source pin: ${path.basename(file)}`);
+    }
+    return {package: name, version, revision: pins.spritePropertiesRevision, source: 'local-tarball',
+        artifact, integrity: pins.spritePropertiesIntegrity, featureDefault: false};
 }
 
 export async function verifyHost(gui, pins) {

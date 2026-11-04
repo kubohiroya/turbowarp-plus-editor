@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -72,7 +73,7 @@ const githubURL = (value: unknown) => {
     return match ? `https://github.com/${match[1]}` : null;
 };
 
-function sourceOf(name: string, manifest, {lock, local}, directory: string) {
+async function sourceOf(name: string, manifest, {lock, local}, directory: string, output: string, label: string) {
     if (lock.link) {
         const repository = githubURL(manifest.repository);
         assert.ok(repository && manifest.repository.directory === lock.resolved,
@@ -80,6 +81,17 @@ function sourceOf(name: string, manifest, {lock, local}, directory: string) {
         assert.equal(manifest.version, local?.version, `${name} differs from its lockfile version`);
         const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: directory, encoding: 'utf8'}).trim();
         return {npm: null, repository, revision, directory: manifest.repository.directory};
+    }
+    if (typeof lock.resolved === 'string' && lock.resolved.startsWith('file:')) {
+        const archive = /^file:(vendor\/[\w.-]+\.tgz)$/u.exec(lock.resolved)?.[1];
+        assert.ok(archive, `${name} must use an archive in vendor/`);
+        assert.equal(lock.version, manifest.version, `${name} differs from its lockfile version`);
+        const bytes = await fs.readFile(path.join(directory, archive));
+        const integrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
+        assert.equal(integrity, lock.integrity, `${name} archive differs from its lockfile integrity`);
+        const tarball = `notices/${label}/source.tgz`;
+        await fs.writeFile(path.join(output, tarball), bytes);
+        return {npm: null, tarball, integrity};
     }
     // A git dependency records its commit, but the lock only says what the install declared:
     // trust its source only while it still matches the version the installed package reports.
@@ -112,7 +124,7 @@ export async function buildFamilyNotices(output: string,
             const files = await copyNoticeFiles(installed.packageRoot, path.join(noticeRoot, label));
             const entry: Record<string, unknown> = {package: manifest.name, version: manifest.version,
                 license: manifest.license ?? null, files: files.map(name => `notices/${label}/${name}`),
-                source: sourceOf(manifest.name, manifest, installed, directory), installedIn: [where]};
+                source: await sourceOf(manifest.name, manifest, installed, directory, output, label), installedIn: [where]};
             if (!files.some(name => licenseFile.test(name)) || !manifest.license) {
                 assert.ok(undeclaredLicenseReleases[manifest.name]?.includes(manifest.version),
                     `${key} has no license declaration or license file`);

@@ -8,12 +8,13 @@ import {guiRoot} from '../extension-host/pinned-host.mjs';
 const inventory = JSON.parse(fs.readFileSync(new URL('../../docs/gui-integration/relocation.json', import.meta.url)));
 const host = path.resolve(import.meta.dirname, '../..');
 const git = (...args) => execFileSync('git', args, {cwd: guiRoot, encoding: 'utf8'});
+const hostContractTests = ['test/sprite-properties-host.test.mjs'];
 
-test('the GUI contains no versioned files absent from the selected upstream tree', () => {
+test('the GUI additions are exactly the allowed host contract tests', () => {
     const upstream = new Set(git('ls-tree', '-r', '--name-only', inventory.upstream).trim().split('\n'));
     const actual = git('ls-files', '--cached', '--others', '--exclude-standard').trim().split('\n')
         .filter(file => file && fs.existsSync(path.join(guiRoot, file)));
-    assert.deepEqual(actual.filter(file => !upstream.has(file)), []);
+    assert.deepEqual(actual.filter(file => !upstream.has(file)).sort(), hostContractTests);
     for (const row of inventory.files) {
         assert.equal(fs.existsSync(path.join(guiRoot, row.from)), false, row.from);
         if (row.disposition === 'moved') assert.ok(fs.existsSync(path.join(host, row.to)), row.to);

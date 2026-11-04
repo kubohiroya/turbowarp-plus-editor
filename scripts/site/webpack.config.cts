@@ -31,9 +31,28 @@ const hookSource = fs.readFileSync(path.join(gui, 'src', 'addons', 'hooks.js'), 
 if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI_HOST__')) {
     throw new Error('The pinned GUI does not expose the optional host bridge');
 }
-config.plugins.push(new (hostRequire('webpack').ProvidePlugin)({
-    __TW_GUI_HOST__: bridge
-}));
+const injections = {__TW_GUI_HOST__: bridge};
+const {spritePropertiesPackage, spritePropertiesVersion} = rootRequire('./site/source.json');
+if (spritePropertiesPackage) {
+    const spriteProperties = path.join(__dirname, '..', '..', 'node_modules', spritePropertiesPackage);
+    const manifest = JSON.parse(fs.readFileSync(path.join(spriteProperties, 'package.json'), 'utf8'));
+    if (manifest.name !== spritePropertiesPackage || manifest.version !== spritePropertiesVersion) {
+        throw new Error('Sprite properties package differs from the source pin');
+    }
+    const css = fs.realpathSync(path.join(spriteProperties, manifest.exports['./styles.css']));
+    const entry = fs.realpathSync(path.join(spriteProperties, manifest.module));
+    config.resolve.alias[`${spritePropertiesPackage}$`] = entry;
+    config.resolve.alias[`${spritePropertiesPackage}/styles.css$`] = css;
+    // The standalone package publishes global class names alongside its React entry.
+    const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
+    cssModules.exclude = css;
+    config.module.rules.push({test: /\.css$/, include: css,
+        use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
+    Object.assign(injections, {__TW_SPRITE_PROPERTIES_PANEL__: [
+        path.join(path.dirname(bridge), 'lib', 'tw-sprite-properties-panel.js'), 'SpritePropertiesPanel'
+    ]});
+}
+config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 // Resolve shared packages to the host's copies, once.
 //
 // A module this repository supplies is resolved from here, so `react` would come from this
@@ -66,10 +85,39 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const layoutEntry = rootRequire.resolve('@kubohiroya/turbowarp-editor-layout');
-config.resolve.alias['@kubohiroya/turbowarp-editor-layout$'] = layoutEntry;
+const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'backpack'].map(feature => {
+    const name = `@kubohiroya/turbowarp-editor-${feature}`;
+    const entry = rootRequire.resolve(name);
+    config.resolve.alias[`${name}$`] = entry;
+    return [feature, path.dirname(entry)];
+}));
+config.resolve.alias['@kubohiroya/turbowarp-editor-layout/targets.css$'] =
+    rootRequire.resolve('@kubohiroya/turbowarp-editor-layout/targets.css');
 const siteSource = path.join(__dirname, '..', '..', 'site');
-config.module.rules.push({test: /\.jsx?$/, include: [siteSource, transferSource, path.dirname(layoutEntry)],
+const backpackSurface = path.join(siteSource, 'editor-backpack');
+config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.js');
+const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
+config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
+const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
+cssModules.exclude = [cssModules.exclude, windowStyles].filter(Boolean);
+config.module.rules.push({test: /\.css$/, include: windowStyles,
+    use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
+config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: ['backpack-popout'], filename: 'backpack-popout.html',
+    template: path.join(backpackSurface, 'backpack-popout.html')
+}));
+config.entry['stage-popout'] = config.entry['backpack-popout'];
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: ['stage-popout'], filename: 'stage-popout.html',
+    template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
+}));
+config.module.rules.push({test: /\.ts$/, include: [
+    backpackSurface, editorEntries.surfaces, editorEntries.transfer
+], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
+config.module.rules.push({test: /\.jsx?$/, include: [
+    siteSource, transferSource, editorEntries.layout, editorEntries.backpack
+],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}],

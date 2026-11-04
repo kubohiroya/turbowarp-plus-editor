@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {readPins, sha} from './source.ts';
@@ -28,8 +29,23 @@ const family = JSON.parse(await fs.readFile(path.join(directory, info.familyNoti
 for (const name of requiredFamilyPackages) {
     assert.ok(family.packages.some(entry => entry.package === name), `Bundled family package without notices: ${name}`);
 }
+const lock = JSON.parse(await fs.readFile(new URL('../../package-lock.json', import.meta.url), 'utf8'));
+if (pins.spritePropertiesPackage) {
+    const properties = family.packages.find(entry => entry.package === pins.spritePropertiesPackage);
+    assert.equal(properties?.version, pins.spritePropertiesVersion);
+    assert.equal(properties.source.integrity, pins.spritePropertiesIntegrity);
+}
 for (const entry of family.packages) {
-    assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
+    const installed = lock.packages[`node_modules/${entry.package}`];
+    if (installed?.resolved?.startsWith('file:vendor/') && installed.version === entry.version) {
+        const tarball = `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`;
+        const bytes = await fs.readFile(path.join(directory, tarball));
+        assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity});
+        assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, installed.integrity,
+            `Source archive differs from the pin: ${entry.package}`);
+    } else {
+        assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
+    }
     for (const file of entry.files) assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing notice: ${file}`);
 }
 if (pins.loaderRepository) {

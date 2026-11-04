@@ -1,6 +1,6 @@
 # GUI追加ファイルの全面移設
 
-2026-11-03の指示により、TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。GUI側に残す追加ファイルの例外はない。
+2026-11-03の指示により、TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。#151 の方針に従い、その後に追加する GUI 側の接続契約テストは、用途とパスを記録して例外とする。
 
 比較元は `TurboWarp/scratch-gui:3c017c528c853af3111df9641914704745c1fdf6`、移設前のGUIは `c24b587ec49b871e9cbdc7530d54635a521a5d6e`、公開時の受け側の基準は `121e1eae083d3abdedd03ae19a725eeb3bf95c04`。
 
@@ -30,7 +30,8 @@ GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` 
 
 ## 検証
 
-- `test:gui-integration` は本家にないGUIファイルが0件であること、削除したモジュールへの参照とrunnerが残っていないことを確認する。32ファイルの移設先の存在も照合する。
+- `test:gui-integration` は本家にない GUI ファイルが次の接続契約テストと完全に一致すること、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。
+  - `test/sprite-properties-host.test.mjs` は #175 の任意接続口について、既存表示への復帰と選択が切り替わった後の古い編集の拒否を検証する。
 - CIは固定GUIを用意し、比較元の本家コミットをfetchした後、GUIの標準unitと受け側の接続テストを実行する。
 - GUI標準unit 33件、受け側の既存境界182件、移設分と配置監査54件が成功。受け側の型検査と変更GUIソースのeslintも成功。
 - GUI単体と配信ホストの両方で、production設定のブラウザー6エントリーをビルド。ローカル検証ではminifyのみOFF。micro:bitの通常生成物は同一基準の既存インストールから使用した。
@@ -42,7 +43,7 @@ GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` 
 
 ## 結果と受け入れ基準
 
-- [x] 本家に存在しないGUIの追跡ファイルは32件から0件。例外なし。
+- [x] 移設時点で本家に存在しない GUI の追跡ファイルは32件から0件になった。以降は上記の接続契約テストを監査で管理する。
 - [x] 文書・ツール・専用テスト・接続実装の所有先が受け側に統一されている。
 - [x] GUI単体と配信ビルドの両方が起動する。
 - [x] 機能とSB3の互換を対象テストと実ブラウザーで確認した。
@@ -88,3 +89,28 @@ GUI単体は任意の描画部品がなければ標準の操作列を表示し�
 `site/gui-integration/lib/tw-plus-transfer.js` がステージ転送項目をネイティブメニューに渡す形へ整え、右クリックメニューとラッパーを描画します。ラッパーのレイアウトは同じディレクトリのCSSで管理します。
 GUIはネイティブのコンテキストメニュー部品とファイル選択用アイコンを明示的に渡し、ステージ選択・ドロップ処理・背景ボタンの配置を担当します。
 切戻しはGUIとホストを移管前の互換なpinに戻して行います。
+
+## Issue #175 スプライト設定パネルの任意接続
+
+設定フォームとスタイルは独立パッケージ `@kubohiroya/turbowarp-editor-sprite-properties` に置く。Editor は `site/source.json` のパッケージ名・版・ソースコミットと、`vendor/` のローカル配布用 tarball を固定する。サイトのソース検証では、manifest と lockfile の相対パス、tarball の SHA-512、インストール済みの JavaScript と CSS の SHA-512 を照合する。Editor は起動時に既定 OFF の `twPlusSpriteProperties=1` を読み、パネルを既存の GUI 接続口に渡す。GUI は既存の選択情報・VM 更新経路を利用する。パネルと一覧は最小ドック内でそれぞれスクロールできる。
+
+Editor 側の `npm ci` で、同梱 tarball が `node_modules` に展開される。独立パッケージの作業ディレクトリを参照する環境変数は不要。既定 OFF と ON のドック動作をローカルで検証する。
+
+```sh
+# Editor の作業ツリー
+npm ci
+node --test test/sprite-properties-source.test.ts test/family-notices.test.ts
+editor_root="$PWD"
+# GUI の作業ツリーは site/source.json に固定されたコミットを用意する
+cd ../gui-sprite175
+CI=1 E2E_GUI_ROOT="$PWD" node node_modules/webpack/bin/webpack.js \
+  --config "$editor_root/scripts/site/webpack.config.cts" --output-path /private/tmp/tw175-host-build --bail
+cd "$editor_root"
+node test/sprite-properties/dock.mjs /private/tmp/tw175-host-build
+```
+
+tarball の再現には、`spritePropertiesRevision` に固定した独立パッケージをクリーンなディレクトリへ展開し、そこで `npm ci`、`npm pack` を実行する。生成した tarball と Editor の固定ファイルを `cmp` で比較する。正式な npm 依存へ切り替える際は公開済みの版と integrity を確認する。
+
+独立パッケージは `GPL-3.0-or-later` を宣言し、`LICENSE`、ソース、ビルドスクリプトを同梱する。配信ビルドは `notices/family.json` にライセンスとソースアーカイブを記録する。ローカル tarball の SHA-512 を照合し、配信成果物の `notices/` にそのまま収録する。
+
+切り戻す場合は URL の `twPlusSpriteProperties=1` を外して再起動する。通常の設定欄に戻り、作品へ確定済みの変更は残る。配布依存も切り戻す場合は、パネル取り付けと配布成果物・依存固定を追加前の版へ戻す。

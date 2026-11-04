@@ -8,7 +8,7 @@ import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
 import {
     root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency,
-    verifySecurityDependency, verifyInstalledCore, verifyScriptTransferDependency, sha
+    verifySecurityDependency, verifyInstalledCore, verifyScriptTransferDependency, verifySpritePropertiesDependency, sha
 } from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
 import {buildFamilyNotices} from './family-notices.ts';
@@ -21,6 +21,7 @@ export async function buildPages(pins = undefined) {
     if (pins.documentEditorRepository) await verifyDocumentEditorDependency(root, pins);
     if (pins.loaderRepository) await verifyLoaderDependency(root, pins);
     if (pins.scriptTransferRepository) await verifyScriptTransferDependency(root, pins);
+    const spriteProperties = pins.spritePropertiesPackage ? await verifySpritePropertiesDependency(root, pins) : undefined;
     const {version: securityVersion} = await verifySecurityDependency(root, pins);
     const siteRevision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim();
     assert.ok(sha(siteRevision), 'Site source must have a full revision');
@@ -64,6 +65,7 @@ export async function buildPages(pins = undefined) {
         repository: `https://github.com/${pins.scriptTransferRepository}`,
         revision: pins.scriptTransferRevision, version: pins.scriptTransferVersion, featureDefault: true
     };
+    if (spriteProperties) info.spriteProperties = spriteProperties;
     info.familyNotices = await buildFamilyNotices(output, [
         {origin: 'scratch-gui', directory: gui},
         {origin: 'turbowarp-plus-editor', directory: root, includeDev: true}]);

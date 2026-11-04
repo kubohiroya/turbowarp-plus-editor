@@ -4,7 +4,10 @@
   "description": "Resizable panes for the TurboWarp editor",
   "type": "module",
   "license": "GPL-3.0-or-later",
-  "exports": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./targets.css": "./src/targets.css"
+  },
   "files": [
     "src",
     "README.md",

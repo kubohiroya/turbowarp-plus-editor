@@ -78,7 +78,12 @@
   },
   "devDependencies": {
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
+    "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
     "@kubohiroya/turbowarp-editor-layout": "file:packages/editor-layout",
+    "@kubohiroya/turbowarp-editor-sprite-properties": "file:vendor/turbowarp-editor-sprite-properties-0.1.1.tgz",
+    "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
+    "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",
+    "@kubohiroya/turbowarp-editor-windows": "file:vendor/turbowarp-editor-windows-0.4.0.tgz",
     "@kubohiroya/turbowarp-extension-data-editor": "0.8.0",
     "@kubohiroya/turbowarp-extension-loader": "0.8.0",
     "@kubohiroya/turbowarp-extension-security-dialog": "0.8.5",

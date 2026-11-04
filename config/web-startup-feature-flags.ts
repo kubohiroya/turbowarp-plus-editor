@@ -5,7 +5,12 @@ export function readWebStartupFeatureFlags(search = '') {
     return readStartupFeatureFlags({
         twPlusExtensionLoader: params.get('twPlusExtensionLoader'),
         twPlusProjectTools: params.get('twPlusProjectTools'),
+        twPlusSpriteProperties: params.get('twPlusSpriteProperties'),
         twPlusSplitter: params.get('twPlusSplitter'),
-        twPlusWindowLayout: params.get('twPlusWindowLayout')
+        twPlusWindowLayout: params.get('twPlusWindowLayout'),
+        twPlusBackpackPopout: params.get('twPlusBackpackPopout'),
+        twPlusInternalWindows: params.get('twPlusInternalWindows'),
+        twPlusStagePanel: params.get('twPlusStagePanel'),
+        twPlusTargetList: params.get('twPlusTargetList')
     });
 }

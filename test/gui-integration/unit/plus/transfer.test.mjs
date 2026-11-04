@@ -9,6 +9,18 @@ test('without a host transfer leaves upstream workspace and stage menus alone', 
     assert.equal(hostStageTransferMenu({}, {}), null);
 });
 
+test('disposing a workspace releases both the Backpack drop and script transfer attachments', () => {
+    const context = {workspace: {}};
+    const disposed = [];
+    const integration = {scriptTransfer: {attach: () => ({dispose: () => disposed.push('script')})}};
+    const attachment = attachHostScriptTransfer(context, integration, supplied => {
+        assert.equal(supplied, context);
+        return {dispose: () => disposed.push('backpack')};
+    });
+    attachment.dispose();
+    assert.deepEqual(disposed, ['backpack', 'script']);
+});
+
 test('the host receives the GUI context and supplies stage actions through the native menu components', () => {
     const context = {vm: {}, ScratchBlocks: {}, workspace: {}, document: {}, Zip: {}, deserializeBlocks () {}};
     const bridge = {dispose () {}};

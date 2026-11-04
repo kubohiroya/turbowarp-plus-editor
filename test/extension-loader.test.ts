@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'splitter', 'windowLayout']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'targetList']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -129,12 +129,57 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, splitter: true, windowLayout: true});
+        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
-test('splitters default on independently of the window layout flag', () => {
-    assert.equal(readStartupFeatureFlags().splitter, true);
+test('Backpack popout requires both startup opt-ins', () => {
+    for (const query of ['', '?twPlusBackpackPopout=1', '?twPlusWindowLayout=0&twPlusBackpackPopout=1',
+        '?twPlusWindowLayout=1&twPlusBackpackPopout=true']) {
+        assert.equal(readWebStartupFeatureFlags(query).backpackPopout, false);
+    }
+    assert.equal(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusBackpackPopout=1').backpackPopout, true);
+});
+
+test('in-app windows require flexible layout and are independent of Backpack popouts', () => {
+    for (const query of ['', '?twPlusInternalWindows=1', '?twPlusWindowLayout=1&twPlusInternalWindows=0',
+        '?twPlusWindowLayout=1&twPlusInternalWindows=true', '?twPlusWindowLayout=1&twPlusBackpackPopout=1']) {
+        assert.equal(readWebStartupFeatureFlags(query).internalWindows, false);
+    }
+    const flags = readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusInternalWindows=1');
+    assert.equal(flags.internalWindows, true);
+    assert.equal(flags.backpackPopout, false);
+});
+
+test('sprite properties requires a separate explicit startup opt-in', () => {
+    for (const search of ['', '?twPlusSpriteProperties=0', '?twPlusSpriteProperties=', '?twPlusSpriteProperties=true']) {
+        assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
+    }
+    assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
+        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false});
+});
+
+test('the stage panel opt-in depends on flexible layout and internal windows', () => {
+    const layout = '?twPlusWindowLayout=1&twPlusInternalWindows=1';
+    for (const search of [layout, layout + '&twPlusStagePanel=0', '?twPlusStagePanel=1',
+        '?twPlusWindowLayout=1&twPlusStagePanel=1']) {
+        assert.equal(readWebStartupFeatureFlags(search).stagePanel, false);
+    }
+    assert.equal(readWebStartupFeatureFlags(layout + '&twPlusStagePanel=1').stagePanel, true);
+});
+
+test('the target list opt-in is independent of the stage panel and requires internal windows', () => {
+    const query = '?twPlusWindowLayout=1&twPlusTargetList=1';
+    assert.equal(readWebStartupFeatureFlags(query).targetList, false);
+    const flags = readWebStartupFeatureFlags(query + '&twPlusInternalWindows=1');
+    assert.equal(flags.targetList, true);
+    assert.equal(flags.stagePanel, false);
+});
+
+test('splitters default on independently of undocking and support explicit rollback', () => {
+    assert.equal(readWebStartupFeatureFlags().splitter, true);
     assert.equal(readWebStartupFeatureFlags('?twPlusWindowLayout=0').splitter, true);
-    assert.equal(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusSplitter=0').splitter, false);
+    const flags = readWebStartupFeatureFlags('?twPlusSplitter=0&twPlusWindowLayout=1&twPlusInternalWindows=1');
+    assert.equal(flags.splitter, false);
+    assert.equal(flags.internalWindows, true);
 });

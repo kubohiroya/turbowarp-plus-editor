@@ -1,3 +1,5 @@
+export {attachExternalMonitorDrag} from './monitor-drag.js';
+
 const separatorSize = 8;
 const keyboardStep = 16;
 
@@ -165,3 +167,5 @@ export function createLayout (React) {
         });
     };
 }
+
+export {createTargetList} from './targets.js';
