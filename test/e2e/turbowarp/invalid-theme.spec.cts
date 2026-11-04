@@ -3,10 +3,12 @@ const fixture = require('./theme-project.cts');
 
 const themes = {
     light: {red: 'rgb(198, 40, 40)',
+        errorText: 'rgb(166, 27, 27)',
         tint: 'rgba(198, 40, 40, 0.08)',
         border: 'rgba(0, 0, 0, 0.15)',
         background: 'rgb(255, 255, 255)'},
     dark: {red: 'rgb(255, 138, 138)',
+        errorText: 'rgb(255, 179, 179)',
         tint: 'rgba(255, 138, 138, 0.12)',
         border: 'rgba(255, 255, 255, 0.15)',
         background: 'rgb(30, 30, 30)'}
@@ -21,6 +23,7 @@ const save = page => dialog(page).locator('[data-block-editor-save]');
 const canvas = page => page.locator('.blocklySvg > .blocklyWorkspace > .blocklyBlockCanvas').first();
 
 const load = async (page, baseURL, theme) => {
+    await page.emulateMedia({colorScheme: theme === 'dark' ? 'light' : 'dark'});
     const url = new URL('editor.html', baseURL);
     url.search = new URLSearchParams({lang: 'en',
         project_url: await fixture.project()}).toString();
@@ -58,6 +61,7 @@ const expectInvalid = async (control, colours) => {
     const id = await error.getAttribute('id');
     expect((await control.getAttribute('aria-describedby')).split(/\s+/)).toContain(id);
     await expect(error).toHaveCSS('border-left-color', colours.red);
+    await expect(error).toHaveCSS('color', colours.errorText);
 };
 const expectValid = async (control, colours) => {
     await expect(control).not.toHaveAttribute('aria-invalid', 'true');

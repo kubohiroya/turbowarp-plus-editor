@@ -94,12 +94,6 @@ export const createPlusIntegration = ({
      */
     blockEditor,
     translations: blockEditorTranslations,
-    themeTokens: {
-        light: {'block-editor-error-border': '#c62828', 'block-editor-error-text': '#a61b1b',
-            'block-editor-error-tint': 'rgba(198, 40, 40, 0.08)'},
-        dark: {'block-editor-error-border': '#ff8a8a', 'block-editor-error-text': '#ffb3b3',
-            'block-editor-error-tint': 'rgba(255, 138, 138, 0.12)'}
-    },
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
      *
