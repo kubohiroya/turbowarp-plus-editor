@@ -118,7 +118,10 @@ test('digest mismatch, unknown schema and a forged trust field fail before evalu
         expect(result.code).toBe(expected);
         expect(await executions(page)).toBe(0);
         await expect(permission(page)).toHaveCount(0);
-        await expect(await showProjectDiagnostics(page)).toContainText(expected);
+        await expect(page.getByTestId('tw-plus-extension-status')).toHaveCount(0);
+        await page.getByTestId('project-diagnostics-snackbar')
+            .getByRole('button', {name: '詳細ログを表示', exact: true}).click();
+        await expect(page.getByTestId('project-diagnostics')).toContainText(expected);
         await page.keyboard.press('Escape');
     }
 });
@@ -365,8 +368,8 @@ test('a transient failure shows the current attempt and remains in Project Diagn
         await answer(page);
         await expectRetryShown(url);
         await allowed(page, loading);
-        expect(served).toBe(2);
         await expectRetryRecorded(url);
+        expect(served).toBe(2);
         return;
     }
     const fixture = await createHTTPSFixture(bytes);
@@ -379,8 +382,8 @@ test('a transient failure shows the current attempt and remains in Project Diagn
         await answer(page);
         await expectRetryShown(url);
         await allowed(page, loading);
-        expect(fixture.seen.filter(pathname => pathname === '/flaky')).toHaveLength(2);
         await expectRetryRecorded(url);
+        expect(fixture.seen.filter(pathname => pathname === '/flaky')).toHaveLength(2);
     } finally { await fixture.close(); }
 });
 

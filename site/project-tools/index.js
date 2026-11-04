@@ -13,16 +13,16 @@ const storageFor = document => {
 
 /** Compose this host's project tools with its existing extension host. */
 export const installProjectToolsHost = (vm, settings = {}, enabled = PROJECT_TOOLS_ENABLED) => {
-    if (!enabled) return installEditorExtensionHost(vm, settings);
     const diagnostics = createProjectDiagnostics();
     const host = installEditorExtensionHost(vm, {...settings, showDiagnostics: false,
         diagnostics: event => { diagnostics.record(event); settings.diagnostics?.(event); },
         onProjectManifest: manifest => { diagnostics.describe(manifest); settings.onProjectManifest?.(manifest); }});
     const document = settings.document || globalThis.document;
-    const properties = installProjectProperties(vm, settings);
-    const history = createAuthorHistory(document ? storageFor(document) : undefined);
-    const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics) : null;
-    const tools = {properties, dialogs, diagnostics};
+    const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled});
+    const history = enabled ? createAuthorHistory(document ? storageFor(document) : undefined) : null;
+    const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics,
+        {locale: settings.locale}) : null;
+    const tools = {properties, dialogs, diagnostics, propertiesEnabled: enabled};
     let lastPhase;
     const unsubscribe = properties.subscribe(() => {
         const state = properties.loadState();
@@ -36,7 +36,7 @@ export const installProjectToolsHost = (vm, settings = {}, enabled = PROJECT_TOO
     });
     projects.set(vm, tools);
     let disposal;
-    return {...host, enabled: true, dispose () {
+    return {...host, dispose () {
         disposal ??= (async () => {
             unsubscribe(); dialogs?.dispose(); properties.dispose(); diagnostics.dispose(); projects.delete(vm);
             await host.dispose();
@@ -57,10 +57,12 @@ export const renderFileMenu = ({vm, locale = 'en', MenuSection, MenuItem, onRequ
         if (type === 'properties') tools.dialogs.showProperties(locale);
         else tools.dialogs.showDiagnostics(locale);
     };
-    return React.createElement(MenuSection, null, ...[
+    const entries = [
         ['properties', '作品のプロパティ…', 'Project Properties…'],
         ['diagnostics', '作品の診断…', 'Project Diagnostics…']
-    ].map(([type, ja, en]) => React.createElement(MenuItem, {key: type, onClick: () => open(type)},
+    ].filter(([type]) => type !== 'properties' || tools.propertiesEnabled);
+    return React.createElement(MenuSection, null, ...entries.map(([type, ja, en]) =>
+        React.createElement(MenuItem, {key: type, onClick: () => open(type)},
         React.createElement('span', {role: 'button', tabIndex: 0, onKeyDown: event => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault(); event.stopPropagation(); open(type);
