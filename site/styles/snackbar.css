@@ -5,15 +5,19 @@
     box-sizing: border-box;
     position: fixed;
     grid-area: auto;
-    bottom: 0;
-    left: 16px;
-    right: 16px;
+    /* Fixed bottom/right can follow an overflowing layout viewport on mobile. */
+    bottom: auto;
+    top: 100vh;
+    top: 100dvh;
+    left: 50vw;
+    right: auto;
+    transform: translate(-50%, -100%);
     z-index: 10000;
     display: flex;
     align-items: flex-start;
     flex-wrap: wrap;
     gap: 16px;
-    width: auto;
+    width: calc(100vw - 32px);
     max-width: 760px;
     max-height: calc(100vh - 32px);
     max-height: calc(100dvh - 32px);
@@ -27,6 +31,19 @@
     color: #fff;
     font: 14px/1.5 system-ui, sans-serif;
     box-shadow: 0 4px 20px #0006;
+}
+
+/* Leave the add dialog's fixed action row reachable while its notice is open. */
+:global(body .twextsec-review[data-mode="add"] > .twextsec-warning) {
+    position: absolute;
+    grid-area: 1 / 1 / 2 / 2;
+    top: auto;
+    bottom: 12px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: calc(100% - 24px);
+    transform: none;
 }
 
 .snackbar > span,

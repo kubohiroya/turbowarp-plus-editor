@@ -236,6 +236,19 @@ test('real mobile context keeps the shared review inside the visual viewport', a
         expect(rect.right).toBeLessThanOrEqual(rect.width);
         await dialog(page).locator('.twextsec-bulk').getByRole('radio',{name:labels.ja.unsandboxed,exact:true}).click();
         await expect(dialog(page).locator('.twextsec-row input[value="unsandboxed"]:checked')).toHaveCount(2);
+        const warning = dialog(page).locator('.twextsec-warning');
+        const notice = await warning.evaluate(node => {
+            const r=node.getBoundingClientRect(),v=window.visualViewport;
+            return {left:r.left-v.offsetLeft,right:r.right-v.offsetLeft,top:r.top-v.offsetTop,
+                bottom:r.bottom-v.offsetTop,width:v.width,height:v.height};
+        });
+        expect(notice.left).toBeGreaterThanOrEqual(0);
+        expect(notice.right).toBeLessThanOrEqual(notice.width);
+        expect(notice.top).toBeGreaterThanOrEqual(0);
+        expect(Math.abs(notice.bottom-notice.height)).toBeLessThanOrEqual(1);
+        await warning.getByRole('button',{name:'閉じる',exact:true}).click();
+        await expect(warning).toHaveCount(0);
+        await expect(dialog(page).locator('.twextsec-row input[value="unsandboxed"]:checked')).toHaveCount(2);
         await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeEnabled();
         expect(await executions(page)).toBe(0);
     } finally { await context.close(); }
