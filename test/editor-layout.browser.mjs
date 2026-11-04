@@ -134,9 +134,6 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await page.mouse.move(scrollHandle.x + scrollHandle.width / 2 + 25, scrollHandle.y + scrollHandle.height / 2, {steps: 5});
     await page.mouse.up();
     await expect.poll(() => page.evaluate(() => ScratchBlocks.getMainWorkspace().scrollX)).not.toBe(scrollX);
-    await page.getByRole('tab', {name: 'Costumes'}).click();
-    await page.getByRole('tab', {name: 'Code'}).click();
-    await expect.poll(() => page.evaluate(() => ScratchBlocks.getMainWorkspace().isVisible())).toBe(true);
 
     await page.evaluate(() => vm.setStageSize(480, 360));
     await page.setViewportSize({width: 1050, height: 660});
@@ -148,6 +145,16 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect.poll(async () => (await stage.boundingBox()).width).toBe(originalStage.width);
     await anchor.click();
     assert.equal(await position(columns), saved);
+    const scriptX = () => page.evaluate(() => vm.editingTarget.blocks.getBlock('layout-script').x);
+    const editedX = await scriptX();
+    await page.evaluate(() => ScratchBlocks.getMainWorkspace().undo(false));
+    await expect.poll(scriptX).toBe(210);
+    await page.evaluate(() => ScratchBlocks.getMainWorkspace().undo(true));
+    await expect.poll(scriptX).toBe(editedX);
+
+    await page.getByRole('tab', {name: 'Costumes'}).click();
+    await page.getByRole('tab', {name: 'Code'}).click();
+    await expect.poll(() => page.evaluate(() => ScratchBlocks.getMainWorkspace().isVisible())).toBe(true);
 
     await page.getByText('File', {exact: true}).click();
     const pending = page.waitForEvent('download');
