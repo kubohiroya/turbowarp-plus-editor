@@ -1,20 +1,27 @@
 import React from 'react';
 import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-editor-layout';
 import {BasicPanel} from './basic-panel.jsx';
-import {createBrowserHost} from '../editor-backpack/browser-host.ts';
+import {createDesktopPanelHost} from './desktop-panel-host.js';
 import {decorateSurface} from '../editor-backpack/surface-styles.js';
 import {layoutFlags, WindowLayoutContext} from './index.jsx';
 import styles from './layout.css';
 
-const desktopPopout = typeof EditorPreload !== 'undefined' &&
-    new URLSearchParams(location.search).get('twPlusStagePopout') === '1' ?
-    createBrowserHost(window, (_url, ticket) => window.open(
-        'about:blank', `tw-plus-stage-${ticket}`, 'popup,width=680,height=520'
-    ), 'stage-popout.html', true, true) : null;
+const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 
 function StageViewport({aspect, width, defaultWidth, floating, render, inputDocument}) {
     const viewport = React.useRef(null);
     const [floatingWidth, setFloatingWidth] = React.useState(null);
+    const [externalBounds, setExternalBounds] = React.useState(Boolean(inputDocument));
+    React.useLayoutEffect(() => {
+        if (inputDocument) {
+            setExternalBounds(true);
+            return;
+        }
+        if (!externalBounds) return;
+        // Recalculate Stage bounds after the docking portal has moved back into the editor.
+        const frame = requestAnimationFrame(() => setExternalBounds(false));
+        return () => cancelAnimationFrame(frame);
+    }, [inputDocument, externalBounds]);
     React.useLayoutEffect(() => {
         if (!floating) return;
         const node = viewport.current;
@@ -29,7 +36,8 @@ function StageViewport({aspect, width, defaultWidth, floating, render, inputDocu
     }, [aspect, floating, inputDocument]);
 
     return <div className={styles.stageViewport} data-floating={floating} ref={viewport}>
-        {render(floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width, floating, inputDocument)}
+        {render(floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width,
+            floating || externalBounds, inputDocument)}
     </div>;
 }
 

@@ -78,7 +78,8 @@ def prepare(source, output, build, test_control):
         write("src-main/plus-desktop-test-control.cjs",
               (root / "test/stage3/desktop-control.cjs").read_bytes())
 
-    for page in ("gui.html", "backpack-popout.html", "stage-popout.html"):
+    for page in ("gui.html", "backpack-popout.html", "stage-popout.html",
+                 "sprite-properties-popout.html", "sprite-list-popout.html"):
         if not (build / page).is_file():
             raise ValueError(f"Missing Desktop build asset: {page}")
     for asset in sorted(build.rglob("*")):

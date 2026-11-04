@@ -8,6 +8,7 @@ export function decorateSurface(doc) {
         }
         doc.documentElement.dir = document.documentElement.dir;
         doc.documentElement.lang = document.documentElement.lang;
+        doc.documentElement.style.cssText = document.documentElement.style.cssText;
         doc.body.className = document.body.className;
         doc.body.style.cssText = document.body.style.cssText;
     };

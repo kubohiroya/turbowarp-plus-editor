@@ -123,3 +123,13 @@
 .target-list-content {
     position: relative;
 }
+
+.external-panel {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    min-block-size: 0;
+    overflow: auto;
+    background: var(--ui-primary);
+    color: var(--text-primary);
+}
