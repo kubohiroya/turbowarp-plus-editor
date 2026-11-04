@@ -1,4 +1,4 @@
-const {test, expect} = require('./fixtures.cts');
+const {test, expect, showProjectDiagnostics} = require('./fixtures.cts');
 const Zip = require('@turbowarp/jszip');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -283,7 +283,9 @@ test('HTTPS redirects and CORS refusal never execute JavaScript, even once the r
             expect((await loading).code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
-            await expect(page.getByTestId('tw-plus-extension-status').locator('[data-event="review"]')).toHaveCount(0);
+            const diagnostics = await showProjectDiagnostics(page);
+            await expect(diagnostics.locator('li').filter({hasText: '"type": "review"'})).toHaveCount(0);
+            await page.keyboard.press('Escape');
         }
         return;
     }
@@ -296,7 +298,9 @@ test('HTTPS redirects and CORS refusal never execute JavaScript, even once the r
             expect(result.code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
-            await expect(page.getByTestId('tw-plus-extension-status').locator('[data-event="review"]')).toHaveCount(0);
+            const diagnostics = await showProjectDiagnostics(page);
+            await expect(diagnostics.locator('li').filter({hasText: '"type": "review"'})).toHaveCount(0);
+            await page.keyboard.press('Escape');
         }
         // Chromium rejects a redirect and a CORS refusal with the same TypeError it raises when
         // it could not connect, so the port cannot tell them apart and asks the full count.
@@ -307,14 +311,13 @@ test('HTTPS redirects and CORS refusal never execute JavaScript, even once the r
     } finally { await fixture.close(); }
 });
 
-test('a transient failure names its attempt centrally and retains it in Project Diagnostics', async ({page}) => {
+test('a transient failure shows the current attempt and remains in Project Diagnostics', async ({page}) => {
     await open(page);
     // One failure shows the behaviour whatever the Loader's retry count is: any policy that
     // retries at all recovers from a single transient one. The sentence around it belongs to the
     // GUI, so assert only what the person needs — which fetch is being repeated, and that the
     // attempt it leads to is named — and let the wording change upstream without failing here.
     const expectRetryShown = async url => {
-        await expect(page.getByTestId('tw-plus-extension-status')).toHaveCount(0);
         const waiting = page.getByTestId('twextsec-wait');
         await expect(waiting).toBeVisible();
         await expect(waiting).toContainText(url);
@@ -339,14 +342,14 @@ test('a transient failure names its attempt centrally and retains it in Project 
         expect(centred.styles).toBe(1);
     };
     const expectRetryRecorded = async url => {
-        await expect(page.getByTestId('twextsec-wait')).toBeHidden();
-        await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
-        await page.getByRole('button', {name: '作品の診断…', exact: true}).click();
-        const retry = page.getByTestId('project-diagnostics').locator('li details')
-            .filter({hasText: '接続を再試行中'});
-        await expect(retry).toHaveCount(1);
-        await expect(retry).toContainText(url);
-        await expect(retry).toContainText(/"attempt":\s*"2"/);
+        await expect(page.getByTestId('twextsec-wait')).toHaveCount(0);
+        const diagnostics = await showProjectDiagnostics(page);
+        const retries = diagnostics.locator('li').filter({hasText: '"type": "retry"'});
+        await expect(retries).toHaveCount(1);
+        await expect(retries).toContainText(url);
+        await expect(retries).toContainText(/"attempt":\s*"2"/u);
+        await expect(retries).toContainText(/"attempts":\s*"\d+"/u);
+        await page.keyboard.press('Escape');
     };
     if (process.env.E2E_BASE_URL) {
         // A published run has no GUI checkout and would reject the fixture's own certificate.

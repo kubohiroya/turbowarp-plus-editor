@@ -38,10 +38,15 @@ const fixture = (isNew = false) => {
         setTime: value => { time = value; }, failSave: () => { failSave = true; }, project: () => project};
 };
 
-test('project tools is off by default and cannot be enabled by arbitrary values', () => {
-    assert.equal(readStartupFeatureFlags('').projectTools, false);
-    assert.equal(readStartupFeatureFlags('?twPlusProjectTools=true').projectTools, false);
+test('project tools defaults on, supports explicit off and rejects arbitrary values independently of the loader', () => {
+    assert.equal(readStartupFeatureFlags('').projectTools, true);
+    assert.equal(readStartupFeatureFlags('?lang=ja').projectTools, true);
     assert.equal(readStartupFeatureFlags('?twPlusProjectTools=1').projectTools, true);
+    for (const value of ['0', '', 'true', 'false', 'invalid']) {
+        assert.equal(readStartupFeatureFlags(`?twPlusProjectTools=${value}`).projectTools, false);
+    }
+    assert.deepEqual(readStartupFeatureFlags('?twPlusExtensionLoader=0'), {extensionLoader: false, projectTools: true});
+    assert.deepEqual(readStartupFeatureFlags('?twPlusProjectTools=0'), {extensionLoader: true, projectTools: false});
 });
 test('properties round trip through an SB3 and preserve the title across a renamed file', async () => {
     const f = fixture();

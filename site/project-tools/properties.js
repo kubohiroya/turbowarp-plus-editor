@@ -103,6 +103,12 @@ export function installProjectProperties(vm, {
             if (disposed) return Promise.reject(new Error('Project properties were disposed'));
             loading++;
             const isNew = projectState.isNew?.() === true;
+            // The authoring controller identifies its own load in the synchronous start callback.
+            // Metadata reading must not defer that callback beyond the caller's ownership scope.
+            let nativeLoad;
+            try { nativeLoad = originals.loadProject.call(vm, input, ...args); }
+            catch (error) { nativeLoad = Promise.reject(error); }
+            const settled = Promise.resolve(nativeLoad).then(value => ({value}), error => ({error, failed: true}));
             const run = async () => {
                 if (disposed) throw new Error('Project properties were disposed');
                 const sequence = ++generation;
@@ -111,7 +117,9 @@ export function installProjectProperties(vm, {
                 const loaded = metadataEnabled ? await readInfo(input) : null;
                 try {
                     if (disposed) throw new Error('Project properties were disposed');
-                    const result = await originals.loadProject.call(vm, input, ...args);
+                    const outcome = await settled;
+                    if (outcome.failed) throw outcome.error;
+                    const result = outcome.value;
                     if (disposed) return result;
                     if (metadataEnabled) {
                         info = loaded || (isNew ? {...empty(), createdAt: now()} : null);
