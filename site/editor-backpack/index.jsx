@@ -4,6 +4,7 @@ import {createBackpackIntegration} from '@kubohiroya/turbowarp-editor-backpack';
 import {useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {layoutFlags, WindowLayoutContext} from '../editor-layout/index.jsx';
 import {createBrowserHost} from './browser-host.ts';
+import {detachBackpackOpener, getBackpackOpenLabel, openBackpackWindow} from '@tw-plus/backpack-window-host';
 
 function decorateSurface(doc) {
     const mirror = () => {
@@ -27,15 +28,16 @@ function decorateSurface(doc) {
 }
 
 const feature = (layoutFlags.backpackPopout || layoutFlags.internalWindows) ? createBackpackIntegration({
-    host: layoutFlags.backpackPopout ? createBrowserHost(window, (url, ticket) =>
-        window.open(url, `tw-plus-backpack-${ticket}`, 'popup,width=560,height=320'), 'backpack-popout.html') : null,
+    host: layoutFlags.backpackPopout ?
+        createBrowserHost(window, openBackpackWindow, 'backpack-popout.html', detachBackpackOpener) : null,
     importScript, decorateSurface
 }) : null;
 
 function WebBackpackSurface(props) {
     const {enabled, locale} = React.useContext(WindowLayoutContext);
     const internalHost = useWindowHost();
-    return <feature.BackpackSurface {...props} enabled={enabled} locale={locale} internalHost={internalHost} />;
+    return <feature.BackpackSurface {...props} enabled={enabled} locale={locale} internalHost={internalHost}
+        openLabel={getBackpackOpenLabel(locale)} />;
 }
 
 export const BackpackSurface = feature ? WebBackpackSurface : undefined;

@@ -34,7 +34,7 @@ const messages = {
 export function createBackpackIntegration({host, importScript, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
-    function BackpackSurface({vm, children, enabled, locale, internalHost}) {
+    function BackpackSurface({vm, children, enabled, locale, internalHost, openLabel}) {
         const labels = /^ja(?:-|$)/i.test(locale) ? messages.ja : messages.en;
         const copyFailed = React.useRef(labels.copyFailed);
         copyFailed.current = labels.copyFailed;
@@ -146,7 +146,7 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
                     <div>
                         <button type="button" disabled={state.kind === 'opening'} ref={launchButton}
                             onClick={() => surface.undock(internalHost ? internalRequest() : undefined)}>
-                            {internalHost ? labels.detach : labels.undock}
+                            {internalHost ? labels.detach : (openLabel ?? labels.undock)}
                         </button>
                         {(state.reason === 'blocked' || state.reason === 'failed') &&
                             <span role="status">{labels.blocked}</span>}

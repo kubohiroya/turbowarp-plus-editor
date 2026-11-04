@@ -12,7 +12,8 @@ export interface OpenRequest {
 export function createBrowserHost(
     parent: Window,
     show: (url: URL, ticket: string) => Window | null,
-    page = 'code-popout.html'
+    page = 'code-popout.html',
+    detachOpener = false
 ): SurfaceHost<OpenRequest, MountedSurface> {
     return {
         open({timeoutMs = 5000, skipHandshake = false} = {}): SurfaceConnection<MountedSurface> | null {
@@ -75,6 +76,15 @@ export function createBrowserHost(
                 if (!mount) {
                     reject(new Error('Surface mount missing'));
                     return;
+                }
+                if (detachOpener && child) {
+                    try {
+                        child.opener = null;
+                        if (child.opener !== null) throw new Error('Opener still accessible');
+                    } catch {
+                        reject(new Error('Surface opener could not be detached'));
+                        return;
+                    }
                 }
                 mounted = true;
                 parent.clearTimeout(deadline);

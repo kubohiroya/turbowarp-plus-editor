@@ -30,6 +30,14 @@ def mouse(kind, point):
 
 if not cg.CGPreflightPostEventAccess():
     raise SystemExit("macOS cannot post mouse events")
+if sys.argv[1] == '--click':
+    point = tuple(map(float, sys.argv[2:]))
+    mouse(5, point)
+    time.sleep(0.12)
+    mouse(1, point)
+    time.sleep(0.06)
+    mouse(2, point)
+    raise SystemExit(0)
 x, y, end_x, end_y = map(float, sys.argv[1:])
 mouse(5, (x, y))
 time.sleep(0.12)

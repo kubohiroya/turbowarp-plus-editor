@@ -74,6 +74,7 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
 }));
 const siteSource = path.join(__dirname, '..', '..', 'site');
 const backpackSurface = path.join(siteSource, 'editor-backpack');
+config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.js');
 const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
 config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
 config.module.rules.find(rule => rule.test?.test('styles.css')).exclude = windowStyles;
