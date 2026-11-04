@@ -199,3 +199,10 @@ test('the web editor defaults to Plus layout and supports startup rollback', () 
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=1').standardLayout, true);
 });
+
+test('the horizontal block palette is opt-in at startup', () => {
+    for (const search of ['', '?twPlusHorizontalBlockPalette=0', '?twPlusHorizontalBlockPalette=true']) {
+        assert.equal(readWebStartupFeatureFlags(search).horizontalBlockPalette, false);
+    }
+    assert.equal(readWebStartupFeatureFlags('?twPlusHorizontalBlockPalette=1').horizontalBlockPalette, true);
+});
