@@ -30,6 +30,11 @@ export const createPlusLibraryTab = ({view = PlusLibrary, enabled = PLUS_LIBRARY
     // The class name is this stylesheet's, hashed when this bundle is built, so the GUI cannot
     // name it: it styles the tag through whatever string arrives here.
     className: styles.plusTag,
+    classes: {
+        library: styles.customLibrary,
+        content: styles.customContent,
+        tags: styles.extendedTags
+    },
     /**
      * Render the tab's contents.
      * @param {object} props What the GUI passes: the filter, the locale, the VM, its review

@@ -47,3 +47,27 @@
 .plus-tag[aria-pressed="true"] {
     background: #a5e3ff;
 }
+.custom-library .custom-content {
+    display: block;
+    padding: 1rem;
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+.custom-library > div {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* The supplied classes win over the native tag layout regardless of stylesheet injection order. */
+.custom-library .extended-tags {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+}
+
+.custom-library .extended-tags > * {
+    flex-shrink: 0;
+}
