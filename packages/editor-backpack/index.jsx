@@ -87,11 +87,15 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
             }
         }, [enabled, surface, vm]);
         React.useLayoutEffect(() => {
-            if (internalHost && enabled && state.kind === 'docked' && state.reason) launchButton.current?.focus();
+            if (!internalHost || !enabled || state.kind !== 'docked' || !state.reason) return;
+            const frame = requestAnimationFrame(() => launchButton.current?.focus({preventScroll: true}));
+            return () => cancelAnimationFrame(frame);
         }, [internalHost, enabled, state]);
 
         function internalRequest() {
-            const request = {presentation: 'internal', id: 'backpack', title: labels.title};
+            const request = {
+                presentation: 'internal', id: 'backpack', title: labels.title, rememberPlacement: true
+            };
             if (host) request.openExternal = () => {
                 surface.dock();
                 fallback.current = request;

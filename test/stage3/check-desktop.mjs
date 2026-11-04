@@ -179,6 +179,8 @@ async function checkInternal ({editor, control}) {
     const launch = editor.getByRole('button', {name: /^(Undock Backpack|バックパックを別画面で開く)$/});
     const backpack = editor.getByRole('region', {name: labels.backpack});
     const open = editor.getByRole('button', {name: labels.action});
+    const fullScreen = editor.getByRole('button', {name: /^(Full-screen editor|エディター全体を全画面表示)$/});
+    await fullScreen.waitFor();
     const search = editor.getByRole('searchbox');
     const tabs = editor.getByRole('tablist');
     assert.equal(await launch.count(), 0);
@@ -198,10 +200,43 @@ async function checkInternal ({editor, control}) {
     assert.equal(await editor.getByText(itemName, {exact: true}).count(), 1);
     assert.equal((await control('windows')).length, 1);
     assert.equal(await backpack.getByRole('button', {name: 'Move to browser window'}).count(), 0);
+    const workArea = editor.locator('.tw-window-desktop');
+    const normal = await workArea.boundingBox();
+    await fullScreen.click();
+    await editor.waitForFunction(() => document.fullscreenElement === document.documentElement);
+    await until(async () => (await control('windows')).some(window => window.id === parent.id && window.fullScreen),
+        'native BrowserWindow fullscreen');
+    await fullScreen.and(editor.locator('[aria-pressed="true"]')).waitFor();
+    await until(async () => (await workArea.boundingBox()).width > normal.width, 'fullscreen work area grows');
+    await editor.locator('[class*="menu-bar_menu-bar_"]').first().waitFor();
+    await backpack.getByText(itemName, {exact: true}).waitFor();
+    const start = await backpack.boundingBox();
+    const handle = await backpack.locator('.tw-desktop-window__handle').boundingBox();
+    const pointer = {x: handle.x + 40, y: handle.y + 12};
+    const distance = normal.x + normal.width - (start.x + start.width) + 100;
+    await editor.mouse.move(pointer.x, pointer.y);
+    await editor.mouse.down();
+    await editor.mouse.move(pointer.x + distance, pointer.y, {steps: 8});
+    await editor.mouse.up();
+    await until(async () => {
+        const box = await backpack.boundingBox();
+        return box.x + box.width > normal.x + normal.width;
+    }, 'Backpack is placed outside the future normal-size bounds');
+    await fullScreen.click();
+    await editor.waitForFunction(() => !document.fullscreenElement);
+    await until(async () => (await control('windows')).some(window => window.id === parent.id && !window.fullScreen),
+        'native BrowserWindow exits fullscreen');
+    await fullScreen.and(editor.locator('[aria-pressed="false"]')).waitFor();
+    await until(async () => {
+        const [area, box] = await Promise.all([workArea.boundingBox(), backpack.boundingBox()]);
+        return area.width <= normal.width && box.x + box.width <= area.x + area.width + 0.5;
+    }, 'Backpack fits the normal-size work area after resize');
+    await until(() => editor.evaluate(() => document.hasFocus()), 'native editor focus after fullscreen');
     await click(control, 'editor', backpack.getByRole('button', {name: labels.dock}));
+    report.checks.push('Full-screen editor includes the menu and live Backpack and returns from native BrowserWindow fullscreen');
     await editor.getByText(itemName, {exact: true}).waitFor();
     assert.equal(await backpack.count(), 0);
-    assert.ok(await launch.evaluate(button => button === document.activeElement));
+    await until(() => launch.evaluate(button => button === document.activeElement), 'Backpack launch focus after dock');
     report.checks.push('Native clicks undock the actual Backpack in the Editor and restore it, with no child BrowserWindow');
 
     for (const [label, content] of [

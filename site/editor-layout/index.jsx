@@ -1,7 +1,7 @@
 import React from 'react';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {createLayout} from '@kubohiroya/turbowarp-editor-layout';
-import {WindowDesktop, WindowList} from '@kubohiroya/turbowarp-editor-windows';
+import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-editor-windows';
 import '@kubohiroya/turbowarp-editor-windows/styles.css';
 import styles from './layout.css';
 import {EditorTabLayout} from './editor-tabs.jsx';
@@ -35,7 +35,11 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
             <span aria-hidden="true">⚓</span>
         </button>
     );
-    const stageTools = layoutFlags.internalWindows && enabled ? <>{toggle}<WindowList /></> : toggle;
+    const stageTools = layoutFlags.internalWindows ? <>
+        {toggle}
+        <EditorFullscreenButton className={styles.toggle} locale={props.locale} />
+        {enabled && <WindowList />}
+    </> : toggle;
     const layout = (
         <SplitLayout
             {...props}

@@ -82,7 +82,7 @@
     "@kubohiroya/turbowarp-editor-layout": "file:packages/editor-layout",
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
     "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",
-    "@kubohiroya/turbowarp-editor-windows": "file:vendor/turbowarp-editor-windows-0.3.0.tgz",
+    "@kubohiroya/turbowarp-editor-windows": "file:vendor/turbowarp-editor-windows-0.4.0.tgz",
     "@kubohiroya/turbowarp-extension-data-editor": "0.8.0",
     "@kubohiroya/turbowarp-extension-loader": "0.8.0",
     "@kubohiroya/turbowarp-extension-security-dialog": "0.8.5",

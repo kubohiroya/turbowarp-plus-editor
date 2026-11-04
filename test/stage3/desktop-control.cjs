@@ -11,7 +11,7 @@ const kind = window => {
 function observe (window) {
     const preferences = window.webContents.getLastWebPreferences();
     return {
-        kind: kind(window), id: window.id, focused: window.isFocused(),
+        kind: kind(window), id: window.id, focused: window.isFocused(), fullScreen: window.isFullScreen(),
         bounds: window.getBounds(), content: window.getContentBounds(), zoom: window.webContents.getZoomFactor(),
         url: window.webContents.getURL(), preferences: {
             sandbox: preferences.sandbox, contextIsolation: preferences.contextIsolation,

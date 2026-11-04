@@ -45,7 +45,7 @@ export function EditorTabLayout({activeEditorTab, editorTargetIsStage, enabled, 
     const getMount = index => enabled && states[index]?.kind === 'external' ? states[index].target.mount : undefined;
 
     function open() {
-        surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title});
+        surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title, rememberPlacement: true});
     }
 
     return render({...layout,

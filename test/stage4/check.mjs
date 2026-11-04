@@ -59,6 +59,8 @@ try {
     const inAppOnly = '&twPlusInternalWindows=1';
     await start('');
     assert.equal(await launch.count(), 0);
+    const fullScreen = page.getByRole('button', {name: 'Full-screen editor', exact: true});
+    assert.equal(await fullScreen.count(), 0);
     await start(inAppOnly + '&twPlusBackpackPopout=1');
     await seed();
     await page.locator('[class*="backpack_backpack-header"]').click();
@@ -127,15 +129,21 @@ try {
     await openExternal.click();
     await frame.getByText(itemName, {exact: true}).waitFor();
     assert.equal(context.pages().length, 1);
-    const [popup] = await Promise.all([page.waitForEvent('popup'), openExternal.click()]);
-    await popup.getByText(itemName, {exact: true}).waitFor();
-    assert.equal(await frame.count(), 0);
-    await Promise.all([popup.waitForEvent('close'), popup.getByRole('button', {name: 'Move into the editor'}).click()]);
-    await frame.getByText(itemName, {exact: true}).waitFor();
+    assert.deepEqual(await frame.boundingBox(), beforeMax);
+    for (let cycle = 0; cycle < 2; cycle++) {
+        const [popup] = await Promise.all([page.waitForEvent('popup'), openExternal.click()]);
+        await popup.getByText(itemName, {exact: true}).waitFor();
+        assert.equal(await frame.count(), 0);
+        await Promise.all([popup.waitForEvent('close'), popup.getByRole('button', {name: 'Move into the editor'}).click()]);
+        await frame.getByText(itemName, {exact: true}).waitFor();
+        assert.equal(await page.getByText(itemName, {exact: true}).count(), 1);
+        assert.equal(context.pages().length, 1);
+        assert.deepEqual(await frame.boundingBox(), beforeMax);
+    }
     await frame.getByRole('button', {name: 'Close and dock'}).click();
     await page.getByText(itemName, {exact: true}).waitFor();
     assert.equal(await frame.count(), 0);
-    assert.ok(await launch.evaluate(button => button === document.activeElement));
+    await page.waitForFunction(() => document.activeElement?.textContent.trim() === 'Undock Backpack');
     await launch.click();
     await frame.getByText(itemName, {exact: true}).waitFor();
     await page.getByRole('button', {name: 'Flexible layout mode'}).click();
@@ -149,11 +157,73 @@ try {
     await frame.getByText(itemName, {exact: true}).waitFor();
     assert.equal(await frame.getByRole('button', {name: 'Move to browser window'}).count(), 0);
     assert.equal(context.pages().length, 1);
+
+    const menu = page.locator('[class*="menu-bar_menu-bar_"]').first();
+    const openCode = page.getByRole('button', {name: 'Open in another window', exact: true});
+    const code = page.getByRole('region', {name: 'Code', exact: true});
+    const windowsList = page.getByRole('button', {name: 'Windows', exact: true});
+    await openCode.click();
+    await code.locator('.blocklySvg').first().waitFor();
+    const getOrder = window => window.evaluate(node => Number(node.style.zIndex));
+    assert.ok(await getOrder(code) > await getOrder(frame));
+    await windowsList.click();
+    await page.getByRole('button', {name: 'Backpack', exact: true}).focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Backpack');
+    assert.ok(await getOrder(frame) > await getOrder(code));
+
+    const placement = await frame.boundingBox();
+    await fullScreen.click();
+    await page.waitForFunction(() => document.fullscreenElement === document.documentElement);
+    await fullScreen.and(page.locator('[aria-pressed="true"]')).waitFor();
+    await menu.waitFor();
+    await frame.getByText(itemName, {exact: true}).waitFor();
+    await code.locator('.blocklySvg').first().waitFor();
+    await fullScreen.click();
+    await page.waitForFunction(() => !document.fullscreenElement);
+    assert.deepEqual(await frame.boundingBox(), placement);
+    await page.evaluate(() => {
+        const request = document.documentElement.requestFullscreen;
+        document.documentElement.requestFullscreen = function () {
+            this.requestFullscreen = request;
+            return Promise.reject(new DOMException('Denied', 'NotAllowedError'));
+        };
+    });
+    await fullScreen.click();
+    await page.getByText('Could not change full-screen mode', {exact: true}).waitFor();
+    assert.equal(await fullScreen.getAttribute('aria-pressed'), 'false');
+    assert.deepEqual(await frame.boundingBox(), placement);
+    await windowsList.click();
+    await page.getByRole('button', {name: 'Code', exact: true}).click();
+    await code.getByRole('button', {name: 'Minimize', exact: true}).click();
+    await code.waitFor({state: 'hidden'});
+
+    await frame.locator('[aria-label="Move window"]').focus();
+    for (let step = 0; step < 18; step++) await page.keyboard.press('Shift+ArrowRight');
+    const far = await frame.boundingBox();
+    await page.setViewportSize({width: 1080, height: 710});
+    await page.waitForFunction(() => {
+        const rect = document.querySelector('.tw-desktop-window').getBoundingClientRect();
+        return rect.right <= innerWidth;
+    });
+    const clamped = await frame.boundingBox();
+    assert.ok(clamped.x < far.x);
+    await windowsList.focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', {name: 'Bring windows into view'}).click();
+    await page.setViewportSize({width: 1400, height: 900});
+    assert.equal((await frame.boundingBox()).x, clamped.x);
+    assert.equal(await code.isVisible(), false);
+    await frame.getByText(itemName, {exact: true}).waitFor();
+    await windowsList.click();
+    await page.getByRole('button', {name: 'Code', exact: true}).click();
+    await code.getByRole('button', {name: 'Close and dock'}).click();
+
     await page.getByRole('button', {name: 'Return here'}).click();
     await page.getByText(itemName, {exact: true}).waitFor();
     assert.equal(await frame.count(), 0);
     assert.deepEqual(errors, []);
-    console.log('Popup refusal, round trip, docking, mode exit and in-app-only operation preserve the item.');
+    console.log('Round trips, stacking, fullscreen, denial and window recovery preserve the open editors.');
 } finally {
     await browser.close();
 }
