@@ -2,8 +2,8 @@ const AbstractWindow = require('./abstract');
 
 const editorURL = 'tw-editor://./gui/gui.html';
 const childBase = 'tw-editor://./gui/';
-const framePattern = /^tw-plus-(backpack|stage|sprite-properties|sprite-list)-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/;
-const reservedFrame = /^tw-plus-(backpack|stage|sprite-properties|sprite-list)-/;
+const framePattern = /^tw-plus-(backpack|stage|sprite-properties|sprite-list|code)-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/;
+const reservedFrame = /^tw-plus-(backpack|stage|sprite-properties|sprite-list|code)-/;
 const splitterDisabled = process.env.TW_PLUS_DESKTOP_SPLITTER === '0';
 const layoutEnabled = process.env.TW_PLUS_DESKTOP_WINDOW_LAYOUT === '1';
 const spritePropertiesEnabled = process.env.TW_PLUS_DESKTOP_SPRITE_PROPERTIES === '1';
@@ -13,11 +13,13 @@ const targetListEnabled = internalEnabled && process.env.TW_PLUS_DESKTOP_TARGET_
 const enabled = layoutEnabled && process.env.TW_PLUS_DESKTOP_BACKPACK_POPOUT === '1';
 const stagePopout = stagePanelEnabled && process.env.TW_PLUS_DESKTOP_STAGE_POPOUT === '1';
 const targetPopout = internalEnabled && process.env.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT === '1';
+const codePopout = internalEnabled && process.env.TW_PLUS_DESKTOP_CODE_POPOUT === '1';
 const allowed = new Set(Object.entries({
     backpack: enabled,
     stage: stagePopout,
     'sprite-properties': targetPopout && spritePropertiesEnabled,
-    'sprite-list': targetPopout && targetListEnabled
+    'sprite-list': targetPopout && targetListEnabled,
+    code: codePopout
 }).filter(([, available]) => available).map(([kind]) => kind));
 
 class BackpackWindow extends AbstractWindow {
@@ -57,16 +59,18 @@ function createBackpackWindowHost (editor) {
     if (enabled) url.searchParams.set('twPlusBackpackPopout', '1');
     if (stagePopout) url.searchParams.set('twPlusStagePopout', '1');
     if (targetPopout) url.searchParams.set('twPlusTargetPanelsPopout', '1');
+    if (codePopout) url.searchParams.set('twPlusCodePopout', '1');
     const children = new Map();
     const pending = new Map();
+    const count = kind => [...children.values(), ...pending.values()].filter(entry => entry.kind === kind).length;
 
     if (allowed.size) {
         editor.webContents.on('did-create-window', (window, details) => {
             const reservation = getReservation(details);
-            if (!reservation || pending.get(reservation.kind) !== reservation.ticket) return;
+            if (!reservation || pending.get(reservation.ticket)?.kind !== reservation.kind) return;
             const {kind, ticket} = reservation;
-            pending.delete(kind);
-            children.set(kind, window);
+            pending.delete(ticket);
+            children.set(ticket, {kind, window});
             const popup = new BackpackWindow({existingWindow: window, parentWindow: editor});
             popup.initialURL = 'about:blank';
             const fail = error => {
@@ -90,13 +94,13 @@ function createBackpackWindowHost (editor) {
             window.webContents.on('did-finish-load', loadChild);
             window.once('closed', () => {
                 clearTimeout(fallback);
-                children.delete(kind);
+                children.delete(ticket);
             });
         });
         editor.once('closed', () => {
             pending.clear();
-            for (const child of children.values()) {
-                if (!child.isDestroyed()) child.destroy();
+            for (const {window} of children.values()) {
+                if (!window.isDestroyed()) window.destroy();
             }
         });
     }
@@ -107,16 +111,16 @@ function createBackpackWindowHost (editor) {
             // Requests outside the reserved namespace keep the original Desktop policy.
             if (!reservedFrame.test(details.frameName || '')) return null;
             const reservation = getReservation(details);
-            if (!reservation || !allowed.has(reservation.kind) ||
-                children.has(reservation.kind) || pending.has(reservation.kind)) {
+            if (!reservation || !allowed.has(reservation.kind)) return {action: 'deny'};
+            const {kind, ticket} = reservation;
+            if (children.has(ticket) || pending.has(ticket) || count(kind) >= (kind === 'code' ? 2 : 1)) {
                 return {action: 'deny'};
             }
-            const {kind, ticket} = reservation;
-            pending.set(kind, ticket);
+            pending.set(ticket, reservation);
             // did-create-window arrives before the opener can issue another request.
             // Release the reservation if Electron rejects the native window before creation.
             setTimeout(() => {
-                if (pending.get(kind) === ticket) pending.delete(kind);
+                if (pending.get(ticket) === reservation) pending.delete(ticket);
             }, 5000).unref();
             return {
                 action: 'allow',

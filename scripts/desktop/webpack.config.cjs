@@ -16,7 +16,8 @@ const oldEntry = '<script src="index.js" onerror="webpackScriptError(event)"></s
 if (!template.includes(oldEntry)) throw new Error('Desktop editor template has changed');
 
 config.entry = {editor: path.join(editor, 'index.jsx'), 'backpack-popout': config.entry['backpack-popout'],
-    'stage-popout': config.entry['stage-popout']};
+    'stage-popout': config.entry['stage-popout'],
+    'code-popout': path.join(__dirname, '../../site/editor-views/code-popout.js')};
 config.resolve.modules = [path.join(E2E_GUI_ROOT, 'node_modules'), 'node_modules'];
 config.resolve.alias['scratch-gui$'] = path.join(E2E_GUI_ROOT, 'src/index.js');
 config.resolve.alias['scratch-gui'] = E2E_GUI_ROOT;
@@ -42,6 +43,11 @@ for (const [id, title] of [['sprite-properties', 'Sprite properties'], ['sprite-
         title
     }));
 }
+config.plugins.push(new HtmlWebpackPlugin({
+    chunks: ['code-popout'],
+    filename: 'code-popout.html',
+    template: path.join(__dirname, '../../site/editor-views/code-popout.html')
+}));
 config.plugins.push(new HtmlWebpackPlugin({
     chunks: ['editor'],
     filename: 'gui.html',

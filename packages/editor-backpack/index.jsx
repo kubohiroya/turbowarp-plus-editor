@@ -154,6 +154,23 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         );
     }
 
+    async function receiveBackpackDrop({vm, target, raw, position, canUse, onError,
+        commit = apply => apply(), accept = () => true}) {
+        const active = sessions.get(vm);
+        if (!active) return;
+        const result = await active.transfer.receive(raw, {session: active.id, id: target.id},
+            async (destination, script) => {
+                if (!accept(script)) throw new Error('Unsupported script for this workspace');
+                return commit(async () => {
+                    if (!canUse() || sessions.get(vm) !== active ||
+                        vm.runtime.getTargetById(destination.id) !== target) return false;
+                    await importScript(vm, target, script, {position});
+                    return true;
+                });
+            });
+        if (result === 'failed' && canUse()) onError?.(new Error(active.copyFailed.current));
+    }
+
     function attachBackpackDrop({vm, workspace, canUse, onError}) {
         const node = workspace.getParentSvg();
         let disposed = false;
@@ -167,7 +184,6 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         function drop(event) {
             if (!allowed(event)) return;
             event.preventDefault();
-            const active = sessions.get(vm);
             const target = vm.editingTarget;
             const raw = event.dataTransfer.getData(transferMime);
             const matrix = workspace.getCanvas().getScreenCTM();
@@ -176,14 +192,7 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
             point.x = event.clientX;
             point.y = event.clientY;
             const {x, y} = point.matrixTransform(matrix.inverse());
-            void active.transfer.receive(raw, {session: active.id, id: target.id}, async (destination, script) => {
-                if (disposed || sessions.get(vm) !== active ||
-                    vm.runtime.getTargetById(destination.id) !== target) return false;
-                await importScript(vm, target, script, {position: {x, y}});
-                return true;
-            }).then(result => {
-                if (result === 'failed' && !disposed) onError(new Error(active.copyFailed.current));
-            });
+            void receiveBackpackDrop({vm, target, raw, position: {x, y}, canUse: () => !disposed, onError});
         }
         node.addEventListener('dragover', over);
         node.addEventListener('drop', drop);
@@ -194,5 +203,5 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         }};
     }
 
-    return {BackpackSurface, attachBackpackDrop};
+    return {BackpackSurface, attachBackpackDrop, receiveBackpackDrop};
 }

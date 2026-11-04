@@ -1,0 +1,12 @@
+{
+  "name": "@kubohiroya/turbowarp-editor-views",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./index.js",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubohiroya/turbowarp-plus-editor.git",
+    "directory": "packages/editor-views"
+  }
+}
