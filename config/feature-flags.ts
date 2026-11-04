@@ -13,7 +13,8 @@ export function readStartupFeatureFlags({
     twPlusStandardLayout: standardLayout = null,
     twPlusPaletteDeletePreview: paletteDeletePreview = null,
     twPlusHorizontalBlockPalette: horizontalBlockPalette = null,
-    twPlusContextMenuIcons: contextMenuIcons = null
+    twPlusContextMenuIcons: contextMenuIcons = null,
+    twPlusWorkspaceMinimap: workspaceMinimap = null
 } = {}) {
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
@@ -29,6 +30,7 @@ export function readStartupFeatureFlags({
         standardLayout: standardLayout === '1',
         paletteDeletePreview: paletteDeletePreview === '1',
         horizontalBlockPalette: horizontalBlockPalette === '1',
-        contextMenuIcons: contextMenuIcons === '1'
+        contextMenuIcons: contextMenuIcons === '1',
+        workspaceMinimap: workspaceMinimap === '1'
     });
 }
