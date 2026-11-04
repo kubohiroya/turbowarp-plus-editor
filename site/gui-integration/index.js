@@ -29,3 +29,4 @@ export const SpritePropertiesPanel = readWebStartupFeatureFlags(startupSearch).s
 
 export {BackpackSurface} from '../editor-backpack/index.jsx';
 export {StagePanel} from '../editor-layout/stage-panel.jsx';
+export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropListActions} from '../editor-layout/target-list.jsx';

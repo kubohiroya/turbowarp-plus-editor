@@ -4,7 +4,7 @@ import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbow
 import {WindowLayoutContext} from './index.jsx';
 import styles from './layout.css';
 
-function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight}) {
+function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight, className}) {
     const {enabled, locale} = React.useContext(WindowLayoutContext);
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
@@ -23,7 +23,7 @@ function DockableBasicPanel({host, id, title, children, render, overlayAction, d
     const mount = enabled && state.kind === 'external' ? state.target.mount : undefined;
 
     const headingClass = overlayAction ? styles.basicPanelOverlayAction : styles.basicPanelHeading;
-    return <div className={styles.basicPanel} style={mount ? {minBlockSize: dockHeight} : undefined}>
+    return <div className={className ? `${styles.basicPanel} ${className}` : styles.basicPanel} style={mount ? {minBlockSize: dockHeight} : undefined}>
         {enabled && <div className={headingClass} ref={action}>
             {!overlayAction && <h2>{title}</h2>}
             {!mount && <OpenWindowButton

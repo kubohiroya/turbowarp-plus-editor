@@ -165,3 +165,5 @@ export function createLayout (React) {
         });
     };
 }
+
+export {createTargetList} from './targets.js';

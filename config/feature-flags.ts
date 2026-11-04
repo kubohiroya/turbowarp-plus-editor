@@ -6,7 +6,8 @@ export function readStartupFeatureFlags({
     twPlusWindowLayout: layout = null,
     twPlusBackpackPopout: backpack = null,
     twPlusInternalWindows: internal = null,
-    twPlusStagePanel: stagePanel = null
+    twPlusStagePanel: stagePanel = null,
+    twPlusTargetList: targetList = null
 } = {}) {
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
@@ -15,6 +16,7 @@ export function readStartupFeatureFlags({
         windowLayout: layout === '1',
         backpackPopout: layout === '1' && backpack === '1',
         internalWindows: layout === '1' && internal === '1',
-        stagePanel: layout === '1' && internal === '1' && stagePanel === '1'
+        stagePanel: layout === '1' && internal === '1' && stagePanel === '1',
+        targetList: layout === '1' && internal === '1' && targetList === '1'
     });
 }

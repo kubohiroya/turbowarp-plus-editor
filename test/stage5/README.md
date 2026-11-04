@@ -25,3 +25,23 @@ node test/stage3/check-desktop.mjs /private/tmp/tw151-stage5-stage-desktop.app -
 ⚓ を解除してステージをドックへ戻す。ステージの切り離し機能を止める場合は Web の `twPlusStagePanel` または Desktop の `TW_PLUS_DESKTOP_STAGE_PANEL` を外して再起動する。
 
 外部ウィンドウのステージは #155 の B-ST の結果を前提とする。
+
+# #176 領域 (3) スプライト一覧と背景タイル
+
+Web は `?twPlusWindowLayout=1&twPlusInternalWindows=1&twPlusTargetList=1` で起動する。⚓ を有効にすると、スプライト一覧の右上から一覧をアプリ内ウィンドウへ移せる。タイトルバーの「閉じる」かドックの「ここに戻す」で元の場所に戻る。
+
+背景タイルは一覧の実寸で位置を決める。横長で2列以上なら右上、縦長で2行以上なら左下に1マスを使い、スクロール中もその端に残る。どちらも収まらないときは一覧の末尾に置く。タイルを選ぶとステージが選択され、背景タブの一覧下部にライブラリ・描画・おまかせ・アップロードの4操作が並ぶ。
+
+## 実エディターで確認する
+
+```sh
+TW151_STAGE5_PREFIX=/turbowarp-plus-editor/ \
+  TW151_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+  node test/stage5/targets.mjs "$E2E_GUI_ROOT/build"
+```
+
+試験では Scratch の画像配信をローカルのテスト画像で代替し、ライブラリ選択、おまかせ、描画、ファイルアップロードには実エディターの操作と VM を使用する。
+
+## 切り戻し
+
+⚓ を解除して一覧をドックへ戻す。従来の一覧と背景操作に戻す場合は `twPlusTargetList` を外して再起動する。

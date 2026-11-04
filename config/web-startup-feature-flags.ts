@@ -9,6 +9,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusWindowLayout: params.get('twPlusWindowLayout'),
         twPlusBackpackPopout: params.get('twPlusBackpackPopout'),
         twPlusInternalWindows: params.get('twPlusInternalWindows'),
-        twPlusStagePanel: params.get('twPlusStagePanel')
+        twPlusStagePanel: params.get('twPlusStagePanel'),
+        twPlusTargetList: params.get('twPlusTargetList')
     });
 }

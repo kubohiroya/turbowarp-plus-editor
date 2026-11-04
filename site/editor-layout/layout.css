@@ -92,3 +92,20 @@
     min-inline-size: 0;
     min-block-size: 0;
 }
+
+.target-list-panel,
+.target-list-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
+    min-inline-size: 0;
+}
+
+.target-list-content {
+    position: relative;
+}
+
+.inactive-target-list {
+    display: contents;
+}
