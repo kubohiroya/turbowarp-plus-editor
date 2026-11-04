@@ -1,6 +1,6 @@
 {
   "guiRepository": "kubohiroya/scratch-gui",
-  "guiRevision": "4205f1e5caa784eae42b40e24d0372514174dd1f",
+  "guiRevision": "481c17b45a66f3a10e62364160a519fd8579bb0c",
   "spritePropertiesPackage": "@kubohiroya/turbowarp-editor-sprite-properties",
   "spritePropertiesVersion": "0.1.1",
   "spritePropertiesRevision": "80825f7275f6f87d47053870d31cba69fc189f30",
@@ -18,7 +18,7 @@
   "loaderSource": "npm",
   "loaderIntegrity": "sha512-DMeJoSErRDUUfK/JPIOVEV3W82BKHHtVXjNUd0lTMg7TsYI91/hmakuOZUDKBqv/y+T9dmaZRWlf4ab/3JP9sg==",
   "vmRepository": "kubohiroya/scratch-vm",
-  "vmRevision": "1c1139a07890e0262630c5c1782799c351cbf4a5",
+  "vmRevision": "78e5f032c2a44a6e636f0e72fd290c6584506c82",
   "vmBaseRevision": "0cb82afe62506f3d9f2ff849c95593f0473b5d2c",
   "packagerRepository": "TurboWarp/packager",
   "packagerRevision": "c115bdf525c5f49f0fb689a21b335ccb70fc22d2",
@@ -29,7 +29,7 @@
   "documentEditorSource": "npm",
   "documentEditorIntegrity": "sha512-gJShwkQggnWHMm5mm102YxODJyf0HLka73TnGsiNvyhzkFEM3ZWr1ppVgwP8fQabp3fOMjRmF2DegVjCKSJl5g==",
   "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
-  "scriptTransferRevision": "65c025b9ee26e78c9e9bdd7658c6757eadab93bc",
+  "scriptTransferRevision": "b8192730b1d9bc93d3067153b6c41df4f6ad4e0c",
   "scriptTransferVersion": "0.1.1",
   "scriptTransferSource": "git"
 }
