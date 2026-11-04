@@ -13,6 +13,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusStagePanel: params.get('twPlusStagePanel'),
         twPlusTargetList: params.get('twPlusTargetList'),
         twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview'),
-        twPlusContextMenuIcons: params.get('twPlusContextMenuIcons')
+        twPlusContextMenuIcons: params.get('twPlusContextMenuIcons'),
+        twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette')
     });
 }
