@@ -1,17 +1,18 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readStartupFeatureFlags} from '../config/feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 import {bootstrapExtensionLoader} from '../src/extension-loader.ts';
 
 test('startup defaults on, supports explicit opt-in/out, rejects invalid values and is immutable', () => {
     for (const search of ['', '?lang=ja', '?twPlusExtensions=1', '?twPlusExtensionLoader=1']) {
-        const flags = readStartupFeatureFlags(search);
+        const flags = readWebStartupFeatureFlags(search);
         assert.equal(flags.extensionLoader, true);
         assert.equal(Object.isFrozen(flags), true);
     }
     for (const search of ['?twPlusExtensionLoader=true', '?twPlusExtensionLoader=false',
         '?twPlusExtensionLoader=0', '?twPlusExtensionLoader=']) {
-        assert.equal(readStartupFeatureFlags(search).extensionLoader, false);
+        assert.equal(readWebStartupFeatureFlags(search).extensionLoader, false);
     }
 });
 
@@ -118,7 +119,16 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readStartupFeatureFlags(query)), ['extensionLoader', 'projectTools']);
-        assert.equal(readStartupFeatureFlags(query).projectTools, true);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'windowLayout']);
+        assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
+});
+
+test('splitter opt-in does not change other startup flag defaults', () => {
+    for (const search of ['', '?twPlusWindowLayout=0', '?twPlusWindowLayout=', '?twPlusWindowLayout=true']) {
+        assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
+    }
+    assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
+        {extensionLoader: false, projectTools: true, windowLayout: true});
+    assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });

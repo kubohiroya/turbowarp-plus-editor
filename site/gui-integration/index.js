@@ -18,3 +18,5 @@ export const renderStageControls = ({vm, isSmall}) => {
     const service = hostStageControls(vm, hostIntegration());
     return service ? React.createElement(StageControlsView, {service, isSmall}) : null;
 };
+
+export {EditorLayout} from '../editor-layout/index.jsx';

@@ -4,7 +4,7 @@ import JSZip from '@turbowarp/jszip';
 import {installProjectProperties, PROJECT_INFO_KEY as key} from '../../site/project-tools/properties.js';
 import {createAuthorHistory} from '../../site/project-tools/history.js';
 import {contactLink, descriptionParts} from '../../site/project-tools/links.js';
-import {readStartupFeatureFlags} from '../../config/feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {EventEmitter} from 'node:events';
 
 const data = () => ({schemaVersion: 1, title: 'Saved title', description: 'Example', author: 'Author',
@@ -39,14 +39,14 @@ const fixture = (isNew = false) => {
 };
 
 test('project tools defaults on, supports explicit off and rejects arbitrary values independently of the loader', () => {
-    assert.equal(readStartupFeatureFlags('').projectTools, true);
-    assert.equal(readStartupFeatureFlags('?lang=ja').projectTools, true);
-    assert.equal(readStartupFeatureFlags('?twPlusProjectTools=1').projectTools, true);
+    assert.equal(readWebStartupFeatureFlags('').projectTools, true);
+    assert.equal(readWebStartupFeatureFlags('?lang=ja').projectTools, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusProjectTools=1').projectTools, true);
     for (const value of ['0', '', 'true', 'false', 'invalid']) {
-        assert.equal(readStartupFeatureFlags(`?twPlusProjectTools=${value}`).projectTools, false);
+        assert.equal(readWebStartupFeatureFlags(`?twPlusProjectTools=${value}`).projectTools, false);
     }
-    assert.deepEqual(readStartupFeatureFlags('?twPlusExtensionLoader=0'), {extensionLoader: false, projectTools: true});
-    assert.deepEqual(readStartupFeatureFlags('?twPlusProjectTools=0'), {extensionLoader: true, projectTools: false});
+    assert.deepEqual(readWebStartupFeatureFlags('?twPlusExtensionLoader=0'), {extensionLoader: false, projectTools: true, windowLayout: false});
+    assert.deepEqual(readWebStartupFeatureFlags('?twPlusProjectTools=0'), {extensionLoader: true, projectTools: false, windowLayout: false});
 });
 test('properties round trip through an SB3 and preserve the title across a renamed file', async () => {
     const f = fixture();

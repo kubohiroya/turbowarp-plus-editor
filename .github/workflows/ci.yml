@@ -36,6 +36,7 @@ jobs:
       - run: npm run test:package
       - run: npm test
       - run: npm run test:e2e:infrastructure
+      - run: npm --prefix packages/editor-layout test
       # A squash merge onto an unchanged base is the tree its pull request's CI already put through
       # every browser check below. main still builds, because the deployed site must carry main's
       # own revision, but it does not run those same checks a second time. Anything that cannot be
@@ -119,6 +120,12 @@ jobs:
         run: node test/e2e/extension-loader/prepare-packaged.ts
       - run: npx playwright install --with-deps chromium
         if: steps.reuse.outputs.verified != 'true'
+      - name: Verify Editor layout splitters
+        if: steps.reuse.outputs.verified != 'true'
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+          E2E_PATH_PREFIX: /turbowarp-plus-editor/
+        run: node --test packages/editor-layout/test/layout.browser.mjs test/editor-layout.browser.mjs
       # These two run the built Editor's real GUI, VM and SB3 against the test-only owner
       # `twpeyamlsettings`; only the native VSCode launcher is replaced. The base SB3 is generated
       # here so no binary fixture is checked in or borrowed from the pinned GUI.
