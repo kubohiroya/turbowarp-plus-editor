@@ -6,7 +6,7 @@ import os from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {readPins, validatePins, root} from '../scripts/site/source.ts';
 import {contentHash} from '../scripts/site/extension-assets.ts';
-import {requiredFamilyPackages} from '../scripts/site/family-notices.ts';
+import {buildFamilyNotices, requiredFamilyPackages} from '../scripts/site/family-notices.ts';
 
 test('production pins reject incomplete or unpinned extension dependency graphs', async () => {
     const pins = await readPins();
@@ -35,24 +35,32 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
             await fs.writeFile(path.join(directory, name), 'checked asset');
         }
         for (const name of ['plus-packager.html', 'plus-packager.js']) integration.assets[name] = contentHash('checked asset');
+        const familyNotices = await buildFamilyNotices(directory,
+            [{origin: 'turbowarp-plus-editor', directory: root, includeDev: true}], {
+                required: requiredFamilyPackages.filter(name => name !== 'scratch-vm'),
+                warn: () => {}
+            });
         const info = {siteRepository: 'https://github.com/kubohiroya/turbowarp-plus-editor', siteRevision: revision,
             repository: `https://github.com/${pins.guiRepository}`, revision: pins.guiRevision,
             coreRepository: `https://github.com/${pins.coreRepository}`, coreRevision: pins.coreRevision, coreVersion: pins.coreVersion,
             securityPackage: pins.securityPackage, securityVersion: pins.securityVersion, securityRevision: pins.securityRevision,
-            extensionIntegration: integration, familyNotices: {index: 'notices/family.json'}};
+            extensionIntegration: integration, familyNotices};
         const writeInfo = () => fs.writeFile(path.join(directory, 'build-info.json'), JSON.stringify(info));
-        const family = {packages: requiredFamilyPackages.map(name => ({package: name, version: '1.0.0',
-            files: [`notices/${name.split('/').at(-1)}/LICENSE`], source: {repository: 'https://github.com/kubohiroya/example'}}))};
-        for (const entry of family.packages) {
-            await fs.mkdir(path.join(directory, path.dirname(entry.files[0])), {recursive: true});
-            await fs.writeFile(path.join(directory, entry.files[0]), 'license text');
-        }
-        const writeFamily = () => fs.writeFile(path.join(directory, 'notices/family.json'), JSON.stringify(family));
+        const familyPath = path.join(directory, familyNotices.index);
+        const family = JSON.parse(await fs.readFile(familyPath, 'utf8'));
+        const vmNotice = {package: 'scratch-vm', version: '1.0.0',
+            files: ['notices/scratch-vm/LICENSE'], source: {repository: 'https://github.com/kubohiroya/scratch-vm'}};
+        const vmLicense = path.join(directory, vmNotice.files[0]);
+        await fs.mkdir(path.dirname(vmLicense), {recursive: true});
+        await fs.writeFile(vmLicense, 'license text');
+        family.packages.push(vmNotice);
+        const writeFamily = () => fs.writeFile(familyPath, JSON.stringify(family));
         await writeFamily();
         const check = () => spawnSync(process.execPath, [path.join(root, 'scripts/site/check-artifact.ts'), directory], {
             env: {...process.env, EXPECTED_REVISION: revision}, encoding: 'utf8'});
         await writeInfo();
-        assert.equal(check().status, 0);
+        const clean = check();
+        assert.equal(clean.status, 0, clean.stderr);
         info.securityRevision = 'f'.repeat(40);
         await writeInfo();
         assert.notEqual(check().status, 0);
@@ -87,12 +95,18 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         await writeInfo();
         assert.equal(check().status, 0);
         // Every bundled family package keeps its license text and source in the published notices.
-        const removed = family.packages.shift();
+        family.packages.pop();
         await writeFamily();
         assert.match(check().stderr, /Bundled family package without notices/);
-        family.packages.unshift(removed);
-        await fs.rm(path.join(directory, removed.files[0]));
+        family.packages.push(vmNotice);
         await writeFamily();
+        const properties = family.packages.find(entry => entry.package === pins.spritePropertiesPackage);
+        const sourceArchive = path.join(directory, properties.source.tarball);
+        const originalArchive = await fs.readFile(sourceArchive);
+        await fs.appendFile(sourceArchive, 'unreviewed replacement');
+        assert.match(check().stderr, /Source archive differs from the pin/);
+        await fs.writeFile(sourceArchive, originalArchive);
+        await fs.rm(vmLicense);
         assert.match(check().stderr, /Missing notice|ENOENT/);
     } finally { await fs.rm(directory, {recursive: true, force: true}); }
 });
