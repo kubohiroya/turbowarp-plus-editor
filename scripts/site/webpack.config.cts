@@ -94,6 +94,11 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
 config.resolve.alias['@kubohiroya/turbowarp-editor-layout/targets.css$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-editor-layout/targets.css');
 const siteSource = path.join(__dirname, '..', '..', 'site');
+// Override the addon default in Plus without changing the pinned GUI sources.
+const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';
+config.resolve.alias[`${hideDeleteButtonManifest}$`] = path.join(siteSource, 'hide-delete-button-manifest.js');
+config.resolve.alias['@tw-plus/upstream-hide-delete-button-manifest$'] =
+    path.join(gui, 'src', 'addons', 'generated', hideDeleteButtonManifest);
 const backpackSurface = path.join(siteSource, 'editor-backpack');
 config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.js');
 const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
