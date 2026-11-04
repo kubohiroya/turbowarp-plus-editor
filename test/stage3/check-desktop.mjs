@@ -35,9 +35,11 @@ async function run (enabled, test) {
     const processEnv = {...process.env, TW_PLUS_DESKTOP_TEST_CONTROL: '1'};
     delete processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT;
     delete processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT;
+    delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
+        if (enabled === 'internal') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
     }
     const application = spawn(join(app, 'Contents/MacOS/TurboWarp'), processArgs, {env: processEnv});
     const stopped = once(application, 'close');
@@ -160,6 +162,93 @@ async function seedBackpack (page) {
     }, itemName);
 }
 
+async function checkInternal ({editor, control}) {
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    await control('layout', parent.id);
+    await control('focus', parent.id);
+    await until(() => editor.evaluate(() => document.hasFocus()), 'native editor focus');
+    const mode = editor.getByRole('button', {name: modeLabel});
+    const labels = {
+        backpack: /^(Backpack|バックパック)$/,
+        code: /^(Code|コード)$/,
+        costumes: /^(Costumes|コスチューム)$/,
+        sounds: /^(Sounds|音)$/,
+        action: /^(Open in another window|別画面で開く)$/,
+        dock: /^(Close and dock|閉じる（ドックに戻す）)$/
+    };
+    const launch = editor.getByRole('button', {name: /^(Undock Backpack|バックパックを別画面で開く)$/});
+    const backpack = editor.getByRole('region', {name: labels.backpack});
+    const open = editor.getByRole('button', {name: labels.action});
+    const search = editor.getByRole('searchbox');
+    const tabs = editor.getByRole('tablist');
+    assert.equal(await launch.count(), 0);
+    assert.equal(await open.count(), 0);
+    await seedBackpack(editor);
+    await observeNative(editor);
+    await click(control, 'editor', mode);
+    if (await mode.getAttribute('aria-pressed') !== 'true') {
+        await control('focus', parent.id);
+        await click(control, 'editor', mode);
+    }
+    await launch.waitFor();
+    await click(control, 'editor', editor.locator('[class*="backpack_backpack-header"]'));
+    await editor.getByText(itemName, {exact: true}).waitFor();
+    await click(control, 'editor', launch);
+    await backpack.getByText(itemName, {exact: true}).waitFor();
+    assert.equal(await editor.getByText(itemName, {exact: true}).count(), 1);
+    assert.equal((await control('windows')).length, 1);
+    assert.equal(await backpack.getByRole('button', {name: 'Move to browser window'}).count(), 0);
+    await click(control, 'editor', backpack.getByRole('button', {name: labels.dock}));
+    await editor.getByText(itemName, {exact: true}).waitFor();
+    assert.equal(await backpack.count(), 0);
+    assert.ok(await launch.evaluate(button => button === document.activeElement));
+    report.checks.push('Native clicks undock the actual Backpack in the Editor and restore it, with no child BrowserWindow');
+
+    for (const [label, content] of [
+        [labels.code, '.blocklySvg'],
+        [labels.costumes, '[class*="asset-panel_wrapper"]'],
+        [labels.sounds, '[class*="asset-panel_wrapper"]']
+    ]) {
+        const tab = editor.getByRole('tab', {name: label});
+        await tab.click();
+        assert.equal(await tab.getAttribute('aria-selected'), 'true');
+        assert.equal(await open.count(), 1);
+        await search.waitFor();
+        const [buttonBox, searchBox, tabsBox] = await Promise.all([open.boundingBox(), search.boundingBox(),
+            tabs.boundingBox()]);
+        assert.ok(buttonBox.x >= searchBox.x + searchBox.width);
+        assert.ok(buttonBox.y < tabsBox.y + tabsBox.height && searchBox.y < buttonBox.y + buttonBox.height);
+        await editor.getByRole('tabpanel').locator(content).first().evaluate(node => {window.savedPanelNode = node;});
+        await open.click();
+        const frame = editor.getByRole('region', {name: label});
+        const moved = frame.locator(content).first();
+        await moved.waitFor();
+        assert.ok(await moved.evaluate(node => node === window.savedPanelNode));
+        assert.equal(await open.isDisabled(), true);
+        await frame.getByRole('button', {name: labels.dock}).click();
+        await frame.waitFor({state: 'hidden'});
+        assert.ok(await open.evaluate(button => button === document.activeElement));
+        assert.ok(await editor.getByRole('tabpanel').locator(content).first().evaluate(node =>
+            node === window.savedPanelNode));
+    }
+
+    const costumeTab = editor.getByRole('tab', {name: labels.costumes});
+    await costumeTab.click();
+    await open.click();
+    await editor.getByRole('region', {name: labels.costumes}).waitFor();
+    await editor.getByRole('tab', {name: labels.sounds}).click();
+    await editor.getByRole('region', {name: labels.costumes}).waitFor();
+    await open.click();
+    await editor.getByRole('region', {name: labels.sounds}).waitFor();
+    await mode.click();
+    assert.equal(await editor.getByRole('region', {name: labels.sounds}).count(), 0);
+    assert.equal(await editor.getByRole('region', {name: labels.costumes}).count(), 0);
+    assert.equal(await open.count(), 0);
+    assert.ok(await editor.evaluate(pattern => window.nativeEvidence.filter(event =>
+        event.type === 'click' && event.trusted && pattern.test(event.label)).length === 5, labels.action));
+    report.checks.push('The shared action is to the right of the find bar and moves each active live panel, keeps it open across tab changes, and docks on close or mode exit');
+}
+
 try {
     await run(false, async ({editor, control}) => {
         assert.equal(await editor.getByRole('button', {name: modeLabel}).count(), 0);
@@ -170,7 +259,8 @@ try {
         report.checks.push('Desktop startup defaults OFF and denies the reserved native window');
     });
 
-    await run(true, async ({editor, context, control}) => {
+    if (process.argv.includes('--internal')) await run('internal', checkInternal);
+    else await run(true, async ({editor, context, control}) => {
         const parent = (await control('windows')).find(window => window.kind === 'editor');
         await control('layout', parent.id);
         await control('focus', parent.id);

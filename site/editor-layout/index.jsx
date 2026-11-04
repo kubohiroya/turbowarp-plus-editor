@@ -4,6 +4,7 @@ import {createLayout} from '@kubohiroya/turbowarp-editor-layout';
 import {WindowDesktop, WindowList} from '@kubohiroya/turbowarp-editor-windows';
 import '@kubohiroya/turbowarp-editor-windows/styles.css';
 import styles from './layout.css';
+import {EditorTabLayout} from './editor-tabs.jsx';
 
 export const layoutFlags = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 export const WindowLayoutContext = React.createContext({enabled: false, locale: 'en'});
@@ -18,7 +19,7 @@ const getStorage = () => {
     }
 };
 
-const WebLayout = props => {
+const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
     const [enabled, setEnabled] = React.useState(false);
     const japanese = props.locale === 'ja' || props.locale?.startsWith('ja-');
     const toggleLabel = japanese ? '自由配置モード' : 'Flexible layout mode';
@@ -51,6 +52,14 @@ const WebLayout = props => {
             stageTools={stageTools}
             storage={getStorage()}
             storageKey={storageKey}
+            render={layoutFlags.internalWindows ? layout => <EditorTabLayout
+                activeEditorTab={activeEditorTab}
+                editorTargetIsStage={editorTargetIsStage}
+                enabled={enabled}
+                layout={layout}
+                locale={props.locale}
+                render={props.render}
+            /> : props.render}
         />
     );
     return (

@@ -27,3 +27,20 @@
     outline: 2px solid #6954ca;
     outline-offset: -2px;
 }
+
+.tab-row {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.tab-row > ul {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.tab-action {
+    flex: none;
+    margin-inline-start: auto;
+    padding-inline-end: 0.25rem;
+}
