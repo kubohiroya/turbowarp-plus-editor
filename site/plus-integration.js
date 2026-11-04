@@ -24,6 +24,10 @@ import {plusProjectPackager} from './packager/handoff.js';
 import {installControlsDock} from './controls-dock.js';
 import getStageControls from './stage-controls.js';
 import {plusTrustedExtensions} from './trusted-extensions.js';
+import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
+import {installPaletteDeletePreview} from './palette-delete-preview/index.js';
+
+const {paletteDeletePreview} = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
 
@@ -164,7 +168,13 @@ export const createPlusIntegration = ({
     }
 });
 
-const integration = createPlusIntegration({mountEditor: mountDocumentEditor});
+const integration = createPlusIntegration({
+    mountEditor: mountDocumentEditor,
+    registerBlockShapes (ScratchBlocks) {
+        registerDocumentSourceRootHatShape(ScratchBlocks);
+        if (paletteDeletePreview) installPaletteDeletePreview(ScratchBlocks);
+    }
+});
 
 /**
  * This distribution's integration, read by the fork through the module it replaced.

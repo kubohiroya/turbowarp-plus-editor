@@ -1,0 +1,20 @@
+.preview {
+    position: absolute;
+    /* Above the toolbox (40) and below the dragged block (50). */
+    z-index: 45;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.preview::before {
+    content: "";
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 2px solid white;
+    border-radius: 50%;
+    background: #a52834 url("./trash.svg") center / 1.75rem no-repeat;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 25%);
+}
