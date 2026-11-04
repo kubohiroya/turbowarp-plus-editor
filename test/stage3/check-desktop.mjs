@@ -40,13 +40,19 @@ async function run (enabled, test) {
     delete processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES;
     delete processEnv.TW_PLUS_DESKTOP_STAGE_PANEL;
     delete processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT;
+    delete processEnv.TW_PLUS_DESKTOP_TARGET_LIST;
+    delete processEnv.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        if (enabled === 'internal' || enabled === 'sprite' || enabled === 'stage' || enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        if (['internal', 'sprite', 'stage', 'stage-popout', 'target-panels'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
         else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
-        if (enabled === 'sprite') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
+        if (enabled === 'sprite' || enabled === 'target-panels') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
         if (enabled === 'stage' || enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
         if (enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT = '1';
+        if (enabled === 'target-panels') {
+            processEnv.TW_PLUS_DESKTOP_TARGET_LIST = '1';
+            processEnv.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT = '1';
+        }
     }
     const application = spawn(join(app, 'Contents/MacOS/TurboWarp'), processArgs, {env: processEnv});
     const stopped = once(application, 'close');
@@ -341,6 +347,127 @@ async function checkStagePanel ({editor, control}) {
     report.checks.push('Desktop retains the live stage canvas when moving between the dock and the in-app window');
 }
 
+async function checkExternalTargetPanels ({editor, context, control}) {
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    await control('layout', parent.id);
+    const select = {
+        'sprite-properties': /^(Sprite|スプライト)$/,
+        'sprite-list': /^(Sprite list|スプライト一覧)$/
+    };
+    const heading = kind => editor.getByRole('heading', {name: select[kind]});
+    const dock = kind => heading(kind).locator('../..').getByRole('button', {name: /^(Return here|ここに戻す)$/});
+    const settings = page => page.getByRole('region', {name: spritePropertiesLabel});
+    const grid = page => page.locator('[data-backdrop-placement]');
+    const readTarget = () => editor.evaluate(() => {
+        const {id, x, y, visible, direction, size, rotationStyle} = vm.editingTarget;
+        return {id, x, y, visible, direction, size, rotationStyle, name: vm.editingTarget.getName()};
+    });
+    const [first, second] = await editor.evaluate(async () => {
+        const original = vm.editingTarget.id;
+        await vm.duplicateSprite(original);
+        const other = vm.runtime.targets.find(target => !target.isStage && target.isOriginal && target.id !== original);
+        vm.renameSprite(other.id, 'Native target two');
+        vm.renameSprite(original, 'Native target one');
+        vm.setEditingTarget(original);
+        return [original, other.id];
+    });
+    const initial = await readTarget();
+    assert.equal(initial.id, first);
+    const anchor = editor.getByRole('button', {name: modeLabel});
+    await anchor.click();
+
+    const focus = async id => {
+        await until(async () => {
+            const state = await control('focus', id);
+            return state.focused && state.contentFocused;
+        }, 'native window focus');
+    };
+    async function open(kind) {
+        await focus(parent.id);
+        const action = heading(kind).locator('..').getByRole('button', {name: /^(Open in another window|別画面で開く)$/});
+        await click(control, 'editor', action);
+        const child = await until(() => context.pages().find(page =>
+            page.url().startsWith(`tw-editor://./gui/${kind}-popout.html#`)), kind);
+        child.on('pageerror', error => report.errors.push(error.message));
+        const native = (await control('windows')).find(window => window.kind === kind);
+        assert.deepEqual(native.preferences, {sandbox: true, contextIsolation: true, nodeIntegration: false, preload: false});
+        await control('layout', native.id);
+        const panel = kind === 'sprite-properties' ? settings(child) : grid(child);
+        await panel.waitFor();
+        assert.equal(await child.evaluate(() => !window.opener && !window.vm && typeof EditorPreload === 'undefined'), true);
+        return {child, id: native.id};
+    }
+
+    const props = await open('sprite-properties');
+    const list = await open('sprite-list');
+    assert.equal((await control('windows')).length, 3);
+    assert.equal(await editor.evaluate(() =>
+        window.open('about:blank', `tw-plus-sprite-list-${crypto.randomUUID()}`) === null), true);
+    assert.equal(await settings(editor).count(), 0);
+    assert.equal(await grid(editor).count(), 0);
+
+    const secondTile = grid(list.child).getByText('Native target two', {exact: true});
+    await focus(list.id);
+    await click(control, 'sprite-list', secondTile);
+    await until(async () => (await readTarget()).id === second, 'list selects the second sprite in the parent VM');
+    const form = settings(props.child);
+    const name = form.locator('input[type="text"]');
+    await until(async () => await name.inputValue() === 'Native target two', 'properties follow the shared selection');
+    await focus(props.id);
+    for (const [label, value] of [
+        [/^x$/i, '52'], [/^y$/i, '-32'], [/^(Size|大きさ)$/i, '75'], [/^(Direction|向き)$/i, '45']
+    ]) {
+        const input = form.getByRole('spinbutton', {name: label});
+        await input.fill(value);
+        await input.press('Enter');
+    }
+    await name.fill('Renamed in its own window');
+    await name.press('Enter');
+    const selects = form.getByRole('combobox');
+    await selects.nth(0).selectOption('false');
+    await selects.nth(1).selectOption('left-right');
+    await until(async () => {
+        const selected = await readTarget();
+        return selected.name === 'Renamed in its own window' && selected.x === 52 && selected.y === -32 &&
+            selected.size === 75 && selected.direction === 45 && !selected.visible && selected.rotationStyle === 'left-right';
+    }, 'edits from the child reach the shared VM');
+    await grid(list.child).getByText('Renamed in its own window', {exact: true}).waitFor();
+
+    const backdrop = grid(list.child).getByRole('button', {name: /^(Backdrops|背景)$/});
+    await backdrop.locator('img').waitFor();
+    await list.child.locator('[data-backdrop-placement="top-right"]').waitFor();
+    await focus(list.id);
+    await backdrop.focus();
+    await control('layout-tall', list.id);
+    await list.child.locator('[data-backdrop-placement="bottom-left"]').waitFor();
+    assert.ok(await backdrop.evaluate(node => node.ownerDocument.activeElement === node));
+    await click(control, 'sprite-list', backdrop);
+    await until(() => editor.evaluate(() => vm.editingTarget.isStage), 'backdrop tile selects the stage');
+    assert.ok(await name.isDisabled());
+    const firstTile = grid(list.child).getByText('Native target one', {exact: true});
+    await click(control, 'sprite-list', firstTile);
+    await until(async () => (await readTarget()).id === first, 'first sprite is selected again');
+    assert.deepEqual(await readTarget(), initial);
+
+    await focus(parent.id);
+    await Promise.all([list.child.waitForEvent('close'), click(control, 'editor', dock('sprite-list'))]);
+    await grid(editor).getByText('Renamed in its own window', {exact: true}).waitFor();
+    await Promise.all([props.child.waitForEvent('close'), control('close', props.id)]);
+    await settings(editor).waitFor();
+    assert.deepEqual(await readTarget(), initial);
+    report.checks.push('Separate native sprite properties and sprite list share one VM and selection; edited values stay on their sprite');
+
+    const reopenedProps = await open('sprite-properties');
+    const reopenedList = await open('sprite-list');
+    await focus(parent.id);
+    await Promise.all([reopenedProps.child.waitForEvent('close'), click(control, 'editor', dock('sprite-properties'))]);
+    await Promise.all([reopenedList.child.waitForEvent('close'), control('close', reopenedList.id)]);
+    await settings(editor).waitFor();
+    await grid(editor).waitFor();
+    assert.equal((await control('windows')).length, 1);
+    report.checks.push('Both panels dock through the parent button and native close; the backdrop tile reflows and preserves focus');
+}
+
 async function checkStagePopout ({editor, context, control}) {
     const parent = (await control('windows')).find(window => window.kind === 'editor');
     await control('layout', parent.id);
@@ -426,15 +553,16 @@ async function checkStagePopout ({editor, context, control}) {
 
     const [width, height] = await editor.evaluate(() => vm.renderer.getNativeSize());
     async function mouseAt(relativeX, relativeY) {
+        await focus(child, native.id);
         const bounds = (await control('windows')).find(window => window.kind === 'stage');
         const box = await screenCanvas.boundingBox();
         await launcher('python3', [mousePath, '--click', String(bounds.content.x + (box.x + box.width * relativeX) * bounds.zoom),
             String(bounds.content.y + (box.y + box.height * relativeY) * bounds.zoom)]);
         const expected = {x: (relativeX - 0.5) * width, y: (0.5 - relativeY) * height};
-        await editor.waitForFunction(({x, y}) => {
+        await until(() => editor.evaluate(({x, y}) => {
             const mouse = vm.runtime.ioDevices.mouse;
             return Math.abs(mouse.getScratchX() - x) <= 3 && Math.abs(mouse.getScratchY() - y) <= 3;
-        }, expected);
+        }, expected), 'native pointer reaches the expected stage coordinate');
     }
     await mouseAt(0.75, 0.25);
     const box = await screenCanvas.boundingBox();
@@ -605,11 +733,14 @@ try {
         assert.equal(await editor.evaluate(() =>
             window.open('about:blank', `tw-plus-backpack-${crypto.randomUUID()}`) === null), true);
         assert.equal(await editor.evaluate(() => window.open('about:blank', `tw-plus-stage-${crypto.randomUUID()}`) === null), true);
+        assert.equal(await editor.evaluate(() => ['sprite-properties', 'sprite-list'].every(kind =>
+            window.open('about:blank', `tw-plus-${kind}-${crypto.randomUUID()}`) === null)), true);
         assert.equal((await control('windows')).length, 1);
         report.checks.push('Desktop enables both splitters by default and keeps undocking off');
     });
 
     if (process.argv.includes('--sprite-properties')) await run('sprite', checkSpriteProperties);
+    else if (process.argv.includes('--target-panels-popout')) await run('target-panels', checkExternalTargetPanels);
     else if (process.argv.includes('--stage-popout')) await run('stage-popout', checkStagePopout);
     else if (process.argv.includes('--stage-panel')) await run('stage', checkStagePanel);
     else if (process.argv.includes('--internal')) await run('internal', checkInternal);

@@ -6,6 +6,8 @@ const kind = window => {
     if (url.startsWith('tw-editor://./gui/gui.html')) return 'editor';
     if (url.startsWith('tw-editor://./gui/backpack-popout.html#')) return 'backpack';
     if (url.startsWith('tw-editor://./gui/stage-popout.html#')) return 'stage';
+    if (url.startsWith('tw-editor://./gui/sprite-properties-popout.html#')) return 'sprite-properties';
+    if (url.startsWith('tw-editor://./gui/sprite-list-popout.html#')) return 'sprite-list';
     return null;
 };
 
@@ -40,7 +42,7 @@ function execute ({operation, windowId}) {
         window.close();
         return null;
     }
-    if (operation === 'layout-tall' && kind(window) === 'stage') {
+    if (operation === 'layout-tall' && ['stage', 'sprite-properties', 'sprite-list'].includes(kind(window))) {
         const area = screen.getPrimaryDisplay().workArea;
         window.setBounds({x: area.x + Math.round(area.width * 0.65), y: area.y + 100,
             width: Math.round(area.width * 0.17), height: Math.round(area.height * 0.72)});

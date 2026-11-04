@@ -4,7 +4,7 @@
 
 変数モニターを別 document に移した場合は、`editor-layout` がマウスのポインターを捕捉し、表示倍率を反映して移動量を計算する。Scratch GUI の既存コールバックで同じ VM に位置を記録し、ドック時とアプリ内では既存のドラッグ経路を使う。
 
-Desktop の main は、明示的な起動設定がある場合に限り `tw-plus-stage-<UUID>` と `about:blank` の組を受け、固定の `stage-popout.html` へ遷移させる。既存の短命チケットと MessagePort を利用する。子は sandbox と context isolation を有効にし、preload と Node の接続を持たない。接続後に opener を解除する。検証用のネイティブ表示先は1枚ずつ開く。
+Desktop の main は、明示的な起動設定がある場合に限り `tw-plus-stage-<UUID>` と `about:blank` の組を受け、固定の `stage-popout.html` へ遷移させる。既存の短命チケットと MessagePort を利用する。子は sandbox と context isolation を有効にし、preload と Node の接続を持たない。接続後に opener を解除する。同じ種類のネイティブ表示先は1枚まで開ける。
 
 ## 再現
 

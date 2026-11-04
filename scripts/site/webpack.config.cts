@@ -110,6 +110,7 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
 config.entry['stage-popout'] = config.entry['backpack-popout'];
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     chunks: ['stage-popout'], filename: 'stage-popout.html',
+    title: 'Stage',
     template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
 }));
 config.module.rules.push({test: /\.ts$/, include: [

@@ -1,11 +1,12 @@
 import React from 'react';
-import {flushSync} from 'react-dom';
+import {createPortal, flushSync} from 'react-dom';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {WindowLayoutContext} from './index.jsx';
 import styles from './layout.css';
 
-function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight, className, externalHost, decorate}) {
+function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight, className,
+    externalHost, decorate, renderInExternalDocument}) {
     const {showUndock, locale} = React.useContext(WindowLayoutContext);
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
@@ -40,6 +41,13 @@ function DockableBasicPanel({host, id, title, children, render, overlayAction, d
 
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mount = state.kind === 'external' ? state.target.mount : undefined;
+    React.useLayoutEffect(() => {
+        if (externalHost && mount) mount.ownerDocument.title = title;
+    }, [externalHost, mount, title]);
+    const content = render ? render(Boolean(mount), mount) : children;
+    // Create target controls in the child document so React delegates input there.
+    const nativeContent = mount && externalHost && renderInExternalDocument ?
+        createPortal(<div className={styles.externalPanel}>{content}</div>, mount) : null;
 
     const headingClass = overlayAction ? styles.basicPanelOverlayAction : styles.basicPanelHeading;
     return <div className={className ? `${styles.basicPanel} ${className}` : styles.basicPanel} style={mount ? {minBlockSize: dockHeight} : undefined}>
@@ -55,7 +63,8 @@ function DockableBasicPanel({host, id, title, children, render, overlayAction, d
             dockLabel={japanese ? 'ここに戻す' : 'Return here'}
             mount={mount}
             onDock={() => surface.dock()}
-        >{render ? render(Boolean(mount), mount) : children}</DockablePanel>
+        >{nativeContent ? null : content}</DockablePanel>
+        {nativeContent}
     </div>;
 }
 

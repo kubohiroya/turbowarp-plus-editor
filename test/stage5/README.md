@@ -45,3 +45,13 @@ TW151_STAGE5_PREFIX=/turbowarp-plus-editor/ \
 ## 切り戻し
 
 タイトルバーの「閉じる」またはドックの「ここに戻す」で一覧を戻す。従来の一覧と背景操作に戻す場合は `twPlusTargetList` を外して再起動する。
+
+## macOS Desktop の別ウィンドウ
+
+[別窓ステージと同じ手順](stage-popout-desktop.md)で公式 Desktop の試験用コピーを作成する。起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1`、`TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1`、`TW_PLUS_DESKTOP_SPRITE_PROPERTIES=1`、`TW_PLUS_DESKTOP_TARGET_LIST=1`、`TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT=1` を指定すると、⚓ で表示した操作からスプライト設定と一覧を各1枚のネイティブウィンドウに開ける。選択と編集は親の VM に反映する。
+
+```sh
+node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --target-panels-popout
+```
+
+試験は両方を同時に開き、一覧での対象選択と設定からの編集、背景タイルの再配置、親の「ここに戻す」と OS ウィンドウの閉鎖による復帰を確認する。別窓だけを無効にする場合は、`TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT` を外して再起動する。設定と一覧はアプリ内ウィンドウに開ける。

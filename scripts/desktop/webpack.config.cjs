@@ -34,6 +34,14 @@ config.module.rules.push({
 config.plugins = config.plugins.filter(plugin =>
     !(plugin instanceof HtmlWebpackPlugin) || ['backpack-popout.html', 'stage-popout.html'].includes(plugin.options.filename)
 );
+for (const [id, title] of [['sprite-properties', 'Sprite properties'], ['sprite-list', 'Sprite list']]) {
+    config.plugins.push(new HtmlWebpackPlugin({
+        chunks: ['stage-popout'],
+        filename: `${id}-popout.html`,
+        template: path.join(__dirname, '../../site/editor-layout/stage-popout.html'),
+        title
+    }));
+}
 config.plugins.push(new HtmlWebpackPlugin({
     chunks: ['editor'],
     filename: 'gui.html',

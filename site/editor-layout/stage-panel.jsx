@@ -1,16 +1,12 @@
 import React from 'react';
 import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-editor-layout';
 import {BasicPanel} from './basic-panel.jsx';
-import {createBrowserHost} from '../editor-backpack/browser-host.ts';
+import {createDesktopPanelHost} from './desktop-panel-host.js';
 import {decorateSurface} from '../editor-backpack/surface-styles.js';
 import {layoutFlags, WindowLayoutContext} from './index.jsx';
 import styles from './layout.css';
 
-const desktopPopout = typeof EditorPreload !== 'undefined' &&
-    new URLSearchParams(location.search).get('twPlusStagePopout') === '1' ?
-    createBrowserHost(window, (_url, ticket) => window.open(
-        'about:blank', `tw-plus-stage-${ticket}`, 'popup,width=680,height=520'
-    ), 'stage-popout.html', true, true) : null;
+const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 
 function StageViewport({aspect, width, defaultWidth, floating, render, inputDocument}) {
     const viewport = React.useRef(null);
