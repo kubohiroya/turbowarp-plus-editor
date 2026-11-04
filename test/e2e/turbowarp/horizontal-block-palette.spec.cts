@@ -6,7 +6,7 @@ const useLayout = async (page, name) => {
 };
 
 test('横パレットでカテゴリを切り替え、実ブロックを追加・削除できる', async ({page, evidence}) => {
-    await page.goto('editor.html?lang=en&twPlusHorizontalBlockPalette=1&twPlusPaletteDeletePreview=1');
+    await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1&twPlusPaletteDeletePreview=1');
     const toolbox = page.locator('.blocklyToolboxDiv');
     const flyout = page.locator('.blocklyFlyout');
     const motion = toolbox.locator('.scratchCategoryId-motion');
@@ -72,7 +72,7 @@ test('横パレットでカテゴリを切り替え、実ブロックを追加�
 });
 
 test('横パレットは拡張と動的カテゴリを表示し、フラグOFFで元に戻る', async ({page, evidence}) => {
-    await page.goto('editor.html?lang=en&twPlusHorizontalBlockPalette=1');
+    await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
     const toolbox = page.locator('.blocklyToolboxDiv');
     const flyout = page.locator('.blocklyFlyout');
     await useLayout(page, 'Use horizontal palette');
@@ -99,7 +99,7 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout).toBeHidden();
 
     evidence.stage('flag-off');
-    await page.goto('editor.html?lang=en&twPlusHorizontalBlockPalette=0');
+    await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=0');
     await toolbox.locator('.scratchCategoryId-motion').click({button: 'right'});
     await expect(page.getByRole('menuitem', {name: 'Use horizontal palette'})).toHaveCount(0);
     await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');

@@ -1,5 +1,5 @@
 .horizontal:global(.blocklyToolboxDiv)[data-horizontal-block-palette] {
-    inset: 0 0 auto;
+    inset: 0 var(--plus-stage-overlap, 0px) auto 0;
     height: auto !important;
     overflow-x: auto;
     overflow-y: hidden;

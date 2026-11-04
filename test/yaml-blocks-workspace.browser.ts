@@ -152,7 +152,7 @@ test(
             await security.getByRole('button', { name: 'サンドボックスなし', exact: true }).click();
             await security.getByRole('button', { name: 'OK', exact: true }).click();
             await security.waitFor({ state: 'hidden', timeout: 60000 });
-            await page.locator('[class*="stage-selector_stage-selector"]').click();
+            await page.getByRole('button', {name: '背景', exact: true}).click();
             await page.waitForFunction(
                 () => window.vm?.editingTarget?.isStage && window.Scratch?.gui?.getBlockly
             );

@@ -61,13 +61,14 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
         surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title, rememberPlacement: true});
     }
 
+    const tabAction = showUndock && title && <div className={styles.tabAction} ref={action}>
+        <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
+    </div>;
+    const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
+        <div className={styles.tabRow}>{tabs}{tabAction}</div>;
+
     const content = render({...layout,
-        renderEditorTabRow: tabs => <div className={styles.tabRow}>
-            {tabs}
-            {showUndock && title && <div className={styles.tabAction} ref={action}>
-                <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
-            </div>}
-        </div>,
+        renderEditorTabRow,
         isEditorPanelOpen: index => Boolean(getMount(index)),
         renderEditorPanel: (index, children) => <DockablePanel
             dockLabel={dockLabel}

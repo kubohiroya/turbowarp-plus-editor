@@ -52,7 +52,7 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
             await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
             await security.getByRole('button', {name: 'OK', exact: true}).click();
             await security.waitFor({state: 'hidden', timeout: 60000});
-            await p.locator('[class*="stage-selector_stage-selector"]').click();
+            await p.getByRole('button', {name: '背景', exact: true}).click();
             await expect(p.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2, {timeout: 60000});
             await expect(p.locator('[data-twpe-yaml-hat-icon]').first()).toHaveAttribute('aria-disabled', 'false');
             assert.equal(await p.locator('.twpe-yaml-toolbar').count(), 0, 'The standard menu must not have an added toolbar.');

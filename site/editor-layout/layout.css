@@ -134,6 +134,88 @@
     color: var(--text-primary);
 }
 
+.standard-body {
+    position: relative;
+    grid-template-areas: "targets editor";
+    grid-template-columns: clamp(174px, 18%, 216px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+}
+
+[dir="rtl"] .standard-body {
+    grid-template-areas: "editor targets";
+    grid-template-columns: minmax(0, 1fr) clamp(174px, 18%, 216px);
+}
+
+.standard-targets {
+    grid-area: targets;
+    min-width: 0;
+    padding-inline: 0.25rem;
+}
+
+.standard-body .floating-stage {
+    position: absolute;
+    top: 3rem;
+    right: 0.5rem;
+    z-index: 110;
+}
+
+.standard-body .stage-hidden,
+.stage-viewport[data-stage-hidden="true"] {
+    display: none;
+}
+
+.layout-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding-inline: 0.25rem;
+}
+
+.stage-toggle,
+.layout-menu summary,
+.layout-menu button {
+    min-height: 2rem;
+    padding-inline: 0.5rem;
+    background: var(--ui-white);
+    color: var(--text-primary);
+    border: 1px solid var(--ui-black-transparent);
+    border-radius: 0.25rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.stage-toggle[aria-pressed="true"] {
+    background: var(--looks-light-transparent);
+    border-color: var(--looks-secondary);
+}
+
+.layout-menu {
+    position: relative;
+}
+
+.layout-menu summary {
+    display: grid;
+    place-items: center;
+}
+
+.layout-menu button {
+    position: absolute;
+    inset-inline-end: 0;
+    z-index: 111;
+}
+
+.sprite-properties {
+    max-block-size: 50%;
+    overflow: auto;
+    background: var(--ui-secondary);
+    color: var(--text-primary);
+}
+
+.sprite-properties summary {
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+}
+
 .codePreview {
     position: relative;
     inline-size: 100%;

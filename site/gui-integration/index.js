@@ -41,7 +41,7 @@ const startupSearch = typeof window === 'undefined' ? '' : window.location.searc
 const startup = readWebStartupFeatureFlags(startupSearch);
 export const attachSpriteCodeWorkspace = startup.spriteCodeWindows && !desktopCodeEnabled ? attachCodeWorkspace : undefined;
 export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
-export const SpritePropertiesPanel = startup.spriteProperties &&
+export const SpritePropertiesPanel = (startup.spriteProperties || startup.standardLayout) &&
     typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
 
 export {BackpackSurface} from '../editor-backpack/index.jsx';

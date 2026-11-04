@@ -30,6 +30,14 @@ TurboWarp Plusの作品をつくる・開くためのエディターです。kub
 
 [![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
 
+## エディターの配置を切り替える
+
+Web 版は TurboWarp Plus 標準配置で開きます。左に2列のスプライト一覧、中央上部に横長のブロックパレットがあり、右上にステージが重なります。コード画面でカテゴリを選ぶと、その下からブロックをドラッグできます。
+
+エディター上部の ⚓️ で Scratch 標準配置と往復できます。Plus 配置では「ステージを表示」ボタンで表示を切り替えられ、非表示の間も作品は実行されます。左の「スプライトの設定」は必要なときに開けます。ステージの読み込みと書き出しは、一覧の「背景」タイルを右クリックして選べます。自由配置を有効にしている場合は、⚓️の隣にある配置メニューからアンドックボタンを表示できます。
+
+従来の配置で起動するには、エディター URL に `twPlusStandardLayout=0` を指定して再読み込みします。
+
 ## 配信の責務
 
 `turbowarp-extension-data-editor` と `turbowarp-extension-security-dialog` は上流のライブラリです。`scratch-gui` がこれらを利用し、さらに下流にある本パッケージが統合Editorを配信・検証します。上流のライブラリから下流GUIをビルドしません。

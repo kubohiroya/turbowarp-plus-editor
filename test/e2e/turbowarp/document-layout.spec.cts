@@ -36,7 +36,7 @@ test('hats a provider owns get icons and a dialog without changing the menu bar 
 
     evidence.stage('plain-project');
     await goto(plainURL);
-    await page.locator('[class*="stage-selector_stage-selector"]').click();
+    await page.getByRole('button', {name: '背景', exact: true}).click();
     await expect.poll(() => page.evaluate(() => window.vm?.runtime?.targets?.length || 0)).toBe(2);
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(0);
     await expect(page.getByRole('dialog', {name: 'データソース', exact: true})).toHaveCount(0);
@@ -49,7 +49,7 @@ test('hats a provider owns get icons and a dialog without changing the menu bar 
     evidence.stage('provider-project');
     await goto(projectURL);
     await approveProjectExtensions(page, [source], 'ja');
-    await page.locator('[class*="stage-selector_stage-selector"]').click();
+    await page.getByRole('button', {name: '背景', exact: true}).click();
     await expect.poll(() => page.evaluate(type => window.ScratchBlocks?.getMainWorkspace()?.getAllBlocks()
         .filter(block => block.type === type).length || 0, hat)).toBe(2);
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2);

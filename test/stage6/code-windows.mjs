@@ -29,8 +29,9 @@ await context.route('**/*', async route => {
     return route.fulfill({path: file});
 });
 
-async function start(extra = '', language = 'en') {
-    await page.goto(origin + prefix + 'editor.html?lang=' + language + flags + extra);
+async function start(extra = '', language = 'en', standardLayout = false) {
+    const layout = standardLayout ? '' : '&twPlusStandardLayout=0';
+    await page.goto(origin + prefix + 'editor.html?lang=' + language + flags + layout + extra);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
 }
 
@@ -303,8 +304,22 @@ try {
     await open(japaneseName, '開く');
     await page.getByRole('region', {name: japaneseName + 'のコード', exact: true}).locator('.blocklySvg').first().waitFor();
     assert.deepEqual(await selected(), [japaneseName]);
-    assert.deepEqual(errors, []);
     console.log('Japanese menu and code window title passed.');
+
+    await start('&twPlusSpriteCodeWindows=1', 'en', true);
+    const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout', exact: true});
+    assert.equal(await anchor.getAttribute('aria-pressed'), 'true');
+    await page.getByLabel('Layout options', {exact: true}).click();
+    await page.getByRole('button', {name: 'Show undock buttons', exact: true}).click();
+    await page.getByRole('tablist').locator('..')
+        .getByRole('button', {name: 'Open in another window', exact: true}).click();
+    const plusTarget = await page.evaluate(() => window.vm.editingTarget.getName());
+    await front(plusTarget, 1, 0);
+    await anchor.click();
+    assert.equal(await anchor.getAttribute('aria-pressed'), 'false');
+    await front(plusTarget, 1, 0);
+    assert.deepEqual(errors, []);
+    console.log('The Plus layout menu opens code windows, which stay open across the anchor toggle.');
 } finally {
     if (errors.length) console.error(errors);
     await browser.close();
