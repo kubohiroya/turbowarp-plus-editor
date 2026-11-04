@@ -7,26 +7,25 @@ import styles from './layout.css';
 
 const views = createTargetList(React, targetStyles);
 
-function useTargetList() {
-    const {enabled, locale} = React.useContext(WindowLayoutContext);
-    return {enabled, japanese: /^ja(?:-|$)/i.test(locale)};
+function useJapaneseLabels() {
+    const {locale} = React.useContext(WindowLayoutContext);
+    return /^ja(?:-|$)/i.test(locale);
 }
 
 function TargetLayout({render}) {
-    return render(useTargetList().enabled);
+    return render(true);
 }
 
 function DockableTargetList({children}) {
-    const {enabled, japanese} = useTargetList();
+    const japanese = useJapaneseLabels();
     return <BasicPanel id="sprite-list" title={japanese ? 'スプライト一覧' : 'Sprite list'}
-        className={enabled ? styles.targetListPanel : styles.inactiveTargetList}>
-        <div className={enabled ? styles.targetListContent : styles.inactiveTargetList}>{children}</div>
+        className={styles.targetListPanel}>
+        <div className={styles.targetListContent}>{children}</div>
     </BasicPanel>;
 }
 
-function BackdropActions({buttons, children}) {
-    const {enabled, japanese} = useTargetList();
-    if (!enabled) return children;
+function BackdropActions({buttons}) {
+    const japanese = useJapaneseLabels();
     const unique = buttons.filter(({title}, index) => buttons.findIndex(button => button.title === title) === index);
     return <views.BackdropFooter buttons={unique} label={japanese ? '背景を追加' : 'Add a backdrop'} />;
 }

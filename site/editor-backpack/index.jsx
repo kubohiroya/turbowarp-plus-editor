@@ -34,9 +34,9 @@ const feature = (layoutFlags.backpackPopout || layoutFlags.internalWindows) ? cr
 }) : null;
 
 function WebBackpackSurface(props) {
-    const {enabled, locale} = React.useContext(WindowLayoutContext);
+    const {showUndock, locale} = React.useContext(WindowLayoutContext);
     const internalHost = useWindowHost();
-    return <feature.BackpackSurface {...props} enabled={enabled} locale={locale} internalHost={internalHost}
+    return <feature.BackpackSurface {...props} showUndock={showUndock} locale={locale} internalHost={internalHost}
         openLabel={getBackpackOpenLabel(locale)} />;
 }
 

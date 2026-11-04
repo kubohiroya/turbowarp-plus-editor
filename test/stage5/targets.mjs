@@ -48,7 +48,7 @@ try {
         return route.fulfill({path: file});
     });
 
-    const mode = page.getByRole('button', {name: 'Flexible layout mode', exact: true});
+    const mode = page.getByRole('button', {name: 'Show undock buttons', exact: true});
     const grid = page.locator('[data-backdrop-placement]');
     const tile = grid.getByRole('button', {name: 'Backdrops', exact: true});
     const frame = page.getByRole('region', {name: 'Sprite list', exact: true});
@@ -64,8 +64,8 @@ try {
     assert.equal(await open.count(), 0);
 
     await start('&twPlusTargetList=1');
-    await legacyStage.waitFor();
-    assert.equal(await tile.count(), 0);
+    await tile.waitFor();
+    assert.equal(await open.count(), 0);
     await mode.click();
     await tile.waitFor();
     assert.equal(await legacyStage.count(), 0);
@@ -143,6 +143,9 @@ try {
             window.originalBackdropTile.querySelector('img').src === stage.sprite.costumes[stage.currentCostume].asset.encodeDataURI();
     });
 
+    await mode.click();
+    await frame.waitFor();
+    assert.ok(await tile.evaluate(node => node === window.originalBackdropTile));
     await frame.getByRole('button', {name: 'Close and dock', exact: true}).click();
     await frame.waitFor({state: 'hidden'});
     assert.ok(await tile.evaluate(node => node === window.originalBackdropTile));
@@ -151,12 +154,12 @@ try {
     await spriteCells.first().click();
     await page.waitForFunction(() => !window.vm.editingTarget.isStage);
     assert.equal(await tile.getAttribute('aria-pressed'), 'false');
-    await mode.click();
-    await legacyStage.waitFor();
-    assert.equal(await tile.count(), 0);
+    assert.equal(await legacyStage.count(), 0);
+    assert.equal(await open.count(), 0);
+    assert.ok(await tile.evaluate(node => node === window.originalBackdropTile));
 
     await start('&twPlusTargetList=1', 'ja');
-    await page.getByRole('button', {name: '自由配置モード', exact: true}).click();
+    await page.getByRole('button', {name: 'アンドックボタンを表示', exact: true}).click();
     await grid.getByRole('button', {name: '背景', exact: true}).waitFor();
     assert.deepEqual(errors, []);
     console.log('One sticky backdrop tile, four footer actions, live preview, sprite selection and undock/dock passed.');

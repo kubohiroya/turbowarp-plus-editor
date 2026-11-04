@@ -80,7 +80,7 @@ try {
             window.ScratchBlocks?.getMainWorkspace());
     }
     const undock = page.getByRole('button', {name: 'Open Backpack in a browser window'});
-    const mode = page.getByRole('button', {name: 'Flexible layout mode'});
+    const mode = page.getByRole('button', {name: 'Show undock buttons'});
     const layoutFlag = '&twPlusWindowLayout=1';
     const backpackFlag = '&twPlusBackpackPopout=1';
     const header = target => target.locator('[class*="backpack_backpack-header"]');
@@ -104,7 +104,7 @@ try {
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0&twPlusBackpackPopout=0'));
     await mode.click();
     await undock.waitFor();
-    report.checks.push('Startup flags stay fixed and the Backpack control appears only in flexible layout mode');
+    report.checks.push('Startup flags stay fixed and the Backpack control follows the undock button toggle');
     const {a, b} = await page.evaluate(async () => {
         const vm = window.vm;
         const target = vm.editingTarget;
@@ -182,7 +182,10 @@ try {
         }));
     }, {mime: transferMime, reference});
     await page.waitForFunction(() => typeof window.stage3FinishCancelledRead === 'function');
-    await Promise.all([popup.waitForEvent('close'), mode.click()]);
+    await mode.click();
+    assert.ok(!popup.isClosed());
+    assert.equal(await page.evaluate(() => Boolean(window.stage3Cancelled)), false);
+    await Promise.all([popup.waitForEvent('close'), popup.getByRole('button', {name: 'Dock Backpack'}).click()]);
     await page.waitForFunction(() => window.stage3Cancelled);
     await page.evaluate(() => window.stage3FinishCancelledRead());
     assert.equal(await page.evaluate(id => window.vm.runtime.getTargetById(id).blocks.getScripts().length, a), 0);
@@ -196,7 +199,7 @@ try {
     await reloaded;
     await page.getByText('Stage 3 stored script', {exact: true}).waitFor();
     popup = await openBackpack();
-    report.checks.push('Leaving flexible layout mode aborts a pending read; leaving or reloading the child restores the Backpack');
+    report.checks.push('Hiding the undock controls keeps the popup alive; docking cancels a pending read and reload restores the Backpack');
 
     if (!lifecycleOnly) {
         const area = await page.evaluate(() => [screen.availLeft, screen.availTop, screen.availWidth, screen.availHeight]);

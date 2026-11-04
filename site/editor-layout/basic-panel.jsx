@@ -5,28 +5,25 @@ import {WindowLayoutContext} from './index.jsx';
 import styles from './layout.css';
 
 function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight, className}) {
-    const {enabled, locale} = React.useContext(WindowLayoutContext);
+    const {showUndock, locale} = React.useContext(WindowLayoutContext);
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
     const surface = React.useMemo(() => createSurface(host, setState), [host]);
     React.useLayoutEffect(() => () => surface.dock(), [surface]);
     React.useLayoutEffect(() => {
-        if (!enabled) surface.dock();
-    }, [enabled, surface]);
-    React.useLayoutEffect(() => {
-        if (!enabled || state.kind !== 'docked' || state.reason !== 'returned' && state.reason !== 'disconnected') return;
+        if (!showUndock || state.kind !== 'docked' || state.reason !== 'returned' && state.reason !== 'disconnected') return;
         const frame = requestAnimationFrame(() => action.current?.querySelector('button')?.focus({preventScroll: true}));
         return () => cancelAnimationFrame(frame);
-    }, [enabled, state]);
+    }, [showUndock, state]);
 
     const japanese = /^ja(?:-|$)/i.test(locale);
-    const mount = enabled && state.kind === 'external' ? state.target.mount : undefined;
+    const mount = state.kind === 'external' ? state.target.mount : undefined;
 
     const headingClass = overlayAction ? styles.basicPanelOverlayAction : styles.basicPanelHeading;
     return <div className={className ? `${styles.basicPanel} ${className}` : styles.basicPanel} style={mount ? {minBlockSize: dockHeight} : undefined}>
-        {enabled && <div className={headingClass} ref={action}>
+        {(!overlayAction || (showUndock && !mount)) && <div className={headingClass} ref={action}>
             {!overlayAction && <h2>{title}</h2>}
-            {!mount && <OpenWindowButton
+            {showUndock && !mount && <OpenWindowButton
                 disabled={state.kind === 'opening'}
                 label={japanese ? '別画面で開く' : 'Open in another window'}
                 onOpen={() => surface.undock({id, title, rememberPlacement: true})}

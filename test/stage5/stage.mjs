@@ -28,7 +28,7 @@ try {
         if (!(await stat(file).catch(() => null))?.isFile()) return route.fulfill({status: 404});
         return route.fulfill({path: file});
     });
-    const mode = page.getByRole('button', {name: 'Flexible layout mode', exact: true});
+    const mode = page.getByRole('button', {name: 'Show undock buttons', exact: true});
     const action = page.locator('[class*="basic-panel-overlay-action_"]').getByRole('button', {
         name: 'Open in another window', exact: true
     });
@@ -93,6 +93,9 @@ try {
     await page.keyboard.press('Enter');
     await stage.waitFor();
     await mode.click();
+    await stage.waitFor();
+    assert.equal(await action.count(), 0);
+    await stage.getByRole('button', {name: 'Close and dock', exact: true}).click();
     await stage.waitFor({state: 'hidden'});
     assert.equal(await action.count(), 0);
     assert.ok(await canvas.evaluate(node => node === window.stage5Canvas));

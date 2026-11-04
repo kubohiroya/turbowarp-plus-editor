@@ -34,7 +34,7 @@ const messages = {
 export function createBackpackIntegration({host, importScript, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
-    function BackpackSurface({vm, children, enabled, locale, internalHost, openLabel}) {
+    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel}) {
         const labels = /^ja(?:-|$)/i.test(locale) ? messages.ja : messages.en;
         const copyFailed = React.useRef(labels.copyFailed);
         copyFailed.current = labels.copyFailed;
@@ -80,17 +80,10 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
             };
         }, [surface]);
         React.useLayoutEffect(() => {
-            if (!enabled) {
-                fallback.current = null;
-                surface.dock();
-                setDisplay({vm, state: docked});
-            }
-        }, [enabled, surface, vm]);
-        React.useLayoutEffect(() => {
-            if (!internalHost || !enabled || state.kind !== 'docked' || !state.reason) return;
+            if (!internalHost || !showUndock || state.kind !== 'docked' || !state.reason) return;
             const frame = requestAnimationFrame(() => launchButton.current?.focus({preventScroll: true}));
             return () => cancelAnimationFrame(frame);
-        }, [internalHost, enabled, state]);
+        }, [internalHost, showUndock, state]);
 
         function internalRequest() {
             const request = {
@@ -125,7 +118,7 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         const dock = (
             <button type="button" onClick={() => surface.dock()}>{labels.dock}</button>
         );
-        if (enabled && state.kind === 'external') {
+        if (state.kind === 'external') {
             const internal = state.target.presentation === 'internal';
             return (
                 <>
@@ -146,7 +139,7 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         }
         return (
             <>
-                {enabled && (
+                {showUndock && (
                     <div>
                         <button type="button" disabled={state.kind === 'opening'} ref={launchButton}
                             onClick={() => surface.undock(internalHost ? internalRequest() : undefined)}>

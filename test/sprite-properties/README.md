@@ -23,7 +23,7 @@ SPRITE_PROPERTIES_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google 
 ```
 
 - 従来フォームへの復帰、対象選択と変更の反映、最小ドックのスクロールを確認する。
-- アプリ内へ移したフォームから同じ VM を編集し、縦長の1列、横長の1行、閉じる操作と ⚓ の解除による復帰を確認する。
+- アプリ内へ移したフォームから同じ VM を編集し、縦長の1列、横長の1行、⚓ でアンドックボタンを隠してもウィンドウが維持され、閉じる操作で復帰することを確認する。
 - 配信検査で `sprite-properties` と `windows` のソースアーカイブ、および先行するローカルパッケージの GPL ライセンスとソース情報を確認する。
 
 ## Desktop のローカルコピー
@@ -36,6 +36,6 @@ node test/stage3/check-desktop.mjs /private/tmp/tw151-stage5-desktop.app --sprit
 
 ## 切り戻し
 
-⚓ を解除して設定をドックへ戻す。設定パネルの独立機能を切り戻す場合は `twPlusSpriteProperties` を外して再起動し、従来の `SpriteInfo` に戻す。確定済みの変更は作品に保持する。
+タイトルバーの「閉じる」またはドックの「ここに戻す」で設定を戻す。設定パネルの独立機能を切り戻す場合は `twPlusSpriteProperties` を外して再起動し、従来の `SpriteInfo` に戻す。確定済みの変更は作品に保持する。
 
 Desktop では `TW_PLUS_DESKTOP_SPRITE_PROPERTIES` を外して再起動する。

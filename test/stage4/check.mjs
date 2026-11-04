@@ -16,7 +16,7 @@ const page = await context.newPage();
 async function start(flags) {
     await page.goto(origin + '/editor.html?lang=en&twPlusWindowLayout=1' + flags);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
-    await page.getByRole('button', {name: 'Flexible layout mode'}).click();
+    await page.getByRole('button', {name: 'Show undock buttons'}).click();
 }
 
 async function seed() {
@@ -146,9 +146,12 @@ try {
     await page.waitForFunction(() => document.activeElement?.textContent.trim() === 'Undock Backpack');
     await launch.click();
     await frame.getByText(itemName, {exact: true}).waitFor();
-    await page.getByRole('button', {name: 'Flexible layout mode'}).click();
+    await page.getByRole('button', {name: 'Show undock buttons'}).click();
+    await frame.getByText(itemName, {exact: true}).waitFor();
+    assert.equal(await launch.count(), 0);
+    await page.getByRole('button', {name: 'Windows', exact: true}).waitFor();
+    await frame.getByRole('button', {name: 'Close and dock'}).click();
     await page.getByText(itemName, {exact: true}).waitFor();
-    assert.equal(await frame.count(), 0);
     assert.equal(await launch.count(), 0);
 
     await start(inAppOnly);

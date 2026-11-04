@@ -82,7 +82,7 @@ try {
     assert.equal(await number('x').isDisabled(), true);
     await page.evaluate(id => window.vm.setEditingTarget(id), ids.first);
     assert.equal(await input('Sprite name').inputValue(), 'Updated cat');
-    await page.getByRole('button', {name: 'Flexible layout mode'}).click();
+    await page.getByRole('button', {name: 'Show undock buttons'}).click();
     await page.getByRole('separator', {name: 'Editor and stage column width'}).press('End');
     await page.getByRole('separator', {name: 'Stage and target pane height'}).press('End');
     const compactDock = await panel.evaluate(element => {
@@ -101,7 +101,7 @@ try {
     const float = page.getByRole('region', {name: 'Sprite', exact: true});
     const action = page.getByRole('heading', {name: 'Sprite', exact: true}).locator('..')
         .getByRole('button', {name: 'Open in another window', exact: true});
-    const mode = page.getByRole('button', {name: 'Flexible layout mode'});
+    const mode = page.getByRole('button', {name: 'Show undock buttons'});
     assert.equal(await action.count(), 0);
     await mode.click();
     await input('Sprite name').evaluate(node => {window.originalSpriteNameInput = node;});
@@ -137,6 +137,9 @@ try {
     await action.click();
     await float.waitFor();
     await mode.click();
+    await float.waitFor();
+    assert.equal(await action.count(), 0);
+    await float.getByRole('button', {name: 'Close and dock', exact: true}).click();
     await float.waitFor({state: 'hidden'});
     assert.equal(await number('x').inputValue(), '41');
 
@@ -144,7 +147,7 @@ try {
     assert.equal(await panel.count(), 0);
     await page.getByPlaceholder('x', {exact: true}).waitFor();
     assert.deepEqual(errors, []);
-    console.log('The same form edits the real VM in the dock and in-app window, reflows from one column to one row, restores on close or mode exit, and respects the startup flag.');
+    console.log('The same form edits the real VM in the dock and in-app window, reflows from one column to one row, stays open with its undock button hidden and restores on close, and respects the startup flag.');
 } finally {
     await browser.close();
 }

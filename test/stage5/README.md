@@ -22,7 +22,7 @@ node test/stage3/check-desktop.mjs /private/tmp/tw151-stage5-stage-desktop.app -
 
 ## 切り戻し
 
-⚓ を解除してステージをドックへ戻す。ステージの切り離し機能を止める場合は Web の `twPlusStagePanel` または Desktop の `TW_PLUS_DESKTOP_STAGE_PANEL` を外して再起動する。
+タイトルバーの「閉じる」またはドックの「ここに戻す」でステージを戻す。ステージの切り離し機能を止める場合は Web の `twPlusStagePanel` または Desktop の `TW_PLUS_DESKTOP_STAGE_PANEL` を外して再起動する。
 
 外部ウィンドウのステージは #155 の B-ST の結果を前提とする。
 
@@ -44,4 +44,4 @@ TW151_STAGE5_PREFIX=/turbowarp-plus-editor/ \
 
 ## 切り戻し
 
-⚓ を解除して一覧をドックへ戻す。従来の一覧と背景操作に戻す場合は `twPlusTargetList` を外して再起動する。
+タイトルバーの「閉じる」またはドックの「ここに戻す」で一覧を戻す。従来の一覧と背景操作に戻す場合は `twPlusTargetList` を外して再起動する。

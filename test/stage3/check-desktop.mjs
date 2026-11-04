@@ -12,7 +12,7 @@ import {chromium} from 'playwright';
 const app = resolve(process.argv[2] || '/private/tmp/tw151-desktop23/TurboWarp-Plus-Backpack.app');
 const mime = 'application/x-turbowarp-editor-transfer';
 const itemName = 'Desktop native Backpack stack';
-const modeLabel = /^(Flexible layout mode|自由配置モード)$/;
+const modeLabel = /^(Show undock buttons|アンドックボタンを表示)$/;
 const undockLabel = /^(Open Backpack in a separate window|バックパックを別ウィンドウで開く)$/;
 const dockLabel = /^(Dock Backpack|バックパックを元の位置に戻す)$/;
 const report = {checks: [], errors: []};
@@ -33,6 +33,7 @@ async function run (enabled, test) {
     await writeFile(join(profile, 'tw_config.json'), JSON.stringify({v2: {updateChecker: 'never', locale: 'en'}}));
     const processArgs = [`--user-data-dir=${profile}`, '--remote-debugging-port=0'];
     const processEnv = {...process.env, TW_PLUS_DESKTOP_TEST_CONTROL: '1'};
+    delete processEnv.TW_PLUS_DESKTOP_SPLITTER;
     delete processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT;
     delete processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;
@@ -280,12 +281,16 @@ async function checkInternal ({editor, control}) {
     await open.click();
     await editor.getByRole('region', {name: labels.sounds}).waitFor();
     await mode.click();
-    assert.equal(await editor.getByRole('region', {name: labels.sounds}).count(), 0);
-    assert.equal(await editor.getByRole('region', {name: labels.costumes}).count(), 0);
+    for (const label of [labels.sounds, labels.costumes]) {
+        const frame = editor.getByRole('region', {name: label});
+        await frame.waitFor();
+        await frame.getByRole('button', {name: labels.dock}).click();
+        await frame.waitFor({state: 'hidden'});
+    }
     assert.equal(await open.count(), 0);
     assert.ok(await editor.evaluate(pattern => window.nativeEvidence.filter(event =>
         event.type === 'click' && event.trusted && pattern.test(event.label)).length === 5, labels.action));
-    report.checks.push('The shared action is to the right of the find bar and moves each active live panel, keeps it open across tab changes, and docks on close or mode exit');
+    report.checks.push('The shared action is to the right of the find bar and moves each active live panel, keeps it open across tab changes, and keeps windows when undock buttons are hidden and docks on close');
 }
 
 const spritePropertiesLabel = /^(Sprite properties|スプライトのプロパティ)$/;
@@ -335,13 +340,17 @@ async function checkStagePanel ({editor, control}) {
 
 try {
     await run(false, async ({editor, control}) => {
+        const parent = (await control('windows')).find(window => window.kind === 'editor');
+        await control('layout', parent.id);
+        await editor.getByRole('separator', {name: /^(Editor and stage column width|編集領域とステージ列の幅)$/}).waitFor();
+        await editor.getByRole('separator', {name: /^(Stage and target pane height|ステージと対象領域の高さ)$/}).waitFor();
         assert.equal(await editor.getByRole('button', {name: modeLabel}).count(), 0);
         assert.equal(await editor.getByRole('button', {name: undockLabel}).count(), 0);
         assert.equal(await editor.getByRole('region', {name: spritePropertiesLabel}).count(), 0);
         assert.equal(await editor.evaluate(() =>
             window.open('about:blank', `tw-plus-backpack-${crypto.randomUUID()}`) === null), true);
         assert.equal((await control('windows')).length, 1);
-        report.checks.push('Desktop startup defaults OFF and denies the reserved native window');
+        report.checks.push('Desktop enables both splitters by default and keeps undocking off');
     });
 
     if (process.argv.includes('--sprite-properties')) await run('sprite', checkSpriteProperties);

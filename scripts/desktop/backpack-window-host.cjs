@@ -3,6 +3,7 @@ const AbstractWindow = require('./abstract');
 const editorURL = 'tw-editor://./gui/gui.html';
 const childURL = 'tw-editor://./gui/backpack-popout.html';
 const framePattern = /^tw-plus-backpack-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/;
+const splitterDisabled = process.env.TW_PLUS_DESKTOP_SPLITTER === '0';
 const layoutEnabled = process.env.TW_PLUS_DESKTOP_WINDOW_LAYOUT === '1';
 const spritePropertiesEnabled = process.env.TW_PLUS_DESKTOP_SPRITE_PROPERTIES === '1';
 const internalEnabled = layoutEnabled && process.env.TW_PLUS_DESKTOP_INTERNAL_WINDOWS === '1';
@@ -33,6 +34,7 @@ function getTicket ({url, frameName, postBody}) {
 
 function createBackpackWindowHost (editor) {
     const url = new URL(editorURL);
+    if (splitterDisabled) url.searchParams.set('twPlusSplitter', '0');
     if (layoutEnabled) url.searchParams.set('twPlusWindowLayout', '1');
     if (internalEnabled) url.searchParams.set('twPlusInternalWindows', '1');
     if (spritePropertiesEnabled) url.searchParams.set('twPlusSpriteProperties', '1');
