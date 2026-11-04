@@ -35,7 +35,7 @@ export const installPaletteDeletePreview = ScratchBlocks => {
         const toolbox = workspace.getToolbox()?.HtmlDiv;
         const flyout = workspace.getFlyout()?.svgBackground_;
         const container = workspace.getInjectionDiv();
-        if (!toolbox || !flyout || !container || workspace.isMutator) {
+        if (!toolbox || !container || workspace.isMutator) {
             clear(this);
             return result;
         }
@@ -43,8 +43,8 @@ export const installPaletteDeletePreview = ScratchBlocks => {
         // The hitbox extends offscreen. Use the visible toolbox and flyout for the overlay.
         const bounds = container.getBoundingClientRect();
         const menu = toolbox.getBoundingClientRect();
-        const blocks = flyout.getBoundingClientRect();
-        if (!blocks.width || !blocks.height) {
+        const blocks = toolbox.hasAttribute('data-horizontal-block-palette') ? menu : flyout?.getBoundingClientRect();
+        if (!blocks?.width || !blocks.height) {
             clear(this);
             return result;
         }
