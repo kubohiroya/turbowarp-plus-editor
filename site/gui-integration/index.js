@@ -1,6 +1,8 @@
 import React from 'react';
 import StageControlsView from '../stage-controls/view.jsx';
+import {attachBackpackDrop} from '../editor-backpack/index.jsx';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.js';
+import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.js';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 
 export * from './lib/tw-plus-integration-points.js';
@@ -19,6 +21,9 @@ export const renderStageControls = ({vm, isSmall}) => {
     const service = hostStageControls(vm, hostIntegration());
     return service ? React.createElement(StageControlsView, {service, isSmall}) : null;
 };
+
+export const attachHostScriptTransfer = (context, integration) =>
+    attachScriptTransfer(context, integration, attachBackpackDrop);
 
 export {EditorLayout} from '../editor-layout/index.jsx';
 
