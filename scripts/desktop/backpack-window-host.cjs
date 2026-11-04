@@ -47,6 +47,7 @@ function getReservation ({url, frameName, postBody}) {
 
 function createBackpackWindowHost (editor) {
     const url = new URL(editorURL);
+    url.searchParams.set('twPlusStandardLayout', '0');
     if (splitterDisabled) url.searchParams.set('twPlusSplitter', '0');
     if (layoutEnabled) url.searchParams.set('twPlusWindowLayout', '1');
     if (internalEnabled) url.searchParams.set('twPlusInternalWindows', '1');

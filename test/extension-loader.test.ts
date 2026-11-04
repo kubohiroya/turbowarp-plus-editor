@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: false, paletteDeletePreview: false, horizontalBlockPalette: false});
+        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,7 +156,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: false, paletteDeletePreview: false, horizontalBlockPalette: false});
+        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -191,8 +191,10 @@ test('the palette delete preview requires explicit startup opt-in', () => {
     assert.equal(readWebStartupFeatureFlags('?twPlusPaletteDeletePreview=1').paletteDeletePreview, true);
 });
 
-test('the standard layout preview requires an explicit startup opt-in', () => {
-    for (const search of ['', '?twPlusStandardLayout=0', '?twPlusStandardLayout=', '?twPlusStandardLayout=true']) {
+test('the web editor defaults to Plus layout and supports startup rollback', () => {
+    assert.equal(readWebStartupFeatureFlags().standardLayout, true);
+    assert.equal(readStartupFeatureFlags().standardLayout, false);
+    for (const search of ['?twPlusStandardLayout=0', '?twPlusStandardLayout=', '?twPlusStandardLayout=true']) {
         assert.equal(readWebStartupFeatureFlags(search).standardLayout, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=1').standardLayout, true);

@@ -18,7 +18,7 @@ const bitmap = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklE
 
 async function start(params, language = 'en') {
     await page.goto(origin + prefix + 'editor.html?lang=' + language +
-        '&twPlusWindowLayout=1&twPlusInternalWindows=1' + params);
+        '&twPlusStandardLayout=0&twPlusWindowLayout=1&twPlusInternalWindows=1' + params);
     await page.waitForFunction(() => window.vm?.renderer?.canvas && window.vm?.editingTarget?.isOriginal);
 }
 

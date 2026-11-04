@@ -75,7 +75,7 @@ try {
     page = await context.newPage();
     page.on('pageerror', error => report.errors.push(error.message));
     async function start(flag) {
-        await page.goto(`${origin}${prefix}editor.html?lang=en${flag}`);
+        await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusStandardLayout=0${flag}`);
         await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal &&
             window.ScratchBlocks?.getMainWorkspace());
     }

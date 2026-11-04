@@ -49,7 +49,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const start = async query => {
-        await page.goto(origin + buildPrefix + 'editor.html?lang=en' + query);
+        await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStandardLayout=0' + query);
         await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
         await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() &&
             window.vm?.editingTarget))).toBe(true);
@@ -230,7 +230,7 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     await expect(stage).toBeVisible();
     await expect(anchor).toHaveCount(0);
     await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
-    await start('&twPlusStandardLayout=1&twPlusWindowLayout=1');
+    await start('&twPlusWindowLayout=1');
     await expect(anchor).toHaveAttribute('aria-pressed', 'true');
     await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
     await expect(stage).toBeVisible();
@@ -242,6 +242,12 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     const stageBounds = await stage.boundingBox();
     assert.ok(gridBounds.x < editorBounds.x && stageBounds.x > editorBounds.x);
     assert.ok(stageBounds.x + stageBounds.width <= 1360 && stageBounds.y < 200);
+    assert.equal(await stage.evaluate(canvas => {
+        const rect = canvas.getBoundingClientRect();
+        return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === canvas;
+    }), true);
+    await expect(page.getByText('Sprite properties', {exact: true})).toBeVisible();
+    await expect(page.getByRole('textbox', {name: 'Sprite name'})).toBeHidden();
 
     await expect.poll(() => page.evaluate(() => Boolean(vm.editingTarget))).toBe(true);
     const spriteId = await page.evaluate(async () => {
@@ -312,5 +318,9 @@ test('the anchor switches layouts without replacing the workspace or stopping th
         addedBlock: Object.values(vm.editingTarget.blocks._blocks).some(block => block.opcode === 'motion_movesteps')
     })), {sameWorkspace: true, sameCanvas: true, target: spriteId, addedBlock: true});
     await expect.poll(running).toBe(true);
+    await page.setViewportSize({width: 1050, height: 660});
+    await expect(anchor).toBeInViewport();
+    await expect(stage).toBeInViewport({ratio: 1});
+    assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 2);
     assert.deepEqual(errors, []);
 });
