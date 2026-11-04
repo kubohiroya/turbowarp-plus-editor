@@ -11,9 +11,10 @@ import {startYamlEditorHost} from '../scripts/yaml-editor/host.ts';
 
 const documents = project => project.extensionStorage.twpeyamlsettings.documents;
 const digest = value => createHash('sha256').update(value).digest('hex');
-const withoutDocuments = project => {
+const withoutExpectedSaveChanges = project => {
     const value = structuredClone(project);
     delete value.extensionStorage.twpeyamlsettings.documents;
+    if (value.turboWarpPlusProject) delete value.turboWarpPlusProject.updatedAt;
     return value;
 };
 const saveLabel = '表示されている形式に変換して検証・保存';
@@ -44,7 +45,7 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
     let stage = 'load';
     try {
         async function load(p, name) {
-            await p.goto(`${base}editor.html?lang=ja&twPlusYamlEditor=1&project_url=${encodeURIComponent(`${base}static/${name}`)}`);
+            await p.goto(`${base}editor.html?lang=ja&project_url=${encodeURIComponent(`${base}static/${name}`)}`);
             // The shared review (security-dialog 0.7) offers one choice for every row.
             const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')});
             await security.waitFor({timeout: 60000});
@@ -90,6 +91,7 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
             {...documents(original), settings: edited});
         await page.screenshot({path: path.join(output, 'imported.png')});
         stage = 'standard-editor-file-save';
+        const saveStarted = Date.now();
         // The File menu stays clear of the floating extension-status badge in the menu bar.
         await page.getByText('ファイル', {exact: true}).click();
         const pending = page.waitForEvent('download');
@@ -99,7 +101,13 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
         const archive = await JSZip.loadAsync(await readFile(saved));
         const savedProject = JSON.parse(await archive.file('project.json').async('string'));
         assert.deepEqual(documents(savedProject), {...documents(original), settings: edited});
-        assert(isDeepStrictEqual(withoutDocuments(savedProject), withoutDocuments(original)), 'Non-document project data must match normal VM serialization.');
+        // Editing a document also advances the project's modification date when project tools are enabled.
+        if (original.turboWarpPlusProject) {
+            const updatedAt = Date.parse(savedProject.turboWarpPlusProject?.updatedAt);
+            assert(updatedAt >= saveStarted && updatedAt <= Date.now(), 'A changed project must record this save time.');
+        }
+        assert(isDeepStrictEqual(withoutExpectedSaveChanges(savedProject), withoutExpectedSaveChanges(original)),
+            'Only document contents and the project modification date may change during this save.');
         const initialArchive = await JSZip.loadAsync(await readFile(fixture));
         const assets = Object.keys(initialArchive.files).filter(name => name !== 'project.json' && !initialArchive.files[name].dir);
         assert(assets.length > 0, 'The fixture must contain assets to preserve.');

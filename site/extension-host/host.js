@@ -51,16 +51,15 @@ export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
     fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
-    onProjectURI, addressProject
+    onProjectURI, addressProject, onProjectManifest, showDiagnostics = true
 } = {}) {
     if (enabled !== true) return Object.freeze({enabled: false, dispose: async () => {}});
     // A single HTML has no catalog to read; its build embeds the digests the catalog listed.
     const trusted = trustedCatalog === null && Array.isArray(trustedDigests) ?
         digestTrustedCatalog(trustedDigests) : trustedCatalog;
-    const ui = createPlusPermissionUI(document, locale);
+    const ui = createPlusPermissionUI(document, locale, {showDiagnostics, onDiagnostic: report});
     const diagnostics = event => {
         ui.diagnostics(event);
-        if (report) report(event);
     };
     // The Loader reports the retry it is about to wait for, and how many attempts this fetch can
     // make in all; the attempt the wait leads to is the next one. Counting them here from the retry
@@ -142,7 +141,7 @@ export function installPlusExtensionHost (vm, {
     let uninstall;
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
-            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject,
+            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest,
             onProjectLoadStart: authoring ? authoring.projectLoadStarted : undefined}, loader);
     } catch (error) {
         authoring?.dispose();

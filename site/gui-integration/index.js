@@ -3,6 +3,7 @@ import StageControlsView from '../stage-controls/view.jsx';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.js';
 
 export * from './lib/tw-plus-integration-points.js';
+export {renderFileMenu, loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.js';
 export * from './lib/tw-plus-transfer.js';
 export * from './lib/tw-plus-extension-host.js';
 export * from './lib/tw-plus-extension-permissions.js';

@@ -30,7 +30,9 @@ const approveSample = async (page, source) => {
     const review = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
     await expect(review).toBeVisible();
     const row = review.locator('.twextsec-row[data-key="blockeditordemo"]');
-    await expect(row.locator('.twextsec-id')).toHaveText('blockeditordemo');
+    // The sample states no name, so its ID is the row's heading and is not repeated beside it.
+    await expect(row.locator('.twextsec-head strong')).toHaveText('blockeditordemo');
+    await expect(row.locator('.twextsec-id')).toHaveCount(0);
     await expect(row.locator('.twextsec-digest')).toContainText(createHash('sha256').update(source).digest('hex'));
     await row.locator('input[name="execution-blockeditordemo"][value="unsandboxed"]').check();
     await review.getByRole('button', {name: 'OK', exact: true}).click();

@@ -2,8 +2,8 @@ const {test, expect, approveProjectExtensions} = require('./fixtures.cts');
 const {settingsProject, extensionSource, settingsHat} = require('./settings-project.cts');
 
 // Source locations reach the built Editor through the same socket as the document editor
-// (`attachToWorkspace`), with `twPlusYamlEditor=1` alone: whether a document's location can be
-// changed is its provider's decision, not a startup flag (#27). The owner is the test-only
+// (`attachToWorkspace`), with no startup switch: whether a document's location can be changed is
+// its provider's decision (#27). The owner is the test-only
 // `twpeyamlsettings`, which marks its source locations editable. What a fetch may
 // do, cancellation and reuse of the previewed source are the document editor's own tests; this only
 // shows that the controls arrive, that a preview goes through the real VM untouched, and that a
@@ -44,7 +44,7 @@ const openDocument = async page => {
 test('the dialog offers source locations and previews a URL without changing the project', async ({page, baseURL, evidence}, testInfo) => {
     const bytes = await settingsProject();
     const {projectURL, requests} = await prepare(page, baseURL, bytes);
-    await open(page, baseURL, projectURL, {twPlusYamlEditor: '1'}, await extensionSource(bytes));
+    await open(page, baseURL, projectURL, {}, await extensionSource(bytes));
     const before = await project(page);
 
     evidence.stage('source-controls');
@@ -73,12 +73,12 @@ test('the dialog offers source locations and previews a URL without changing the
     expect(requests).toEqual([sourceURL]);
 });
 
-// The abolished flag is not read any more: turning it off leaves the controls where they are, and
-// still nothing is fetched until a preview is asked for.
-test('twPlusDocumentSource=0 changes nothing and nothing is fetched before a preview', async ({page, baseURL, evidence}) => {
+// The abolished switches are not read any more: turning them off leaves the hats' icons and the
+// source controls where they are, and still nothing is fetched until a preview is asked for.
+test('the removed switches turned off change nothing and nothing is fetched before a preview', async ({page, baseURL, evidence}) => {
     const bytes = await settingsProject();
     const {projectURL, requests} = await prepare(page, baseURL, bytes);
-    await open(page, baseURL, projectURL, {twPlusYamlEditor: '1', twPlusDocumentSource: '0'}, await extensionSource(bytes));
+    await open(page, baseURL, projectURL, {twPlusYamlEditor: '0', twPlusDocumentSource: '0'}, await extensionSource(bytes));
     const before = await project(page);
 
     evidence.stage('source-controls-regardless');

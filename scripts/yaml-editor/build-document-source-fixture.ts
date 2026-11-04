@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import JSZip from '@turbowarp/jszip';
-import {createEmbeddedYamlMarker} from '@kubohiroya/turbowarp-document-source';
+import {createEmbeddedYamlMarker} from '@kubohiroya/turbowarp-document-data/document-source';
 
 export const fixtureSources = {
     'yaml-settings': '# User settings\r\nvolume: 50 # percent\r\nmode: rehearsal\r\n',
@@ -17,7 +17,7 @@ const schemas = {
 export async function buildDocumentSourceFixture(input, output) {
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
     // Separate inert block declarations are preloaded only in this explicit test composition.
-    const companion = await build({absWorkingDir: root, stdin: {contents: "import {createYamlBlockRuntime} from '@kubohiroya/turbowarp-document-source/runtime'; Scratch.extensions.register(createYamlBlockRuntime(Scratch,{enabled:true}));", resolveDir: root, sourcefile: 'document-source-companion.js'}, bundle: true, platform: 'browser', format: 'iife', target: 'es2022', write: false, minify: true, legalComments: 'eof'});
+    const companion = await build({absWorkingDir: root, stdin: {contents: "import {createYamlBlockRuntime} from '@kubohiroya/turbowarp-yaml-json/runtime'; Scratch.extensions.register(createYamlBlockRuntime(Scratch,{enabled:true}));", resolveDir: root, sourcefile: 'document-source-companion.js'}, bundle: true, platform: 'browser', format: 'iife', target: 'es2022', write: false, minify: true, legalComments: 'eof'});
     const companionURL = `data:application/javascript;base64,${Buffer.from(companion.outputFiles[0].contents).toString('base64')}`;
     const compiled = await build({absWorkingDir: root, define: {__TWPE_COMPANION_URL__: JSON.stringify(companionURL)}, entryPoints: ['test/fixtures/document-source/runtime.ts'], bundle: true, platform: 'browser', format: 'iife', target: 'es2022', write: false, minify: true, legalComments: 'eof'});
     const zip = await JSZip.loadAsync(await fs.readFile(input));

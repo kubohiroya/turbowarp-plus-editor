@@ -72,38 +72,39 @@
     "build:test-driver": "tsc -p test/vscode-edit-driver/tsconfig.json",
     "test:package": "npm run build && node --test test/package/*.test.ts",
     "test:script-transfer": "node --test test/script-transfer/*.test.mjs",
+    "test:project-tools": "node --test test/project-tools/*.test.mjs && node --test test/project-tools/*.test.cjs",
     "test:gui-integration": "node --test --import ./test/asset-hooks.mjs \"test/gui-integration/**/*.test.mjs\" \"test/gui-integration/**/*.test.cjs\"",
     "preview:security": "node scripts/local-security-preview.cjs"
   },
   "devDependencies": {
-    "@kubohiroya/turbowarp-document-source": "0.1.0-rc.0",
-    "@kubohiroya/turbowarp-extension-data-editor": "0.7.0",
+    "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
+    "@kubohiroya/turbowarp-extension-data-editor": "0.8.0",
     "@kubohiroya/turbowarp-extension-loader": "0.8.0",
-    "@kubohiroya/turbowarp-extension-security-dialog": "github:kubohiroya/turbowarp-extension-security-dialog#5c816492b39831a7c4ffeaabde01536046104c6a",
+    "@kubohiroya/turbowarp-extension-security-dialog": "0.8.5",
     "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",
-    "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.0",
-    "@kubohiroya/turbowarp-yaml-json": "0.8.0-rc.0",
+    "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.1",
+    "@kubohiroya/turbowarp-yaml-json": "0.9.0-rc.0",
     "@playwright/test": "^1.64.1",
     "@turbowarp/packager": "3.14.0",
     "@types/node": "^24.19.2",
     "@types/vscode": "^1.144.0",
     "ajv": "8.20.0",
     "esbuild": "0.25.12",
+    "jsdom": "26.1.0",
     "react-dom": "18.3.1",
     "typescript": "^6.0.3",
-    "yaml": "2.9.1",
-    "jsdom": "26.1.0"
+    "yaml": "2.9.1"
   },
   "publishConfig": {
     "access": "public",
     "tag": "next"
   },
   "dependencies": {
-    "@kubohiroya/turbowarp-document-data": "0.5.0-rc.1",
-    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.3",
-    "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.1",
-    "@turbowarp/jszip": "^3.12.0",
-    "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#6f6f9c3f0e7a6c601a8046777ae8289968d36800"
+    "@kubohiroya/turbowarp-document-data": "0.6.0-rc.0",
+    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.4",
+    "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
+    "@kubohiroya/turbowarp-script-transfer": "0.1.0",
+    "@turbowarp/jszip": "^3.12.0"
   },
   "bin": {
     "turbowarp-plus-editor-yaml": "dist/scripts/yaml-editor/cli.js",

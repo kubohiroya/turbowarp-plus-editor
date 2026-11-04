@@ -2,6 +2,14 @@ const JSZip = require('@turbowarp/jszip');
 const {createHash} = require('node:crypto');
 const {test, expect} = require('./fixtures.cts');
 
+// These custom fixture IDs are deliberately outside the trusted catalog. Keep that precondition
+// deterministic instead of waiting for the public catalog's 15-second network timeout in CI.
+const useFixtureCatalog = context => context.route(
+    'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json',
+    route => route.fulfill({json: {schemaVersion: 1, extensions: []}})
+);
+test.beforeEach(async ({context}) => { await useFixtureCatalog(context); });
+
 /**
  * The review a project's extensions go through before any of them runs, on the real editor.
  *
@@ -51,11 +59,11 @@ const rows = page => dialog(page).locator('.twextsec-row');
 const executions = page => page.evaluate(() => globalThis.__securityFixtureStarted || 0);
 const labels = {
     ja:{title:'この作品は機能拡張を使います',deny:'動かさない',sandboxed:'サンドボックスの中で',
-        unsandboxed:'サンドボックスなしで',cancel:'キャンセル',required:'サンドボックスなしが必要と申告しています',
-        unknown:'サンドボックスについて申告がありません',creator:'製作者'},
+        unsandboxed:'サンドボックスなしで',cancel:'キャンセル',required:'⚠️ サンドボックスなしが必要',
+        creator:'製作者（未検証の申告）'},
     en:{title:'This project wants to run extensions',deny:'Do not run',sandboxed:'In the sandbox',
-        unsandboxed:'Without the sandbox',cancel:'Cancel',required:'Says it needs to run without the sandbox',
-        unknown:'Says nothing about the sandbox',creator:'Creator'}
+        unsandboxed:'Without the sandbox',cancel:'Cancel',required:'⚠️ Needs to run without the sandbox',
+        creator:'Creator (unverified claim)'}
 };
 const choice = (page, row, language, execution) =>
     row.getByRole('radio', {name: labels[language][execution], exact: true});
@@ -145,7 +153,8 @@ for (const language of ['ja','en']) {
         await open(page,language,{mixed:true});
         await expect(rows(page)).toHaveCount(2);
         await expect(rows(page).nth(1).locator('.twextsec-id')).toHaveText('securityordinary');
-        await expect(rows(page).nth(1).locator('.twextsec-requirement')).toHaveText(labels[language].unknown);
+        // An extension that says nothing about the sandbox runs inside it by default, so it carries no warning.
+        await expect(rows(page).nth(1).locator('.twextsec-requirement')).toHaveCount(0);
         // Both start in the sandbox; nothing is chosen outside it for the person.
         for (const index of [0,1]) await expect(choice(page,rows(page).nth(index),language,'sandboxed')).toBeChecked();
         const bulk = dialog(page).locator('.twextsec-bulk');
@@ -207,11 +216,14 @@ test('narrow security dialog keeps the choices and a reachable confirmation butt
     await expect.poll(()=>executions(page)).toBe(1);
 });
 
-test('real mobile context keeps the shared review inside the visual viewport', async ({browser,baseURL}) => {
+test('real mobile context keeps the shared review inside the visual viewport', async ({browser,baseURL,evidence}) => {
     const {devices} = require('@playwright/test');
     const context = await browser.newContext({...devices['Pixel 7'],viewport:{width:390,height:844},locale:'ja-JP'});
     try {
+        await useFixtureCatalog(context);
         const page = await context.newPage();
+        evidence.observe(page);
+        evidence.stage('shared-security-real-mobile');
         const target = new URL('editor.html',baseURL);
         target.search = new URLSearchParams({lang:'ja',project_url:await projectURL({mixed:true})}).toString();
         await page.goto(target.href);
@@ -223,6 +235,19 @@ test('real mobile context keeps the shared review inside the visual viewport', a
         expect(rect.left).toBeGreaterThanOrEqual(0);
         expect(rect.right).toBeLessThanOrEqual(rect.width);
         await dialog(page).locator('.twextsec-bulk').getByRole('radio',{name:labels.ja.unsandboxed,exact:true}).click();
+        await expect(dialog(page).locator('.twextsec-row input[value="unsandboxed"]:checked')).toHaveCount(2);
+        const warning = dialog(page).locator('.twextsec-warning');
+        const notice = await warning.evaluate(node => {
+            const r=node.getBoundingClientRect(),v=window.visualViewport;
+            return {left:r.left-v.offsetLeft,right:r.right-v.offsetLeft,top:r.top-v.offsetTop,
+                bottom:r.bottom-v.offsetTop,width:v.width,height:v.height};
+        });
+        expect(notice.left).toBeGreaterThanOrEqual(0);
+        expect(notice.right).toBeLessThanOrEqual(notice.width);
+        expect(notice.top).toBeGreaterThanOrEqual(0);
+        expect(Math.abs(notice.bottom-notice.height)).toBeLessThanOrEqual(1);
+        await warning.getByRole('button',{name:'閉じる',exact:true}).click();
+        await expect(warning).toHaveCount(0);
         await expect(dialog(page).locator('.twextsec-row input[value="unsandboxed"]:checked')).toHaveCount(2);
         await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeEnabled();
         expect(await executions(page)).toBe(0);

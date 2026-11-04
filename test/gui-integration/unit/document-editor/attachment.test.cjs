@@ -3,7 +3,8 @@ const {test} = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
 const {createRequire} = require('node:module');
-const guiRequire = createRequire(path.join(process.env.E2E_GUI_ROOT, 'package.json'));
+const guiRequire = createRequire(path.join(
+    require('../../../pinned-gui.cjs')('This test needs the pinned GUI'), 'package.json'));
 const babel = guiRequire('@babel/core');
 
 const filename = path.resolve(__dirname, '../../../../site/gui-integration/containers/tw-plus-workspace-attachment.jsx');

@@ -30,4 +30,12 @@ const test = base.extend({
         expect(await identity(request, baseURL), 'Deployment changed during the test').toEqual(before);
     }, {auto: true}]
 });
-module.exports = {test, expect};
+async function showProjectDiagnostics(page) {
+    await page.getByText(/^(File|ファイル)$/u).locator('xpath=ancestor::div[1]').click();
+    await page.getByRole('button', {name: /^(Project Diagnostics…|作品の診断…)$/u}).click();
+    const dialog = page.getByTestId('project-diagnostics');
+    await expect(dialog).toBeVisible();
+    return dialog;
+}
+
+module.exports = {test, expect, showProjectDiagnostics};

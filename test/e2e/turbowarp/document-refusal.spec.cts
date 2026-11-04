@@ -10,7 +10,7 @@ const refusal = 'The settings owner keeps this document locked.';
 const project = page => page.evaluate(() => window.vm.toJSON(undefined, {allowOptimization: false}));
 
 const lockedProject = () => settingsProject(async value => {
-    const {createEmbeddedYamlMarker} = await import('@kubohiroya/turbowarp-document-source');
+    const {createEmbeddedYamlMarker} = await import('@kubohiroya/turbowarp-document-data/document-source');
     value.extensionStorage.twpeyamlsettings.documents.locked = 'state: locked\n';
     const stage = value.targets.find(target => target.isStage);
     stage.blocks['locked-hat'] = createEmbeddedYamlMarker({opcode: settingsHat,
@@ -32,7 +32,7 @@ const load = async (page, baseURL) => {
     const projectURL = new URL('static/document-refusal.sb3', baseURL).href;
     await page.route(projectURL, route => route.fulfill({status: 200, contentType: 'application/octet-stream', body: bytes}));
     const url = new URL('editor.html', baseURL);
-    url.search = new URLSearchParams({lang: 'ja', twPlusYamlEditor: '1', project_url: projectURL}).toString();
+    url.search = new URLSearchParams({lang: 'ja', project_url: projectURL}).toString();
     await page.goto(url.href);
     await approveProjectExtensions(page, [await extensionSource(bytes)], 'ja');
     await page.locator('[class*="stage-selector_stage-selector"]').click();

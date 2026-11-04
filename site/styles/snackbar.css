@@ -1,0 +1,84 @@
+/* The host gives warnings and load failures the same viewport anchor and appearance. */
+.snackbar,
+:global(body .twextsec-review > .twextsec-warning),
+:global(body .twextsec-review[data-mode="add"] > .twextsec-warning) {
+    box-sizing: border-box;
+    position: fixed;
+    grid-area: auto;
+    /* Fixed bottom/right can follow an overflowing layout viewport on mobile. */
+    bottom: auto;
+    top: 100vh;
+    top: 100dvh;
+    left: 50vw;
+    right: auto;
+    transform: translate(-50%, -100%);
+    z-index: 10000;
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: calc(100vw - 32px);
+    max-width: 760px;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    margin: 0 auto;
+    padding: 14px 16px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    overflow: auto;
+    border: 1px solid #90a4bf;
+    border-radius: 8px;
+    background: #243247;
+    color: #fff;
+    font: 14px/1.5 system-ui, sans-serif;
+    box-shadow: 0 4px 20px #0006;
+}
+
+/* Leave the add dialog's fixed action row reachable while its notice is open. */
+:global(body .twextsec-review[data-mode="add"] > .twextsec-warning) {
+    position: absolute;
+    grid-area: 1 / 1 / 2 / 2;
+    top: auto;
+    bottom: 12px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: calc(100% - 24px);
+    transform: none;
+}
+
+.snackbar > span,
+:global(body .twextsec-review > .twextsec-warning > span) {
+    flex: 1 1 200px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.snackbar > button,
+:global(body .twextsec-review > .twextsec-warning > button) {
+    flex: none;
+    min-width: 64px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid currentColor;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.snackbar > button:hover,
+:global(body .twextsec-review > .twextsec-warning > button:hover) {
+    background: #ffffff1a;
+}
+
+.snackbar > button:focus-visible,
+:global(body .twextsec-review > .twextsec-warning > button:focus-visible) {
+    outline: 3px solid #ffd166;
+    outline-offset: 2px;
+}
+
+/* A failure takes priority until it is dismissed or its diagnostics are opened. */
+:global(body:has(> [data-testid="project-diagnostics-snackbar"]) .twextsec-warning) {
+    visibility: hidden;
+}
