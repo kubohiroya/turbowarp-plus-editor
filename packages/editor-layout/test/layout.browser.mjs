@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
+import {readFile, readdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -9,10 +9,13 @@ import {chromium, expect} from '@playwright/test';
 const require = createRequire(import.meta.url);
 const origin = 'http://layout.test';
 const example = '/example/index.html';
-const files = new Map([
-    [example, fileURLToPath(new URL('../example/index.html', import.meta.url))],
-    ['/src/index.js', fileURLToPath(new URL('../src/index.js', import.meta.url))]
-]);
+const files = new Map([[example, fileURLToPath(new URL('../example/index.html', import.meta.url))]]);
+const source = fileURLToPath(new URL('../src/', import.meta.url));
+for (const entry of await readdir(source, {withFileTypes: true})) {
+    if (entry.isFile() && entry.name.endsWith('.js')) {
+        files.set(`/src/${entry.name}`, path.join(source, entry.name));
+    }
+}
 for (const name of ['react', 'react-dom']) {
     const entry = `/umd/${name}.development.js`;
     files.set('/node_modules/' + name + entry, path.join(path.dirname(require.resolve(name + '/package.json')), entry));
