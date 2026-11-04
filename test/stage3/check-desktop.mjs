@@ -9,6 +9,13 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
+const testMode = ['--sprite-properties', '--target-panels-popout', '--stage-popout', '--stage-panel', '--internal']
+    .find(flag => process.argv.includes(flag));
+const usesSystemInput = testMode !== '--sprite-properties' && testMode !== '--stage-panel';
+if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
+    throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
+}
+
 const app = resolve(process.argv[2] || '/private/tmp/tw151-desktop23/TurboWarp-Plus-Backpack.app');
 const mime = 'application/x-turbowarp-editor-transfer';
 const itemName = 'Desktop native Backpack stack';
@@ -743,11 +750,11 @@ try {
         report.checks.push('Desktop enables both splitters by default and keeps undocking off');
     });
 
-    if (process.argv.includes('--sprite-properties')) await run('sprite', checkSpriteProperties);
-    else if (process.argv.includes('--target-panels-popout')) await run('target-panels', checkExternalTargetPanels);
-    else if (process.argv.includes('--stage-popout')) await run('stage-popout', checkStagePopout);
-    else if (process.argv.includes('--stage-panel')) await run('stage', checkStagePanel);
-    else if (process.argv.includes('--internal')) await run('internal', checkInternal);
+    if (testMode === '--sprite-properties') await run('sprite', checkSpriteProperties);
+    else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
+    else if (testMode === '--stage-popout') await run('stage-popout', checkStagePopout);
+    else if (testMode === '--stage-panel') await run('stage', checkStagePanel);
+    else if (testMode === '--internal') await run('internal', checkInternal);
     else await run(true, async ({editor, context, control}) => {
         const parent = (await control('windows')).find(window => window.kind === 'editor');
         await control('layout', parent.id);

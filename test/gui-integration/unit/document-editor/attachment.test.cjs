@@ -49,16 +49,23 @@ test('a host that attached nothing leaves nothing to dispose and logs nothing', 
     assert.deepEqual(f.errors, []);
 });
 
-test('the host receives the VM, the locale, the document and a way to reach Blockly', async () => {
+test('the host receives the VM, locale, document, Blockly and current translations', async () => {
     const disposals = [];
     const f = fixture(attaching(disposals));
     const vm = {};
-    const component = new f.Attachment({vm, locale: 'ja'});
+    const initialMessages = {example: '複製'};
+    const component = new f.Attachment({vm, locale: 'ja', messages: initialMessages});
     component.componentDidMount();
     assert.equal(f.contexts[0].vm, vm);
     assert.equal(f.contexts[0].locale, 'ja');
     assert.equal(typeof f.contexts[0].getBlockly, 'function');
     assert.equal(await f.contexts[0].getBlockly(), f.blockly);
+    assert.equal(f.contexts[0].getMessages(), initialMessages);
+    const nextMessages = {example: 'duplicate'};
+    component.props = {vm, locale: 'en', messages: nextMessages};
+    component.componentDidUpdate({vm});
+    assert.equal(f.contexts.length, 1);
+    assert.equal(f.contexts[0].getMessages(), nextMessages);
     assert.deepEqual(f.errors, []);
 });
 

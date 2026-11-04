@@ -34,6 +34,7 @@ export const createWorkspaceAttachment = ({LazyScratchBlocks, log}) => {
                     vm: this.props.vm,
                     locale: this.props.locale,
                     document,
+                    getMessages: () => this.props.messages,
                     getBlockly: () => LazyScratchBlocks.load().then(() => LazyScratchBlocks.get())
                 }, hostIntegration());
             } catch (error) {
@@ -54,8 +55,12 @@ export const createWorkspaceAttachment = ({LazyScratchBlocks, log}) => {
             return null;
         }
     }
-    PlusWorkspaceAttachment.propTypes = {vm: PropTypes.shape({}).isRequired, locale: PropTypes.string};
-    const mapStateToProps = state => ({vm: state.scratchGui.vm, locale: state.locales.locale});
+    PlusWorkspaceAttachment.propTypes = {
+        vm: PropTypes.shape({}).isRequired, locale: PropTypes.string, messages: PropTypes.objectOf(PropTypes.string)
+    };
+    const mapStateToProps = state => ({
+        vm: state.scratchGui.vm, locale: state.locales.locale, messages: state.locales.messages
+    });
     return connect(mapStateToProps)(PlusWorkspaceAttachment);
 };
 export default createWorkspaceAttachment;

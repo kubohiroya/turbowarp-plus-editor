@@ -20,12 +20,13 @@ Editor作業ツリーから実行する。macOSのGUIセッションとOSマウ�
 ```sh
 node --test test/stage2/contracts.test.ts
 node test/stage2/build.mjs
-node test/stage2/check-browser.mjs
+TW_PLUS_NATIVE_INPUT=1 node test/stage2/check-browser.mjs
 
 # #155 のローカルブランチにある再パッケージ用スクリプトを利用
 python3 ../gui-155/scripts/issue-155-code-popout/prepare-desktop.py \
   /private/tmp/tw151-stage2/TurboWarp.app --build /private/tmp/tw151-stage2/build
-TW151_DESKTOP_APP=/private/tmp/tw151-stage2/TurboWarp.app node test/stage2/check-browser.mjs
+TW_PLUS_NATIVE_INPUT=1 TW151_DESKTOP_APP=/private/tmp/tw151-stage2/TurboWarp.app \
+  node test/stage2/check-browser.mjs
 ```
 
 Desktopでは公式TurboWarp Desktop 1.17.1のアドホック署名したローカルコピーを用い、#155の製品のmain・preload・許可経路を通す。rendererのGUIエントリーにはこの試験パネルを載せる。通常のDesktopエディターや段階3のバックパックがこのビルドに組み込まれたことを示す試験とは区別する。
