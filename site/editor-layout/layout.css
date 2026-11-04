@@ -44,3 +44,24 @@
     margin-inline-start: auto;
     padding-inline-end: 0.25rem;
 }
+
+.basic-panel {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+}
+
+.basic-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+    flex: none;
+    padding: 0.25rem 0.5rem;
+    color: var(--text-primary);
+}
+
+.basic-panel-heading h2 {
+    margin: 0;
+    font-size: 0.875rem;
+}

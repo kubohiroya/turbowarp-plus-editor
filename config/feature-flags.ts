@@ -2,6 +2,7 @@
 export function readStartupFeatureFlags({
     twPlusExtensionLoader: loader = null,
     twPlusProjectTools: projectTools = null,
+    twPlusSpriteProperties: spriteProperties = null,
     twPlusWindowLayout: layout = null,
     twPlusBackpackPopout: backpack = null,
     twPlusInternalWindows: internal = null
@@ -9,6 +10,7 @@ export function readStartupFeatureFlags({
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
         projectTools: projectTools === null || projectTools === '1',
+        spriteProperties: spriteProperties === '1',
         windowLayout: layout === '1',
         backpackPopout: layout === '1' && backpack === '1',
         internalWindows: layout === '1' && internal === '1'

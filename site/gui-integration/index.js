@@ -1,6 +1,7 @@
 import React from 'react';
 import StageControlsView from '../stage-controls/view.jsx';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.js';
+import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 
 export * from './lib/tw-plus-integration-points.js';
 export {renderFileMenu, loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.js';
@@ -20,5 +21,10 @@ export const renderStageControls = ({vm, isSmall}) => {
 };
 
 export {EditorLayout} from '../editor-layout/index.jsx';
+
+/* global __TW_SPRITE_PROPERTIES_PANEL__ */
+const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
+export const SpritePropertiesPanel = readWebStartupFeatureFlags(startupSearch).spriteProperties &&
+    typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
 
 export {BackpackSurface} from '../editor-backpack/index.jsx';

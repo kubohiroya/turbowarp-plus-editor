@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {buildFamilyNotices, requiredFamilyPackages} from '../scripts/site/family-notices.ts';
-import {root} from '../scripts/site/source.ts';
+import {readPins, root} from '../scripts/site/source.ts';
 
 const vmRevision = 'c'.repeat(40);
 const installed = [
@@ -97,10 +97,22 @@ test('this repository records every family package it supplies, dev entries incl
                     '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog'],
                 warn: () => {}});
         const index = JSON.parse(await fs.readFile(path.join(output, built.index), 'utf8'));
+        const pins = await readPins();
+        const lock = JSON.parse(await fs.readFile(path.join(root, 'package-lock.json'), 'utf8'));
         for (const entry of index.packages) {
-            assert.ok((entry.source.npm || entry.source.revision) && entry.source.repository, `Missing source: ${entry.package}`);
+            const installed = lock.packages[`node_modules/${entry.package}`];
+            if (installed?.resolved?.startsWith('file:vendor/')) {
+                const tarball = `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`;
+                assert.equal(entry.license, 'GPL-3.0-or-later');
+                assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity});
+                assert.deepEqual(await fs.readFile(path.join(output, tarball)),
+                    await fs.readFile(path.join(root, installed.resolved.slice('file:'.length))));
+            } else {
+                assert.ok((entry.source.npm || entry.source.revision) && entry.source.repository, `Missing source: ${entry.package}`);
+            }
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
+        assert.ok(built.packages.includes(`${pins.spritePropertiesPackage}@${pins.spritePropertiesVersion}`));
         const layout = index.packages.find(entry => entry.package === '@kubohiroya/turbowarp-editor-layout');
         assert.equal(layout.source.npm, null);
         assert.equal(layout.source.repository, 'https://github.com/kubohiroya/turbowarp-plus-editor');

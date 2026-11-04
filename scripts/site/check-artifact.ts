@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {readPins, sha} from './source.ts';
@@ -29,7 +30,16 @@ for (const name of requiredFamilyPackages) {
     assert.ok(family.packages.some(entry => entry.package === name), `Bundled family package without notices: ${name}`);
 }
 for (const entry of family.packages) {
-    assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
+    if (entry.package === pins.spritePropertiesPackage) {
+        const tarball = `notices/turbowarp-editor-sprite-properties@${pins.spritePropertiesVersion}/source.tgz`;
+        const bytes = await fs.readFile(path.join(directory, tarball));
+        assert.equal(entry.version, pins.spritePropertiesVersion);
+        assert.deepEqual(entry.source, {npm: null, tarball, integrity: pins.spritePropertiesIntegrity});
+        assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, pins.spritePropertiesIntegrity,
+            'Sprite properties source archive differs from the pin');
+    } else {
+        assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
+    }
     for (const file of entry.files) assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing notice: ${file}`);
 }
 if (pins.loaderRepository) {

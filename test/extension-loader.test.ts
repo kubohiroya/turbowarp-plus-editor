@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'windowLayout', 'backpackPopout', 'internalWindows']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'spriteProperties', 'windowLayout', 'backpackPopout', 'internalWindows']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, windowLayout: true, backpackPopout: false, internalWindows: false});
+        {extensionLoader: false, projectTools: true, spriteProperties: false, windowLayout: true, backpackPopout: false, internalWindows: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -149,4 +149,12 @@ test('in-app windows require flexible layout and are independent of Backpack pop
     const flags = readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusInternalWindows=1');
     assert.equal(flags.internalWindows, true);
     assert.equal(flags.backpackPopout, false);
+});
+
+test('sprite properties requires a separate explicit startup opt-in', () => {
+    for (const search of ['', '?twPlusSpriteProperties=0', '?twPlusSpriteProperties=', '?twPlusSpriteProperties=true']) {
+        assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
+    }
+    assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
+        {extensionLoader: true, projectTools: true, spriteProperties: true, windowLayout: false, backpackPopout: false, internalWindows: false});
 });
