@@ -38,12 +38,14 @@ async function run (enabled, test) {
     delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;
     delete processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES;
     delete processEnv.TW_PLUS_DESKTOP_STAGE_PANEL;
+    delete processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        if (enabled === 'internal' || enabled === 'sprite' || enabled === 'stage') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        if (enabled === 'internal' || enabled === 'sprite' || enabled === 'stage' || enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
         else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'sprite') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
-        if (enabled === 'stage') processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
+        if (enabled === 'stage' || enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
+        if (enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT = '1';
     }
     const application = spawn(join(app, 'Contents/MacOS/TurboWarp'), processArgs, {env: processEnv});
     const stopped = once(application, 'close');
@@ -78,7 +80,7 @@ async function run (enabled, test) {
         report.electron = await editor.evaluate(() => navigator.userAgent.match(/Electron\/([\d.]+)/)?.[1]);
         editor.on('pageerror', error => report.errors.push(error.message));
         await editor.waitForFunction(() => window.vm?.editingTarget?.isOriginal &&
-            window.ScratchBlocks?.getMainWorkspace());
+            window.ScratchBlocks?.getMainWorkspace(), undefined, {polling: 100, timeout: 20000});
         assert.equal(await editor.evaluate(() => typeof EditorPreload.getInitialFile), 'function');
         await test({editor, context, control});
     } catch (error) {
@@ -111,8 +113,8 @@ async function screenPoint (control, kind, locator, horizontal = 0.5) {
     ];
 }
 
-async function click (control, kind, locator) {
-    const point = await screenPoint(control, kind, locator);
+async function click (control, kind, locator, horizontal = 0.5) {
+    const point = await screenPoint(control, kind, locator, horizontal);
     await launcher('python3', [mousePath, '--click', ...point.map(String)]);
 }
 
@@ -333,6 +335,161 @@ async function checkStagePanel ({editor, control}) {
     report.checks.push('Desktop retains the live stage canvas when moving between the dock and the in-app window');
 }
 
+async function checkStagePopout ({editor, context, control}) {
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    await control('layout', parent.id);
+    await control('focus', parent.id);
+    const canvas = editor.locator('[data-gui-stage] canvas').first();
+    const stageAction = editor.locator('[class*="basic-panel-overlay-action_"]').getByRole('button', {
+        name: /^(Open in another window|別画面で開く)$/
+    });
+    await canvas.evaluate(node => {
+        window.stage155 = {vm, loop: vm.runtime.frameLoop, renderer: vm.renderer, canvas: node, lost: 0, input: [], frames: 0};
+        node.addEventListener('webglcontextlost', () => window.stage155.lost++);
+        const post = vm.postIOData.bind(vm);
+        vm.postIOData = (device, data) => {
+            if (device === 'keyboard' || device === 'mouse') window.stage155.input.push({device, data});
+            return post(device, data);
+        };
+        const draw = vm.renderer.draw.bind(vm.renderer);
+        vm.renderer.draw = (...args) => {
+            window.stage155.frames++;
+            return draw(...args);
+        };
+        vm.editingTarget.setXY(-110, 30);
+    });
+    await editor.getByRole('button', {name: modeLabel}).click();
+
+    async function open() {
+        await control('focus', parent.id);
+        await stageAction.focus();
+        await editor.keyboard.press('Enter');
+        const child = await until(() => context.pages().find(page =>
+            page.url().startsWith('tw-editor://./gui/stage-popout.html#')), 'Stage BrowserWindow');
+        child.on('pageerror', error => report.errors.push(error.message));
+        const screenCanvas = child.locator('[data-gui-stage] canvas').first();
+        await screenCanvas.waitFor();
+        await editor.waitForFunction(() => stage155.canvas.ownerDocument !== document &&
+            stage155.canvas === vm.renderer.canvas && stage155.canvas.isConnected);
+        assert.equal(await canvas.count(), 0);
+        assert.equal(await child.evaluate(() => !window.opener && !window.vm &&
+            typeof require === 'undefined' && typeof window.EditorPreload === 'undefined'), true);
+        return {child, screenCanvas};
+    }
+
+    const {child, screenCanvas} = await open();
+    const native = (await control('windows')).find(window => window.kind === 'stage');
+    assert.deepEqual(native.preferences, {sandbox: true, contextIsolation: true, nodeIntegration: false, preload: false});
+    assert.equal(await child.evaluate(() => window.open('about:blank') === null), true);
+    assert.equal(await editor.evaluate(() => window.open('about:blank', 'tw-plus-stage-invalid') === null), true);
+    assert.equal(await editor.evaluate(() =>
+        window.open('stage-popout.html', `tw-plus-stage-${crypto.randomUUID()}`) === null), true);
+    await control('layout', native.id);
+    await control('focus', native.id);
+    await child.waitForFunction(() => document.hasFocus());
+    const first = await screenCanvas.screenshot();
+    const before = await editor.evaluate(() => stage155.frames);
+    await editor.evaluate(() => vm.editingTarget.setXY(110, -30));
+    await editor.waitForFunction(frame => stage155.frames > frame, before);
+    const second = await screenCanvas.screenshot();
+    assert.notDeepEqual(second, first);
+    assert.equal(await editor.evaluate(() => stage155.vm === vm && stage155.loop === vm.runtime.frameLoop && stage155.loop.running &&
+        stage155.renderer === vm.renderer && !stage155.lost), true);
+
+    const [width, height] = await editor.evaluate(() => vm.renderer.getNativeSize());
+    async function mouseAt(relativeX, relativeY) {
+        const bounds = (await control('windows')).find(window => window.kind === 'stage');
+        const box = await screenCanvas.boundingBox();
+        await launcher('python3', [mousePath, '--click', String(bounds.content.x + (box.x + box.width * relativeX) * bounds.zoom),
+            String(bounds.content.y + (box.y + box.height * relativeY) * bounds.zoom)]);
+        const expected = {x: (relativeX - 0.5) * width, y: (0.5 - relativeY) * height};
+        await editor.waitForFunction(({x, y}) => {
+            const mouse = vm.runtime.ioDevices.mouse;
+            return Math.abs(mouse.getScratchX() - x) <= 3 && Math.abs(mouse.getScratchY() - y) <= 3;
+        }, expected);
+    }
+    await mouseAt(0.75, 0.25);
+    const box = await screenCanvas.boundingBox();
+    await control('layout-tall', native.id);
+    await until(async () => Math.abs((await screenCanvas.boundingBox()).width - box.width) > 8, 'Stage resizes');
+    const tall = await screenCanvas.boundingBox();
+    assert.ok(Math.abs(tall.width / tall.height - width / height) < 0.015);
+    await mouseAt(0.25, 0.75);
+    const resized = await screenCanvas.screenshot();
+    await editor.evaluate(() => vm.editingTarget.setXY(-110, 30));
+    await until(async () => !(await screenCanvas.screenshot()).equals(resized), 'resized stage pixels update');
+
+    const key = direction => launcher('python3', [mousePath, '--key-' + direction, '0']);
+    await key('down');
+    try {
+        await editor.waitForFunction(() => vm.runtime.ioDevices.keyboard.getKeyIsDown('a'));
+    } finally {
+        await key('up');
+    }
+    await editor.waitForFunction(() => !vm.runtime.ioDevices.keyboard.getKeyIsDown('a'));
+    report.checks.push('One VM, renderer and WebGL canvas; live pixels changed in the child, native mouse and keyboard reached the VM after resize');
+
+    const returnButton = editor.getByRole('button', {name: /^(Return here|ここに戻す)$/});
+    await Promise.all([child.waitForEvent('close'), returnButton.click()]);
+    await canvas.waitFor();
+    assert.ok(await canvas.evaluate(node => node === stage155.canvas && !stage155.lost));
+
+    const secondOpen = await open();
+    const secondNative = (await control('windows')).find(window => window.kind === 'stage');
+    await control('focus', secondNative.id);
+    await secondOpen.child.waitForFunction(() => document.hasFocus());
+    await key('down');
+    try {
+        await editor.waitForFunction(() => vm.runtime.ioDevices.keyboard.getKeyIsDown('a'));
+        await Promise.all([secondOpen.child.waitForEvent('close'), control('close', secondNative.id)]);
+        await editor.waitForFunction(() => !vm.runtime.ioDevices.keyboard.getKeyIsDown('a'));
+    } finally {
+        await key('up');
+    }
+    await canvas.waitFor();
+    assert.ok(await canvas.evaluate(node => node === stage155.canvas && stage155.vm === vm &&
+        stage155.renderer === vm.renderer && !stage155.lost));
+    assert.equal((await control('windows')).length, 1);
+    await control('focus', parent.id);
+    await editor.waitForFunction(() => document.hasFocus());
+    await canvas.scrollIntoViewIfNeeded();
+    const lastInput = await editor.evaluate(() => stage155.input.length);
+    await click(control, 'editor', canvas, 0.45);
+    try {
+        await editor.waitForFunction(({lastInput, width}) => {
+            const mouse = vm.runtime.ioDevices.mouse;
+            return stage155.input.slice(lastInput).some(({device, data}) => device === 'mouse' && data.isDown) &&
+                Math.abs(mouse.getScratchX() + width * 0.05) <= 3 && Math.abs(mouse.getScratchY()) <= 3;
+        }, {lastInput, width});
+    } catch (error) {
+        report.dockInput = await canvas.evaluate((node, from) => {
+            const rect = node.getBoundingClientRect();
+            const hit = document.elementFromPoint(rect.x + rect.width * 0.45, rect.y + rect.height / 2);
+            const mouse = vm.runtime.ioDevices.mouse;
+            return {box: rect.toJSON(), hit: hit?.outerHTML.slice(0, 250),
+                mouse: [mouse.getScratchX(), mouse.getScratchY()], events: stage155.input.slice(from)};
+        }, lastInput);
+        throw error;
+    }
+    const redocked = await canvas.screenshot();
+    const frame = await editor.evaluate(() => stage155.frames);
+    await editor.evaluate(() => vm.editingTarget.setXY(0, 0));
+    try {
+        await editor.waitForFunction(previous => stage155.frames > previous, frame);
+        await until(async () => !(await canvas.screenshot()).equals(redocked), 'redocked stage pixels update');
+    } catch (error) {
+        await writeFile('/private/tmp/tw155-stage-docked-before.png', redocked);
+        await canvas.screenshot({path: '/private/tmp/tw155-stage-docked-after.png'});
+        report.redock = await editor.evaluate(() => ({
+            frames: stage155.frames, xy: [vm.editingTarget.x, vm.editingTarget.y],
+            width: stage155.canvas.width, height: stage155.canvas.height, visibility: document.visibilityState,
+            glLost: vm.renderer._gl.isContextLost()
+        }));
+        throw error;
+    }
+    report.checks.push('Dock button and native BrowserWindow close returned the same live canvas; held key released and rendering continued');
+}
+
 try {
     await run(false, async ({editor, control}) => {
         assert.equal(await editor.getByRole('button', {name: modeLabel}).count(), 0);
@@ -340,11 +497,13 @@ try {
         assert.equal(await editor.getByRole('region', {name: spritePropertiesLabel}).count(), 0);
         assert.equal(await editor.evaluate(() =>
             window.open('about:blank', `tw-plus-backpack-${crypto.randomUUID()}`) === null), true);
+        assert.equal(await editor.evaluate(() => window.open('about:blank', `tw-plus-stage-${crypto.randomUUID()}`) === null), true);
         assert.equal((await control('windows')).length, 1);
         report.checks.push('Desktop startup defaults OFF and denies the reserved native window');
     });
 
     if (process.argv.includes('--sprite-properties')) await run('sprite', checkSpriteProperties);
+    else if (process.argv.includes('--stage-popout')) await run('stage-popout', checkStagePopout);
     else if (process.argv.includes('--stage-panel')) await run('stage', checkStagePanel);
     else if (process.argv.includes('--internal')) await run('internal', checkInternal);
     else await run(true, async ({editor, context, control}) => {
@@ -359,6 +518,10 @@ try {
         const ids = await seedBackpack(editor);
         await observeNative(editor);
         await click(control, 'editor', mode);
+        if (await mode.getAttribute('aria-pressed') !== 'true') {
+            await control('focus', parent.id);
+            await click(control, 'editor', mode);
+        }
         await undock.waitFor();
         assert.equal(await mode.getAttribute('aria-pressed'), 'true');
         await click(control, 'editor', header);

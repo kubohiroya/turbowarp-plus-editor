@@ -13,7 +13,8 @@ export function createBrowserHost(
     parent: Window,
     show: (url: URL, ticket: string) => Window | null,
     page = 'code-popout.html',
-    detachOpener = false
+    detachOpener = false,
+    synchronousPageHide = false
 ): SurfaceHost<OpenRequest, MountedSurface> {
     return {
         open({timeoutMs = 5000, skipHandshake = false} = {}): SurfaceConnection<MountedSurface> | null {
@@ -40,6 +41,7 @@ export function createBrowserHost(
                 closed = true;
                 parent.removeEventListener('message', handshake);
                 parent.removeEventListener('pagehide', disconnect);
+                if (synchronousPageHide) connectedDocument?.defaultView?.removeEventListener('pagehide', disconnect);
                 parent.clearInterval(watcher);
                 parent.clearTimeout(deadline);
                 channel.port1.removeEventListener('message', handlePort);
@@ -86,6 +88,7 @@ export function createBrowserHost(
                         return;
                     }
                 }
+                if (synchronousPageHide) connectedDocument.defaultView?.addEventListener('pagehide', disconnect, {once: true});
                 mounted = true;
                 parent.clearTimeout(deadline);
                 resolve({mount, port: channel.port1});

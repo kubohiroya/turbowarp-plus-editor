@@ -107,6 +107,11 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     chunks: ['backpack-popout'], filename: 'backpack-popout.html',
     template: path.join(backpackSurface, 'backpack-popout.html')
 }));
+config.entry['stage-popout'] = config.entry['backpack-popout'];
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: ['stage-popout'], filename: 'stage-popout.html',
+    template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
+}));
 config.module.rules.push({test: /\.ts$/, include: [
     backpackSurface, editorEntries.surfaces, editorEntries.transfer
 ], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
