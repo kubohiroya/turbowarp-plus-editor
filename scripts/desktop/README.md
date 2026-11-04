@@ -23,7 +23,8 @@ CI=1 NODE_ENV=production ROOT= E2E_GUI_ROOT="$PWD" \
 # Editor 作業ツリー
 python3 scripts/desktop/prepare-app.py /private/tmp/tw151-desktop23/TurboWarp-Plus-Backpack-verified.app \
   --build /private/tmp/tw151-desktop23-build --test-control
-node test/stage3/check-desktop.mjs /private/tmp/tw151-desktop23/TurboWarp-Plus-Backpack-verified.app
+TW_PLUS_NATIVE_INPUT=1 \
+  node test/stage3/check-desktop.mjs /private/tmp/tw151-desktop23/TurboWarp-Plus-Backpack-verified.app
 ```
 
 再パッケージ時は元の ASAR の整合性とコピーのアドホック署名を検証する。テスト時は別プロファイルを使い、CoreGraphics の HID で ⚓・バックパックの展開・別窓を開く操作・別窓からのドラッグ・ドック操作を行う。テスト専用制御はウィンドウの配置・フォーカス・観測・終了だけを受け付け、`--test-control` を指定したコピーに限って組み込まれる。CDP は実ストレージへの試験データ登録、選択切り替え、DOMとVMの検証に使う。
