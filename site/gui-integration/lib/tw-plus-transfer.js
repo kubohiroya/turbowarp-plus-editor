@@ -1,9 +1,17 @@
 import React from 'react';
 import styles from './tw-stage-transfer-menu.css';
+import {attachBackpackDrop} from '../../editor-backpack/index.js';
 
 // Optional transfer sockets. With no host, the GUI keeps its own menus and clipboard.
-export const attachHostScriptTransfer = (context, integration) =>
-    integration?.scriptTransfer?.attach?.(context) || null;
+export const attachHostScriptTransfer = (context, integration) => {
+    const existing = integration?.scriptTransfer?.attach?.(context) || null;
+    const backpack = attachBackpackDrop(context);
+    if (!backpack) return existing;
+    return {dispose() {
+        backpack.dispose();
+        existing?.dispose();
+    }};
+};
 
 const stageTransferMenuId = 'tw-plus-stage-transfer';
 

@@ -1,0 +1,8 @@
+{
+  "name": "@kubohiroya/turbowarp-editor-backpack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./index.jsx",
+  "peerDependencies": {"react": ">=16.8", "react-dom": ">=16.8"}
+}

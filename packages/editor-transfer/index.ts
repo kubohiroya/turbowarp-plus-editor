@@ -16,7 +16,7 @@ export interface TransferReference {
 export type TransferResult = 'applied' | 'rejected' | 'cancelled' | 'failed';
 
 type Reader<T> = (signal: AbortSignal) => T | Promise<T>;
-type Apply<T> = (target: Readonly<DropTarget>, payload: T) => boolean;
+type Apply<T> = (target: Readonly<DropTarget>, payload: T) => boolean | Promise<boolean>;
 
 function isReference(value: unknown): value is TransferReference {
     if (!value || typeof value !== 'object') return false;
@@ -91,7 +91,9 @@ export function createTransferSession<T>(session: string, options: {
             const payload = await Promise.race([entry.read(controller.signal), cancellation]);
             if (payload === aborted || controller.signal.aborted) return 'cancelled';
             if (entry.expires <= now()) return 'rejected';
-            return apply(target, payload) ? 'applied' : 'rejected';
+            // Cancellation ends at submission. The host owns an accepted async commit.
+            reading.delete(ref.id);
+            return await apply(target, payload) ? 'applied' : 'rejected';
         } catch {
             return controller.signal.aborted ? 'cancelled' : 'failed';
         } finally {

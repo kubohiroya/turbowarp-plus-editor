@@ -71,6 +71,24 @@ test('transfer pins the target before async read and claims a token once', async
     assert.deepEqual(seen, ['old', 'copy']);
 });
 
+test('closing a transfer does not cancel a submitted async commit', async () => {
+    const session = createTransferSession<string>('session');
+    const target = {session: 'session', id: 'a'};
+    const started = deferred<string>();
+    const commit = deferred<boolean>();
+    const ref = JSON.stringify(session.offer('code', () => 'copy'));
+    const apply = (_target: Readonly<typeof target>, payload: string) => {
+        started.resolve(payload);
+        return commit.promise;
+    };
+    const result = session.receive(ref, target, apply);
+    assert.equal(await started.promise, 'copy');
+    assert.equal(await session.receive(ref, target, apply), 'rejected');
+    session.close();
+    commit.resolve(true);
+    assert.equal(await result, 'applied');
+});
+
 test('transfer rejects invalid, wrong-session, expired and no-longer-valid destinations', async () => {
     let clock = 10;
     const session = createTransferSession('session', {now: () => clock, lifetimeMs: 20});

@@ -1,6 +1,6 @@
 import {createSurface} from '../../packages/editor-surfaces/index.ts';
 import {createTransferSession, transferMime} from '../../packages/editor-transfer/index.ts';
-import {createBrowserHost} from './browser-host.ts';
+import {createBrowserHost} from '../../site/editor-backpack/browser-host.ts';
 
 const sessionId = crypto.randomUUID();
 const transfer = createTransferSession<string>(sessionId);

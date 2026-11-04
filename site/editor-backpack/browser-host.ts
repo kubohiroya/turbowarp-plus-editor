@@ -7,6 +7,7 @@ export interface MountedSurface {
 export interface OpenRequest {
     timeoutMs?: number;
     skipHandshake?: boolean;
+    page?: string;
 }
 
 export function createBrowserHost(
@@ -14,9 +15,9 @@ export function createBrowserHost(
     show: (url: URL, ticket: string) => Window | null
 ): SurfaceHost<OpenRequest, MountedSurface> {
     return {
-        open({timeoutMs = 5000, skipHandshake = false}): SurfaceConnection<MountedSurface> | null {
+        open({timeoutMs = 5000, skipHandshake = false, page = 'code-popout.html'}): SurfaceConnection<MountedSurface> | null {
             const ticket = crypto.randomUUID();
-            const url = new URL('code-popout.html', parent.location.href);
+            const url = new URL(page, parent.location.href);
             url.hash = ticket;
             const child = show(url, ticket);
             if (!child) return null;

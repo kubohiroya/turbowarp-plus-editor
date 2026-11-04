@@ -69,7 +69,20 @@ config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(trans
 const layoutEntry = rootRequire.resolve('@kubohiroya/turbowarp-editor-layout');
 config.resolve.alias['@kubohiroya/turbowarp-editor-layout$'] = layoutEntry;
 const siteSource = path.join(__dirname, '..', '..', 'site');
-config.module.rules.push({test: /\.jsx?$/, include: [siteSource, transferSource, path.dirname(layoutEntry)],
+const packages = path.join(__dirname, '..', '..', 'packages');
+const backpackSurface = path.join(siteSource, 'editor-backpack');
+config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: ['backpack-popout'], filename: 'backpack-popout.html',
+    template: path.join(backpackSurface, 'backpack-popout.html')
+}));
+config.module.rules.push({test: /\.ts$/, include: [
+    backpackSurface, path.join(packages, 'editor-surfaces'), path.join(packages, 'editor-transfer')
+], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
+config.module.rules.push({test: /\.jsx?$/, include: [
+    siteSource, transferSource, path.dirname(layoutEntry),
+    path.join(packages, 'editor-backpack'), path.join(packages, 'editor-windows')
+],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}],
