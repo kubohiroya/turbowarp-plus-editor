@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>標準TurboWarpから増える機能 — TurboWarp-Plus-Editor</title>
-<meta name="description" content="フォームでのブロック編集、拡張の確認と保存、文書編集、転送機能を実画面と図で紹介します。">
+<meta name="description" content="フォームでのブロック編集、拡張の確認と保存、文書編集、転送、Project PropertiesとProject Diagnosticsを実画面と図で紹介します。">
 <link rel="stylesheet" href="guide.css">
 </head>
 <body>
 <header><a href="../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
-<p class="eyebrow">機能ガイド · 2026年11月3日更新</p>
+<p class="eyebrow">機能ガイド · 2026年11月4日更新</p>
 <h1>標準のTurboWarpから<br>何が増える？</h1>
-<p class="lead">ブロックに入れる複雑なデータをフォームで編集する。作品で使う機能拡張の内容・実行方法・保存方法を確認する。対応する作品では、文書やスクリプトも扱える。いつものエディターを土台に、これらの操作を追加しています。</p>
+<p class="lead">ブロックに入れる複雑なデータをフォームで編集する。作品で使う機能拡張の内容・実行方法・保存方法を確認する。作品の概要や作者を保存し、読み込みの診断を見る。対応する作品では、文書やスクリプトも扱えます。</p>
 <p>比較対象は <a href="https://turbowarp.org/editor">TurboWarpの標準エディター</a>です。Scratchとの比較ではありません。高速実行、アドオン、カスタム拡張のURL読込、標準Packagerなど、TurboWarpが元から備える機能は追加機能に数えていません。</p>
-<aside><strong>画面の読み方</strong>：掲載画像は、説明用拡張を実際に読み込んだローカル統合Editorの撮影です。モック画面ではありません。「Block editor demo」はこのリポジトリのサンプルで、公開カタログに掲載されているという意味ではありません。拡張が付ける英語の項目名は、日本語UIでもそのまま表示されます。撮影条件は<a href="images/capture.json">記録ファイル</a>を参照してください。</aside>
+<aside><strong>画面の読み方</strong>：掲載画像は、実際のEditorを操作して撮影しています。フォームの「Block editor demo」は説明用サンプルで、公開カタログに掲載されているという意味ではありません。作品情報と診断の画像は公開Editorの日本語表示です。作者名・連絡先は架空の例、診断用の拡張はテスト専用です。拡張が付ける英語の項目名は、日本語UIでもそのまま表示されます。撮影版と条件は<a href="images/capture.json">記録ファイル</a>を参照してください。</aside>
 <nav aria-label="目次"><ol>
 <li><a href="#comparison">追加機能の一覧と有効になる条件</a></li>
 <li><a href="#forms">ブロックのデータをフォームで編集</a></li>
@@ -23,11 +23,13 @@
 <li><a href="#transfer">スクリプトとステージを別作品へ転送</a></li>
 <li><a href="#runtime">拡張が提供するプレビュー・ステージ操作</a></li>
 <li><a href="#packager">Plus作品をHTMLとして配布</a></li>
+<li><a href="#project-properties">Project Properties：作品情報を編集・保存</a></li>
+<li><a href="#project-diagnostics">Project Diagnostics：検証・許可・読み込みの記録</a></li>
 <li><a href="#start">目的別の始め方と保存時の注意</a></li>
 </ol></nav>
 
 <section id="comparison"><h2>1. 追加機能の一覧</h2>
-<p>どの機能も<strong>通常の起動URLのまま</strong>使えます。機能ごとに有効・無効を切り替えるURLの設定はありません。フォームや文書の操作は、その機能を登録した拡張・作品がある場合にだけ現れます。対応する拡張を使わない作品は、標準TurboWarpと同じ見た目です。標準ブロックすべてに専用フォームが付くわけではありません。</p>
+<p>このガイドの機能は<strong>通常の起動URLのまま</strong>使えます。作品情報と診断は追加拡張なしで利用できます。フォームや文書の操作は、その機能を登録した拡張・作品がある場合にだけ現れます。標準ブロックすべてに専用フォームが付くわけではありません。作品情報とPlusローダーの無効化設定は<a href="#start">目的別の案内</a>を参照してください。</p>
 <div class="table-scroll"><table><caption>標準TurboWarpとPlus Editorの違い</caption><thead><tr><th>操作</th><th>標準TurboWarp</th><th>このEditorで増えること</th><th>利用条件</th></tr></thead><tbody>
 <tr><th>ブロックの入力</th><td>ブロック上の入力欄・メニュー</td><td>拡張が定義したフォーム、入力検証、入れ子の一括編集</td><td><span class="badge">通常起動</span> 対応拡張</td></tr>
 <tr><th>拡張の追加</th><td>標準一覧・カスタム拡張</td><td>TurboWarp Plusカタログ、依存拡張の選択、読込・保存方法の指定。通信の失敗なら同じ選択のままやり直せる</td><td><span class="badge">通常起動</span> 追加設定なし</td></tr>
@@ -37,6 +39,8 @@
 <tr><th>スクリプト・ステージの転送</th><td>標準のバックパック等</td><td>.blocks3 / .stage3、ウィンドウ間コピー・貼り付け</td><td><span class="badge">通常起動</span> 追加設定なし</td></tr>
 <tr><th>編集プレビュー・ステージ操作</th><td>標準の実行・停止・表示操作</td><td>拡張が登録する編集プレビュー、操作ボタン、操作ドックの接続</td><td><span class="badge">作品依存</span> 対応拡張が提供する場合</td></tr>
 <tr><th>単一HTMLの出力</th><td>標準Packager</td><td>Plus形式の拡張コードと実行条件を引き継ぐ出力経路</td><td><span class="badge">通常起動</span> Plus形式の作品</td></tr>
+<tr><th>作品情報の編集</th><td>作品タイトルの編集</td><td>Project Propertiesで概要・作者・連絡先も編集し、日時とともにSB3へ保存。作者と連絡先の入力履歴各5件</td><td><span class="badge">通常起動</span> 追加拡張なし</td></tr>
+<tr><th>読み込みの診断</th><td>読み込み時の確認・エラー表示</td><td>Project Diagnosticsで検証・実行許可・読み込み・再試行・失敗の記録を確認・コピー</td><td><span class="badge">通常起動</span> Plus拡張の詳細はLoaderが報告する場合</td></tr>
 </tbody></table></div></section>
 
 <section id="forms"><h2>2. ブロックのデータをフォームで編集する</h2>
@@ -111,15 +115,44 @@
 <p>外部依存がない作品はオフラインで動作します。外部API・画像・モデル等の資産を自動的に収集する機能ではありません。詳細は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-loader-integration.md">ローダーとHTML出力の仕様</a>を参照してください。</p>
 </section>
 
-<section id="start"><h2>9. 目的に合わせて始める</h2>
+<section id="project-properties"><h2>9. Project Properties：作品情報を編集・保存する <span class="badge">通常起動</span></h2>
+<p>「ファイル」の最下部に「作品のプロパティ…」（英語では「Project Properties…」）と「作品の診断…」（「Project Diagnostics…」）があります。<a href="../editor.html?lang=ja">通常のEditor</a>で利用でき、URLへの機能設定や追加拡張は必要ありません。</p>
+<figure><a href="images/project-menu.png"><img src="images/project-menu.png" width="1440" height="1000" alt="公開Editorの日本語のファイルメニュー。最下部に作品のプロパティと作品の診断が並んでいる。" loading="lazy"></a><figcaption>作品情報と診断の共通の入口。以前の右上の「拡張の検証・許可」ボタンに代わり、Fileメニューから診断を開きます。</figcaption></figure>
+<ol><li>「ファイル」→「作品のプロパティ…」を開きます。</li><li>作品タイトル、複数行の作品概要、作者名、連絡先を入力します。作者名と連絡先は、履歴から選ぶことも新しく入力することもできます。</li><li>「適用」で現在の作品へ反映します。タイトルはエディター上部と同期します。「キャンセル」または閉じる操作では、作品も入力履歴も変更しません。</li><li>最後に「ファイル」からSB3を保存します。「適用」だけでは手元の作品ファイルは更新されません。</li></ol>
+<figure><a href="images/project-properties.png"><img src="images/project-properties.png" width="1440" height="1000" alt="作品のプロパティ画面。星空の物語というタイトル、概要とHTTPSリンク、サンプル作者、メール連絡先とリンク、作成日時・最終更新日時、適用とキャンセルが表示されている。" loading="lazy"></a><figcaption>架空の作品情報を適用し、SB3生成後に開き直した実画面。日時は表示専用で、連絡先と概要のリンクは入力欄の下に表示します。</figcaption></figure>
+<h3>作者名と連絡先：直近5件から選択、または新規入力</h3>
+<p>適用した空でない作者名・連絡先を、それぞれ新しい順に5件まで、このブラウザーに記憶します。同じ値を使うと履歴の先頭に移ります。候補を選んでから編集することもできます。今回の作者名と連絡先はSB3へ入りますが、履歴全体は入りません。ブラウザーの保存機能を利用できない場合は、Editorを開いている間だけ記憶します。</p>
+<p>連絡先のメールアドレスや<code>mailto:</code>はメール用リンクに、<code>https:</code>はWebリンクになります。メールリンクは利用環境のメールアプリ、Webリンクは別タブで開きます。作品概要はプレーンテキストとして入力し、プレビュー内のHTTPS URLをリンクとして開けます。</p>
+<h3>日時とSB3への保存</h3>
+<p>作成日時・最終更新日時は手入力する欄ではありません。新規作品の作成日時は初回の読み込み時に記録し、過去の作品で分からない日時は「未記録」と表示します。最終更新日時は、作品情報やブロックなどを変更して作品ファイルの生成に成功したときに更新します。閲覧や変更なしの再保存では更新しません。ブラウザー外のディスク書き込み完了を示す日時ではありません。</p>
+<div class="flow" role="img" aria-label="作品情報を入力して適用すると現在の作品へ反映。続けてSB3を保存すると情報と更新日時を作品ファイルに記録し、Plus Editorで開き直すと復元する。"><div>作品情報を入力<br><small>履歴選択・新規入力</small></div><span>→</span><div>適用<br><small>現在の作品へ反映</small></div><span>→</span><div>SB3を保存<br><small>情報・更新日時を記録</small></div><span>→</span><div>Plusで開き直す<br><small>タイトル・情報を復元</small></div></div>
+<p>この情報はPlus独自の作品情報としてSB3に保存します。作者名・連絡先は、SB3を共有すると受け取り手にも表示されます。標準Scratch/TurboWarpや作品情報を無効化したEditorで保存し直すと、独自情報が失われる可能性があるため、元のSB3を保持してください。保存仕様は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/project-tools.md">作品情報と診断の仕様</a>を参照してください。</p>
+</section>
+
+<section id="project-diagnostics"><h2>10. Project Diagnostics：検証・許可・読み込みの記録を見る <span class="badge">通常起動</span></h2>
+<p>「ファイル」→「作品の診断…」を開くと、作品を開いた際の結果や、Plus拡張の取得元・実行モード・SHA-256、内容の検証・実行許可・読み込み・再試行・失敗を確認できます。表示するのはLoaderが実際に報告した記録です。作品中のすべてのバグやブロックの正しさを検査する機能ではありません。</p>
+<figure><a href="images/project-diagnostics.png"><img src="images/project-diagnostics.png" width="1440" height="1000" alt="作品の診断画面。テスト専用拡張plusfixtureの取得元・実行モード・SHA-256と、内容を検証済み・実行を許可済みなどのイベントを表示している。" loading="lazy"></a><figcaption>説明用の拡張を含む作品を実際に開いた例。拡張名やイベントを押すと詳細を展開できます。記録を見る操作だけでは、作品や実行許可は変わりません。</figcaption></figure>
+<ol><li>上部の「読み込みの記録」で、確認したい回を選びます。最新5回を保持し、各回の最新50件のイベントを表示します。</li><li>拡張やイベントの行を展開し、取得元・検証結果・理由コード・再試行回数などを確認します。失敗した回も、次の作品を開いた後で選べます。</li><li>「診断をコピー」で、選んだ回の記録をコピーします。クリップボードへ書き込めない環境では、選択してコピーできるテキストを表示します。</li><li>「閉じる」またはEscapeでEditorへ戻ります。診断を開閉しても作品データは変わりません。</li></ol>
+<h3>失敗通知から、該当の診断を開く</h3>
+<p>読み込みに失敗したときは、画面下部の通知の「詳細ログを表示」から、その失敗の診断を開けます。通知だけを閉じても、保持範囲内の診断は残ります。通信が原因で再試行できる場合の操作は、拡張の確認画面や中央の再試行表示で行います。</p>
+<figure><a href="images/project-diagnostics-failure.png"><img src="images/project-diagnostics-failure.png" width="1440" height="1000" alt="ハッシュが一致しないテスト作品の診断。読み込み失敗の記録と、読み込みを拒否したイベントの理由コードの詳細を表示している。" loading="lazy"></a><figcaption>テスト作品のSHA-256を意図的に不一致にして、実際の拒否を記録した画面。失敗の説明を確認するためにコードを実行し直す必要はありません。</figcaption></figure>
+<div class="flow" role="img" aria-label="作品読み込み時の検証と実行許可の確認から読み込み結果を記録し、診断で回を選択して確認またはコピー。失敗時の詳細ログ表示からも同じ診断へ移動する。"><div>作品を開く<br><small>検証・許可の確認</small></div><span>→</span><div>読み込み結果を記録<br><small>成功・再試行・失敗</small></div><span>→</span><div>作品の診断<br><small>回を選択・詳細・コピー</small></div></div>
+<h3>記録の保持と、実行許可を選ぶ画面との違い</h3>
+<p>診断はEditorを開いている間のメモリにだけ保持します。ページを再読み込みすると消え、SB3やブラウザーの保存領域には記録しません。コピーには作品名・取得URL・失敗理由などが入るため、問い合わせ等で共有する前に内容を確認してください。</p>
+<p>実行許可の選択は、作品を開く際の<a href="#extensions">拡張の確認画面</a>で行います。診断画面には、新たに許可したり取り消したりする操作はありません。SHA-256の一致は内容の一致を示し、作者の本人性やコードの安全性を保証するものではありません。通常のScratch/TurboWarp拡張について、報告されていない個別の検証・許可イベントを追加表示することもありません。</p>
+</section>
+
+<section id="start"><h2>11. 目的に合わせて始める</h2>
 <div class="table-scroll"><table><thead><tr><th>やりたいこと</th><th>入口</th><th>必要なもの</th></tr></thead><tbody>
 <tr><td>普通の作品を作る・開く</td><td><a href="../editor.html?lang=ja">通常のEditor</a></td><td>追加設定なし。手元のSB3は「ファイル」から開く</td></tr>
 <tr><td>フォームを試す</td><td>対応拡張のブロックのアイコン</td><td>対応拡張。作者向けサンプルはリポジトリのexamples/extensions/</td></tr>
 <tr><td>Plus拡張を追加する</td><td>「拡張機能を追加」→「TurboWarp Plus」</td><td>通常起動。追加前に読込・保存方法を選択</td></tr>
 <tr><td>文書を編集する</td><td>対応する帽子ブロックのファイルアイコン</td><td>対応する提供元の文書。参照元切替は提供元が許す文書のみ</td></tr>
 <tr><td>スクリプトを別作品へ移す</td><td>スクリプト・コード領域・ステージの右クリック</td><td>追加設定なし</td></tr>
+<tr><td>作品の概要・作者・連絡先を残す</td><td><a href="#project-properties">「ファイル」→「作品のプロパティ…」</a></td><td>追加拡張なし。適用後にSB3を保存</td></tr>
+<tr><td>検証・実行許可・読み込み結果を調べる</td><td><a href="#project-diagnostics">「ファイル」→「作品の診断…」</a>、失敗通知の「詳細ログを表示」</td><td>通常起動。記録はEditorを開いている間だけ保持</td></tr>
 </tbody></table></div>
-<p>URLで切り替えられる設定は、Plusローダーを外す<code>twPlusExtensionLoader=0</code>だけです。Plusローダーは通常起動で有効です。<code>twPlusExtensionLoader=0</code>を付けて再読込すると無効になり、このガイドのPlusカタログ・Plus形式の読込経路は使えなくなります。無効化は保存済み作品を標準形式へ変換する操作ではありません。</p>
+<p>作品情報とPlusローダーは通常起動で有効です。作品情報だけを外す場合は<code>twPlusProjectTools=0</code>を付けて再読込します。診断と失敗通知は引き続き利用できます。Plusローダーは<code>twPlusExtensionLoader=0</code>で無効になり、このガイドのPlusカタログ・Plus形式の読込経路は使えなくなります。両設定は独立しています。無効化は保存済み作品を標準形式へ変換する操作ではありません。</p>
 <aside><strong>保存の区切り</strong>：フォームや文書の「保存」は、開いている作品へ変更を反映します。手元にファイルを残すには、最後にSB3を保存してください。Plus固有の形式や専用UIを使う作品を標準TurboWarpへ渡す場合は、元のSB3を保持し、コピーで互換性を確認してください。</aside>
 </section>
 </main>

@@ -13,5 +13,29 @@
   "gui": "0def6f3b044fe04b173e2d442804d15360b69547",
   "security": "0.8.4",
   "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
-  "note": "Captured from the public Editor. catalog.png chooses TurboWarp-Markdown from the public catalog. review.png opens a project that adds two extensions outside the catalog as data: URLs, one declaring 'Unsandboxed: required'; the catalog extension in the same project needs no review and is not listed."
+  "note": "Captured from the public Editor. catalog.png chooses TurboWarp-Markdown from the public catalog. review.png opens a project that adds two extensions outside the catalog as data: URLs, one declaring 'Unsandboxed: required'; the catalog extension in the same project needs no review and is not listed.",
+  "projectTools": {
+    "date": "2026-11-04",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "siteRevision": "0f2a6d41ac9aa064dfbdcfdb62426ca71ce47245",
+    "guiRevision": "ca6cada95e853eef1ab6ef779f83aafc83c3a8bf",
+    "securityVersion": "0.8.4",
+    "images": [
+      "project-menu.png",
+      "project-properties.png",
+      "project-diagnostics.png",
+      "project-diagnostics-failure.png"
+    ],
+    "note": "Captured from the public Japanese Editor without a feature-flag query. Properties use fictional author/contact examples and real Apply/save/history operations. Diagnostics use the test-only embedded plusfixture extension: successful validation and execution approval, then a real SHA-256 mismatch. No UI state or log content is fabricated.",
+    "failure": {
+      "ok": false,
+      "code": "DIGEST_MISMATCH",
+      "message": "Extension bytes do not match the digest"
+    },
+    "pageErrors": []
+  }
 }
