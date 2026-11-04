@@ -321,7 +321,10 @@ async function checkSpriteProperties ({editor, control}) {
     await x.fill('52');
     await x.press('Enter');
     await editor.waitForFunction(() => window.vm.editingTarget.x === 52);
-    await floating.getByRole('button', {name: /^(Close and dock|閉じる（ドックに戻す）)$/}).click();
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    await control('focus', parent.id);
+    await until(() => editor.evaluate(() => document.hasFocus()), 'native editor focus');
+    await click(control, 'editor', floating.getByRole('button', {name: /^(Close and dock|閉じる（ドックに戻す）)$/}));
     await floating.waitFor({state: 'hidden'});
     assert.equal(await x.inputValue(), '52');
     assert.ok(await x.evaluate(node => node === window.stage5SpriteX));
@@ -702,6 +705,7 @@ async function checkStagePopout ({editor, context, control}) {
         }, lastInput);
         throw error;
     }
+    await until(() => canvas.evaluate(node => node.width > 0 && node.height > 0), 'redocked drawing buffer is sized');
     const redocked = await canvas.screenshot();
     const frame = await editor.evaluate(() => stage155.frames);
     await editor.evaluate(() => vm.editingTarget.setXY(0, 0));

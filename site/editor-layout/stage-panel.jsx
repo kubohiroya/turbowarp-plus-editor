@@ -11,6 +11,17 @@ const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 
 function StageViewport({aspect, width, defaultWidth, floating, render, inputDocument}) {
     const viewport = React.useRef(null);
     const [floatingWidth, setFloatingWidth] = React.useState(null);
+    const [externalBounds, setExternalBounds] = React.useState(Boolean(inputDocument));
+    React.useLayoutEffect(() => {
+        if (inputDocument) {
+            setExternalBounds(true);
+            return;
+        }
+        if (!externalBounds) return;
+        // Recalculate Stage bounds after the docking portal has moved back into the editor.
+        const frame = requestAnimationFrame(() => setExternalBounds(false));
+        return () => cancelAnimationFrame(frame);
+    }, [inputDocument, externalBounds]);
     React.useLayoutEffect(() => {
         if (!floating) return;
         const node = viewport.current;
@@ -25,7 +36,8 @@ function StageViewport({aspect, width, defaultWidth, floating, render, inputDocu
     }, [aspect, floating, inputDocument]);
 
     return <div className={styles.stageViewport} data-floating={floating} ref={viewport}>
-        {render(floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width, floating, inputDocument)}
+        {render(floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width,
+            floating || externalBounds, inputDocument)}
     </div>;
 }
 
