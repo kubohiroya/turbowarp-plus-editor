@@ -13,8 +13,7 @@ import {
     hostTranslationsFor,
     hostStageControls,
     registerHostBlockShapes,
-    withHostSecurityModals,
-    withHostThemeTokens
+    withHostSecurityModals
 } from '../../../../site/gui-integration/lib/tw-plus-integration-points.js';
 import {guiImport} from '../../../extension-host/pinned-host.mjs';
 const {openHostModal} = await guiImport('src/reducers/modals.js');
@@ -26,7 +25,6 @@ test('with nothing supplied every point leaves the GUI unchanged', () => {
     assert.deepEqual(hostModalNames(null), []);
     assert.deepEqual(hostModalDefaults(null), {});
     assert.deepEqual(withHostSecurityModals({Fetch: 'Fetch'}, null), {Fetch: 'Fetch'});
-    assert.deepEqual(withHostThemeTokens({a: '#000'}, 'light', null), {a: '#000'});
     assert.deepEqual(hostTranslationsFor('ja', null), {});
     assert.equal(hostIgnoresKeyEvent({}, null), false);
     assert.equal(registerHostBlockShapes({}, null), undefined);
@@ -36,15 +34,12 @@ test('a supplied integration adds to what the GUI has without replacing it', () 
     const integration = {
         modals: ['blockEditorModal', 'saveFormatModal'],
         securityModals: {LoadExtensions: 'LoadExtensions'},
-        themeTokens: {light: {'block-editor-error-text': '#a61b1b'}, dark: {'block-editor-error-text': '#ff8a80'}},
         translations: {ja: {'twp.save': '保存'}}
     };
     assert.deepEqual(hostModalNames(integration), ['blockEditorModal', 'saveFormatModal']);
     assert.deepEqual(hostModalDefaults(integration), {blockEditorModal: false, saveFormatModal: false});
     assert.deepEqual(withHostSecurityModals({Fetch: 'Fetch'}, integration),
         {Fetch: 'Fetch', LoadExtensions: 'LoadExtensions'});
-    assert.deepEqual(withHostThemeTokens({a: '#000'}, 'dark', integration),
-        {a: '#000', 'block-editor-error-text': '#ff8a80'});
     assert.deepEqual(hostTranslationsFor('JA', integration), {'twp.save': '保存'});
     assert.deepEqual(hostTranslationsFor('en', integration), {});
 });

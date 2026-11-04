@@ -42,16 +42,6 @@ export const hostModalDefaults = integration =>
 export const withHostSecurityModals = (modals, integration) => ({...modals, ...(integration?.securityModals || {})});
 
 /**
- * Extra colour tokens for one theme, so host UI can be themed with the GUI.
- * @param {object} colors The tokens this theme defines.
- * @param {string} theme The theme name, `light` or `dark`.
- * @param {object} [integration] The host's integration.
- * @returns {object} The tokens with the host's added.
- */
-export const withHostThemeTokens = (colors, theme, integration) =>
-    ({...colors, ...(integration?.themeTokens?.[theme] || {})});
-
-/**
  * The host's messages for one locale. Locales match in lower case, as tw translations do.
  * @param {string} locale The locale being filled.
  * @param {object} [integration] The host's integration.

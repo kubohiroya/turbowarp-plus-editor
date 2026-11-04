@@ -1,8 +1,10 @@
 import PropTypes from 'prop-types';
 import {injectIntl, intlShape} from 'react-intl';
+import {connect} from 'react-redux';
+import theme from '../../block-editor/theme.css';
 import {hostBlockEditor, hostIntegration} from '../lib/tw-plus-integration-points.js';
 
-const BlockEditorModal = ({intl, nodeAppearances, nodeLabels, onClose, session, ModalComponent, onError}) =>
+const BlockEditorModal = ({dark, intl, nodeAppearances, nodeLabels, onClose, session, ModalComponent, onError}) =>
     hostBlockEditor(hostIntegration())?.render({
         intl,
         nodeAppearances,
@@ -10,10 +12,12 @@ const BlockEditorModal = ({intl, nodeAppearances, nodeLabels, onClose, session, 
         onClose,
         session,
         ModalComponent,
-        onError
+        onError,
+        className: dark ? theme.dark : undefined
     }) || null;
 
 BlockEditorModal.propTypes = {
+    dark: PropTypes.bool,
     ModalComponent: PropTypes.elementType.isRequired,
     onError: PropTypes.func.isRequired,
     nodeAppearances: PropTypes.object,
@@ -24,4 +28,4 @@ BlockEditorModal.propTypes = {
 };
 
 export {BlockEditorModal};
-export default injectIntl(BlockEditorModal);
+export default connect(state => ({dark: state.scratchGui.theme.theme.isDark()}))(injectIntl(BlockEditorModal));
