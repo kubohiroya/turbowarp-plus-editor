@@ -19,10 +19,14 @@ An editor for creating and opening TurboWarp Plus projects. It builds kubohiroya
 
 - Edit supported block data in forms, with validation, save/cancel, and Undo.
 - Review Plus extensions and choose how their code is stored: remote references or embedded in the SB3.
-- Enable experimental document editing through startup options.
+- Edit, validate, and convert supported documents as YAML/JSON source or blocks.
 - Transfer scripts and stages to other projects with `.blocks3` / `.stage3` files and cross-window copy/paste.
+- Use [Project Properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-properties) to edit the title, description, author, and contact, and save them with timestamps in the SB3. Author and contact fields accept new text or one of the five most recent entries each, with email and HTTPS links.
+- Use [Project Diagnostics](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-diagnostics) to inspect and copy validation, execution approval, loading, retry, and failure records.
 
-The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) includes six real screenshots, workflow diagrams, a comparison table, activation conditions, and saving/compatibility details. Forms, documents, and previews require extensions that provide them.
+Both tools are at the bottom of the **File** menu on ordinary Editor URLs, with no supporting extension or activation option required. After applying properties, save the SB3 file. Diagnostics last only while the Editor page remains open and do not offer permission changes.
+
+The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) includes real screenshots, workflow diagrams, a comparison table, availability conditions, and saving/compatibility details. Forms, documents, and previews require extensions that provide them.
 
 [![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
 
