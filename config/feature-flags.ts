@@ -1,7 +1,21 @@
-// Read once at host startup; project data must never supply this value.
-export function readStartupFeatureFlags(search = '') {
-    const value = new URLSearchParams(search).get('twPlusExtensionLoader');
-    const projectTools = new URLSearchParams(search).get('twPlusProjectTools');
-    return Object.freeze({extensionLoader: value === null || value === '1',
-        projectTools: projectTools === null || projectTools === '1'});
+// Read once at host startup; project data must never supply these values.
+export function readStartupFeatureFlags({
+    twPlusExtensionLoader: loader = null,
+    twPlusProjectTools: projectTools = null,
+    twPlusWindowLayout: layout = null
+} = {}) {
+    return Object.freeze({
+        extensionLoader: loader === null || loader === '1',
+        projectTools: projectTools === null || projectTools === '1',
+        windowLayout: layout === '1'
+    });
+}
+
+export function readWebStartupFeatureFlags(search = '') {
+    const params = new URLSearchParams(search);
+    return readStartupFeatureFlags({
+        twPlusExtensionLoader: params.get('twPlusExtensionLoader'),
+        twPlusProjectTools: params.get('twPlusProjectTools'),
+        twPlusWindowLayout: params.get('twPlusWindowLayout')
+    });
 }

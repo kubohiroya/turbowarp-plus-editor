@@ -1,5 +1,5 @@
-import {readStartupFeatureFlags} from '../../config/feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../../config/feature-flags.ts';
 
 // Snapshot at module startup, before project content is read.
-export const PROJECT_TOOLS_ENABLED = readStartupFeatureFlags(
+export const PROJECT_TOOLS_ENABLED = readWebStartupFeatureFlags(
     typeof window === 'undefined' ? '' : window.location?.search || '').projectTools;

@@ -1,0 +1,29 @@
+.toggle {
+    width: calc(2rem + 2px);
+    height: calc(2rem + 2px);
+    flex: none;
+    background: transparent;
+    color: inherit;
+    border: 1px solid currentColor;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 1.15rem;
+    margin-inline-end: 0.2rem;
+}
+
+.toggle[aria-pressed="true"] {
+    background: #5746ad;
+    border-color: #5746ad;
+    color: white;
+}
+
+.separator {
+    background: rgba(98, 91, 127, 0.28);
+}
+
+.separator:hover,
+.separator:focus-visible {
+    background: #6954ca;
+    outline: 2px solid #6954ca;
+    outline-offset: -2px;
+}

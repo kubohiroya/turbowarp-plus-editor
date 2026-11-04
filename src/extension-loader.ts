@@ -1,4 +1,4 @@
-import {readStartupFeatureFlags} from '../config/feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../config/feature-flags.ts';
 
 export interface ExtensionLoader {
     unload(): void | Promise<void>;
@@ -22,7 +22,7 @@ export interface ExtensionLoaderHandle {
 export async function bootstrapExtensionLoader<Ports, Options, Host, Loader extends ExtensionLoader>({
     startupSearch = '', loaderModule, integration, host, ports, loaderOptions
 }: ExtensionLoaderOptions<Ports, Options, Host, Loader> = {}): Promise<ExtensionLoaderHandle> {
-    const flags = readStartupFeatureFlags(startupSearch);
+    const flags = readWebStartupFeatureFlags(startupSearch);
     if (!flags.extensionLoader) {
         return Object.freeze({enabled: false, dispose: async () => {}});
     }

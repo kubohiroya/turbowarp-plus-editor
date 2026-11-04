@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Editor layout trial host</title>
+<style>
+    body {font: 1rem system-ui; margin: 1rem}
+    .panes {height: 440px; display: flex; background: #e9e8ef}
+    .editor, .stage-column, .stage, .targets {border: 1px solid #8f86ac; box-sizing: border-box}
+    .editor {flex: 1}
+    .stage-column {width: 340px}
+    .stage {min-height: 180px}
+    .separator {background: #9f93cc}
+</style>
+<div id="root"></div>
+<script src="../node_modules/react/umd/react.development.js"></script>
+<script src="../node_modules/react-dom/umd/react-dom.development.js"></script>
+<script type="module">
+    import {createLayout} from '../src/index.js';
+    const h = React.createElement;
+    const SplitLayout = createLayout(React);
+    const App = () => {
+        const [enabled, setEnabled] = React.useState(true);
+        return h(React.Fragment, null,
+            h('button', {onClick: () => setEnabled(value => !value), 'aria-pressed': enabled}, 'Split layout'),
+            h(SplitLayout, {
+                enabled,
+                labels: {columns: 'Editor width', rows: 'Stage height'},
+                minimumEditor: 220, minimumStageColumn: 180, minimumStageRow: 180, minimumTargets: 100,
+                defaultStageWidth: 340, defaultStageHeight: 180,
+                stageAspect: 4 / 3, horizontalInset: 0, verticalInset: 0,
+                storage: localStorage, storageKey: 'layout-example', separatorClassName: 'separator',
+                render: layout => h('div', {className: 'panes', ref: layout.observe, style: layout.bodyStyle},
+                    h('div', {className: 'editor', style: layout.editorStyle}, 'Editor'),
+                    layout.columnSplitter,
+                    h('div', {className: 'stage-column', style: {...layout.stageColumnStyle,
+                        ...(layout.stageColumnStyle && {width: 'auto'})}},
+                        h('div', {className: 'stage'}, 'Stage'),
+                        layout.rowSplitter,
+                        h('div', {className: 'targets'}, 'Targets')))
+            }));
+    };
+    ReactDOM.render(h(App), document.getElementById('root'));
+</script>
+</html>
