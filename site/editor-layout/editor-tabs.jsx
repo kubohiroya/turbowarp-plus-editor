@@ -1,6 +1,7 @@
 import React from 'react';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
+import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.js';
 import styles from './layout.css';
 
 const codeTab = 0;
@@ -42,6 +43,10 @@ export function EditorTabLayout({activeEditorTab, editorTargetIsStage, showUndoc
     const getMount = index => states[index]?.kind === 'external' ? states[index].target.mount : undefined;
 
     function open() {
+        if (activeEditorTab === codeTab && desktopCodeEnabled) {
+            openDesktopCode();
+            return;
+        }
         surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title, rememberPlacement: true});
     }
 

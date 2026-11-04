@@ -9,9 +9,11 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
-const testMode = ['--sprite-properties', '--target-panels-popout', '--stage-popout', '--stage-panel', '--internal']
-    .find(flag => process.argv.includes(flag));
-const usesSystemInput = testMode !== '--stage-panel';
+const testMode = [
+    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-popout', '--target-panels-popout',
+    '--stage-popout', '--stage-panel', '--internal'
+].find(flag => process.argv.includes(flag));
+const usesSystemInput = !['--code-backpack', '--code-popout', '--stage-panel'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -49,13 +51,16 @@ async function run (enabled, test) {
     delete processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_TARGET_LIST;
     delete processEnv.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT;
+    delete processEnv.TW_PLUS_DESKTOP_CODE_POPOUT;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        if (['internal', 'sprite', 'stage', 'stage-popout', 'target-panels'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        if (['internal', 'sprite', 'stage', 'stage-popout', 'target-panels', 'code-popout', 'code-backpack'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
         else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'sprite' || enabled === 'target-panels') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
         if (enabled === 'stage' || enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
         if (enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT = '1';
+        if (enabled === 'code-popout' || enabled === 'code-backpack') processEnv.TW_PLUS_DESKTOP_CODE_POPOUT = '1';
+        if (enabled === 'code-backpack') processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'target-panels') {
             processEnv.TW_PLUS_DESKTOP_TARGET_LIST = '1';
             processEnv.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT = '1';
@@ -118,7 +123,7 @@ async function run (enabled, test) {
 }
 
 async function screenPoint (control, kind, locator, horizontal = 0.5) {
-    const window = (await control('windows')).find(window => window.kind === kind);
+    const window = (await control('windows')).find(window => window.kind === kind || window.id === kind);
     assert.ok(window, `Missing native ${kind} bounds`);
     const box = await locator.boundingBox();
     assert.ok(box, `Missing visible ${kind} control`);
@@ -355,6 +360,355 @@ async function checkStagePanel ({editor, control}) {
     await frame.waitFor({state: 'hidden'});
     assert.ok(await canvas.evaluate(node => node === window.stage5DesktopCanvas));
     report.checks.push('Desktop retains the live stage canvas when moving between the dock and the in-app window');
+}
+
+async function checkNativeCodeBackpack ({editor, context, control}, a, b, targets, originalId) {
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    const inert = view => view.child.locator('#mount').evaluate(node => node.inert);
+    await control('layout', a.id);
+    await click(control, b.id, b.child.locator('#status'));
+    await until(async () => await inert(a) && !(await inert(b)), 'B is the front code editor');
+    await observeNative(a.child);
+    await a.child.evaluate(() => {
+        const mount = document.getElementById('mount');
+        window.everEditable = false;
+        new MutationObserver(records => {
+            if (!mount.inert || records.some(record => record.oldValue === null)) window.everEditable = true;
+        }).observe(mount, {attributes: true, attributeFilter: ['inert'], attributeOldValue: true});
+    });
+
+    await control('focus', parent.id);
+    await click(control, parent.id, editor.locator('[class*="backpack_backpack-header"]'));
+    await editor.getByText(itemName, {exact: true}).waitFor();
+    await click(control, parent.id,
+        editor.getByRole('button', {name: /^(Undock Backpack|バックパックを別画面で開く)$/}));
+    const frame = editor.getByRole('region', {name: /^(Backpack|バックパック)$/});
+    const [backpack] = await Promise.all([context.waitForEvent('page'),
+        click(control, parent.id, frame.getByRole('button', {name: /^(Move to browser window|別ウィンドウへ移す)$/}))]);
+    await backpack.waitForURL(/\/backpack-popout\.html#/);
+    backpack.on('pageerror', error => report.errors.push(error.message));
+    const source = (await control('windows')).find(window => window.url === backpack.url());
+    await observeNative(backpack);
+    const handle = backpack.getByTestId('backpack-script-drag');
+    const zone = a.child.locator('#drop-zone');
+    await handle.waitFor();
+    await zone.waitFor();
+    const points = [...await screenPoint(control, source.id, handle),
+        ...await screenPoint(control, a.id, zone, 0.7)];
+    report.drag = points;
+    await launcher('python3', [mousePath, ...points.map(String)]);
+    const read = () => editor.evaluate(({a, b}) => {
+        const blocks = vm.runtime.getTargetById(a).blocks;
+        const scripts = blocks.getScripts();
+        const copy = scripts.map(id => blocks.getBlock(id))
+            .find(block => block.opcode === 'looks_hide' && blocks.getBlock(block.next)?.opcode === 'looks_show');
+        return {scripts, copy: copy && [copy.id, copy.next], selected: vm.editingTarget.id,
+            other: vm.runtime.getTargetById(b).blocks.getScripts()};
+    }, targets);
+    const copied = await until(async () => {
+        const state = await read();
+        return state.copy && state;
+    }, 'HID drop copies the Backpack stack to the back code view');
+    const drag = (await backpack.evaluate(() => window.nativeEvidence)).find(event => event.type === 'dragstart');
+    const drop = (await a.child.evaluate(() => window.nativeEvidence)).find(event => event.type === 'drop');
+    assert.ok(drag?.trusted);
+    assert.ok(drop?.trusted && drop.mime.includes(mime));
+    assert.equal(copied.selected, targets.a);
+    assert.deepEqual(copied.other, []);
+    assert.deepEqual([...copied.scripts].sort(), [originalId, copied.copy[0]].sort());
+    const block = (view, id) => view.child.locator(`[data-id=${JSON.stringify(id)}]`).first();
+    for (const view of [a, b]) {
+        for (const id of copied.copy) await block(view, id).waitFor();
+    }
+    assert.equal(await a.child.evaluate(() => window.everEditable), false);
+    assert.equal(await inert(a), true);
+    assert.equal(await a.child.evaluate(() => document.hasFocus()), false);
+    report.checks.push('Trusted macOS HID dragstart and drop copy a whole stack to the back view without granting it editing');
+
+    // The drag source takes focus. Raise B through the native window controller before clicking.
+    await until(async () => {
+        if (!(await inert(b))) return true;
+        await control('focus', b.id);
+        return false;
+    }, 'B owns the edit lease for shared undo');
+    await observeNative(b.child);
+    const undo = b.child.getByRole('button', {name: 'Undo', exact: true});
+    assert.equal(await undo.isEnabled(), true);
+    await click(control, b.id, undo);
+    for (const view of [a, b]) {
+        for (const id of copied.copy) await block(view, id).waitFor({state: 'detached'});
+        await block(view, originalId).waitFor();
+    }
+    assert.deepEqual(await read(), {scripts: [originalId], copy: undefined, selected: targets.a, other: []});
+    const redo = b.child.getByRole('button', {name: 'Redo', exact: true});
+    assert.equal(await redo.isEnabled(), true);
+    await click(control, b.id, redo);
+    for (const view of [a, b]) {
+        for (const id of copied.copy) await block(view, id).waitFor();
+    }
+    assert.deepEqual(await read(), copied);
+    assert.equal(await a.child.evaluate(() => window.everEditable), false);
+    assert.deepEqual((await b.child.evaluate(() => window.nativeEvidence)).filter(event => event.type === 'click')
+        .map(({label, trusted}) => ({label, trusted})), [{label: 'Undo', trusted: true}, {label: 'Redo', trusted: true}]);
+    report.checks.push('One native click on Undo and one on Redo in the front view remove and restore the whole copy in both views');
+
+    const dock = backpack.getByRole('button', {name: dockLabel});
+    await dock.evaluate(button => button.addEventListener('click',
+        event => localStorage.setItem('tw-stage6-native-dock', String(event.isTrusted)), {once: true}));
+    await control('focus', source.id);
+    const closed = backpack.waitForEvent('close');
+    await click(control, source.id, dock);
+    await closed;
+    await editor.getByText(itemName, {exact: true}).waitFor();
+    assert.equal(await editor.evaluate(() => localStorage.getItem('tw-stage6-native-dock')), 'true');
+    assert.equal((await control('windows')).some(window => window.id === source.id), false);
+    report.checks.push('Trusted macOS HID dock click closes the Backpack window and returns its item to the editor');
+}
+
+async function checkCodePopouts ({editor, context, control}, withBackpack = false, native = false) {
+    const id = 'stage-six-shared-block';
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    await control('layout', parent.id);
+    const focus = async (page, windowId) => {
+        await until(async () => {
+            await control('focus', windowId);
+            return page.evaluate(() => document.hasFocus());
+        }, 'native window focus');
+    };
+    const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
+    const targetId = await editor.evaluate(blockId => {
+        vm.editingTarget.blocks.createBlock({
+            id: blockId, opcode: 'looks_hide', next: null, parent: null, topLevel: true, shadow: false,
+            inputs: {}, fields: {}, x: 90, y: 100
+        });
+        vm.refreshWorkspace();
+        return vm.editingTarget.id;
+    }, id);
+    const coordinates = () => editor.evaluate(({targetId, id}) => {
+        const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
+        return {x, y};
+    }, {targetId, id});
+    const block = page => page.locator(`[data-id="${id}"]`).first();
+    const original = await coordinates();
+    await block(editor).waitFor();
+    await focus(editor, parent.id);
+    const mode = editor.getByRole('button', {name: modeLabel});
+    const editorClick = locator => native ? click(control, parent.id, locator) : locator.click();
+    await editorClick(mode);
+    if (native && await mode.getAttribute('aria-pressed') !== 'true') {
+        await focus(editor, parent.id);
+        await editorClick(mode);
+    }
+    const action = editor.locator('[class*="layout_tab-action_"]').getByRole('button', {
+        name: /^(Open in another window|別画面で開く)$/
+    });
+
+    async function open() {
+        await focus(editor, parent.id);
+        await action.waitFor();
+        const [child] = await Promise.all([context.waitForEvent('page'), editorClick(action)]);
+        await child.waitForURL(/\/code-popout\.html#/);
+        child.on('pageerror', error => report.errors.push(error.message));
+        const native = await until(async () => (await control('windows')).find(window => window.url === child.url()),
+            'native code window');
+        assert.deepEqual(native.preferences, {sandbox: true, contextIsolation: true, nodeIntegration: false, preload: false});
+        await block(child).waitFor();
+        assert.equal(await child.evaluate(() => !window.opener && !window.vm && typeof EditorPreload === 'undefined'), true);
+        return {child, id: native.id};
+    }
+
+    const a = await open();
+    const b = await open();
+    assert.equal((await control('windows')).filter(window => window.kind === 'code').length, 2);
+    if (native) {
+        await checkNativeCodeBackpack({editor, context, control}, a, b, backpackTargets, id);
+        return;
+    }
+    assert.equal(await editor.evaluate(() =>
+        window.open('about:blank', `tw-plus-code-${crypto.randomUUID()}`) === null), true);
+    const inert = view => view.child.locator('#mount').evaluate(element => element.inert);
+    const editorInert = () => editor.evaluate(() => ScratchBlocks.getMainWorkspace().getParentSvg().parentElement.inert);
+    const history = async (view, name) => {
+        await focus(view.child, view.id);
+        await until(async () => !(await inert(view)), `code window is editable for ${name}`);
+        await view.child.getByRole('button', {name, exact: true}).click();
+    };
+    await focus(a.child, a.id);
+    await until(async () => !(await inert(a)) && await inert(b) && await editorInert(), 'A holds the only edit lease');
+    const position = await block(a.child).boundingBox();
+    assert.ok(position);
+    await a.child.mouse.move(position.x + 12, position.y + 11);
+    await a.child.mouse.down();
+    await a.child.mouse.move(position.x + 82, position.y + 53, {steps: 8});
+    await a.child.mouse.up();
+    await until(async () => (await coordinates()).x > original.x, 'moving the block edits the parent VM');
+    const edited = await coordinates();
+    const rendered = page => block(page).getAttribute('transform');
+    await until(async () => await rendered(a.child) === await rendered(b.child), 'B renders the same edited position');
+    assert.equal(await b.child.getByRole('button', {name: 'Undo', exact: true}).isDisabled(), true);
+
+    await focus(b.child, b.id);
+    await until(async () => await inert(a) && !(await inert(b)) && await editorInert(), 'B takes the edit lease');
+    await history(b, 'Undo');
+    await until(async () => (await coordinates()).x === original.x &&
+        await rendered(a.child) === await rendered(b.child), 'one undo updates the VM and both views');
+    assert.deepEqual(await coordinates(), original);
+    await history(b, 'Redo');
+    await until(async () => (await coordinates()).x === edited.x &&
+        await rendered(a.child) === await rendered(b.child), 'one redo updates the VM and both views');
+    assert.deepEqual(await coordinates(), edited);
+    report.checks.push('One parent VM, two native ScratchBlocks views, exclusive foreground editing and shared undo/redo');
+
+    await focus(editor, parent.id);
+    await until(async () => await inert(a) && await inert(b) && !(await editorInert()), 'the native editor regains editing');
+    await editor.evaluate(() => ScratchBlocks.getMainWorkspace().undo(false));
+    await until(async () => (await coordinates()).x === original.x &&
+        await rendered(a.child) === await rendered(b.child), 'the docked workspace uses the same history');
+    await editor.evaluate(blockId => ScratchBlocks.getMainWorkspace().getBlockById(blockId).moveBy(36, 28), id);
+    await until(async () => (await coordinates()).x > original.x &&
+        await rendered(a.child) === await rendered(editor) && await rendered(b.child) === await rendered(editor),
+    'an edit in the docked workspace reaches both child views');
+    const parentEdit = await coordinates();
+    await focus(b.child, b.id);
+    await until(async () => !(await inert(b)), 'B takes editing after the docked workspace');
+    assert.equal(await b.child.getByRole('button', {name: 'Redo', exact: true}).isDisabled(), true);
+    await history(b, 'Undo');
+    await until(async () => (await coordinates()).x === original.x, 'B undoes the parent edit');
+    await history(b, 'Redo');
+    await until(async () => (await coordinates()).x === parentEdit.x, 'redo persists in the parent VM');
+    const showBlock = b.child.locator('.blocklyFlyout').getByText('show', {exact: true});
+    if (!await showBlock.isVisible()) {
+        await b.child.locator('.scratchCategoryMenuItemLabel').filter({hasText: /^Looks$/}).click();
+    }
+    const sample = await showBlock.boundingBox();
+    assert.ok(sample);
+    await b.child.mouse.move(sample.x + sample.width / 2, sample.y + sample.height / 2);
+    await b.child.mouse.down();
+    await b.child.mouse.move(410, 310, {steps: 12});
+    await b.child.mouse.up();
+    const addedId = await until(() => editor.evaluate(() => vm.editingTarget.blocks.getScripts()
+        .find(scriptId => vm.editingTarget.blocks.getBlock(scriptId).opcode === 'looks_show')), 'the toolbox adds code to the parent VM');
+    const added = page => page.locator(`[data-id="${addedId}"]`).first();
+    await added(a.child).waitFor();
+    await history(b, 'Undo');
+    await added(a.child).waitFor({state: 'detached'});
+    await history(b, 'Redo');
+    await added(a.child).waitFor();
+    if (backpackTargets) {
+        await focus(editor, parent.id);
+        await editor.locator('[class*="backpack_backpack-header"]').click();
+        await editor.getByText(itemName, {exact: true}).waitFor();
+        await editor.getByRole('button', {name: /^(Undock Backpack|バックパックを別画面で開く)$/}).click();
+        const frame = editor.getByRole('region', {name: /^(Backpack|バックパック)$/});
+        const opened = context.waitForEvent('page');
+        await frame.getByRole('button', {name: /^(Move to browser window|別ウィンドウへ移す)$/}).click();
+        const backpack = await opened;
+        await backpack.waitForURL(/\/backpack-popout\.html#/);
+        backpack.on('pageerror', error => report.errors.push(error.message));
+        const source = (await control('windows')).find(window => window.kind === 'backpack');
+        await focus(backpack, source.id);
+        const handle = backpack.getByTestId('backpack-script-drag');
+        await handle.waitFor();
+        const sourceCDP = await context.newCDPSession(backpack);
+        await sourceCDP.send('Input.setInterceptDrags', {enabled: true});
+        const grip = await handle.boundingBox();
+        assert.ok(grip);
+        const drag = once(sourceCDP, 'Input.dragIntercepted', {signal: AbortSignal.timeout(10000)});
+        const x = grip.x + grip.width / 2;
+        const y = grip.y + grip.height / 2;
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mouseMoved', x, y});
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mousePressed', x, y,
+            button: 'left', buttons: 1, clickCount: 1});
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mouseMoved', x: x + 24, y,
+            button: 'left', buttons: 1});
+        const [{data}] = await drag;
+        assert.ok(data.items.some(item => item.mimeType === mime));
+        await sourceCDP.send('Input.dispatchDragEvent', {type: 'dragCancel', x, y, data});
+        await sourceCDP.send('Input.dispatchMouseEvent', {type: 'mouseReleased', x: x + 24, y,
+            button: 'left', clickCount: 1});
+        await sourceCDP.detach();
+
+        await control('layout', a.id);
+        await focus(b.child, b.id);
+        await until(async () => await inert(a) && !(await inert(b)), 'only B edits before the drop');
+        const dropCDP = await context.newCDPSession(a.child);
+        const drop = async () => {
+            const zone = a.child.locator('#drop-zone');
+            await zone.waitFor();
+            const box = await zone.boundingBox();
+            assert.ok(box);
+            for (const type of ['dragEnter', 'dragOver', 'drop']) {
+                await dropCDP.send('Input.dispatchDragEvent', {type, x: box.x + box.width * 0.8, y: box.y + 160, data});
+            }
+        };
+        const imported = () => editor.evaluate(targets => {
+            const getBlocks = id => vm.runtime.getTargetById(id).blocks;
+            const blocks = getBlocks(targets.a);
+            const first = blocks.getScripts().map(id => blocks.getBlock(id))
+                .find(block => block.opcode === 'looks_hide' && blocks.getBlock(block.next)?.opcode === 'looks_show');
+            return {id: first?.id, next: first?.next, scripts: blocks.getScripts().length,
+                other: getBlocks(targets.b).getScripts().length, selected: vm.editingTarget.id};
+        }, backpackTargets);
+        assert.deepEqual(await imported(), {id: undefined, next: undefined, scripts: 2, other: 0, selected: targetId});
+        await drop();
+        const copy = await until(async () => {
+            const state = await imported();
+            return state.id && state;
+        }, 'Backpack stack reaches the back code window');
+        assert.equal(copy.scripts, 3);
+        assert.equal(copy.other, 0);
+        assert.equal(copy.selected, targetId);
+        const showCopy = (page, blockId) => page.locator(`[data-id="${blockId}"]`).first();
+        for (const {child} of [a, b]) {
+            await showCopy(child, copy.id).waitFor();
+            await showCopy(child, copy.next).waitFor();
+        }
+        assert.equal(await inert(a), true);
+        assert.equal(await a.child.evaluate(() => document.hasFocus()), false);
+        assert.equal(await b.child.evaluate(() => document.hasFocus()), true);
+        await until(async () => !(await inert(b)), 'B keeps editing after the back window drop');
+        const undoCopy = b.child.getByRole('button', {name: 'Undo', exact: true});
+        assert.equal(await undoCopy.isEnabled(), true, 'the drop publishes undo history');
+        await drop();
+        assert.equal(await undoCopy.isEnabled(), true, 'a replay keeps the existing undo history');
+        await dropCDP.detach();
+        await history(b, 'Undo');
+        await until(async () => (await imported()).scripts === 2, 'one shared undo removes the entire copied stack');
+        assert.deepEqual(await imported(), {id: undefined, next: undefined, scripts: 2, other: 0, selected: targetId});
+        assert.deepEqual(await coordinates(), parentEdit);
+        await added(a.child).waitFor();
+        await added(b.child).waitFor();
+        await showCopy(a.child, copy.id).waitFor({state: 'detached'});
+        await showCopy(b.child, copy.id).waitFor({state: 'detached'});
+        await history(b, 'Redo');
+        await showCopy(a.child, copy.next).waitFor();
+        await showCopy(b.child, copy.next).waitFor();
+        assert.deepEqual(await imported(), copy);
+        await history(b, 'Undo');
+        await showCopy(a.child, copy.id).waitFor({state: 'detached'});
+        await focus(backpack, source.id);
+        await Promise.all([backpack.waitForEvent('close'), backpack.getByRole('button', {name: dockLabel}).press('Enter')]);
+        await editor.getByText(itemName, {exact: true}).waitFor();
+        report.checks.push('Real Backpack to background code window via CDP drag: both views update, no lease or target change, one undo removes both imported blocks, redo restores them, replay is rejected and Backpack docks');
+    }
+    await Promise.all([b.child.waitForEvent('close'), b.child.getByRole('button', {name: 'Return to editor'}).click()]);
+    await Promise.all([a.child.waitForEvent('close'), control('close', a.id)]);
+    await focus(editor, parent.id);
+    await until(async () => !(await editorInert()), 'closing all windows releases the docked workspace');
+    assert.deepEqual(await coordinates(), parentEdit);
+    await added(editor).waitFor();
+    const restored = await editor.evaluate(async () => {
+        const targetName = vm.editingTarget.getName();
+        const sb3 = await vm.saveProjectSb3();
+        await vm.loadProject(await sb3.arrayBuffer());
+        const target = vm.runtime.targets.find(candidate => candidate.isOriginal && candidate.getName() === targetName);
+        const scripts = target.blocks.getScripts().map(blockId => target.blocks.getBlock(blockId));
+        const block = scripts.find(script => script.opcode === 'looks_hide');
+        return {x: block?.x, y: block?.y, added: scripts.find(script => script.opcode === 'looks_show')?.opcode};
+    });
+    assert.deepEqual(restored, {...parentEdit, added: 'looks_show'});
+    report.checks.push('The docked workspace shares edits and undo; button and native close preserve edits and release editing');
+    report.checks.push('SB3 save and reload retains the moved and newly created blocks');
 }
 
 async function checkExternalTargetPanels ({editor, context, control}) {
@@ -746,11 +1100,15 @@ try {
         assert.equal(await editor.evaluate(() => window.open('about:blank', `tw-plus-stage-${crypto.randomUUID()}`) === null), true);
         assert.equal(await editor.evaluate(() => ['sprite-properties', 'sprite-list'].every(kind =>
             window.open('about:blank', `tw-plus-${kind}-${crypto.randomUUID()}`) === null)), true);
+        assert.equal(await editor.evaluate(() => window.open('about:blank', `tw-plus-code-${crypto.randomUUID()}`) === null), true);
         assert.equal((await control('windows')).length, 1);
         report.checks.push('Desktop enables both splitters by default and keeps undocking off');
     });
 
     if (testMode === '--sprite-properties') await run('sprite', checkSpriteProperties);
+    else if (testMode === '--code-backpack-native') await run('code-backpack', env => checkCodePopouts(env, true, true));
+    else if (testMode === '--code-backpack') await run('code-backpack', env => checkCodePopouts(env, true));
+    else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
     else if (testMode === '--stage-popout') await run('stage-popout', checkStagePopout);
     else if (testMode === '--stage-panel') await run('stage', checkStagePanel);

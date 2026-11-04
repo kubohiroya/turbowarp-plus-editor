@@ -22,3 +22,4 @@ function WebBackpackSurface(props) {
 
 export const BackpackSurface = feature ? WebBackpackSurface : undefined;
 export const attachBackpackDrop = context => feature?.attachBackpackDrop(context);
+export const receiveBackpackDrop = feature?.receiveBackpackDrop;
