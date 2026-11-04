@@ -2,20 +2,25 @@
     position: absolute;
     z-index: 1;
     box-sizing: border-box;
-    pointer-events: none;
+    cursor: pointer;
     overflow: hidden;
-    opacity: 0.78;
     color: var(--text-primary, #334155);
-    background: var(--ui-primary, white);
+    background: color-mix(in srgb, var(--ui-primary, white) 50%, transparent);
     border: 1px solid var(--ui-black-transparent, #cbd5e1);
     border-radius: 8px;
     box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
 }
 
 .viewport {
+    cursor: grab;
     fill: currentColor;
     fill-opacity: 0.06;
     stroke: currentColor;
     stroke-width: 1.5px;
     vector-effect: non-scaling-stroke;
+}
+
+.minimap[data-dragging],
+.minimap[data-dragging] .viewport {
+    cursor: grabbing;
 }
