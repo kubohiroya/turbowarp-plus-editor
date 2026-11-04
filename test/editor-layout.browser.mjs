@@ -54,29 +54,37 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
         await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() &&
             window.vm?.editingTarget))).toBe(true);
     };
-    const anchor = page.getByRole('button', {name: 'Flexible layout mode'});
     const stage = page.locator('[data-gui-stage] canvas').first();
     const columns = page.getByRole('separator', {name: 'Editor and stage column width'});
     const rows = page.getByRole('separator', {name: 'Stage and target pane height'});
     const position = divider => divider.getAttribute('aria-valuenow').then(Number);
-    for (const query of ['&twPlusWindowLayout=0', '&twPlusWindowLayout=', '&twPlusWindowLayout=true', '']) {
+    for (const query of ['', '&twPlusWindowLayout=0', '&twPlusWindowLayout=1']) {
         await start(query);
-        await expect(anchor).toHaveCount(0);
-        await expect(columns).toHaveCount(0);
+        await expect(columns).toBeVisible();
+        await expect(rows).toBeVisible();
     }
-    await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=1'));
-    await expect(anchor).toHaveCount(0);
-    const originalStage = await stage.boundingBox();
-    await start('&twPlusWindowLayout=1');
-    await expect(anchor).toHaveAttribute('aria-pressed', 'false');
-    await anchor.focus();
-    await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', {name: 'Switch to small stage', exact: true})).toBeFocused();
-    await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0'));
-    await expect(columns).toHaveCount(0);
+    const themeColor = property => page.evaluate(token => {
+        const sample = document.createElement('span');
+        sample.style.color = `var(${token})`;
+        document.body.append(sample);
+        const color = getComputedStyle(sample).color;
+        sample.remove();
+        return color;
+    }, property);
+    const checkDividerColor = async () => {
+        await columns.hover();
+        await expect(columns).toHaveCSS('background-color', await themeColor('--looks-secondary'));
+    };
+    const originalAccent = await themeColor('--looks-secondary');
+    await checkDividerColor();
+    await page.getByText('Settings', {exact: true}).click();
+    await page.getByText('Accent', {exact: true}).click();
+    await page.getByText('Blue', {exact: true}).click();
+    assert.notEqual(await themeColor('--looks-secondary'), originalAccent);
+    await checkDividerColor();
+    await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusSplitter=0'));
+    await expect(columns).toBeVisible();
     const before = await page.evaluate(() => window.vm.toJSON());
-    await anchor.click();
-    await expect(anchor).toHaveAttribute('aria-pressed', 'true');
     const first = await position(columns);
     const initialSvgWidth = await page.locator('.blocklySvg').first().getAttribute('width').then(parseFloat);
     const divider = await columns.boundingBox();
@@ -140,11 +148,6 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect.poll(async () => (await columns.boundingBox()).x).toBeLessThan(1050);
     await page.setViewportSize({width: 1360, height: 900});
     await expect.poll(() => position(columns)).toBe(saved);
-    await anchor.click();
-    await expect(columns).toHaveCount(0);
-    await expect.poll(async () => (await stage.boundingBox()).width).toBe(originalStage.width);
-    await anchor.click();
-    assert.equal(await position(columns), saved);
     const scriptX = () => page.evaluate(() => vm.editingTarget.blocks.getBlock('layout-script').x);
     const editedX = await scriptX();
     await page.evaluate(() => ScratchBlocks.getMainWorkspace().undo(false));
@@ -167,9 +170,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     assert.ok(project.targets.some(target => Object.values(target.blocks)
         .some(block => block.opcode === 'event_whenflagclicked' && block.x > 220)));
 
-    await start('&twPlusWindowLayout=1');
-    await expect(columns).toHaveCount(0);
-    await anchor.click();
+    await start('');
+    await expect(columns).toBeVisible();
     assert.equal(await position(columns), saved);
     await page.getByRole('button', {name: 'Switch to small stage', exact: true}).click();
     await expect.poll(async () => (await stage.boundingBox()).width).toBe(240);
@@ -177,8 +179,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await page.context().route(projectURL, route => route.fulfill({
         body: archive, contentType: 'application/octet-stream'
     }));
-    await start('&twPlusWindowLayout=0&project_url=' + encodeURIComponent(projectURL));
-    await expect(anchor).toHaveCount(0);
+    await start('&twPlusSplitter=0&project_url=' + encodeURIComponent(projectURL));
     await expect(columns).toHaveCount(0);
     assert.equal(await page.evaluate(() => window.layoutReads), 0);
     await expect.poll(() => page.evaluate(() => window.ScratchBlocks?.getMainWorkspace()?.getAllBlocks()
