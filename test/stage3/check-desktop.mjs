@@ -37,11 +37,13 @@ async function run (enabled, test) {
     delete processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;
     delete processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES;
+    delete processEnv.TW_PLUS_DESKTOP_STAGE_PANEL;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        if (enabled === 'internal' || enabled === 'sprite') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        if (enabled === 'internal' || enabled === 'sprite' || enabled === 'stage') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
         else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'sprite') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
+        if (enabled === 'stage') processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
     }
     const application = spawn(join(app, 'Contents/MacOS/TurboWarp'), processArgs, {env: processEnv});
     const stopped = once(application, 'close');
@@ -312,6 +314,25 @@ async function checkSpriteProperties ({editor, control}) {
     report.checks.push('The licensed sprite properties form uses the same live VM in the dock and in-app on Desktop');
 }
 
+async function checkStagePanel ({editor, control}) {
+    const canvas = editor.locator('[data-gui-stage] canvas').first();
+    const frame = editor.getByRole('region', {name: /^(Stage|ステージ)$/});
+    const action = editor.locator('[class*="basic-panel-overlay-action_"]').getByRole('button', {
+        name: /^(Open in another window|別画面で開く)$/
+    });
+    await editor.getByRole('button', {name: modeLabel}).click();
+    await canvas.evaluate(node => {window.stage5DesktopCanvas = node;});
+    await action.focus();
+    await editor.keyboard.press('Enter');
+    await frame.locator('[data-gui-stage] canvas').waitFor();
+    assert.equal((await control('windows')).length, 1);
+    assert.ok(await canvas.evaluate(node => node === window.stage5DesktopCanvas && node === window.vm.renderer.canvas));
+    await frame.getByRole('button', {name: /^(Close and dock|閉じる（ドックに戻す）)$/}).click();
+    await frame.waitFor({state: 'hidden'});
+    assert.ok(await canvas.evaluate(node => node === window.stage5DesktopCanvas));
+    report.checks.push('Desktop retains the live stage canvas when moving between the dock and the in-app window');
+}
+
 try {
     await run(false, async ({editor, control}) => {
         assert.equal(await editor.getByRole('button', {name: modeLabel}).count(), 0);
@@ -324,6 +345,7 @@ try {
     });
 
     if (process.argv.includes('--sprite-properties')) await run('sprite', checkSpriteProperties);
+    else if (process.argv.includes('--stage-panel')) await run('stage', checkStagePanel);
     else if (process.argv.includes('--internal')) await run('internal', checkInternal);
     else await run(true, async ({editor, context, control}) => {
         const parent = (await control('windows')).find(window => window.kind === 'editor');

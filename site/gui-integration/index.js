@@ -28,3 +28,4 @@ export const SpritePropertiesPanel = readWebStartupFeatureFlags(startupSearch).s
     typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
 
 export {BackpackSurface} from '../editor-backpack/index.jsx';
+export {StagePanel} from '../editor-layout/stage-panel.jsx';

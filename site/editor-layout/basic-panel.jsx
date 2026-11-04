@@ -4,7 +4,7 @@ import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbow
 import {WindowLayoutContext} from './index.jsx';
 import styles from './layout.css';
 
-function DockableBasicPanel({host, id, title, children}) {
+function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight}) {
     const {enabled, locale} = React.useContext(WindowLayoutContext);
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
@@ -22,9 +22,10 @@ function DockableBasicPanel({host, id, title, children}) {
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mount = enabled && state.kind === 'external' ? state.target.mount : undefined;
 
-    return <div className={styles.basicPanel}>
-        {enabled && <div className={styles.basicPanelHeading} ref={action}>
-            <h2>{title}</h2>
+    const headingClass = overlayAction ? styles.basicPanelOverlayAction : styles.basicPanelHeading;
+    return <div className={styles.basicPanel} style={mount ? {minBlockSize: dockHeight} : undefined}>
+        {enabled && <div className={headingClass} ref={action}>
+            {!overlayAction && <h2>{title}</h2>}
             {!mount && <OpenWindowButton
                 disabled={state.kind === 'opening'}
                 label={japanese ? '別画面で開く' : 'Open in another window'}
@@ -35,11 +36,12 @@ function DockableBasicPanel({host, id, title, children}) {
             dockLabel={japanese ? 'ここに戻す' : 'Return here'}
             mount={mount}
             onDock={() => surface.dock()}
-        >{children}</DockablePanel>
+        >{render ? render(Boolean(mount)) : children}</DockablePanel>
     </div>;
 }
 
-export function BasicPanel({id, title, children}) {
+export function BasicPanel({children, ...options}) {
     const host = useWindowHost();
-    return host ? <DockableBasicPanel {...{host, id, title}}>{children}</DockableBasicPanel> : children;
+    return host ? <DockableBasicPanel {...options} host={host}>{children}</DockableBasicPanel> :
+        (options.render ? options.render(false) : children);
 }

@@ -46,6 +46,7 @@
 }
 
 .basic-panel {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-block-size: 0;
@@ -64,4 +65,30 @@
 .basic-panel-heading h2 {
     margin: 0;
     font-size: 0.875rem;
+}
+
+.basic-panel-overlay-action {
+    position: absolute;
+    inset-block-start: 0.25rem;
+    inset-inline-end: 0.25rem;
+    z-index: 3;
+    opacity: 0;
+}
+
+.basic-panel:hover > .basic-panel-overlay-action,
+.basic-panel:focus-within > .basic-panel-overlay-action {
+    opacity: 1;
+}
+
+.stage-viewport {
+    display: contents;
+}
+
+.stage-viewport[data-floating="true"] {
+    display: grid;
+    place-items: center;
+    inline-size: 100%;
+    block-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 0;
 }

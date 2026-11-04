@@ -8,6 +8,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusSpriteProperties: params.get('twPlusSpriteProperties'),
         twPlusWindowLayout: params.get('twPlusWindowLayout'),
         twPlusBackpackPopout: params.get('twPlusBackpackPopout'),
-        twPlusInternalWindows: params.get('twPlusInternalWindows')
+        twPlusInternalWindows: params.get('twPlusInternalWindows'),
+        twPlusStagePanel: params.get('twPlusStagePanel')
     });
 }

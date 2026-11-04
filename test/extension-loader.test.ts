@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'spriteProperties', 'windowLayout', 'backpackPopout', 'internalWindows']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'spriteProperties', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, spriteProperties: false, windowLayout: true, backpackPopout: false, internalWindows: false});
+        {extensionLoader: false, projectTools: true, spriteProperties: false, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,5 +156,14 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, spriteProperties: true, windowLayout: false, backpackPopout: false, internalWindows: false});
+        {extensionLoader: true, projectTools: true, spriteProperties: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false});
+});
+
+test('the stage panel opt-in depends on flexible layout and internal windows', () => {
+    const layout = '?twPlusWindowLayout=1&twPlusInternalWindows=1';
+    for (const search of [layout, layout + '&twPlusStagePanel=0', '?twPlusStagePanel=1',
+        '?twPlusWindowLayout=1&twPlusStagePanel=1']) {
+        assert.equal(readWebStartupFeatureFlags(search).stagePanel, false);
+    }
+    assert.equal(readWebStartupFeatureFlags(layout + '&twPlusStagePanel=1').stagePanel, true);
 });
