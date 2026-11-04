@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium, expect} from '@playwright/test';
+import JSZip from '@turbowarp/jszip';
 
 const types = {
     '.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
@@ -131,15 +132,34 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect.poll(async () => (await stage.boundingBox()).width).toBe(originalStage.width);
     await anchor.click();
     assert.equal(await position(columns), saved);
+
+    await page.getByText('File', {exact: true}).click();
+    const pending = page.waitForEvent('download');
+    await page.getByRole('listitem').filter({hasText: /^(Save as\.\.\.|Save to your computer)$/}).click();
+    const archive = await readFile(await (await pending).path());
+    const zip = await JSZip.loadAsync(archive, {checkCRC32: true});
+    const json = await zip.file('project.json').async('string');
+    assert.ok(!json.includes('twPlusEditorLayout'));
+    const project = JSON.parse(json);
+    assert.ok(project.targets.some(target => Object.values(target.blocks)
+        .some(block => block.opcode === 'event_whenflagclicked' && block.x > 220)));
+
     await start('&twPlusWindowLayout=1');
     await expect(columns).toHaveCount(0);
     await anchor.click();
     assert.equal(await position(columns), saved);
     await page.getByRole('button', {name: 'Switch to small stage', exact: true}).click();
     await expect.poll(async () => (await stage.boundingBox()).width).toBe(240);
-    await start('&twPlusWindowLayout=0');
+    const projectURL = origin + '/roundtrip.sb3';
+    await page.context().route(projectURL, route => route.fulfill({
+        body: archive, contentType: 'application/octet-stream'
+    }));
+    await start('&twPlusWindowLayout=0&project_url=' + encodeURIComponent(projectURL));
     await expect(anchor).toHaveCount(0);
     await expect(columns).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks?.getMainWorkspace()?.getAllBlocks()
+        .some(block => block.type === 'event_whenflagclicked' && block.getRelativeToSurfaceXY().x > 220)))
+        .toBe(true);
     assert.deepEqual(errors, []);
 });
 
