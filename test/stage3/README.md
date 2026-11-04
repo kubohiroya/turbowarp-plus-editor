@@ -33,7 +33,7 @@ TW151_STAGE3_PREFIX=/turbowarp-plus-editor/ \
   TW151_STAGE3_BUILD=/private/tmp/tw151-product23/production node test/stage3/check.mjs
 ```
 
-`TW151_STAGE3_LIFECYCLE_ONLY=1` を追加すると、ネイティブドラッグを省いたヘッドレス検証になる。
+既定ではヘッドレスで開閉と復帰を検証する。ウィンドウ間の実マウスドラッグを確認する場合は、コマンドに `TW_PLUS_NATIVE_INPUT=1` を追加する。
 
 - 既定、明示 OFF、不正値で既存のバックパックとコード画面を利用できる。両方の起動フラグを有効にした場合も、⚓ を押すまで操作は出ない。
 - ポップアップ拒否で保存済み項目を元の場所で使える。成功時は展開状態と項目を別ウィンドウに表示する。

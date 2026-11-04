@@ -9,6 +9,10 @@ import {setTimeout as sleep} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
+if (process.env.TW_PLUS_NATIVE_INPUT !== '1') {
+    throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
+}
+
 const desktop = process.env.TW151_DESKTOP_APP;
 const executable = desktop ? join(desktop, 'Contents/MacOS/TurboWarp') :
     process.env.TW151_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';

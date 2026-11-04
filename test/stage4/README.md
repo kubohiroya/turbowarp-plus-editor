@@ -41,7 +41,7 @@ TW151_STAGE4_BUILD=/private/tmp/tw151-stage4-workarea-final-web \
 公式 TurboWarp Desktop 1.17.1 のコピーを `scripts/desktop/README.md` に沿ってこのブランチの Webpack 設定で作成する。起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1 TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1` を指定すると、⚓ からアプリ内ウィンドウを利用できる。署名済み試験用コピーでは次を実行する。
 
 ```sh
-node test/stage3/check-desktop.mjs /private/tmp/tw151-stage4-workarea-final.app --internal
+TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs /private/tmp/tw151-stage4-workarea-final.app --internal
 ```
 
 実バックパックの開閉には macOS のマウス入力を使う。タブ行の操作と画面の DOM 確認には Playwright を使う。段階3の外部ウィンドウ経路を回帰確認する場合は `--internal` を外す。

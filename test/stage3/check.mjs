@@ -11,7 +11,7 @@ import {chromium} from 'playwright';
 const origin = 'http://localhost:15103';
 const prefix = process.env.TW151_STAGE3_PREFIX || '/';
 const transferMime = 'application/x-turbowarp-editor-transfer';
-const lifecycleOnly = process.env.TW151_STAGE3_LIFECYCLE_ONLY === '1';
+const lifecycleOnly = process.env.TW_PLUS_NATIVE_INPUT !== '1' || process.env.TW151_STAGE3_LIFECYCLE_ONLY === '1';
 const build = resolve(process.env.TW151_STAGE3_BUILD || '/private/tmp/tw151-product23/build');
 const profile = await mkdtemp(join(tmpdir(), 'tw151-backpack-'));
 const chrome = spawn(process.env.TW151_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
