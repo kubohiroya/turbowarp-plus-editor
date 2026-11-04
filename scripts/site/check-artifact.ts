@@ -29,14 +29,20 @@ const family = JSON.parse(await fs.readFile(path.join(directory, info.familyNoti
 for (const name of requiredFamilyPackages) {
     assert.ok(family.packages.some(entry => entry.package === name), `Bundled family package without notices: ${name}`);
 }
+const lock = JSON.parse(await fs.readFile(new URL('../../package-lock.json', import.meta.url), 'utf8'));
+if (pins.spritePropertiesPackage) {
+    const properties = family.packages.find(entry => entry.package === pins.spritePropertiesPackage);
+    assert.equal(properties?.version, pins.spritePropertiesVersion);
+    assert.equal(properties.source.integrity, pins.spritePropertiesIntegrity);
+}
 for (const entry of family.packages) {
-    if (entry.package === pins.spritePropertiesPackage) {
-        const tarball = `notices/turbowarp-editor-sprite-properties@${pins.spritePropertiesVersion}/source.tgz`;
+    const installed = lock.packages[`node_modules/${entry.package}`];
+    if (installed?.resolved?.startsWith('file:vendor/') && installed.version === entry.version) {
+        const tarball = `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`;
         const bytes = await fs.readFile(path.join(directory, tarball));
-        assert.equal(entry.version, pins.spritePropertiesVersion);
-        assert.deepEqual(entry.source, {npm: null, tarball, integrity: pins.spritePropertiesIntegrity});
-        assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, pins.spritePropertiesIntegrity,
-            'Sprite properties source archive differs from the pin');
+        assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity});
+        assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, installed.integrity,
+            `Source archive differs from the pin: ${entry.package}`);
     } else {
         assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
     }

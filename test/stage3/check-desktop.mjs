@@ -36,10 +36,12 @@ async function run (enabled, test) {
     delete processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT;
     delete processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;
+    delete processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        if (enabled === 'internal') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        if (enabled === 'internal' || enabled === 'sprite') processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
         else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
+        if (enabled === 'sprite') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
     }
     const application = spawn(join(app, 'Contents/MacOS/TurboWarp'), processArgs, {env: processEnv});
     const stopped = once(application, 'close');
@@ -284,17 +286,45 @@ async function checkInternal ({editor, control}) {
     report.checks.push('The shared action is to the right of the find bar and moves each active live panel, keeps it open across tab changes, and docks on close or mode exit');
 }
 
+const spritePropertiesLabel = /^(Sprite properties|スプライトのプロパティ)$/;
+
+async function checkSpriteProperties ({editor, control}) {
+    const panel = editor.getByRole('region', {name: spritePropertiesLabel});
+    const x = panel.getByRole('spinbutton', {name: 'x', exact: true});
+    const heading = editor.getByRole('heading', {name: /^(Sprite|スプライト)$/});
+    const action = heading.locator('..').getByRole('button', {name: /^(Open in another window|別画面で開く)$/});
+    const floating = editor.getByRole('region', {name: /^(Sprite|スプライト)$/});
+    await panel.waitFor();
+    assert.equal(await action.count(), 0);
+    await editor.getByRole('button', {name: modeLabel}).click();
+    await x.evaluate(node => {window.stage5SpriteX = node;});
+    await action.click();
+    await floating.getByRole('region', {name: spritePropertiesLabel}).waitFor();
+    assert.equal(await control('windows').then(windows => windows.length), 1);
+    assert.ok(await x.evaluate(node => node === window.stage5SpriteX));
+    await x.fill('52');
+    await x.press('Enter');
+    await editor.waitForFunction(() => window.vm.editingTarget.x === 52);
+    await floating.getByRole('button', {name: /^(Close and dock|閉じる（ドックに戻す）)$/}).click();
+    await floating.waitFor({state: 'hidden'});
+    assert.equal(await x.inputValue(), '52');
+    assert.ok(await x.evaluate(node => node === window.stage5SpriteX));
+    report.checks.push('The licensed sprite properties form uses the same live VM in the dock and in-app on Desktop');
+}
+
 try {
     await run(false, async ({editor, control}) => {
         assert.equal(await editor.getByRole('button', {name: modeLabel}).count(), 0);
         assert.equal(await editor.getByRole('button', {name: undockLabel}).count(), 0);
+        assert.equal(await editor.getByRole('region', {name: spritePropertiesLabel}).count(), 0);
         assert.equal(await editor.evaluate(() =>
             window.open('about:blank', `tw-plus-backpack-${crypto.randomUUID()}`) === null), true);
         assert.equal((await control('windows')).length, 1);
         report.checks.push('Desktop startup defaults OFF and denies the reserved native window');
     });
 
-    if (process.argv.includes('--internal')) await run('internal', checkInternal);
+    if (process.argv.includes('--sprite-properties')) await run('sprite', checkSpriteProperties);
+    else if (process.argv.includes('--internal')) await run('internal', checkInternal);
     else await run(true, async ({editor, context, control}) => {
         const parent = (await control('windows')).find(window => window.kind === 'editor');
         await control('layout', parent.id);
