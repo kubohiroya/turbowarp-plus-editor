@@ -62,6 +62,35 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
     }
 
     const bridge = {
+        onError,
+        prepareImport(target) {
+            if (loadedTarget === target) flush();
+            const before = signature(target);
+            const stored = histories.get(target);
+            const previous = loadedTarget === target && loadedSignature === before ? workspace.undoStack_.slice() :
+                (stored?.signature === before ? stored.undo : []);
+            return ({blockIds, rootBlockIds}) => {
+                const group = crypto.randomUUID();
+                const added = new Set(blockIds);
+                const events = rootBlockIds.map(blockId => {
+                    const xml = target.blocks.blockToXML(blockId, target.comments);
+                    const root = blocks.Xml.textToDom(`<xml>${xml}</xml>`).firstElementChild;
+                    const ids = [blockId, ...Array.from(root.querySelectorAll('block[id], shadow[id]'),
+                        child => child.id)].filter(id => added.has(id));
+                    const event = blocks.Events.fromJson({type: 'create', blockId, xml, ids}, workspace);
+                    // The pinned ScratchBlocks block decoder does not restore the event group.
+                    event.group = group;
+                    return event;
+                });
+                const history = {signature: signature(target), undo: [...previous, ...events], redo: []};
+                histories.set(target, history);
+                if (loadedTarget === target) {
+                    loadedSignature = history.signature;
+                    workspace.undoStack_ = history.undo.slice();
+                    workspace.redoStack_ = [];
+                }
+            };
+        },
         blockListener(event) {
             if (event.workspaceId !== workspace.id || !loadedTarget || vm.editingTarget !== loadedTarget ||
                 vm.runtime.getEditingTarget() !== loadedTarget) return;

@@ -116,17 +116,35 @@ export function useCodeWindows({vm, host, locale, enabled}) {
     } : null;
 }
 
-function Preview({vm, target, className}) {
+function Preview({vm, view, className, attachBackpackDrop}) {
+    const {target} = view;
+    const drop = React.useRef(null);
     const ref = React.useRef(null);
     React.useLayoutEffect(() => {
         const session = getCodeSession(vm);
         let bridge;
         let preview;
+        let dropBinding;
         const update = () => {
             if (bridge !== session.bridge) {
+                dropBinding?.dispose();
                 preview?.dispose();
                 bridge = session.bridge;
                 preview = bridge?.preview(ref.current, target);
+                if (preview) {
+                    const boundBridge = bridge;
+                    const canCommit = () => session.bridge === boundBridge && !view.connection.disconnected.aborted;
+                    let record;
+                    dropBinding = attachBackpackDrop({
+                        vm, workspace: preview.workspace, dropElement: drop.current,
+                        canUse: canCommit, onError: bridge.onError,
+                        destination: {
+                            target, canCommit,
+                            beforeCommit: () => { record = boundBridge.prepareImport(target); },
+                            onCommitted: receipt => record(receipt)
+                        }
+                    });
+                }
             }
             preview?.update();
         };
@@ -134,13 +152,16 @@ function Preview({vm, target, className}) {
         update();
         return () => {
             unsubscribe();
+            dropBinding?.dispose();
             preview?.dispose();
         };
-    }, [vm, target]);
-    return <div ref={ref} className={className} aria-hidden="true" inert="" />;
+    }, [vm, view, target, attachBackpackDrop]);
+    return <div ref={drop} className={className} data-code-preview="" aria-hidden="true">
+        <div ref={ref} inert="" />
+    </div>;
 }
 
-export function BackCodeWindows({vm, windows, front, previewClass}) {
+export function BackCodeWindows({vm, windows, front, previewClass, attachBackpackDrop}) {
     return windows.filter(view => view !== front && !view.minimized && view.mount).map(view =>
-        createPortal(<Preview vm={vm} target={view.target} className={previewClass} />, view.mount, view.id));
+        createPortal(<Preview vm={vm} view={view} className={previewClass} attachBackpackDrop={attachBackpackDrop} />, view.mount, view.id));
 }

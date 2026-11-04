@@ -31,7 +31,7 @@ const messages = {
     }
 };
 
-export function createBackpackIntegration({host, importScript, decorateSurface, readScript = readBackpackScript}) {
+export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
     function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel}) {
@@ -154,8 +154,9 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
         );
     }
 
-    function attachBackpackDrop({vm, workspace, canUse, onError}) {
-        const node = workspace.getParentSvg();
+    function attachBackpackDrop({vm, workspace, canUse, onError, dropElement, destination}) {
+        const svg = workspace.getParentSvg();
+        const node = dropElement ?? svg;
         let disposed = false;
         const allowed = event => sessions.has(vm) && canUse() &&
             Array.from(event.dataTransfer?.types ?? []).includes(transferMime);
@@ -168,18 +169,27 @@ export function createBackpackIntegration({host, importScript, decorateSurface, 
             if (!allowed(event)) return;
             event.preventDefault();
             const active = sessions.get(vm);
-            const target = vm.editingTarget;
+            const target = destination?.target ?? vm.editingTarget;
             const raw = event.dataTransfer.getData(transferMime);
             const matrix = workspace.getCanvas().getScreenCTM();
             if (!target || !matrix) return;
-            const point = node.createSVGPoint();
+            const point = svg.createSVGPoint();
             point.x = event.clientX;
             point.y = event.clientY;
             const {x, y} = point.matrixTransform(matrix.inverse());
-            void active.transfer.receive(raw, {session: active.id, id: target.id}, async (destination, script) => {
-                if (disposed || sessions.get(vm) !== active ||
-                    vm.runtime.getTargetById(destination.id) !== target) return false;
-                await importScript(vm, target, script, {position: {x, y}});
+            const canCommit = () => sessions.get(vm) === active &&
+                vm.runtime.getTargetById(target.id) === target &&
+                (destination ? destination.canCommit() : !disposed);
+            const position = {x, y};
+            void active.transfer.receive(raw, {session: active.id, id: target.id}, async (_, script) => {
+                if (!canCommit()) return false;
+                if (destination) {
+                    const receipt = await importScriptWithReceipt(vm, target, script, {
+                        position, canCommit, beforeCommit: destination.beforeCommit, onCommitted: destination.onCommitted
+                    });
+                    return receipt !== null;
+                }
+                await importScript(vm, target, script, {position});
                 return true;
             }).then(result => {
                 if (result === 'failed' && !disposed) onError(new Error(active.copyFailed.current));

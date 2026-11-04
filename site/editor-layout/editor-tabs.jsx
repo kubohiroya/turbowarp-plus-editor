@@ -3,6 +3,7 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import styles from './layout.css';
 import {layoutFlags} from './index.jsx';
+import {attachBackpackDrop} from '../editor-backpack/integration.js';
 import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-editor-views';
 
 const codeTab = 0;
@@ -72,6 +73,7 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
     });
     return <SpriteCodeProvider value={code?.context ?? null}>
         {content}
-        {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front} previewClass={styles.codePreview} />}
+        {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front}
+            previewClass={styles.codePreview} attachBackpackDrop={attachBackpackDrop} />}
     </SpriteCodeProvider>;
 }
