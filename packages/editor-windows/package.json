@@ -1,8 +1,0 @@
-{
-  "name": "@kubohiroya/turbowarp-editor-windows",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "exports": "./index.jsx",
-  "peerDependencies": {"react": ">=16"}
-}

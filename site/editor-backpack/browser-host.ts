@@ -1,4 +1,4 @@
-import type {SurfaceConnection, SurfaceHost} from '../../packages/editor-surfaces/index.ts';
+import type {SurfaceConnection, SurfaceHost} from '@kubohiroya/turbowarp-editor-surfaces';
 
 export interface MountedSurface {
     mount: HTMLElement;
@@ -7,15 +7,15 @@ export interface MountedSurface {
 export interface OpenRequest {
     timeoutMs?: number;
     skipHandshake?: boolean;
-    page?: string;
 }
 
 export function createBrowserHost(
     parent: Window,
-    show: (url: URL, ticket: string) => Window | null
+    show: (url: URL, ticket: string) => Window | null,
+    page = 'code-popout.html'
 ): SurfaceHost<OpenRequest, MountedSurface> {
     return {
-        open({timeoutMs = 5000, skipHandshake = false, page = 'code-popout.html'}): SurfaceConnection<MountedSurface> | null {
+        open({timeoutMs = 5000, skipHandshake = false} = {}): SurfaceConnection<MountedSurface> | null {
             const ticket = crypto.randomUUID();
             const url = new URL(page, parent.location.href);
             url.hash = ticket;

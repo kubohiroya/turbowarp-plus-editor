@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'windowLayout']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'windowLayout', 'backpackPopout']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -129,6 +129,14 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, windowLayout: true});
+        {extensionLoader: false, projectTools: true, windowLayout: true, backpackPopout: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
+});
+
+test('Backpack popout requires both startup opt-ins', () => {
+    for (const query of ['', '?twPlusBackpackPopout=1', '?twPlusWindowLayout=0&twPlusBackpackPopout=1',
+        '?twPlusWindowLayout=1&twPlusBackpackPopout=true']) {
+        assert.equal(readWebStartupFeatureFlags(query).backpackPopout, false);
+    }
+    assert.equal(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusBackpackPopout=1').backpackPopout, true);
 });

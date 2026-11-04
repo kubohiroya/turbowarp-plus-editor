@@ -3,7 +3,8 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {createLayout} from '@kubohiroya/turbowarp-editor-layout';
 import styles from './layout.css';
 
-const layoutEnabled = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search).windowLayout;
+export const layoutFlags = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
+export const WindowLayoutContext = React.createContext({enabled: false, locale: 'en'});
 const SplitLayout = createLayout(React);
 const storageKey = 'twPlusEditorLayout';
 
@@ -32,23 +33,25 @@ const WebLayout = props => {
         </button>
     );
     return (
-        <SplitLayout
-            {...props}
-            enabled={enabled}
-            labels={{
-                columns: japanese ? '編集領域とステージ列の幅' : 'Editor and stage column width',
-                rows: japanese ? 'ステージと対象領域の高さ' : 'Stage and target pane height'
-            }}
-            minimumEditor={500}
-            minimumStageColumn={350}
-            minimumStageRow={135}
-            minimumTargets={175}
-            separatorClassName={styles.separator}
-            stageTools={stageTools}
-            storage={getStorage()}
-            storageKey={storageKey}
-        />
+        <WindowLayoutContext.Provider value={{enabled, locale: props.locale}}>
+            <SplitLayout
+                {...props}
+                enabled={enabled}
+                labels={{
+                    columns: japanese ? '編集領域とステージ列の幅' : 'Editor and stage column width',
+                    rows: japanese ? 'ステージと対象領域の高さ' : 'Stage and target pane height'
+                }}
+                minimumEditor={500}
+                minimumStageColumn={350}
+                minimumStageRow={135}
+                minimumTargets={175}
+                separatorClassName={styles.separator}
+                stageTools={stageTools}
+                storage={getStorage()}
+                storageKey={storageKey}
+            />
+        </WindowLayoutContext.Provider>
     );
 };
 
-export const EditorLayout = layoutEnabled ? WebLayout : undefined;
+export const EditorLayout = layoutFlags.windowLayout ? WebLayout : undefined;

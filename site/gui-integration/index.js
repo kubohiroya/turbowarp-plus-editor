@@ -21,4 +21,4 @@ export const renderStageControls = ({vm, isSmall}) => {
 
 export {EditorLayout} from '../editor-layout/index.jsx';
 
-export {BackpackSurface} from '../editor-backpack/index.js';
+export {BackpackSurface} from '../editor-backpack/index.jsx';

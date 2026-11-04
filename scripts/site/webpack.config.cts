@@ -66,10 +66,13 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const layoutEntry = rootRequire.resolve('@kubohiroya/turbowarp-editor-layout');
-config.resolve.alias['@kubohiroya/turbowarp-editor-layout$'] = layoutEntry;
+const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'backpack'].map(feature => {
+    const name = `@kubohiroya/turbowarp-editor-${feature}`;
+    const entry = rootRequire.resolve(name);
+    config.resolve.alias[`${name}$`] = entry;
+    return [feature, path.dirname(entry)];
+}));
 const siteSource = path.join(__dirname, '..', '..', 'site');
-const packages = path.join(__dirname, '..', '..', 'packages');
 const backpackSurface = path.join(siteSource, 'editor-backpack');
 config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
@@ -77,11 +80,10 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     template: path.join(backpackSurface, 'backpack-popout.html')
 }));
 config.module.rules.push({test: /\.ts$/, include: [
-    backpackSurface, path.join(packages, 'editor-surfaces'), path.join(packages, 'editor-transfer')
+    backpackSurface, editorEntries.surfaces, editorEntries.transfer
 ], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
 config.module.rules.push({test: /\.jsx?$/, include: [
-    siteSource, transferSource, path.dirname(layoutEntry),
-    path.join(packages, 'editor-backpack'), path.join(packages, 'editor-windows')
+    siteSource, transferSource, editorEntries.layout, editorEntries.backpack
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,

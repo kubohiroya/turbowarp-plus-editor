@@ -9,11 +9,15 @@ import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
 const origin = 'http://localhost:15103';
-const build = resolve(process.env.TW151_STAGE3_BUILD || '/private/tmp/tw151-stage3/build');
+const prefix = process.env.TW151_STAGE3_PREFIX || '/';
+const transferMime = 'application/x-turbowarp-editor-transfer';
+const lifecycleOnly = process.env.TW151_STAGE3_LIFECYCLE_ONLY === '1';
+const build = resolve(process.env.TW151_STAGE3_BUILD || '/private/tmp/tw151-product23/build');
 const profile = await mkdtemp(join(tmpdir(), 'tw151-backpack-'));
 const chrome = spawn(process.env.TW151_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--no-first-run', '--disable-popup-blocking',
-    '--use-mock-keychain', '--password-store=basic', '--enable-unsafe-swiftshader', 'about:blank'
+    '--use-mock-keychain', '--password-store=basic', '--enable-unsafe-swiftshader',
+    ...(lifecycleOnly ? ['--headless=new'] : []), 'about:blank'
 ], {stdio: ['ignore', 'ignore', 'pipe']});
 const stopped = once(chrome, 'close');
 let stderr = '';
@@ -58,8 +62,9 @@ try {
     context.setDefaultTimeout(10000);
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
-        const file = resolve(build, '.' + decodeURIComponent(url.pathname));
-        if (url.origin !== origin || !file.startsWith(build + sep)) return route.abort();
+        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+        const file = resolve(build, decodeURIComponent(url.pathname.slice(prefix.length)));
+        if (!file.startsWith(build + sep)) return route.abort();
         try {
             await access(file);
         } catch {
@@ -70,19 +75,36 @@ try {
     page = await context.newPage();
     page.on('pageerror', error => report.errors.push(error.message));
     async function start(flag) {
-        await page.goto(`${origin}/editor.html?lang=en&twPlusWindowLayout=1${flag}`);
+        await page.goto(`${origin}${prefix}editor.html?lang=en${flag}`);
         await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal &&
             window.ScratchBlocks?.getMainWorkspace());
     }
-    const undock = page.getByRole('button', {name: 'Undock Backpack'});
+    const undock = page.getByRole('button', {name: 'Open Backpack in a browser window'});
+    const mode = page.getByRole('button', {name: 'Flexible layout mode'});
+    const layoutFlag = '&twPlusWindowLayout=1';
+    const backpackFlag = '&twPlusBackpackPopout=1';
     const header = target => target.locator('[class*="backpack_backpack-header"]');
-    await start('');
+    await start(backpackFlag);
+    assert.equal(await mode.count(), 0);
     assert.equal(await undock.count(), 0);
-    await page.getByRole('button', {name: 'Flexible layout mode'}).waitFor();
     await header(page).waitFor();
-    report.checks.push('Flag off retains the real Backpack, Blockly and splitter entry');
 
-    await start('&twPlusBackpackPopout=1');
+    for (const backpackValue of ['', '&twPlusBackpackPopout=0', '&twPlusBackpackPopout=', '&twPlusBackpackPopout=true']) {
+        await start(layoutFlag + backpackValue);
+        await mode.click();
+        assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+        assert.equal(await undock.count(), 0);
+        await header(page).waitFor();
+    }
+    report.checks.push('Default, disabled and invalid flags retain the real Backpack and independent splitter');
+
+    await start(layoutFlag + backpackFlag);
+    assert.equal(await mode.getAttribute('aria-pressed'), 'false');
+    assert.equal(await undock.count(), 0);
+    await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0&twPlusBackpackPopout=0'));
+    await mode.click();
+    await undock.waitFor();
+    report.checks.push('Startup flags stay fixed and the Backpack control appears only in flexible layout mode');
     const {a, b} = await page.evaluate(async () => {
         const vm = window.vm;
         const target = vm.editingTarget;
@@ -136,54 +158,96 @@ try {
     popup = await openBackpack();
     report.checks.push('Stored item remains on popup refusal and the expanded real Backpack moves to its child');
 
-    const area = await page.evaluate(() => [screen.availLeft, screen.availTop, screen.availWidth, screen.availHeight]);
-    await setBounds(context, page, area[0] + 25, area[1] + 45, Math.round(area[2] * 0.65), Math.round(area[3] * 0.8));
-    await setBounds(context, popup, area[0] + Math.round(area[2] * 0.69), area[1] + 55,
-        Math.round(area[2] * 0.27), 300);
-    await page.evaluate(() => {
-        const fetch = window.fetch;
+    // Lifecycle coverage uses DOM events. Native delivery is verified separately below.
+    const reference = await popup.getByTestId('backpack-script-drag').evaluate((button, mime) => {
+        const dataTransfer = new DataTransfer();
+        button.dispatchEvent(new DragEvent('dragstart', {dataTransfer, bubbles: true}));
+        return dataTransfer.getData(mime);
+    }, transferMime);
+    assert.ok(reference);
+    await page.evaluate(({mime, reference}) => {
+        const originalFetch = window.fetch;
         window.fetch = async (url, options) => {
             if (typeof url === 'string' && url.startsWith('data:application/json;base64,')) {
-                window.stage3Reading = true;
-                await new Promise(resolve => {window.stage3Release = resolve;});
+                options.signal.addEventListener('abort', () => {window.stage3Cancelled = true;}, {once: true});
+                await new Promise(resolve => {window.stage3FinishCancelledRead = resolve;});
+                window.fetch = originalFetch;
             }
-            return fetch(url, options);
+            return originalFetch(url, options);
         };
-        document.addEventListener('drop', event => {
-            window.stage3Drop = {trusted: event.isTrusted, mime: Array.from(event.dataTransfer.types)};
-        }, {capture: true, once: true});
-    });
-    await popup.bringToFront();
-    await wait(() => popup.evaluate(() => document.hasFocus()), 'Backpack focus');
-    const source = popup.getByTestId('backpack-script-drag');
-    const destination = page.locator('.blocklySvg').first();
-    const points = [...await coords(popup, source), ...await coords(page, destination, 0.76)];
-    report.drag = points;
-    await promisify(execFile)('python3', [join(import.meta.dirname, '../stage2/native-mouse.py'), ...points.map(String)]);
-    await page.waitForFunction(() => window.stage3Reading, null, {polling: 50});
-    const drop = await page.evaluate(() => window.stage3Drop);
-    assert.equal(drop.trusted, true);
-    assert.ok(drop.mime.includes('application/x-turbowarp-editor-transfer'));
-    await page.evaluate(other => {
-        window.vm.setEditingTarget(other);
-        window.stage3Release();
-    }, b);
-    await page.waitForFunction(id => window.vm.runtime.getTargetById(id).blocks.getScripts().length === 1, a,
-        {polling: 50});
-    const targets = await page.evaluate(({a, b}) => [a, b].map(id => {
-        const blocks = window.vm.runtime.getTargetById(id).blocks;
-        return blocks.getScripts().map(rootId => {
-            const block = blocks.getBlock(rootId);
-            return [block.opcode, blocks.getBlock(block.next)?.opcode];
+        const dataTransfer = new DataTransfer();
+        dataTransfer.setData(mime, reference);
+        window.ScratchBlocks.getMainWorkspace().getParentSvg().dispatchEvent(new DragEvent('drop', {
+            dataTransfer, bubbles: true, cancelable: true
+        }));
+    }, {mime: transferMime, reference});
+    await page.waitForFunction(() => typeof window.stage3FinishCancelledRead === 'function');
+    await Promise.all([popup.waitForEvent('close'), mode.click()]);
+    await page.waitForFunction(() => window.stage3Cancelled);
+    await page.evaluate(() => window.stage3FinishCancelledRead());
+    assert.equal(await page.evaluate(id => window.vm.runtime.getTargetById(id).blocks.getScripts().length, a), 0);
+    assert.equal(await mode.getAttribute('aria-pressed'), 'false');
+    assert.equal(await undock.count(), 0);
+    await page.getByText('Stage 3 stored script', {exact: true}).waitFor();
+    await mode.click();
+    popup = await openBackpack();
+    const reloaded = popup.waitForEvent('close');
+    await popup.reload({waitUntil: 'commit'}).catch(() => {});
+    await reloaded;
+    await page.getByText('Stage 3 stored script', {exact: true}).waitFor();
+    popup = await openBackpack();
+    report.checks.push('Leaving flexible layout mode aborts a pending read; leaving or reloading the child restores the Backpack');
+
+    if (!lifecycleOnly) {
+        const area = await page.evaluate(() => [screen.availLeft, screen.availTop, screen.availWidth, screen.availHeight]);
+        await setBounds(context, page, area[0] + 25, area[1] + 45, Math.round(area[2] * 0.65), Math.round(area[3] * 0.8));
+        await setBounds(context, popup, area[0] + Math.round(area[2] * 0.69), area[1] + 55,
+            Math.round(area[2] * 0.27), 300);
+        await page.evaluate(() => {
+            const fetch = window.fetch;
+            window.fetch = async (url, options) => {
+                if (typeof url === 'string' && url.startsWith('data:application/json;base64,')) {
+                    window.stage3Reading = true;
+                    await new Promise(resolve => {window.stage3Release = resolve;});
+                }
+                return fetch(url, options);
+            };
+            document.addEventListener('drop', event => {
+                window.stage3Drop = {trusted: event.isTrusted, mime: Array.from(event.dataTransfer.types)};
+            }, {capture: true, once: true});
         });
-    }), {a, b});
-    assert.deepEqual(targets, [[['looks_hide', 'looks_show']], []]);
-    assert.equal(await page.evaluate(() => window.vm.editingTarget.id), b);
-    await page.evaluate(id => window.vm.setEditingTarget(id), a);
-    await page.waitForFunction(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks()
-        .some(block => block.type === 'looks_hide' && block.getNextBlock()?.type === 'looks_show'), null, {polling: 50});
-    await popup.getByText('Stage 3 stored script', {exact: true}).waitFor();
-    report.checks.push('Native drag copies the stored stack once; delayed read preserves the drop-time sprite');
+        await popup.bringToFront();
+        await wait(() => popup.evaluate(() => document.hasFocus()), 'Backpack focus');
+        const source = popup.getByTestId('backpack-script-drag');
+        const destination = page.locator('.blocklySvg').first();
+        const points = [...await coords(popup, source), ...await coords(page, destination, 0.76)];
+        report.drag = points;
+        await promisify(execFile)('python3', [join(import.meta.dirname, '../stage2/native-mouse.py'), ...points.map(String)]);
+        await page.waitForFunction(() => window.stage3Reading, null, {polling: 50});
+        const drop = await page.evaluate(() => window.stage3Drop);
+        assert.equal(drop.trusted, true);
+        assert.ok(drop.mime.includes(transferMime));
+        await page.evaluate(other => {
+            window.vm.setEditingTarget(other);
+            window.stage3Release();
+        }, b);
+        await page.waitForFunction(id => window.vm.runtime.getTargetById(id).blocks.getScripts().length === 1, a,
+            {polling: 50});
+        const targets = await page.evaluate(({a, b}) => [a, b].map(id => {
+            const blocks = window.vm.runtime.getTargetById(id).blocks;
+            return blocks.getScripts().map(rootId => {
+                const block = blocks.getBlock(rootId);
+                return [block.opcode, blocks.getBlock(block.next)?.opcode];
+            });
+        }), {a, b});
+        assert.deepEqual(targets, [[['looks_hide', 'looks_show']], []]);
+        assert.equal(await page.evaluate(() => window.vm.editingTarget.id), b);
+        await page.evaluate(id => window.vm.setEditingTarget(id), a);
+        await page.waitForFunction(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks()
+            .some(block => block.type === 'looks_hide' && block.getNextBlock()?.type === 'looks_show'), null, {polling: 50});
+        await popup.getByText('Stage 3 stored script', {exact: true}).waitFor();
+        report.checks.push('Native drag copies the stored stack once; delayed read preserves the drop-time sprite');
+    }
 
     await Promise.all([popup.waitForEvent('close'),
         popup.getByRole('button', {name: 'Dock Backpack'}).click()]);
@@ -192,17 +256,20 @@ try {
     await popup.close({runBeforeUnload: true});
     await undock.waitFor();
     await page.getByText('Stage 3 stored script', {exact: true}).waitFor();
-    assert.equal(await page.evaluate(id => window.vm.runtime.getTargetById(id).blocks.getScripts().length, a), 1);
-    const sb3 = await page.evaluate(async () => {
-        const vm = window.vm;
-        const archive = await vm.saveProjectSb3();
-        const bytes = await archive.arrayBuffer();
-        await vm.loadProject(bytes);
-        return vm.runtime.targets.filter(target => target.isOriginal && !target.isStage)
-            .map(target => target.blocks.getScripts().length).sort();
-    });
-    assert.deepEqual(sb3, [0, 1]);
-    report.checks.push('Dock button and close preserve the expanded Backpack; SB3 save and reload retain the copy');
+    report.checks.push('Dock button and browser close preserve the expanded Backpack');
+    if (!lifecycleOnly) {
+        assert.equal(await page.evaluate(id => window.vm.runtime.getTargetById(id).blocks.getScripts().length, a), 1);
+        const sb3 = await page.evaluate(async () => {
+            const vm = window.vm;
+            const archive = await vm.saveProjectSb3();
+            const bytes = await archive.arrayBuffer();
+            await vm.loadProject(bytes);
+            return vm.runtime.targets.filter(target => target.isOriginal && !target.isStage)
+                .map(target => target.blocks.getScripts().length).sort();
+        });
+        assert.deepEqual(sb3, [0, 1]);
+        report.checks.push('SB3 save and reload retain the copied script');
+    }
     assert.deepEqual(report.errors, []);
 } catch (error) {
     report.failure = String(error);
