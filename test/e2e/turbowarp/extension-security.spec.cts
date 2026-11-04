@@ -2,6 +2,14 @@ const JSZip = require('@turbowarp/jszip');
 const {createHash} = require('node:crypto');
 const {test, expect} = require('./fixtures.cts');
 
+// These custom fixture IDs are deliberately outside the trusted catalog. Keep that precondition
+// deterministic instead of waiting for the public catalog's 15-second network timeout in CI.
+const useFixtureCatalog = context => context.route(
+    'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json',
+    route => route.fulfill({json: {schemaVersion: 1, extensions: []}})
+);
+test.beforeEach(async ({context}) => { await useFixtureCatalog(context); });
+
 /**
  * The review a project's extensions go through before any of them runs, on the real editor.
  *
@@ -208,11 +216,14 @@ test('narrow security dialog keeps the choices and a reachable confirmation butt
     await expect.poll(()=>executions(page)).toBe(1);
 });
 
-test('real mobile context keeps the shared review inside the visual viewport', async ({browser,baseURL}) => {
+test('real mobile context keeps the shared review inside the visual viewport', async ({browser,baseURL,evidence}) => {
     const {devices} = require('@playwright/test');
     const context = await browser.newContext({...devices['Pixel 7'],viewport:{width:390,height:844},locale:'ja-JP'});
     try {
+        await useFixtureCatalog(context);
         const page = await context.newPage();
+        evidence.observe(page);
+        evidence.stage('shared-security-real-mobile');
         const target = new URL('editor.html',baseURL);
         target.search = new URLSearchParams({lang:'ja',project_url:await projectURL({mixed:true})}).toString();
         await page.goto(target.href);

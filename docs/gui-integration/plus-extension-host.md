@@ -24,12 +24,18 @@ Plus一覧のチェックボックスは左端に置き、その右にアイコ�
 概要は改行を保持し、HTTP(S)・mailto・メールアドレスをリンク表示します。製作者の右横には
 登録済みの連絡先を表示します。リンクを開いても選択や実行許可は変更しません。
 
-共通画面は `site/source.json` の `securityRevision` と、package.json・lockfileの完全SHAを
-一致させて固定します。バージョン番号だけでなく、インストール後の `build-info.json` のrevisionと
-出所も検証します。Gitアーカイブのビルドでは既存CIが `TWEXTSEC_SOURCE_REVISION` を渡します。
+共通画面はnpm版 `0.8.5` を完全一致で固定します。package.jsonと `site/source.json` の
+`securityVersion` を一致させ、lockfileにはnpmアーカイブのURLとintegrityを記録します。
+Git指定用の `securityRevision` は設定しません。通常の `npm ci` でビルド済み配布物を取得します。
+公開・取り込み時には、npmとGitHub Releaseのアーカイブhash一致と、配布物の
+`build-info.json` がversion `0.8.5`・revision `cba70ed1df196300cfb155da4397a50a920dd786`・
+`sourceState: "commit"` であることを照合しています。
 
-切り戻す場合は、共通画面の依存をnpm版 `0.8.4` に戻し、`securityRevision` を削除してlockfileを
-対応するnpmアーカイブへ戻します。実行許可・拡張の保存形式・他の依存は変更しません。
+切り戻す場合は、直前のGit固定へ戻します。依存を
+`github:kubohiroya/turbowarp-extension-security-dialog#67dbe996d92c8dbb3d954c2c4253cdd82eedb888`
+とし、`securityVersion` を `0.8.4`、`securityRevision` を同じ完全SHAに戻して、lockfileも対応させます。
+Gitアーカイブのビルドでは既存CIが `TWEXTSEC_SOURCE_REVISION` を渡します。
+実行許可・拡張の保存形式・他の依存は変更しません。公開済みのnpm版は削除・上書きしません。
 関連: [Editor #139](https://github.com/kubohiroya/turbowarp-plus-editor/issues/139)、
 共通画面 [#68](https://github.com/kubohiroya/turbowarp-extension-security-dialog/issues/68)・
 [#70](https://github.com/kubohiroya/turbowarp-extension-security-dialog/issues/70)・
