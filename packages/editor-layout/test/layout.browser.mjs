@@ -12,7 +12,7 @@ const example = '/example/index.html';
 const files = new Map([[example, fileURLToPath(new URL('../example/index.html', import.meta.url))]]);
 const source = fileURLToPath(new URL('../src/', import.meta.url));
 for (const entry of await readdir(source, {withFileTypes: true})) {
-    if (entry.isFile() && entry.name.endsWith('.js')) {
+    if (entry.isFile() && /\.(?:js|css)$/.test(entry.name)) {
         files.set(`/src/${entry.name}`, path.join(source, entry.name));
     }
 }
@@ -21,7 +21,7 @@ for (const name of ['react', 'react-dom']) {
     files.set('/node_modules/' + name + entry, path.join(path.dirname(require.resolve(name + '/package.json')), entry));
 }
 
-test('the standalone host resizes, restores, and resets its dividers', {timeout: 30_000}, async t => {
+async function openExample(t) {
     const browser = await chromium.launch();
     t.after(() => browser.close());
     const page = await browser.newPage({viewport: {width: 900, height: 600}});
@@ -31,10 +31,14 @@ test('the standalone host resizes, restores, and resets its dividers', {timeout:
         if (!filename) return route.fulfill({status: 404});
         return route.fulfill({
             body: await readFile(filename),
-            contentType: pathname === example ? 'text/html' : 'application/javascript'
+            contentType: pathname === example ? 'text/html' : pathname.endsWith('.css') ? 'text/css' : 'application/javascript'
         });
     });
+    return page;
+}
 
+test('the standalone host resizes, restores, and resets its dividers', {timeout: 30_000}, async t => {
+    const page = await openExample(t);
     await page.goto(origin + example);
     const columns = page.getByRole('separator', {name: 'Editor width'});
     const rows = page.getByRole('separator', {name: 'Stage height'});
@@ -69,4 +73,33 @@ test('the standalone host resizes, restores, and resets its dividers', {timeout:
     await expect(columns).toHaveAttribute('aria-valuenow', String(initial - 16));
     await columns.press('Enter');
     await expect(columns).toHaveAttribute('aria-valuenow', String(initial));
+});
+
+
+test('standard layout and stage visibility work in the standalone package', {timeout: 30_000}, async t => {
+    const page = await openExample(t);
+    await page.goto(origin + example + '?standard=1');
+    const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
+    const stageToggle = page.getByRole('button', {name: 'Show stage'});
+    const stage = page.locator('[data-stage]');
+    const editor = page.getByRole('textbox', {name: 'Editor'});
+    await expect(anchor).toHaveAttribute('aria-pressed', 'true');
+    await expect(stage).toBeVisible();
+    await expect(stage).toHaveCSS('position', 'absolute');
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'top');
+    await editor.fill('draft');
+    await stageToggle.click();
+    await expect(stage).toBeHidden();
+    await anchor.click();
+    await expect(stage).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'side');
+    await anchor.click();
+    await expect(stage).toBeHidden();
+    await stageToggle.click();
+    await expect(stage).toBeVisible();
+    await expect(editor).toHaveValue('draft');
+
+    await page.goto(origin + example + '?standard=0');
+    await expect(stage).toBeVisible();
+    await expect(anchor).toHaveCount(0);
 });

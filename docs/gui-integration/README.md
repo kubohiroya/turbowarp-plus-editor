@@ -90,6 +90,12 @@ GUI単体は任意の描画部品がなければ標準の操作列を表示し�
 GUIはネイティブのコンテキストメニュー部品とファイル選択用アイコンを明示的に渡し、ステージ選択・ドロップ処理・背景ボタンの配置を担当します。
 切戻しはGUIとホストを移管前の互換なpinに戻して行います。
 
+## Issue #192 の標準配置
+
+配置切り替え、ステージ表示、対象一覧のレイアウトと CSS は `@kubohiroya/turbowarp-editor-layout` が所有します。Editor は起動設定、既存画面、ウィンドウ操作とパレットを接続します。
+
+背景タイルでは GUI がタイルとネイティブのメニュー部品を任意の `wrapBackdropTile` 接続口に渡します。どの配置で転送メニューを表示し、どの項目を含めるかは Editor の既存ステージ転送接続で決めます。
+
 ## Issue #175 スプライト設定パネルの任意接続
 
 設定フォームとスタイルは独立パッケージ `@kubohiroya/turbowarp-editor-sprite-properties` に置く。Editor は `site/source.json` のパッケージ名・版・ソースコミットと、`vendor/` のローカル配布用 tarball を固定する。サイトのソース検証では、manifest と lockfile の相対パス、tarball の SHA-512、インストール済みの JavaScript と CSS の SHA-512 を照合する。Editor は起動時に既定 OFF の `twPlusSpriteProperties=1` を読み、パネルを既存の GUI 接続口に渡す。GUI は既存の選択情報・VM 更新経路を利用する。パネルと一覧は最小ドック内でそれぞれスクロールできる。
