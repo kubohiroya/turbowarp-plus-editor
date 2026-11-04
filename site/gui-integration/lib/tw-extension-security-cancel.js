@@ -1,4 +1,5 @@
-import {describeExtensionLoadFailure} from './tw-plus-extension-load-failure';
+import {isPlusPermissionDenied} from './tw-plus-extension-host.js';
+import {describeExtensionLoadFailure, isExtensionLoadFailure} from './tw-plus-extension-load-failure.js';
 
 const returnToEditorStart = (dispatch, actions) => {
     const {cancelSecurityLoad, setProjectTitle, setFileHandle, closeLoadingProject, closeFileMenu,
@@ -18,15 +19,15 @@ const returnToEditorStart = (dispatch, actions) => {
     dispatch(cancelSecurityLoad());
 };
 
-// An extension that cannot load ends the open like a cancellation, and the error dialog names it.
-const returnToEditorStartAfterExtensionFailure = (dispatch, error, actions) => {
-    const {setProjectError, openInvalidProjectModal} = actions;
-    returnToEditorStart(dispatch, actions);
-    dispatch(setProjectError(describeExtensionLoadFailure(error)));
-    dispatch(openInvalidProjectModal());
-};
+export const recoverProjectLoad = (dispatch, error, actions) => {
+    // A cancelled review can also be marked as a loader failure.
+    const cancelled = isPlusPermissionDenied(error);
+    if (!cancelled && !isExtensionLoadFailure(error)) return false;
 
-export {
-    returnToEditorStart as default,
-    returnToEditorStartAfterExtensionFailure
+    returnToEditorStart(dispatch, actions);
+    if (!cancelled) {
+        dispatch(actions.setProjectError(describeExtensionLoadFailure(error)));
+        dispatch(actions.openInvalidProjectModal());
+    }
+    return true;
 };
