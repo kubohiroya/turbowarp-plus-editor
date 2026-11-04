@@ -6,19 +6,35 @@ test('without a host transfer leaves upstream workspace and stage menus alone', 
     const workspace = {};
     assert.equal(attachHostScriptTransfer({workspace}, null), null);
     assert.deepEqual(workspace, {});
-    assert.deepEqual(hostStageTransferMenu({}, {}), {contextItems: [], backdropItems: []});
+    assert.equal(hostStageTransferMenu({}, {}), null);
 });
 
-test('the host receives the GUI context and owns disposal and menu callbacks', () => {
+test('the host receives the GUI context and supplies stage actions through the native menu components', () => {
     const context = {vm: {}, ScratchBlocks: {}, workspace: {}, document: {}, Zip: {}, deserializeBlocks () {}};
     const bridge = {dispose () {}};
-    const menu = {contextItems: [{label: 'export'}], backdropItems: [{label: 'import'}]};
+    const onExport = () => {};
+    const onImport = () => {};
+    const menu = {contextItems: [{label: 'export', onClick: onExport}], backdropItems: [{label: 'import', onClick: onImport}]};
     const integration = {scriptTransfer: {
         attach: supplied => { assert.equal(supplied, context); return bridge; },
         stageMenu: supplied => { assert.equal(supplied, context); return menu; }
     }};
     assert.equal(attachHostScriptTransfer(context, integration), bridge);
-    assert.equal(hostStageTransferMenu(context, integration), menu);
+    const stageMenu = hostStageTransferMenu(context, integration);
+    const nativeIcon = {};
+    assert.deepEqual(stageMenu.backdropButtons(nativeIcon), [{title: 'import', img: nativeIcon, onClick: onImport}]);
+
+    const primitives = {ContextMenuTrigger: () => null, ContextMenu: () => null, MenuItem: () => null};
+    const stage = 'stage';
+    const trigger = stageMenu.wrap(stage, primitives);
+    assert.equal(trigger.type, primitives.ContextMenuTrigger);
+    const [content, renderedMenu] = trigger.props.children;
+    assert.equal(content, stage);
+    assert.equal(renderedMenu.type, primitives.ContextMenu);
+    assert.equal(trigger.props.id, renderedMenu.props.id);
+    assert.equal(renderedMenu.props.children[0].type, primitives.MenuItem);
+    assert.equal(renderedMenu.props.children[0].props.onClick, onExport);
+    assert.equal(renderedMenu.props.children[0].props.children, 'export');
 });
 
 
