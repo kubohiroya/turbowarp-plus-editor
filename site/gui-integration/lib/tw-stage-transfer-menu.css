@@ -1,0 +1,4 @@
+.context-menu-wrapper {
+    display: flex;
+    flex-grow: 1;
+}
