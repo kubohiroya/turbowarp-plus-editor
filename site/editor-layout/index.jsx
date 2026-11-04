@@ -32,7 +32,11 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
             type="button"
             onClick={() => setShowUndock(value => !value)}
         >
-            <span aria-hidden="true">⚓</span>
+            <svg aria-hidden="true" className={styles.anchorIcon} viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="5" r="3" />
+                <path d="M12 8v14M8 12h8M3 13a9 9 0 0 0 18 0M3 17v-4h4M21 17v-4h-4" />
+            </svg>
         </button>
     );
     const stageTools = layoutFlags.internalWindows ? <>
