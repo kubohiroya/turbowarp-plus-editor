@@ -4,6 +4,7 @@ import {attachBackpackDrop} from '../editor-backpack/index.jsx';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.js';
 import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.js';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {attachCodeWorkspace} from '@kubohiroya/turbowarp-editor-views';
 
 export * from './lib/tw-plus-integration-points.js';
 export {renderFileMenu, loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.js';
@@ -29,7 +30,10 @@ export {EditorLayout} from '../editor-layout/index.jsx';
 
 /* global __TW_SPRITE_PROPERTIES_PANEL__ */
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
-export const SpritePropertiesPanel = readWebStartupFeatureFlags(startupSearch).spriteProperties &&
+const startup = readWebStartupFeatureFlags(startupSearch);
+export const attachSpriteCodeWorkspace = startup.spriteCodeWindows ? attachCodeWorkspace : undefined;
+export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-editor-views';
+export const SpritePropertiesPanel = startup.spriteProperties &&
     typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
 
 export {BackpackSurface} from '../editor-backpack/index.jsx';

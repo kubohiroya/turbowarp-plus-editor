@@ -2,16 +2,19 @@ import React from 'react';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import styles from './layout.css';
+import {layoutFlags} from './index.jsx';
+import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-editor-views';
 
 const codeTab = 0;
 const resizeCode = () => {
     const blocks = window.ScratchBlocks;
     const workspace = blocks?.getMainWorkspace();
-    if (workspace?.getParentSvg()?.getBoundingClientRect().width) blocks.svgResize(workspace);
+    if (workspace?.getInjectionDiv()?.clientWidth) blocks.svgResize(workspace);
 };
 
-export function EditorTabLayout({activeEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
+export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
     const host = useWindowHost();
+    const code = useCodeWindows({vm, host, locale, enabled: layoutFlags.spriteCodeWindows});
     const [states, setStates] = React.useState([]);
     const action = React.useRef(null);
     const previousActive = React.useRef(null);
@@ -39,13 +42,20 @@ export function EditorTabLayout({activeEditorTab, editorTargetIsStage, showUndoc
             action.current?.querySelector('button')?.focus();
         }
     }, [activeEditorTab, activeState, showUndock]);
-    const getMount = index => states[index]?.kind === 'external' ? states[index].target.mount : undefined;
+    const getMount = index => {
+        if (index === codeTab && code?.front) return code.front.mount;
+        return states[index]?.kind === 'external' ? states[index].target.mount : undefined;
+    };
 
     function open() {
+        if (code && activeEditorTab === codeTab && !editorTargetIsStage) {
+            code.openCurrent();
+            return;
+        }
         surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title, rememberPlacement: true});
     }
 
-    return render({...layout,
+    const content = render({...layout,
         renderEditorTabRow: tabs => <div className={styles.tabRow}>
             {tabs}
             {showUndock && title && <div className={styles.tabAction} ref={action}>
@@ -56,8 +66,12 @@ export function EditorTabLayout({activeEditorTab, editorTargetIsStage, showUndoc
         renderEditorPanel: (index, children) => <DockablePanel
             dockLabel={dockLabel}
             mount={getMount(index)}
-            onDock={() => surfaces[index].dock()}
+            onDock={() => index === codeTab && code?.front ? code.front.connection.close() : surfaces[index].dock()}
             onResize={index === codeTab ? resizeCode : undefined}
         >{children}</DockablePanel>
     });
+    return <SpriteCodeProvider value={code?.context ?? null}>
+        {content}
+        {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front} previewClass={styles.codePreview} />}
+    </SpriteCodeProvider>;
 }

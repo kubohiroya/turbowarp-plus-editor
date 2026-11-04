@@ -133,3 +133,11 @@
     background: var(--ui-primary);
     color: var(--text-primary);
 }
+
+.codePreview {
+    position: relative;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: hidden;
+    pointer-events: none;
+}

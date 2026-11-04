@@ -12,6 +12,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusInternalWindows: params.get('twPlusInternalWindows'),
         twPlusStagePanel: params.get('twPlusStagePanel'),
         twPlusTargetList: params.get('twPlusTargetList'),
+        twPlusSpriteCodeWindows: params.get('twPlusSpriteCodeWindows'),
         twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview'),
         twPlusContextMenuIcons: params.get('twPlusContextMenuIcons')
     });

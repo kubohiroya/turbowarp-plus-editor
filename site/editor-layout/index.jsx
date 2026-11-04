@@ -19,7 +19,7 @@ const getStorage = () => {
     }
 };
 
-const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
+const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
     const [showUndock, setShowUndock] = React.useState(false);
     const japanese = props.locale === 'ja' || props.locale?.startsWith('ja-');
     const toggleLabel = japanese ? 'アンドックボタンを表示' : 'Show undock buttons';
@@ -61,6 +61,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
             storage={getStorage()}
             storageKey={storageKey}
             render={layoutFlags.internalWindows ? layout => <EditorTabLayout
+                vm={vm}
                 activeEditorTab={activeEditorTab}
                 editorTargetIsStage={editorTargetIsStage}
                 showUndock={showUndock}
