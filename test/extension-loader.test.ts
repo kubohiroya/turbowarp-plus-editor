@@ -116,9 +116,9 @@ test('teardown retains the first unload failure when host recovery also fails', 
 });
 
 
-test('startup flags carry the extension loader and opt-in project tools switches', () => {
+test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
         assert.deepEqual(Object.keys(readStartupFeatureFlags(query)), ['extensionLoader', 'projectTools']);
-        assert.equal(readStartupFeatureFlags(query).projectTools, false);
+        assert.equal(readStartupFeatureFlags(query).projectTools, true);
     }
 });

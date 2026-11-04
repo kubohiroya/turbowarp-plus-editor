@@ -9,7 +9,12 @@ import JSZip from '@turbowarp/jszip';
 import {startYamlEditorHost} from '../scripts/yaml-editor/host.ts';
 
 const documents = project => project.extensionStorage.twpeyamlsettings.documents;
-const withoutDocuments = project => {const p = structuredClone(project); delete p.extensionStorage.twpeyamlsettings.documents; return p;};
+const withoutExpectedSaveChanges = project => {
+    const value = structuredClone(project);
+    delete value.extensionStorage.twpeyamlsettings.documents;
+    if (value.turboWarpPlusProject) delete value.turboWarpPlusProject.updatedAt;
+    return value;
+};
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const saveLabel = '表示されている形式に変換して検証・保存';
 
@@ -98,6 +103,7 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
         assert.deepEqual(await page.evaluate(() => window.vm.runtime.extensionStorage.twpeyamlsettings.documents), {settings: first, labels: second});
         await page.screenshot({path: path.join(output, '02-second-document-saved.png')});
         stage = 'standard-editor-file-save';
+        const saveStarted = Date.now();
         // The File menu always downloads; the menu-bar shortcut can sit under the extension status panel.
         await page.getByText('ファイル', {exact: true}).click();
         const pending = page.waitForEvent('download'); await page.getByRole('listitem').filter({hasText: /^コンピューターに保存する$/}).click();
@@ -105,7 +111,11 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
         const zip = await JSZip.loadAsync(await readFile(saved));
         const savedProject = JSON.parse(await zip.file('project.json').async('string'));
         assert.deepEqual(documents(savedProject), {settings: first, labels: second});
-        assert.deepEqual(withoutDocuments(savedProject), withoutDocuments(original));
+        if (original.turboWarpPlusProject) {
+            const updatedAt = Date.parse(savedProject.turboWarpPlusProject?.updatedAt);
+            assert(updatedAt >= saveStarted && updatedAt <= Date.now(), 'A changed project must record this save time.');
+        }
+        assert.deepEqual(withoutExpectedSaveChanges(savedProject), withoutExpectedSaveChanges(original));
         const originalZip = await JSZip.loadAsync(await readFile(fixture));
         const assets = Object.keys(originalZip.files).filter(name => name !== 'project.json' && !originalZip.files[name].dir);
         assert(assets.length > 0, 'The fixture must contain assets to preserve.');

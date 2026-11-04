@@ -130,3 +130,21 @@ for (const metadata of [false, true]) {
         } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
     });
 }
+
+test('project properties preserve authoring load ownership when an extension is added', async () => {
+    const vm = new VM();
+    const host = installProjectToolsHost(vm, {enabled: true, vmModules,
+        cache: {async get() {}, async put() {}}, requestApproval: async () => true}, true);
+    try {
+        const input = {...project, turboWarpPlus: undefined};
+        await vm.loadProject(JSON.stringify(input));
+        const before = JSON.parse(vm.toJSON());
+        await host.authoring.add({id: 'propertiestest', execution: 'unsandboxed',
+            source: {type: 'embedded-file'}, bytes});
+        const after = JSON.parse(vm.toJSON());
+        assert.equal(vm.extensionManager.isExtensionLoaded('propertiestest'), true);
+        assert.deepEqual(after.targets, before.targets);
+        assert.equal(after[PROJECT_INFO_KEY].author, before[PROJECT_INFO_KEY].author);
+        assert.equal(after.turboWarpPlus.extensions[0].id, 'propertiestest');
+    } finally { await host.dispose(); vm.runtime.dispose(); }
+});
