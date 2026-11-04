@@ -94,6 +94,8 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
     config.resolve.alias[`${name}$`] = entry;
     return [feature, path.dirname(entry)];
 }));
+config.resolve.alias['@kubohiroya/turbowarp-editor-views/sprite-code-windows$'] =
+    rootRequire.resolve('@kubohiroya/turbowarp-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-editor-layout/targets.css$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-editor-layout/targets.css');
 const siteSource = path.join(__dirname, '..', '..', 'site');

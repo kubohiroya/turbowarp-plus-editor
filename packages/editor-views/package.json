@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./index.jsx",
+  "exports": {
+    ".": "./index.js",
+    "./sprite-code-windows": "./index.jsx"
+  },
   "peerDependencies": {
     "react": ">=16.8",
     "react-dom": ">=16.8"

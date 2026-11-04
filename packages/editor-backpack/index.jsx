@@ -154,6 +154,29 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
         );
     }
 
+    async function receiveBackpackDrop({vm, target, raw, position, canUse, onError, receipt,
+        commit = apply => apply(), accept = () => true}) {
+        const active = sessions.get(vm);
+        if (!active) return;
+        const canCommit = () => canUse() && sessions.get(vm) === active &&
+            vm.runtime.getTargetById(target.id) === target;
+        const result = await active.transfer.receive(raw, {session: active.id, id: target.id}, async (_, script) => {
+            if (!accept(script)) throw new Error('Unsupported script for this workspace');
+            return commit(async () => {
+                if (!canCommit()) return false;
+                if (receipt) {
+                    const imported = await importScriptWithReceipt(vm, target, script, {
+                        position, canCommit, beforeCommit: receipt.beforeCommit, onCommitted: receipt.onCommitted
+                    });
+                    return imported !== null;
+                }
+                await importScript(vm, target, script, {position});
+                return true;
+            });
+        });
+        if (result === 'failed' && canUse()) onError?.(new Error(active.copyFailed.current));
+    }
+
     function attachBackpackDrop({vm, workspace, canUse, onError, dropElement, destination}) {
         const svg = workspace.getParentSvg();
         const node = dropElement ?? svg;
@@ -168,7 +191,6 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
         function drop(event) {
             if (!allowed(event)) return;
             event.preventDefault();
-            const active = sessions.get(vm);
             const target = destination?.target ?? vm.editingTarget;
             const raw = event.dataTransfer.getData(transferMime);
             const matrix = workspace.getCanvas().getScreenCTM();
@@ -177,22 +199,9 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
             point.x = event.clientX;
             point.y = event.clientY;
             const {x, y} = point.matrixTransform(matrix.inverse());
-            const canCommit = () => sessions.get(vm) === active &&
-                vm.runtime.getTargetById(target.id) === target &&
-                (destination ? destination.canCommit() : !disposed);
-            const position = {x, y};
-            void active.transfer.receive(raw, {session: active.id, id: target.id}, async (_, script) => {
-                if (!canCommit()) return false;
-                if (destination) {
-                    const receipt = await importScriptWithReceipt(vm, target, script, {
-                        position, canCommit, beforeCommit: destination.beforeCommit, onCommitted: destination.onCommitted
-                    });
-                    return receipt !== null;
-                }
-                await importScript(vm, target, script, {position});
-                return true;
-            }).then(result => {
-                if (result === 'failed' && !disposed) onError(new Error(active.copyFailed.current));
+            void receiveBackpackDrop({
+                vm, target, raw, position: {x, y}, onError, receipt: destination,
+                canUse: destination ? destination.canCommit : () => !disposed
             });
         }
         node.addEventListener('dragover', over);
@@ -204,5 +213,5 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
         }};
     }
 
-    return {BackpackSurface, attachBackpackDrop};
+    return {BackpackSurface, attachBackpackDrop, receiveBackpackDrop};
 }

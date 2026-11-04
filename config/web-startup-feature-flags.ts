@@ -14,6 +14,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusTargetList: params.get('twPlusTargetList'),
         twPlusSpriteCodeWindows: params.get('twPlusSpriteCodeWindows'),
         twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview'),
-        twPlusContextMenuIcons: params.get('twPlusContextMenuIcons')
+        twPlusContextMenuIcons: params.get('twPlusContextMenuIcons'),
+        twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette')
     });
 }

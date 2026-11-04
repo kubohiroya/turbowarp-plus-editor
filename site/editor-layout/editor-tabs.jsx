@@ -1,10 +1,11 @@
 import React from 'react';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
+import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.js';
 import styles from './layout.css';
 import {layoutFlags} from './index.jsx';
 import {attachBackpackDrop} from '../editor-backpack/integration.js';
-import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-editor-views';
+import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
 
 const codeTab = 0;
 const resizeCode = () => {
@@ -15,7 +16,7 @@ const resizeCode = () => {
 
 export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
     const host = useWindowHost();
-    const code = useCodeWindows({vm, host, locale, enabled: layoutFlags.spriteCodeWindows});
+    const code = useCodeWindows({vm, host, locale, enabled: layoutFlags.spriteCodeWindows && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
     const action = React.useRef(null);
     const previousActive = React.useRef(null);
@@ -49,6 +50,10 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
     };
 
     function open() {
+        if (activeEditorTab === codeTab && desktopCodeEnabled) {
+            openDesktopCode();
+            return;
+        }
         if (code && activeEditorTab === codeTab && !editorTargetIsStage) {
             code.openCurrent();
             return;

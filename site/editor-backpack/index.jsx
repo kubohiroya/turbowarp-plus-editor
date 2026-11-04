@@ -12,4 +12,4 @@ function WebBackpackSurface(props) {
 }
 
 export const BackpackSurface = feature ? WebBackpackSurface : undefined;
-export {attachBackpackDrop} from './integration.js';
+export {attachBackpackDrop, receiveBackpackDrop} from './integration.js';

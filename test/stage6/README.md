@@ -1,32 +1,34 @@
-# スプライト一覧と複数コード画面
+# #151 段階6 — コードの別ウィンドウ
 
-対象は同一ページ内の複数コード画面。一覧と前面化の作業ブランチは `feat/views/multi-target-editors`、背面へのドロップは `feat/views/background-code-drop`。#176 のアプリ内ウィンドウと、V-C で検証した前面だけの編集権を前提にする。 [製品統合 #177](https://github.com/kubohiroya/turbowarp-plus-editor/issues/177) · [契約検証 #154](https://github.com/kubohiroya/turbowarp-plus-editor/issues/154)
+#154 と #155 の対象固定、編集権、履歴共有の試作を、#189 後の Editor に接続する。Scratch GUI は `site/source.json` の既存固定版と任意のワークスペース接続口を使用する。各子ウィンドウはその document で ScratchBlocks を起動し、既存の固定 URL と MessagePort を使って親の VM に接続する。子は VM、Node、preload、opener を持たない。
 
-## 接続仕様
+`editor-views` がターゲットと編集権、対象別の Undo／Redo、投影を管理する。旧所有者のイベントを MessagePort 順に処理し、解放を受けてから次を許可する。親のコード画面は同じ履歴を使用する。履歴は対象ごとに最初の別窓を開いた時点から親のメモリーに保持し、確定したコードは VM の通常の SB3 保存対象になる。履歴を復元するアダプターは、#155 と同様に固定 VM のブロックコンテナー内部を利用する。
 
-- GUI は既存のホスト接続口に、スプライトタイルの選択と「開く」、通常コードワークスペースのライフサイクルを渡す。GUI の一覧、コンテキストメニュー、既存のパレットとブロック編集処理を使う。任意の接続を指定しない GUI は従来の経路を通る。
-- `windows` は通常の枠・前面化・最小化を担当する。追加した接続は前面化通知とプログラムからの前面化、最小化通知、タイトル更新を提供する。パッケージソース `e365d66999f1c187821733eaa4fc1a161d354a4e` の 0.5.0 を同梱し、lockfile で固定する。
-- `views` はウィンドウごとの対象オブジェクトと前後順を保持する。一覧の左クリックは最後に前面化した同対象ウィンドウを選び、右クリックの「開く」は固有 ID を持つ新しいウィンドウを作る。前面が閉じたら次の表示中のウィンドウへ編集権を渡す。対象削除や作品差替えで、同じ ID の古い対象を再利用しない。
-- 既存のコードワークスペースをマウントしたまま、前面またはドックへ移す。切替前に ScratchBlocks のジェスチャーとイベントキューを処理する。VM 側とワークスペースの対象が一致している場合に編集イベントを通す。背面は VM の対象から読み取り専用 ScratchBlocks 表示を更新する。
-- Undo／Redo は既存の ScratchBlocks 履歴を対象オブジェクト別に保持する。外部更新でコードの内容が変わった場合や、ネイティブワークスペースを再生成した場合は古い履歴を破棄する。今回の GUI 接続は固定済み VM と ScratchBlocks を使う。履歴とイベントキューの内部 API への依存は `views/workspace.js` に限定する。
+実バックパックからコード別窓へは、既存の一度だけ使える転送参照を渡す。背面では専用の領域がドロップを受け、ドロップ先はウィンドウに結び付いた対象に固定する。前面の編集イベントを処理し終えてから親の VM にコピーし、転送したスクリプト全体を対象別履歴の1件として記録する。バックパック側の既存の対象範囲と同じく、転送は依存関係のない標準ブロックに限る。
 
-GUI の既存5ファイルに任意接続を追加する。コードは配信側の `packages/editor-views` が所有する。既存の単一編集画面と SB3 のデータ形式を使う。コスチューム・音・別ウィンドウは対応する契約検証の後に扱う。
+## 検証
 
-### 背面コード画面へのドロップ
-
-- バックパックが扱う標準ブロックのスクリプトを、アプリ内で表示中の背面コード画面にドロップできる。移し先は画面が保持する対象オブジェクトで決める。前面の画面、選択枠、VM の編集対象を維持する。
-- VM の `shareBlocksToTargetWithReceipt` は、拡張の読み込み後、書き込み直前に移し先の有効性を再確認する。VM が振り直して実際に追加した全 ID を `blockIds`、最上位の ID を `rootBlockIds` として返す。取り消された場合は `null` を返す。確定フックは同期的に実行する。
-- 転送パッケージの `importScriptWithReceipt` は既存の VM 単位の転送キューを使う。バックパックのセッション、移し先のウィンドウ、VM の対象と作品を確定前に照合する。対象削除、作品切替、画面閉鎖後の古い転送を拒否する。
-- Editor は追加 ID に対応する ScratchBlocks の作成イベントを、移し先の対象の履歴に同じグループとして記録する。移し先を前面にした後、Undo 1回でそのドロップの全スタックを取り消し、Redo で戻せる。
-- 依存の統合順は VM の `feat/vm/script-import-receipt` と転送の `feat/transfer/script-import-receipt` が先で、GUI の VM 固定更新、Editor の固定更新の順。ローカル検証は各固定コミットを使う。
-
-## 検証と切り戻し
-
-起動時に `twPlusWindowLayout=1&twPlusInternalWindows=1&twPlusSpriteCodeWindows=1` を指定する。既定は OFF。以下はアプリ内のスプライト一覧を使い、配信用ビルドの起動、左右クリック、選択枠、キー操作による前面化、同対象の編集同期と Undo／Redo、別対象への誤適用防止、タブ切替、閉鎖、対象削除と SB3 保存・再読込、日英メニューを確認する。実際のバックパックからのドラッグで、前面の選択維持、追加 ID の一致、移し先を閉じた転送の拒否、Undo／Redo を確認する。
+[既存の Desktop コピー作成手順](../stage5/stage-popout-desktop.md)で、GUI の固定版と公式 TurboWarp Desktop 1.17.1 から試験用アプリを作る。macOS の製品版ローカルコピーは次のコマンドで検証する。
 
 ```sh
-E2E_GUI_ROOT=/absolute/path/to/scratch-gui TW_PLUS_PACKAGER_ROOT=/absolute/path/to/packager npm run build:pages
-node test/stage6/code-windows.mjs /absolute/path/to/scratch-gui/build
+node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-popout
+node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-backpack
+TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-backpack-native
+node --test packages/editor-views/test/code-session.test.js
 ```
 
-切り戻す場合は、開いたコードウィンドウを閉じて作品を保存し、`twPlusSpriteCodeWindows=1` を外して起動し直す。確定済みのブロックは通常の SB3 に保存する。
+フォーカスは Electron のネイティブウィンドウで切り替え、コード編集と Undo／Redo は Playwright／CDP で実際の ScratchBlocks と操作ボタンに入力する。親の VM、両ワークスペース、親コード画面への引き継ぎを観測する。移動したブロックと追加したブロックは、SB3 を保存して再読込した後にも照合する。
+
+`--code-backpack` は実バックパックのドラッグを CDP で捕捉し、背面のコード別窓にドロップする。前面が操作可能な状態に戻り、コピーした2ブロックが親の VM と同じ対象の両ビューに表示され、別のスプライトに変更が入らないことを照合する。再送が拒否されること、前面の共有 Undo／Redo でコピー全体を1回で戻せること、バックパックがドックに復帰することも確認する。
+
+`--code-backpack-native` は macOS の CoreGraphics HID 経由でドラッグとボタンのクリックを行う。CDP はテストデータの用意と状態観測に使う。ドラッグ開始とドロップが信頼されたイベントであること、背面のコード画面が途中も編集不可のままであること、前面の Undo と Redo を各1回押すとコピーした2ブロック全体が消え、復元されることを確認する。バックパックのドックボタンを押すと別窓が閉じ、元の項目がエディター内に戻る。
+
+2026年11月5日に、TurboWarp Desktop 1.17.1 の macOS ローカルコピー（Electron 43.8.4）で `--code-backpack-native` の全項目が通過した。
+
+## 今回の範囲と切り戻し
+
+Desktop のコード欄から、選択中の対象を固定した別窓を最大2枚開ける。初期パレットは動きと見た目の一部。コードの基本ブロック編集、前面への編集権の移動、対象別履歴、閉鎖時の親コード画面への復帰を対象とする。全パレット、変数・コメント・定義・拡張ブロックの共有履歴、対象セレクター、Web 外部表示、他 OS は個別に検証する。
+
+起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1`、`TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1`、`TW_PLUS_DESKTOP_CODE_POPOUT=1` を指定する。バックパックも OS の別窓で開く場合は `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` を加える。⚓ で操作を表示し、コード行の「別画面で開く」を押す。フラグは既定 OFF。子を閉じ、作品を保存してから `TW_PLUS_DESKTOP_CODE_POPOUT` を外して再起動すると、既存のコード画面とアプリ内表示に戻る。
+
+アプリ内の複数コード画面と背面ドロップは別の検証手順を使う。両方の起動フラグが有効な Desktop では、既存の OS 別窓を優先する。 [アプリ内コード画面の検証](sprite-code-windows.md)

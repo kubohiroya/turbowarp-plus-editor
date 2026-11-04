@@ -13,3 +13,4 @@ export const feature = (layoutFlags.backpackPopout || layoutFlags.internalWindow
 }) : null;
 
 export const attachBackpackDrop = context => feature?.attachBackpackDrop(context);
+export const receiveBackpackDrop = feature?.receiveBackpackDrop;

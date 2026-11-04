@@ -27,8 +27,9 @@ import {plusTrustedExtensions} from './trusted-extensions.js';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.js';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.js';
+import {installHorizontalBlockPalette} from './horizontal-block-palette/index.js';
 
-const {paletteDeletePreview} = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
+const {paletteDeletePreview, horizontalBlockPalette} = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
 
@@ -176,6 +177,7 @@ const integration = createPlusIntegration({
         registerDocumentSourceRootHatShape(ScratchBlocks);
         if (paletteDeletePreview) installPaletteDeletePreview(ScratchBlocks);
         installBlockContextMenuIcons(ScratchBlocks);
+        if (horizontalBlockPalette) installHorizontalBlockPalette(ScratchBlocks);
     }
 });
 

@@ -8,6 +8,7 @@ const kind = window => {
     if (url.startsWith('tw-editor://./gui/stage-popout.html#')) return 'stage';
     if (url.startsWith('tw-editor://./gui/sprite-properties-popout.html#')) return 'sprite-properties';
     if (url.startsWith('tw-editor://./gui/sprite-list-popout.html#')) return 'sprite-list';
+    if (url.startsWith('tw-editor://./gui/code-popout.html#')) return 'code';
     return null;
 };
 
