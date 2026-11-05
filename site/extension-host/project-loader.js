@@ -27,6 +27,7 @@ const failure = (code, message) => Object.assign(new Error(message), {code});
 export function installExtensionLoader(host, loader) {
     const vm = host?.vm;
     const io = host?.projectIO;
+    const payloads = host?.payloads;
     if (host?.transactionalRegistration !== true || !vm || !io ||
         ['loadProject', '_loadExtensions', 'toJSON', '_saveProjectZip', 'saveProjectSb3DontZip']
             .some(name => typeof vm[name] !== 'function') ||
@@ -134,6 +135,7 @@ export function installExtensionLoader(host, loader) {
     const loadProject = function(input, ...args) {
         checkActive();
         if (host.onProjectLoadStart) host.onProjectLoadStart(input);
+        payloads?.loadStarted();
         pending++;
         const run = async () => {
             checkActive();
@@ -141,7 +143,8 @@ export function installExtensionLoader(host, loader) {
             activeController = controller;
             let touchedHost = false;
             try {
-                const prepared = await io.prepare(input, {signal: controller.signal});
+                const restoredPayloads = payloads ? await payloads.read(input, controller.signal) : null;
+                const prepared = await io.prepare(restoredPayloads?.input ?? input, {signal: controller.signal});
                 checkActive();
                 if (!prepared || !Object.hasOwn(prepared, 'manifest') || !Object.hasOwn(prepared, 'input')) {
                     throw failure('INVALID_PROJECT_CODEC', 'The Loader project codec returned no project');
@@ -167,6 +170,10 @@ export function installExtensionLoader(host, loader) {
                     throw failure('UNSUPPORTED_HOST', 'The VM did not invoke its extension loading hook');
                 }
                 savedContext = context;
+                if (restoredPayloads) {
+                    await payloads.loaded(restoredPayloads, controller.signal);
+                    checkActive();
+                }
                 return result;
             } catch (error) {
                 if (typeof host.onDiagnostic === 'function') {
@@ -177,7 +184,10 @@ export function installExtensionLoader(host, loader) {
                         // A presentation failure must not change the loading decision.
                     }
                 }
-                if (touchedHost) savedContext = null;
+                if (touchedHost) {
+                    savedContext = null;
+                    payloads?.clear();
+                }
                 if (touchedHost && hasLoaded) {
                     await loader.unload();
                     hasLoaded = false;
@@ -250,7 +260,8 @@ export function installExtensionLoader(host, loader) {
     const saveZip = function(...args) {
         canSave();
         const zip = originals._saveProjectZip.apply(vm, args);
-        return savedContext === null ? zip : restored(io.restoreArchive(zip, contextForSave()));
+        const archive = savedContext === null ? zip : restored(io.restoreArchive(zip, contextForSave()));
+        return payloads?.active ? payloads.writeZip(archive) : archive;
     };
     const saveFiles = function(...args) {
         canSave();

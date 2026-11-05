@@ -21,8 +21,13 @@ const site = path.resolve('site');
 
 /** The packages the site build resolves to the host's copies; tests follow the build. */
 const shared = new Set(['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip', 'scratch-vm', 'react-intl', 'react-redux']);
+// Babel turns the host's import into require(). Resolve the ESM-only vocabulary entry as webpack does.
+const saveFormat = '@kubohiroya/turbowarp-sb3-save-format';
+const saveFormatManifest = require.resolve(`${saveFormat}/package.json`);
+const saveFormatEntry = path.resolve(path.dirname(saveFormatManifest), require(saveFormatManifest).main);
 const previousLoad = Module._load;
 Module._load = function (request, ...rest) {
+    if (request === saveFormat) return previousLoad.call(this, saveFormatEntry, ...rest);
     // Resolved to a path first: requiring through the host's own require would come back here and
     // ask for the same name again.
     const redirected = shared.has(request) || request.startsWith('react-dom/');

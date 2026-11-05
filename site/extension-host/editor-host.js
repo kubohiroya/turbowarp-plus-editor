@@ -24,6 +24,9 @@ import {createExtensionAuthoringController, setExtensionAuthoringHost} from './a
 import {extensionProjectArchiveOptions} from './config.js';
 import {installPlusExtensionHost} from './host.js';
 import {createProjectAddresser} from './project-address.js';
+import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {approveProjectPayloads} from '../project-payloads/approval.js';
+import {createProjectPayloadHost} from '../project-payloads/host.js';
 
 /**
  * The editor's persistent cache, or undefined where the browser offers no IndexedDB, in which case
@@ -53,10 +56,15 @@ export const installEditorExtensionHost = (vm, settings = {}) => {
     // A project's default address is made from where this editor was opened, never from a
     // constant, so a copy served elsewhere names its projects under its own origin.
     const origin = globalThis.location?.origin;
+    const payloadsEnabled = readWebStartupFeatureFlags(settings.search ?? globalThis.location?.search).payloadFormats;
     const base = {
         createAuthoring: (target, options) => createExtensionAuthoringController(target, {...options, origin}),
         setAuthoringHost: setExtensionAuthoringHost,
-        archiveOptions: extensionProjectArchiveOptions
+        archiveOptions: extensionProjectArchiveOptions,
+        createPayloads: ports => createProjectPayloadHost(vm, {...ports, canEdit: payloadsEnabled, vmModules: settings.vmModules,
+            approve: (urls, cacheable, signal) => approveProjectPayloads(
+                settings.document || globalThis.document, settings.locale, urls, cacheable, signal)
+        })
     };
     if (enabled !== true) return installPlusExtensionHost(vm, {...base, ...rest, enabled});
     // The project open now, as the bridge reports it on each load and on the save that addresses

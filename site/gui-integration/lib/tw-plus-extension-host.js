@@ -13,6 +13,9 @@
  * be the one the VM uses. The startup query goes as a value; what it means is the host's to decide.
  */
 
+/* global __TW_PLUS_FILE_UPLOADER__ */
+import {loadCostume} from 'scratch-vm/src/import/load-costume.js';
+import {loadSound} from 'scratch-vm/src/import/load-sound.js';
 import ScratchCommon from 'scratch-vm/src/extension-support/tw-extension-api-common.js';
 import createTranslate from 'scratch-vm/src/extension-support/tw-l10n.js';
 import staticFetch from 'scratch-vm/src/util/tw-static-fetch.js';
@@ -42,7 +45,8 @@ export function startupPlusExtensionHost (vm, options = {}, integration = hostIn
         // loading on. What that query means, and what limits a project is read with, are the
         // host's: its own Packager wiring reads the same two, and both are stated there now.
         search: options.search === undefined ? startupSearch : options.search,
-        vmModules: {ScratchCommon, createTranslate, staticFetch, dispatch},
+        vmModules: {ScratchCommon, createTranslate, staticFetch, dispatch, loadCostume, loadSound,
+            assetUploads: typeof __TW_PLUS_FILE_UPLOADER__ === 'undefined' ? undefined : __TW_PLUS_FILE_UPLOADER__},
         trustedCatalog: hostTrustedCatalog(integration),
         markLoadFailure: markExtensionLoadFailure,
         ...options
