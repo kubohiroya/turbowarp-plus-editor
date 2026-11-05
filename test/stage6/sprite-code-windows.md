@@ -26,7 +26,7 @@ GUI の既存5ファイルに任意接続を追加する。コードは配信側
 
 ```sh
 E2E_GUI_ROOT=/absolute/path/to/scratch-gui TW_PLUS_PACKAGER_ROOT=/absolute/path/to/packager npm run build:pages
-node test/stage6/code-windows.mjs /absolute/path/to/scratch-gui/build
+node test/stage6/code-windows.ts /absolute/path/to/scratch-gui/build
 ```
 
 切り戻す場合は、開いたコードウィンドウを閉じて作品を保存し、`twPlusSpriteCodeWindows=1` を外して起動し直す。確定済みのブロックは通常の SB3 に保存する。

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {createPlusTrustedCatalog, listTrustedDigests, plusTrustedExtensions} from '../site/trusted-extensions.js';
+import {createPlusTrustedCatalog, listTrustedDigests, plusTrustedExtensions} from '../site/trusted-extensions.ts';
 
 const listed = 'https://cdn.example.test/npm/@owner/listed@1.0.0/dist/listed.js';
 const digest = 'a'.repeat(64);

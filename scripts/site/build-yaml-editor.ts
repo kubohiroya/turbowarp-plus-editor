@@ -16,7 +16,7 @@ async function packageMetadata(packageName, entryName = packageName) {
         license: manifest.license, localOnly: Object.values(manifest.dependencies || {}).some(value => typeof value === 'string' && /^(?:file:|link:)/u.test(value))}};
 }
 
-// This distribution mounts the editor (`site/plus-integration.js`, through the fork's
+// This distribution mounts the editor (`site/plus-integration.ts`, through the fork's
 // `attachToWorkspace` socket) and bundles it (`withDocumentEditorWebpack4` in
 // `scripts/site/webpack.config.cts`). This records which packages went in and their licenses.
 export async function buildDocumentEditorMetadata(output, prefix = '/turbowarp-plus-editor/') {

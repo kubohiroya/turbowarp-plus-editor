@@ -1,4 +1,4 @@
-const selectBackdrop = require('../../fixtures/select-backdrop.cjs');
+const selectBackdrop = require('../../fixtures/select-backdrop.ts').default;
 const {test, expect, approveProjectExtensions} = require('./fixtures.cts');
 const {settingsProject, extensionSource, settingsHat} = require('./settings-project.cts');
 

@@ -95,7 +95,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 3 | `installExtensionHost` の口（#111）と、配信側の空モジュール差し替え | 済・[PR #57](https://github.com/kubohiroya/turbowarp-plus-editor/pull/57) |
 | 4 | 表の口を一覧で足す: `modals` / `securityModals` / `themeTokens` / `translations` / `registerBlockShapes` / `shouldIgnoreKeyEvent`。いずれも数行で、互いに依存しない | 3 |
 | 5 | ~~CSS差し込み口~~ 取り消し。CSSは段階8・9と汎用変更へ振り分けた | — |
-| 6 | 文書エディタの結線の移送。開けた口は `attachToWorkspace`（[scratch-gui#113](https://github.com/kubohiroya/scratch-gui/pull/113)）で、結線は本リポジトリの `site/plus-integration.js` に置いた（[PR #61](https://github.com/kubohiroya/turbowarp-plus-editor/pull/61)）。当初案の `alwaysMountedModals` と `TWDocumentEditor` の移送は取らなかった: 文書エディタはモーダルではなくVM・言語・ScratchBlocksに付くもので、フォークが渡すべきは描画先ではなくそれらだった | 済 |
+| 6 | 文書エディタの結線の移送。開けた口は `attachToWorkspace`（[scratch-gui#113](https://github.com/kubohiroya/scratch-gui/pull/113)）で、結線は本リポジトリの `site/plus-integration.ts` に置いた（[PR #61](https://github.com/kubohiroya/turbowarp-plus-editor/pull/61)）。当初案の `alwaysMountedModals` と `TWDocumentEditor` の移送は取らなかった: 文書エディタはモーダルではなくVM・言語・ScratchBlocksに付くもので、フォークが渡すべきは描画先ではなくそれらだった | 済 |
 | 7 | `createCancelSecurityLoad`（値を引数で渡し、既定をホストが上書き） | 4 |
 | 8 | `stageControls` / `cameraControls` と `controls.jsx` 2件・`camera-control/*`・`tw-stage-controls.js`・`tw-camera-controls.js` の移送 | 4 |
 | 9 | `extensionLibrary` / `extensionGuiApi` / `addons` | 4 |
@@ -165,7 +165,7 @@ case CANCEL_SECURITY_LOAD:
 
 ## 信頼するカタログを配信側へ移す（2026-11-03）
 
-`src/lib/tw-plus-trusted-extensions.js`（104行）とそのテスト（60行）をフォークから外し、`site/trusted-extensions.js` としてこちらで持つようにした。「このカタログに載っている拡張は、TurboWarp が自分のギャラリーを扱うのと同じく、確認なしで非サンドボックスで動かす」という判断は、**配信物についての言明**であってエディタの機能ではない。誰が配信するかで答えが変わるものは、配信する側が持つ。
+`src/lib/tw-plus-trusted-extensions.js`（104行）とそのテスト（60行）をフォークから外し、`site/trusted-extensions.ts` としてこちらで持つようにした。「このカタログに載っている拡張は、TurboWarp が自分のギャラリーを扱うのと同じく、確認なしで非サンドボックスで動かす」という判断は、**配信物についての言明**であってエディタの機能ではない。誰が配信するかで答えが変わるものは、配信する側が持つ。
 
 フォークに残るのは口が2つだけになった。
 
@@ -194,16 +194,16 @@ export const hostTrustedDigests = async (manifest, integration) =>
 
 | 移したもの | 行数 | 置き場所 |
 | --- | --- | --- |
-| `tw-plus-extension-host.js` の結線 | 114 | `site/extension-host/host.js` |
-| `tw-plus-extension-registrar.js` | 371 | `site/extension-host/registrar.js` |
-| `tw-plus-project-loader.js` | 202 | `site/extension-host/project-loader.js` |
-| `tw-plus-permission-ui.js` | 139 | `site/extension-host/permission-ui.js` |
+| `tw-plus-extension-host.js` の結線 | 114 | `site/extension-host/host.ts` |
+| `tw-plus-extension-registrar.js` | 371 | `site/extension-host/registrar.ts` |
+| `tw-plus-project-loader.js` | 202 | `site/extension-host/project-loader.ts` |
+| `tw-plus-permission-ui.js` | 139 | `site/extension-host/permission-ui.ts` |
 
 フォークに残るのは `startupPlusExtensionHost`（口を呼ぶ29行）と `isPlusPermissionDenied`（1行）だけになった。ホストを持たないフォークでは拡張の読み込みそのものが無くなる——本家と同じ挙動で、これが「最小限の差分」の意味するところ。
 
 ### 「訊ける相手がいるか」を今回も先に確かめた
 
-[信頼カタログの段階](#信頼するカタログを配信側へ移す2026-11-03)で分かった制約をそのまま適用した。単一HTMLに同梱されるランタイム束は差し込み口を差し替えられないので、**束の作り方を変えた**: `scripts/site/build-extension-runtime.cts` のエントリをフォークの `src/lib/tw-plus-extension-host.js` から配信側の `site/extension-host/runtime.js` へ移した。配信物の中で訊く相手がいないなら、訊かずに済むように作る側を変えればよい。
+[信頼カタログの段階](#信頼するカタログを配信側へ移す2026-11-03)で分かった制約をそのまま適用した。単一HTMLに同梱されるランタイム束は差し込み口を差し替えられないので、**束の作り方を変えた**: `scripts/site/build-extension-runtime.cts` のエントリをフォークの `src/lib/tw-plus-extension-host.js` から配信側の `site/extension-host/runtime.ts` へ移した。配信物の中で訊く相手がいないなら、訊かずに済むように作る側を変えればよい。
 
 ### VMのモジュールは引数で渡す
 
@@ -235,12 +235,12 @@ vmModules: {ScratchCommon, createTranslate, staticFetch, dispatch}
 
 | 移したもの | 行数 | 置き場所 |
 | --- | --- | --- |
-| `containers/tw-plus-library.jsx` | 200 | `site/extension-library/plus-library.jsx` |
+| `containers/tw-plus-library.jsx` | 200 | `site/extension-library/plus-library.tsx` |
 | `components/tw-plus-library/` (css + icon) | 57+26 | `site/extension-library/` |
-| `lib/tw-plus-extension-authoring.js` | 164 | `site/extension-host/authoring.js` |
-| `lib/tw-plus-catalog-authoring.js` | 57 | `site/extension-library/catalog-settings.js` |
-| `lib/tw-plus-extension-loader.js` | 54 | `site/extension-library/load-extensions.js` |
-| `config/feature-flags.js` | 8 | `site/extension-library/flags.js` |
+| `lib/tw-plus-extension-authoring.js` | 164 | `site/extension-host/authoring.ts` |
+| `lib/tw-plus-catalog-authoring.js` | 57 | `site/extension-library/catalog-settings.ts` |
+| `lib/tw-plus-extension-loader.js` | 54 | `site/extension-library/load-extensions.ts` |
+| `config/feature-flags.js` | 8 | `site/extension-library/flags.ts` |
 
 ### CSSは移せる。移せないのは「本家のクラス名を狙う」場合だけだった
 
@@ -252,15 +252,15 @@ vmModules: {ScratchCommon, createTranslate, staticFetch, dispatch}
 
 `authoring.js`（作品の拡張を追加・設定・削除するコントローラ）を `host.js` が `import` したところ、単一HTML用のランタイム束が 540KB → 640KB に増えた。実行時に `authoring: false` と言っても、静的 importは束に残る。そこで入口を2つに分けた。
 
-- `site/extension-host/editor-host.js` — 結線＋コントローラ。エディタが使う。
-- `site/extension-host/runtime.js` — 結線のみ。単一HTMLが使う（540KBに戻った）。
+- `site/extension-host/editor-host.ts` — 結線＋コントローラ。エディタが使う。
+- `site/extension-host/runtime.ts` — 結線のみ。単一HTMLが使う（540KBに戻った）。
 
 **何を渡すかではなく、どの入口が何をimportするかで束の中身が決まる。** 前段階の `vmModules` と同じ「引数で渡す」手が、ここでは束のサイズのために効いた。
 
 ### テストは3つに分かれた
 
 - `test/extension-library/` — 移した実装。JSXを扱うため `harness.cjs` が pin した GUI の babel を使い、共有パッケージも GUI のコピーへ向ける（site側webpackのaliasと同じ向き）。レビュー記録の WeakMap はフォークに残るので、そこだけ pin した checkout から読む。
-- `test/*.test.ts`（ESM）— 統合の形。`--import ./test/asset-hooks.mjs` で `.css`/`.svg`/`.jsx` に代役を返す。node には webpack のローダがないので、ライブラリのタブが統合に加わった時点でここが落ちた。
+- `test/*.test.ts`（ESM）— 統合の形。`--import ./test/asset-hooks.ts` で `.css`/`.svg`/`.jsx` に代役を返す。node には webpack のローダがないので、ライブラリのタブが統合に加わった時点でここが落ちた。
 - フォーク側 — 残した汎用部分。`components/library/library.jsx` が「自分のものでないタグを1つ置ける」ことと、その中の検索がタグから外れないこと。
 
 ### 残した理由
@@ -373,7 +373,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 
 ## ブロックエディタ: family 依存が全て外れた（2026-11-03）
 
-拡張がブロックにスキーマを宣言したとき、それをフォームにして見せるのは配信物の仕事。`@kubohiroya/turbowarp-extension-data-editor` の入口3つ（サービス生成・ワークスペースへの接続・ダイアログ）を `site/block-editor/editor.js` に移した。フォークは **+65 / -1904行**、79ファイル/+3,383 まで下がり、lock の差分も +644 になった。
+拡張がブロックにスキーマを宣言したとき、それをフォームにして見せるのは配信物の仕事。`@kubohiroya/turbowarp-extension-data-editor` の入口3つ（サービス生成・ワークスペースへの接続・ダイアログ）を `site/block-editor/editor.ts` に移した。フォークは **+65 / -1904行**、79ファイル/+3,383 まで下がり、lock の差分も +644 になった。
 
 **これで family の4依存が全て外れ、フォークは配信物のパッケージを1つも install しない。**
 
@@ -389,7 +389,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 
 移した `modal.test.mjs`（599行）が `activeElement.attachEvent is not a function` で落ちた。原因は**Reactが2つ**: 配信側には（他のパッケージ経由で）React 18 が入っており、パッケージの `react.js` がそれを読む一方、テストは pin した本家の React 16 を読んでいた。site側webpackが `react$` を alias しているのと同じ問題が、Nodeのテストで再現した形。
 
-`test/asset-hooks.mjs` に **resolve フック**を足し、`react` / `react-dom` / `prop-types` / `lodash.bindall` を pin した checkout へ向けた——ビルドの alias と同じ向き。**テストはビルドと同じ解決をする**のが原則で、これで揃った。
+`test/asset-hooks.ts` に **resolve フック**を足し、`react` / `react-dom` / `prop-types` / `lodash.bindall` を pin した checkout へ向けた——ビルドの alias と同じ向き。**テストはビルドと同じ解決をする**のが原則で、これで揃った。
 
 同じファイルで `.css` の代役も直した。全てのプロパティに名前を返す Proxy を返していたため `styles.なんでも` が真になり、ブラウザでは通らない分岐に入っていた。ESM側は空オブジェクトを返し、クラス名を見たいテストは require フックのハーネスを使う。
 
@@ -471,7 +471,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 | フォークが描く要素のCSS | `controls.css`・`library.css`（`preview-reload.css` と `block-editor.css` は移った。下の「台帳の訂正」） |
 | 汎用変更（上流へ出せる形） | `modal.jsx` の `hideCloseButton`、`library.jsx` の `busy`、`modal.css` のモバイル修正、`data-url.css` の高さ |
 | インフラ | `webpack.config.js`・CI workflow・README・.gitignore |
-| 独自の道具・例・文書・テスト | `scripts/local-security-preview.cjs`(273行)、`src/examples/extensions/*`、`docs/*`、`test/unit/*` |
+| 独自の道具・例・文書・テスト | `scripts/local-security-preview.cts`(273行)、`src/examples/extensions/*`、`docs/*`、`test/unit/*` |
 
 **この一覧がこの文書の現在の結論である。** フォークの差分を「まだ移せるもの」と読んではいけない。移せるものは上の取りこぼし2件だけで、他は口の呼び出しか、本家側に残すと決めたものである。
 

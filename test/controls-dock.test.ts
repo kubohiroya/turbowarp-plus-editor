@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {createControlsDock, installControlsDock} from '../site/controls-dock.js';
-import {createStageControlsService} from '../site/stage-controls.js';
+import {createControlsDock, installControlsDock} from '../site/controls-dock.ts';
+import {createStageControlsService} from '../site/stage-controls.ts';
 
 const DOCK = Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1');
 const hostDocument = () => ({} as unknown as Document & Record<symbol, unknown>);

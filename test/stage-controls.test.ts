@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {createStageControlsService} from '../site/stage-controls.js';
-import getStageControls from '../site/stage-controls.js';
-import {createPlusIntegration} from '../site/plus-integration.js';
+import {createStageControlsService} from '../site/stage-controls.ts';
+import getStageControls from '../site/stage-controls.ts';
+import {createPlusIntegration} from '../site/plus-integration.ts';
 
 // Moved here from the fork's test/unit/stage-controls/service.test.mjs, unchanged in substance:
 // this distribution now owns the service, so it owns the test.
@@ -20,7 +20,7 @@ test('stage controls register hidden, update, focus, and dispose without retaini
     assert.equal(button.text, '監視中');
     assert.equal(button.expanded, true);
     button.onClick();
-    button.ref({focus: () => focuses++});
+    button.ref({focus: () => focuses++} as unknown as HTMLButtonElement);
     handle.focus();
     assert.equal(clicks, 1);
     assert.equal(focuses, 1);
@@ -70,10 +70,10 @@ test('this distribution hands the service to the fork through the integration', 
         mountEditor: () => ({dispose () {}}),
         stageControls: (vm: unknown) => {
             asked.push(vm);
-            return {api: {}, snapshot: () => [], subscribe: () => () => {}};
+            return createStageControlsService();
         }
     });
-    const vm = {};
+    const vm = {on: () => {}};
     assert.equal(typeof integration.stageControls, 'function');
     integration.stageControls(vm);
     assert.deepEqual(asked, [vm]);

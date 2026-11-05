@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./index.js",
-    "./target-combobox": "./target-combobox.jsx",
-    "./sprite-code-windows": "./index.jsx"
+    ".": "./index.ts",
+    "./target-combobox": "./target-combobox.tsx",
+    "./sprite-code-windows": "./index.tsx"
   },
   "peerDependencies": {
     "react": ">=16.8",

@@ -12,17 +12,17 @@ type Check = typeof allChecks[number];
 
 const rules: {area: string; path: RegExp; checks: readonly Check[]}[] = [
     {area: 'documentation', path: /^(?:README(?:\.ja)?\.md|docs\/.+\.md)$/, checks: ['documentation']},
-    {area: 'layout-tests', path: /^packages\/editor-layout\/test\/.+\.test\.js$/, checks: ['layout-unit']},
+    {area: 'layout-tests', path: /^packages\/editor-layout\/test\/.+\.test\.(?:ts|js|mjs)$/, checks: ['layout-unit']},
     {area: 'layout', path: /^packages\/editor-layout\/src\//,
         checks: ['typecheck', 'layout-unit', 'gui-integration', 'site-build', 'layout-browser', 'editor-browser']},
-    {area: 'views-tests', path: /^packages\/editor-views\/test\/.+\.test\.js$/, checks: ['views-unit']},
-    {area: 'views', path: /^packages\/editor-views\/[^/]+\.(?:jsx?|css)$/,
+    {area: 'views-tests', path: /^packages\/editor-views\/test\/.+\.test\.(?:ts|js|mjs)$/, checks: ['views-unit']},
+    {area: 'views', path: /^packages\/editor-views\/[^/]+\.(?:[jt]sx?|css)$/,
         checks: ['typecheck', 'views-unit', 'gui-integration', 'site-build', 'code-windows-browser', 'editor-browser']},
-    {area: 'backpack-tests', path: /^packages\/editor-backpack\/test\/.+\.test\.mjs$/, checks: ['backpack-unit']},
-    {area: 'backpack', path: /^packages\/editor-backpack\/[^/]+\.jsx?$/,
+    {area: 'backpack-tests', path: /^packages\/editor-backpack\/test\/.+\.test\.(?:ts|js|mjs)$/, checks: ['backpack-unit']},
+    {area: 'backpack', path: /^packages\/editor-backpack\/[^/]+\.[jt]sx?$/,
         checks: ['typecheck', 'backpack-unit', 'gui-integration', 'script-transfer', 'site-build',
             'code-windows-browser', 'editor-browser']},
-    {area: 'project-tools-tests', path: /^test\/project-tools\/.+\.test\.[cm]js$/, checks: ['project-tools']},
+    {area: 'project-tools-tests', path: /^test\/project-tools\/.+\.test\.(?:ts|cts|[cm]js)$/, checks: ['project-tools']},
     {area: 'extension-loader-tests', path: /^test\/e2e\/extension-loader\/.+\.spec\.cts$/,
         checks: ['site-build', 'extension-loader-browser']}
 ];

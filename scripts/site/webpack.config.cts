@@ -1,4 +1,4 @@
-const path = require('node:path');
+const path: typeof import('node:path') = require('node:path');
 const fs = require('node:fs');
 const {createRequire} = require('node:module');
 if (!process.env.E2E_GUI_ROOT || !path.isAbsolute(process.env.E2E_GUI_ROOT)) throw new Error('An absolute GUI checkout is required');
@@ -17,16 +17,20 @@ if (localCatalogFile) {
     }
     localCatalog = JSON.parse(fs.readFileSync(localCatalogFile, 'utf8'));
 }
-// Keep historical demo URLs while this host owns the sample sources.
+// Compile the example sources while preserving their historical browser URLs.
 config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [{
-    from: path.join(__dirname, '..', '..', 'examples', 'extensions'),
-    to: 'static/extensions'
+    from: '*.ts',
+    context: path.join(__dirname, '..', '..', 'examples', 'extensions'),
+    to: 'static/extensions/[name].js',
+    toType: 'template',
+    transform: (source, file) => rootRequire('esbuild').transformSync(source.toString(),
+        {loader: 'ts', target: 'es2017', sourcefile: file}).code
 }]}));
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog)
 }));
 // The host owns every additional module; the fork only consults this optional build-time value.
-const bridge = path.join(__dirname, '..', '..', 'site', 'gui-integration', 'index.js');
+const bridge = path.join(__dirname, '..', '..', 'site', 'gui-integration', 'index.ts');
 const hookSource = fs.readFileSync(path.join(gui, 'src', 'addons', 'hooks.js'), 'utf8');
 if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI_HOST__')) {
     throw new Error('The pinned GUI does not expose the optional host bridge');
@@ -53,7 +57,7 @@ if (spritePropertiesPackage) {
     config.module.rules.push({test: /\.css$/, include: css,
         use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
     Object.assign(injections, {__TW_SPRITE_PROPERTIES_PANEL__: [
-        path.join(path.dirname(bridge), 'lib', 'tw-sprite-properties-panel.js'), 'SpritePropertiesPanel'
+        path.join(path.dirname(bridge), 'lib', 'tw-sprite-properties-panel.tsx'), 'SpritePropertiesPanel'
     ]});
 }
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
@@ -105,17 +109,18 @@ for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
+config.resolve.extensions = [...(config.resolve.extensions || ['.wasm', '.mjs', '.js', '.json']), '.ts', '.tsx'];
 const siteSource = path.join(__dirname, '..', '..', 'site');
 // Share the original fullscreen artwork with the stage display menu.
 config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
     path.join(gui, 'src', 'components', 'stage-header', 'icon--fullscreen.svg');
 // Override the addon default in Plus without changing the pinned GUI sources.
 const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';
-config.resolve.alias[`${hideDeleteButtonManifest}$`] = path.join(siteSource, 'hide-delete-button-manifest.js');
+config.resolve.alias[`${hideDeleteButtonManifest}$`] = path.join(siteSource, 'hide-delete-button-manifest.ts');
 config.resolve.alias['@tw-plus/upstream-hide-delete-button-manifest$'] =
     path.join(gui, 'src', 'addons', 'generated', hideDeleteButtonManifest);
 const backpackSurface = path.join(siteSource, 'editor-backpack');
-config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.js');
+config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.ts');
 const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
 config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
@@ -133,12 +138,12 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     title: 'Stage',
     template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
 }));
-config.module.rules.push({test: /\.ts$/, include: [
-    backpackSurface, editorEntries.surfaces, editorEntries.transfer
-], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
+config.module.rules.push({test: /\.tsx?$/, include: [
+    siteSource, path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), path.dirname(editorUiEntry)
+], loader: path.join(__dirname, 'transpile-local-typescript.cts')});
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views, path.dirname(editorUiEntry)
+    transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
@@ -164,7 +169,7 @@ const {withExtensionLoaderWebpack4} = rootRequire('@kubohiroya/turbowarp-extensi
 const securityReview = rootRequire.resolve('@kubohiroya/turbowarp-extension-security-dialog/react');
 config.module.rules.push({
     include: [securityReview, path.join(path.dirname(securityReview), 'react.mjs')],
-    use: path.join(__dirname, 'extension-add-copy-loader.cjs')
+    use: path.join(__dirname, 'extension-add-copy-loader.cts')
 });
 // The block editor helper aliases its subpaths to precompiled entries in this repository's install.
 const {withBlockEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-data-editor/webpack4');

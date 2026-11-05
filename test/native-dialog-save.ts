@@ -1,4 +1,4 @@
-import selectBackdrop from './fixtures/select-backdrop.cjs';
+import selectBackdrop from './fixtures/select-backdrop.ts';
 import assert from 'node:assert/strict';
 import {mkdtemp,cp,copyFile,mkdir,readFile,writeFile} from 'node:fs/promises';
 import path from 'node:path';import {tmpdir} from 'node:os';
