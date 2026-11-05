@@ -1,12 +1,12 @@
 import {capture, createHistory, restore, workspaceXML} from './history.js';
-import {decodeEdit, isBlockEdit} from './protocol.js';
+import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.js';
 
 export {encodeEdit} from './protocol.js';
 
-// Shared history captures blocks, so a drop must not create variables or load extensions.
+// A drop must stay within one target's block and comment history.
 const supportsSharedHistory = script => !script.variables.length && !script.extensionIDs?.length &&
     !Object.keys(script.extensionURLs).length;
-const needsEditingTarget = event => event.type === 'change' && event.element === 'field' &&
+const needsEditingTarget = event => isCommentEdit(event) || event.type === 'change' && event.element === 'field' &&
     ['VARIABLE', 'LIST', 'BROADCAST_OPTION'].includes(event.name);
 
 export function createCodeSession({vm, workspace, ScratchBlocks, document, locale, canUse, onError, receiveBackpackDrop}) {
@@ -83,10 +83,10 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     function observeParent(event) {
         if (projecting || switchingWorkspace || disposed || dropJob?.running) return;
         const target = vm.editingTarget;
-        if (isBlockEdit(event) && histories.has(target)) {
+        if (isCodeEdit(event) && histories.has(target)) {
             dirty.add(target);
             queueMicrotask(flushParent);
-        } else if (/^(?:var|comment)_/.test(event.type) && histories.size) {
+        } else if (/^var_/.test(event.type) && histories.size) {
             // These operations can affect blocks on multiple targets and need a wider history model.
             queueMicrotask(() => {
                 if (disposed) return;
@@ -137,6 +137,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         }
         workspace.cancelCurrentGesture();
         ScratchBlocks.hideChaff();
+        if (document.activeElement?.matches('.scratchCommentTextarea')) document.activeElement.blur();
         ScratchBlocks.Events.fireNow_();
         flushParent();
         if (vm.editingTarget !== view.target) vm.setEditingTarget(view.target.id);
