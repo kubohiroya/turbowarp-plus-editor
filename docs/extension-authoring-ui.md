@@ -26,6 +26,14 @@
 
 読み込み済みのチェックは状態表示のため解除できません。実行中の拡張を停止・削除する操作としては扱いません。実行状態を特定できない拡張について、サンドボックス設定を推測して表示することはありません。
 
+## 作品の URI を指定する
+
+[Issue #55](https://github.com/kubohiroya/turbowarp-plus-editor/issues/55) の機能です。通常起動で「ファイル」→「作品のプロパティ…」を開き、「作品の URI」に入力して「適用」を押します。認証情報やフラグメントを含まない HTTPS URI が使えます。
+
+「ファイル」から SB3 を保存すると URI が記録され、同じ SB3 を開き直すと入力欄に表示されます。保存ファイル名は作品タイトルから付きます。URI を変更した後のキャッシュ書き込みには新しい URI が使われ、以前のキャッシュは保持されます。
+
+URI 欄を非表示にするには、`twPlusManualProjectURI=0` を指定して起動します。
+
 ## カタログにない拡張
 
 ローダーが扱う拡張の入口は、TurboWarp Plusの一覧だけです。カタログにない拡張を追加する機能は置きません。「拡張機能を追加」→「カスタム拡張機能」は本家TurboWarpと同じ画面と動作で、ローダーを通しません（作品の`extensionURLs`へ従来どおり保存します）。方針は [turbowarp-plus-packagesの設計書](https://github.com/kubohiroya/turbowarp-plus-packages/blob/main/docs/editor-architecture.ja.md) の「拡張の選び方と読み込み」を参照してください。

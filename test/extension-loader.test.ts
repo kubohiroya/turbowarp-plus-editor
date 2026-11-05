@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'targetList', 'spriteCodeWindows', 'standardLayout', 'paletteDeletePreview', 'horizontalBlockPalette', 'contextMenuIcons', 'workspaceMinimap']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'manualProjectURI', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'targetList', 'spriteCodeWindows', 'standardLayout', 'paletteDeletePreview', 'horizontalBlockPalette', 'contextMenuIcons', 'workspaceMinimap']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: false, projectTools: true, manualProjectURI: false, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,7 +156,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: true, projectTools: true, manualProjectURI: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -231,4 +231,13 @@ test('the workspace minimap defaults on and supports explicit opt-out', () => {
         assert.equal(readWebStartupFeatureFlags(query).workspaceMinimap, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusWorkspaceMinimap=1').workspaceMinimap, true);
+});
+
+test('editing the project URI defaults on with the loader and supports explicit opt-out', () => {
+    assert.equal(readWebStartupFeatureFlags('').manualProjectURI, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusManualProjectURI=1').manualProjectURI, true);
+    for (const value of ['0', '', 'invalid']) {
+        assert.equal(readWebStartupFeatureFlags(`?twPlusManualProjectURI=${value}`).manualProjectURI, false);
+    }
+    assert.equal(readWebStartupFeatureFlags('?twPlusManualProjectURI=1&twPlusExtensionLoader=0').manualProjectURI, false);
 });

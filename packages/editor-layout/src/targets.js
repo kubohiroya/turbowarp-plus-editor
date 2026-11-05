@@ -6,7 +6,7 @@ const padding = gap * 2;
 export function createTargetList(React, styles) {
     const {createElement: element, useLayoutEffect, useRef, useState} = React;
 
-    function SpriteGrid({className, compact, fixedColumns, stageTile, children}) {
+    function SpriteGrid({className, compact, maximumColumns, stageTile, children}) {
         const grid = useRef(null);
         const [size, setSize] = useState({width: 0, height: 0, visibleRows: 0});
         useLayoutEffect(() => {
@@ -26,15 +26,17 @@ export function createTargetList(React, styles) {
             const observer = new view.ResizeObserver(measure);
             observer.observe(viewport);
             return () => observer.disconnect();
-        }, [compact, fixedColumns]);
+        }, [compact]);
 
-        const columns = fixedColumns || Math.max(1, Math.floor((size.width - padding + gap) / (minTileWidth + gap)));
-        const placement = fixedColumns || size.width < size.height ? 'bottom-right' :
+        const fittingColumns = Math.max(1, Math.floor((size.width - padding + gap) / (minTileWidth + gap)));
+        const columns = Math.min(fittingColumns, maximumColumns ?? fittingColumns);
+        const placement = maximumColumns || size.width < size.height ? 'bottom-right' :
             (columns >= 2 ? 'top-right' : 'inline');
         const rows = Math.max(size.visibleRows, Math.ceil((React.Children.count(children) + 1) / columns));
         return element('div', {
             className: compact ? `${className} ${styles.grid}` : className,
-            'data-fixed-columns': fixedColumns,
+            'data-maximum-columns': maximumColumns,
+            'data-target-columns': compact ? columns : undefined,
             'data-backdrop-placement': compact ? placement : undefined,
             ref: grid,
             style: compact ? {

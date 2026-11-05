@@ -105,7 +105,11 @@ export const createPlusIntegration = ({
     blockEditor,
     attachWorkspaceMinimap: workspaceMinimap ? attachWorkspaceMinimap : undefined,
     modals: blockEditor ? [BLOCK_EDITOR_MODAL] : [],
-    translations: blockEditorTranslations,
+    translations: {
+        en: {...blockEditorTranslations.en, 'gui.extensionLibrary.chooseAnExtension': 'Add Extensions to the Project'},
+        ja: {...blockEditorTranslations.ja, 'gui.extensionLibrary.chooseAnExtension': '機能拡張を作品に追加する'},
+        'ja-hira': {'gui.extensionLibrary.chooseAnExtension': 'かくちょうきのうをさくひんについかする'}
+    },
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.
      *

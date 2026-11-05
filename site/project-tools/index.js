@@ -1,9 +1,10 @@
 import React from 'react';
-import {PROJECT_TOOLS_ENABLED} from './config.js';
+import {MANUAL_PROJECT_URI_ENABLED, PROJECT_TOOLS_ENABLED} from './config.js';
 import {installProjectProperties} from './properties.js';
 import {createAuthorHistory} from './history.js';
 import {createProjectDialogs} from './dialog.js';
 import {installEditorExtensionHost} from '../extension-host/editor-host.js';
+import {editProjectURI} from '../extension-host/project-loader.js';
 import {createProjectDiagnostics} from './diagnostics.js';
 
 const projects = new WeakMap();
@@ -22,7 +23,8 @@ export const installProjectToolsHost = (vm, settings = {}, enabled = PROJECT_TOO
     const history = enabled ? createAuthorHistory(document ? storageFor(document) : undefined) : null;
     const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics,
         {locale: settings.locale}) : null;
-    const tools = {properties, dialogs, diagnostics, propertiesEnabled: enabled};
+    const tools = {dialogs, propertiesEnabled: enabled,
+        projectURIEnabled: MANUAL_PROJECT_URI_ENABLED && host.enabled, properties};
     let lastPhase;
     const unsubscribe = properties.subscribe(() => {
         const state = properties.loadState();
@@ -54,13 +56,14 @@ export const renderFileMenu = ({vm, locale = 'en', MenuSection, MenuItem, onRequ
     if (!tools?.dialogs) return null;
     const open = type => {
         onRequestClose();
-        if (type === 'properties') tools.dialogs.showProperties(locale);
-        else tools.dialogs.showDiagnostics(locale);
+        if (type === 'properties') {
+            tools.dialogs.showProperties(locale, tools.projectURIEnabled ? editProjectURI(vm) : undefined);
+        } else tools.dialogs.showDiagnostics(locale);
     };
     const entries = [
-        ['properties', '作品のプロパティ…', 'Project Properties…'],
-        ['diagnostics', '作品の診断…', 'Project Diagnostics…']
-    ].filter(([type]) => type !== 'properties' || tools.propertiesEnabled);
+        ['properties', '作品のプロパティ…', 'Project Properties…', tools.propertiesEnabled || tools.projectURIEnabled],
+        ['diagnostics', '作品の診断…', 'Project Diagnostics…', true]
+    ].filter(([, , , enabled]) => enabled);
     return React.createElement(MenuSection, null, ...entries.map(([type, ja, en]) =>
         React.createElement(MenuItem, {key: type, onClick: () => open(type)},
         React.createElement('span', {role: 'button', tabIndex: 0, onKeyDown: event => {

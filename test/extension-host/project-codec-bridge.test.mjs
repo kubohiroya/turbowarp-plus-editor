@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createExtensionLoader} from '@kubohiroya/turbowarp-extension-loader';
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
-import {installExtensionLoader} from '../../site/extension-host/project-loader.js';
+import {editProjectURI, installExtensionLoader} from '../../site/extension-host/project-loader.js';
 
 import {guiRequire} from './pinned-host.mjs';
 
@@ -50,8 +50,10 @@ function setup(allow) {
         _saveProjectZip() { return new Zip().file('project.json', this.toJSON()); },
         saveProjectSb3DontZip() { return {'project.json': new TextEncoder().encode(this.toJSON())}; }
     };
-    const dispose = installExtensionLoader({vm, projectIO, transactionalRegistration: true}, loader);
-    return {vm, loader, dispose, events};
+    const addresses = [];
+    const dispose = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
+        onProjectURI: uri => addresses.push(uri)}, loader);
+    return {vm, loader, dispose, events, addresses};
 }
 
 test('core codec and bridge keep pinned remote manifest across save and reopen', async () => {
@@ -98,4 +100,25 @@ test('embedded ZIP bytes and source survive core verification, GUI ZIP save and 
     assert.equal(JSON.parse(vm.toJSON()).turboWarpPlus.extensions[0].sha256, sha256);
     await dispose();
     await loader.unload();
+});
+
+test('URI edits keep other project data and reject a draft after switching projects', async () => {
+    const {vm, dispose, addresses} = setup(true);
+    const original = {targets: [], extensions: ['pen'], extensionURLs: {}};
+    await vm.loadProject(original);
+    const edit = editProjectURI(vm);
+    assert.equal(edit.uri, '');
+    await assert.rejects(edit.apply('https://example.test/project.sb3#fragment'), {code: 'INVALID_PROJECT_URI'});
+    assert.deepEqual(JSON.parse(vm.toJSON()), original);
+    const uri = 'https://example.test/project.sb3';
+    await edit.apply(uri);
+    const files = vm.saveProjectSb3DontZip();
+    const saved = JSON.parse(new TextDecoder().decode(files['project.json']));
+    assert.deepEqual(saved, {...original, turboWarpPlus: {schemaVersion: 1, uri, extensions: []}});
+    assert.deepEqual(addresses, [undefined, uri]);
+    await vm.loadProject(saved);
+    assert.equal(editProjectURI(vm).uri, uri);
+    await assert.rejects(edit.apply('https://example.test/stale.sb3'), {code: 'PROJECT_CHANGED'});
+    assert.deepEqual(JSON.parse(vm.toJSON()), saved);
+    await dispose();
 });
