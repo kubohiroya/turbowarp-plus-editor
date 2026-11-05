@@ -169,3 +169,4 @@ export function createLayout (React) {
 }
 
 export {createTargetList} from './targets.js';
+export {attachHorizontalWorkspaceZoom, workspaceControlsCorner} from './workspace-zoom.js';

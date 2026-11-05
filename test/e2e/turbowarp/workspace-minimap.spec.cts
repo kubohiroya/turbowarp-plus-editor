@@ -19,6 +19,23 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     await page.goto('editor.html?lang=en');
     await expect(page.locator('.blocklyToolboxDiv[data-horizontal-block-palette]')).toBeVisible();
     await expect(minimap).toBeVisible();
+    const zoom = (action: string) => page.locator(`[data-plus-zoom-action="${action}"]`);
+    const [minus, plus, reset] = await Promise.all(['out', 'in', 'reset'].map(action => zoom(action).boundingBox()));
+    const mapPosition = await minimap.boundingBox();
+    expect(minus.y).toBe(plus.y);
+    expect(minus.y).toBe(reset.y);
+    expect(minus.x).toBeLessThan(plus.x);
+    expect(plus.x).toBeLessThan(reset.x);
+    expect(mapPosition.x + mapPosition.width).toBeCloseTo(reset.x + reset.width);
+    expect(mapPosition.y + mapPosition.height).toBeLessThan(reset.y);
+    const scale = () => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().scale);
+    const initialScale = await scale();
+    await zoom('out').click();
+    await expect.poll(scale).toBeLessThan(initialScale);
+    await zoom('in').click();
+    await expect.poll(scale).toBeCloseTo(initialScale);
+    await zoom('reset').click();
+    await expect.poll(scale).toBe(initialScale);
 
     evidence.stage('classic-layout');
     await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
