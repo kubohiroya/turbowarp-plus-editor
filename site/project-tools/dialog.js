@@ -72,11 +72,10 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
         notice.append(show, dismiss); document.body.appendChild(notice);
     });
     const api = {
-        showProperties(locale = 'en') {
+        showProperties(locale = 'en', editURI) {
             const {dialog, label} = open(locale.startsWith('ja') ? '作品のプロパティ' : 'Project Properties', locale);
             dialog.setAttribute('data-testid', 'project-properties');
             const value = properties.snapshot();
-            const recent = history.snapshot();
             const inputs = {};
             const form = element(document, 'form');
             const field = (key, title, list) => {
@@ -97,67 +96,99 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
                 row.appendChild(input); form.appendChild(row); inputs[key] = input;
                 return input;
             };
-            field('title', label('作品タイトル', 'Project title'));
-            const description = field('description', label('作品概要', 'Description'));
-            const preview = element(document, 'div', undefined, {class: styles.preview,
-                'aria-label': label('作品概要のプレビュー', 'Description preview')});
-            const renderPreview = () => {
-                preview.replaceChildren();
-                for (const part of descriptionParts(description.value)) {
-                    preview.appendChild(part.href ? element(document, 'a', part.text,
-                        {href: part.href, target: '_blank', rel: 'noopener noreferrer'}) : document.createTextNode(part.text));
-                }
-            };
-            description.addEventListener('input', renderPreview); renderPreview(); form.appendChild(preview);
-            field('author', label('作者名', 'Author name'), recent.names);
-            const contact = field('contact', label('連絡先', 'Contact'), recent.contacts);
-            const contactView = element(document, 'div', undefined, {class: styles.preview});
-            const renderContact = () => {
-                const href = contactLink(contact.value);
-                contactView.replaceChildren();
-                if (!href) return;
-                contactView.appendChild(element(document, 'a', contact.value, {href,
-                    ...(href.startsWith('https:') ? {target: '_blank', rel: 'noopener noreferrer'} : {})}));
-            };
-            contact.addEventListener('input', renderContact); renderContact(); form.appendChild(contactView);
-            const dates = element(document, 'dl');
-            for (const [key, title] of [['createdAt', label('作成日時', 'Created')],
-                ['updatedAt', label('最終更新日時', 'Last updated')]]) {
-                dates.appendChild(element(document, 'dt', title));
-                const row = element(document, 'dd');
-                row.appendChild(value[key] ? element(document, 'time', new Date(value[key]).toLocaleString(locale),
-                    {datetime: value[key]}) : document.createTextNode(label('未記録', 'Not recorded')));
-                dates.appendChild(row);
+            if (history) field('title', label('作品タイトル', 'Project title'));
+            let uriInput;
+            if (editURI) {
+                const id = `project-uri-${identity}`;
+                const row = element(document, 'label', label('作品の URI', 'Project URI'), {for: id});
+                uriInput = element(document, 'input', undefined, {
+                    id, name: 'uri', inputmode: 'url', 'aria-describedby': `${id}-help`
+                });
+                uriInput.value = editURI.uri;
+                uriInput.disabled = value.loading;
+                row.appendChild(uriInput);
+                const help = element(document, 'p', label(
+                    '適用した URI は、次に作品を保存したときに SB3 に記録されます。',
+                    'The URI will be recorded in the SB3 the next time you save the project.'), {id: `${id}-help`});
+                form.append(row, help);
             }
-            form.appendChild(dates);
-            form.appendChild(element(document, 'p', label(
-                '作者名・連絡先の候補はこのブラウザに各5件保持します。作品ファイルには今回の入力値を保存します。',
-                'This browser remembers five recent names and contacts. Only the current values are saved in the project.')));
-            if (value.readOnly) form.appendChild(element(document, 'p', label(
-                'この作品情報の形式は未対応です。元の情報を保持し、編集はできません。',
-                'This metadata version is unsupported. The original data is preserved and cannot be edited.')));
+            if (history) {
+                const recent = history.snapshot();
+                const description = field('description', label('作品概要', 'Description'));
+                const preview = element(document, 'div', undefined, {class: styles.preview,
+                    'aria-label': label('作品概要のプレビュー', 'Description preview')});
+                const renderPreview = () => {
+                    preview.replaceChildren();
+                    for (const part of descriptionParts(description.value)) {
+                        preview.appendChild(part.href ? element(document, 'a', part.text,
+                            {href: part.href, target: '_blank', rel: 'noopener noreferrer'}) : document.createTextNode(part.text));
+                    }
+                };
+                description.addEventListener('input', renderPreview); renderPreview(); form.appendChild(preview);
+                field('author', label('作者名', 'Author name'), recent.names);
+                const contact = field('contact', label('連絡先', 'Contact'), recent.contacts);
+                const contactView = element(document, 'div', undefined, {class: styles.preview});
+                const renderContact = () => {
+                    const href = contactLink(contact.value);
+                    contactView.replaceChildren();
+                    if (!href) return;
+                    contactView.appendChild(element(document, 'a', contact.value, {href,
+                        ...(href.startsWith('https:') ? {target: '_blank', rel: 'noopener noreferrer'} : {})}));
+                };
+                contact.addEventListener('input', renderContact); renderContact(); form.appendChild(contactView);
+                const dates = element(document, 'dl');
+                for (const [key, title] of [['createdAt', label('作成日時', 'Created')],
+                    ['updatedAt', label('最終更新日時', 'Last updated')]]) {
+                    dates.appendChild(element(document, 'dt', title));
+                    const row = element(document, 'dd');
+                    row.appendChild(value[key] ? element(document, 'time', new Date(value[key]).toLocaleString(locale),
+                        {datetime: value[key]}) : document.createTextNode(label('未記録', 'Not recorded')));
+                    dates.appendChild(row);
+                }
+                form.appendChild(dates);
+                form.appendChild(element(document, 'p', label(
+                    '作者名・連絡先の候補はこのブラウザに各5件保持します。作品ファイルには今回の入力値を保存します。',
+                    'This browser remembers five recent names and contacts. Only the current values are saved in the project.')));
+                if (value.readOnly) form.appendChild(element(document, 'p', label(
+                    'この作品情報の形式は未対応です。元の情報を保持し、編集はできません。',
+                    'This metadata version is unsupported. The original data is preserved and cannot be edited.')));
+            }
+            const canApplyMetadata = Boolean(history) && !value.readOnly;
             const error = element(document, 'p', '', {role: 'alert'});
             form.appendChild(error);
             const actions = element(document, 'div', undefined, {class: styles.actions});
             const cancel = element(document, 'button', label('キャンセル', 'Cancel'), {type: 'button'});
             cancel.addEventListener('click', close);
             const apply = element(document, 'button', label('適用', 'Apply'), {type: 'submit'});
-            apply.disabled = value.readOnly || value.loading;
+            apply.disabled = value.loading || (!canApplyMetadata && !uriInput);
             actions.append(cancel, apply); form.appendChild(actions);
-            form.addEventListener('submit', event => {
+            form.addEventListener('submit', async event => {
                 event.preventDefault();
+                if (apply.disabled) return;
+                apply.disabled = true;
+                error.textContent = '';
+                const draft = Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));
                 try {
-                    const draft = Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));
-                    properties.apply(draft);
-                    history.remember(draft.author, draft.contact);
+                    // Validate and apply the URI first so a rejected URI cannot commit the metadata draft.
+                    if (uriInput && uriInput.value.trim() !== editURI.uri) await editURI.apply(uriInput.value);
+                    if (active !== dialog) return;
+                    if (canApplyMetadata) {
+                        properties.apply(draft);
+                        history.remember(draft.author, draft.contact);
+                    }
                     close();
                 } catch (failure) {
-                    error.textContent = label('作品情報を適用できませんでした。読み込み完了後に開き直してください。',
-                        'Could not apply properties. Reopen this dialog after loading has finished.');
+                    error.textContent = failure.code === 'INVALID_PROJECT_URI' ?
+                        label('認証情報やフラグメントを含まない HTTPS URI を入力してください。',
+                            'Enter an HTTPS URI without credentials or a fragment.') :
+                        label('作品情報を適用できませんでした。読み込み完了後に開き直してください。',
+                            'Could not apply properties. Reopen this dialog after loading has finished.');
+                    apply.disabled = false;
+                    if (failure.code === 'INVALID_PROJECT_URI' && active === dialog) uriInput.focus();
                 }
             });
             dialog.appendChild(form);
-            dialog.showModal(); inputs.title.focus();
+            dialog.showModal(); (inputs.title || uriInput)?.focus();
         },
         showDiagnostics(locale = 'en', initialSession) {
             const {dialog, label} = open(locale.startsWith('ja') ? '作品の診断' : 'Project Diagnostics', locale);

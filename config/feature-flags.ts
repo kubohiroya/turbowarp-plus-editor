@@ -2,6 +2,7 @@
 export function readStartupFeatureFlags({
     twPlusExtensionLoader: loader = null,
     twPlusProjectTools: projectTools = null,
+    twPlusManualProjectURI: manualProjectURI = null,
     twPlusSpriteProperties: spriteProperties = null,
     twPlusSplitter: splitter = null,
     twPlusWindowLayout: layout = null,
@@ -19,6 +20,7 @@ export function readStartupFeatureFlags({
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
         projectTools: projectTools === null || projectTools === '1',
+        manualProjectURI: (manualProjectURI === null || manualProjectURI === '1') && (loader === null || loader === '1'),
         spriteProperties: spriteProperties === '1',
         splitter: splitter === null || splitter === '1',
         windowLayout: layout === '1',

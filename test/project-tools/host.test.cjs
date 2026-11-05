@@ -57,8 +57,8 @@ test('real VM and extension codec preserve project properties and embedded code 
         assert.notEqual(streamInfo.updatedAt, project[PROJECT_INFO_KEY].updatedAt);
         const MenuItem = () => null; const MenuSection = () => null;
         const menu = renderFileMenu({vm, MenuItem, MenuSection, locale: 'en', onRequestClose() {}});
-        assert.equal(menu.props.children.length, 2);
-        menu.props.children[1].props.onClick();
+        assert.deepEqual(menu.props.children.map(item => item.key), ['properties', 'diagnostics']);
+        menu.props.children.find(item => item.key === 'diagnostics').props.onClick();
         assert.match(dom.window.document.querySelector('dialog').textContent, /https:\/\/|extensions\/test.js/);
         assert.match(dom.window.document.querySelector('dialog').textContent, /Execution approved/);
         await host.dispose();
@@ -67,7 +67,7 @@ test('real VM and extension codec preserve project properties and embedded code 
         assert.equal(renderFileMenu({vm}), null);
     } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
 });
-test('normal startup removes the corner log and opens failed-load diagnostics without enabling project properties', async () => {
+test('normal startup removes the corner log and opens failed-load diagnostics with metadata editing disabled', async () => {
     const vm = new VM();
     const dom = new JSDOM('<html><head></head><body></body></html>');
     dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
@@ -80,7 +80,7 @@ test('normal startup removes the corner log and opens failed-load diagnostics wi
         assert.equal(dom.window.document.querySelector('[data-testid="tw-plus-extension-status"]'), null);
         const MenuItem = () => null; const MenuSection = () => null;
         const menu = renderFileMenu({vm, MenuItem, MenuSection, onRequestClose() {}});
-        assert.equal(menu.props.children.key, 'diagnostics');
+        assert.deepEqual(menu.props.children.map(item => item.key), ['properties', 'diagnostics']);
         const plain = {...project, turboWarpPlus: undefined, extensions: []};
         await vm.loadProject(JSON.stringify(plain));
         assert.equal(title, 'Native title');

@@ -10,9 +10,12 @@
  * screen states the failure.
  */
 
-import {isWorthAskingAgain} from '@kubohiroya/turbowarp-extension-loader';
+import {isWorthAskingAgain, validateManifest} from '@kubohiroya/turbowarp-extension-loader';
 
-const installations = new WeakSet();
+const installations = new WeakMap();
+
+/** Open a URI edit for the project currently in this VM. */
+export const editProjectURI = vm => installations.get(vm)?.();
 
 const failure = (code, message) => Object.assign(new Error(message), {code});
 
@@ -76,6 +79,33 @@ export function installExtensionLoader(host, loader) {
                 // Bookkeeping must not change the loading or saving decision.
             }
         }
+    };
+    const editURI = () => {
+        const projectLoad = queue;
+        const assertSameProject = () => {
+            canSave();
+            if (projectLoad !== queue) throw failure('PROJECT_CHANGED', 'The project changed while editing its URI');
+        };
+        return {
+            uri: projectURI ?? '',
+            async apply(value) {
+                assertSameProject();
+                const manifest = validateManifest({schemaVersion: 1, uri: value.trim(), extensions: []});
+                const {uri} = manifest;
+                if (uri === projectURI) return uri;
+                const previous = savedContext;
+                // Explicitly identifying a regular project gives it an empty Plus manifest.
+                // The codec merges it with the live project when the VM serializes it.
+                const next = previous === null ? (await io.prepare({turboWarpPlus: manifest})).context :
+                    io.assignProjectURI(previous, uri, {replace: true});
+                assertSameProject();
+                if (savedContext !== previous) throw failure('PROJECT_CHANGED', 'The project URI changed while editing');
+                savedContext = next;
+                tellProjectURI(uri);
+                vm.runtime?.emitProjectChanged?.();
+                return uri;
+            }
+        };
     };
     /**
      * The context a whole-project save restores, given its address first if it has none yet.
@@ -245,7 +275,7 @@ export function installExtensionLoader(host, loader) {
         }
         throw failure('UNSUPPORTED_HOST', `VM lifecycle hook installation failed: ${error.message}`);
     }
-    installations.add(vm);
+    installations.set(vm, editURI);
 
     return () => {
         if (disposed) return drain;
