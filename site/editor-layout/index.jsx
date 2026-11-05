@@ -11,6 +11,7 @@ import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.js';
 
 export {WindowLayoutContext} from './context.js';
 export const layoutFlags = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
+export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
 export const layoutViews = createStandardLayout(React, {styles, targetStyles, context: WindowLayoutContext});
 
 const getStorage = () => {
@@ -34,7 +35,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
             storage={getStorage()}
             storageKey="twPlusEditorLayout"
             onPaletteModeChange={setHorizontalBlockPalette}
-            Container={layoutFlags.internalWindows ? WindowDesktop : undefined}
+            Container={layoutFlags.internalWindows || stageCanUndock ? WindowDesktop : undefined}
             windowTools={layoutFlags.internalWindows && <>
                 <EditorFullscreenButton className={styles.toggle} locale={props.locale} />
                 <WindowList />
