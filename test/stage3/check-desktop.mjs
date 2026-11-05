@@ -469,7 +469,7 @@ async function checkCodeTargetSync ({editor, a, b, focus, parent, sprites}) {
     const [first, second] = sprites;
     const combo = view => view.child.getByRole('combobox', {name: /^(Editing target|編集対象)$/});
     const block = (view, sprite) => view.child.locator(`[data-id="${sprite.blockId}"]`).first();
-    const targetIs = (view, sprite) => until(async () => await combo(view).innerText() === sprite.name &&
+    const targetIs = (view, sprite) => until(async () => await combo(view).inputValue() === sprite.name &&
         await block(view, sprite).isVisible(), `code window shows ${sprite.name}`);
     const listName = sprite => editor.getByText(sprite.name, {exact: true})
         .and(editor.locator('[class*="sprite-selector-item_sprite-name_"]'));
@@ -502,9 +502,9 @@ async function checkCodeTargetSync ({editor, a, b, focus, parent, sprites}) {
     const firstEdited = await move(b, first);
     await until(async () => await block(a, first).getAttribute('transform') ===
         await block(b, first).getAttribute('transform'), 'the back view shows the shared edit');
-    const selectedThumbnail = combo(b).locator('img');
+    const selectedThumbnail = b.child.locator('#target-picker img').first();
     await until(() => selectedThumbnail.evaluate(image => image.naturalWidth > 0), 'selected costume is visible');
-    await combo(b).click();
+    await b.child.getByRole('button', {name: /^(Editing target options|編集対象の候補)$/}).click();
     const option = b.child.getByRole('option', {name: second.name, exact: true});
     await until(() => option.locator('img').evaluate(image => image.naturalWidth > 0), 'option has a costume thumbnail');
     const secondThumbnail = await option.locator('img').getAttribute('src');
@@ -556,6 +556,35 @@ async function checkCodeTargetSync ({editor, a, b, focus, parent, sprites}) {
     await targetIs(a, second);
     await targetIs(b, first);
     report.checks.push('Thumbnail combobox and sprite list sync only the last active code window; each sprite keeps shared undo/redo');
+
+    await editable(b);
+    await combo(b).fill(second.name);
+    await combo(b).press('Enter');
+    await b.child.getByRole('alert').waitFor();
+    assert.equal(await combo(b).inputValue(), first.name);
+    const renamed = {...first, name: '改名したスプライト'};
+    await combo(b).fill(renamed.name);
+    await combo(b).press('Enter');
+    await targetIs(b, renamed);
+    await listSelected(renamed);
+    await targetIs(a, second);
+    assert.ok((await b.child.title()).includes(renamed.name));
+    const referenceName = () => editor.evaluate(({id, blockId}) =>
+        vm.runtime.getTargetById(id).blocks.getBlock(`${blockId}-menu`).fields.TO.value, second);
+    assert.equal(await referenceName(), renamed.name);
+    await editable(a);
+    await history(a, 'Undo').click();
+    await until(async () => (await position(second)).x === secondOriginal.x, 'another target can still undo its edit');
+    assert.equal(await referenceName(), renamed.name);
+    await history(a, 'Redo').click();
+    await until(async () => (await position(second)).x === secondEdited.x, 'another target can still redo its edit');
+    assert.equal(await referenceName(), renamed.name);
+    await combo(a).press('ArrowDown');
+    await a.child.getByRole('option', {name: renamed.name, exact: true}).click();
+    await targetIs(a, renamed);
+    await targetIs(b, renamed);
+    assert.ok((await a.child.title()).includes(renamed.name));
+    report.checks.push('Inline sprite rename updates the list and title, rejects duplicates, and keeps sprite references current across undo/redo');
 }
 
 async function checkCodePopouts ({editor, context, control}, {withBackpack = false, native = false, targetSync = false} = {}) {
@@ -580,6 +609,13 @@ async function checkCodePopouts ({editor, context, control}, {withBackpack = fal
             const secondBlock = `${blockId}-second`;
             second.blocks.createBlock({id: secondBlock, opcode: 'looks_show', next: null, parent: null,
                 topLevel: true, shadow: false, inputs: {}, fields: {}, x: 100, y: 110});
+            const gotoId = `${secondBlock}-goto`;
+            const menuId = `${secondBlock}-menu`;
+            second.blocks.createBlock({id: gotoId, opcode: 'motion_goto', next: null, parent: null,
+                topLevel: true, shadow: false, inputs: {TO: {name: 'TO', block: menuId, shadow: menuId}},
+                fields: {}, x: 240, y: 280});
+            second.blocks.createBlock({id: menuId, opcode: 'motion_goto_menu', next: null, parent: gotoId,
+                topLevel: false, shadow: true, inputs: {}, fields: {TO: {name: 'TO', value: first.getName()}}});
             seeded.push({id: second.id, name: second.getName(), blockId: secondBlock});
             vm.setEditingTarget(first.id);
         }

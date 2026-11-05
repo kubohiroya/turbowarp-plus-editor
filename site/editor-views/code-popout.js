@@ -10,6 +10,7 @@ const mount = document.getElementById('mount');
 const workspaceArea = document.getElementById('workspace-area');
 const dropZone = document.getElementById('drop-zone');
 const picker = document.getElementById('target-picker');
+const renameError = document.getElementById('rename-error');
 const status = document.getElementById('status');
 const undo = document.getElementById('undo');
 const redo = document.getElementById('redo');
@@ -54,8 +55,15 @@ function renderTarget() {
     ReactDOM.render(<TargetCombobox id="code-target" value={targetId} targets={targets} locale={locale}
         disabled={!editable} onSelect={nextTargetId => {
             if (!editable || nextTargetId === targetId) return;
+            renameError.hidden = true;
             drain();
             port.postMessage({type: 'select-target', targetId, lease, nextTargetId});
+        }} onRename={name => {
+            if (!editable) return;
+            renameError.hidden = true;
+            drain();
+            setEditable(false);
+            port.postMessage({type: 'rename-target', targetId, lease, name});
         }} />, picker);
 }
 
@@ -121,8 +129,18 @@ function receive({data: message}) {
             break;
         case 'target':
             targetId = message.targetId;
+            renameError.hidden = true;
             snapshot(message);
             renderTarget();
+            break;
+        case 'rename-result':
+            if (lease === message.lease) {
+                renameError.textContent = /^ja(?:-|$)/i.test(locale) ?
+                    'この名前は使用できません' : 'This name is unavailable';
+                renameError.hidden = message.accepted;
+                if (document.hasFocus()) setEditable(true);
+                else release();
+            }
             break;
         case 'targets':
             targets = message.targets;

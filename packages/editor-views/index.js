@@ -45,10 +45,12 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         const targets = vm.runtime.targets.filter(selectable).map(target => {
             const asset = target.getCostumes?.()[target.currentCostume]?.asset;
             if (asset && !thumbnails.has(asset)) thumbnails.set(asset, asset.encodeDataURI());
-            return {id: target.id, name: target.getName(), thumbnailUrl: asset && thumbnails.get(asset)};
+            return {id: target.id, name: target.getName(), isStage: Boolean(target.isStage),
+                thumbnailUrl: asset && thumbnails.get(asset)};
         });
-        if (targets.length === catalog.length && targets.every(({id, name, thumbnailUrl}, index) =>
-            id === catalog[index].id && name === catalog[index].name && thumbnailUrl === catalog[index].thumbnailUrl)) return;
+        if (targets.length === catalog.length && targets.every(({id, name, isStage, thumbnailUrl}, index) =>
+            id === catalog[index].id && name === catalog[index].name && isStage === catalog[index].isStage &&
+            thumbnailUrl === catalog[index].thumbnailUrl)) return;
         catalog = targets;
         for (const view of views) send(view, {type: 'targets', targets});
     }
@@ -162,6 +164,27 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             exists(view.target);
     }
 
+    function renameTarget(view, value) {
+        const target = view.target;
+        const name = typeof value === 'string' ? value.trim() : '';
+        const oldName = target.getName();
+        if (!name || !target.isOriginal || target.isStage || vm.editingTarget !== target ||
+            vm.runtime.targets.some(other => other !== target && selectable(other) && !other.isStage &&
+                other.getName() === name)) return false;
+        if (name === oldName) return true;
+        ScratchBlocks.Events.fireNow_();
+        flushParent();
+        // Passing an unused name keeps the VM's sprite name and all its block references identical.
+        vm.renameSprite(target.id, name);
+        const actual = target.getName();
+        if (actual === oldName) return false;
+        for (const [tracked, history] of histories) {
+            history.renameSpriteReferences(oldName, actual);
+            publish(tracked, null, true);
+        }
+        return true;
+    }
+
     async function runDrop(job) {
         try {
             workspace.cancelCurrentGesture();
@@ -241,6 +264,17 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                 pending = view;
                 retarget(view, target);
             }
+            return;
+        }
+        if (message.type === 'rename-target') {
+            if (view.draining) return;
+            let accepted = false;
+            try {
+                if (viewFocused(view)) accepted = renameTarget(view, message.name);
+            } catch (error) {
+                onError?.(error);
+            }
+            send(view, {type: 'rename-result', lease: view.lease, accepted});
             return;
         }
         if (message.type === 'edits' && Array.isArray(message.events) && message.events.length <= 1000) {

@@ -31,6 +31,15 @@ export function createHistory(target) {
             revision++;
             return true;
         },
+        renameSpriteReferences(oldName, newName) {
+            // Use the pinned VM's field rules for snapshots without touching the live block cache.
+            const blocks = Object.create(target.blocks);
+            blocks.resetCache = () => {};
+            for (const snapshot of [...past, present, ...future]) {
+                blocks._blocks = snapshot.blocks;
+                blocks.updateAssetName(oldName, newName, 'sprite');
+            }
+        },
         step(redo) {
             const next = (redo ? future : past).pop();
             if (!next) return false;

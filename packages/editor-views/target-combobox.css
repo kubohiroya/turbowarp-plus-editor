@@ -18,16 +18,28 @@
     text-align: start;
 }
 
-.field:focus-visible {
+.field:focus-within {
     outline: 2px solid var(--tw-window-control-focus, #3855b9);
     outline-offset: 1px;
 }
 
-.name {
+.field input {
     flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-inline-size: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    outline: none;
+}
+
+.field button {
+    display: grid;
+    place-items: center;
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
 }
 
 .thumbnail {
