@@ -8,31 +8,39 @@ export function createTargetList(React, styles) {
 
     function SpriteGrid({className, compact, fixedColumns, stageTile, children}) {
         const grid = useRef(null);
-        const [size, setSize] = useState({width: 0, height: 0});
+        const [size, setSize] = useState({width: 0, height: 0, visibleRows: 0});
         useLayoutEffect(() => {
-            if (!compact || fixedColumns) return;
-            const viewport = grid.current.parentElement;
+            if (!compact) return;
+            const node = grid.current;
+            const viewport = node.parentElement;
+            const view = node.ownerDocument.defaultView;
             const measure = () => {
                 const {clientWidth: width, clientHeight: height} = viewport;
-                setSize(previous => previous.width === width && previous.height === height ? previous : {width, height});
+                const {paddingTop, paddingBottom} = view.getComputedStyle(node);
+                const verticalPadding = parseFloat(paddingTop) + parseFloat(paddingBottom);
+                const visibleRows = Math.floor((height - verticalPadding + gap) / (tileHeight + gap));
+                setSize(previous => previous.width === width && previous.height === height &&
+                    previous.visibleRows === visibleRows ? previous : {width, height, visibleRows});
             };
             measure();
-            const observer = new ResizeObserver(measure);
+            const observer = new view.ResizeObserver(measure);
             observer.observe(viewport);
             return () => observer.disconnect();
         }, [compact, fixedColumns]);
 
         const columns = fixedColumns || Math.max(1, Math.floor((size.width - padding + gap) / (minTileWidth + gap)));
-        const visibleRows = Math.floor((size.height - padding + gap) / (tileHeight + gap));
-        const placement = fixedColumns ? 'inline' : size.width >= size.height && columns >= 2 ? 'top-right' :
-            (visibleRows >= 2 ? 'bottom-left' : 'inline');
-        const rows = Math.max(visibleRows, Math.ceil((React.Children.count(children) + 1) / columns));
+        const placement = fixedColumns || size.width < size.height ? 'bottom-right' :
+            (columns >= 2 ? 'top-right' : 'inline');
+        const rows = Math.max(size.visibleRows, Math.ceil((React.Children.count(children) + 1) / columns));
         return element('div', {
             className: compact ? `${className} ${styles.grid}` : className,
             'data-fixed-columns': fixedColumns,
             'data-backdrop-placement': compact ? placement : undefined,
             ref: grid,
-            style: compact ? {'--target-columns': columns, '--target-rows-before-last': rows - 1} : undefined
+            style: compact ? {
+                '--target-columns': columns,
+                '--target-rows-before-last': rows > 1 ? `repeat(${rows - 1}, ${tileHeight}px)` : undefined
+            } : undefined
         }, children, stageTile && element('div', {className: styles.backdropCell, key: 'stage'}, stageTile));
     }
 

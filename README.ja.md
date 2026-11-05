@@ -38,6 +38,10 @@ Web 版は TurboWarp Plus 標準配置で開きます。左に2列のスプラ�
 
 従来の配置で起動するには、エディター URL に `twPlusStandardLayout=0` を指定して再読み込みします。
 
+コード編集領域の左下にはミニマップが表示されます。クリックや表示範囲の枠のドラッグで移動できます。非表示にするには、エディター URL に `twPlusWorkspaceMinimap=0` を指定して再読み込みします。
+
+コード領域のブロックを削除できる位置までパレットにドラッグすると、パレットがぼけて中央にゴミ箱が表示されます。横並びパレットでは、ブロック一覧を閉じた状態でもカテゴリの帯に表示されます。表示を無効にするには `twPlusPaletteDeletePreview=0` を指定して再読み込みします。切り戻しを確認するには、パレットへのドロップでブロックを削除し、Undo で戻せることを確かめます。
+
 ## 配信の責務
 
 `turbowarp-extension-data-editor` と `turbowarp-extension-security-dialog` は上流のライブラリです。`scratch-gui` がこれらを利用し、さらに下流にある本パッケージが統合Editorを配信・検証します。上流のライブラリから下流GUIをビルドしません。
@@ -145,6 +149,8 @@ E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
 TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
 E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 ```
+
+ミニマップだけを検証するには、ビルド後に `E2E_GUI_ROOT` を指定して `npm run test:e2e -- workspace-minimap.spec.cts` を実行します。既定表示、URL での非表示、クリックとドラッグでの移動を確認します。
 
 GUIとPackagerは `site/source.json` に記録したSHAをチェックアウトします。GUIの依存をインストールし、`node scripts/prepublish.mjs` で準備します。ビルドはGUIのSHA、実際にインストールされたdata-editorのSHA、security-dialogのバージョンが固定値と一致することを確認します。Pagesは統合検証に成功したmainから配信します。リリースのタグはnpmのバージョンと一致させます。
 

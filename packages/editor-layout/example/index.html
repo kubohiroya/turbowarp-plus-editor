@@ -2,6 +2,7 @@
 <html lang="en">
 <meta charset="utf-8">
 <title>Editor layout trial host</title>
+<link rel="stylesheet" href="../src/editor.css">
 <style>
     body {font: 1rem system-ui; margin: 1rem}
     .panes {height: 440px; display: flex; background: #e9e8ef}
@@ -16,6 +17,7 @@
 <script src="../node_modules/react-dom/umd/react-dom.development.js"></script>
 <script type="module">
     import {createLayout} from '../src/index.js';
+    import {createStandardLayout} from '../src/standard-layout.js';
     const h = React.createElement;
     const SplitLayout = createLayout(React);
     const App = () => {
@@ -39,6 +41,24 @@
                         h('div', {className: 'targets'}, 'Targets')))
             }));
     };
-    ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+    const styles = new Proxy({}, {get: (_, key) => key.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase())});
+    const context = React.createContext({});
+    const {StandardLayout} = createStandardLayout(React, {styles, targetStyles: styles, context});
+    const params = new URLSearchParams(location.search);
+    const StandardExample = () => h(StandardLayout, {
+        enabled: params.get('standard') === '1',
+        defaultStageWidth: 340, defaultStageHeight: 180, stageAspect: 4 / 3,
+        onPaletteModeChange: horizontal => { document.documentElement.dataset.palette = horizontal ? 'top' : 'side'; },
+        render: layout => h('div', {
+            className: ['panes', layout.bodyClassName].filter(Boolean).join(' '),
+            ref: layout.observe, style: layout.bodyStyle
+        },
+        h('div', {className: 'editor', style: layout.editorStyle},
+            layout.renderEditorTabRow?.(h('span', null, 'Code')), h('textarea', {'aria-label': 'Editor'})),
+        h('div', {className: 'stage-column', style: layout.stageColumnStyle},
+            h('div', {className: layout.stageClassName, 'data-stage': ''}, 'Stage'),
+            h('div', {className: layout.targetClassName}, 'Targets')))
+    });
+    ReactDOM.createRoot(document.getElementById('root')).render(h(params.has('standard') ? StandardExample : App));
 </script>
 </html>

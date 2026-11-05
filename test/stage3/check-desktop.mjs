@@ -326,7 +326,7 @@ async function checkSpriteProperties ({editor, control}) {
     assert.equal(await action.count(), 0);
     await editor.getByRole('button', {name: modeLabel}).click();
     await x.evaluate(node => {window.stage5SpriteX = node;});
-    await action.click();
+    await action.press('Enter');
     await floating.getByRole('region', {name: spritePropertiesLabel}).waitFor();
     assert.equal(await control('windows').then(windows => windows.length), 1);
     assert.ok(await x.evaluate(node => node === window.stage5SpriteX));
@@ -346,7 +346,7 @@ async function checkSpriteProperties ({editor, control}) {
 async function checkStagePanel ({editor, control}) {
     const canvas = editor.locator('[data-gui-stage] canvas').first();
     const frame = editor.getByRole('region', {name: /^(Stage|ステージ)$/});
-    const action = editor.locator('[class*="basic-panel-overlay-action_"]').getByRole('button', {
+    const action = editor.locator('[class*="stage-action-slot_"]').getByRole('button', {
         name: /^(Open in another window|別画面で開く)$/
     });
     await editor.getByRole('button', {name: modeLabel}).click();
@@ -642,13 +642,13 @@ async function checkCodePopouts ({editor, context, control}, {withBackpack = fal
         await focus(editor, parent.id);
         await editorClick(mode);
     }
-    const action = editor.locator('[class*="layout_tab-action_"]').getByRole('button', {
+    const action = editor.locator('[class*="_tab-action_"]').getByRole('button', {
         name: /^(Open in another window|別画面で開く)$/
     });
 
     async function open() {
         await focus(editor, parent.id);
-        await action.waitFor();
+        await action.focus();
         const [child] = await Promise.all([context.waitForEvent('page'), editorClick(action)]);
         await child.waitForURL(/\/code-popout\.html#/);
         child.on('pageerror', error => report.errors.push(error.message));
@@ -896,6 +896,7 @@ async function checkExternalTargetPanels ({editor, context, control}) {
     async function open(kind) {
         await focus(parent.id);
         const action = heading(kind).locator('..').getByRole('button', {name: /^(Open in another window|別画面で開く)$/});
+        await action.focus();
         await click(control, 'editor', action);
         const child = await until(() => context.pages().find(page =>
             page.url().startsWith(`tw-editor://./gui/${kind}-popout.html#`)), kind);
@@ -950,7 +951,7 @@ async function checkExternalTargetPanels ({editor, context, control}) {
     await focus(list.id);
     await backdrop.focus();
     await control('layout-tall', list.id);
-    await list.child.locator('[data-backdrop-placement="bottom-left"]').waitFor();
+    await list.child.locator('[data-backdrop-placement="bottom-right"]').waitFor();
     assert.ok(await backdrop.evaluate(node => node.ownerDocument.activeElement === node));
     await click(control, 'sprite-list', backdrop);
     await until(() => editor.evaluate(() => vm.editingTarget.isStage), 'backdrop tile selects the stage');
@@ -984,7 +985,7 @@ async function checkStagePopout ({editor, context, control}) {
     await control('layout', parent.id);
     await control('focus', parent.id);
     const canvas = editor.locator('[data-gui-stage] canvas').first();
-    const stageAction = editor.locator('[class*="basic-panel-overlay-action_"]').getByRole('button', {
+    const stageAction = editor.locator('[class*="stage-action-slot_"]').getByRole('button', {
         name: /^(Open in another window|別画面で開く)$/
     });
     const focus = async (page, id) => {

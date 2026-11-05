@@ -34,7 +34,7 @@ const messages = {
 export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
-    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel}) {
+    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName}) {
         const labels = /^ja(?:-|$)/i.test(locale) ? messages.ja : messages.en;
         const copyFailed = React.useRef(labels.copyFailed);
         copyFailed.current = labels.copyFailed;
@@ -81,7 +81,7 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
         }, [surface]);
         React.useLayoutEffect(() => {
             if (!internalHost || !showUndock || state.kind !== 'docked' || !state.reason) return;
-            const frame = requestAnimationFrame(() => launchButton.current?.focus({preventScroll: true}));
+            const frame = requestAnimationFrame(() => launchButton.current?.querySelector('button')?.focus({preventScroll: true}));
             return () => cancelAnimationFrame(frame);
         }, [internalHost, showUndock, state]);
 
@@ -137,19 +137,23 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
                 </>
             );
         }
+        const launch = {
+            disabled: state.kind === 'opening',
+            label: internalHost ? labels.detach : (openLabel ?? labels.undock),
+            onOpen: () => surface.undock(internalHost ? internalRequest() : undefined)
+        };
         return (
             <>
                 {showUndock && (
-                    <div>
-                        <button type="button" disabled={state.kind === 'opening'} ref={launchButton}
-                            onClick={() => surface.undock(internalHost ? internalRequest() : undefined)}>
-                            {internalHost ? labels.detach : (openLabel ?? labels.undock)}
-                        </button>
-                        {(state.reason === 'blocked' || state.reason === 'failed') &&
-                            <span role="status">{labels.blocked}</span>}
+                    <div className={launchClassName}>
+                        <span ref={launchButton}>{renderLaunchButton ? renderLaunchButton(launch) :
+                            <button type="button" disabled={launch.disabled} onClick={launch.onOpen}>{launch.label}</button>}
+                        </span>
                     </div>
                 )}
                 {children}
+                {showUndock && (state.reason === 'blocked' || state.reason === 'failed') &&
+                    <span role="status">{labels.blocked}</span>}
             </>
         );
     }

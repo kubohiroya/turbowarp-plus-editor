@@ -28,9 +28,9 @@ export function readStartupFeatureFlags({
         targetList: layout === '1' && internal === '1' && targetList === '1',
         spriteCodeWindows: layout === '1' && internal === '1' && spriteCodeWindows === '1',
         standardLayout: standardLayout === '1',
-        paletteDeletePreview: paletteDeletePreview === '1',
+        paletteDeletePreview: paletteDeletePreview === null || paletteDeletePreview === '1',
         horizontalBlockPalette: horizontalBlockPalette === '1',
         contextMenuIcons: contextMenuIcons === '1',
-        workspaceMinimap: workspaceMinimap === '1'
+        workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1'
     });
 }

@@ -63,8 +63,18 @@ try {
     assert.equal(await fullScreen.count(), 0);
     await start(inAppOnly + '&twPlusBackpackPopout=1');
     await seed();
-    await page.locator('[class*="backpack_backpack-header"]').click();
+    const header = page.locator('[class*="backpack_backpack-header_"]');
+    await header.click();
     await page.getByText(itemName, {exact: true}).waitFor();
+    const mode = page.getByRole('button', {name: 'Show undock buttons'});
+    await mode.click();
+    const beforeLaunch = await header.boundingBox();
+    await mode.click();
+    await launch.focus();
+    const [heading, icon] = await Promise.all([header.boundingBox(), launch.boundingBox()]);
+    assert.equal(heading.y, beforeLaunch.y);
+    assert.ok(icon.y >= heading.y && icon.y + icon.height <= heading.y + heading.height + 1);
+    assert.ok(heading.x + heading.width - icon.x - icon.width <= 8);
     await launch.click();
     await frame.getByText(itemName, {exact: true}).waitFor();
     assert.equal(context.pages().length, 1);
@@ -143,7 +153,7 @@ try {
     await frame.getByRole('button', {name: 'Close and dock'}).click();
     await page.getByText(itemName, {exact: true}).waitFor();
     assert.equal(await frame.count(), 0);
-    await page.waitForFunction(() => document.activeElement?.textContent.trim() === 'Undock Backpack');
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Undock Backpack');
     await launch.click();
     await frame.getByText(itemName, {exact: true}).waitFor();
     await page.getByRole('button', {name: 'Show undock buttons'}).click();
@@ -165,6 +175,28 @@ try {
     const openCode = page.getByRole('button', {name: 'Open in another window', exact: true});
     const code = page.getByRole('region', {name: 'Code', exact: true});
     const windowsList = page.getByRole('button', {name: 'Windows', exact: true});
+    const actionOpacity = () => openCode.evaluate(node => getComputedStyle(node.parentElement).opacity);
+    await windowsList.focus();
+    assert.equal(await actionOpacity(), '0');
+    const workspacePoint = await workspace.evaluate(svg => {
+        const {left, top, width, height} = svg.getBoundingClientRect();
+        for (const y of [0.8, 0.6, 0.3]) {
+            for (const x of [0.8, 0.6, 0.4]) {
+                const point = {x: left + x * width, y: top + y * height};
+                if (svg.contains(document.elementFromPoint(point.x, point.y))) return point;
+            }
+        }
+        return null;
+    });
+    assert.ok(workspacePoint);
+    await page.mouse.click(workspacePoint.x, workspacePoint.y);
+    assert.equal(await actionOpacity(), '1');
+    assert.equal(await openCode.getAttribute('title'), 'Open in another window');
+    assert.equal(await openCode.locator('span').isVisible(), false);
+    const [actionBounds, tabBounds] = await Promise.all([
+        openCode.boundingBox(), page.getByRole('tablist').boundingBox()
+    ]);
+    assert.ok(actionBounds.x >= tabBounds.x + tabBounds.width);
     await openCode.click();
     await code.locator('.blocklySvg').first().waitFor();
     const getOrder = window => window.evaluate(node => Number(node.style.zIndex));
