@@ -8,8 +8,20 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  verify-stable:
+    if: github.repository == 'kubohiroya/turbowarp-plus-editor' && (!contains(github.ref_name, '-') || contains(github.ref_name, '+'))
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      release_revision: ${{ github.sha }}
   release:
-    if: github.repository == 'kubohiroya/turbowarp-plus-editor'
+    needs: verify-stable
+    if: >-
+      !cancelled() && github.repository == 'kubohiroya/turbowarp-plus-editor' &&
+      (needs.verify-stable.result == 'success' ||
+       (contains(github.ref_name, '-') && !contains(github.ref_name, '+') && needs.verify-stable.result == 'skipped'))
     runs-on: ubuntu-latest
     timeout-minutes: 40
     permissions:
@@ -34,8 +46,10 @@ jobs:
       - run: npm test
       - run: npm run test:e2e:infrastructure
       - name: Require a matching release tag on main
+        env:
+          FULL_VERIFICATION_RESULT: ${{ needs.verify-stable.result }}
         run: |
-          node -e 'if (process.env.GITHUB_REF_NAME !== "v" + JSON.parse(require("node:fs").readFileSync("package.json")).version) process.exit(1)'
+          node scripts/ci/release-verification.ts
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
       - name: Require successful normal integration CI before publishing
         env:

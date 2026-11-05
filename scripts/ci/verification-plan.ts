@@ -99,25 +99,28 @@ export function planForEvent(eventName: string | undefined, event: Event, revisi
         }
         const diff = git(['diff', '--raw', '--no-renames', '--no-ext-diff', '--ignore-submodules=none',
             '-z', base, revision, '--']);
-        return selectVerification(readChangedPaths(diff), mainPush);
+        return {...selectVerification(readChangedPaths(diff), mainPush), base};
     } catch {
         return fullPlan('diff-unavailable');
     }
 }
 
-function recordPlan() {
-    const {GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_SHA, GITHUB_STEP_SUMMARY} = process.env;
-    let plan;
+export function readVerificationPlan(env = process.env) {
+    const {GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_SHA} = env;
     try {
         const event = JSON.parse(readFileSync(GITHUB_EVENT_PATH ?? '', 'utf8')) as Event;
-        plan = planForEvent(GITHUB_EVENT_NAME, event, GITHUB_SHA, args => execFileSync('git', args, {
+        return planForEvent(GITHUB_EVENT_NAME, event, GITHUB_SHA, args => execFileSync('git', args, {
             timeout: 15_000, maxBuffer: 4 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'],
             env: {...process.env, GIT_TERMINAL_PROMPT: '0'}
         }));
     } catch {
-        plan = fullPlan('event-unavailable');
+        return fullPlan('event-unavailable');
     }
+}
 
+function recordPlan() {
+    const {GITHUB_STEP_SUMMARY} = process.env;
+    const plan = readVerificationPlan();
     console.log(JSON.stringify(plan));
     if (GITHUB_STEP_SUMMARY) {
         const lines = [

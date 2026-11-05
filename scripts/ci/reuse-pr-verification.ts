@@ -24,11 +24,11 @@ export function isVerifiedPullRequestRun(run, repository, id) {
         run.repository?.full_name === repository && run.head_repository?.full_name === repository;
 }
 
-export async function findVerifiedRun({repository, tree, get}) {
-    const listing = await get(`artifacts?name=${encodeURIComponent(markerName(tree))}&per_page=20`);
+export async function findVerifiedRun({repository, tree, get, name = markerName(tree)}) {
+    const listing = await get(`artifacts?name=${encodeURIComponent(name)}&per_page=20`);
     if (!Array.isArray(listing?.artifacts)) return null;
     for (const artifact of listing.artifacts) {
-        if (artifact.name !== markerName(tree) || artifact.expired) continue;
+        if (artifact.name !== name || artifact.expired) continue;
         const id = artifact.workflow_run?.id;
         if (!Number.isSafeInteger(id) || id <= 0) continue;
         const run = await get(`runs/${id}`);

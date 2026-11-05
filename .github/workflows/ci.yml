@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
+    inputs:
+      release_revision:
+        type: string
+        required: true
 permissions:
   contents: read
   # Read-only, to find the pull request run that already verified a merged tree.
@@ -18,10 +23,21 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      TW_PLUS_CI_SCOPED: ${{ vars.TW_PLUS_CI_SCOPED }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ inputs.release_revision || github.sha }}
+      - name: Confirm the stable release checkout
+        if: inputs.release_revision != ''
+        env:
+          CI_RELEASE_REVISION: ${{ inputs.release_revision }}
+        run: |
+          test "$GITHUB_REF_TYPE" = tag
+          test "$CI_RELEASE_REVISION" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$CI_RELEASE_REVISION"
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -29,48 +45,75 @@ jobs:
       - name: Record proposed verification plan
         continue-on-error: true
         run: node scripts/ci/verification-plan.ts
+      - name: Select verification to execute
+        id: scope
+        if: env.TW_PLUS_CI_SCOPED == '1' && inputs.release_revision == ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/verification-execution.ts
+      - name: Check documentation diff
+        id: documentation
+        if: steps.scope.outputs.mode == 'scoped' && contains(steps.scope.outputs.checks, '|documentation|')
+        env:
+          BASE: ${{ steps.scope.outputs.base }}
+        run: git diff --check "$BASE" HEAD --
       - name: Prepare pnpm for the security package's Git install
+        if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.npm == 'true'
         uses: pnpm/action-setup@v6
         with:
           version: 11.28.8
-      - run: |
+      - if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.npm == 'true'
+        run: |
           TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
       - run: npm run typecheck
         id: typecheck
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|typecheck|')
       - run: npm run test:package
         id: package-tests
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|package|')
       - run: npm test
         id: unit-tests
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|unit|')
       - run: npm run test:e2e:infrastructure
         id: infrastructure-tests
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|infrastructure|')
       - run: npm --prefix packages/editor-layout test
         id: layout-unit
-      # A squash merge onto an unchanged base is the tree its pull request's CI already put through
-      # every browser check below. main still builds, because the deployed site must carry main's
-      # own revision, but it does not run those same checks a second time. Anything that cannot be
-      # confirmed runs them all.
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|layout-unit|')
+      - run: node --test 'packages/editor-views/test/**/*.test.js'
+        id: views-unit
+        if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|views-unit|'))
+      - run: node --test 'packages/editor-backpack/test/**/*.test.mjs'
+        id: backpack-unit
+        if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|backpack-unit|'))
+      # Keep the legacy browser reuse path while scoped verification is off. main still builds
+      # with its own revision, and an unverified tree runs all of the legacy browser checks.
       - name: Find a pull request run that verified this tree
         id: reuse
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && inputs.release_revision == '' && env.TW_PLUS_CI_SCOPED != '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: TREE=$(git rev-parse 'HEAD^{tree}') node scripts/ci/reuse-pr-verification.ts
       - name: Record per-check reuse candidates
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && inputs.release_revision == '' && env.TW_PLUS_CI_SCOPED != '1'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/ci/verification-evidence.ts inspect
       - name: Read immutable integration sources
         id: source
+        if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.gui == 'true'
         run: node scripts/site/source.ts
       - uses: actions/checkout@v4
+        if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.gui == 'true'
         with:
           repository: kubohiroya/scratch-gui
           ref: ${{ steps.source.outputs.guiRevision }}
           path: .host/scratch-gui
           persist-credentials: false
       - uses: actions/checkout@v4
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|site-build|')
         with:
           repository: ${{ steps.source.outputs.packagerRepository }}
           ref: ${{ steps.source.outputs.packagerRevision }}
@@ -78,6 +121,7 @@ jobs:
           persist-credentials: false
       - name: Restore the pinned host's modules
         id: host-modules
+        if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.gui == 'true'
         uses: actions/cache@v4
         with:
           path: .host/scratch-gui/node_modules
@@ -97,6 +141,7 @@ jobs:
           # deletes the tree that was just restored — paying for the download to throw it away.
           key: host-modules-${{ runner.os }}-${{ hashFiles('.host/scratch-gui/package-lock.json') }}
       - name: Install the pinned host dependencies
+        if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.gui == 'true'
         working-directory: .host/scratch-gui
         run: |
           if [ "${{ steps.host-modules.outputs.cache-hit }}" != "true" ]; then
@@ -107,6 +152,7 @@ jobs:
           node scripts/prepublish.mjs
       - name: Verify the prepared host
         id: pinned-gui-unit
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|pinned-gui-unit|')
         working-directory: .host/scratch-gui
         run: |
           git fetch --no-tags --depth=1 https://github.com/TurboWarp/scratch-gui.git 3c017c528c853af3111df9641914704745c1fdf6
@@ -114,32 +160,44 @@ jobs:
       # The extension host is supplied from here, but what it installs on is the pinned GUI's VM,
       # and the registration it drives must use that VM's own modules. So these run against the
       # checkout above rather than this repository's dependencies, and only once it is prepared.
-      - name: Verify the extension host against the prepared VM
-        id: host-integration
+      - run: npm run test:extension-host
+        id: extension-host
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|extension-host|')
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: |
-          npm run test:extension-host
-          npm run test:gui-integration
-          npm run test:script-transfer
-          npm run test:project-tools
+      - run: npm run test:gui-integration
+        id: gui-integration
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|gui-integration|')
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+      - run: npm run test:script-transfer
+        id: script-transfer
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|script-transfer|')
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+      - run: npm run test:project-tools
+        id: project-tools
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|project-tools|')
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
       - name: Build TurboWarp-Plus-Editor
         id: site-build
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|site-build|')
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           TW_PLUS_PACKAGER_ROOT: ${{ github.workspace }}/.host/packager
           NODE_OPTIONS: --max-old-space-size=6144
         run: npm run build:pages
       - name: Generate the packaged extension fixture from checked build assets
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|extension-loader-browser|')
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
         run: node test/e2e/extension-loader/prepare-packaged.ts
       - run: npx playwright install --with-deps chromium
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || steps.scope.outputs.browser == 'true'
       - name: Verify Editor layout splitters
         id: layout-browser
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|layout-browser|')
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           E2E_PATH_PREFIX: /turbowarp-plus-editor/
@@ -148,13 +206,13 @@ jobs:
       # `twpeyamlsettings`; only the native VSCode launcher is replaced. The base SB3 is generated
       # here so no binary fixture is checked in or borrowed from the pinned GUI.
       - name: Build the document editor's SB3 fixtures
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|yaml-browser|')
         run: |
           node test/fixtures/yaml-editor/base-project.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3"
           node scripts/yaml-editor/build-settings-fixture.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3" "$RUNNER_TEMP/yaml-fixtures/settings.sb3"
       - name: Verify YAML import, invalid YAML, project replacement and the SB3 round trip
         id: yaml-roundtrip
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|yaml-browser|')
         env:
           TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
           TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
@@ -162,7 +220,7 @@ jobs:
         run: npm run test:yaml:roundtrip
       - name: Verify two documents with separate schemas, a guarded switch and saving both
         id: yaml-multi-document
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|yaml-browser|')
         env:
           TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
           TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
@@ -170,7 +228,7 @@ jobs:
         run: npm run test:yaml:multi-document
       - name: Verify integrated editing, security, themes and SB3 round trips
         id: editor-browser
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|editor-browser|')
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
@@ -181,7 +239,7 @@ jobs:
         run: npm run test:e2e:block-editor
       - name: Verify extension loader defaults, opt-out and offline HTML output
         id: extension-loader-browser
-        if: steps.reuse.outputs.verified != 'true'
+        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|extension-loader-browser|')
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
@@ -189,12 +247,29 @@ jobs:
           E2E_EXPECT_SITE_REVISION: ${{ github.sha }}
           E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
         run: npm run test:e2e:extension-loader
+      - name: Verify app-internal code windows
+        id: code-windows-browser
+        if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|code-windows-browser|'))
+        run: node test/stage6/code-windows.mjs .host/scratch-gui/build
+      - name: Require all selected verification to pass
+        if: ${{ !cancelled() && (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') }}
+        env:
+          CI_RELEASE_REVISION: ${{ inputs.release_revision }}
+          CI_EXECUTION_MODE: ${{ steps.scope.outputs.mode }}
+          CI_REQUIRED_CHECKS: ${{ steps.scope.outputs.checks }}
+          CI_STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: node scripts/ci/verification-execution.ts verify
+      # Partial PRs cannot publish the legacy all-browser marker.
       - name: Name the tree these checks verified
         id: tree
-        if: success() && github.event_name == 'pull_request'
+        if: >-
+          success() && github.event_name == 'pull_request' &&
+          steps.layout-browser.outcome == 'success' && steps.yaml-roundtrip.outcome == 'success' &&
+          steps.yaml-multi-document.outcome == 'success' && steps.editor-browser.outcome == 'success' &&
+          steps.extension-loader-browser.outcome == 'success'
         run: echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
-        if: success() && github.event_name == 'pull_request'
+        if: success() && steps.tree.outcome == 'success'
         with:
           name: ci-verified-tree-${{ steps.tree.outputs.tree }}
           path: site/source.json
@@ -212,10 +287,11 @@ jobs:
         with:
           name: ${{ steps.verification-evidence.outputs.artifact }}
           path: ${{ runner.temp }}/verification-evidence.json
+          overwrite: true
           retention-days: 7
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
-        if: success()
+        if: success() && steps.site-build.outcome == 'success'
         with:
           name: editor-site-${{ github.sha }}-${{ github.run_attempt }}
           path: .host/scratch-gui/build/
