@@ -23,7 +23,7 @@ export function readStartupFeatureFlags({
         extensionLoader: loader === null || loader === '1',
         projectTools: projectTools === null || projectTools === '1',
         manualProjectURI: (manualProjectURI === null || manualProjectURI === '1') && (loader === null || loader === '1'),
-        payloadFormats: payloadFormats === '1',
+        payloadFormats: payloadFormats === null || payloadFormats === '1',
         spriteProperties: spriteProperties === '1',
         splitter: splitter === null || splitter === '1',
         windowLayout: layout === '1',

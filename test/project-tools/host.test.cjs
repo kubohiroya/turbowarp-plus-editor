@@ -57,7 +57,7 @@ test('real VM and extension codec preserve project properties and embedded code 
         assert.notEqual(streamInfo.updatedAt, project[PROJECT_INFO_KEY].updatedAt);
         const MenuItem = () => null; const MenuSection = () => null;
         const menu = renderFileMenu({vm, MenuItem, MenuSection, locale: 'en', onRequestClose() {}});
-        assert.deepEqual(menu.props.children.map(item => item.key), ['properties', 'diagnostics']);
+        assert.deepEqual(menu.props.children.map(item => item.key), ['properties', 'payloads', 'diagnostics']);
         menu.props.children.find(item => item.key === 'diagnostics').props.onClick();
         assert.match(dom.window.document.querySelector('dialog').textContent, /https:\/\/|extensions\/test.js/);
         assert.match(dom.window.document.querySelector('dialog').textContent, /Execution approved/);
@@ -80,7 +80,7 @@ test('normal startup removes the corner log and opens failed-load diagnostics wi
         assert.equal(dom.window.document.querySelector('[data-testid="tw-plus-extension-status"]'), null);
         const MenuItem = () => null; const MenuSection = () => null;
         const menu = renderFileMenu({vm, MenuItem, MenuSection, onRequestClose() {}});
-        assert.deepEqual(menu.props.children.map(item => item.key), ['properties', 'diagnostics']);
+        assert.deepEqual(menu.props.children.map(item => item.key), ['properties', 'payloads', 'diagnostics']);
         const plain = {...project, turboWarpPlus: undefined, extensions: []};
         await vm.loadProject(JSON.stringify(plain));
         assert.equal(title, 'Native title');

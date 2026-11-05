@@ -47,8 +47,8 @@ async function openSettings(page) {
     await page.getByRole('button', {name: '作品データの形式…'}).click();
     await expect(settings(page)).toBeVisible();
 }
-async function start(page, edit = true) {
-    await page.goto(`editor.html?lang=ja${edit ? '&twPlusPayloadFormats=1' : ''}`);
+async function start(page, disableFormatEditing = false) {
+    await page.goto(`editor.html?lang=ja${disableFormatEditing ? '&twPlusPayloadFormats=0' : ''}`);
     await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
 }
 async function waitForOwner(page) {
@@ -65,8 +65,8 @@ const selections = [
     ['アセット – Blank', 'Blank', 'native'],
     ['アセット – Beat', 'Beat', 'sound']
 ];
-async function reopenRemote(page, sb3, cacheable, edit = true, useCache = true) {
-    await start(page, edit);
+async function reopenRemote(page, sb3, cacheable, disableFormatEditing = false, useCache = true) {
+    await start(page, disableFormatEditing);
     await reopenSB3(page, sb3, 'payload-formats.sb3');
     const permission = page.getByRole('dialog', {name: /作品のデータを取得する|Load Project Data/u});
     await expect(permission).toBeVisible();
@@ -165,12 +165,15 @@ for (const format of ['embedded-file', 'embedded-data', 'remote-non-cacheable', 
         }
         if (remote) {
             expect(Object.values(requests)).toEqual([2, 2, 2, 2]);
-            await reopenRemote(page, saved, format === 'remote-cacheable', false);
+            await reopenRemote(page, saved, format === 'remote-cacheable');
             await waitForOwner(page);
             expect(Object.values(requests)).toEqual(format === 'remote-cacheable' ? [2, 2, 2, 2] : [3, 3, 3, 3]);
             if (format === 'remote-cacheable') {
-                await reopenRemote(page, saved, true, false, false);
+                await reopenRemote(page, saved, true, true, false);
                 await waitForOwner(page);
+                await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
+                await expect(page.getByRole('button', {name: '作品データの形式…'})).toHaveCount(0);
+                await expect(page.getByRole('button', {name: 'バンドル素材を作品に追加…'})).toHaveCount(0);
                 expect(Object.values(requests)).toEqual([3, 3, 3, 3]);
             }
         }
@@ -238,7 +241,7 @@ test('adds bundled images and sound as native project assets that work after reo
     expect(await zip.file(savedSound.md5ext).async('nodebuffer')).toEqual(chime);
     expect(output.extensionStorage[owner].assets).toEqual(originalBundle);
 
-    await start(page, false);
+    await start(page);
     await reopenSB3(page, saved, 'native-materials.sb3');
     await waitForOwner(page);
     const used = await page.evaluate(() => {
