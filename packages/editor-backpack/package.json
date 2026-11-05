@@ -17,6 +17,6 @@
   "dependencies": {
     "@kubohiroya/turbowarp-editor-surfaces": "0.1.0",
     "@kubohiroya/turbowarp-editor-transfer": "0.1.0",
-    "@kubohiroya/turbowarp-script-transfer": "0.1.0"
+    "@kubohiroya/turbowarp-script-transfer": "^0.1.0"
   }
 }

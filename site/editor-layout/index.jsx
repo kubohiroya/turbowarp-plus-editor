@@ -21,7 +21,7 @@ const getStorage = () => {
     }
 };
 
-const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
+const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
     const {StandardLayout} = layoutViews;
     return <StandardLayout
         {...props}
@@ -37,6 +37,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, ...props}) => {
             <WindowList />
         </>}
         render={layoutFlags.internalWindows ? (layout, showUndock) => <EditorTabLayout
+            vm={vm}
             activeEditorTab={activeEditorTab}
             editorTargetIsStage={editorTargetIsStage}
             showUndock={showUndock}

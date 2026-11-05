@@ -30,3 +30,5 @@ node --test packages/editor-views/test/code-session.test.js
 Desktop のコード欄から、選択中の対象を固定した別窓を最大2枚開ける。初期パレットは動きと見た目の一部。コードの基本ブロック編集、前面への編集権の移動、対象別履歴、閉鎖時の親コード画面への復帰を対象とする。全パレット、変数・コメント・定義・拡張ブロックの共有履歴、対象セレクター、Web 外部表示、他 OS は個別に検証する。
 
 起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1`、`TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1`、`TW_PLUS_DESKTOP_CODE_POPOUT=1` を指定する。バックパックも OS の別窓で開く場合は `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` を加える。⚓ で操作を表示し、コード行の「別画面で開く」を押す。フラグは既定 OFF。子を閉じ、作品を保存してから `TW_PLUS_DESKTOP_CODE_POPOUT` を外して再起動すると、既存のコード画面とアプリ内表示に戻る。
+
+アプリ内の複数コード画面と背面ドロップは別の検証手順を使う。両方の起動フラグが有効な Desktop では、既存の OS 別窓を優先する。 [アプリ内コード画面の検証](sprite-code-windows.md)

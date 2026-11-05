@@ -7,13 +7,10 @@ test('the independent transfer package is locked to its repository, revision and
     await verifyScriptTransferDependency(root, pins);
     assert.equal(pins.scriptTransferRepository, 'kubohiroya/turbowarp-script-transfer');
     assert.throws(() => validatePins({...pins, scriptTransferRevision: 'main'}), /full script transfer revision/);
-    assert.equal(pins.scriptTransferSource, 'npm');
-    assert.throws(() => validatePins({...pins, scriptTransferIntegrity: undefined}), /published script transfer integrity/);
-    await assert.rejects(verifyScriptTransferDependency(root, {...pins, scriptTransferSource: 'git'}),
-        /source differs from the pin/);
+    assert.equal(pins.scriptTransferSource, 'git');
+    assert.throws(() => validatePins({...pins, scriptTransferSource: 'npm'}), /published script transfer integrity/);
     await assert.rejects(verifyScriptTransferDependency(root,
-        {...pins, scriptTransferIntegrity: 'sha512-' + Buffer.alloc(64, 1).toString('base64')}),
-        /integrity differs from the pin/);
+        {...pins, scriptTransferRevision: 'a'.repeat(40)}), /source differs from the pin/);
     await assert.rejects(verifyScriptTransferDependency(root, {...pins, scriptTransferVersion: '9.9.9'}),
-        /source differs from the pin/);
+        /version differs from the pin/);
 });
