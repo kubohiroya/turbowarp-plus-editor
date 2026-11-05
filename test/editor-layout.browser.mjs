@@ -238,7 +238,33 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     const columns = await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' '));
     assert.equal(columns.length, 2);
     const gridBounds = await grid.boundingBox();
-    const editorBounds = await page.locator('.blocklySvg').first().boundingBox();
+    const workspace = page.locator('.blocklySvg').first();
+    const editorBounds = await workspace.boundingBox();
+    const backdrop = grid.getByRole('button', {name: 'Backdrops', exact: true});
+    await expect(grid).toHaveAttribute('data-backdrop-placement', 'bottom-right');
+    const assertBackdropPosition = async () => {
+        const tile = await backdrop.boundingBox();
+        const bounds = await grid.boundingBox();
+        const viewport = await grid.locator('..').boundingBox();
+        assert.ok(Math.abs(bounds.x + bounds.width - tile.x - tile.width - 6) <= 1);
+        assert.ok(Math.abs(tile.height - 80) <= 1);
+        const gap = viewport.y + viewport.height - tile.y - tile.height;
+        assert.ok(gap >= -1 && gap <= 65, JSON.stringify({tile, viewport}));
+    };
+    await assertBackdropPosition();
+
+    const splitter = page.getByRole('separator', {name: 'Sprite list and editor width'});
+    const divider = await splitter.boundingBox();
+    assert.ok(gridBounds.x + gridBounds.width <= divider.x && divider.x + divider.width <= editorBounds.x + 1);
+    await page.mouse.move(divider.x + divider.width / 2, divider.y + 80);
+    await page.mouse.down();
+    await page.mouse.move(divider.x + divider.width / 2 + 80, divider.y + 80, {steps: 8});
+    await page.mouse.up();
+    await expect.poll(async () => Math.round((await grid.boundingBox()).width - gridBounds.width)).toBe(80);
+    await expect.poll(async () => Math.round(editorBounds.width - (await workspace.boundingBox()).width)).toBe(80);
+    await assertBackdropPosition();
+    await splitter.press('Enter');
+    await expect.poll(async () => Math.round((await grid.boundingBox()).width - gridBounds.width)).toBe(0);
     const stageBounds = await stage.boundingBox();
     assert.ok(gridBounds.x < editorBounds.x && stageBounds.x > editorBounds.x);
     assert.ok(stageBounds.x + stageBounds.width <= 1360 && stageBounds.y < 200);
@@ -246,6 +272,26 @@ test('the anchor switches layouts without replacing the workspace or stopping th
         const rect = canvas.getBoundingClientRect();
         return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === canvas;
     }), true);
+    const stageGrip = page.locator('[data-stage-resize="left"]');
+    const grip = await stageGrip.boundingBox();
+    const [stageGripX, stageGripY] = [grip.x + grip.width / 2, grip.y + 90];
+    await page.mouse.move(stageGripX, stageGripY);
+    await page.mouse.down();
+    await page.mouse.move(stageGripX - 80, stageGripY, {steps: 10});
+    await page.mouse.up();
+    await expect.poll(async () => Math.round((await stage.boundingBox()).width - stageBounds.width)).toBe(80);
+    const resizedStage = await stage.boundingBox();
+    assert.ok(Math.abs(resizedStage.width / resizedStage.height - stageBounds.width / stageBounds.height) < 0.01);
+    assert.ok(Math.abs(resizedStage.x + resizedStage.width - stageBounds.x - stageBounds.width) <= 1);
+    assert.ok(Math.abs(resizedStage.y - stageBounds.y) <= 1);
+
+    const bottomGrip = page.locator('[data-stage-resize="bottom"]');
+    const bottom = await bottomGrip.boundingBox();
+    await page.mouse.move(bottom.x + bottom.width / 2, bottom.y + bottom.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(bottom.x + bottom.width / 2, bottom.y + bottom.height / 2 - 30, {steps: 8});
+    await page.mouse.up();
+    await expect.poll(async () => Math.round((await stage.boundingBox()).height - resizedStage.height)).toBe(-30);
     await expect(page.getByText('Sprite properties', {exact: true})).toBeVisible();
     await expect(page.getByRole('textbox', {name: 'Sprite name'})).toBeHidden();
 
@@ -262,6 +308,7 @@ test('the anchor switches layouts without replacing the workspace or stopping th
         .toBe(true);
     await grid.evaluate(node => { node.parentElement.scrollTop = node.parentElement.scrollHeight; });
     assert.ok(await grid.evaluate(node => node.parentElement.scrollTop > 0));
+    await assertBackdropPosition();
     await expect(page.getByRole('button', {name: 'Choose a Sprite', exact: true}).first()).toBeVisible();
 
     await toolbox.locator('.scratchCategoryId-motion').click();
@@ -302,6 +349,7 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     await expect(anchor).toHaveAttribute('aria-pressed', 'false');
     await expect(stage).toBeVisible();
     await expect(grid).toHaveCount(0);
+    await expect(splitter).toHaveCount(0);
     await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
     await page.getByLabel('Layout options').click();
     await page.getByRole('button', {name: 'Show undock buttons'}).click();

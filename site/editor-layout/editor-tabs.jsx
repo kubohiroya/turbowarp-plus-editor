@@ -44,6 +44,27 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
             action.current?.querySelector('button')?.focus();
         }
     }, [activeEditorTab, activeState, showUndock]);
+    React.useLayoutEffect(() => {
+        const tabs = action.current?.parentElement?.parentElement;
+        if (!tabs) return;
+        const enableCodeFocus = event => {
+            // Blockly focuses its SVG on mouse down, so make it programmatically focusable first.
+            const svg = event.target.closest('.blocklySvg');
+            if (svg && !svg.hasAttribute('tabindex')) svg.setAttribute('tabindex', '-1');
+        };
+        const focusPanel = event => {
+            const panel = event.target.closest('[role="tabpanel"]');
+            if (!panel || panel.contains(panel.ownerDocument.activeElement)) return;
+            if (!panel.hasAttribute('tabindex')) panel.tabIndex = -1;
+            panel.focus({preventScroll: true});
+        };
+        tabs.addEventListener('pointerdown', enableCodeFocus, true);
+        tabs.addEventListener('click', focusPanel);
+        return () => {
+            tabs.removeEventListener('pointerdown', enableCodeFocus, true);
+            tabs.removeEventListener('click', focusPanel);
+        };
+    }, [showUndock, title]);
     const getMount = index => {
         if (index === codeTab && code?.front) return code.front.mount;
         return states[index]?.kind === 'external' ? states[index].target.mount : undefined;
@@ -61,7 +82,7 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
         surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title, rememberPlacement: true});
     }
 
-    const tabAction = showUndock && title && <div className={styles.tabAction} ref={action}>
+    const tabAction = showUndock && title && <div className={`${styles.tabAction} ${styles.openWindowAction}`} ref={action}>
         <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
     </div>;
     const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :

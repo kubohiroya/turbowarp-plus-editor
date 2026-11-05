@@ -294,7 +294,7 @@ try {
     const undockButtons = page.getByRole('button', {name: 'Show undock buttons', exact: true});
     if (await undockButtons.getAttribute('aria-pressed') === 'false') await undockButtons.click();
     await page.getByRole('tablist').locator('..')
-        .getByRole('button', {name: 'Open in another window', exact: true}).click();
+        .getByRole('button', {name: 'Open in another window', exact: true}).press('Enter');
     const basicTarget = await page.evaluate(() => window.vm.editingTarget.getName());
     await front(basicTarget, 1, 0);
     console.log('The existing tab-row action opens the selected sprite code window.');
@@ -312,7 +312,7 @@ try {
     await page.getByLabel('Layout options', {exact: true}).click();
     await page.getByRole('button', {name: 'Show undock buttons', exact: true}).click();
     await page.getByRole('tablist').locator('..')
-        .getByRole('button', {name: 'Open in another window', exact: true}).click();
+        .getByRole('button', {name: 'Open in another window', exact: true}).press('Enter');
     const plusTarget = await page.evaluate(() => window.vm.editingTarget.getName());
     await front(plusTarget, 1, 0);
     await anchor.click();

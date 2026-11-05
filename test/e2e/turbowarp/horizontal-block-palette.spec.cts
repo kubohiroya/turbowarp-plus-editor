@@ -50,7 +50,9 @@ test('横パレットでカテゴリを切り替え、実ブロックを追加�
     await page.mouse.move(from.x + 12, from.y + 12);
     await page.mouse.down();
     await page.mouse.move(from.x + 12, from.y + 34, {steps: 4});
+    await expect(flyout).toBeVisible();
     await page.mouse.move(surface.x + surface.width * 0.65, surface.y + 260, {steps: 16});
+    await expect(flyout).toBeHidden();
     await page.mouse.up();
     await expect(block).toHaveCount(1);
     await expect(flyout).toBeHidden();

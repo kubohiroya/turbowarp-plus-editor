@@ -1,6 +1,6 @@
 import React from 'react';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {createLayout} from '@kubohiroya/turbowarp-editor-layout';
+import {createLayout, createSplitter, splitAxis} from '@kubohiroya/turbowarp-editor-layout';
 import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-editor-windows';
 import '@kubohiroya/turbowarp-editor-windows/styles.css';
 import styles from './layout.css';
@@ -10,6 +10,9 @@ import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.js';
 export const layoutFlags = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 export const WindowLayoutContext = React.createContext({showUndock: false, plusLayout: false, locale: 'en'});
 const SplitLayout = createLayout(React);
+const Splitter = createSplitter(React);
+const minimumStandardTargets = 174;
+const minimumStandardEditor = 380;
 const storageKey = 'twPlusEditorLayout';
 
 const getStorage = () => {
@@ -36,6 +39,9 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
     const [plusSelected, setPlusSelected] = React.useState(layoutFlags.standardLayout);
     const [showStage, setShowStage] = React.useState(true);
     const [size, setSize] = React.useState(null);
+    const [targetRatio, setTargetRatio] = React.useState(null);
+    const [preferredStageWidth, setPreferredStageWidth] = React.useState(null);
+    const [stageActionMount, setStageActionMount] = React.useState(null);
     const body = React.useRef(null);
     const plusLayout = plusSelected && !props.fullscreen;
     const stageHidden = plusLayout && !showStage;
@@ -49,8 +55,24 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
         <EditorFullscreenButton className={styles.toggle} locale={props.locale} />
         <WindowList />
     </>;
-    const stageTools = !layoutFlags.standardLayout && layoutFlags.windowLayout ?
-        <>{legacyAnchor}{windowTools}</> : null;
+    const stageTools = <>
+        {!layoutFlags.standardLayout && layoutFlags.windowLayout && <>{legacyAnchor}{windowTools}</>}
+        {layoutFlags.stagePanel && <span className={styles.stageActionSlot} ref={setStageActionMount} />}
+    </>;
+    const bodyWidth = size?.width ?? 1024;
+    const defaultTargetWidth = Math.max(minimumStandardTargets, Math.min(bodyWidth * 0.18, 216));
+    const targetSplit = plusLayout && layoutFlags.splitter && size ? splitAxis(
+        bodyWidth, targetRatio, defaultTargetWidth, minimumStandardTargets, minimumStandardEditor
+    ) : null;
+    const resizable = targetSplit && targetSplit.maximum > targetSplit.minimum;
+    const editorSpace = resizable ? targetSplit.second : bodyWidth - defaultTargetWidth;
+    const maximumStageWidth = Math.max(1, Math.floor(Math.min(editorSpace - 24,
+        ((size?.height ?? 640) - 112) * props.stageAspect)));
+    const defaultStageWidth = Math.min(maximumStageWidth, Math.floor(Math.min(props.defaultStageWidth, 360, bodyWidth / 2)));
+    const minimumStageWidth = Math.min(defaultStageWidth, 280);
+    const stageWidth = Math.max(minimumStageWidth, Math.min(maximumStageWidth, preferredStageWidth ?? defaultStageWidth));
+    const stageResize = plusLayout && maximumStageWidth > minimumStageWidth ?
+        {minimum: minimumStageWidth, maximum: maximumStageWidth, resize: setPreferredStageWidth} : null;
 
     React.useLayoutEffect(() => {
         if (layoutFlags.standardLayout) setHorizontalBlockPalette(plusSelected);
@@ -73,7 +95,6 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
     const renderEditorTabRow = layoutFlags.standardLayout ? (tabs, action) => (
         <div className={styles.tabRow}>
             {tabs}
-            {action}
             <div className={styles.layoutTools}>
                 <AnchorButton label={anchorLabel} pressed={plusSelected} onClick={() => setPlusSelected(value => !value)} />
                 {plusSelected && <button aria-pressed={showStage} className={styles.stageToggle} type="button"
@@ -88,15 +109,15 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
                 </details>}
                 {windowTools}
             </div>
+            {action}
         </div>
     ) : undefined;
 
     const applyStandardLayout = layout => {
-        if (!layoutFlags.standardLayout) return layout;
-        const stageWidth = Math.max(1, Math.floor(Math.min(props.defaultStageWidth, 360,
-            (size?.width ?? 1024) / 2, ((size?.height ?? 640) - 112) * props.stageAspect)));
+        if (!layoutFlags.standardLayout) return {...layout, stageClassName: styles.stagePanel};
         const shared = {
             ...layout,
+            stageClassName: styles.stagePanel,
             renderEditorTabRow,
             observe: node => {
                 layout.observe(node);
@@ -104,16 +125,28 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
             }
         };
         if (!plusLayout) return shared;
+        const bodyStyle = {display: 'grid', '--plus-stage-overlap': showStage ? `${stageWidth + 16}px` : '0px'};
+        if (resizable) {
+            bodyStyle['--plus-target-width'] = `${targetSplit.first}px`;
+            bodyStyle['--plus-target-divider-width'] = `${size.width - targetSplit.available}px`;
+        }
+        // The target list is on the physical left in both text directions.
+        const columnSplitter = resizable ? <Splitter axis="columns" split={targetSplit}
+            label={japanese ? 'スプライト一覧と編集領域の幅' : 'Sprite list and editor width'}
+            className={`${styles.separator} ${styles.standardSeparator}`}
+            onChange={setTargetRatio} onReset={() => setTargetRatio(null)} /> : null;
         return {
             ...shared,
             bodyClassName: styles.standardBody,
-            bodyStyle: {display: 'grid', '--plus-stage-overlap': showStage ? `${stageWidth + 16}px` : '0px'},
+            bodyStyle,
+            columnSplitter,
             editorStyle: {gridArea: 'editor', minWidth: 0, minHeight: 0},
             stageColumnStyle: {display: 'contents'},
-            stageClassName: stageHidden ? `${styles.floatingStage} ${styles.stageHidden}` : styles.floatingStage,
+            stageClassName: `${styles.stagePanel} ${styles.floatingStage}${stageHidden ? ` ${styles.stageHidden}` : ''}`,
             targetClassName: styles.standardTargets,
             stageDisplayWidth: stageWidth,
-            editorWidth: size?.width
+            handleStagePreset: () => setPreferredStageWidth(null),
+            editorWidth: resizable ? targetSplit.second : size?.width
         };
     };
 
@@ -150,7 +183,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
         />
     );
     return (
-        <WindowLayoutContext.Provider value={{showUndock, plusLayout, stageHidden, locale: props.locale}}>
+        <WindowLayoutContext.Provider value={{showUndock, plusLayout, stageHidden, stageResize, stageActionMount, locale: props.locale}}>
             {layoutFlags.internalWindows ? <WindowDesktop locale={props.locale}>{layout}</WindowDesktop> : layout}
         </WindowLayoutContext.Provider>
     );

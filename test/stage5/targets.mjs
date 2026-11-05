@@ -81,6 +81,7 @@ try {
     });
     await grid.locator('[class*="sprite-selector_sprite-wrapper_"]').last().waitFor({state: 'attached'});
     await tile.evaluate(node => {window.originalBackdropTile = node;});
+    await tile.focus();
     await open.click();
     await frame.locator('[data-backdrop-placement="top-right"]').waitFor();
     assert.ok(await tile.evaluate(node => node === window.originalBackdropTile));
@@ -95,11 +96,12 @@ try {
     const grip = frame.getByRole('separator', {name: 'Resize window', exact: true});
     for (let i = 0; i < 7; i++) await grip.press('Shift+ArrowLeft');
     for (let i = 0; i < 6; i++) await grip.press('Shift+ArrowDown');
-    await frame.locator('[data-backdrop-placement="bottom-left"]').waitFor();
+    await frame.locator('[data-backdrop-placement="bottom-right"]').waitFor();
     const lower = await tile.boundingBox();
     const view = await grid.locator('..').boundingBox();
-    assert.ok(lower.x - view.x < 16 && Math.abs(view.y + view.height - lower.y - lower.height) < 16,
-        JSON.stringify({lower, view}));
+    const tallGrid = await grid.boundingBox();
+    assert.ok(Math.abs(tallGrid.x + tallGrid.width - lower.x - lower.width - 6) < 2 &&
+        Math.abs(view.y + view.height - lower.y - lower.height) < 16, JSON.stringify({lower, view, tallGrid}));
     await tile.focus();
     const scroll = await grid.locator('..').evaluate(node => {
         node.scrollTop = 130;

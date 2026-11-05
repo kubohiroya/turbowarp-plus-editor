@@ -107,7 +107,7 @@ try {
     assert.equal(await action.count(), 0);
     await mode.click();
     await input('Sprite name').evaluate(node => {window.originalSpriteNameInput = node;});
-    await action.click();
+    await action.press('Enter');
     await float.getByRole('region', {name: 'Sprite properties'}).waitFor();
     assert.equal(await panel.count(), 1);
     assert.ok(await input('Sprite name').evaluate(node => node === window.originalSpriteNameInput));
@@ -136,7 +136,7 @@ try {
     await float.waitFor({state: 'hidden'});
     assert.ok(await input('Sprite name').evaluate(node => node === window.originalSpriteNameInput));
     assert.equal(await input('Sprite name').inputValue(), 'Floating cat');
-    await action.click();
+    await action.press('Enter');
     await float.waitFor();
     await mode.click();
     await float.waitFor();
