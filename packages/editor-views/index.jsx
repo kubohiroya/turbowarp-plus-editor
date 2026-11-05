@@ -54,6 +54,7 @@ export function useCodeWindows({vm, host, locale, enabled}) {
         const connection = host.open({
             id: view.id, title: title(target), closeLabel: japanese ? 'コード画面を閉じる' : 'Close code window',
             onActivate: () => activated(view),
+            onDuplicate: () => show(view.target.id, true),
             onMinimize() {
                 view.minimized = true;
                 remaining(view, false);

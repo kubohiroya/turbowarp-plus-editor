@@ -30,6 +30,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     let lease = 0;
     let projecting = false;
     let disposed = false;
+    let canDuplicate = false;
 
     const exists = target => vm.runtime.getTargetById(target.id) === target;
     const selectable = target => Boolean(target?.isOriginal || target?.isStage);
@@ -243,6 +244,10 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             }
             return;
         }
+        if (message.type === 'duplicate-view' && canDuplicate && view.duplicate && exists(view.target) && viewFocused(view)) {
+            view.duplicate(view.target);
+            return;
+        }
         if (message.type === 'dock' || message.type === 'failed') {
             view.close();
             return;
@@ -314,7 +319,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         if (owner && target !== owner.target) revoke();
     }
 
-    function attach({target, mount, port, close}) {
+    function attach({target, mount, port, close, duplicate, layoutMenu}) {
         if (disposed || !exists(target)) {
             close();
             return () => {};
@@ -324,13 +329,14 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             updateCatalog();
         }
         if (!histories.has(target)) histories.set(target, createHistory(target));
-        const view = {target, port, document: mount.ownerDocument, close};
+        const view = {target, port, document: mount.ownerDocument, close, duplicate};
         const listener = event => receive(view, event.data);
         views.add(view);
         port.addEventListener('message', listener);
         port.start();
         send(view, {type: 'snapshot', targetId: target.id, targets: catalog, locale,
-            backpackDrop: Boolean(receiveBackpackDrop), ...projection(target)});
+            backpackDrop: Boolean(receiveBackpackDrop), layoutMenu: Boolean(layoutMenu),
+            canDuplicate: Boolean(duplicate && canDuplicate), ...projection(target)});
         return () => {
             views.delete(view);
             port.removeEventListener('message', listener);
@@ -361,7 +367,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     vm.on('targetsUpdate', targetsUpdated);
     vm.on('workspaceUpdate', flushWorkspaceSwitch);
 
-    return {attach, dispose() {
+    return {attach, setCanDuplicate(available) {
+        if (available === canDuplicate) return;
+        canDuplicate = available;
+        for (const view of views) if (view.duplicate) send(view, {type: 'can-duplicate', available});
+    }, dispose() {
         disposed = true;
         if (dropJob && !dropJob.running) {
             dropJob.resolve(false);

@@ -4,8 +4,8 @@
 
 ## 起動と権限
 
-- 起動時にホスト設定を固定する。ローカルコピーでは `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1` と `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` の両方を明示し、⚓ を押すとバックパックのアンドックボタンが出る。両フラグの既定は OFF。
-- main は予約したフレーム名と `about:blank` の組を検査し、起動時に許可した画面の種類ごとに1枚だけ開く。初期化が完了した子ウィンドウに固定のパッケージ内 URL をロードする。子は sandbox と context isolation を有効にし、preload、Node、追加ウィンドウや許可外ページへの遷移を許可しない。
+- 既定の起動では Plus 標準配置を使用する。従来の配置で起動するには `TW_PLUS_DESKTOP_STANDARD_LAYOUT=0` を指定する。従来の検証用のローカルコピーでは `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1` と `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` の両方を明示し、⚓ を押すとバックパックのアンドックボタンが出る。両フラグの既定は OFF。
+- main は予約したフレーム名と `about:blank` の組を検査し、起動時に許可した画面の種類ごとに1枚だけ開く。初期化が完了した子ウィンドウに固定のパッケージ内 URL をロードする。子は sandbox と context isolation を有効にする。Plus 標準配置の子は、最大化・最小化・通常サイズへの復帰に限定した preload を使う。main は送信元と対象 URL を照合する。
 - レンダラーが同一オリジン・起動チケット・接続元を検証して MessagePort を確立した後、子の `opener` を切る。表示は親から同一オリジンの固定資産へ React Portal で渡す。
 
 ## ローカル検証

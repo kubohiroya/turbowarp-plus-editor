@@ -16,7 +16,7 @@ const resizeCode = () => {
 
 export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
     const host = useWindowHost();
-    const code = useCodeWindows({vm, host, locale, enabled: layoutFlags.spriteCodeWindows && !desktopCodeEnabled});
+    const code = useCodeWindows({vm, host, locale, enabled: (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
     const action = React.useRef(null);
     const previousActive = React.useRef(null);

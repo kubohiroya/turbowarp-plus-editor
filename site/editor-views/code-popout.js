@@ -1,5 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import '@kubohiroya/turbowarp-editor-windows/styles.css';
+import {PopupLayout} from '../editor-layout/popup-layout.jsx';
+import {attachWorkspaceNavigation} from '../workspace-minimap/index.js';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {encodeEdit} from '@kubohiroya/turbowarp-editor-views';
@@ -14,6 +17,7 @@ const renameError = document.getElementById('rename-error');
 const status = document.getElementById('status');
 const undo = document.getElementById('undo');
 const redo = document.getElementById('redo');
+const popupLayout = document.getElementById('popup-layout');
 const dock = document.getElementById('dock');
 const motion = `<category name="Motion" colour="#4c97ff" secondaryColour="#3373cc">
     <block type="motion_movesteps"><value name="STEPS"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block>
@@ -26,8 +30,9 @@ const toolbox = isStage => `<xml>${isStage ? '' : motion}
     </category></xml>`;
 
 const workspace = ScratchBlocks.inject(mount, {
-    media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: true
+    media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: true, zoom: {controls: true}
 });
+let navigation;
 let stageToolbox = false;
 let port;
 let targetId;
@@ -76,6 +81,14 @@ function renderTarget() {
             setEditable(false);
             port.postMessage({type: 'rename-target', targetId, lease, name});
         }} />, picker);
+}
+
+function renderLayout(canDuplicate) {
+    ReactDOM.render(<PopupLayout window={window} locale={locale} onDock={() => dock.click()}
+        onDuplicate={canDuplicate ? () => {
+            drain();
+            port.postMessage({type: 'duplicate-view'});
+        } : undefined} />, popupLayout);
 }
 
 function snapshot(message) {
@@ -136,8 +149,17 @@ function receive({data: message}) {
             backpackDrop = message.backpackDrop;
             snapshot(message);
             dock.disabled = false;
+            if (message.layoutMenu) {
+                dock.hidden = true;
+                popupLayout.hidden = false;
+                navigation ??= attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZoom: true, minimap: true});
+                renderLayout(message.canDuplicate);
+            }
             setEditable(false);
             if (document.hasFocus()) focus();
+            break;
+        case 'can-duplicate':
+            renderLayout(message.available);
             break;
         case 'target':
             targetId = message.targetId;
@@ -238,6 +260,7 @@ window.addEventListener('blur', () => release());
 window.addEventListener('resize', () => ScratchBlocks.svgResize(workspace));
 window.addEventListener('pagehide', () => {
     release();
+    navigation?.dispose();
     port?.postMessage('stage2/disconnect');
     workspace.dispose();
 }, {once: true});

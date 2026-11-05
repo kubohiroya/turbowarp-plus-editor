@@ -6,3 +6,10 @@ export function createDesktopPanelHost(kind, flag, width, height, synchronousPag
         'about:blank', `tw-plus-${kind}-${ticket}`, `popup,width=${width},height=${height}`
     ), `${kind}-popout.html`, true, synchronousPageHide);
 }
+
+export function createWebPanelHost(kind, width, height) {
+    if (typeof EditorPreload !== 'undefined' || typeof window === 'undefined') return null;
+    return createBrowserHost(window, (url, ticket) => window.open(
+        url.href, `tw-plus-${kind}-${ticket}`, `popup,width=${width},height=${height}`
+    ), 'stage-popout.html', true, true);
+}
