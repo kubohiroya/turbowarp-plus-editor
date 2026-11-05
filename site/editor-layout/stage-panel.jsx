@@ -4,7 +4,7 @@ import {BasicPanel} from './basic-panel.jsx';
 import {createDesktopPanelHost} from './desktop-panel-host.js';
 import {decorateSurface} from '../editor-backpack/surface-styles.js';
 import {layoutFlags, WindowLayoutContext} from './index.jsx';
-import styles from './layout.css';
+import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 
