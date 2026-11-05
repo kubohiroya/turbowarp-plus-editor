@@ -11,7 +11,7 @@
     overflow: visible;
 }
 
-.grid[data-fixed-columns] {
+.grid[data-maximum-columns] {
     padding-block-end: 4rem;
 }
 
@@ -48,6 +48,10 @@
     grid-column: -2;
     align-self: end;
     bottom: 0;
+}
+
+.grid[data-maximum-columns][data-target-columns="1"] > .backdrop-cell {
+    bottom: 4rem;
 }
 
 [dir="rtl"] .grid[data-backdrop-placement="top-right"] > .backdrop-cell,
