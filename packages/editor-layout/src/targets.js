@@ -6,7 +6,7 @@ const padding = gap * 2;
 export function createTargetList(React, styles) {
     const {createElement: element, useLayoutEffect, useRef, useState} = React;
 
-    function SpriteGrid({className, compact, maximumColumns, stageTile, children}) {
+    function SpriteGrid({className, compact, maximumColumns, stageTile, children, query = ''}) {
         const grid = useRef(null);
         const [size, setSize] = useState({width: 0, height: 0, visibleRows: 0});
         useLayoutEffect(() => {
@@ -27,6 +27,25 @@ export function createTargetList(React, styles) {
             observer.observe(viewport);
             return () => observer.disconnect();
         }, [compact]);
+
+        useLayoutEffect(() => {
+            const name = query.trim().toLocaleLowerCase();
+            if (!name) return;
+            // Scratch GUI keys sortable tiles by sprite name. Keep their order and drag indices intact.
+            let match = -1;
+            React.Children.forEach(children, (child, index) => {
+                if (match === -1 && child?.key?.toLocaleLowerCase().includes(name)) match = index;
+            });
+            const tile = grid.current.children[match];
+            if (!tile) return;
+            const scroll = grid.current.parentElement;
+            const {top, bottom} = scroll.getBoundingClientRect();
+            const bounds = tile.getBoundingClientRect();
+            if (bounds.top < top) scroll.scrollTop += bounds.top - top;
+            else if (bounds.bottom > bottom) scroll.scrollTop += bounds.bottom - bottom;
+            tile.setAttribute('data-sprite-search-match', '');
+            return () => tile.removeAttribute('data-sprite-search-match');
+        }, [children, query]);
 
         const fittingColumns = Math.max(1, Math.floor((size.width - padding + gap) / (minTileWidth + gap)));
         const columns = Math.min(fittingColumns, maximumColumns ?? fittingColumns);

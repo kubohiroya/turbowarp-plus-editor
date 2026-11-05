@@ -13,10 +13,10 @@ import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
     '--code-popout', '--target-panels-popout',
-    '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal'
+    '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--stage-display-menu', '--stage-panel'].includes(testMode);
+    '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -45,7 +45,8 @@ async function run (enabled, test) {
     const processArgs = [`--user-data-dir=${profile}`, '--remote-debugging-port=0'];
     const processEnv = {...process.env, TW_PLUS_DESKTOP_TEST_CONTROL: '1'};
     delete processEnv.TW_PLUS_DESKTOP_SPLITTER;
-    processEnv.TW_PLUS_DESKTOP_STANDARD_LAYOUT = '0';
+    if (testMode === '--plus-layout') delete processEnv.TW_PLUS_DESKTOP_STANDARD_LAYOUT;
+    else processEnv.TW_PLUS_DESKTOP_STANDARD_LAYOUT = '0';
     delete processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT;
     delete processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;
@@ -1432,8 +1433,72 @@ async function checkStagePopout ({editor, context, control}) {
     report.checks.push('Hiding undock buttons preserved the child; dock and native close restored the same live canvas and released held input');
 }
 
+async function checkPlusLayout({editor, context, control}) {
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    await control('layout', parent.id);
+    const trigger = editor.getByRole('button', {name: /^(Reveal sprite list|スプライト一覧を展開)$/, exact: true});
+    await trigger.hover();
+    await editor.getByRole('button', {name: /^(Undock sprite list|アンドック)$/, exact: true}).click();
+    const internal = editor.getByRole('region', {name: /^(Sprite list|スプライト一覧)$/, exact: true});
+    await internal.getByRole('button', {name: /^(Window layout|レイアウト変更)$/, exact: true}).click();
+    const popup = context.waitForEvent('page');
+    await internal.getByRole('button', {name: /^(Open in a separate window \(undock\)|別窓で開く（アンドック）)$/, exact: true}).click();
+    const child = await popup;
+    await child.waitForURL(/sprite-list-popout/);
+    await child.locator('[data-backdrop-placement]').waitFor();
+    const menu = child.getByRole('button', {name: /^(Window layout|レイアウト変更)$/, exact: true});
+    await menu.click();
+    assert.equal(await child.getByRole('list', {name: /^(Window layout|レイアウト変更)$/}).getByRole('button').count(), 6);
+    assert.equal(await child.getByRole('button', {name: /^(Open in a separate window \(undock\)|別窓で開く（アンドック）)$/}).isDisabled(), true);
+    assert.equal(await child.getByRole('button', {name: /^(Restore normal window|通常のウィンドウに戻す)$/}).isDisabled(), true);
+    await child.getByRole('button', {name: /^(Maximize this window|この画面を最大化する)$/}).click();
+    await child.waitForFunction(async () => await TwPlusWindowControls.mode() === 'maximized');
+    await menu.click();
+    assert.equal(await child.getByRole('button', {name: /^(Maximize this window|この画面を最大化する)$/}).isDisabled(), true);
+    await child.getByRole('button', {name: /^(Restore normal window|通常のウィンドウに戻す)$/}).click();
+    await child.waitForFunction(async () => await TwPlusWindowControls.mode() === 'normal');
+    await menu.click();
+    const closed = child.waitForEvent('close');
+    await child.getByRole('button', {name: /^(Return to the editor \(dock\)|元の画面に戻す（ドックする）)$/}).click();
+    await closed;
+    await trigger.hover();
+    await editor.locator('[data-backdrop-placement]').waitFor();
+    const windows = await control('windows');
+    assert.equal(windows.length, 1);
+    report.checks.push('Default Plus layout: sprite drawer moved into a native window, maximized, restored, and returned to its dock');
+
+    await editor.mouse.move(500, 400);
+    await editor.getByRole('tab', {name: /^(Code|コード)$/}).focus();
+    const opened = context.waitForEvent('page');
+    await editor.getByRole('button', {name: /^(Open in another window|別画面で開く)$/}).click();
+    const first = await opened;
+    await first.waitForURL(/code-popout/);
+    const layout = page => page.getByRole('button', {name: /^(Window layout|レイアウト変更)$/});
+    const duplicate = page => page.getByRole('button', {name: /^(Open another view of this editor|この編集画面をもう一枚開く（別のビューを開く）)$/});
+    const dock = page => page.getByRole('button', {name: /^(Return to the editor \(dock\)|元の画面に戻す（ドックする）)$/});
+    await layout(first).click();
+    const copied = context.waitForEvent('page');
+    await duplicate(first).click();
+    const second = await copied;
+    await second.waitForURL(/code-popout/);
+    await second.locator('[data-plus-horizontal-zoom]').waitFor({state: 'attached'});
+    assert.equal(await first.locator('#code-target').inputValue(), await second.locator('#code-target').inputValue());
+    await layout(second).click();
+    assert.equal(await duplicate(second).isDisabled(), true);
+    const secondClosed = second.waitForEvent('close');
+    await dock(second).click();
+    await secondClosed;
+    await layout(first).click();
+    assert.equal(await duplicate(first).isEnabled(), true);
+    const firstClosed = first.waitForEvent('close');
+    await dock(first).click();
+    await firstClosed;
+    report.checks.push('The native Code menu duplicates the same target, disables duplication at the two-view limit, and docks both views');
+}
+
 try {
-    await run(false, async ({editor, control}) => {
+    if (testMode === '--plus-layout') await run(false, checkPlusLayout);
+    else await run(false, async ({editor, control}) => {
         const parent = (await control('windows')).find(window => window.kind === 'editor');
         await control('layout', parent.id);
         await editor.getByRole('separator', {name: /^(Editor and stage column width|編集領域とステージ列の幅)$/}).waitFor();
@@ -1451,7 +1516,8 @@ try {
         report.checks.push('Desktop enables both splitters by default and keeps undocking off');
     });
 
-    if (testMode === '--sprite-properties') await run('sprite', checkSpriteProperties);
+    if (testMode === '--plus-layout') { /* The default Plus scenario has already run. */ }
+    else if (testMode === '--sprite-properties') await run('sprite', checkSpriteProperties);
     else if (testMode === '--code-backpack-native') await run('code-backpack', env => checkCodePopouts(env, {withBackpack: true, native: true}));
     else if (testMode === '--code-backpack') await run('code-backpack', env => checkCodePopouts(env, {withBackpack: true}));
     else if (testMode === '--code-target-sync') await run('code-popout', env => checkCodePopouts(env, {targetSync: true}));

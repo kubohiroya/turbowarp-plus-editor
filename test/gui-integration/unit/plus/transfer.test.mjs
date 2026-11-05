@@ -65,7 +65,8 @@ test('the host chooses the compact backdrop menu items from its layout context',
     const render = plusLayout => ReactDOMServer.renderToStaticMarkup(element(WindowLayoutContext.Provider, {value: {plusLayout}},
         bridge.wrapBackdropTile(tile, primitives)));
     assert.equal(render(false), '<button>Backdrops</button>');
-    assert.match(render(true), /Backdrops.*Export Stage.*Import Stage/);
+    assert.match(render(true), /Backdrops.*Export Stage/);
+    assert.doesNotMatch(render(true), /Import Stage/);
 });
 
 

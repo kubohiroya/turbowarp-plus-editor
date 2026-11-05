@@ -303,6 +303,8 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const extension = await page.getByRole('button', {name: 'Add Extension', exact: true}).boundingBox();
     const motion = await toolbox.locator('.scratchCategoryId-motion .scratchCategoryItemBubble').boundingBox();
     assert.ok(extension.width < 48 && motion.x - (extension.x + extension.width) >= 23, JSON.stringify({extension, motion}));
+    await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
+    await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     await expect(grid).toBeVisible();
     const columns = await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' '));
     assert.equal(columns.length, 1);
@@ -482,10 +484,66 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(backdropActions).toBeVisible();
 
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1');
+    await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
     const japaneseSettings = page.locator('summary').filter({hasText: /^スプライト$/});
     await expect(japaneseSettings).toBeVisible();
     assert.ok(await japaneseSettings.evaluate(heading => heading.scrollWidth <= heading.clientWidth));
     await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
     await expect(page.getByRole('menuitem', {name: 'ステージを隠す', exact: true})).toBeVisible();
     assert.deepEqual(errors, []);
+});
+
+test('the default editor reveals the sprite drawer and exposes the detached window layout', {timeout: 60_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
+    const pin = page.getByRole('button', {name: 'Pin sprite list', exact: true});
+    const undock = page.getByRole('button', {name: 'Undock sprite list', exact: true});
+    const backdrop = page.locator('[data-backdrop-placement] img').first();
+    await expect(sprites).toHaveAttribute('aria-expanded', 'false');
+    await sprites.hover();
+    await expect(backdrop).toBeVisible();
+    await expect(undock).toBeVisible();
+    await page.mouse.move(500, 400);
+    await expect(sprites).toHaveAttribute('aria-expanded', 'false');
+
+    await sprites.hover();
+    await pin.click();
+    await page.mouse.move(500, 400);
+    await expect(pin).toHaveAttribute('aria-pressed', 'true');
+    await expect(backdrop).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Sprite list', exact: true})).toHaveCount(0);
+    const tools = page.getByRole('group', {name: 'Sprite list tools', exact: true});
+    const controls = ['Search sprites', 'Pin sprite list', 'Undock sprite list'];
+    const buttons = await Promise.all(controls.map(name => tools.getByRole('button', {name, exact: true}).boundingBox()));
+    assert.ok(buttons.every(button => button.y === buttons[0].y));
+    assert.ok(buttons[0].x < buttons[1].x && buttons[1].x < buttons[2].x);
+    await tools.getByRole('button', {name: 'Search sprites'}).click();
+    const search = page.getByRole('searchbox', {name: 'Search sprites'});
+    await search.fill(await page.evaluate(() => vm.editingTarget.getName()));
+    await expect(page.locator('[data-sprite-search-match]')).toBeVisible();
+    await search.press('Escape');
+    await expect(search).toHaveCount(0);
+    await undock.click();
+    const window = page.getByRole('region', {name: 'Sprite list', exact: true});
+    const menu = window.getByRole('button', {name: 'Window layout', exact: true});
+    await expect(window.locator('[data-backdrop-placement]')).toBeVisible();
+    await menu.click();
+    await expect(window.getByRole('list', {name: 'Window layout'}).getByRole('button')).toHaveCount(6);
+    await expect(window.getByRole('button', {name: 'Restore normal window'})).toBeDisabled();
+    await expect(window.getByRole('button', {name: 'Open another view of this editor'})).toBeDisabled();
+    await window.getByRole('button', {name: 'Maximize this window'}).click();
+    await menu.click();
+    await expect(window.getByRole('button', {name: 'Maximize this window'})).toBeDisabled();
+    await window.getByRole('button', {name: 'Restore normal window'}).click();
+    await menu.click();
+    await window.getByRole('button', {name: 'Minimize this window'}).click();
+    await expect(window).toBeHidden();
+    await page.getByRole('button', {name: 'Windows', exact: true}).click();
+    await page.getByRole('button', {name: 'Sprite list', exact: true}).click();
+    await menu.click();
+    await window.getByRole('button', {name: 'Return to the editor (dock)'}).click();
+    await expect(window).toHaveCount(0);
+    await expect(backdrop).toBeVisible();
+
 });
