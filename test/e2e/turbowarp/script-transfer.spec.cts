@@ -2,8 +2,8 @@ const fs = require('node:fs/promises');
 const {test, expect} = require('./fixtures.cts');
 
 // Transfer is always on: the plain editor URL carries no switch for it.
-const startTransfer = async page => {
-    await page.goto('editor.html?lang=en');
+const startTransfer = async (page, query = '') => {
+    await page.goto('editor.html?lang=en' + query);
     await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
     await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() && vm.editingTarget))).toBe(true);
 };
@@ -116,16 +116,19 @@ test('the stage menus round-trip backdrops, sounds and scripts into another proj
             topLevel: true, shadow: false, parent: null, next: null, x: 40, y: 40});
         vm.emitTargetsUpdate();
     });
+    await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
+    await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     await page.getByRole('button', {name: 'Backdrops', exact: true}).click({button: 'right'});
+    await expect(page.getByText('Import Stage (add)', {exact: true})).toHaveCount(0);
     const pending = page.waitForEvent('download');
     await page.getByText('Export Stage', {exact: true}).click();
     const filename = info.outputPath('stage.stage3');
     await (await pending).saveAs(filename);
     const other = await context.newPage(); evidence.observe(other);
-    await startTransfer(other);
-    await other.getByRole('button', {name: 'Backdrops', exact: true}).click({button: 'right'});
+    await startTransfer(other, '&twPlusStandardLayout=0');
+    await other.getByRole('button', {name: 'Choose a Backdrop', exact: true}).first().hover();
     const chooser = other.waitForEvent('filechooser');
-    await other.getByText('Import Stage (add)', {exact: true}).click();
+    await other.getByRole('button', {name: 'Import Stage (add)', exact: true}).click();
     await (await chooser).setFiles(filename);
     await expect.poll(() => other.evaluate(() => {
         const stage = vm.runtime.getTargetForStage();
