@@ -1,3 +1,4 @@
+import selectBackdrop from './fixtures/select-backdrop.cjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, cp, copyFile, mkdir, readFile, writeFile} from 'node:fs/promises';
@@ -43,7 +44,7 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
         await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
         await security.getByRole('button', {name: 'OK', exact: true}).click();
         await security.waitFor({state: 'hidden'});
-        await p.getByRole('button', {name: '背景', exact: true}).click();
+        await selectBackdrop(p);
         await expect(p.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2, {timeout: 60000});
     }
     async function open(index) {

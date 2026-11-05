@@ -7,8 +7,9 @@ import {PopupLayout} from './popup-layout.jsx';
 import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 function DockableBasicPanel({host, id, title, children, render, actionMount, dockHeight, className,
-    externalHost, decorate, renderInExternalDocument, onDockActionChange}) {
+    externalHost, decorate, renderInExternalDocument, onDockActionChange, alwaysShowUndock, openLabel, renderDockHeading}) {
     const {showUndock, locale, plusLayout} = React.useContext(WindowLayoutContext);
+    const canUndock = alwaysShowUndock || showUndock;
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
     const undecorate = React.useRef(null);
@@ -45,10 +46,10 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         };
     }, [surface]);
     React.useLayoutEffect(() => {
-        if (!showUndock || state.kind !== 'docked' || state.reason !== 'returned' && state.reason !== 'disconnected') return;
+        if (!canUndock || state.kind !== 'docked' || state.reason !== 'returned' && state.reason !== 'disconnected') return;
         const frame = requestAnimationFrame(() => action.current?.querySelector('button')?.focus({preventScroll: true}));
         return () => cancelAnimationFrame(frame);
-    }, [showUndock, state]);
+    }, [canUndock, state]);
 
     const undock = React.useCallback(() => {
         if (externalHost && !plusLayout) {
@@ -85,10 +86,10 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
             {content}
         </div>, externalMount) : null;
 
-    const openAction = showUndock && !mount && <span className={styles.openWindowAction} ref={action}>
+    const openAction = canUndock && !mount && <span className={styles.openWindowAction} ref={action}>
         <OpenWindowButton
             disabled={state.kind === 'opening'}
-            label={japanese ? '別画面で開く' : 'Open in another window'}
+            label={openLabel ?? (japanese ? '別画面で開く' : 'Open in another window')}
             onOpen={undock}
         />
     </span>;
@@ -100,10 +101,12 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
             const node = event.currentTarget;
             if (node.contains(event.target) && !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
         } : undefined}>
-        {actionMount === undefined ? <div className={styles.basicPanelHeading}>
-            <h2>{title}</h2>
-            {openAction}
-        </div> : (actionMount && openAction && createPortal(openAction, actionMount))}
+        {actionMount === undefined ? (
+            renderDockHeading ? !mount && renderDockHeading(openAction) : <div className={styles.basicPanelHeading}>
+                <h2>{title}</h2>
+                {openAction}
+            </div>
+        ) : (actionMount && openAction && createPortal(openAction, actionMount))}
         <DockablePanel
             dockLabel={japanese ? 'ここに戻す' : 'Return here'}
             mount={mount}

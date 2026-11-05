@@ -125,3 +125,8 @@
     width: 1.15rem;
     height: 1.15rem;
 }
+
+.grid > [data-sprite-search-match] {
+    outline: 2px solid var(--looks-secondary);
+    border-radius: 0.45rem;
+}

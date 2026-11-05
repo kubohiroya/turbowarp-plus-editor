@@ -10,11 +10,13 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
     const SplitLayout = createLayout(React);
     const Splitter = createSplitter(React);
     const targets = createTargetList(React, targetStyles);
+    const targetSearch = React.createContext('');
 
     function StandardLayout({
         enabled, splitter, windowLayout, stageActionEnabled, onPaletteModeChange, windowTools, Container, render, ...props
     }) {
         const [showUndock, setShowUndock] = useState(false);
+        const [targetsPinned, setTargetsPinned] = useState(false);
         const [showStage, setShowStage] = useState(true);
         const [size, setSize] = useState(null);
         const [targetRatio, setTargetRatio] = useState(null);
@@ -43,7 +45,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             bodyWidth, targetRatio, singleColumnTargetWidth, singleColumnTargetWidth, minimumStandardEditor
         ) : null;
         const resizable = targetSplit && targetSplit.maximum > targetSplit.minimum;
-        const editorSpace = resizable ? targetSplit.second : bodyWidth - singleColumnTargetWidth;
+        const editorSpace = targetsPinned ? (targetSplit?.second ?? bodyWidth - singleColumnTargetWidth) : bodyWidth;
         const maximumStageWidth = Math.max(1, Math.floor(Math.min(editorSpace - 24,
             ((size?.height ?? 640) - 112) * props.stageAspect)));
         const defaultStageWidth = Math.min(maximumStageWidth, Math.floor(Math.min(props.defaultStageWidth, 360, bodyWidth / 2)));
@@ -97,7 +99,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
                 bodyStyle['--plus-target-divider-width'] = `${size.width - targetSplit.available}px`;
             }
             // The target list is on the physical left in both text directions.
-            const columnSplitter = resizable ? element(Splitter, {
+            const columnSplitter = targetsPinned && resizable ? element(Splitter, {
                 axis: 'columns', split: targetSplit,
                 label: japanese ? 'スプライト一覧と編集領域の幅' : 'Sprite list and editor width',
                 className: `${styles.separator} ${styles.standardSeparator}`,
@@ -111,10 +113,11 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
                 editorStyle: {gridArea: 'editor', minWidth: 0, minHeight: 0},
                 stageColumnStyle: {display: 'contents'},
                 stageClassName: `${styles.stagePanel} ${styles.floatingStage}${stageHidden ? ` ${styles.stageHidden}` : ''}`,
-                targetClassName: styles.standardTargets,
+                targetClassName: targetsPinned ? styles.standardTargets :
+                    `${styles.standardTargets} ${styles.retractedTargets}`,
                 stageDisplayWidth: stageWidth,
                 handleStagePreset: () => setPreferredStageWidth(null),
-                editorWidth: resizable ? targetSplit.second : size?.width
+                editorWidth: targetsPinned && resizable ? targetSplit.second : size?.width
             };
         };
 
@@ -134,18 +137,72 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             render: slots => render(applyStandardLayout(slots), showUndock)
         });
         return element(context.Provider, {value: {
-            showUndock, plusLayout, stageHidden, setStageVisible: setShowStage, stageResize, stageActionMount, locale: props.locale
+            showUndock, plusLayout, targetsPinned, setTargetsPinned, stageHidden, setStageVisible: setShowStage, stageResize, stageActionMount, locale: props.locale
         }},
             Container ? element(Container, {locale: props.locale}, layout) : layout);
     }
 
+    function EdgeDrawer({edge, label, pinned = false, onOpenChange, children}) {
+        const [hovered, setHovered] = useState(false);
+        const [engaged, setEngaged] = useState(false);
+        const trigger = useRef(null);
+        const panel = useRef(null);
+        const open = pinned || hovered || engaged;
+
+        useLayoutEffect(() => {onOpenChange?.(open);}, [open, onOpenChange]);
+
+        return element('div', {
+            className: styles.edgeDrawer,
+            'data-edge': edge,
+            'data-pinned': pinned || undefined,
+            onPointerEnter: event => {
+                if (event.pointerType === 'mouse') setHovered(true);
+            },
+            onPointerLeave: () => setHovered(false),
+            onFocus: event => {
+                if (panel.current.contains(event.target)) setEngaged(true);
+            },
+            onBlur: event => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setEngaged(false);
+            },
+            onKeyDown: event => {
+                if (event.key !== 'Escape' || pinned || !open || event.defaultPrevented) return;
+                setHovered(false);
+                setEngaged(false);
+                trigger.current.focus();
+                event.stopPropagation();
+            }
+        },
+        element('button', {
+            type: 'button',
+            className: styles.edgeTrigger,
+            hidden: pinned,
+            'aria-label': label,
+            'aria-expanded': open,
+            ref: trigger,
+            onClick: () => {
+                setEngaged(true);
+                const frame = trigger.current.ownerDocument.defaultView;
+                frame.requestAnimationFrame(() => {
+                    if (panel.current && !panel.current.hidden) panel.current.focus({preventScroll: true});
+                });
+            }
+        }, edge === 'left' ? '›' : '⌃'),
+        element('div', {className: styles.edgePanel, ref: panel, tabIndex: -1, hidden: !open}, children));
+    }
+
     function TargetLayout({compact, render}) {
-        return render(useContext(context).plusLayout || compact);
+        const {plusLayout, targetsPinned, locale} = useContext(context);
+        const panel = render(plusLayout || compact);
+        return plusLayout ? element(EdgeDrawer, {
+            edge: 'left', pinned: targetsPinned,
+            label: isJapanese(locale) ? 'スプライト一覧を展開' : 'Reveal sprite list'
+        }, panel) : panel;
     }
 
     function SpriteGrid(props) {
         const {plusLayout} = useContext(context);
-        return element(targets.SpriteGrid, {...props, maximumColumns: plusLayout ? 2 : undefined});
+        return element(targets.SpriteGrid, {...props, query: useContext(targetSearch), maximumColumns: plusLayout ? 2 : undefined});
     }
 
     function BackdropActions({compact, buttons, children}) {
@@ -161,5 +218,5 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             element('summary', null, isJapanese(locale) ? 'スプライト' : 'Sprite'), children) : fallback;
     }
 
-    return {StandardLayout, TargetLayout, SpriteGrid, BackdropTile: targets.BackdropTile, BackdropActions, SpritePropertiesSection};
+    return {StandardLayout, EdgeDrawer, TargetLayout, TargetSearchProvider: targetSearch.Provider, SpriteGrid, BackdropTile: targets.BackdropTile, BackdropActions, SpritePropertiesSection};
 }
