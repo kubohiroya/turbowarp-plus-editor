@@ -23,7 +23,7 @@ export const installProjectToolsHost = (vm, settings = {}, enabled = PROJECT_TOO
     const history = enabled ? createAuthorHistory(document ? storageFor(document) : undefined) : null;
     const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics,
         {locale: settings.locale}) : null;
-    const tools = {dialogs, propertiesEnabled: enabled,
+    const tools = {dialogs, payloads: host.payloads, propertiesEnabled: enabled,
         projectURIEnabled: MANUAL_PROJECT_URI_ENABLED && host.enabled, properties};
     let lastPhase;
     const unsubscribe = properties.subscribe(() => {
@@ -58,10 +58,17 @@ export const renderFileMenu = ({vm, locale = 'en', MenuSection, MenuItem, onRequ
         onRequestClose();
         if (type === 'properties') {
             tools.dialogs.showProperties(locale, tools.projectURIEnabled ? editProjectURI(vm) : undefined);
+        } else if (type === 'payloads') {
+            tools.dialogs.showPayloadFormats(tools.payloads.edit(), locale);
+        } else if (type === 'bundle-assets') {
+            const conversion = tools.payloads.convert();
+            if (conversion) tools.dialogs.showBundleAssetConversion(conversion, locale);
         } else tools.dialogs.showDiagnostics(locale);
     };
     const entries = [
         ['properties', '作品のプロパティ…', 'Project Properties…', tools.propertiesEnabled || tools.projectURIEnabled],
+        ['payloads', '作品データの形式…', 'Project Data Formats…', tools.payloads?.canEdit],
+        ['bundle-assets', 'バンドル素材を作品に追加…', 'Add Bundle Material to Project…', tools.payloads?.canConvert],
         ['diagnostics', '作品の診断…', 'Project Diagnostics…', true]
     ].filter(([, , , enabled]) => enabled);
     return React.createElement(MenuSection, null, ...entries.map(([type, ja, en]) =>

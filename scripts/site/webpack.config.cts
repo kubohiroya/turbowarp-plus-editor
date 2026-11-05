@@ -33,6 +33,7 @@ if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI
 }
 const injections = {
     __TW_GUI_HOST__: bridge,
+    __TW_PLUS_FILE_UPLOADER__: path.join(gui, 'src', 'lib', 'file-uploader.js'),
     __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json')
 };
 const {spritePropertiesPackage, spritePropertiesVersion} = rootRequire('./site/source.json');
@@ -134,7 +135,8 @@ config.module.rules.push({test: /\.ts$/, include: [
     backpackSurface, editorEntries.surfaces, editorEntries.transfer
 ], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
 config.module.rules.push({test: /\.jsx?$/, include: [
-    siteSource, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
+    siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
+    transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
