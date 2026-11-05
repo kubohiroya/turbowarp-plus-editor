@@ -6,7 +6,8 @@
   "type": "module",
   "license": "GPL-3.0-or-later",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/icon-menu-button.jsx",
+    "./palette-dropdown-resize": "./src/palette-dropdown-resize.js"
   },
   "peerDependencies": {
     "react": ">=16.8"

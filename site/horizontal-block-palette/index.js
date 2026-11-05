@@ -1,4 +1,4 @@
-import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-ui';
+import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';
 import styles from './palette.css';
 
 const installed = new WeakSet();
