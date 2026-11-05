@@ -13,6 +13,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusBackpackPopout: params.get('twPlusBackpackPopout'),
         twPlusInternalWindows: params.get('twPlusInternalWindows'),
         twPlusStagePanel: params.get('twPlusStagePanel'),
+        twPlusStageDisplayMenu: params.get('twPlusStageDisplayMenu'),
         twPlusTargetList: params.get('twPlusTargetList'),
         twPlusSpriteCodeWindows: params.get('twPlusSpriteCodeWindows'),
         twPlusStandardLayout: standardLayout === null ? '1' : standardLayout,

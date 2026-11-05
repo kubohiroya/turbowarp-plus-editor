@@ -46,4 +46,5 @@ export const SpritePropertiesPanel = (startup.spriteProperties || startup.standa
 
 export {BackpackSurface} from '../editor-backpack/index.jsx';
 export {StagePanel, attachStageMonitorDrag} from '../editor-layout/stage-panel.jsx';
+export {StageDisplayMenu} from '../editor-layout/stage-display-menu.jsx';
 export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropListActions} from '../editor-layout/target-list.jsx';
