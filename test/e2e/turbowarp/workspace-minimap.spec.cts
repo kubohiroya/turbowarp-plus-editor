@@ -25,6 +25,19 @@ test('the sprite costume stays aligned above the minimap when its code is undock
         }).toBe(true);
     };
     await checkWatermark();
+    const viewportSize = page.viewportSize();
+    await page.setViewportSize({width: 850, height: 540});
+    await checkWatermark();
+    await expect.poll(() => watermark.evaluate(img => {
+        const rect = img.getBoundingClientRect();
+        // Give the pointer-transparent image a hit area to detect occlusion by the floating stage.
+        const saved = img.style.pointerEvents;
+        img.style.pointerEvents = 'auto';
+        const topmost = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        img.style.pointerEvents = saved;
+        return img.naturalWidth > 0 && rect.right <= innerWidth && rect.bottom <= innerHeight && topmost === img;
+    })).toBe(true);
+    await page.setViewportSize(viewportSize);
 
     await page.getByRole('tab', {name: 'Code', exact: true}).focus();
     await page.getByRole('button', {name: 'Open in another window', exact: true}).click();

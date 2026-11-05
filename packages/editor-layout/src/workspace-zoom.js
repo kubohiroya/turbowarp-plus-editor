@@ -3,11 +3,17 @@ export function workspaceControlsCorner(workspace, ScratchBlocks, metrics) {
     const rightFlyout = toolboxPosition === ScratchBlocks.TOOLBOX_AT_RIGHT ? flyoutWidth : 0;
     const bottomFlyout = toolboxPosition === ScratchBlocks.TOOLBOX_AT_BOTTOM ? flyoutHeight : 0;
     const scrollbar = workspace.scrollbar ? ScratchBlocks.Scrollbar.scrollbarThickness : 0;
-    return {right: absoluteLeft + viewWidth - rightFlyout - scrollbar - 12,
-        bottom: absoluteTop + viewHeight - bottomFlyout - scrollbar - 12};
+    const container = workspace.getInjectionDiv();
+    const {left, top} = container.getBoundingClientRect();
+    const view = container.ownerDocument.documentElement;
+    return {
+        right: Math.min(absoluteLeft + viewWidth - rightFlyout - scrollbar, view.clientWidth - left - container.clientLeft) - 12,
+        bottom: Math.min(absoluteTop + viewHeight - bottomFlyout - scrollbar, view.clientHeight - top - container.clientTop) - 12
+    };
 }
 
-export function attachHorizontalWorkspaceZoom(workspace, ScratchBlocks) {
+export function attachHorizontalWorkspaceZoom(workspace, ScratchBlocks,
+    getCorner = metrics => workspaceControlsCorner(workspace, ScratchBlocks, metrics)) {
     const zoom = workspace.zoomControls_;
     const group = zoom?.svgGroup_;
     if (!group) return null;
@@ -20,6 +26,7 @@ export function attachHorizontalWorkspaceZoom(workspace, ScratchBlocks) {
     const gap = 8;
     const width = 3 * size + 2 * gap;
     const position = zoom.position;
+    const window = group.ownerDocument.defaultView;
 
     group.setAttribute('data-plus-horizontal-zoom', '');
     buttons.forEach((button, index) => {
@@ -30,15 +37,20 @@ export function attachHorizontalWorkspaceZoom(workspace, ScratchBlocks) {
     zoom.position = () => {
         const metrics = workspace.getMetrics();
         if (!metrics) return;
-        const {right, bottom} = workspaceControlsCorner(workspace, ScratchBlocks, metrics);
+        const {right, bottom} = getCorner(metrics);
         zoom.left_ = right - width;
         zoom.top_ = bottom - size;
         group.setAttribute('transform', `translate(${zoom.left_},${zoom.top_})`);
     };
     zoom.position();
+    const reposition = zoom.position;
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, {passive: true});
     return {
         height: size,
         dispose() {
+            window.removeEventListener('resize', reposition);
+            window.removeEventListener('scroll', reposition);
             zoom.position = position;
             group.removeAttribute('data-plus-horizontal-zoom');
             buttons.forEach((button, index) => {

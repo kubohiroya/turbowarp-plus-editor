@@ -4,18 +4,42 @@ import styles from './minimap.css';
 const SVG = 'http://www.w3.org/2000/svg';
 const SIZE_FACTOR = 0.8;
 const DRAG_THRESHOLD = 3;
+const MAX_WATERMARK_SIZE = 64;
+const MAX_MAP_WIDTH = 164;
+const MAX_MAP_HEIGHT = 104;
+const CONTROLS_GAP = 8;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
 export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZoom, minimap}) {
-    const zoom = horizontalZoom ? attachHorizontalWorkspaceZoom(workspace, ScratchBlocks) : null;
-    const map = minimap ? attachWorkspaceMinimap(workspace, ScratchBlocks, zoom) : null;
+    const container = workspace.getInjectionDiv();
+    const getCorner = metrics => {
+        const corner = workspaceControlsCorner(workspace, ScratchBlocks, metrics);
+        const stage = container.closest('[class*="editor_standard-body_"]')?.querySelector('[data-plus-stage-frame]');
+        if (!stage || stage.closest('[data-stage-hidden="true"]')) return corner;
+
+        const workspaceRect = container.getBoundingClientRect();
+        const stageRect = stage.getBoundingClientRect();
+        const right = workspaceRect.left + container.clientLeft + corner.right;
+        const bottom = workspaceRect.top + container.clientTop + corner.bottom;
+        const stackHeight = 36 + Math.min(MAX_MAP_HEIGHT, metrics.viewHeight * 0.35) * SIZE_FACTOR +
+            MAX_WATERMARK_SIZE + 2 * CONTROLS_GAP;
+        const stageLeft = stageRect.left - workspaceRect.left - container.clientLeft;
+        const mapWidth = MAX_MAP_WIDTH * SIZE_FACTOR;
+        if (stageLeft >= mapWidth + 24 && right > stageRect.left && right - mapWidth < stageRect.right &&
+                bottom > stageRect.top && bottom - stackHeight < stageRect.bottom) {
+            return {...corner, right: stageLeft - 12};
+        }
+        return corner;
+    };
+    const zoom = horizontalZoom ? attachHorizontalWorkspaceZoom(workspace, ScratchBlocks, getCorner) : null;
+    const map = minimap ? attachWorkspaceMinimap(workspace, ScratchBlocks, zoom, getCorner) : null;
     return {dispose() {
         map?.dispose();
         zoom?.dispose();
     }};
 }
 
-function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
+function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner) {
     const container = workspace.getInjectionDiv();
     const canvas = workspace.getCanvas();
     const workspaceSvg = workspace.getParentSvg();
@@ -70,6 +94,7 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
             minimap.style.display = 'none';
             return;
         }
+        const corner = zoom && getCorner(metrics);
         const scale = workspace.scale;
         const x = metrics.viewLeft / scale;
         const y = metrics.viewTop / scale;
@@ -98,17 +123,20 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
         viewport.setAttribute('height', height);
 
         const bottomToolbox = metrics.toolboxPosition === ScratchBlocks.TOOLBOX_AT_BOTTOM ? metrics.toolboxHeight : 0;
-        const mapHeight = Math.min(104, metrics.viewHeight * 0.35) * SIZE_FACTOR;
-        if (zoom) {
-            const {right, bottom} = workspaceControlsCorner(workspace, ScratchBlocks, metrics);
+        let mapHeight = Math.min(MAX_MAP_HEIGHT, metrics.viewHeight * 0.35) * SIZE_FACTOR;
+        if (corner) {
+            const {right, bottom} = corner;
+            const spaceAboveZoom = Math.max(0, bottom - zoom.height - 2 * CONTROLS_GAP);
+            if (watermark) mapHeight = Math.min(mapHeight, spaceAboveZoom * 0.6);
             const rightInset = container.clientWidth - right;
-            const bottomInset = container.clientHeight - bottom + zoom.height + 8;
+            const bottomInset = container.clientHeight - bottom + zoom.height + CONTROLS_GAP;
             if (watermark) {
                 // The watermark is outside Blockly's border while the minimap is inside it.
                 const rightBorder = container.offsetWidth - container.clientWidth - container.clientLeft;
                 const bottomBorder = container.offsetHeight - container.clientHeight - container.clientTop;
                 watermark.style.setProperty('--plus-watermark-right', `${rightInset + rightBorder}px`);
-                watermark.style.setProperty('--plus-watermark-bottom', `${bottomInset + bottomBorder + mapHeight + 8}px`);
+                watermark.style.setProperty('--plus-watermark-bottom', `${bottomInset + bottomBorder + mapHeight + CONTROLS_GAP}px`);
+                watermark.style.setProperty('--plus-watermark-size', `${Math.min(MAX_WATERMARK_SIZE, spaceAboveZoom - mapHeight)}px`);
             }
             minimap.style.right = `${rightInset}px`;
             minimap.style.bottom = `${bottomInset}px`;
@@ -116,7 +144,7 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
             minimap.style.left = `${metrics.absoluteLeft + 12}px`;
             minimap.style.bottom = `${bottomToolbox + 16}px`;
         }
-        minimap.style.width = `${Math.min(164, metrics.viewWidth * 0.4) * SIZE_FACTOR}px`;
+        minimap.style.width = `${Math.min(MAX_MAP_WIDTH, metrics.viewWidth * 0.4) * SIZE_FACTOR}px`;
         minimap.style.height = `${mapHeight}px`;
     };
 
@@ -191,6 +219,10 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
     minimap.addEventListener('pointerup', endPointer, options);
     minimap.addEventListener('pointercancel', endPointer, options);
     minimap.addEventListener('lostpointercapture', endPointer, options);
+    if (zoom) {
+        window.addEventListener('resize', schedule, options);
+        window.addEventListener('scroll', schedule, {signal: events.signal, passive: true});
+    }
 
     // Sprite changes can rebuild the workspace with Blockly events disabled.
     // Watch the rendered blocks as well as the canvas transform used for pan and zoom.
@@ -218,6 +250,7 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
                 delete watermark.dataset.plusWorkspaceWatermark;
                 watermark.style.removeProperty('--plus-watermark-right');
                 watermark.style.removeProperty('--plus-watermark-bottom');
+                watermark.style.removeProperty('--plus-watermark-size');
             }
         }
     };
