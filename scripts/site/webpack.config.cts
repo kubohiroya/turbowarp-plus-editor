@@ -153,9 +153,13 @@ const {withDocumentEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-document
 // side that transpiles it for webpack 4's parser. `hostRoot` is still the GUI, because that is
 // where babel-loader and preset-env are installed.
 const {withExtensionLoaderWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-loader/webpack4');
-// And the block editor's, which aliases the package's subpaths to the precompiled entries beside
-// the copy that provides the helper. That is why it matters that this is this repository's copy:
-// the GUI no longer depends on the package, and these are the bytes its modules import.
+// Override only the add-mode intro in the pinned security review bundle.
+const securityReview = rootRequire.resolve('@kubohiroya/turbowarp-extension-security-dialog/react');
+config.module.rules.push({
+    include: [securityReview, path.join(path.dirname(securityReview), 'react.mjs')],
+    use: path.join(__dirname, 'extension-add-copy-loader.cjs')
+});
+// The block editor helper aliases its subpaths to precompiled entries in this repository's install.
 const {withBlockEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-data-editor/webpack4');
 module.exports = withBlockEditorWebpack4(
     withExtensionLoaderWebpack4(withDocumentEditorWebpack4(config), {hostRoot: gui}), {hostRoot: gui});
