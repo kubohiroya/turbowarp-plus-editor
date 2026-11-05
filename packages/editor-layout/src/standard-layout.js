@@ -2,7 +2,8 @@ import {createLayout, createSplitter, splitAxis} from './index.js';
 import {createTargetList} from './targets.js';
 
 const isJapanese = locale => /^ja(?:-|$)/i.test(locale);
-const minimumStandardTargets = 174;
+const minimumStandardTargets = 108;
+const minimumDefaultTargetWidth = 174;
 const minimumStandardEditor = 380;
 
 export function createStandardLayout(React, {styles, targetStyles, context}) {
@@ -46,7 +47,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
                 element(AnchorButton, {label: undockLabel, pressed: showUndock, onClick: toggleUndock}), windowTools),
             stageActionEnabled && element('span', {className: styles.stageActionSlot, ref: setStageActionMount}));
         const bodyWidth = size?.width ?? 1024;
-        const defaultTargetWidth = Math.max(minimumStandardTargets, Math.min(bodyWidth * 0.18, 216));
+        const defaultTargetWidth = Math.max(minimumDefaultTargetWidth, Math.min(bodyWidth * 0.18, 216));
         const targetSplit = plusLayout && splitter && size ? splitAxis(
             bodyWidth, targetRatio, defaultTargetWidth, minimumStandardTargets, minimumStandardEditor
         ) : null;
@@ -165,7 +166,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
 
     function SpriteGrid(props) {
         const {plusLayout} = useContext(context);
-        return element(targets.SpriteGrid, {...props, fixedColumns: plusLayout ? 2 : undefined});
+        return element(targets.SpriteGrid, {...props, maximumColumns: plusLayout ? 2 : undefined});
     }
 
     function BackdropActions({compact, buttons, children}) {
@@ -178,7 +179,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
     function SpritePropertiesSection({fallback, children}) {
         const {plusLayout, locale} = useContext(context);
         return plusLayout ? element('details', {className: styles.spriteProperties},
-            element('summary', null, isJapanese(locale) ? 'スプライトの設定' : 'Sprite properties'), children) : fallback;
+            element('summary', null, isJapanese(locale) ? 'スプライト' : 'Sprite'), children) : fallback;
     }
 
     return {StandardLayout, TargetLayout, SpriteGrid, BackdropTile: targets.BackdropTile, BackdropActions, SpritePropertiesSection};

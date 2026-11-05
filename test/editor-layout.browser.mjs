@@ -224,7 +224,7 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
     const stageToggle = page.getByRole('button', {name: 'Show stage', exact: true});
     const stage = page.locator('[data-gui-stage] canvas').first();
-    const grid = page.locator('[data-fixed-columns="2"]');
+    const grid = page.locator('[data-maximum-columns="2"]');
     const toolbox = page.locator('.blocklyToolboxDiv').first();
     await start('&twPlusStandardLayout=0');
     await expect(stage).toBeVisible();
@@ -292,8 +292,50 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     await page.mouse.move(bottom.x + bottom.width / 2, bottom.y + bottom.height / 2 - 30, {steps: 8});
     await page.mouse.up();
     await expect.poll(async () => Math.round((await stage.boundingBox()).height - resizedStage.height)).toBe(-30);
-    await expect(page.getByText('Sprite properties', {exact: true})).toBeVisible();
+    const spriteSettings = page.locator('summary').filter({hasText: /^Sprite$/});
+    await expect(spriteSettings).toBeVisible();
     await expect(page.getByRole('textbox', {name: 'Sprite name'})).toBeHidden();
+
+    const resetDivider = await splitter.boundingBox();
+    await page.mouse.move(resetDivider.x + resetDivider.width / 2, resetDivider.y + 80);
+    await page.mouse.down();
+    await page.mouse.move(resetDivider.x - 150, resetDivider.y + 80, {steps: 8});
+    await page.mouse.up();
+    await expect(grid).toHaveAttribute('data-target-columns', '1');
+    await expect.poll(() => grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length)).toBe(1);
+    await spriteSettings.click();
+    const spriteName = page.getByRole('textbox', {name: 'Sprite name'});
+    await expect(spriteName).toBeEditable();
+    const settings = spriteSettings.locator('..');
+    const fields = settings.locator('.tw-sprite-properties__fields > .tw-sprite-properties__field');
+    await expect(fields).toHaveCount(6);
+    assert.ok(await fields.evaluateAll(nodes => {
+        const bounds = nodes[0].parentElement.getBoundingClientRect();
+        const left = nodes[0].getBoundingClientRect().left;
+        return nodes.every(node => {
+            const rect = node.getBoundingClientRect();
+            return rect.left === left && rect.right <= bounds.right;
+        });
+    }));
+    const name = await spriteName.inputValue();
+    await spriteName.fill('Compact sprite');
+    await spriteName.press('Enter');
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.getName())).toBe('Compact sprite');
+    await spriteName.fill(name);
+    await spriteName.press('Enter');
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.getName())).toBe(name);
+    await spriteSettings.click();
+    const addSprite = page.getByRole('button', {name: 'Choose a Sprite', exact: true}).first();
+    await expect(addSprite).toBeVisible();
+    const narrowTile = await backdrop.boundingBox();
+    const addBounds = await addSprite.boundingBox();
+    assert.ok(narrowTile.y + narrowTile.height <= addBounds.y);
+    assert.ok(await backdrop.evaluate(node => {
+        const rect = node.getBoundingClientRect();
+        return node.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+    }));
+    await splitter.press('Enter');
+    await expect(grid).toHaveAttribute('data-target-columns', '2');
 
     await expect.poll(() => page.evaluate(() => Boolean(vm.editingTarget))).toBe(true);
     const spriteId = await page.evaluate(async () => {
@@ -377,5 +419,8 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     await expect(backdropActions).toBeVisible();
     await anchor.click();
     await expect(backdropActions).toHaveCount(0);
+
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1');
+    await expect(page.locator('summary').filter({hasText: /^スプライト$/})).toBeVisible();
     assert.deepEqual(errors, []);
 });
