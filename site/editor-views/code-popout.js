@@ -15,14 +15,20 @@ const status = document.getElementById('status');
 const undo = document.getElementById('undo');
 const redo = document.getElementById('redo');
 const dock = document.getElementById('dock');
-const toolbox = `<xml><category name="Motion" colour="#4c97ff" secondaryColour="#3373cc">
+const motion = `<category name="Motion" colour="#4c97ff" secondaryColour="#3373cc">
     <block type="motion_movesteps"><value name="STEPS"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block>
     <block type="motion_turnright"><value name="DEGREES"><shadow type="math_number"><field name="NUM">15</field></shadow></value></block>
-    </category><category name="Looks" colour="#9966ff" secondaryColour="#774dcb"><block type="looks_show"></block><block type="looks_hide"></block></category></xml>`;
+    </category>`;
+const toolbox = isStage => `<xml>${isStage ? '' : motion}
+    <category name="Looks" colour="#9966ff" secondaryColour="#774dcb">
+        ${isStage ? '<block type="looks_nextbackdrop"></block><block type="looks_backdropnumbername"></block>' :
+        '<block type="looks_show"></block><block type="looks_hide"></block>'}
+    </category></xml>`;
 
 const workspace = ScratchBlocks.inject(mount, {
-    media: 'static/blocks-media/default/', toolbox, scrollbars: true, comments: false
+    media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: false
 });
+let stageToolbox = false;
 let port;
 let targetId;
 let targets = [];
@@ -49,7 +55,12 @@ function setEditable(value) {
 }
 
 function renderTarget() {
-    const name = targets.find(target => target.id === targetId)?.name;
+    const target = targets.find(candidate => candidate.id === targetId);
+    const name = target?.name;
+    if (target && target.isStage !== stageToolbox) {
+        workspace.updateToolbox(toolbox(target.isStage));
+        stageToolbox = target.isStage;
+    }
     const code = /^ja(?:-|$)/i.test(locale) ? 'コード' : 'Code';
     document.title = name ? `${code} · ${name}` : code;
     ReactDOM.render(<TargetCombobox id="code-target" value={targetId} targets={targets} locale={locale}
