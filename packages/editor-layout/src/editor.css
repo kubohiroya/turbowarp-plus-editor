@@ -29,7 +29,26 @@
 }
 
 .separator {
+    display: grid;
+    place-items: center;
     background: var(--ui-black-transparent);
+    color: var(--text-primary);
+}
+
+.separator::after {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1.4px);
+    background-size: 4px 6px;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.separator[aria-orientation="horizontal"]::after {
+    width: 18px;
+    height: 4px;
+    background-size: 6px 4px;
 }
 
 .separator:hover,

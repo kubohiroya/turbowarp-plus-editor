@@ -60,6 +60,10 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const columns = page.getByRole('separator', {name: 'Editor and stage column width'});
     const rows = page.getByRole('separator', {name: 'Stage and target pane height'});
     const position = divider => divider.getAttribute('aria-valuenow').then(Number);
+    const grip = divider => divider.evaluate(element => {
+        const style = getComputedStyle(element, '::after');
+        return {width: style.width, height: style.height, image: style.backgroundImage};
+    });
     for (const query of ['&twPlusWindowLayout=0', '&twPlusWindowLayout=', '&twPlusWindowLayout=true', '']) {
         await start(query);
         await expect(layoutMenu(page)).toHaveCount(0);
@@ -70,6 +74,12 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect(layoutMenu(page)).toHaveCount(0);
     await start('&twPlusWindowLayout=1');
     await expect(mode).toHaveAttribute('aria-pressed', 'false');
+    const columnGrip = await grip(columns);
+    const rowGrip = await grip(rows);
+    assert.deepEqual([columnGrip.width, columnGrip.height, rowGrip.width, rowGrip.height],
+        ['4px', '18px', '18px', '4px']);
+    assert.match(columnGrip.image, /radial-gradient/);
+    assert.match(rowGrip.image, /radial-gradient/);
     const themeColor = property => page.evaluate(token => {
         const sample = document.createElement('span');
         sample.style.color = `var(${token})`;
@@ -95,9 +105,10 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const first = await position(columns);
     const initialSvgWidth = await page.locator('.blocklySvg').first().getAttribute('width').then(parseFloat);
     const divider = await columns.boundingBox();
-    await page.mouse.move(divider.x + divider.width / 2, divider.y + 90);
+    const center = divider.y + divider.height / 2;
+    await page.mouse.move(divider.x + divider.width / 2, center);
     await page.mouse.down();
-    await page.mouse.move(divider.x + 64, divider.y + 90, {steps: 6});
+    await page.mouse.move(divider.x + 64, center, {steps: 6});
     await page.mouse.up();
     assert.ok(await position(columns) > first);
     await expect.poll(() => page.locator('.blocklySvg').first().getAttribute('width').then(parseFloat))
