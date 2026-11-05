@@ -1,3 +1,4 @@
+import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-ui';
 import styles from './palette.css';
 
 const installed = new WeakSet();
@@ -20,6 +21,8 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
     const scrollbar = flyout.scrollbar_.svgGroup_;
     const surface = workspace.getParentSvg();
     const doc = menu.ownerDocument;
+    const win = doc.defaultView;
+    const resizer = attachPaletteDropdownResize(panel, () => flyout.position());
     const {ContextMenu, WidgetDiv, DropDownDiv} = ScratchBlocks;
     const events = new AbortController();
     const capture = {capture: true, signal: events.signal};
@@ -39,12 +42,14 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
 
     let horizontal = false;
     let openId = null;
+    let layoutWidth;
     const scrollPositions = new Map();
     const verticalPosition = workspace.toolboxPosition;
     const categoryById = id => toolbox.categoryMenu_.categories_.find(category => category.id_ === id);
 
     const close = () => {
         if (openId === null) return;
+        resizer.close();
         scrollPositions.set(openId, flyout.getScrollPos());
         categoryById(openId)?.item_.setAttribute('aria-expanded', 'false');
         openId = null;
@@ -56,6 +61,10 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         label.setAttribute('text', category.name_);
         label.setAttribute('web-class', 'categoryLabel');
         label.setAttribute('showStatusButton', category.showStatusButton_);
+        if (flyout.RTL) {
+            layoutWidth = flyout.getWidth();
+            flyout.workspace_.scrollX = 0;
+        }
         flyout.show([label].concat(category.getContents()));
         flyout.setScrollPos(scroll);
     };
@@ -68,6 +77,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         }
         close();
         openId = category.id_;
+        resizer.open(openId);
         toolbox.setSelectedItem(category, false);
         category.item_.setAttribute('aria-expanded', 'true');
         showCategory(category, scrollPositions.get(category.id_) ?? 0);
@@ -121,38 +131,71 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         updateCategoryButtons();
     };
 
-    flyout.getWidth = () => {
-        const width = original.getFlyoutWidth.call(flyout);
-        return horizontal ? Math.min(width, Math.max(1, menu.clientWidth - 8)) : width;
+    const getBounds = () => {
+        const surfaceRect = surface.getBoundingClientRect();
+        const menuRect = menu.getBoundingClientRect();
+        return {
+            surfaceLeft: surfaceRect.left,
+            left: Math.max(0, menuRect.left - surfaceRect.left, -surfaceRect.left),
+            right: Math.min(surface.clientWidth, menuRect.right - surfaceRect.left,
+                doc.documentElement.clientWidth - surfaceRect.left),
+            top: Math.max(menu.offsetHeight, -surfaceRect.top),
+            bottom: Math.min(surface.clientHeight, doc.documentElement.clientHeight - surfaceRect.top) - 4
+        };
     };
+    const getWidth = ({left, right}) => {
+        const width = resizer.size?.width ?? original.getFlyoutWidth.call(flyout);
+        return Math.max(1, Math.min(width, right - left - 8));
+    };
+    flyout.getWidth = () => horizontal ? getWidth(getBounds()) : original.getFlyoutWidth.call(flyout);
+
     flyout.position = () => {
         if (!horizontal) {
             original.position.call(flyout);
             return;
         }
         const category = categoryById(openId);
-        if (!category || !flyout.isVisible() || !surface.clientWidth || !surface.clientHeight) return;
+        if (!category || !flyout.isVisible()) return;
 
         // Keep the existing vertical flyout and scrollbar. Only their viewport and origin change.
-        const width = flyout.getWidth();
-        const top = menu.offsetHeight;
-        const height = Math.max(4, Math.min(360, surface.clientHeight * 0.65, surface.clientHeight - top - 4));
-        const offset = surface.getBoundingClientRect();
+        const bounds = getBounds();
+        const {top} = bounds;
+        const width = getWidth(bounds);
+        const requestedHeight = resizer.size?.height ?? Math.min(360, surface.clientHeight * 0.65);
+        const height = Math.max(0, Math.min(requestedHeight, bounds.bottom - top));
+        const visible = width > flyout.SCROLLBAR_PADDING && height > 2 * flyout.SCROLLBAR_PADDING;
+        panel.style.visibility = scrollbar.style.visibility = visible ? '' : 'hidden';
+        if (!visible) {
+            resizer.place(null);
+            return;
+        }
+
         const anchor = category.item_.getBoundingClientRect();
-        const menuLeft = menu.getBoundingClientRect().left - offset.left;
-        const preferredLeft = workspace.RTL ? anchor.right - offset.left - width : anchor.left - offset.left;
-        const left = Math.min(Math.max(menuLeft, preferredLeft), menuLeft + menu.clientWidth - width);
+        const preferredLeft = resizer.left ?? (workspace.RTL ? anchor.right - width : anchor.left) - bounds.surfaceLeft;
+        const left = Math.min(Math.max(bounds.left, preferredLeft), bounds.right - width);
 
         flyout.width_ = width;
         flyout.height_ = height;
+        // Scratch Blocks positions RTL blocks against the width used when laying them out.
+        if (flyout.RTL) flyout.workspace_.scrollX = width - layoutWidth;
         flyout.setBackgroundPath_(width, height);
         panel.setAttribute('width', width);
         panel.setAttribute('height', height);
         panel.style.transform = `translate(${left}px, ${top}px)`;
         flyout.scrollbar_.setOrigin(left, top);
         flyout.scrollbar_.resize();
+        resizer.place({left, top, width, height});
         panel.style.opacity = '1';
     };
+
+    const reposition = () => {
+        if (openId !== null) flyout.position();
+    };
+    const resizeObserver = new win.ResizeObserver(reposition);
+    resizeObserver.observe(surface);
+    resizeObserver.observe(menu);
+    win.addEventListener('resize', reposition, {signal: events.signal});
+
     flyout.isDragTowardWorkspace = delta => {
         if (!horizontal) return original.isDragTowardWorkspace.call(flyout, delta);
         // Leave vertical swipes available to scroll the block list on touch screens.
@@ -180,6 +223,8 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         updateCategoryButtons();
         if (horizontal) flyout.hide();
         else {
+            panel.style.visibility = scrollbar.style.visibility = '';
+            if (flyout.RTL) flyout.workspace_.scrollX = 0;
             toolbox.showAll_();
             if (category) toolbox.setSelectedItem(category);
         }
@@ -224,6 +269,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         else open(category);
     }, capture);
     menu.addEventListener('scroll', () => {
+        resizer.followAnchor();
         if (horizontal) flyout.position();
     }, {signal: events.signal});
     menu.addEventListener('wheel', event => {
@@ -234,7 +280,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
     doc.addEventListener('pointerdown', event => {
         if (WidgetDiv.DIV?.contains(event.target)) return;
         WidgetDiv.hideIfOwner(toolbox);
-        if (openId !== null && ![menu, panel, scrollbar, DropDownDiv.DIV]
+        if (openId !== null && !resizer.contains(event.target) && ![menu, panel, scrollbar, DropDownDiv.DIV]
             .some(element => element?.contains(event.target))) close();
     }, capture);
     doc.addEventListener('keydown', event => {
@@ -245,6 +291,8 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
     toolbox.dispose = () => {
         palettes.delete(setMode);
         closeOnDragExit.delete(flyout);
+        resizeObserver.disconnect();
+        resizer.dispose();
         events.abort();
         WidgetDiv.hideIfOwner(toolbox);
         original.dispose.call(toolbox);
