@@ -11,9 +11,9 @@ import {chromium} from 'playwright';
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-popout', '--target-panels-popout',
-    '--stage-popout', '--stage-panel', '--internal'
+    '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal'
 ].find(flag => process.argv.includes(flag));
-const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-popout', '--stage-panel'].includes(testMode);
+const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-popout', '--stage-display-menu', '--stage-panel'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -48,17 +48,19 @@ async function run (enabled, test) {
     delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;
     delete processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES;
     delete processEnv.TW_PLUS_DESKTOP_STAGE_PANEL;
+    delete processEnv.TW_PLUS_DESKTOP_STAGE_DISPLAY_MENU;
     delete processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_TARGET_LIST;
     delete processEnv.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_CODE_POPOUT;
     if (enabled) {
         processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT = '1';
-        if (['internal', 'sprite', 'stage', 'stage-popout', 'target-panels', 'code-popout', 'code-backpack'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
+        if (['internal', 'sprite', 'stage', 'stage-popout', 'stage-display-menu', 'target-panels', 'code-popout', 'code-backpack'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS = '1';
         else processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'sprite' || enabled === 'target-panels') processEnv.TW_PLUS_DESKTOP_SPRITE_PROPERTIES = '1';
-        if (enabled === 'stage' || enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
-        if (enabled === 'stage-popout') processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT = '1';
+        if (['stage', 'stage-popout', 'stage-display-menu'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_STAGE_PANEL = '1';
+        if (['stage-popout', 'stage-display-menu'].includes(enabled)) processEnv.TW_PLUS_DESKTOP_STAGE_POPOUT = '1';
+        if (enabled === 'stage-display-menu') processEnv.TW_PLUS_DESKTOP_STAGE_DISPLAY_MENU = '1';
         if (enabled === 'code-popout' || enabled === 'code-backpack') processEnv.TW_PLUS_DESKTOP_CODE_POPOUT = '1';
         if (enabled === 'code-backpack') processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT = '1';
         if (enabled === 'target-panels') {
@@ -980,6 +982,45 @@ async function checkExternalTargetPanels ({editor, context, control}) {
     report.checks.push('Both panels dock through the parent button and native close; the backdrop tile reflows and preserves focus');
 }
 
+async function checkStageDisplayMenu ({editor, context, control}) {
+    const parent = (await control('windows')).find(window => window.kind === 'editor');
+    await control('layout', parent.id);
+    const canvas = editor.locator('[data-gui-stage] canvas').first();
+    await canvas.evaluate(node => { window.originalStageCanvas = node; });
+    const displayLabel = /^(Stage display|ステージの表示)$/;
+    const display = editor.getByRole('button', {name: displayLabel});
+    const menu = editor.getByRole('menu', {name: displayLabel});
+    const undock = menu.getByRole('menuitem', {name: /^(Open in a separate window|別ウィンドウで開く)$/});
+    const dock = menu.getByRole('menuitem', {name: /^(Dock stage|ドックに戻す)$/});
+    const open = async () => {
+        await control('focus', parent.id);
+        await display.click();
+        const [child] = await Promise.all([
+            context.waitForEvent('page'), undock.click()
+        ]);
+        await child.waitForURL(/\/stage-popout\.html#/);
+        child.on('pageerror', error => report.errors.push(error.message));
+        await child.locator('[data-gui-stage] canvas').first().waitFor();
+        return child;
+    };
+
+    const child = await open();
+    await control('focus', parent.id);
+    await display.click();
+    await Promise.all([child.waitForEvent('close'), dock.click()]);
+    assert.ok(await canvas.evaluate(node => node === window.originalStageCanvas));
+
+    const reopened = await open();
+    const childWindow = (await control('windows')).find(window => window.kind === 'stage');
+    assert.ok(childWindow);
+    await Promise.all([reopened.waitForEvent('close'), control('close', childWindow.id)]);
+    assert.ok(await canvas.evaluate(node => node === window.originalStageCanvas));
+    await control('focus', parent.id);
+    await display.click();
+    assert.equal(await undock.getAttribute('aria-disabled'), 'false');
+    report.checks.push('Stage display menu opens and docks a native window and resets after OS close, preserving the canvas');
+}
+
 async function checkStagePopout ({editor, context, control}) {
     const parent = (await control('windows')).find(window => window.kind === 'editor');
     await control('layout', parent.id);
@@ -1259,6 +1300,7 @@ try {
     else if (testMode === '--code-target-sync') await run('code-popout', env => checkCodePopouts(env, {targetSync: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
+    else if (testMode === '--stage-display-menu') await run('stage-display-menu', checkStageDisplayMenu);
     else if (testMode === '--stage-popout') await run('stage-popout', checkStagePopout);
     else if (testMode === '--stage-panel') await run('stage', checkStagePanel);
     else if (testMode === '--internal') await run('internal', checkInternal);

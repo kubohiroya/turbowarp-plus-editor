@@ -103,6 +103,9 @@ for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const siteSource = path.join(__dirname, '..', '..', 'site');
+// Share the original fullscreen artwork with the stage display menu.
+config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
+    path.join(gui, 'src', 'components', 'stage-header', 'icon--fullscreen.svg');
 // Override the addon default in Plus without changing the pinned GUI sources.
 const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';
 config.resolve.alias[`${hideDeleteButtonManifest}$`] = path.join(siteSource, 'hide-delete-button-manifest.js');

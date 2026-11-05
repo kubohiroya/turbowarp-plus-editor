@@ -1,6 +1,7 @@
 import React from 'react';
 import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-editor-layout';
 import {BasicPanel} from './basic-panel.jsx';
+import {StageDisplayMenuContext} from './context.js';
 import {createDesktopPanelHost} from './desktop-panel-host.js';
 import {decorateSurface} from '../editor-backpack/surface-styles.js';
 import {layoutFlags, WindowLayoutContext} from './index.jsx';
@@ -98,8 +99,11 @@ function StageViewport({aspect, width, defaultWidth, floating, render, inputDocu
 
 function AppStagePanel({aspect, width, defaultWidth, render}) {
     const {locale, stageActionMount} = React.useContext(WindowLayoutContext);
+    const menu = React.useContext(StageDisplayMenuContext);
     const title = /^ja(?:-|$)/i.test(locale) ? 'ステージ' : 'Stage';
-    return <BasicPanel id="stage" title={title} externalHost={desktopPopout} decorate={decorateSurface} actionMount={stageActionMount ?? null} dockHeight={Math.round((width ?? defaultWidth) / aspect)}
+    return <BasicPanel id="stage" title={title} externalHost={desktopPopout} decorate={decorateSurface}
+        actionMount={stageActionMount ?? null} onDockActionChange={layoutFlags.stageDisplayMenu ? menu?.setDockAction : undefined}
+        dockHeight={Math.round((width ?? defaultWidth) / aspect)}
         render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render}}
             inputDocument={desktopPopout ? mount?.ownerDocument : undefined} />}
     />;

@@ -55,6 +55,7 @@ function createBackpackWindowHost (editor) {
     if (internalEnabled) url.searchParams.set('twPlusInternalWindows', '1');
     if (spritePropertiesEnabled) url.searchParams.set('twPlusSpriteProperties', '1');
     if (stagePanelEnabled) url.searchParams.set('twPlusStagePanel', '1');
+    if (process.env.TW_PLUS_DESKTOP_STAGE_DISPLAY_MENU === '1') url.searchParams.set('twPlusStageDisplayMenu', '1');
     if (targetListEnabled) url.searchParams.set('twPlusTargetList', '1');
     if (enabled) url.searchParams.set('twPlusBackpackPopout', '1');
     if (stagePopout) url.searchParams.set('twPlusStagePopout', '1');
