@@ -34,9 +34,20 @@ test('横パレットでカテゴリを切り替え、実ブロックを追加�
     expect(panel.height).toBeLessThan(vertical.height);
     await flyout.hover();
     await page.mouse.wheel(0, 180);
-    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getFlyout().getScrollPos()))
-        .toBeGreaterThan(0);
+    const getScrollPosition = () => page.evaluate(() =>
+        window.ScratchBlocks.getMainWorkspace().getFlyout().getScrollPos());
+    await expect.poll(getScrollPosition).toBeGreaterThan(0);
+    const looksScrollPosition = await getScrollPosition();
 
+    evidence.stage('restore-category-scroll');
+    await page.keyboard.press('Escape');
+    await expect(flyout).toBeHidden();
+    await looks.click();
+    await expect.poll(getScrollPosition).toBeCloseTo(looksScrollPosition);
+    await motion.click();
+    await expect.poll(getScrollPosition).toBeCloseTo(0);
+    await looks.click();
+    await expect.poll(getScrollPosition).toBeCloseTo(looksScrollPosition);
     await page.keyboard.press('Escape');
     await expect(flyout).toBeHidden();
     await motion.focus();

@@ -39,17 +39,19 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
 
     let horizontal = false;
     let openId = null;
+    const scrollPositions = new Map();
     const verticalPosition = workspace.toolboxPosition;
     const categoryById = id => toolbox.categoryMenu_.categories_.find(category => category.id_ === id);
 
     const close = () => {
         if (openId === null) return;
+        scrollPositions.set(openId, flyout.getScrollPos());
         categoryById(openId)?.item_.setAttribute('aria-expanded', 'false');
         openId = null;
         flyout.hide();
     };
 
-    const showCategory = (category, scroll = 0) => {
+    const showCategory = (category, scroll) => {
         const label = doc.createElement('label');
         label.setAttribute('text', category.name_);
         label.setAttribute('web-class', 'categoryLabel');
@@ -68,7 +70,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         openId = category.id_;
         toolbox.setSelectedItem(category, false);
         category.item_.setAttribute('aria-expanded', 'true');
-        showCategory(category);
+        showCategory(category, scrollPositions.get(category.id_) ?? 0);
     };
 
     const updateCategoryButtons = () => {
