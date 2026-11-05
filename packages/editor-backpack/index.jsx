@@ -149,11 +149,11 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
                         <span ref={launchButton}>{renderLaunchButton ? renderLaunchButton(launch) :
                             <button type="button" disabled={launch.disabled} onClick={launch.onOpen}>{launch.label}</button>}
                         </span>
-                        {(state.reason === 'blocked' || state.reason === 'failed') &&
-                            <span role="status">{labels.blocked}</span>}
                     </div>
                 )}
                 {children}
+                {showUndock && (state.reason === 'blocked' || state.reason === 'failed') &&
+                    <span role="status">{labels.blocked}</span>}
             </>
         );
     }

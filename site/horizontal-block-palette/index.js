@@ -137,8 +137,9 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         const height = Math.max(4, Math.min(360, surface.clientHeight * 0.65, surface.clientHeight - top - 4));
         const offset = surface.getBoundingClientRect();
         const anchor = category.item_.getBoundingClientRect();
+        const menuLeft = menu.getBoundingClientRect().left - offset.left;
         const preferredLeft = workspace.RTL ? anchor.right - offset.left - width : anchor.left - offset.left;
-        const left = Math.min(Math.max(0, preferredLeft), menu.clientWidth - width);
+        const left = Math.min(Math.max(menuLeft, preferredLeft), menuLeft + menu.clientWidth - width);
 
         flyout.width_ = width;
         flyout.height_ = height;

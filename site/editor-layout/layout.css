@@ -108,11 +108,27 @@
     order: 1;
 }
 
+.backpack-panel {
+    display: flow-root;
+    position: relative;
+}
+
+.backpack-panel:has(> .backpack-actions) :global([class*="backpack_backpack-header_"]) {
+    padding-inline: 2rem;
+}
+
 .backpack-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 0.25rem;
+    position: absolute;
+    top: calc(0.5rem + 2px);
+    right: 0.25rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.backpack-actions .open-window-action :global(.tw-window-titlebar__button) {
+    min-block-size: 1.375rem;
+    min-inline-size: 1.375rem;
+    padding: 0.125rem;
 }
 
 .basic-panel {
