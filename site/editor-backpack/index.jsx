@@ -20,7 +20,7 @@ function WebBackpackSurface({setExpanded, ...props}) {
         if (node.contains(event.target) && !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
     } : undefined}>
         <feature.BackpackSurface {...props} showUndock={canUndock} locale={locale} internalHost={internalHost}
-            onDetachedChange={setDetached}
+            onDetachedChange={setDetached} internalLayer={plusLayout ? 'utility' : undefined}
             renderPopupTools={plusLayout ? ({mount, onDock}) => <div className={styles.popupTools}>
                 <PopupLayout window={mount.ownerDocument.defaultView} locale={locale} onDock={onDock} />
             </div> : undefined}

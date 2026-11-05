@@ -1,3 +1,8 @@
+/* Keep the palette and its scrollbar within the code surface's own stacking context. */
+:global(.injectionDiv):has(> :global([data-horizontal-block-palette])) {
+    isolation: isolate;
+}
+
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) + :global([class*="gui_extension-button-container_"]) {
     inset: 1px auto auto 1px;
     width: var(--plus-extension-button-width, 3.75rem);

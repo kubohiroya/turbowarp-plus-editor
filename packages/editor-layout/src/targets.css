@@ -11,7 +11,7 @@
     overflow: visible;
 }
 
-.grid[data-maximum-columns] {
+.grid[data-standard-target-grid] {
     padding-block-end: 4rem;
 }
 
@@ -50,7 +50,7 @@
     bottom: 0;
 }
 
-.grid[data-maximum-columns][data-target-columns="1"] > .backdrop-cell {
+.grid[data-standard-target-grid][data-target-columns="1"] > .backdrop-cell {
     bottom: 4rem;
 }
 

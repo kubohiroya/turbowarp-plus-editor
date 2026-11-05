@@ -15,13 +15,13 @@ const origin = 'http://layout.test';
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
 
-async function openBrowser(t, root, prefix = '/') {
+async function openBrowser(t, root, prefix = '/', routeOrigin = origin) {
     const browser = await chromium.launch({args: ['--enable-unsafe-swiftshader']});
     t.after(() => browser.close());
     const context = await browser.newContext({viewport: {width: 1360, height: 900}});
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
-        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+        if (url.origin !== routeOrigin || !url.pathname.startsWith(prefix)) return route.abort();
         const pathname = decodeURIComponent(url.pathname.slice(prefix.length));
         const filename = path.resolve(root, pathname);
         if (!filename.startsWith(root + path.sep)) return route.abort();
@@ -60,6 +60,10 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const columns = page.getByRole('separator', {name: 'Editor and stage column width'});
     const rows = page.getByRole('separator', {name: 'Stage and target pane height'});
     const position = divider => divider.getAttribute('aria-valuenow').then(Number);
+    const grip = divider => divider.evaluate(element => {
+        const style = getComputedStyle(element, '::after');
+        return {width: style.width, height: style.height, image: style.backgroundImage};
+    });
     for (const query of ['&twPlusWindowLayout=0', '&twPlusWindowLayout=', '&twPlusWindowLayout=true', '']) {
         await start(query);
         await expect(layoutMenu(page)).toHaveCount(0);
@@ -70,6 +74,12 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect(layoutMenu(page)).toHaveCount(0);
     await start('&twPlusWindowLayout=1');
     await expect(mode).toHaveAttribute('aria-pressed', 'false');
+    const columnGrip = await grip(columns);
+    const rowGrip = await grip(rows);
+    assert.deepEqual([columnGrip.width, columnGrip.height, rowGrip.width, rowGrip.height],
+        ['4px', '18px', '18px', '4px']);
+    assert.match(columnGrip.image, /radial-gradient/);
+    assert.match(rowGrip.image, /radial-gradient/);
     const themeColor = property => page.evaluate(token => {
         const sample = document.createElement('span');
         sample.style.color = `var(${token})`;
@@ -95,9 +105,10 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const first = await position(columns);
     const initialSvgWidth = await page.locator('.blocklySvg').first().getAttribute('width').then(parseFloat);
     const divider = await columns.boundingBox();
-    await page.mouse.move(divider.x + divider.width / 2, divider.y + 90);
+    const center = divider.y + divider.height / 2;
+    await page.mouse.move(divider.x + divider.width / 2, center);
     await page.mouse.down();
-    await page.mouse.move(divider.x + 64, divider.y + 90, {steps: 6});
+    await page.mouse.move(divider.x + 64, center, {steps: 6});
     await page.mouse.up();
     assert.ok(await position(columns) > first);
     await expect.poll(() => page.locator('.blocklySvg').first().getAttribute('width').then(parseFloat))
@@ -275,7 +286,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const showStage = page.getByRole('menuitem', {name: 'Show stage', exact: true});
     const displayMenu = page.getByRole('button', {name: 'Stage display', exact: true});
     const stage = page.locator('[data-gui-stage] canvas').first();
-    const grid = page.locator('[data-maximum-columns="2"]');
+    const grid = page.locator('[data-standard-target-grid]');
     const toolbox = page.locator('.blocklyToolboxDiv').first();
     await start('&twPlusStandardLayout=0');
     await expect(stage).toBeVisible();
@@ -335,8 +346,20 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect.poll(async () => Math.round(editorBounds.width - (await workspace.boundingBox()).width)).toBe(80);
     await expect(grid).toHaveAttribute('data-target-columns', '2');
     await assertBackdropPosition();
+    const widerDivider = await splitter.boundingBox();
+    const gripX = widerDivider.x + widerDivider.width / 2;
+    const gripY = widerDivider.y + widerDivider.height / 2;
+    await page.mouse.move(gripX, gripY);
+    await page.mouse.down();
+    await page.mouse.move(gripX + 78, gripY, {steps: 8});
+    await expect(grid).toHaveAttribute('data-target-columns', '3');
+    await page.mouse.move(gripX + 156, gripY, {steps: 8});
+    await page.mouse.up();
+    await expect(grid).toHaveAttribute('data-target-columns', '4');
+    await assertBackdropPosition();
     await splitter.press('Enter');
     await expect.poll(async () => Math.round((await grid.boundingBox()).width - gridBounds.width)).toBe(0);
+    await expect(grid).toHaveAttribute('data-target-columns', '1');
     const stageBounds = await stage.boundingBox();
     assert.ok(gridBounds.x < editorBounds.x && stageBounds.x > editorBounds.x);
     assert.ok(stageBounds.x + stageBounds.width <= 1360 && stageBounds.y < 200);
@@ -401,6 +424,16 @@ test('startup chooses the layout and the stage menu hides the stage without stop
         const rect = node.getBoundingClientRect();
         return node.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
     }));
+    await addSprite.hover();
+    const paint = page.getByRole('button', {name: 'Paint', exact: true});
+    await expect.poll(() => paint.evaluate((node, tile) => {
+        const rect = node.getBoundingClientRect();
+        const x = rect.x + rect.width / 2;
+        const y = rect.y + rect.height / 2;
+        return x > tile.x && x < tile.x + tile.width && y > tile.y && y < tile.y + tile.height &&
+            node.contains(document.elementFromPoint(x, y));
+    }, narrowTile)).toBe(true);
+    await page.mouse.move(500, 400);
     await splitter.press('Enter');
     await expect(grid).toHaveAttribute('data-target-columns', '1');
 
@@ -569,4 +602,59 @@ test('the default editor expands the Backpack at the bottom edge', {timeout: 30_
     await page.mouse.move(500, 400);
     await expect(backpack).toHaveAttribute('aria-expanded', 'false');
     await expect.poll(async () => (await workspace.boundingBox()).height).toBe(height);
+});
+
+test('utility panels and menus stay above the code workspace and its palette', {timeout: 45_000}, async t => {
+    // The Backpack transfer session uses crypto.randomUUID in a secure context.
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+
+    await page.getByRole('button', {name: 'Motion', exact: true}).click();
+    const flyout = page.locator('.blocklyFlyout').first();
+    await expect(flyout).toBeVisible();
+    // Keep the flyout open while exercising the menu's click handler.
+    await page.getByText('File', {exact: true}).evaluate(node => node.click());
+    const fileMenu = page.locator('[class*="menu_menu_"]').filter({hasText: /Save/});
+    await expect(fileMenu).toBeVisible();
+    assert.ok(await fileMenu.evaluate((menu, palette) => {
+        const bounds = menu.getBoundingClientRect();
+        const x = Math.max(bounds.left, palette.x) + 8;
+        const y = Math.max(bounds.top, palette.y) + 8;
+        return x < Math.min(bounds.right, palette.x + palette.width) &&
+            y < Math.min(bounds.bottom, palette.y + palette.height) &&
+            menu.contains(document.elementFromPoint(x, y));
+    }, await flyout.boundingBox()));
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('tab', {name: 'Code', exact: true}).focus();
+    await page.getByRole('button', {name: 'Open in another window', exact: true}).click();
+    const code = page.getByRole('region', {name: /^Code · /});
+    await code.getByRole('button', {name: 'Window layout'}).click();
+    await code.getByRole('button', {name: 'Maximize this window'}).click();
+
+    const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
+    await sprites.hover();
+    await expect(sprites).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', {name: 'Undock sprite list', exact: true}).click();
+    const spriteWindow = page.getByRole('region', {name: 'Sprite list', exact: true});
+    await expect(spriteWindow).toBeVisible();
+    await code.click({position: {x: 780, y: 430}});
+    await spriteWindow.getByRole('button', {name: 'Window layout'}).click();
+    await expect(spriteWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    const backpack = page.getByRole('button', {name: 'Reveal Backpack', exact: true});
+    await backpack.hover();
+    await expect(backpack).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', {name: 'Undock Backpack', exact: true}).click();
+    const backpackWindow = page.getByRole('region', {name: 'Backpack', exact: true});
+    await expect(backpackWindow).toBeVisible();
+    await code.click({position: {x: 780, y: 430}});
+    await backpackWindow.getByRole('button', {name: 'Window layout'}).click();
+    await expect(backpackWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await code.getByRole('button', {name: 'Window layout'}).click();
+    await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
+    await expect(code).toHaveCount(0);
 });

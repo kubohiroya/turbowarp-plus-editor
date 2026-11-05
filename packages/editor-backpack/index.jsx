@@ -34,7 +34,7 @@ const messages = {
 export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
-    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName, onDetachedChange, renderPopupTools}) {
+    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName, onDetachedChange, renderPopupTools, internalLayer}) {
         const labels = /^ja(?:-|$)/i.test(locale) ? messages.ja : messages.en;
         const copyFailed = React.useRef(labels.copyFailed);
         copyFailed.current = labels.copyFailed;
@@ -89,7 +89,7 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
 
         function internalRequest() {
             const request = {
-                presentation: 'internal', id: 'backpack', title: labels.title, rememberPlacement: true
+                presentation: 'internal', id: 'backpack', title: labels.title, rememberPlacement: true, layer: internalLayer
             };
             if (host) request.openExternal = () => {
                 surface.dock();

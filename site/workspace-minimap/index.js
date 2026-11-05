@@ -3,7 +3,6 @@ import styles from './minimap.css';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const SIZE_FACTOR = 0.8;
-const PADDING_PER_BLOCK_WIDTH = 0.5;
 const DRAG_THRESHOLD = 3;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
@@ -44,11 +43,8 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
 
     let frame = null;
     let blocksChanged = true;
-    let blockArea = null;
     const drawBlocks = () => {
         const paths = document.createDocumentFragment();
-        let blockWidth = 0;
-        let blockCount = 0;
         for (const block of workspace.getAllBlocks(false)) {
             const root = block.getSvgRoot();
             if (!root || !canvas.contains(root)) continue;
@@ -62,18 +58,8 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
             path.setAttribute('d', shape);
             path.setAttribute('fill', source.getAttribute('fill') || block.getColour());
             paths.appendChild(path);
-            if (!block.isShadow()) {
-                blockWidth += block.width;
-                blockCount++;
-            }
         }
         blocks.replaceChildren(paths);
-        blockArea = null;
-        if (blocks.childElementCount) {
-            const {x, y, width, height} = blocks.getBBox();
-            const padding = (blockCount ? blockWidth / blockCount : width) * PADDING_PER_BLOCK_WIDTH;
-            blockArea = {x: x - padding, y: y - padding, width: width + 2 * padding, height: height + 2 * padding};
-        }
         blocksChanged = false;
     };
 
@@ -91,7 +77,13 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
         const height = metrics.viewHeight / scale;
         minimap.style.display = '';
         if (blocksChanged) drawBlocks();
-        const area = blockArea || {x, y, width, height};
+        // Use the scrollable area so the viewport outline stays visible even with few blocks.
+        const area = workspace.scrollbar && metrics.contentWidth > 0 && metrics.contentHeight > 0 ? {
+            x: metrics.contentLeft / scale,
+            y: metrics.contentTop / scale,
+            width: metrics.contentWidth / scale,
+            height: metrics.contentHeight / scale
+        } : {x, y, width, height};
         const viewBox = `${area.x} ${area.y} ${area.width} ${area.height}`;
         minimap.setAttribute('viewBox', viewBox);
         // Clip the viewport frame to the map even where the SVG is letterboxed.
@@ -144,7 +136,7 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
 
     let pointer = null;
     const startPointer = event => {
-        if (!event.isPrimary || event.button !== 0 || pointer || !workspace.scrollbar || !blockArea) return;
+        if (!event.isPrimary || event.button !== 0 || pointer || !workspace.scrollbar) return;
         const metrics = workspace.getMetrics();
         const screen = minimap.getScreenCTM();
         if (!metrics || !screen) return;
@@ -180,14 +172,12 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
         if (pointer?.id !== event.pointerId) return;
         if (event.type === 'pointerup') {
             movePointer(event);
-            if (!pointer.moved && blockArea) {
+            if (!pointer.moved) {
                 const metrics = workspace.getMetrics();
                 const {x, y} = toMap(event, pointer.inverse);
-                const mapX = clamp(x, blockArea.x, blockArea.x + blockArea.width);
-                const mapY = clamp(y, blockArea.y, blockArea.y + blockArea.height);
                 ScratchBlocks.hideChaff(true);
-                scrollTo(metrics, mapX - metrics.viewWidth / (2 * workspace.scale),
-                    mapY - metrics.viewHeight / (2 * workspace.scale));
+                scrollTo(metrics, x - metrics.viewWidth / (2 * workspace.scale),
+                    y - metrics.viewHeight / (2 * workspace.scale));
             }
         }
         pointer = null;

@@ -29,7 +29,26 @@
 }
 
 .separator {
+    display: grid;
+    place-items: center;
     background: var(--ui-black-transparent);
+    color: var(--text-primary);
+}
+
+.separator::after {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1.4px);
+    background-size: 4px 6px;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.separator[aria-orientation="horizontal"]::after {
+    width: 18px;
+    height: 4px;
+    background-size: 6px 4px;
 }
 
 .separator:hover,
@@ -233,6 +252,10 @@
     position: relative;
 }
 
+.target-list-content > :global([class*="sprite-selector_add-button_"]) {
+    z-index: 2;
+}
+
 .external-panel {
     display: flex;
     flex-direction: column;
@@ -245,9 +268,10 @@
 
 .standard-body {
     position: relative;
-    isolation: isolate;
     --plus-target-width: 108px;
     --plus-target-divider-width: 0px;
+    /* Between regular and utility windows in the in-app desktop. */
+    --plus-docked-utility-layer: 110;
     grid-template-areas: "targets divider editor";
     grid-template-columns: var(--plus-target-width) var(--plus-target-divider-width) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -260,9 +284,12 @@
 
 .standard-separator {
     grid-area: divider;
+    z-index: var(--plus-docked-utility-layer);
 }
 
 .standard-targets {
+    position: relative;
+    z-index: var(--plus-docked-utility-layer);
     grid-area: targets;
     min-width: 0;
     padding-inline: 0.25rem;
@@ -272,7 +299,7 @@
     position: absolute;
     top: 0;
     right: 0.5rem;
-    z-index: 110;
+    z-index: 90;
 }
 
 .standard-body {
@@ -283,10 +310,15 @@
 .standard-body :global([class*="gui_blocks-wrapper_"]):has([data-horizontal-block-palette])
     + :global([class*="gui_extension-button-container_"]) :global([class*="gui_extension-button_"]) {
     padding-inline: 0.25rem;
+    padding-left: 0.5rem;
 }
 
 .standard-body .tab-row {
     padding-right: var(--plus-stage-tab-inset, 0px);
+}
+
+.standard-body .tab-row > ul {
+    padding-left: 16pt;
 }
 
 .standard-body .stage-hidden {
@@ -385,7 +417,6 @@
     position: absolute;
     inset: 0 auto 0 0;
     width: 0;
-    z-index: 109;
 }
 
 .standard-body .standard-targets {
@@ -407,6 +438,7 @@
 }
 
 .edge-drawer[data-edge="bottom"] {
+    z-index: var(--plus-docked-utility-layer);
     flex: none;
     flex-direction: column-reverse;
     pointer-events: none;

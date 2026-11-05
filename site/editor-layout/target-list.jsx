@@ -63,7 +63,7 @@ function DockableTargetList({children}) {
     if (!plusLayout && !layoutFlags.targetList) return children;
     return <BasicPanel id="sprite-list" title={japanese ? 'スプライト一覧' : 'Sprite list'}
         className={styles.targetListPanel} externalHost={externalHost} decorate={decorateSurface}
-        alwaysShowUndock={plusLayout} renderDockHeading={plusLayout ? dockHeading : undefined}
+        layer={plusLayout ? 'utility' : undefined} alwaysShowUndock={plusLayout} renderDockHeading={plusLayout ? dockHeading : undefined}
         openLabel={plusLayout ? (japanese ? 'アンドック' : 'Undock sprite list') : undefined}
         renderInExternalDocument>
         <layoutViews.TargetSearchProvider value={query}>
