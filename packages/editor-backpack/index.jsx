@@ -34,12 +34,14 @@ const messages = {
 export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
-    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName, renderPopupTools}) {
+    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName, onDetachedChange, renderPopupTools}) {
         const labels = /^ja(?:-|$)/i.test(locale) ? messages.ja : messages.en;
         const copyFailed = React.useRef(labels.copyFailed);
         copyFailed.current = labels.copyFailed;
         const [display, setDisplay] = React.useState({vm, state: docked});
         const state = display.vm === vm ? display.state : docked;
+        const detached = state.kind === 'external';
+        React.useLayoutEffect(() => {onDetachedChange?.(detached);}, [onDetachedChange, detached]);
         const scope = React.useRef(null);
         const mounted = React.useRef(true);
         const launchButton = React.useRef(null);

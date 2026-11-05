@@ -547,3 +547,26 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
     await expect(backdrop).toBeVisible();
 
 });
+
+test('the default editor expands the Backpack at the bottom edge', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const backpack = page.getByRole('button', {name: 'Reveal Backpack', exact: true});
+    const workspace = page.locator('.blocklySvg').first();
+    const map = page.locator('[data-workspace-minimap]');
+    const zoom = page.locator('[data-plus-horizontal-zoom]');
+    await expect(backpack).toHaveAttribute('aria-expanded', 'false');
+    await expect(workspace).toBeVisible();
+    const height = (await workspace.boundingBox()).height;
+    await backpack.hover();
+    await expect(backpack).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByRole('button', {name: 'Undock Backpack', exact: true})).toBeVisible();
+    await expect.poll(async () => (await workspace.boundingBox()).height).toBeLessThan(height);
+    const mapBounds = await map.boundingBox();
+    const zoomBounds = await zoom.boundingBox();
+    const trigger = await backpack.boundingBox();
+    assert.ok(mapBounds.y + mapBounds.height < zoomBounds.y && zoomBounds.y + zoomBounds.height < trigger.y);
+    await page.mouse.move(500, 400);
+    await expect(backpack).toHaveAttribute('aria-expanded', 'false');
+    await expect.poll(async () => (await workspace.boundingBox()).height).toBe(height);
+});
