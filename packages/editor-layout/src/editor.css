@@ -245,9 +245,10 @@
 
 .standard-body {
     position: relative;
-    isolation: isolate;
     --plus-target-width: 108px;
     --plus-target-divider-width: 0px;
+    /* Between regular and utility windows in the in-app desktop. */
+    --plus-docked-utility-layer: 110;
     grid-template-areas: "targets divider editor";
     grid-template-columns: var(--plus-target-width) var(--plus-target-divider-width) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -260,9 +261,12 @@
 
 .standard-separator {
     grid-area: divider;
+    z-index: var(--plus-docked-utility-layer);
 }
 
 .standard-targets {
+    position: relative;
+    z-index: var(--plus-docked-utility-layer);
     grid-area: targets;
     min-width: 0;
     padding-inline: 0.25rem;
@@ -272,7 +276,7 @@
     position: absolute;
     top: 0;
     right: 0.5rem;
-    z-index: 110;
+    z-index: 90;
 }
 
 .standard-body {
@@ -385,7 +389,6 @@
     position: absolute;
     inset: 0 auto 0 0;
     width: 0;
-    z-index: 109;
 }
 
 .standard-body .standard-targets {
@@ -407,6 +410,7 @@
 }
 
 .edge-drawer[data-edge="bottom"] {
+    z-index: var(--plus-docked-utility-layer);
     flex: none;
     flex-direction: column-reverse;
     pointer-events: none;

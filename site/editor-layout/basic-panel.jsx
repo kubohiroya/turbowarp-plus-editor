@@ -7,7 +7,7 @@ import {PopupLayout} from './popup-layout.jsx';
 import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 function DockableBasicPanel({host, id, title, children, render, actionMount, dockHeight, className,
-    externalHost, decorate, renderInExternalDocument, onDockActionChange, alwaysShowUndock, openLabel, renderDockHeading}) {
+    externalHost, decorate, renderInExternalDocument, onDockActionChange, alwaysShowUndock, openLabel, renderDockHeading, layer}) {
     const {showUndock, locale, plusLayout} = React.useContext(WindowLayoutContext);
     const canUndock = alwaysShowUndock || showUndock;
     const [state, setState] = React.useState({kind: 'docked'});
@@ -56,14 +56,14 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
             surface.undock();
             return;
         }
-        const request = {id, title, rememberPlacement: true, presentation: 'internal'};
+        const request = {id, title, rememberPlacement: true, presentation: 'internal', layer};
         if (externalHost) request.openExternal = () => {
             surface.dock();
             fallback.current = request;
             surface.undock();
         };
         surface.undock(request);
-    }, [surface, id, title, externalHost, plusLayout]);
+    }, [surface, id, title, externalHost, plusLayout, layer]);
     React.useLayoutEffect(() => {
         if (!onDockActionChange) return;
         onDockActionChange({kind: state.kind, dock: surface.dock, undock, external: Boolean(externalHost && !plusLayout)});

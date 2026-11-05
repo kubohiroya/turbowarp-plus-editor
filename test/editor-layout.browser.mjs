@@ -15,13 +15,13 @@ const origin = 'http://layout.test';
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
 
-async function openBrowser(t, root, prefix = '/') {
+async function openBrowser(t, root, prefix = '/', routeOrigin = origin) {
     const browser = await chromium.launch({args: ['--enable-unsafe-swiftshader']});
     t.after(() => browser.close());
     const context = await browser.newContext({viewport: {width: 1360, height: 900}});
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
-        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+        if (url.origin !== routeOrigin || !url.pathname.startsWith(prefix)) return route.abort();
         const pathname = decodeURIComponent(url.pathname.slice(prefix.length));
         const filename = path.resolve(root, pathname);
         if (!filename.startsWith(root + path.sep)) return route.abort();
@@ -569,4 +569,59 @@ test('the default editor expands the Backpack at the bottom edge', {timeout: 30_
     await page.mouse.move(500, 400);
     await expect(backpack).toHaveAttribute('aria-expanded', 'false');
     await expect.poll(async () => (await workspace.boundingBox()).height).toBe(height);
+});
+
+test('utility panels and menus stay above the code workspace and its palette', {timeout: 45_000}, async t => {
+    // The Backpack transfer session uses crypto.randomUUID in a secure context.
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+
+    await page.getByRole('button', {name: 'Motion', exact: true}).click();
+    const flyout = page.locator('.blocklyFlyout').first();
+    await expect(flyout).toBeVisible();
+    // Keep the flyout open while exercising the menu's click handler.
+    await page.getByText('File', {exact: true}).evaluate(node => node.click());
+    const fileMenu = page.locator('[class*="menu_menu_"]').filter({hasText: /Save/});
+    await expect(fileMenu).toBeVisible();
+    assert.ok(await fileMenu.evaluate((menu, palette) => {
+        const bounds = menu.getBoundingClientRect();
+        const x = Math.max(bounds.left, palette.x) + 8;
+        const y = Math.max(bounds.top, palette.y) + 8;
+        return x < Math.min(bounds.right, palette.x + palette.width) &&
+            y < Math.min(bounds.bottom, palette.y + palette.height) &&
+            menu.contains(document.elementFromPoint(x, y));
+    }, await flyout.boundingBox()));
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('tab', {name: 'Code', exact: true}).focus();
+    await page.getByRole('button', {name: 'Open in another window', exact: true}).click();
+    const code = page.getByRole('region', {name: /^Code · /});
+    await code.getByRole('button', {name: 'Window layout'}).click();
+    await code.getByRole('button', {name: 'Maximize this window'}).click();
+
+    const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
+    await sprites.hover();
+    await expect(sprites).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', {name: 'Undock sprite list', exact: true}).click();
+    const spriteWindow = page.getByRole('region', {name: 'Sprite list', exact: true});
+    await expect(spriteWindow).toBeVisible();
+    await code.click({position: {x: 780, y: 430}});
+    await spriteWindow.getByRole('button', {name: 'Window layout'}).click();
+    await expect(spriteWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    const backpack = page.getByRole('button', {name: 'Reveal Backpack', exact: true});
+    await backpack.hover();
+    await expect(backpack).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', {name: 'Undock Backpack', exact: true}).click();
+    const backpackWindow = page.getByRole('region', {name: 'Backpack', exact: true});
+    await expect(backpackWindow).toBeVisible();
+    await code.click({position: {x: 780, y: 430}});
+    await backpackWindow.getByRole('button', {name: 'Window layout'}).click();
+    await expect(backpackWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await code.getByRole('button', {name: 'Window layout'}).click();
+    await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
+    await expect(code).toHaveCount(0);
 });
