@@ -13,6 +13,7 @@ test('横パレットでカテゴリを切り替え、実ブロックを追加�
     const looks = toolbox.locator('.scratchCategoryId-looks');
     const workspace = page.locator('.blocklySvg').first();
     const block = workspace.locator('> .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable');
+    const preview = page.locator('[data-palette-delete-preview]');
 
     evidence.stage('switch-to-horizontal');
     await expect(flyout).toBeVisible();
@@ -20,6 +21,8 @@ test('横パレットでカテゴリを切り替え、実ブロックを追加�
     await useLayout(page, 'Use horizontal palette');
     await expect(flyout).toBeHidden();
     const horizontal = await toolbox.boundingBox();
+    const moveToPalette = () => page.mouse.move(horizontal.x + horizontal.width / 2,
+        horizontal.y + horizontal.height / 2, {steps: 14});
     expect(horizontal.width).toBeGreaterThan(vertical.width);
     expect(horizontal.height).toBeLessThan(vertical.height);
     expect((await motion.boundingBox()).y).toBe((await looks.boundingBox()).y);
@@ -71,9 +74,24 @@ test('横パレットでカテゴリを切り替え、実ブロックを追加�
     const placed = await block.boundingBox();
     await page.mouse.move(placed.x + 12, placed.y + 12);
     await page.mouse.down();
-    await page.mouse.move(horizontal.x + horizontal.width / 2, horizontal.y + horizontal.height / 2, {steps: 14});
-    await expect(page.locator('[data-palette-delete-preview]')).toBeVisible();
+    await moveToPalette();
+    await expect(preview).toBeVisible();
     await page.mouse.up();
+    await expect(block).toHaveCount(0);
+
+    evidence.stage('return-to-palette');
+    await motion.click();
+    await expect(source).toBeVisible();
+    const next = await source.boundingBox();
+    await page.mouse.move(next.x + 12, next.y + 12);
+    await page.mouse.down();
+    await page.mouse.move(surface.x + surface.width * 0.65, surface.y + 260, {steps: 16});
+    await expect(flyout).toBeHidden();
+    await expect(preview).toHaveCount(0);
+    await moveToPalette();
+    await expect(preview).toBeVisible();
+    await page.mouse.up();
+    await expect(preview).toHaveCount(0);
     await expect(block).toHaveCount(0);
 
     evidence.stage('return-to-vertical');

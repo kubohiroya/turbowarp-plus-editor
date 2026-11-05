@@ -17,8 +17,7 @@ export const installPaletteDeletePreview = ScratchBlocks => {
         const result = handleMove.call(this, event);
         const dragger = this.blockDragger_;
         // Reuse the dragger's decision, including deletability and competing connections.
-        // A gesture that started in the flyout can also have a dragger in the main workspace.
-        if (this.flyout_ || !dragger?.wouldDeleteBlock_ || dragger.deleteArea_ !== ScratchBlocks.DELETE_AREA_TOOLBOX) {
+        if (!dragger?.wouldDeleteBlock_ || dragger.deleteArea_ !== ScratchBlocks.DELETE_AREA_TOOLBOX) {
             clear(this);
             return result;
         }
