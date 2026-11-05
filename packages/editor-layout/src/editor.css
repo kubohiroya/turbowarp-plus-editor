@@ -259,6 +259,16 @@
     z-index: 110;
 }
 
+.standard-body {
+    --plus-extension-button-width: 2.75rem;
+    --plus-extension-button-gap: 0.75rem;
+}
+
+.standard-body :global([class*="gui_blocks-wrapper_"]):has([data-horizontal-block-palette])
+    + :global([class*="gui_extension-button-container_"]) :global([class*="gui_extension-button_"]) {
+    padding-inline: 0.25rem;
+}
+
 .standard-body .stage-hidden {
     visibility: hidden;
     pointer-events: none;
