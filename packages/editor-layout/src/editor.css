@@ -337,8 +337,8 @@
     padding-inline: 0.25rem;
 }
 
-.layout-menu summary,
-.layout-menu button {
+details.layout-menu summary,
+details.layout-menu button {
     min-height: 2rem;
     padding-inline: 0.5rem;
     background: var(--ui-white);
@@ -350,15 +350,16 @@
 }
 
 .layout-menu {
+    --tw-plus-icon-menu-layer: 111;
     position: relative;
 }
 
-.layout-menu summary {
+details.layout-menu summary {
     display: grid;
     place-items: center;
 }
 
-.layout-menu button {
+details.layout-menu button {
     position: absolute;
     inset-inline-end: 0;
     z-index: 111;

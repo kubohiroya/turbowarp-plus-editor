@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
 import {chromium} from 'playwright';
-import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
+import {readUndockButtonsChecked, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15107';
 const prefix = '/turbowarp-plus-editor/';
@@ -292,7 +292,7 @@ try {
     console.log('Tab switching, close, sprite deletion, and saving and reopening a project passed.');
 
     await page.getByRole('tab', {name: 'Code', exact: true}).click();
-    if (await undockButtons(page).getAttribute('aria-pressed') === 'false') await toggleUndockButtons(page);
+    if (!await readUndockButtonsChecked(page)) await toggleUndockButtons(page);
     await page.getByRole('tablist').locator('..')
         .getByRole('button', {name: 'Open in another window', exact: true}).press('Enter');
     const basicTarget = await page.evaluate(() => window.vm.editingTarget.getName());

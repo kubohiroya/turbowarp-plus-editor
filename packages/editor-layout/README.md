@@ -17,7 +17,7 @@ Scratch 配置では分割を既定で有効にする。既存のステージサ
 
 ## Plus 標準配置
 
-`createStandardLayout(React, {styles, targetStyles, context})` は、⚓️ での配置切り替え、ステージの表示と計測、スプライト一覧の2列配置を担当する。`editor.css` と `targets.css` をクラス名マップとして渡す。ホストは起動設定、ストレージ、ウィンドウ操作部品、パレット表示のコールバックと描画先を渡す。ステージを隠しても同じ描画先を使う。
+`createStandardLayout(React, {styles, targetStyles, context})` は、⚓️ での配置切り替え、ステージの表示と計測、スプライト一覧の2列配置を担当する。`editor.css` と `targets.css` をクラス名マップとして渡す。ホストは起動設定、ストレージ、ウィンドウ操作部品、パレット表示のコールバックと描画先を渡す。配置メニューの描画を差し替える場合は、任意の `LayoutMenu` コンポーネントをファクトリーに渡す。ステージを隠しても同じ描画先を使う。
 
 試験用ホストの `/example/?standard=1` で Plus と Scratch の往復を確認できる。`standard=0` は起動時の切り戻しを再現する。
 

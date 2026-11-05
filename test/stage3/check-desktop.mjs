@@ -8,7 +8,7 @@ import {createInterface} from 'node:readline';
 import {setTimeout as delay} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {chromium} from 'playwright';
-import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
+import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
@@ -199,7 +199,6 @@ async function checkInternal ({editor, control}) {
     await control('layout', parent.id);
     await control('focus', parent.id);
     await until(() => editor.evaluate(() => document.hasFocus()), 'native editor focus');
-    const mode = undockButtons(editor);
     const labels = {
         backpack: /^(Backpack|バックパック)$/,
         code: /^(Code|コード)$/,
@@ -220,7 +219,7 @@ async function checkInternal ({editor, control}) {
     await seedBackpack(editor);
     await observeNative(editor);
     await toggleUndockButtons(editor, button => click(control, 'editor', button));
-    if (await mode.getAttribute('aria-pressed') !== 'true') {
+    if (!await readUndockButtonsChecked(editor)) {
         await control('focus', parent.id);
         await toggleUndockButtons(editor, button => click(control, 'editor', button));
     }
@@ -786,10 +785,9 @@ async function checkCodePopouts ({editor, context, control}, {
     const original = await coordinates();
     await block(editor).waitFor();
     await focus(editor, parent.id);
-    const mode = undockButtons(editor);
     const editorClick = locator => native ? click(control, parent.id, locator) : locator.click();
     await toggleUndockButtons(editor, editorClick);
-    if (native && await mode.getAttribute('aria-pressed') !== 'true') {
+    if (native && !await readUndockButtonsChecked(editor)) {
         await focus(editor, parent.id);
         await toggleUndockButtons(editor, editorClick);
     }
@@ -1360,9 +1358,8 @@ async function checkStagePopout ({editor, context, control}) {
     await question.waitFor({state: 'hidden'});
     report.checks.push('Green flag, stop and question submission in the child control the parent VM');
 
-    const anchor = undockButtons(editor);
     await toggleUndockButtons(editor);
-    assert.equal(await anchor.getAttribute('aria-pressed'), 'false');
+    assert.equal(await readUndockButtonsChecked(editor), false);
     assert.equal(await stageAction.count(), 0);
     assert.ok(!child.isClosed());
     await screenCanvas.waitFor();
@@ -1503,7 +1500,7 @@ try {
         await control('layout', parent.id);
         await editor.getByRole('separator', {name: /^(Editor and stage column width|編集領域とステージ列の幅)$/}).waitFor();
         await editor.getByRole('separator', {name: /^(Stage and target pane height|ステージと対象領域の高さ)$/}).waitFor();
-        assert.equal(await undockButtons(editor).count(), 0);
+        assert.equal(await layoutMenu(editor).count(), 0);
         assert.equal(await editor.getByRole('button', {name: undockLabel}).count(), 0);
         assert.equal(await editor.getByRole('region', {name: spritePropertiesLabel}).count(), 0);
         assert.equal(await editor.evaluate(() =>
@@ -1534,19 +1531,18 @@ try {
         await control('layout', parent.id);
         await control('focus', parent.id);
         await until(() => editor.evaluate(() => document.hasFocus()), 'native editor focus');
-        const mode = undockButtons(editor);
         const undock = editor.getByRole('button', {name: undockLabel});
         const header = editor.locator('[class*="backpack_backpack-header"]');
         assert.equal(await undock.count(), 0);
         const ids = await seedBackpack(editor);
         await observeNative(editor);
         await toggleUndockButtons(editor, button => click(control, 'editor', button));
-        if (await mode.getAttribute('aria-pressed') !== 'true') {
+        if (!await readUndockButtonsChecked(editor)) {
             await control('focus', parent.id);
             await toggleUndockButtons(editor, button => click(control, 'editor', button));
         }
         await undock.waitFor();
-        assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+        assert.equal(await readUndockButtonsChecked(editor), true);
         await click(control, 'editor', header);
         await editor.getByText(itemName, {exact: true}).waitFor();
 
