@@ -581,6 +581,44 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
 
 });
 
+test('a background sprite code window fits scripts far from the origin', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.addInitScript(() => localStorage.setItem('tw:theme', 'dark'));
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    await page.evaluate(async () => {
+        const sprite = vm.editingTarget;
+        vm.renameSprite(sprite.id, 'Preview sprite');
+        await vm.duplicateSprite(sprite.id);
+        vm.renameSprite(vm.editingTarget.id, 'Editing sprite');
+        for (const [id, x, y] of [['preview-first', 2200, 1800], ['preview-last', 2600, 2200]]) {
+            sprite.blocks.createBlock({id, x, y, opcode: 'looks_show', fields: {}, inputs: {},
+                shadow: false, topLevel: true, parent: null, next: null});
+        }
+    });
+
+    await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
+    await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
+    const tile = name => page.locator('[class*="sprite-selector-item_sprite-name"]').getByText(name, {exact: true});
+    await tile('Preview sprite').click();
+    const back = page.getByRole('region', {name: 'Code · Preview sprite', exact: true});
+    await expect(back.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
+    await tile('Editing sprite').click();
+    const front = page.getByRole('region', {name: 'Code · Editing sprite', exact: true});
+    await expect(front.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
+
+    const preview = back.locator('[data-code-preview] .blocklySvg');
+    await expect.poll(() => preview.evaluate(svg => {
+        const area = svg.getBoundingClientRect();
+        return ['preview-first', 'preview-last'].every(id => {
+            const block = svg.querySelector(`[data-id="${id}"]`)?.getBoundingClientRect();
+            return block?.width > 0 && block.height > 0 && block.left >= area.left && block.top >= area.top &&
+                block.right <= area.right && block.bottom <= area.bottom;
+        });
+    })).toBe(true);
+    assert.equal(await page.evaluate(() => vm.editingTarget.getName()), 'Editing sprite');
+});
+
 test('the default editor expands the Backpack at the bottom edge', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');

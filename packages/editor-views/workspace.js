@@ -134,7 +134,25 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             }));
             workspace.markFocused();
             let renderedXml;
-            const resize = () => blocks.svgResize(preview);
+            const resize = () => {
+                blocks.svgResize(preview);
+                const width = element.clientWidth;
+                const height = element.clientHeight;
+                if (!width || !height) return;
+                const bounds = preview.getBlocksBoundingBox();
+                // Preserve the existing coordinates when the whole preview already fits.
+                const fits = bounds.x >= 0 && bounds.y >= 0 &&
+                    bounds.x + bounds.width <= width && bounds.y + bounds.height <= height;
+                const padding = Math.min(16, width / 4, height / 4);
+                const scale = fits ? 1 : Math.min(1,
+                    (width - 2 * padding) / Math.max(1, bounds.width),
+                    (height - 2 * padding) / Math.max(1, bounds.height));
+                // setScale hides Blockly widgets globally, including those in the active editor.
+                preview.scale = scale;
+                const x = fits ? 0 : (width - bounds.width * scale) / 2 - bounds.x * scale;
+                const y = fits ? 0 : (height - bounds.height * scale) / 2 - bounds.y * scale;
+                preview.translate(x, y);
+            };
             const observer = new ResizeObserver(resize);
             observer.observe(element);
             return {
