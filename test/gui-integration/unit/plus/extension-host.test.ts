@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -65,7 +64,7 @@ test('the startup query goes over unread, and a later URL change cannot change i
     // With no search given, the snapshot taken before any project was opened is used, so changing
     // the URL afterwards changes nothing.
     const previous = globalThis.location;
-    globalThis.location = {search: '?twPlusExtensionLoader=0'};
+    globalThis.location = {search: '?twPlusExtensionLoader=0'} as Location;
     try {
         startupPlusExtensionHost({}, {}, integration);
         assert.equal(given[1].search, previous === undefined ? '' : previous.search);
@@ -108,7 +107,7 @@ test('the host installs the batch review under the loader and restores it after 
     const onComplete = () => {};
     let review;
     const dispose = installSecurityHost(vm, {
-        securityManager: {}, locale: 'ja', DialogFrame, isTrusted,
+        securityManager: {}, locale: 'ja', DialogFrame, isTrusted, projectState: undefined,
         extensionLibrary: [{extensionId: 'music', iconURL: 'native-icon'}],
         requestModal (render, cancelled) {
             assert.equal(cancelled, null);
@@ -161,7 +160,8 @@ test('a supplied native loading policy bypasses the batch review and stays bound
             return 'iframe';
         }
     };
-    const dispose = installSecurityHost(vm, {securityManager}, {
+    const dispose = installSecurityHost(vm, {securityManager, locale: undefined, projectState: undefined,
+        extensionLibrary: undefined, isTrusted: undefined, DialogFrame: undefined, requestModal: undefined}, {
         securityReview: {installBatchLoader: () => assert.fail('Native policy should own this load')},
         installExtensionHost (target, {hostPolicy}) {
             assert.equal(target, vm);

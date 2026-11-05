@@ -1,4 +1,4 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
+import type {VMBlock, VMVariable} from '@kubohiroya/turbowarp-script-transfer';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {guiRequire} from '../extension-host/pinned-host.ts';
@@ -59,10 +59,10 @@ test('stage import adds scripts/assets and merges globals while retaining destin
     await importStage(vm, await archive(json, true), {Zip, deserializeBlocks});
     assert.equal(vm.runtime.targets.filter(t => t.isStage).length, 1);
     assert.equal(stage.variables.destination.value, 9);
-    assert.deepEqual(Object.values(stage.variables).find(v => v.type === 'list').value, ['日本語']);
+    assert.deepEqual(Object.values<VMVariable>(stage.variables).find(v => v.type === 'list').value, ['日本語']);
     assert.equal(stage.getCostumes().length, before + 1);
     assert.equal(stage.tempo, 83);
-    const imported = Object.values(stage.blocks._blocks).find(b => b.opcode === 'data_setvariableto');
+    const imported = Object.values<VMBlock>(stage.blocks._blocks).find(b => b.opcode === 'data_setvariableto');
     assert.equal(imported.fields.VARIABLE.id, 'destination');
 });
 
@@ -93,9 +93,9 @@ test('asset name collisions rename both the imported backdrop and its literal re
     const stage = vm.runtime.getTargetForStage();
     const json = stageFile();
     json.costumes.push({name: 'original', md5ext: 'image.svg', assetId: 'image', dataFormat: 'svg'});
-    json.blocks.menu = {opcode: 'looks_backdrops', inputs: {}, fields: {BACKDROP: ['original', null]},
-        topLevel: true, shadow: true, next: null, parent: null};
+    Object.assign(json.blocks, {menu: {opcode: 'looks_backdrops', inputs: {}, fields: {BACKDROP: ['original', null]},
+        topLevel: true, shadow: true, next: null, parent: null}});
     await importStage(vm, await archive(json, true), {Zip, deserializeBlocks});
     assert.deepEqual(stage.getCostumes().map(c => c.name), ['original', 'original (2)']);
-    assert.equal(Object.values(stage.blocks._blocks).find(b => b.opcode === 'looks_backdrops').fields.BACKDROP.value, 'original (2)');
+    assert.equal(Object.values<VMBlock>(stage.blocks._blocks).find(b => b.opcode === 'looks_backdrops').fields.BACKDROP.value, 'original (2)');
 });

@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';

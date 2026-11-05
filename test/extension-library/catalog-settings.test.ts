@@ -1,4 +1,4 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
+import type {CatalogEntry, ReviewDecision} from '@kubohiroya/turbowarp-extension-security-dialog';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
@@ -6,7 +6,7 @@ import Zip from '@turbowarp/jszip';
 import {applyPlusCatalogSettings, readPlusCatalogSettings} from '../../site/extension-library/catalog-settings.ts';
 import {createExtensionAuthoringController, setExtensionAuthoringHost} from '../../site/extension-host/authoring.ts';
 
-const entry = (id, dependencies = []) => ({id, ids: [id], url: `https://catalog.test/${id}.js`, dependencies,
+const entry = (id, dependencies = []) => ({id, key: id, ids: [id], url: `https://catalog.test/${id}.js`, dependencies,
     metadata: {name: id, version: '1.2.3'}});
 // The Loader's four forms: a source either names a URL or carries the bytes. The review screen
 // spells them the same way, so what `readPlusCatalogSettings` returns and what
@@ -19,11 +19,12 @@ function vmFixture(services = [], loadedIds = services.map(([id]) => id)) {
         isExtensionLoaded(id) { return loadedIds.includes(id); }}};
 }
 /** `decisions` as `[id, execution, loading]`; a missing loading stays missing. */
-const selection = (entries, decisions) => ({entries, decisions: new Map(decisions.map(([id, execution, loading]) =>
-    [id, loading === undefined ? {execution} : {execution, loading}]))});
-const deferred = () => {
-    let resolve;
-    const promise = new Promise(yes => { resolve = yes; });
+const selection = (entries: CatalogEntry[], decisions: [string, ReviewDecision['execution'], ReviewDecision['loading']?][]) =>
+    ({entries, decisions: new Map<string, ReviewDecision>(decisions.map(([id, execution, loading]) =>
+        [id, loading === undefined ? {execution} : {execution, loading}]))});
+const deferred = <Value = void>() => {
+    let resolve: (value: Value) => void;
+    const promise = new Promise<Value>(yes => { resolve = yes; });
     return {promise, resolve};
 };
 async function plainSB3() {
@@ -118,7 +119,7 @@ test('missing or unknown execution prevents the entire batch from reaching confi
         let calls = 0;
         setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
         await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('first'), entry('second')],
-            [['first', 'sandboxed', 'remote-cacheable'], ['second', mode, 'remote-cacheable']])), {code: 'MISSING_EXECUTION'});
+            [['first', 'sandboxed', 'remote-cacheable'], ['second', mode as ReviewDecision['execution'], 'remote-cacheable']])), {code: 'MISSING_EXECUTION'});
         assert.equal(calls, 0);
         setExtensionAuthoringHost(vm, null);
     }
@@ -129,7 +130,7 @@ test('a missing form, or a retired spelling, is refused rather than defaulted or
         const vm = vmFixture();
         let calls = 0;
         setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
-        await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('first')], [['first', 'sandboxed', loading]])),
+        await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('first')], [['first', 'sandboxed', loading as ReviewDecision['loading']]])),
             {code: 'MISSING_LOADING'}, String(loading));
         assert.equal(calls, 0);
         setExtensionAuthoringHost(vm, null);
@@ -141,18 +142,19 @@ test('the disabled Loader host refuses distribution writes', async () => {
 });
 
 test('configure and inspect connect the real core batch API to one project apply without executing JS', async () => {
-    const vm = new EventEmitter();
-    vm.extensionManager = {isExtensionLoaded: () => false};
     let current = await plainSB3();
     const approvals = [];
     const loads = [];
     let controller;
-    vm.saveProjectSb3 = async () => current.slice().buffer;
-    vm.loadProject = async bytes => {
-        controller.projectLoadStarted();
-        loads.push(bytes);
-        current = new Uint8Array(bytes);
-    };
+    const vm = Object.assign(new EventEmitter(), {
+        extensionManager: {isExtensionLoaded: () => false},
+        saveProjectSb3: async () => current.slice().buffer,
+        loadProject: async (bytes: ArrayBuffer) => {
+            controller.projectLoadStarted();
+            loads.push(bytes);
+            current = new Uint8Array(bytes);
+        }
+    });
     controller = createExtensionAuthoringController(vm, {zip: Zip, ports: {
         fetcher: {async fetch(url) { return {bytes: new TextEncoder().encode('globalThis.__catalogAdapterExecuted=true;'), finalURL: url, redirects: []}; }},
         trustProvider: {async authorize(code) { approvals.push([code.id, code.execution, code.source.type]); return {allowed: true, scope: 'digest', sha256: code.sha256}; }}
@@ -160,7 +162,7 @@ test('configure and inspect connect the real core batch API to one project apply
     const configured = await controller.configure([
         {id: 'first', url: entry('first').url, distribution: 'embedded-file', execution: 'sandboxed', dependencies: [], version: '1.2.3'},
         {id: 'second', url: entry('second').url, distribution: 'remote-cacheable', execution: 'unsandboxed', dependencies: ['first'], version: '1.2.3'}
-    ]);
+    ], undefined);
     assert.deepEqual(approvals, [['first', 'sandboxed', 'embedded-file'], ['second', 'unsandboxed', 'remote-cacheable']]);
     assert.equal(loads.length, 1);
     assert.deepEqual(await controller.inspect(), configured);
@@ -171,23 +173,24 @@ test('configure and inspect connect the real core batch API to one project apply
 });
 
 test('inspect rejects pending configuration and project changes during asynchronous serialization', async () => {
-    const vm = new EventEmitter();
-    vm.extensionManager = {isExtensionLoaded: () => false};
     const current = await plainSB3();
     const fetching = deferred();
     const resume = deferred();
-    vm.saveProjectSb3 = async () => current;
-    vm.loadProject = async () => {};
+    const vm = Object.assign(new EventEmitter(), {
+        extensionManager: {isExtensionLoaded: () => false},
+        saveProjectSb3: async () => current,
+        loadProject: async () => {}
+    });
     const controller = createExtensionAuthoringController(vm, {zip: Zip, ports: {
         fetcher: {async fetch(url) { fetching.resolve(); await resume.promise; return {bytes: new TextEncoder().encode('/* code */'), finalURL: url, redirects: []}; }},
         trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}
     }});
-    const pending = controller.configure([{id: 'sample', url: entry('sample').url, distribution: 'remote-cacheable', execution: 'sandboxed'}]);
+    const pending = controller.configure([{id: 'sample', url: entry('sample').url, distribution: 'remote-cacheable', execution: 'sandboxed'}], undefined);
     await fetching.promise;
     await assert.rejects(controller.inspect(), {code: 'PROJECT_BUSY'});
     resume.resolve();
     await pending;
-    const serialized = deferred();
+    const serialized = deferred<typeof current>();
     vm.saveProjectSb3 = () => serialized.promise;
     const inspecting = controller.inspect();
     vm.emit('PROJECT_CHANGED');

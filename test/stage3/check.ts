@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {spawn, execFile} from 'node:child_process';
 import {once} from 'node:events';
@@ -24,7 +23,16 @@ const chrome = spawn(process.env.TW151_CHROME || '/Applications/Google Chrome.ap
 const stopped = once(chrome, 'close');
 let stderr = '';
 chrome.stderr.on('data', chunk => {stderr = (stderr + chunk).slice(-12000);});
-const report = {checks: [], errors: []};
+const report: {
+    checks: string[];
+    errors: string[];
+    browser?: string;
+    drag?: number[];
+    failure?: string;
+    stderr?: string;
+    parent?: unknown;
+    popup?: unknown;
+} = {checks: [], errors: []};
 let browser;
 let page;
 let popup;
@@ -116,7 +124,7 @@ try {
             shadow: false, fields: {}, inputs: {}, x: 30, y: 30});
         const stack = [block('stage3-hide', 'looks_hide', null, 'stage3-show'),
             block('stage3-show', 'looks_show', 'stage3-hide', null)];
-        const database = await new Promise((resolve, reject) => {
+        const database = await new Promise<IDBDatabase>((resolve, reject) => {
             const request = indexedDB.open('TW_Backpack', 1);
             request.onupgradeneeded = () => request.result.createObjectStore('backpack',
                 {keyPath: 'id', autoIncrement: true});
@@ -171,7 +179,7 @@ try {
         window.fetch = async (url, options) => {
             if (typeof url === 'string' && url.startsWith('data:application/json;base64,')) {
                 options.signal.addEventListener('abort', () => {window.stage3Cancelled = true;}, {once: true});
-                await new Promise(resolve => {window.stage3FinishCancelledRead = resolve;});
+                await new Promise<void>(resolve => {window.stage3FinishCancelledRead = resolve;});
                 window.fetch = originalFetch;
             }
             return originalFetch(url, options);
@@ -212,7 +220,7 @@ try {
             window.fetch = async (url, options) => {
                 if (typeof url === 'string' && url.startsWith('data:application/json;base64,')) {
                     window.stage3Reading = true;
-                    await new Promise(resolve => {window.stage3Release = resolve;});
+                    await new Promise<void>(resolve => {window.stage3Release = resolve;});
                 }
                 return fetch(url, options);
             };

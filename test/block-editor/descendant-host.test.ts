@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {BlockEditorConflictError, BlockEditorStructureError} from '@kubohiroya/turbowarp-extension-data-editor';
@@ -271,7 +270,7 @@ test('a real sb3 ZIP round-trip retains all committed values and connections wit
         for (const block of Object.values(target.blocks)) {
             if (!block || Array.isArray(block)) continue;
             for (const key of ['draft', 'generation', 'schema', 'inputPath', 'revision']) {
-                assert.equal(Object.hasOwn(block, key), false);
+                assert.equal(Object.hasOwn(block as object, key), false);
             }
         }
     }

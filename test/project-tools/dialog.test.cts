@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 require('../extension-library/harness.cts');
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
@@ -7,7 +6,7 @@ const {createProjectDialogs} = require('../../site/project-tools/dialog.ts');
 const {createAuthorHistory} = require('../../site/project-tools/history.ts');
 const {createProjectDiagnostics} = require('../../site/project-tools/diagnostics.ts');
 
-const fixture = (options) => {
+const fixture = (options?: {locale?: string}) => {
     const dom = new JSDOM('<button id="origin">File</button>', {url: 'https://example.test/'});
     const document = dom.window.document;
     dom.window.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };

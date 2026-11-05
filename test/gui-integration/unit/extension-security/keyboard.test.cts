@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 require('./helpers.cts');
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
@@ -11,7 +10,9 @@ test('host-owned dialog keyup preserves native activation without forwarding key
     // GUI API registration is unrelated to the keyboard event boundary under test.
     const apiPath=require.resolve('../../../src/lib/tw-extension-gui-api');
     const previousAPI=require.cache[apiPath];
-    require.cache[apiPath]={id:apiPath,filename:apiPath,loaded:true,exports:{__esModule:true,default:()=>{}}};
+    require.cache[apiPath] = Object.assign(new (require('node:module'))(apiPath), {
+        filename: apiPath, loaded: true, exports: {__esModule: true, default: () => {}}
+    });
     const previousIntegration=globalThis.__TW_GUI_HOST__;
     globalThis.__TW_GUI_HOST__={hostIntegration:()=>({}),hostIgnoresKeyEvent:event=>Boolean(event.target.closest?.('.host-dialog'))};
     const VMListener=require('../../../src/lib/vm-listener-hoc.jsx').default(()=>null).WrappedComponent;

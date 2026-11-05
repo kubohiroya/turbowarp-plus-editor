@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import VirtualMachine from 'scratch-vm';
@@ -7,11 +6,12 @@ import createPreviewVm, {createPreviewVmWithDispatch} from '../../../../site/gui
 
 const entries = services => ['runtime', 'extensions'].map(key => Object.getOwnPropertyDescriptor(services, key));
 class EmptyVm {
-    constructor() {this.securityManager = {};this.extensionManager = {};}
+    securityManager: {canLoadExtensionFromProject?(): boolean} = {};
+    extensionManager: {loadExtensionURL?(url: string): Promise<void>; loadExtensionIdSync?(id: string): void} = {};
 }
 
 test('preview construction restores exact prior service descriptors without touching unrelated services', async () => {
-    const services = {unrelated: {owner: 'editor'}};
+    const services: Record<string, {owner: string}> = {unrelated: {owner: 'editor'}};
     Object.defineProperty(services, 'runtime', {value: {owner: 'runtime'}, writable: false, enumerable: false, configurable: true});
     Object.defineProperty(services, 'extensions', {value: {owner: 'extensions'}, writable: true, enumerable: true, configurable: true});
     const before = entries(services);const unrelated = services.unrelated;
@@ -29,7 +29,7 @@ test('preview construction restores exact prior service descriptors without touc
 });
 
 test('preview construction deletes services that were originally absent', () => {
-    const services = {};
+    const services: Record<string, object> = {};
     class Preview extends EmptyVm {constructor() {super();services.runtime = {};services.extensions = {};}}
     createPreviewVmWithDispatch(Preview, {services});assert.deepEqual(entries(services), [undefined, undefined]);
 });
@@ -43,7 +43,7 @@ test('a throwing VM constructor restores editor services exactly', () => {
 
 test('an unsupported service table is rejected before deleting anything or invoking the constructor', () => {
     let called = false;class Preview {constructor() {called = true;}}
-    const services = {};Object.defineProperty(services, 'runtime', {value: {}, configurable: false});
+    const services: Record<string, object> = {};Object.defineProperty(services, 'runtime', {value: {}, configurable: false});
     const before = entries(services);assert.throws(() => createPreviewVmWithDispatch(Preview, {services}), /temporarily isolated/);
     assert.deepEqual(entries(services), before);assert.equal(called, false);
 });

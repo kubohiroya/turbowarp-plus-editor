@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {after, test} from 'node:test';
@@ -44,7 +43,10 @@ function fixture (t) {
     const rendered = [];
     const disposed = [];
     const minimap = {attached: [], disposed: []};
-    const installed = points.hostIntegration();
+    const installed = points.hostIntegration() as {
+        blockEditor: {createService(): object; attach(context: {workspace: object}): {dispose(): void}};
+        attachWorkspaceMinimap(workspace: object): {dispose(): void};
+    };
     const original = installed.blockEditor;
     t.mock.method(installed, 'attachWorkspaceMinimap', workspace => {
         minimap.attached.push(workspace);
@@ -70,7 +72,7 @@ function fixture (t) {
             return React.createElement('div', {role: 'dialog'}, props.nodeLabels.root);
         }
     };
-    const module = {exports: {}};
+    const module: {exports: {default?: typeof import('../../../../site/gui-integration/containers/tw-plus-blocks.tsx').default}} = {exports: {}};
     new Function('require', 'module', 'exports', code)(name => {
         assert.ok(Object.hasOwn(imports, name), name);
         return imports[name];
@@ -94,7 +96,7 @@ function fixture (t) {
     }
     const Workspace = reactRedux.connect(state => ({
         anyModalVisible: Object.values(state).some(Boolean)
-    }))(module.exports.default({openHostModal, closeHostModal, onError: assert.fail})(NativeBlocks));
+    }))(module.exports.default({ModalComponent: undefined, openHostModal, closeHostModal, onError: assert.fail})(NativeBlocks));
     const store = createStore(modals);
     const container = document.createElement('div');
     document.body.appendChild(container);

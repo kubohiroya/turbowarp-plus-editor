@@ -1,4 +1,4 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
+import {hostError} from './test-errors.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -30,7 +30,11 @@ const extension = (id = 'realfixture', body = '') => `(function(Scratch) {
     ${body}
 })(Scratch);`;
 
-function setup({code = extension(), source = 'embedded', allow = true, registrarOptions, loaderOptions} = {}) {
+function setup({code = extension(), source = 'embedded', allow = true, registrarOptions, loaderOptions}: {
+    code?: string; source?: string; allow?: boolean;
+    registrarOptions?: Parameters<typeof createVMExtensionRegistrar>[1];
+    loaderOptions?: Parameters<typeof createExtensionLoader>[1];
+} = {}) {
     const vm = new VM();
     const bytes = encode(code);
     // The VM modules come from the checkout this VM came from, which is what the editor's GUI
@@ -101,7 +105,7 @@ test('getInfo ID mismatch is rejected before VM tables or services are registere
     const before = Object.keys(dispatch.services);
     const listeners = vm.listenerCount('LOCALE_CHANGED');
     try {
-        await assert.rejects(loader.load(manifest), error => error.cause?.code === 'REGISTRATION_ID_MISMATCH');
+        await assert.rejects(loader.load(manifest), error => hostError(error).cause?.code === 'REGISTRATION_ID_MISMATCH');
         assert.equal(vm.extensionManager._loadedExtensions.size, 0);
         assert.equal(vm.runtime._blockInfo.some(info => info.id === 'impostor'), false);
         assert.equal(vm.plusDisposed, 1);
@@ -114,12 +118,12 @@ test('existing custom and core opcode IDs cannot be impersonated or overwritten'
     const {vm, loader, manifest} = setup();
     try {
         vm.runtime._primitives.realfixture_existing = () => 'keep';
-        await assert.rejects(loader.load(manifest), error => error.cause?.code === 'ID_CONFLICT');
+        await assert.rejects(loader.load(manifest), error => hostError(error).cause?.code === 'ID_CONFLICT');
         assert.equal(vm.plusExecuted, undefined);
         assert.equal(vm.runtime._primitives.realfixture_existing(), 'keep');
         delete vm.runtime._primitives.realfixture_existing;
         vm.extensionManager._loadedExtensions.set('realfixture', 'host-owned');
-        await assert.rejects(loader.load(manifest), error => error.cause?.code === 'ID_CONFLICT');
+        await assert.rejects(loader.load(manifest), error => hostError(error).cause?.code === 'ID_CONFLICT');
         assert.equal(vm.extensionManager._loadedExtensions.get('realfixture'), 'host-owned');
     } finally { clean(vm); }
 });
@@ -164,8 +168,8 @@ test('a script that does not register times out and closes its scoped registrati
     const {vm, loader, manifest} = setup({code, registrarOptions: {registrationTimeoutMs: 10}});
     const listeners = vm.listenerCount('LOCALE_CHANGED');
     try {
-        await assert.rejects(loader.load(manifest), error => error.cause?.code === 'REGISTRATION_TIMEOUT' &&
-            error.cause.extensionId === 'realfixture');
+        await assert.rejects(loader.load(manifest), error => hostError(error).cause?.code === 'REGISTRATION_TIMEOUT' &&
+            hostError(error).cause.extensionId === 'realfixture');
         assert.throws(vm.lateRegister, {code: 'REGISTRATION_CLOSED'});
         assert.equal(vm.listenerCount('LOCALE_CHANGED'), listeners);
         assert.equal(vm.extensionManager._loadedExtensions.size, 0);
@@ -175,8 +179,8 @@ test('a script that does not register times out and closes its scoped registrati
 test('an extension that throws while registering is named in the failure', async () => {
     const {vm, loader, manifest} = setup({code: 'throw new Error("Fixture must run unsandboxed.");'});
     try {
-        await assert.rejects(loader.load(manifest), error => error.cause?.extensionId === 'realfixture' &&
-            error.cause.message === 'Fixture must run unsandboxed.');
+        await assert.rejects(loader.load(manifest), error => hostError(error).cause?.extensionId === 'realfixture' &&
+            hostError(error).cause.message === 'Fixture must run unsandboxed.');
     } finally { clean(vm); }
 });
 
@@ -184,8 +188,8 @@ test('a load that times out while an extension registers reports the timeout, no
     const {vm, loader, manifest} = setup({code: 'Scratch.vm.neverRegisters = true;',
         registrarOptions: {registrationTimeoutMs: 5000}, loaderOptions: {timeoutMs: 20}});
     try {
-        await assert.rejects(loader.load(manifest), error => error.cause?.code === 'CANCELLED' &&
-            error.cause.extensionId === 'realfixture' && error.cause.cause?.code === 'TIMEOUT');
+        await assert.rejects(loader.load(manifest), error => hostError(error).cause?.code === 'CANCELLED' &&
+            hostError(error).cause.extensionId === 'realfixture' && hostError(error).cause.cause?.code === 'TIMEOUT');
     } finally { clean(vm); }
 });
 
@@ -235,7 +239,7 @@ test('multiple registrations are rejected without partial VM registration', asyn
         Scratch.extensions.register({getInfo(){ return {id:'otherfixture',blocks:[]}; }});`;
     const {vm, loader, manifest} = setup({code});
     try {
-        await assert.rejects(loader.load(manifest), error => error.cause?.code === 'REGISTRATION_FAILED');
+        await assert.rejects(loader.load(manifest), error => hostError(error).cause?.code === 'REGISTRATION_FAILED');
         assert.equal(vm.extensionManager._loadedExtensions.size, 0);
         assert.equal(vm.runtime._blockInfo.length, 0);
     } finally { clean(vm); }

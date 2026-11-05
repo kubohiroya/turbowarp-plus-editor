@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 require('../extension-security/helpers.cts');
 const {after, test} = require('node:test');
 const assert = require('node:assert/strict');
@@ -51,7 +50,7 @@ test('the host renders visible controls in the GUI slot with click, focus and ac
         icon: '↻', onClick: () => clicks++});
     handle.update({visible: true});
     f.render(service);
-    const button = () => f.container.querySelector('[data-extension-stage-control="reload"]');
+    const button = () => (f.container as HTMLElement).querySelector<HTMLButtonElement>('[data-extension-stage-control="reload"]');
     assert.equal(f.container.querySelector('[data-extension-stage-control="hidden"]'), null);
     assert.equal(button().getAttribute('aria-expanded'), 'false');
     assert.equal(f.container.querySelector('img[title="Stop"]').nextElementSibling, button());

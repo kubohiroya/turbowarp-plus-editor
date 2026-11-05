@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createPlusPermissionUI} from '../../site/extension-host/permission-ui.ts';
@@ -21,15 +20,15 @@ function fixture(locale) {
 test('approval dialog displays exact source, digest, requested mode and unverified publisher as text', async () => {
     const {dom, document, ui} = fixture('ja');
     const review = ui.requestApproval(code);
-    const dialog = document.querySelector('[data-testid="tw-plus-permission"]');
+    const dialog = document.querySelector<HTMLDialogElement>('[data-testid="tw-plus-permission"]');
     assert.equal(dialog.open, true);
     assert.equal(dialog.querySelector('[data-field="source"]').textContent, code.source.url);
     assert.equal(dialog.querySelector('[data-field="sha256"]').textContent, code.sha256);
     assert.equal(dialog.querySelector('[data-field="execution"]').textContent, 'unsandboxed');
     assert.equal(dialog.querySelector('[data-field="publisher"]').textContent.includes('本人性は未検証'), true);
     assert.equal(dialog.querySelector('img'), null);
-    assert.equal(document.activeElement, dialog.querySelector('[data-testid="tw-plus-deny"]'));
-    dialog.querySelector('[data-testid="tw-plus-allow"]').click();
+    assert.equal(document.activeElement, dialog.querySelector<HTMLButtonElement>('[data-testid="tw-plus-deny"]'));
+    dialog.querySelector<HTMLButtonElement>('[data-testid="tw-plus-allow"]').click();
     assert.equal(await review, true);
     assert.equal(document.querySelector('dialog'), null);
     ui.dispose(); dom.window.close();
@@ -41,7 +40,7 @@ test('denial, escape, close, abort and host disposal all refuse execution', asyn
         const controller = new AbortController();
         const review = ui.requestApproval(code, {signal: controller.signal});
         const dialog = document.querySelector('dialog');
-        if (action === 'deny') dialog.querySelector('[data-testid="tw-plus-deny"]').click();
+        if (action === 'deny') dialog.querySelector<HTMLButtonElement>('[data-testid="tw-plus-deny"]').click();
         if (action === 'escape') dialog.dispatchEvent(new dom.window.Event('cancel', {cancelable: true}));
         if (action === 'close') dialog.dispatchEvent(new dom.window.Event('close'));
         if (action === 'abort') controller.abort();
@@ -59,7 +58,7 @@ test('sandboxed consent displays its actual isolation mode and never claims unsa
     assert.equal(dialog.querySelector('[data-field="execution"]').textContent, 'sandboxed');
     assert.match(dialog.textContent, /分離されたiframe/);
     assert.equal(dialog.textContent.includes('権限は制限されません'), false);
-    dialog.querySelector('[data-testid="tw-plus-allow"]').click();
+    dialog.querySelector<HTMLButtonElement>('[data-testid="tw-plus-allow"]').click();
     assert.equal(await review, true);
     ui.dispose(); dom.window.close();
 });
@@ -77,7 +76,7 @@ test('diagnostics are bounded text and show an explicit failure reason', () => {
     const {dom, document, ui} = fixture('en');
     for (let i = 0; i < 60; i++) ui.diagnostics({type: 'verified', id: 'sample', sha256: code.sha256});
     ui.diagnostics({type: 'project-error', code: 'DIGEST_MISMATCH', message: '<script>unsafe</script>'});
-    const status = document.querySelector('[data-testid="tw-plus-extension-status"]');
+    const status = document.querySelector<HTMLDetailsElement>('[data-testid="tw-plus-extension-status"]');
     assert.equal(status.open, true);
     assert.equal(status.querySelectorAll('li').length, 50);
     assert.equal(status.querySelector('li:last-child').textContent.includes('DIGEST_MISMATCH'), true);
@@ -87,7 +86,7 @@ test('diagnostics are bounded text and show an explicit failure reason', () => {
 
 test('a retry is logged and raised to a centred dialog, and taken down when the fetch resolves', async () => {
     const {dom, document, ui} = fixture('ja');
-    const status = document.querySelector('[data-testid="tw-plus-extension-status"]');
+    const status = document.querySelector<HTMLDetailsElement>('[data-testid="tw-plus-extension-status"]');
     const waiting = () => document.querySelector('[data-testid="twextsec-wait"]');
     ui.diagnostics({type: 'retry', attempt: 2, attempts: 3, message: 'https://example.org/sample.js'});
     const item = status.querySelector('li[data-event="retry"]');

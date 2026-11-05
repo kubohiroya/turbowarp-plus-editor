@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import fs from 'node:fs';
@@ -6,7 +5,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {guiRoot} from '../extension-host/pinned-host.ts';
 
-const inventory = JSON.parse(fs.readFileSync(new URL('../../docs/gui-integration/relocation.json', import.meta.url)));
+const inventory = JSON.parse(fs.readFileSync(new URL('../../docs/gui-integration/relocation.json', import.meta.url), 'utf8'));
 const host = path.resolve(import.meta.dirname, '../..');
 const git = (...args) => execFileSync('git', args, {cwd: guiRoot, encoding: 'utf8'});
 const hostContractTests = ['test/sprite-properties-host.test.mjs'];
@@ -34,7 +33,7 @@ test('the GUI has no references to removed source modules or migrated test runne
             assert.ok(!new RegExp(`(?:from|require\\()\\s*['"][^'"]*${name}(?:\\.(?:js|jsx))?['"]`).test(text), `${file}: ${name}`);
         }
     }
-    const pkg = JSON.parse(fs.readFileSync(path.join(guiRoot, 'package.json')));
+    const pkg = JSON.parse(fs.readFileSync(path.join(guiRoot, 'package.json'), 'utf8'));
     assert.equal(pkg.devDependencies.jsdom, undefined);
     assert.ok(!Object.keys(pkg.scripts).some(name => /plus|block-editor|document-editor|extension-security|preview:security/.test(name)));
 });

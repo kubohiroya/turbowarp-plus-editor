@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 
@@ -20,7 +19,7 @@ test('a declined extension still opens its project and keeps its blocks and sour
     const url = 'data:text/javascript,throw%20new%20Error(%22must%20not%20run%22)';
     // Nothing is trusted and nothing is listed, so every extension reaches the review, which
     // declines: that is the path this checks.
-    const review = createSecurityReview({trusted: {isTrustedURL: () => Promise.resolve(false)}});
+    const review = createSecurityReview({trusted: {listedDigests: new Set(), ready: async () => {}, isTrustedCode: async () => false, isTrustedURL: () => Promise.resolve(false)}});
     const restore = review.installBatchLoader({
         vm,
         defaultURLs: {},
@@ -41,7 +40,7 @@ test('a declined extension still opens its project and keeps its blocks and sour
         assert.equal(vm.extensionManager.isExtensionLoaded('refused'), false);
         const saved = JSON.parse(vm.toJSON());
         assert.equal(saved.extensionURLs.refused, url);
-        assert.ok(Object.values(saved.targets[0].blocks).some(block => block.opcode === 'refused_test'));
+        assert.ok(Object.values<{opcode: string}>(saved.targets[0].blocks).some(block => block.opcode === 'refused_test'));
     } finally {
         restore();
         vm.quit();
@@ -72,7 +71,7 @@ test('rows the catalog or the GUI vouches for are decided without the screen, an
     let review;
     const install = (vm, callback) => { review = callback; return () => {}; };
     const security = createSecurityReview({install, storage: null, identify: async () => null,
-        trusted: {isTrustedURL: async url => url === 'https://catalog.test/listed.js'}});
+        trusted: {listedDigests: new Set(), ready: async () => {}, isTrustedCode: async () => false, isTrustedURL: async url => url === 'https://catalog.test/listed.js'}});
     security.installBatchLoader({vm: {}, defaultURLs: {},
         isTrusted: url => url === 'https://gui.test/own.js',
         bannerFor: ({ids}) => (ids.includes('shown') ? 'banner.svg' : undefined),

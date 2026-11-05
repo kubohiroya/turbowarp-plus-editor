@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 /**
  * The dialog as the editor actually mounts it.
  *
@@ -70,7 +69,7 @@ const imports = {
     }, props.children),
     '../lib/log.js': {error: () => {}},
 };
-const wrapper = {exports: {}};
+const wrapper: {exports: {default?: typeof import('../../site/gui-integration/containers/tw-block-editor-modal.tsx').default}} = {exports: {}};
 new Function('require', 'module', 'exports', code)(name => {
     assert.ok(Object.hasOwn(imports, name), `Unexpected component dependency: ${name}`);
     return imports[name];
@@ -79,26 +78,36 @@ const NativeComponent = wrapper.exports.default;
 const Component = props => React.createElement(NativeComponent, {...props,
     ModalComponent: imports['./modal.jsx'], onError: imports['../lib/log.js'].error});
 
-async function fixture(t, {validate = () => []} = {}) {
+function textValue(value: core.JsonValue): string {
+    assert.equal(typeof value, 'string');
+    return value as string;
+}
+
+function literalText(slot: core.ArgumentSlot): string {
+    assert.equal(slot.kind, 'literal');
+    return textValue(slot.value);
+}
+
+async function fixture(t, {validate = () => []}: {validate?: core.EditorDefinition['validate']} = {}) {
     const registry = new core.EditorRegistry();
     let mounts = 0;
     let cleanups = 0;
     let commits = 0;
     let closes = 0;
-    const block = {
+    const block: core.BlockSnapshot = {
         targetId: 'sprite', blockId: 'scene', opcode: 'story_scene', revision: '1',
-        arguments: {PROPERTIES: {kind: 'literal', value: '{}'}}
+        arguments: {PROPERTIES: {kind: 'literal' as const, value: '{}'}}
     };
     registry.register({
         apiVersion: 1, extensionId: 'story', editorId: 'properties', opcodes: ['story_scene'],
         editableArguments: ['PROPERTIES'],
         read: () => ({properties: '{}'}), validate,
-        createPatch: draft => [{argument: 'PROPERTIES', value: draft.properties}],
+        createPatch: draft => [{argument: 'PROPERTIES', value: textValue(draft.properties)}],
         mount: (container, context) => {
             assert.ok(container instanceof dom.window.HTMLElement);
             mounts++;
             const input = document.createElement('textarea');
-            input.value = context.getDraft().properties;
+            input.value = textValue(context.getDraft().properties);
             container.appendChild(input);
             const onInput = () => context.setDraft({properties: input.value});
             input.addEventListener('input', onInput);
@@ -132,7 +141,7 @@ async function fixture(t, {validate = () => []} = {}) {
             input.value = value;
             input.dispatchEvent(new dom.window.Event('input', {bubbles: true}));
         }),
-        save: () => document.querySelector('[data-block-editor-save]')
+        save: () => document.querySelector<HTMLButtonElement>('[data-block-editor-save]')
     };
 }
 
@@ -164,7 +173,7 @@ test('invalid data stays open with its draft and errors; valid data alone reache
 
 test('asynchronous validation disables Save and a repeated click cannot commit early', async t => {
     let release;
-    const f = await fixture(t, {validate: () => new Promise(resolve => { release = resolve; })});
+    const f = await fixture(t, {validate: () => new Promise<core.ValidationIssue[]>(resolve => { release = resolve; })});
     f.edit('pending invalid data');
     act(() => f.save().click());
     assert.equal(f.save().disabled, true);
@@ -213,7 +222,11 @@ test('IME Escape and multiline Enter retain the draft; ordinary Escape cancels',
     assert.equal(f.commits(), 0);
 });
 
-async function hierarchyFixture(t, {validate = () => [], extraNodes = 0, nodeAppearances = {}} = {}) {
+async function hierarchyFixture(t, {validate = () => [], extraNodes = 0, nodeAppearances = {}}: {
+    validate?: core.EditorDefinition['validate'];
+    extraNodes?: number;
+    nodeAppearances?: Record<string, import('@kubohiroya/turbowarp-extension-data-editor/turbowarp').TurboWarpNodeAppearance>;
+} = {}) {
     const registry = new core.EditorRegistry();
     let commits = 0;
     let closes = 0;
@@ -221,14 +234,14 @@ async function hierarchyFixture(t, {validate = () => [], extraNodes = 0, nodeApp
     const remove = registry.register({
         apiVersion: 1, extensionId: 'demo', editorId: 'tree', opcodes: ['demo_node'],
         editableArguments: ['VALUE'],
-        read: block => ({properties: block.arguments.VALUE.value, id: block.blockId}),
+        read: block => ({properties: literalText(block.arguments.VALUE), id: block.blockId}),
         validate: (draft, block) => draft.properties === 'invalid'
             ? [{message: 'Invalid nested value', path: 'properties'}] : validate(draft, block),
-        createPatch: draft => [{argument: 'VALUE', value: draft.properties}],
+        createPatch: draft => [{argument: 'VALUE', value: textValue(draft.properties)}],
         mount: (container, context) => {
             const input = document.createElement('textarea');
             input.id = `field-${context.getDraft().id}`;
-            input.value = context.getDraft().properties;
+            input.value = textValue(context.getDraft().properties);
             const update = () => {
                 context.setDraft({...context.getDraft(), properties: input.value});
             };
@@ -245,7 +258,7 @@ async function hierarchyFixture(t, {validate = () => [], extraNodes = 0, nodeApp
         }
     });
     const node = (id, branches = [], opcode = 'demo_node') => ({block: {
-        targetId: 'target', blockId: id, opcode, revision: '1', arguments: {VALUE: {kind: 'literal', value: '{}'}}
+        targetId: 'target', blockId: id, opcode, revision: '1', arguments: {VALUE: {kind: 'literal' as const, value: '{}'}}
     }, branches});
     const snapshot = {targetId: 'target', blockId: 'root', generation: '1', nodes: [
         node('root', [{input: 'BODY', blockIds: ['a', 'middle']}, {input: 'ELSE', blockIds: ['b']}]),
@@ -275,11 +288,11 @@ async function hierarchyFixture(t, {validate = () => [], extraNodes = 0, nodeApp
     });
     return {
         session, remove, commits: () => commits, closes: () => closes, cleanups: () => cleanups,
-        field: id => document.getElementById(`field-${id}`),
-        toggle: id => document.querySelector(`[data-block-editor-toggle="${id}"]`),
-        save: () => document.querySelector('[data-block-editor-save]'),
+        field: id => document.querySelector<HTMLTextAreaElement>(`#field-${id}`),
+        toggle: id => document.querySelector<HTMLButtonElement>(`[data-block-editor-toggle="${id}"]`),
+        save: () => document.querySelector<HTMLButtonElement>('[data-block-editor-save]'),
         edit: (id, value) => act(() => {
-            const input = document.getElementById(`field-${id}`);
+            const input = document.querySelector<HTMLTextAreaElement>(`#field-${id}`);
             input.value = value;
             input.dispatchEvent(new dom.window.Event('input', {bubbles: true}));
         })
@@ -292,10 +305,10 @@ test('one real modal composes parent/grandchild forms and reveals an invalid col
     assert.equal(document.querySelectorAll('[data-block-editor-save]').length, 1);
     assert.equal(f.save().textContent, 'Save all');
     assert.equal(document.querySelectorAll('form').length, 0);
-    const rootNode = document.querySelector('[data-block-editor-node="root"]');
-    const middleNode = document.querySelector('[data-block-editor-node="middle"]');
+    const rootNode = document.querySelector<HTMLElement>('[data-block-editor-node="root"]');
+    const middleNode = document.querySelector<HTMLElement>('[data-block-editor-node="middle"]');
     assert.ok(rootNode.contains(middleNode));
-    assert.ok(middleNode.contains(document.querySelector('[data-block-editor-node="grand"]')));
+    assert.ok(middleNode.contains(document.querySelector<HTMLElement>('[data-block-editor-node="grand"]')));
     f.edit('grand', 'invalid');
     act(() => f.toggle('middle').click());
     assert.equal(f.field('grand'), null);
@@ -318,7 +331,7 @@ test('one real modal composes parent/grandchild forms and reveals an invalid col
 
 test('aggregate saving disables forms, closing, toggles and double submit; unregister releases all views', async t => {
     let release;
-    const f = await hierarchyFixture(t, {validate: () => new Promise(resolve => { release = resolve; })});
+    const f = await hierarchyFixture(t, {validate: () => new Promise<core.ValidationIssue[]>(resolve => { release = resolve; })});
     f.edit('a', 'pending');
     act(() => f.save().click());
     assert.equal(f.save().disabled, true);
@@ -367,7 +380,7 @@ test('hierarchy opening errors show a diagnostic with Save disabled and no parti
             React.createElement(Component, {session, onClose: () => {}})), root);
         await new Promise(resolve => setTimeout(resolve, 0));
     });
-    assert.equal(document.querySelector('[data-block-editor-save]').disabled, true);
+    assert.equal(document.querySelector<HTMLButtonElement>('[data-block-editor-save]').disabled, true);
     assert.equal(document.querySelectorAll('textarea, input').length, 0);
     assert.match(document.querySelector('[role="status"]').textContent, /500 blocks or 32 levels/);
 });
@@ -394,8 +407,8 @@ test('each hierarchy heading has its own decorative icon and colour, including s
         middle: {colour: '#ffab19', tint: 'rgba(255, 171, 25, 0.08)'},
         grand: {iconURI: otherIcon, colour: '#663399', tint: 'rgba(102, 51, 153, 0.08)'}
     }});
-    const section = id => document.querySelector(`[data-block-editor-node="${id}"]`);
-    const icon = id => document.querySelector(`[data-block-editor-node-icon="${id}"]`);
+    const section = id => document.querySelector<HTMLElement>(`[data-block-editor-node="${id}"]`);
+    const icon = id => document.querySelector<HTMLImageElement>(`[data-block-editor-node-icon="${id}"]`);
     assert.equal(icon('root').getAttribute('src'), firstIcon);
     assert.equal(document.querySelector('[data-block-editor-node-name="root"]').textContent, '親グループ');
     assert.equal(document.querySelector('[data-block-editor-node-name="grand"]').textContent, 'Grandchild');
@@ -438,19 +451,24 @@ test('an image load failure removes only that node icon and survives collapsing 
     assert.equal(f.commits(), 0);
 });
 
-async function schemaModalFixture(t, {schema, data, uiSchema, descendants} = {}) {
+async function schemaModalFixture(t, {schema, data, uiSchema, descendants}: {
+    schema: Parameters<typeof createSchemaEditor>[0]['schema'];
+    uiSchema?: Parameters<typeof createSchemaEditor>[0]['uiSchema'];
+    data: core.JsonValue;
+    descendants?: core.JsonValue;
+}) {
     const registry = new core.EditorRegistry();
     registry.register(createSchemaEditor({apiVersion: 1, extensionId: 'demo', editorId: 'schema',
         opcodes: ['demo_node'], argument: 'VALUE', schema, uiSchema}));
     const node = (id, value, branches = []) => ({block: {
         targetId: 'target', blockId: id, opcode: 'demo_node', revision: '1',
-        arguments: {VALUE: {kind: 'literal', value: JSON.stringify(value)}}
+        arguments: {VALUE: {kind: 'literal' as const, value: JSON.stringify(value)}}
     }, branches});
     const snapshot = {targetId: 'target', blockId: 'root', generation: '1', nodes: descendants ? [
         node('root', data, [{input:'BODY',blockIds:['grand']}]), node('grand', descendants)
     ] : [node('root', data)]};
     let commits = 0;
-    const host = {readBlock: () => snapshot.nodes[0].block, commit: () => { commits++; },
+    const host: core.BlockEditorHost = {readBlock: () => snapshot.nodes[0].block, commit: () => { commits++; },
         descendants: {capability: core.DESCENDANT_EDITING_CAPABILITY,
             readSubtree: () => snapshot, commitSubtree: () => { commits++; }}};
     const session = descendants ? registry.openDescendants(snapshot, host) : registry.open(snapshot, host);
@@ -470,9 +488,9 @@ async function schemaModalFixture(t, {schema, data, uiSchema, descendants} = {})
         mounted = false;
     };
     t.after(() => { unmount(); root.remove(); });
-    const field = (name, id) => {
-        const container = id ? document.querySelector(`[data-block-editor-node="${id}"]`) : document;
-        return [...container.querySelectorAll('input,textarea,select')].find(control=>control.id.endsWith(`_${name}`));
+    const field = (name: string, id?: string) => {
+        const container = id ? document.querySelector<HTMLElement>(`[data-block-editor-node="${id}"]`) : document;
+        return [...container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input,textarea,select')].find(control=>control.id.endsWith(`_${name}`));
     };
     return {session, snapshot, unmount, commits:()=>commits, field,
         change: async (control,value) => {
@@ -540,15 +558,15 @@ test('real nested RJSF error display survives collapse and reveal while block ap
     const f=await schemaModalFixture(t,{schema:{type:'object',required:['amount'],properties:{
         amount:{type:'integer',minimum:1}
     }},data:{amount:1},descendants:{amount:0}});
-    const root=document.querySelector('[data-block-editor-node="root"]');
-    const grand=document.querySelector('[data-block-editor-node="grand"]');
+    const root=document.querySelector<HTMLElement>('[data-block-editor-node="root"]');
+    const grand=document.querySelector<HTMLElement>('[data-block-editor-node="grand"]');
     assert.equal(root.style.getPropertyValue('--block-editor-node-colour'),'#087f8c');
     assert.equal(grand.style.getPropertyValue('--block-editor-node-colour'),'#663399');
     assert.equal(f.field('amount','root').hasAttribute('aria-invalid'),false);
     assert.equal(f.field('amount','grand').getAttribute('aria-invalid'),'true');
-    act(()=>document.querySelector('[data-block-editor-toggle="grand"]').click());
+    act(()=>document.querySelector<HTMLButtonElement>('[data-block-editor-toggle="grand"]').click());
     assert.equal(f.field('amount','grand'),undefined);
-    const issue=document.querySelector('[data-block-editor-issue]');
+    const issue=document.querySelector<HTMLElement>('[data-block-editor-issue]');
     assert.ok(issue);
     await act(async()=> { issue.click(); await new Promise(resolve=>setTimeout(resolve,30)); });
     const control=f.field('amount','grand');
@@ -570,7 +588,7 @@ test('the error adapter leaves custom non-RJSF forms untouched and releases its 
     const input=container.querySelector('input');
     assert.equal(input.hasAttribute('aria-invalid'),false);
     stop();
-    container.firstChild.classList.add('rjsf');
+    container.firstElementChild.classList.add('rjsf');
     await Promise.resolve();
     assert.equal(input.hasAttribute('data-block-editor-invalid'),false);
 });

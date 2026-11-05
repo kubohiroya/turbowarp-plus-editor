@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import JSZip from '@turbowarp/jszip';
@@ -23,13 +22,13 @@ const fixture = (isNew = false) => {
             project = typeof input === 'string' ? JSON.parse(input) : input instanceof Uint8Array ?
                 JSON.parse(await (await JSZip.loadAsync(input)).file('project.json').async('string')) : input;
         },
-        toJSON(target) { return JSON.stringify(target ? {sprite: true} : {targets: project.targets, meta: project.meta}); },
+        toJSON(target?: string) { return JSON.stringify(target ? {sprite: true} : {targets: project.targets, meta: project.meta}); },
         async saveProjectSb3() {
             if (failSave) throw new Error('Compression failed');
             const zip = new JSZip(); zip.file('project.json', this.toJSON());
             return zip.generateAsync({type: 'uint8array'});
         },
-        saveProjectSb3Stream() { const stream = new EventEmitter(); stream.json = this.toJSON(); return stream; },
+        saveProjectSb3Stream() { return Object.assign(new EventEmitter(), {json: this.toJSON()}); },
         saveProjectSb3DontZip() { return {'project.json': new TextEncoder().encode(this.toJSON())}; }
     };
     const original = {...vm};

@@ -1,4 +1,4 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
+import {hostError} from './test-errors.ts';
 import {test} from 'node:test';
 import {transformSync as stripTypes} from 'esbuild';
 import assert from 'node:assert/strict';
@@ -67,8 +67,8 @@ for (const [variant, createLoader] of [['native', nativeLoader], ['webpack4', tr
             }
         });
         await assert.rejects(loader.load(manifest), error => {
-            assert.equal(error.code, 'LOAD_FAILED');
-            assert.equal(error.cause, registrationError);
+            assert.equal(hostError(error).code, 'LOAD_FAILED');
+            assert.equal(hostError(error).cause, registrationError);
             return true;
         });
         assert.equal(rollbacks, 1);
@@ -99,9 +99,9 @@ for (const [variant, createLoader] of [['native', nativeLoader], ['webpack4', tr
             }
         });
         await assert.rejects(loader.load(manifest), error => {
-            assert.equal(error.code, 'ROLLBACK_FAILED');
-            assert.equal(error.cause.errors[0].cause, registrationError);
-            assert.equal(error.cause.errors[1], cleanupError);
+            assert.equal(hostError(error).code, 'ROLLBACK_FAILED');
+            assert.equal(hostError((hostError(error).cause as AggregateError).errors[0]).cause, registrationError);
+            assert.equal((hostError(error).cause as AggregateError).errors[1], cleanupError);
             return true;
         });
         assert.equal(rollbacks, 1);
@@ -136,8 +136,8 @@ for (const execution of ['unsandboxed', 'sandboxed']) {
             source: {type: 'embedded-file', path: 'extensions/sample.js'}}]};
         try {
             await assert.rejects(loader.load(request), error => {
-                assert.equal(error.code, 'LOAD_FAILED');
-                assert.equal(error.cause, registrationError);
+                assert.equal(hostError(error).code, 'LOAD_FAILED');
+                assert.equal(hostError(error).cause, registrationError);
                 return true;
             });
             assert.equal(vm.extensionManager.isExtensionLoaded('sample'), false);

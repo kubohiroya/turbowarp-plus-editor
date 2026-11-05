@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -154,9 +153,9 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
         vm.refreshWorkspace();
     });
     await expect.poll(() => page.evaluate(() => Boolean(
-        ScratchBlocks.getMainWorkspace().getBlockById('layout-script')?.getSvgRoot()))).toBe(true);
+        window.ScratchBlocks.getMainWorkspace().getBlockById('layout-script')?.getSvgRoot()))).toBe(true);
     const block = await page.evaluate(() => {
-        const {x, y, width, height} = ScratchBlocks.getMainWorkspace().getBlockById('layout-script')
+        const {x, y, width, height} = window.ScratchBlocks.getMainWorkspace().getBlockById('layout-script')
             .getSvgRoot().getBoundingClientRect();
         return {x, y, width, height};
     });
@@ -165,13 +164,13 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await page.mouse.move(block.x + block.width / 2 + 52, block.y + block.height / 2 + 30, {steps: 8});
     await page.mouse.up();
     await expect.poll(() => page.evaluate(() => vm.editingTarget.blocks.getBlock('layout-script').x)).toBeGreaterThan(220);
-    const scrollX = await page.evaluate(() => ScratchBlocks.getMainWorkspace().scrollX);
+    const scrollX = await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().scrollX);
     const scrollHandle = await page.locator('.blocklyScrollbarHorizontal .blocklyScrollbarHandle').first().boundingBox();
     await page.mouse.move(scrollHandle.x + scrollHandle.width / 2, scrollHandle.y + scrollHandle.height / 2);
     await page.mouse.down();
     await page.mouse.move(scrollHandle.x + scrollHandle.width / 2 + 25, scrollHandle.y + scrollHandle.height / 2, {steps: 5});
     await page.mouse.up();
-    await expect.poll(() => page.evaluate(() => ScratchBlocks.getMainWorkspace().scrollX)).not.toBe(scrollX);
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().scrollX)).not.toBe(scrollX);
 
     await page.evaluate(() => vm.setStageSize(480, 360));
     await page.setViewportSize({width: 1050, height: 660});
@@ -184,14 +183,14 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect(rows).toBeVisible();
     const scriptX = () => page.evaluate(() => vm.editingTarget.blocks.getBlock('layout-script').x);
     const editedX = await scriptX();
-    await page.evaluate(() => ScratchBlocks.getMainWorkspace().undo(false));
+    await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
     await expect.poll(scriptX).toBe(210);
-    await page.evaluate(() => ScratchBlocks.getMainWorkspace().undo(true));
+    await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(true));
     await expect.poll(scriptX).toBe(editedX);
 
     await page.getByRole('tab', {name: 'Costumes'}).click();
     await page.getByRole('tab', {name: 'Code'}).click();
-    await expect.poll(() => page.evaluate(() => ScratchBlocks.getMainWorkspace().isVisible())).toBe(true);
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().isVisible())).toBe(true);
 
     await page.getByText('File', {exact: true}).click();
     const pending = page.waitForEvent('download');
@@ -201,7 +200,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const json = await zip.file('project.json').async('string');
     assert.ok(!json.includes('twPlusEditorLayout'));
     const project = JSON.parse(json);
-    assert.ok(project.targets.some(target => Object.values(target.blocks)
+    assert.ok(project.targets.some(target => Object.values<{opcode: string; x: number}>(target.blocks)
         .some(block => block.opcode === 'event_whenflagclicked' && block.x > 220)));
 
     await start('&twPlusWindowLayout=1');
@@ -451,7 +450,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
         const id = vm.editingTarget.id;
         for (let index = 0; index < 16; index++) await vm.duplicateSprite(id);
         vm.setEditingTarget(id);
-        window.layoutWorkspace = ScratchBlocks.getMainWorkspace();
+        window.layoutWorkspace = window.ScratchBlocks.getMainWorkspace();
         window.layoutCanvas = document.querySelector('[data-gui-stage] canvas');
         return id;
     });
@@ -472,7 +471,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await page.mouse.move(from.x + 12, from.y + 34, {steps: 4});
     await page.mouse.move(editorBounds.x + 340, editorBounds.y + 300, {steps: 14});
     await page.mouse.up();
-    await expect.poll(() => page.evaluate(() => Object.values(vm.editingTarget.blocks._blocks)
+    await expect.poll(() => page.evaluate(() => Object.values<{opcode: string; x: number}>(vm.editingTarget.blocks._blocks)
         .some(block => block.opcode === 'motion_movesteps'))).toBe(true);
 
     await page.evaluate(() => {
@@ -509,10 +508,10 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(stage).toBeVisible();
     await page.getByRole('tab', {name: 'Code'}).click();
     assert.deepEqual(await page.evaluate(() => ({
-        sameWorkspace: window.layoutWorkspace === ScratchBlocks.getMainWorkspace(),
+        sameWorkspace: window.layoutWorkspace === window.ScratchBlocks.getMainWorkspace(),
         sameCanvas: window.layoutCanvas === document.querySelector('[data-gui-stage] canvas'),
         target: vm.editingTarget.id,
-        addedBlock: Object.values(vm.editingTarget.blocks._blocks).some(block => block.opcode === 'motion_movesteps')
+        addedBlock: Object.values<{opcode: string; x: number}>(vm.editingTarget.blocks._blocks).some(block => block.opcode === 'motion_movesteps')
     })), {sameWorkspace: true, sameCanvas: true, target: spriteId, addedBlock: true});
     await expect.poll(running).toBe(true);
     await page.setViewportSize({width: 1050, height: 660});
@@ -661,7 +660,7 @@ test('utility panels and menus stay above the code workspace and its palette', {
     const flyout = page.locator('.blocklyFlyout').first();
     await expect(flyout).toBeVisible();
     // Keep the flyout open while exercising the menu's click handler.
-    await page.getByText('File', {exact: true}).evaluate(node => node.click());
+    await page.getByText('File', {exact: true}).evaluate(node => (node as HTMLElement).click());
     const fileMenu = page.locator('[class*="menu_menu_"]').filter({hasText: /Save/});
     await expect(fileMenu).toBeVisible();
     assert.ok(await fileMenu.evaluate((menu, palette) => {

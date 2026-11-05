@@ -1,4 +1,4 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
+import type {VMBlock, VMVariable} from '@kubohiroya/turbowarp-script-transfer';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {guiRequire as require} from '../extension-host/pinned-host.ts';
@@ -59,15 +59,15 @@ test('VM import merges globals by name and type, retains destination values and 
     await importScript(b, b.editingTarget, script);
     assert.equal(stage.variables['different-id'].value, 99);
     assert.equal(stage.variables.local.name, 'unrelated');
-    const local = Object.values(b.editingTarget.variables).find(v => v.name === 'items');
+    const local = Object.values<VMVariable>(b.editingTarget.variables).find(v => v.name === 'items');
     assert.deepEqual(local.value, ['あ', 2]);
     assert.notEqual(local.id, 'local');
-    const imported = Object.values(b.editingTarget.blocks._blocks);
+    const imported = Object.values<VMBlock>(b.editingTarget.blocks._blocks);
     assert.equal(imported.length, 7);
     assert.equal(imported.find(b => b.opcode === 'data_setvariableto').fields.VARIABLE.id, 'different-id');
     assert.equal(imported.some(b => script.blocks.some(s => s.id === b.id)), false);
     await importScript(b, b.editingTarget, script);
-    assert.equal(new Set(Object.values(b.editingTarget.blocks._blocks).filter(b => b.opcode === 'procedures_prototype')
+    assert.equal(new Set(Object.values<VMBlock>(b.editingTarget.blocks._blocks).filter(b => b.opcode === 'procedures_prototype')
         .map(b => b.mutation.proccode)).size, 2);
     assert.equal(script.blocks[0].id, 'call', 'import must not mutate the file or clipboard');
 });
@@ -77,7 +77,7 @@ test('local variables become globals on stage and retain list/scalar distinction
     const stage = b.runtime.getTargetForStage();
     stage.createVariable('scalar', 'items', '');
     await importScript(b, stage, exportScript(a, source(a), 'call'));
-    assert.deepEqual(Object.values(stage.variables).find(v => v.name === 'items' && v.type === 'list').value, ['あ', 2]);
+    assert.deepEqual(Object.values<VMVariable>(stage.variables).find(v => v.name === 'items' && v.type === 'list').value, ['あ', 2]);
     assert.equal(stage.variables.scalar.type, '');
 });
 
@@ -111,8 +111,8 @@ test('concurrent pastes serialize variable and procedure conflict resolution', a
     const a = await makeVM(t); const b = await makeVM(t);
     const script = exportScript(a, source(a), 'call');
     await Promise.all([importScript(b, b.editingTarget, script), importScript(b, b.editingTarget, script)]);
-    assert.equal(Object.values(b.editingTarget.variables).filter(v => v.name === 'items').length, 1);
-    const definitions = Object.values(b.editingTarget.blocks._blocks).filter(b => b.opcode === 'procedures_prototype');
+    assert.equal(Object.values<VMVariable>(b.editingTarget.variables).filter(v => v.name === 'items').length, 1);
+    const definitions = Object.values<VMBlock>(b.editingTarget.blocks._blocks).filter(b => b.opcode === 'procedures_prototype');
     assert.deepEqual(definitions.map(b => b.mutation.proccode).sort(), ['work', 'work (2)']);
 });
 

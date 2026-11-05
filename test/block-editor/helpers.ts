@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 /**
  * The fixtures these tests share.
  *
@@ -10,6 +9,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import type {TestContext} from 'node:test';
+import type {EditorDefinition, PreparedEditorDefinition} from '@kubohiroya/turbowarp-extension-data-editor';
 import {EditorRegistry} from '@kubohiroya/turbowarp-extension-data-editor';
 import {createTurboWarpBlockEditorHost as createBlockEditorHost} from '@kubohiroya/turbowarp-extension-data-editor/turbowarp';
 
@@ -35,13 +36,18 @@ ScratchBlocks.ScratchMsgs.setLocale('en');
 const VM = require('scratch-vm');
 const Sprite = require('scratch-vm/src/sprites/sprite');
 
-export const makeDefinition = (overrides = {}) => ({
+function fixtureText(slot: import('@kubohiroya/turbowarp-extension-data-editor').ArgumentSlot) {
+    if (slot.kind !== 'literal') throw new TypeError('Expected a literal argument in the fixture');
+    return slot.value;
+}
+
+export const makeDefinition = (overrides: Partial<EditorDefinition> = {}): EditorDefinition => ({
     apiVersion: 1, extensionId: 'story', editorId: 'properties', opcodes: ['story_scene'],
     editableArguments: ['PROPERTIES', 'NAME'],
-    read: snapshot => ({properties: snapshot.arguments.PROPERTIES.value, name: snapshot.arguments.NAME.value}),
+    read: snapshot => ({properties: fixtureText(snapshot.arguments.PROPERTIES), name: fixtureText(snapshot.arguments.NAME)}),
     validate: () => [],
     createPatch: draft => [
-        {argument: 'PROPERTIES', value: draft.properties}, {argument: 'NAME', value: draft.name}
+        {argument: 'PROPERTIES', value: draft.properties as string}, {argument: 'NAME', value: draft.name as string}
     ],
     mount: () => () => {},
     ...overrides
@@ -61,9 +67,14 @@ ScratchBlocks.Blocks.story_scene = {
     }
 };
 
-export function fixture(t, {definition = makeDefinition(), registry = new EditorRegistry(), xmlText,
-    enableDescendants = false} = {}) {
-    const unregisterDefinition = definition.saveContract === 'prepared-source-v1'
+export function fixture(t: TestContext, {definition = makeDefinition(), registry = new EditorRegistry(), xmlText,
+    enableDescendants = false}: {
+    definition?: EditorDefinition | PreparedEditorDefinition;
+    registry?: EditorRegistry;
+    xmlText?: string;
+    enableDescendants?: boolean;
+} = {}) {
+    const unregisterDefinition = 'saveContract' in definition && definition.saveContract === 'prepared-source-v1'
         ? registry.registerPrepared(definition) : registry.register(definition);
     const workspace = new ScratchBlocks.Workspace();
     // Headless workspaces have no procedure-return renderer to update.

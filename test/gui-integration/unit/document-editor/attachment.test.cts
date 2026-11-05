@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const fs = require('node:fs');
@@ -18,7 +17,7 @@ const {code} = babel.transformSync(source, {
 function fixture (integration) {
     const contexts = [], disposals = [], errors = [];
     const blockly = {};
-    const module = {exports: {}};
+    const module: {exports: {default?: typeof import('../../../../site/gui-integration/containers/tw-plus-workspace-attachment.tsx').default}} = {exports: {}};
     const mocks = {
         react: require('react'),
         'prop-types': require('prop-types'),

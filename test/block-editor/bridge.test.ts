@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {attachTurboWarpBlockEditors as createBlockEditorBridge, openBlockEditorSession}
@@ -12,7 +11,7 @@ import {guiRequire} from '../extension-host/pinned-host.ts';
 function bridgeFixture(t, overrides = {}, descendants = false) {
     t.mock.method(ScratchBlocks, 'hideChaff', () => {});
     const f = fixture(t, {definition: makeDefinition(overrides)});
-    const listeners = new Set();
+    const listeners = new Set<() => void>();
     const service = {registry: f.registry, subscribe: fn => {
         listeners.add(fn);
         return () => listeners.delete(fn);
@@ -133,12 +132,17 @@ test('the bridge passes block presentation data outside the aggregate snapshot a
 test('flag OFF or an unsupported host uses single editing; supported hierarchy errors never fall back', () => {
     let singles = 0;
     let aggregates = 0;
+    // Stub only the entry points used by this selection test.
     const registry = {open: () => { singles++; return 'single'; },
-        openDescendants: () => { aggregates++; throw new BlockEditorStructureError('Invalid tree', 'cycle'); }};
-    const host = {};
+        openDescendants: () => { aggregates++; throw new BlockEditorStructureError('Invalid tree', 'cycle'); }} as unknown as Parameters<typeof openBlockEditorSession>[0]['registry'];
+    const host: import('@kubohiroya/turbowarp-extension-data-editor').BlockEditorHost = {
+        readBlock: () => null,
+        commit: () => assert.fail('Unexpected commit')
+    };
     const reference = {targetId: 'target', blockId: 'block'};
     assert.equal(openBlockEditorSession({registry, host, reference, descendants: true}), 'single');
-    host.descendants = {capability: 'descendant-editing-v1', readSubtree: () => {}, commitSubtree: () => {}};
+    Object.assign(host, {descendants: {capability: 'descendant-editing-v1', readSubtree: () => null,
+        commitSubtree: () => assert.fail('Unexpected subtree commit')}});
     assert.equal(openBlockEditorSession({registry, host, reference, descendants: false}), 'single');
     assert.throws(() => openBlockEditorSession({registry, host, reference, descendants: true}), BlockEditorStructureError);
     assert.equal(singles, 2);

@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 /**
  * Loading a reviewed selection uses the same host-owned permission registry that the GUI calls.
  * The VM and rendering dependencies still come from the prepared GUI checkout.
@@ -78,7 +77,7 @@ test('missing decisions and incorrect registered IDs fail before a dependent loa
     const {vm, calls} = fixture();
     await assert.rejects(load(vm, entries, new Map(), permissions), /Missing permission/);
     assert.deepEqual(calls, []);
-    vm.extensionManager.loadExtensionURL = async url => calls.push(url);
+    vm.extensionManager.loadExtensionURL = async url => { calls.push(url); };
     await assert.rejects(load(vm, entries, decisions(), permissions), /catalog ID/);
     assert.deepEqual(calls, [entries[0].url]);
 });

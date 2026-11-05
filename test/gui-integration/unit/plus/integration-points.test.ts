@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -21,7 +20,7 @@ const {openHostModal} = await guiImport('src/reducers/modals.js');
 // Opening a point must be safe on its own: with nothing supplied the GUI keeps doing exactly what
 // it did, which is what lets each implementation move across the boundary later and alone.
 test('with nothing supplied every point leaves the GUI unchanged', () => {
-    assert.equal(typeof hostIntegration().installExtensionHost, 'function');
+    assert.equal(typeof (hostIntegration() as {installExtensionHost?: unknown}).installExtensionHost, 'function');
     assert.deepEqual(hostModalNames(null), []);
     assert.deepEqual(hostModalDefaults(null), {});
     assert.deepEqual(hostTranslationsFor('ja', null), {});

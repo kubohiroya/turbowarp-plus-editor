@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -14,11 +13,11 @@ const project = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: 
     currentCostume: 0, costumes: [], sounds: [], volume: 100, layerOrder: 0, tempo: 60, videoTransparency: 50, videoState: 'on', textToSpeechLanguage: null}],
     monitors: [], extensions: ['sample'], extensionURLs: {}, meta: {semver: '3.0.0', vm: '2.0.0', agent: 'Plus fixture'},
     turboWarpPlus: {schemaVersion: 1, extensions: [{id: 'sample', execution: 'unsandboxed', sha256, source: {type: 'remote-cacheable', url: 'https://example.test/code.js'}}]}};
-const ports = {
+const ports: Parameters<typeof prepareOfflinePackage>[1] = {
     fetcher: {async fetch(url) { return {bytes, finalURL: url, redirects: []}; }},
     trustProvider: {async authorize(code) { return {allowed: true, scope: 'digest', sha256: code.sha256}; }}
 };
-const prepare = () => prepareOfflinePackage(project, ports, {zip: Zip, resourceDependencies: {sample: []}});
+const prepare = () => prepareOfflinePackage(project, ports, {zip: Zip, resourceDependencies: {sample: [] as never[]}});
 
 test('actual TurboWarp Packager embeds an opaque verified SB3, runtime bootstrap and restrictive CSP into single HTML', async () => {
     const prepared = await prepare();
@@ -44,7 +43,7 @@ test('actual Packager resource assembly preserves double-quoted iframe script te
     await packager.loadResources();
     assert.equal(packager.script.includes("</scri'+'pt>"), false);
     assert.equal(packager.script.toLowerCase().includes('</script>'), false);
-    const state = {};
+    const state: {iframeEnd?: string} = {};
     new Function('globalThis', packager.script)(state);
     assert.equal(state.iframeEnd, '</script></body>');
 });
@@ -69,7 +68,7 @@ test('packaging embeds only valid digests of the project extensions for the reci
     assert.ok(packager.options.custom.js.includes(
         `installPlusExtensionHost(vm, {"enabled":true,"locale":"ja","trustedDigests":["${sha256}"],${limits}})`));
     for (const trustedDigests of [['a'.repeat(64)], ['not a digest'], 'nope']) {
-        assert.throws(() => configurePlusPackager(new Packager(), prepared, {runtimeBundle: 'trusted();', trustedDigests}),
+        assert.throws(() => configurePlusPackager(new Packager(), prepared, {runtimeBundle: 'trusted();', trustedDigests: trustedDigests as string[]}),
             {code: 'INVALID_TRUSTED_DIGESTS'});
     }
     const untrusted = new Packager();

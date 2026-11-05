@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 /**
  * What the authoring path actually fails with, and what the Loader says about asking again.
  *
@@ -55,11 +54,18 @@ const emptyProject = async () => {
  * @returns {Promise<object>} `{code, worth}`, or `{resolved: true}`.
  */
 async function configure ({fetchImpl, requestApproval = async () => true, loaderOptions, retries = 0,
-    aborted = false}, project) {
+    aborted = false}: {
+    fetchImpl: typeof fetch;
+    requestApproval?: () => Promise<boolean>;
+    loaderOptions?: import('@kubohiroya/turbowarp-extension-loader').LoaderOptions;
+    retries?: number;
+    aborted?: boolean;
+}, project: Uint8Array) {
     const vm = new VM();
     vm.attachStorage(new Storage());
     const host = installEditorExtensionHost(vm, {enabled: true, document: undefined, vmModules,
         fetchImpl, fetchRetry: {retries}, loaderOptions, requestApproval});
+    assert.equal(host.enabled, true);
     try {
         await vm.loadProject(project);
         const controller = new AbortController();
@@ -78,11 +84,11 @@ async function configure ({fetchImpl, requestApproval = async () => true, loader
 test('the library\'s own failures split into the ones a person could answer differently', async () => {
     const project = await emptyProject();
     assert.deepEqual(await configure({fetchImpl: served}, project), {resolved: true});
-    for (const [name, attempt, expected] of [
+    const cases: [string, Parameters<typeof configure>[0], {code: string; worth: boolean}][] = [
         // Offline, CORS and CSP all reach the page as a bare TypeError from fetch.
         ['offline', {fetchImpl: async () => { throw new TypeError('Failed to fetch'); }},
             {code: 'LOAD_FAILED', worth: true}],
-        ['timed out', {fetchImpl: () => new Promise(() => {}), loaderOptions: {timeoutMs: 60}},
+        ['timed out', {fetchImpl: () => new Promise<Response>(() => {}), loaderOptions: {timeoutMs: 60}},
             {code: 'TIMEOUT', worth: true}],
         ['missing', {fetchImpl: async url => respond(url, 'nope', 404)},
             {code: 'FETCH_FAILED', worth: false}],
@@ -103,7 +109,8 @@ test('the library\'s own failures split into the ones a person could answer diff
         // Same code as being offline, opposite answer: the cause is a permanent rejection.
         ['wrong ID', {fetchImpl: async url => respond(url, register('other'))},
             {code: 'LOAD_FAILED', worth: false}]
-    ]) {
+    ];
+    for (const [name, attempt, expected] of cases) {
         assert.deepEqual(await configure(attempt, project), expected, name);
     }
 });

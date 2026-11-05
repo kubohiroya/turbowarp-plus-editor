@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {BlockEditorConflictError} from '@kubohiroya/turbowarp-extension-data-editor';
@@ -46,7 +45,9 @@ test('an unchanged save does not dirty the project or clear existing redo histor
     ScratchBlocks.Events.fireNow_();
     const redo = [...f.workspace.redoStack_];
     const dirty = f.dirty();
-    assert.equal((await f.open().save()).changed, false);
+    const result = await f.open().save();
+    assert.equal(result.status, 'saved');
+    assert.equal(result.changed, false);
     assert.deepEqual(Array.from(f.workspace.redoStack_), redo);
     assert.equal(f.dirty(), dirty);
 });

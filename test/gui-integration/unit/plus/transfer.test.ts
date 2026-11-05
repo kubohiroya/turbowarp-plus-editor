@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import React from 'react';
@@ -8,7 +7,7 @@ import {attachHostScriptTransfer, hostStageTransferMenu, finalizeHostTransferMen
 
 test('without a host transfer leaves upstream workspace and stage menus alone', () => {
     const workspace = {};
-    assert.equal(attachHostScriptTransfer({workspace}, null), null);
+    assert.equal(attachHostScriptTransfer({workspace}, null, undefined), null);
     assert.deepEqual(workspace, {});
     assert.equal(hostStageTransferMenu({}, {}), null);
 });
@@ -35,7 +34,7 @@ test('the host receives the GUI context and supplies stage actions through the n
         attach: supplied => { assert.equal(supplied, context); return bridge; },
         stageMenu: supplied => { assert.equal(supplied, context); return menu; }
     }};
-    assert.equal(attachHostScriptTransfer(context, integration), bridge);
+    assert.equal(attachHostScriptTransfer(context, integration, undefined), bridge);
     const stageMenu = hostStageTransferMenu(context, integration);
     const nativeIcon = {};
     assert.deepEqual(stageMenu.backdropButtons(nativeIcon), [{title: 'import', img: nativeIcon, onClick: onImport}]);
@@ -63,7 +62,7 @@ test('the host chooses the compact backdrop menu items from its layout context',
     };
     const bridge = hostStageTransferMenu({}, {scriptTransfer: {stageMenu: () => menu}});
     const tile = element('button', null, 'Backdrops');
-    const render = plusLayout => ReactDOMServer.renderToStaticMarkup(element(WindowLayoutContext.Provider, {value: {plusLayout}},
+    const render = plusLayout => ReactDOMServer.renderToStaticMarkup(element(WindowLayoutContext.Provider, {value: {plusLayout, showUndock: false, locale: 'en'}},
         bridge.wrapBackdropTile(tile, primitives)));
     assert.equal(render(false), '<button>Backdrops</button>');
     assert.match(render(true), /Backdrops.*Export Stage/);

@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -20,7 +19,7 @@ const project = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: 
 
 test('disabled host does not access a VM or permission document', async () => {
     const forbidden = new Proxy({}, {get() { throw new Error('unexpected access'); }});
-    const host = installPlusExtensionHost(forbidden, {document: forbidden});
+    const host = installPlusExtensionHost(forbidden, {document: forbidden as Document});
     assert.equal(host.enabled, false);
     await host.dispose();
 });
@@ -46,7 +45,7 @@ test('catalog-listed code loads without a separate approval and unlisted code st
     const checked = [];
     const host = installPlusExtensionHost(vm, {enabled: true, document: undefined, vmModules,
         requestApproval: async () => { prompts++; return false; },
-        trustedCatalog: {async isTrustedCode(code) { checked.push(code.actualSHA256); return trusted; }},
+        trustedCatalog: {isTrustedURL: async () => false, async isTrustedCode(code) { checked.push(code.actualSHA256); return trusted; }},
         async fetchImpl(url) { const response = new Response(bytes); Object.defineProperty(response, 'url', {value: url}); return response; }});
     try {
         await vm.loadProject(JSON.stringify(project));
@@ -58,7 +57,7 @@ test('catalog-listed code loads without a separate approval and unlisted code st
         trusted = false;
         const untrusted = installPlusExtensionHost(vm, {enabled: true, document: undefined, vmModules,
             requestApproval: async () => { prompts++; return false; },
-            trustedCatalog: {async isTrustedCode() { return trusted; }},
+            trustedCatalog: {isTrustedURL: async () => false, async isTrustedCode() { return trusted; }},
             async fetchImpl(url) { const response = new Response(bytes); Object.defineProperty(response, 'url', {value: url}); return response; }});
         try {
             await assert.rejects(vm.loadProject(JSON.stringify(project)), {code: 'TRUST_DENIED'});

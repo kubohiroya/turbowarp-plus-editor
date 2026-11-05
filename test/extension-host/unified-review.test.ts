@@ -1,4 +1,4 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
+import {hostError} from './test-errors.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -52,7 +52,7 @@ function install (answer) {
     const asked = [];
     const writes = [];
     const review = createSecurityReview({storage: null, identify: async () => null,
-        trusted: {isTrustedURL: async () => false, isTrustedCode: async () => false}});
+        trusted: {listedDigests: new Set(), ready: async () => {}, isTrustedURL: async () => false, isTrustedCode: async () => false}});
     const restore = review.installBatchLoader({vm, defaultURLs: {}, isTrusted: () => false,
         bannerFor: () => undefined,
         showReview: async (entries, initial) => {
@@ -145,7 +145,7 @@ test('choosing no sandbox for a row its author runs in the sandbox still runs it
         // The pinned VM has no sandboxed runner here, so registration fails — after approval, which
         // is what this checks: the answer was within what the author asked, so it was not refused.
         await assert.rejects(fixture.vm.loadProject(JSON.stringify(project('sandboxed'))),
-            error => error.code !== 'TRUST_DENIED');
+            error => hostError(error).code !== 'TRUST_DENIED');
         assert.ok(fixture.events.includes('authorized'), fixture.events.join(' '));
     } finally {
         await fixture.dispose();
@@ -156,7 +156,7 @@ test('saying no on the screen cancels the whole load before the Loader fetches a
     let fetched = 0;
     const vm = new VM();
     const review = createSecurityReview({storage: null, identify: async () => null,
-        trusted: {isTrustedURL: async () => false, isTrustedCode: async () => false}});
+        trusted: {listedDigests: new Set(), ready: async () => {}, isTrustedURL: async () => false, isTrustedCode: async () => false}});
     const restore = review.installBatchLoader({vm, defaultURLs: {}, isTrusted: () => false,
         bannerFor: () => undefined, showReview: async () => null});
     const host = installPlusExtensionHost(vm, {enabled: true, document: null, vmModules,

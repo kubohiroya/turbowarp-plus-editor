@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {spawn, execFile} from 'node:child_process';
 import {EventEmitter, once} from 'node:events';
@@ -19,7 +18,19 @@ const executable = desktop ? join(desktop, 'Contents/MacOS/TurboWarp') :
     process.env.TW151_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const output = resolve(process.env.TW151_STAGE2_BUILD || '/private/tmp/tw151-stage2/build');
 const origin = 'http://localhost:15100';
-const report = {host: desktop ? 'Packaged Desktop stage 2 fixture' : 'Chrome stage 2 fixture', checks: [], errors: []};
+const report: {
+    host: string;
+    checks: (string | {name: string;
+    first: unknown;
+    second: unknown})[];
+    errors: string[];
+    browser?: string;
+    firstDrag?: unknown;
+    failure?: string;
+    stderr?: string;
+    windows?: unknown;
+    pages?: unknown;
+} = {host: desktop ? 'Packaged Desktop stage 2 fixture' : 'Chrome stage 2 fixture', checks: [], errors: []};
 const profile = await mkdtemp(join(tmpdir(), 'tw151-stage2-'));
 await writeFile(join(profile, 'tw_config.json'), JSON.stringify({v2: {updateChecker: 'never'}}));
 const processArgs = [`--user-data-dir=${profile}`, '--remote-debugging-port=0', '--no-first-run',
@@ -148,7 +159,7 @@ try {
     observe(parent);
     if (!desktop) await parent.goto(origin + '/editor.html');
     report.browser = await parent.evaluate(() => navigator.userAgent);
-    if (desktop) assert.equal(await parent.evaluate(() => typeof globalThis.EditorPreload?.getInitialFile), 'function');
+    if (desktop) assert.equal(await parent.evaluate(() => typeof window.EditorPreload?.getInitialFile), 'function');
     const docked = () => parent.locator('#dock #panel').count();
     const state = expected => parent.waitForFunction(value =>
         document.querySelector('#surface-state')?.textContent === value, expected, {polling: 50});
@@ -180,7 +191,7 @@ try {
     const awaitCopy = (editor, panel) => parent.waitForFunction(({editor, panel}) => {
         const output = document.querySelector('#copies');
         const count = JSON.parse(output.textContent);
-        return output.dataset.result === 'applied' && count.editor === editor && count.panel === panel;
+        return (output as HTMLElement).dataset.result === 'applied' && count.editor === editor && count.panel === panel;
     }, {editor, panel}, {polling: 50});
     await awaitCopy(0, 1);
     assert.equal(await parent.locator('#copies').getAttribute('data-trusted'), 'true');

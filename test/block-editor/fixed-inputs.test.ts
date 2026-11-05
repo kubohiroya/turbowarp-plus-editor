@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import exposeBlockEditorAPI from '../../site/block-editor/capabilities.ts';
@@ -21,7 +20,7 @@ const integration = {blockEditor: {createService: ({getIntl}) => {
 
 test('fixed labels use the actual GUI Intl locale and preserve one service per VM', () => {
     const {IntlProvider} = guiRequire('react-intl');
-    const translations = JSON.parse(readFileSync(new URL('../../site/block-editor/translations.json', import.meta.url)));
+    const translations = JSON.parse(readFileSync(new URL('../../site/block-editor/translations.json', import.meta.url), 'utf8'));
     const vm = {};
     let previous;
     for (const locale of ['en', 'ja']) {

@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import getBlockEditorService from '../../../../site/gui-integration/lib/tw-block-editor-service.ts';
@@ -33,7 +32,8 @@ test('ordinary extensions receive the GUI API without a host block editor', asyn
     const require = createRequire(import.meta.url);
     require('../extension-security/helpers.cts');
     const implementGuiAPI = require('../../../src/lib/tw-extension-gui-api.js').default;
-    const scratch = {vm: {}};
+    const scratch: {vm: object; gui?: {getBlockly?: () => unknown; createPreviewVm?: unknown;
+        blockEditors?: unknown; stageControls?: unknown}} = {vm: {}};
     assert.doesNotThrow(() => implementGuiAPI(scratch));
     assert.equal(typeof scratch.gui.getBlockly, 'function');
     assert.equal(scratch.gui.createPreviewVm, undefined);

@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -40,7 +39,7 @@ const sb3 = (manifest, extensions = manifest ? manifest.extensions.map(item => i
     meta: {semver: '3.0.0', vm: '2.0.0', agent: 'cache fixture'}, ...(manifest ? {turboWarpPlus: manifest} : {})}))
     .file(`${assetId}.svg`, svg)
     .generateAsync({type: 'uint8array'});
-const remote = uri => ({schemaVersion: 1, ...(uri ? {uri} : {}), extensions: [spec]});
+const remote = (uri?: string) => ({schemaVersion: 1, ...(uri ? {uri} : {}), extensions: [spec]});
 
 const withOrigin = async (origin, run) => {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'location');
@@ -106,7 +105,7 @@ function bridge({manifest, addressProject}) {
             await this._loadExtensions(new Set(serialized.extensions), new Map());
         },
         async _loadExtensions() {},
-        toJSON(target) { return target ? '{"sprite":true}' : JSON.stringify(serialized); },
+        toJSON(target?: string) { return target ? '{"sprite":true}' : JSON.stringify(serialized); },
         _saveProjectZip() { return new Zip().file('project.json', this.toJSON()); },
         saveProjectSb3DontZip() { return {'project.json': new TextEncoder().encode(this.toJSON())}; }
     };

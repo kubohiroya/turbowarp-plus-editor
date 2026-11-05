@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 /**
  * The Packager button, end to end across the boundary.
  *
@@ -48,12 +47,20 @@ function fixture (enabled = true, plus = true, blockPopup = false) {
     }, alert () {}, addEventListener () {}, removeEventListener () {}};
     // The handoff reads these as globals when it is called, as it does in a browser.
     const previous = {location: globalThis.location, window: globalThis.window, root: process.env.ROOT};
-    globalThis.location = location;
-    globalThis.window = window;
+    globalThis.location = location as Location;
+    globalThis.window = window as unknown as typeof globalThis.window;
     process.env.ROOT = '/turbowarp-plus-editor/';
     const {connectProjectPackager, createProjectPackager} = require('../../site/packager/handoff.ts');
     const projectPackager = createProjectPackager({enabled});
-    const module = {exports: {}};
+    interface FixtureComponent {
+        props: {reduxProjectTitle: string};
+        handleClickPackager(): Promise<void>;
+        handleMessage(event: {origin: string; source: unknown; data: unknown}): void;
+        componentWillUnmount(): void;
+    }
+    const module: {exports: {default?: (component: () => null) => new (props: {
+        canOpenPackager: boolean; reduxProjectTitle: string; vm: {saveProjectSb3(): Promise<ArrayBuffer>};
+    }) => FixtureComponent}} = {exports: {}};
     const requireMock = name => {
         if (name === 'react-redux') return {connect: () => component => component};
         if (name === './log') return {error () {}};

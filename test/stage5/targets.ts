@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
@@ -70,7 +69,7 @@ try {
     await toggleUndockButtons(page);
     await tile.waitFor();
     assert.equal(await legacyStage.count(), 0);
-    assert.equal(await tile.evaluate(node => node.innerText.trim()), 'Backdrops');
+    assert.equal(await tile.evaluate(node => (node as HTMLElement).innerText.trim()), 'Backdrops');
     assert.ok(await tile.locator('img').getAttribute('src'));
     assert.equal(await tile.evaluate(node => getComputedStyle(node).borderTopStyle), 'dashed');
 
@@ -143,7 +142,7 @@ try {
     await page.waitForFunction(() => {
         const stage = window.vm.runtime.getTargetForStage();
         return stage.sprite.costumes[stage.currentCostume].name === 'local-test' &&
-            window.originalBackdropTile.querySelector('img').src === stage.sprite.costumes[stage.currentCostume].asset.encodeDataURI();
+            window.originalBackdropTile.querySelector<HTMLImageElement>('img').src === stage.sprite.costumes[stage.currentCostume].asset.encodeDataURI();
     });
 
     await toggleUndockButtons(page);

@@ -1,4 +1,4 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
+import {hostError} from './test-errors.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {installExtensionLoader} from '../../site/extension-host/project-loader.ts';
@@ -22,7 +22,7 @@ function fixture({manifest = {schemaVersion: 1, extensions: []}, failLoad = fals
             return 'loaded';
         },
         async _loadExtensions(ids, urls) { events.push(['legacy', [...ids], [...urls]]); },
-        toJSON(target) { return target ? 'sprite' : 'project'; },
+        toJSON(target?: string): string { return target ? 'sprite' : 'project'; },
         _saveProjectZip() { return {json: this.toJSON()}; },
         saveProjectSb3DontZip() { return {'project.json': this.toJSON()}; }
     };
@@ -36,11 +36,12 @@ function fixture({manifest = {schemaVersion: 1, extensions: []}, failLoad = fals
         async unload() { events.push(['loader.unload']); }
     };
     const host = {
+        onDiagnostic: undefined as ((event: import('../../site/extension-host/permission-ui.ts').HostDiagnostic) => void) | undefined,
         vm, transactionalRegistration: true, markFailure: markExtensionLoadFailure,
         projectIO: {
-            async prepare(input) { events.push(['prepare']); return {manifest, input, context: manifest ? context : null}; },
+            async prepare(input: unknown, _options?: {signal: AbortSignal}): Promise<{manifest: typeof manifest; input: unknown; context?: object}> { events.push(['prepare']); return {manifest, input, context: manifest ? context : null}; },
             activate(value) { assert.equal(value, manifest ? context : null); },
-            restoreJSON(json, value) { assert.equal(value, context); return `${json}:retained`; },
+            restoreJSON(json: string, value: object): string | Promise<string> { assert.equal(value, context); return `${json}:retained`; },
             restoreArchive(zip, value) { assert.equal(value, context); return {...zip, embedded: true}; },
             restoreFiles(files, value) { assert.equal(value, context); return {...files, embedded: true}; }
         }
@@ -99,9 +100,9 @@ test('extension failures are marked for the GUI without replacing the original e
 test('project failures outside extension loading are not marked as extension failures', async () => {
     const f = fixture({failLoad: true});
     installExtensionLoader(f.host, f.loader);
-    await assert.rejects(f.vm.loadProject('input'), error => /VM failed/.test(error.message) && !isExtensionLoadFailure(error));
+    await assert.rejects(f.vm.loadProject('input'), error => /VM failed/.test(hostError(error).message) && !isExtensionLoadFailure(error));
     f.host.projectIO.prepare = async () => { throw Object.assign(new Error('bad ZIP'), {code: 'INVALID_ZIP'}); };
-    await assert.rejects(f.vm.loadProject('invalid'), error => error.code === 'INVALID_ZIP' && !isExtensionLoadFailure(error));
+    await assert.rejects(f.vm.loadProject('invalid'), error => hostError(error).code === 'INVALID_ZIP' && !isExtensionLoadFailure(error));
 });
 
 test('cleans registrations after VM failure and does not retain a failed manifest', async () => {
@@ -255,7 +256,7 @@ test('refuses double installation and a VM that skips the extension lifecycle', 
 
 test('the project-error diagnostic carries the Loader\'s judgement of asking again, and showing it changes nothing', async () => {
     const {LoaderError, isWorthAskingAgain} = await import('@kubohiroya/turbowarp-extension-loader');
-    const cases = [
+    const cases: [Error & {code?: string}, boolean][] = [
         [new LoaderError('TIMEOUT', 'The operation timed out'), true],
         [new LoaderError('DIGEST_MISMATCH', 'Digest mismatch', 'plus'), false],
         // The same code on both sides: what it wraps decides, so this side never reads the code.

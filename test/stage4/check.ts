@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
@@ -28,7 +27,7 @@ async function seed() {
             id: 'stage4-show', opcode: 'looks_show', parent: null, next: null, topLevel: true,
             shadow: false, fields: {}, inputs: {}, x: 30, y: 30
         }]);
-        const db = await new Promise((resolve, reject) => {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
             const open = indexedDB.open('TW_Backpack', 1);
             open.onupgradeneeded = () => open.result.createObjectStore('backpack', {keyPath: 'id', autoIncrement: true});
             open.onsuccess = () => resolve(open.result);

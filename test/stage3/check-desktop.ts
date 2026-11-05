@@ -1,4 +1,3 @@
-// @ts-nocheck -- Migrated test fixture with dynamic host mocks.
 import assert from 'node:assert/strict';
 import {execFile, spawn} from 'node:child_process';
 import {once} from 'node:events';
@@ -27,7 +26,21 @@ const mime = 'application/x-turbowarp-editor-transfer';
 const itemName = 'Desktop native Backpack stack';
 const undockLabel = /^(Open Backpack in a separate window|バックパックを別ウィンドウで開く)$/;
 const dockLabel = /^(Dock Backpack|バックパックを元の位置に戻す)$/;
-const report = {checks: [], errors: []};
+const report: {
+    checks: string[];
+    errors: string[];
+    chromium?: string;
+    electron?: string;
+    diagnostics?: {stderr: string;
+    urls?: string[];
+    windows: unknown;
+    editor?: unknown};
+    drag?: number[];
+    monitorEvents?: MonitorEvidence[];
+    dockInput?: unknown;
+    redock?: unknown;
+    failure?: string;
+} = {checks: [], errors: []};
 const launcher = promisify(execFile);
 const mousePath = join(import.meta.dirname, '../stage2/native-mouse.py');
 
@@ -44,7 +57,7 @@ async function run (enabled, test) {
     const profile = await mkdtemp(join(tmpdir(), 'tw-plus-desktop-stage3-'));
     await writeFile(join(profile, 'tw_config.json'), JSON.stringify({v2: {updateChecker: 'never', locale: 'en'}}));
     const processArgs = [`--user-data-dir=${profile}`, '--remote-debugging-port=0'];
-    const processEnv = {...process.env, TW_PLUS_DESKTOP_TEST_CONTROL: '1'};
+    const processEnv: NodeJS.ProcessEnv = {...process.env, TW_PLUS_DESKTOP_TEST_CONTROL: '1'};
     delete processEnv.TW_PLUS_DESKTOP_SPLITTER;
     if (testMode === '--plus-layout') delete processEnv.TW_PLUS_DESKTOP_STANDARD_LAYOUT;
     else processEnv.TW_PLUS_DESKTOP_STANDARD_LAYOUT = '0';
@@ -87,7 +100,7 @@ async function run (enabled, test) {
         const reply = JSON.parse(line.slice('TWPLUS_DESKTOP '.length));
         replies.set(reply.id, reply);
     });
-    async function control (operation, windowId) {
+    async function control (operation: string, windowId?: number) {
         const current = ++id;
         application.stdin.write(`${JSON.stringify({id: current, operation, windowId})}\n`);
         const reply = await until(() => replies.get(current), operation);
@@ -107,7 +120,7 @@ async function run (enabled, test) {
         editor.on('pageerror', error => report.errors.push(error.message));
         await editor.waitForFunction(() => window.vm?.editingTarget?.isOriginal &&
             window.ScratchBlocks?.getMainWorkspace(), undefined, {polling: 100, timeout: 20000});
-        assert.equal(await editor.evaluate(() => typeof EditorPreload.getInitialFile), 'function');
+        assert.equal(await editor.evaluate(() => typeof window.EditorPreload.getInitialFile), 'function');
         await test({editor, context, control});
     } catch (error) {
         report.diagnostics = {stderr, urls: context?.pages().map(page => page.url()),
@@ -150,9 +163,9 @@ async function observeNative (page) {
         window.nativeEvidence = [];
         for (const type of ['click', 'dragstart', 'drop']) document.addEventListener(type, event => {
             window.nativeEvidence.push({
-                type, trusted: event.isTrusted, mime: Array.from(event.dataTransfer?.types || []),
-                label: event.target.closest?.('button')?.getAttribute('aria-label') ||
-                    event.target.textContent?.trim().slice(0, 80)
+                type, trusted: event.isTrusted, mime: Array.from((event as DragEvent).dataTransfer?.types || []),
+                label: (event.target as Element).closest?.('button')?.getAttribute('aria-label') ||
+                    (event.target as Node).textContent?.trim().slice(0, 80)
             });
         }, true);
     });
@@ -169,7 +182,7 @@ async function seedBackpack (page) {
             topLevel: parent === null, shadow: false, fields: {}, inputs: {}, x: 30, y: 30});
         const stack = [block('desktop-hide', 'looks_hide', null, 'desktop-show'),
             block('desktop-show', 'looks_show', 'desktop-hide', null)];
-        const db = await new Promise((resolve, reject) => {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
             const request = indexedDB.open('TW_Backpack', 1);
             request.onupgradeneeded = () => request.result.createObjectStore('backpack',
                 {keyPath: 'id', autoIncrement: true});
@@ -668,7 +681,7 @@ async function checkCodeComments ({editor, a, b, focus, parent, sprites}) {
     const textarea = page => page.locator('textarea.scratchCommentTextarea');
     const workspaceComment = page => page.locator('g:has(> .scratchWorkspaceCommentBorder) > foreignObject textarea');
     const menu = (page, name) => page.locator('.blocklyContextMenu').getByText(name);
-    const read = id => editor.evaluate(targetId => Object.values(vm.runtime.getTargetById(targetId).comments)
+    const read = id => editor.evaluate(targetId => Object.values<{x: number; y: number; blockId: string | null; text: string}>(vm.runtime.getTargetById(targetId).comments)
         .map(({blockId, text}) => ({blockId, text})), id);
     const attached = async () => (await read(sprite.id)).find(item => item.blockId === sprite.blockId);
     const editable = async view => {
@@ -705,7 +718,7 @@ async function checkCodeComments ({editor, a, b, focus, parent, sprites}) {
         'the workspace comment reaches the VM');
     await until(async () => await workspaceComment(a.child).inputValue() === 'workspace note', 'back view shows the workspace comment');
     const coordinates = () => editor.evaluate(targetId => {
-        const {x, y} = Object.values(vm.runtime.getTargetById(targetId).comments).find(item => item.blockId === null);
+        const {x, y} = Object.values<{x: number; y: number; blockId: string | null; text: string}>(vm.runtime.getTargetById(targetId).comments).find(item => item.blockId === null);
         return {x, y};
     }, sprite.id);
     const original = await coordinates();
@@ -726,7 +739,7 @@ async function checkCodeComments ({editor, a, b, focus, parent, sprites}) {
     await until(async () => await workspaceComment(editor).inputValue() === 'workspace note', 'docked view shows the workspace comment');
     const restored = await editor.evaluate(async ({name, otherName}) => {
         await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
-        const comments = targetName => Object.values(vm.runtime.targets.find(target => target.getName() === targetName).comments)
+        const comments = targetName => Object.values<{blockId: string | null; text: string}>(vm.runtime.targets.find(target => target.getName() === targetName).comments)
             .map(comment => [Boolean(comment.blockId), comment.text]).sort();
         return [comments(name), comments(otherName)];
     }, {name: sprite.name, otherName: other.name});
@@ -832,7 +845,7 @@ async function checkCodePopouts ({editor, context, control}, {
     assert.equal(await editor.evaluate(() =>
         window.open('about:blank', `tw-plus-code-${crypto.randomUUID()}`) === null), true);
     const inert = view => view.child.locator('#mount').evaluate(element => element.inert);
-    const editorInert = () => editor.evaluate(() => ScratchBlocks.getMainWorkspace().getParentSvg().parentElement.inert);
+    const editorInert = () => editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().getParentSvg().parentElement.inert);
     const history = async (view, name) => {
         await focus(view.child, view.id);
         await until(async () => !(await inert(view)), `code window is editable for ${name}`);
@@ -866,10 +879,10 @@ async function checkCodePopouts ({editor, context, control}, {
 
     await focus(editor, parent.id);
     await until(async () => await inert(a) && await inert(b) && !(await editorInert()), 'the native editor regains editing');
-    await editor.evaluate(() => ScratchBlocks.getMainWorkspace().undo(false));
+    await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
     await until(async () => (await coordinates()).x === original.x &&
         await rendered(a.child) === await rendered(b.child), 'the docked workspace uses the same history');
-    await editor.evaluate(blockId => ScratchBlocks.getMainWorkspace().getBlockById(blockId).moveBy(36, 28), id);
+    await editor.evaluate(blockId => window.ScratchBlocks.getMainWorkspace().getBlockById(blockId).moveBy(36, 28), id);
     await until(async () => (await coordinates()).x > original.x &&
         await rendered(a.child) === await rendered(editor) && await rendered(b.child) === await rendered(editor),
     'an edit in the docked workspace reaches both child views');
@@ -1209,7 +1222,7 @@ async function checkStagePopout ({editor, context, control}) {
     const monitor = page => page.locator(`[data-id="${monitorId}"][data-opcode="data_variable"]`);
     await monitor(editor).waitFor();
     await canvas.evaluate(node => {
-        window.stage155 = {vm, loop: vm.runtime.frameLoop, renderer: vm.renderer, canvas: node, lost: 0, input: [], frames: 0};
+        window.stage155 = {vm, loop: vm.runtime.frameLoop, renderer: vm.renderer, canvas: node as HTMLCanvasElement, lost: 0, input: [], frames: 0};
         node.addEventListener('webglcontextlost', () => window.stage155.lost++);
         const post = vm.postIOData.bind(vm);
         vm.postIOData = (device, data) => {
@@ -1316,7 +1329,7 @@ async function checkStagePopout ({editor, context, control}) {
         stage155.monitorEvents = [];
         for (const name of ['pointerdown', 'pointerup']) {
             owner.addEventListener(name, event => stage155.monitorEvents.push({
-                name, trusted: event.isTrusted, target: event.target.closest?.('[data-opcode]')?.dataset.id,
+                name, trusted: event.isTrusted, target: (event.target as Element).closest?.<HTMLElement>('[data-opcode]')?.dataset.id,
                 belongsToChildRealm: event.target instanceof owner.defaultView.Node
             }), {capture: true, once: true});
         }
@@ -1580,7 +1593,7 @@ try {
             const original = window.fetch;
             window.fetch = async (url, options) => {
                 if (typeof url === 'string' && url.startsWith('data:application/json;base64,')) {
-                    await new Promise(resolve => {window.nativeBackpackRead = resolve;});
+                    await new Promise<void>(resolve => {window.nativeBackpackRead = resolve;});
                     window.fetch = original;
                 }
                 return original(url, options);
@@ -1612,7 +1625,7 @@ try {
             });
         }), ids), [[['looks_hide', 'looks_show']], []]);
         await editor.evaluate(id => window.vm.setEditingTarget(id), ids.a);
-        await editor.waitForFunction(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks()
+        await editor.waitForFunction(() => window.window.ScratchBlocks.getMainWorkspace().getTopBlocks()
             .some(block => block.type === 'looks_hide' && block.getNextBlock()?.type === 'looks_show'));
         await child.getByText(itemName, {exact: true}).waitFor();
         report.checks.push('Trusted macOS HID drag copies once to the drop-time sprite and renders in the main editor');
