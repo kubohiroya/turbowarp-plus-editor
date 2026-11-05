@@ -6,7 +6,7 @@ import {WindowLayoutContext} from './index.jsx';
 import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 function DockableBasicPanel({host, id, title, children, render, actionMount, dockHeight, className,
-    externalHost, decorate, renderInExternalDocument}) {
+    externalHost, decorate, renderInExternalDocument, onDockActionChange}) {
     const {showUndock, locale} = React.useContext(WindowLayoutContext);
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
@@ -39,6 +39,13 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         return () => cancelAnimationFrame(frame);
     }, [showUndock, state]);
 
+    const undock = React.useCallback(() => surface.undock({id, title, rememberPlacement: true}), [surface, id, title]);
+    React.useLayoutEffect(() => {
+        if (!onDockActionChange) return;
+        onDockActionChange({kind: state.kind, dock: surface.dock, undock, external: Boolean(externalHost)});
+        return () => onDockActionChange(null);
+    }, [onDockActionChange, state.kind, surface, undock, externalHost]);
+
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mount = state.kind === 'external' ? state.target.mount : undefined;
     React.useLayoutEffect(() => {
@@ -53,7 +60,7 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         <OpenWindowButton
             disabled={state.kind === 'opening'}
             label={japanese ? '別画面で開く' : 'Open in another window'}
-            onOpen={() => surface.undock({id, title, rememberPlacement: true})}
+            onOpen={undock}
         />
     </span>;
     const focusable = Boolean(openAction && actionMount === undefined);

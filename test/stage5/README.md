@@ -4,6 +4,14 @@
 
 Web は `?twPlusWindowLayout=1&twPlusInternalWindows=1&twPlusStagePanel=1` で起動する。⚓ を有効にし、ステージにフォーカスして右上に表示される「別画面で開く」アイコンを選ぶ。タイトルバーの「閉じる」またはドックの「ここに戻す」で元に戻る。
 
+## ステージ表示メニュー
+
+Web は上の起動設定に `twPlusStageDisplayMenu=1` を加える。ステージ右上の「ステージの表示」から、小さい表示・大きい表示・全画面・アンドックを選べる。切り離すと同じ項目が「ドックに戻す」になり、メニューから表示サイズや全画面を選ぶとステージをドックしてから表示を切り替える。カスタムサイズで既存の固定幅プリセットが使える場合は、その項目も表示する。
+
+Desktop は既存のステージ用の起動設定に `TW_PLUS_DESKTOP_STAGE_DISPLAY_MENU=1` を加える。`TW_PLUS_DESKTOP_STAGE_POPOUT=1` も指定すると、アンドックの表示先は OS の別ウィンドウになる。メニューの切り戻しは、メニュー用の起動設定を外して再起動する。
+
+受け入れ基準は、通常のステージでボタン1つに4項目が収まり、キーボードで選択・閉鎖できること、同じキャンバスを維持してドック復帰できること。Desktop の別窓での復帰は、試験用コピーに対して `node test/stage3/check-desktop.mjs /absolute/path/to/Stage.app --stage-display-menu` で確認できる。
+
 ## ローカル検証
 
 [設定パネルの手順](../sprite-properties/README.md) と同じ GUI と Packager の固定ソースを用意する。配信ビルドを使う場合は次を実行する。
