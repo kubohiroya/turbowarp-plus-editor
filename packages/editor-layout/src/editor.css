@@ -406,6 +406,12 @@
     pointer-events: none;
 }
 
+.edge-drawer[data-edge="bottom"] {
+    flex: none;
+    flex-direction: column-reverse;
+    pointer-events: none;
+}
+
 .edge-trigger,
 .edge-panel {
     pointer-events: auto;
@@ -432,6 +438,11 @@
     width: 0.625rem;
 }
 
+.edge-drawer[data-edge="bottom"] .edge-trigger {
+    height: 0.75rem;
+    line-height: 0.75rem;
+}
+
 .edge-panel {
     display: flex;
     flex: 1;
@@ -456,7 +467,12 @@
     box-shadow: 3px 0 8px var(--ui-black-transparent);
 }
 
-.target-list-panel .open-window-action {
+.edge-drawer[data-edge="bottom"] .edge-panel {
+    border-top: 1px solid var(--ui-black-transparent);
+}
+
+.target-list-panel .open-window-action,
+.edge-panel .backpack-panel .open-window-action {
     opacity: 1;
     pointer-events: auto;
 }
