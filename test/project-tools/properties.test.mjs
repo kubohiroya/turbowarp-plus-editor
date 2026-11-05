@@ -45,8 +45,8 @@ test('project tools defaults on, supports explicit off and rejects arbitrary val
     for (const value of ['0', '', 'true', 'false', 'invalid']) {
         assert.equal(readWebStartupFeatureFlags(`?twPlusProjectTools=${value}`).projectTools, false);
     }
-    assert.deepEqual(readWebStartupFeatureFlags('?twPlusExtensionLoader=0'), {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false});
-    assert.deepEqual(readWebStartupFeatureFlags('?twPlusProjectTools=0'), {extensionLoader: true, projectTools: false, spriteProperties: false, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false});
+    assert.deepEqual(readWebStartupFeatureFlags('?twPlusExtensionLoader=0'), {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: false});
+    assert.deepEqual(readWebStartupFeatureFlags('?twPlusProjectTools=0'), {extensionLoader: true, projectTools: false, spriteProperties: false, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: false});
 });
 test('properties round trip through an SB3 and preserve the title across a renamed file', async () => {
     const f = fixture();

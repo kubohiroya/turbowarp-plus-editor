@@ -28,8 +28,10 @@ import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts
 import {installHorizontalBlockPalette} from './horizontal-block-palette/index.js';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.js';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.js';
+import {attachWorkspaceMinimap} from './workspace-minimap/index.js';
 
-const {paletteDeletePreview, horizontalBlockPalette, standardLayout} = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
+const {paletteDeletePreview, horizontalBlockPalette, standardLayout, workspaceMinimap} =
+    readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
 
@@ -101,6 +103,7 @@ export const createPlusIntegration = ({
      * frame and its palette, because those are its own.
      */
     blockEditor,
+    attachWorkspaceMinimap: workspaceMinimap ? attachWorkspaceMinimap : undefined,
     modals: blockEditor ? [BLOCK_EDITOR_MODAL] : [],
     translations: blockEditorTranslations,
     /**

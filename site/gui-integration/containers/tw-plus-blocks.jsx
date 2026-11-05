@@ -7,7 +7,7 @@ import {hostBlockEditor, hostIntegration} from '../lib/tw-plus-integration-point
 import BlockEditorModal from './tw-block-editor-modal.jsx';
 
 // The native Blocks component reports when its workspace is ready and when it is about to be
-// disposed. The host attaches its editor to that workspace and presents its own modal.
+// disposed. The host attaches its workspace features and presents its own modal.
 const createBlocksWrapper = ({ModalComponent, openHostModal, closeHostModal, onError}) => Blocks => {
     class PlusBlocks extends React.Component {
         constructor (props) {
@@ -28,10 +28,15 @@ const createBlocksWrapper = ({ModalComponent, openHostModal, closeHostModal, onE
             this.disposeWorkspace();
             const integration = hostIntegration();
             const editor = hostBlockEditor(integration);
-            if (!editor) return;
             const {vm} = this.props;
             const attachment = {vm};
             this.attachment = attachment;
+            try {
+                attachment.minimap = integration?.attachWorkspaceMinimap?.(workspace, ScratchBlocks);
+            } catch (error) {
+                onError(error);
+            }
+            if (!editor) return;
             const isCurrent = () => this.attachment === attachment && this.props.vm === vm;
             const canOpen = () => isCurrent() && this.props.isVisible && !this.props.anyModalVisible && !this.dialog;
             afterNativeFieldStartup(startupReady, fixedInputs => {
@@ -73,7 +78,11 @@ const createBlocksWrapper = ({ModalComponent, openHostModal, closeHostModal, onE
             const {attachment, dialog} = this;
             this.attachment = null;
             try {
-                attachment?.bridge?.dispose();
+                try {
+                    attachment?.minimap?.dispose();
+                } finally {
+                    attachment?.bridge?.dispose();
+                }
             } catch (error) {
                 onError(error);
             } finally {
