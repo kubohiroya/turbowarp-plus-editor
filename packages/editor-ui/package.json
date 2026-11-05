@@ -1,0 +1,19 @@
+{
+  "name": "@kubohiroya/turbowarp-plus-editor-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared UI components for TurboWarp Plus Editor",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "exports": {
+    ".": "./src/icon-menu-button.jsx"
+  },
+  "peerDependencies": {
+    "react": ">=16.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubohiroya/turbowarp-plus-editor.git",
+    "directory": "packages/editor-ui"
+  }
+}

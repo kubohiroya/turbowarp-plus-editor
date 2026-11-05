@@ -103,6 +103,8 @@ for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
     const specifier = `@kubohiroya/turbowarp-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
+const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
+config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 const siteSource = path.join(__dirname, '..', '..', 'site');
 // Share the original fullscreen artwork with the stage display menu.
 config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
@@ -136,7 +138,7 @@ config.module.rules.push({test: /\.ts$/, include: [
 ], loader: path.join(__dirname, 'transpile-local-typescript.cjs')});
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
+    transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views, path.dirname(editorUiEntry)
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
