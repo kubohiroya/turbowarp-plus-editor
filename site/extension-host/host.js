@@ -51,7 +51,7 @@ export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
     fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
-    onProjectURI, addressProject, onProjectManifest, showDiagnostics = true
+    onProjectURI, addressProject, onProjectManifest, createPayloads, showDiagnostics = true
 } = {}) {
     if (enabled !== true) return Object.freeze({enabled: false, dispose: async () => {}});
     // A single HTML has no catalog to read; its build embeds the digests the catalog listed.
@@ -133,6 +133,7 @@ export function installPlusExtensionHost (vm, {
         diagnostics
     };
     const loader = createExtensionLoader(ports, loaderOptions);
+    const payloads = createPayloads?.({fetch: fetchImpl, cache: ports.cache, validate: projectIO.prepare});
     // A player built as a single HTML has no library to add an extension from, so its entry
     // supplies no controller: passing the factory in rather than importing it here is what keeps
     // the controller, and everything it pulls in, out of that bundle.
@@ -141,10 +142,11 @@ export function installPlusExtensionHost (vm, {
     let uninstall;
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
-            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest,
+            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest, payloads,
             onProjectLoadStart: authoring ? authoring.projectLoadStarted : undefined}, loader);
     } catch (error) {
         authoring?.dispose();
+        payloads?.dispose();
         ui.dispose();
         trustProvider.revokeAll();
         throw error;
@@ -152,11 +154,12 @@ export function installPlusExtensionHost (vm, {
     if (authoring) setAuthoringHost(vm, authoring);
     let disposal;
     return Object.freeze({
-        enabled: true, loader, projectIO, authoring,
+        enabled: true, loader, projectIO, authoring, payloads,
         dispose () {
             if (!disposal) {
                 if (authoring) setAuthoringHost(vm, null);
                 authoring?.dispose();
+                payloads?.dispose();
                 ui.dispose();
                 trustProvider.revokeAll();
                 disposal = Promise.resolve(uninstall()).then(() => loader.unload());

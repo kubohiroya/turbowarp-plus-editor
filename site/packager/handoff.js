@@ -17,6 +17,7 @@ import JSZip from '@turbowarp/jszip';
 
 import {extensionProjectArchiveOptions} from '../extension-host/config.js';
 import {PLUS_EXTENSION_LOADER_ENABLED} from '../extension-library/flags.js';
+import {saveProjectForPackager} from '../project-payloads/host.js';
 
 /** This build's own builder page, under whatever prefix the site was built for. */
 const pageURL = () => new URL(`${process.env.ROOT || './'}plus-packager.html`, location.href).href;
@@ -58,7 +59,7 @@ export const createProjectPackager = ({
          */
         async open ({popup, vm, name, fallbackURL}) {
             try {
-                const buffer = await vm.saveProjectSb3('arraybuffer');
+                const buffer = await saveProjectForPackager(vm);
                 if (popup.closed) return;
                 if (!await readProject(buffer)) {
                     popup.location.href = fallbackURL;

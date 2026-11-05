@@ -2,6 +2,7 @@ import styles from './dialog.css';
 import snackbarStyles from '../styles/snackbar.css';
 import {contactLink, descriptionParts} from './links.js';
 import {diagnosticText} from './diagnostics.js';
+import {renderBundleAssetForm, renderPayloadForm} from '../project-payloads/form.js';
 
 const element = (document, tag, text, attributes = {}) => {
     const node = document.createElement(tag);
@@ -15,13 +16,13 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
     let active = null;
     let returnFocus = null;
     let identity = 0;
-    let stopDiagnosticsView = null;
+    let disposeView = null;
     let notice = null;
     let noticeReturnFocus = null;
     let notifiedError = '';
     const close = () => {
         if (!active) return;
-        stopDiagnosticsView?.(); stopDiagnosticsView = null;
+        disposeView?.(); disposeView = null;
         active.remove(); active = null;
         if (returnFocus?.isConnected) returnFocus.focus();
     };
@@ -190,6 +191,20 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             dialog.appendChild(form);
             dialog.showModal(); (inputs.title || uriInput)?.focus();
         },
+        showPayloadFormats(edit, locale = 'en') {
+            const {dialog} = open(locale.startsWith('ja') ? '作品データの形式' : 'Project Data Formats', locale);
+            const {form, dispose} = renderPayloadForm(document, edit, locale, close);
+            disposeView = dispose;
+            dialog.append(form);
+            dialog.showModal();
+        },
+        showBundleAssetConversion(conversion, locale = 'en') {
+            const {dialog} = open(locale.startsWith('ja') ? 'バンドル素材を作品に追加' : 'Add Bundle Material to Project', locale);
+            const {form, dispose} = renderBundleAssetForm(document, conversion, locale, close);
+            disposeView = dispose;
+            dialog.append(form);
+            dialog.showModal();
+        },
         showDiagnostics(locale = 'en', initialSession) {
             const {dialog, label} = open(locale.startsWith('ja') ? '作品の診断' : 'Project Diagnostics', locale);
             dialog.setAttribute('data-testid', 'project-diagnostics');
@@ -256,7 +271,7 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
                     status.textContent = label('選択した内容をコピーしてください。', 'Copy the selected text.');
                 }
             });
-            stopDiagnosticsView = diagnostics?.subscribe(render);
+            disposeView = diagnostics?.subscribe(render);
             render(); dialog.showModal(); done.focus();
         },
         ownsKeyEvent: event => Boolean(event.target?.closest?.('[data-project-tools]')),

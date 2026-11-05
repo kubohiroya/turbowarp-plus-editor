@@ -7,6 +7,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusExtensionLoader: params.get('twPlusExtensionLoader'),
         twPlusProjectTools: params.get('twPlusProjectTools'),
         twPlusManualProjectURI: params.get('twPlusManualProjectURI'),
+        twPlusPayloadFormats: params.get('twPlusPayloadFormats'),
         twPlusSpriteProperties: params.get('twPlusSpriteProperties'),
         twPlusSplitter: params.get('twPlusSplitter'),
         twPlusWindowLayout: params.get('twPlusWindowLayout'),

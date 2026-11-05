@@ -38,10 +38,12 @@ test('the host is handed what only this fork has, and nothing it could read itse
     assert.equal(settings.search, '');
     assert.equal(settings.enabled, undefined);
     assert.equal(settings.archiveOptions, undefined);
-    // The VM modules the registration needs, as this fork's own instances: central dispatch is a
+    // The VM modules registration and native asset import need. Central dispatch is a
     // singleton, and a copy resolved anywhere else would not be the one the VM uses.
     assert.deepEqual(Object.keys(settings.vmModules).sort(),
-        ['ScratchCommon', 'createTranslate', 'dispatch', 'staticFetch']);
+        ['ScratchCommon', 'assetUploads', 'createTranslate', 'dispatch', 'loadCostume', 'loadSound', 'staticFetch']);
+    assert.equal(settings.vmModules.loadCostume, (await import('scratch-vm/src/import/load-costume.js')).loadCostume);
+    assert.equal(settings.vmModules.loadSound, (await import('scratch-vm/src/import/load-sound.js')).loadSound);
     assert.equal(settings.vmModules.dispatch,
         (await import('scratch-vm/src/dispatch/central-dispatch.js')).default);
     // What the project-error paths read back. The authoring controller the extension library
