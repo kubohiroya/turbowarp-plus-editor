@@ -5,12 +5,14 @@
 <style>
     html, body {height:100%; margin:0}
     body {display:flex; flex-direction:column; font: 14px system-ui, sans-serif}
-    header {display:flex; align-items:center; gap:.5rem; padding:.5rem; background:#e8edf1; color:#25324a}
+    header {position:relative; z-index:20; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; padding:.5rem; background:#e8edf1; color:#25324a}
     #status {margin-inline-end:auto}
-    #workspace-area {position:relative; flex:1; min-height:0}
+    #workspace-area {position:relative; isolation:isolate; flex:1; min-height:0}
     #mount, #drop-zone {position:absolute; inset:0}
 </style>
 <header>
+    <div id="target-picker"></div>
+    <span id="rename-error" role="alert" hidden></span>
     <span id="status" role="status">Connecting…</span>
     <button id="undo" type="button" disabled>Undo</button>
     <button id="redo" type="button" disabled>Redo</button>

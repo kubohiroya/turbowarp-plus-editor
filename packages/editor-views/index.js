@@ -6,8 +6,10 @@ export {encodeEdit} from './protocol.js';
 // Shared history captures blocks, so a drop must not create variables or load extensions.
 const supportsSharedHistory = script => !script.variables.length && !script.extensionIDs?.length &&
     !Object.keys(script.extensionURLs).length;
+const needsEditingTarget = event => event.type === 'change' && event.element === 'field' &&
+    ['VARIABLE', 'LIST', 'BROADCAST_OPTION'].includes(event.name);
 
-export function createCodeSession({vm, workspace, ScratchBlocks, document, canUse, onError, receiveBackpackDrop}) {
+export function createCodeSession({vm, workspace, ScratchBlocks, document, locale, canUse, onError, receiveBackpackDrop}) {
     const parent = document.defaultView;
     const container = workspace.getParentSvg().parentElement;
     const originalInert = container.inert;
@@ -17,6 +19,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     const histories = new Map();
     const views = new Set();
     const dirty = new Set();
+    const thumbnails = new WeakMap();
+    let catalog = [];
+    let activeView;
+    let selectedTarget = vm.editingTarget;
+    let switchingWorkspace = false;
     let owner;
     let pending;
     let dropJob;
@@ -25,6 +32,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     let disposed = false;
 
     const exists = target => vm.runtime.getTargetById(target.id) === target;
+    const selectable = target => Boolean(target?.isOriginal || target?.isStage);
     const parentFocused = () => document.hasFocus();
     const viewFocused = view => view.document.hasFocus();
     const updateInput = () => {
@@ -32,6 +40,20 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     };
     const projection = target => ({...histories.get(target).state, xml: workspaceXML(vm, target)});
     const send = (view, message) => view.port.postMessage(message);
+
+    function updateCatalog() {
+        const targets = vm.runtime.targets.filter(selectable).map(target => {
+            const asset = target.getCostumes?.()[target.currentCostume]?.asset;
+            if (asset && !thumbnails.has(asset)) thumbnails.set(asset, asset.encodeDataURI());
+            return {id: target.id, name: target.getName(), isStage: Boolean(target.isStage),
+                thumbnailUrl: asset && thumbnails.get(asset)};
+        });
+        if (targets.length === catalog.length && targets.every(({id, name, isStage, thumbnailUrl}, index) =>
+            id === catalog[index].id && name === catalog[index].name && isStage === catalog[index].isStage &&
+            thumbnailUrl === catalog[index].thumbnailUrl)) return;
+        catalog = targets;
+        for (const view of views) send(view, {type: 'targets', targets});
+    }
 
     function publish(target, source, refreshParent) {
         const data = projection(target);
@@ -59,7 +81,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     }
 
     function observeParent(event) {
-        if (projecting || disposed || dropJob?.running) return;
+        if (projecting || switchingWorkspace || disposed || dropJob?.running) return;
         const target = vm.editingTarget;
         if (isBlockEdit(event) && histories.has(target)) {
             dirty.add(target);
@@ -76,6 +98,29 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
                 dirty.clear();
             });
         }
+    }
+
+    function flushWorkspaceSwitch() {
+        if (!switchingWorkspace) return;
+        // The GUI replaces Blockly's contents when the VM selection changes.
+        // Its queued projection events are not user edits and must not reset shared history.
+        try {
+            ScratchBlocks.Events.fireNow_();
+        } finally {
+            switchingWorkspace = false;
+        }
+    }
+
+    function retarget(view, target) {
+        if (owner === view) {
+            view.nextTarget = target;
+            revoke();
+            return;
+        }
+        if (target === view.target || !exists(target)) return;
+        view.target = target;
+        if (!histories.has(target)) histories.set(target, createHistory(target));
+        send(view, {type: 'target', targetId: target.id, ...projection(target)});
     }
 
     function grant() {
@@ -116,7 +161,28 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
 
     function owns(view, message) {
         return owner === view && view.lease === message.lease && view.target.id === message.targetId &&
-            exists(view.target) && vm.editingTarget === view.target && vm.runtime.getEditingTarget() === view.target;
+            exists(view.target);
+    }
+
+    function renameTarget(view, value) {
+        const target = view.target;
+        const name = typeof value === 'string' ? value.trim() : '';
+        const oldName = target.getName();
+        if (!name || !target.isOriginal || target.isStage || vm.editingTarget !== target ||
+            vm.runtime.targets.some(other => other !== target && selectable(other) && !other.isStage &&
+                other.getName() === name)) return false;
+        if (name === oldName) return true;
+        ScratchBlocks.Events.fireNow_();
+        flushParent();
+        // Passing an unused name keeps the VM's sprite name and all its block references identical.
+        vm.renameSprite(target.id, name);
+        const actual = target.getName();
+        if (actual === oldName) return false;
+        for (const [tracked, history] of histories) {
+            history.renameSpriteReferences(oldName, actual);
+            publish(tracked, null, true);
+        }
+        return true;
     }
 
     async function runDrop(job) {
@@ -160,6 +226,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
         if (!views.has(view) || !message || typeof message !== 'object') return;
         if (message.type === 'focus') {
             if (owner === view && !view.draining || !viewFocused(view)) return;
+            activeView = view;
             pending = view;
             if (owner) revoke();
             else grant();
@@ -168,6 +235,9 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
         if (message.type === 'release') {
             if (owner === view && view.lease === message.lease) {
                 owner = undefined;
+                const target = view.nextTarget;
+                view.nextTarget = undefined;
+                if (target) retarget(view, target);
                 grant();
             }
             return;
@@ -187,9 +257,31 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
             return;
         }
         if (!owns(view, message)) return;
+        if (message.type === 'select-target') {
+            if (view.draining || !viewFocused(view)) return;
+            const target = vm.runtime.getTargetById(message.nextTargetId);
+            if (selectable(target) && target !== view.target) {
+                pending = view;
+                retarget(view, target);
+            }
+            return;
+        }
+        if (message.type === 'rename-target') {
+            if (view.draining) return;
+            let accepted = false;
+            try {
+                if (viewFocused(view)) accepted = renameTarget(view, message.name);
+            } catch (error) {
+                onError?.(error);
+            }
+            send(view, {type: 'rename-result', lease: view.lease, accepted});
+            return;
+        }
         if (message.type === 'edits' && Array.isArray(message.events) && message.events.length <= 1000) {
             const edits = message.events.map(decodeEdit);
             if (!edits.length || edits.some(event => !event)) return;
+            // Those fields resolve through the VM's current editing target rather than the Blocks container.
+            if (vm.runtime.getEditingTarget() !== view.target && edits.some(needsEditingTarget)) return;
             const before = capture(view.target);
             try {
                 for (const event of edits) view.target.blocks.blocklyListen(event);
@@ -201,16 +293,24 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
                 return;
             }
             if (histories.get(view.target).commit()) publish(view.target, view, true);
-        } else if (message.type === 'step' && typeof message.redo === 'boolean' && !view.draining) {
+        } else if (message.type === 'step' && typeof message.redo === 'boolean' && !view.draining &&
+            vm.editingTarget === view.target) {
             if (histories.get(view.target).step(message.redo)) publish(view.target, view, true);
             send(view, {type: 'step-result', lease: view.lease, ...projection(view.target)});
         }
     }
 
     function targetsUpdated() {
+        if (views.size) updateCatalog();
         for (const view of views) if (!exists(view.target)) view.close();
         for (const target of histories.keys()) if (!exists(target)) histories.delete(target);
-        if (owner && vm.editingTarget !== owner.target) revoke();
+        const target = vm.editingTarget;
+        if (target === selectedTarget) return;
+        selectedTarget = target;
+        switchingWorkspace = true;
+        queueMicrotask(flushWorkspaceSwitch);
+        if (parentFocused() && activeView && selectable(target)) retarget(activeView, target);
+        if (owner && target !== owner.target) revoke();
     }
 
     function attach({target, mount, port, close}) {
@@ -218,17 +318,22 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
             close();
             return () => {};
         }
+        if (!views.size) {
+            selectedTarget = vm.editingTarget;
+            updateCatalog();
+        }
         if (!histories.has(target)) histories.set(target, createHistory(target));
         const view = {target, port, document: mount.ownerDocument, close};
         const listener = event => receive(view, event.data);
         views.add(view);
         port.addEventListener('message', listener);
         port.start();
-        send(view, {type: 'snapshot', targetId: target.id, name: target.getName(),
+        send(view, {type: 'snapshot', targetId: target.id, targets: catalog, locale,
             backpackDrop: Boolean(receiveBackpackDrop), ...projection(target)});
         return () => {
             views.delete(view);
             port.removeEventListener('message', listener);
+            if (activeView === view) activeView = undefined;
             if (pending === view) pending = undefined;
             if (owner === view) owner = undefined;
             grant();
@@ -253,6 +358,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
     workspace.addChangeListener(observeParent);
     parent.addEventListener('focus', parentFocus);
     vm.on('targetsUpdate', targetsUpdated);
+    vm.on('workspaceUpdate', flushWorkspaceSwitch);
 
     return {attach, dispose() {
         disposed = true;
@@ -268,6 +374,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, canUs
         workspace.hasRedoStack = nativeHasRedo;
         parent.removeEventListener('focus', parentFocus);
         vm.removeListener('targetsUpdate', targetsUpdated);
+        vm.removeListener('workspaceUpdate', flushWorkspaceSwitch);
         container.inert = originalInert;
     }};
 }

@@ -1,11 +1,16 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {encodeEdit} from '@kubohiroya/turbowarp-editor-views';
+import {TargetCombobox} from '@kubohiroya/turbowarp-editor-views/target-combobox';
 
 const ticket = location.hash.slice(1);
 const mount = document.getElementById('mount');
 const workspaceArea = document.getElementById('workspace-area');
 const dropZone = document.getElementById('drop-zone');
+const picker = document.getElementById('target-picker');
+const renameError = document.getElementById('rename-error');
 const status = document.getElementById('status');
 const undo = document.getElementById('undo');
 const redo = document.getElementById('redo');
@@ -20,6 +25,8 @@ const workspace = ScratchBlocks.inject(mount, {
 });
 let port;
 let targetId;
+let targets = [];
+let locale;
 let backpackDrop = false;
 let lease;
 let editable = false;
@@ -38,6 +45,26 @@ function setEditable(value) {
     dropZone.hidden = value || !backpackDrop;
     status.textContent = value ? 'Editing' : 'Read only';
     buttons();
+    renderTarget();
+}
+
+function renderTarget() {
+    const name = targets.find(target => target.id === targetId)?.name;
+    const code = /^ja(?:-|$)/i.test(locale) ? 'コード' : 'Code';
+    document.title = name ? `${code} · ${name}` : code;
+    ReactDOM.render(<TargetCombobox id="code-target" value={targetId} targets={targets} locale={locale}
+        disabled={!editable} onSelect={nextTargetId => {
+            if (!editable || nextTargetId === targetId) return;
+            renameError.hidden = true;
+            drain();
+            port.postMessage({type: 'select-target', targetId, lease, nextTargetId});
+        }} onRename={name => {
+            if (!editable) return;
+            renameError.hidden = true;
+            drain();
+            setEditable(false);
+            port.postMessage({type: 'rename-target', targetId, lease, name});
+        }} />, picker);
 }
 
 function snapshot(message) {
@@ -92,12 +119,32 @@ function receive({data: message}) {
         switch (message.type) {
         case 'snapshot':
             targetId = message.targetId;
+            targets = message.targets;
+            locale = message.locale;
             backpackDrop = message.backpackDrop;
-            document.title = `Code · ${message.name}`;
             snapshot(message);
             dock.disabled = false;
             setEditable(false);
             if (document.hasFocus()) focus();
+            break;
+        case 'target':
+            targetId = message.targetId;
+            renameError.hidden = true;
+            snapshot(message);
+            renderTarget();
+            break;
+        case 'rename-result':
+            if (lease === message.lease) {
+                renameError.textContent = /^ja(?:-|$)/i.test(locale) ?
+                    'この名前は使用できません' : 'This name is unavailable';
+                renameError.hidden = message.accepted;
+                if (document.hasFocus()) setEditable(true);
+                else release();
+            }
+            break;
+        case 'targets':
+            targets = message.targets;
+            renderTarget();
             break;
         case 'grant':
             if (!document.hasFocus()) {

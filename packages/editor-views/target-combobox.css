@@ -1,0 +1,88 @@
+.root {
+    position: relative;
+    min-inline-size: 0;
+}
+
+.field {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    inline-size: 10rem;
+    max-inline-size: 100%;
+    padding: 0.125rem 0.375rem;
+    border: 1px solid #d7dbe6;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+}
+
+.field:focus-within {
+    outline: 2px solid var(--tw-window-control-focus, #3855b9);
+    outline-offset: 1px;
+}
+
+.field input {
+    flex: 1;
+    min-inline-size: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    outline: none;
+}
+
+.field button {
+    display: grid;
+    place-items: center;
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+}
+
+.thumbnail {
+    flex: none;
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    border-radius: 0.25rem;
+    object-fit: contain;
+    background: #f5f6fa;
+}
+
+.options {
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline-start: 0;
+    box-sizing: border-box;
+    min-inline-size: 100%;
+    max-block-size: 14rem;
+    overflow: auto;
+    margin: 0.375rem 0 0;
+    padding: 0.25rem;
+    border: 1px solid #d7dbe6;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-shadow: 0 8px 24px #30364d24;
+    list-style: none;
+}
+
+.options li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.options li:hover,
+.highlight {
+    background: #e9ecf5;
+}
+
+.options [aria-selected="true"] {
+    font-weight: 600;
+}

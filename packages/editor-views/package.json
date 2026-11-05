@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./index.js",
+    "./target-combobox": "./target-combobox.jsx",
     "./sprite-code-windows": "./index.jsx"
   },
   "peerDependencies": {

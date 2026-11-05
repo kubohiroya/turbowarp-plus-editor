@@ -96,6 +96,8 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
 }));
 config.resolve.alias['@kubohiroya/turbowarp-editor-views/sprite-code-windows$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-editor-views/sprite-code-windows');
+config.resolve.alias['@kubohiroya/turbowarp-editor-views/target-combobox$'] =
+    rootRequire.resolve('@kubohiroya/turbowarp-editor-views/target-combobox');
 for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
     const specifier = `@kubohiroya/turbowarp-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
