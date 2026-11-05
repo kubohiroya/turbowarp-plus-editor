@@ -2,7 +2,7 @@ const {test, expect} = require('./fixtures.cts');
 
 for (const enabled of [true, false]) {
     test(`パレットへのドロップでブロックを削除できる（削除予告 ${enabled ? '既定ON' : '明示OFF'}）`, async ({page, evidence}) => {
-        evidence.stage('palette-to-workspace');
+        evidence.stage('return-to-palette');
         await page.goto(`editor.html?lang=en&twPlusStandardLayout=0${enabled ? '' : '&twPlusPaletteDeletePreview=0'}`);
         const flyout = page.locator('.blocklyFlyout');
         const source = flyout.locator('.blocklyDraggable').filter({has: page.getByText('move', {exact: true})});
@@ -15,18 +15,31 @@ for (const enabled of [true, false]) {
         const inPalette = {x: palette.x + palette.width / 2, y: palette.y + palette.height / 2};
         const inWorkspace = {x: workspace.x + workspace.width * 0.75, y: workspace.y + 170};
         const move = point => page.mouse.move(point.x, point.y, {steps: 12});
+        const startFromPalette = async () => {
+            await page.mouse.move(from.x + 12, from.y + 12);
+            await page.mouse.down();
+            await move(inWorkspace);
+            await expect(preview).toHaveCount(0);
+        };
         const startFromWorkspace = async () => {
             const bounds = await block.boundingBox();
             await page.mouse.move(bounds.x + 12, bounds.y + 12);
             await page.mouse.down();
         };
 
-        await page.mouse.move(from.x + 12, from.y + 12);
-        await page.mouse.down();
-        await move(inWorkspace);
+        await startFromPalette();
         await move(inPalette);
+        await expect(preview).toHaveCount(enabled ? 1 : 0);
+        await page.mouse.up();
         await expect(preview).toHaveCount(0);
+        await expect(block).toHaveCount(0);
+
+        evidence.stage('palette-to-workspace');
+        await startFromPalette();
+        await move(inPalette);
+        await expect(preview).toHaveCount(enabled ? 1 : 0);
         await move(inWorkspace);
+        await expect(preview).toHaveCount(0);
         await page.mouse.up();
         await expect(block).toHaveCount(1);
 
