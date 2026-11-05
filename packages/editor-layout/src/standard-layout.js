@@ -6,7 +6,7 @@ const singleColumnTargetWidth = 108;
 const minimumStandardEditor = 380;
 
 export function createStandardLayout(React, {styles, targetStyles, context}) {
-    const {createElement: element, Fragment, useContext, useLayoutEffect, useRef, useState} = React;
+    const {createElement: element, useContext, useLayoutEffect, useRef, useState} = React;
     const SplitLayout = createLayout(React);
     const Splitter = createSplitter(React);
     const targets = createTargetList(React, targetStyles);
@@ -36,9 +36,8 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
                     menu.querySelector('summary').focus();
                 }
             }, undockLabel));
-        const stageTools = element(Fragment, null,
-            !enabled && windowLayout && element(Fragment, null, layoutMenu, windowTools),
-            stageActionEnabled && element('span', {className: styles.stageActionSlot, ref: setStageActionMount}));
+        const stageTools = stageActionEnabled &&
+            element('span', {className: styles.stageActionSlot, ref: setStageActionMount});
         const bodyWidth = size?.width ?? 1024;
         const targetSplit = plusLayout && splitter && size ? splitAxis(
             bodyWidth, targetRatio, singleColumnTargetWidth, singleColumnTargetWidth, minimumStandardEditor
@@ -75,7 +74,8 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             (layoutMenu || windowTools) && element('div', {className: styles.layoutTools}, layoutMenu, windowTools), action);
 
         const applyStandardLayout = layout => {
-            if (!enabled) return {...layout, stageClassName: styles.stagePanel};
+            if (!enabled) return {...layout, stageClassName: styles.stagePanel,
+                renderEditorTabRow: windowLayout ? renderEditorTabRow : undefined};
             const shared = {
                 ...layout,
                 stageClassName: styles.stagePanel,
@@ -86,7 +86,12 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
                 }
             };
             if (!plusLayout) return shared;
-            const bodyStyle = {display: 'grid', '--plus-stage-overlap': showStage ? `${stageWidth + 16}px` : '0px'};
+            const stageOverlap = `${stageWidth + 20}px`;
+            const bodyStyle = {
+                display: 'grid',
+                '--plus-stage-overlap': showStage ? stageOverlap : '0px',
+                '--plus-stage-tab-inset': showStage ? stageOverlap : '3rem'
+            };
             if (resizable) {
                 bodyStyle['--plus-target-width'] = `${targetSplit.first}px`;
                 bodyStyle['--plus-target-divider-width'] = `${size.width - targetSplit.available}px`;

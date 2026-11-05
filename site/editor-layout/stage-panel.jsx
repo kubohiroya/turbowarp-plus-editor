@@ -4,7 +4,7 @@ import {BasicPanel} from './basic-panel.jsx';
 import {StageDisplayMenuContext} from './context.js';
 import {createDesktopPanelHost} from './desktop-panel-host.js';
 import {decorateSurface} from '../editor-backpack/surface-styles.js';
-import {layoutFlags, WindowLayoutContext} from './index.jsx';
+import {layoutFlags, stageCanUndock, WindowLayoutContext} from './index.jsx';
 import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
@@ -53,11 +53,12 @@ function StageResizeHandle({edge, aspect, width, limits, label}) {
     />;
 }
 
-function StageViewport({aspect, width, defaultWidth, floating, render, inputDocument}) {
+function StageViewport({aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen, inputDocument}) {
     const {stageHidden, stageResize, locale} = React.useContext(WindowLayoutContext);
     const resizable = !floating && stageResize;
     const resizeLabel = /^ja(?:-|$)/i.test(locale) ? 'ステージのサイズを変更' : 'Resize stage';
     const viewport = React.useRef(null);
+    const header = React.useRef(null);
     const [floatingWidth, setFloatingWidth] = React.useState(null);
     const [externalBounds, setExternalBounds] = React.useState(Boolean(inputDocument));
     React.useLayoutEffect(() => {
@@ -74,8 +75,9 @@ function StageViewport({aspect, width, defaultWidth, floating, render, inputDocu
         if (!floating) return;
         const node = viewport.current;
         const measure = () => {
-            if (node.clientWidth < 3 || node.clientHeight < 3) return;
-            setFloatingWidth(Math.max(1, Math.floor(Math.min(node.clientWidth - 2, (node.clientHeight - 2) * aspect))));
+            const height = node.clientHeight - (header.current?.offsetHeight ?? 0) - 8;
+            if (node.clientWidth < 12 || height < 1) return;
+            setFloatingWidth(Math.max(1, Math.floor(Math.min(node.clientWidth - 12, height * aspect))));
         };
         const observer = new (inputDocument?.defaultView.ResizeObserver ?? ResizeObserver)(measure);
         measure();
@@ -83,33 +85,39 @@ function StageViewport({aspect, width, defaultWidth, floating, render, inputDocu
         return () => observer.disconnect();
     }, [aspect, floating, inputDocument]);
 
-    return <div className={styles.stageViewport} data-floating={floating} data-stage-hidden={stageHidden || undefined}
-        data-resizable={resizable ? true : undefined} data-focusable={layoutFlags.stagePanel || undefined} ref={viewport}
-        tabIndex={layoutFlags.stagePanel ? -1 : undefined}
-        onClick={event => {
-            const node = event.currentTarget;
-            if (layoutFlags.stagePanel && !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
-        }}>
-        {render(floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width,
-            Boolean(floating || externalBounds || resizable), inputDocument)}
+    const displayWidth = floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width;
+    const canvas = <>
+        {render(displayWidth, Boolean(floating || externalBounds || resizable), inputDocument)}
         {resizable && ['left', 'bottom', 'corner'].map(edge => <StageResizeHandle key={edge}
             {...{edge, aspect, width}} limits={stageResize} label={resizeLabel} />)}
+    </>;
+    return <div className={styles.stageViewport} data-floating={floating} data-stage-hidden={stageHidden || undefined}
+        data-resizable={resizable ? true : undefined} data-focusable={stageCanUndock || undefined} ref={viewport}
+        tabIndex={stageCanUndock ? -1 : undefined}
+        onClick={event => {
+            const node = event.currentTarget;
+            if (stageCanUndock && !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
+        }}>
+        {renderHeader ? <div className={styles.stageFrame} data-fullscreen={isFullScreen || undefined} data-plus-stage-frame="">
+            <div className={styles.stageHeader} ref={header}>{renderHeader(displayWidth)}</div>
+            <div className={styles.stageCanvas}>{canvas}</div>
+        </div> : <div className={styles.stageCanvas}>{canvas}</div>}
     </div>;
 }
 
-function AppStagePanel({aspect, width, defaultWidth, render}) {
+function AppStagePanel({aspect, width, defaultWidth, render, renderHeader, isFullScreen}) {
     const {locale, stageActionMount} = React.useContext(WindowLayoutContext);
     const menu = React.useContext(StageDisplayMenuContext);
     const title = /^ja(?:-|$)/i.test(locale) ? 'ステージ' : 'Stage';
     return <BasicPanel id="stage" title={title} externalHost={desktopPopout} decorate={decorateSurface}
         actionMount={stageActionMount ?? null} onDockActionChange={layoutFlags.stageDisplayMenu ? menu?.setDockAction : undefined}
-        dockHeight={Math.round((width ?? defaultWidth) / aspect)}
-        render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render}}
+        dockHeight={Math.round((width ?? defaultWidth) / aspect) + (renderHeader ? 44 : 0)}
+        render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen}}
             inputDocument={desktopPopout ? mount?.ownerDocument : undefined} />}
     />;
 }
 
-export const StagePanel = layoutFlags.stagePanel ? AppStagePanel :
+export const StagePanel = stageCanUndock ? AppStagePanel :
     (layoutFlags.standardLayout ? StageViewport : undefined);
 export const attachStageMonitorDrag = desktopPopout && layoutFlags.stagePanel ?
     (element, onMove, isDraggable) => attachExternalMonitorDrag(element, onMove, isDraggable, document) : undefined;

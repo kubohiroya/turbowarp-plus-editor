@@ -9,6 +9,7 @@ import {attachCodeWorkspace} from '@kubohiroya/turbowarp-editor-views/sprite-cod
 
 export * from './lib/tw-plus-integration-points.js';
 export {renderFileMenu, loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.js';
+export {ProjectInfoMenu} from '../project-tools/info-menu.jsx';
 export * from './lib/tw-plus-transfer.js';
 export * from './lib/tw-plus-extension-host.js';
 export * from './lib/tw-plus-extension-permissions.js';

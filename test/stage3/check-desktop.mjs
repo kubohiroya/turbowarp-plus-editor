@@ -1145,7 +1145,6 @@ async function checkStageDisplayMenu ({editor, context, control}) {
     const display = editor.getByRole('button', {name: displayLabel});
     const menu = editor.getByRole('menu', {name: displayLabel});
     const undock = menu.getByRole('menuitem', {name: /^(Open in a separate window|別ウィンドウで開く)$/});
-    const dock = menu.getByRole('menuitem', {name: /^(Dock stage|ドックに戻す)$/});
     const open = async () => {
         await control('focus', parent.id);
         await display.click();
@@ -1159,9 +1158,12 @@ async function checkStageDisplayMenu ({editor, context, control}) {
     };
 
     const child = await open();
-    await control('focus', parent.id);
-    await display.click();
-    await Promise.all([child.waitForEvent('close'), dock.click()]);
+    const native = (await control('windows')).find(window => window.kind === 'stage');
+    await control('focus', native.id);
+    await child.locator('[class*="green-flag_green-flag_"]').first().waitFor();
+    await child.getByRole('button', {name: displayLabel}).click();
+    await Promise.all([child.waitForEvent('close'),
+        child.getByRole('menuitem', {name: /^(Dock stage|ドックに戻す)$/}).click()]);
     assert.ok(await canvas.evaluate(node => node === window.originalStageCanvas));
 
     const reopened = await open();
@@ -1332,11 +1334,11 @@ async function checkStagePopout ({editor, context, control}) {
 
     report.checks.push('Native monitor drag moved the variable monitor in the parent VM');
 
-    const greenFlag = editor.locator('[class*="green-flag_green-flag_"]').first();
-    const stop = editor.locator('[class*="stop-all_stop-all_"]').first();
+    const greenFlag = child.locator('[class*="green-flag_green-flag_"]').first();
+    const stop = child.locator('[class*="stop-all_stop-all_"]').first();
     const question = child.getByRole('textbox');
-    await focus(editor, parent.id);
-    await click(control, 'editor', greenFlag);
+    await focus(child, native.id);
+    await click(control, 'stage', greenFlag);
     await question.waitFor();
     await focus(child, native.id);
     await click(control, 'stage', question);
@@ -1349,12 +1351,12 @@ async function checkStagePopout ({editor, context, control}) {
     await question.waitFor({state: 'hidden'});
     await until(() => editor.evaluate(value => vm.runtime.getOpcodeFunction('sensing_answer')() === value, answer),
         'answer reaches the parent VM');
-    await focus(editor, parent.id);
-    await click(control, 'editor', greenFlag);
+    await focus(child, native.id);
+    await click(control, 'stage', greenFlag);
     await question.waitFor();
-    await click(control, 'editor', stop);
+    await click(control, 'stage', stop);
     await question.waitFor({state: 'hidden'});
-    report.checks.push('Parent green flag and stop control the VM; native question submission works in the child');
+    report.checks.push('Green flag, stop and question submission in the child control the parent VM');
 
     const anchor = undockButtons(editor);
     await toggleUndockButtons(editor);

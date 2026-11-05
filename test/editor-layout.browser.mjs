@@ -89,9 +89,6 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await page.getByText('Blue', {exact: true}).click();
     assert.notEqual(await themeColor('--looks-secondary'), originalAccent);
     await checkDividerColor();
-    await layoutMenu(page).focus();
-    await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', {name: 'Switch to small stage', exact: true})).toBeFocused();
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0'));
     await expect(columns).toBeVisible();
     const before = await page.evaluate(() => window.vm.toJSON());
@@ -214,6 +211,58 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.locator('[data-gui-stage] canvas').first()).toBeVisible();
     await expect(page.getByRole('button', {name: 'Show undock buttons'})).toHaveCount(0);
     await expect(page.getByRole('separator')).toHaveCount(0);
+});
+
+test('the Plus project menu and the complete stage panel work by default', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await expect(page.getByText('See Project Page', {exact: true})).toHaveCount(0);
+    await expect(page.getByText('TurboWarp Feedback', {exact: true})).toHaveCount(0);
+    const project = page.getByLabel('TurboWarp Plus project information', {exact: true}).first();
+    await project.click();
+    await expect(page.getByRole('link', {name: 'About TurboWarp Plus Editor'})).toBeVisible();
+    await expect(page.getByRole('link', {name: 'Source code'})).toBeVisible();
+    await expect(page.getByRole('link', {name: 'Licenses and credits'})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('link', {name: 'Source code'})).toHaveCount(0);
+
+    const frame = page.locator('[data-plus-stage-frame]');
+    const canvas = frame.locator('[data-gui-stage] canvas').first();
+    const display = frame.getByRole('button', {name: 'Stage display', exact: true});
+    await expect(canvas).toBeVisible();
+    const tabs = await page.getByRole('tablist').first().boundingBox();
+    const stage = await frame.boundingBox();
+    assert.ok(Math.abs(stage.y - tabs.y) <= 2, JSON.stringify({stage, tabs}));
+    await frame.evaluate(node => {
+        window.initialStagePanel = node;
+        window.initialStageCanvas = node.querySelector('[data-gui-stage] canvas');
+        window.initialStageControls = node.querySelector('[class*="controls_controls-container"]');
+        window.stageControlCalls = [];
+        for (const [method, label] of [['greenFlag', 'go'], ['stopAll', 'stop']]) {
+            const original = vm[method].bind(vm);
+            vm[method] = (...args) => {
+                window.stageControlCalls.push(label);
+                return original(...args);
+            };
+        }
+    });
+    await display.click();
+    await frame.getByRole('menuitem', {name: 'Undock stage', exact: true}).click();
+    const floating = page.getByRole('region', {name: 'Stage', exact: true});
+    await expect(floating.locator('[data-plus-stage-frame] canvas').first()).toBeVisible();
+    await expect(floating.getByRole('button', {name: 'Stage display', exact: true})).toBeVisible();
+    assert.ok(await frame.evaluate(node => node === window.initialStagePanel &&
+        node.querySelector('[data-gui-stage] canvas') === window.initialStageCanvas &&
+        window.initialStageControls && node.contains(window.initialStageControls)));
+    await floating.getByTitle('Go', {exact: true}).click();
+    await floating.getByTitle('Stop', {exact: true}).click();
+    await expect.poll(() => page.evaluate(() => window.stageControlCalls)).toEqual(['go', 'stop']);
+    await display.click();
+    await floating.getByRole('menuitem', {name: 'Dock stage', exact: true}).click();
+    await expect(floating).toHaveCount(0);
+    await expect(canvas).toBeVisible();
+    assert.ok(await frame.evaluate(node => node === window.initialStagePanel &&
+        node.querySelector('[data-gui-stage] canvas') === window.initialStageCanvas));
 });
 
 test('startup chooses the layout and the stage menu hides the stage without stopping the project', {timeout: 90_000}, async t => {
