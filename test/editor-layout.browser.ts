@@ -535,8 +535,9 @@ test('startup chooses the layout and the stage menu hides the stage without stop
 });
 
 test('the default editor reveals the sprite drawer and exposes the detached window layout', {timeout: 60_000}, async t => {
-    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
     const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
     const pin = page.getByRole('button', {name: 'Pin sprite list', exact: true});
     const undock = page.getByRole('button', {name: 'Undock sprite list', exact: true});
@@ -585,6 +586,32 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
     await menu.click();
     await window.getByRole('button', {name: 'Return to the editor (dock)'}).click();
     await expect(window).toHaveCount(0);
+    await expect(backdrop).toBeVisible();
+
+    await undock.click();
+    await menu.click();
+    const [child] = await Promise.all([
+        page.waitForEvent('popup'),
+        window.getByRole('button', {name: 'Open in a separate window (undock)'}).click()
+    ]);
+    const popupMenu = child.getByRole('button', {name: 'Window layout', exact: true});
+    const commands = child.getByRole('menu', {name: 'Window layout', exact: true});
+    const current = commands.getByRole('menuitem', {name: 'Open in a separate window (undock)'});
+    const dock = commands.getByRole('menuitem', {name: 'Return to the editor (dock)'});
+    await popupMenu.press('ArrowDown');
+    await expect(commands.getByRole('menuitem')).toHaveCount(6);
+    await expect(current).toBeFocused();
+    await expect(current).toHaveAttribute('aria-current', 'true');
+    await expect(commands.getByRole('menuitem', {name: 'Maximize this window'})).toBeDisabled();
+    await expect(commands.getByRole('menuitem', {name: 'Minimize this window'})).toBeDisabled();
+    await expect(commands.getByRole('menuitem', {name: 'Restore normal window'})).toBeDisabled();
+    await child.keyboard.press('Escape');
+    await expect(popupMenu).toBeFocused();
+    await expect(commands).toHaveCount(0);
+    await popupMenu.press('ArrowDown');
+    await child.keyboard.press('ArrowDown');
+    await expect(dock).toBeFocused();
+    await Promise.all([child.waitForEvent('close'), dock.press('Enter')]);
     await expect(backdrop).toBeVisible();
 
 });

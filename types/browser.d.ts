@@ -1,3 +1,12 @@
+type PlusPopupWindowMode = 'normal' | 'minimized' | 'maximized';
+type PlusPopupWindowAction = 'maximize' | 'minimize' | 'restore';
+
+interface PlusPopupWindowControls {
+    onMode(listener: (mode: PlusPopupWindowMode) => void): () => void;
+    mode(): Promise<PlusPopupWindowMode>;
+    change(action: PlusPopupWindowAction): Promise<PlusPopupWindowMode>;
+}
+
 // TurboWarp exposes these host objects at runtime; their implementations live upstream.
 interface Window {
     vm: any;
@@ -5,6 +14,7 @@ interface Window {
     ScratchBlocks: any;
     ReduxStore: any;
     TurboWarpPlusExtensionHost: any;
+    TwPlusWindowControls?: PlusPopupWindowControls;
 }
 
 

@@ -70,7 +70,7 @@ interface Window {
     EditorPreload?: {getInitialFile(): unknown};
 }
 declare var stage155: StagePopoutEvidence;
-declare var TwPlusWindowControls: {mode(): Promise<'normal' | 'minimized' | 'maximized'>};
+declare var TwPlusWindowControls: PlusPopupWindowControls;
 
 interface Screen {
     // Chromium exposes these offsets for screens to the left of or above the primary display.

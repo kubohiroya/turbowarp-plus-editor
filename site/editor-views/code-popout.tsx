@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import '@kubohiroya/turbowarp-editor-windows/styles.css';
 import {PopupLayout} from '../editor-layout/popup-layout.tsx';
 import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
 import ScratchBlocks from 'scratch-blocks';
