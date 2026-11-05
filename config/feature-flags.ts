@@ -31,6 +31,6 @@ export function readStartupFeatureFlags({
         paletteDeletePreview: paletteDeletePreview === '1',
         horizontalBlockPalette: horizontalBlockPalette === '1',
         contextMenuIcons: contextMenuIcons === '1',
-        workspaceMinimap: workspaceMinimap === '1'
+        workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1'
     });
 }

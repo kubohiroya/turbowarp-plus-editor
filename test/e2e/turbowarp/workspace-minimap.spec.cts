@@ -10,17 +10,18 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
         const screen = new DOMPoint(x, y).matrixTransform(element.getScreenCTM());
         return {x: screen.x, y: screen.y};
     });
-    await page.goto('editor.html?lang=en');
+    evidence.stage('explicit-opt-out');
+    await page.goto('editor.html?lang=en&twPlusWorkspaceMinimap=0');
     await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
     await expect(minimap).toHaveCount(0);
 
     evidence.stage('default-plus-layout');
-    await page.goto('editor.html?lang=en&twPlusWorkspaceMinimap=1');
+    await page.goto('editor.html?lang=en');
     await expect(page.locator('.blocklyToolboxDiv[data-horizontal-block-palette]')).toBeVisible();
     await expect(minimap).toBeVisible();
 
     evidence.stage('classic-layout');
-    await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusWorkspaceMinimap=1&twPlusHorizontalBlockPalette=1');
+    await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
     await expect(minimap).toBeVisible();
     await expect(minimap).toHaveCSS('cursor', 'pointer');
     await expect(minimap).toHaveCSS('background-color', /\/ 0\.5\)$/);

@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: false});
+        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,7 +156,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: false});
+        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -222,8 +222,10 @@ test('sprite code windows are opt-in and use the internal window layout', () => 
     assert.equal(readWebStartupFeatureFlags(layout + '&twPlusSpriteCodeWindows=1').spriteCodeWindows, true);
 });
 
-test('the workspace minimap requires explicit startup opt-in', () => {
-    for (const query of ['', '?twPlusWorkspaceMinimap=0', '?twPlusWorkspaceMinimap=true']) {
+test('the workspace minimap defaults on and supports explicit opt-out', () => {
+    assert.equal(readStartupFeatureFlags().workspaceMinimap, true);
+    assert.equal(readWebStartupFeatureFlags().workspaceMinimap, true);
+    for (const query of ['?twPlusWorkspaceMinimap=0', '?twPlusWorkspaceMinimap=true']) {
         assert.equal(readWebStartupFeatureFlags(query).workspaceMinimap, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusWorkspaceMinimap=1').workspaceMinimap, true);
