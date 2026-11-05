@@ -233,6 +233,10 @@
     position: relative;
 }
 
+.target-list-content > :global([class*="sprite-selector_add-button_"]) {
+    z-index: 2;
+}
+
 .external-panel {
     display: flex;
     flex-direction: column;
