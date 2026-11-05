@@ -29,29 +29,30 @@
     height: 80px;
 }
 
+.backdrop-cell > * {
+    height: 100%;
+}
+
 .grid[data-backdrop-placement="top-right"] > .backdrop-cell {
     grid-row: 1;
     grid-column: -2;
     top: 0;
 }
 
-.grid[data-backdrop-placement="bottom-left"] {
-    grid-template-rows: repeat(var(--target-rows-before-last), 80px) minmax(80px, 1fr);
+.grid[data-backdrop-placement="bottom-right"] {
+    grid-template-rows: var(--target-rows-before-last,) minmax(80px, 1fr);
 }
 
-.grid[data-backdrop-placement="bottom-left"] > .backdrop-cell {
+.grid[data-backdrop-placement="bottom-right"] > .backdrop-cell {
     grid-row: -2;
-    grid-column: 1;
+    grid-column: -2;
     align-self: end;
     bottom: 0;
 }
 
-[dir="rtl"] .grid[data-backdrop-placement="top-right"] > .backdrop-cell {
+[dir="rtl"] .grid[data-backdrop-placement="top-right"] > .backdrop-cell,
+[dir="rtl"] .grid[data-backdrop-placement="bottom-right"] > .backdrop-cell {
     grid-column: 1;
-}
-
-[dir="rtl"] .grid[data-backdrop-placement="bottom-left"] > .backdrop-cell {
-    grid-column: -2;
 }
 
 .backdrop {

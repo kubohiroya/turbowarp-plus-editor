@@ -50,7 +50,9 @@ test('横パレットでカテゴリを切り替え、実ブロックを追加�
     await page.mouse.move(from.x + 12, from.y + 12);
     await page.mouse.down();
     await page.mouse.move(from.x + 12, from.y + 34, {steps: 4});
+    await expect(flyout).toBeVisible();
     await page.mouse.move(surface.x + surface.width * 0.65, surface.y + 260, {steps: 16});
+    await expect(flyout).toBeHidden();
     await page.mouse.up();
     await expect(block).toHaveCount(1);
     await expect(flyout).toBeHidden();
@@ -75,7 +77,25 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
     const toolbox = page.locator('.blocklyToolboxDiv');
     const flyout = page.locator('.blocklyFlyout');
+    const addExtension = page.getByRole('button', {name: 'Add Extension', exact: true});
+    const verticalButton = await addExtension.boundingBox();
     await useLayout(page, 'Use horizontal palette');
+    const horizontalButton = await addExtension.boundingBox();
+    const categories = await toolbox.boundingBox();
+    expect(Math.abs(horizontalButton.y - categories.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(horizontalButton.x + horizontalButton.width - categories.x)).toBeLessThanOrEqual(2);
+    expect(horizontalButton.y).toBeLessThan(verticalButton.y);
+    const divider = page.getByRole('separator', {name: 'Editor and stage column width'});
+    await divider.press('Home');
+    const fixedButton = await addExtension.boundingBox();
+    const scroll = await toolbox.evaluate(node => {
+        node.scrollLeft = node.scrollWidth;
+        return node.scrollLeft;
+    });
+    expect(scroll).toBeGreaterThan(0);
+    expect(await addExtension.boundingBox()).toEqual(fixedButton);
+    await toolbox.evaluate(node => { node.scrollLeft = 0; });
+    await divider.press('Enter');
 
     evidence.stage('dynamic-category');
     await toolbox.locator('.scratchCategoryId-variables').click();
@@ -90,7 +110,7 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout.getByText('Make a Block', {exact: true})).toBeVisible();
 
     evidence.stage('extension-category');
-    await page.getByRole('button', {name: 'Add Extension', exact: true}).click();
+    await addExtension.click();
     await page.getByText('Pen', {exact: true}).click();
     const pen = toolbox.locator('.scratchCategoryId-pen');
     await pen.click();

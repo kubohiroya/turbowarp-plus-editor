@@ -29,7 +29,7 @@ try {
         return route.fulfill({path: file});
     });
     const mode = page.getByRole('button', {name: 'Show undock buttons', exact: true});
-    const action = page.locator('[class*="basic-panel-overlay-action_"]').getByRole('button', {
+    const action = page.locator('[class*="stage-action-slot_"]').getByRole('button', {
         name: 'Open in another window', exact: true
     });
     const stage = page.getByRole('region', {name: 'Stage', exact: true});
@@ -53,9 +53,21 @@ try {
         };
     });
     const opacity = () => action.evaluate(node => getComputedStyle(node.parentElement).opacity);
+    const editor = page.getByRole('tab', {name: 'Code', exact: true});
+    await editor.focus();
     assert.equal(await opacity(), '0');
     await canvas.hover();
+    assert.equal(await opacity(), '0');
+    await canvas.click({position: {x: 30, y: 30}});
     assert.equal(await opacity(), '1');
+    assert.equal(await action.getAttribute('title'), 'Open in another window');
+    assert.equal(await action.locator('span').isVisible(), false);
+    const button = await action.boundingBox();
+    const canvasBox = await canvas.boundingBox();
+    assert.ok(button.y + button.height < canvasBox.y, JSON.stringify({button, canvasBox}));
+    await action.click({trial: true});
+    await editor.focus();
+    assert.equal(await opacity(), '0');
     await action.focus();
     await page.keyboard.press('Enter');
     await stage.locator('[data-gui-stage] canvas').waitFor();

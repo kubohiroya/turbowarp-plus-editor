@@ -28,6 +28,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
         enabled={layoutFlags.standardLayout}
         splitter={layoutFlags.splitter}
         windowLayout={layoutFlags.windowLayout}
+        stageActionEnabled={layoutFlags.stagePanel}
         storage={getStorage()}
         storageKey="twPlusEditorLayout"
         onPaletteModeChange={setHorizontalBlockPalette}

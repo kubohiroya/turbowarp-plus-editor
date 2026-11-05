@@ -1,11 +1,14 @@
-import {createLayout} from './index.js';
+import {createLayout, createSplitter, splitAxis} from './index.js';
 import {createTargetList} from './targets.js';
 
 const isJapanese = locale => /^ja(?:-|$)/i.test(locale);
+const minimumStandardTargets = 174;
+const minimumStandardEditor = 380;
 
 export function createStandardLayout(React, {styles, targetStyles, context}) {
     const {createElement: element, Fragment, useContext, useLayoutEffect, useRef, useState} = React;
     const SplitLayout = createLayout(React);
+    const Splitter = createSplitter(React);
     const targets = createTargetList(React, targetStyles);
 
     function AnchorButton({label, pressed, onClick}) {
@@ -21,12 +24,15 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
     }
 
     function StandardLayout({
-        enabled, splitter, windowLayout, onPaletteModeChange, windowTools, Container, render, ...props
+        enabled, splitter, windowLayout, stageActionEnabled, onPaletteModeChange, windowTools, Container, render, ...props
     }) {
         const [showUndock, setShowUndock] = useState(false);
         const [plusSelected, setPlusSelected] = useState(enabled);
         const [showStage, setShowStage] = useState(true);
         const [size, setSize] = useState(null);
+        const [targetRatio, setTargetRatio] = useState(null);
+        const [preferredStageWidth, setPreferredStageWidth] = useState(null);
+        const [stageActionMount, setStageActionMount] = useState(null);
         const body = useRef(null);
         const plusLayout = plusSelected && !props.fullscreen;
         const stageHidden = plusLayout && !showStage;
@@ -35,8 +41,24 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
         const anchorLabel = japanese ? 'TurboWarp Plus 標準配置' : 'TurboWarp Plus layout';
         const stageLabel = japanese ? 'ステージを表示' : 'Show stage';
         const toggleUndock = () => setShowUndock(value => !value);
-        const stageTools = !enabled && windowLayout ? element(Fragment, null,
-            element(AnchorButton, {label: undockLabel, pressed: showUndock, onClick: toggleUndock}), windowTools) : null;
+        const stageTools = element(Fragment, null,
+            !enabled && windowLayout && element(Fragment, null,
+                element(AnchorButton, {label: undockLabel, pressed: showUndock, onClick: toggleUndock}), windowTools),
+            stageActionEnabled && element('span', {className: styles.stageActionSlot, ref: setStageActionMount}));
+        const bodyWidth = size?.width ?? 1024;
+        const defaultTargetWidth = Math.max(minimumStandardTargets, Math.min(bodyWidth * 0.18, 216));
+        const targetSplit = plusLayout && splitter && size ? splitAxis(
+            bodyWidth, targetRatio, defaultTargetWidth, minimumStandardTargets, minimumStandardEditor
+        ) : null;
+        const resizable = targetSplit && targetSplit.maximum > targetSplit.minimum;
+        const editorSpace = resizable ? targetSplit.second : bodyWidth - defaultTargetWidth;
+        const maximumStageWidth = Math.max(1, Math.floor(Math.min(editorSpace - 24,
+            ((size?.height ?? 640) - 112) * props.stageAspect)));
+        const defaultStageWidth = Math.min(maximumStageWidth, Math.floor(Math.min(props.defaultStageWidth, 360, bodyWidth / 2)));
+        const minimumStageWidth = Math.min(defaultStageWidth, 280);
+        const stageWidth = Math.max(minimumStageWidth, Math.min(maximumStageWidth, preferredStageWidth ?? defaultStageWidth));
+        const stageResize = plusLayout && maximumStageWidth > minimumStageWidth ?
+            {minimum: minimumStageWidth, maximum: maximumStageWidth, resize: setPreferredStageWidth} : null;
 
         useLayoutEffect(() => {
             if (enabled) onPaletteModeChange?.(plusSelected);
@@ -56,7 +78,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             return () => observer.disconnect();
         }, []);
 
-        const renderEditorTabRow = (tabs, action) => element('div', {className: styles.tabRow}, tabs, action,
+        const renderEditorTabRow = (tabs, action) => element('div', {className: styles.tabRow}, tabs,
             element('div', {className: styles.layoutTools},
                 element(AnchorButton, {label: anchorLabel, pressed: plusSelected,
                     onClick: () => setPlusSelected(value => !value)}),
@@ -75,12 +97,13 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
                             menu.querySelector('summary').focus();
                         }
                     }, undockLabel)),
-                windowTools));
+                windowTools), action);
 
         const applyStandardLayout = layout => {
-            if (!enabled) return layout;
+            if (!enabled) return {...layout, stageClassName: styles.stagePanel};
             const shared = {
                 ...layout,
+                stageClassName: styles.stagePanel,
                 renderEditorTabRow,
                 observe: node => {
                     layout.observe(node);
@@ -88,18 +111,30 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
                 }
             };
             if (!plusLayout) return shared;
-            const stageWidth = Math.max(1, Math.floor(Math.min(props.defaultStageWidth, 360,
-                (size?.width ?? 1024) / 2, ((size?.height ?? 640) - 112) * props.stageAspect)));
+            const bodyStyle = {display: 'grid', '--plus-stage-overlap': showStage ? `${stageWidth + 16}px` : '0px'};
+            if (resizable) {
+                bodyStyle['--plus-target-width'] = `${targetSplit.first}px`;
+                bodyStyle['--plus-target-divider-width'] = `${size.width - targetSplit.available}px`;
+            }
+            // The target list is on the physical left in both text directions.
+            const columnSplitter = resizable ? element(Splitter, {
+                axis: 'columns', split: targetSplit,
+                label: japanese ? 'スプライト一覧と編集領域の幅' : 'Sprite list and editor width',
+                className: `${styles.separator} ${styles.standardSeparator}`,
+                onChange: setTargetRatio, onReset: () => setTargetRatio(null)
+            }) : null;
             return {
                 ...shared,
                 bodyClassName: styles.standardBody,
-                bodyStyle: {display: 'grid', '--plus-stage-overlap': showStage ? `${stageWidth + 16}px` : '0px'},
+                bodyStyle,
+                columnSplitter,
                 editorStyle: {gridArea: 'editor', minWidth: 0, minHeight: 0},
                 stageColumnStyle: {display: 'contents'},
-                stageClassName: stageHidden ? `${styles.floatingStage} ${styles.stageHidden}` : styles.floatingStage,
+                stageClassName: `${styles.stagePanel} ${styles.floatingStage}${stageHidden ? ` ${styles.stageHidden}` : ''}`,
                 targetClassName: styles.standardTargets,
                 stageDisplayWidth: stageWidth,
-                editorWidth: size?.width
+                handleStagePreset: () => setPreferredStageWidth(null),
+                editorWidth: resizable ? targetSplit.second : size?.width
             };
         };
 
@@ -118,7 +153,9 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             stageTools,
             render: slots => render(applyStandardLayout(slots), showUndock)
         });
-        return element(context.Provider, {value: {showUndock, plusLayout, stageHidden, locale: props.locale}},
+        return element(context.Provider, {value: {
+            showUndock, plusLayout, stageHidden, stageResize, stageActionMount, locale: props.locale
+        }},
             Container ? element(Container, {locale: props.locale}, layout) : layout);
     }
 

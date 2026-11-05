@@ -1,6 +1,7 @@
 import styles from './palette.css';
 
 const installed = new WeakSet();
+const closeOnDragExit = new WeakMap();
 const palettes = new Set();
 let horizontalLayout = false;
 
@@ -31,7 +32,6 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         scrollToId: toolbox.scrollToCategoryById,
         scrollToName: toolbox.scrollToCategoryByName,
         showAll: toolbox.showAll_,
-        createBlock: flyout.createBlock,
         getFlyoutWidth: flyout.getWidth,
         isDragTowardWorkspace: flyout.isDragTowardWorkspace,
         position: flyout.position
@@ -137,8 +137,9 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         const height = Math.max(4, Math.min(360, surface.clientHeight * 0.65, surface.clientHeight - top - 4));
         const offset = surface.getBoundingClientRect();
         const anchor = category.item_.getBoundingClientRect();
+        const menuLeft = menu.getBoundingClientRect().left - offset.left;
         const preferredLeft = workspace.RTL ? anchor.right - offset.left - width : anchor.left - offset.left;
-        const left = Math.min(Math.max(0, preferredLeft), menu.clientWidth - width);
+        const left = Math.min(Math.max(menuLeft, preferredLeft), menuLeft + menu.clientWidth - width);
 
         flyout.width_ = width;
         flyout.height_ = height;
@@ -156,11 +157,11 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         const touch = workspace.currentGesture_?.mostRecentEvent_?.type.startsWith('touch');
         return Math.abs(delta.x) > Math.abs(delta.y) / 2 || (!touch && delta.y > 0);
     };
-    flyout.createBlock = block => {
-        const created = original.createBlock.call(flyout, block);
-        if (horizontal && created) close();
-        return created;
-    };
+    closeOnDragExit.set(flyout, ({clientX, clientY}) => {
+        if (openId === null) return;
+        const {left, right, top, bottom} = panel.getBoundingClientRect();
+        if (clientX < left || clientX > right || clientY < top || clientY > bottom) close();
+    });
 
     const setMode = next => {
         if (next === horizontal) return;
@@ -241,6 +242,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
     }, capture);
     toolbox.dispose = () => {
         palettes.delete(setMode);
+        closeOnDragExit.delete(flyout);
         events.abort();
         WidgetDiv.hideIfOwner(toolbox);
         original.dispose.call(toolbox);
@@ -253,6 +255,16 @@ export const installHorizontalBlockPalette = (ScratchBlocks, {allowManualToggle 
     const toolbox = ScratchBlocks.Toolbox?.prototype;
     if (!toolbox?.init || installed.has(toolbox)) return;
     installed.add(toolbox);
+
+    const gesture = ScratchBlocks.Gesture.prototype;
+    const {handleMove} = gesture;
+    gesture.handleMove = function (...args) {
+        const result = handleMove.apply(this, args);
+        if (this.isDraggingBlock_ && this.mostRecentEvent_) {
+            closeOnDragExit.get(this.flyout_)?.(this.mostRecentEvent_);
+        }
+        return result;
+    };
 
     const {init} = toolbox;
     toolbox.init = function (...args) {
