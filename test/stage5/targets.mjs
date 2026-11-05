@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
 import {chromium} from 'playwright';
+import {toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15106';
 const prefix = process.env.TW151_STAGE5_PREFIX || '/';
@@ -48,7 +49,6 @@ try {
         return route.fulfill({path: file});
     });
 
-    const mode = page.getByRole('button', {name: 'Show undock buttons', exact: true});
     const grid = page.locator('[data-backdrop-placement]');
     const tile = grid.getByRole('button', {name: 'Backdrops', exact: true});
     const frame = page.getByRole('region', {name: 'Sprite list', exact: true});
@@ -58,7 +58,7 @@ try {
     const legacyStage = page.locator('[class*="stage-selector_stage-selector_"]');
 
     await start('');
-    await mode.click();
+    await toggleUndockButtons(page);
     await legacyStage.waitFor();
     assert.equal(await tile.count(), 0);
     assert.equal(await open.count(), 0);
@@ -66,7 +66,7 @@ try {
     await start('&twPlusTargetList=1');
     await tile.waitFor();
     assert.equal(await open.count(), 0);
-    await mode.click();
+    await toggleUndockButtons(page);
     await tile.waitFor();
     assert.equal(await legacyStage.count(), 0);
     assert.equal(await tile.evaluate(node => node.innerText.trim()), 'Backdrops');
@@ -145,7 +145,7 @@ try {
             window.originalBackdropTile.querySelector('img').src === stage.sprite.costumes[stage.currentCostume].asset.encodeDataURI();
     });
 
-    await mode.click();
+    await toggleUndockButtons(page);
     await frame.waitFor();
     assert.ok(await tile.evaluate(node => node === window.originalBackdropTile));
     await frame.getByRole('button', {name: 'Close and dock', exact: true}).click();
@@ -161,7 +161,7 @@ try {
     assert.ok(await tile.evaluate(node => node === window.originalBackdropTile));
 
     await start('&twPlusTargetList=1', 'ja');
-    await page.getByRole('button', {name: 'アンドックボタンを表示', exact: true}).click();
+    await toggleUndockButtons(page);
     await grid.getByRole('button', {name: '背景', exact: true}).waitFor();
     assert.deepEqual(errors, []);
     console.log('One sticky backdrop tile, four footer actions, live preview, sprite selection and undock/dock passed.');

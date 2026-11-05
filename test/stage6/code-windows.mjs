@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
 import {chromium} from 'playwright';
+import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15107';
 const prefix = '/turbowarp-plus-editor/';
@@ -187,7 +188,7 @@ try {
     await tile('CodeCat').click();
     await front('CodeCat', 3, 1);
     await seedBackpack();
-    await page.getByRole('button', {name: 'Show undock buttons', exact: true}).click();
+    await toggleUndockButtons(page);
     await page.locator('[class*="backpack_backpack-header"]').click();
     await page.getByText('Stage 6 stored script', {exact: true}).waitFor();
     await page.getByRole('button', {name: 'Undock Backpack', exact: true}).click();
@@ -291,8 +292,7 @@ try {
     console.log('Tab switching, close, sprite deletion, and saving and reopening a project passed.');
 
     await page.getByRole('tab', {name: 'Code', exact: true}).click();
-    const undockButtons = page.getByRole('button', {name: 'Show undock buttons', exact: true});
-    if (await undockButtons.getAttribute('aria-pressed') === 'false') await undockButtons.click();
+    if (await undockButtons(page).getAttribute('aria-pressed') === 'false') await toggleUndockButtons(page);
     await page.getByRole('tablist').locator('..')
         .getByRole('button', {name: 'Open in another window', exact: true}).press('Enter');
     const basicTarget = await page.evaluate(() => window.vm.editingTarget.getName());
@@ -308,18 +308,16 @@ try {
 
     await start('&twPlusSpriteCodeWindows=1', 'en', true);
     const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout', exact: true});
-    assert.equal(await anchor.getAttribute('aria-pressed'), 'true');
-    await page.getByLabel('Layout options', {exact: true}).click();
-    await page.getByRole('button', {name: 'Show undock buttons', exact: true}).click();
+    assert.equal(await anchor.count(), 0);
+    await toggleUndockButtons(page);
     await page.getByRole('tablist').locator('..')
         .getByRole('button', {name: 'Open in another window', exact: true}).press('Enter');
     const plusTarget = await page.evaluate(() => window.vm.editingTarget.getName());
     await front(plusTarget, 1, 0);
-    await anchor.click();
-    assert.equal(await anchor.getAttribute('aria-pressed'), 'false');
+    await toggleUndockButtons(page);
     await front(plusTarget, 1, 0);
     assert.deepEqual(errors, []);
-    console.log('The Plus layout menu opens code windows, which stay open across the anchor toggle.');
+    console.log('The Plus layout menu opens code windows, which stay open when undock buttons are hidden.');
 } finally {
     if (errors.length) console.error(errors);
     await browser.close();

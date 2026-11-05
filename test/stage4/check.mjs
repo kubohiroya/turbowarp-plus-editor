@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
 import {chromium} from 'playwright';
+import {toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15104';
 const build = resolve(process.env.TW151_STAGE4_BUILD || '/private/tmp/tw151-stage4-build');
@@ -16,7 +17,7 @@ const page = await context.newPage();
 async function start(flags) {
     await page.goto(origin + '/editor.html?lang=en&twPlusStandardLayout=0&twPlusWindowLayout=1' + flags);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
-    await page.getByRole('button', {name: 'Show undock buttons'}).click();
+    await toggleUndockButtons(page);
 }
 
 async function seed() {
@@ -66,10 +67,9 @@ try {
     const header = page.locator('[class*="backpack_backpack-header_"]');
     await header.click();
     await page.getByText(itemName, {exact: true}).waitFor();
-    const mode = page.getByRole('button', {name: 'Show undock buttons'});
-    await mode.click();
+    await toggleUndockButtons(page);
     const beforeLaunch = await header.boundingBox();
-    await mode.click();
+    await toggleUndockButtons(page);
     await launch.focus();
     const [heading, icon] = await Promise.all([header.boundingBox(), launch.boundingBox()]);
     assert.equal(heading.y, beforeLaunch.y);
@@ -156,7 +156,7 @@ try {
     await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Undock Backpack');
     await launch.click();
     await frame.getByText(itemName, {exact: true}).waitFor();
-    await page.getByRole('button', {name: 'Show undock buttons'}).click();
+    await toggleUndockButtons(page);
     await frame.getByText(itemName, {exact: true}).waitFor();
     assert.equal(await launch.count(), 0);
     await page.getByRole('button', {name: 'Windows', exact: true}).waitFor();

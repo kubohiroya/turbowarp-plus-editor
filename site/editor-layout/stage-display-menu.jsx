@@ -1,17 +1,21 @@
 import React from 'react';
 import fullscreenIcon from '@tw-plus/gui-stage-fullscreen-icon';
-import {StageDisplayMenuContext} from './context.js';
+import {StageDisplayMenuContext, WindowLayoutContext} from './context.js';
 import {layoutFlags} from './index.jsx';
 import styles from './stage-display-menu.css';
 
 function DisplayMenu({locale, presets, fullscreen}) {
     const {dockAction} = React.useContext(StageDisplayMenuContext) ?? {};
+    const {plusLayout, stageHidden, setStageVisible} = React.useContext(WindowLayoutContext);
     const [open, setOpen] = React.useState(false);
     const root = React.useRef(null);
     const trigger = React.useRef(null);
     const list = React.useRef(null);
     const japanese = /^ja(?:-|$)/i.test(locale);
     const label = japanese ? 'ステージの表示' : 'Stage display';
+    const canToggleVisibility = plusLayout && (!dockAction || dockAction.kind === 'docked');
+    const visibilityLabel = stageHidden ? (japanese ? 'ステージを表示' : 'Show stage') :
+        (japanese ? 'ステージを隠す' : 'Hide stage');
     const detached = dockAction?.kind === 'external';
     const dockLabel = detached ? (japanese ? 'ドックに戻す' : 'Dock stage') :
         dockAction?.external ? (japanese ? '別ウィンドウで開く' : 'Open in a separate window') :
@@ -36,11 +40,12 @@ function DisplayMenu({locale, presets, fullscreen}) {
     };
     const selectDisplay = action => {
         close();
+        if (stageHidden) setStageVisible(true);
         if (detached) dockAction.dock();
         action();
     };
 
-    return <div className={styles.root} ref={root}
+    return <div className={styles.root} data-stage-hidden={stageHidden || undefined} ref={root}
         onBlur={event => {
             if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
         }}>
@@ -89,11 +94,19 @@ function DisplayMenu({locale, presets, fullscreen}) {
                 <img className={styles.icon} src={fullscreenIcon} alt="" draggable={false} />
                 {fullscreen.title}
             </button>
+            {canToggleVisibility && <button type="button" role="menuitem" tabIndex={-1} onClick={() => {
+                close();
+                setStageVisible(stageHidden);
+            }}>
+                <span className={styles.icon} aria-hidden="true" />
+                {visibilityLabel}
+            </button>}
             <button type="button" role="menuitem" tabIndex={-1} className={styles.dock}
                 aria-disabled={!dockAction || dockAction.kind === 'opening'}
                 onClick={() => {
                     if (!dockAction || dockAction.kind === 'opening') return;
                     close();
+                    if (stageHidden) setStageVisible(true);
                     if (detached) dockAction.dock();
                     else dockAction.undock();
                 }}>

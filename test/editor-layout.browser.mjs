@@ -5,6 +5,7 @@ import path from 'node:path';
 import {chromium, expect} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
 import pinnedGui from './pinned-gui.cjs';
+import {layoutMenu, toggleUndockButtons, undockButtons} from './fixtures/layout-menu.mjs';
 
 const types = {
     '.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
@@ -54,21 +55,21 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
         await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() &&
             window.vm?.editingTarget))).toBe(true);
     };
-    const anchor = page.getByRole('button', {name: 'Show undock buttons'});
+    const mode = undockButtons(page);
     const stage = page.locator('[data-gui-stage] canvas').first();
     const columns = page.getByRole('separator', {name: 'Editor and stage column width'});
     const rows = page.getByRole('separator', {name: 'Stage and target pane height'});
     const position = divider => divider.getAttribute('aria-valuenow').then(Number);
     for (const query of ['&twPlusWindowLayout=0', '&twPlusWindowLayout=', '&twPlusWindowLayout=true', '']) {
         await start(query);
-        await expect(anchor).toHaveCount(0);
+        await expect(layoutMenu(page)).toHaveCount(0);
         await expect(columns).toBeVisible();
         await expect(rows).toBeVisible();
     }
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=1'));
-    await expect(anchor).toHaveCount(0);
+    await expect(layoutMenu(page)).toHaveCount(0);
     await start('&twPlusWindowLayout=1');
-    await expect(anchor).toHaveAttribute('aria-pressed', 'false');
+    await expect(mode).toHaveAttribute('aria-pressed', 'false');
     const themeColor = property => page.evaluate(token => {
         const sample = document.createElement('span');
         sample.style.color = `var(${token})`;
@@ -88,7 +89,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await page.getByText('Blue', {exact: true}).click();
     assert.notEqual(await themeColor('--looks-secondary'), originalAccent);
     await checkDividerColor();
-    await anchor.focus();
+    await layoutMenu(page).focus();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', {name: 'Switch to small stage', exact: true})).toBeFocused();
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0'));
@@ -105,9 +106,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect.poll(() => page.locator('.blocklySvg').first().getAttribute('width').then(parseFloat))
         .toBeGreaterThan(initialSvgWidth);
     const moved = await position(columns);
-    await anchor.click();
-    await expect(anchor).toHaveAttribute('aria-pressed', 'true');
-    await expect(anchor).toHaveCSS('border-top-color', await themeColor('--looks-secondary'));
+    await toggleUndockButtons(page);
+    await expect(mode).toHaveAttribute('aria-pressed', 'true');
     assert.equal(await position(columns), moved);
     await columns.press('ArrowLeft');
     assert.equal(await position(columns), moved - 16);
@@ -161,8 +161,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect.poll(async () => (await columns.boundingBox()).x).toBeLessThan(1050);
     await page.setViewportSize({width: 1360, height: 900});
     await expect.poll(() => position(columns)).toBe(saved);
-    await anchor.click();
-    await expect(anchor).toHaveAttribute('aria-pressed', 'false');
+    await toggleUndockButtons(page);
+    await expect(mode).toHaveAttribute('aria-pressed', 'false');
     assert.equal(await position(columns), saved);
     await expect(rows).toBeVisible();
     const scriptX = () => page.evaluate(() => vm.editingTarget.blocks.getBlock('layout-script').x);
@@ -188,7 +188,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
         .some(block => block.opcode === 'event_whenflagclicked' && block.x > 220)));
 
     await start('&twPlusWindowLayout=1');
-    await expect(anchor).toHaveAttribute('aria-pressed', 'false');
+    await expect(mode).toHaveAttribute('aria-pressed', 'false');
     await expect.poll(() => position(columns)).toBe(saved);
     await page.getByRole('button', {name: 'Switch to small stage', exact: true}).click();
     await expect.poll(async () => (await stage.boundingBox()).width).toBe(240);
@@ -197,7 +197,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
         body: archive, contentType: 'application/octet-stream'
     }));
     await start('&twPlusWindowLayout=0&twPlusSplitter=0&project_url=' + encodeURIComponent(projectURL));
-    await expect(anchor).toHaveCount(0);
+    await expect(layoutMenu(page)).toHaveCount(0);
     await expect(columns).toHaveCount(0);
     assert.equal(await page.evaluate(() => window.layoutReads), 0);
     await expect.poll(() => page.evaluate(() => window.ScratchBlocks?.getMainWorkspace()?.getAllBlocks()
@@ -216,27 +216,47 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.getByRole('separator')).toHaveCount(0);
 });
 
-test('the anchor switches layouts without replacing the workspace or stopping the hidden stage', {timeout: 90_000}, async t => {
+test('startup chooses the layout and the stage menu hides the stage without stopping the project', {timeout: 90_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const start = query => page.goto(origin + buildPrefix + 'editor.html?lang=en' + query);
     const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
-    const stageToggle = page.getByRole('button', {name: 'Show stage', exact: true});
+    const hideStage = page.getByRole('menuitem', {name: 'Hide stage', exact: true});
+    const showStage = page.getByRole('menuitem', {name: 'Show stage', exact: true});
+    const displayMenu = page.getByRole('button', {name: 'Stage display', exact: true});
     const stage = page.locator('[data-gui-stage] canvas').first();
     const grid = page.locator('[data-maximum-columns="2"]');
     const toolbox = page.locator('.blocklyToolboxDiv').first();
     await start('&twPlusStandardLayout=0');
     await expect(stage).toBeVisible();
     await expect(anchor).toHaveCount(0);
+    await expect(displayMenu).toHaveCount(0);
+    await expect(page.getByRole('button', {name: 'Switch to small stage', exact: true})).toBeVisible();
     await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
     await start('&twPlusWindowLayout=1');
-    await expect(anchor).toHaveAttribute('aria-pressed', 'true');
+    await expect(anchor).toHaveCount(0);
     await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
     await expect(stage).toBeVisible();
+    await expect(page.getByRole('button', {name: /^(Hide|Show) stage$/})).toHaveCount(0);
+    await expect(displayMenu).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Switch to small stage', exact: true})).toHaveCount(0);
+    await displayMenu.click();
+    await expect(hideStage).toBeVisible();
+    await expect(showStage).toHaveCount(0);
+    await expect(page.getByRole('menuitemradio', {name: 'Switch to small stage', exact: true})).toBeVisible();
+    await expect(page.getByRole('menuitem', {name: 'Enter full screen mode', exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    const tabs = page.getByRole('tab').filter({hasText: /^(Code|Costumes|Sounds)$/});
+    await expect(tabs).toHaveCount(3);
+    assert.ok(await tabs.evaluateAll(items => items.every(tab => tab.scrollWidth <= tab.clientWidth &&
+        parseFloat(getComputedStyle(tab).paddingInlineStart) >= 12)));
+    const extension = await page.getByRole('button', {name: 'Add Extension', exact: true}).boundingBox();
+    const motion = await toolbox.locator('.scratchCategoryId-motion .scratchCategoryItemBubble').boundingBox();
+    assert.ok(extension.width < 48 && motion.x - (extension.x + extension.width) >= 23, JSON.stringify({extension, motion}));
     await expect(grid).toBeVisible();
     const columns = await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' '));
-    assert.equal(columns.length, 2);
+    assert.equal(columns.length, 1);
     const gridBounds = await grid.boundingBox();
     const workspace = page.locator('.blocklySvg').first();
     const editorBounds = await workspace.boundingBox();
@@ -262,6 +282,7 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     await page.mouse.up();
     await expect.poll(async () => Math.round((await grid.boundingBox()).width - gridBounds.width)).toBe(80);
     await expect.poll(async () => Math.round(editorBounds.width - (await workspace.boundingBox()).width)).toBe(80);
+    await expect(grid).toHaveAttribute('data-target-columns', '2');
     await assertBackdropPosition();
     await splitter.press('Enter');
     await expect.poll(async () => Math.round((await grid.boundingBox()).width - gridBounds.width)).toBe(0);
@@ -296,11 +317,6 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     await expect(spriteSettings).toBeVisible();
     await expect(page.getByRole('textbox', {name: 'Sprite name'})).toBeHidden();
 
-    const resetDivider = await splitter.boundingBox();
-    await page.mouse.move(resetDivider.x + resetDivider.width / 2, resetDivider.y + 80);
-    await page.mouse.down();
-    await page.mouse.move(resetDivider.x - 150, resetDivider.y + 80, {steps: 8});
-    await page.mouse.up();
     await expect(grid).toHaveAttribute('data-target-columns', '1');
     await expect.poll(() => grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length)).toBe(1);
     await spriteSettings.click();
@@ -335,7 +351,7 @@ test('the anchor switches layouts without replacing the workspace or stopping th
         return node.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
     }));
     await splitter.press('Enter');
-    await expect(grid).toHaveAttribute('data-target-columns', '2');
+    await expect(grid).toHaveAttribute('data-target-columns', '1');
 
     await expect.poll(() => page.evaluate(() => Boolean(vm.editingTarget))).toBe(true);
     const spriteId = await page.evaluate(async () => {
@@ -379,26 +395,24 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     });
     const running = () => page.evaluate(() => vm.runtime.threads.some(thread => thread.topBlock === 'layout-start'));
     await expect.poll(running).toBe(true);
-    await stageToggle.click();
+    await displayMenu.click();
+    await hideStage.click();
     await expect(stage).toBeHidden();
-    await expect(anchor).toBeVisible();
+    await expect(displayMenu).toBeVisible();
+    await expect(displayMenu).toBeFocused();
     await expect.poll(running).toBe(true);
 
     const costumes = page.getByRole('tab', {name: 'Costumes'});
     await costumes.click();
-    await anchor.click();
+    await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusStandardLayout=0'));
     await expect(costumes).toHaveAttribute('aria-selected', 'true');
-    await expect(anchor).toHaveAttribute('aria-pressed', 'false');
-    await expect(stage).toBeVisible();
-    await expect(grid).toHaveCount(0);
-    await expect(splitter).toHaveCount(0);
-    await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
-    await page.getByLabel('Layout options').click();
-    await page.getByRole('button', {name: 'Show undock buttons'}).click();
-    await anchor.click();
+    await expect(grid).toBeVisible();
+    await expect(splitter).toBeVisible();
+    await toggleUndockButtons(page);
     await expect(stage).toBeHidden();
     await expect(costumes).toHaveAttribute('aria-selected', 'true');
-    await stageToggle.click();
+    await displayMenu.click();
+    await showStage.click();
     await expect(stage).toBeVisible();
     await page.getByRole('tab', {name: 'Code'}).click();
     assert.deepEqual(await page.evaluate(() => ({
@@ -409,18 +423,20 @@ test('the anchor switches layouts without replacing the workspace or stopping th
     })), {sameWorkspace: true, sameCanvas: true, target: spriteId, addedBlock: true});
     await expect.poll(running).toBe(true);
     await page.setViewportSize({width: 1050, height: 660});
-    await expect(anchor).toBeInViewport();
+    await expect(displayMenu).toBeInViewport();
     await expect(stage).toBeInViewport({ratio: 1});
-    assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 2);
+    assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 1);
 
     await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
     await page.getByRole('tab', {name: 'Backdrops', exact: true}).click();
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
-    await anchor.click();
-    await expect(backdropActions).toHaveCount(0);
 
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1');
-    await expect(page.locator('summary').filter({hasText: /^スプライト$/})).toBeVisible();
+    const japaneseSettings = page.locator('summary').filter({hasText: /^スプライト$/});
+    await expect(japaneseSettings).toBeVisible();
+    assert.ok(await japaneseSettings.evaluate(heading => heading.scrollWidth <= heading.clientWidth));
+    await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
+    await expect(page.getByRole('menuitem', {name: 'ステージを隠す', exact: true})).toBeVisible();
     assert.deepEqual(errors, []);
 });

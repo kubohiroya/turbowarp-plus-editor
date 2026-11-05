@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
 import {chromium} from 'playwright';
+import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15105';
 const prefix = process.env.TW151_STAGE5_PREFIX || '/';
@@ -29,7 +30,7 @@ try {
         if (!(await stat(file).catch(() => null))?.isFile()) return route.fulfill({status: 404});
         return route.fulfill({path: file});
     });
-    const mode = page.getByRole('button', {name: 'Show undock buttons', exact: true});
+    const mode = undockButtons(page);
     const action = page.locator('[class*="stage-action-slot_"]').getByRole('button', {
         name: 'Open in another window', exact: true
     });
@@ -38,13 +39,13 @@ try {
     const display = page.getByRole('button', {name: 'Stage display', exact: true});
     await start('');
     assert.equal(await display.count(), 0);
-    await mode.click();
+    await toggleUndockButtons(page);
     assert.equal(await action.count(), 0);
 
     await start('&twPlusStagePanel=1');
     await canvas.waitFor();
     assert.equal(await action.count(), 0);
-    await mode.click();
+    await toggleUndockButtons(page);
     await canvas.evaluate(node => {
         window.stage5Canvas = node;
         window.stage5Renderer = window.vm.renderer;
@@ -107,7 +108,7 @@ try {
     await action.focus();
     await page.keyboard.press('Enter');
     await stage.waitFor();
-    await mode.click();
+    await toggleUndockButtons(page);
     await stage.waitFor();
     assert.equal(await action.count(), 0);
     await stage.getByRole('button', {name: 'Close and dock', exact: true}).click();
