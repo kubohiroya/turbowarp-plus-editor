@@ -424,6 +424,16 @@ test('startup chooses the layout and the stage menu hides the stage without stop
         const rect = node.getBoundingClientRect();
         return node.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
     }));
+    await addSprite.hover();
+    const paint = page.getByRole('button', {name: 'Paint', exact: true});
+    await expect.poll(() => paint.evaluate((node, tile) => {
+        const rect = node.getBoundingClientRect();
+        const x = rect.x + rect.width / 2;
+        const y = rect.y + rect.height / 2;
+        return x > tile.x && x < tile.x + tile.width && y > tile.y && y < tile.y + tile.height &&
+            node.contains(document.elementFromPoint(x, y));
+    }, narrowTile)).toBe(true);
+    await page.mouse.move(500, 400);
     await splitter.press('Enter');
     await expect(grid).toHaveAttribute('data-target-columns', '1');
 
