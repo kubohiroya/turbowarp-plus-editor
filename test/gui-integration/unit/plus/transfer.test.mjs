@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import React from 'react';
+import ReactDOMServer from 'react-dom/server';
+import {WindowLayoutContext} from '../../../../site/editor-layout/context.js';
 import {attachHostScriptTransfer, hostStageTransferMenu, finalizeHostTransferMenu} from '../../../../site/gui-integration/lib/tw-plus-transfer.js';
 
 test('without a host transfer leaves upstream workspace and stage menus alone', () => {
@@ -47,6 +50,22 @@ test('the host receives the GUI context and supplies stage actions through the n
     assert.equal(renderedMenu.props.children[0].type, primitives.MenuItem);
     assert.equal(renderedMenu.props.children[0].props.onClick, onExport);
     assert.equal(renderedMenu.props.children[0].props.children, 'export');
+});
+
+test('the host chooses the compact backdrop menu items from its layout context', () => {
+    const {createElement: element} = React;
+    const group = ({children}) => element('div', null, children);
+    const primitives = {ContextMenuTrigger: group, ContextMenu: group, MenuItem: group};
+    const menu = {
+        contextItems: [{label: 'Export Stage'}],
+        backdropItems: [{label: 'Import Stage (add)'}]
+    };
+    const bridge = hostStageTransferMenu({}, {scriptTransfer: {stageMenu: () => menu}});
+    const tile = element('button', null, 'Backdrops');
+    const render = plusLayout => ReactDOMServer.renderToStaticMarkup(element(WindowLayoutContext.Provider, {value: {plusLayout}},
+        bridge.wrapBackdropTile(tile, primitives)));
+    assert.equal(render(false), '<button>Backdrops</button>');
+    assert.match(render(true), /Backdrops.*Export Stage.*Import Stage/);
 });
 
 

@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: false, projectTools: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,7 +156,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: false, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: true, projectTools: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -184,8 +184,10 @@ test('splitters default on independently of undocking and support explicit rollb
     assert.equal(flags.internalWindows, true);
 });
 
-test('the palette delete preview requires explicit startup opt-in', () => {
-    for (const search of ['', '?twPlusPaletteDeletePreview=0', '?twPlusPaletteDeletePreview=', '?twPlusPaletteDeletePreview=true']) {
+test('the palette delete preview defaults on and supports startup rollback', () => {
+    assert.equal(readStartupFeatureFlags().paletteDeletePreview, true);
+    assert.equal(readWebStartupFeatureFlags().paletteDeletePreview, true);
+    for (const search of ['?twPlusPaletteDeletePreview=0', '?twPlusPaletteDeletePreview=', '?twPlusPaletteDeletePreview=true']) {
         assert.equal(readWebStartupFeatureFlags(search).paletteDeletePreview, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusPaletteDeletePreview=1').paletteDeletePreview, true);

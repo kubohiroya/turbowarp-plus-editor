@@ -3,7 +3,7 @@ import {createPortal, flushSync} from 'react-dom';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {WindowLayoutContext} from './index.jsx';
-import styles from './layout.css';
+import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 function DockableBasicPanel({host, id, title, children, render, overlayAction, dockHeight, className,
     externalHost, decorate, renderInExternalDocument}) {
