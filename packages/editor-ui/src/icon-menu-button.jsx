@@ -57,10 +57,10 @@ export function IconMenuButton({label, icon, items, className}) {
             event.preventDefault();
             buttons[next]?.focus();
         }}>
-            {items.map(({id, label: itemLabel, icon: itemIcon, checked, checkbox, disabled, separatorBefore, onSelect}) =>
+            {items.map(({id, label: itemLabel, icon: itemIcon, checked, checkbox, current, disabled, separatorBefore, onSelect}) =>
                 <button key={id} type="button" role={checkbox ? 'menuitemcheckbox' :
                     (checked === undefined ? 'menuitem' : 'menuitemradio')}
-                    aria-checked={checked} aria-disabled={disabled} data-separator-before={separatorBefore || undefined}
+                    aria-checked={checked} aria-current={current || undefined} aria-disabled={disabled} data-separator-before={separatorBefore || undefined}
                     tabIndex={-1} onClick={() => {
                         if (disabled) return;
                         close();

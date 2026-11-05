@@ -1,6 +1,6 @@
 .root {
     position: relative;
-    color: var(--text-primary);
+    color: var(--text-primary, #25324a);
 }
 
 .trigger {
@@ -10,8 +10,8 @@
     height: calc(2rem + 2px);
     padding: 0.25rem;
     color: inherit;
-    background: var(--ui-white);
-    border: 1px solid var(--ui-black-transparent);
+    background: var(--ui-white, #fff);
+    border: 1px solid var(--ui-black-transparent, #d7dbe6);
     border-radius: 0.25rem;
     cursor: pointer;
 }
@@ -28,12 +28,14 @@
     z-index: var(--tw-plus-icon-menu-layer, 1);
     inset-block-start: calc(100% + 0.25rem);
     inset-inline-end: 0;
-    min-inline-size: max-content;
+    box-sizing: border-box;
+    inline-size: max-content;
+    max-inline-size: var(--tw-plus-icon-menu-max-width, none);
     padding: 0.25rem;
-    background: var(--ui-white);
-    border: 1px solid var(--ui-black-transparent);
+    background: var(--ui-white, #fff);
+    border: 1px solid var(--ui-black-transparent, #d7dbe6);
     border-radius: 0.25rem;
-    box-shadow: 0 2px 8px var(--ui-black-transparent);
+    box-shadow: 0 2px 8px var(--ui-black-transparent, #30364d45);
 }
 
 .menu button {
@@ -72,12 +74,12 @@
 .menu button:hover,
 .menu button:focus-visible,
 .menu button[aria-checked="true"] {
-    background: var(--looks-light-transparent);
+    background: var(--looks-light-transparent, #e9ecf5);
 }
 
 .trigger:focus-visible,
 .menu button:focus-visible {
-    outline: 2px solid var(--looks-secondary);
+    outline: 2px solid var(--looks-secondary, #4c97ff);
     outline-offset: -2px;
 }
 
@@ -87,5 +89,5 @@
 }
 
 .menu button[data-separator-before="true"] {
-    border-block-start: 1px solid var(--ui-black-transparent);
+    border-block-start: 1px solid var(--ui-black-transparent, #d7dbe6);
 }
