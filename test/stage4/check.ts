@@ -5,9 +5,12 @@ import {chromium} from 'playwright';
 import {toggleUndockButtons} from '../fixtures/layout-menu.ts';
 
 const origin = 'http://localhost:15104';
+const prefix = process.env.TW151_STAGE4_PREFIX || '/';
 const build = resolve(process.env.TW151_STAGE4_BUILD || '/private/tmp/tw151-stage4-build');
 const itemName = 'Stage 4 stored script';
-const browser = await chromium.launch({executablePath: process.env.TW151_CHROME, args: ['--enable-unsafe-swiftshader']});
+const browser = await chromium.launch({
+    executablePath: process.env.TW151_CHROME, headless: true, args: ['--enable-unsafe-swiftshader']
+});
 const context = await browser.newContext({viewport: {width: 1400, height: 900}});
 context.setDefaultTimeout(10000);
 const errors = [];
@@ -15,7 +18,7 @@ context.on('page', page => page.on('pageerror', error => errors.push(error.messa
 const page = await context.newPage();
 
 async function start(flags) {
-    await page.goto(origin + '/editor.html?lang=en&twPlusStandardLayout=0&twPlusWindowLayout=1' + flags);
+    await page.goto(origin + prefix + 'editor.html?lang=en&twPlusStandardLayout=0&twPlusWindowLayout=1' + flags);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
     await toggleUndockButtons(page);
 }
@@ -49,8 +52,9 @@ async function seed() {
 try {
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
-        const file = resolve(build, '.' + decodeURIComponent(url.pathname));
-        if (url.origin !== origin || !file.startsWith(build + sep)) return route.abort();
+        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+        const file = resolve(build, decodeURIComponent(url.pathname.slice(prefix.length)));
+        if (!file.startsWith(build + sep)) return route.abort();
         if (!(await stat(file).catch(() => null))?.isFile()) return route.fulfill({status: 404});
         return route.fulfill({path: file});
     });
@@ -176,7 +180,8 @@ try {
     const code = page.getByRole('region', {name: 'Code', exact: true});
     const windowsList = page.getByRole('button', {name: 'Windows', exact: true});
     const actionOpacity = () => openCode.evaluate(node => getComputedStyle(node.parentElement).opacity);
-    await windowsList.focus();
+    // The Windows list is part of the tab row and keeps its actions visible.
+    await page.getByTitle('Go', {exact: true}).focus();
     assert.equal(await actionOpacity(), '0');
     const workspacePoint = await workspace.evaluate(svg => {
         const {left, top, width, height} = svg.getBoundingClientRect();

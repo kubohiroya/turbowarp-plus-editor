@@ -158,6 +158,8 @@ try {
     await page.getByRole('status').filter({hasText: 'Could not open Backpack window'}).waitFor();
     await page.getByText('Stage 3 stored script', {exact: true}).waitFor();
     async function openBackpack() {
+        // Returning from the layout menu leaves focus outside the Backpack panel.
+        await undock.focus();
         const [child] = await Promise.all([page.waitForEvent('popup'), undock.click()]);
         child.on('pageerror', error => report.errors.push(error.message));
         await child.getByText('Stage 3 stored script', {exact: true}).waitFor();

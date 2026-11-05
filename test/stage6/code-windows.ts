@@ -8,14 +8,17 @@ const origin = 'http://localhost:15107';
 const prefix = '/turbowarp-plus-editor/';
 const build = resolve(process.argv[2]);
 const chrome = process.env.TW151_CHROME;
-const browser = await chromium.launch({executablePath: chrome, args: ['--enable-unsafe-swiftshader']});
+const browser = await chromium.launch({
+    executablePath: chrome, headless: true, args: ['--enable-unsafe-swiftshader']
+});
 const context = await browser.newContext({viewport: {width: 1500, height: 940}});
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', error => errors.push(error.stack ?? error.message));
 page.setDefaultTimeout(12000);
 const flags = '&twPlusWindowLayout=1&twPlusInternalWindows=1&twPlusTargetList=1';
-const windows = page.locator('.tw-desktop-window').filter({has: page.getByRole('button', {name: 'Close code window'})});
+// Both title bar layouts expose the code window title as its accessible name.
+const windows = page.locator('.tw-desktop-window[aria-label^="Code · "]');
 const tile = name => page.locator('[class*="sprite-selector_sprite-wrapper"]')
     .locator('[class*="sprite-selector-item_sprite-selector-item"]').filter({hasText: name});
 const selected = () => page.locator('[class*="sprite-selector_sprite-wrapper"] [class*="sprite-selector-item_is-selected"] ' +
