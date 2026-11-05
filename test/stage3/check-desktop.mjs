@@ -10,10 +10,10 @@ import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
 const testMode = [
-    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-popout', '--target-panels-popout',
+    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-popout', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal'
 ].find(flag => process.argv.includes(flag));
-const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-popout', '--stage-display-menu', '--stage-panel'].includes(testMode);
+const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-popout', '--stage-display-menu', '--stage-panel'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -589,7 +589,76 @@ async function checkCodeTargetSync ({editor, a, b, focus, parent, sprites}) {
     report.checks.push('Inline sprite rename updates the list and title, rejects duplicates, and keeps sprite references current across undo/redo');
 }
 
-async function checkCodePopouts ({editor, context, control}, {withBackpack = false, native = false, targetSync = false} = {}) {
+async function checkStageCode ({editor, a, b, focus, parent, sprite}) {
+    const stage = await editor.evaluate(() => {
+        const target = vm.runtime.getTargetForStage();
+        return {id: target.id, name: target.getName()};
+    });
+    const combo = view => view.child.getByRole('combobox', {name: /^(Editing target|編集対象)$/});
+    const category = (view, name) => view.child.locator('.scratchCategoryMenuItemLabel').filter({hasText: name});
+    const workspaceBlock = (page, id) => page.locator(`.blocklyBlockCanvas [data-id="${id}"]`).first();
+    const select = async (view, target) => {
+        await focus(view.child, view.id);
+        await until(() => combo(view).isEnabled(), 'code window has the edit lease');
+        await view.child.getByRole('button', {name: /^(Editing target options|編集対象の候補)$/}).click();
+        await view.child.getByRole('option', {name: target.name, exact: true}).click();
+        await until(async () => await combo(view).inputValue() === target.name &&
+            await editor.evaluate(id => vm.editingTarget.id === id, target.id), 'code window and VM select the same target');
+        await until(() => combo(view).isEnabled(), 'target switch restores the edit lease');
+    };
+    const stageBlock = () => editor.evaluate(() => {
+        const {blocks} = vm.runtime.getTargetForStage();
+        return blocks.getScripts().find(script => blocks.getBlock(script).opcode === 'looks_nextbackdrop');
+    });
+
+    await select(b, stage);
+    await category(b, 'Looks').waitFor();
+    assert.equal(await category(b, 'Motion').count(), 0);
+    await category(a, 'Motion').waitFor();
+    assert.equal(await combo(a).inputValue(), sprite.name);
+    assert.equal(await combo(a).isDisabled(), true);
+    const flyout = b.child.locator('.blocklyFlyout');
+    const nextBackdrop = flyout.getByText(/^(next\s+backdrop|次の背景にする)$/);
+    await nextBackdrop.waitFor();
+    assert.equal(await flyout.getByText(/^(show|表示する)$/).count(), 0);
+    const box = await nextBackdrop.boundingBox();
+    assert.ok(box);
+    await b.child.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await b.child.mouse.down();
+    await b.child.mouse.move(410, 310, {steps: 12});
+    await b.child.mouse.up();
+    const id = await until(stageBlock, 'stage VM receives the backdrop block');
+    assert.equal(await workspaceBlock(a.child, id).count(), 0);
+    assert.equal(await editor.evaluate(({spriteId, blockId}) =>
+        Boolean(vm.runtime.getTargetById(spriteId).blocks.getBlock(blockId)), {spriteId: sprite.id, blockId: id}), false);
+
+    await select(a, stage);
+    await workspaceBlock(a.child, id).waitFor();
+    await a.child.getByRole('button', {name: 'Undo', exact: true}).click();
+    await until(async () => !(await stageBlock()), 'shared undo removes the stage block');
+    await workspaceBlock(b.child, id).waitFor({state: 'detached'});
+    await focus(b.child, b.id);
+    await b.child.getByRole('button', {name: 'Redo', exact: true}).click();
+    await until(async () => (await stageBlock()) === id, 'the other view restores the stage block');
+    await workspaceBlock(a.child, id).waitFor();
+
+    await select(a, sprite);
+    await category(a, 'Motion').waitFor();
+    assert.equal(await workspaceBlock(a.child, id).count(), 0);
+    await workspaceBlock(b.child, id).waitFor();
+    await focus(a.child, a.id);
+    await Promise.all([a.child.waitForEvent('close'), a.child.locator('#dock').click()]);
+    await focus(b.child, b.id);
+    await Promise.all([b.child.waitForEvent('close'), b.child.locator('#dock').click()]);
+    await focus(editor, parent.id);
+    await editor.evaluate(stageId => vm.setEditingTarget(stageId), stage.id);
+    await workspaceBlock(editor, id).waitFor();
+    await editor.evaluate(async () => vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer()));
+    await until(stageBlock, 'saved project restores the stage block');
+    report.checks.push('Stage-specific toolbox, isolated backdrop edits, two-view Undo/Redo, docking and SB3 round trip');
+}
+
+async function checkCodePopouts ({editor, context, control}, {withBackpack = false, native = false, targetSync = false, stageCode = false} = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
     await control('layout', parent.id);
@@ -671,6 +740,10 @@ async function checkCodePopouts ({editor, context, control}, {withBackpack = fal
     }
     if (targetSync) {
         await checkCodeTargetSync({editor, a, b, focus, parent, sprites});
+        return;
+    }
+    if (stageCode) {
+        await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
         return;
     }
     assert.equal(await editor.evaluate(() =>
@@ -1298,6 +1371,7 @@ try {
     else if (testMode === '--code-backpack-native') await run('code-backpack', env => checkCodePopouts(env, {withBackpack: true, native: true}));
     else if (testMode === '--code-backpack') await run('code-backpack', env => checkCodePopouts(env, {withBackpack: true}));
     else if (testMode === '--code-target-sync') await run('code-popout', env => checkCodePopouts(env, {targetSync: true}));
+    else if (testMode === '--code-stage') await run('code-popout', env => checkCodePopouts(env, {stageCode: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
     else if (testMode === '--stage-display-menu') await run('stage-display-menu', checkStageDisplayMenu);
