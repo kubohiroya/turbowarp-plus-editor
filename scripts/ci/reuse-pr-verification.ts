@@ -18,6 +18,12 @@ export const markerName = tree => {
     return `ci-verified-tree-${tree}`;
 };
 
+export function isVerifiedPullRequestRun(run, repository, id) {
+    return run?.id === id && run.event === 'pull_request' && run.status === 'completed' &&
+        run.conclusion === 'success' && run.path === '.github/workflows/ci.yml' &&
+        run.repository?.full_name === repository && run.head_repository?.full_name === repository;
+}
+
 export async function findVerifiedRun({repository, tree, get}) {
     const listing = await get(`artifacts?name=${encodeURIComponent(markerName(tree))}&per_page=20`);
     if (!Array.isArray(listing?.artifacts)) return null;
@@ -26,19 +32,16 @@ export async function findVerifiedRun({repository, tree, get}) {
         const id = artifact.workflow_run?.id;
         if (!Number.isSafeInteger(id) || id <= 0) continue;
         const run = await get(`runs/${id}`);
-        if (run?.id === id && run.event === 'pull_request' && run.status === 'completed' &&
-            run.conclusion === 'success' && run.path === '.github/workflows/ci.yml' &&
-            run.repository?.full_name === repository && run.head_repository?.full_name === repository) {
+        if (isVerifiedPullRequestRun(run, repository, id)) {
             return {runId: id, url: run.html_url};
         }
     }
     return null;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    const {GITHUB_REPOSITORY: repository, GH_TOKEN: token, TREE: tree, GITHUB_OUTPUT: output} = process.env;
+export function actionsAPI(repository, token) {
     const api = (process.env.GITHUB_API_URL || 'https://api.github.com').replace(/\/$/, '');
-    const get = async path => {
+    return async path => {
         const response = await fetch(`${api}/repos/${repository}/actions/${path}`, {
             headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`,
                 'X-GitHub-Api-Version': '2022-11-28'},
@@ -47,6 +50,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         if (!response.ok) throw new Error(`GitHub Actions API returned HTTP ${response.status}`);
         return response.json();
     };
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    const {GITHUB_REPOSITORY: repository, GH_TOKEN: token, TREE: tree, GITHUB_OUTPUT: output} = process.env;
+    const get = actionsAPI(repository, token);
     let found = null;
     try {
         found = await findVerifiedRun({repository, tree, get});
