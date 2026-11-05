@@ -1,9 +1,9 @@
 const {test, expect} = require('./fixtures.cts');
 
 for (const enabled of [true, false]) {
-    test(`パレットへのドロップでブロックを削除できる（削除予告 ${enabled ? 'ON' : '既定OFF'}）`, async ({page, evidence}) => {
+    test(`パレットへのドロップでブロックを削除できる（削除予告 ${enabled ? '既定ON' : '明示OFF'}）`, async ({page, evidence}) => {
         evidence.stage('palette-to-workspace');
-        await page.goto(`editor.html?lang=en&twPlusStandardLayout=0${enabled ? '&twPlusPaletteDeletePreview=1' : ''}`);
+        await page.goto(`editor.html?lang=en&twPlusStandardLayout=0${enabled ? '' : '&twPlusPaletteDeletePreview=0'}`);
         const flyout = page.locator('.blocklyFlyout');
         const source = flyout.locator('.blocklyDraggable').filter({has: page.getByText('move', {exact: true})});
         const block = page.locator('.blocklySvg > .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable');

@@ -6,7 +6,7 @@ const useLayout = async (page, name) => {
 };
 
 test('横パレットでカテゴリを切り替え、実ブロックを追加・削除できる', async ({page, evidence}) => {
-    await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1&twPlusPaletteDeletePreview=1');
+    await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
     const toolbox = page.locator('.blocklyToolboxDiv');
     const flyout = page.locator('.blocklyFlyout');
     const motion = toolbox.locator('.scratchCategoryId-motion');
