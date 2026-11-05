@@ -6,6 +6,8 @@
   "license": "GPL-3.0-or-later",
   "exports": {
     ".": "./src/index.js",
+    "./standard-layout": "./src/standard-layout.js",
+    "./editor.css": "./src/editor.css",
     "./targets.css": "./src/targets.css"
   },
   "files": [

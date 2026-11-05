@@ -3,7 +3,7 @@ import {OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-wind
 import {WindowLayoutContext} from '../editor-layout/index.jsx';
 import {getBackpackOpenLabel} from '@tw-plus/backpack-window-host';
 import {feature} from './integration.js';
-import styles from '../editor-layout/layout.css';
+import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 function WebBackpackSurface(props) {
     const {showUndock, locale} = React.useContext(WindowLayoutContext);

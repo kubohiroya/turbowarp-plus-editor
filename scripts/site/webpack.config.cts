@@ -96,8 +96,10 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
 }));
 config.resolve.alias['@kubohiroya/turbowarp-editor-views/sprite-code-windows$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-editor-views/sprite-code-windows');
-config.resolve.alias['@kubohiroya/turbowarp-editor-layout/targets.css$'] =
-    rootRequire.resolve('@kubohiroya/turbowarp-editor-layout/targets.css');
+for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
+    const specifier = `@kubohiroya/turbowarp-editor-layout/${entry}`;
+    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+}
 const siteSource = path.join(__dirname, '..', '..', 'site');
 // Override the addon default in Plus without changing the pinned GUI sources.
 const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';
