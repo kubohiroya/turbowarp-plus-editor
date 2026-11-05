@@ -9,7 +9,7 @@ if (!gui || !path.isAbsolute(gui)) throw new Error('An absolute E2E_GUI_ROOT is 
 // The Loader and the HTML writer are both this repository's now; only the GUI checkout's own
 // build assets below still come from there.
 const {prepareOfflinePackage} = await import('@kubohiroya/turbowarp-extension-loader/packager');
-const {packagePlusHTML} = await import('../../../site/packager/html.js');
+const {packagePlusHTML} = await import('../../../site/packager/html.ts');
 const output = path.resolve('.host/issue-4-artifacts');
 await mkdir(output, {recursive: true});
 const require = createRequire(import.meta.url);

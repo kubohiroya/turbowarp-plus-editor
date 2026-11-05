@@ -81,10 +81,10 @@ jobs:
       - run: npm --prefix packages/editor-layout test
         id: layout-unit
         if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|layout-unit|')
-      - run: node --test 'packages/editor-views/test/**/*.test.js'
+      - run: node --test 'packages/editor-views/test/**/*.test.ts'
         id: views-unit
         if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|views-unit|'))
-      - run: node --test 'packages/editor-backpack/test/**/*.test.mjs'
+      - run: node --test 'packages/editor-backpack/test/**/*.test.ts'
         id: backpack-unit
         if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|backpack-unit|'))
       # Keep the legacy browser reuse path while scoped verification is off. main still builds
@@ -201,7 +201,7 @@ jobs:
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           E2E_PATH_PREFIX: /turbowarp-plus-editor/
-        run: node --test packages/editor-layout/test/layout.browser.mjs test/editor-layout.browser.mjs
+        run: node --test packages/editor-layout/test/layout.browser.ts test/editor-layout.browser.ts
       # These two run the built Editor's real GUI, VM and SB3 against the test-only owner
       # `twpeyamlsettings`; only the native VSCode launcher is replaced. The base SB3 is generated
       # here so no binary fixture is checked in or borrowed from the pinned GUI.
@@ -250,7 +250,7 @@ jobs:
       - name: Verify app-internal code windows
         id: code-windows-browser
         if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|code-windows-browser|'))
-        run: node test/stage6/code-windows.mjs .host/scratch-gui/build
+        run: node test/stage6/code-windows.ts .host/scratch-gui/build
       - name: Require all selected verification to pass
         if: ${{ !cancelled() && (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') }}
         env:

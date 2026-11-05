@@ -1,4 +1,4 @@
-import selectBackdrop from './fixtures/select-backdrop.cjs';
+import selectBackdrop from './fixtures/select-backdrop.ts';
 import type {FixtureYamlMapping} from './helpers/fixture-types.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';

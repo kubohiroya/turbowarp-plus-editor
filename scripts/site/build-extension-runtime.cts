@@ -5,7 +5,7 @@ const {createRequire} = require('node:module');
 // Build the extension host this repository supplies into the bundle a built single HTML carries.
 //
 // The entry is this repository's, not the GUI's: the wiring is supplied through the GUI's
-// integration socket, and a distributed HTML has no socket to ask. `site/extension-host/runtime.js`
+// integration socket, and a distributed HTML has no socket to ask. `site/extension-host/runtime.ts`
 // is the same wiring with the VM modules of this build filled in.
 const gui = process.env.E2E_GUI_ROOT;
 if (!gui || !path.isAbsolute(gui)) throw new Error('E2E_GUI_ROOT must be an absolute GUI checkout');
@@ -23,14 +23,17 @@ const output = path.resolve(process.env.TW_PLUS_RUNTIME_OUTPUT || '.host/issue-4
 const config = withExtensionLoaderWebpack4({
     mode: 'production',
     context: gui,
-    entry: path.resolve('site/extension-host/runtime.js'),
+    entry: path.resolve('site/extension-host/runtime.ts'),
     output: {path: path.dirname(output), filename: path.basename(output),
         library: 'TurboWarpPlusExtensionHost', libraryTarget: 'window'},
     optimization: {minimize: false},
     // The host's modules come first, so the packages both sides share are the host's single copy.
     resolve: {modules: [path.join(gui, 'node_modules'), path.resolve('node_modules'), 'node_modules'],
         alias: {'@kubohiroya/turbowarp-extension-loader': loaderRoot}},
-    module: {rules: [{test: /\.js$/, include: [path.join(gui, 'src'), vmSource, path.resolve('site')],
+    module: {rules: [
+        {test: /\.tsx?$/, include: path.resolve('site'),
+            loader: path.join(__dirname, 'transpile-local-typescript.cts')},
+        {test: /\.js$/, include: [path.join(gui, 'src'), vmSource, path.resolve('site')],
         loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
             presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}}]}
 }, {hostRoot: gui});

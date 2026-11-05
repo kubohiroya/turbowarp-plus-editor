@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {CATALOG_URL, createPlusCatalog} from '../site/plus-catalog.js';
-import {createPlusIntegration} from '../site/plus-integration.js';
+import {CATALOG_URL, createPlusCatalog} from '../site/plus-catalog.ts';
+import {createPlusIntegration} from '../site/plus-integration.ts';
 
 const document = {extensions: [{id: 'alpha', url: 'https://example.test/alpha.js'}]};
 const svg = 'data:image/svg+xml;base64,PHN2Zy8+';
@@ -52,7 +52,7 @@ test('the integration ships the catalog, so the GUI can ask for it', () => {
     });
     // The catalog is not handed through the integration any more: the GUI stopped reading it when
     // the library tab and the trusted catalog moved here, so both read `plus-catalog.js` directly.
-    assert.equal(shipped.extensionCatalog, undefined);
+    assert.equal('extensionCatalog' in shipped, false);
 });
 
 // The builder has no editor chrome, so it is given only the catalog. Supplying the editor's

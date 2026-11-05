@@ -21,15 +21,17 @@ Web 版を `?twPlusWindowLayout=1&twPlusInternalWindows=1` で起動し、⚓ �
 
 ```sh
 # scratch-gui 作業ツリー
-CI=1 E2E_GUI_ROOT="$PWD" node node_modules/webpack/bin/webpack.js \
+CI=1 E2E_GUI_ROOT="$PWD" DISABLE_V8_COMPILE_CACHE=1 node node_modules/webpack/bin/webpack.js \
   --config ../editor-stage4/scripts/site/webpack.config.cts \
   --output-path /private/tmp/tw151-stage4-workarea-final-web --bail
 
 # Editor 作業ツリー
 TW151_STAGE4_BUILD=/private/tmp/tw151-stage4-workarea-final-web \
   TW151_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
-  node test/stage4/check.mjs
+  node test/stage4/check.ts
 ```
+
+ヘッドレスで実行する。配信用の `ROOT=/turbowarp-plus-editor/` で生成したビルドを使う場合は、実行時に `TW151_STAGE4_PREFIX=/turbowarp-plus-editor/` を指定する。
 
 - アプリ内でのマウス移動、キーボードでの移動とサイズ変更、最大化と復元、最小化とウィンドウ一覧からの復元を確認する。
 - 実バックパックの保存済みスクリプトをコード画面に1回コピーし、バックパックにも残ることを確認する。ドラッグには Chrome の自動操作を使う。
@@ -41,7 +43,7 @@ TW151_STAGE4_BUILD=/private/tmp/tw151-stage4-workarea-final-web \
 公式 TurboWarp Desktop 1.17.1 のコピーを `scripts/desktop/README.md` に沿ってこのブランチの Webpack 設定で作成する。起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1 TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1` を指定すると、⚓ からアプリ内ウィンドウを利用できる。署名済み試験用コピーでは次を実行する。
 
 ```sh
-TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs /private/tmp/tw151-stage4-workarea-final.app --internal
+TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.ts /private/tmp/tw151-stage4-workarea-final.app --internal
 ```
 
 実バックパックの開閉には macOS のマウス入力を使う。タブ行の操作と画面の DOM 確認には Playwright を使う。段階3の外部ウィンドウ経路を回帰確認する場合は `--internal` を外す。

@@ -56,13 +56,16 @@ for (const [name, file] of Object.entries({scaffolding: 'scaffolding-full.js', '
 }
 const config = withExtensionLoaderWebpack4({
     mode: 'production', context: gui,
-    entry: path.resolve('site/packager/page.js'),
+    entry: path.resolve('site/packager/page.ts'),
     output: {path: output, filename: 'plus-packager.js'},
     optimization: {minimize: false},
     resolve: {modules: [path.join(gui, 'node_modules'), path.resolve('node_modules'), 'node_modules'],
         alias: {'@turbowarp/packager-web$': path.join(packager, 'src/packager/web/export.js'),
             '@kubohiroya/turbowarp-extension-loader': loaderRoot}},
     module: {rules: [
+        {test: /\.tsx?$/, include: path.resolve('site'),
+            loader: path.join(__dirname, 'transpile-local-typescript.cts')},
+
         {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src'), vmSource,
             path.resolve('site')],
             loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
