@@ -26,10 +26,10 @@ const seedScript = async page => {
 };
 const blockMenu = page => page.locator('[data-transfer-root]').click({button: 'right'});
 const workspaceMenu = async page => {
-    // Use the workspace's own context-menu event at a point outside the blocks.
+    // Open the workspace menu away from the stage, blocks, and navigation controls.
     const svg = page.locator('.blocklySvg').first();
     const bounds = await svg.boundingBox();
-    await page.mouse.click(bounds.x + bounds.width - 80, bounds.y + bounds.height - 100, {button: 'right'});
+    await page.mouse.click(bounds.x + bounds.width * 0.6, bounds.y + bounds.height * 0.75, {button: 'right'});
 };
 const countImported = page => page.evaluate(() => Object.values<any>(vm.editingTarget.blocks._blocks)
     .filter(block => block.opcode === 'data_changevariableby').length);
