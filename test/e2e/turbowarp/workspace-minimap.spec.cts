@@ -69,13 +69,19 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getBlockById('minimap-distant').moveBy(70, 0));
     await expect(paths).toHaveCount(2);
     await expect(minimap.locator('path[transform="translate(1270 900)"]')).toHaveCount(1);
-    const fittedArea = await minimap.evaluate((element: SVGSVGElement) => {
-        const {x, y, width, height} = element.querySelector('g').getBBox();
-        const rendered = window.ScratchBlocks.getMainWorkspace().getAllBlocks(false);
-        const halfMeanWidth = rendered.reduce((sum, block) => sum + block.width, 0) / (2 * rendered.length);
-        return [x - halfMeanWidth, y - halfMeanWidth, width + 2 * halfMeanWidth, height + 2 * halfMeanWidth].join(' ');
+    const scrollArea = () => page.evaluate(() => {
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        const metrics = workspace.getMetrics();
+        return [metrics.contentLeft, metrics.contentTop, metrics.contentWidth, metrics.contentHeight]
+            .map(value => value / workspace.scale).join(' ');
     });
-    await expect(minimap).toHaveAttribute('viewBox', fittedArea);
+    const viewportFits = () => minimap.evaluate((element: SVGSVGElement) => {
+        const map = element.viewBox.baseVal;
+        const box = element.querySelector('rect').getBBox();
+        return box.x >= map.x - 1 && box.y >= map.y - 1 &&
+            box.x + box.width <= map.x + map.width + 1 && box.y + box.height <= map.y + map.height + 1;
+    });
+    await expect(minimap).toHaveAttribute('viewBox', await scrollArea());
 
     evidence.stage('pan-zoom-resize');
     const beforePan = await viewport.getAttribute('x');
@@ -86,13 +92,15 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     await page.mouse.move(panX - 120, panY - 90, {steps: 8});
     await page.mouse.up();
     await expect(viewport).not.toHaveAttribute('x', beforePan);
+    await expect.poll(viewportFits).toBe(true);
     const beforeZoom = await viewport.getAttribute('width');
     await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().zoomCenter(1));
     await expect(viewport).not.toHaveAttribute('width', beforeZoom);
     const beforeResize = await viewport.getAttribute('width');
     await page.setViewportSize({width: 1120, height: 780});
     await expect(viewport).not.toHaveAttribute('width', beforeResize);
-    await expect(minimap).toHaveAttribute('viewBox', fittedArea);
+    await expect.poll(viewportFits).toBe(true);
+    await expect(minimap).toHaveAttribute('viewBox', await scrollArea());
 
     evidence.stage('click-to-recenter');
     const target = {x: 950, y: 680};
@@ -105,7 +113,7 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
         const center = await viewportCenter();
         return Math.hypot(center.x - click.x, center.y - click.y);
     }).toBeLessThan(2);
-    await expect(minimap).toHaveAttribute('viewBox', fittedArea);
+    await expect(minimap).toHaveAttribute('viewBox', await scrollArea());
 
     evidence.stage('drag-viewport');
     const beforeDrag = await viewportCenter();
@@ -146,4 +154,14 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     await page.locator('[class*="stage-selector_stage-selector"]').click();
     await expect(paths).toHaveCount(0);
     await expect(minimap).toBeVisible();
+    const emptyMap = await minimap.getAttribute('viewBox');
+    const emptyViewportX = await viewport.getAttribute('x');
+    await page.evaluate(() => {
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        const metrics = workspace.getMetrics();
+        workspace.scrollbar.set(metrics.viewWidth * 0.2, metrics.viewHeight * 0.2);
+    });
+    await expect(viewport).not.toHaveAttribute('x', emptyViewportX);
+    await expect(minimap).toHaveAttribute('viewBox', emptyMap);
+    await expect.poll(viewportFits).toBe(true);
 });
