@@ -1,3 +1,4 @@
+import {attachHorizontalWorkspaceZoom, workspaceControlsCorner} from '@kubohiroya/turbowarp-editor-layout';
 import styles from './minimap.css';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -6,7 +7,16 @@ const PADDING_PER_BLOCK_WIDTH = 0.5;
 const DRAG_THRESHOLD = 3;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
-export function attachWorkspaceMinimap (workspace, ScratchBlocks) {
+export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZoom, minimap}) {
+    const zoom = horizontalZoom ? attachHorizontalWorkspaceZoom(workspace, ScratchBlocks) : null;
+    const map = minimap ? attachWorkspaceMinimap(workspace, ScratchBlocks, zoom) : null;
+    return {dispose() {
+        map?.dispose();
+        zoom?.dispose();
+    }};
+}
+
+function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
     const container = workspace.getInjectionDiv();
     const canvas = workspace.getCanvas();
     const workspaceSvg = workspace.getParentSvg();
@@ -90,8 +100,14 @@ export function attachWorkspaceMinimap (workspace, ScratchBlocks) {
         viewport.setAttribute('height', height);
 
         const bottomToolbox = metrics.toolboxPosition === ScratchBlocks.TOOLBOX_AT_BOTTOM ? metrics.toolboxHeight : 0;
-        minimap.style.left = `${metrics.absoluteLeft + 12}px`;
-        minimap.style.bottom = `${bottomToolbox + 16}px`;
+        if (zoom) {
+            const {right, bottom} = workspaceControlsCorner(workspace, ScratchBlocks, metrics);
+            minimap.style.right = `${container.clientWidth - right}px`;
+            minimap.style.bottom = `${container.clientHeight - bottom + zoom.height + 8}px`;
+        } else {
+            minimap.style.left = `${metrics.absoluteLeft + 12}px`;
+            minimap.style.bottom = `${bottomToolbox + 16}px`;
+        }
         minimap.style.width = `${Math.min(164, metrics.viewWidth * 0.4) * SIZE_FACTOR}px`;
         minimap.style.height = `${Math.min(104, metrics.viewHeight * 0.35) * SIZE_FACTOR}px`;
     };

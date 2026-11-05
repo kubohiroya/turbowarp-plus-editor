@@ -328,3 +328,12 @@
     block-size: 100%;
     pointer-events: none;
 }
+
+:global(.injectionDiv):has([data-plus-horizontal-zoom]) :global(.sa-custom-zoom-area) {
+    width: 150px;
+    height: 60px;
+}
+
+[data-plus-horizontal-zoom]:global(.sa-custom-zoom-hidden) > * {
+    transform: translateY(64px);
+}
