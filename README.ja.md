@@ -156,6 +156,12 @@ GUIとPackagerは `site/source.json` に記録したSHAをチェックアウト�
 
 統合Editorの動作確認はこのリポジトリが担当します。既存の上流ライブラリの単体テストとGUIの機能フラグは維持します。新配信先の確認後、各参照先を移行し、旧data-editorのPagesを停止します。旧サイトへのリダイレクト配信は残しません。切戻しは直前のGUI固定SHA・サイト差分へのrevertと直前成果物の再配信で行います。
 
+### CI の検証範囲
+
+リポジトリ変数 `TW_PLUS_CI_SCOPED` が未設定のときは従来の検証を実行します。`1` にすると、通常 PR は変更差分に対応する項目を実行し、`main` は同じ Git ツリー・検証契約の PR CI で成功した項目を再利用します。差分や証跡を確認できないときは全体検証に切り替えます。Pages 用の成果物は毎回 `main` のリビジョンでビルドします。
+
+従来の検証に戻すには変数を未設定に戻すか `0` にします。安定版の公開前には、タグが指すコミットに対して全体検証を行います。
+
 ## 組み込み文書を編集する（0.2.0-rc.1）
 
 [Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3)と[共通化Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6)に対応する機能です。起動設定はありません。登録された提供元が文書を所有するハットにだけファイルアイコンが付くため、そうした提供元のない作品は上流のTurboWarpと同じ見た目です。VSCodeで編集するには、Visual Studio CodeとNode.jsをインストールした環境で、ローカル補助プロセスからEditorを開きます。編集UIと外部エディタ連携は `@kubohiroya/turbowarp-document-editor` に分離し、scratch-guiフォークが直接組み込みます。TurboWarp-Plus-EditorはGUIの固定・ビルド・配信を担当します。原文文書の保存・文書参照・提供元登録は `@kubohiroya/turbowarp-document-data`、ハット・YAMLアイコン・共通YAMLブロックは独立した `@kubohiroya/turbowarp-document-source` に置きます。各拡張が文書を登録し、共通編集UIは所有者の検証と差分適用を呼び出します。標準のSB3ファイル保存はGUIが担当します。
