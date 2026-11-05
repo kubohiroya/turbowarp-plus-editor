@@ -7,7 +7,7 @@ import {join, resolve, sep} from 'node:path';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {chromium} from 'playwright';
-import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
+import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15103';
 const prefix = process.env.TW151_STAGE3_PREFIX || '/';
@@ -81,26 +81,25 @@ try {
             window.ScratchBlocks?.getMainWorkspace());
     }
     const undock = page.getByRole('button', {name: 'Open Backpack in a browser window'});
-    const mode = undockButtons(page);
     const layoutFlag = '&twPlusWindowLayout=1';
     const backpackFlag = '&twPlusBackpackPopout=1';
     const header = target => target.locator('[class*="backpack_backpack-header"]');
     await start(backpackFlag);
-    assert.equal(await mode.count(), 0);
+    assert.equal(await layoutMenu(page).count(), 0);
     assert.equal(await undock.count(), 0);
     await header(page).waitFor();
 
     for (const backpackValue of ['', '&twPlusBackpackPopout=0', '&twPlusBackpackPopout=', '&twPlusBackpackPopout=true']) {
         await start(layoutFlag + backpackValue);
         await toggleUndockButtons(page);
-        assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+        assert.equal(await readUndockButtonsChecked(page), true);
         assert.equal(await undock.count(), 0);
         await header(page).waitFor();
     }
     report.checks.push('Default, disabled and invalid flags retain the real Backpack and independent splitter');
 
     await start(layoutFlag + backpackFlag);
-    assert.equal(await mode.getAttribute('aria-pressed'), 'false');
+    assert.equal(await readUndockButtonsChecked(page), false);
     assert.equal(await undock.count(), 0);
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0&twPlusBackpackPopout=0'));
     await toggleUndockButtons(page);
@@ -190,7 +189,7 @@ try {
     await page.waitForFunction(() => window.stage3Cancelled);
     await page.evaluate(() => window.stage3FinishCancelledRead());
     assert.equal(await page.evaluate(id => window.vm.runtime.getTargetById(id).blocks.getScripts().length, a), 0);
-    assert.equal(await mode.getAttribute('aria-pressed'), 'false');
+    assert.equal(await readUndockButtonsChecked(page), false);
     assert.equal(await undock.count(), 0);
     await page.getByText('Stage 3 stored script', {exact: true}).waitFor();
     await toggleUndockButtons(page);

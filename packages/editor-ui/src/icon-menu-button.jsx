@@ -57,8 +57,9 @@ export function IconMenuButton({label, icon, items, className}) {
             event.preventDefault();
             buttons[next]?.focus();
         }}>
-            {items.map(({id, label: itemLabel, icon: itemIcon, checked, disabled, separatorBefore, onSelect}) =>
-                <button key={id} type="button" role={checked === undefined ? 'menuitem' : 'menuitemradio'}
+            {items.map(({id, label: itemLabel, icon: itemIcon, checked, checkbox, disabled, separatorBefore, onSelect}) =>
+                <button key={id} type="button" role={checkbox ? 'menuitemcheckbox' :
+                    (checked === undefined ? 'menuitem' : 'menuitemradio')}
                     aria-checked={checked} aria-disabled={disabled} data-separator-before={separatorBefore || undefined}
                     tabIndex={-1} onClick={() => {
                         if (disabled) return;
@@ -67,6 +68,7 @@ export function IconMenuButton({label, icon, items, className}) {
                     }}>
                     {hasItemIcons && <span className={styles.itemIcon} aria-hidden="true">{itemIcon}</span>}
                     {itemLabel}
+                    {checkbox && <span className={styles.checkboxMark} aria-hidden="true">{checked ? '✓' : ''}</span>}
                 </button>)}
         </div>}
     </div>;

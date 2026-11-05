@@ -1,4 +1,5 @@
 import React from 'react';
+import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {createStandardLayout} from '@kubohiroya/turbowarp-editor-layout/standard-layout';
 import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
@@ -12,7 +13,21 @@ import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.js';
 export {WindowLayoutContext} from './context.js';
 export const layoutFlags = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
-export const layoutViews = createStandardLayout(React, {styles, targetStyles, context: WindowLayoutContext});
+const layoutMenuIcon = (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <circle cx="6" cy="12" r="1.5" />
+        <circle cx="12" cy="12" r="1.5" />
+        <circle cx="18" cy="12" r="1.5" />
+    </svg>
+);
+
+function LayoutMenu({label, undockLabel, showUndock, onToggle}) {
+    return <IconMenuButton label={label} icon={layoutMenuIcon} className={styles.layoutMenu} items={[{
+        id: 'show-undock', label: undockLabel, checked: showUndock, checkbox: true, onSelect: onToggle
+    }]} />;
+}
+
+export const layoutViews = createStandardLayout(React, {styles, targetStyles, context: WindowLayoutContext, LayoutMenu});
 
 function LayoutDesktop(props) {
     return <WindowDesktop {...props} layoutMenu={layoutFlags.standardLayout} />;

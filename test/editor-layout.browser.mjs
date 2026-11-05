@@ -5,7 +5,7 @@ import path from 'node:path';
 import {chromium, expect} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
 import pinnedGui from './pinned-gui.cjs';
-import {layoutMenu, toggleUndockButtons, undockButtons} from './fixtures/layout-menu.mjs';
+import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons, undockButtons} from './fixtures/layout-menu.mjs';
 
 const types = {
     '.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
@@ -55,7 +55,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
         await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() &&
             window.vm?.editingTarget))).toBe(true);
     };
-    const mode = undockButtons(page);
+    const menu = layoutMenu(page);
+    const checkbox = undockButtons(page);
     const stage = page.locator('[data-gui-stage] canvas').first();
     const columns = page.getByRole('separator', {name: 'Editor and stage column width'});
     const rows = page.getByRole('separator', {name: 'Stage and target pane height'});
@@ -73,7 +74,11 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=1'));
     await expect(layoutMenu(page)).toHaveCount(0);
     await start('&twPlusWindowLayout=1');
-    await expect(mode).toHaveAttribute('aria-pressed', 'false');
+    await menu.press('ArrowDown');
+    await expect(checkbox).toHaveAttribute('aria-checked', 'false');
+    await expect(checkbox).toBeFocused();
+    await checkbox.press('Escape');
+    await expect(menu).toBeFocused();
     const columnGrip = await grip(columns);
     const rowGrip = await grip(rows);
     assert.deepEqual([columnGrip.width, columnGrip.height, rowGrip.width, rowGrip.height],
@@ -114,8 +119,11 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await expect.poll(() => page.locator('.blocklySvg').first().getAttribute('width').then(parseFloat))
         .toBeGreaterThan(initialSvgWidth);
     const moved = await position(columns);
-    await toggleUndockButtons(page);
-    await expect(mode).toHaveAttribute('aria-pressed', 'true');
+    await menu.press('ArrowDown');
+    await checkbox.press('Enter');
+    await expect(menu).toBeFocused();
+    await expect(menu).toHaveAttribute('aria-expanded', 'false');
+    assert.equal(await readUndockButtonsChecked(page), true);
     assert.equal(await position(columns), moved);
     await columns.press('ArrowLeft');
     assert.equal(await position(columns), moved - 16);
@@ -170,7 +178,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     await page.setViewportSize({width: 1360, height: 900});
     await expect.poll(() => position(columns)).toBe(saved);
     await toggleUndockButtons(page);
-    await expect(mode).toHaveAttribute('aria-pressed', 'false');
+    assert.equal(await readUndockButtonsChecked(page), false);
     assert.equal(await position(columns), saved);
     await expect(rows).toBeVisible();
     const scriptX = () => page.evaluate(() => vm.editingTarget.blocks.getBlock('layout-script').x);
@@ -196,7 +204,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
         .some(block => block.opcode === 'event_whenflagclicked' && block.x > 220)));
 
     await start('&twPlusWindowLayout=1');
-    await expect(mode).toHaveAttribute('aria-pressed', 'false');
+    assert.equal(await readUndockButtonsChecked(page), false);
     await expect.poll(() => position(columns)).toBe(saved);
     await page.getByRole('button', {name: 'Switch to small stage', exact: true}).click();
     await expect.poll(async () => (await stage.boundingBox()).width).toBe(240);

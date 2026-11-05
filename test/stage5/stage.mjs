@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
 import {chromium} from 'playwright';
-import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
+import {readUndockButtonsChecked, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15105';
 const prefix = process.env.TW151_STAGE5_PREFIX || '/';
@@ -30,7 +30,6 @@ try {
         if (!(await stat(file).catch(() => null))?.isFile()) return route.fulfill({status: 404});
         return route.fulfill({path: file});
     });
-    const mode = undockButtons(page);
     const action = page.locator('[class*="stage-action-slot_"]').getByRole('button', {
         name: 'Open in another window', exact: true
     });
@@ -77,7 +76,7 @@ try {
     await stage.locator('[data-gui-stage] canvas').waitFor();
     await page.locator('img[class*="green-flag_green-flag_"]').first().click();
     assert.equal(await page.evaluate(() => window.stage5Runs), 1);
-    assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+    assert.equal(await readUndockButtonsChecked(page), true);
     assert.ok(await canvas.evaluate(node => node === window.stage5Canvas && window.vm.renderer === window.stage5Renderer));
 
     const original = await canvas.boundingBox();

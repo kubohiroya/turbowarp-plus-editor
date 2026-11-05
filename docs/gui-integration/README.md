@@ -98,9 +98,9 @@ GUIはネイティブのコンテキストメニュー部品とファイル選�
 
 ### Editor のツールバーに置くアイコン付きメニュー
 
-1つのアイコンから関連する操作や表示の選択肢を開く場合は、`@kubohiroya/turbowarp-plus-editor-ui`（`packages/editor-ui`）から `IconMenuButton` をインポートする。パネルの表示や配置の切り替えなどが対象。ステージ表示メニューを最初の利用例とし、今後同じ形式のツールバー操作を追加・改修するときの共通部品とする。
+1つのアイコンから関連する操作や表示の選択肢を開く場合は、`@kubohiroya/turbowarp-plus-editor-ui`（`packages/editor-ui`）から `IconMenuButton` をインポートする。パネルの表示や配置の切り替えなどが対象。ステージ表示メニューと編集タブ横の配置メニューを利用例とし、今後同じ形式のツールバー操作を追加・改修するときの共通部品とする。
 
-- 呼び出し側は、翻訳済みの `label`、トリガーの装飾アイコン `icon`、表示順に並べた `items` を渡す。項目には一意の `id`、`label`、`onSelect` を指定し、必要に応じて `icon`、選択状態の `checked`、`disabled`、前に区切り線を置く `separatorBefore` を加える。
+- 呼び出し側は、翻訳済みの `label`、トリガーの装飾アイコン `icon`、表示順に並べた `items` を渡す。項目には一意の `id`、`label`、`onSelect` を指定し、必要に応じて `icon`、選択状態の `checked`、独立したオン・オフ項目を示す `checkbox`、`disabled`、前に区切り線を置く `separatorBefore` を加える。
 - 共通部品がテーマに沿った描画、メニューのアクセシブル名、矢印キー・Home・End での移動、Esc やメニュー外操作での閉鎖を担当する。ステージの表示・サイズ・ドック状態と起動フラグは、ステージ側が管理する。
 
 UI パッケージは Editor リポジトリ内の `file:` 依存として Web と Desktop のビルドで共有する。React はホストから受け取り、GUI の Redux やステージの状態に依存しない。

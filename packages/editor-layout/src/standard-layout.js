@@ -5,7 +5,7 @@ const isJapanese = locale => /^ja(?:-|$)/i.test(locale);
 const singleColumnTargetWidth = 108;
 const minimumStandardEditor = 380;
 
-export function createStandardLayout(React, {styles, targetStyles, context}) {
+export function createStandardLayout(React, {styles, targetStyles, context, LayoutMenu}) {
     const {createElement: element, useContext, useLayoutEffect, useRef, useState} = React;
     const SplitLayout = createLayout(React);
     const Splitter = createSplitter(React);
@@ -27,17 +27,21 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
         const stageHidden = plusLayout && !showStage;
         const japanese = isJapanese(props.locale);
         const undockLabel = japanese ? 'アンドックボタンを表示' : 'Show undock buttons';
-        const layoutMenu = windowLayout && element('details', {className: styles.layoutMenu},
-            element('summary', {'aria-label': japanese ? '配置メニュー' : 'Layout options'}, '⋯'),
+        const layoutMenuLabel = japanese ? '配置メニュー' : 'Layout options';
+        const toggleUndock = () => setShowUndock(value => !value);
+        const layoutMenu = windowLayout && (LayoutMenu ? element(LayoutMenu, {
+            label: layoutMenuLabel, undockLabel, showUndock, onToggle: toggleUndock
+        }) : element('details', {className: styles.layoutMenu},
+            element('summary', {'aria-label': layoutMenuLabel}, '⋯'),
             element('button', {
                 'aria-pressed': showUndock, type: 'button',
                 onClick: event => {
-                    setShowUndock(value => !value);
+                    toggleUndock();
                     const menu = event.currentTarget.parentElement;
                     menu.open = false;
                     menu.querySelector('summary').focus();
                 }
-            }, undockLabel));
+            }, undockLabel)));
         const stageTools = stageActionEnabled &&
             element('span', {className: styles.stageActionSlot, ref: setStageActionMount});
         const bodyWidth = size?.width ?? 1024;
