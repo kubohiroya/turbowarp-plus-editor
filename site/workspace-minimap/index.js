@@ -20,6 +20,12 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
     const container = workspace.getInjectionDiv();
     const canvas = workspace.getCanvas();
     const workspaceSvg = workspace.getParentSvg();
+    const watermark = zoom && container.closest('[class*="gui_blocks-wrapper_"]')?.parentElement
+        .querySelector(':scope > [class*="gui_watermark_"]');
+    if (watermark) {
+        watermark.classList.add(styles.workspaceWatermark);
+        watermark.dataset.plusWorkspaceWatermark = '';
+    }
     const document = container.ownerDocument;
     const window = document.defaultView;
     const createSvg = name => document.createElementNS(SVG, name);
@@ -100,16 +106,26 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
         viewport.setAttribute('height', height);
 
         const bottomToolbox = metrics.toolboxPosition === ScratchBlocks.TOOLBOX_AT_BOTTOM ? metrics.toolboxHeight : 0;
+        const mapHeight = Math.min(104, metrics.viewHeight * 0.35) * SIZE_FACTOR;
         if (zoom) {
             const {right, bottom} = workspaceControlsCorner(workspace, ScratchBlocks, metrics);
-            minimap.style.right = `${container.clientWidth - right}px`;
-            minimap.style.bottom = `${container.clientHeight - bottom + zoom.height + 8}px`;
+            const rightInset = container.clientWidth - right;
+            const bottomInset = container.clientHeight - bottom + zoom.height + 8;
+            if (watermark) {
+                // The watermark is outside Blockly's border while the minimap is inside it.
+                const rightBorder = container.offsetWidth - container.clientWidth - container.clientLeft;
+                const bottomBorder = container.offsetHeight - container.clientHeight - container.clientTop;
+                watermark.style.setProperty('--plus-watermark-right', `${rightInset + rightBorder}px`);
+                watermark.style.setProperty('--plus-watermark-bottom', `${bottomInset + bottomBorder + mapHeight + 8}px`);
+            }
+            minimap.style.right = `${rightInset}px`;
+            minimap.style.bottom = `${bottomInset}px`;
         } else {
             minimap.style.left = `${metrics.absoluteLeft + 12}px`;
             minimap.style.bottom = `${bottomToolbox + 16}px`;
         }
         minimap.style.width = `${Math.min(164, metrics.viewWidth * 0.4) * SIZE_FACTOR}px`;
-        minimap.style.height = `${Math.min(104, metrics.viewHeight * 0.35) * SIZE_FACTOR}px`;
+        minimap.style.height = `${mapHeight}px`;
     };
 
     const schedule = () => {
@@ -207,6 +223,12 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom) {
             resize.disconnect();
             if (frame !== null) window.cancelAnimationFrame(frame);
             minimap.remove();
+            if (watermark) {
+                watermark.classList.remove(styles.workspaceWatermark);
+                delete watermark.dataset.plusWorkspaceWatermark;
+                watermark.style.removeProperty('--plus-watermark-right');
+                watermark.style.removeProperty('--plus-watermark-bottom');
+            }
         }
     };
 }

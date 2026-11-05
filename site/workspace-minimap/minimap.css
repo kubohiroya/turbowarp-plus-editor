@@ -24,3 +24,7 @@
 .minimap[data-dragging] .viewport {
     cursor: grabbing;
 }
+
+:global([dir]) .workspace-watermark[data-plus-workspace-watermark] {
+    inset: auto var(--plus-watermark-right, 1.25rem) var(--plus-watermark-bottom, 1.25rem) auto;
+}

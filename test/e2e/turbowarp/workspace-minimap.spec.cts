@@ -1,5 +1,45 @@
 const {test, expect} = require('./fixtures.cts');
 
+test('the sprite costume stays aligned above the minimap when its code is undocked', async ({page}) => {
+    await page.goto('editor.html?lang=en');
+    await page.waitForFunction(() => window.vm?.editingTarget && window.ScratchBlocks?.getMainWorkspace());
+    await page.evaluate(async () => {
+        const target = vm.editingTarget;
+        const storage = vm.runtime.storage;
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="20"/></svg>';
+        const asset = storage.createAsset(storage.AssetType.ImageVector, 'svg', new TextEncoder().encode(svg), null, true);
+        await vm.addCostume(`${asset.assetId}.svg`, {name: 'Watermark fixture', asset, assetId: asset.assetId,
+            dataFormat: 'svg', rotationCenterX: 20, rotationCenterY: 20}, target.id);
+        target.setCostume(target.getCostumes().length - 1);
+        vm.emitTargetsUpdate();
+    });
+    const watermark = page.locator('[data-plus-workspace-watermark] img[src]');
+    const minimap = page.locator('[data-workspace-minimap]');
+    const checkWatermark = async () => {
+        await expect(watermark).toBeVisible();
+        await expect.poll(async () => {
+            const image = await watermark.boundingBox();
+            const map = await minimap.boundingBox();
+            return image && map && Math.abs(image.x + image.width - map.x - map.width) <= 2 &&
+                image.y + image.height <= map.y;
+        }).toBe(true);
+    };
+    await checkWatermark();
+
+    await page.getByRole('tab', {name: 'Code', exact: true}).focus();
+    await page.getByRole('button', {name: 'Open in another window', exact: true}).click();
+    const code = page.getByRole('region', {name: /^Code · /});
+    await expect(code.locator('[data-plus-workspace-watermark] img[src]')).toBeVisible();
+    await checkWatermark();
+    await code.getByRole('button', {name: 'Window layout'}).click();
+    await code.getByRole('button', {name: 'Maximize this window'}).click();
+    await checkWatermark();
+    await code.getByRole('button', {name: 'Window layout'}).click();
+    await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
+    await expect(code).toHaveCount(0);
+    await checkWatermark();
+});
+
 test('the workspace minimap follows blocks, viewport and code tab visibility', async ({page, evidence}) => {
     const minimap = page.locator('[data-workspace-minimap]');
     const paths = minimap.locator('path');
