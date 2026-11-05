@@ -1,3 +1,4 @@
+const selectBackdrop = require('../../fixtures/select-backdrop.cjs');
 const {test, expect, approveProjectExtensions} = require('./fixtures.cts');
 const {settingsProject, extensionSource, settingsHat} = require('./settings-project.cts');
 
@@ -35,7 +36,7 @@ const load = async (page, baseURL) => {
     url.search = new URLSearchParams({lang: 'ja', project_url: projectURL}).toString();
     await page.goto(url.href);
     await approveProjectExtensions(page, [await extensionSource(bytes)], 'ja');
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await selectBackdrop(page);
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(4);
     // Count the VM's own change notifications from here on; a refusal must not emit one.
     await page.evaluate(() => {

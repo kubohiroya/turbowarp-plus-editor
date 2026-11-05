@@ -1,3 +1,4 @@
+import selectBackdrop from './fixtures/select-backdrop.cjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, cp, copyFile, mkdir, readFile, writeFile} from 'node:fs/promises';
@@ -37,7 +38,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
         const security = p.locator('.twextsec-modal'); await security.waitFor({timeout: 60000});
         await security.getByRole('button', {name: 'サンドボックスなし', exact: true}).click();
         await security.getByRole('button', {name: 'OK', exact: true}).click(); await security.waitFor({state: 'hidden'});
-        await p.getByRole('button', {name: '背景', exact: true}).click();
+        await selectBackdrop(p);
         await expect(p.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2, {timeout: 60000});
     }
     async function open(blockId) {

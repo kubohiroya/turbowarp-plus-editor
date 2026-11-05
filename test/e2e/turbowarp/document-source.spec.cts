@@ -1,3 +1,4 @@
+const selectBackdrop = require('../../fixtures/select-backdrop.cjs');
 const {test, expect, approveProjectExtensions} = require('./fixtures.cts');
 const {settingsProject, extensionSource, settingsHat} = require('./settings-project.cts');
 
@@ -27,7 +28,7 @@ const open = async (page, baseURL, projectURL, flags, source) => {
     url.search = new URLSearchParams({lang: 'ja', ...flags, project_url: projectURL}).toString();
     await page.goto(url.href);
     await approveProjectExtensions(page, [source], 'ja');
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await selectBackdrop(page);
     await expect.poll(() => page.evaluate(type => window.ScratchBlocks?.getMainWorkspace()?.getAllBlocks()
         .filter(block => block.type === type).length || 0, settingsHat)).toBe(2);
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2);

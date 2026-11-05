@@ -1,3 +1,4 @@
+import selectBackdrop from './fixtures/select-backdrop.cjs';
 import type {FixtureYamlMapping} from './helpers/fixture-types.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -152,7 +153,7 @@ test(
             await security.getByRole('button', { name: 'サンドボックスなし', exact: true }).click();
             await security.getByRole('button', { name: 'OK', exact: true }).click();
             await security.waitFor({ state: 'hidden', timeout: 60000 });
-            await page.getByRole('button', {name: '背景', exact: true}).click();
+            await selectBackdrop(page);
             await page.waitForFunction(
                 () => window.vm?.editingTarget?.isStage && window.Scratch?.gui?.getBlockly
             );
