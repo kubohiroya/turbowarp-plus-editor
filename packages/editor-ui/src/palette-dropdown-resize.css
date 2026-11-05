@@ -1,0 +1,18 @@
+.handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 32;
+    cursor: nwse-resize;
+    touch-action: none;
+}
+
+.handle::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, transparent 51%, #68778c 51% 61%, transparent 61% 72%, #68778c 72% 82%, transparent 82%);
+}

@@ -136,3 +136,91 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
     await expect(flyout).toBeVisible();
 });
+
+test('横パレットの小窓を編集領域内でリサイズし、カテゴリ別に復元する', async ({page, evidence}) => {
+    await page.goto('editor.html?lang=en');
+    const toolbox = page.locator('.blocklyToolboxDiv');
+    const motion = toolbox.locator('.scratchCategoryId-motion');
+    const looks = toolbox.locator('.scratchCategoryId-looks');
+    const surface = page.locator('.blocklySvg').first();
+    const flyout = page.locator('.blocklyFlyout');
+    const handle = page.locator('[data-palette-resize-handle]');
+    const viewport = page.viewportSize();
+    const size = async () => {
+        const {width, height} = await flyout.boundingBox();
+        return {width, height};
+    };
+    const sizeDifference = async expected => {
+        const actual = await size();
+        return Math.max(Math.abs(actual.width - expected.width), Math.abs(actual.height - expected.height));
+    };
+    const dragHandle = async (dx, dy) => {
+        const {x, y, width, height} = await handle.boundingBox();
+        const startX = x + width / 2;
+        const startY = y + height / 2;
+        await page.mouse.move(startX, startY);
+        await page.mouse.down();
+        await page.mouse.move(startX + dx, startY + dy, {steps: 8});
+        await expect(flyout).toBeVisible();
+        await page.mouse.up();
+    };
+    const fitsSurface = async () => {
+        const box = await flyout.boundingBox();
+        const editor = await surface.boundingBox();
+        const menu = await toolbox.boundingBox();
+        const view = page.viewportSize();
+        return box.x >= Math.max(0, editor.x) - 1 && box.y >= Math.max(0, editor.y) - 1 &&
+            box.x + box.width <= Math.min(view.width, editor.x + editor.width, menu.x + menu.width) + 1 &&
+            box.y + box.height <= Math.min(view.height, editor.y + editor.height) + 1;
+    };
+
+    evidence.stage('resize-and-switch-category');
+    await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+    await expect(handle).toBeHidden();
+    await motion.click();
+    await expect(handle).toBeVisible();
+    const initial = await size();
+    await dragHandle(44, 56);
+    const motionSize = await size();
+    expect(motionSize.width).toBeCloseTo(initial.width + 44);
+    expect(motionSize.height).toBeCloseTo(initial.height + 56);
+    await looks.click();
+    expect(await size()).toEqual(initial);
+    await dragHandle(-40, -50);
+    const looksSize = await size();
+    expect(looksSize.width).toBeCloseTo(initial.width - 40);
+    expect(looksSize.height).toBeCloseTo(initial.height - 50);
+    await motion.click();
+    expect(await size()).toEqual(motionSize);
+
+    evidence.stage('reload-saved-sizes');
+    await page.reload();
+    await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+    await looks.click();
+    expect(await size()).toEqual(looksSize);
+    await motion.click();
+    expect(await size()).toEqual(motionSize);
+
+    evidence.stage('clamp-to-visible-editor');
+    const corner = await handle.boundingBox();
+    await dragHandle(viewport.width - corner.x - corner.width / 2 - 1,
+        viewport.height - corner.y - corner.height / 2 - 1);
+    // Leaving the bottom edge closes the backpack drawer that temporarily shortens the editor.
+    await page.mouse.move(viewport.width - 1, 1);
+    await expect(page.getByRole('button', {name: 'Reveal Backpack'})).toHaveAttribute('aria-expanded', 'false');
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tw-plus-palette-size:motion')));
+    await expect.poll(() => sizeDifference(saved)).toBeLessThanOrEqual(1);
+    const largest = await size();
+    expect(largest.width).toBeGreaterThan(motionSize.width);
+    expect(largest.height).toBeGreaterThan(motionSize.height);
+    expect(await fitsSurface()).toBe(true);
+    await page.setViewportSize({width: 900, height: 510});
+    await expect.poll(fitsSurface).toBe(true);
+    await expect.poll(async () => (await size()).height).toBeLessThan(largest.height);
+    await page.keyboard.press('Escape');
+    await expect(handle).toBeHidden();
+    await motion.click();
+    expect(await fitsSurface()).toBe(true);
+    await page.setViewportSize(viewport);
+    await expect.poll(() => sizeDifference(saved)).toBeLessThanOrEqual(1);
+});
