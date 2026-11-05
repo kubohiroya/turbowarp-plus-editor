@@ -40,7 +40,7 @@ export {EditorLayout} from '../editor-layout/index.jsx';
 /* global __TW_SPRITE_PROPERTIES_PANEL__ */
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startup = readWebStartupFeatureFlags(startupSearch);
-export const attachSpriteCodeWorkspace = startup.spriteCodeWindows && !desktopCodeEnabled ? attachCodeWorkspace : undefined;
+export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.standardLayout) && !desktopCodeEnabled ? attachCodeWorkspace : undefined;
 export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
 export const SpritePropertiesPanel = (startup.spriteProperties || startup.standardLayout) &&
     typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;

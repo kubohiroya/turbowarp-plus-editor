@@ -71,6 +71,8 @@ def prepare(source, output, build, test_control):
     write(editor_path, editor.encode())
     write("src-main/windows/plus-backpack-host.cjs",
           (root / "scripts/desktop/backpack-window-host.cjs").read_bytes())
+    write("src-main/windows/plus-popup-preload.cjs",
+          (root / "scripts/desktop/popup-preload.cjs").read_bytes())
     if test_control:
         entry_path = "src-main/entrypoint.js"
         write(entry_path, read(entry_path) + b"\nif (process.env.TW_PLUS_DESKTOP_TEST_CONTROL === '1') "

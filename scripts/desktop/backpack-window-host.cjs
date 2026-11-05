@@ -1,3 +1,4 @@
+const path = require('node:path');
 const AbstractWindow = require('./abstract');
 
 const editorURL = 'tw-editor://./gui/gui.html';
@@ -6,19 +7,21 @@ const framePattern = /^tw-plus-(backpack|stage|sprite-properties|sprite-list|cod
 const reservedFrame = /^tw-plus-(backpack|stage|sprite-properties|sprite-list|code)-/;
 const splitterDisabled = process.env.TW_PLUS_DESKTOP_SPLITTER === '0';
 const layoutEnabled = process.env.TW_PLUS_DESKTOP_WINDOW_LAYOUT === '1';
+const standardLayout = process.env.TW_PLUS_DESKTOP_STANDARD_LAYOUT === undefined ?
+    !layoutEnabled : process.env.TW_PLUS_DESKTOP_STANDARD_LAYOUT === '1';
 const spritePropertiesEnabled = process.env.TW_PLUS_DESKTOP_SPRITE_PROPERTIES === '1';
 const internalEnabled = layoutEnabled && process.env.TW_PLUS_DESKTOP_INTERNAL_WINDOWS === '1';
 const stagePanelEnabled = internalEnabled && process.env.TW_PLUS_DESKTOP_STAGE_PANEL === '1';
 const targetListEnabled = internalEnabled && process.env.TW_PLUS_DESKTOP_TARGET_LIST === '1';
-const enabled = layoutEnabled && process.env.TW_PLUS_DESKTOP_BACKPACK_POPOUT === '1';
-const stagePopout = stagePanelEnabled && process.env.TW_PLUS_DESKTOP_STAGE_POPOUT === '1';
+const enabled = standardLayout || layoutEnabled && process.env.TW_PLUS_DESKTOP_BACKPACK_POPOUT === '1';
+const stagePopout = standardLayout || stagePanelEnabled && process.env.TW_PLUS_DESKTOP_STAGE_POPOUT === '1';
 const targetPopout = internalEnabled && process.env.TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT === '1';
-const codePopout = internalEnabled && process.env.TW_PLUS_DESKTOP_CODE_POPOUT === '1';
+const codePopout = standardLayout || internalEnabled && process.env.TW_PLUS_DESKTOP_CODE_POPOUT === '1';
 const allowed = new Set(Object.entries({
     backpack: enabled,
     stage: stagePopout,
     'sprite-properties': targetPopout && spritePropertiesEnabled,
-    'sprite-list': targetPopout && targetListEnabled,
+    'sprite-list': standardLayout || targetPopout && targetListEnabled,
     code: codePopout
 }).filter(([, available]) => available).map(([kind]) => kind));
 
@@ -49,7 +52,7 @@ function getReservation ({url, frameName, postBody}) {
 
 function createBackpackWindowHost (editor) {
     const url = new URL(editorURL);
-    url.searchParams.set('twPlusStandardLayout', '0');
+    url.searchParams.set('twPlusStandardLayout', standardLayout ? '1' : '0');
     if (splitterDisabled) url.searchParams.set('twPlusSplitter', '0');
     if (layoutEnabled) url.searchParams.set('twPlusWindowLayout', '1');
     if (internalEnabled) url.searchParams.set('twPlusInternalWindows', '1');
@@ -59,7 +62,7 @@ function createBackpackWindowHost (editor) {
     if (targetListEnabled) url.searchParams.set('twPlusTargetList', '1');
     if (enabled) url.searchParams.set('twPlusBackpackPopout', '1');
     if (stagePopout) url.searchParams.set('twPlusStagePopout', '1');
-    if (targetPopout) url.searchParams.set('twPlusTargetPanelsPopout', '1');
+    if (standardLayout || targetPopout) url.searchParams.set('twPlusTargetPanelsPopout', '1');
     if (codePopout) url.searchParams.set('twPlusCodePopout', '1');
     const children = new Map();
     const pending = new Map();
@@ -74,6 +77,24 @@ function createBackpackWindowHost (editor) {
             children.set(ticket, {kind, window});
             const popup = new BackpackWindow({existingWindow: window, parentWindow: editor});
             popup.initialURL = 'about:blank';
+            if (standardLayout) {
+                const contents = window.webContents;
+                const channel = 'tw-plus-popup:mode';
+                const mode = () => window.isMinimized() ? 'minimized' : window.isMaximized() ? 'maximized' : 'normal';
+                const expectedURL = `${childBase}${kind}-popout.html#${ticket}`;
+                contents.ipc.handle(channel, (event, action) => {
+                    if (event.senderFrame !== contents.mainFrame || event.senderFrame.url !== expectedURL) return;
+                    if (action === 'maximize') window.maximize();
+                    if (action === 'minimize') window.minimize();
+                    if (action === 'restore') window.unmaximize();
+                    return mode();
+                });
+                for (const event of ['maximize', 'unmaximize', 'minimize', 'restore']) {
+                    window.on(event, () => {
+                        if (!contents.isDestroyed() && contents.getURL() === expectedURL) contents.send(channel, mode());
+                    });
+                }
+            }
             const fail = error => {
                 console.error('Could not initialize the detached window:', error);
                 if (!window.isDestroyed()) window.close();
@@ -134,7 +155,7 @@ function createBackpackWindowHost (editor) {
                         sandbox: true,
                         webviewTag: false,
                         webSecurity: true,
-                        preload: null
+                        preload: standardLayout ? path.join(__dirname, 'plus-popup-preload.cjs') : null
                     }
                 }
             };

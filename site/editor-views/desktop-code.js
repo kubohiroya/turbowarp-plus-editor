@@ -12,19 +12,22 @@ export function attachDesktopCode(context) {
     if (!host) return null;
     const session = createCodeSession(context);
     const surfaces = new Set();
-    const open = () => {
-        const target = context.vm.editingTarget;
+    const menu = new URLSearchParams(location.search).get('twPlusStandardLayout') === '1';
+    const open = (target = context.vm.editingTarget) => {
         if (!target?.isOriginal || !context.canUse() || surfaces.size >= 2) return;
         let detach;
         const surface = createSurface(host, state => {
             if (state.kind === 'external') {
-                detach = session.attach({...state.target, target, close: () => surface.dock()});
+                detach = session.attach({...state.target, target, close: () => surface.dock(),
+                    duplicate: menu ? next => open(next) : undefined, layoutMenu: menu});
             } else if (state.kind === 'docked') {
                 surfaces.delete(surface);
                 detach?.();
+                if (menu) session.setCanDuplicate(surfaces.size < 2);
             }
         });
         surfaces.add(surface);
+        if (menu) session.setCanDuplicate(surfaces.size < 2);
         surface.undock({timeoutMs: 15000});
     };
     openCode = open;

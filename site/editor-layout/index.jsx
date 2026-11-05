@@ -14,6 +14,10 @@ export const layoutFlags = readWebStartupFeatureFlags(typeof window === 'undefin
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
 export const layoutViews = createStandardLayout(React, {styles, targetStyles, context: WindowLayoutContext});
 
+function LayoutDesktop(props) {
+    return <WindowDesktop {...props} layoutMenu={layoutFlags.standardLayout} />;
+}
+
 const getStorage = () => {
     try {
         return window.localStorage;
@@ -35,16 +39,16 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
             storage={getStorage()}
             storageKey="twPlusEditorLayout"
             onPaletteModeChange={setHorizontalBlockPalette}
-            Container={layoutFlags.internalWindows || stageCanUndock ? WindowDesktop : undefined}
-            windowTools={layoutFlags.internalWindows && <>
-                <EditorFullscreenButton className={styles.toggle} locale={props.locale} />
+            Container={layoutFlags.internalWindows || layoutFlags.standardLayout || stageCanUndock ? LayoutDesktop : undefined}
+            windowTools={<>
+                {layoutFlags.internalWindows && <EditorFullscreenButton className={styles.toggle} locale={props.locale} />}
                 <WindowList />
             </>}
-            render={layoutFlags.internalWindows ? (layout, showUndock) => <EditorTabLayout
+            render={layoutFlags.internalWindows || layoutFlags.standardLayout ? (layout, showUndock) => <EditorTabLayout
                 vm={vm}
                 activeEditorTab={activeEditorTab}
                 editorTargetIsStage={editorTargetIsStage}
-                showUndock={showUndock}
+                showUndock={layoutFlags.standardLayout || showUndock}
                 layout={layout}
                 locale={props.locale}
                 render={props.render}

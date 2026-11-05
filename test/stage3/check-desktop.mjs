@@ -45,6 +45,7 @@ async function run (enabled, test) {
     const processArgs = [`--user-data-dir=${profile}`, '--remote-debugging-port=0'];
     const processEnv = {...process.env, TW_PLUS_DESKTOP_TEST_CONTROL: '1'};
     delete processEnv.TW_PLUS_DESKTOP_SPLITTER;
+    processEnv.TW_PLUS_DESKTOP_STANDARD_LAYOUT = '0';
     delete processEnv.TW_PLUS_DESKTOP_WINDOW_LAYOUT;
     delete processEnv.TW_PLUS_DESKTOP_BACKPACK_POPOUT;
     delete processEnv.TW_PLUS_DESKTOP_INTERNAL_WINDOWS;

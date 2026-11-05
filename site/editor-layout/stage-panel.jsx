@@ -2,12 +2,13 @@ import React from 'react';
 import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-editor-layout';
 import {BasicPanel} from './basic-panel.jsx';
 import {StageDisplayMenuContext} from './context.js';
-import {createDesktopPanelHost} from './desktop-panel-host.js';
+import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.js';
 import {decorateSurface} from '../editor-backpack/surface-styles.js';
 import {layoutFlags, stageCanUndock, WindowLayoutContext} from './index.jsx';
 import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
+const externalHost = desktopPopout ?? (layoutFlags.standardLayout ? createWebPanelHost('stage', 680, 520) : null);
 
 function StageResizeHandle({edge, aspect, width, limits, label}) {
     const drag = React.useRef(null);
@@ -109,11 +110,11 @@ function AppStagePanel({aspect, width, defaultWidth, render, renderHeader, isFul
     const {locale, stageActionMount} = React.useContext(WindowLayoutContext);
     const menu = React.useContext(StageDisplayMenuContext);
     const title = /^ja(?:-|$)/i.test(locale) ? 'ステージ' : 'Stage';
-    return <BasicPanel id="stage" title={title} externalHost={desktopPopout} decorate={decorateSurface}
+    return <BasicPanel id="stage" title={title} externalHost={externalHost} decorate={decorateSurface}
         actionMount={stageActionMount ?? null} onDockActionChange={layoutFlags.stageDisplayMenu ? menu?.setDockAction : undefined}
         dockHeight={Math.round((width ?? defaultWidth) / aspect) + (renderHeader ? 44 : 0)}
         render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen}}
-            inputDocument={desktopPopout ? mount?.ownerDocument : undefined} />}
+            inputDocument={mount?.ownerDocument} />}
     />;
 }
 

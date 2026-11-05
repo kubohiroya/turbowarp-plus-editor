@@ -34,7 +34,7 @@ const messages = {
 export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript}) {
     const sessions = new WeakMap();
 
-    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName}) {
+    function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName, renderPopupTools}) {
         const labels = /^ja(?:-|$)/i.test(locale) ? messages.ja : messages.en;
         const copyFailed = React.useRef(labels.copyFailed);
         copyFailed.current = labels.copyFailed;
@@ -128,9 +128,10 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
                         </div>
                     ) : dock}
                     {createPortal(<>
-                        {!internal && <>{dock}{internalHost && <button type="button" onClick={moveInternal}>
-                            {labels.internal}
-                        </button>}</>}
+                        {!internal && (renderPopupTools ? renderPopupTools({mount: state.target.mount, onDock: surface.dock}) :
+                            <>{dock}{internalHost && <button type="button" onClick={moveInternal}>
+                                {labels.internal}
+                            </button>}</>)}
                         {React.cloneElement(children, {renderScriptDragHandle: handle})}
                     </>,
                         state.target.mount)}

@@ -366,3 +366,11 @@
 [data-plus-horizontal-zoom]:global(.sa-custom-zoom-hidden) > * {
     transform: translateY(64px);
 }
+
+.popup-tools {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.25rem;
+    color: var(--text-primary);
+    background: var(--ui-primary);
+}

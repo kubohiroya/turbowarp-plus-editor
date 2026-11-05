@@ -3,21 +3,31 @@ import {createPortal, flushSync} from 'react-dom';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {WindowLayoutContext} from './index.jsx';
+import {PopupLayout} from './popup-layout.jsx';
 import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
 
 function DockableBasicPanel({host, id, title, children, render, actionMount, dockHeight, className,
     externalHost, decorate, renderInExternalDocument, onDockActionChange}) {
-    const {showUndock, locale} = React.useContext(WindowLayoutContext);
+    const {showUndock, locale, plusLayout} = React.useContext(WindowLayoutContext);
     const [state, setState] = React.useState({kind: 'docked'});
     const action = React.useRef(null);
     const undecorate = React.useRef(null);
     const unmounting = React.useRef(false);
-    const surface = React.useMemo(() => createSurface(externalHost ?? host, next => {
-        if (!externalHost) {
-            setState(next);
-            return;
+    const fallback = React.useRef(null);
+    const surface = React.useMemo(() => createSurface({
+        open: request => request?.presentation === 'internal' ? host.open(request) : externalHost?.open(request)
+    }, next => {
+        if (next.kind === 'external' && next.target.presentation !== 'internal') {
+            undecorate.current = decorate(next.target.mount.ownerDocument);
         }
-        if (next.kind === 'external') undecorate.current = decorate(next.target.mount.ownerDocument);
+        if (next.kind === 'docked' && fallback.current) {
+            const retry = fallback.current;
+            fallback.current = null;
+            if (next.reason === 'blocked' || next.reason === 'failed') {
+                surface.undock(retry);
+                return;
+            }
+        }
         if (next.kind === 'docked' && undecorate.current) {
             if (!unmounting.current) flushSync(() => setState(next));
             undecorate.current();
@@ -30,6 +40,7 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         unmounting.current = false;
         return () => {
             unmounting.current = true;
+            fallback.current = null;
             surface.dock();
         };
     }, [surface]);
@@ -39,22 +50,40 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         return () => cancelAnimationFrame(frame);
     }, [showUndock, state]);
 
-    const undock = React.useCallback(() => surface.undock({id, title, rememberPlacement: true}), [surface, id, title]);
+    const undock = React.useCallback(() => {
+        if (externalHost && !plusLayout) {
+            surface.undock();
+            return;
+        }
+        const request = {id, title, rememberPlacement: true, presentation: 'internal'};
+        if (externalHost) request.openExternal = () => {
+            surface.dock();
+            fallback.current = request;
+            surface.undock();
+        };
+        surface.undock(request);
+    }, [surface, id, title, externalHost, plusLayout]);
     React.useLayoutEffect(() => {
         if (!onDockActionChange) return;
-        onDockActionChange({kind: state.kind, dock: surface.dock, undock, external: Boolean(externalHost)});
+        onDockActionChange({kind: state.kind, dock: surface.dock, undock, external: Boolean(externalHost && !plusLayout)});
         return () => onDockActionChange(null);
-    }, [onDockActionChange, state.kind, surface, undock, externalHost]);
+    }, [onDockActionChange, state.kind, surface, undock, externalHost, plusLayout]);
 
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mount = state.kind === 'external' ? state.target.mount : undefined;
+    const externalMount = mount && state.target.presentation !== 'internal' ? mount : null;
     React.useLayoutEffect(() => {
-        if (externalHost && mount) mount.ownerDocument.title = title;
-    }, [externalHost, mount, title]);
-    const content = render ? render(Boolean(mount), mount) : children;
+        if (externalMount) externalMount.ownerDocument.title = title;
+    }, [externalMount, title]);
+    const content = render ? render(Boolean(mount), externalMount) : children;
     // Create target controls in the child document so React delegates input there.
-    const nativeContent = mount && externalHost && renderInExternalDocument ?
-        createPortal(<div className={styles.externalPanel}>{content}</div>, mount) : null;
+    const nativeContent = externalMount && renderInExternalDocument ?
+        createPortal(<div className={styles.externalPanel}>
+            {plusLayout && <div className={styles.popupTools}>
+                <PopupLayout window={externalMount.ownerDocument.defaultView} locale={locale} onDock={surface.dock} />
+            </div>}
+            {content}
+        </div>, externalMount) : null;
 
     const openAction = showUndock && !mount && <span className={styles.openWindowAction} ref={action}>
         <OpenWindowButton
