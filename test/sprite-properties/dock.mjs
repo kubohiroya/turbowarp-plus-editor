@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium} from 'playwright';
+import {toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const build = process.argv[2];
 assert.ok(path.isAbsolute(build), 'Pass the absolute Editor webpack output directory');
@@ -84,7 +85,7 @@ try {
     assert.equal(await number('x').isDisabled(), true);
     await page.evaluate(id => window.vm.setEditingTarget(id), ids.first);
     assert.equal(await input('Sprite name').inputValue(), 'Updated cat');
-    await page.getByRole('button', {name: 'Show undock buttons'}).click();
+    await toggleUndockButtons(page);
     await page.getByRole('separator', {name: 'Editor and stage column width'}).press('End');
     await page.getByRole('separator', {name: 'Stage and target pane height'}).press('End');
     const compactDock = await panel.evaluate(element => {
@@ -103,9 +104,8 @@ try {
     const float = page.getByRole('region', {name: 'Sprite', exact: true});
     const action = page.getByRole('heading', {name: 'Sprite', exact: true}).locator('..')
         .getByRole('button', {name: 'Open in another window', exact: true});
-    const mode = page.getByRole('button', {name: 'Show undock buttons'});
     assert.equal(await action.count(), 0);
-    await mode.click();
+    await toggleUndockButtons(page);
     await input('Sprite name').evaluate(node => {window.originalSpriteNameInput = node;});
     await action.press('Enter');
     await float.getByRole('region', {name: 'Sprite properties'}).waitFor();
@@ -138,7 +138,7 @@ try {
     assert.equal(await input('Sprite name').inputValue(), 'Floating cat');
     await action.press('Enter');
     await float.waitFor();
-    await mode.click();
+    await toggleUndockButtons(page);
     await float.waitFor();
     assert.equal(await action.count(), 0);
     await float.getByRole('button', {name: 'Close and dock', exact: true}).click();

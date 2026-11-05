@@ -7,6 +7,7 @@ import {join, resolve, sep} from 'node:path';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {chromium} from 'playwright';
+import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const origin = 'http://localhost:15103';
 const prefix = process.env.TW151_STAGE3_PREFIX || '/';
@@ -80,7 +81,7 @@ try {
             window.ScratchBlocks?.getMainWorkspace());
     }
     const undock = page.getByRole('button', {name: 'Open Backpack in a browser window'});
-    const mode = page.getByRole('button', {name: 'Show undock buttons'});
+    const mode = undockButtons(page);
     const layoutFlag = '&twPlusWindowLayout=1';
     const backpackFlag = '&twPlusBackpackPopout=1';
     const header = target => target.locator('[class*="backpack_backpack-header"]');
@@ -91,7 +92,7 @@ try {
 
     for (const backpackValue of ['', '&twPlusBackpackPopout=0', '&twPlusBackpackPopout=', '&twPlusBackpackPopout=true']) {
         await start(layoutFlag + backpackValue);
-        await mode.click();
+        await toggleUndockButtons(page);
         assert.equal(await mode.getAttribute('aria-pressed'), 'true');
         assert.equal(await undock.count(), 0);
         await header(page).waitFor();
@@ -102,7 +103,7 @@ try {
     assert.equal(await mode.getAttribute('aria-pressed'), 'false');
     assert.equal(await undock.count(), 0);
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0&twPlusBackpackPopout=0'));
-    await mode.click();
+    await toggleUndockButtons(page);
     await undock.waitFor();
     report.checks.push('Startup flags stay fixed and the Backpack control follows the undock button toggle');
     const {a, b} = await page.evaluate(async () => {
@@ -182,7 +183,7 @@ try {
         }));
     }, {mime: transferMime, reference});
     await page.waitForFunction(() => typeof window.stage3FinishCancelledRead === 'function');
-    await mode.click();
+    await toggleUndockButtons(page);
     assert.ok(!popup.isClosed());
     assert.equal(await page.evaluate(() => Boolean(window.stage3Cancelled)), false);
     await Promise.all([popup.waitForEvent('close'), popup.getByRole('button', {name: 'Dock Backpack'}).click()]);
@@ -192,7 +193,7 @@ try {
     assert.equal(await mode.getAttribute('aria-pressed'), 'false');
     assert.equal(await undock.count(), 0);
     await page.getByText('Stage 3 stored script', {exact: true}).waitFor();
-    await mode.click();
+    await toggleUndockButtons(page);
     popup = await openBackpack();
     const reloaded = popup.waitForEvent('close');
     await popup.reload({waitUntil: 'commit'}).catch(() => {});

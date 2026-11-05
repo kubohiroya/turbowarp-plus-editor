@@ -3,6 +3,11 @@
     color: var(--text-primary);
 }
 
+.root[data-stage-hidden="true"] {
+    visibility: visible;
+    pointer-events: auto;
+}
+
 .trigger {
     display: grid;
     place-items: center;

@@ -1,11 +1,6 @@
-/* Reserve a fixed button slot beside the horizontally scrolling categories. */
-:has(> :global([class*="gui_blocks-wrapper_"]) .horizontal) {
-    --plus-extension-button-width: 3.75rem;
-}
-
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) + :global([class*="gui_extension-button-container_"]) {
     inset: 1px auto auto 1px;
-    width: var(--plus-extension-button-width);
+    width: var(--plus-extension-button-width, 3.75rem);
     height: 50px;
     box-sizing: border-box;
 }
@@ -16,7 +11,7 @@
 
 .horizontal:global(.blocklyToolboxDiv)[data-horizontal-block-palette] {
     inset: 0 var(--plus-stage-overlap, 0px) auto 0;
-    left: var(--plus-extension-button-width, 0px) !important;
+    left: calc(var(--plus-extension-button-width, 3.75rem) + var(--plus-extension-button-gap, 0px)) !important;
     height: auto !important;
     overflow-x: auto;
     overflow-y: hidden;

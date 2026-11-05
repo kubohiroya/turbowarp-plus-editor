@@ -76,30 +76,17 @@ test('the standalone host resizes, restores, and resets its dividers', {timeout:
 });
 
 
-test('standard layout and stage visibility work in the standalone package', {timeout: 30_000}, async t => {
+test('the standalone package uses its configured layout', {timeout: 30_000}, async t => {
     const page = await openExample(t);
     await page.goto(origin + example + '?standard=1');
     const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
-    const stageToggle = page.getByRole('button', {name: 'Show stage'});
     const stage = page.locator('[data-stage]');
-    const editor = page.getByRole('textbox', {name: 'Editor'});
-    await expect(anchor).toHaveAttribute('aria-pressed', 'true');
+    await expect(anchor).toHaveCount(0);
     await expect(stage).toBeVisible();
     await expect(stage).toHaveCSS('position', 'absolute');
     await expect(page.locator('html')).toHaveAttribute('data-palette', 'top');
-    await editor.fill('draft');
-    await stageToggle.click();
-    await expect(stage).toBeHidden();
-    await anchor.click();
-    await expect(stage).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('data-palette', 'side');
-    await anchor.click();
-    await expect(stage).toBeHidden();
-    await stageToggle.click();
-    await expect(stage).toBeVisible();
-    await expect(editor).toHaveValue('draft');
-
     await page.goto(origin + example + '?standard=0');
     await expect(stage).toBeVisible();
+    await expect(stage).not.toHaveCSS('position', 'absolute');
     await expect(anchor).toHaveCount(0);
 });

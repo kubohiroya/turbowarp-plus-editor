@@ -2,8 +2,7 @@ import {createLayout, createSplitter, splitAxis} from './index.js';
 import {createTargetList} from './targets.js';
 
 const isJapanese = locale => /^ja(?:-|$)/i.test(locale);
-const minimumStandardTargets = 108;
-const minimumDefaultTargetWidth = 174;
+const singleColumnTargetWidth = 108;
 const minimumStandardEditor = 380;
 
 export function createStandardLayout(React, {styles, targetStyles, context}) {
@@ -12,47 +11,40 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
     const Splitter = createSplitter(React);
     const targets = createTargetList(React, targetStyles);
 
-    function AnchorButton({label, pressed, onClick}) {
-        return element('button', {
-            'aria-label': label, 'aria-pressed': pressed, className: styles.toggle,
-            title: label, type: 'button', onClick
-        }, element('svg', {
-            'aria-hidden': true, className: styles.anchorIcon, viewBox: '0 0 24 24',
-            fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round'
-        },
-        element('circle', {cx: 12, cy: 5, r: 3}),
-        element('path', {d: 'M12 8v14M8 12h8M3 13a9 9 0 0 0 18 0M3 17v-4h4M21 17v-4h-4'})));
-    }
-
     function StandardLayout({
         enabled, splitter, windowLayout, stageActionEnabled, onPaletteModeChange, windowTools, Container, render, ...props
     }) {
         const [showUndock, setShowUndock] = useState(false);
-        const [plusSelected, setPlusSelected] = useState(enabled);
         const [showStage, setShowStage] = useState(true);
         const [size, setSize] = useState(null);
         const [targetRatio, setTargetRatio] = useState(null);
         const [preferredStageWidth, setPreferredStageWidth] = useState(null);
         const [stageActionMount, setStageActionMount] = useState(null);
         const body = useRef(null);
-        const plusLayout = plusSelected && !props.fullscreen;
+        const plusLayout = enabled && !props.fullscreen;
         const stageHidden = plusLayout && !showStage;
         const japanese = isJapanese(props.locale);
         const undockLabel = japanese ? 'アンドックボタンを表示' : 'Show undock buttons';
-        const anchorLabel = japanese ? 'TurboWarp Plus 標準配置' : 'TurboWarp Plus layout';
-        const stageLabel = japanese ? 'ステージを表示' : 'Show stage';
-        const toggleUndock = () => setShowUndock(value => !value);
+        const layoutMenu = windowLayout && element('details', {className: styles.layoutMenu},
+            element('summary', {'aria-label': japanese ? '配置メニュー' : 'Layout options'}, '⋯'),
+            element('button', {
+                'aria-pressed': showUndock, type: 'button',
+                onClick: event => {
+                    setShowUndock(value => !value);
+                    const menu = event.currentTarget.parentElement;
+                    menu.open = false;
+                    menu.querySelector('summary').focus();
+                }
+            }, undockLabel));
         const stageTools = element(Fragment, null,
-            !enabled && windowLayout && element(Fragment, null,
-                element(AnchorButton, {label: undockLabel, pressed: showUndock, onClick: toggleUndock}), windowTools),
+            !enabled && windowLayout && element(Fragment, null, layoutMenu, windowTools),
             stageActionEnabled && element('span', {className: styles.stageActionSlot, ref: setStageActionMount}));
         const bodyWidth = size?.width ?? 1024;
-        const defaultTargetWidth = Math.max(minimumDefaultTargetWidth, Math.min(bodyWidth * 0.18, 216));
         const targetSplit = plusLayout && splitter && size ? splitAxis(
-            bodyWidth, targetRatio, defaultTargetWidth, minimumStandardTargets, minimumStandardEditor
+            bodyWidth, targetRatio, singleColumnTargetWidth, singleColumnTargetWidth, minimumStandardEditor
         ) : null;
         const resizable = targetSplit && targetSplit.maximum > targetSplit.minimum;
-        const editorSpace = resizable ? targetSplit.second : bodyWidth - defaultTargetWidth;
+        const editorSpace = resizable ? targetSplit.second : bodyWidth - singleColumnTargetWidth;
         const maximumStageWidth = Math.max(1, Math.floor(Math.min(editorSpace - 24,
             ((size?.height ?? 640) - 112) * props.stageAspect)));
         const defaultStageWidth = Math.min(maximumStageWidth, Math.floor(Math.min(props.defaultStageWidth, 360, bodyWidth / 2)));
@@ -62,8 +54,8 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             {minimum: minimumStageWidth, maximum: maximumStageWidth, resize: setPreferredStageWidth} : null;
 
         useLayoutEffect(() => {
-            if (enabled) onPaletteModeChange?.(plusSelected);
-        }, [enabled, onPaletteModeChange, plusSelected]);
+            if (enabled) onPaletteModeChange?.(true);
+        }, [enabled, onPaletteModeChange]);
 
         useLayoutEffect(() => {
             const node = body.current;
@@ -80,25 +72,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
         }, []);
 
         const renderEditorTabRow = (tabs, action) => element('div', {className: styles.tabRow}, tabs,
-            element('div', {className: styles.layoutTools},
-                element(AnchorButton, {label: anchorLabel, pressed: plusSelected,
-                    onClick: () => setPlusSelected(value => !value)}),
-                plusSelected && element('button', {
-                    'aria-pressed': showStage, className: styles.stageToggle, type: 'button',
-                    onClick: () => setShowStage(value => !value)
-                }, stageLabel),
-                windowLayout && element('details', {className: styles.layoutMenu},
-                    element('summary', {'aria-label': japanese ? '配置メニュー' : 'Layout options'}, '⋯'),
-                    element('button', {
-                        'aria-pressed': showUndock, type: 'button',
-                        onClick: event => {
-                            toggleUndock();
-                            const menu = event.currentTarget.parentElement;
-                            menu.open = false;
-                            menu.querySelector('summary').focus();
-                        }
-                    }, undockLabel)),
-                windowTools), action);
+            (layoutMenu || windowTools) && element('div', {className: styles.layoutTools}, layoutMenu, windowTools), action);
 
         const applyStandardLayout = layout => {
             if (!enabled) return {...layout, stageClassName: styles.stagePanel};
@@ -155,7 +129,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
             render: slots => render(applyStandardLayout(slots), showUndock)
         });
         return element(context.Provider, {value: {
-            showUndock, plusLayout, stageHidden, stageResize, stageActionMount, locale: props.locale
+            showUndock, plusLayout, stageHidden, setStageVisible: setShowStage, stageResize, stageActionMount, locale: props.locale
         }},
             Container ? element(Container, {locale: props.locale}, layout) : layout);
     }

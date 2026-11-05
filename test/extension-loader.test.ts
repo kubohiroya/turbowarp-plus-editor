@@ -129,7 +129,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,7 +156,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: false, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, paletteDeletePreview: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -168,11 +168,14 @@ test('the stage panel opt-in depends on flexible layout and internal windows', (
     assert.equal(readWebStartupFeatureFlags(layout + '&twPlusStagePanel=1').stagePanel, true);
 });
 
-test('stage display menu requires its own explicit startup flag', () => {
-    for (const query of ['', '?twPlusStageDisplayMenu=0', '?twPlusStageDisplayMenu=true', '?twPlusStageDisplayMenu=']) {
+test('stage display menu defaults on with Plus layout and supports explicit rollback', () => {
+    assert.equal(readWebStartupFeatureFlags().stageDisplayMenu, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=0').stageDisplayMenu, false);
+    assert.equal(readStartupFeatureFlags().stageDisplayMenu, false);
+    for (const query of ['?twPlusStageDisplayMenu=0', '?twPlusStageDisplayMenu=true', '?twPlusStageDisplayMenu=']) {
         assert.equal(readWebStartupFeatureFlags(query).stageDisplayMenu, false);
     }
-    assert.equal(readWebStartupFeatureFlags('?twPlusStageDisplayMenu=1').stageDisplayMenu, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=0&twPlusStageDisplayMenu=1').stageDisplayMenu, true);
 });
 
 test('the target list opt-in is independent of the stage panel and requires internal windows', () => {

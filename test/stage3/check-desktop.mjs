@@ -8,6 +8,7 @@ import {createInterface} from 'node:readline';
 import {setTimeout as delay} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {chromium} from 'playwright';
+import {undockButtons, toggleUndockButtons} from '../fixtures/layout-menu.mjs';
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
@@ -23,7 +24,6 @@ if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
 const app = resolve(process.argv[2] || '/private/tmp/tw151-desktop23/TurboWarp-Plus-Backpack.app');
 const mime = 'application/x-turbowarp-editor-transfer';
 const itemName = 'Desktop native Backpack stack';
-const modeLabel = /^(Show undock buttons|アンドックボタンを表示)$/;
 const undockLabel = /^(Open Backpack in a separate window|バックパックを別ウィンドウで開く)$/;
 const dockLabel = /^(Dock Backpack|バックパックを元の位置に戻す)$/;
 const report = {checks: [], errors: []};
@@ -197,7 +197,7 @@ async function checkInternal ({editor, control}) {
     await control('layout', parent.id);
     await control('focus', parent.id);
     await until(() => editor.evaluate(() => document.hasFocus()), 'native editor focus');
-    const mode = editor.getByRole('button', {name: modeLabel});
+    const mode = undockButtons(editor);
     const labels = {
         backpack: /^(Backpack|バックパック)$/,
         code: /^(Code|コード)$/,
@@ -217,10 +217,10 @@ async function checkInternal ({editor, control}) {
     assert.equal(await open.count(), 0);
     await seedBackpack(editor);
     await observeNative(editor);
-    await click(control, 'editor', mode);
+    await toggleUndockButtons(editor, button => click(control, 'editor', button));
     if (await mode.getAttribute('aria-pressed') !== 'true') {
         await control('focus', parent.id);
-        await click(control, 'editor', mode);
+        await toggleUndockButtons(editor, button => click(control, 'editor', button));
     }
     await launch.waitFor();
     await click(control, 'editor', editor.locator('[class*="backpack_backpack-header"]'));
@@ -305,7 +305,7 @@ async function checkInternal ({editor, control}) {
     await editor.getByRole('region', {name: labels.costumes}).waitFor();
     await open.click();
     await editor.getByRole('region', {name: labels.sounds}).waitFor();
-    await mode.click();
+    await toggleUndockButtons(editor);
     for (const label of [labels.sounds, labels.costumes]) {
         const frame = editor.getByRole('region', {name: label});
         await frame.waitFor();
@@ -328,7 +328,7 @@ async function checkSpriteProperties ({editor, control}) {
     const floating = editor.getByRole('region', {name: /^(Sprite|スプライト)$/});
     await panel.waitFor();
     assert.equal(await action.count(), 0);
-    await editor.getByRole('button', {name: modeLabel}).click();
+    await toggleUndockButtons(editor);
     await x.evaluate(node => {window.stage5SpriteX = node;});
     await action.press('Enter');
     await floating.getByRole('region', {name: spritePropertiesLabel}).waitFor();
@@ -353,7 +353,7 @@ async function checkStagePanel ({editor, control}) {
     const action = editor.locator('[class*="stage-action-slot_"]').getByRole('button', {
         name: /^(Open in another window|別画面で開く)$/
     });
-    await editor.getByRole('button', {name: modeLabel}).click();
+    await toggleUndockButtons(editor);
     await canvas.evaluate(node => {window.stage5DesktopCanvas = node;});
     await action.focus();
     await editor.keyboard.press('Enter');
@@ -784,12 +784,12 @@ async function checkCodePopouts ({editor, context, control}, {
     const original = await coordinates();
     await block(editor).waitFor();
     await focus(editor, parent.id);
-    const mode = editor.getByRole('button', {name: modeLabel});
+    const mode = undockButtons(editor);
     const editorClick = locator => native ? click(control, parent.id, locator) : locator.click();
-    await editorClick(mode);
+    await toggleUndockButtons(editor, editorClick);
     if (native && await mode.getAttribute('aria-pressed') !== 'true') {
         await focus(editor, parent.id);
-        await editorClick(mode);
+        await toggleUndockButtons(editor, editorClick);
     }
     const action = editor.locator('[class*="_tab-action_"]').getByRole('button', {
         name: /^(Open in another window|別画面で開く)$/
@@ -1041,8 +1041,7 @@ async function checkExternalTargetPanels ({editor, context, control}) {
     });
     const initial = await readTarget();
     assert.equal(initial.id, first);
-    const anchor = editor.getByRole('button', {name: modeLabel});
-    await anchor.click();
+    await toggleUndockButtons(editor);
 
     const focus = async id => {
         await until(async () => {
@@ -1221,7 +1220,7 @@ async function checkStagePopout ({editor, context, control}) {
         };
         vm.editingTarget.setXY(-110, 30);
     });
-    await editor.getByRole('button', {name: modeLabel}).click();
+    await toggleUndockButtons(editor);
 
     async function open() {
         await control('focus', parent.id);
@@ -1357,8 +1356,8 @@ async function checkStagePopout ({editor, context, control}) {
     await question.waitFor({state: 'hidden'});
     report.checks.push('Parent green flag and stop control the VM; native question submission works in the child');
 
-    const anchor = editor.getByRole('button', {name: modeLabel});
-    await anchor.click();
+    const anchor = undockButtons(editor);
+    await toggleUndockButtons(editor);
     assert.equal(await anchor.getAttribute('aria-pressed'), 'false');
     assert.equal(await stageAction.count(), 0);
     assert.ok(!child.isClosed());
@@ -1372,7 +1371,7 @@ async function checkStagePopout ({editor, context, control}) {
     assert.deepEqual(await monitorPosition(), movedMonitor);
     await checkMonitorDisplay(editor, movedMonitor);
 
-    await anchor.click();
+    await toggleUndockButtons(editor);
     const secondOpen = await open();
     const secondNative = (await control('windows')).find(window => window.kind === 'stage');
     await control('focus', secondNative.id);
@@ -1436,7 +1435,7 @@ try {
         await control('layout', parent.id);
         await editor.getByRole('separator', {name: /^(Editor and stage column width|編集領域とステージ列の幅)$/}).waitFor();
         await editor.getByRole('separator', {name: /^(Stage and target pane height|ステージと対象領域の高さ)$/}).waitFor();
-        assert.equal(await editor.getByRole('button', {name: modeLabel}).count(), 0);
+        assert.equal(await undockButtons(editor).count(), 0);
         assert.equal(await editor.getByRole('button', {name: undockLabel}).count(), 0);
         assert.equal(await editor.getByRole('region', {name: spritePropertiesLabel}).count(), 0);
         assert.equal(await editor.evaluate(() =>
@@ -1466,16 +1465,16 @@ try {
         await control('layout', parent.id);
         await control('focus', parent.id);
         await until(() => editor.evaluate(() => document.hasFocus()), 'native editor focus');
-        const mode = editor.getByRole('button', {name: modeLabel});
+        const mode = undockButtons(editor);
         const undock = editor.getByRole('button', {name: undockLabel});
         const header = editor.locator('[class*="backpack_backpack-header"]');
         assert.equal(await undock.count(), 0);
         const ids = await seedBackpack(editor);
         await observeNative(editor);
-        await click(control, 'editor', mode);
+        await toggleUndockButtons(editor, button => click(control, 'editor', button));
         if (await mode.getAttribute('aria-pressed') !== 'true') {
             await control('focus', parent.id);
-            await click(control, 'editor', mode);
+            await toggleUndockButtons(editor, button => click(control, 'editor', button));
         }
         await undock.waitFor();
         assert.equal(await mode.getAttribute('aria-pressed'), 'true');

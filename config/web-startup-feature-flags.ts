@@ -2,7 +2,8 @@ import {readStartupFeatureFlags} from './feature-flags.ts';
 
 export function readWebStartupFeatureFlags(search = '') {
     const params = new URLSearchParams(search);
-    const standardLayout = params.get('twPlusStandardLayout');
+    const standardLayout = params.has('twPlusStandardLayout') ? params.get('twPlusStandardLayout') : '1';
+    const stageDisplayMenu = params.get('twPlusStageDisplayMenu');
     return readStartupFeatureFlags({
         twPlusExtensionLoader: params.get('twPlusExtensionLoader'),
         twPlusProjectTools: params.get('twPlusProjectTools'),
@@ -14,10 +15,10 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusBackpackPopout: params.get('twPlusBackpackPopout'),
         twPlusInternalWindows: params.get('twPlusInternalWindows'),
         twPlusStagePanel: params.get('twPlusStagePanel'),
-        twPlusStageDisplayMenu: params.get('twPlusStageDisplayMenu'),
+        twPlusStageDisplayMenu: stageDisplayMenu === null && standardLayout === '1' ? '1' : stageDisplayMenu,
         twPlusTargetList: params.get('twPlusTargetList'),
         twPlusSpriteCodeWindows: params.get('twPlusSpriteCodeWindows'),
-        twPlusStandardLayout: standardLayout === null ? '1' : standardLayout,
+        twPlusStandardLayout: standardLayout,
         twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview'),
         twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette'),
         twPlusContextMenuIcons: params.get('twPlusContextMenuIcons'),
