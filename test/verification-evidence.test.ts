@@ -19,9 +19,9 @@ const evidence = recordEvidence({tree, contract, runId, attempt, steps: {
 }});
 const run = {id: runId, run_attempt: attempt, event: 'pull_request', status: 'completed', conclusion: 'success',
     path: '.github/workflows/ci.yml', repository: {full_name: repository}, head_repository: {full_name: repository}};
-const name = `ci-verification-${tree}-${contract}-${attempt}`;
+const name = `ci-verification-v2-${tree}`;
 const artifact = {name, expired: false, size_in_bytes: 500};
-const marker = {name: `ci-verified-tree-${tree}`, expired: false, workflow_run: {id: runId}};
+const marker = {...artifact, workflow_run: {id: runId}};
 
 function inspect(options = {} as {
     source?: Record<string, unknown>; latest?: Record<string, unknown>; markers?: unknown[];
@@ -57,9 +57,9 @@ test('records successful outcomes only and requires every step in a combined che
         'unit-tests': {outcome: 'skipped'},
         'editor-browser': {outcome: 'failure'},
         'yaml-roundtrip': {outcome: 'success'},
-        'host-integration': {outcome: 'success'}
+        'extension-host': {outcome: 'success'}
     }});
-    assert.deepEqual(recorded.checks, ['typecheck', 'extension-host', 'gui-integration', 'script-transfer', 'project-tools']);
+    assert.deepEqual(recorded.checks, ['typecheck', 'extension-host']);
     assert.ok(recordEvidence({tree, contract, runId, attempt, steps: {
         'yaml-roundtrip': {outcome: 'success'}, 'yaml-multi-document': {outcome: 'success'}
     }}).checks.includes('yaml-browser'));
@@ -75,14 +75,16 @@ test('matches individual checks and retains the main build and unverified checks
 });
 
 test('absent, expired, old or ambiguous artifacts leave all checks to run', async () => {
-    for (const artifacts of [[], [{...artifact, expired: true}], [{...artifact, name: marker.name}],
-        [{...artifact, name: name.replace(/-2$/, '-1')}], [artifact, artifact]]) {
+    for (const artifacts of [[], [{...artifact, expired: true}], [{...artifact, name: `ci-verified-tree-${tree}`}],
+        [{...artifact, name: `ci-verification-${tree}-${contract}-1`}], [artifact, artifact]]) {
         const report = await inspect({artifacts, read: async () => assert.fail('must not download')});
         assert.equal(report.reason, 'missing-compatible-evidence');
         assert.deepEqual(report.reusable, []);
         assert.ok(report.runLocally.includes('typecheck'));
     }
-    assert.equal((await inspect({markers: []})).reason, 'no-verified-pr-run');
+    for (const markers of [[], [{...marker, name: `ci-verified-tree-${tree}`}]]) {
+        assert.equal((await inspect({markers})).reason, 'no-verified-pr-run');
+    }
 });
 
 test('malformed, mismatched and unavailable evidence cannot be reused', async () => {
@@ -105,7 +107,7 @@ test('forks, failures, and stale attempts are rejected even if a marker exists',
         'unverified-attempt');
 });
 
-test('the workflow command writes a manifest and attempt-specific artifact name', t => {
+test('the workflow command records the attempt in the manifest indexed by tree', t => {
     const directory = mkdtempSync(join(tmpdir(), 'ci-evidence-test-'));
     t.after(() => rmSync(directory, {recursive: true, force: true}));
     const output = join(directory, 'output');
@@ -118,6 +120,7 @@ test('the workflow command writes a manifest and attempt-specific artifact name'
     const recorded = JSON.parse(readFileSync(join(directory, 'verification-evidence.json'), 'utf8'));
     assert.deepEqual(JSON.parse(stdout), recorded);
     assert.deepEqual(recorded.checks, ['typecheck']);
-    assert.match(readFileSync(output, 'utf8'), /^artifact=ci-verification-[a-f0-9]{40}-[a-f0-9]{64}-2\n$/);
+    assert.equal(recorded.attempt, attempt);
+    assert.match(readFileSync(output, 'utf8'), /^artifact=ci-verification-v2-[a-f0-9]{40}\n$/);
     assert.match(readFileSync(summary, 'utf8'), /Checks: typecheck/);
 });

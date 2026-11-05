@@ -8,25 +8,30 @@ import {actionsAPI, findVerifiedRun, isVerifiedPullRequestRun} from './reuse-pr-
 
 const workflow = new URL('../../.github/workflows/ci.yml', import.meta.url);
 const evidenceFile = 'verification-evidence.json';
-const schema = 1;
+const schema = 2;
 const checkSteps = {
+    documentation: ['documentation'],
     typecheck: ['typecheck'],
     package: ['package-tests'],
     unit: ['unit-tests'],
     infrastructure: ['infrastructure-tests'],
     'layout-unit': ['layout-unit'],
+    'views-unit': ['views-unit'],
+    'backpack-unit': ['backpack-unit'],
     'pinned-gui-unit': ['pinned-gui-unit'],
-    'extension-host': ['host-integration'],
-    'gui-integration': ['host-integration'],
-    'script-transfer': ['host-integration'],
-    'project-tools': ['host-integration'],
+    'extension-host': ['extension-host'],
+    'gui-integration': ['gui-integration'],
+    'script-transfer': ['script-transfer'],
+    'project-tools': ['project-tools'],
     'site-build': ['site-build'],
     'layout-browser': ['layout-browser'],
+    'code-windows-browser': ['code-windows-browser'],
     'yaml-browser': ['yaml-roundtrip', 'yaml-multi-document'],
     'editor-browser': ['editor-browser'],
     'extension-loader-browser': ['extension-loader-browser']
 };
 const checks = Object.keys(checkSteps);
+export const fullChecks = checks.filter(check => check !== 'documentation');
 // Pages always requires a fresh build stamped with main's own revision.
 const reusableChecks = checks.filter(check => check !== 'site-build');
 const maxEvidenceBytes = 16 * 1024;
@@ -39,21 +44,40 @@ export function verificationContract(workflowBytes: Buffer, environment: readonl
         .digest('hex');
 }
 
-function evidenceName(tree: string, contract: string, attempt: number) {
-    if (!/^[0-9a-f]{40}$/.test(tree) || !/^[0-9a-f]{64}$/.test(contract) || !positive(attempt)) {
-        throw new Error('Invalid verification identity');
-    }
-    return `ci-verification-${tree}-${contract}-${attempt}`;
+function evidenceName(tree: string) {
+    if (!/^[0-9a-f]{40}$/.test(tree)) throw new Error('Invalid verification tree');
+    return `ci-verification-v2-${tree}`;
 }
 
 type Step = {outcome?: string};
+export function verificationOutcomes(steps: Record<string, Step>) {
+    return Object.fromEntries(checks.map(check => {
+        const outcomes = checkSteps[check].map(step => steps[step]?.outcome);
+        const status = outcomes.includes('failure') ? 'failed' :
+            outcomes.every(outcome => outcome === 'success') ? 'passed' : 'not run';
+        return [check, status];
+    }));
+}
+
+export function successfulChecks(steps: Record<string, Step>) {
+    const outcomes = verificationOutcomes(steps);
+    return checks.filter(check => outcomes[check] === 'passed');
+}
+
+export function requireCompletedChecks(required: readonly string[], steps: Record<string, Step>) {
+    const passed = new Set(successfulChecks(steps));
+    const missing = required.filter(check => !passed.has(check));
+    if (missing.length) throw new Error(`Missing successful checks: ${missing.join(', ')}`);
+}
+
 export function recordEvidence({tree, contract, runId, attempt, steps}: {
     tree: string; contract: string; runId: number; attempt: number; steps: Record<string, Step>;
 }) {
-    evidenceName(tree, contract, attempt);
-    if (!positive(runId)) throw new Error('Invalid verification run ID');
-    const passed = checks.filter(check => checkSteps[check].every(step => steps[step]?.outcome === 'success'));
-    return {schema, tree, contract, runId, attempt, checks: passed};
+    evidenceName(tree);
+    if (!/^[0-9a-f]{64}$/.test(contract) || !positive(runId) || !positive(attempt)) {
+        throw new Error('Invalid verification identity');
+    }
+    return {schema, tree, contract, runId, attempt, checks: successfulChecks(steps)};
 }
 
 const fallback = (reason: string) => ({reason, reusable: [], runLocally: checks});
@@ -61,7 +85,8 @@ const getCandidate = (get, runId: number) => get(`runs/${runId}`);
 
 export async function inspectEvidence({repository, tree, contract, get, read}) {
     try {
-        const candidate = await findVerifiedRun({repository, tree, get});
+        const name = evidenceName(tree);
+        const candidate = await findVerifiedRun({repository, tree, get, name});
         if (!candidate) return fallback('no-verified-pr-run');
         const {runId} = candidate;
         const run = await getCandidate(get, runId);
@@ -69,7 +94,6 @@ export async function inspectEvidence({repository, tree, contract, get, read}) {
             return fallback('unverified-attempt');
         }
         const attempt = run.run_attempt;
-        const name = evidenceName(tree, contract, attempt);
         const listing = await get(`runs/${runId}/artifacts?name=${encodeURIComponent(name)}&per_page=20`);
         const artifacts = listing?.artifacts;
         if (!Array.isArray(artifacts) || artifacts.length !== 1 || artifacts[0].name !== name ||
@@ -107,16 +131,29 @@ function downloadEvidence(repository: string, runId: number, name: string) {
     }
 }
 
-async function main() {
-    const env = process.env;
+function currentIdentity(env: NodeJS.ProcessEnv) {
     const tree = execFileSync('git', ['rev-parse', 'HEAD^{tree}'], {encoding: 'utf8'}).trim();
     const contract = verificationContract(readFileSync(workflow), [
         process.version, env.RUNNER_OS ?? '', env.RUNNER_ARCH ?? '', env.ImageOS ?? '', env.ImageVersion ?? ''
     ]);
+    return {tree, contract};
+}
+
+export async function inspectCurrentEvidence(env = process.env) {
+    const {tree, contract} = currentIdentity(env);
+    const repository = env.GITHUB_REPOSITORY;
+    const report = await inspectEvidence({repository, tree, contract, get: actionsAPI(repository, env.GH_TOKEN),
+        read: (runId, name) => downloadEvidence(repository, runId, name)});
+    return {tree, contract, ...report};
+}
+
+async function main() {
+    const env = process.env;
     if (process.argv[2] === 'record') {
+        const {tree, contract} = currentIdentity(env);
         const evidence = recordEvidence({tree, contract, runId: Number(env.GITHUB_RUN_ID),
             attempt: Number(env.GITHUB_RUN_ATTEMPT), steps: JSON.parse(env.CI_STEP_OUTCOMES)});
-        const name = evidenceName(tree, contract, evidence.attempt);
+        const name = evidenceName(tree);
         writeFileSync(join(env.RUNNER_TEMP, evidenceFile), JSON.stringify(evidence) + '\n');
         appendFileSync(env.GITHUB_OUTPUT, `artifact=${name}\n`);
         console.log(JSON.stringify(evidence));
@@ -128,9 +165,8 @@ async function main() {
     }
 
     const repository = env.GITHUB_REPOSITORY;
-    const report = await inspectEvidence({repository, tree, contract, get: actionsAPI(repository, env.GH_TOKEN),
-        read: (runId, name) => downloadEvidence(repository, runId, name)});
-    console.log(JSON.stringify({tree, contract, ...report}));
+    const report = await inspectCurrentEvidence(env);
+    console.log(JSON.stringify(report));
     const server = env.GITHUB_SERVER_URL ?? 'https://github.com';
     const source = 'runId' in report ? [
         `- Source: [run ${report.runId}, attempt ${report.attempt}](` +
