@@ -10,10 +10,10 @@ import {planForEvent, readChangedPaths, selectVerification} from '../scripts/ci/
 test('documentation, isolated package tests and multiple areas select distinct checks', () => {
     assert.deepEqual(selectVerification(['README.ja.md', 'docs/gui-integration/README.md']).checks, ['documentation']);
     assert.deepEqual(selectVerification(['README.md'], true).checks, ['documentation', 'site-build']);
-    assert.deepEqual(selectVerification(['packages/editor-views/test/code-session.test.js']).checks, ['views-unit']);
+    assert.deepEqual(selectVerification(['packages/editor-views/test/code-session.test.ts']).checks, ['views-unit']);
     const plan = selectVerification([
-        'packages/editor-views/index.js',
-        'packages/editor-backpack/test/script.test.mjs',
+        'packages/editor-views/index.ts',
+        'packages/editor-backpack/test/script.test.ts',
         'test/e2e/extension-loader/catalog-authoring.spec.cts'
     ]);
     assert.equal(plan.mode, 'scoped');
@@ -24,7 +24,7 @@ test('documentation, isolated package tests and multiple areas select distinct c
 
 test('pins, shared infrastructure, unknown paths and empty diffs plan a full run', () => {
     for (const path of ['site/source.json', 'package-lock.json', 'packages/editor-views/package.json',
-        '.github/workflows/ci.yml', 'site/gui-integration/index.js', 'docs/tool.sh', 'unclassified.txt']) {
+        '.github/workflows/ci.yml', 'site/gui-integration/index.ts', 'docs/tool.sh', 'unclassified.txt']) {
         const plan = selectVerification(['README.md', path]);
         assert.equal(plan.mode, 'full', path);
         assert.equal(plan.reason, 'unclassified-path', path);
@@ -49,8 +49,8 @@ test('the PR merge candidate is compared to its exact base and a rename covers b
     git(['config', 'user.name', 'Verification Plan Test']);
     git(['config', 'user.email', 'verification-plan@example.invalid']);
     git(['config', 'commit.gpgsign', 'false']);
-    const source = 'packages/editor-views/test/sample.test.js';
-    const destination = 'packages/editor-backpack/test/sample.test.mjs';
+    const source = 'packages/editor-views/test/sample.test.ts';
+    const destination = 'packages/editor-backpack/test/sample.test.ts';
     mkdirSync(join(cwd, 'packages/editor-views/test'), {recursive: true});
     mkdirSync(join(cwd, 'packages/editor-backpack/test'), {recursive: true});
     writeFileSync(join(cwd, source), 'const value = 1;\n');

@@ -184,7 +184,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages上では文書の表示・変換・検証を利用できます。VSCodeを起動する操作は、上記のローカルURLで開いた場合に利用できます。
 
-表示されたローカルURLは同じEditorを開きます。URLパラメーターは付けません。`site/plus-integration.js` は、フォークがworkspaceへ接続するときに常に文書エディターをマウントします。
+表示されたローカルURLは同じEditorを開きます。URLパラメーターは付けません。`site/plus-integration.ts` は、フォークがworkspaceへ接続するときに常に文書エディターをマウントします。
 
 1. 組み込み文書のSB3をEditorで開き、「データソース」ハットブロックのファイルアイコンを押します。文書ダイアログのYAMLテキストタブで「外部エディタで編集」を選びます。
 2. 開いたYAMLを編集してVSCodeで保存します。

@@ -14,10 +14,10 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import resolvePinnedGui from './pinned-gui.cjs';
+import resolvePinnedGui from './pinned-gui.ts';
 import pins from '../site/source.json' with {type: 'json'};
 
-const resolver = fileURLToPath(new URL('./pinned-gui.cjs', import.meta.url));
+const resolver = fileURLToPath(new URL('./pinned-gui.ts', import.meta.url));
 const configured = process.env.E2E_GUI_ROOT;
 
 /** Point the resolver at one checkout for a case, and leave the run's own setting as it was. */
@@ -62,7 +62,7 @@ test('no checkout at all says what to prepare rather than resolving against noth
     const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), 'twplus-pinned-gui-cwd-'));
     t.after(() => fs.rmSync(elsewhere, {recursive: true, force: true}));
     const {E2E_GUI_ROOT: _unset, ...environment} = process.env;
-    const result = spawnSync(process.execPath, ['-e', `require(${JSON.stringify(resolver)})('probe')`],
+    const result = spawnSync(process.execPath, ['-e', `require(${JSON.stringify(resolver)}).default('probe')`],
         {cwd: elsewhere, env: environment, encoding: 'utf8', timeout: 10000});
     assert.equal(result.status, 1, result.stderr);
     assert.match(result.stderr, /probe: set E2E_GUI_ROOT/);

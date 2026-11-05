@@ -10,10 +10,10 @@
 
 | 移設前のGUI | 移設先・扱い |
 | --- | --- |
-| 追加した `src/lib/` の10ファイル | `site/gui-integration/lib/`。空の `tw-plus-integration.js` は既存の `site/plus-integration.js` とGUIの任意getterに置換 |
+| 追加した `src/lib/` の10ファイル | `site/gui-integration/lib/`。空の `tw-plus-integration.js` は既存の `site/plus-integration.ts` とGUIの任意getterに置換 |
 | 追加した `src/containers/` の2ファイル | `site/gui-integration/containers/` |
 | 追加したテスト・helperの15ファイル | `test/gui-integration/unit/` |
-| ローカル確認ツール1ファイル | `scripts/local-security-preview.cjs` |
+| ローカル確認ツール1ファイル | `scripts/local-security-preview.cts` |
 | 文書4ファイル | `docs/gui-integration/` |
 
 GUIのREADMEと `.gitignore` は本家相当へ戻した。テストrunnerと専用CI呼出しをGUIから撤去し、`jsdom` と関連lockエントリも受け側のdevDependencyへ移した。GUIの `package-lock.json` は引き続き保持し、本家との差はVM固定元に関する追加3行・削除3行だけとなった。
@@ -22,7 +22,7 @@ GUIのREADMEと `.gitignore` は本家相当へ戻した。テストrunnerと専
 
 GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` と、そのgetterを使う既存ファイル内の呼出し箇所を残す。追加のモジュールパスをGUIからimportしない。
 
-配信ビルドの `scripts/site/webpack.config.cts` はwebpackの `ProvidePlugin` で `__TW_GUI_HOST__` を `site/gui-integration/index.js` に結び付ける。ランタイムglobalへの代入や起動順に依存しない。GUI単体では値が存在せず、getterは `null` を返す。追加のローダー・フォーム・プレビューVM等は設置されず、通常のGUIが起動する。
+配信ビルドの `scripts/site/webpack.config.cts` はwebpackの `ProvidePlugin` で `__TW_GUI_HOST__` を `site/gui-integration/index.ts` に結び付ける。ランタイムglobalへの代入や起動順に依存しない。GUI単体では値が存在せず、getterは `null` を返す。追加のローダー・フォーム・プレビューVM等は設置されず、通常のGUIが起動する。
 
 共有するReact、React DOM、Redux/Intl、VMとcentral dispatchは、配信ビルドが固定GUIの実体に解決する。GUIのModal・遅延ScratchBlocks・logger・Redux action creatorは呼出し時に渡す。受け側の接続モジュールがGUIのreducerやUIを直接importして初期化の循環を作らない。
 
@@ -70,7 +70,7 @@ CIと同じ入れ子checkoutで、テスト補助のresolverがGUI自身の依�
 
 ## Issue #126：追加操作列の描画をホストで所有する
 
-`site/stage-controls/view.jsx` がボタン・パネルの描画、serviceの購読と破棄を担当します。
+`site/stage-controls/view.tsx` がボタン・パネルの描画、serviceの購読と破棄を担当します。
 GUIのcontrols viewは任意の `afterStop` nodeを配置し、containerは既存getterの `renderStageControls` へVMと表示サイズを渡します。
 `Scratch.gui.stageControls` と同じVM単位のserviceを使い、登録APIと表示条件は維持します。
 GUI単体は任意の描画部品がなければ標準の操作列を表示します。CSSはGUIの公開テーマ変数を使います。
@@ -86,7 +86,7 @@ GUI単体は任意の描画部品がなければ標準の操作列を表示し�
 
 ## Issue #163：ステージ転送メニューの描画をホストで所有する
 
-`site/gui-integration/lib/tw-plus-transfer.js` がステージ転送項目をネイティブメニューに渡す形へ整え、右クリックメニューとラッパーを描画します。ラッパーのレイアウトは同じディレクトリのCSSで管理します。
+`site/gui-integration/lib/tw-plus-transfer.ts` がステージ転送項目をネイティブメニューに渡す形へ整え、右クリックメニューとラッパーを描画します。ラッパーのレイアウトは同じディレクトリのCSSで管理します。
 GUIはネイティブのコンテキストメニュー部品とファイル選択用アイコンを明示的に渡し、ステージ選択・ドロップ処理・背景ボタンの配置を担当します。
 切戻しはGUIとホストを移管前の互換なpinに戻して行います。
 
@@ -120,10 +120,10 @@ node --test test/sprite-properties-source.test.ts test/family-notices.test.ts
 editor_root="$PWD"
 # GUI の作業ツリーは site/source.json に固定されたコミットを用意する
 cd ../gui-sprite175
-CI=1 E2E_GUI_ROOT="$PWD" node node_modules/webpack/bin/webpack.js \
+CI=1 E2E_GUI_ROOT="$PWD" DISABLE_V8_COMPILE_CACHE=1 node node_modules/webpack/bin/webpack.js \
   --config "$editor_root/scripts/site/webpack.config.cts" --output-path /private/tmp/tw175-host-build --bail
 cd "$editor_root"
-node test/sprite-properties/dock.mjs /private/tmp/tw175-host-build
+node test/sprite-properties/dock.ts /private/tmp/tw175-host-build
 ```
 
 tarball の再現には、`spritePropertiesRevision` に固定した独立パッケージをクリーンなディレクトリへ展開し、そこで `npm ci`、`npm pack` を実行する。生成した tarball と Editor の固定ファイルを `cmp` で比較する。正式な npm 依存へ切り替える際は公開済みの版と integrity を確認する。

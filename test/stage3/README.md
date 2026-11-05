@@ -18,19 +18,19 @@ Editor の `feat/backpack/product-integration` と、`site/source.json` が参�
 
 ```sh
 # Editor 作業ツリー
-node --test --import ./test/asset-hooks.mjs test/extension-loader.test.ts \
-  test/project-tools/properties.test.mjs test/stage2/contracts.test.ts \
-  packages/editor-backpack/test/script.test.mjs
+node --test --import ./test/asset-hooks.ts test/extension-loader.test.ts \
+  test/project-tools/properties.test.ts test/stage2/contracts.test.ts \
+  packages/editor-backpack/test/script.test.ts
 
 # scratch-gui 作業ツリー
 CI=1 NODE_ENV=production ROOT=/turbowarp-plus-editor/ E2E_GUI_ROOT="$PWD" \
-  node --openssl-legacy-provider node_modules/webpack/bin/webpack.js \
+  DISABLE_V8_COMPILE_CACHE=1 node --openssl-legacy-provider node_modules/webpack/bin/webpack.js \
   --config ../editor-product23/scripts/site/webpack.config.cts \
   --output-path /private/tmp/tw151-product23/production --bail
 
 # Editor 作業ツリー
 TW151_STAGE3_PREFIX=/turbowarp-plus-editor/ \
-  TW151_STAGE3_BUILD=/private/tmp/tw151-product23/production node test/stage3/check.mjs
+  TW151_STAGE3_BUILD=/private/tmp/tw151-product23/production node test/stage3/check.ts
 ```
 
 既定ではヘッドレスで開閉と復帰を検証する。ウィンドウ間の実マウスドラッグを確認する場合は、コマンドに `TW_PLUS_NATIVE_INPUT=1` を追加する。

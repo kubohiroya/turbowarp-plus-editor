@@ -49,8 +49,8 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test --import ./test/asset-hooks.mjs test/*.test.ts",
-    "test:extension-host": "node --test --import ./test/asset-hooks.mjs test/extension-host/*.test.mjs test/extension-library/*.test.mjs test/extension-library/*.test.cjs test/packager/*.test.mjs test/packager/*.test.cjs test/block-editor/*.test.mjs",
+    "test": "node --test --import ./test/asset-hooks.ts test/*.test.ts",
+    "test:extension-host": "node --test --import ./test/asset-hooks.ts test/extension-host/*.test.ts test/extension-library/*.test.ts test/extension-library/*.test.cts test/packager/*.test.ts test/packager/*.test.cts test/block-editor/*.test.ts",
     "build:pages": "node scripts/site/build.ts",
     "test:e2e": "playwright test --config test/e2e/turbowarp/playwright.config.cts",
     "test:e2e:block-editor": "npm run test:e2e",
@@ -68,13 +68,14 @@
     "editor:sb3-format": "node scripts/sb3-save-format/cli.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build --prefix packages/editor-layout",
     "prepack": "npm run build",
     "build:test-driver": "tsc -p test/vscode-edit-driver/tsconfig.json",
     "test:package": "npm run build && node --test test/package/*.test.ts",
-    "test:script-transfer": "node --test test/script-transfer/*.test.mjs",
-    "test:project-tools": "node --test test/project-tools/*.test.mjs && node --test test/project-tools/*.test.cjs",
-    "test:gui-integration": "node --test --import ./test/asset-hooks.mjs \"test/gui-integration/**/*.test.mjs\" \"test/gui-integration/**/*.test.cjs\"",
-    "preview:security": "node scripts/local-security-preview.cjs"
+    "test:script-transfer": "node --test test/script-transfer/*.test.ts",
+    "test:project-tools": "node --test test/project-tools/*.test.ts && node --test test/project-tools/*.test.cts",
+    "test:gui-integration": "node --test --import ./test/asset-hooks.ts \"test/gui-integration/**/*.test.ts\" \"test/gui-integration/**/*.test.cts\"",
+    "preview:security": "node scripts/local-security-preview.cts"
   },
   "devDependencies": {
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
@@ -94,7 +95,10 @@
     "@kubohiroya/turbowarp-yaml-json": "0.9.0-rc.0",
     "@playwright/test": "^1.64.1",
     "@turbowarp/packager": "3.14.0",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^24.19.2",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
     "@types/vscode": "^1.144.0",
     "ajv": "8.20.0",
     "esbuild": "0.25.12",

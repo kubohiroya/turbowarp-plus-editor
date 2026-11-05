@@ -19,7 +19,7 @@ EXPECTED_REVISION=$(git rev-parse HEAD) node scripts/site/check-artifact.ts "$E2
 
 ```sh
 SPRITE_PROPERTIES_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
-  node test/sprite-properties/dock.mjs /private/tmp/tw151-stage5-web
+  node test/sprite-properties/dock.ts /private/tmp/tw151-stage5-web
 ```
 
 - 従来フォームへの復帰、対象選択と変更の反映、最小ドックのスクロールを確認する。
@@ -31,7 +31,7 @@ SPRITE_PROPERTIES_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google 
 `scripts/desktop/README.md` の手順でこのブランチの設定を使って公式アプリのコピーを作成する。Desktop の起動設定は `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1 TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1 TW_PLUS_DESKTOP_SPRITE_PROPERTIES=1`。
 
 ```sh
-TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs /private/tmp/tw151-stage5-desktop.app --sprite-properties
+TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.ts /private/tmp/tw151-stage5-desktop.app --sprite-properties
 ```
 
 ## 切り戻し

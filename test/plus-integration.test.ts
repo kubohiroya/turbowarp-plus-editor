@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {createPlusIntegration, plusIntegration} from '../site/plus-integration.js';
+import {createPlusIntegration, plusIntegration} from '../site/plus-integration.ts';
 
 const service = () => ({
-    api: {},
+    api: {addButton() {throw new Error('Unexpected control registration');}},
     placePanel: () => {},
     panel: () => null,
     snapshot: () => [],
-    subscribe: () => () => {},
+    subscribe: () => () => true,
     clear: () => {}
 });
 
@@ -32,7 +32,8 @@ const context = (vm: object = {}, doc = hostDocument()) => ({
     vm,
     locale: 'ja',
     document: doc as unknown as Document,
-    getBlockly: async () => ({blockly: true})
+    getBlockly: async () => ({blockly: true}),
+    getMessages: () => ({})
 });
 
 // There is no startup switch: the editor is always mounted, next to the dock. Whether a hat gets
@@ -129,7 +130,7 @@ test('every attachment is released even when one throws', () => {
 });
 
 test('this distribution supplies the extension host and the library tab the GUI renders', async () => {
-    const {plusIntegration} = await import('../site/plus-integration.js');
+    const {plusIntegration} = await import('../site/plus-integration.ts');
     const supplied = plusIntegration() as Record<string, unknown>;
     // The GUI installs loading through this and renders the tab; what either does is decided here,
     // so a build that supplies neither leaves the editor with upstream's own library.
@@ -139,7 +140,7 @@ test('this distribution supplies the extension host and the library tab the GUI 
     assert.equal(tab.tagProps.intlLabel, 'TurboWarp Plus');
     assert.equal(typeof tab.render, 'function');
     // Nothing is offered when this build says so, and the GUI then adds no tag at all.
-    const {createPlusLibraryTab} = await import('../site/extension-library/tab.js');
+    const {createPlusLibraryTab} = await import('../site/extension-library/tab.ts');
     assert.equal(createPlusLibraryTab({enabled: false}), null);
 });
 
@@ -147,7 +148,7 @@ test('this distribution supplies the extension host and the library tab the GUI 
 test('script transfer is always supplied and a host can supply its own entry points', () => {
     const supplied = plusIntegration().scriptTransfer as Record<string, unknown>;
     for (const name of ['attach', 'stageMenu', 'finalizeMenu']) assert.equal(typeof supplied[name], 'function');
-    const scriptTransfer = {attach () {}, stageMenu () {}};
+    const scriptTransfer = {attach: () => null, stageMenu: () => null, finalizeMenu: items => items};
     const integration = createPlusIntegration({mountEditor: () => null, scriptTransfer});
     assert.equal(integration.scriptTransfer, scriptTransfer);
 });

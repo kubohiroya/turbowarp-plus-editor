@@ -27,4 +27,4 @@ Editor はこのパッケージの `0.1.0` をローカル依存としてロッ�
 
 `npm test` で配分・縦横比・設定の読み書きを、`npm run test:browser` で独立した試験用ホストを検証する。試験用ホストを手動で開くには、このディレクトリで `npm install` と `python3 -m http.server` を実行し、`/example/` を表示する。
 
-Editor のルートから、`site/source.json` の GUI を `npm run build:pages` でビルドし、`E2E_GUI_ROOT=/absolute/gui-checkout E2E_PATH_PREFIX=/turbowarp-plus-editor/ node --test test/editor-layout.browser.mjs` を実行する。同じ GUI をホスト接続なしでビルドしたディレクトリを `E2E_LAYOUT_BARE_BUILD` に渡すと、GUI 単体の動作も検証する。
+Editor のルートから、`site/source.json` の GUI を `npm run build:pages` でビルドし、`E2E_GUI_ROOT=/absolute/gui-checkout E2E_PATH_PREFIX=/turbowarp-plus-editor/ node --test test/editor-layout.browser.ts` を実行する。同じ GUI をホスト接続なしでビルドしたディレクトリを `E2E_LAYOUT_BARE_BUILD` に渡すと、GUI 単体の動作も検証する。

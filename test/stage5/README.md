@@ -10,7 +10,7 @@ Web は上の起動設定に `twPlusStageDisplayMenu=1` を加える。ステー
 
 Desktop は既存のステージ用の起動設定に `TW_PLUS_DESKTOP_STAGE_DISPLAY_MENU=1` を加える。`TW_PLUS_DESKTOP_STAGE_POPOUT=1` も指定すると、アンドックの表示先は OS の別ウィンドウになる。メニューの切り戻しは、メニュー用の起動設定を外して再起動する。
 
-受け入れ基準は、通常のステージでボタン1つに4項目が収まり、キーボードで選択・閉鎖できること、同じキャンバスを維持してドック復帰できること。Desktop の別窓での復帰は、試験用コピーに対して `node test/stage3/check-desktop.mjs /absolute/path/to/Stage.app --stage-display-menu` で確認できる。
+受け入れ基準は、通常のステージでボタン1つに4項目が収まり、キーボードで選択・閉鎖できること、同じキャンバスを維持してドック復帰できること。Desktop の別窓での復帰は、試験用コピーに対して `node test/stage3/check-desktop.ts /absolute/path/to/Stage.app --stage-display-menu` で確認できる。
 
 ## ローカル検証
 
@@ -19,13 +19,13 @@ Desktop は既存のステージ用の起動設定に `TW_PLUS_DESKTOP_STAGE_DIS
 ```sh
 TW151_STAGE5_PREFIX=/turbowarp-plus-editor/ \
   TW151_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
-  node test/stage5/stage.mjs "$E2E_GUI_ROOT/build"
+  node test/stage5/stage.ts "$E2E_GUI_ROOT/build"
 ```
 
 Desktop のローカルコピーは `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1 TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1 TW_PLUS_DESKTOP_STAGE_PANEL=1` で起動する。署名済み試験用コピーで次を実行する。
 
 ```sh
-node test/stage3/check-desktop.mjs /private/tmp/tw151-stage5-stage-desktop.app --stage-panel
+node test/stage3/check-desktop.ts /private/tmp/tw151-stage5-stage-desktop.app --stage-panel
 ```
 
 ## 切り戻し
@@ -45,7 +45,7 @@ Web は `?twPlusWindowLayout=1&twPlusInternalWindows=1&twPlusTargetList=1` で�
 ```sh
 TW151_STAGE5_PREFIX=/turbowarp-plus-editor/ \
   TW151_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
-  node test/stage5/targets.mjs "$E2E_GUI_ROOT/build"
+  node test/stage5/targets.ts "$E2E_GUI_ROOT/build"
 ```
 
 試験では Scratch の画像配信をローカルのテスト画像で代替し、ライブラリ選択、おまかせ、描画、ファイルアップロードには実エディターの操作と VM を使用する。
@@ -59,7 +59,7 @@ TW151_STAGE5_PREFIX=/turbowarp-plus-editor/ \
 [別窓ステージと同じ手順](stage-popout-desktop.md)で公式 Desktop の試験用コピーを作成する。起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1`、`TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1`、`TW_PLUS_DESKTOP_SPRITE_PROPERTIES=1`、`TW_PLUS_DESKTOP_TARGET_LIST=1`、`TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT=1` を指定すると、⚓ で表示した操作からスプライト設定と一覧を各1枚のネイティブウィンドウに開ける。選択と編集は親の VM に反映する。
 
 ```sh
-TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --target-panels-popout
+TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.ts /absolute/path/to/trial.app --target-panels-popout
 ```
 
 試験は両方を同時に開き、一覧での対象選択と設定からの編集、背景タイルの再配置、親の「ここに戻す」と OS ウィンドウの閉鎖による復帰を確認する。別窓だけを無効にする場合は、`TW_PLUS_DESKTOP_TARGET_PANELS_POPOUT` を外して再起動する。設定と一覧はアプリ内ウィンドウに開ける。

@@ -8,6 +8,16 @@ import struct
 import subprocess
 
 
+def strip_types(source):
+    return subprocess.check_output([
+        "node", "-e",
+        "const fs = require('node:fs'); "
+        "const {stripTypeScriptTypes} = require('node:module'); "
+        "process.stdout.write(stripTypeScriptTypes(fs.readFileSync(process.argv[1], 'utf8')));",
+        str(source),
+    ])
+
+
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -70,15 +80,15 @@ def prepare(source, output, build, test_control):
                           "    if (plusPolicy) return plusPolicy;\n")
     write(editor_path, editor.encode())
     write("src-main/windows/plus-backpack-host.cjs",
-          (root / "scripts/desktop/backpack-window-host.cjs").read_bytes())
+          strip_types(root / "scripts/desktop/backpack-window-host.cts"))
     write("src-main/windows/plus-popup-preload.cjs",
-          (root / "scripts/desktop/popup-preload.cjs").read_bytes())
+          strip_types(root / "scripts/desktop/popup-preload.cts"))
     if test_control:
         entry_path = "src-main/entrypoint.js"
         write(entry_path, read(entry_path) + b"\nif (process.env.TW_PLUS_DESKTOP_TEST_CONTROL === '1') "
               b"require('./plus-desktop-test-control.cjs');\n")
         write("src-main/plus-desktop-test-control.cjs",
-              (root / "test/stage3/desktop-control.cjs").read_bytes())
+              strip_types(root / "test/stage3/desktop-control.cts"))
 
     for page in ("gui.html", "backpack-popout.html", "stage-popout.html",
                  "sprite-properties-popout.html", "sprite-list-popout.html", "code-popout.html"):

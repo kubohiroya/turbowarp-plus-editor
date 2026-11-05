@@ -168,7 +168,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages supports document display, conversion, and validation. Launching VSCode is available when opening the local URL above.
 
-The displayed local URL opens the same Editor; no URL parameter is added. `site/plus-integration.js` always mounts the document editor when the fork attaches to a workspace.
+The displayed local URL opens the same Editor; no URL parameter is added. `site/plus-integration.ts` always mounts the document editor when the fork attaches to a workspace.
 
 1. Open an SB3 containing an embedded document and select the file icon on its **Data source** hat. In the YAML text tab of the document dialog, choose **Edit in external editor**.
 2. Edit the YAML and save it in VSCode.

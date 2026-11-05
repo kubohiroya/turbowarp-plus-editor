@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2023",
     "module": "NodeNext",
+    "jsx": "react",
     "moduleResolution": "NodeNext",
     "lib": [
       "ES2023",
@@ -23,6 +24,13 @@
     "src/**/*.ts",
     "config/**/*.ts",
     "site/**/*.ts",
+    "site/**/*.tsx",
+    "packages/**/src/**/*.ts",
+    "packages/**/src/**/*.tsx",
+    "packages/editor-backpack/*.ts",
+    "packages/editor-backpack/*.tsx",
+    "packages/editor-views/*.ts",
+    "packages/editor-views/*.tsx",
     "scripts/**/*.ts",
     "scripts/**/*.cts",
     "test/**/*.ts",

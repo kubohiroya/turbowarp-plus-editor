@@ -31,7 +31,7 @@ export async function buildPages(pins = undefined) {
     await fs.rm(output, {recursive: true, force: true});
     const result = spawnSync(process.execPath, ['--openssl-legacy-provider',
         path.join(gui, 'node_modules/webpack/bin/webpack.js'), '--config', path.join(root, 'scripts/site/webpack.config.cts'), '--bail'], {
-        cwd: gui, stdio: 'inherit', env: {...process.env, NODE_ENV: 'production', ROOT: prefix, CI: '1'}
+        cwd: gui, stdio: 'inherit', env: {...process.env, NODE_ENV: 'production', ROOT: prefix, CI: '1', DISABLE_V8_COMPILE_CACHE: '1'}
     });
     if (result.error) throw result.error;
     if (result.status !== 0) process.exit(result.status || 1);
