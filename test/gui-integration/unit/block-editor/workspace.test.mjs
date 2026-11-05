@@ -40,8 +40,13 @@ function fixture (t) {
     const attachments = [];
     const rendered = [];
     const disposed = [];
+    const minimap = {attached: [], disposed: []};
     const installed = points.hostIntegration();
     const original = installed.blockEditor;
+    t.mock.method(installed, 'attachWorkspaceMinimap', workspace => {
+        minimap.attached.push(workspace);
+        return {dispose: () => minimap.disposed.push(workspace)};
+    });
     installed.blockEditor = {
         createService: () => ({}),
         attach: context => {
@@ -103,7 +108,7 @@ function fixture (t) {
         ReactDOM.render(React.createElement(reactRedux.Provider, {store}, React.createElement(Workspace, props)),
             container);
     };
-    return {attachments, rendered, disposed, store, container, render, unmount};
+    return {attachments, rendered, disposed, minimap, store, container, render, unmount};
 }
 
 test('workspace readiness and native modal state gate the host editor, including repeated opens', async t => {
@@ -114,6 +119,8 @@ test('workspace readiness and native modal state gate the host editor, including
     ready();
     await tick();
     const [bridge] = f.attachments;
+    assert.equal(f.minimap.attached.length, 1);
+    assert.equal(f.minimap.attached[0], bridge.workspace);
     assert.equal(bridge.fixedInputs, true);
     assert.equal(bridge.canOpen(), true);
     f.render({isVisible: false});
@@ -136,6 +143,8 @@ test('workspace readiness and native modal state gate the host editor, including
     assert.equal(f.container.querySelector('[role="dialog"]').textContent, 'Second');
     f.unmount();
     assert.deepEqual(f.disposed, [bridge.workspace]);
+    assert.equal(f.minimap.disposed.length, 1);
+    assert.equal(f.minimap.disposed[0], bridge.workspace);
     assert.equal(f.store.getState()[modal], false);
 });
 
