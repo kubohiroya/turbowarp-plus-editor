@@ -14,6 +14,7 @@
 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-popout
 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-target-sync
 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-stage
+node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-comments
 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-backpack
 TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.mjs /absolute/path/to/trial.app --code-backpack-native
 node --test packages/editor-views/test/code-session.test.js
@@ -26,6 +27,8 @@ node --test packages/editor-views/test/code-session.test.js
 前面のコード別窓ではコンボボックスの名前欄でスプライトを改名できる。Enter で確定し、Escape で編集中の値を取り消す。同名の別スプライトがいる場合は元の名前に戻して通知する。改名後は別窓のタイトルと候補、スプライト一覧を更新し、別スプライトのコードからの名前参照が共有 Undo／Redo 後も新しい名前を指すことを確認する。
 
 `--code-stage` は、対象をステージへ切り替えるとパレットに背景用ブロックが表示され、スプライトへ戻すと「動き」カテゴリが戻ることを確認する。追加した「次の背景にする」はステージのコードにだけ反映され、同じステージの別窓から Undo／Redo できる。ドック復帰後と SB3 再読込後にも追加したブロックを照合する。入力は Playwright／CDP を使用する。
+
+`--code-comments` は、ブロックに付けたコメントと独立したコメントを別窓から編集する。別窓に編集権が移るときに入力を確定し、共有 Undo／Redo、別スプライトへの誤適用防止、ドック復帰、SB3 再読込を Playwright／CDP で確認する。
 
 2026年11月5日に、TurboWarp Desktop 1.17.1 の macOS ローカルコピー（Electron 43.8.4）で `--code-target-sync` と `--code-backpack` が通過した。名前編集を追加した後も、Editor が固定する GUI `481c17b45` と VM `78e5f032` を使った同製品のローカルコピーで `--code-target-sync` が通過した。
 

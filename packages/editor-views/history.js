@@ -2,14 +2,20 @@ const historyLimit = 100;
 
 export const capture = target => structuredClone({
     blocks: target.blocks._blocks,
-    scripts: target.blocks.getScripts()
+    scripts: target.blocks.getScripts(),
+    comments: target.comments
 });
 
 export function restore(target, snapshot) {
-    const {blocks, scripts} = structuredClone(snapshot);
+    const {blocks, scripts, comments} = structuredClone(snapshot);
     // Keep the live Blocks container, which also belongs to any clones of the sprite.
     target.blocks._blocks = Object.assign(Object.create(null), blocks);
     target.blocks._scripts = scripts;
+    // Recreate VM Comment instances so projections and SB3 retain attached and workspace comments.
+    target.comments = Object.create(null);
+    for (const {id, blockId, text, x, y, width, height, minimized} of Object.values(comments)) {
+        target.createComment(id, blockId, text, x, y, width, height, minimized);
+    }
     target.blocks.resetCache();
     target.blocks.emitProjectChanged();
 }

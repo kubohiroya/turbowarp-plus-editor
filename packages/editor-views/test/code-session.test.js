@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
-import {createCodeSession} from '../index.js';
+import {createCodeSession, encodeEdit} from '../index.js';
 
 function fixture(receiveBackpackDrop) {
     const document = {defaultView: new EventTarget(), hasFocus: () => focused === document};
@@ -114,6 +114,44 @@ test('a focused window gets a lease after release and stale edits do not enter t
     b.close();
     session.dispose();
     assert.equal(workspace.undo, nativeUndo);
+});
+
+test('comment edits use the active target and restore serializable comments in the shared history', () => {
+    const {session, connect, target, other, vm} = fixture();
+    class Comment {
+        constructor(id, blockId, text, x, y, width, height, minimized) {
+            Object.assign(this, {id, blockId, text, x, y, width, height, minimized});
+        }
+        toXML() {return `<comment>${this.text}</comment>`;}
+    }
+    for (const sprite of [target, other]) {
+        sprite.createComment = function (...args) {
+            const comment = new Comment(...args);
+            this.comments[comment.id] = comment;
+        };
+    }
+    // The VM resolves comments through its runtime editing target, even on another Blocks instance.
+    target.blocks.blocklyListen = event => vm.runtime.getEditingTarget().createComment(event.commentId,
+        event.blockId, event.text, event.xy.x, event.xy.y, event.width, event.height, event.minimized);
+    const child = connect(target);
+    child.focus();
+    const {lease} = child.messages.at(-1);
+    const edit = (commentId, text) => child.send({type: 'edits', lease, targetId: target.id, events: [
+        encodeEdit({type: 'comment_create', commentId, blockId: null, text, xy: {x: 10, y: 20},
+            width: 100, height: 100, minimized: false})
+    ]});
+    edit('note', 'saved');
+    assert.equal(target.comments.note.text, 'saved');
+    child.send({type: 'step', lease, targetId: target.id, redo: false});
+    assert.equal(Object.keys(target.comments).length, 0);
+    child.send({type: 'step', lease, targetId: target.id, redo: true});
+    assert.equal(target.comments.note.toXML(), '<comment>saved</comment>');
+
+    vm.setEditingTarget(other.id);
+    edit('late', 'stale draft');
+    assert.equal(Object.hasOwn(target.comments, 'late'), false);
+    assert.deepEqual(other.comments, {});
+    session.dispose();
 });
 
 test('renaming from the foreground rewrites other targets’ undo and redo references', () => {

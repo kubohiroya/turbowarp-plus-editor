@@ -26,7 +26,7 @@ const toolbox = isStage => `<xml>${isStage ? '' : motion}
     </category></xml>`;
 
 const workspace = ScratchBlocks.inject(mount, {
-    media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: false
+    media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: true
 });
 let stageToolbox = false;
 let port;
@@ -101,14 +101,15 @@ function flush() {
 function drain() {
     workspace.cancelCurrentGesture();
     ScratchBlocks.hideChaff();
+    if (document.activeElement?.matches('.scratchCommentTextarea')) document.activeElement.blur();
     ScratchBlocks.Events.fireNow_();
     flush();
 }
 
 function release(token = lease) {
     if (token === undefined || token !== lease) return;
-    setEditable(false);
     drain();
+    setEditable(false);
     port.postMessage({type: 'release', lease});
     lease = undefined;
     edits = [];

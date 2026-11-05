@@ -10,10 +10,12 @@ import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 
 const testMode = [
-    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-popout', '--target-panels-popout',
+    '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
+    '--code-popout', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal'
 ].find(flag => process.argv.includes(flag));
-const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-popout', '--stage-display-menu', '--stage-panel'].includes(testMode);
+const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
+    '--stage-display-menu', '--stage-panel'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -658,7 +660,81 @@ async function checkStageCode ({editor, a, b, focus, parent, sprite}) {
     report.checks.push('Stage-specific toolbox, isolated backdrop edits, two-view Undo/Redo, docking and SB3 round trip');
 }
 
-async function checkCodePopouts ({editor, context, control}, {withBackpack = false, native = false, targetSync = false, stageCode = false} = {}) {
+async function checkCodeComments ({editor, a, b, focus, parent, sprites}) {
+    const [sprite, other] = sprites;
+    const block = page => page.locator(`.blocklyBlockCanvas [data-id="${sprite.blockId}"]`).first();
+    const textarea = page => page.locator('textarea.scratchCommentTextarea');
+    const workspaceComment = page => page.locator('g:has(> .scratchWorkspaceCommentBorder) > foreignObject textarea');
+    const menu = (page, name) => page.locator('.blocklyContextMenu').getByText(name);
+    const read = id => editor.evaluate(targetId => Object.values(vm.runtime.getTargetById(targetId).comments)
+        .map(({blockId, text}) => ({blockId, text})), id);
+    const attached = async () => (await read(sprite.id)).find(item => item.blockId === sprite.blockId);
+    const editable = async view => {
+        await focus(view.child, view.id);
+        await until(() => view.child.locator('#mount').evaluate(node => !node.inert), 'comment editor has the edit lease');
+    };
+    const history = (view, name) => view.child.getByRole('button', {name, exact: true}).click();
+
+    await editable(b);
+    await block(b.child).click({button: 'right'});
+    await menu(b.child, /^add comment$/i).click();
+    await until(attached, 'VM receives the attached comment');
+    await textarea(b.child).fill('attached <&>');
+    await editable(a);
+    await until(async () => (await attached())?.text === 'attached <&>', 'focus switch commits the comment draft');
+    assert.equal(await textarea(a.child).inputValue(), 'attached <&>');
+    assert.equal(await b.child.locator('#mount').evaluate(node => node.inert), true);
+    await history(a, 'Undo');
+    await until(async () => (await attached())?.text === '', 'the other view can undo the text edit');
+    await editable(b);
+    await history(b, 'Redo');
+    await until(async () => (await attached())?.text === 'attached <&>', 'redo restores the attached text');
+    await block(b.child).click({button: 'right'});
+    await menu(b.child, /^remove comment$/i).click();
+    await until(async () => !(await attached()), 'deletion reaches the VM');
+    await history(b, 'Undo');
+    await until(async () => (await attached())?.text === 'attached <&>', 'undo restores the attached comment');
+
+    await b.child.locator('.blocklyMainBackground').click({button: 'right', position: {x: 360, y: 270}});
+    await menu(b.child, /^add comment$/i).click();
+    await workspaceComment(b.child).fill('workspace note');
+    await workspaceComment(b.child).press('Tab');
+    await until(async () => (await read(sprite.id)).some(item => item.blockId === null && item.text === 'workspace note'),
+        'the workspace comment reaches the VM');
+    await until(async () => await workspaceComment(a.child).inputValue() === 'workspace note', 'back view shows the workspace comment');
+    const coordinates = () => editor.evaluate(targetId => {
+        const {x, y} = Object.values(vm.runtime.getTargetById(targetId).comments).find(item => item.blockId === null);
+        return {x, y};
+    }, sprite.id);
+    const original = await coordinates();
+    const handle = b.child.locator('g:has(> .scratchWorkspaceCommentBorder) > .scratchCommentTopBar');
+    const box = await handle.boundingBox();
+    assert.ok(box);
+    await b.child.mouse.move(box.x + 60, box.y + box.height / 2);
+    await b.child.mouse.down();
+    await b.child.mouse.move(box.x + 120, box.y + 25, {steps: 8});
+    await b.child.mouse.up();
+    await until(async () => (await coordinates()).x > original.x, 'moving the workspace comment reaches the VM');
+    assert.deepEqual(await read(other.id), []);
+    const close = view => Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
+    await close(b);
+    await editable(a);
+    await close(a);
+    await focus(editor, parent.id);
+    await until(async () => await workspaceComment(editor).inputValue() === 'workspace note', 'docked view shows the workspace comment');
+    const restored = await editor.evaluate(async ({name, otherName}) => {
+        await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
+        const comments = targetName => Object.values(vm.runtime.targets.find(target => target.getName() === targetName).comments)
+            .map(comment => [Boolean(comment.blockId), comment.text]).sort();
+        return [comments(name), comments(otherName)];
+    }, {name: sprite.name, otherName: other.name});
+    assert.deepEqual(restored, [[[false, 'workspace note'], [true, 'attached <&>']], []]);
+    report.checks.push('Attached and workspace comments stay with their target through focus, shared Undo/Redo, docking and SB3');
+}
+
+async function checkCodePopouts ({editor, context, control}, {
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false
+} = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
     await control('layout', parent.id);
@@ -669,14 +745,16 @@ async function checkCodePopouts ({editor, context, control}, {withBackpack = fal
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync}) => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
-        if (targetSync) {
+        if (targetSync || comments) {
             await vm.duplicateSprite(first.id);
             const second = vm.editingTarget;
-            second.getCostumes().push({...vm.runtime.getTargetForStage().getCostumes()[0]});
-            second.setCostume(second.getCostumes().length - 1);
+            if (targetSync) {
+                second.getCostumes().push({...vm.runtime.getTargetForStage().getCostumes()[0]});
+                second.setCostume(second.getCostumes().length - 1);
+            }
             const secondBlock = `${blockId}-second`;
             second.blocks.createBlock({id: secondBlock, opcode: 'looks_show', next: null, parent: null,
                 topLevel: true, shadow: false, inputs: {}, fields: {}, x: 100, y: 110});
@@ -696,7 +774,7 @@ async function checkCodePopouts ({editor, context, control}, {withBackpack = fal
         });
         vm.refreshWorkspace();
         return seeded;
-    }, {blockId: id, targetSync});
+    }, {blockId: id, targetSync, comments});
     const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
@@ -744,6 +822,10 @@ async function checkCodePopouts ({editor, context, control}, {withBackpack = fal
     }
     if (stageCode) {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
+        return;
+    }
+    if (comments) {
+        await checkCodeComments({editor, a, b, focus, parent, sprites});
         return;
     }
     assert.equal(await editor.evaluate(() =>
@@ -1372,6 +1454,7 @@ try {
     else if (testMode === '--code-backpack') await run('code-backpack', env => checkCodePopouts(env, {withBackpack: true}));
     else if (testMode === '--code-target-sync') await run('code-popout', env => checkCodePopouts(env, {targetSync: true}));
     else if (testMode === '--code-stage') await run('code-popout', env => checkCodePopouts(env, {stageCode: true}));
+    else if (testMode === '--code-comments') await run('code-popout', env => checkCodePopouts(env, {comments: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
     else if (testMode === '--stage-display-menu') await run('stage-display-menu', checkStageDisplayMenu);
