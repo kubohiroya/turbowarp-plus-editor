@@ -202,7 +202,7 @@ export function createStandardLayout(React, {styles, targetStyles, context}) {
 
     function SpriteGrid(props) {
         const {plusLayout} = useContext(context);
-        return element(targets.SpriteGrid, {...props, query: useContext(targetSearch), maximumColumns: plusLayout ? 2 : undefined});
+        return element(targets.SpriteGrid, {...props, query: useContext(targetSearch), standard: plusLayout});
     }
 
     function BackdropActions({compact, buttons, children}) {
