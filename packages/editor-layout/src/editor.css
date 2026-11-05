@@ -302,10 +302,15 @@
 .standard-body :global([class*="gui_blocks-wrapper_"]):has([data-horizontal-block-palette])
     + :global([class*="gui_extension-button-container_"]) :global([class*="gui_extension-button_"]) {
     padding-inline: 0.25rem;
+    padding-left: 0.5rem;
 }
 
 .standard-body .tab-row {
     padding-right: var(--plus-stage-tab-inset, 0px);
+}
+
+.standard-body .tab-row > ul {
+    padding-left: 16pt;
 }
 
 .standard-body .stage-hidden {
