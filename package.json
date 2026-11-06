@@ -110,9 +110,9 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.6.0-rc.0",
-    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#c86d23c893ef6c27809d424c73cf525367edeb10",
+    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#3942e4502de24127dd698d0c1a8f24e56b22d0e1",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
-    "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#b8192730b1d9bc93d3067153b6c41df4f6ad4e0c",
+    "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#a348b8e493976daf16dffeab4e79e49ae2013f9a",
     "@turbowarp/jszip": "^3.12.0"
   },
   "bin": {

@@ -12,7 +12,7 @@ import {
 } from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 
-import {attachScriptTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
+import {attachScriptTransfer, createProjectJSONTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
 
 import {plusBlockEditor} from './block-editor/editor.ts';
 import blockEditorTranslations from './block-editor/translations.json' with {type: 'json'};
@@ -36,6 +36,11 @@ const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, sta
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
 
+const desktopProjectTransfer = (document: Document, kind: 'script' | 'yaml') => {
+    const host = document?.defaultView as Window & typeof globalThis & {EditorPreload?: {projectJSONTransfer?: boolean}};
+    return host?.EditorPreload?.projectJSONTransfer === true ? createProjectJSONTransfer(host, kind) : undefined;
+};
+
 /**
  * Build the integration from what it depends on, so a test can hand in its own. The exported
  * `plusIntegration` is this applied to the real package.
@@ -52,7 +57,8 @@ export const createPlusIntegration = ({
     projectPackager = plusProjectPackager,
     securityReview = plusSecurityReview,
     scriptTransfer = {
-        attach: attachScriptTransfer, stageMenu: stageTransferMenu, finalizeMenu: finalizeTransferMenu
+        attach: context => attachScriptTransfer({...context, projectTransfer: desktopProjectTransfer(context.document, 'script')}),
+        stageMenu: stageTransferMenu, finalizeMenu: finalizeTransferMenu
     },
     blockEditor = plusBlockEditor
 }) => ({
@@ -163,6 +169,7 @@ export const createPlusIntegration = ({
             vm,
             document: hostDocument,
             language: locale,
+            projectTransfer: desktopProjectTransfer(hostDocument, 'yaml'),
             openPanel: request => workspace.open(request),
             getScratch: () => ({vm, gui: {getBlockly}})
         });
