@@ -13,6 +13,8 @@
 <h1>TurboWarp Plusで作品をつくる</h1>
 <p class="lead">作品を開いたら、スプライト、コード、ステージを作業しやすい位置に並べます。編集した内容を確かめ、使い回したい素材を取り込み、SB3や単一HTMLにまとめます。</p>
 <p><a href="../editor.html?lang=ja">日本語でエディターを開く</a> · <a href="images/capture.json">掲載画面の撮影条件</a></p>
+<p>Scratch 3と標準TurboWarpで保存したSB3は、どちらもPlus Editorで開けます。Plus固有の機能には、対応する拡張や専用データなどが必要なものがあります。</p>
+<p><a href="sb3-compatibility.md">Scratch・TurboWarpのSB3互換性と機能一覧（Markdown）</a></p>
 <p class="guide-note">画面画像を選ぶと元の大きさで開けます。「概念図」は、画面や操作の関係を簡略化して示しています。</p>
 <div id="comparison">
 <h2>標準のTurboWarpに加わる機能</h2>
@@ -171,8 +173,8 @@
 
 <h2>7. ステージを展開して作品を動かす</h2>
 
-<p>右端の「ステージを展開」からステージを表示します。緑旗・一時停止・停止で動作を確認し、「ステージの表示」で小さい表示、フルステージ、全画面、非表示を切り替えます。表示を隠しても作品は実行を続けます。</p>
-<figure><a href="images/stage-menu.png"><img src="images/stage-menu.png" width="1440" height="1000" alt="右端から開いたステージと、サイズ・全画面・作業領域・別窓を選べる表示メニュー。" loading="lazy"></a><figcaption>「ステージの表示」に、サイズの変更と表示先の切り替えがまとまっています。</figcaption></figure>
+<p>右端の「ステージを展開」からステージを表示します。緑旗・一時停止・停止で動作を確認し、「ステージの表示」から全画面表示や非表示を選べます。表示を隠しても作品は実行を続けます。</p>
+<figure><a href="images/stage-menu.png"><img src="images/stage-menu.png" width="1440" height="1000" alt="右端から開いたステージと、全画面表示、非表示、タブ、別窓を選べる表示メニュー。" loading="lazy"></a><figcaption>右端のステージで「ステージの表示」を開いたところ。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">右端のステージと別窓</a></p>
 
 </section>
@@ -227,9 +229,10 @@
 
 <h2>12. コスチュームや音の選択を保って編集する</h2>
 
-<p>「編集パネルのレイアウト」で「パネルを横に分割」を選び、同じスプライトの「コスチューム」と「音」を左右に開きます。音を選ぶと波形が表示され、その下の再生ボタンで試聴できます。音が入っていないスプライトには「音」タブで追加します。ペインごとに選んだ素材が保持されるので、元のペインをクリックするか、フォーカスを当ててEnterを押せば、その素材の編集を再開できます。</p>
+<p>「編集パネルのレイアウト」から「パネルを横に分割」を選び、同じスプライトの「コスチューム」と「音」を左右に開きます。「音」で素材を選ぶと波形が表示され、その下の再生ボタンで試聴できます。音の一覧が空の場合は「音」タブから追加します。</p>
+<p>別のペインに移っても、開いていたタブと選んだ素材はペインごとに保持されます。編集を再開するには、元のペインをクリックするか、ペインにフォーカスを当ててEnterを押します。</p>
 <figure><a href="images/local-media-panes.png"><img src="images/local-media-panes.png" width="1440" height="575" alt="ローカル統合版のPlus配置。左ペインにコスチュームの全体像、右ペインに音の波形と再生ボタンが表示され、両方の検索欄が各ペインの右端にある。" loading="lazy"></a><figcaption>ローカル統合版。左にコスチュームのプレビュー、右に確認用の音の波形と再生ボタン。</figcaption></figure>
-<p><span class="badge planned">開発中</span> 図のローカル統合版では、編集していない側のコスチュームプレビューの高さに上限を設け、検索欄を各ペインの右端に揃えています。公開版でも素材の選択保持と音の再生を利用できます。公開版ではペインが縦長だとコスチュームのプレビューが大きくなり、音のペインでは検索欄の右に別の操作ボタンが表示されます。</p>
+<p><span class="badge planned">開発中</span> ローカル統合版では、操作していないペインのコスチュームプレビューが大きくなりすぎないよう、高さに上限があります。「検索」は各ペインの右端に揃います。公開版でも素材の選択は保持され、音を再生できます。縦長のペインではプレビューが大きく表示され、「音」のペインでは検索欄の右に操作ボタンが並びます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">素材の選択と編集状態</a></p>
 
 </section>
@@ -238,9 +241,9 @@
 
 <h2>13. 変数を見ながらコードを編集する</h2>
 
-<p>ペインを横に分割し、一方で変数、もう一方でコードを開くと、処理を見ながら値を調整できます。値の欄に入力してEnterを押すと確定し、同じ変数を表示している別のペインにも反映されます。</p>
+<p>ペインを横に分割し、片方に変数、もう片方にコードを表示します。値の欄を編集し、Enterで確定すると、同じ変数を表示しているほかのペインにも新しい値が反映されます。</p>
 <figure><a href="images/local-variable-pane.png"><img src="images/local-variable-pane.png" width="1440" height="405" alt="ローカル統合版の左ペインに、すべてのスプライト用のスコアと、このスプライトのみの速さが別の見出しで表示されている。速さの値は8。右ペインに速さを使って移動するコードがある。" loading="lazy"></a><figcaption>ローカル統合版。「変数」タブで「速さ」を8に確定したところ。隣のコードでは「速さ」を移動量に使っています。</figcaption></figure>
-<p><span class="badge planned">開発中</span> 図のローカル統合版では「変数」タブを開きます。「すべてのスプライト用」と「このスプライトのみ」に分かれ、名前列を狭くして値の欄を広く取っています。公開版では「プロパティ・変数」タブを開き、各変数に付く「作品」「スプライト」の表示で範囲を確認します。</p>
+<p><span class="badge planned">開発中</span> ローカル統合版の「変数」タブでは、「すべてのスプライト用」と「このスプライトのみ」の見出しで変数がまとまっています。値の列は名前の列より広く、入力欄からフォーカスを外しても確定できます。確定前にEscを押すと入力を取り消せます。公開版では「プロパティ・変数」タブを開き、変数名に添えられた「作品」または「スプライト」の表示で範囲を確認します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">変数タブ</a></p>
 
 </section>
@@ -249,11 +252,12 @@
 
 <h2>14. ステージを作業領域や別窓に移す</h2>
 
-<p>右端からステージを展開し、「ステージの表示」→「作業領域で開く」で、コードの隣にステージタブを開けます。ステージ上の「ステージの表示」から「小さいステージに切り替える」「別窓で開く」「作業領域から戻す」を選べます。元の位置へ戻すには、ステージタブを閉じる方法もあります。</p>
+<p>右端からステージを展開し、「ステージの表示」→「ステージをタブで開く」を選ぶと、コードの隣にステージタブを開けます。同じメニューから「別窓で開く」も選べます。右端に戻すには「作業領域から戻す」を選ぶか、ステージタブを閉じます。</p>
 <div class="flow" role="img" aria-label="右端のステージを作業領域のタブまたはブラウザー別窓に移し、右端に戻す。"><div>右端のステージ</div><span>↔</span><div>作業領域のタブ<br><small>またはブラウザーの別窓</small></div></div>
-<figure><a href="images/local-stage-workspace.png"><img src="images/local-stage-workspace.png" width="1440" height="1000" alt="ローカル統合版で左にコード、右にペインの幅に合わせたステージを表示。ステージの表示メニューに小さいステージへの切り替え、作業領域から戻す、別窓で開くが並ぶ。" loading="lazy"></a><figcaption>ローカル統合版。作業領域に移したステージで「ステージの表示」を開いたところ。</figcaption></figure>
-<p><span class="badge planned">開発中</span> ローカル統合版は縦横比を保ったまま、ペインに収まる大きさまでステージを広げます。小さいステージも選べます。ステージ側の表示操作は「ステージの表示」にまとまっています。公開版では広いペインでも通常表示の幅が480pxにとどまり、ステージのタブ列にも「編集パネルのレイアウト」が表示されます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/258">作業領域へのステージ移動</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">別窓とドック復帰</a></p>
+<figure><a href="images/stage-workspace-current.png"><img src="images/stage-workspace-current.png" width="1440" height="1000" alt="左にコード、右にステージタブを表示。ステージの表示メニューから右端に戻す操作や別窓へ移す操作を選べる。" loading="lazy"></a><figcaption>公開Web版。作業領域に移したステージで「ステージの表示」を開いたところ。</figcaption></figure>
+<p><span class="badge planned">開発中</span> ペインの広さに合わせてステージを拡大・縮小する動作は、ローカル統合版で確認しています。掲載した公開版の通常表示ではステージの幅は480pxです。</p>
+<figure><a href="images/local-stage-workspace.png"><img src="images/local-stage-workspace.png" width="1440" height="1000" alt="ローカル統合版で左にコード、右にペインの幅に合わせたステージを表示。" loading="lazy"></a><figcaption>ローカル統合版の比較画像。幅715pxのペインにステージを幅703pxで表示。メニューは撮影時点の開発版です。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">ステージの表示メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">別窓とドック復帰</a></p>
 
 </section>
 
@@ -421,10 +425,10 @@
 
 <h2>27. スクリプトとステージを別作品へ転送する</h2>
 
-<p>移したいスクリプトのブロックを右クリックし、「スクリプトを書き出し」か「コピー」を選びます。転送先のコード領域の空白を右クリックし、「スクリプトを読み込み」か「貼り付け」を選びます。転送は<a href="../editor.html?lang=ja">通常の起動</a>で利用でき、Ctrl/Cmd+C・Vも使えます。</p>
+<p>移したいスクリプトのブロックを右クリックします。「スクリプトを書き出し」と「コピー」は、右クリックしたブロックを含む、つながった一組のブロック全体に適用されます。転送先ではコード領域の空白を右クリックし、ファイルなら「スクリプトを読み込み」、コピーした内容なら「貼り付け」を選びます。コピーと貼り付けにはCtrl／Cmd+C・Vも使えます。</p>
 <figure class="guide-detail"><a href="images/local-script-transfer.png"><img src="images/local-script-transfer.png" width="690" height="559" alt="ローカル統合版のPlus配置で、ブロックを右クリックしたところ。スクリプトを書き出し、コピー、複製、削除などの項目の左に操作アイコンが並ぶ。" loading="lazy"></a><figcaption>ローカル統合版のブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンで見分けられます。</figcaption></figure>
-<p><span class="badge planned">開発中</span> ローカル統合版では通常の起動でアイコンが表示されます。公開版で同じアイコンを表示するには、EditorのURLに <code>twPlusContextMenuIcons=1</code> を指定します。これはアイコン表示の設定です。</p>
-<ul><li><strong>.blocks3</strong>：スクリプトと必要なブロック定義・変数・リスト・メッセージ・拡張参照を移します。OSクリップボードへの許可がなくても、同じサイトのウィンドウ間でコピー・貼り付けできます。</li><li><strong>.stage3</strong>：Plus配置では背景タイル、Scratch配置ではステージの右クリックから書き出せます。Scratch配置では背景の「選ぶ」メニューから「ステージを読み込み（追加）」を選びます。背景・音・スクリプトを既存のステージへ追加します。</li><li>同名の変数等はスコープ・種類が合う既存データを使い、読み込み先の値を保持します。名前が競合する定義やアセットは必要に応じて改名します。式で生成する背景・音の名前や番号までは自動変換しません。</li><li>転送元の拡張の承認は引き継ぎません。別サイトへのクリップボード転送には対応ブラウザーと読取許可が必要です。同じサイト内の最後のコピーはlocalStorageにも残ります。</li></ul>
+<p><span class="badge planned">開発中</span> ローカル統合版は通常の起動でアイコンを表示します。公開版でアイコンを表示するには、URLに <code>twPlusContextMenuIcons=1</code> を指定します。転送操作はどちらの版でも<a href="../editor.html?lang=ja">通常の起動</a>で使えます。</p>
+<ul><li><strong>.blocks3</strong> にはスクリプトと、それが使うブロック定義・変数・リスト・メッセージ・拡張の情報が含まれます。同じオリジンで開いたウィンドウ間では、OSのクリップボードへのアクセスを許可していなくてもコピーと貼り付けができます。別のオリジン間では、対応ブラウザーとクリップボードの読み取り許可が必要です。</li><li><strong>.stage3</strong> は、Plus配置なら背景タイル、Scratch配置ならステージを右クリックして書き出します。Scratch配置で取り込むには、背景の「選ぶ」メニューで「ステージを読み込み（追加）」を選びます。背景・音・スクリプトが現在のステージに追加されます。</li><li>変数やリストの名前と範囲・種類が一致する場合は、読み込み先の項目とその値を使います。名前が衝突するブロック定義や素材は必要に応じて改名します。計算で決まる背景・音の名前や番号は自動変換の対象外です。</li><li>拡張を実行できるかどうかは、転送先の設定や承認で決まります。</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a></p>
 
 </section>
@@ -433,7 +437,8 @@
 
 <h2>28. バンドル素材を背景・コスチューム・音に追加する</h2>
 
-<p>対応するバンドル素材を含む作品で、「ファイル」→「バンドル素材を作品に追加…」を開きます。素材、追加する種類、追加先を選び、「作品に追加」を押します。たとえばバンドル内の画像をステージの背景として再利用できます。元の素材もバンドルに保持されます。</p>
+<p>バンドル素材は、紙芝居などの拡張が使うために、通常の背景・コスチューム・音とは別枠で作品に保存した画像・音声ファイルです。たとえば紙芝居の場面用画像を、通常のステージ背景として追加できます。元の画像は紙芝居にも残ります。</p>
+<p>素材が入っている作品で、「ファイル」→「バンドル素材を作品に追加…」を開きます。素材、追加する種類、追加先を選び、「作品に追加」を押します。</p>
 <div class="table-scroll" role="region" aria-label="素材の種類に応じた追加先" tabindex="0">
 <table><caption>素材の種類に応じた追加先</caption><thead><tr><th scope="col">素材</th><th scope="col">追加する種類</th><th scope="col">追加先</th></tr></thead><tbody>
 <tr><th scope="row">画像</th><td>コスチューム</td><td>選んだスプライト</td></tr>
@@ -499,7 +504,7 @@
 
 <h2>32. ソースデータと素材をどの形式で保存するか選ぶ</h2>
 
-<p>「ファイル」→「作品データの形式…」で、対応するソースデータやアセットを項目ごとに設定できます。HTTPSから毎回取得、HTTPSから取得してキャッシュ可、SB3内のファイル、作品JSON内のデータから選びます。外部URLの内容は現在のデータと一致する必要があります。</p>
+<p>「ファイル」→「作品データの形式…」では、Scratch 3や標準TurboWarpのSB3に入っている背景・コスチューム・音の格納方式を選べます。対応する拡張が提供するYAMLなどのソースデータも、作品に含まれていれば設定できます。外部URLの内容は現在のデータと一致する必要があります。</p>
 <div class="table-scroll" role="region" aria-label="ソースデータと素材の保存方法" tabindex="0">
 <table><caption>ソースデータと素材の保存方法</caption><thead><tr><th scope="col">画面で選ぶ形式</th><th scope="col">使い分け</th></tr></thead><tbody>
 <tr><th scope="row">HTTPS から毎回取得</th><td>開くたびに配信元から取得する</td></tr>
@@ -515,7 +520,8 @@
 
 <h2>33. 作品を単一HTMLにまとめて配布する</h2>
 
-<p>標準TurboWarpにもPackagerがあります。ここでの追加点は、Plus形式の拡張とその実行条件を引き継ぐ出力です。Plus作品で「ファイル」→「プロジェクトをパッケージ化する」を選ぶと、ローカルの出力画面へ進みます。</p>
+<p>通常のScratch 3・TurboWarpのSB3は、「ファイル」→「プロジェクトをパッケージ化する」から<a href="https://packager.turbowarp.org/">標準のTurboWarp Packager</a>を開き、単一HTMLにできます。Plus形式の拡張の保存情報を持つ作品では、同じ操作でPlus専用の出力画面が開きます。</p>
+<p>Plus専用の出力では、次の手順で拡張コードと実行条件を引き継ぎます。</p>
 <ol><li>作品に外部API・モデルなどの依存がないか確認します。</li><li>確認してHTMLを生成します。Remoteの拡張コードも取得・検証して同梱し、サンドボックスの指定を保持します。</li><li>生成したHTMLを開いて動作を確かめます。カタログ掲載拡張は生成時に埋め込んだハッシュと照合し、カタログ外の拡張はHTMLを開くたびに確認します。</li></ol>
 <div class="flow" role="img" aria-label="Plus作品から拡張コードを取得して検証し、コードと作品を単一HTMLに同梱。受取人が開く際にも実行条件を確認する。"><div>Plus作品</div><span>→</span><div>コード取得・検証</div><span>→</span><div>単一HTMLへ同梱</div><span>→</span><div>開く人が実行<br><small>必要な拡張を確認</small></div></div>
 <p>外部依存がない作品はオフラインで動作します。外部API・画像・モデル等の資産を自動的に収集する機能ではありません。詳細は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-loader-integration.md">ローダーとHTML出力の仕様</a>を参照してください。</p>

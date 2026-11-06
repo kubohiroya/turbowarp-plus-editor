@@ -52,7 +52,6 @@
       "current-file-menu.png": "File menu with extension addition and project data commands.",
       "plus-workspace.png": "Default workspace, before expanding drawers.",
       "sprite-drawer.png": "Sprite drawer expanded from the left edge.",
-      "stage-menu.png": "Stage drawer and the display menu.",
       "palette-current.png": "Motion category selected in the horizontal palette.",
       "dockview-workspace.png": "Stage moved to the same Dockview workspace as sprite code.",
       "catalog-current.png": "Current File menu path, TurboWarp Plus filter with TurboWarp-Markdown selected.",
@@ -119,6 +118,20 @@
       "local-variable-pane.png": "Split variable and code panes. The local speed variable was set to 8 using Enter. Cropped around the table and the sample script.",
       "local-stage-workspace.png": "Stage opened in the workspace with its display menu open. The canvas is 703 CSS pixels wide in the 715-pixel pane. The small preset was checked at 240 pixels.",
       "local-script-transfer.png": "Default block context menu with icons. Captured with no icon feature-flag query and cropped around the workspace toolbar and menu."
+    }
+  },
+  "publicStageMenu": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "3a769baee6a1849b3bbe5db496607bf9d233e037",
+    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "stage-menu.png": "Public stage drawer with the display menu open.",
+      "stage-workspace-current.png": "Stage opened in a workspace tab using the public display menu. Its canvas is 480 CSS pixels wide."
     }
   }
 }
