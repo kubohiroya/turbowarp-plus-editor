@@ -1,12 +1,20 @@
+declare const TW_TEST_NATIVE_SVG: boolean;
+
 declare const Scratch: {
     BlockType: {REPORTER: string};
     extensions: {register(extension: {getInfo(): object; display(args: {NOTE: string; MODE: string}): string}): void};
 };
 
 const parent = window as Window & {
-    vm: unknown;
-    ScratchBlocks: {
-        FieldTextInput: new (value: string) => {getValue(): string; setValue(value: string): void; showEditor_(): void};
+    vm?: unknown;
+    ScratchBlocks?: {
+        FieldTextInput: new (value: string) => {
+            getValue(): string;
+            setValue(value: string): void;
+            getSvgRoot(): SVGGElement;
+            render_(): void;
+            showEditor_(): void;
+        };
         WidgetDiv: {DIV: HTMLDivElement; show(owner: unknown, rtl: boolean): void; hide(): void};
     };
 };
@@ -18,9 +26,28 @@ Scratch.extensions.register({
             customFieldTypes: {
                 caption: {output: 'String', outputShape: 2, implementation: {
                     fromJson(options: {name: string}) {
-                        if (options.name !== 'field_windowfields_caption' || !parent.vm) throw new Error('Wrong field context');
+                        if (options.name !== 'field_windowfields_caption' || !parent.vm || !parent.ScratchBlocks) {
+                            throw new Error('Wrong field context');
+                        }
                         const {FieldTextInput, WidgetDiv} = parent.ScratchBlocks;
                         const field = new FieldTextInput('');
+                        if (TW_TEST_NATIVE_SVG) {
+                            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            marker.setAttribute('cx', '5');
+                            marker.setAttribute('cy', '8');
+                            marker.setAttribute('r', '3');
+                            const render = field.render_;
+                            field.render_ = () => {
+                                render.call(field);
+                                const root = field.getSvgRoot();
+                                if (!root) return;
+                                const value = field.getValue();
+                                const color = value === 'original' ? '#15803d' :
+                                    value === 'edited after dock' ? '#1d4ed8' : '#c2410c';
+                                marker.setAttribute('fill', color);
+                                if (marker.parentNode !== root) root.append(marker);
+                            };
+                        }
                         field.showEditor_ = () => {
                             WidgetDiv.show(field, false);
                             const group = document.createElement('fieldset');

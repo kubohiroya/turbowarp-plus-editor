@@ -1,3 +1,4 @@
+import type {NativeFieldGraphic} from './native-field-svg.ts';
 import {getCustomFields, programmaticField, registerCustomFields, type CustomField} from './custom-extension-fields.ts';
 
 import {createFieldActionDialog, readFieldActionPanel} from './programmatic-extension-field.ts';
@@ -204,6 +205,7 @@ export function createCodeExtensionPalette(blocks, openProgrammatic?) {
     const defaults = new Map<string, BlockDefinition>();
     let shapes = new Map<string, BlockDefinition>();
     let unregisterFields: (() => void) | undefined;
+    let nativeGraphics = new Map<string, Map<string, NativeFieldGraphic>>();
 
     function canInstall(json: BlockDefinition) {
         const registry = blocks.Field?.TYPE_MAP_;
@@ -264,7 +266,10 @@ export function createCodeExtensionPalette(blocks, openProgrammatic?) {
     return {
         update({definitions, categories, dynamicDefaults, customFields}: CodeExtensions) {
             unregisterFields?.();
-            unregisterFields = registerCustomFields(blocks, customFields, openProgrammatic);
+            unregisterFields = registerCustomFields(blocks, customFields, openProgrammatic, undefined, (blockId, name, value) => {
+                const graphic = nativeGraphics.get(blockId)?.get(name);
+                return graphic?.value === value ? graphic : undefined;
+            });
             for (const type of installed) delete blocks.Blocks[type];
             installed.clear();
             dynamicTypes.clear();
@@ -295,6 +300,13 @@ export function createCodeExtensionPalette(blocks, openProgrammatic?) {
                 }
                 return category.querySelector('block') ? category.outerHTML : '';
             }).join('');
+        },
+        setNativeFieldGraphics(graphics: NativeFieldGraphic[]) {
+            nativeGraphics = new Map();
+            for (const graphic of graphics) {
+                if (!nativeGraphics.has(graphic.blockId)) nativeGraphics.set(graphic.blockId, new Map());
+                nativeGraphics.get(graphic.blockId).set(graphic.name, graphic);
+            }
         },
         setDynamicShapes(next: DynamicShape[]) {
             shapes = new Map();

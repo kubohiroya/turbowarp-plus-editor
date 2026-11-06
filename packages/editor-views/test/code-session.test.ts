@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
 import {attachDockedCodeExtensions, getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
+import {captureNativeFieldDrawing} from '../native-field-svg.ts';
 import {registerCustomFields} from '../custom-extension-fields.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
@@ -294,6 +295,32 @@ test('custom extension fields project data-only editors and keep existing field 
     assert.equal(registry.field_fixture_name, native);
     unregister();
     assert.deepEqual(registry, {field_fixture_name: native});
+});
+
+test('native SVG projection keeps visible shapes and omits executable and externally linked content', () => {
+    const svg = (localName, attributes = {}, childNodes = []) => ({
+        namespaceURI: 'http://www.w3.org/2000/svg', localName, nodeType: 1, childNodes,
+        attributes: Object.entries(attributes).map(([name, value]) => ({name, value})),
+        ownerDocument: {},
+        getBBox: () => ({x: 0, y: 1, width: 20, height: 12})
+    });
+    const root = svg('g', {transform: 'translate(100, 200)', id: 'parent-only'}, [
+        svg('circle', {cx: '5', cy: '8', r: '3', fill: '#15803d', stroke: 'url(https://example.invalid/x)',
+            style: 'fill: red', onclick: 'run()'}),
+        svg('text', {x: '12'}, [{nodeType: 3, textContent: '<saved>'}]),
+        svg('script'),
+        svg('use', {href: 'https://example.invalid/svg#id'}),
+        svg('foreignObject', {}, [svg('rect')])
+    ]);
+    assert.deepEqual(captureNativeFieldDrawing(root), {
+        bounds: [0, 1, 20, 12],
+        drawing: {tag: 'g', attributes: [], children: [
+            {tag: 'circle', attributes: [['cx', '5'], ['cy', '8'], ['r', '3'], ['fill', '#15803d']], children: []},
+            {tag: 'text', attributes: [['x', '12']], children: ['<saved>']}
+        ]}
+    });
+    assert.equal(captureNativeFieldDrawing(svg('g', {}, [svg('image')])), undefined);
+    assert.equal(captureNativeFieldDrawing({...root, getBBox: () => ({x: 0, y: 0, width: Infinity, height: 0})}), undefined);
 });
 
 test('programmatic field callbacks stay in the parent and accept only a current authorized action', () => {

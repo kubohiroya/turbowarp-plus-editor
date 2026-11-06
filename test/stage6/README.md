@@ -81,3 +81,14 @@ Desktop のコード欄から、選択中の対象で別窓を最大2枚開け�
 
 製品版 Electron の検証用コピーに対して `--code-native-fields` を指定する。
 `fixtures/native-extension.ts` の独自テキストエリアとボタンを Playwright／CDP で操作する。
+
+### 独自 SVG の互換性試作
+
+親の ScratchBlocks で描画済みの拡張フィールドから、基本図形、パス、文字と
+許可した描画属性をデータとして取得する。別窓ではフィールドの保存値と一致する描画だけを再現する。
+スクリプト、イベント属性、外部参照、任意の CSS は渡さない。親で対象の描画を取得できない場合は
+別窓に値を文字で表示する。編集は既存の `WidgetDiv` と同期的な `setValue` を使う。
+
+製品版 Electron の検証用コピーで `--code-svg-fields` を指定すると、
+`fixtures/native-extension.ts` の独自 SVG を表示し、値に応じた色の変化、
+共有 Undo／Redo、ドック復帰、SB3 再読込を Playwright／CDP で確認する。
