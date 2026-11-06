@@ -11,7 +11,7 @@ import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
-import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
+import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext} from './context.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
@@ -99,9 +99,13 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
     const layoutStorage = React.useMemo(() => {
-        if (!multiView || externalYamlPort) return;
+        if (!multiView || (externalYamlPort && !desktopWorkspaceLayout)) return;
         try {
-            return {storage: window.localStorage, key: 'twPlusDockviewLayout',
+            const storage = desktopWorkspaceLayout ? {
+                getItem: () => desktopWorkspaceLayout.read(),
+                setItem: (_key: string, raw: string) => desktopWorkspaceLayout.write(raw)
+            } : window.localStorage;
+            return {storage, key: 'twPlusDockviewLayout',
                 isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)};
         } catch { /* Storage is optional. */ }
     }, [multiView, vm]);
