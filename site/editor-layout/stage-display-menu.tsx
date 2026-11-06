@@ -1,7 +1,7 @@
 import React from 'react';
 import type {IconMenuItem} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
-import {stageDockActionLabel} from '@kubohiroya/turbowarp-plus-editor-layout/stage-surface';
+import {stageDockActionLabel, stageFullscreenLabel} from '@kubohiroya/turbowarp-plus-editor-layout/stage-surface';
 import fullscreenIcon from '@tw-plus/gui-stage-fullscreen-icon';
 import {StageDisplayMenuContext, WindowLayoutContext} from './context.ts';
 import {layoutFlags} from './index.tsx';
@@ -47,7 +47,7 @@ function DisplayMenu({locale, presets, fullscreen}) {
     }));
     items.push({
         id: 'fullscreen',
-        label: fullscreen.title,
+        label: stageFullscreenLabel(locale, fullscreen.title),
         icon: <PresetIcon icon={fullscreenIcon} />,
         onSelect: () => selectDisplay(fullscreen.handleClick)
     });
