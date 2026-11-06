@@ -31,9 +31,12 @@ for (const name of requiredFamilyPackages) {
 }
 const lock = JSON.parse(await fs.readFile(new URL('../../package-lock.json', import.meta.url), 'utf8'));
 const layout = '@kubohiroya/turbowarp-plus-editor-layout';
-const layoutVersion = lock.packages[`node_modules/${layout}`]?.version;
-assert.ok(layoutVersion && family.packages.some(entry => entry.package === layout && entry.version === layoutVersion),
-    `Bundled family package without notices: ${layout}`);
+const layoutLock = lock.packages[`node_modules/${layout}`];
+const layoutNotice = family.packages.find(entry => entry.package === layout && entry.version === layoutLock?.version);
+assert.ok(layoutLock && layoutNotice, `Bundled family package without notices: ${layout}`);
+if (layoutLock.resolved.startsWith('https://registry.npmjs.org/')) {
+    assert.equal(layoutNotice.source?.tarball, layoutLock.resolved, `Source URL differs from the pin: ${layout}`);
+}
 for (const entry of family.packages) {
     const installed = lock.packages[`node_modules/${entry.package}`];
     if (installed?.resolved?.startsWith('file:vendor/') && installed.version === entry.version) {

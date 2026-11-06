@@ -101,11 +101,12 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         family.packages.push(vmNotice);
         await writeFamily();
         const layout = family.packages.find(entry => entry.package === '@kubohiroya/turbowarp-plus-editor-layout');
-        const sourceArchive = path.join(directory, layout.source.tarball);
-        const originalArchive = await fs.readFile(sourceArchive);
-        await fs.appendFile(sourceArchive, 'unreviewed replacement');
-        assert.match(check().stderr, /Source archive differs from the pin/);
-        await fs.writeFile(sourceArchive, originalArchive);
+        const sourceURL = layout.source.tarball;
+        layout.source.tarball = sourceURL.replace('registry.npmjs.org', 'example.test');
+        await writeFamily();
+        assert.match(check().stderr, /Source URL differs from the pin/);
+        layout.source.tarball = sourceURL;
+        await writeFamily();
         await fs.rm(vmLicense);
         assert.match(check().stderr, /Missing notice|ENOENT/);
     } finally { await fs.rm(directory, {recursive: true, force: true}); }
