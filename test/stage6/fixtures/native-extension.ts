@@ -4,8 +4,11 @@ declare const TW_TEST_NATIVE_CSS: boolean;
 declare const TW_TEST_PSEUDO_CSS: boolean;
 declare const TW_TEST_ANIMATION_CSS: boolean;
 declare const TW_TEST_LAYOUT_CSS: boolean;
+declare const TW_TEST_EXTERNAL_FIELDS: boolean;
 
 const useLayout = typeof TW_TEST_LAYOUT_CSS !== 'undefined' && TW_TEST_LAYOUT_CSS;
+const externalFields = typeof TW_TEST_EXTERNAL_FIELDS !== 'undefined' && TW_TEST_EXTERNAL_FIELDS;
+const assetRoot = 'https://field-assets.test/';
 
 declare const Scratch: {
     BlockType: {REPORTER: string};
@@ -121,6 +124,15 @@ Scratch.extensions.register({
             customFieldTypes: {
                 caption: {output: 'String', outputShape: 2, implementation: {
                     parentDocument: TW_TEST_PARENT_DOCUMENT,
+                    resources: externalFields ? {
+                        picture: {kind: 'image', url: assetRoot + 'picture.png'},
+                        vector: {kind: 'image', url: assetRoot + 'vector.svg'},
+                        caption: {kind: 'font', url: assetRoot + 'caption.woff2'},
+                        denied: {kind: 'image', url: assetRoot + 'denied.png'},
+                        redirected: {kind: 'image', url: assetRoot + 'redirect.png'},
+                        wrongType: {kind: 'image', url: assetRoot + 'wrong-type.png'},
+                        insecure: {kind: 'image', url: 'http://field-assets.test/insecure.png'}
+                    } : undefined,
                     fromJson(options: {name: string}) {
                         if (options.name !== 'field_windowfields_caption' || !parentWindow.vm || !parentWindow.ScratchBlocks) {
                             throw new Error('Wrong field context');
@@ -214,6 +226,23 @@ Scratch.extensions.register({
                                 group.append(grid, unsupported);
                             } else {
                                 group.append(input, apply);
+                            }
+                            if (externalFields) {
+                                input.dataset.plusFieldFont = 'caption';
+                                for (const [id, alt] of [
+                                    ['picture', 'Remote PNG'], ['vector', 'Remote SVG'], ['denied', 'Denied image'],
+                                    ['redirected', 'Redirected image'], ['wrongType', 'Wrong MIME'], ['insecure', 'Insecure image']
+                                ]) {
+                                    const image = document.createElement('img');
+                                    image.dataset.plusFieldImage = id;
+                                    image.alt = alt;
+                                    image.width = 12;
+                                    image.height = 8;
+                                    group.append(image);
+                                }
+                                const image = document.createElement('img');
+                                image.alt = 'Unmarked image';
+                                group.append(image);
                             }
                             if (TW_TEST_PARENT_DOCUMENT) {
                                 const link = document.createElement('a');

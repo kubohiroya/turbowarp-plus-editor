@@ -1,10 +1,12 @@
 import {mirrorParentField} from './parent-field-mirror.ts';
+import type {FieldResourceOptions} from './parent-field-resources.ts';
 
 type Anchor = {left: number; bottom: number};
 
 /** The parent field owns the widget and its value. */
-export function openNativeField({blocks, field, document, anchor, parentDocument = false, valid, commit, onError}: {
-    blocks; field; document: Document; anchor: Anchor; parentDocument?: boolean; valid(): boolean; commit(value: string): void;
+export function openNativeField({blocks, field, document, anchor, parentDocument = false, resources, valid, commit, onError}: {
+    blocks; field; document: Document; anchor: Anchor; parentDocument?: boolean; resources?: FieldResourceOptions;
+    valid(): boolean; commit(value: string): void;
     onError?(error: unknown): void;
 }) {
     const widget = blocks.WidgetDiv;
@@ -113,7 +115,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
             return;
         }
         if (parentDocument) {
-            disposeMirror = mirrorParentField(original, host, () => !closed && valid());
+            disposeMirror = mirrorParentField(original, host, () => !closed && valid(), resources);
             if (!disposeMirror) {
                 close();
                 return;
