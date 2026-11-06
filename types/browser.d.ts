@@ -32,6 +32,7 @@ declare module '@tw-plus/gui-stage-fullscreen-icon' {
     export default url;
 }
 declare module '@tw-plus/upstream-hide-delete-button-manifest';
+declare module '*source.json?kamishibai-preview-styles';
 declare module '@tw-plus/backpack-window-host' {
     export function openBackpackWindow(url: URL, ticket: string): Window | null;
     export const detachBackpackOpener: boolean;
