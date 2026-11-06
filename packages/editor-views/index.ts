@@ -2,7 +2,7 @@ import {getCodeDynamicShapes, getCodeExtensions} from './code-extensions.ts';
 import {customField} from './custom-extension-fields.ts';
 import {projectNativeFieldGraphics} from './native-field-svg.ts';
 import {openNativeField} from './native-extension-field.ts';
-import {readFieldActionPanel, type FieldActionPanel, type ProgrammaticExtensionField} from './programmatic-extension-field.ts';
+import {readFieldActionPanel, runFieldAction, type FieldActionPanel, type ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 import {capture, createHistory, restore, workspaceXML} from './history.ts';
 import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
 import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.ts';
@@ -57,7 +57,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         duplicate?: () => void;
         closeNativeField?: () => void;
         fieldAction?: {request: number; blockId: string; name: string; value: string;
-            editor: ProgrammaticExtensionField; panel: FieldActionPanel};
+            editor: ProgrammaticExtensionField; panel: FieldActionPanel; submitted?: boolean};
     };
     const views = new Set<CodeView>();
     const dirty = new Set();
@@ -110,7 +110,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     }
 
     function publish(target, source, refreshParent) {
-        for (const view of views) if (view.target === target) closeNativeEditor(view);
+        for (const view of views) {
+            if (view.target !== target) continue;
+            view.fieldAction = undefined;
+            closeNativeEditor(view);
+        }
         const xml = workspaceXML(vm, target);
         if (refreshParent && vm.editingTarget === target) {
             projecting = true;
@@ -287,6 +291,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         if (view.draining || !viewFocused(view) || vm.editingTarget !== view.target) return;
         const target = view.target;
         const pending = view.fieldAction;
+        if (message.type === 'field-action' && pending?.submitted) return;
         view.fieldAction = undefined;
         const {request, blockId, name, action} = message;
         if (!Number.isSafeInteger(request) || typeof blockId !== 'string' || typeof name !== 'string') return;
@@ -326,8 +331,26 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                 send(view, {type: 'field-panel', lease: view.lease, request, panel});
             } else if (pending?.request === request && pending.blockId === blockId && pending.name === name &&
                 pending.editor === editor && pending.value === value && pending.panel.actions.some(item => item.id === action)) {
-                const next = editor.applyAction(value, action);
-                if (typeof next === 'string' && next !== value) commit(next);
+                pending.submitted = true;
+                view.fieldAction = pending;
+                const takeCurrent = () => {
+                    if (view.fieldAction !== pending) return false;
+                    view.fieldAction = undefined;
+                    return !disposed && views.has(view) && owns(view, {targetId: target.id, lease}) &&
+                        !view.draining && viewFocused(view) && vm.editingTarget === target &&
+                        target.blocks.getBlock(blockId) === block && block.fields[name]?.value === value &&
+                        customField(vm.runtime, block.opcode, name)?.programmatic === editor;
+                };
+                runFieldAction(editor, value, action, next => {
+                    if (!takeCurrent() || typeof next !== 'string' || next === value) return;
+                    try {
+                        commit(next);
+                    } catch (error) {
+                        onError?.(error);
+                    }
+                }, error => {
+                    if (takeCurrent()) onError?.(error);
+                });
             }
         } catch (error) {
             onError?.(error);
@@ -346,6 +369,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         }
         if (message.type === 'release') {
             if (owner === view && view.lease === message.lease) {
+                view.fieldAction = undefined;
                 closeNativeEditor(view);
                 owner = undefined;
                 const target = view.nextTarget;
@@ -478,6 +502,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
 
     function extensionsUpdated() {
         for (const view of views) {
+            view.fieldAction = undefined;
             closeNativeEditor(view);
             send(view, {type: 'extensions', extensions: extensionsFor(view.target), dynamicShapes: dynamicShapesFor(view.target)});
         }
@@ -495,6 +520,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         if (!histories.has(target)) histories.set(target, createHistory(target, vm.runtime.getTargetForStage()));
         const view: CodeView = {target, port, document: mount.ownerDocument, close, duplicate};
         const listener = event => receive(view, event.data);
+        const discardFieldAction = () => {view.fieldAction = undefined;};
+        const child = view.document.defaultView;
+        const windowEvents = new AbortController();
+        child?.addEventListener('blur', discardFieldAction, {signal: windowEvents.signal});
+        child?.addEventListener('pagehide', discardFieldAction, {signal: windowEvents.signal});
         views.add(view);
         port.addEventListener('message', listener);
         port.start();
@@ -502,6 +532,8 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             backpackDrop: Boolean(receiveBackpackDrop), layoutMenu: Boolean(layoutMenu),
             canDuplicate: Boolean(duplicate && canDuplicate), extensions: extensionsFor(target), ...projection(target)});
         return () => {
+            discardFieldAction();
+            windowEvents.abort();
             closeNativeEditor(view);
             views.delete(view);
             port.removeEventListener('message', listener);

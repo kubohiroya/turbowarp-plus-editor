@@ -1,7 +1,7 @@
 import type {NativeFieldGraphic} from './native-field-svg.ts';
 import {getCustomFields, programmaticField, registerCustomFields, type CustomField} from './custom-extension-fields.ts';
 
-import {createFieldActionDialog, readFieldActionPanel} from './programmatic-extension-field.ts';
+import {createFieldActionDialog, readFieldActionPanel, runFieldAction} from './programmatic-extension-field.ts';
 export {createFieldActionDialog} from './programmatic-extension-field.ts';
 
 type BlockDefinition = {type: string; [key: string]: unknown};
@@ -55,24 +55,30 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale,
     const fieldRegistrations = new Map<string, () => void>();
     let disposed = false;
     const dialog = document && createFieldActionDialog(document);
+    let fieldRequest = 0;
+    const invalidateFieldAction = () => {fieldRequest++;};
 
     function openProgrammatic(field, name: string) {
         const block = field.sourceBlock_;
         if (!dialog || disposed || !block || block.isInFlyout) return;
         const editor = programmaticField(runtime, block.type, name);
         if (!editor) return;
+        const request = ++fieldRequest;
+        const target = runtime.getEditingTarget();
         try {
             const value = field.getValue();
             const panel = readFieldActionPanel(editor, value);
+            const current = () => !disposed && request === fieldRequest && field.sourceBlock_ === block &&
+                field.getValue() === value && runtime.getEditingTarget() === target && document.hasFocus() &&
+                !block.workspace?.getParentSvg?.()?.parentElement?.inert &&
+                programmaticField(runtime, block.type, name) === editor;
             if (panel) dialog.show(panel, action => {
-                if (disposed || !field.sourceBlock_ || field.getValue() !== value ||
-                    programmaticField(runtime, block.type, name) !== editor) return;
-                try {
-                    const next = editor.applyAction(value, action);
-                    if (typeof next === 'string') field.setValue(next);
-                } catch (error) {
-                    onFieldError(error);
-                }
+                if (!current()) return;
+                runFieldAction(editor, value, action, next => {
+                    if (current() && typeof next === 'string') field.setValue(next);
+                }, error => {
+                    if (current()) onFieldError(error);
+                });
             }, locale);
         } catch (error) {
             onFieldError(error);
@@ -124,6 +130,8 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale,
     // The docked GUI registers its factory first and also replays existing categories on mount.
     vm.on('EXTENSION_ADDED', install);
     vm.on('BLOCKSINFO_UPDATE', install);
+    vm.on('workspaceUpdate', invalidateFieldAction);
+    document?.defaultView?.addEventListener('blur', invalidateFieldAction);
     queueMicrotask(() => {
         if (!disposed) for (const category of runtime._blockInfo ?? []) install(category);
     });
@@ -133,6 +141,8 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale,
         dialog?.close();
         vm.removeListener('EXTENSION_ADDED', install);
         vm.removeListener('BLOCKSINFO_UPDATE', install);
+        vm.removeListener('workspaceUpdate', invalidateFieldAction);
+        document?.defaultView?.removeEventListener('blur', invalidateFieldAction);
         for (const unregister of fieldRegistrations.values()) unregister();
         for (const [type, {native, replacement}] of installed) {
             if (definitions[type] === replacement) definitions[type] = native;
