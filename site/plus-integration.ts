@@ -158,13 +158,18 @@ export const createPlusIntegration = ({
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
-        attached.push(mountEditor({
+        const workspace = getDocumentWorkspace(vm);
+        const documents = mountEditor({
             vm,
             document: hostDocument,
             language: locale,
-            openPanel: request => getDocumentWorkspace(vm).open(request),
+            openPanel: request => workspace.open(request),
             getScratch: () => ({vm, gui: {getBlockly}})
-        }));
+        });
+        attached.push(documents);
+        if (documents?.getPanelRequest && documents.subscribePanelRequests) {
+            attached.push({dispose: workspace.connectSource(documents)});
+        }
         return {
             dispose () {
                 // Each attachment is independent, so one that throws must not keep the others
