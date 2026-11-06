@@ -22,7 +22,7 @@ function PresetIcon({icon}) {
 }
 
 function DisplayMenu({locale, presets, fullscreen}) {
-    const {dockAction} = React.useContext(StageDisplayMenuContext) ?? {};
+    const {dockAction, stage} = React.useContext(StageDisplayMenuContext) ?? {};
     const {plusLayout, stageDrawer, stageHidden, setStageVisible} = React.useContext(WindowLayoutContext);
     const japanese = /^ja(?:-|$)/i.test(locale);
     const label = japanese ? 'ステージの表示' : 'Stage display';
@@ -53,7 +53,21 @@ function DisplayMenu({locale, presets, fullscreen}) {
     if (canToggleVisibility) items.push({
         id: 'visibility',
         label: visibilityLabel,
-        onSelect: () => setStageVisible(stageHidden)
+        onSelect: () => {
+            if (stage?.docked) stage.commands.close();
+            setStageVisible(stageHidden);
+        }
+    });
+    if (stage?.commands && dockAction?.kind === 'docked') items.push({
+        id: 'workspace',
+        label: stage.docked ? stage.closeLabel : stage.openLabel,
+        onSelect: () => {
+            if (stage.docked) stage.commands.close();
+            else {
+                if (stageHidden) setStageVisible(true);
+                stage.commands.open();
+            }
+        }
     });
     items.push({
         id: 'dock',
@@ -68,7 +82,10 @@ function DisplayMenu({locale, presets, fullscreen}) {
         onSelect: () => {
             if (stageHidden) setStageVisible(true);
             if (detached) dockAction.dock();
-            else dockAction.undock();
+            else {
+                if (stage?.docked) stage.commands.close();
+                dockAction.undock();
+            }
         }
     });
     return <IconMenuButton label={label} icon={stageLayoutIcon} items={items}

@@ -1,6 +1,7 @@
 import React from 'react';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-layout/standard-layout';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import targetStyles from '@kubohiroya/turbowarp-plus-editor-layout/targets.css';
@@ -52,7 +53,14 @@ const getStorage = () => {
 const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, vm, ...props}) => {
     const {StandardLayout} = layoutViews;
     const [dockAction, setDockAction] = React.useState(null);
-    return <StageDisplayMenuContext.Provider value={{dockAction, setDockAction}}>
+    const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
+    const resizeStage = React.useCallback((surface: HTMLElement) => {
+        const renderer = vm.renderer;
+        if (!renderer?.canvas || !surface.contains(renderer.canvas)) return;
+        const {width, height} = renderer.canvas.getBoundingClientRect();
+        if (width > 0 && height > 0) renderer.resize(width, height);
+    }, [vm]);
+    return <StageDisplayMenuContext.Provider value={{dockAction, setDockAction, stage, resizeStage}}>
         <StandardLayout
             {...props}
             enabled={layoutFlags.standardLayout}
