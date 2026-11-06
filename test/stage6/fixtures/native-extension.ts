@@ -1,3 +1,5 @@
+import type {NativeFieldEditSession} from '../../../packages/editor-views/index.ts';
+
 declare const TW_TEST_NATIVE_SVG: boolean;
 declare const TW_TEST_PARENT_DOCUMENT: boolean;
 declare const TW_TEST_NATIVE_CSS: boolean;
@@ -5,9 +7,11 @@ declare const TW_TEST_PSEUDO_CSS: boolean;
 declare const TW_TEST_ANIMATION_CSS: boolean;
 declare const TW_TEST_LAYOUT_CSS: boolean;
 declare const TW_TEST_EXTERNAL_FIELDS: boolean;
+declare const TW_TEST_ASYNC_FIELD: boolean;
 
 const useLayout = typeof TW_TEST_LAYOUT_CSS !== 'undefined' && TW_TEST_LAYOUT_CSS;
 const externalFields = typeof TW_TEST_EXTERNAL_FIELDS !== 'undefined' && TW_TEST_EXTERNAL_FIELDS;
+const asyncField = typeof TW_TEST_ASYNC_FIELD !== 'undefined' && TW_TEST_ASYNC_FIELD;
 const assetRoot = 'https://field-assets.test/';
 
 declare const Scratch: {
@@ -17,6 +21,7 @@ declare const Scratch: {
 
 const parentWindow = window as Window & {
     vm?: unknown;
+    testAsyncFieldJobs?: {finish(): void; signal: AbortSignal; delivered: boolean}[];
     ScratchBlocks?: {
         FieldTextInput: new (value: string) => {
             getValue(): string;
@@ -124,6 +129,7 @@ Scratch.extensions.register({
             customFieldTypes: {
                 caption: {output: 'String', outputShape: 2, implementation: {
                     parentDocument: TW_TEST_PARENT_DOCUMENT,
+                    asyncCommit: asyncField,
                     resources: externalFields ? {
                         picture: {kind: 'image', url: assetRoot + 'picture.png'},
                         vector: {kind: 'image', url: assetRoot + 'vector.svg'},
@@ -161,7 +167,7 @@ Scratch.extensions.register({
                                 if (marker.parentNode !== root) root.append(marker);
                             };
                         }
-                        field.showEditor_ = () => {
+                        field.showEditor_ = (edit?: NativeFieldEditSession) => {
                             const group = document.createElement('fieldset');
                             const heading = document.createElement('legend');
                             heading.textContent = 'Native caption editor';
@@ -178,6 +184,20 @@ Scratch.extensions.register({
                             }
                             const commit = (value: string) => {
                                 if (!parentWindow.vm) throw new Error('Missing parent VM');
+                                if (edit) {
+                                    apply.disabled = true;
+                                    let finish: () => void;
+                                    const ready = new Promise<void>(resolve => {finish = resolve;});
+                                    const job = {finish, signal: edit.signal, delivered: false};
+                                    (parentWindow.testAsyncFieldJobs ??= []).push(job);
+                                    void ready.then(() => {
+                                        // Deliver even after abort to exercise the session boundary.
+                                        edit.commit(value);
+                                        edit.commit('duplicate callback');
+                                        job.delivered = true;
+                                    });
+                                    return;
+                                }
                                 field.setValue(value);
                                 WidgetDiv.hide();
                             };

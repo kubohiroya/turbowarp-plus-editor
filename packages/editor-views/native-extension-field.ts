@@ -3,9 +3,15 @@ import type {FieldResourceOptions} from './parent-field-resources.ts';
 
 type Anchor = {left: number; bottom: number};
 
+/** The capability belongs to one popup editor invocation. */
+export type NativeFieldEditSession = {
+    signal: AbortSignal;
+    commit(value: string): void;
+};
+
 /** The parent field owns the widget and its value. */
-export function openNativeField({blocks, field, document, anchor, parentDocument = false, resources, valid, commit, onError}: {
-    blocks; field; document: Document; anchor: Anchor; parentDocument?: boolean; resources?: FieldResourceOptions;
+export function openNativeField({blocks, field, document, anchor, parentDocument = false, asyncCommit = false, resources, valid, commit, onError}: {
+    blocks; field; document: Document; anchor: Anchor; parentDocument?: boolean; asyncCommit?: boolean; resources?: FieldResourceOptions;
     valid(): boolean; commit(value: string): void;
     onError?(error: unknown): void;
 }) {
@@ -27,6 +33,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
     document.body.append(host);
     let closed = false;
     let queued = false;
+    const editController = parentDocument && asyncCommit ? new AbortController() : undefined;
 
     function withoutEvents(apply: () => void) {
         blocks.Events.disable();
@@ -43,6 +50,11 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
         observer.disconnect();
         document.removeEventListener('keydown', escape, true);
         document.removeEventListener('pointerdown', outside, true);
+        if (editController) {
+            window.removeEventListener('blur', close);
+            window.removeEventListener('pagehide', close);
+            editController.abort();
+        }
         try {
             if (ownsWidget && widget.DIV === widgetHost && (!parentDocument || widget.owner_ === widgetOwner)) widget.hide(true);
         } catch (error) {
@@ -80,6 +92,26 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
     const observer = new MutationObserver(() => {
         if (!queued && (!widget.isVisible() || (parentDocument && widget.owner_ !== widgetOwner))) close();
     });
+    const ownsOpenWidget = () => !editController ||
+        (widget.DIV === widgetHost && widget.owner_ === widgetOwner && widget.isVisible());
+    function stageValue(next: unknown) {
+        if (closed || !valid() || !ownsOpenWidget()) return;
+        withoutEvents(() => setValue.call(field, next));
+        if (queued || field.getValue() === value) return;
+        queued = true;
+        queueMicrotask(() => {
+            if (closed) return;
+            try {
+                const result = field.getValue();
+                const accepted = valid() && ownsOpenWidget() && typeof result === 'string' && result !== value;
+                close();
+                if (accepted && valid()) commit(result);
+            } catch (error) {
+                close();
+                onError?.(error);
+            }
+        });
+    }
     try {
         widget.hide(true);
         widget.DIV = widgetHost;
@@ -88,25 +120,22 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
             original.style.opacity = '0';
             original.inert = true;
         }
-        field.setValue = next => {
-            if (closed || !valid()) return;
-            withoutEvents(() => setValue.call(field, next));
-            if (queued || field.getValue() === value) return;
-            queued = true;
-            queueMicrotask(() => {
-                if (closed) return;
-                const result = field.getValue();
-                try {
-                    const accepted = valid() && typeof result === 'string' && result !== value;
-                    close();
-                    if (accepted) commit(result);
-                } catch (error) {
-                    onError?.(error);
-                }
-            });
-        };
+        field.setValue = stageValue;
         try {
-            field.showEditor_();
+            if (editController) {
+                const edit: NativeFieldEditSession = {signal: editController.signal, commit(next) {
+                    if (queued || typeof next !== 'string') return;
+                    try {
+                        stageValue(next);
+                    } catch (error) {
+                        close();
+                        onError?.(error);
+                    }
+                }};
+                field.showEditor_(edit);
+            } else {
+                field.showEditor_();
+            }
         } finally {
             widgetOwner = widget.owner_;
         }
@@ -128,6 +157,10 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
         observer.observe(widgetHost, {attributes: true, attributeFilter: ['style']});
         document.addEventListener('keydown', escape, true);
         document.addEventListener('pointerdown', outside, true);
+        if (editController) {
+            window.addEventListener('blur', close);
+            window.addEventListener('pagehide', close);
+        }
         return close;
     } catch (error) {
         close();

@@ -7,6 +7,7 @@ import {chromium, type Locator, type Page} from 'playwright';
 const directory = resolve(process.argv[2]);
 const layout = process.argv.includes('--layout');
 const resources = process.argv[3] === '--resources';
+const asyncField = process.argv[3] === '--async-commit';
 const fontFile = resources ? await readFile(process.argv[4]) : undefined;
 const origin = 'http://localhost:15107';
 const assetOrigin = 'https://field-assets.test';
@@ -39,8 +40,8 @@ const [driver, extension] = await Promise.all([
     transform(await readFile(new URL('fixtures/native-extension.ts', import.meta.url), 'utf8'), {
         loader: 'ts', format: 'iife', define: {
             TW_TEST_NATIVE_SVG: 'false', TW_TEST_PARENT_DOCUMENT: 'true', TW_TEST_NATIVE_CSS: 'true',
-            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources),
-            TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources)
+            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources && !asyncField),
+            TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources), TW_TEST_ASYNC_FIELD: String(asyncField)
         }
     })
 ]);
@@ -194,10 +195,10 @@ try {
     const a = await open();
     const b = await open();
     await focus(a);
-    const widget = await openWidget(a);
+    let widget = await openWidget(a);
     assert.equal(await a.locator('#tw-test-native-field-css').count(), 0);
     const group = widget.locator('fieldset');
-    const animation = layout || resources ? undefined : await checkAnimation(group);
+    const animation = layout || resources || asyncField ? undefined : await checkAnimation(group);
     const family = resources ? await checkResources(widget) : undefined;
     if (layout) {
         await checkLayout(editor.locator('[data-tw-parent-document-caption] [aria-label="Caption layout"]'), false);
@@ -210,8 +211,40 @@ try {
     }
 
     const edited = '改訂<&>';
-    await widget.getByRole('textbox', {name: 'Caption'}).fill(edited);
-    await widget.getByRole('button', {name: 'Apply caption'}).click();
+    const submit = async (value: string) => {
+        await widget.getByRole('textbox', {name: 'Caption'}).fill(value);
+        await widget.getByRole('button', {name: 'Apply caption'}).click();
+    };
+    if (asyncField) {
+        const jobCount = (count: number) => editor.waitForFunction(count =>
+            window['testAsyncFieldJobs']?.length === count, count);
+        const finish = async (index: number) => {
+            await editor.evaluate(index => window['testAsyncFieldJobs'][index].finish(), index);
+            await editor.waitForFunction(index => window['testAsyncFieldJobs'][index].delivered, index);
+        };
+        const undoDisabled = (page: Page) => page.locator('#undo').evaluate((node: HTMLButtonElement) => node.disabled);
+        await submit('stale value');
+        await jobCount(1);
+        await checkValue('original', [a, b]);
+        assert.equal(await undoDisabled(a), true);
+        await focus(b);
+        await widget.waitFor({state: 'detached'});
+        assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][0].signal.aborted), true);
+        assert.equal(await undoDisabled(b), true);
+
+        await focus(a);
+        widget = await openWidget(a);
+        await submit(edited);
+        await jobCount(2);
+        await finish(0);
+        await checkValue('original', [a, b]);
+        assert.equal(await undoDisabled(a), true);
+        assert.equal(await widget.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
+        assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][1].signal.aborted), false);
+        await finish(1);
+    } else {
+        await submit(edited);
+    }
     await widget.waitFor({state: 'detached'});
     if (animation) assert.equal(await animation.evaluate(effect => effect.playState), 'idle');
     if (family) assert.equal(await a.evaluate(family => [...document.fonts].some(face => face.family === family), family), false);
@@ -219,6 +252,7 @@ try {
     await focus(b);
     await b.locator('#undo').click();
     await checkValue('original', [a, b]);
+    if (asyncField) assert.equal(await b.locator('#undo').evaluate((node: HTMLButtonElement) => node.disabled), true);
     await focus(a);
     await a.locator('#redo').click();
     await checkValue(edited, [a, b]);
@@ -245,7 +279,7 @@ try {
             !request.cookie && !request.referer));
     } else if (layout) {
         await checkLayout(restored.locator('[aria-label="Caption layout"]'), true);
-    } else {
+    } else if (!asyncField) {
         assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 1);
         await reopened.emulateMedia({reducedMotion: 'reduce'});
         await reopened.waitForFunction(() => document.querySelector('[data-plus-native-field] fieldset').getAnimations().length === 0);
@@ -256,7 +290,8 @@ try {
     }
     await dock(reopened);
     assert.deepEqual(errors, []);
-    const displayCheck = resources ? 'parent-only PNG, SVG and WOFF2 loading and resource filtering' :
+    const displayCheck = asyncField ? 'async commit, stale completion after reacquiring edit access and duplicate callback filtering' :
+        resources ? 'parent-only PNG, SVG and WOFF2 loading and resource filtering' :
         layout ? 'Grid tracks and spans, Flexbox alignment and gaps, popup reflow' :
         'popup keyframes, resource filtering, reduced motion';
     console.log(`Chromium ${browser.version()}: ${displayCheck}, shared edit/Undo/Redo, docking and SB3 reload passed.`);

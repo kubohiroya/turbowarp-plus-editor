@@ -2,7 +2,7 @@ import {attachNativeFieldGraphic, type NativeFieldGraphic} from './native-field-
 import type {ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 
 type FieldEditor = {type: 'field_input' | 'turbowarp_plus_actions' | 'native_widget'} | {type: 'field_dropdown'; options: [string, string][]};
-type NativeFactory = {fromJson(options: unknown): unknown; parentDocument?: boolean; resources?: unknown};
+type NativeFactory = {fromJson(options: unknown): unknown; parentDocument?: boolean; resources?: unknown; asyncCommit?: boolean};
 export type CustomField = {name: string; editor: FieldEditor};
 
 function readEditor(implementation): FieldEditor | undefined {
