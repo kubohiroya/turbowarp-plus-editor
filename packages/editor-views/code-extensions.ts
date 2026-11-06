@@ -31,10 +31,74 @@ function projectDefinition(json, runtime, target): BlockDefinition {
     }));
 }
 
-// Match the connection shapes supported by the docked GUI's dynamic block editor.
 const dynamicTypes = new Set(['command', 'reporter', 'Boolean', 'hat', 'event']);
-const supportsDynamicInfo = info => dynamicTypes.has(info?.blockType) &&
-    typeof info.text === 'string' && !info.branchCount;
+const isBranched = info => (info?.blockType === 'conditional' || info?.blockType === 'loop') &&
+    [undefined, 0, 1, 2].includes(info.branchCount) && (typeof info.text === 'string' ||
+        Array.isArray(info.text) && info.text.length > 0 && info.text.every(line => typeof line === 'string'));
+const supportsDynamicInfo = info => isBranched(info) || (dynamicTypes.has(info?.blockType) &&
+    typeof info.text === 'string' && !info.branchCount);
+
+function convertDynamicShape(runtime, category, opcode: string, info) {
+    return runtime._convertBlockForScratchBlocks({...info, opcode, isDynamic: true}, category).json;
+}
+
+export function attachDockedDynamicBranches({vm, ScratchBlocks}) {
+    const {runtime} = vm;
+    const definitions = ScratchBlocks.Blocks;
+    const installed = new Map();
+    let disposed = false;
+
+    function install(category) {
+        for (const entry of category.blocks ?? []) {
+            if (!entry.info?.isDynamic) continue;
+            const type = entry.json?.type;
+            const native = definitions[type];
+            if (!native?.domToMutation || installed.get(type)?.replacement === native) continue;
+            const mutations = new WeakMap();
+            const replacement = {...native,
+                domToMutation(mutation: Element) {
+                    let info;
+                    let json;
+                    try {
+                        info = JSON.parse(mutation.getAttribute('blockInfo'));
+                        if (isBranched(info)) {
+                            json = convertDynamicShape(runtime, category, entry.info.opcode, info);
+                        }
+                    } catch {
+                        // Leave invalid metadata to the native definition.
+                    }
+                    if (!json) return native.domToMutation.call(this, mutation);
+                    // Native init supplies the docked theme. Apply the VM's layout and connections.
+                    const {colour, colourSecondary, colourTertiary, extensions, ...layout} = json;
+                    this.jsonInit(layout);
+                    if (info.color1 || info.color2 || info.color3) this.setColour(info.color1, info.color2, info.color3);
+                    mutations.set(this, mutation.cloneNode(true));
+                },
+                mutationToDom() {
+                    return mutations.get(this)?.cloneNode(true) ?? native.mutationToDom.call(this);
+                }
+            };
+            definitions[type] = replacement;
+            installed.set(type, {native, replacement});
+        }
+    }
+
+    // The docked GUI registers its factory first and also replays existing categories on mount.
+    vm.on('EXTENSION_ADDED', install);
+    vm.on('BLOCKSINFO_UPDATE', install);
+    queueMicrotask(() => {
+        if (!disposed) for (const category of runtime._blockInfo ?? []) install(category);
+    });
+
+    return {dispose() {
+        disposed = true;
+        vm.removeListener('EXTENSION_ADDED', install);
+        vm.removeListener('BLOCKSINFO_UPDATE', install);
+        for (const [type, {native, replacement}] of installed) {
+            if (definitions[type] === replacement) definitions[type] = native;
+        }
+    }};
+}
 
 // getBlocksJSON omits menu shadows and does not distinguish dynamic shapes.
 export function getCodeExtensions(runtime, target): CodeExtensions {
@@ -76,8 +140,7 @@ export function getCodeDynamicShapes(runtime, target): DynamicShape[] {
         const key = shapeKey(block.opcode, mutation);
         if (shapes.has(key)) continue;
         try {
-            const metadata = {...(info as object), opcode: registration.opcode, isDynamic: true};
-            const {json} = runtime._convertBlockForScratchBlocks(metadata, registration.category);
+            const json = convertDynamicShape(runtime, registration.category, registration.opcode, info);
             shapes.set(key, {mutation, json: projectDefinition(json, runtime, target)});
         } catch {
             // An invalid or unsupported mutation remains in the parent VM.
@@ -127,8 +190,10 @@ export function createCodeExtensionPalette(blocks) {
         const inputs = new Map(blockArgs(json).map(arg => [arg.name, arg.type]));
         return Array.from(block.children).every(child => {
             if (child.localName === 'next') return Object.hasOwn(json, 'nextStatement');
-            if (child.localName === 'value') return inputs.get(child.getAttribute('name')) === 'input_value';
-            if (child.localName === 'statement') return inputs.get(child.getAttribute('name')) === 'input_statement';
+            const inputType = inputs.get(child.getAttribute('name'));
+            // VM workspace XML uses <value> for statement inputs as well.
+            if (child.localName === 'value') return inputType === 'input_value' || inputType === 'input_statement';
+            if (child.localName === 'statement') return inputType === 'input_statement';
             return true;
         });
     }

@@ -12,11 +12,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1330,8 +1330,132 @@ async function checkCodeDynamic ({editor, a, b, focus, open, parent, sprite}) {
     report.checks.push('A parent-loaded dynamic opcode renders command, reporter, and Boolean shapes in two code windows. Reporter detachment, shared Undo/Redo, and SB3 reload preserve mutations and connections.');
 }
 
+const dynamicBranchFixture = {
+    url: `data:text/javascript,${encodeURIComponent(dynamicExtensionFixture.replace('Scratch.BlockType.COMMAND', 'Scratch.BlockType.LOOP'))}`,
+    stacks: [
+        {id: 'dynamic-loop', xml: `
+            <block type="windowdynamic_shape" id="dynamic-loop" x="260" y="125">
+                <mutation blockInfo='{"opcode":"shape","isDynamic":true,"blockType":"loop","text":"dynamic loop"}'></mutation>
+                <statement name="SUBSTACK"><block type="motion_ifonedgebounce" id="dynamic-loop-body"></block></statement>
+                <next><block type="looks_nextcostume" id="dynamic-loop-next"></block></next>
+            </block>`},
+        {id: 'dynamic-conditional', xml: `
+            <block type="windowdynamic_shape" id="dynamic-conditional" x="95" y="215">
+                <mutation blockInfo='{"opcode":"shape","isDynamic":true,"blockType":"conditional","branchCount":2,"text":["dynamic if","dynamic else"]}'></mutation>
+                <statement name="SUBSTACK"><block type="looks_nextbackdrop" id="dynamic-then"></block></statement>
+                <statement name="SUBSTACK2"><block type="looks_show" id="dynamic-else">
+                    <next><block type="looks_hide" id="dynamic-else-next"></block></next>
+                </block></statement>
+            </block>`}
+    ]
+};
+
+async function checkCodeDynamicBranches ({editor, a, b, focus, open, parent, sprite}) {
+    const selector = id => `[data-id="${id.replace(/[\\"]/g, '\\$&')}"]`;
+    const block = (page, id) => page.locator(`.blocklyBlockCanvas ${selector(id)}`);
+    const state = (reload = false) => editor.evaluate(async ({name, reload}) => {
+        if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
+        const target = vm.runtime.targets.find(item => item.getName() === name);
+        if (reload) vm.setEditingTarget(target.id);
+        const {blocks} = target;
+        const roots = blocks.getScripts().map(id => blocks.getBlock(id));
+        const shape = type => roots.find(block => block.opcode === 'windowdynamic_shape' && block.mutation.blockInfo.blockType === type);
+        const loop = shape('loop');
+        const conditional = shape('conditional');
+        const input = (block, name) => blocks.getBlock(block.inputs[name]?.block);
+        const body = input(loop, 'SUBSTACK');
+        const thenBlock = input(conditional, 'SUBSTACK');
+        const elseBlock = input(conditional, 'SUBSTACK2') ?? roots.find(block => block.opcode === 'looks_show');
+        const next = blocks.getBlock(elseBlock.next);
+        return {
+            ids: {loop: loop.id, conditional: conditional.id, body: body.id, loopNext: loop.next, then: thenBlock.id,
+                else: elseBlock.id, elseNext: next.id},
+            attached: elseBlock.parent === conditional.id && input(conditional, 'SUBSTACK2') === elseBlock,
+            body: [body, blocks.getBlock(loop.next), thenBlock, elseBlock, next].map(block => block.opcode),
+            mutations: [loop, conditional].map(block => block.mutation.blockInfo)
+        };
+    }, {name: sprite.name, reload});
+    const original = await state();
+    assert.equal(original.attached, true);
+    assert.deepEqual(original.body, ['motion_ifonedgebounce', 'looks_nextcostume', 'looks_nextbackdrop', 'looks_show', 'looks_hide']);
+
+    const checkView = async (page, {ids, attached}) => {
+        for (const [root, expected] of [[ids.loop, 'c-1'], [ids.conditional, 'c-2']]) {
+            await block(page, root).waitFor();
+            assert.ok((await block(page, root).getAttribute('data-shapes')).split(' ').includes(expected));
+        }
+        await block(page, ids.conditional).getByText('dynamic else', {exact: true}).waitFor();
+        await until(async () => {
+            const contains = (root, child) => block(page, root).locator(selector(child)).count();
+            return await contains(ids.loop, ids.body) && await contains(ids.loop, ids.loopNext) &&
+                await contains(ids.conditional, ids.then) && await contains(ids.else, ids.elseNext) &&
+                Boolean(await contains(ids.conditional, ids.else)) === attached;
+        }, 'the displayed branch stacks match the VM');
+    };
+    const checkEdit = async (page, attached) => {
+        const current = await until(async () => {
+            const result = await state();
+            return result.attached === attached && result;
+        }, 'the VM records the changed second branch');
+        assert.deepEqual(current, {...original, attached});
+        await checkView(page, current);
+    };
+    await checkView(editor, original);
+    await checkView(a.child, original);
+    await checkView(b.child, original);
+
+    await activateCodeView(a, b, focus);
+    await a.child.locator('.scratchCategoryMenuItemLabel').filter({hasText: /^Window dynamic$/}).click();
+    await a.child.locator('.blocklyFlyout [data-shapes~="c-1"]').getByText('dynamic default', {exact: true}).waitFor();
+    await activateCodeView(a, b, focus);
+    const origin = await block(a.child, original.ids.else).evaluate(element => {
+        const text = [...element.querySelectorAll('.blocklyText')].find(label => label.closest('[data-id]') === element);
+        const bounds = text.getBoundingClientRect();
+        const x = bounds.left + bounds.width / 2;
+        const y = bounds.top + bounds.height / 2;
+        const hit = document.elementFromPoint(x, y);
+        if (hit?.closest('[data-id]') !== element) {
+            throw new Error(`Branch block is obscured at ${x}, ${y} by ${hit?.closest('[data-id]')?.getAttribute('data-id') ?? hit?.tagName}`);
+        }
+        return {x, y};
+    });
+    const mouse = a.child.mouse;
+    await mouse.move(origin.x, origin.y);
+    await mouse.down();
+    await mouse.move(origin.x + 48, origin.y + 22, {steps: 6});
+    await mouse.move(730, 475, {steps: 18});
+    await mouse.up();
+    await checkEdit(b.child, false);
+
+    for (const [front, back, action, attached] of [[b, a, 'Undo', true], [a, b, 'Redo', false], [b, a, 'Undo', true]] as const) {
+        await activateCodeView(front, back, focus);
+        await front.child.getByRole('button', {name: action, exact: true}).click();
+        await checkEdit(back.child, attached);
+    }
+    const dock = async view => {
+        await focus(view.child, view.id);
+        await Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
+    };
+    await dock(a);
+    await dock(b);
+    await focus(editor, parent.id);
+    await checkView(editor, original);
+    await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(true));
+    await checkEdit(editor, false);
+    await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
+    await checkEdit(editor, true);
+
+    const restored = await state(true);
+    assert.deepEqual({...restored, ids: original.ids}, original);
+    await checkView(editor, restored);
+    const reopened = await open(restored.ids.loop);
+    await checkView(reopened.child, restored);
+    await dock(reopened);
+    report.checks.push('Dynamic C/E stacks retain their branch inputs and connected blocks in two windows, shared Undo/Redo, after docking, and after SB3 reload.');
+}
+
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1427,7 +1551,7 @@ async function checkCodePopouts ({editor, context, control}, {
         return seeded;
     }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope],
         broadcastFixture: broadcast ? broadcastFixture : null, procedureFixture: procedures ? procedureFixture : null, extensions,
-        dynamicFixture: dynamic ? {
+        dynamicFixture: dynamicBranches ? dynamicBranchFixture : dynamic ? {
             url: `data:text/javascript,${encodeURIComponent(dynamicExtensionFixture)}`,
             stacks: [{
                 id: 'dynamic-test-command',
@@ -1498,6 +1622,10 @@ async function checkCodePopouts ({editor, context, control}, {
     }
     if (stageCode) {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
+        return;
+    }
+    if (dynamicBranches) {
+        await checkCodeDynamicBranches({editor, a, b, focus, open, parent, sprite: sprites[0]});
         return;
     }
     if (dynamic) {
@@ -2241,6 +2369,7 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
+    else if (testMode === '--code-dynamic-branches') await run('code-popout', env => checkCodePopouts(env, {dynamicBranches: true}));
     else if (testMode === '--code-dynamic') await run('code-popout', env => checkCodePopouts(env, {dynamic: true}));
     else if (testMode === '--code-extensions') await run('code-popout', env => checkCodePopouts(env, {extensions: true}));
     else if (testMode === '--code-procedures') await run('code-popout', env => checkCodePopouts(env, {procedures: true}));
