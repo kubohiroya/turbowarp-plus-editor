@@ -12,11 +12,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -948,8 +948,162 @@ async function checkCodeBroadcast ({editor, a, b, focus, parent, sprite}) {
     report.checks.push('Broadcast send, send and wait, and receive references retain message IDs through two views, VM message pruning, shared Undo/Redo and SB3');
 }
 
+const procedureFixture = `
+    <block id="procedure-test-definition" type="procedures_definition" x="140" y="155">
+        <statement name="custom_block">
+            <shadow id="procedure-test-prototype" type="procedures_prototype">
+                <mutation proccode="drive %s" argumentids='["amount"]' argumentnames='["speed"]'
+                    argumentdefaults='[""]' warp="false"></mutation>
+                <value name="amount"><shadow id="procedure-test-shadow" type="argument_reporter_string_number">
+                    <field name="VALUE">speed</field>
+                </shadow></value>
+            </shadow>
+        </statement>
+        <next><block id="procedure-test-move" type="motion_movesteps">
+            <value name="STEPS"><block id="procedure-test-argument" type="argument_reporter_string_number">
+                <field name="VALUE">speed</field>
+            </block></value>
+        </block></next>
+    </block>
+    <block id="procedure-test-call" type="procedures_call" x="140" y="320">
+        <mutation proccode="drive %s" argumentids='["amount"]' warp="false"></mutation>
+        <value name="amount"><shadow id="procedure-test-value" type="text"><field name="TEXT">35</field></shadow></value>
+    </block>`;
+
+async function checkCodeProcedures ({editor, a, b, focus, parent, sprite}) {
+    const inspect = reload => editor.evaluate(async ({spriteName, reload}) => {
+        if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
+        const target = vm.runtime.targets.find(item => item.getName() === spriteName);
+        if (reload) vm.setEditingTarget(target.id);
+        const {blocks} = target;
+        const roots = blocks.getScripts().map(id => blocks.getBlock(id));
+        const definitions = roots.filter(block => block.opcode === 'procedures_definition');
+        const getPrototype = definition => blocks.getBlock(definition.inputs.custom_block.block);
+        const definition = definitions.find(block => getPrototype(block).mutation.proccode.startsWith('drive '));
+        const call = roots.find(block => block.opcode === 'procedures_call');
+        const prototype = getPrototype(definition);
+        const move = blocks.getBlock(definition.next);
+        const reporter = blocks.getBlock(move.inputs.STEPS.block);
+        const args = JSON.parse(prototype.mutation.argumentids);
+        const value = id => blocks.getBlock(call.inputs[id]?.block)?.fields.TEXT?.value;
+        return {
+            definition: prototype.mutation.proccode,
+            definitionCodes: definitions.map(block => getPrototype(block).mutation.proccode).sort(),
+            call: call.mutation.proccode,
+            args,
+            callArgs: JSON.parse(call.mutation.argumentids),
+            names: JSON.parse(prototype.mutation.argumentnames),
+            reporter: reporter.fields.VALUE.value,
+            values: Object.keys(call.inputs).map(value),
+            prototypeInputs: Object.keys(prototype.inputs),
+            callInputs: Object.keys(call.inputs),
+            shadowRoots: roots.filter(block => block.shadow).length,
+            callId: call.id
+        };
+    }, {spriteName: sprite.name, reload});
+    const renderedCall = (page, id = 'procedure-test-call') =>
+        page.locator(`.blocklyBlockCanvas [data-id="${id}"]`);
+    const shows = async (page, label, id?) =>
+        (await renderedCall(page, id).textContent()).replace(/\s/g, ' ').includes(label);
+    const check = async (view, edited) => {
+        const title = edited ? 'drive edited' : 'drive';
+        await until(async () => {
+            const state = await inspect(false);
+            return state.definition === (edited ? 'drive edited %s %s %b' : 'drive %s') &&
+                state.call === state.definition && await shows(view.child, title);
+        }, 'definition and caller agree in the VM and the other view');
+        const state = await inspect(false);
+        assert.deepEqual(state.args, state.callArgs);
+        assert.equal(state.args[0], 'amount');
+        assert.equal(state.args.length, edited ? 3 : 1);
+        assert.deepEqual(state.names, edited ? ['velocity', 'note', 'ready'] : ['speed']);
+        assert.equal(state.reporter, edited ? 'velocity' : 'speed');
+        assert.deepEqual(state.values, edited ? ['35', ''] : ['35']);
+        assert.equal(state.shadowRoots, 0);
+    };
+    await activateCodeView(a, b, focus);
+    await renderedCall(a.child).click({button: 'right'});
+    await a.child.locator('.blocklyContextMenu').getByText(/^Edit$/i).click();
+    const dialog = a.child.getByRole('dialog');
+    const draft = dialog.locator('[data-procedure-workspace]');
+    const setText = async value => {
+        const input = dialog.locator('.blocklyHtmlInput');
+        await input.fill(value);
+        await input.press('Enter');
+    };
+    await draft.getByText('drive', {exact: true}).click();
+    await setText('drive edited');
+    await draft.getByText('speed', {exact: true}).click();
+    await setText('velocity');
+    await dialog.getByRole('button', {name: /^(Add number or text input|引数を追加（数値または文字列）)$/}).click();
+    await setText('note');
+    await dialog.getByRole('button', {name: /^(Add boolean input|真偽値の引数を追加)$/}).click();
+    await setText('ready');
+    await dialog.getByRole('button', {name: 'OK', exact: true}).click();
+    await check(b, true);
+
+    await activateCodeView(b, a, focus);
+    await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
+    await check(a, false);
+    await activateCodeView(a, b, focus);
+    await a.child.getByRole('button', {name: 'Redo', exact: true}).click();
+    await check(b, true);
+
+    const withNote = await inspect(false);
+    await activateCodeView(a, b, focus);
+    await renderedCall(a.child).click({button: 'right'});
+    await a.child.locator('.blocklyContextMenu').getByText(/^Edit$/i).click();
+    await draft.getByText('note', {exact: true}).click();
+    await dialog.locator('.blocklyTextRemoveIcon').click();
+    await dialog.getByRole('button', {name: 'OK', exact: true}).click();
+    await until(async () => (await inspect(false)).call === 'drive edited %s %b', 'removed argument reaches the VM');
+    const removed = await inspect(false);
+    assert.equal(removed.call, removed.definition);
+    assert.deepEqual(removed.names, ['velocity', 'ready']);
+    assert.deepEqual(removed.args, [withNote.args[0], withNote.args[2]]);
+    assert.deepEqual(removed.args, removed.callArgs);
+    assert.deepEqual(removed.prototypeInputs, removed.args);
+    assert.deepEqual(removed.callInputs, ['amount']);
+    assert.deepEqual(removed.values, ['35']);
+    assert.equal(removed.shadowRoots, 0);
+
+    await activateCodeView(b, a, focus);
+    await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
+    await check(a, true);
+    await activateCodeView(a, b, focus);
+    await a.child.getByRole('button', {name: 'Redo', exact: true}).click();
+    await until(async () => (await inspect(false)).call === removed.call, 'one redo removes the argument again');
+    assert.deepEqual(await inspect(false), removed);
+
+    await activateCodeView(a, b, focus);
+    await a.child.locator('.scratchCategoryMenuItemLabel').filter({hasText: /^My Blocks$/}).click();
+    await a.child.getByText('Make a Block', {exact: true}).click();
+    await draft.getByText('block name', {exact: true}).click();
+    await setText('turn check');
+    await dialog.getByRole('button', {name: 'OK', exact: true}).click();
+    const createdId = await until(() => editor.evaluate(spriteId => {
+        const {blocks} = vm.runtime.getTargetById(spriteId);
+        const definitions = blocks.getScripts().map(id => blocks.getBlock(id)).filter(block =>
+            block.opcode === 'procedures_definition' &&
+            blocks.getBlock(block.inputs.custom_block.block).mutation.proccode === 'turn check');
+        return definitions.length === 1 && definitions[0].id;
+    }, sprite.id), 'one new definition reaches the VM');
+    await b.child.locator(`.blocklyBlockCanvas [data-id="${createdId}"]`).getByText('turn check', {exact: true}).waitFor();
+
+    for (const view of [a, b]) {
+        await focus(view.child, view.id);
+        await Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
+    }
+    await focus(editor, parent.id);
+    const {callId: _beforeId, ...before} = await inspect(false);
+    const {callId, ...restored} = await inspect(true);
+    assert.deepEqual(restored, before);
+    await until(() => shows(editor, 'drive edited', callId), 'reloaded editor displays the edited call');
+    report.checks.push('Procedure creation, definition changes, call inputs, argument reporters and call values stay together through two views, one-step Undo/Redo and SB3');
+}
+
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -961,7 +1115,7 @@ async function checkCodePopouts ({editor, context, control}, {
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture}) => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
         if (targetSync || comments) {
@@ -1023,10 +1177,12 @@ async function checkCodePopouts ({editor, context, control}, {
                     parent: blockId, topLevel: false, shadow: true, inputs: {}, fields: structuredClone(fields)});
             }
         }
+        if (procedureFixture) first.blocks.blocklyListen({type: 'create', blockId: 'procedure-test-definition',
+            xml: {outerHTML: procedureFixture.trim().replace(/>\s+</g, '><')}});
         vm.refreshWorkspace();
         return seeded;
     }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope],
-        broadcastFixture: broadcast ? broadcastFixture : null});
+        broadcastFixture: broadcast ? broadcastFixture : null, procedureFixture: procedures ? procedureFixture : null});
     const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
@@ -1073,6 +1229,10 @@ async function checkCodePopouts ({editor, context, control}, {
     }
     if (stageCode) {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
+        return;
+    }
+    if (procedures) {
+        await checkCodeProcedures({editor, a, b, focus, parent, sprite: sprites[0]});
         return;
     }
     if (broadcast) {
@@ -1804,6 +1964,7 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
+    else if (testMode === '--code-procedures') await run('code-popout', env => checkCodePopouts(env, {procedures: true}));
     else if (testMode === '--code-broadcast') await run('code-popout', env => checkCodePopouts(env, {broadcast: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);

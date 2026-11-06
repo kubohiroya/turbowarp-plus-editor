@@ -1,0 +1,44 @@
+:global(.twPlusProcedureDialog) {
+    position: fixed;
+    inset: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+    background: transparent;
+}
+:global(.twPlusProcedureDialog::backdrop) {
+    background: #17212a80;
+}
+:global(.twPlusProcedureDialog > form) {
+    box-sizing: border-box;
+    max-width: min(38rem, calc(100% - 2rem));
+    margin: min(12vh, 4rem) auto 0;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: Canvas;
+    color: CanvasText;
+}
+:global(.twPlusProcedureDialog h2) {
+    margin-top: 0;
+}
+:global(.twPlusProcedureDialog [data-procedure-workspace]) {
+    position: relative;
+    height: 7rem;
+    border: 1px solid GrayText;
+}
+:global(.twPlusProcedureDialog [data-procedure-buttons]),
+:global(.twPlusProcedureDialog footer) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block: 0.75rem;
+}
+:global(.twPlusProcedureDialog footer) {
+    justify-content: flex-end;
+}

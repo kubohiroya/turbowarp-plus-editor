@@ -6,6 +6,7 @@
   "exports": {
     ".": "./index.ts",
     "./target-combobox": "./target-combobox.tsx",
+    "./procedure-editor": "./procedure-editor.ts",
     "./variable-references": "./variable-references.ts",
     "./sprite-code-windows": "./index.tsx"
   },
