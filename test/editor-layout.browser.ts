@@ -1276,7 +1276,10 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await expect(groups).toHaveCount(2);
     await assertStage();
 
-    await stageTab.dragTo(codeTab);
+    const codeBounds = await codeContent.boundingBox();
+    assert.ok(codeBounds);
+    await stageTab.dragTo(codeContent, {targetPosition: {x: codeBounds.width / 2, y: codeBounds.height / 2}});
+    await expect(codeGroup.getByRole('tab', {name: 'Stage', exact: true})).toBeVisible();
     await expect(groups).toHaveCount(1);
     await codeTab.click();
     await expect(canvas).toBeHidden();
