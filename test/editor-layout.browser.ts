@@ -390,8 +390,6 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const motion = await page.getByRole('button', {name: 'Motion', exact: true}).boundingBox();
     const toolboxBounds = await toolbox.boundingBox();
     assert.ok(motion.x - toolboxBounds.x < 8);
-    await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
-    await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     await expect(grid).toBeVisible();
     const columns = await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' '));
     assert.equal(columns.length, 1);
@@ -603,7 +601,6 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(backdropActions).toBeVisible();
 
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusDockview=0&twPlusWindowLayout=1&twPlusStageDrawer=0');
-    await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
     const japaneseAdd = page.getByRole('button', {name: 'スプライトを追加する', exact: true});
     await japaneseAdd.hover();
     await expect.poll(() => japaneseAdd.evaluate(button => getComputedStyle(button, '::after').content))
@@ -631,7 +628,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     assert.deepEqual(errors, []);
 });
 
-test('the default editor reveals the sprite drawer and exposes the detached window layout', {timeout: 60_000}, async t => {
+test('the default editor pins the sprite list and supports the drawer and detached window layout', {timeout: 60_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
@@ -639,8 +636,16 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
     const pin = page.getByRole('button', {name: 'Pin sprite list', exact: true});
     const undock = page.getByRole('button', {name: 'Undock sprite list', exact: true});
     const backdrop = page.locator('[data-backdrop-placement] img').first();
+    await expect(pin).toHaveAttribute('aria-pressed', 'true');
+    await expect(sprites).toBeHidden();
+    await expect(backdrop).toBeVisible();
+
+    await pin.press('Enter');
+    await sprites.press('Escape');
     await expect(sprites).toHaveAttribute('aria-expanded', 'false');
+    await expect(backdrop).toBeHidden();
     await sprites.hover();
+    await expect(pin).toHaveAttribute('aria-pressed', 'false');
     await expect(backdrop).toBeVisible();
     await expect(undock).toBeVisible();
     await page.mouse.move(500, 400);
@@ -774,8 +779,6 @@ test('a background sprite code window fits scripts when the foreground shows non
         }
     });
 
-    await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
-    await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     const tile = name => page.locator('[class*="sprite-selector-item_sprite-name"]').getByText(name, {exact: true});
     const openCodeWindow = async name => {
         await tile(name).click({button: 'right'});
@@ -837,6 +840,9 @@ test('utility panels and menus stay above the code workspace and its palette', {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0');
 
+    const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
+    await page.getByRole('button', {name: 'Pin sprite list', exact: true}).press('Enter');
+    await sprites.press('Escape');
     await page.getByRole('button', {name: 'Motion', exact: true}).click();
     const flyout = page.locator('.blocklyFlyout').first();
     await expect(flyout).toBeVisible();
@@ -860,7 +866,6 @@ test('utility panels and menus stay above the code workspace and its palette', {
     await code.getByRole('button', {name: 'Window layout'}).click();
     await code.getByRole('button', {name: 'Maximize this window'}).click();
 
-    const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
     await sprites.hover();
     await expect(sprites).toHaveAttribute('aria-expanded', 'true');
     await page.getByRole('button', {name: 'Undock sprite list', exact: true}).click();
