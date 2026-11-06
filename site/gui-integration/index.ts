@@ -1,4 +1,7 @@
 import React from 'react';
+import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-editor';
+import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {externalYamlPort} from '../editor-layout/index.tsx';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
@@ -66,5 +69,21 @@ export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropLis
 
 export const extensionInFileMenu = startup.extensionFileMenu;
 export const createFileMenuItem = extensionInFileMenu ? createIconFileMenuItem : undefined;
+const externalYamlActions = new WeakMap<object, ReturnType<typeof createExternalYamlMenuAction>>();
+const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClose}) => {
+    if (!externalYamlPort || !vm) return null;
+    let entry = externalYamlActions.get(vm);
+    if (!entry) {
+        entry = createExternalYamlMenuAction({vm, locale, port: externalYamlPort,
+            openPanel: request => getDocumentWorkspace(vm).open(request), document});
+        externalYamlActions.set(vm, entry);
+    }
+    const action = entry;
+    return React.createElement(MenuSection, null,
+        React.createElement(MenuItem, {command: 'open-external-yaml', onClick: () => {
+            onRequestClose();
+            void action.open();
+        }}, action.label));
+};
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
-    renderProjectFileMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+    renderProjectFileMenu(props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));

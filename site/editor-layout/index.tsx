@@ -1,4 +1,5 @@
 import React from 'react';
+import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
@@ -17,8 +18,12 @@ const startupParams = new URLSearchParams(startupSearch);
 export const layoutFlags = readWebStartupFeatureFlags(startupSearch);
 export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
     startupParams.get('twPlusDockviewSpriteTabs') !== '0';
+const desktopYamlPort = typeof window !== 'undefined' && (window as Window & {
+    EditorPreload?: {externalYaml?: ExternalYamlFilePort};
+}).EditorPreload?.externalYaml;
 export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled &&
-    startupParams.get('twPlusDockview') !== '0' && typeof EditorPreload === 'undefined';
+    startupParams.get('twPlusDockview') !== '0' && (typeof EditorPreload === 'undefined' || Boolean(desktopYamlPort));
+export const externalYamlPort = dockviewMultiViewEnabled && desktopYamlPort;
 export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
     startupParams.get('twPlusStageDrawer') !== '0';
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
