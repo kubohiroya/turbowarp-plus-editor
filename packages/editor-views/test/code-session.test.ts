@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
-import {attachDockedDynamicBranches, getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
+import {attachDockedCodeExtensions, getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
+import {registerCustomFields} from '../custom-extension-fields.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
 
@@ -261,6 +262,39 @@ test('code extension projections send definitions and resolve menus only for the
     assert.deepEqual(structuredClone(editable), editable);
 });
 
+test('custom extension fields project only declarative editors and keep native field registrations', () => {
+    const info = (name, implementation) => ({
+        extendedName: `fixture_${name}`, fieldImplementation: implementation,
+        scratchBlocksDefinition: {json: {type: `fixture_${name}`, args0: [{type: `field_fixture_${name}`}]}}
+    });
+    const options = [['First', 'id-1'], ['Second', 'id-2']];
+    const customFieldTypes = {
+        mode: info('mode', {type: 'field_dropdown', options, fromJson() {throw new Error('must not run');}}),
+        name: info('name', {type: 'field_input'}),
+        unsafe: info('unsafe', {fromJson() {throw new Error('must not run');}}),
+        invalid: info('invalid', {type: 'field_dropdown', options: [[{src: 'https://invalid.example'}, 'bad']]})
+    };
+    const projected = getCodeExtensions({_blockInfo: [{id: 'fixture', customFieldTypes}]}, {});
+    assert.deepEqual(structuredClone(projected), projected);
+    assert.deepEqual(projected.definitions.map(definition => definition.type), ['fixture_mode', 'fixture_name']);
+    assert.deepEqual(projected.customFields, [
+        {name: 'field_fixture_mode', editor: {type: 'field_dropdown', options}},
+        {name: 'field_fixture_name', editor: {type: 'field_input'}}
+    ]);
+    assert.notEqual(projected.customFields[0].editor.options[0], options[0]);
+
+    const native = {fromJson() {}};
+    const registry = {field_fixture_name: native};
+    const unregister = registerCustomFields({
+        Field: {TYPE_MAP_: registry, register(name, factory) {registry[name] = factory;}},
+        FieldDropdown: class {constructor(options) {this.options = options;}}
+    }, projected.customFields);
+    assert.deepEqual(registry.field_fixture_mode.fromJson().options, options);
+    assert.equal(registry.field_fixture_name, native);
+    unregister();
+    assert.deepEqual(registry, {field_fixture_name: native});
+});
+
 test('dynamic extension projections use the registered opcode and each supported saved shape', () => {
     const opcode = 'fixture_shape';
     const command = {opcode: 'other', blockType: 'command', text: 'command [AMOUNT]'};
@@ -323,7 +357,7 @@ test('the docked factory retains branch mutations and follows GUI extension refr
         mutationToDom() {return this.nativeMutation;}
     });
     const definitions = {};
-    const connection = attachDockedDynamicBranches({vm, ScratchBlocks: {Blocks: definitions}});
+    const connection = attachDockedCodeExtensions({vm, ScratchBlocks: {Blocks: definitions}});
     definitions[opcode] = nativeFactory();
     await Promise.resolve();
 

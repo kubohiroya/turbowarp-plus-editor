@@ -3,7 +3,7 @@ import {capture, createHistory, restore, workspaceXML} from './history.ts';
 import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
 import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.ts';
 
-export {attachDockedDynamicBranches} from './code-extensions.ts';
+export {attachDockedCodeExtensions} from './code-extensions.ts';
 export {encodeEdit} from './protocol.ts';
 
 // A drop must stay within one target's block and comment history.
