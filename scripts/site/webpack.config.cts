@@ -103,12 +103,10 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-window
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
-for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
+for (const entry of ['standard-layout', 'editor.css', 'targets.css', 'extension-file-menu', 'sprite-tabs', 'dockview-styles']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
-const extensionFileMenuEntry = '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
-config.resolve.alias[`${extensionFileMenuEntry}$`] = rootRequire.resolve(extensionFileMenuEntry);
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 const paletteResizeEntry = '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';
@@ -125,11 +123,24 @@ config.resolve.alias['@tw-plus/upstream-hide-delete-button-manifest$'] =
     path.join(gui, 'src', 'addons', 'generated', hideDeleteButtonManifest);
 const backpackSurface = path.join(siteSource, 'editor-backpack');
 config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.ts');
+const layoutRequire = createRequire(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-layout'));
+const dockviewEntry = layoutRequire.resolve('dockview');
+const dockviewRequire = createRequire(dockviewEntry);
+config.resolve.alias['dockview$'] = dockviewEntry;
+config.resolve.alias['dockview-core$'] = dockviewRequire.resolve('dockview-core');
+const dockviewStyles = layoutRequire.resolve('dockview/dist/styles/dockview.css');
+config.resolve.alias['dockview/dist/styles/dockview.css$'] = dockviewStyles;
+config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
+    {from: path.join(path.dirname(layoutRequire.resolve('dockview/package.json')), 'LICENCE.md'),
+        to: 'notices/dockview/LICENCE.md'},
+    {from: path.join(path.dirname(dockviewRequire.resolve('dockview-core/package.json')), 'LICENCE.md'),
+        to: 'notices/dockview-core/LICENCE.md'}
+]}));
 const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
 config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
-cssModules.exclude = [cssModules.exclude, windowStyles].filter(Boolean);
-config.module.rules.push({test: /\.css$/, include: windowStyles,
+cssModules.exclude = [cssModules.exclude, windowStyles, dockviewStyles].filter(Boolean);
+config.module.rules.push({test: /\.css$/, include: [windowStyles, dockviewStyles],
     use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
 config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({

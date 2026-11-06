@@ -364,6 +364,13 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     assert.equal(columns.length, 1);
     const gridBounds = await grid.boundingBox();
     const workspace = page.locator('.blocklySvg').first();
+    const splitter = page.getByRole('separator', {name: 'Sprite list and editor width'});
+    await expect.poll(async () => {
+        const divider = await splitter.boundingBox();
+        const panel = await workspace.boundingBox();
+        const editor = await workspace.locator('xpath=ancestor::*[contains(@class,"gui_editor-wrapper_")][1]').boundingBox();
+        return divider.x + divider.width <= panel.x + 1 && Math.abs(panel.width - editor.width) <= 1;
+    }).toBe(true);
     const editorBounds = await workspace.boundingBox();
     const backdrop = grid.getByRole('button', {name: 'Backdrops', exact: true});
     await expect(grid).toHaveAttribute('data-backdrop-placement', 'bottom-right');
@@ -378,7 +385,6 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     };
     await assertBackdropPosition();
 
-    const splitter = page.getByRole('separator', {name: 'Sprite list and editor width'});
     const divider = await splitter.boundingBox();
     assert.ok(gridBounds.x + gridBounds.width <= divider.x && divider.x + divider.width <= editorBounds.x + 1);
     await page.mouse.move(divider.x + divider.width / 2, divider.y + 80);
@@ -662,7 +668,9 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
     await popupMenu.press('ArrowDown');
     await child.keyboard.press('ArrowDown');
     await expect(dock).toBeFocused();
-    await Promise.all([child.waitForEvent('close'), dock.press('Enter')]);
+    await Promise.all([child.waitForEvent('close'), child.keyboard.down('Enter').catch(error => {
+        if (!child.isClosed()) throw error;
+    })]);
     await expect(backdrop).toBeVisible();
 
 });
@@ -729,7 +737,11 @@ test('a background sprite code window fits scripts when the foreground shows non
     await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
     await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     const tile = name => page.locator('[class*="sprite-selector-item_sprite-name"]').getByText(name, {exact: true});
-    await tile('Preview sprite').click();
+    const openCodeWindow = async name => {
+        await tile(name).click({button: 'right'});
+        await page.locator('.react-contextmenu--visible').getByRole('menuitem', {name: 'Open', exact: true}).click();
+    };
+    await openCodeWindow('Preview sprite');
     const back = page.getByRole('region', {name: 'Code · Preview sprite', exact: true});
     await expect(back.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
     // The native editor may automatically pan towards a distant script when the window opens.
@@ -740,7 +752,7 @@ test('a background sprite code window fits scripts when the foreground shows non
         workspace.scrollY = 0;
         workspace.translate(absoluteLeft, absoluteTop);
     });
-    await tile('Editing sprite').click();
+    await openCodeWindow('Editing sprite');
     const front = page.getByRole('region', {name: 'Code · Editing sprite', exact: true});
     await expect(front.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
 

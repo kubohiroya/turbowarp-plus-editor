@@ -36,7 +36,7 @@ test('documentation needs only Git and a selected browser suite pulls in its bui
 test('main runs missing items and its own build even if supplied matching evidence for the build', () => {
     const plan = scoped(['typecheck', 'unit', 'editor-browser', 'site-build']);
     const execution = select(plan, {main: true, evidence: {reason: 'verified-items',
-        reusable: ['typecheck', 'editor-browser', 'site-build', 'layout-unit']}});
+        reusable: ['typecheck', 'editor-browser', 'site-build', 'views-unit']}});
     assert.deepEqual(execution.reused, ['typecheck', 'editor-browser']);
     assert.deepEqual(execution.checks, ['unit', 'site-build']);
     assert.equal(execution.needsBrowser, false);

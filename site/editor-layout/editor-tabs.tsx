@@ -3,7 +3,9 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
-import {layoutFlags} from './index.tsx';
+import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
+import {dockviewSpriteTabsEnabled, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
@@ -16,6 +18,12 @@ const resizeCode = () => {
 
 export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
     const host = useWindowHost();
+    const {plusLayout} = React.useContext(WindowLayoutContext);
+    const spriteTabs = useSpriteTabs({
+        available: dockviewSpriteTabsEnabled, enabled: plusLayout && dockviewSpriteTabsEnabled,
+        vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
+        resize: () => requestAnimationFrame(resizeCode)
+    });
     const code = useCodeWindows({vm, host, locale, enabled: (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
     const action = React.useRef(null);
@@ -89,16 +97,24 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
         <div className={styles.tabRow}>{tabs}{tabAction}</div>;
 
     const content = render({...layout,
-        renderEditorTabRow,
+        renderEditorTabRow: tabs => {
+            const row = renderEditorTabRow(tabs);
+            return spriteTabs.renderEditorTabRow ? spriteTabs.renderEditorTabRow(row) : row;
+        },
         isEditorPanelOpen: index => Boolean(getMount(index)),
-        renderEditorPanel: (index, children) => <DockablePanel
-            dockLabel={dockLabel}
-            mount={getMount(index)}
-            onDock={() => index === codeTab && code?.front ? code.front.connection.close() : surfaces[index].dock()}
-            onResize={index === codeTab ? resizeCode : undefined}
-        >{children}</DockablePanel>
+        renderEditorPanel: (index, children) => {
+            const panel = <DockablePanel
+                dockLabel={dockLabel}
+                mount={getMount(index)}
+                onDock={() => index === codeTab && code?.front ? code.front.connection.close() : surfaces[index].dock()}
+                onResize={index === codeTab ? resizeCode : undefined}
+            >{children}</DockablePanel>;
+            return spriteTabs.renderEditorPanel ? spriteTabs.renderEditorPanel(index, panel) : panel;
+        }
     });
-    return <SpriteCodeProvider value={code?.context ?? null}>
+    const selection = spriteTabs.context;
+    const editorCommands = selection && code ? {...selection, open: code.context.open} : selection ?? code?.context ?? null;
+    return <SpriteCodeProvider value={editorCommands}>
         {content}
         {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front}
             attachBackpackDrop={attachBackpackDrop} />}
