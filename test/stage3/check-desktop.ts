@@ -2285,7 +2285,7 @@ async function checkStageDisplayMenu ({editor, context, control}) {
     await child.locator('[class*="green-flag_green-flag_"]').first().waitFor();
     await child.getByRole('button', {name: displayLabel}).click();
     await Promise.all([child.waitForEvent('close'),
-        child.getByRole('menuitem', {name: /^(Dock stage|ドックに戻す)$/}).click()]);
+        child.getByRole('menuitem', {name: /^(Dock stage|ステージをエディターに戻す)$/}).click()]);
     assert.ok(await canvas.evaluate(node => node === window.originalStageCanvas));
 
     const reopened = await open();
