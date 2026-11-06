@@ -58,5 +58,32 @@
       "catalog-current.png": "Current File menu path, TurboWarp Plus filter with TurboWarp-Markdown selected.",
       "minimap-current.png": "Default workspace with five test blocks added to illustrate the minimap."
     }
+  },
+  "operationDetails": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "b506c8bc32f08f6bbe45531afb7e850277e06ccb",
+    "guiRevision": "1712614699ca5bef772dc3a020b1b7b63d6bccea",
+    "securityVersion": "0.8.7",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "splitter-detail.png": "Scratch layout (twPlusStandardLayout=0), column separator focused after a keyboard adjustment.",
+      "sprite-tabs-detail.png": "Two sprite tabs after duplicating the starter sprite.",
+      "split-menu.png": "Editor layout menu showing the split and close actions.",
+      "media-panes-detail.png": "Costumes and Sounds tabs in two horizontal panels of the same sprite.",
+      "variable-pane-detail.png": "A test score variable created with the editor UI and displayed beside the code pane.",
+      "palette-resize-detail.png": "Resize grip at the lower-right corner of the Motion flyout.",
+      "palette-order-detail.png": "The Motion category held over the Sound category while reordering.",
+      "project-uri-detail.png": "Project URI field with an illustrative example.org URL typed in, before applying."
+    }
+  },
+  "assetPreviewDevelopment": {
+    "date": "2026-11-04",
+    "baseRevision": "b1677c5c693f4270994b6d70d6d102c18815572c",
+    "image": "asset-preview-development.png",
+    "note": "Local Kamishibai development build with additional working changes. Remote-cacheable test image served by a test response. Crop of the real preview."
   }
 }
