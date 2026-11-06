@@ -1010,11 +1010,14 @@ test('the Dockview asset connection restores the native costume and sound select
     const bounds = async (pane: ReturnType<typeof page.locator>) => {
         const list = await pane.locator('[class*="selector_wrapper_"]').boundingBox();
         const body = await pane.locator('[class*="asset-panel_detail-area_"]').boundingBox();
+        const toolbarHeight = await pane.evaluate(node => node.closest('.tw-plus-sprite-tab-slot--split')
+            .querySelector('.tw-plus-sprite-toolbar').getBoundingClientRect().height);
         assert(list && body);
-        return {list: list.width, detail: body.width, height: body.height};
+        // The active toolbar can wrap when its additional controls need another row.
+        return {list: list.width, detail: body.width, heightWithToolbar: body.height + toolbarHeight};
     };
-    const sameBounds = (before: {list: number; detail: number; height: number}, after: typeof before) => {
-        for (const key of ['list', 'detail', 'height'] as const) {
+    const sameBounds = (before: Awaited<ReturnType<typeof bounds>>, after: typeof before) => {
+        for (const key of ['list', 'detail', 'heightWithToolbar'] as const) {
             assert(Math.abs(before[key] - after[key]) <= 2, key + ': ' + before[key] + ' vs ' + after[key]);
         }
     };
