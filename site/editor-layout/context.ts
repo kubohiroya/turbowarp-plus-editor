@@ -5,6 +5,8 @@ export const WindowLayoutContext = React.createContext<{
     plusLayout: boolean;
     locale: string;
     stageHidden?: boolean;
+    stageDrawer?: boolean;
+    setStageDrawerOpen?: (open: boolean) => void;
     setStageVisible?: (visible: boolean) => void;
     stageResize?: () => void;
     stageActionMount?: HTMLElement;

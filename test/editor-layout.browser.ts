@@ -266,9 +266,9 @@ test('the Plus File menu has action icons and opens the extension library from i
     await expect(add).toHaveCount(0);
 });
 
-test('the Plus project menu and the complete stage panel work by default', {timeout: 30_000}, async t => {
+test('the Plus project menu and previous stage layout remain available', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStageDrawer=0');
     await expect(page.getByText('See Project Page', {exact: true})).toHaveCount(0);
     await expect(page.getByText('TurboWarp Feedback', {exact: true})).toHaveCount(0);
     const project = page.getByLabel('TurboWarp Plus project information', {exact: true}).first();
@@ -321,7 +321,7 @@ test('the Plus project menu and the complete stage panel work by default', {time
 test('a separate stage window releases keyboard input on blur and restores the editor canvas', {timeout: 30_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
-    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en&twPlusStageDrawer=0');
     const frame = page.locator('[data-plus-stage-frame]');
     await expect(frame.locator('[data-gui-stage] canvas')).toBeVisible();
     await page.evaluate(() => {
@@ -355,7 +355,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    const start = query => page.goto(origin + buildPrefix + 'editor.html?lang=en' + query);
+    const start = query => page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStageDrawer=0' + query);
     const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
     const hideStage = page.getByRole('menuitem', {name: 'Hide stage', exact: true});
     const showStage = page.getByRole('menuitem', {name: 'Show stage', exact: true});
@@ -602,7 +602,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
 
-    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1');
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1&twPlusStageDrawer=0');
     await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
     const japaneseAdd = page.getByRole('button', {name: 'スプライトを追加する', exact: true});
     await japaneseAdd.hover();
