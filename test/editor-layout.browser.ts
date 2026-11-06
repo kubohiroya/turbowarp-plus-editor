@@ -772,6 +772,9 @@ test('opt-in sprite tabs share the native editor and the File menu opens the ext
     const secondTab = dockviewTabs.filter({hasText: 'ミント'});
     await expect(firstTab).toBeVisible();
     await expect(secondTab).toBeVisible();
+    const secondBounds = await secondTab.boundingBox();
+    await firstTab.dragTo(secondTab, {targetPosition: {x: secondBounds.width - 5, y: secondBounds.height / 2}});
+    await expect(dockviewTabs).toHaveText(['ミント', 'ダンゴ']);
     const cost = page.getByRole('tab', {name: 'コスチューム', exact: true});
     const code = page.getByRole('tab', {name: 'コード', exact: true});
     await cost.click();

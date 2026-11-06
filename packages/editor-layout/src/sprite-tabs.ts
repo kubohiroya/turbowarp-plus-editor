@@ -57,12 +57,11 @@ export function mountSpriteTabs(root: HTMLElement, content: HTMLElement, options
         }
     });
     // The host has one editable surface. Keep reordering inside its tab group.
-    const overlay = dockview.onWillShowOverlay(event => {
-        if (event.position !== 'center') event.preventDefault();
-    });
-    const drop = dockview.onWillDrop(event => {
-        if (event.position !== 'center') event.preventDefault();
-    });
+    const preventSplit = (event: {kind: string; position: string; preventDefault(): void}) => {
+        if (event.kind === 'edge' || event.kind === 'content' && event.position !== 'center') event.preventDefault();
+    };
+    const overlay = dockview.onWillShowOverlay(preventSplit);
+    const drop = dockview.onWillDrop(preventSplit);
 
     function show(panel: IDockviewPanel | undefined) {
         const next = targets.get(panel?.id);
