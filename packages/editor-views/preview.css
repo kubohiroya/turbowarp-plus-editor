@@ -1,0 +1,18 @@
+:global([data-code-preview]) {
+    position: relative;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: hidden;
+}
+
+:global([data-code-preview]) > div {
+    inline-size: 100%;
+    block-size: 100%;
+    pointer-events: none;
+}
+
+:global([data-code-preview]) > :global(.tw-code-preview-chrome) {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
