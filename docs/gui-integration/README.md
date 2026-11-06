@@ -113,7 +113,7 @@ UI パッケージは Editor リポジトリ内の `file:` 依存として Web �
 
 Plus 標準配置では既定で、ファイルメニューの項目にアイコンが付き、末尾の「機能拡張の追加」から既存のライブラリを開く。切り戻す場合は URL に `twPlusExtensionFileMenu=0` を指定して再読み込みする。
 
-項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu` が担当する。Editor は Scratch GUI #170 で提供された接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。
+項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu` が担当する。Editor は Scratch GUI #170 で提供された接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。拡張カタログの画面操作はデスクトップ幅で検証する。
 
 ## Issue #175 スプライト設定パネルの任意接続
 

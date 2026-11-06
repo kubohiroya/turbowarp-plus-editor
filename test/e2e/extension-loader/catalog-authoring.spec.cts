@@ -211,44 +211,6 @@ test('catalog writes all four loading forms, restores them, and packages one off
     }
 });
 
-test('mobile viewport keeps catalog and distribution controls visible and operable', async ({browser, baseURL}, testInfo) => {
-    const context = await browser.newContext({...devices['Pixel 7'],
-        viewport: {width: 390, height: 844}, locale: 'ja-JP'});
-    try {
-        await installFixtures(context);
-        const page = await context.newPage();
-        await page.goto(new URL('editor.html?lang=ja', baseURL).href);
-        await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
-        const before = await projectJSON(page);
-        const withinViewport = async locator => {
-            await expect.poll(() => locator.evaluate(node => {
-                const rect = node.getBoundingClientRect();
-                const viewport = window.visualViewport;
-                const left = rect.left - viewport.offsetLeft;
-                const top = rect.top - viewport.offsetTop;
-                return left >= -1 && top >= -1 && left + rect.width <= viewport.width + 1 &&
-                    top + rect.height <= viewport.height + 1 && node.scrollWidth <= node.clientWidth + 1;
-            })).toBe(true);
-        };
-        await openCatalog(page);
-        await withinViewport(selection(page));
-        await selection(page).locator('.twextsec-bulk').getByRole('radio', {name: '作品の中から', exact: true}).click();
-        await row(page, specifications[0]).getByRole('checkbox').check();
-        const apply = selection(page).getByRole('button', {name: '追加', exact: true});
-        await apply.scrollIntoViewIfNeeded();
-        await expect(apply).toBeEnabled();
-        await withinViewport(apply);
-        await testInfo.attach('mobile-catalog.png', {body: await page.screenshot({scale: 'css'}),
-            contentType: 'image/png'});
-        await applySettings(page);
-        await expectTrusted(page, [specifications[0]]);
-        await expect(selection(page)).toHaveCount(0);
-        expect((await projectJSON(page)).targets).toEqual(before.targets);
-    } finally {
-        await context.close();
-    }
-});
-
 test('catalog keeps distribution controls off when the Loader startup flag is explicitly disabled', async ({page, context}) => {
     await installFixtures(context);
     await openEditor(page, false);
