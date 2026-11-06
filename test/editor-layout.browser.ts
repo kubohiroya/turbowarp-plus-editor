@@ -268,7 +268,7 @@ test('the Plus File menu has action icons and opens the extension library from i
 
 test('the Plus project menu and previous stage layout remain available', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStageDrawer=0');
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0');
     await expect(page.getByText('See Project Page', {exact: true})).toHaveCount(0);
     await expect(page.getByText('TurboWarp Feedback', {exact: true})).toHaveCount(0);
     const project = page.getByLabel('TurboWarp Plus project information', {exact: true}).first();
@@ -355,7 +355,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    const start = query => page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStageDrawer=0' + query);
+    const start = query => page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0' + query);
     const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
     const hideStage = page.getByRole('menuitem', {name: 'Hide stage', exact: true});
     const showStage = page.getByRole('menuitem', {name: 'Show stage', exact: true});
@@ -717,7 +717,7 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
 
 test('a background code view retains its layout, pan and zoom', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
     await page.getByRole('tab', {name: 'Code', exact: true}).focus();
     await page.getByRole('button', {name: 'Open in another window', exact: true}).press('Enter');
@@ -761,7 +761,7 @@ test('a background code view retains its layout, pan and zoom', {timeout: 45_000
 test('a background sprite code window fits scripts when the foreground shows none', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.addInitScript(() => localStorage.setItem('tw:theme', 'dark'));
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
     await page.evaluate(async () => {
         const sprite = vm.editingTarget;
@@ -835,7 +835,7 @@ test('utility panels and menus stay above the code workspace and its palette', {
     // The Backpack transfer session uses crypto.randomUUID in a secure context.
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
-    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0');
 
     await page.getByRole('button', {name: 'Motion', exact: true}).click();
     const flyout = page.locator('.blocklyFlyout').first();
@@ -886,19 +886,19 @@ test('utility panels and menus stay above the code workspace and its palette', {
     await expect(code).toHaveCount(0);
 });
 
-test('the Dockview opt-in splits one sprite editor and restores each view section', {timeout: 45_000}, async t => {
+test('the default Dockview splits one sprite editor and restores each view section', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     page.setDefaultTimeout(8_000);
     const url = origin + buildPrefix + 'editor.html?lang=en';
     const groups = page.locator('.dv-groupview');
-    await page.goto(url);
+    await page.goto(url + '&twPlusDockview=0');
     await expect(page.getByRole('tab', {name: 'Code', exact: true})).toBeVisible();
     await expect(groups).toHaveCount(1);
     await expect(groups.getByRole('button', {name: 'Editor panel layout'})).toHaveCount(0);
 
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(url + '&twPlusDockview=1');
+    await page.goto(url);
     await expect(groups).toHaveCount(1);
     const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
     const tabs = () => page.getByRole('tab', {name: spriteName, exact: true});

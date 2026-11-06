@@ -10,6 +10,7 @@ import './styles/preview-reload.css';
 import {
     mountDocumentEditor, registerDocumentSourceRootHatShape
 } from '@kubohiroya/turbowarp-document-editor';
+import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 
 import {attachScriptTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
 
@@ -161,6 +162,7 @@ export const createPlusIntegration = ({
             vm,
             document: hostDocument,
             language: locale,
+            openPanel: request => getDocumentWorkspace(vm).open(request),
             getScratch: () => ({vm, gui: {getBlockly}})
         }));
         return {

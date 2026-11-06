@@ -1,7 +1,7 @@
 const {test, expect} = require('./fixtures.cts');
 
 test('the sprite costume stays aligned above the minimap when its code is undocked', async ({page}) => {
-    await page.goto('editor.html?lang=en');
+    await page.goto('editor.html?lang=en&twPlusDockview=0');
     await page.waitForFunction(() => window.vm?.editingTarget && window.ScratchBlocks?.getMainWorkspace());
     await page.evaluate(async () => {
         const target = vm.editingTarget;

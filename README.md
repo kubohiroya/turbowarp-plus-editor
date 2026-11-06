@@ -160,7 +160,7 @@ npm run build:yaml-tools -- /absolute/path/to/editor/build
 npm run editor:yaml -- --site-dir /absolute/path/to/editor/build --data-dir /absolute/path/to/work-files
 ```
 
-Shared packages are pinned to published release candidates. VSCode integration requires the local companion serving a built Editor. It can also be launched from npm:
+VSCode integration requires the local companion serving a built Editor. It can also be launched from npm:
 
 ```sh
 npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor-yaml --site-dir /absolute/path/to/editor/build --data-dir /absolute/path/to/work-files
@@ -168,14 +168,14 @@ npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor
 
 GitHub Pages supports document display, conversion, and validation. Launching VSCode is available when opening the local URL above.
 
-The displayed local URL opens the same Editor; no URL parameter is added. `site/plus-integration.ts` always mounts the document editor when the fork attaches to a workspace.
+Embedded YAML opens in the same Dockview workspace as code and the stage by default in the Web Editor. Drafts survive tab moves and splits, and closing a tab with a draft offers save, discard, and cancel. To return to the previous layout and document modal, save the document and SB3, then reopen the Editor with `twPlusDockview=0` in the URL.
 
 1. Open an SB3 containing an embedded document and select the file icon on its **Data source** hat. In the YAML text tab of the document dialog, choose **Edit in external editor**.
 2. Edit the YAML and save it in VSCode.
 3. Return to the Editor and choose **Convert, validate and save the displayed format** at the lower right. It reads the saved VSCode working copy, validates its format, asset references, and project identity, and applies the document and consistency metadata in the Editor.
 4. Save the SB3 using the Editor’s standard **File** menu or **Save to your computer**. Saving in the document dialog does not download a file. Image and audio storage remains unchanged.
 
-The hat is the entry point to embedded YAML. Its dropdown shows the filename, while the SB3 stores a provider ID and document ID reference rather than duplicating the script text in a block argument. IDs distinguish documents even when filenames match. Save or cancel the current dialog before switching documents. The owning provider handles retrieval, validation, and updates; the mechanism does not depend on any particular App. Supported SB3s contain hats added by their owning extension. The Editor does not automatically inject unknown blocks or extension code into older hatless SB3s. When a provider registers conversion capabilities, the same dialog can convert between source files, shared YAML blocks, and schema-specific blocks.
+The hat is the entry point to embedded YAML. Its dropdown shows the filename, while the SB3 stores a provider ID and document ID reference rather than duplicating the script text in a block argument. IDs distinguish documents even when filenames match. In the document modal, save or cancel the current edit before switching documents. The owning provider handles retrieval, validation, and updates. Supported SB3s contain hats added by their owning extension. The Editor does not automatically inject unknown blocks or extension code into older hatless SB3s. When a provider registers conversion capabilities, the document editor can convert between source files, shared YAML blocks, and schema-specific blocks.
 
 Providers may attach `schema: {id, schema}` to each document. Local integration writes the owner’s schema and associations to the working directory without inserting configuration comments into the YAML. The first opening of a document with a schema downloads the official Red Hat YAML extension, `redhat.vscode-yaml@2.0.0`, into a private extensions directory. Existing VSCode settings and extensions remain unchanged. The initial download requires network access. Documents without schemas continue to use owner validation when importing.
 

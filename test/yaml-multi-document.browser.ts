@@ -38,7 +38,8 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
     const base = `${host.apiOrigin}/turbowarp-plus-editor/`;
     let stage = 'load';
     async function load(p, filename) {
-        await p.goto(`${base}editor.html?lang=ja&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
+        await p.goto(`${base}editor.html?lang=ja&twPlusDockview=0&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
+        await expect(p.locator('[data-multi-view]')).toHaveCount(0);
         // The shared review (security-dialog 0.7) offers one choice for every row.
         const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')}); await security.waitFor({timeout: 60000});
         await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();

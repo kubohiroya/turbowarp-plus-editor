@@ -18,7 +18,7 @@ export const layoutFlags = readWebStartupFeatureFlags(startupSearch);
 export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
     startupParams.get('twPlusDockviewSpriteTabs') !== '0';
 export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled &&
-    startupParams.get('twPlusDockview') === '1' && typeof EditorPreload === 'undefined';
+    startupParams.get('twPlusDockview') !== '0' && typeof EditorPreload === 'undefined';
 export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
     startupParams.get('twPlusStageDrawer') !== '0';
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
