@@ -18,6 +18,14 @@ import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {BackCodeWindows, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
+
+function AttachedCodePanel({children}: {children: React.ReactNode}) {
+    const [attached, setAttached] = React.useState(false);
+    // Blockly injects synchronously once cached. DockablePanel attaches its portal during commit.
+    React.useLayoutEffect(() => setAttached(true), []);
+    return attached ? children : null;
+}
+
 const thumbnails = new WeakMap<object, string>();
 function assetImage(asset) {
     if (!asset?.encodeDataURI) return undefined;
@@ -245,7 +253,8 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
                 mount={getMount(index)}
                 onDock={() => index === codeTab && code?.front ? code.front.connection.close() : surfaces[index].dock()}
                 onResize={index === codeTab ? resizeCode : undefined}
-            >{connectAssetSelection(index, children)}</DockablePanel>;
+            >{index === codeTab ? <AttachedCodePanel>{children}</AttachedCodePanel> :
+                connectAssetSelection(index, children)}</DockablePanel>;
             return spriteTabs.renderEditorPanel ? spriteTabs.renderEditorPanel(index, panel) : panel;
         }
     });

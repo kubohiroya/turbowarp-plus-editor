@@ -22,7 +22,7 @@ export const installProjectToolsHost = (vm, settings: Parameters<typeof installE
     const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled});
     const history = enabled ? createAuthorHistory(document ? storageFor(document) : undefined) : null;
     const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics,
-        {locale: settings.locale}) : null;
+        {locale: settings.locale, getLocale: settings.getLocale}) : null;
     const tools = {dialogs, payloads: 'payloads' in host ? host.payloads : undefined, propertiesEnabled: enabled,
         projectURIEnabled: MANUAL_PROJECT_URI_ENABLED && host.enabled, properties};
     let lastPhase;
