@@ -9,6 +9,18 @@ const supportsSharedHistory = script => !script.variables.length && !script.exte
 const needsEditingTarget = event => isCommentEdit(event) || event.type === 'change' && event.element === 'field' &&
     ['VARIABLE', 'LIST', 'BROADCAST_OPTION'].includes(event.name);
 
+type ScalarField = {id?: string; value?: string};
+
+function scalarField(block: unknown): ScalarField | undefined {
+    const {opcode, fields} = (block ?? {}) as {opcode?: string; fields?: {VARIABLE?: ScalarField}};
+    return opcode?.startsWith('data_') ? fields?.VARIABLE : undefined;
+}
+
+function scalarVariable(target, id: unknown) {
+    const variable = typeof id === 'string' ? target.lookupVariableById(id) : undefined;
+    return variable?.type === '' ? variable : undefined;
+}
+
 export function createCodeSession({vm, workspace, ScratchBlocks, document, locale, canUse, onError, receiveBackpackDrop}) {
     const parent = document.defaultView;
     const container = workspace.getParentSvg().parentElement;
@@ -292,19 +304,46 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         if (message.type === 'edits' && Array.isArray(message.events) && message.events.length <= 1000) {
             const edits = message.events.map(decodeEdit);
             if (!edits.length || edits.some(event => !event)) return;
+            const {target} = view;
             // Those fields resolve through the VM's current editing target rather than the Blocks container.
-            if (vm.runtime.getEditingTarget() !== view.target && edits.some(needsEditingTarget)) return;
-            const before = capture(view.target);
+            if (vm.runtime.getEditingTarget() !== target && edits.some(needsEditingTarget)) return;
+            const before = capture(target);
+            let applied = false;
+            const reject = () => {
+                if (applied) restore(target, before);
+                publish(target, null, applied);
+            };
             try {
-                for (const event of edits) view.target.blocks.blocklyListen(event);
+                for (const event of edits) {
+                    if (event.type === 'change' && event.element === 'field' && event.name === 'VARIABLE' &&
+                        scalarField(target.blocks.getBlock(event.blockId)) && !scalarVariable(target, event.newValue)) {
+                        reject();
+                        return;
+                    }
+                    target.blocks.blocklyListen(event);
+                    applied = true;
+                }
+                // Create XML stores variable IDs directly. Only check changed references so old projects
+                // with unrelated unresolved fields can still be edited.
+                if (edits.some(event => event.type === 'create') &&
+                    Object.entries(target.blocks._blocks).some(([id, block]) => {
+                        const field = scalarField(block);
+                        const previous = scalarField(before.blocks[id]);
+                        if (!field || (previous && field.id === previous.id && field.value === previous.value)) return false;
+                        const variable = scalarVariable(target, field.id);
+                        return !variable || variable.name !== field.value;
+                    })) {
+                    reject();
+                    return;
+                }
             } catch (error) {
-                restore(view.target, before);
-                publish(view.target, null, true);
+                restore(target, before);
+                publish(target, null, true);
                 view.close();
                 onError?.(error);
                 return;
             }
-            if (histories.get(view.target).commit()) publish(view.target, view, true);
+            if (histories.get(target).commit()) publish(target, view, true);
         } else if (message.type === 'step' && typeof message.redo === 'boolean' && !view.draining &&
             vm.editingTarget === view.target) {
             if (histories.get(view.target).step(message.redo)) publish(view.target, view, true);

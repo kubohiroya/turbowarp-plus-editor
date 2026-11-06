@@ -12,11 +12,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -747,8 +747,85 @@ async function checkCodeComments ({editor, a, b, focus, parent, sprites}) {
     report.checks.push('Attached and workspace comments stay with their target through focus, shared Undo/Redo, docking and SB3');
 }
 
+async function checkScalarScope ({editor, a, b, focus, open, parent, sprite}) {
+    const block = (view, id) => view.child.locator(`.blocklyBlockCanvas [data-id="${id}"]`);
+    const reporter = view => block(view, 'scalar-reporter');
+    const setter = view => block(view, 'scalar-setter');
+    const field = id => editor.evaluate(({targetId, id}) =>
+        vm.runtime.getTargetById(targetId).blocks.getBlock(id).fields.VARIABLE.id, {targetId: sprite.id, id});
+    const activate = async (front, back) => {
+        await focus(front.child, front.id);
+        const inert = view => view.child.locator('#mount').evaluate(node => node.inert);
+        await until(async () => !await inert(front) && await inert(back), 'only the front view can edit');
+    };
+    const ja = (await a.child.title()).startsWith('コード');
+    const scopeLabel = scope => ja ? (scope === 'Global' ? '全体' : 'このスプライト') : scope;
+    const optionLabel = scope => `${scopeLabel(scope)}: shared counter`;
+    const showsScope = async (locator, scope) =>
+        (await locator.textContent()).replace(/\s/g, ' ').includes(`${scopeLabel(scope)}: shared`);
+    const expectScope = (view, locator, scope, id) => until(async () =>
+        await field(id) === `${scope.toLowerCase()}-counter` && await showsScope(locator(view), scope),
+    `${scope} ID and label in the other view`);
+    const selectReporter = async (view, scope) => {
+        await reporter(view).click({button: 'right'});
+        await view.child.locator('.blocklyContextMenu').getByText(optionLabel(scope), {exact: true}).click();
+    };
+    const history = (view, name) => view.child.getByRole('button', {name, exact: true}).click();
+    await activate(b, a);
+    await expectScope(a, reporter, 'Global', 'scalar-reporter');
+    await selectReporter(b, 'Local');
+    await expectScope(a, reporter, 'Local', 'scalar-reporter');
+
+    await activate(a, b);
+    await selectReporter(a, 'Global');
+    await expectScope(b, reporter, 'Global', 'scalar-reporter');
+    await activate(b, a);
+    await history(b, 'Undo');
+    await expectScope(a, reporter, 'Local', 'scalar-reporter');
+    await activate(a, b);
+    await history(a, 'Redo');
+    await expectScope(b, reporter, 'Global', 'scalar-reporter');
+
+    await activate(a, b);
+    const dropdown = a.child.locator('.blocklyDropDownDiv .goog-menuitem');
+    await setter(a).locator('.blocklyDropdownText').click();
+    await dropdown.filter({hasText: optionLabel('Global')}).waitFor();
+    await dropdown.filter({hasText: optionLabel('Local')}).click();
+    await expectScope(b, setter, 'Local', 'scalar-setter');
+
+    const close = view => Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
+    await close(a);
+    await focus(b.child, b.id);
+    await close(b);
+    await focus(editor, parent.id);
+    const restored = await editor.evaluate(async name => {
+        await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
+        const target = vm.runtime.targets.find(item => item.getName() === name);
+        const stage = vm.runtime.getTargetForStage();
+        const scripts = target.blocks.getScripts().map(id => target.blocks.getBlock(id));
+        const reference = opcode => {
+            const block = scripts.find(item => item.opcode === opcode);
+            return {blockId: block.id, variableId: block.fields.VARIABLE.id};
+        };
+        vm.setEditingTarget(target.id);
+        return {
+            reporter: reference('data_variable'),
+            setter: reference('data_setvariableto'),
+            global: stage.variables['global-counter']?.name,
+            local: target.variables['local-counter']?.name
+        };
+    }, sprite.name);
+    assert.deepEqual([restored.reporter.variableId, restored.setter.variableId, restored.global, restored.local],
+        ['global-counter', 'local-counter', 'shared counter', 'shared counter']);
+    const reopened = await open(restored.reporter.blockId);
+    assert.equal(await showsScope(block(reopened, restored.reporter.blockId), 'Global'), true);
+    assert.equal(await showsScope(block(reopened, restored.setter.blockId), 'Local'), true);
+    await close(reopened);
+    report.checks.push('Same-name scalar reporter and dropdown retain scope through both-way switching, two views, shared Undo/Redo and SB3');
+}
+
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, scalarScope = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -760,7 +837,7 @@ async function checkCodePopouts ({editor, context, control}, {
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync, comments}) => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scalarScope}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
         if (targetSync || comments) {
@@ -787,15 +864,27 @@ async function checkCodePopouts ({editor, context, control}, {
             id: blockId, opcode: 'looks_hide', next: null, parent: null, topLevel: true, shadow: false,
             inputs: {}, fields: {}, x: 90, y: 100
         });
+        if (scalarScope) {
+            const name = 'shared counter';
+            vm.runtime.getTargetForStage().createVariable('global-counter', name, '', false);
+            first.createVariable('local-counter', name, '', false);
+            for (const [id, opcode, x] of [
+                ['scalar-reporter', 'data_variable', 160], ['scalar-setter', 'data_setvariableto', 340]
+            ]) {
+                first.blocks.createBlock({id, opcode, x, y: 160, next: null, parent: null, topLevel: true,
+                    shadow: false, inputs: {},
+                    fields: {VARIABLE: {name: 'VARIABLE', id: 'global-counter', value: name, variableType: ''}}});
+            }
+        }
         vm.refreshWorkspace();
         return seeded;
-    }, {blockId: id, targetSync, comments});
+    }, {blockId: id, targetSync, comments, scalarScope});
     const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
         return {x, y};
     }, {targetId, id});
-    const block = page => page.locator(`[data-id="${id}"]`).first();
+    const block = (page, blockId = id) => page.locator(`[data-id="${blockId}"]`).first();
     const original = await coordinates();
     await block(editor).waitFor();
     await focus(editor, parent.id);
@@ -809,7 +898,7 @@ async function checkCodePopouts ({editor, context, control}, {
         name: /^(Open in another window|別画面で開く)$/
     });
 
-    async function open() {
+    async function open(expectedBlockId = id) {
         await focus(editor, parent.id);
         await action.focus();
         const [child] = await Promise.all([context.waitForEvent('page'), editorClick(action)]);
@@ -818,7 +907,7 @@ async function checkCodePopouts ({editor, context, control}, {
         const native = await until(async () => (await control('windows')).find(window => window.url === child.url()),
             'native code window');
         assert.deepEqual(native.preferences, {sandbox: true, contextIsolation: true, nodeIntegration: false, preload: false});
-        await block(child).waitFor();
+        await block(child, expectedBlockId).waitFor();
         assert.equal(await child.evaluate(() => !window.opener && !window.vm && typeof EditorPreload === 'undefined'), true);
         return {child, id: native.id};
     }
@@ -836,6 +925,10 @@ async function checkCodePopouts ({editor, context, control}, {
     }
     if (stageCode) {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
+        return;
+    }
+    if (scalarScope) {
+        await checkScalarScope({editor, a, b, focus, open, parent, sprite: sprites[0]});
         return;
     }
     if (comments) {
@@ -1554,6 +1647,7 @@ try {
     else if (testMode === '--code-target-sync') await run('code-popout', env => checkCodePopouts(env, {targetSync: true}));
     else if (testMode === '--code-stage') await run('code-popout', env => checkCodePopouts(env, {stageCode: true}));
     else if (testMode === '--code-comments') await run('code-popout', env => checkCodePopouts(env, {comments: true}));
+    else if (testMode === '--code-scalar-scope') await run('code-popout', env => checkCodePopouts(env, {scalarScope: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
     else if (testMode === '--stage-display-menu') await run('stage-display-menu', checkStageDisplayMenu);
