@@ -1,4 +1,4 @@
-import {createCodeSession} from '@kubohiroya/turbowarp-editor-views';
+import {createCodeSession} from '@kubohiroya/turbowarp-plus-editor-views';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {createDesktopPanelHost} from '../editor-layout/desktop-panel-host.ts';
 

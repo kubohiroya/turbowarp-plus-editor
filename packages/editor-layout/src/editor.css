@@ -399,19 +399,6 @@ details.layout-menu button {
     overflow: auto;
 }
 
-.codePreview {
-    position: relative;
-    inline-size: 100%;
-    block-size: 100%;
-    overflow: hidden;
-}
-
-.codePreview > div {
-    inline-size: 100%;
-    block-size: 100%;
-    pointer-events: none;
-}
-
 :global(.injectionDiv):has([data-plus-horizontal-zoom]) :global(.sa-custom-zoom-area) {
     width: 150px;
     height: 60px;

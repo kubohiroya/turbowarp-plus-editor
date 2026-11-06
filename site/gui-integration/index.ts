@@ -7,7 +7,7 @@ import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-cod
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
 import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {attachCodeWorkspace} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
+import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 export * from './lib/tw-plus-integration-points.ts';
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
@@ -42,8 +42,16 @@ export {EditorLayout} from '../editor-layout/index.tsx';
 /* global __TW_SPRITE_PROPERTIES_PANEL__ */
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startup = readWebStartupFeatureFlags(startupSearch);
-export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.standardLayout) && !desktopCodeEnabled ? attachCodeWorkspace : undefined;
-export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
+export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.standardLayout) && !desktopCodeEnabled ?
+    context => attachCodeWorkspace({...context, presentationElements: injection => {
+        const wrapper = injection.closest('[class*="gui_blocks-wrapper_"]');
+        return {
+            wrapper,
+            extensionButton: wrapper?.parentElement.querySelector<HTMLElement>(':scope > [class*="gui_extension-button-container_"]'),
+            watermark: wrapper?.parentElement.querySelector<HTMLElement>(':scope > [class*="gui_watermark_"]')
+        };
+    }}) : undefined;
+export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 export const SpritePropertiesPanel = (startup.spriteProperties || startup.standardLayout) &&
     typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
 

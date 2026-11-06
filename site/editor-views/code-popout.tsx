@@ -4,8 +4,8 @@ import {PopupLayout} from '../editor-layout/popup-layout.tsx';
 import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
-import {encodeEdit} from '@kubohiroya/turbowarp-editor-views';
-import {TargetCombobox} from '@kubohiroya/turbowarp-editor-views/target-combobox';
+import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-views';
+import {TargetCombobox} from '@kubohiroya/turbowarp-plus-editor-views/target-combobox';
 
 const ticket = location.hash.slice(1);
 const mount = document.getElementById('mount');

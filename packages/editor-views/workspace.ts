@@ -1,11 +1,23 @@
 import type {CodeTarget} from './history.ts';
+import {captureCodePreviewChrome} from './preview-chrome.ts';
+import type {PresentationElements} from './preview-chrome.ts';
 
 // Keep VM identity and workspace lifetime separate from the lifetime of a floating window.
+interface Presentation {
+    scale: number;
+    x: number;
+    y: number;
+    visible: boolean;
+    chrome: ReturnType<typeof captureCodePreviewChrome>;
+}
+
 interface CodeSession {
+    frontView: {target: object; mount: HTMLElement; presentation?: Presentation} | null;
     bridge: ReturnType<typeof attachCodeWorkspace> | null;
     subscribe(listener: () => void): () => void;
     changed(): void;
 }
+
 const sessions = new WeakMap<object, CodeSession>();
 
 export function getCodeSession(vm: object) {
@@ -14,6 +26,7 @@ export function getCodeSession(vm: object) {
         const listeners = new Set<() => void>();
         session = {
             bridge: null,
+            frontView: null,
             subscribe(listener) {
                 listeners.add(listener);
                 return () => listeners.delete(listener);
@@ -46,7 +59,7 @@ function targetXml(vm: {runtime: {getTargetForStage(): CodeTarget}}, target: Cod
         `${comments.join('')}${target.blocks.toXML(target.comments)}</xml>`;
 }
 
-export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, options, onError}) {
+export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, options, onError, presentationElements = null as PresentationElements | null}) {
     const session = getCodeSession(vm);
     const histories = new WeakMap();
     const signature = target => target.blocks.toXML(target.comments);
@@ -66,6 +79,28 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
         workspace.cancelCurrentGesture();
         blocks.hideChaff();
         blocks.Events.fireNow_();
+    }
+
+    function rememberView() {
+        const {frontView} = session;
+        if (!frontView || frontView.target !== loadedTarget ||
+                !frontView.mount?.contains(workspace.getInjectionDiv())) return;
+        const metrics = workspace.getMetrics();
+        if (!metrics) return;
+        const area = workspace.getParentSvg().getBoundingClientRect();
+        const roots = workspace.getTopBlocks(false);
+        const visible = !roots.length || roots.some(block => {
+            const bounds = block.getSvgRoot()?.getBoundingClientRect();
+            return bounds && bounds.left < area.right && bounds.right > area.left + metrics.absoluteLeft &&
+                bounds.top < area.bottom && bounds.bottom > area.top + metrics.absoluteTop;
+        });
+        frontView.presentation = {
+            scale: workspace.scale,
+            x: workspace.scrollX + metrics.absoluteLeft,
+            y: workspace.scrollY + metrics.absoluteTop,
+            visible,
+            chrome: captureCodePreviewChrome(workspace, loadedTarget, presentationElements)
+        };
     }
 
     const bridge = {
@@ -106,6 +141,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             changed();
         },
         beforeReload() {
+            if (loadedTarget !== vm.editingTarget) rememberView();
             if (loadedTarget && vm.runtime.getTargetById(loadedTarget.id) === loadedTarget) {
                 if (signature(loadedTarget) === loadedSignature) {
                     histories.set(loadedTarget, {signature: loadedSignature,
@@ -126,23 +162,36 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             }
             changed();
         },
-        select(target) {
+        select(view) {
+            const {target} = view;
             if (vm.runtime.getTargetById(target.id) !== target) return false;
             if (target !== vm.editingTarget) {
                 flush();
                 vm.setEditingTarget(target.id);
+            } else if (session.frontView !== view) {
+                rememberView();
+                flush();
             }
             return true;
         },
-        preview(element, target) {
+        preview(element, chrome, view) {
+            const {target, presentation} = view;
             const preview = withoutEvents(blocks, () => blocks.inject(element, {
                 readOnly: true, scrollbars: false, sounds: false, media: options.media, rtl: options.rtl,
-                colours: options.colours
+                colours: options.colours, grid: options.grid,
+                zoom: {startScale: presentation?.scale ?? options.zoom?.startScale}
             }));
             workspace.markFocused();
+            presentation?.chrome?.mount(chrome);
             let renderedXml;
             const resize = () => {
                 blocks.svgResize(preview);
+                if (presentation?.visible) {
+                    preview.scrollX = presentation.x;
+                    preview.scrollY = presentation.y;
+                    preview.translate(presentation.x, presentation.y);
+                    return;
+                }
                 const width = element.clientWidth;
                 const height = element.clientHeight;
                 if (!width || !height) return;
@@ -179,6 +228,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 },
                 dispose() {
                     observer.disconnect();
+                    presentation?.chrome?.dispose();
                     withoutEvents(blocks, () => preview.dispose());
                 }
             };
