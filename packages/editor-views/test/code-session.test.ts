@@ -157,58 +157,63 @@ test('comment edits use the active target and restore serializable comments in t
     session.dispose();
 });
 
-test('scalar reference edits stay in scope and rejected batches preserve shared history', () => {
-    const {session, connect, target, other, vm} = fixture();
-    const scalar = {name: 'counter', type: '', toXML: () => ''};
-    Object.assign(vm.runtime.getTargetForStage().variables, {global: scalar});
-    Object.assign(target.variables, {mine: scalar, list: {...scalar, type: 'list'}});
-    Object.assign(other.variables, {foreign: scalar});
-    const reporter = (id, value = scalar.name) => ({opcode: 'data_variable', fields: {VARIABLE: {id, value}}});
-    target.blocks._blocks.block = reporter('global');
-    target.blocks._blocks.legacy = reporter('deleted');
-    target.blocks.blocklyListen = function (event) {
-        if (event.type === 'create') {
-            const [id, name] = event.xml.outerHTML.split(':');
-            this._blocks[event.blockId] = reporter(id, name);
-        } else {
-            this._blocks[event.blockId].fields.VARIABLE.id = event.newValue;
+for (const [kind, type, fieldName, opcode] of [
+    ['scalar', '', 'VARIABLE', 'data_variable'],
+    ['list', 'list', 'LIST', 'data_listcontents']
+]) {
+    test(`${kind} reference edits stay in scope and rejected batches preserve shared history`, () => {
+        const {session, connect, target, other, vm} = fixture();
+        const variable = {name: 'shared', type, toXML: () => ''};
+        Object.assign(vm.runtime.getTargetForStage().variables, {global: variable});
+        Object.assign(target.variables, {mine: variable, wrongType: {...variable, type: type === '' ? 'list' : ''}});
+        Object.assign(other.variables, {foreign: variable});
+        const reporter = (id, value = variable.name) => ({opcode, fields: {[fieldName]: {id, value}}});
+        target.blocks._blocks.block = reporter('global');
+        target.blocks._blocks.legacy = reporter('deleted');
+        target.blocks.blocklyListen = function (event) {
+            if (event.type === 'create') {
+                const [id, name] = event.xml.outerHTML.split(':');
+                this._blocks[event.blockId] = reporter(id, name);
+            } else {
+                this._blocks[event.blockId].fields[fieldName].id = event.newValue;
+            }
+        };
+
+        const child = connect(target);
+        const mirror = connect(target);
+        child.focus();
+        const {lease} = child.messages.at(-1);
+        const send = (...events) => child.send({type: 'edits', lease, targetId: target.id, events});
+        const change = (newValue, blockId = 'block') => ({type: 'change', element: 'field', blockId,
+            name: fieldName, newValue});
+        const create = xml => ({type: 'create', blockId: 'new', xml});
+        const field = () => target.blocks.getBlock('block').fields[fieldName].id;
+        const step = redo => child.send({type: 'step', lease, targetId: target.id, redo});
+
+        for (const edits of [[change('foreign')], [change('wrongType')],
+            [change('mine'), create('foreign:shared')], [create('mine:stale')], [create('wrongType:shared')],
+            [create('mine:shared'), change('foreign', 'new')]]) {
+            send(...edits);
+            assert.equal(field(), 'global');
+            assert.equal(target.blocks.getBlock('new'), undefined);
+            assert.equal(child.messages.at(-1).canUndo, false);
         }
-    };
 
-    const child = connect(target);
-    const mirror = connect(target);
-    child.focus();
-    const {lease} = child.messages.at(-1);
-    const send = (...events) => child.send({type: 'edits', lease, targetId: target.id, events});
-    const change = (newValue, blockId = 'block') => ({type: 'change', element: 'field', blockId,
-        name: 'VARIABLE', newValue});
-    const create = xml => ({type: 'create', blockId: 'new', xml});
-    const field = () => target.blocks.getBlock('block').fields.VARIABLE.id;
-    const step = redo => child.send({type: 'step', lease, targetId: target.id, redo});
-
-    for (const edits of [[change('foreign')], [change('list')],
-        [change('mine'), create('foreign:counter')], [create('mine:stale')],
-        [create('mine:counter'), change('foreign', 'new')]]) {
-        send(...edits);
+        send(change('mine'), create('mine:shared'));
+        assert.equal(field(), 'mine');
+        assert.equal(target.blocks.getBlock('new').fields[fieldName].id, 'mine');
+        assert.equal(target.blocks.getBlock('legacy').fields[fieldName].id, 'deleted');
+        assert.equal(mirror.messages.at(-1).canUndo, true);
+        step(false);
         assert.equal(field(), 'global');
         assert.equal(target.blocks.getBlock('new'), undefined);
-        assert.equal(child.messages.at(-1).canUndo, false);
-    }
-
-    send(change('mine'), create('mine:counter'));
-    assert.equal(field(), 'mine');
-    assert.equal(target.blocks.getBlock('new').fields.VARIABLE.id, 'mine');
-    assert.equal(target.blocks.getBlock('legacy').fields.VARIABLE.id, 'deleted');
-    assert.equal(mirror.messages.at(-1).canUndo, true);
-    step(false);
-    assert.equal(field(), 'global');
-    assert.equal(target.blocks.getBlock('new'), undefined);
-    step(true);
-    assert.equal(field(), 'mine');
-    assert.equal(target.blocks.getBlock('new').fields.VARIABLE.id, 'mine');
-    assert.equal(other.blocks.getBlock('new'), undefined);
-    session.dispose();
-});
+        step(true);
+        assert.equal(field(), 'mine');
+        assert.equal(target.blocks.getBlock('new').fields[fieldName].id, 'mine');
+        assert.equal(other.blocks.getBlock('new'), undefined);
+        session.dispose();
+    });
+}
 
 test('renaming from the foreground rewrites other targets’ undo and redo references', () => {
     const {session, connect, target, other} = fixture();

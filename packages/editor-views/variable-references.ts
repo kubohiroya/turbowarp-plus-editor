@@ -1,11 +1,12 @@
 // ScratchBlocks normally coalesces variables by name and type. The VM's
-// projection can contain two scalars with the same name and different scopes.
-export function installScopedScalarReferences(blocks, workspace, getLocale: () => string) {
+// projection can contain two variables or lists with the same name and different scopes.
+export function installScopedVariableReferences(blocks, workspace, getLocale: () => string) {
+    const scopedType = type => type === '' || type === blocks.LIST_VARIABLE_TYPE;
     const map = workspace.getVariableMap();
     const createVariable = map.createVariable;
     const getVariable = map.getVariable;
     map.createVariable = function (name, type, id, isLocal, isCloud) {
-        const existing = id && type === '' && typeof isLocal === 'boolean' && getVariable.call(this, name, type);
+        const existing = id && scopedType(type) && typeof isLocal === 'boolean' && getVariable.call(this, name, type);
         if (!existing) return createVariable.call(this, name, type, id, isLocal, isCloud);
 
         const byId = this.getVariableById(id);
@@ -22,7 +23,6 @@ export function installScopedScalarReferences(blocks, workspace, getLocale: () =
         }
     };
 
-    const scalars = () => workspace.getVariablesOfType('');
     const scopedLabel = (variable, variables) => {
         if (!variables.some(other => other.name === variable.name && other.isLocal !== variable.isLocal)) {
             return variable.name;
@@ -36,8 +36,8 @@ export function installScopedScalarReferences(blocks, workspace, getLocale: () =
         const setText = field.setText;
         field.setText = function (text) {
             const variable = this.getVariable();
-            const label = inWorkspace(this) && variable?.type === '' && text === variable.name ?
-                scopedLabel(variable, scalars()) : text;
+            const label = inWorkspace(this) && variable && scopedType(variable.type) && text === variable.name ?
+                scopedLabel(variable, workspace.getVariablesOfType(variable.type)) : text;
             return setText.call(this, label);
         };
     }
@@ -45,8 +45,9 @@ export function installScopedScalarReferences(blocks, workspace, getLocale: () =
     const getOptions = blocks.FieldVariable.prototype.getOptions;
     blocks.FieldVariable.prototype.getOptions = function () {
         const options = getOptions.call(this);
-        if (!inWorkspace(this) || this.getVariable()?.type !== '') return options;
-        const variables = scalars();
+        const type = this.getVariable()?.type;
+        if (!inWorkspace(this) || !scopedType(type)) return options;
+        const variables = workspace.getVariablesOfType(type);
         const byId = new Map(variables.map(variable => [variable.getId(), variable]));
         return options.map(option => {
             const variable = byId.get(option[1]);
@@ -54,21 +55,26 @@ export function installScopedScalarReferences(blocks, workspace, getLocale: () =
         });
     };
 
-    const reporter = blocks.Blocks.data_variable;
-    const init = reporter.init;
-    reporter.init = function () {
-        init.call(this);
-        if (this.workspace !== workspace || this.isInFlyout) return;
-        this.customContextMenu = options => {
-            if (this.isCollapsed()) return;
-            const field = this.getField('VARIABLE');
-            const variables = scalars();
-            for (const variable of variables.sort((a, b) => a.name.localeCompare(b.name))) {
-                const id = variable.getId();
-                if (id !== field.getValue()) {
-                    options.push({text: scopedLabel(variable, variables), enabled: true, callback: () => field.setValue(id)});
+    for (const [opcode, fieldName, type] of [
+        ['data_variable', 'VARIABLE', ''],
+        ['data_listcontents', 'LIST', blocks.LIST_VARIABLE_TYPE]
+    ]) {
+        const reporter = blocks.Blocks[opcode];
+        const init = reporter.init;
+        reporter.init = function () {
+            init.call(this);
+            if (this.workspace !== workspace || this.isInFlyout) return;
+            this.customContextMenu = options => {
+                if (this.isCollapsed()) return;
+                const field = this.getField(fieldName);
+                const variables = workspace.getVariablesOfType(type);
+                for (const variable of variables.sort((a, b) => a.name.localeCompare(b.name))) {
+                    const id = variable.getId();
+                    if (id !== field.getValue()) {
+                        options.push({text: scopedLabel(variable, variables), enabled: true, callback: () => field.setValue(id)});
+                    }
                 }
-            }
+            };
         };
-    };
+    }
 }
