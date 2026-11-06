@@ -318,6 +318,39 @@ test('the Plus project menu and the complete stage panel work by default', {time
         node.querySelector('[data-gui-stage] canvas') === window.initialStageCanvas));
 });
 
+test('a separate stage window releases keyboard input on blur and restores the editor canvas', {timeout: 30_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+    const frame = page.locator('[data-plus-stage-frame]');
+    await expect(frame.locator('[data-gui-stage] canvas')).toBeVisible();
+    await page.evaluate(() => {
+        vm.stageInputTest = [];
+        const original = vm.postIOData.bind(vm);
+        vm.postIOData = (device, data) => {
+            if (device === 'keyboard' && data.key === 'q') vm.stageInputTest.push(data.isDown);
+            original(device, data);
+        };
+    });
+    await frame.getByRole('button', {name: 'Stage display', exact: true}).click();
+    await frame.getByRole('menuitem', {name: 'Undock stage', exact: true}).click();
+    const stageWindow = page.getByRole('region', {name: 'Stage', exact: true});
+    await stageWindow.getByRole('button', {name: 'Window layout', exact: true}).click();
+    const [child] = await Promise.all([
+        page.waitForEvent('popup'),
+        stageWindow.getByRole('button', {name: 'Open in a separate window (undock)'}).click()
+    ]);
+    const canvas = child.locator('[data-gui-stage] canvas');
+    await expect(canvas).toBeVisible();
+    await canvas.evaluate(node => {
+        node.dispatchEvent(new KeyboardEvent('keydown', {key: 'q', code: 'KeyQ', keyCode: 81, bubbles: true}));
+        window.dispatchEvent(new Event('blur'));
+    });
+    await expect.poll(() => page.evaluate(() => vm.stageInputTest)).toEqual([true, false]);
+    await child.close();
+    await expect(frame.locator('[data-gui-stage] canvas')).toBeVisible();
+});
+
 test('startup chooses the layout and the stage menu hides the stage without stopping the project', {timeout: 90_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];

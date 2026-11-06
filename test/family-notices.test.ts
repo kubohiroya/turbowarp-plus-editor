@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {buildFamilyNotices, requiredFamilyPackages} from '../scripts/site/family-notices.ts';
-import {readPins, root} from '../scripts/site/source.ts';
+import {root} from '../scripts/site/source.ts';
 
 const vmRevision = 'c'.repeat(40);
 const installed = [
@@ -97,7 +97,6 @@ test('this repository records every family package it supplies, dev entries incl
                     '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog'],
                 warn: () => {}});
         const index = JSON.parse(await fs.readFile(path.join(output, built.index), 'utf8'));
-        const pins = await readPins();
         const lock = JSON.parse(await fs.readFile(path.join(root, 'package-lock.json'), 'utf8'));
         for (const entry of index.packages) {
             const installed = lock.packages[`node_modules/${entry.package}`];
@@ -112,7 +111,6 @@ test('this repository records every family package it supplies, dev entries incl
             }
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
-        assert.ok(built.packages.includes(`${pins.spritePropertiesPackage}@${pins.spritePropertiesVersion}`));
         const layout = '@kubohiroya/turbowarp-plus-editor-layout';
         const layoutVersion = lock.packages[`node_modules/${layout}`].version;
         assert.ok(built.packages.includes(`${layout}@${layoutVersion}`));

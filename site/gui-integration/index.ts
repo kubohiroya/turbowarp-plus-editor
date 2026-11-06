@@ -7,6 +7,7 @@ import StageControlsView from '../stage-controls/view.tsx';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
+import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
 import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
@@ -41,7 +42,6 @@ export const attachHostScriptTransfer = (context, integration) => {
 
 export {EditorLayout} from '../editor-layout/index.tsx';
 
-/* global __TW_SPRITE_PROPERTIES_PANEL__ */
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startup = readWebStartupFeatureFlags(startupSearch);
 export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.standardLayout) && !desktopCodeEnabled ?
@@ -54,9 +54,7 @@ export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.s
         };
     }}) : undefined;
 export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
-const SpritePropertiesPanel = (startup.spriteProperties || startup.standardLayout) &&
-    typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
-export const wrapSpriteInfo = SpritePropertiesPanel ?
+export const wrapSpriteInfo = (startup.spriteProperties || startup.standardLayout) ?
     Fallback => createSpriteInfoAdapter(Fallback, SpritePropertiesPanel) : undefined;
 export {spriteListClasses} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
 

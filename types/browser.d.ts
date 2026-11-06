@@ -48,7 +48,6 @@ declare module '@turbowarp/packager-web';
 declare const EditorPreload: unknown;
 declare const __TW_PLUS_LOCAL_CATALOG__: unknown;
 declare const __TW_GUI_ADDON_MESSAGES__: Readonly<Record<string, string>>;
-declare const __TW_SPRITE_PROPERTIES_PANEL__: typeof import('../site/gui-integration/lib/tw-sprite-properties-panel.tsx').SpritePropertiesPanel;
 declare const __TW_PLUS_FILE_UPLOADER__: unknown;
 declare const __TW_PLUS_PACKAGER_ASSETS__: Record<string, string>;
 declare const __TW_PLUS_EXTENSION_RUNTIME__: string;
