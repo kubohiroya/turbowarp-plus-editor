@@ -699,7 +699,7 @@ test('a background sprite code window fits scripts when the foreground shows non
     await expect(back.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
     // The native editor may automatically pan towards a distant script when the window opens.
     await page.evaluate(() => {
-        const workspace = ScratchBlocks.getMainWorkspace();
+        const workspace = window.ScratchBlocks.getMainWorkspace();
         const {absoluteLeft, absoluteTop} = workspace.getMetrics();
         workspace.scrollX = 0;
         workspace.scrollY = 0;
