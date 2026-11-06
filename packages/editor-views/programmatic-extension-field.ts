@@ -5,7 +5,19 @@ export type FieldActionPanel = {title: string; actions: readonly FieldAction[]};
 export interface ProgrammaticExtensionField {
     type: 'turbowarp_plus_actions';
     getEditor(value: string): FieldActionPanel;
-    applyAction(value: string, actionId: string): string | undefined;
+    applyAction(value: string, actionId: string): string | undefined | Promise<string | undefined>;
+}
+
+export function runFieldAction(editor: ProgrammaticExtensionField, value: string, actionId: string,
+    complete: (next: string | undefined) => void, onError: (error: unknown) => void) {
+    try {
+        const next = editor.applyAction(value, actionId);
+        if (typeof next === 'string') complete(next);
+        else if (next === undefined) complete(undefined);
+        else void Promise.resolve(next).then(complete).catch(onError);
+    } catch (error) {
+        onError(error);
+    }
 }
 
 export function readFieldActionPanel(editor: ProgrammaticExtensionField, value: string): FieldActionPanel | undefined {

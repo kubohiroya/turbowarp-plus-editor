@@ -8,6 +8,8 @@ const directory = resolve(process.argv[2]);
 const layout = process.argv.includes('--layout');
 const resources = process.argv[3] === '--resources';
 const asyncField = process.argv[3] === '--async-commit';
+const programmaticPromise = process.argv[3] === '--programmatic-promise';
+const programmatic = programmaticPromise || process.argv[3] === '--programmatic-sync';
 const fontFile = resources ? await readFile(process.argv[4]) : undefined;
 const origin = 'http://localhost:15107';
 const assetOrigin = 'https://field-assets.test';
@@ -22,7 +24,11 @@ const [driver, extension] = await Promise.all([
             const host = createBrowserHost(window, url => window.open(url.href, '_blank', 'popup'), 'code-popout.html', true);
             const session = createCodeSession({
                 vm, ScratchBlocks, workspace: ScratchBlocks.getMainWorkspace(), document, locale: 'en',
-                canUse: () => true, onError: error => { throw error; }, receiveBackpackDrop: undefined
+                canUse: () => true, onError: error => {
+                    if (error.message === 'Fixture applyAction rejection') {
+                        (window.testProgrammaticErrors ??= []).push(error.message);
+                    } else throw error;
+                }, receiveBackpackDrop: undefined
             });
             window.openTestCode = () => {
                 const target = vm.editingTarget;
@@ -37,11 +43,13 @@ const [driver, extension] = await Promise.all([
         `},
         bundle: true, write: false, platform: 'browser'
     }),
-    transform(await readFile(new URL('fixtures/native-extension.ts', import.meta.url), 'utf8'), {
+    transform(await readFile(new URL(programmatic ? 'fixtures/programmatic-extension.ts' :
+        'fixtures/native-extension.ts', import.meta.url), 'utf8'), {
         loader: 'ts', format: 'iife', define: {
             TW_TEST_NATIVE_SVG: 'false', TW_TEST_PARENT_DOCUMENT: 'true', TW_TEST_NATIVE_CSS: 'true',
             TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources && !asyncField),
-            TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources), TW_TEST_ASYNC_FIELD: String(asyncField)
+            TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources), TW_TEST_ASYNC_FIELD: String(asyncField),
+            TW_TEST_PROGRAMMATIC_PROMISE: String(programmaticPromise)
         }
     })
 ]);
@@ -179,7 +187,10 @@ try {
     const checkValue = async (value: string, pages: Page[]) => {
         const {id} = await readValue();
         for (const page of pages) await field(page, id).filter({hasText: value}).waitFor();
-        assert.equal((await readValue()).value, value);
+        await editor.waitForFunction(({sprite, id, value}) => {
+            const target = window.vm.runtime.targets.find(target => target.getName() === sprite);
+            return target?.blocks.getBlock(id)?.fields.field_windowfields_caption.value === value;
+        }, {sprite, id, value});
     };
     const openWidget = async (page: Page) => {
         await field(page, (await readValue()).id).click({force: true});
@@ -187,6 +198,18 @@ try {
         await widget.waitFor();
         return widget;
     };
+    const openAction = async (page: Page, value: string) => {
+        await field(page, (await readValue()).id).click({force: true});
+        const dialog = page.getByRole('dialog', {name: `Caption: ${value}`, exact: true});
+        await dialog.waitFor();
+        return dialog;
+    };
+    const programmaticJobs = (count: number) => editor.waitForFunction(count =>
+        window['testProgrammaticJobs']?.length === count, count);
+    const resolveAction = (index: number, value: string) => editor.evaluate(({index, value}) => {
+        window['testProgrammaticJobs'][index].resolve(value);
+    }, {index, value});
+    const undoDisabled = (page: Page) => page.locator('#undo').evaluate((node: HTMLButtonElement) => node.disabled);
     const dock = async (page: Page) => {
         await focus(page);
         await Promise.all([page.waitForEvent('close'), page.locator('#dock').click()]);
@@ -195,10 +218,10 @@ try {
     const a = await open();
     const b = await open();
     await focus(a);
-    let widget = await openWidget(a);
+    let widget = programmatic ? await openAction(a, 'original') : await openWidget(a);
     assert.equal(await a.locator('#tw-test-native-field-css').count(), 0);
     const group = widget.locator('fieldset');
-    const animation = layout || resources || asyncField ? undefined : await checkAnimation(group);
+    const animation = layout || resources || asyncField || programmatic ? undefined : await checkAnimation(group);
     const family = resources ? await checkResources(widget) : undefined;
     if (layout) {
         await checkLayout(editor.locator('[data-tw-parent-document-caption] [aria-label="Caption layout"]'), false);
@@ -210,19 +233,40 @@ try {
         assert.equal(await fallback.evaluate(node => getComputedStyle(node).display), 'block');
     }
 
-    const edited = '改訂<&>';
+    const edited = programmatic ? '改訂 <&> note' : '改訂<&>';
     const submit = async (value: string) => {
         await widget.getByRole('textbox', {name: 'Caption'}).fill(value);
         await widget.getByRole('button', {name: 'Apply caption'}).click();
     };
-    if (asyncField) {
+    if (programmatic) {
+        const revise = (dialog: Locator) => dialog.getByRole('button', {name: 'Revise caption'}).click();
+        await revise(widget);
+        if (programmaticPromise) {
+            await programmaticJobs(1);
+            await checkValue('original', [a, b]);
+            assert.equal(await undoDisabled(a), true);
+            await focus(b);
+            await focus(a);
+            await revise(await openAction(a, 'original'));
+            await programmaticJobs(2);
+            await resolveAction(0, 'stale result');
+            await checkValue('original', [a, b]);
+            assert.equal(await undoDisabled(a), true);
+            await editor.evaluate(() => window['testProgrammaticJobs'][1].reject(new Error('Fixture applyAction rejection')));
+            await editor.waitForFunction(() => window['testProgrammaticErrors']?.length === 1);
+            await checkValue('original', [a, b]);
+            assert.equal(await undoDisabled(a), true);
+            await revise(await openAction(a, 'original'));
+            await programmaticJobs(3);
+            await resolveAction(2, edited);
+        }
+    } else if (asyncField) {
         const jobCount = (count: number) => editor.waitForFunction(count =>
             window['testAsyncFieldJobs']?.length === count, count);
         const finish = async (index: number) => {
             await editor.evaluate(index => window['testAsyncFieldJobs'][index].finish(), index);
             await editor.waitForFunction(index => window['testAsyncFieldJobs'][index].delivered, index);
         };
-        const undoDisabled = (page: Page) => page.locator('#undo').evaluate((node: HTMLButtonElement) => node.disabled);
         await submit('stale value');
         await jobCount(1);
         await checkValue('original', [a, b]);
@@ -252,13 +296,25 @@ try {
     await focus(b);
     await b.locator('#undo').click();
     await checkValue('original', [a, b]);
-    if (asyncField) assert.equal(await b.locator('#undo').evaluate((node: HTMLButtonElement) => node.disabled), true);
+    if (asyncField || programmaticPromise) assert.equal(await undoDisabled(b), true);
     await focus(a);
     await a.locator('#redo').click();
     await checkValue(edited, [a, b]);
     await dock(a);
     await dock(b);
     await focus(editor);
+    if (programmatic) {
+        const dialog = await openAction(editor, edited);
+        await dialog.getByRole('button', {name: 'Restore caption'}).click();
+        if (programmaticPromise) {
+            await programmaticJobs(4);
+            await checkValue(edited, [editor]);
+            await resolveAction(3, 'original');
+        }
+        await checkValue('original', [editor]);
+        await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
+        await checkValue(edited, [editor]);
+    }
     await editor.evaluate(async name => {
         await window.vm.loadProject(await (await window.vm.saveProjectSb3()).arrayBuffer());
         const target = window.vm.runtime.targets.find(item => item.getName() === name);
@@ -267,8 +323,12 @@ try {
     await checkValue(edited, [editor]);
     const reopened = await open();
     await focus(reopened);
-    const restored = await openWidget(reopened);
-    assert.equal(await restored.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
+    const restored = programmatic ? await openAction(reopened, edited) : await openWidget(reopened);
+    if (programmatic) {
+        await restored.getByRole('button', {name: 'Cancel'}).click();
+    } else {
+        assert.equal(await restored.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
+    }
     if (resources) {
         await checkResources(restored);
         const decisions = await editor.evaluate(() => window['fieldResourceDecisions'] as string[]);
@@ -279,7 +339,7 @@ try {
             !request.cookie && !request.referer));
     } else if (layout) {
         await checkLayout(restored.locator('[aria-label="Caption layout"]'), true);
-    } else if (!asyncField) {
+    } else if (!asyncField && !programmatic) {
         assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 1);
         await reopened.emulateMedia({reducedMotion: 'reduce'});
         await reopened.waitForFunction(() => document.querySelector('[data-plus-native-field] fieldset').getAnimations().length === 0);
@@ -290,7 +350,9 @@ try {
     }
     await dock(reopened);
     assert.deepEqual(errors, []);
-    const displayCheck = asyncField ? 'async commit, stale completion after reacquiring edit access and duplicate callback filtering' :
+    const displayCheck = programmaticPromise ? 'applyAction Promise, stale result filtering and rejection recovery' :
+        programmatic ? 'synchronous applyAction' :
+        asyncField ? 'async commit, stale completion after reacquiring edit access and duplicate callback filtering' :
         resources ? 'parent-only PNG, SVG and WOFF2 loading and resource filtering' :
         layout ? 'Grid tracks and spans, Flexbox alignment and gaps, popup reflow' :
         'popup keyframes, resource filtering, reduced motion';

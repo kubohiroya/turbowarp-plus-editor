@@ -59,12 +59,29 @@ Desktop のコード欄から、選択中の対象で別窓を最大2枚開け�
 
 親側での実行が許可された TypeScript 拡張で処理を伴うフィールドを定義するときは
 `ProgrammaticExtensionField` を使う。`getEditor(value)` が見出しと操作ボタンを返し、
-`applyAction(value, actionId)` が保存する文字列を返す。変更を取り消す場合は
-`undefined` を返す。コールバックは親側で同期的に実行される。作品の変更は戻り値で表し、コールバックから VM を直接更新しない。別窓へは文字列と操作 ID を渡す。
+`applyAction(value, actionId)` が保存する文字列、または変更を取り消す `undefined` を返す。
+Promise で同じ結果を返す場合は、親側で解決を待ってから確定する。作品の変更は戻り値で表し、
+コールバックから VM を直接更新しない。別窓へは文字列と操作 ID を渡す。
 対象は、操作ボタンで完結するフィールド編集。任意の `fromJson`、HTML、DOM の互換性は別途検証する。
 
 検証用の TypeScript 拡張は `fixtures/programmatic-extension.ts`。
 製品版 Electron の検証用コピーに対し `--code-programmatic-fields` で実行する。
+
+### `ProgrammaticExtensionField.applyAction` の Promise 確定
+
+解決時に、開始したリクエスト、別窓の編集権、対象とフィールド、元の値、登録済みの拡張定義を照合する。
+別窓から編集権が移った場合や新しい操作が始まった場合は、以前の結果を破棄する。現在のリクエストの
+拒否は既存のエラー経路へ通知し、共有履歴には値が変わった確定だけを1件記録する。
+ドック画面でも Promise を扱い、ウィンドウのフォーカスと対象フィールドを照合する。
+拡張内部の処理そのものの中断や、戻り値以外の VM 更新は契約の対象外。
+
+後述の手順でビルドし、`node test/stage6/css-animation-fields.ts "$trial/build" --programmatic-promise`
+を実行する。前面を行き来して同じフィールドを開き直した後に古い Promise を解決させ、
+値と共有履歴を照合する。現在の Promise の拒否と再試行、新しい確定、共有 Undo／Redo、
+ドック復帰後の確定、SB3 再読込後の値を確認する。フォーカス通知は検証ハーネスから供給する。
+同期版の回帰は `--programmatic-sync` を指定する。
+ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で両方通過した。
+切り戻し時は作品を保存してコード別窓をドックに戻し、この段階の `editor-views` の差分を戻す。
 
 ### `fromJson` と独自 DOM の互換性試作
 
@@ -188,7 +205,7 @@ node test/stage6/css-animation-fields.ts "$trial/build"
 確定時に、開いている編集 UI、対象フィールド、元の値、ビューの編集権を照合する。
 確定した変更は共有履歴の1件として保存する。編集 UI の閉鎖、別ビューへのフォーカス移動、
 対象やフィールドの入れ替わりで、以前のセッションから届く結果は無効になる。
-任意の遅延 `field.setValue` や `ProgrammaticExtensionField` の Promise 戻り値は検証範囲外。
+任意の遅延 `field.setValue` は検証範囲外。
 
 上の手順でビルドした後、`node test/stage6/css-animation-fields.ts "$trial/build" --async-commit` を実行する。
 フォーカス通知を検証ハーネスで供給し、前面を行き来して同じフィールドを開き直した後に、古い処理を
