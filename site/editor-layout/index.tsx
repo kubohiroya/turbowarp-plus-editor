@@ -18,6 +18,8 @@ export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
     startupParams.get('twPlusDockviewSpriteTabs') !== '0';
 export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled &&
     startupParams.get('twPlusDockview') === '1' && typeof EditorPreload === 'undefined';
+export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
+    startupParams.get('twPlusStageDrawer') !== '0';
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
 const layoutMenuIcon = (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -56,6 +58,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
             enabled={layoutFlags.standardLayout}
             splitter={layoutFlags.splitter}
             windowLayout={layoutFlags.windowLayout}
+            stageDrawer={stageDrawerEnabled}
             stageActionEnabled={layoutFlags.stagePanel && !layoutFlags.stageDisplayMenu}
             storage={getStorage()}
             storageKey="twPlusEditorLayout"

@@ -27,6 +27,7 @@ interface PanelProps {
     actionMount?: HTMLElement | null;
     dockHeight?: number;
     className?: string;
+    externalOnly?: boolean;
     externalHost?: ReturnType<typeof import('./desktop-panel-host.ts').createDesktopPanelHost>;
     decorate?: (document: Document) => () => void;
     renderInExternalDocument?: boolean;
@@ -38,7 +39,7 @@ interface PanelProps {
     layer?: 'utility';
 }
 function DockableBasicPanel({host, id, title, children, render, actionMount, dockHeight, className,
-    externalHost, decorate, renderInExternalDocument, onDockActionChange, alwaysShowUndock, openLabel, renderDockHeading, layer}: PanelProps & {host: NonNullable<ReturnType<typeof useWindowHost>>}) {
+    externalHost, externalOnly, decorate, renderInExternalDocument, onDockActionChange, alwaysShowUndock, openLabel, renderDockHeading, layer}: PanelProps & {host: NonNullable<ReturnType<typeof useWindowHost>>}) {
     const {showUndock, locale, plusLayout} = React.useContext(WindowLayoutContext);
     const canUndock = alwaysShowUndock || showUndock;
     const [state, setState] = React.useState<SurfaceState<PanelMount>>({kind: 'docked'});
@@ -83,7 +84,7 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
     }, [canUndock, state]);
 
     const undock = React.useCallback(() => {
-        if (externalHost && !plusLayout) {
+        if (externalOnly || (externalHost && !plusLayout)) {
             surface.undock(undefined);
             return;
         }
@@ -94,12 +95,12 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
             surface.undock(undefined);
         };
         surface.undock(request);
-    }, [surface, id, title, externalHost, plusLayout, layer]);
+    }, [surface, id, title, externalHost, externalOnly, plusLayout, layer]);
     React.useLayoutEffect(() => {
         if (!onDockActionChange) return;
-        onDockActionChange({kind: state.kind, dock: surface.dock, undock, external: Boolean(externalHost && !plusLayout)});
+        onDockActionChange({kind: state.kind, dock: surface.dock, undock, external: Boolean(externalHost && (externalOnly || !plusLayout))});
         return () => onDockActionChange(null);
-    }, [onDockActionChange, state.kind, surface, undock, externalHost, plusLayout]);
+    }, [onDockActionChange, state.kind, surface, undock, externalHost, externalOnly, plusLayout]);
 
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mount = state.kind === 'external' ? state.target.mount : undefined;

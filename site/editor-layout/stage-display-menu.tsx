@@ -1,6 +1,7 @@
 import React from 'react';
 import type {IconMenuItem} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
+import {stageDockActionLabel} from '@kubohiroya/turbowarp-plus-editor-layout/stage-surface';
 import fullscreenIcon from '@tw-plus/gui-stage-fullscreen-icon';
 import {StageDisplayMenuContext, WindowLayoutContext} from './context.ts';
 import {layoutFlags} from './index.tsx';
@@ -22,16 +23,14 @@ function PresetIcon({icon}) {
 
 function DisplayMenu({locale, presets, fullscreen}) {
     const {dockAction} = React.useContext(StageDisplayMenuContext) ?? {};
-    const {plusLayout, stageHidden, setStageVisible} = React.useContext(WindowLayoutContext);
+    const {plusLayout, stageDrawer, stageHidden, setStageVisible} = React.useContext(WindowLayoutContext);
     const japanese = /^ja(?:-|$)/i.test(locale);
     const label = japanese ? 'ステージの表示' : 'Stage display';
     const canToggleVisibility = plusLayout && (!dockAction || dockAction.kind === 'docked');
     const visibilityLabel = stageHidden ? (japanese ? 'ステージを表示' : 'Show stage') :
         (japanese ? 'ステージを隠す' : 'Hide stage');
     const detached = dockAction?.kind === 'external';
-    const dockLabel = detached ? (japanese ? 'ドックに戻す' : 'Dock stage') :
-        dockAction?.external ? (japanese ? '別ウィンドウで開く' : 'Open in a separate window') :
-            (japanese ? 'アンドック' : 'Undock stage');
+    const dockLabel = stageDockActionLabel(locale, {drawer: stageDrawer, detached, external: dockAction?.external});
 
     const selectDisplay = action => {
         if (stageHidden) setStageVisible(true);

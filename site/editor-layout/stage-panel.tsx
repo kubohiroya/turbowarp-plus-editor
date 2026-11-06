@@ -1,14 +1,18 @@
 import React from 'react';
 import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-plus-editor-layout';
+import {createStageSurface} from '@kubohiroya/turbowarp-plus-editor-layout/stage-surface';
 import {BasicPanel} from './basic-panel.tsx';
 import {StageDisplayMenuContext} from './context.ts';
 import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.ts';
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
-import {layoutFlags, stageCanUndock, WindowLayoutContext} from './index.tsx';
+import {layoutFlags, layoutViews, stageCanUndock, stageDrawerEnabled, WindowLayoutContext} from './index.tsx';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 const externalHost = desktopPopout ?? (layoutFlags.standardLayout ? createWebPanelHost('stage', 680, 520) : null);
+const StageSurface = createStageSurface(React, {
+    context: WindowLayoutContext, EdgeDrawer: layoutViews.EdgeDrawer, Panel: BasicPanel
+});
 
 function StageResizeHandle({edge, aspect, width, limits, label}) {
     const drag = React.useRef(null);
@@ -55,7 +59,7 @@ function StageResizeHandle({edge, aspect, width, limits, label}) {
 }
 
 function StageViewport({aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen, inputDocument}) {
-    const {stageHidden, stageResize, locale} = React.useContext(WindowLayoutContext);
+    const {stageDrawer, stageHidden, stageResize, locale} = React.useContext(WindowLayoutContext);
     const resizable = !floating && stageResize;
     const resizeLabel = /^ja(?:-|$)/i.test(locale) ? 'ステージのサイズを変更' : 'Resize stage';
     const viewport = React.useRef(null);
@@ -88,7 +92,7 @@ function StageViewport({aspect, width, defaultWidth, floating, render, renderHea
 
     const displayWidth = floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width;
     const canvas = <>
-        {render(displayWidth, Boolean(floating || externalBounds || resizable), inputDocument)}
+        {render(displayWidth, Boolean(stageDrawer || floating || externalBounds || resizable), inputDocument)}
         {resizable && ['left', 'bottom', 'corner'].map(edge => <StageResizeHandle key={edge}
             {...{edge, aspect, width}} limits={stageResize} label={resizeLabel} />)}
     </>;
@@ -107,10 +111,9 @@ function StageViewport({aspect, width, defaultWidth, floating, render, renderHea
 }
 
 function AppStagePanel({aspect, width, defaultWidth, render, renderHeader, isFullScreen}) {
-    const {locale, stageActionMount} = React.useContext(WindowLayoutContext);
+    const {stageActionMount} = React.useContext(WindowLayoutContext);
     const menu = React.useContext(StageDisplayMenuContext);
-    const title = /^ja(?:-|$)/i.test(locale) ? 'ステージ' : 'Stage';
-    return <BasicPanel id="stage" title={title} externalHost={externalHost} decorate={decorateSurface}
+    return <StageSurface externalHost={externalHost} decorate={decorateSurface}
         actionMount={stageActionMount ?? null} onDockActionChange={layoutFlags.stageDisplayMenu ? menu?.setDockAction : undefined}
         dockHeight={Math.round((width ?? defaultWidth) / aspect) + (renderHeader ? 44 : 0)}
         render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen}}
@@ -120,5 +123,5 @@ function AppStagePanel({aspect, width, defaultWidth, render, renderHeader, isFul
 
 export const StagePanel = stageCanUndock ? AppStagePanel :
     (layoutFlags.standardLayout ? StageViewport : undefined);
-export const attachStageMonitorDrag = desktopPopout && layoutFlags.stagePanel ?
+export const attachStageMonitorDrag = (stageDrawerEnabled && externalHost) || (desktopPopout && layoutFlags.stagePanel) ?
     (element, onMove, isDraggable) => attachExternalMonitorDrag(element, onMove, isDraggable, document) : undefined;
