@@ -37,5 +37,111 @@
       "message": "Extension bytes do not match the digest"
     },
     "pageErrors": []
+  },
+  "workspace": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "babcc6d45e6ed0491e9641704596c2b0b5e35f07",
+    "guiRevision": "62ecfefe155ebf634d8739ab44b7784d41a7f7bb",
+    "securityVersion": "0.8.7",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "current-file-menu.png": "File menu with extension addition and project data commands.",
+      "plus-workspace.png": "Default workspace, before expanding drawers.",
+      "sprite-drawer.png": "Sprite drawer expanded from the left edge.",
+      "palette-current.png": "Motion category selected in the horizontal palette.",
+      "dockview-workspace.png": "Stage moved to the same Dockview workspace as sprite code.",
+      "catalog-current.png": "Current File menu path, TurboWarp Plus filter with TurboWarp-Markdown selected.",
+      "minimap-current.png": "Default workspace with five test blocks added to illustrate the minimap."
+    }
+  },
+  "publicSpriteTabs": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "7e7f4977ef877db31ad5dcba72b7936ca0be9686",
+    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
+    "image": "sprite-tabs-public.png",
+    "viewport": {"width": 1440, "height": 1000},
+    "crop": {"x": 0, "y": 47, "width": 750, "height": 130},
+    "note": "Two tabs after duplicating the starter sprite in the public Japanese Editor. The toolbar label is プロパティ・変数."
+  },
+  "operationDetails": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "b506c8bc32f08f6bbe45531afb7e850277e06ccb",
+    "guiRevision": "1712614699ca5bef772dc3a020b1b7b63d6bccea",
+    "securityVersion": "0.8.7",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "splitter-detail.png": "Scratch layout (twPlusStandardLayout=0), column separator focused after a keyboard adjustment.",
+      "sprite-tabs-detail.png": "Two sprite tabs after duplicating the starter sprite.",
+      "split-menu.png": "Editor layout menu showing the split and close actions.",
+      "media-panes-detail.png": "Costumes and Sounds tabs in two horizontal panels of the same sprite.",
+      "variable-pane-detail.png": "A test score variable created with the editor UI and displayed beside the code pane.",
+      "palette-resize-detail.png": "Resize grip at the lower-right corner of the Motion flyout.",
+      "palette-order-detail.png": "The Motion category held over the Sound category while reordering.",
+      "project-uri-detail.png": "Project URI field with an illustrative example.org URL typed in, before applying.",
+      "plus-sprite-splitter.png": "Default Plus layout with the sprite drawer pinned, cropped around the divider.",
+      "plus-script-transfer.png": "Default Plus layout with twPlusContextMenuIcons=1, block menu opened on a test block. Cropped to include the tab, category bar, and menu. Site revision d08309885647425b480a6b0889f1f014ce2a3d8b.",
+      "plus-media-panes.png": "Full viewport with both media panes visible. The sound is a generated test tone added to the starter sprite.",
+      "plus-project-properties.png": "Default Plus layout, project properties opened with fictional sample inputs."
+    }
+  },
+  "assetPreviewDevelopment": {
+    "date": "2026-11-04",
+    "baseRevision": "b1677c5c693f4270994b6d70d6d102c18815572c",
+    "image": "asset-preview-development.png",
+    "note": "Local Kamishibai development build with additional working changes. Remote-cacheable test image served by a test response. Crop of the real preview."
+  },
+  "formDetails": {
+    "source": "Existing form.png and validation.png",
+    "images": [
+      "form-dialog.png",
+      "validation-dialog.png"
+    ],
+    "note": "Dialog-only crops of the existing Editor screenshots, independent of the workspace layout."
+  },
+  "variablePaneDevelopment": {
+    "layoutRevision": "1a0ee61",
+    "image": "variable-pane-grouped.png",
+    "note": "The local layout package's real variable pane rendered in its browser fixture with Japanese labels and sample variables from both scopes."
+  },
+  "integratedPanelReview": {
+    "date": "2026-11-06",
+    "url": "http://127.0.0.1:8767/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "f27a349ce697cfc36c0f953149235995f3f710b6",
+    "guiRevision": "1712614699ca5bef772dc3a020b1b7b63d6bccea",
+    "layoutRevision": "6848f671fe08deb2e2f37b88ca6cca068574eedd",
+    "publicComparisonRevision": "23127c277c26d0395981d8616aa72a10c932f377",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "local-media-panes.png": "Split costume preview and sound editor. The sample audio uses the bundled delete.wav. The crop retains the preview, waveform, and playback controls.",
+      "local-variable-pane.png": "Split variable and code panes. The local speed variable was set to 8 using Enter. Cropped around the table and the sample script.",
+      "local-stage-workspace.png": "Stage opened in the workspace with its display menu open. The canvas is 703 CSS pixels wide in the 715-pixel pane. The small preset was checked at 240 pixels.",
+      "local-script-transfer.png": "Default block context menu with icons. Captured with no icon feature-flag query and cropped around the workspace toolbar and menu."
+    }
+  },
+  "publicStageMenu": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "3a769baee6a1849b3bbe5db496607bf9d233e037",
+    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "stage-menu.png": "Public stage drawer with the display menu open.",
+      "stage-workspace-current.png": "Stage opened in a workspace tab using the public display menu. Its canvas is 480 CSS pixels wide."
+    }
   }
 }
