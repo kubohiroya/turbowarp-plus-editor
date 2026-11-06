@@ -65,3 +65,19 @@ Desktop のコード欄から、選択中の対象で別窓を最大2枚開け�
 
 検証用の TypeScript 拡張は `fixtures/programmatic-extension.ts`。
 製品版 Electron の検証用コピーに対し `--code-programmatic-fields` で実行する。
+
+### `fromJson` と独自 DOM の互換性試作
+
+親側での実行が許可された拡張の `customFieldTypes` に対し、親の ScratchBlocks が
+`implementation.fromJson` を呼び、元のフィールドを生成する。
+別窓のブロック上には保存値を表示し、編集時は親のフィールドが `WidgetDiv` に作る DOM を
+別窓の document に配置する。イベントリスナーは親側で作られたものを使う。
+前面ビューの編集権と対象を確認し、同じ操作中の同期的な `setValue` を共有履歴の1項目として確定する。
+フォーカス移動、対象の切り替え、別窓の閉鎖では編集中の UI を閉じる。
+
+対象は `WidgetDiv` に DOM を作り、文字列を `setValue` で確定する編集 UI。
+フィールド自体の独自 SVG 描画、`document.body` や別のオーバーレイに直接出力する UI、
+親 document に依存するイベントや CSS、閉鎖後の非同期確定は互換性の検証範囲外。
+
+製品版 Electron の検証用コピーに対して `--code-native-fields` を指定する。
+`fixtures/native-extension.ts` の独自テキストエリアとボタンを Playwright／CDP で操作する。

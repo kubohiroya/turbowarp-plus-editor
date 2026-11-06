@@ -44,7 +44,8 @@ const extensionPalette = createCodeExtensionPalette(ScratchBlocks, (field, name)
     if (!editable || blockedSnapshot || !document.hasFocus() || !block || block.isInFlyout) return;
     drain();
     pendingField = {request: ++fieldRequest, blockId: block.id, name};
-    port.postMessage({type: 'field-editor', targetId, lease, ...pendingField});
+    const {left, bottom} = field.getSvgRoot().getBoundingClientRect();
+    port.postMessage({type: 'field-editor', targetId, lease, ...pendingField, anchor: {left, bottom}});
 });
 
 function cancelFieldEditor() {

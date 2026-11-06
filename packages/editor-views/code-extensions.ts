@@ -82,7 +82,8 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale,
         fieldRegistrations.get(category.id)?.();
         const fields = getCustomFields(category);
         if (fields.length) {
-            fieldRegistrations.set(category.id, registerCustomFields(ScratchBlocks, fields.map(({declaration}) => declaration), openProgrammatic));
+            fieldRegistrations.set(category.id, registerCustomFields(ScratchBlocks, fields.map(({declaration}) => declaration), openProgrammatic,
+                name => fields.find(field => field.declaration.name === name)?.native));
         } else fieldRegistrations.delete(category.id);
 
         for (const entry of category.blocks ?? []) {
