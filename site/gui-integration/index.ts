@@ -1,4 +1,6 @@
 import React from 'react';
+import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
+import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
 import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import StageControlsView from '../stage-controls/view.tsx';
@@ -52,10 +54,14 @@ export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.s
         };
     }}) : undefined;
 export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
-export const SpritePropertiesPanel = (startup.spriteProperties || startup.standardLayout) &&
+const SpritePropertiesPanel = (startup.spriteProperties || startup.standardLayout) &&
     typeof __TW_SPRITE_PROPERTIES_PANEL__ !== 'undefined' ? __TW_SPRITE_PROPERTIES_PANEL__ : undefined;
+export const wrapSpriteInfo = SpritePropertiesPanel ?
+    Fallback => createSpriteInfoAdapter(Fallback, SpritePropertiesPanel) : undefined;
+export {spriteListClasses} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
 
 export {BackpackSurface} from '../editor-backpack/index.tsx';
+export {attachStageInput} from '@kubohiroya/turbowarp-plus-editor-layout';
 export {StagePanel, attachStageMonitorDrag} from '../editor-layout/stage-panel.tsx';
 export {StageDisplayMenu} from '../editor-layout/stage-display-menu.tsx';
 export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropListActions} from '../editor-layout/target-list.tsx';

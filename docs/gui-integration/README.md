@@ -24,14 +24,13 @@ GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` 
 
 配信ビルドの `scripts/site/webpack.config.cts` はwebpackの `ProvidePlugin` で `__TW_GUI_HOST__` を `site/gui-integration/index.ts` に結び付ける。ランタイムglobalへの代入や起動順に依存しない。GUI単体では値が存在せず、getterは `null` を返す。追加のローダー・フォーム・プレビューVM等は設置されず、通常のGUIが起動する。
 
-共有するReact、React DOM、Redux/Intl、VMとcentral dispatchは、配信ビルドが固定GUIの実体に解決する。GUIのModal・遅延ScratchBlocks・logger・Redux action creatorは呼出し時に渡す。受け側の接続モジュールがGUIのreducerやUIを直接importして初期化の循環を作らない。
+共有するReact、React DOM、Redux/Intl、VMとcentral dispatchは、配信ビルドが固定GUIの実体に解決する。GUIのModal・遅延ScratchBlocks・logger・Redux action creatorは呼出し時に渡す。受け側の接続モジュールがGUIのreducerやUIを直接importして初期化の循環を作らない。 Scratch GUI #172 のスプライト一覧のスタイル、プロパティのラッパー、別ウィンドウのステージ入力には、レイアウトパッケージの接続口を渡す。
 
 機能の有効化条件・既存の起動時フラグ・保存形式は変更しない。独立プレビューVMのdispatch退避、VM単位のサービス同一性、workspaceの差替え・破棄、権限拒否時の初期状態への復帰と失敗表示も受け側の接続実装が保持する。
 
 ## 検証
 
-- `test:gui-integration` は本家にない GUI ファイルが次の接続契約テストと完全に一致すること、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。
-  - `test/sprite-properties-host.test.mjs` は #175 の任意接続口について、既存表示への復帰と選択が切り替わった後の古い編集の拒否を検証する。
+- `test:gui-integration` は固定 GUI に本家への追加ファイルがなく、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。GUI 側にあった `test/sprite-properties-host.test.mjs` は Scratch GUI #172 で削除した。
 - CIは固定GUIを用意し、比較元の本家コミットをfetchした後、GUIの標準unitと受け側の接続テストを実行する。
 - GUI標準unit 33件、受け側の既存境界182件、移設分と配置監査54件が成功。受け側の型検査と変更GUIソースのeslintも成功。
 - GUI単体と配信ホストの両方で、production設定のブラウザー6エントリーをビルド。ローカル検証ではminifyのみOFF。micro:bitの通常生成物は同一基準の既存インストールから使用した。
@@ -95,6 +94,8 @@ GUIはネイティブのコンテキストメニュー部品とファイル選�
 配置切り替え、ステージ表示、対象一覧のレイアウトと CSS は `@kubohiroya/turbowarp-plus-editor-layout` が所有します。Editor は起動設定、既存画面、ウィンドウ操作とパレットを接続します。
 
 Plus 標準配置ではスプライト編集画面を Dockview のタブで開きます。「別画面で開く」からは既存の別画面コード編集を利用できます。切り戻すときは起動 URL に `twPlusDockviewSpriteTabs=0` を追加して再読み込みします。Editor は独立パッケージのアーカイブと整合性を lockfile に固定し、Scratch GUI の既存の編集タブ列・編集パネルの接続口を使います。
+
+Web 版で `twPlusDockview=1` を付けて起動すると、同じスプライトを複数のペインに開き、コスチュームや音の選択と一覧のスクロール位置をペインごとに保持できます。変数タブでは、編集中のペインでプロジェクトの変数値を変更できます。切り戻すときは `twPlusDockview=1` を URL から外して再読み込みします。
 
 背景タイルでは GUI がタイルとネイティブのメニュー部品を任意の `wrapBackdropTile` 接続口に渡します。どの配置で転送メニューを表示し、どの項目を含めるかは Editor の既存ステージ転送接続で決めます。
 

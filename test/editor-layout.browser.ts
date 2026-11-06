@@ -852,3 +852,223 @@ test('utility panels and menus stay above the code workspace and its palette', {
     await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
     await expect(code).toHaveCount(0);
 });
+
+test('the Dockview opt-in splits one sprite editor and restores each view section', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.setDefaultTimeout(8_000);
+    const url = origin + buildPrefix + 'editor.html?lang=en';
+    const groups = page.locator('.dv-groupview');
+    await page.goto(url);
+    await expect(page.getByRole('tab', {name: 'Code', exact: true})).toBeVisible();
+    await expect(groups).toHaveCount(1);
+    await expect(groups.getByRole('button', {name: 'Editor panel layout'})).toHaveCount(0);
+
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(url + '&twPlusDockview=1');
+    await expect(groups).toHaveCount(1);
+    const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
+    const tabs = () => page.getByRole('tab', {name: spriteName, exact: true});
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
+    const menu = (group: ReturnType<typeof page.locator>) => group.getByRole('button', {name: 'Editor panel layout'});
+    await expect(tabs()).toHaveCount(1);
+    await page.evaluate(() => document.documentElement.style.setProperty('--ui-white', 'rgb(38, 47, 65)'));
+    await expect(groups.first().getByRole('tab', {name: spriteName, exact: true}))
+        .toHaveCSS('background-color', 'rgb(38, 47, 65)');
+    await page.evaluate(() => document.documentElement.style.removeProperty('--ui-white'));
+    await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace()))).toBe(true);
+    const blockId = await page.evaluate(() => {
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        const block = workspace.newBlock('motion_movesteps');
+        block.initSvg();
+        block.render();
+        const center = workspace.centerOnBlock.bind(workspace);
+        workspace.centerOnBlock = id => {
+            document.documentElement.dataset.testCenteredBlock = id;
+            center(id);
+        };
+        return block.id;
+    });
+    const search = toolbar.getByRole('combobox', {name: 'Search within this sprite'});
+    await search.fill('move');
+    await search.press('ArrowDown');
+    await search.press('Enter');
+    await expect(page.locator('html')).toHaveAttribute('data-test-centered-block', blockId);
+    await section('Costumes').click();
+    await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
+
+    await menu(groups.first()).click();
+    await page.getByRole('menuitem', {name: 'Split right'}).click();
+    await expect(groups).toHaveCount(2);
+    await expect(tabs()).toHaveCount(2);
+    await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
+    await section('Code').click();
+    await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
+    await groups.first().getByRole('tab', {name: spriteName, exact: true}).click();
+    await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
+    await groups.last().getByRole('tab', {name: spriteName, exact: true}).click();
+    await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
+    await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
+
+    await menu(groups.last()).click();
+    await page.getByRole('menuitem', {name: 'Close this split'}).click();
+    await expect(groups).toHaveCount(1);
+    await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
+    await menu(groups.first()).click();
+    await expect(page.getByRole('menuitem', {name: 'Close this split'})).toBeDisabled();
+    await page.getByRole('menuitem', {name: 'Split below'}).click();
+    await expect(groups).toHaveCount(2);
+    const upper = await groups.first().boundingBox();
+    const lower = await groups.last().boundingBox();
+    assert(upper && lower && lower.y > upper.y);
+    await groups.last().getByRole('button', {name: 'Close ' + spriteName, exact: true}).click();
+    await expect(groups).toHaveCount(1);
+    assert.deepEqual(errors, []);
+});
+
+test('the Dockview asset connection restores the native costume and sound selection per pane', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.setDefaultTimeout(8_000);
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1');
+    const groups = page.locator('.dv-groupview');
+    await expect(groups).toHaveCount(1);
+    await page.evaluate(async prefix => {
+        const vm = window.vm;
+        const target = vm.editingTarget;
+        target.createVariable('dockview-counter', 'Pane counter', '', false);
+        target.variables['dockview-counter'].value = 9;
+        await vm.duplicateCostume(0);
+        vm.renameCostume(0, 'Pane costume A');
+        vm.renameCostume(1, 'Pane costume B');
+        for (let i = 0; i < 11; i++) {
+            await vm.duplicateCostume(target.getCostumes().length - 1);
+            vm.renameCostume(target.getCostumes().length - 1, 'Extra outfit ' + i);
+        }
+        const response = await fetch(prefix + 'static/blocks-media/default/delete.wav');
+        if (!response.ok) throw new Error('Missing GUI sound fixture');
+        const storage = vm.runtime.storage;
+        const asset = storage.createAsset(storage.AssetType.Sound, storage.DataFormat.WAV,
+            new Uint8Array(await response.arrayBuffer()), null, true);
+        const sound = {asset, md5: asset.assetId + '.wav'};
+        await vm.addSound({...sound, name: 'Pane sound A'}, target.id);
+        await vm.addSound({...sound, name: 'Pane sound B'}, target.id);
+    }, buildPrefix);
+    const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
+    const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
+    const card = (name: string) => editor.locator('[class*="selector_list-item_"]:visible').filter({hasText: name});
+    const selectedItem = '[class*="selector_list-item_"][class*="sprite-selector-item_is-selected_"]:visible';
+    const selected = editor.locator(selectedItem);
+    const choose = async (name: string) => {
+        await card(name).click();
+        await expect(selected).toContainText(name);
+    };
+    const preview = page.locator('.tw-plus-sprite-tab-asset-preview:visible');
+    const previewSelected = preview.locator(selectedItem);
+    const bounds = async (pane: ReturnType<typeof page.locator>) => {
+        const list = await pane.locator('[class*="selector_wrapper_"]').boundingBox();
+        const body = await pane.locator('[class*="asset-panel_detail-area_"]').boundingBox();
+        assert(list && body);
+        return {list: list.width, detail: body.width, height: body.height};
+    };
+    const sameBounds = (before: {list: number; detail: number; height: number}, after: typeof before) => {
+        for (const key of ['list', 'detail', 'height'] as const) {
+            assert(Math.abs(before[key] - after[key]) <= 2, key + ': ' + before[key] + ' vs ' + after[key]);
+        }
+    };
+    const activate = (index: number) => groups.nth(index).getByRole('tab', {name: spriteName, exact: true}).click();
+
+    await section('Costumes').click();
+    await choose('Pane costume A');
+    await groups.first().getByRole('button', {name: 'Editor panel layout'}).click();
+    await page.getByRole('menuitem', {name: 'Split right'}).click();
+    await expect(groups).toHaveCount(2);
+    await expect(selected).toContainText('Pane costume A');
+    await activate(0);
+    const costumeLayout = await bounds(editor);
+    const listArea = '[class*="selector_list-area_"]';
+    await editor.locator(listArea).evaluate(node => {
+        node.scrollTop = 48;
+        node.dispatchEvent(new Event('scroll', {bubbles: true}));
+    });
+    await activate(1);
+    await choose('Pane costume B');
+    await expect(previewSelected).toContainText('Pane costume A');
+    sameBounds(costumeLayout, await bounds(preview));
+    await expect.poll(() => preview.locator(listArea).evaluate(node => node.scrollTop)).toBe(48);
+    await expect(preview.getByRole('img', {name: 'Pane costume A'})).toBeVisible();
+    // The first click resumes the pane, even when it lands on another costume.
+    const otherCard = await preview.locator('[class*="selector_list-item_"]').filter({hasText: 'Pane costume B'}).boundingBox();
+    assert(otherCard);
+    await page.mouse.click(otherCard.x + otherCard.width / 2, otherCard.y + otherCard.height / 2);
+    await expect(selected).toContainText('Pane costume A');
+    await expect.poll(() => editor.locator(listArea).evaluate(node => node.scrollTop)).toBe(48);
+    assert.equal(await page.evaluate(() => window.vm.editingTarget.getCurrentCostume().name), 'Pane costume B');
+    await activate(1);
+    await expect(selected).toContainText('Pane costume B');
+
+    await section('Sounds').click();
+    await choose('Pane sound A');
+    await activate(0);
+    await section('Sounds').click();
+    const search = toolbar.getByRole('combobox', {name: 'Search within this sprite'});
+    await search.fill('Pane sound B');
+    await page.getByRole('option', {name: 'Pane sound B'}).click();
+    await expect(selected).toContainText('Pane sound B');
+    const soundLayout = await bounds(editor);
+    await activate(1);
+    await expect(selected).toContainText('Pane sound A');
+    await expect(previewSelected).toContainText('Pane sound B');
+    await expect(preview.getByRole('img', {name: 'Waveform: Pane sound B'})).toBeVisible();
+    sameBounds(soundLayout, await bounds(preview));
+    await preview.focus();
+    await page.keyboard.press('Enter');
+    await expect(selected).toContainText('Pane sound B');
+    await expect(page.locator('[class*="sound-editor_waveform-container_"]:visible')).toBeVisible();
+    await section('Code').click();
+    await section('Sounds').click();
+    await expect(selected).toContainText('Pane sound B');
+
+    await page.evaluate(async () => {
+        const vm = window.vm;
+        await vm.duplicateSprite(vm.editingTarget.id);
+        vm.renameSprite(vm.editingTarget.id, 'Other pane sprite');
+        const index = vm.editingTarget.getSounds().findIndex(sound => sound.name === 'Pane sound A');
+        vm.renameSound(index, 'Other sprite sound');
+    });
+    await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe('Other pane sprite');
+    await expect(preview.getByRole('img', {name: 'Waveform: Pane sound A'})).toBeVisible();
+    await expect(preview.getByText('Other sprite sound', {exact: true})).toHaveCount(0);
+    await activate(0);
+    await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
+    await expect(selected).toContainText('Pane sound B');
+
+    await section('Variables').click();
+    const viewIds = await Promise.all([0, 1].map(index => groups.nth(index)
+        .getByRole('tab', {name: spriteName, exact: true}).getAttribute('data-tab-panel-id')));
+    const variable = (group: number) => page.locator('[id="' + viewIds[group] + '-content"]')
+        .getByRole('textbox', {name: 'Pane counter'});
+    const first = variable(0);
+    await expect(first).toBeEditable();
+    const width = (await first.boundingBox()).width;
+    await first.fill('17');
+    await activate(1);
+    await section('Variables').click();
+    await expect(first).not.toBeEditable();
+    await expect(first).toHaveValue('17');
+    assert.equal((await first.boundingBox()).width, width);
+    await expect(variable(1)).toHaveValue('17');
+    await first.click();
+    await expect(first).toBeEditable();
+    await expect(first).toHaveValue('17');
+    await expect(variable(1)).not.toBeEditable();
+    await first.fill('23');
+    await first.press('Enter');
+    await expect(variable(1)).toHaveValue('23');
+    assert.equal(await page.evaluate(() => window.vm.editingTarget.variables['dockview-counter'].value), 23);
+    assert.deepEqual(errors, []);
+});
