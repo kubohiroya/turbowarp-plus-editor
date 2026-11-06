@@ -1,4 +1,7 @@
-import {getCustomFields, registerCustomFields, type CustomField} from './custom-extension-fields.ts';
+import {getCustomFields, programmaticField, registerCustomFields, type CustomField} from './custom-extension-fields.ts';
+
+import {createFieldActionDialog, readFieldActionPanel} from './programmatic-extension-field.ts';
+export {createFieldActionDialog} from './programmatic-extension-field.ts';
 
 type BlockDefinition = {type: string; [key: string]: unknown};
 type Category = {id: string; xml: string};
@@ -44,18 +47,42 @@ function convertDynamicShape(runtime, category, opcode: string, info) {
     return runtime._convertBlockForScratchBlocks({...info, opcode, isDynamic: true}, category).json;
 }
 
-export function attachDockedCodeExtensions({vm, ScratchBlocks}) {
+export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale, onError: onFieldError = (_error: unknown) => {}}) {
     const {runtime} = vm;
     const definitions = ScratchBlocks.Blocks;
     const installed = new Map();
     const fieldRegistrations = new Map<string, () => void>();
     let disposed = false;
+    const dialog = document && createFieldActionDialog(document);
+
+    function openProgrammatic(field, name: string) {
+        const block = field.sourceBlock_;
+        if (!dialog || disposed || !block || block.isInFlyout) return;
+        const editor = programmaticField(runtime, block.type, name);
+        if (!editor) return;
+        try {
+            const value = field.getValue();
+            const panel = readFieldActionPanel(editor, value);
+            if (panel) dialog.show(panel, action => {
+                if (disposed || !field.sourceBlock_ || field.getValue() !== value ||
+                    programmaticField(runtime, block.type, name) !== editor) return;
+                try {
+                    const next = editor.applyAction(value, action);
+                    if (typeof next === 'string') field.setValue(next);
+                } catch (error) {
+                    onFieldError(error);
+                }
+            }, locale);
+        } catch (error) {
+            onFieldError(error);
+        }
+    }
 
     function install(category) {
         fieldRegistrations.get(category.id)?.();
         const fields = getCustomFields(category);
         if (fields.length) {
-            fieldRegistrations.set(category.id, registerCustomFields(ScratchBlocks, fields.map(({declaration}) => declaration)));
+            fieldRegistrations.set(category.id, registerCustomFields(ScratchBlocks, fields.map(({declaration}) => declaration), openProgrammatic));
         } else fieldRegistrations.delete(category.id);
 
         for (const entry of category.blocks ?? []) {
@@ -101,6 +128,7 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks}) {
 
     return {dispose() {
         disposed = true;
+        dialog?.close();
         vm.removeListener('EXTENSION_ADDED', install);
         vm.removeListener('BLOCKSINFO_UPDATE', install);
         for (const unregister of fieldRegistrations.values()) unregister();
@@ -169,7 +197,7 @@ const paletteTags = new Set(['block', 'shadow', 'field', 'value', 'statement', '
 const blockArgs = (json: BlockDefinition) => Object.entries(json).filter(([key]) => /^args\d+$/.test(key))
     .flatMap(([, args]) => Array.isArray(args) ? args : []);
 
-export function createCodeExtensionPalette(blocks) {
+export function createCodeExtensionPalette(blocks, openProgrammatic?) {
     const installed = new Set<string>();
     const dynamicTypes = new Set<string>();
     const defaults = new Map<string, BlockDefinition>();
@@ -235,7 +263,7 @@ export function createCodeExtensionPalette(blocks) {
     return {
         update({definitions, categories, dynamicDefaults, customFields}: CodeExtensions) {
             unregisterFields?.();
-            unregisterFields = registerCustomFields(blocks, customFields);
+            unregisterFields = registerCustomFields(blocks, customFields, openProgrammatic);
             for (const type of installed) delete blocks.Blocks[type];
             installed.clear();
             dynamicTypes.clear();
