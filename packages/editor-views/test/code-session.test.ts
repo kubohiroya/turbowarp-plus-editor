@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
-import {getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
+import {attachDockedDynamicBranches, getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
 
@@ -265,7 +265,8 @@ test('dynamic extension projections use the registered opcode and each supported
     const opcode = 'fixture_shape';
     const command = {opcode: 'other', blockType: 'command', text: 'command [AMOUNT]'};
     const reporter = {blockType: 'reporter', text: 'reporter [VALUE]'};
-    const unsupported = {blockType: 'conditional', branchCount: 1, text: 'conditional'};
+    const branch = {blockType: 'conditional', branchCount: 2, text: ['when', 'otherwise']};
+    const unsupported = {blockType: 'conditional', branchCount: -1, text: 'conditional'};
     const category = {id: 'fixture', blocks: [{
         info: {opcode: 'shape', isDynamic: true, blockType: 'command', text: 'default'},
         json: {type: opcode, nextStatement: null}
@@ -273,7 +274,7 @@ test('dynamic extension projections use the registered opcode and each supported
     const block = (blockInfo, type = opcode) => ({opcode: type, mutation: {blockInfo}});
     const target = {blocks: {_blocks: {
         a: block(command), b: block(reporter), duplicate: block(reporter),
-        unsupported: block(unsupported), unregistered: block(command, 'other_shape')
+        branch: block(branch), unsupported: block(unsupported), unregistered: block(command, 'other_shape')
     }}};
     const calls = [];
     const runtime = {
@@ -295,11 +296,57 @@ test('dynamic extension projections use the registered opcode and each supported
     const shapes = getCodeDynamicShapes(runtime, target);
     assert.deepEqual(shapes, [
         {mutation: JSON.stringify(command), json: {type: opcode, message0: command.text, nextStatement: null}},
-        {mutation: JSON.stringify(reporter), json: {type: opcode, message0: reporter.text, output: 'String'}}
+        {mutation: JSON.stringify(reporter), json: {type: opcode, message0: reporter.text, output: 'String'}},
+        {mutation: JSON.stringify(branch), json: {type: opcode, message0: branch.text, nextStatement: null}}
     ]);
-    assert.deepEqual(calls, [command, reporter].map(info => ({...info, opcode: 'shape', isDynamic: true})));
+    assert.deepEqual(calls, [command, reporter, branch].map(info => ({...info, opcode: 'shape', isDynamic: true})));
     assert.equal(command.opcode, 'other');
     assert.deepEqual(structuredClone(shapes), shapes);
+});
+
+test('the docked factory retains branch mutations and follows GUI extension refreshes', async () => {
+    const opcode = 'fixture_shape';
+    const category = {blocks: [{info: {isDynamic: true, opcode: 'shape'}, json: {type: opcode}}]};
+    const branch = {opcode: 'other', blockType: 'conditional', branchCount: 2, text: ['when', 'otherwise']};
+    const layout = {type: opcode, args1: [{type: 'input_statement', name: 'SUBSTACK'}],
+        args3: [{type: 'input_statement', name: 'SUBSTACK2'}]};
+    const vm = Object.assign(new EventEmitter(), {runtime: {
+        _blockInfo: [category],
+        _convertBlockForScratchBlocks(info, owner) {
+            assert.deepEqual(info, {...branch, opcode: 'shape', isDynamic: true});
+            assert.equal(owner, category);
+            return {json: {...layout, colour: '#abcd01', extensions: ['from_extension']}};
+        }
+    }});
+    const nativeFactory = () => ({
+        domToMutation(mutation) {this.nativeMutation = mutation;},
+        mutationToDom() {return this.nativeMutation;}
+    });
+    const definitions = {};
+    const connection = attachDockedDynamicBranches({vm, ScratchBlocks: {Blocks: definitions}});
+    definitions[opcode] = nativeFactory();
+    await Promise.resolve();
+
+    const instance = {...definitions[opcode], jsonInit(json) {assert.deepEqual(json, layout);}};
+    const xml = info => {
+        const mutation = {getAttribute: () => JSON.stringify(info), cloneNode: () => xml(info)};
+        return mutation;
+    };
+    const saved = xml(branch);
+    instance.domToMutation(saved);
+    assert.notEqual(instance.mutationToDom(), saved);
+    assert.deepEqual(JSON.parse(instance.mutationToDom().getAttribute()), branch);
+
+    const latest = nativeFactory();
+    definitions[opcode] = latest;
+    vm.emit('BLOCKSINFO_UPDATE', category);
+    const regular = {...definitions[opcode]};
+    const command = xml({blockType: 'command', text: 'command'});
+    regular.domToMutation(command);
+    assert.equal(regular.mutationToDom(), command);
+    assert.notEqual(definitions[opcode], latest);
+    connection.dispose();
+    assert.equal(definitions[opcode], latest);
 });
 
 test('procedure edits remove only obsolete slots and their shadows', () => {

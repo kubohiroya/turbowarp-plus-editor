@@ -13,6 +13,7 @@ import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-poin
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
 import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {attachDockedDynamicBranches} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 export * from './lib/tw-plus-integration-points.ts';
@@ -36,9 +37,10 @@ export const renderStageControls = ({vm, isSmall}) => {
 export const attachHostScriptTransfer = (context, integration) => {
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);
     const code = attachDesktopCode({...context, receiveBackpackDrop});
-    if (!code) return transfer;
+    const branches = attachDockedDynamicBranches(context);
     return {dispose() {
-        code.dispose();
+        branches.dispose();
+        code?.dispose();
         transfer?.dispose();
     }};
 };
