@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../../scripts/site/editor-revision.ts';
 import assert from 'node:assert/strict';
 import {spawn, execFile} from 'node:child_process';
 import {once} from 'node:events';
@@ -14,6 +15,7 @@ const prefix = process.env.TW151_STAGE3_PREFIX || '/';
 const transferMime = 'application/x-turbowarp-editor-transfer';
 const lifecycleOnly = process.env.TW_PLUS_NATIVE_INPUT !== '1' || process.env.TW151_STAGE3_LIFECYCLE_ONLY === '1';
 const build = resolve(process.env.TW151_STAGE3_BUILD || '/private/tmp/tw151-product23/build');
+await verifyWebEditor(build);
 const profile = await mkdtemp(join(tmpdir(), 'tw151-backpack-'));
 const chrome = spawn(process.env.TW151_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
     `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--no-first-run', '--disable-popup-blocking',

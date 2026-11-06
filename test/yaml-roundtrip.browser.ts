@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -32,6 +33,7 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
     const owned = await mkdtemp(path.join(tmpdir(), 'twpe-yaml-roundtrip-'));
     const site = path.join(owned, 'site');
     await cp(inputSite, site, {recursive: true});
+    await verifyWebEditor(site);
     await copyFile(fixture, path.join(site, 'static/yaml-roundtrip.sb3'));
     const files = [];
     const host = await startYamlEditorHost({siteDirectory: site, dataDirectory: path.join(owned, 'work'), launchEditor: async file => { files.push(file); }});

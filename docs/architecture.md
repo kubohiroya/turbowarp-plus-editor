@@ -26,6 +26,20 @@
 
 出力はGUI checkoutの `build/` です。`ROOT=/turbowarp-plus-editor/` に固定し、GUIのplayerを `player.html` に保持します。`editor.html`、ブロック編集サンプル、拡張セキュリティUI、GUIのLICENSEを同梱します。入口は `index.html`、共有資産は `assets/icon.svg` と `assets/edit-button.css` です。
 
+## 実験で起動する Editor の版
+
+最新版の実験では開始時にリモート `main` を解決し、その SHA の checkout と固定依存で成果物を用意します。過去版を再現する場合は、対象の完全な SHA を指定して結果を区別します。
+
+```sh
+expected=$(git ls-remote --exit-code https://github.com/kubohiroya/turbowarp-plus-editor.git refs/heads/main | cut -f1)
+test -n "$expected" || exit 1
+export E2E_EXPECT_SITE_REVISION="$expected"
+```
+
+Web の実験ランナーは、実際に配信する `build-info.json` の `siteRevision` をブラウザー起動前に照合します。CI は同じ変数に PR のマージ候補、`main` の対象コミット、またはリリースの対象 SHA を設定します。ビルドパスや配信 URL が以前と同じでも、期待 SHA が一致しなければ停止します。
+
+Desktop の公式アプリに Plus を組み込む試験用コピーでは、`test/stage3/check-desktop.ts` が `.app` の ASAR にある `gui/build-info.json` の `editorRevision` を照合します。Plus Desktop の製品パッケージは、同じ期待値で `node scripts/desktop/check-editor-revision.ts /absolute/path/to/TurboWarp-Plus.app` を実行すると、`plus-gui` に同梱された版を起動前に検証できます。公式 Desktop を使う D3 作品プロセス CI の結果は別に扱います。
+
 ## CIとPages
 
 1. 通常CIがnpmの単体テスト、統合基盤、固定GUIの接続テスト、ビルド、移管したGUI E2Eを実行します。CIではブラウザーE2Eを3並列で実行します（`E2E_WORKERS` で変更でき、ローカルの既定は直列）。

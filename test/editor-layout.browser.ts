@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -15,7 +16,8 @@ const origin = 'http://layout.test';
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
 
-async function openBrowser(t, root, prefix = '/', routeOrigin = origin) {
+async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui = false) {
+    if (!bareGui) await verifyWebEditor(root);
     const browser = await chromium.launch({args: ['--enable-unsafe-swiftshader']});
     t.after(() => browser.close());
     const context = await browser.newContext({viewport: {width: 1360, height: 900}});
@@ -224,7 +226,7 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
 
 
 test('the GUI keeps its original editor without a host connection', {skip: !bareBuild, timeout: 30_000}, async t => {
-    const page = await openBrowser(t, path.resolve(bareBuild));
+    const page = await openBrowser(t, path.resolve(bareBuild), '/', origin, true);
     await page.goto(origin + '/editor.html?lang=en&twPlusWindowLayout=1');
     await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
     await expect(page.locator('[data-gui-stage] canvas').first()).toBeVisible();

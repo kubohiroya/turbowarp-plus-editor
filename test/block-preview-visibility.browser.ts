@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,6 +19,7 @@ test('native preview stays invisible until layout completes and cancelled render
         const owned = await mkdtemp(path.join(tmpdir(), 'twpe-preview-visibility-site-'));
         const site = path.join(owned, 'site');
         await cp(input, site, {recursive: true});
+        await verifyWebEditor(site);
         await build({
             entryPoints: [fileURLToPath(import.meta.resolve('@kubohiroya/turbowarp-document-editor/block-preview'))],
             outfile: path.join(site, 'static/preview-visibility.mjs'),

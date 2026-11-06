@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,7 +13,9 @@ const saveLabel='表示されている形式に変換して検証・保存',sour
 test('source ↔ real editable YAML blocks survives standard SB3 save/reload without losing comments or assets', {timeout:240000},async()=>{
  const input=process.env.TWPE_YAML_SITE,fixture=process.env.TWPE_YAML_FIXTURE;assert(input&&fixture);
  const out=process.env.TWPE_YAML_EVIDENCE||await mkdtemp(path.join(tmpdir(),'twpe-views-evidence-'));await mkdir(out,{recursive:true});
- const owned=await mkdtemp(path.join(tmpdir(),'twpe-view-integration-')),site=path.join(owned,'site');await cp(input,site,{recursive:true});await copyFile(fixture,path.join(site,'static/source-views.sb3'));
+ const owned=await mkdtemp(path.join(tmpdir(),'twpe-view-integration-')),site=path.join(owned,'site');await cp(input,site,{recursive:true});
+ await verifyWebEditor(site);
+ await copyFile(fixture,path.join(site,'static/source-views.sb3'));
  const host=await startYamlEditorHost({siteDirectory:site,dataDirectory:path.join(owned,'work'),launchEditor:async()=>{throw new Error('This conversion test must not launch VSCode.');}});
  // Use the GUI's download path instead of the native file picker.
  const browser=await chromium.launch({headless:true,executablePath:process.env.TWPE_CHROME_EXECUTABLE});const context=await browser.newContext({viewport:{width:1440,height:1000},locale:'ja-JP',acceptDownloads:true});await context.addInitScript(()=>{delete window.showSaveFilePicker;});const errors=[];context.on('page',p=>p.on('pageerror',(e: Error & {code?: string; status?: number}) =>errors.push(e.message)));const page=await context.newPage();const base=host.apiOrigin+'/turbowarp-plus-editor/';let stage='load';

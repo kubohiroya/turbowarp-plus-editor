@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
@@ -30,6 +31,7 @@ function readGroups(page: Page) {
 test('Dockview restores reordered tabs, split geometry and selected panels from a restarted browser', {timeout: 180000}, async t => {
     const site = process.env.TWPE_YAML_SITE, fixture = process.env.TWPE_YAML_FIXTURE;
     assert(site && fixture);
+    await verifyWebEditor(site);
     const directory = await mkdtemp(path.join(tmpdir(), 'twpe-dockview-restore-'));
     const host = await startYamlEditorHost({siteDirectory: site, dataDirectory: path.join(directory, 'work')});
     const bytes = await readFile(fixture);

@@ -1,5 +1,6 @@
 const path: typeof import('node:path') = require('node:path');
 const fs = require('node:fs');
+const {execFileSync} = require('node:child_process');
 const {createRequire} = require('node:module');
 if (!process.env.E2E_GUI_ROOT || !path.isAbsolute(process.env.E2E_GUI_ROOT)) throw new Error('An absolute GUI checkout is required');
 // The host owns its application configuration; the site selects only its browser build.
@@ -9,6 +10,19 @@ const hostRequire = createRequire(path.join(gui, 'package.json'));
 // Resolved from this file, not the working directory: the site build runs with the GUI checkout as
 // its cwd, so `path.resolve` here would have reached the GUI's install instead of this one.
 const rootRequire = createRequire(path.join(__dirname, '..', '..', 'package.json'));
+// Standalone webpack builds also carry the revision of the Editor checkout that produced them.
+const editorRevision = execFileSync('git', ['rev-parse', 'HEAD'], {
+    cwd: path.join(__dirname, '..', '..'), encoding: 'utf8'
+}).trim();
+const revisionField = process.env.TW_PLUS_DESKTOP_SOURCE ? 'editorRevision' : 'siteRevision';
+config.plugins.push({
+    apply(compiler) {
+        compiler.hooks.emit.tap('EditorRevision', compilation => {
+            const json = JSON.stringify({[revisionField]: editorRevision}) + '\n';
+            compilation.assets['build-info.json'] = {source: () => json, size: () => Buffer.byteLength(json)};
+        });
+    }
+});
 const localCatalogFile = process.env.TW_PLUS_LOCAL_CATALOG_INPUT;
 let localCatalog = null;
 if (localCatalogFile) {

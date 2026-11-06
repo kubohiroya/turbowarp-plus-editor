@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,6 +23,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
     await mkdir(output, {recursive: true});
     const owned = await mkdtemp(path.join(tmpdir(), 'twpe-document-source-'));
     const site = path.join(owned, 'site'); await cp(siteInput, site, {recursive: true});
+    await verifyWebEditor(site);
     await copyFile(fixture, path.join(site, 'static/document-source-family.sb3'));
     const launches = [];
     const host = await startYamlEditorHost({siteDirectory: site, dataDirectory: path.join(owned, 'work'), launchEditor: async (file, profile) => {launches.push({file, profile});}});

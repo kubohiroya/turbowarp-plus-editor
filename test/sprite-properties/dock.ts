@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../../scripts/site/editor-revision.ts';
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import path from 'node:path';
@@ -6,6 +7,7 @@ import {toggleUndockButtons} from '../fixtures/layout-menu.ts';
 
 const build = process.argv[2];
 assert.ok(path.isAbsolute(build), 'Pass the absolute Editor webpack output directory');
+await verifyWebEditor(build);
 const origin = 'http://localhost:15175';
 const prefix = process.env.SPRITE_PROPERTIES_PREFIX || '/';
 const browser = await chromium.launch({executablePath: process.env.SPRITE_PROPERTIES_CHROME});

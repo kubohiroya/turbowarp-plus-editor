@@ -4,9 +4,7 @@ const path = require('node:path');
 
 const root = path.join(require('./gui-root.cts')(), 'build');
 const prefix = process.env.E2E_PATH_PREFIX || '/turbowarp-plus-editor/';
-if (!fs.existsSync(path.join(root, 'build-info.json'))) {
-    throw new Error('Build the Pages application first: npm run build');
-}
+const {verifyWebEditor} = require('../../../scripts/site/editor-revision.ts');
 const types = {
     '.html': 'text/html',
     '.js': 'application/javascript',
@@ -40,5 +38,10 @@ const server = http.createServer((request, response) => {
 server.on('error', (error: Error & {code?: string; status?: number; errors?: Error[]}) => {
     console.error(error); process.exitCode = 1;
 });
-server.listen(Number(process.env.E2E_PORT || 8732), '127.0.0.1');
+verifyWebEditor(root).then(() => {
+    server.listen(Number(process.env.E2E_PORT || 8732), '127.0.0.1');
+}).catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+});
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => server.close());

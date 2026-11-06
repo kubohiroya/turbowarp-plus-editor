@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../../scripts/site/editor-revision.ts';
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
@@ -7,6 +8,7 @@ import {toggleUndockButtons} from '../fixtures/layout-menu.ts';
 const origin = 'http://localhost:15104';
 const prefix = process.env.TW151_STAGE4_PREFIX || '/';
 const build = resolve(process.env.TW151_STAGE4_BUILD || '/private/tmp/tw151-stage4-build');
+await verifyWebEditor(build);
 const itemName = 'Stage 4 stored script';
 const browser = await chromium.launch({
     executablePath: process.env.TW151_CHROME, headless: true, args: ['--enable-unsafe-swiftshader']
