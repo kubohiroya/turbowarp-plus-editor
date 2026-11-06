@@ -80,7 +80,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const groupFor = (id: string) => groups.filter({has: page.getByRole('tab', {name: documentTitle(id), exact: true})});
 
     await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
-    const stageDisplay = page.getByRole('menuitem', {name: '作業領域で開く', exact: true});
+    const stageDisplay = page.getByRole('menuitem', {name: 'ステージをタブで開く', exact: true});
     const stageMenu = page.getByRole('button', {name: 'ステージの表示', exact: true});
     await stageMenu.click();
     await stageDisplay.click();

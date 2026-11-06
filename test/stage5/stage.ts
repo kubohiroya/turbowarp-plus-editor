@@ -124,17 +124,10 @@ try {
     await start('&twPlusStagePanel=1&twPlusStageDisplayMenu=1');
     await canvas.evaluate(node => { window.stage5Canvas = node; });
     await display.press('ArrowDown');
-    const small = menu.getByRole('menuitemradio', {name: 'Switch to small stage'});
-    const full = menu.getByRole('menuitemradio', {name: 'Switch to full stage'});
-    assert.equal(await menu.getByRole('menuitemradio').count() + await menu.getByRole('menuitem').count(), 4);
-    assert.equal(await small.evaluate(node => node === document.activeElement), true);
-    await page.keyboard.press('Enter');
-    await menu.waitFor({state: 'hidden'});
-    await display.click();
-    assert.equal(await small.getAttribute('aria-checked'), 'true');
-    await full.click();
-    await display.click();
-    assert.equal(await full.getAttribute('aria-checked'), 'true');
+    const fullscreen = menu.getByRole('menuitem', {name: 'Enter full screen mode', exact: true});
+    assert.equal(await menu.getByRole('menuitemradio').count(), 0);
+    assert.equal(await menu.getByRole('menuitem').count(), 2);
+    assert.equal(await fullscreen.evaluate(node => node === document.activeElement), true);
     await page.keyboard.press('Escape');
     await menu.waitFor({state: 'hidden'});
     assert.equal(await display.evaluate(node => node === document.activeElement), true);
@@ -157,14 +150,14 @@ try {
     await undock.click();
     await stage.waitFor();
     await display.click();
-    await menu.getByRole('menuitem', {name: 'Enter full screen mode'}).click();
+    await fullscreen.click();
     await display.waitFor({state: 'hidden'});
     await page.keyboard.press('Escape');
     await display.waitFor();
     await stage.waitFor({state: 'hidden'});
     await display.click();
     assert.equal(await undock.getAttribute('aria-disabled'), 'false');
-    await start('&twPlusStagePanel=1&twPlusStageDisplayMenu=1', '1');
+    await start('&twPlusStagePanel=1&twPlusStageDisplayMenu=1&twPlusStageDrawer=0', '1');
     await display.click();
     await undock.click();
     await stage.waitFor();
@@ -173,7 +166,7 @@ try {
     await stage.waitFor({state: 'hidden'});
     assert.deepEqual(errors, []);
     console.log('Stage retains the renderer, canvas, aspect and mouse coordinates when undocked, moved, resized and restored.');
-    console.log('Stage display menu handles keyboard, presets, fullscreen and docking in both editor layouts.');
+    console.log('Stage display menu handles keyboard, fullscreen and docking in both editor layouts.');
 } finally {
     await browser.close();
 }

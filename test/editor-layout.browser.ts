@@ -379,7 +379,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await displayMenu.click();
     await expect(hideStage).toBeVisible();
     await expect(showStage).toHaveCount(0);
-    await expect(page.getByRole('menuitemradio', {name: 'Switch to small stage', exact: true})).toBeVisible();
+    await expect(page.getByRole('menuitemradio', {name: /^(Switch to small stage|Switch to full stage)$/})).toHaveCount(0);
     await expect(page.getByRole('menuitem', {name: 'Enter full screen mode', exact: true})).toBeVisible();
     await page.keyboard.press('Escape');
     const tabs = page.getByRole('tab').filter({hasText: /^(Code|Costumes|Sounds)$/});
@@ -1220,9 +1220,9 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     const stageGroup = groups.filter({has: page.getByRole('tab', {name: 'Stage', exact: true})});
     const codeGroup = groups.filter({has: page.getByRole('tab', {name: spriteName, exact: true})});
     const display = page.getByRole('button', {name: 'Stage display', exact: true});
-    const selectDisplay = async (name: string, role: 'menuitem' | 'menuitemradio' = 'menuitem') => {
+    const selectDisplay = async (name: string) => {
         await display.click();
-        await page.getByRole(role, {name, exact: true}).click();
+        await page.getByRole('menuitem', {name, exact: true}).click();
     };
     const assertStage = async () => {
         await expect(canvas).toBeVisible();
@@ -1295,14 +1295,13 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await dockedStage.getByTitle('Stop', {exact: true}).click();
     await expect.poll(() => page.evaluate(() => window.dockviewStageControls.slice(-2))).toEqual(['greenFlag', 'stopAll']);
 
-    await selectDisplay('Switch to small stage', 'menuitemradio');
-    await expect.poll(async () => (await canvas.boundingBox()).width).toBe(240);
+    const stageWidth = (await canvas.boundingBox()).width;
     await selectDisplay('Enter full screen mode');
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toHaveCount(0);
     await assertStage();
     await page.getByRole('img', {name: 'Exit full screen mode', exact: true}).click();
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
-    await expect.poll(async () => (await canvas.boundingBox()).width).toBe(240);
+    await expect.poll(async () => (await canvas.boundingBox()).width).toBe(stageWidth);
     await assertStage();
 
     await stageTab.getByRole('button', {name: 'Close Stage', exact: true}).click();

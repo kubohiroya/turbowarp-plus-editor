@@ -37,7 +37,8 @@ function DisplayMenu({locale, presets, fullscreen}) {
         if (detached) dockAction.dock();
         action();
     };
-    const items: IconMenuItem[] = presets.map(({title, isSelected, handleClick, icon}) => ({
+    // Scratch GUI passes small first and full last, with an optional fixed-width preset between them.
+    const items: IconMenuItem[] = presets.slice(1, -1).map(({title, isSelected, handleClick, icon}) => ({
         id: title,
         label: title,
         checked: isSelected,
