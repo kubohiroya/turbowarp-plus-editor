@@ -366,17 +366,28 @@ details.layout-menu button {
 }
 
 .sprite-properties {
+    display: flex;
+    flex-direction: column;
     max-block-size: 50%;
-    overflow: auto;
     background: var(--ui-secondary);
     color: var(--text-primary);
 }
 
-.sprite-properties summary {
+.sprite-properties-toggle {
+    flex: none;
     padding: 0.35rem 0.5rem;
-    cursor: pointer;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
     font-size: 0.875rem;
-    white-space: nowrap;
+    text-align: start;
+    cursor: pointer;
+}
+
+.sprite-properties-content {
+    min-block-size: 0;
+    overflow: auto;
 }
 
 .codePreview {
@@ -505,6 +516,7 @@ details.layout-menu button {
 }
 
 .target-list-panel .open-window-action,
+.target-list-tools .open-window-action,
 .edge-panel .backpack-panel .open-window-action {
     opacity: 1;
     pointer-events: auto;

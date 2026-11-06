@@ -2,7 +2,7 @@ import React from 'react';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
-import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import {layoutFlags} from './index.tsx';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';

@@ -395,8 +395,8 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await page.mouse.move(bottom.x + bottom.width / 2, bottom.y + bottom.height / 2 - 30, {steps: 8});
     await page.mouse.up();
     await expect.poll(async () => Math.round((await stage.boundingBox()).height - resizedStage.height)).toBe(-30);
-    const spriteSettings = page.locator('summary').filter({hasText: /^Sprite$/});
-    await expect(spriteSettings).toBeVisible();
+    const spriteSettings = page.getByRole('button', {name: 'Sprite', exact: true});
+    await expect(spriteSettings).toHaveAttribute('aria-expanded', 'false');
     await expect(page.getByRole('textbox', {name: 'Sprite name'})).toBeHidden();
 
     await expect(grid).toHaveAttribute('data-target-columns', '1');
@@ -405,6 +405,8 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const spriteName = page.getByRole('textbox', {name: 'Sprite name'});
     await expect(spriteName).toBeEditable();
     const settings = spriteSettings.locator('..');
+    await expect(spriteSettings).toHaveAttribute('aria-expanded', 'true');
+    await expect(settings.getByRole('heading', {name: 'Sprite', exact: true})).toHaveCount(0);
     const fields = settings.locator('.tw-sprite-properties__fields > .tw-sprite-properties__field');
     await expect(fields).toHaveCount(6);
     assert.ok(await fields.evaluateAll(nodes => {
@@ -526,9 +528,23 @@ test('startup chooses the layout and the stage menu hides the stage without stop
 
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1');
     await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
-    const japaneseSettings = page.locator('summary').filter({hasText: /^スプライト$/});
-    await expect(japaneseSettings).toBeVisible();
-    assert.ok(await japaneseSettings.evaluate(heading => heading.scrollWidth <= heading.clientWidth));
+    const japaneseSettings = page.getByRole('button', {name: 'スプライト', exact: true});
+    const japaneseTools = page.getByRole('group', {name: 'スプライト一覧の操作', exact: true});
+    const japaneseName = page.getByRole('textbox', {name: 'スプライト名', exact: true});
+    await expect(japaneseSettings).toHaveAttribute('aria-expanded', 'false');
+    await expect(japaneseTools).toBeVisible();
+    await expect(japaneseName).toBeHidden();
+    await japaneseSettings.press('Enter');
+    await expect(japaneseSettings).toHaveAttribute('aria-expanded', 'true');
+    await expect(japaneseName).toBeVisible();
+    const [titleBounds, toolsBounds, inputBounds] = await Promise.all(
+        [japaneseSettings, japaneseTools, japaneseName].map(locator => locator.boundingBox()));
+    assert.ok(titleBounds.y + titleBounds.height <= toolsBounds.y);
+    assert.ok(toolsBounds.y + toolsBounds.height <= inputBounds.y);
+    await expect(grid).toHaveAttribute('data-target-columns', '1');
+    await japaneseSettings.press('Enter');
+    await expect(japaneseName).toBeHidden();
+    await expect(japaneseTools).toBeVisible();
     await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
     await expect(page.getByRole('menuitem', {name: 'ステージを隠す', exact: true})).toBeVisible();
     assert.deepEqual(errors, []);

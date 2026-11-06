@@ -1,11 +1,11 @@
 import React from 'react';
-import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-editor-layout';
+import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-plus-editor-layout';
 import {BasicPanel} from './basic-panel.tsx';
 import {StageDisplayMenuContext} from './context.ts';
 import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.ts';
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {layoutFlags, stageCanUndock, WindowLayoutContext} from './index.tsx';
-import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 const externalHost = desktopPopout ?? (layoutFlags.standardLayout ? createWebPanelHost('stage', 680, 520) : null);
