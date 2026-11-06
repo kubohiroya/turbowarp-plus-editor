@@ -37,5 +37,26 @@
       "message": "Extension bytes do not match the digest"
     },
     "pageErrors": []
+  },
+  "workspace": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "babcc6d45e6ed0491e9641704596c2b0b5e35f07",
+    "guiRevision": "62ecfefe155ebf634d8739ab44b7784d41a7f7bb",
+    "securityVersion": "0.8.7",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "current-file-menu.png": "File menu with extension addition and project data commands.",
+      "plus-workspace.png": "Default workspace, before expanding drawers.",
+      "sprite-drawer.png": "Sprite drawer expanded from the left edge.",
+      "stage-menu.png": "Stage drawer and the display menu.",
+      "palette-current.png": "Motion category selected in the horizontal palette.",
+      "dockview-workspace.png": "Stage moved to the same Dockview workspace as sprite code.",
+      "catalog-current.png": "Current File menu path, TurboWarp Plus filter with TurboWarp-Markdown selected.",
+      "minimap-current.png": "Default workspace with five test blocks added to illustrate the minimap."
+    }
   }
 }
