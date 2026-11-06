@@ -127,6 +127,7 @@ function renderLayout(canDuplicate) {
 function snapshot(message) {
     history = message;
     if (message.extensions) updateExtensions(message.extensions);
+    if (message.dynamicShapes) extensionPalette.setDynamicShapes(message.dynamicShapes);
     if (message.xml) {
         procedureEditor.cancel();
         ScratchBlocks.Events.disable();
@@ -218,7 +219,8 @@ function receive({data: message}) {
             break;
         case 'extensions':
             updateExtensions(message.extensions);
-            if (blockedSnapshot) snapshot({...history, xml: blockedSnapshot, extensions: undefined});
+            extensionPalette.setDynamicShapes(message.dynamicShapes);
+            if (blockedSnapshot) snapshot({...history, xml: blockedSnapshot, extensions: undefined, dynamicShapes: undefined});
             break;
         case 'targets':
             targets = message.targets;
