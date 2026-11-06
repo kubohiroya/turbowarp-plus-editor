@@ -5,7 +5,7 @@ import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {installProcedureEditor} from '@kubohiroya/turbowarp-plus-editor-views/procedure-editor';
-import {createCodeExtensionPalette} from '@kubohiroya/turbowarp-plus-editor-views/code-extensions';
+import {createCodeExtensionPalette, createFieldActionDialog} from '@kubohiroya/turbowarp-plus-editor-views/code-extensions';
 import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-views';
 import {installScopedVariableReferences} from '@kubohiroya/turbowarp-plus-editor-views/variable-references';
 import {TargetCombobox} from '@kubohiroya/turbowarp-plus-editor-views/target-combobox';
@@ -36,7 +36,21 @@ const workspace = ScratchBlocks.inject(mount, {
     media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: true, zoom: {controls: true}
 });
 let navigation;
-const extensionPalette = createCodeExtensionPalette(ScratchBlocks);
+const fieldDialog = createFieldActionDialog(document);
+let fieldRequest = 0;
+let pendingField: {request: number; blockId: string; name: string} | undefined;
+const extensionPalette = createCodeExtensionPalette(ScratchBlocks, (field, name) => {
+    const block = field.sourceBlock_;
+    if (!editable || blockedSnapshot || !document.hasFocus() || !block || block.isInFlyout) return;
+    drain();
+    pendingField = {request: ++fieldRequest, blockId: block.id, name};
+    port.postMessage({type: 'field-editor', targetId, lease, ...pendingField});
+});
+
+function cancelFieldEditor() {
+    pendingField = undefined;
+    fieldDialog.close();
+}
 let stageToolbox = false;
 let extensionCategories = '';
 let extensionSignature = '';
@@ -69,6 +83,7 @@ function buttons() {
 
 function setEditable(value) {
     editable = value;
+    if (!value) cancelFieldEditor();
     updateWorkspaceAccess();
     buttons();
     renderTarget();
@@ -129,6 +144,7 @@ function snapshot(message) {
     if (message.extensions) updateExtensions(message.extensions);
     if (message.dynamicShapes) extensionPalette.setDynamicShapes(message.dynamicShapes);
     if (message.xml) {
+        cancelFieldEditor();
         procedureEditor.cancel();
         ScratchBlocks.Events.disable();
         try {
@@ -237,6 +253,16 @@ function receive({data: message}) {
             break;
         case 'revoke':
             release(message.lease);
+            break;
+        case 'field-panel':
+            if (editable && document.hasFocus() && lease === message.lease && pendingField?.request === message.request) {
+                const selection = pendingField;
+                fieldDialog.show(message.panel, action => {
+                    if (pendingField !== selection || !editable || !document.hasFocus()) return;
+                    pendingField = undefined;
+                    port.postMessage({type: 'field-action', targetId, lease, ...selection, action});
+                }, locale);
+            }
             break;
         case 'history':
         case 'update':

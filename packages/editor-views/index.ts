@@ -1,9 +1,12 @@
 import {getCodeDynamicShapes, getCodeExtensions} from './code-extensions.ts';
+import {programmaticField} from './custom-extension-fields.ts';
+import {readFieldActionPanel, type FieldActionPanel, type ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 import {capture, createHistory, restore, workspaceXML} from './history.ts';
 import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
 import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.ts';
 
 export {attachDockedCodeExtensions} from './code-extensions.ts';
+export type {FieldActionPanel, ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 export {encodeEdit} from './protocol.ts';
 
 // A drop must stay within one target's block and comment history.
@@ -49,6 +52,8 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         document: Document;
         close(): void;
         duplicate?: () => void;
+        fieldAction?: {request: number; blockId: string; name: string; value: string;
+            editor: ProgrammaticExtensionField; panel: FieldActionPanel};
     }>();
     const dirty = new Set();
     const thumbnails = new WeakMap();
@@ -189,6 +194,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     function revoke() {
         if (!owner || owner.draining) return;
         owner.draining = true;
+        owner.fieldAction = undefined;
         send(owner, {type: 'revoke', lease: owner.lease});
     }
 
@@ -261,6 +267,37 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         });
     }
 
+    function handleFieldAction(view, message) {
+        if (view.draining || !viewFocused(view) || vm.editingTarget !== view.target) return;
+        const target = view.target;
+        const pending = view.fieldAction;
+        view.fieldAction = undefined;
+        const {request, blockId, name, action} = message;
+        if (!Number.isSafeInteger(request) || typeof blockId !== 'string' || typeof name !== 'string') return;
+        const block = target.blocks.getBlock(blockId);
+        const value = block?.fields?.[name]?.value;
+        if (typeof value !== 'string') return;
+        const editor = programmaticField(vm.runtime, block.opcode, name);
+        if (!editor) return;
+        try {
+            if (message.type === 'field-editor') {
+                const panel = readFieldActionPanel(editor, value);
+                if (!panel) return;
+                view.fieldAction = {request, blockId, name, value, editor, panel};
+                send(view, {type: 'field-panel', lease: view.lease, request, panel});
+            } else if (pending?.request === request && pending.blockId === blockId && pending.name === name &&
+                pending.editor === editor && pending.value === value && pending.panel.actions.some(item => item.id === action)) {
+                const next = editor.applyAction(value, action);
+                if (typeof next === 'string' && next !== value) {
+                    target.blocks.blocklyListen({type: 'change', blockId, element: 'field', name, newValue: next});
+                    if (histories.get(target).commit()) publish(target, null, true);
+                }
+            }
+        } catch (error) {
+            onError?.(error);
+        }
+    }
+
     function receive(view, message) {
         if (!views.has(view) || !message || typeof message !== 'object') return;
         if (message.type === 'focus') {
@@ -300,6 +337,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             return;
         }
         if (!owns(view, message)) return;
+        if (message.type === 'field-editor' || message.type === 'field-action') {
+            handleFieldAction(view, message);
+            return;
+        }
+        view.fieldAction = undefined;
         if (message.type === 'select-target') {
             if (view.draining || !viewFocused(view)) return;
             const target = vm.runtime.getTargetById(message.nextTargetId);
@@ -337,6 +379,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                 const mutations = new Set<string>();
                 for (const event of edits) {
                     const {name} = event;
+                    if (event.type === 'change' && event.element === 'field' && typeof name === 'string' &&
+                        programmaticField(vm.runtime, target.blocks.getBlock(event.blockId)?.opcode, name)) {
+                        reject();
+                        return;
+                    }
                     if (event.type === 'change' && event.element === 'field' && isReferenceName(name) &&
                         referenceField(target.blocks.getBlock(event.blockId), name) &&
                         !scopedReference(target, stage, event.newValue, name)) {
