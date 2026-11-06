@@ -16,6 +16,7 @@ export function readStartupFeatureFlags({
     twPlusStandardLayout: standardLayout = null,
     twPlusExtensionFileMenu: extensionFileMenu = null,
     twPlusPaletteDeletePreview: paletteDeletePreview = null,
+    twPlusPaletteCategoryReorder: paletteCategoryReorder = null,
     twPlusHorizontalBlockPalette: horizontalBlockPalette = null,
     twPlusContextMenuIcons: contextMenuIcons = null,
     twPlusWorkspaceMinimap: workspaceMinimap = null
@@ -37,6 +38,7 @@ export function readStartupFeatureFlags({
         standardLayout: standardLayout === '1',
         extensionFileMenu: standardLayout === '1' && (extensionFileMenu === null || extensionFileMenu === '1'),
         paletteDeletePreview: paletteDeletePreview === null || paletteDeletePreview === '1',
+        paletteCategoryReorder: paletteCategoryReorder === null || paletteCategoryReorder === '1',
         horizontalBlockPalette: horizontalBlockPalette === '1',
         contextMenuIcons: contextMenuIcons === '1',
         workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1'

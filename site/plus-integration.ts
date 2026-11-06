@@ -30,7 +30,7 @@ import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './conte
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
 import {attachWorkspaceNavigation} from './workspace-minimap/index.ts';
 
-const {paletteDeletePreview, horizontalBlockPalette, standardLayout, workspaceMinimap} =
+const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap} =
     readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
@@ -186,8 +186,10 @@ const integration = createPlusIntegration({
     registerBlockShapes (ScratchBlocks) {
         registerDocumentSourceRootHatShape(ScratchBlocks);
         if (paletteDeletePreview) installPaletteDeletePreview(ScratchBlocks);
-        if (horizontalBlockPalette || standardLayout) {
-            installHorizontalBlockPalette(ScratchBlocks, {allowManualToggle: horizontalBlockPalette});
+        if (horizontalBlockPalette || standardLayout || paletteCategoryReorder) {
+            installHorizontalBlockPalette(ScratchBlocks, {
+                allowManualToggle: horizontalBlockPalette, allowCategoryReorder: paletteCategoryReorder
+            });
         }
         installBlockContextMenuIcons(ScratchBlocks);
     }

@@ -1,3 +1,4 @@
+import {attachPaletteCategoryReorder} from '@kubohiroya/turbowarp-plus-editor-ui/palette-category-reorder';
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';
 import styles from './palette.css';
 
@@ -11,7 +12,7 @@ export const setHorizontalBlockPalette = (horizontal: boolean) => {
     for (const setMode of palettes) setMode(horizontal);
 };
 
-const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
+const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder}) => {
     const workspace = toolbox.workspace_;
     const flyout = toolbox.flyout_;
     const menu = toolbox.HtmlDiv;
@@ -114,7 +115,45 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         if (horizontal) open(toolbox.categoryMenu_.categories_.find(category => category.name_ === name));
         else original.scrollToName.call(toolbox, name);
     };
+    const categories = () => {
+        const {categories_, table} = toolbox.categoryMenu_;
+        // Addons may split categories into separate lists.
+        return categories_.every(category => category.item_.parentElement.parentElement === table) ? categories_ : [];
+    };
+    let categoryOrder: string[] = [];
+    const applyCategoryOrder = () => {
+        if (!categoryOrder.length) return;
+        const current = categories();
+        const rank = id => {
+            const index = categoryOrder.indexOf(id);
+            return index < 0 ? categoryOrder.length : index;
+        };
+        const ordered = current.slice().sort((a, b) => rank(a.id_) - rank(b.id_));
+        if (ordered.every((category, index) => category === current[index])) return;
+        current.splice(0, current.length, ...ordered);
+        toolbox.categoryMenu_.table.append(...ordered.map(category => category.item_.parentElement));
+    };
+    const reorder = allowCategoryReorder && attachPaletteCategoryReorder(
+        menu,
+        () => categories().map(category => category.item_),
+        (from, to) => {
+            const ordered = categories().map(category => category.id_);
+            ordered.splice(to, 0, ordered.splice(from, 1)[0]);
+            categoryOrder = ordered.concat(categoryOrder.filter(id => !ordered.includes(id)));
+            applyCategoryOrder();
+            if (horizontal) {
+                resizer.followAnchor();
+                flyout.position();
+            } else {
+                const selected = toolbox.getSelectedItem();
+                original.showAll.call(toolbox);
+                if (selected) original.scrollToId.call(toolbox, selected.id_);
+            }
+        }
+    );
+
     toolbox.showAll_ = () => {
+        applyCategoryOrder();
         if (!horizontal) {
             original.showAll.call(toolbox);
             return;
@@ -124,6 +163,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         else close();
     };
     toolbox.populate_ = tree => {
+        if (reorder) reorder.cancel();
         original.populate.call(toolbox, tree);
         if (!horizontal) return;
         const category = categoryById(openId);
@@ -210,6 +250,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
 
     const setMode = next => {
         if (next === horizontal) return;
+        if (reorder) reorder.cancel();
         const category = toolbox.getSelectedItem();
         workspace.cancelCurrentGesture();
         close();
@@ -293,6 +334,7 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
         closeOnDragExit.delete(flyout);
         resizeObserver.disconnect();
         resizer.dispose();
+        if (reorder) reorder.dispose();
         events.abort();
         WidgetDiv.hideIfOwner(toolbox);
         original.dispose.call(toolbox);
@@ -301,7 +343,8 @@ const attach = (ScratchBlocks, toolbox, allowManualToggle) => {
     setMode(horizontalLayout);
 };
 
-export const installHorizontalBlockPalette = (ScratchBlocks, {allowManualToggle = false} = {}) => {
+export const installHorizontalBlockPalette = (ScratchBlocks,
+    {allowManualToggle = false, allowCategoryReorder = false} = {}) => {
     const toolbox = ScratchBlocks.Toolbox?.prototype;
     if (!toolbox?.init || installed.has(toolbox)) return;
     installed.add(toolbox);
@@ -319,7 +362,7 @@ export const installHorizontalBlockPalette = (ScratchBlocks, {allowManualToggle 
     const {init} = toolbox;
     toolbox.init = function (...args) {
         const result = init.apply(this, args);
-        attach(ScratchBlocks, this, allowManualToggle);
+        attach(ScratchBlocks, this, {allowManualToggle, allowCategoryReorder});
         return result;
     };
 };
