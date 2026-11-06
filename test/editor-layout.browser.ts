@@ -466,7 +466,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await spriteName.press('Enter');
     await expect.poll(() => page.evaluate(() => vm.editingTarget.getName())).toBe(name);
     await spriteSettings.click();
-    const addSprite = page.getByRole('button', {name: 'Choose a Sprite', exact: true}).first();
+    const addSprite = page.getByRole('button', {name: 'Add a Sprite', exact: true});
     await expect(addSprite).toBeVisible();
     const narrowTile = await backdrop.boundingBox();
     const addBounds = await addSprite.boundingBox();
@@ -476,6 +476,8 @@ test('startup chooses the layout and the stage menu hides the stage without stop
         return node.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
     }));
     await addSprite.hover();
+    await expect.poll(() => addSprite.evaluate(button => getComputedStyle(button, '::after').content))
+        .toBe('"Add a Sprite"');
     const paint = page.getByRole('button', {name: 'Paint', exact: true});
     await expect.poll(() => paint.evaluate((node, tile) => {
         const rect = node.getBoundingClientRect();
@@ -502,7 +504,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await grid.evaluate(node => { node.parentElement.scrollTop = node.parentElement.scrollHeight; });
     assert.ok(await grid.evaluate(node => node.parentElement.scrollTop > 0));
     await assertBackdropPosition();
-    await expect(page.getByRole('button', {name: 'Choose a Sprite', exact: true}).first()).toBeVisible();
+    await expect(addSprite).toBeVisible();
 
     await toolbox.locator('.scratchCategoryId-motion').click();
     const source = page.locator('.blocklyFlyout .blocklyDraggable')
@@ -569,6 +571,11 @@ test('startup chooses the layout and the stage menu hides the stage without stop
 
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1');
     await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
+    const japaneseAdd = page.getByRole('button', {name: 'スプライトを追加する', exact: true});
+    await japaneseAdd.hover();
+    await expect.poll(() => japaneseAdd.evaluate(button => getComputedStyle(button, '::after').content))
+        .toBe('"スプライトを追加する"');
+    await expect(page.getByRole('button', {name: 'スプライトを選ぶ', exact: true})).toHaveCount(1);
     const japaneseSettings = page.getByRole('button', {name: 'スプライト', exact: true});
     const japaneseTools = page.getByRole('group', {name: 'スプライト一覧の操作', exact: true});
     const japaneseName = page.getByRole('textbox', {name: 'スプライト名', exact: true});

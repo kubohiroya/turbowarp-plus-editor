@@ -23,7 +23,7 @@ function DockableTargetList({children}) {
         openLabel={plusLayout ? openLabel : undefined}
         renderInExternalDocument>
         <layoutViews.TargetSearchProvider value={query}>
-            <div className={styles.targetListContent}>{children}</div>
+            <layoutViews.SpriteListContent>{children}</layoutViews.SpriteListContent>
         </layoutViews.TargetSearchProvider>
     </BasicPanel>;
 }
