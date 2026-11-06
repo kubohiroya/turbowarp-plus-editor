@@ -75,7 +75,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
 
     await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
     await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
-    await page.getByRole('menuitem', {name: '作業領域で開く', exact: true}).click();
+    await page.getByRole('menuitem', {name: 'ステージをタブで開く', exact: true}).click();
     await tab(page, stageCode).click();
     await open(page, 0, 'settings');
     const workspace = dockview(page);
