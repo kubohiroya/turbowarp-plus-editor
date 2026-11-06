@@ -109,8 +109,10 @@ for (const entry of ['standard-layout', 'editor.css', 'targets.css', 'extension-
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-const paletteResizeEntry = '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';
-config.resolve.alias[`${paletteResizeEntry}$`] = rootRequire.resolve(paletteResizeEntry);
+for (const entry of ['palette-category-reorder', 'palette-dropdown-resize']) {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
+    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+}
 config.resolve.extensions = [...(config.resolve.extensions || ['.wasm', '.mjs', '.js', '.json']), '.ts', '.tsx'];
 const siteSource = path.join(__dirname, '..', '..', 'site');
 // Share the original fullscreen artwork with the stage display menu.

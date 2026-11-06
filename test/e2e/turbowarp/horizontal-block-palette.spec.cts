@@ -242,3 +242,95 @@ test('横パレットの小窓を編集領域内でリサイズし、カテゴ�
     await page.setViewportSize(viewport);
     await expect.poll(() => sizeDifference(saved)).toBeLessThanOrEqual(1);
 });
+
+for (const horizontal of [false, true]) {
+    test(`長押しでカテゴリを並べ替え、パレット外へのドロップで取り消す (${horizontal ? '横' : '縦'})`,
+        async ({page, evidence}) => {
+            await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
+            const toolbox = page.locator('.blocklyToolboxDiv');
+            const motion = toolbox.locator('.scratchCategoryId-motion');
+            const looks = toolbox.locator('.scratchCategoryId-looks');
+            const sound = toolbox.locator('.scratchCategoryId-sound');
+            const order = () => toolbox.locator('.scratchCategoryMenuItemLabel').allTextContents();
+            const moveTo = async locator => {
+                const {x, y, width, height} = await locator.boundingBox();
+                await page.mouse.move(x + width / 2, y + height / 2, {steps: 5});
+            };
+
+            await expect(sound).toBeVisible();
+            if (horizontal) await useLayout(page, 'Use horizontal palette');
+            const initial = await order();
+
+            evidence.stage('reorder-categories');
+            await moveTo(motion);
+            await page.mouse.down();
+            await expect(motion).toHaveAttribute('data-palette-reorder-source', '');
+            await moveTo(sound);
+            await expect(sound).toHaveAttribute('data-palette-reorder-target', '');
+            await page.mouse.up();
+            await expect(toolbox).not.toHaveAttribute('data-palette-reordering');
+            const expected = ['Looks', 'Sound', 'Motion', ...initial.slice(3)];
+            expect(await order()).toEqual(expected);
+
+            // Switch layout and rebuild the toolbox to check the order lives beyond the current DOM.
+            await useLayout(page, horizontal ? 'Use vertical palette' : 'Use horizontal palette');
+            await useLayout(page, horizontal ? 'Use horizontal palette' : 'Use vertical palette');
+            await page.evaluate(() => {
+                const workspace = window.ScratchBlocks.getMainWorkspace();
+                workspace.updateToolbox(workspace.options.languageTree);
+            });
+            await expect.poll(order).toEqual(expected);
+
+            evidence.stage('cancel-outside');
+            await moveTo(looks);
+            await page.mouse.down();
+            await expect(looks).toHaveAttribute('data-palette-reorder-source', '');
+            await moveTo(motion);
+            await expect(motion).toHaveAttribute('data-palette-reorder-target', '');
+            await page.mouse.move(500, 350, {steps: 6});
+            await page.mouse.up();
+            await expect(toolbox).not.toHaveAttribute('data-palette-reordering');
+            expect(await order()).toEqual(expected);
+
+            await looks.click();
+            if (horizontal) await expect(looks).toHaveAttribute('aria-expanded', 'true');
+            else await expect(looks).toHaveClass(/categorySelected/);
+        });
+}
+
+test('カテゴリの並べ替えを無効にしても短押しで選択できる', async ({page}) => {
+    await page.goto('editor.html?lang=en&twPlusPaletteCategoryReorder=0');
+    const toolbox = page.locator('.blocklyToolboxDiv');
+    const looks = toolbox.locator('.scratchCategoryId-looks');
+    await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+    await looks.click({delay: 600});
+    await expect(toolbox).not.toHaveAttribute('data-palette-reordering');
+    await expect(looks).toHaveAttribute('aria-expanded', 'true');
+});
+
+test.describe('タッチ操作', () => {
+    test.use({hasTouch: true});
+
+    test('長押しでカテゴリを先頭に移動できる', async ({page}) => {
+        await page.goto('editor.html?lang=en');
+        const toolbox = page.locator('.blocklyToolboxDiv');
+        const motion = toolbox.locator('.scratchCategoryId-motion');
+        const looks = toolbox.locator('.scratchCategoryId-looks');
+        await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+        const touchPoint = async locator => {
+            const {x, y, width, height} = await locator.boundingBox();
+            return {x: x + width / 2, y: y + height / 2};
+        };
+        const session = await page.context().newCDPSession(page);
+        await session.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [await touchPoint(looks)]});
+        await expect(looks).toHaveAttribute('data-palette-reorder-source', '');
+        await session.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [await touchPoint(motion)]});
+        await expect(motion).toHaveAttribute('data-palette-reorder-target', '');
+        await session.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
+        await expect(toolbox.locator('.scratchCategoryMenuItemLabel').first()).toHaveText('Looks');
+        await expect(toolbox).not.toHaveAttribute('data-palette-reordering');
+        await expect(page.locator('.blocklyFlyout')).toBeHidden();
+        await looks.tap();
+        await expect(looks).toHaveAttribute('aria-expanded', 'true');
+    });
+});
