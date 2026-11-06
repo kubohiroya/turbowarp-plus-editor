@@ -4,7 +4,7 @@ const {test, expect} = require('./fixtures.cts');
 // Transfer is always on: the plain editor URL carries no switch for it.
 const startTransfer = async (page, query = '') => {
     await page.goto('editor.html?lang=en' + query);
-    await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
+    await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
     await expect.poll(() => page.evaluate(() => Boolean(window.ScratchBlocks?.getMainWorkspace() && vm.editingTarget))).toBe(true);
 };
 const seedScript = async page => {
@@ -164,7 +164,7 @@ test('OS clipboard includes scratchblocks text and imports JSON across origins',
     const peerURL = new URL('editor.html?lang=en', baseURL);
     await other.goto(`${peerOrigin}${peerURL.pathname}${peerURL.search}`);
     expect(new URL(other.url()).origin).not.toBe(new URL(page.url()).origin);
-    await expect(other.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
+    await expect(other.locator('.blocklyToolboxDiv')).toBeVisible();
     expect(await other.evaluate(() => localStorage.getItem('tw-plus-script-clipboard-v1'))).toBeNull();
     await workspaceMenu(other);
     await menuItem(other, 'Paste').click();

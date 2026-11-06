@@ -238,13 +238,13 @@ test('the Plus File menu has action icons and opens the extension library from i
     const paletteButton = page.getByRole('button', {name: '拡張機能を追加', exact: true});
     const add = page.getByRole('button', {name: '機能拡張の追加', exact: true});
     const openFile = () => page.getByText('ファイル', {exact: true}).click();
-    await start('');
+    await start('&twPlusExtensionFileMenu=0');
     await expect(paletteButton).toBeVisible();
     await openFile();
     await expect(add).toHaveCount(0);
     await expect(page.locator('[data-file-menu-icon]')).toHaveCount(0);
 
-    await start('&twPlusExtensionFileMenu=1');
+    await start('');
     await expect(paletteButton).toHaveCount(0);
     const palette = page.locator('[data-horizontal-block-palette]');
     const motion = page.getByRole('button', {name: '動き', exact: true});
@@ -353,9 +353,10 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(tabs).toHaveCount(3);
     assert.ok(await tabs.evaluateAll(items => items.every(tab => tab.scrollWidth <= tab.clientWidth &&
         parseFloat(getComputedStyle(tab).paddingInlineStart) >= 12)));
-    const extension = await page.getByRole('button', {name: 'Add Extension', exact: true}).boundingBox();
-    const motion = await toolbox.locator('.scratchCategoryId-motion .scratchCategoryItemBubble').boundingBox();
-    assert.ok(extension.width < 48 && motion.x - (extension.x + extension.width) >= 23, JSON.stringify({extension, motion}));
+    await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toHaveCount(0);
+    const motion = await page.getByRole('button', {name: 'Motion', exact: true}).boundingBox();
+    const toolboxBounds = await toolbox.boundingBox();
+    assert.ok(motion.x - toolboxBounds.x < 8);
     await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
     await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     await expect(grid).toBeVisible();

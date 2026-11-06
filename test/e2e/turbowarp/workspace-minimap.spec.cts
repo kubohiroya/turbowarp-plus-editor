@@ -65,7 +65,7 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     });
     evidence.stage('explicit-opt-out');
     await page.goto('editor.html?lang=en&twPlusWorkspaceMinimap=0');
-    await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toBeVisible();
+    await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
     await expect(minimap).toHaveCount(0);
 
     evidence.stage('default-plus-layout');

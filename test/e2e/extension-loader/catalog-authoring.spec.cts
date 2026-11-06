@@ -5,7 +5,7 @@ const {tmpdir} = require('node:os');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
 const Zip = require('@turbowarp/jszip');
-const {catalogURL, specifications, installFixtures, selection, row, form, openCatalog, saveSB3, reopenSB3} =
+const {catalogURL, specifications, installFixtures, selection, row, form, openExtensionLibrary, openCatalog, saveSB3, reopenSB3} =
     require('./catalog.cts');
 
 test.use({userAgent: devices['Pixel 7'].userAgent});
@@ -28,7 +28,7 @@ test('catalog checkboxes alone exclude packages, dependencies stay selected, and
             sha256: spec.sha256, dependencies: spec.id === parent.id ? [base.id] : [], unsandboxed: 'optional'}))},
         headers: {'access-control-allow-origin': '*'}}));
     await openEditor(page);
-    await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
+    await openExtensionLibrary(page);
     const plusTab = page.getByRole('button', {name: 'TurboWarp Plus', exact: true});
     await plusTab.press('Enter');
     await expect(plusTab).toHaveAttribute('aria-pressed', 'true');

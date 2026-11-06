@@ -35,7 +35,7 @@ export function readStartupFeatureFlags({
         targetList: layout === '1' && internal === '1' && targetList === '1',
         spriteCodeWindows: layout === '1' && internal === '1' && spriteCodeWindows === '1',
         standardLayout: standardLayout === '1',
-        extensionFileMenu: standardLayout === '1' && extensionFileMenu === '1',
+        extensionFileMenu: standardLayout === '1' && (extensionFileMenu === null || extensionFileMenu === '1'),
         paletteDeletePreview: paletteDeletePreview === null || paletteDeletePreview === '1',
         horizontalBlockPalette: horizontalBlockPalette === '1',
         contextMenuIcons: contextMenuIcons === '1',
