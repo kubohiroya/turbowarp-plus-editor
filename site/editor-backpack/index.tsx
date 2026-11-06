@@ -4,7 +4,7 @@ import {layoutViews, WindowLayoutContext} from '../editor-layout/index.tsx';
 import {getBackpackOpenLabel} from '@tw-plus/backpack-window-host';
 import {feature} from './integration.ts';
 import {PopupLayout} from '../editor-layout/popup-layout.tsx';
-import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 function WebBackpackSurface({setExpanded, ...props}: Pick<
     React.ComponentProps<NonNullable<typeof feature>['BackpackSurface']>, 'vm' | 'children'

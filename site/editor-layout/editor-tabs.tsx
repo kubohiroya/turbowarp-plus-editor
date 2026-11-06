@@ -2,8 +2,10 @@ import React from 'react';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
-import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
-import {layoutFlags} from './index.tsx';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
+import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
+import {layoutFlags, WindowLayoutContext} from './index.tsx';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
 
@@ -14,9 +16,17 @@ const resizeCode = () => {
     if (workspace?.getInjectionDiv()?.clientWidth) blocks.svgResize(workspace);
 };
 
-export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
+export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
     const host = useWindowHost();
-    const code = useCodeWindows({vm, host, locale, enabled: (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
+    const {plusLayout} = React.useContext(WindowLayoutContext);
+    const dockviewTabs = plusLayout && layoutFlags.dockviewSpriteTabs;
+    const {context: spriteTabsContext, renderEditor} = useSpriteTabs({
+        available: layoutFlags.dockviewSpriteTabs, enabled: dockviewTabs, vm, locale, className: styles.spriteTabs,
+        activeSection: activeEditorTab, activateSection: onActivateEditorTab,
+        resize: () => requestAnimationFrame(resizeCode)
+    });
+    const code = useCodeWindows({vm, host, locale,
+        enabled: !dockviewTabs && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
     const action = React.useRef(null);
     const previousActive = React.useRef(null);
@@ -89,6 +99,7 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
         <div className={styles.tabRow}>{tabs}{tabAction}</div>;
 
     const content = render({...layout,
+        renderEditor,
         renderEditorTabRow,
         isEditorPanelOpen: index => Boolean(getMount(index)),
         renderEditorPanel: (index, children) => <DockablePanel
@@ -98,7 +109,7 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
             onResize={index === codeTab ? resizeCode : undefined}
         >{children}</DockablePanel>
     });
-    return <SpriteCodeProvider value={code?.context ?? null}>
+    return <SpriteCodeProvider value={spriteTabsContext ?? code?.context ?? null}>
         {content}
         {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front}
             previewClass={styles.codePreview} attachBackpackDrop={attachBackpackDrop} />}

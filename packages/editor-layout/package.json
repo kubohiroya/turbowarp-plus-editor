@@ -1,7 +1,7 @@
 {
-  "name": "@kubohiroya/turbowarp-editor-layout",
+  "name": "@kubohiroya/turbowarp-plus-editor-layout",
   "version": "0.1.0",
-  "description": "Resizable panes for the TurboWarp editor",
+  "description": "Resizable panes and layout for TurboWarp Plus Editor",
   "type": "module",
   "license": "GPL-3.0-or-later",
   "exports": {
@@ -14,7 +14,16 @@
       "default": "./dist/standard-layout.js"
     },
     "./editor.css": "./src/editor.css",
-    "./targets.css": "./src/targets.css"
+    "./targets.css": "./src/targets.css",
+    "./sprite-tabs": {
+      "types": "./dist/sprite-tabs.d.ts",
+      "default": "./dist/sprite-tabs.js"
+    },
+    "./dockview-styles": "./dist/dockview-styles.js",
+    "./extension-file-menu": {
+      "types": "./dist/extension-file-menu.d.ts",
+      "default": "./dist/extension-file-menu.js"
+    }
   },
   "files": [
     "dist",
@@ -32,11 +41,19 @@
     "@playwright/test": "1.64.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "jsdom": "26.1.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kubohiroya/turbowarp-plus-editor.git",
     "directory": "packages/editor-layout"
+  },
+  "dependencies": {
+    "dockview": "8.8.3"
+  },
+  "peerDependencies": {
+    "react": ">=16.14",
+    "react-dom": ">=16.14"
   }
 }

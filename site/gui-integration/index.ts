@@ -1,4 +1,6 @@
 import React from 'react';
+import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
+import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import StageControlsView from '../stage-controls/view.tsx';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
@@ -8,7 +10,9 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
 
 export * from './lib/tw-plus-integration-points.ts';
-export {renderFileMenu, loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
+export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
+export const renderFileMenu = props => React.createElement(React.Fragment, null,
+    renderExtensionFileMenu(props), renderProjectFileMenu(props));
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
 export * from './lib/tw-plus-transfer.ts';
 export * from './lib/tw-plus-extension-host.ts';
@@ -40,6 +44,8 @@ export {EditorLayout} from '../editor-layout/index.tsx';
 /* global __TW_SPRITE_PROPERTIES_PANEL__ */
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startup = readWebStartupFeatureFlags(startupSearch);
+export const extensionInFileMenu = startup.extensionFileMenu;
+export const createFileMenuItem = extensionInFileMenu ? createIconFileMenuItem : undefined;
 export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.standardLayout) && !desktopCodeEnabled ? attachCodeWorkspace : undefined;
 export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
 export const SpritePropertiesPanel = (startup.spriteProperties || startup.standardLayout) &&

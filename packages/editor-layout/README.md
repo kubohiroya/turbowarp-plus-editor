@@ -1,4 +1,4 @@
-# TurboWarp Editor Layout
+# TurboWarp Plus Editor Layout
 
 同じ document 内で「編集領域／ステージ列」と「ステージ／対象領域」の境界を調整する。ホストは `createLayout(React)` に既存の React を渡し、`render` に渡される境界・スタイル・表示サイズを既存コンポーネントに接続する。ホストがストレージとキーを指定し、このパッケージが設定を保存・復元する。
 

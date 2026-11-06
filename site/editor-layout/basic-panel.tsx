@@ -5,7 +5,7 @@ import type {SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
 import {WindowLayoutContext} from './index.tsx';
 import {PopupLayout} from './popup-layout.tsx';
-import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 interface PanelMount {
     mount: HTMLElement;

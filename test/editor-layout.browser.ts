@@ -611,7 +611,9 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
     await popupMenu.press('ArrowDown');
     await child.keyboard.press('ArrowDown');
     await expect(dock).toBeFocused();
-    await Promise.all([child.waitForEvent('close'), dock.press('Enter')]);
+    await Promise.all([child.waitForEvent('close'), child.keyboard.down('Enter').catch(error => {
+        if (!child.isClosed()) throw error;
+    })]);
     await expect(backdrop).toBeVisible();
 
 });
@@ -730,4 +732,64 @@ test('utility panels and menus stay above the code workspace and its palette', {
     await code.getByRole('button', {name: 'Window layout'}).click();
     await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
     await expect(code).toHaveCount(0);
+});
+
+test('opt-in sprite tabs share the native editor and the File menu opens the extension library', {timeout: 60_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const editor = origin + buildPrefix + 'editor.html?lang=ja';
+    const extensionButton = page.locator('button[class*="gui_extension-button_"]');
+    const fileMenu = page.getByText('ファイル', {exact: true}).first();
+    const addExtension = page.getByText('機能拡張を追加…', {exact: true});
+    const dockviewTabs = page.locator('.dv-tab');
+    await page.goto(editor);
+    await expect(extensionButton).toBeVisible();
+    await fileMenu.click();
+    await expect(addExtension).toHaveCount(0);
+    await expect(dockviewTabs).toHaveCount(0);
+
+    await page.goto(editor + '&twPlusExtensionFileMenu=1&twPlusDockviewSpriteTabs=1');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    await expect(extensionButton).toHaveCount(0);
+    await fileMenu.click();
+    const openMenu = addExtension.locator('xpath=ancestor::ul[1]');
+    await expect(openMenu.locator('li:not(:has([data-file-menu-icon]))')).toHaveCount(0);
+    await expect(openMenu.locator('[data-file-menu-icon="extension"]')).toBeVisible();
+    await addExtension.press('Enter');
+    await expect(page.getByText('機能拡張を作品に追加する', {exact: true}).first()).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    const [first, second] = await page.evaluate(async () => {
+        const first = vm.editingTarget.id;
+        vm.renameSprite(first, 'ダンゴ');
+        await vm.duplicateSprite(first);
+        const second = vm.editingTarget.id;
+        vm.renameSprite(second, 'ミント');
+        vm.setEditingTarget(first);
+        window.ScratchBlocks.getMainWorkspace().getInjectionDiv().dataset.originalTabWorkspace = 'true';
+        return [first, second];
+    });
+    const firstTab = dockviewTabs.filter({hasText: 'ダンゴ'});
+    const secondTab = dockviewTabs.filter({hasText: 'ミント'});
+    await expect(firstTab).toBeVisible();
+    await expect(secondTab).toBeVisible();
+    const cost = page.getByRole('tab', {name: 'コスチューム', exact: true});
+    const code = page.getByRole('tab', {name: 'コード', exact: true});
+    await cost.click();
+    await secondTab.click();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.id)).toBe(second);
+    await code.click();
+    await firstTab.click();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.id)).toBe(first);
+    await expect(cost).toHaveAttribute('aria-selected', 'true');
+    await code.click();
+    const workspace = page.locator('.dv-content-container .blocklySvg').first();
+    await expect(workspace).toBeVisible();
+    assert.equal(await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getInjectionDiv()
+        .dataset.originalTabWorkspace), 'true');
+    await firstTab.locator('.dv-default-tab-action').click();
+    await expect(firstTab).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.id)).toBe(second);
+    await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).click();
+    await page.getByText('ダンゴ', {exact: true}).first().click();
+    await expect(firstTab).toBeVisible();
 });

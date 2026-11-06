@@ -3,7 +3,7 @@ import {BasicPanel} from './basic-panel.tsx';
 import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.ts';
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {layoutFlags, layoutViews, WindowLayoutContext} from './index.tsx';
-import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('sprite-list', 'twPlusTargetPanelsPopout', 540, 420);
 const externalHost = desktopPopout ?? (layoutFlags.standardLayout ? createWebPanelHost('sprite-list', 540, 420) : null);

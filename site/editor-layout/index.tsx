@@ -1,9 +1,9 @@
 import React from 'react';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {createStandardLayout} from '@kubohiroya/turbowarp-editor-layout/standard-layout';
-import styles from '@kubohiroya/turbowarp-editor-layout/editor.css';
-import targetStyles from '@kubohiroya/turbowarp-editor-layout/targets.css';
+import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-layout/standard-layout';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
+import targetStyles from '@kubohiroya/turbowarp-plus-editor-layout/targets.css';
 import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-editor-windows';
 import '@kubohiroya/turbowarp-editor-windows/styles.css';
 import {EditorTabLayout} from './editor-tabs.tsx';
@@ -41,7 +41,7 @@ const getStorage = () => {
     }
 };
 
-const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
+const WebLayout = ({activeEditorTab, editorTargetIsStage, onActivateEditorTab, vm, ...props}) => {
     const {StandardLayout} = layoutViews;
     const [dockAction, setDockAction] = React.useState(null);
     return <StageDisplayMenuContext.Provider value={{dockAction, setDockAction}}>
@@ -62,6 +62,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
             render={layoutFlags.internalWindows || layoutFlags.standardLayout ? (layout, showUndock) => <EditorTabLayout
                 vm={vm}
                 activeEditorTab={activeEditorTab}
+                onActivateEditorTab={onActivateEditorTab}
                 editorTargetIsStage={editorTargetIsStage}
                 showUndock={layoutFlags.standardLayout || showUndock}
                 layout={layout}

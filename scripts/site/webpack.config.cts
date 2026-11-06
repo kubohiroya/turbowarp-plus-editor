@@ -93,8 +93,15 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'backpack', 'views'].map(feature => {
-    const name = `@kubohiroya/turbowarp-editor-${feature}`;
+const layoutPackage = '@kubohiroya/turbowarp-plus-editor-layout';
+const editorPackages = {
+    layout: layoutPackage,
+    surfaces: '@kubohiroya/turbowarp-editor-surfaces',
+    transfer: '@kubohiroya/turbowarp-editor-transfer',
+    backpack: '@kubohiroya/turbowarp-editor-backpack',
+    views: '@kubohiroya/turbowarp-editor-views'
+};
+const editorEntries = Object.fromEntries(Object.entries(editorPackages).map(([feature, name]) => {
     const entry = rootRequire.resolve(name);
     config.resolve.alias[`${name}$`] = entry;
     return [feature, path.dirname(entry)];
@@ -103,8 +110,8 @@ config.resolve.alias['@kubohiroya/turbowarp-editor-views/sprite-code-windows$'] 
     rootRequire.resolve('@kubohiroya/turbowarp-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-editor-views/target-combobox');
-for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
-    const specifier = `@kubohiroya/turbowarp-editor-layout/${entry}`;
+for (const entry of ['standard-layout', 'editor.css', 'targets.css', 'sprite-tabs', 'dockview-styles', 'extension-file-menu']) {
+    const specifier = `${layoutPackage}/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
@@ -123,11 +130,24 @@ config.resolve.alias['@tw-plus/upstream-hide-delete-button-manifest$'] =
     path.join(gui, 'src', 'addons', 'generated', hideDeleteButtonManifest);
 const backpackSurface = path.join(siteSource, 'editor-backpack');
 config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.ts');
+const layoutRequire = createRequire(rootRequire.resolve(layoutPackage));
+const dockviewEntry = layoutRequire.resolve('dockview');
+const dockviewRequire = createRequire(dockviewEntry);
+config.resolve.alias['dockview$'] = dockviewEntry;
+config.resolve.alias['dockview-core$'] = dockviewRequire.resolve('dockview-core');
+const dockviewStyles = layoutRequire.resolve('dockview/dist/styles/dockview.css');
+config.resolve.alias['dockview/dist/styles/dockview.css$'] = dockviewStyles;
+config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
+    {from: path.join(path.dirname(layoutRequire.resolve('dockview/package.json')), 'LICENCE.md'),
+        to: 'notices/dockview/LICENCE.md'},
+    {from: path.join(path.dirname(dockviewRequire.resolve('dockview-core/package.json')), 'LICENCE.md'),
+        to: 'notices/dockview-core/LICENCE.md'}
+]}));
 const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
 config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
-cssModules.exclude = [cssModules.exclude, windowStyles].filter(Boolean);
-config.module.rules.push({test: /\.css$/, include: windowStyles,
+cssModules.exclude = [cssModules.exclude, windowStyles, dockviewStyles].filter(Boolean);
+config.module.rules.push({test: /\.css$/, include: [windowStyles, dockviewStyles],
     use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
 config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
