@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
 import {createCodeSession, encodeEdit} from '../index.ts';
+import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
 
 function fixture(receiveBackpackDrop) {
     const document = {defaultView: new EventTarget(), hasFocus: () => focused === document};
@@ -227,6 +228,24 @@ for (const [kind, type, fieldName, opcode] of [
         session.dispose();
     });
 }
+
+test('procedure edits remove only obsolete slots and their shadows', () => {
+    const entries = {
+        call: {opcode: 'procedures_call', mutation: {argumentids: '["kept"]'}, inputs: {
+            kept: {block: 'keptShadow', shadow: 'keptShadow'},
+            removed: {block: null, shadow: 'removedShadow'}
+        }},
+        keptShadow: {shadow: true, parent: 'call'},
+        removedShadow: {shadow: true, parent: null},
+        disconnectedValue: {shadow: false, parent: null}
+    };
+    const deleted = [];
+    const blocks = {getBlock: id => entries[id], deleteBlock: id => {deleted.push(id);}, resetCache() {}};
+
+    removeObsoleteProcedureInputs(blocks, new Set(['call']));
+    assert.deepEqual(entries.call.inputs, {kept: {block: 'keptShadow', shadow: 'keptShadow'}});
+    assert.deepEqual(deleted, ['removedShadow']);
+});
 
 test('renaming from the foreground rewrites other targets’ undo and redo references', () => {
     const {session, connect, target, other} = fixture();

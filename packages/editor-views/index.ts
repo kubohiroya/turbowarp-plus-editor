@@ -1,4 +1,5 @@
 import {capture, createHistory, restore, workspaceXML} from './history.ts';
+import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
 import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.ts';
 
 export {encodeEdit} from './protocol.ts';
@@ -327,6 +328,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                 publish(target, null, applied);
             };
             try {
+                const mutations = new Set<string>();
                 for (const event of edits) {
                     const {name} = event;
                     if (event.type === 'change' && event.element === 'field' && isReferenceName(name) &&
@@ -337,7 +339,9 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                     }
                     target.blocks.blocklyListen(event);
                     applied = true;
+                    if (event.type === 'change' && event.element === 'mutation') mutations.add(event.blockId);
                 }
+                removeObsoleteProcedureInputs(target.blocks, mutations);
                 // Create XML stores variable IDs directly. Only check changed references so old projects
                 // with unrelated unresolved fields can still be edited.
                 if (edits.some(event => event.type === 'create') &&

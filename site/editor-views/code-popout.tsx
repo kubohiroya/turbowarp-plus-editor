@@ -4,6 +4,7 @@ import {PopupLayout} from '../editor-layout/popup-layout.tsx';
 import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
+import {installProcedureEditor} from '@kubohiroya/turbowarp-plus-editor-views/procedure-editor';
 import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-views';
 import {installScopedVariableReferences} from '@kubohiroya/turbowarp-plus-editor-views/variable-references';
 import {TargetCombobox} from '@kubohiroya/turbowarp-plus-editor-views/target-combobox';
@@ -27,7 +28,8 @@ const toolbox = isStage => `<xml>${isStage ? '' : motion}
     <category name="Looks" colour="#9966ff" secondaryColour="#774dcb">
         ${isStage ? '<block type="looks_nextbackdrop"></block><block type="looks_backdropnumbername"></block>' :
         '<block type="looks_show"></block><block type="looks_hide"></block>'}
-    </category></xml>`;
+    </category>
+    <category name="My Blocks" colour="#ff6680" secondaryColour="#ff4d6a" custom="PROCEDURE"></category></xml>`;
 
 const workspace = ScratchBlocks.inject(mount, {
     media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: true, zoom: {controls: true}
@@ -45,6 +47,15 @@ let history = {canUndo: false, canRedo: false};
 let group;
 let edits = [];
 installScopedVariableReferences(ScratchBlocks, workspace, () => locale);
+const procedureEditor = installProcedureEditor({
+    blocks: ScratchBlocks, workspace, getLocale: () => locale, canEdit: () => editable && document.hasFocus(),
+    commit(apply) {
+        drain();
+        apply();
+        ScratchBlocks.Events.fireNow_();
+        flush();
+    }
+});
 
 function buttons() {
     undo.disabled = !editable || !history.canUndo;
@@ -95,6 +106,7 @@ function renderLayout(canDuplicate) {
 function snapshot(message) {
     history = message;
     if (message.xml) {
+        procedureEditor.cancel();
         ScratchBlocks.Events.disable();
         try {
             ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(ScratchBlocks.Xml.textToDom(message.xml), workspace);
@@ -122,6 +134,7 @@ function drain() {
 
 function release(token = lease) {
     if (token === undefined || token !== lease) return;
+    procedureEditor.cancel();
     drain();
     setEditable(false);
     port.postMessage({type: 'release', lease});
