@@ -152,8 +152,8 @@
 
 <h2>5. Plus標準配置とScratch配置を使い分ける</h2>
 
-<p>公開版はPlus標準配置で開きます。中央でコードや素材を編集し、左端からスプライト一覧、右端からステージ、下端からバックパックを開けます。従来のScratch配置で作業するには、エディターのURLに <code>twPlusStandardLayout=0</code> を指定して開き直します。</p>
-<figure><a href="images/plus-workspace.png"><img src="images/plus-workspace.png" width="1440" height="1000" alt="Plus標準配置で、中央にコード、左右の端に折りたたまれたスプライト一覧とステージがある。" loading="lazy"></a><figcaption>Plus標準配置の起動直後。左右の端から必要なパネルを展開できます。</figcaption></figure>
+<p>Plus標準配置では、左側にスプライト一覧が固定表示された状態で開きます。中央でコードや素材を編集し、右端からステージ、下端からバックパックを開けます。従来のScratch配置で作業するには、エディターのURLに <code>twPlusStandardLayout=0</code> を指定して開き直します。</p>
+<figure><a href="images/plus-workspace.png"><img src="images/plus-workspace.png" width="1440" height="1000" alt="Plus標準配置で、中央にコード、左右の端に折りたたまれたスプライト一覧とステージがある。" loading="lazy"></a><figcaption>Plus標準配置でスプライト一覧のピンを外し、一覧とステージを閉じた状態。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/221">Plus標準配置</a></p>
 
 </section>
@@ -162,7 +162,7 @@
 
 <h2>6. 左端からスプライトを探す</h2>
 
-<p>Plus標準配置では、左端にポインターを置くか「スプライト一覧を展開」を押して、対象を選びます。「スプライトを検索」で名前の一部を入力すると、最初に一致したタイルが強調表示されます。「スプライト一覧を固定表示」で一覧を開いたままにでき、幅を広げるとタイルを複数列に並べられます。「背景」のタイルからはステージの背景を開けます。</p>
+<p>左側のスプライト一覧で対象を選びます。ピンを外した場合は、左端にポインターを置くか「スプライト一覧を展開」を押すと一覧が開きます。「スプライトを検索」で名前の一部を入力すると、最初に一致したタイルが強調表示されます。固定表示中に幅を広げると、タイルを複数列に並べられます。「背景」のタイルからはステージの背景を開けます。</p>
 <figure><a href="images/sprite-drawer.png"><img src="images/sprite-drawer.png" width="1440" height="1000" alt="左端から展開したスプライト一覧と検索・固定表示の操作。" loading="lazy"></a><figcaption>一覧を展開し、スプライトを選べる状態。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/225">一覧の展開・検索・固定</a></p>
 
@@ -265,7 +265,7 @@
 
 <h2>15. スプライト一覧を切り離して元に戻す</h2>
 
-<p>公開版のPlus配置では、左端のスプライト一覧を展開し、「アンドック」を押すと、一覧をエディター内の小窓に移せます。小窓の「レイアウト変更」から「別窓で開く（アンドック）」を選ぶとブラウザーの別ウィンドウに移り、「元の画面に戻す（ドックする）」を選ぶと左端に戻ります。</p>
+<p>Plus標準配置では、左側のスプライト一覧で「アンドック」を押すと、一覧をエディター内の小窓に移せます。小窓の「レイアウト変更」から「別窓で開く（アンドック）」を選ぶとブラウザーの別ウィンドウに移り、「元の画面に戻す（ドックする）」を選ぶと左端に戻ります。</p>
 <figure class="guide-schematic"><div class="schematic-panels"><div class="schematic-panel"><strong>ドック中</strong><div class="schematic-cells"><span>左端：スプライト一覧</span><span>中央：コード</span></div></div><div class="schematic-panel"><strong>切り離したあと</strong><div class="schematic-cells"><span>左端：元の枠</span><span>中央：コード</span><span>移動できる一覧</span></div></div></div><figcaption>概念図。切り離した一覧を移動し、使い終えたら元の枠に戻します。</figcaption></figure>
 <p><span class="badge planned">開発中</span> macOSのDesktop開発版では、ステージ・スプライト設定・一覧をアプリの別ウィンドウに移して元に戻す操作も確認しています。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/189">macOSでの確認範囲</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/224">レイアウト変更メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/issues/11">Desktopへの導入状況</a></p>
 

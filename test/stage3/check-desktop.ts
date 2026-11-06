@@ -2557,7 +2557,7 @@ async function checkPlusLayout({editor, context, control}) {
     await control('layout', parent.id);
     const trigger = editor.getByRole('button', {name: /^(Reveal sprite list|スプライト一覧を展開)$/, exact: true});
     const openSpritePopup = async () => {
-        await trigger.hover();
+        if (await trigger.isVisible()) await trigger.hover();
         await editor.getByRole('button', {name: /^(Undock sprite list|アンドック)$/, exact: true}).click();
         const internal = editor.getByRole('region', {name: /^(Sprite list|スプライト一覧)$/, exact: true});
         await internal.getByRole('button', {name: /^(Window layout|レイアウト変更)$/, exact: true}).click();
@@ -2591,7 +2591,7 @@ async function checkPlusLayout({editor, context, control}) {
     const closed = child.waitForEvent('close');
     await child.getByRole('menuitem', {name: /^(Return to the editor \(dock\)|元の画面に戻す（ドックする）)$/}).click();
     await closed;
-    await trigger.hover();
+    if (await trigger.isVisible()) await trigger.hover();
     await editor.locator('[data-backdrop-placement]').waitFor();
     const windows = await control('windows');
     assert.equal(windows.length, 1);
@@ -2602,7 +2602,7 @@ async function checkPlusLayout({editor, context, control}) {
     await minimized.getByRole('menuitem', {name: /^(Minimize this window|この画面を最小化する)$/}).click();
     await minimized.waitForFunction(async () => await TwPlusWindowControls.mode() === 'minimized', undefined, {polling: 100});
     await Promise.all([minimized.waitForEvent('close'), control('close', nativeWindow.id)]);
-    await trigger.hover();
+    if (await trigger.isVisible()) await trigger.hover();
     await editor.locator('[data-backdrop-placement]').waitFor();
     report.checks.push('Default Plus layout: native sprite drawer supports menu maximize, restore, dock and minimize');
 
