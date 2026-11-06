@@ -12,11 +12,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1102,8 +1102,123 @@ async function checkCodeProcedures ({editor, a, b, focus, parent, sprite}) {
     report.checks.push('Procedure creation, definition changes, call inputs, argument reporters and call values stay together through two views, one-step Undo/Redo and SB3');
 }
 
+const extensionFixture = `
+Scratch.extensions.register({
+    getInfo() {
+        return {id: 'windowfixture', name: 'Window fixture', blocks: [
+            {opcode: 'setLevel', blockType: Scratch.BlockType.COMMAND, text: 'fixture level [LEVEL]',
+                arguments: {LEVEL: {type: Scratch.ArgumentType.NUMBER, defaultValue: 12}}}
+        ]};
+    },
+    setLevel() {}
+});
+`;
+
+async function checkCodeExtensions ({editor, a, b, focus, parent, sprite}) {
+    const block = (page, id) => page.locator(`.blocklyBlockCanvas [data-id="${id}"]`);
+    const targetState = (reload = false) => editor.evaluate(async ({spriteName, reload}) => {
+        if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
+        const target = vm.runtime.targets.find(item => item.getName() === spriteName);
+        if (reload) vm.setEditingTarget(target.id);
+        const {blocks} = target;
+        const roots = blocks.getScripts().map(id => blocks.getBlock(id));
+        const pen = roots.find(block => block.opcode === 'pen_setPenColorParamTo');
+        const custom = Object.keys(blocks._blocks).map(id => blocks.getBlock(id))
+            .find(block => block.opcode === 'windowfixture_setLevel');
+        return {
+            penId: pen.id,
+            color: blocks.getBlock(pen.inputs.COLOR_PARAM.block).fields.colorParam.value,
+            penValue: String(blocks.getBlock(pen.inputs.VALUE.block).fields.NUM.value),
+            custom: custom && {id: custom.id, value: String(blocks.getBlock(custom.inputs.LEVEL.block).fields.NUM.value)}
+        };
+    }, {spriteName: sprite.name, reload});
+    const field = (view, id, selector) => block(view.child, id).locator(selector);
+    const activate = (front, back) => activateCodeView(front, back, focus);
+    const number = async (view, id, value) => {
+        const input = field(view, id, '.blocklyEditableText');
+        await input.click({force: true});
+        const editor = view.child.locator('.blocklyHtmlInput');
+        await editor.fill(value);
+        await editor.press('Enter');
+    };
+    const penId = 'extension-test-pen';
+    const valueId = 'extension-test-value';
+    const saturation = await editor.evaluate(() => vm.runtime._blockInfo.find(category => category.id === 'pen')
+        .menus.find(menu => menu.json.type === 'pen_menu_colorParam').json.args0[0].options
+        .find(([, value]) => value === 'saturation')[0]);
+    const expectPen = (view, color, value) => until(async () => {
+        const state = await targetState();
+        const rendered = (await block(view.child, penId).textContent()).replace(/\s/g, ' ');
+        return state.color === color && state.penValue === value && rendered.includes(value) &&
+            (color !== 'saturation' || rendered.includes(saturation));
+    }, 'extension field changes reach the VM and the other view');
+    await activate(a, b);
+    await field(a, penId, '.blocklyDropdownText').click({force: true});
+    const option = a.child.locator('.blocklyDropDownDiv .goog-menuitem').filter({hasText: saturation});
+    await option.click({force: true});
+    await option.waitFor({state: 'hidden'});
+    await expectPen(b, 'saturation', '50');
+    await activate(a, b);
+    await number(a, valueId, '73');
+    await expectPen(b, 'saturation', '73');
+
+    await activate(b, a);
+    await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
+    await expectPen(a, 'saturation', '50');
+    await activate(a, b);
+    await a.child.getByRole('button', {name: 'Redo', exact: true}).click();
+    await expectPen(b, 'saturation', '73');
+
+    const url = `data:text/javascript,${encodeURIComponent(extensionFixture)}`;
+    await editor.evaluate(url => vm.extensionManager.loadExtensionURL(url), url);
+    assert.equal(await editor.evaluate(() => vm.extensionManager.isExtensionLoaded('windowfixture')), true);
+    const category = view => view.child.locator('.scratchCategoryMenuItemLabel').filter({hasText: /^Window fixture$/});
+    await category(b).waitFor();
+    await activate(a, b);
+    await category(a).click();
+    const entry = a.child.locator('.blocklyFlyout [data-id]').filter({hasText: /fixture\s+level/}).first();
+    const origin = await until(async () => entry.evaluate(element => {
+        const bounds = element.getBoundingClientRect();
+        const x = bounds.left + 18;
+        const y = bounds.top + 15;
+        return element.contains(document.elementFromPoint(x, y)) && {x, y};
+    }), 'the extension palette block is visible and hittable');
+    const mouse = a.child.mouse;
+    await mouse.move(origin.x, origin.y);
+    await mouse.down();
+    await mouse.move(origin.x + 42, origin.y, {steps: 4});
+    await mouse.move(630, 410, {steps: 18});
+    await mouse.up();
+    const created = await until(async () => (await targetState()).custom, 'custom extension block can be added from the child palette');
+    await block(b.child, created.id).waitFor();
+    assert.equal(created.value, '12');
+    const expectCustom = (view, value) => until(async () =>
+        (await targetState()).custom?.value === value && (await block(view.child, created.id).textContent()).includes(value),
+    'custom extension input reaches the VM and the other view');
+    await activate(a, b);
+    await number(a, created.id, '27');
+    await expectCustom(b, '27');
+    await activate(b, a);
+    await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
+    await expectCustom(a, '12');
+    await activate(a, b);
+    await a.child.getByRole('button', {name: 'Redo', exact: true}).click();
+    await expectCustom(b, '27');
+
+    for (const view of [a, b]) {
+        await focus(view.child, view.id);
+        await Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
+    }
+    await focus(editor, parent.id);
+    const restored = await targetState(true);
+    assert.deepEqual([restored.color, restored.penValue, restored.custom?.value], ['saturation', '73', '27']);
+    await until(async () => (await block(editor, restored.penId).textContent()).includes('73'),
+        'reloaded editor renders the saved extension block');
+    report.checks.push('Parent VM extension blocks and menus work in two views, shared Undo/Redo and SB3; a late custom extension appears in both palettes');
+}
+
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1115,7 +1230,7 @@ async function checkCodePopouts ({editor, context, control}, {
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture}) => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
         if (targetSync || comments) {
@@ -1179,10 +1294,20 @@ async function checkCodePopouts ({editor, context, control}, {
         }
         if (procedureFixture) first.blocks.blocklyListen({type: 'create', blockId: 'procedure-test-definition',
             xml: {outerHTML: procedureFixture.trim().replace(/>\s+</g, '><')}});
+        if (extensions) {
+            vm.extensionManager.loadExtensionIdSync('pen');
+            const {xml} = vm.runtime.getBlocksXML(first).find(category => category.id === 'pen');
+            const source = new DOMParser().parseFromString(xml, 'text/xml').querySelector('block[type="pen_setPenColorParamTo"]');
+            source.setAttribute('id', 'extension-test-pen');
+            source.setAttribute('x', '140');
+            source.setAttribute('y', '190');
+            source.querySelector('value[name="VALUE"] shadow').setAttribute('id', 'extension-test-value');
+            first.blocks.blocklyListen({type: 'create', blockId: 'extension-test-pen', xml: {outerHTML: source.outerHTML}});
+        }
         vm.refreshWorkspace();
         return seeded;
     }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope],
-        broadcastFixture: broadcast ? broadcastFixture : null, procedureFixture: procedures ? procedureFixture : null});
+        broadcastFixture: broadcast ? broadcastFixture : null, procedureFixture: procedures ? procedureFixture : null, extensions});
     const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
@@ -1229,6 +1354,10 @@ async function checkCodePopouts ({editor, context, control}, {
     }
     if (stageCode) {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
+        return;
+    }
+    if (extensions) {
+        await checkCodeExtensions({editor, a, b, focus, parent, sprite: sprites[0]});
         return;
     }
     if (procedures) {
@@ -1964,6 +2093,7 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
+    else if (testMode === '--code-extensions') await run('code-popout', env => checkCodePopouts(env, {extensions: true}));
     else if (testMode === '--code-procedures') await run('code-popout', env => checkCodePopouts(env, {procedures: true}));
     else if (testMode === '--code-broadcast') await run('code-popout', env => checkCodePopouts(env, {broadcast: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);

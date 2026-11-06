@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
+import {getCodeExtensions} from '../code-extensions.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
 
@@ -228,6 +229,37 @@ for (const [kind, type, fieldName, opcode] of [
         session.dispose();
     });
 }
+
+test('code extension projections send definitions and resolve menus only for the active target', () => {
+    const active = {};
+    const back = {};
+    let menuReads = 0;
+    const runtime = {
+        getEditingTarget: () => active,
+        getBlocksXML: target => [{id: 'fixture', xml: target === active ? 'active palette' : 'back palette'}],
+        _blockInfo: [{id: 'fixture', menus: [{json: {
+            type: 'fixture_menu_mode', args0: [{type: 'field_dropdown', options: () => {
+                menuReads++;
+                return [['Choice', 'choice']];
+            }}]
+        }}], blocks: [
+            {json: {type: 'fixture_block', args0: [{type: 'field_image', src: 'https://example.invalid/icon'}]}},
+            {json: {type: 'fixture_dynamic'}, info: {isDynamic: true}},
+            {json: {type: 'motion_movesteps'}}
+        ]}]
+    };
+
+    const passive = getCodeExtensions(runtime, back);
+    assert.equal(menuReads, 0);
+    assert.deepEqual(passive.definitions[0].args0, [{type: 'field_dropdown', options: [['', '']]}]);
+    const editable = getCodeExtensions(runtime, active);
+    assert.equal(menuReads, 1);
+    assert.deepEqual(editable.definitions.map(block => block.type), ['fixture_menu_mode', 'fixture_block']);
+    assert.deepEqual(editable.definitions[0].args0, [{type: 'field_dropdown', options: [['Choice', 'choice']]}]);
+    assert.deepEqual(editable.definitions[1].args0, [{type: 'field_image', src: ''}]);
+    assert.equal(editable.categories[0].xml, 'active palette');
+    assert.deepEqual(structuredClone(editable), editable);
+});
 
 test('procedure edits remove only obsolete slots and their shadows', () => {
     const entries = {
