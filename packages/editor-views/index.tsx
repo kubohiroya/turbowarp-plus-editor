@@ -4,6 +4,7 @@ import './preview.css';
 import {getCodeSession} from './workspace.ts';
 
 export {attachCodeWorkspace} from './workspace.ts';
+export {createCodePaneAdapter} from './code-pane.ts';
 
 const SpriteCodeContext = React.createContext(null);
 export const SpriteCodeProvider = SpriteCodeContext.Provider;

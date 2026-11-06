@@ -81,20 +81,17 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
         blocks.Events.fireNow_();
     }
 
-    function rememberView() {
-        const {frontView} = session;
-        if (!frontView || frontView.target !== loadedTarget ||
-                !frontView.mount?.contains(workspace.getInjectionDiv())) return;
+    function capturePresentation(preserveViewport = false): Presentation | undefined {
         const metrics = workspace.getMetrics();
-        if (!metrics) return;
+        if (!metrics || !loadedTarget) return;
         const area = workspace.getParentSvg().getBoundingClientRect();
         const roots = workspace.getTopBlocks(false);
-        const visible = !roots.length || roots.some(block => {
+        const visible = preserveViewport || !roots.length || roots.some(block => {
             const bounds = block.getSvgRoot()?.getBoundingClientRect();
             return bounds && bounds.left < area.right && bounds.right > area.left + metrics.absoluteLeft &&
                 bounds.top < area.bottom && bounds.bottom > area.top + metrics.absoluteTop;
         });
-        frontView.presentation = {
+        return {
             scale: workspace.scale,
             x: workspace.scrollX + metrics.absoluteLeft,
             y: workspace.scrollY + metrics.absoluteTop,
@@ -103,8 +100,29 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
         };
     }
 
+    function rememberView() {
+        const {frontView} = session;
+        if (!frontView || frontView.target !== loadedTarget ||
+                !frontView.mount?.contains(workspace.getInjectionDiv())) return;
+        const presentation = capturePresentation();
+        if (presentation) frontView.presentation = presentation;
+    }
+
     const bridge = {
         onError,
+        capturePane(targetId: string) {
+            if (loadedTarget?.id === targetId) return capturePresentation(true);
+        },
+        restorePane(targetId: string, presentation: Presentation) {
+            const injection = workspace.getInjectionDiv();
+            if (loadedTarget?.id !== targetId || !injection.clientWidth || !injection.clientHeight) return;
+            blocks.svgResize(workspace);
+            workspace.setScale(presentation.scale);
+            const metrics = workspace.getMetrics();
+            if (!metrics) return;
+            workspace.scrollbar.set(metrics.absoluteLeft - presentation.x - metrics.contentLeft,
+                metrics.absoluteTop - presentation.y - metrics.contentTop);
+        },
         prepareImport(target) {
             if (loadedTarget === target) flush();
             const before = signature(target);
