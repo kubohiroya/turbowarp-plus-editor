@@ -64,6 +64,7 @@ export async function buildPages(pins = undefined) {
         repository: `https://github.com/${pins.scriptTransferRepository}`,
         revision: pins.scriptTransferRevision, version: pins.scriptTransferVersion, featureDefault: true
     };
+    info.previewReloadStyles = pins.previewReloadStyles;
     info.familyNotices = await buildFamilyNotices(output, [
         {origin: 'scratch-gui', directory: gui},
         {origin: 'turbowarp-plus-editor', directory: root, includeDev: true}]);
