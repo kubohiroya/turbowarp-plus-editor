@@ -102,5 +102,23 @@
     "layoutRevision": "1a0ee61",
     "image": "variable-pane-grouped.png",
     "note": "The local layout package's real variable pane rendered in its browser fixture with Japanese labels and sample variables from both scopes."
+  },
+  "integratedPanelReview": {
+    "date": "2026-11-06",
+    "url": "http://127.0.0.1:8767/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "f27a349ce697cfc36c0f953149235995f3f710b6",
+    "guiRevision": "1712614699ca5bef772dc3a020b1b7b63d6bccea",
+    "layoutRevision": "6848f671fe08deb2e2f37b88ca6cca068574eedd",
+    "publicComparisonRevision": "23127c277c26d0395981d8616aa72a10c932f377",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "local-media-panes.png": "Split costume preview and sound editor. The sample audio uses the bundled delete.wav. The crop retains the preview, waveform, and playback controls.",
+      "local-variable-pane.png": "Split variable and code panes. The local speed variable was set to 8 using Enter. Cropped around the table and the sample script.",
+      "local-stage-workspace.png": "Stage opened in the workspace with its display menu open. The canvas is 703 CSS pixels wide in the 715-pixel pane. The small preset was checked at 240 pixels.",
+      "local-script-transfer.png": "Default block context menu with icons. Captured with no icon feature-flag query and cropped around the workspace toolbar and menu."
+    }
   }
 }

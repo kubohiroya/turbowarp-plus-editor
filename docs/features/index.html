@@ -227,8 +227,9 @@
 
 <h2>12. コスチュームや音の選択を保って編集する</h2>
 
-<p>分割したペインごとに、コード・コスチューム・音のどこを開いているか、どの素材を選んでいるかを保持します。たとえば一方で歩くコスチューム、もう一方で止まるコスチュームを選んで比較できます。別のペインで作業した後、元のペインをクリックするかEnterで編集を再開します。音をまだ追加していないスプライトでは、「音」タブから音を追加すると波形を確認できます。</p>
-<figure><a href="images/plus-media-panes.png"><img src="images/plus-media-panes.png" width="1440" height="1000" alt="Plus配置で同じスプライトのコスチュームと音を左右に開いている。左にコスチュームの全体像、右に確認用の音の波形が表示されている。" loading="lazy"></a><figcaption>左にコスチュームのプレビュー、右に確認用の音と波形。編集するペインを切り替えても、選んでいた素材を保持します。</figcaption></figure>
+<p>「編集パネルのレイアウト」で「パネルを横に分割」を選び、同じスプライトの「コスチューム」と「音」を左右に開きます。音を選ぶと波形が表示され、その下の再生ボタンで試聴できます。音が入っていないスプライトには「音」タブで追加します。ペインごとに選んだ素材が保持されるので、元のペインをクリックするか、フォーカスを当ててEnterを押せば、その素材の編集を再開できます。</p>
+<figure><a href="images/local-media-panes.png"><img src="images/local-media-panes.png" width="1440" height="575" alt="ローカル統合版のPlus配置。左ペインにコスチュームの全体像、右ペインに音の波形と再生ボタンが表示され、両方の検索欄が各ペインの右端にある。" loading="lazy"></a><figcaption>ローカル統合版。左にコスチュームのプレビュー、右に確認用の音の波形と再生ボタン。</figcaption></figure>
+<p><span class="badge planned">開発中</span> 図のローカル統合版では、編集していない側のコスチュームプレビューの高さに上限を設け、検索欄を各ペインの右端に揃えています。公開版でも素材の選択保持と音の再生を利用できます。公開版ではペインが縦長だとコスチュームのプレビューが大きくなり、音のペインでは検索欄の右に別の操作ボタンが表示されます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">素材の選択と編集状態</a></p>
 
 </section>
@@ -237,9 +238,9 @@
 
 <h2>13. 変数を見ながらコードを編集する</h2>
 
-<p>ペインの「変数」タブで値を確認し、編集可能な入力欄から変更できます。コードと変数を分割表示しておけば、処理を見ながらテスト値を変更できます。ペインを切り替えても入力欄の配置を保ち、変更した値は各ペインに反映されます。</p>
-<p><span class="badge planned">開発中</span> 変数を使える範囲でまとめ、各行に変数名と値を表示するように変更しています。</p>
-<figure class="guide-detail"><a href="images/variable-pane-grouped.png"><img src="images/variable-pane-grouped.png" width="680" height="220" alt="変数名と値の表。「すべてのスプライト用」にスコア（0）、「このスプライトのみ」に速さ（5）を表示。名前の列は値の列より狭い。" loading="lazy"></a><figcaption>開発中の変数ペインをサンプルデータで表示した例。</figcaption></figure>
+<p>ペインを横に分割し、一方で変数、もう一方でコードを開くと、処理を見ながら値を調整できます。値の欄に入力してEnterを押すと確定し、同じ変数を表示している別のペインにも反映されます。</p>
+<figure><a href="images/local-variable-pane.png"><img src="images/local-variable-pane.png" width="1440" height="405" alt="ローカル統合版の左ペインに、すべてのスプライト用のスコアと、このスプライトのみの速さが別の見出しで表示されている。速さの値は8。右ペインに速さを使って移動するコードがある。" loading="lazy"></a><figcaption>ローカル統合版。「変数」タブで「速さ」を8に確定したところ。隣のコードでは「速さ」を移動量に使っています。</figcaption></figure>
+<p><span class="badge planned">開発中</span> 図のローカル統合版では「変数」タブを開きます。「すべてのスプライト用」と「このスプライトのみ」に分かれ、名前列を狭くして値の欄を広く取っています。公開版では「プロパティ・変数」タブを開き、各変数に付く「作品」「スプライト」の表示で範囲を確認します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">変数タブ</a></p>
 
 </section>
@@ -248,9 +249,10 @@
 
 <h2>14. ステージを作業領域や別窓に移す</h2>
 
-<p>右端からステージを展開し、「ステージの表示」→「作業領域で開く」で、コードと同じタブ領域に置けます。「別窓で開く」を選ぶとブラウザーの別ウィンドウに移ります。どちらも同じ作品のステージです。タブを閉じるかメニューで元の位置に戻せます。</p>
-<p><span class="badge planned">開発中</span> 作業領域のステージをペインの広さに合わせて表示し、操作メニューを「ステージの表示」にまとめています。</p>
+<p>右端からステージを展開し、「ステージの表示」→「作業領域で開く」で、コードの隣にステージタブを開けます。ステージ上の「ステージの表示」から「小さいステージに切り替える」「別窓で開く」「作業領域から戻す」を選べます。元の位置へ戻すには、ステージタブを閉じる方法もあります。</p>
 <div class="flow" role="img" aria-label="右端のステージを作業領域のタブまたはブラウザー別窓に移し、右端に戻す。"><div>右端のステージ</div><span>↔</span><div>作業領域のタブ<br><small>またはブラウザーの別窓</small></div></div>
+<figure><a href="images/local-stage-workspace.png"><img src="images/local-stage-workspace.png" width="1440" height="1000" alt="ローカル統合版で左にコード、右にペインの幅に合わせたステージを表示。ステージの表示メニューに小さいステージへの切り替え、作業領域から戻す、別窓で開くが並ぶ。" loading="lazy"></a><figcaption>ローカル統合版。作業領域に移したステージで「ステージの表示」を開いたところ。</figcaption></figure>
+<p><span class="badge planned">開発中</span> ローカル統合版は縦横比を保ったまま、ペインに収まる大きさまでステージを広げます。小さいステージも選べます。ステージ側の表示操作は「ステージの表示」にまとまっています。公開版では広いペインでも通常表示の幅が480pxにとどまり、ステージのタブ列にも「編集パネルのレイアウト」が表示されます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/258">作業領域へのステージ移動</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">別窓とドック復帰</a></p>
 
 </section>
@@ -419,10 +421,11 @@
 
 <h2>27. スクリプトとステージを別作品へ転送する</h2>
 
-<p><a href="../editor.html?lang=ja">通常のEditor</a>で、スクリプトの右クリックに書き出し・コピー、コード領域の右クリックに読み込み・貼り付けを追加します。起動設定は不要です。Ctrl/Cmd+C・Vも使えます。</p>
-<figure class="guide-detail"><a href="images/plus-script-transfer.png"><img src="images/plus-script-transfer.png" width="660" height="540" alt="Plus配置のスプライトタブと横並びのカテゴリの下で、ブロックの右クリックメニューを表示。スクリプトを書き出し、コピー、削除などの操作にアイコンが付いている。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。公開版の撮影時は twPlusContextMenuIcons=1 でアイコンを有効にしています。</figcaption></figure>
+<p>移したいスクリプトのブロックを右クリックし、「スクリプトを書き出し」か「コピー」を選びます。転送先のコード領域の空白を右クリックし、「スクリプトを読み込み」か「貼り付け」を選びます。転送は<a href="../editor.html?lang=ja">通常の起動</a>で利用でき、Ctrl/Cmd+C・Vも使えます。</p>
+<figure class="guide-detail"><a href="images/local-script-transfer.png"><img src="images/local-script-transfer.png" width="690" height="559" alt="ローカル統合版のPlus配置で、ブロックを右クリックしたところ。スクリプトを書き出し、コピー、複製、削除などの項目の左に操作アイコンが並ぶ。" loading="lazy"></a><figcaption>ローカル統合版のブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンで見分けられます。</figcaption></figure>
+<p><span class="badge planned">開発中</span> ローカル統合版では通常の起動でアイコンが表示されます。公開版で同じアイコンを表示するには、EditorのURLに <code>twPlusContextMenuIcons=1</code> を指定します。これはアイコン表示の設定です。</p>
 <ul><li><strong>.blocks3</strong>：スクリプトと必要なブロック定義・変数・リスト・メッセージ・拡張参照を移します。OSクリップボードへの許可がなくても、同じサイトのウィンドウ間でコピー・貼り付けできます。</li><li><strong>.stage3</strong>：Plus配置では背景タイル、Scratch配置ではステージの右クリックから書き出せます。Scratch配置では背景の「選ぶ」メニューから「ステージを読み込み（追加）」を選びます。背景・音・スクリプトを既存のステージへ追加します。</li><li>同名の変数等はスコープ・種類が合う既存データを使い、読み込み先の値を保持します。名前が競合する定義やアセットは必要に応じて改名します。式で生成する背景・音の名前や番号までは自動変換しません。</li><li>転送元の拡張の承認は引き継ぎません。別サイトへのクリップボード転送には対応ブラウザーと読取許可が必要です。同じサイト内の最後のコピーはlocalStorageにも残ります。</li></ul>
-<p>URLの設定で無効にすることはできません。詳しくは<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a>を参照してください。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a></p>
 
 </section>
 
