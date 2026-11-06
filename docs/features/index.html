@@ -182,7 +182,7 @@
 <h2>8. 境界を動かして作業領域を調整する</h2>
 
 <p>境界にある3点のグリップをドラッグして隣接する領域の幅や高さを変えます。Plus配置で固定したスプライト一覧の幅を変えるときや、Scratch配置でコード領域とステージ列の幅、ステージと対象一覧の高さを変えるときに使います。Scratch配置では境界にフォーカスを当て、矢印キーでも調整できます。</p>
-<figure class="guide-detail"><a href="images/splitter-detail.png"><img src="images/splitter-detail.png" width="475" height="310" alt="Scratch配置でコード領域とステージ列を隔てる縦の境界線。中央に3点のグリップがある。" loading="lazy"></a><figcaption>赤く表示された縦の境界を左右に動かすと、コードとステージ側の幅が変わります。</figcaption></figure>
+<figure class="guide-detail"><a href="images/plus-sprite-splitter.png"><img src="images/plus-sprite-splitter.png" width="660" height="665" alt="Plus配置で固定したスプライト一覧とコード領域の間に、3点のグリップがある。" loading="lazy"></a><figcaption>スプライト一覧をピンで固定すると、コード領域との境界をドラッグできます。</figcaption></figure>
 <p>調整した比率はブラウザー側に保存されます。スプリッターを外して起動するには <code>twPlusSplitter=0</code> を指定します。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/227">境界のグリップ</a></p>
 
 </section>
@@ -227,8 +227,8 @@
 
 <h2>12. コスチュームや音の選択を保って編集する</h2>
 
-<p>分割したペインごとに、コード・コスチューム・音のどこを開いているか、どの素材を選んでいるかを保持します。たとえば一方で歩くコスチューム、もう一方で止まるコスチュームを選んで比較できます。別のペインで作業した後、元のペインをクリックするかEnterで編集を再開します。</p>
-<figure><a href="images/media-panes-detail.png"><img src="images/media-panes-detail.png" width="1440" height="650" alt="左にコスチュームの一覧とプレビュー、右に音のタブを開いた分割画面。" loading="lazy"></a><figcaption>同じスプライトのコスチュームと音のタブを、別々のペインで開いた例。</figcaption></figure>
+<p>分割したペインごとに、コード・コスチューム・音のどこを開いているか、どの素材を選んでいるかを保持します。たとえば一方で歩くコスチューム、もう一方で止まるコスチュームを選んで比較できます。別のペインで作業した後、元のペインをクリックするかEnterで編集を再開します。音をまだ追加していないスプライトでは、「音」タブから音を追加すると波形を確認できます。</p>
+<figure><a href="images/plus-media-panes.png"><img src="images/plus-media-panes.png" width="1440" height="1000" alt="Plus配置で同じスプライトのコスチュームと音を左右に開いている。左にコスチュームの全体像、右に確認用の音の波形が表示されている。" loading="lazy"></a><figcaption>左にコスチュームのプレビュー、右に確認用の音と波形。編集するペインを切り替えても、選んでいた素材を保持します。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">素材の選択と編集状態</a></p>
 
 </section>
@@ -238,7 +238,8 @@
 <h2>13. 変数を見ながらコードを編集する</h2>
 
 <p>ペインの「変数」タブで値を確認し、編集可能な入力欄から変更できます。コードと変数を分割表示しておけば、処理を見ながらテスト値を変更できます。ペインを切り替えても入力欄の配置を保ち、変更した値は各ペインに反映されます。</p>
-<figure><a href="images/variable-pane-detail.png"><img src="images/variable-pane-detail.png" width="1440" height="385" alt="スプライトの変数タブにスコアの入力欄が表示されている。" loading="lazy"></a><figcaption>変数タブで、確認したい値を表示した例。</figcaption></figure>
+<p><span class="badge planned">開発中</span> 変数を使える範囲でまとめ、各行に変数名と値を表示するように変更しています。</p>
+<figure class="guide-detail"><a href="images/variable-pane-grouped.png"><img src="images/variable-pane-grouped.png" width="680" height="220" alt="変数名と値の表。「すべてのスプライト用」にスコア（0）、「このスプライトのみ」に速さ（5）を表示。名前の列は値の列より狭い。" loading="lazy"></a><figcaption>開発中の変数ペインをサンプルデータで表示した例。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">変数タブ</a></p>
 
 </section>
@@ -248,8 +249,8 @@
 <h2>14. ステージを作業領域や別窓に移す</h2>
 
 <p>右端からステージを展開し、「ステージの表示」→「作業領域で開く」で、コードと同じタブ領域に置けます。「別窓で開く」を選ぶとブラウザーの別ウィンドウに移ります。どちらも同じ作品のステージです。タブを閉じるかメニューで元の位置に戻せます。</p>
+<p><span class="badge planned">開発中</span> 作業領域のステージをペインの広さに合わせて表示し、操作メニューを「ステージの表示」にまとめています。</p>
 <div class="flow" role="img" aria-label="右端のステージを作業領域のタブまたはブラウザー別窓に移し、右端に戻す。"><div>右端のステージ</div><span>↔</span><div>作業領域のタブ<br><small>またはブラウザーの別窓</small></div></div>
-<figure><a href="images/dockview-workspace.png"><img src="images/dockview-workspace.png" width="1440" height="1000" alt="コードとステージを同じDockviewワークスペースで開いた公開Web版。" loading="lazy"></a><figcaption>ステージを作業領域で開いた例。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/258">作業領域へのステージ移動</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">別窓とドック復帰</a></p>
 
 </section>
@@ -310,7 +311,8 @@
 
 <p>カテゴリを長押しし、移動先を示す印に合わせて離すと並び替えられます。パレットの外で離すと取り消せます。並び順はレイアウトを切り替えても保持し、ページを再読み込みすると初期順に戻ります。</p>
 <figure class="guide-detail"><a href="images/palette-order-detail.png"><img src="images/palette-order-detail.png" width="540" height="126" alt="横型パレットで動きのカテゴリを長押しし、音の位置へ移動している途中。" loading="lazy"></a><figcaption>長押ししたカテゴリと移動先の表示を見ながら並べ替えます。</figcaption></figure>
-<p>ブロックをパレットに戻して削除できる位置では、ドラッグ中にゴミ箱が表示されます。右クリックメニューに操作アイコンを出すには、エディターのURLに <code>twPlusContextMenuIcons=1</code> を付けて開きます。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/250">カテゴリの並べ替え</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/243">削除予告</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューのアイコン</a></p>
+<p>ブロックをパレットに戻して削除できる位置では、ドラッグ中にゴミ箱が表示されます。公開版で右クリックメニューに操作アイコンを出すには、エディターのURLに <code>twPlusContextMenuIcons=1</code> を付けて開きます。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/250">カテゴリの並べ替え</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/243">削除予告</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューのアイコン</a></p>
+<p><span class="badge planned">開発中</span> 右クリックメニューの操作アイコンを起動時から表示するように変更しています。</p>
 
 </section>
 
@@ -330,12 +332,11 @@
 
 <p><strong>拡張開発者は、ブロックで編集・保存するデータのJSON Schemaを用意し、対象ブロックと引数を指定して登録すると、専用フォームを自動生成できます。</strong> エディターが入力欄を作り、保存前に必須項目や値の範囲を検証します。</p>
 <p>たとえば「シーンの名前」「表示時間」「複数の設定」を1つのJSON文字列で持つ拡張では、文字列を手で直す代わりに、項目ごとのフォームを使えます。拡張が編集定義を登録すると、ワークスペースの対応ブロックのアイコンが「ブロックを編集」ボタンになります。</p>
-<figure><a href="images/workspace.png"><img src="images/workspace.png" width="1440" height="1000" alt="サンプル拡張のscene propertiesブロックを配置したEditor。左側に拡張カテゴリ、中央にブロック、右側に通常のステージがある。" loading="lazy"></a><figcaption>基本配置はいつものTurboWarp。追加の入口は、対応するブロックのアイコンです。画像を押すと原寸で開きます。</figcaption></figure>
 <ol><li>対応ブロックをコード領域に置き、ブロックのアイコンを押します。</li><li>フォームで名前や数値を変更します。表示名・色・項目の意味は拡張が定義します。</li><li>「すべて保存」で下書きをブロックへ反映します。「キャンセル」または閉じる操作では下書きを反映しません。</li><li>作品ファイルを残すには、その後に通常の「ファイル」からSB3を保存します。</li></ol>
-<figure><a href="images/form.png"><img src="images/form.png" width="1440" height="1000" alt="scene propertiesのフォーム。Scene labelにOpening、Durationに2が入り、キャンセルとすべて保存が表示されている。" loading="lazy"></a><figcaption>サンプルではシーン名と表示秒数を別々の欄で入力。ブロックの設定をJSON文字列として直接編集せずに済みます。</figcaption></figure>
+<figure><a href="images/form-dialog.png"><img src="images/form-dialog.png" width="820" height="520" alt="シーン名と表示時間の入力欄が自動生成されたブロック編集フォーム。" loading="lazy"></a><figcaption>説明用の拡張が定義したフォーム。シーン名と秒数を別々の欄に入力します。</figcaption></figure>
 <h3>入力の誤りを、その場で見つける</h3>
 <p>拡張のSchemaや検証処理に従い、必須項目・値の範囲などを確かめます。このサンプルの表示時間は1〜60秒です。0を入力するとエラーを示し、保存できなくなります。検証の内容は各拡張によって異なります。</p>
-<figure><a href="images/validation.png"><img src="images/validation.png" width="1440" height="1000" alt="Durationに0を入れるとmust be greater than or equal to 1の検証メッセージが表示され、保存が無効になったフォーム。" loading="lazy"></a><figcaption>検証に通るまでブロック本体へ反映しません。修正して保存するか、取り消して元の値へ戻れます。</figcaption></figure>
+<figure><a href="images/validation-dialog.png"><img src="images/validation-dialog.png" width="820" height="602" alt="表示時間に0を入れると最小値1の検証メッセージが出て、保存ボタンが無効になる。" loading="lazy"></a><figcaption>表示時間が範囲外のときは入力欄に理由が表示されます。</figcaption></figure>
 <h3>入れ子・固定入力・Undo</h3>
 <p>対応する定義があれば、親子のブロックを同じ編集セッションで扱い、数値・文字列・メニューなどの固定入力も専用の欄で編集できます。保存した変更はBlocklyのUndoにまとめられます。定義のないブロックや動的な計算式を、勝手に編集可能なデータへ置き換える機能ではありません。</p>
 <div class="flow" role="img" aria-label="ブロックの値から下書きを開き、検証に成功したら保存。キャンセルなら元のブロックは変えない。最後にSB3を別途保存する。"><div>ブロックの値</div><span>→</span><div>フォームの下書き<br><small>変更・検証・取消</small></div><span>→</span><div>すべて保存<br><small>ブロックへ反映／Undo</small></div><span>→</span><div>ファイルから保存<br><small>SB3を手元へ</small></div></div>
@@ -419,7 +420,7 @@
 <h2>27. スクリプトとステージを別作品へ転送する</h2>
 
 <p><a href="../editor.html?lang=ja">通常のEditor</a>で、スクリプトの右クリックに書き出し・コピー、コード領域の右クリックに読み込み・貼り付けを追加します。起動設定は不要です。Ctrl/Cmd+C・Vも使えます。</p>
-<figure><a href="images/transfer.png"><img src="images/transfer.png" width="1440" height="1000" alt="英語UIのスクリプト右クリックメニュー。CopyとExport Scriptが追加されている。" loading="lazy"></a><figcaption>英語表示での追加メニュー例。Export Scriptは選んだスタックを.blocks3へ書き出します。通常起動で表示されます。</figcaption></figure>
+<figure class="guide-detail"><a href="images/plus-script-transfer.png"><img src="images/plus-script-transfer.png" width="660" height="540" alt="Plus配置のスプライトタブと横並びのカテゴリの下で、ブロックの右クリックメニューを表示。スクリプトを書き出し、コピー、削除などの操作にアイコンが付いている。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。公開版の撮影時は twPlusContextMenuIcons=1 でアイコンを有効にしています。</figcaption></figure>
 <ul><li><strong>.blocks3</strong>：スクリプトと必要なブロック定義・変数・リスト・メッセージ・拡張参照を移します。OSクリップボードへの許可がなくても、同じサイトのウィンドウ間でコピー・貼り付けできます。</li><li><strong>.stage3</strong>：Plus配置では背景タイル、Scratch配置ではステージの右クリックから書き出せます。Scratch配置では背景の「選ぶ」メニューから「ステージを読み込み（追加）」を選びます。背景・音・スクリプトを既存のステージへ追加します。</li><li>同名の変数等はスコープ・種類が合う既存データを使い、読み込み先の値を保持します。名前が競合する定義やアセットは必要に応じて改名します。式で生成する背景・音の名前や番号までは自動変換しません。</li><li>転送元の拡張の承認は引き継ぎません。別サイトへのクリップボード転送には対応ブラウザーと読取許可が必要です。同じサイト内の最後のコピーはlocalStorageにも残ります。</li></ul>
 <p>URLの設定で無効にすることはできません。詳しくは<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a>を参照してください。</p>
 
@@ -452,7 +453,7 @@
 
 <p>「ファイル」メニューに「作品のプロパティ…」（英語では「Project Properties…」）と「作品の診断…」（「Project Diagnostics…」）があります。<a href="../editor.html?lang=ja">通常のEditor</a>で利用でき、URLへの機能設定や追加拡張は必要ありません。</p>
 <ol><li>「ファイル」→「作品のプロパティ…」を開きます。</li><li>作品タイトル、複数行の作品概要、作者名、連絡先を入力します。作者名と連絡先は、履歴から選ぶことも新しく入力することもできます。</li><li>「適用」で現在の作品へ反映します。タイトルはエディター上部と同期します。「キャンセル」または閉じる操作では、作品も入力履歴も変更しません。</li><li>最後に「ファイル」からSB3を保存します。「適用」だけでは手元の作品ファイルは更新されません。</li></ol>
-<figure><a href="images/project-properties.png"><img src="images/project-properties.png" width="1440" height="1000" alt="作品のプロパティ画面。星空の物語というタイトル、概要とHTTPSリンク、サンプル作者、メール連絡先とリンク、作成日時・最終更新日時、適用とキャンセルが表示されている。" loading="lazy"></a><figcaption>架空の作品情報を適用し、SB3生成後に開き直した実画面。日時は表示専用で、連絡先と概要のリンクは入力欄の下に表示します。</figcaption></figure>
+<figure><a href="images/plus-project-properties.png"><img src="images/plus-project-properties.png" width="1440" height="1000" alt="Plus配置のエディターで作品のプロパティを開き、架空の作品のタイトル、URI、概要、作者名、連絡先を入力した例。" loading="lazy"></a><figcaption>Plus配置の「ファイル」から作品のプロパティを開いた例。入力内容は説明用です。</figcaption></figure>
 <h3>作者名と連絡先：直近5件から選択、または新規入力</h3>
 <p>適用した空でない作者名・連絡先を、それぞれ新しい順に5件まで、このブラウザーに記憶します。同じ値を使うと履歴の先頭に移ります。候補を選んでから編集することもできます。今回の作者名と連絡先はSB3へ入りますが、履歴全体は入りません。ブラウザーの保存機能を利用できない場合は、Editorを開いている間だけ記憶します。</p>
 <p>連絡先のメールアドレスや<code>mailto:</code>はメール用リンクに、<code>https:</code>はWebリンクになります。メールリンクは利用環境のメールアプリ、Webリンクは別タブで開きます。作品概要はプレーンテキストとして入力し、プレビュー内のHTTPS URLをリンクとして開けます。</p>

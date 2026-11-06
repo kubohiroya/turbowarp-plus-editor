@@ -77,7 +77,11 @@
       "variable-pane-detail.png": "A test score variable created with the editor UI and displayed beside the code pane.",
       "palette-resize-detail.png": "Resize grip at the lower-right corner of the Motion flyout.",
       "palette-order-detail.png": "The Motion category held over the Sound category while reordering.",
-      "project-uri-detail.png": "Project URI field with an illustrative example.org URL typed in, before applying."
+      "project-uri-detail.png": "Project URI field with an illustrative example.org URL typed in, before applying.",
+      "plus-sprite-splitter.png": "Default Plus layout with the sprite drawer pinned, cropped around the divider.",
+      "plus-script-transfer.png": "Default Plus layout with twPlusContextMenuIcons=1, block menu opened on a test block. Cropped to include the tab, category bar, and menu. Site revision d08309885647425b480a6b0889f1f014ce2a3d8b.",
+      "plus-media-panes.png": "Full viewport with both media panes visible. The sound is a generated test tone added to the starter sprite.",
+      "plus-project-properties.png": "Default Plus layout, project properties opened with fictional sample inputs."
     }
   },
   "assetPreviewDevelopment": {
@@ -85,5 +89,18 @@
     "baseRevision": "b1677c5c693f4270994b6d70d6d102c18815572c",
     "image": "asset-preview-development.png",
     "note": "Local Kamishibai development build with additional working changes. Remote-cacheable test image served by a test response. Crop of the real preview."
+  },
+  "formDetails": {
+    "source": "Existing form.png and validation.png",
+    "images": [
+      "form-dialog.png",
+      "validation-dialog.png"
+    ],
+    "note": "Dialog-only crops of the existing Editor screenshots, independent of the workspace layout."
+  },
+  "variablePaneDevelopment": {
+    "layoutRevision": "1a0ee61",
+    "image": "variable-pane-grouped.png",
+    "note": "The local layout package's real variable pane rendered in its browser fixture with Japanese labels and sample variables from both scopes."
   }
 }
