@@ -13,11 +13,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--code-css-fields', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--code-css-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1474,7 +1474,7 @@ Scratch.extensions.register({
 });
 `;
 
-async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields, svgFields, parentDocumentFields}) {
+async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields, svgFields, parentDocumentFields, cssFields}) {
     const editedText = '改訂 <&> note';
     const state = (reload = false) => editor.evaluate(async ({name, reload}) => {
         if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
@@ -1502,8 +1502,11 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
             if (svgFields) {
                 const color = values[0] === 'original' ? '#15803d' :
                     values[0] === 'edited after dock' ? '#1d4ed8' : '#c2410c';
-                const marker = caption.locator(`circle[cx="5"][cy="8"][r="3"][fill="${color}"]`);
+                const marker = caption.locator('circle[cx="5"][cy="8"][r="3"]');
                 if (!await marker.isVisible()) return false;
+                const fill = await marker.evaluate(node => getComputedStyle(node).fill);
+                const expected = color.match(/[0-9a-f]{2}/g).map(part => parseInt(part, 16)).join(', ');
+                if (fill !== `rgb(${expected})`) return false;
                 const dimensions = await marker.boundingBox();
                 if (!dimensions || dimensions.width <= 0 || dimensions.height <= 0) return false;
             }
@@ -1522,6 +1525,30 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
         assert.deepEqual(current.types, ['windowfields_caption', 'windowfields_setting']);
         await checkView(page, current);
     };
+    const checkWidgetStyles = async (widget, mirror) => {
+        if (!cssFields) return;
+        const group = widget.locator('fieldset');
+        const input = widget.getByRole('textbox', {name: 'Caption'});
+        const button = widget.getByRole('button', {name: 'Apply caption'});
+        const read = (locator, properties) => locator.evaluate((node, names) => {
+            const style = getComputedStyle(node);
+            return names.map(name => style.getPropertyValue(name));
+        }, properties);
+        assert.deepEqual(await read(group, ['background-color', 'padding-left']), ['rgb(237, 246, 255)', '9px']);
+        assert.deepEqual(
+            await read(input, ['color', 'background-color', 'border-top-width', 'border-top-style',
+                'border-top-color', 'padding-left', 'font-size']),
+            ['rgb(19, 48, 75)', 'rgb(255, 248, 225)', '3px', 'solid', 'rgb(22, 101, 52)', '11px', '15px']
+        );
+        assert.deepEqual(await read(button, ['background-color', 'color']), ['rgb(124, 45, 18)', 'rgb(255, 255, 255)']);
+        const [image] = await read(input, ['background-image']);
+        if (mirror) {
+            assert.equal(image, 'none');
+            assert.equal(await widget.locator('.tw-test-caption-widget, .tw-test-caption-input, .tw-test-caption-apply').count(), 0);
+        } else {
+            assert.match(image, /data:image\/svg\+xml/);
+        }
+    };
     const original = await state();
     assert.deepEqual(original.values, ['original', 'first-id']);
     for (const page of [editor, a.child, b.child]) await checkView(page, original);
@@ -1538,6 +1565,11 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
                 return source?.ownerDocument === document && source.getAttribute('data-parent-input') === expected;
             }, value), 'the original input stays in the parent document and its delegated listener receives the edit');
         };
+        await checkWidgetStyles(widget, true);
+        if (cssFields) {
+            assert.equal(await editor.locator('#tw-test-native-field-css').count(), 1);
+            assert.equal(await a.child.locator('#tw-test-native-field-css').count(), 0);
+        }
         await input.fill('cancel on focus change');
         await expectParentInput('cancel on focus change');
         if (parentDocumentFields) {
@@ -1551,6 +1583,7 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
         await activateCodeView(a, b, focus);
         await field(a.child, original.ids[0]).locator('.blocklyEditableText').click({force: true});
         assert.equal(await input.inputValue(), 'original');
+        await checkWidgetStyles(widget, true);
         await input.fill(editedText);
         await expectParentInput(editedText);
         await widget.getByRole('button', {name: 'Apply caption'}).click();
@@ -1602,6 +1635,7 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     if (nativeFields) {
         await field(editor, original.ids[0]).locator('.blocklyEditableText').click({force: true});
         const widget = editor.locator('.blocklyWidgetDiv');
+        await checkWidgetStyles(widget, false);
         await widget.getByRole('textbox', {name: 'Caption'}).fill('edited after dock');
         await widget.getByRole('button', {name: 'Apply caption'}).click();
         await expectValues(editor, ['edited after dock', selection]);
@@ -1635,7 +1669,14 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     assert.equal(result, `${editedText}:${selection}`);
     const reopened = await open(restored.root);
     await checkView(reopened.child, restored);
+    if (cssFields) {
+        await focus(reopened.child, reopened.id);
+        await until(() => reopened.child.locator('#mount').evaluate(node => !node.inert), 'the reopened code view can edit');
+        await field(reopened.child, restored.ids[0]).locator('.blocklyEditableText').click({force: true});
+        await checkWidgetStyles(reopened.child.locator('[data-plus-native-field]'), true);
+    }
     await dock(reopened);
+    if (cssFields) report.checks.push('The mirrored widget and its SVG field retain the supported computed styles without copying the parent stylesheet or image reference.');
     if (parentDocumentFields) {
         report.checks.push('The editor DOM stays in the parent document; mirrored input and click events reach its delegated listeners.');
     }
@@ -1646,7 +1687,7 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
 }
 
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false, svgFields = false, parentDocumentFields = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false, svgFields = false, parentDocumentFields = false, cssFields = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1662,7 +1703,8 @@ async function checkCodePopouts ({editor, context, control}, {
         await readFile(new URL(nativeFields ? '../stage6/fixtures/native-extension.ts' :
             '../stage6/fixtures/programmatic-extension.ts', import.meta.url), 'utf8'),
         {loader: 'ts', format: 'iife', define: {
-            TW_TEST_NATIVE_SVG: String(svgFields), TW_TEST_PARENT_DOCUMENT: String(parentDocumentFields)
+            TW_TEST_NATIVE_SVG: String(svgFields), TW_TEST_PARENT_DOCUMENT: String(parentDocumentFields),
+            TW_TEST_NATIVE_CSS: String(cssFields)
         }}
     )).code : customFieldsFixture;
     const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions, dynamicFixture, customFieldsURL, trustedFieldFixture}) => {
@@ -1843,7 +1885,7 @@ async function checkCodePopouts ({editor, context, control}, {
         return;
     }
     if (customFields || programmaticFields || nativeFields) {
-        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields, svgFields, parentDocumentFields});
+        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields, svgFields, parentDocumentFields, cssFields});
         return;
     }
     if (dynamicBranches) {
@@ -2590,6 +2632,9 @@ try {
         await run('code-popout', env => checkCodePopouts(env, {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
+    }
+    else if (testMode === '--code-css-fields') {
+        await run('code-popout', env => checkCodePopouts(env, {nativeFields: true, parentDocumentFields: true, svgFields: true, cssFields: true}));
     }
     else if (testMode === '--code-parent-document-fields') {
         await run('code-popout', env => checkCodePopouts(env, {nativeFields: true, parentDocumentFields: true}));

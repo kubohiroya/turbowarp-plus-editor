@@ -323,6 +323,21 @@ test('native SVG projection keeps visible shapes and omits executable and extern
     assert.equal(captureNativeFieldDrawing({...root, getBBox: () => ({x: 0, y: 0, width: Infinity, height: 0})}), undefined);
 });
 
+test('native SVG projection uses computed CSS paint without carrying resource references', () => {
+    const root = {
+        namespaceURI: 'http://www.w3.org/2000/svg', localName: 'circle', nodeType: 1, childNodes: [],
+        attributes: [{name: 'r', value: '4'}, {name: 'fill', value: '#f00'}, {name: 'stroke', value: '#000'}],
+        ownerDocument: {defaultView: {getComputedStyle() {
+            const values = {fill: 'rgb(12, 34, 56)', stroke: 'url("https://example.invalid/paint")', 'stroke-width': '2px'};
+            return {getPropertyValue: name => values[name] ?? ''};
+        }}},
+        getBBox: () => ({x: 0, y: 0, width: 8, height: 8})
+    };
+    assert.deepEqual(captureNativeFieldDrawing(root)?.drawing.attributes, [
+        ['r', '4'], ['fill', 'rgb(12, 34, 56)'], ['stroke-width', '2']
+    ]);
+});
+
 test('programmatic field callbacks stay in the parent and accept only a current authorized action', () => {
     const {session, connect, target, vm} = fixture();
     const name = 'field_fixture_caption';
