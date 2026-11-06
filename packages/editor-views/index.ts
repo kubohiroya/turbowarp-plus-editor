@@ -1,5 +1,6 @@
 import {getCodeDynamicShapes, getCodeExtensions} from './code-extensions.ts';
 import {customField} from './custom-extension-fields.ts';
+import {projectNativeFieldGraphics} from './native-field-svg.ts';
 import {openNativeField} from './native-extension-field.ts';
 import {readFieldActionPanel, type FieldActionPanel, type ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 import {capture, createHistory, restore, workspaceXML} from './history.ts';
@@ -80,8 +81,9 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         container.inert = originalInert || Boolean(owner || pending || dropJob);
     };
     const dynamicShapesFor = target => getCodeDynamicShapes(vm.runtime, target);
-    const projection = target => ({
-        ...histories.get(target).state, xml: workspaceXML(vm, target), dynamicShapes: dynamicShapesFor(target)
+    const projection = (target, xml = workspaceXML(vm, target)) => ({
+        ...histories.get(target).state, xml, dynamicShapes: dynamicShapesFor(target),
+        nativeFieldGraphics: vm.editingTarget === target ? projectNativeFieldGraphics(vm.runtime, target, workspace) : []
     });
     const extensionsFor = target => getCodeExtensions(vm.runtime, target);
     const send = (view, message) => view.port.postMessage(message);
@@ -108,17 +110,19 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
 
     function publish(target, source, refreshParent) {
         for (const view of views) if (view.target === target) closeNativeEditor(view);
-        const data = projection(target);
+        const xml = workspaceXML(vm, target);
         if (refreshParent && vm.editingTarget === target) {
             projecting = true;
             ScratchBlocks.Events.disable();
             try {
-                vm.emit('workspaceUpdate', {xml: data.xml});
+                vm.emit('workspaceUpdate', {xml});
             } finally {
                 ScratchBlocks.Events.enable();
                 projecting = false;
             }
         }
+        if (!views.size) return;
+        const data = projection(target, xml);
         for (const view of views) {
             if (view.target !== target) continue;
             send(view, view === source ? {type: 'history', ...histories.get(target).state} : {type: 'update', ...data});

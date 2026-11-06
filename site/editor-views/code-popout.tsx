@@ -145,6 +145,7 @@ function snapshot(message) {
     if (message.extensions) updateExtensions(message.extensions);
     if (message.dynamicShapes) extensionPalette.setDynamicShapes(message.dynamicShapes);
     if (message.xml) {
+        extensionPalette.setNativeFieldGraphics(message.nativeFieldGraphics ?? []);
         cancelFieldEditor();
         procedureEditor.cancel();
         ScratchBlocks.Events.disable();

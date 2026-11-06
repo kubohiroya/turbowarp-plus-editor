@@ -13,11 +13,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1474,7 +1474,7 @@ Scratch.extensions.register({
 });
 `;
 
-async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields}) {
+async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields, svgFields}) {
     const editedText = '改訂 <&> note';
     const state = (reload = false) => editor.evaluate(async ({name, reload}) => {
         if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
@@ -1498,11 +1498,21 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     const field = (page, id) => page.locator(`.blocklyBlockCanvas [data-id="${id.replace(/[\\"]/g, '\\$&')}"]`);
     const checkView = async (page, {ids, values}) => {
         await until(async () => {
-            const text = await field(page, ids[0]).textContent();
+            const caption = field(page, ids[0]);
+            if (svgFields) {
+                const color = values[0] === 'original' ? '#15803d' :
+                    values[0] === 'edited after dock' ? '#1d4ed8' : '#c2410c';
+                const marker = caption.locator(`circle[cx="5"][cy="8"][r="3"][fill="${color}"]`);
+                if (!await marker.isVisible()) return false;
+                const dimensions = await marker.boundingBox();
+                if (!dimensions || dimensions.width <= 0 || dimensions.height <= 0) return false;
+            }
+            const text = await caption.textContent();
             const dropdown = await field(page, ids[1]).textContent();
             const label = values[1] === 'first-id' ? 'First label' : 'Second label';
             return text.replace(/\s/g, ' ').includes(values[0]) && dropdown.replace(/\s/g, ' ').includes(label);
-        }, 'the text and dropdown show the saved extension values');
+        }, svgFields ? 'the custom SVG and fields reflect the saved extension values' :
+            'the text and dropdown show the saved extension values');
     };
     const expectValues = async (page, values) => {
         const current = await until(async () => {
@@ -1539,14 +1549,17 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
         await input.press('Enter');
     }
     await expectValues(b.child, [editedText, 'first-id']);
+    if (svgFields) await expectValues(a.child, [editedText, 'first-id']);
 
     if (nativeFields) {
         await activateCodeView(b, a, focus);
         await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
         await expectValues(a.child, original.values);
+        if (svgFields) await expectValues(b.child, original.values);
         await activateCodeView(a, b, focus);
         await a.child.getByRole('button', {name: 'Redo', exact: true}).click();
         await expectValues(b.child, [editedText, 'first-id']);
+        if (svgFields) await expectValues(a.child, [editedText, 'first-id']);
     } else {
         await activateCodeView(b, a, focus);
         await field(b.child, original.ids[1]).locator('.blocklyDropdownText').click({force: true});
@@ -1608,13 +1621,14 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     const reopened = await open(restored.root);
     await checkView(reopened.child, restored);
     await dock(reopened);
+    if (svgFields) report.checks.push('The native field SVG updates in both code windows through edit, shared Undo/Redo, docking, and SB3 reload.');
     if (nativeFields) report.checks.push('The parent fromJson factory and native WidgetDiv editor work in the code window. Losing the editing lease cancels the uncommitted DOM editor.');
     if (programmaticFields) report.checks.push('The TypeScript field callbacks build the dialog and apply edits in the parent; only its action model reaches the child.');
     report.checks.push('Custom field values round-trip through two code windows, shared Undo/Redo, docking, and SB3 reload, then reach the extension in the parent VM.');
 }
 
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false, svgFields = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1629,7 +1643,7 @@ async function checkCodePopouts ({editor, context, control}, {
     const customFieldsSource = programmaticFields || nativeFields ? (await transform(
         await readFile(new URL(nativeFields ? '../stage6/fixtures/native-extension.ts' :
             '../stage6/fixtures/programmatic-extension.ts', import.meta.url), 'utf8'),
-        {loader: 'ts', format: 'iife'}
+        {loader: 'ts', format: 'iife', define: {TW_TEST_NATIVE_SVG: String(svgFields)}}
     )).code : customFieldsFixture;
     const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions, dynamicFixture, customFieldsURL, trustedFieldFixture}) => {
         const first = vm.editingTarget;
@@ -1809,7 +1823,7 @@ async function checkCodePopouts ({editor, context, control}, {
         return;
     }
     if (customFields || programmaticFields || nativeFields) {
-        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields});
+        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields, svgFields});
         return;
     }
     if (dynamicBranches) {
@@ -2557,6 +2571,7 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
+    else if (testMode === '--code-svg-fields') await run('code-popout', env => checkCodePopouts(env, {nativeFields: true, svgFields: true}));
     else if (testMode === '--code-native-fields') await run('code-popout', env => checkCodePopouts(env, {nativeFields: true}));
     else if (testMode === '--code-programmatic-fields') await run('code-popout', env => checkCodePopouts(env, {programmaticFields: true}));
     else if (testMode === '--code-custom-fields') await run('code-popout', env => checkCodePopouts(env, {customFields: true}));

@@ -1,3 +1,4 @@
+import {attachNativeFieldGraphic, type NativeFieldGraphic} from './native-field-svg.ts';
 import type {ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 
 type FieldEditor = {type: 'field_input' | 'turbowarp_plus_actions' | 'native_widget'} | {type: 'field_dropdown'; options: [string, string][]};
@@ -49,7 +50,8 @@ export function customField(runtime, opcode: string, name: string) {
 
 export const programmaticField = (runtime, opcode: string, name: string) => customField(runtime, opcode, name)?.programmatic;
 
-export function registerCustomFields(blocks, declarations: CustomField[], openCustomEditor?, getNative?: (name: string) => NativeFactory) {
+export function registerCustomFields(blocks, declarations: CustomField[], openCustomEditor?, getNative?: (name: string) => NativeFactory,
+    getGraphic?: (blockId: string, name: string, value: string) => NativeFieldGraphic | undefined) {
     const registry = blocks.Field?.TYPE_MAP_;
     const registered = new Map();
     if (registry) {
@@ -61,6 +63,9 @@ export function registerCustomFields(blocks, declarations: CustomField[], openCu
                     if (native) return native.fromJson(options);
                     if (editor.type !== 'field_dropdown') {
                         const field = new blocks.FieldTextInput('');
+                        if (editor.type === 'native_widget' && getGraphic) {
+                            attachNativeFieldGraphic(field, (blockId, value) => getGraphic(blockId, name, value));
+                        }
                         if (editor.type !== 'field_input') {
                             field.showEditor_ = () => openCustomEditor?.(field, name);
                         }
