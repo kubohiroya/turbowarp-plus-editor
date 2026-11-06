@@ -1,11 +1,12 @@
 declare const TW_TEST_NATIVE_SVG: boolean;
+declare const TW_TEST_PARENT_DOCUMENT: boolean;
 
 declare const Scratch: {
     BlockType: {REPORTER: string};
     extensions: {register(extension: {getInfo(): object; display(args: {NOTE: string; MODE: string}): string}): void};
 };
 
-const parent = window as Window & {
+const parentWindow = window as Window & {
     vm?: unknown;
     ScratchBlocks?: {
         FieldTextInput: new (value: string) => {
@@ -15,7 +16,7 @@ const parent = window as Window & {
             render_(): void;
             showEditor_(): void;
         };
-        WidgetDiv: {DIV: HTMLDivElement; show(owner: unknown, rtl: boolean): void; hide(): void};
+        WidgetDiv: {DIV: HTMLDivElement; show(owner: unknown, rtl: boolean, dispose?: () => void): void; hide(): void};
     };
 };
 
@@ -25,11 +26,12 @@ Scratch.extensions.register({
             id: 'windowfields', name: 'Window fields',
             customFieldTypes: {
                 caption: {output: 'String', outputShape: 2, implementation: {
+                    parentDocument: TW_TEST_PARENT_DOCUMENT,
                     fromJson(options: {name: string}) {
-                        if (options.name !== 'field_windowfields_caption' || !parent.vm || !parent.ScratchBlocks) {
+                        if (options.name !== 'field_windowfields_caption' || !parentWindow.vm || !parentWindow.ScratchBlocks) {
                             throw new Error('Wrong field context');
                         }
-                        const {FieldTextInput, WidgetDiv} = parent.ScratchBlocks;
+                        const {FieldTextInput, WidgetDiv} = parentWindow.ScratchBlocks;
                         const field = new FieldTextInput('');
                         if (TW_TEST_NATIVE_SVG) {
                             const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -49,7 +51,6 @@ Scratch.extensions.register({
                             };
                         }
                         field.showEditor_ = () => {
-                            WidgetDiv.show(field, false);
                             const group = document.createElement('fieldset');
                             const heading = document.createElement('legend');
                             heading.textContent = 'Native caption editor';
@@ -57,13 +58,45 @@ Scratch.extensions.register({
                             input.setAttribute('aria-label', 'Caption');
                             input.value = field.getValue();
                             const apply = document.createElement('button');
+                            apply.type = 'button';
                             apply.textContent = 'Apply caption';
-                            apply.addEventListener('click', () => {
-                                if (!parent.vm) throw new Error('Missing parent VM');
-                                field.setValue(input.value);
+                            const commit = (value: string) => {
+                                if (!parentWindow.vm) throw new Error('Missing parent VM');
+                                field.setValue(value);
                                 WidgetDiv.hide();
-                            });
+                            };
+                            if (TW_TEST_PARENT_DOCUMENT) {
+                                if (WidgetDiv.DIV.ownerDocument !== document) throw new Error('The widget left its parent document');
+                                group.dataset.twParentDocumentCaption = '';
+                                let pendingValue = input.value;
+                                const onInput = (event: Event) => {
+                                    if (event.target !== input) return;
+                                    if (input.ownerDocument !== document) throw new Error('The input left its parent document');
+                                    pendingValue = input.value;
+                                    group.dataset.parentInput = pendingValue;
+                                };
+                                const onClick = (event: Event) => {
+                                    if (event.target !== apply) return;
+                                    if (apply.ownerDocument !== document) throw new Error('The button left its parent document');
+                                    commit(pendingValue);
+                                };
+                                WidgetDiv.show(field, false, () => {
+                                    document.removeEventListener('input', onInput);
+                                    document.removeEventListener('click', onClick);
+                                });
+                                document.addEventListener('input', onInput);
+                                document.addEventListener('click', onClick);
+                            } else {
+                                WidgetDiv.show(field, false);
+                                apply.addEventListener('click', () => commit(input.value));
+                            }
                             group.append(heading, input, apply);
+                            if (TW_TEST_PARENT_DOCUMENT) {
+                                const link = document.createElement('a');
+                                link.href = '#parent-only';
+                                link.textContent = 'Parent-only link';
+                                group.append(link);
+                            }
                             WidgetDiv.DIV.append(group);
                         };
                         return field;

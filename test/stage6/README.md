@@ -92,3 +92,20 @@ Desktop のコード欄から、選択中の対象で別窓を最大2枚開け�
 製品版 Electron の検証用コピーで `--code-svg-fields` を指定すると、
 `fixtures/native-extension.ts` の独自 SVG を表示し、値に応じた色の変化、
 共有 Undo／Redo、ドック復帰、SB3 再読込を Playwright／CDP で確認する。
+
+### 親 document で描画・イベント処理を行う独自フィールドの試作
+
+親側での実行が許可された拡張で、`customFieldTypes` の
+`implementation.parentDocument = true` を指定する。元の `WidgetDiv` と操作対象は
+親 document に残し、別窓に許可した HTML 要素だけを再構築する。
+別窓で編集権を持つ間、入力値を対応する親側の要素へコピーし、
+バブリングする `input`、`change`、`click` を送る。拡張の委譲リスナーは親 document で実行し、
+同期的な `setValue` を既存の共有履歴へ確定する。
+
+対象は固定構造のテキストエリア、テキスト・数値・範囲の入力欄、ボタンと補助的なテキスト要素。
+別窓へは任意の HTML、スクリプト、外部参照、独自 CSS を渡さない。
+`WidgetDiv` 外への描画、構造の動的な変更、実フォーカスや `isTrusted` に依存するイベント、
+キーボード・ポインターイベントの一般的な転送、非同期確定は未検証。
+
+製品版 Electron の検証用コピーに対して `--code-parent-document-fields` を指定する。
+試験拡張の元の入力とボタンが親 document に留まり、親の委譲イベントで値が確定することを Playwright／CDP で確認する。
