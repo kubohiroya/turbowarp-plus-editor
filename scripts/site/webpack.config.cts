@@ -103,8 +103,10 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-window
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
-const spriteLayoutStyles = ['sprite-layout-menu.css', 'sprite-asset-pane.css', 'sprite-editor-toolbar.css'];
-for (const entry of [...spriteLayoutStyles, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu', 'sprite-tabs', 'dockview-styles']) {
+const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.css', 'sprite-editor-toolbar.css',
+    'sprite-properties.css'];
+for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
+    'sprite-properties', 'sprite-tabs', 'dockview-styles']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -141,7 +143,7 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
 ]}));
 const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
 config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
-const globalLayoutStyles = spriteLayoutStyles.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
+const globalLayoutStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
 cssModules.exclude = [cssModules.exclude, windowStyles, dockviewStyles, ...globalLayoutStyles].filter(Boolean);
 config.module.rules.push({test: /\.css$/, include: [windowStyles, dockviewStyles, ...globalLayoutStyles],
