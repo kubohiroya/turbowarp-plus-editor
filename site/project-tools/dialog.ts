@@ -12,7 +12,9 @@ const element = <Tag extends keyof HTMLElementTagNameMap>(document: Document, ta
 };
 
 /** Native modal dialogs keep focus and Escape handling in the browser, outside the stage. */
-export const createProjectDialogs = (document, properties, history, diagnostics, {locale: hostLocale}: {locale?: string} = {}) => {
+export const createProjectDialogs = (document, properties, history, diagnostics, {
+    locale: hostLocale, getLocale
+}: {locale?: string; getLocale?: () => string | undefined} = {}) => {
     let active = null;
     let returnFocus = null;
     let identity = 0;
@@ -50,7 +52,7 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
         notifiedError = key;
         if (!notice?.contains(document.activeElement)) noticeReturnFocus = document.activeElement;
         notice?.remove();
-        const locale = hostLocale || document.documentElement.lang || 'en';
+        const locale = getLocale?.() || hostLocale || document.documentElement.lang || 'en';
         const ja = locale.startsWith('ja');
         notice = element(document, 'aside', undefined, {class: snackbarStyles.snackbar, 'data-project-tools': '',
             'data-testid': 'project-diagnostics-snackbar'});

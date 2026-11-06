@@ -305,6 +305,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             const field = workspace.getBlockById(blockId)?.getField(name);
             view.closeNativeField = openNativeField({
                 blocks: ScratchBlocks, field, document: view.document, anchor,
+                parentDocument: definition.native.parentDocument === true,
                 valid: () => owns(view, {targetId: target.id, lease}) && !view.draining && viewFocused(view) &&
                     vm.editingTarget === target && workspace.getBlockById(blockId)?.getField(name) === field &&
                     target.blocks.getBlock(blockId)?.fields?.[name]?.value === value,

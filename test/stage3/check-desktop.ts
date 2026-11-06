@@ -13,11 +13,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1474,7 +1474,7 @@ Scratch.extensions.register({
 });
 `;
 
-async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields, svgFields}) {
+async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields, svgFields, parentDocumentFields}) {
     const editedText = '改訂 <&> note';
     const state = (reload = false) => editor.evaluate(async ({name, reload}) => {
         if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
@@ -1530,14 +1530,29 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     if (nativeFields) {
         const widget = a.child.locator('[data-plus-native-field]');
         const input = widget.getByRole('textbox', {name: 'Caption'});
+        const parentWidget = editor.locator('.blocklyWidgetDiv [data-tw-parent-document-caption]');
+        const expectParentInput = async value => {
+            if (!parentDocumentFields) return;
+            await until(async () => editor.evaluate(expected => {
+                const source = document.querySelector('.blocklyWidgetDiv [data-tw-parent-document-caption]');
+                return source?.ownerDocument === document && source.getAttribute('data-parent-input') === expected;
+            }, value), 'the original input stays in the parent document and its delegated listener receives the edit');
+        };
         await input.fill('cancel on focus change');
+        await expectParentInput('cancel on focus change');
+        if (parentDocumentFields) {
+            assert.equal(await parentWidget.locator('a[href="#parent-only"]').count(), 1);
+            assert.equal(await widget.getByText('Parent-only link', {exact: true}).count(), 0);
+        }
         await activateCodeView(b, a, focus);
         await widget.waitFor({state: 'detached'});
+        if (parentDocumentFields) await parentWidget.waitFor({state: 'detached'});
         await expectValues(b.child, original.values);
         await activateCodeView(a, b, focus);
         await field(a.child, original.ids[0]).locator('.blocklyEditableText').click({force: true});
         assert.equal(await input.inputValue(), 'original');
         await input.fill(editedText);
+        await expectParentInput(editedText);
         await widget.getByRole('button', {name: 'Apply caption'}).click();
         await widget.waitFor({state: 'detached'});
     } else if (programmaticFields) {
@@ -1549,17 +1564,17 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
         await input.press('Enter');
     }
     await expectValues(b.child, [editedText, 'first-id']);
-    if (svgFields) await expectValues(a.child, [editedText, 'first-id']);
+    if (svgFields || parentDocumentFields) await expectValues(a.child, [editedText, 'first-id']);
 
     if (nativeFields) {
         await activateCodeView(b, a, focus);
         await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
         await expectValues(a.child, original.values);
-        if (svgFields) await expectValues(b.child, original.values);
+        if (svgFields || parentDocumentFields) await expectValues(b.child, original.values);
         await activateCodeView(a, b, focus);
         await a.child.getByRole('button', {name: 'Redo', exact: true}).click();
         await expectValues(b.child, [editedText, 'first-id']);
-        if (svgFields) await expectValues(a.child, [editedText, 'first-id']);
+        if (svgFields || parentDocumentFields) await expectValues(a.child, [editedText, 'first-id']);
     } else {
         await activateCodeView(b, a, focus);
         await field(b.child, original.ids[1]).locator('.blocklyDropdownText').click({force: true});
@@ -1621,6 +1636,9 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     const reopened = await open(restored.root);
     await checkView(reopened.child, restored);
     await dock(reopened);
+    if (parentDocumentFields) {
+        report.checks.push('The editor DOM stays in the parent document; mirrored input and click events reach its delegated listeners.');
+    }
     if (svgFields) report.checks.push('The native field SVG updates in both code windows through edit, shared Undo/Redo, docking, and SB3 reload.');
     if (nativeFields) report.checks.push('The parent fromJson factory and native WidgetDiv editor work in the code window. Losing the editing lease cancels the uncommitted DOM editor.');
     if (programmaticFields) report.checks.push('The TypeScript field callbacks build the dialog and apply edits in the parent; only its action model reaches the child.');
@@ -1628,7 +1646,7 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
 }
 
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false, svgFields = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false, svgFields = false, parentDocumentFields = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1643,7 +1661,9 @@ async function checkCodePopouts ({editor, context, control}, {
     const customFieldsSource = programmaticFields || nativeFields ? (await transform(
         await readFile(new URL(nativeFields ? '../stage6/fixtures/native-extension.ts' :
             '../stage6/fixtures/programmatic-extension.ts', import.meta.url), 'utf8'),
-        {loader: 'ts', format: 'iife', define: {TW_TEST_NATIVE_SVG: String(svgFields)}}
+        {loader: 'ts', format: 'iife', define: {
+            TW_TEST_NATIVE_SVG: String(svgFields), TW_TEST_PARENT_DOCUMENT: String(parentDocumentFields)
+        }}
     )).code : customFieldsFixture;
     const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions, dynamicFixture, customFieldsURL, trustedFieldFixture}) => {
         const first = vm.editingTarget;
@@ -1823,7 +1843,7 @@ async function checkCodePopouts ({editor, context, control}, {
         return;
     }
     if (customFields || programmaticFields || nativeFields) {
-        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields, svgFields});
+        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields, svgFields, parentDocumentFields});
         return;
     }
     if (dynamicBranches) {
@@ -2570,6 +2590,9 @@ try {
         await run('code-popout', env => checkCodePopouts(env, {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
+    }
+    else if (testMode === '--code-parent-document-fields') {
+        await run('code-popout', env => checkCodePopouts(env, {nativeFields: true, parentDocumentFields: true}));
     }
     else if (testMode === '--code-svg-fields') await run('code-popout', env => checkCodePopouts(env, {nativeFields: true, svgFields: true}));
     else if (testMode === '--code-native-fields') await run('code-popout', env => checkCodePopouts(env, {nativeFields: true}));

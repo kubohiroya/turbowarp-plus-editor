@@ -1,8 +1,10 @@
+import {mirrorParentField} from './parent-field-mirror.ts';
+
 type Anchor = {left: number; bottom: number};
 
-/** The widget is created by the parent ScratchBlocks instance. Its DOM and listeners are adopted by the child. */
-export function openNativeField({blocks, field, document, anchor, valid, commit, onError}: {
-    blocks; field; document: Document; anchor: Anchor; valid(): boolean; commit(value: string): void;
+/** The parent field owns the widget and its value. */
+export function openNativeField({blocks, field, document, anchor, parentDocument = false, valid, commit, onError}: {
+    blocks; field; document: Document; anchor: Anchor; parentDocument?: boolean; valid(): boolean; commit(value: string): void;
     onError?(error: unknown): void;
 }) {
     const widget = blocks.WidgetDiv;
@@ -14,6 +16,11 @@ export function openNativeField({blocks, field, document, anchor, valid, commit,
     const host = document.createElement('div');
     host.className = original.className;
     host.dataset.plusNativeField = '';
+    const widgetHost = parentDocument ? original : host;
+    const originalOpacity = original.style.opacity;
+    const originalInert = original.inert;
+    let ownsWidget = false;
+    let widgetOwner;
     document.body.append(host);
     let closed = false;
     let queued = false;
@@ -34,11 +41,15 @@ export function openNativeField({blocks, field, document, anchor, valid, commit,
         document.removeEventListener('keydown', escape, true);
         document.removeEventListener('pointerdown', outside, true);
         try {
-            if (widget.DIV === host) widget.hide(true);
+            if (ownsWidget && widget.DIV === widgetHost && (!parentDocument || widget.owner_ === widgetOwner)) widget.hide(true);
         } catch (error) {
             onError?.(error);
         } finally {
-            if (widget.DIV === host) widget.DIV = original;
+            if (!parentDocument && widget.DIV === host) widget.DIV = original;
+            if (parentDocument && ownsWidget) {
+                original.style.opacity = originalOpacity;
+                original.inert = originalInert;
+            }
             field.setValue = setValue;
             host.remove();
             if (field.sourceBlock_ && field.getValue() !== value) {
@@ -63,11 +74,16 @@ export function openNativeField({blocks, field, document, anchor, valid, commit,
     }
 
     const observer = new MutationObserver(() => {
-        if (!queued && !widget.isVisible()) close();
+        if (!queued && (!widget.isVisible() || (parentDocument && widget.owner_ !== widgetOwner))) close();
     });
     try {
         widget.hide(true);
-        widget.DIV = host;
+        widget.DIV = widgetHost;
+        ownsWidget = true;
+        if (parentDocument) {
+            original.style.opacity = '0';
+            original.inert = true;
+        }
         field.setValue = next => {
             if (closed || !valid()) return;
             withoutEvents(() => setValue.call(field, next));
@@ -85,15 +101,21 @@ export function openNativeField({blocks, field, document, anchor, valid, commit,
                 }
             });
         };
-        field.showEditor_();
-        if (!widget.isVisible() || !host.childElementCount) {
+        try {
+            field.showEditor_();
+        } finally {
+            widgetOwner = widget.owner_;
+        }
+        if (!widget.isVisible() || !widgetHost.childElementCount ||
+            (parentDocument && !mirrorParentField(original, host, () => !closed && valid()))) {
             close();
             return;
         }
+        if (parentDocument) host.style.display = 'block';
         host.style.position = 'fixed';
         host.style.left = `${Math.max(0, Math.min(anchor.left, window.innerWidth - host.offsetWidth))}px`;
         host.style.top = `${Math.max(0, Math.min(anchor.bottom, window.innerHeight - host.offsetHeight))}px`;
-        observer.observe(host, {attributes: true, attributeFilter: ['style']});
+        observer.observe(widgetHost, {attributes: true, attributeFilter: ['style']});
         document.addEventListener('keydown', escape, true);
         document.addEventListener('pointerdown', outside, true);
         return close;

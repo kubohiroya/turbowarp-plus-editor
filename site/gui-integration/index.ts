@@ -71,16 +71,17 @@ export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropLis
 
 export const extensionInFileMenu = startup.extensionFileMenu;
 export const createFileMenuItem = extensionInFileMenu ? createIconFileMenuItem : undefined;
-const externalYamlActions = new WeakMap<object, ReturnType<typeof createExternalYamlMenuAction>>();
+const externalYamlActions = new WeakMap<object, {locale: string; action: ReturnType<typeof createExternalYamlMenuAction>}>();
 const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClose}) => {
     if (!externalYamlPort || !vm) return null;
     let entry = externalYamlActions.get(vm);
-    if (!entry) {
-        entry = createExternalYamlMenuAction({vm, locale, port: externalYamlPort,
+    if (!entry || entry.locale !== locale) {
+        const action = createExternalYamlMenuAction({vm, locale, port: externalYamlPort,
             openPanel: request => getDocumentWorkspace(vm).open({...request, transient: true}), document});
+        entry = {locale, action};
         externalYamlActions.set(vm, entry);
     }
-    const action = entry;
+    const {action} = entry;
     return React.createElement(MenuSection, null,
         React.createElement(MenuItem, {command: 'open-external-yaml', onClick: () => {
             onRequestClose();
