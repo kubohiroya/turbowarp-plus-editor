@@ -64,7 +64,7 @@
     "editor:yaml": "node scripts/yaml-editor/cli.ts",
     "test:yaml": "node --test test/yaml-build.test.ts test/yaml-cli.test.ts",
     "test:yaml:roundtrip": "node --test test/yaml-roundtrip.browser.ts",
-    "test:yaml:multi-document": "node --test --test-concurrency=1 test/yaml-multi-document.browser.ts test/yaml-dockview.browser.ts",
+    "test:yaml:multi-document": "node --test --test-concurrency=1 test/yaml-multi-document.browser.ts test/yaml-dockview.browser.ts test/dockview-restore.browser.ts",
     "editor:sb3-format": "node scripts/sb3-save-format/cli.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
@@ -79,7 +79,7 @@
   "devDependencies": {
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
     "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
-    "@kubohiroya/turbowarp-plus-editor-layout": "0.1.5",
+    "@kubohiroya/turbowarp-plus-editor-layout": "0.1.6",
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
     "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",
     "@kubohiroya/turbowarp-plus-editor-views": "file:packages/editor-views",
@@ -110,7 +110,7 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.6.0-rc.0",
-    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#05fbc0c0fbad55886d9321ac7387a5a3c707cdcd",
+    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#c86d23c893ef6c27809d424c73cf525367edeb10",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
     "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#b8192730b1d9bc93d3067153b6c41df4f6ad4e0c",
     "@turbowarp/jszip": "^3.12.0"

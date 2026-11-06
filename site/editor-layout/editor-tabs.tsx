@@ -11,6 +11,7 @@ import '@kubohiroya/turbowarp-plus-editor-layout/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, layoutFlags, WindowLayoutContext} from './index.tsx';
+import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext} from './context.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {BackCodeWindows, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
@@ -65,6 +66,13 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
     // The stage uses the native fullscreen surface while Dockview keeps its panel and layout.
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
+    const layoutStorage = React.useMemo(() => {
+        if (!multiView) return;
+        try {
+            return {storage: window.localStorage, key: 'twPlusDockviewLayout',
+                isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)};
+        } catch { /* Storage is optional. */ }
+    }, [multiView, vm]);
     const codePaneAdapter = React.useMemo(() => createCodePaneAdapter(vm, locale), [vm, locale]);
     const code = useCodeWindows({vm, host, locale,
         enabled: !multiView && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
@@ -144,7 +152,7 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
         activateSection: onActivateEditorTab,
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, stagePane: stage?.pane, activeTools: renderEditorTabRow(null), viewAdapter: codePaneAdapter,
+            multiView, layoutStorage, stagePane: stage?.pane, activeTools: renderEditorTabRow(null), viewAdapter: codePaneAdapter,
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             writeVariable(id, variableId, value) {
