@@ -9,17 +9,21 @@ const supportsSharedHistory = script => !script.variables.length && !script.exte
 const needsEditingTarget = event => isCommentEdit(event) || event.type === 'change' && event.element === 'field' &&
     ['VARIABLE', 'LIST', 'BROADCAST_OPTION'].includes(event.name);
 
-type ScalarField = {id?: string; value?: string};
+const referenceTypes = {VARIABLE: '', LIST: 'list'} as const;
+type ReferenceName = keyof typeof referenceTypes;
+type ReferenceField = {id?: string; value?: string};
 
-function scalarField(block: unknown): ScalarField | undefined {
-    const {opcode, fields} = (block ?? {}) as {opcode?: string; fields?: {VARIABLE?: ScalarField}};
-    return opcode?.startsWith('data_') ? fields?.VARIABLE : undefined;
+function referenceField(block: unknown, name: ReferenceName): ReferenceField | undefined {
+    const {opcode, fields} = (block ?? {}) as {opcode?: string; fields?: Partial<Record<ReferenceName, ReferenceField>>};
+    return opcode?.startsWith('data_') ? fields?.[name] : undefined;
 }
 
-function scalarVariable(target, id: unknown) {
+function scopedReference(target, id: unknown, name: ReferenceName) {
     const variable = typeof id === 'string' ? target.lookupVariableById(id) : undefined;
-    return variable?.type === '' ? variable : undefined;
+    return variable?.type === referenceTypes[name] ? variable : undefined;
 }
+
+const referenceNames = Object.keys(referenceTypes) as ReferenceName[];
 
 export function createCodeSession({vm, workspace, ScratchBlocks, document, locale, canUse, onError, receiveBackpackDrop}) {
     const parent = document.defaultView;
@@ -315,8 +319,10 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             };
             try {
                 for (const event of edits) {
-                    if (event.type === 'change' && event.element === 'field' && event.name === 'VARIABLE' &&
-                        scalarField(target.blocks.getBlock(event.blockId)) && !scalarVariable(target, event.newValue)) {
+                    const {name} = event;
+                    if (event.type === 'change' && event.element === 'field' && (name === 'VARIABLE' || name === 'LIST') &&
+                        referenceField(target.blocks.getBlock(event.blockId), name) &&
+                        !scopedReference(target, event.newValue, name)) {
                         reject();
                         return;
                     }
@@ -326,13 +332,13 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                 // Create XML stores variable IDs directly. Only check changed references so old projects
                 // with unrelated unresolved fields can still be edited.
                 if (edits.some(event => event.type === 'create') &&
-                    Object.entries(target.blocks._blocks).some(([id, block]) => {
-                        const field = scalarField(block);
-                        const previous = scalarField(before.blocks[id]);
+                    Object.entries(target.blocks._blocks).some(([id, block]) => referenceNames.some(name => {
+                        const field = referenceField(block, name);
+                        const previous = referenceField(before.blocks[id], name);
                         if (!field || (previous && field.id === previous.id && field.value === previous.value)) return false;
-                        const variable = scalarVariable(target, field.id);
+                        const variable = scopedReference(target, field.id, name);
                         return !variable || variable.name !== field.value;
-                    })) {
+                    }))) {
                     reject();
                     return;
                 }

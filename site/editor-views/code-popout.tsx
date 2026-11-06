@@ -5,7 +5,7 @@ import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-views';
-import {installScopedScalarReferences} from '@kubohiroya/turbowarp-plus-editor-views/scalar-references';
+import {installScopedVariableReferences} from '@kubohiroya/turbowarp-plus-editor-views/variable-references';
 import {TargetCombobox} from '@kubohiroya/turbowarp-plus-editor-views/target-combobox';
 
 const ticket = location.hash.slice(1);
@@ -44,7 +44,7 @@ let editable = false;
 let history = {canUndo: false, canRedo: false};
 let group;
 let edits = [];
-installScopedScalarReferences(ScratchBlocks, workspace, () => locale);
+installScopedVariableReferences(ScratchBlocks, workspace, () => locale);
 
 function buttons() {
     undo.disabled = !editable || !history.canUndo;

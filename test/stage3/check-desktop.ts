@@ -12,11 +12,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -747,24 +747,37 @@ async function checkCodeComments ({editor, a, b, focus, parent, sprites}) {
     report.checks.push('Attached and workspace comments stay with their target through focus, shared Undo/Redo, docking and SB3');
 }
 
-async function checkScalarScope ({editor, a, b, focus, open, parent, sprite}) {
+const variableScopeFixtures = {
+    scalar: {name: 'shared counter', type: '', fieldName: 'VARIABLE', reporterOpcode: 'data_variable',
+        statementOpcode: 'data_setvariableto', globalId: 'global-counter', localId: 'local-counter'},
+    list: {name: 'shared items', type: 'list', fieldName: 'LIST', reporterOpcode: 'data_listcontents',
+        statementOpcode: 'data_addtolist', globalId: 'global-list', localId: 'local-list'}
+};
+
+async function checkVariableScope ({editor, a, b, focus, open, parent, sprite, kind}) {
+    const fixture = variableScopeFixtures[kind];
+    const {name, fieldName, globalId, localId} = fixture;
+    const reporterId = 'scope-reporter';
+    const statementId = 'scope-statement';
     const block = (view, id) => view.child.locator(`.blocklyBlockCanvas [data-id="${id}"]`);
-    const reporter = view => block(view, 'scalar-reporter');
-    const setter = view => block(view, 'scalar-setter');
-    const field = id => editor.evaluate(({targetId, id}) =>
-        vm.runtime.getTargetById(targetId).blocks.getBlock(id).fields.VARIABLE.id, {targetId: sprite.id, id});
+    const reporter = view => block(view, reporterId);
+    const statement = view => block(view, statementId);
+    const field = id => editor.evaluate(({targetId, id, fieldName}) =>
+        vm.runtime.getTargetById(targetId).blocks.getBlock(id).fields[fieldName].id, {targetId: sprite.id, id, fieldName});
     const activate = async (front, back) => {
-        await focus(front.child, front.id);
         const inert = view => view.child.locator('#mount').evaluate(node => node.inert);
-        await until(async () => !await inert(front) && await inert(back), 'only the front view can edit');
+        await until(async () => {
+            if (!await front.child.evaluate(() => document.hasFocus())) await focus(front.child, front.id);
+            return !await inert(front) && await inert(back);
+        }, 'only the front view can edit');
     };
     const ja = (await a.child.title()).startsWith('コード');
     const scopeLabel = scope => ja ? (scope === 'Global' ? '全体' : 'このスプライト') : scope;
-    const optionLabel = scope => `${scopeLabel(scope)}: shared counter`;
+    const optionLabel = scope => `${scopeLabel(scope)}: ${name}`;
     const showsScope = async (locator, scope) =>
         (await locator.textContent()).replace(/\s/g, ' ').includes(`${scopeLabel(scope)}: shared`);
     const expectScope = (view, locator, scope, id) => until(async () =>
-        await field(id) === `${scope.toLowerCase()}-counter` && await showsScope(locator(view), scope),
+        await field(id) === (scope === 'Global' ? globalId : localId) && await showsScope(locator(view), scope),
     `${scope} ID and label in the other view`);
     const selectReporter = async (view, scope) => {
         await reporter(view).click({button: 'right'});
@@ -772,60 +785,63 @@ async function checkScalarScope ({editor, a, b, focus, open, parent, sprite}) {
     };
     const history = (view, name) => view.child.getByRole('button', {name, exact: true}).click();
     await activate(b, a);
-    await expectScope(a, reporter, 'Global', 'scalar-reporter');
+    await expectScope(a, reporter, 'Global', reporterId);
     await selectReporter(b, 'Local');
-    await expectScope(a, reporter, 'Local', 'scalar-reporter');
+    await expectScope(a, reporter, 'Local', reporterId);
 
     await activate(a, b);
     await selectReporter(a, 'Global');
-    await expectScope(b, reporter, 'Global', 'scalar-reporter');
+    await expectScope(b, reporter, 'Global', reporterId);
     await activate(b, a);
     await history(b, 'Undo');
-    await expectScope(a, reporter, 'Local', 'scalar-reporter');
+    await expectScope(a, reporter, 'Local', reporterId);
     await activate(a, b);
     await history(a, 'Redo');
-    await expectScope(b, reporter, 'Global', 'scalar-reporter');
+    await expectScope(b, reporter, 'Global', reporterId);
 
     await activate(a, b);
     const dropdown = a.child.locator('.blocklyDropDownDiv .goog-menuitem');
-    await setter(a).locator('.blocklyDropdownText').click();
+    await statement(a).locator('.blocklyDropdownText').click();
     await dropdown.filter({hasText: optionLabel('Global')}).waitFor();
     await dropdown.filter({hasText: optionLabel('Local')}).click();
-    await expectScope(b, setter, 'Local', 'scalar-setter');
+    await expectScope(b, statement, 'Local', statementId);
 
     const close = view => Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
     await close(a);
     await focus(b.child, b.id);
     await close(b);
     await focus(editor, parent.id);
-    const restored = await editor.evaluate(async name => {
+    const restored = await editor.evaluate(async ({spriteName, fixture}) => {
         await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
-        const target = vm.runtime.targets.find(item => item.getName() === name);
+        const target = vm.runtime.targets.find(item => item.getName() === spriteName);
         const stage = vm.runtime.getTargetForStage();
         const scripts = target.blocks.getScripts().map(id => target.blocks.getBlock(id));
         const reference = opcode => {
             const block = scripts.find(item => item.opcode === opcode);
-            return {blockId: block.id, variableId: block.fields.VARIABLE.id};
+            return {blockId: block.id, variableId: block.fields[fixture.fieldName].id};
         };
         vm.setEditingTarget(target.id);
         return {
-            reporter: reference('data_variable'),
-            setter: reference('data_setvariableto'),
-            global: stage.variables['global-counter']?.name,
-            local: target.variables['local-counter']?.name
+            reporter: reference(fixture.reporterOpcode),
+            statement: reference(fixture.statementOpcode),
+            global: stage.variables[fixture.globalId]?.name,
+            local: target.variables[fixture.localId]?.name,
+            listContents: fixture.type === 'list' ?
+                [stage.variables[fixture.globalId]?.value, target.variables[fixture.localId]?.value] : null
         };
-    }, sprite.name);
-    assert.deepEqual([restored.reporter.variableId, restored.setter.variableId, restored.global, restored.local],
-        ['global-counter', 'local-counter', 'shared counter', 'shared counter']);
+    }, {spriteName: sprite.name, fixture});
+    assert.deepEqual([restored.reporter.variableId, restored.statement.variableId, restored.global, restored.local],
+        [globalId, localId, name, name]);
+    if (kind === 'list') assert.deepEqual(restored.listContents, [['global item'], ['local item']]);
     const reopened = await open(restored.reporter.blockId);
     assert.equal(await showsScope(block(reopened, restored.reporter.blockId), 'Global'), true);
-    assert.equal(await showsScope(block(reopened, restored.setter.blockId), 'Local'), true);
+    assert.equal(await showsScope(block(reopened, restored.statement.blockId), 'Local'), true);
     await close(reopened);
-    report.checks.push('Same-name scalar reporter and dropdown retain scope through both-way switching, two views, shared Undo/Redo and SB3');
+    report.checks.push(`Same-name ${kind} reporter and dropdown retain scope through both-way switching, two views, shared Undo/Redo and SB3`);
 }
 
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, scalarScope = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -837,7 +853,7 @@ async function checkCodePopouts ({editor, context, control}, {
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scalarScope}) => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
         if (targetSync || comments) {
@@ -864,21 +880,26 @@ async function checkCodePopouts ({editor, context, control}, {
             id: blockId, opcode: 'looks_hide', next: null, parent: null, topLevel: true, shadow: false,
             inputs: {}, fields: {}, x: 90, y: 100
         });
-        if (scalarScope) {
-            const name = 'shared counter';
-            vm.runtime.getTargetForStage().createVariable('global-counter', name, '', false);
-            first.createVariable('local-counter', name, '', false);
+        if (scopeFixture) {
+            const {name, type, fieldName, reporterOpcode, statementOpcode, globalId, localId} = scopeFixture;
+            const stage = vm.runtime.getTargetForStage();
+            stage.createVariable(globalId, name, type, false);
+            first.createVariable(localId, name, type, false);
+            if (type === 'list') {
+                stage.variables[globalId].value = ['global item'];
+                first.variables[localId].value = ['local item'];
+            }
             for (const [id, opcode, x] of [
-                ['scalar-reporter', 'data_variable', 160], ['scalar-setter', 'data_setvariableto', 340]
+                ['scope-reporter', reporterOpcode, 160], ['scope-statement', statementOpcode, 340]
             ]) {
                 first.blocks.createBlock({id, opcode, x, y: 160, next: null, parent: null, topLevel: true,
                     shadow: false, inputs: {},
-                    fields: {VARIABLE: {name: 'VARIABLE', id: 'global-counter', value: name, variableType: ''}}});
+                    fields: {[fieldName]: {name: fieldName, id: globalId, value: name, variableType: type}}});
             }
         }
         vm.refreshWorkspace();
         return seeded;
-    }, {blockId: id, targetSync, comments, scalarScope});
+    }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope]});
     const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
@@ -927,8 +948,8 @@ async function checkCodePopouts ({editor, context, control}, {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
         return;
     }
-    if (scalarScope) {
-        await checkScalarScope({editor, a, b, focus, open, parent, sprite: sprites[0]});
+    if (variableScope) {
+        await checkVariableScope({editor, a, b, focus, open, parent, sprite: sprites[0], kind: variableScope});
         return;
     }
     if (comments) {
@@ -1647,7 +1668,11 @@ try {
     else if (testMode === '--code-target-sync') await run('code-popout', env => checkCodePopouts(env, {targetSync: true}));
     else if (testMode === '--code-stage') await run('code-popout', env => checkCodePopouts(env, {stageCode: true}));
     else if (testMode === '--code-comments') await run('code-popout', env => checkCodePopouts(env, {comments: true}));
-    else if (testMode === '--code-scalar-scope') await run('code-popout', env => checkCodePopouts(env, {scalarScope: true}));
+    else if (testMode === '--code-scalar-scope' || testMode === '--code-list-scope') {
+        await run('code-popout', env => checkCodePopouts(env, {
+            variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
+        }));
+    }
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
     else if (testMode === '--stage-display-menu') await run('stage-display-menu', checkStageDisplayMenu);
