@@ -12,9 +12,12 @@ import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
+const startupParams = new URLSearchParams(startupSearch);
 export const layoutFlags = readWebStartupFeatureFlags(startupSearch);
 export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
-    new URLSearchParams(startupSearch).get('twPlusDockviewSpriteTabs') !== '0';
+    startupParams.get('twPlusDockviewSpriteTabs') !== '0';
+export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled &&
+    startupParams.get('twPlusDockview') === '1' && typeof EditorPreload === 'undefined';
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
 const layoutMenuIcon = (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -44,7 +47,7 @@ const getStorage = () => {
     }
 };
 
-const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
+const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, vm, ...props}) => {
     const {StandardLayout} = layoutViews;
     const [dockAction, setDockAction] = React.useState(null);
     return <StageDisplayMenuContext.Provider value={{dockAction, setDockAction}}>
@@ -65,6 +68,7 @@ const WebLayout = ({activeEditorTab, editorTargetIsStage, vm, ...props}) => {
             render={layoutFlags.internalWindows || layoutFlags.standardLayout ? (layout, showUndock) => <EditorTabLayout
                 vm={vm}
                 activeEditorTab={activeEditorTab}
+                onActivateEditorTab={onActivateEditorTab}
                 editorTargetIsStage={editorTargetIsStage}
                 showUndock={layoutFlags.standardLayout || showUndock}
                 layout={layout}
