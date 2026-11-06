@@ -1,22 +1,23 @@
 import assert from 'node:assert/strict';
 import {execFile, spawn} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdtemp, rm, writeFile} from 'node:fs/promises';
+import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {createInterface} from 'node:readline';
 import {setTimeout as delay} from 'node:timers/promises';
 import {promisify} from 'node:util';
+import {transform} from 'esbuild';
 import {chromium} from 'playwright';
 import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixtures/layout-menu.ts';
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1473,7 +1474,7 @@ Scratch.extensions.register({
 });
 `;
 
-async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite}) {
+async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields}) {
     const editedText = '改訂 <&> note';
     const state = (reload = false) => editor.evaluate(async ({name, reload}) => {
         if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
@@ -1516,9 +1517,14 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     for (const page of [editor, a.child, b.child]) await checkView(page, original);
     await activateCodeView(a, b, focus);
     await field(a.child, original.ids[0]).locator('.blocklyEditableText').click({force: true});
-    const input = a.child.locator('.blocklyHtmlInput');
-    await input.fill(editedText);
-    await input.press('Enter');
+    if (programmaticFields) {
+        const dialog = a.child.getByRole('dialog', {name: 'Caption: original'});
+        await dialog.getByRole('button', {name: 'Revise caption'}).click();
+    } else {
+        const input = a.child.locator('.blocklyHtmlInput');
+        await input.fill(editedText);
+        await input.press('Enter');
+    }
     await expectValues(b.child, [editedText, 'first-id']);
 
     await activateCodeView(b, a, focus);
@@ -1542,6 +1548,13 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     await dock(b);
     await focus(editor, parent.id);
     await expectValues(editor, [editedText, 'second-id']);
+    if (programmaticFields) {
+        await field(editor, original.ids[0]).locator('.blocklyEditableText').click({force: true});
+        await editor.getByRole('dialog', {name: `Caption: ${editedText}`}).getByRole('button', {name: 'Restore caption'}).click();
+        await expectValues(editor, ['original', 'second-id']);
+        await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
+        await expectValues(editor, [editedText, 'second-id']);
+    }
     const restored = await state(true);
     assert.deepEqual(restored.values, [editedText, 'second-id']);
     assert.deepEqual(restored.types, original.types);
@@ -1564,11 +1577,12 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
     const reopened = await open(restored.root);
     await checkView(reopened.child, restored);
     await dock(reopened);
+    if (programmaticFields) report.checks.push('The TypeScript field callbacks build the dialog and apply edits in the parent; only its action model reaches the child.');
     report.checks.push('Custom text and dropdown values round-trip through two code windows, shared Undo/Redo, docking, and SB3 reload, then reach the extension in the parent VM.');
 }
 
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1580,7 +1594,11 @@ async function checkCodePopouts ({editor, context, control}, {
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions, dynamicFixture, customFieldsURL}) => {
+    const customFieldsSource = programmaticFields ? (await transform(
+        await readFile(new URL('../stage6/fixtures/programmatic-extension.ts', import.meta.url), 'utf8'),
+        {loader: 'ts', format: 'iife'}
+    )).code : customFieldsFixture;
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions, dynamicFixture, customFieldsURL, programmaticFields}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
         if (targetSync || comments) {
@@ -1661,6 +1679,12 @@ async function checkCodePopouts ({editor, context, control}, {
             }
         }
         if (customFieldsURL) {
+            if (programmaticFields) {
+                // Only the test's compiled TypeScript fixture may run unsandboxed.
+                const security = vm.extensionManager.securityManager;
+                const getSandboxMode = security.getSandboxMode.bind(security);
+                security.getSandboxMode = url => url === customFieldsURL ? 'unsandboxed' : getSandboxMode(url);
+            }
             await vm.extensionManager.loadExtensionURL(customFieldsURL);
             const {xml} = vm.runtime.getBlocksXML(first).find(category => category.id === 'windowfields');
             const block = new DOMParser().parseFromString(xml, 'text/xml').querySelector('block[type="windowfields_display"]');
@@ -1676,7 +1700,8 @@ async function checkCodePopouts ({editor, context, control}, {
         return seeded;
     }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope],
         broadcastFixture: broadcast ? broadcastFixture : null, procedureFixture: procedures ? procedureFixture : null, extensions,
-        customFieldsURL: customFields ? `data:text/javascript,${encodeURIComponent(customFieldsFixture)}` : null,
+        programmaticFields, customFieldsURL: customFields || programmaticFields ?
+            `data:text/javascript,${encodeURIComponent(customFieldsSource)}` : null,
         dynamicFixture: dynamicBranches ? dynamicBranchFixture : dynamic ? {
             url: `data:text/javascript,${encodeURIComponent(dynamicExtensionFixture)}`,
             stacks: [{
@@ -1750,8 +1775,8 @@ async function checkCodePopouts ({editor, context, control}, {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
         return;
     }
-    if (customFields) {
-        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0]});
+    if (customFields || programmaticFields) {
+        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields});
         return;
     }
     if (dynamicBranches) {
@@ -2499,6 +2524,7 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
+    else if (testMode === '--code-programmatic-fields') await run('code-popout', env => checkCodePopouts(env, {programmaticFields: true}));
     else if (testMode === '--code-custom-fields') await run('code-popout', env => checkCodePopouts(env, {customFields: true}));
     else if (testMode === '--code-dynamic-branches') await run('code-popout', env => checkCodePopouts(env, {dynamicBranches: true}));
     else if (testMode === '--code-dynamic') await run('code-popout', env => checkCodePopouts(env, {dynamic: true}));

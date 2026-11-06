@@ -1,7 +1,13 @@
-type FieldEditor = {type: 'field_input'} | {type: 'field_dropdown'; options: [string, string][]};
+import type {ProgrammaticExtensionField} from './programmatic-extension-field.ts';
+
+type FieldEditor = {type: 'field_input' | 'turbowarp_plus_actions'} | {type: 'field_dropdown'; options: [string, string][]};
 export type CustomField = {name: string; editor: FieldEditor};
 
 function readEditor(implementation): FieldEditor | undefined {
+    if (implementation?.type === 'turbowarp_plus_actions' &&
+        typeof implementation.getEditor === 'function' && typeof implementation.applyAction === 'function') {
+        return {type: 'turbowarp_plus_actions'};
+    }
     if (implementation?.type === 'field_input') return {type: 'field_input'};
     if (implementation?.type !== 'field_dropdown' || !Array.isArray(implementation.options) ||
         !implementation.options.length) return;
@@ -15,18 +21,28 @@ function readEditor(implementation): FieldEditor | undefined {
 }
 
 export function getCustomFields(category) {
-    const fields: {declaration: CustomField; definition: {type: string; [key: string]: unknown}}[] = [];
+    const fields: {declaration: CustomField; definition: {type: string; [key: string]: unknown};
+        programmatic?: ProgrammaticExtensionField}[] = [];
     for (const {extendedName, fieldImplementation, scratchBlocksDefinition} of Object.values(category.customFieldTypes ?? {}) as {
         extendedName: string; fieldImplementation: unknown; scratchBlocksDefinition?: {json: {type: string}}
     }[]) {
         if (!extendedName?.startsWith(`${category.id}_`) || scratchBlocksDefinition?.json?.type !== extendedName) continue;
         const editor = readEditor(fieldImplementation);
-        if (editor) fields.push({declaration: {name: `field_${extendedName}`, editor}, definition: scratchBlocksDefinition.json});
+        if (editor) fields.push({
+            declaration: {name: `field_${extendedName}`, editor}, definition: scratchBlocksDefinition.json,
+            programmatic: editor.type === 'turbowarp_plus_actions' ? fieldImplementation as ProgrammaticExtensionField : undefined
+        });
     }
     return fields;
 }
 
-export function registerCustomFields(blocks, declarations: CustomField[]) {
+export function programmaticField(runtime, opcode: string, name: string) {
+    if (typeof opcode !== 'string' || name !== `field_${opcode}`) return;
+    const category = runtime._blockInfo?.find(category => opcode.startsWith(`${category.id}_`));
+    return category && getCustomFields(category).find(field => field.definition.type === opcode)?.programmatic;
+}
+
+export function registerCustomFields(blocks, declarations: CustomField[], openProgrammatic?) {
     const registry = blocks.Field?.TYPE_MAP_;
     const registered = new Map();
     if (registry) {
@@ -34,7 +50,13 @@ export function registerCustomFields(blocks, declarations: CustomField[]) {
             if (Object.hasOwn(registry, name)) continue;
             const factory = {
                 fromJson() {
-                    if (editor.type === 'field_input') return new blocks.FieldTextInput('');
+                    if (editor.type !== 'field_dropdown') {
+                        const field = new blocks.FieldTextInput('');
+                        if (editor.type === 'turbowarp_plus_actions') {
+                            field.showEditor_ = () => openProgrammatic?.(field, name);
+                        }
+                        return field;
+                    }
                     // The native dropdown preserves a saved value even if it leaves the option list.
                     return new blocks.FieldDropdown(editor.options.map(([label, value]) => [label, value]));
                 }

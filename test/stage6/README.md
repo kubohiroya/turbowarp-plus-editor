@@ -56,3 +56,12 @@ Desktop のコード欄から、選択中の対象で別窓を最大2枚開け�
 製品版 Electron の検証用コピーに対して
 `node test/stage3/check-desktop.ts /path/to/TurboWarp.app --code-custom-fields`
 を実行する。Playwright／CDP で、別窓間のテキストと選択値の反映、共有履歴、ドック復帰、SB3 再読込を確認する。
+
+親側での実行が許可された TypeScript 拡張で処理を伴うフィールドを定義するときは
+`ProgrammaticExtensionField` を使う。`getEditor(value)` が見出しと操作ボタンを返し、
+`applyAction(value, actionId)` が保存する文字列を返す。変更を取り消す場合は
+`undefined` を返す。コールバックは親側で同期的に実行される。作品の変更は戻り値で表し、コールバックから VM を直接更新しない。別窓へは文字列と操作 ID を渡す。
+対象は、操作ボタンで完結するフィールド編集。任意の `fromJson`、HTML、DOM の互換性は別途検証する。
+
+検証用の TypeScript 拡張は `fixtures/programmatic-extension.ts`。
+製品版 Electron の検証用コピーに対し `--code-programmatic-fields` で実行する。

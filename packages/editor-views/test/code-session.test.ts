@@ -295,6 +295,62 @@ test('custom extension fields project only declarative editors and keep native f
     assert.deepEqual(registry, {field_fixture_name: native});
 });
 
+test('programmatic field callbacks stay in the parent and accept only a current authorized action', () => {
+    const {session, connect, target, vm} = fixture();
+    const name = 'field_fixture_caption';
+    const opcode = 'fixture_caption';
+    const block = target.blocks.getBlock('block');
+    Object.assign(block, {opcode, fields: {[name]: {name, value: 'original'}}});
+    target.blocks.blocklyListen = event => {block.fields[name].value = event.newValue;};
+    let applications = 0;
+    const editor = {
+        type: 'turbowarp_plus_actions',
+        getEditor(value) {
+            return {title: value, actions: [{id: 'revise', label: 'Revise', callback() {throw new Error('not data');}}]};
+        },
+        applyAction(value, action) {
+            applications++;
+            return `${value}:${action}`;
+        }
+    };
+    vm.runtime._blockInfo = [{id: 'fixture', customFieldTypes: {caption: {
+        extendedName: opcode, fieldImplementation: editor, scratchBlocksDefinition: {json: {type: opcode}}
+    }}}];
+    const a = connect(target);
+    const b = connect(target);
+    const projection = a.messages.at(-1).extensions;
+    assert.deepEqual(structuredClone(projection), projection);
+    assert.deepEqual(projection.customFields, [{name, editor: {type: 'turbowarp_plus_actions'}}]);
+
+    a.focus();
+    const lease = a.messages.at(-1).lease;
+    const field = {request: 1, targetId: target.id, lease, blockId: 'block', name};
+    a.send({type: 'field-editor', ...field});
+    const panel = a.messages.at(-1);
+    assert.deepEqual(panel, {type: 'field-panel', lease, request: 1,
+        panel: {title: 'original', actions: [{id: 'revise', label: 'Revise'}]}});
+    assert.deepEqual(structuredClone(panel), panel);
+    a.send({type: 'field-action', ...field, action: 'unknown'});
+    assert.equal(applications, 0);
+
+    a.send({type: 'field-editor', ...field, request: 2});
+    a.send({type: 'field-action', ...field, request: 2, action: 'revise'});
+    assert.equal(block.fields[name].value, 'original:revise');
+    assert.equal(b.messages.at(-1).type, 'update');
+
+    a.send({type: 'edits', targetId: target.id, lease,
+        events: [{type: 'change', blockId: 'block', element: 'field', name, newValue: 'bypass'}]});
+    assert.equal(block.fields[name].value, 'original:revise');
+    a.send({type: 'field-editor', ...field, request: 3});
+    b.focus();
+    a.send({type: 'field-action', ...field, request: 3, action: 'revise'});
+    assert.equal(applications, 1);
+    a.send({type: 'release', lease});
+    b.send({type: 'step', targetId: target.id, lease: b.messages.at(-1).lease, redo: false});
+    assert.equal(target.blocks.getBlock('block').fields[name].value, 'original');
+    session.dispose();
+});
+
 test('dynamic extension projections use the registered opcode and each supported saved shape', () => {
     const opcode = 'fixture_shape';
     const command = {opcode: 'other', blockType: 'command', text: 'command [AMOUNT]'};
