@@ -30,8 +30,7 @@ GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` 
 
 ## 検証
 
-- `test:gui-integration` は本家にない GUI ファイルが次の接続契約テストと完全に一致すること、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。
-  - `test/sprite-properties-host.test.mjs` は #175 の任意接続口について、既存表示への復帰と選択が切り替わった後の古い編集の拒否を検証する。
+- `test:gui-integration` は固定 GUI に本家への追加ファイルがなく、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。GUI 側にあった `test/sprite-properties-host.test.mjs` は Scratch GUI #172 で削除した。
 - CIは固定GUIを用意し、比較元の本家コミットをfetchした後、GUIの標準unitと受け側の接続テストを実行する。
 - GUI標準unit 33件、受け側の既存境界182件、移設分と配置監査54件が成功。受け側の型検査と変更GUIソースのeslintも成功。
 - GUI単体と配信ホストの両方で、production設定のブラウザー6エントリーをビルド。ローカル検証ではminifyのみOFF。micro:bitの通常生成物は同一基準の既存インストールから使用した。
