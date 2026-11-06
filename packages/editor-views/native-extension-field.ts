@@ -21,6 +21,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
     const originalInert = original.inert;
     let ownsWidget = false;
     let widgetOwner;
+    let disposeMirror: (() => void) | undefined;
     document.body.append(host);
     let closed = false;
     let queued = false;
@@ -45,6 +46,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
         } catch (error) {
             onError?.(error);
         } finally {
+            disposeMirror?.();
             if (!parentDocument && widget.DIV === host) widget.DIV = original;
             if (parentDocument && ownsWidget) {
                 original.style.opacity = originalOpacity;
@@ -106,12 +108,18 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
         } finally {
             widgetOwner = widget.owner_;
         }
-        if (!widget.isVisible() || !widgetHost.childElementCount ||
-            (parentDocument && !mirrorParentField(original, host, () => !closed && valid()))) {
+        if (!widget.isVisible() || !widgetHost.childElementCount) {
             close();
             return;
         }
-        if (parentDocument) host.style.display = 'block';
+        if (parentDocument) {
+            disposeMirror = mirrorParentField(original, host, () => !closed && valid());
+            if (!disposeMirror) {
+                close();
+                return;
+            }
+            host.style.display = 'block';
+        }
         host.style.position = 'fixed';
         host.style.left = `${Math.max(0, Math.min(anchor.left, window.innerWidth - host.offsetWidth))}px`;
         host.style.top = `${Math.max(0, Math.min(anchor.bottom, window.innerHeight - host.offsetHeight))}px`;

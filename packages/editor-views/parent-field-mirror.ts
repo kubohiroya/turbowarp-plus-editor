@@ -14,6 +14,57 @@ const color = /^(?:#[\da-f]{3,8}|[a-z]+|rgba?\([\d.,%\s]+\))$/i;
 const generatedText = /^(?:"[^"\\\x00-\x1f]{0,120}"|none|normal)$/;
 const stateSelector = /^\.([\w-]+)(:hover|:focus|:focus-visible)(::before|::after)?$/;
 const pseudoElements = ['::before', '::after'];
+const animatedColors = colors.map(name => name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()));
+
+function widgetAnimation(original: HTMLElement) {
+    const parent = original.ownerDocument.defaultView;
+    if (!parent?.CSSAnimation || !parent.KeyframeEffect || !original.getAnimations) return;
+    const animations = original.getAnimations().filter(animation => animation instanceof parent.CSSAnimation &&
+        animation.effect instanceof parent.KeyframeEffect && animation.effect.target === original &&
+        !animation.effect.pseudoElement);
+    if (animations.length !== 1) return;
+    const [animation] = animations;
+    if (animation.playState !== 'running' || animation.playbackRate !== 1 ||
+        animation.timeline !== original.ownerDocument.timeline) return;
+    const effect = animation.effect as KeyframeEffect;
+    const timing = effect.getTiming();
+    if (effect.composite !== 'replace' || typeof timing.duration !== 'number' ||
+        timing.duration <= 0 || timing.duration > 60000 || Math.abs(timing.delay) > 60000) return;
+    const source = effect.getKeyframes();
+    if (source.length < 2 || source.length > 32 ||
+        source.some(frame => frame.composite !== 'auto' && frame.composite !== 'replace')) return;
+    const accepts = (property: string, value: unknown) => typeof value === 'string' && value.length <= 128 &&
+        (property === 'opacity' ? /^\d+(?:\.\d+)?$/.test(value) && Number(value) <= 1 : color.test(value));
+    // Require explicit endpoints so the replay does not interpolate from the parent's sampled style.
+    const properties = [...animatedColors, 'opacity'].filter(property =>
+        source[0].computedOffset === 0 && source.at(-1).computedOffset === 1 &&
+        accepts(property, source[0][property]) && accepts(property, source.at(-1)[property]));
+    if (!properties.length) return;
+    const keyframes: Keyframe[] = source.map(frame => {
+        const projected: Keyframe = {offset: frame.computedOffset, easing: frame.easing};
+        for (const property of properties) {
+            if (accepts(property, frame[property])) projected[property] = frame[property];
+        }
+        return projected;
+    });
+    return {keyframes, timing};
+}
+
+function mirrorWidgetAnimations(host: HTMLElement, nodes: [HTMLElement, HTMLElement][]) {
+    const motion = host.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!motion || motion.matches) return () => {};
+    const animations: Animation[] = [];
+    for (const [original, proxy] of nodes) {
+        const projection = widgetAnimation(original);
+        if (projection) animations.push(proxy.animate(projection.keyframes, projection.timing));
+    }
+    const stop = () => {
+        motion.removeEventListener('change', stop);
+        for (const animation of animations) animation.cancel();
+    };
+    if (animations.length) motion.addEventListener('change', stop, {once: true});
+    return stop;
+}
 
 function copyAppearance(source: CSSStyleDeclaration, target: CSSStyleDeclaration, {pseudo = false, priority = ''} = {}) {
     const copy = (name: string, accept: (value: string) => boolean) => {
@@ -90,7 +141,7 @@ type TextControl = HTMLInputElement | HTMLTextAreaElement;
 /** The parent's widget remains authoritative, including its document-level handlers. */
 export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid: () => boolean) {
     const parent = source.ownerDocument.defaultView;
-    if (!parent) return false;
+    if (!parent) return;
     const sync: (() => void)[] = [];
     const nodes: [HTMLElement, HTMLElement][] = [];
     let remaining = 128;
@@ -174,8 +225,8 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
         const copy = mirror(node, 0);
         if (copy) host.append(copy);
     }
-    if (!controls) return false;
+    if (!controls) return;
     sync.push(mirrorWidgetStyles(parent, host, nodes));
     refresh();
-    return true;
+    return mirrorWidgetAnimations(host, nodes);
 }
