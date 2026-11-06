@@ -131,7 +131,7 @@ Playwright／CDP で確認する。
 例は `.apply:hover` や `.apply:hover::after`。許可した宣言を編集中のウィジェットに限定し、
 別窓のブラウザーがポインターとフォーカスの状態に応じて適用する。拡張のイベント処理と値の確定は親側で行う。
 `::before` と `::after` には、短いプレーンテキストと許可した色・余白・文字などのスタイルを適用する。
-複数の条件や複雑なセレクター、カスケード全体、SVG の対話状態、アニメーション、任意のレイアウト、
+複数の条件や複雑なセレクター、カスケード全体、SVG の対話状態、任意のレイアウト、
 外部フォント・画像・SVG 参照、非同期確定は検証範囲外。
 
 製品版 Electron の検証用コピーに対して次を実行する。
@@ -144,3 +144,35 @@ Playwright／CDP で、別窓のホバー・フォーカス・解除、生成テ
 続けて編集、別ビューへの反映、共有 Undo／Redo、ドック復帰、SB3 再読込後の値と表示を確認する。
 TurboWarp Desktop 1.17.1 の macOS ローカルコピー（Electron 43.8.4、GUI `15edb7930`、VM `78e5f032`）で通過した。
 切り戻し時は作品を保存してドックへ戻し、`editor-views` のこの差分を戻す。
+
+### CSS アニメーションの互換性試作
+
+`implementation.parentDocument = true` の固定構造の HTML 操作部品では、親のブラウザーが解決した
+CSS アニメーションから、色と不透明度のキーフレームを取得して別窓で再生する。
+要素ごとに通常の文書タイムラインで実行中のアニメーション1本を対象とし、
+対象プロパティの始点と終点を明示したキーフレームを使う。別窓で開くたびに再生を開始し、
+閉じると停止する。別窓で動きを減らす設定が有効な場合は再生を抑止し、再生中に有効にすると停止する。
+拡張の処理と値の確定は親 VM 側で行う。別窓へスタイルシートや外部参照は渡さない。
+
+複数アニメーションの合成、動的な開始・停止や親との位相同期、擬似要素・SVG のアニメーション、
+トランジション、位置・サイズ・変形などのレイアウトに関わるプロパティは検証範囲外。
+
+検証では固定済みの Scratch GUI、Editor の Web レンダラー、本番のコード別窓レンダラーを使う。
+ヘッドレス Chromium は複数のページで同時にフォーカスを報告するため、検証ハーネスが各ページの
+フォーカス状態と通知を供給し、製品コードの編集権と MessagePort の経路で操作する。
+
+```sh
+editor_checkout="$PWD"
+trial=$(mktemp -d)
+(
+  cd /absolute/path/to/pinned-scratch-gui
+  CI=1 NODE_ENV=production ROOT=/turbowarp-plus-editor/ E2E_GUI_ROOT="$PWD" \
+    DISABLE_V8_COMPILE_CACHE=1 node --openssl-legacy-provider node_modules/webpack/bin/webpack.js \
+    --config "$editor_checkout/test/stage6/code-popouts.webpack.config.cts" --output-path "$trial/build" --bail
+)
+node test/stage6/css-animation-fields.ts "$trial/build"
+```
+
+再生時刻ごとの見た目、動きを減らす設定、共有 Undo／Redo、ドック復帰、SB3 再読込後の値と再生を確認する。
+ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で通過した。
+切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。

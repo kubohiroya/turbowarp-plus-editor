@@ -2,6 +2,7 @@ declare const TW_TEST_NATIVE_SVG: boolean;
 declare const TW_TEST_PARENT_DOCUMENT: boolean;
 declare const TW_TEST_NATIVE_CSS: boolean;
 declare const TW_TEST_PSEUDO_CSS: boolean;
+declare const TW_TEST_ANIMATION_CSS: boolean;
 
 declare const Scratch: {
     BlockType: {REPORTER: string};
@@ -72,6 +73,18 @@ if (TW_TEST_NATIVE_CSS && !document.getElementById('tw-test-native-field-css')) 
         }
         .tw-test-caption-apply::before {
             content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E");
+        }
+    `;
+    if (typeof TW_TEST_ANIMATION_CSS !== 'undefined' && TW_TEST_ANIMATION_CSS) sheet.textContent += `
+        .tw-test-caption-widget { animation: tw-caption-pulse 2s linear infinite alternate; }
+        @keyframes tw-caption-pulse {
+            from { opacity: .4; background-color: #123456; transform: translateX(5px); }
+            to {
+                opacity: .9;
+                background-color: #abcdef;
+                transform: translateX(40px);
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E");
+            }
         }
     `;
     document.head.append(sheet);
