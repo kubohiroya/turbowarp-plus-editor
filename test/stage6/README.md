@@ -195,3 +195,33 @@ node test/stage6/css-animation-fields.ts "$trial/build"
 Grid のスパン、Flexbox の整列、別窓内での幅変更による再計算、対応外 Grid の表示を確認した。
 編集と別ビューへの反映、共有 Undo／Redo、ドック復帰、SB3 再読込後の値とレイアウトも確認した。
 切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。
+
+### 外部画像・フォント・SVG の互換性試作
+
+`implementation.parentDocument = true` の固定構造の HTML フィールドで、拡張が
+`implementation.resources` に ID、種別、絶対 HTTPS URL を宣言する。画像（PNG、独立した SVG）は
+`{kind: 'image', url}`、フォント（通常フェイスの WOFF2）は `{kind: 'font', url}` とし、既存の
+`WidgetDiv` 内の `img[data-plus-field-image="ID"]` または `data-plus-field-font="ID"` を付けた
+対応要素に結び付ける。元の `WidgetDiv` の DOM と拡張の処理は親に残す。
+
+親 VM の `canFetch` が許可したときだけ、親 document が CORS 付きで取得する。資格情報・
+リファラー・リダイレクトは使わない。上限は8件、各256 KiB、画像は縦横512 pxまで。
+SVG は幅と高さを明示し、許可した図形と文字を再構築して PNG にする。別窓には画像のピクセルと
+フォントのバイト列を渡す。読み込みに失敗した画像は代替テキストを使い、フォントは元の表示に戻る。
+編集 UI を閉じたときは保留取得を中断し、別窓に登録したフォントを解放する。
+
+ブロック上の SVG による外部参照、`<use>`、任意の CSS の `url()` や `@font-face` の転送、
+SVG の CSS・グラデーション・外部参照・対話機能、ほかの画像とフォント形式は残課題。
+
+上の手順でビルドした後、GUI が固定する WOFF2 を試験データとして次を実行する。
+
+```sh
+node test/stage6/css-animation-fields.ts "$trial/build" --resources \
+  /absolute/path/to/pinned-scratch-gui/node_modules/scratch-render-fonts/src/SourceSerifPro-Regular.woff2
+```
+
+ヘッドレス Chromium のルーティングで HTTPS の外部オリジンを模擬する。別窓で画像のピクセルと
+フォントの読み込み、親だけのネットワーク取得、拒否された URL・応答・SVG 内参照の除外、
+編集の同期、共有 Undo／Redo、ドック復帰、SB3 再読込後の値と表示を確認する。
+ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で通過した。
+切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。

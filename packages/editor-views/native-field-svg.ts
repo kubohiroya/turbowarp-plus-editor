@@ -1,5 +1,5 @@
 const svgNamespace = 'http://www.w3.org/2000/svg';
-const shapes = new Set(['g', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text', 'tspan']);
+export const svgDrawingElements = new Set(['g', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text', 'tspan']);
 const numbers = /^[\d.eE+,%\s-]+$/;
 const geometry = new Set(['x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'cx', 'cy', 'r', 'rx', 'ry', 'dx', 'dy',
     'points', 'stroke-width', 'opacity', 'fill-opacity', 'stroke-opacity', 'font-size']);
@@ -13,7 +13,7 @@ export type NativeFieldGraphic = {
     blockId: string; name: string; value: string; bounds: [number, number, number, number]; drawing: Drawing;
 };
 
-function safeAttribute(name: string, value: string) {
+export function isSafeSvgDrawingAttribute(name: string, value: string) {
     if (value.length > 4096) return false;
     if (geometry.has(name)) return numbers.test(value);
     if (name === 'fill' || name === 'stroke') return paint.test(value);
@@ -27,12 +27,12 @@ function safeAttribute(name: string, value: string) {
 export function captureNativeFieldDrawing(root: SVGGraphicsElement): Pick<NativeFieldGraphic, 'bounds' | 'drawing'> | undefined {
     let remaining = 128;
     function read(element: Element, depth: number): Drawing | undefined {
-        if (element.namespaceURI !== svgNamespace || !shapes.has(element.localName) || depth > 8 || remaining <= 0) return;
+        if (element.namespaceURI !== svgNamespace || !svgDrawingElements.has(element.localName) || depth > 8 || remaining <= 0) return;
         remaining--;
         const tag = element.localName;
         const attributes: [string, string][] = [];
         for (const {name, value} of element.attributes) {
-            if ((depth || name !== 'transform') && safeAttribute(name, value)) attributes.push([name, value]);
+            if ((depth || name !== 'transform') && isSafeSvgDrawingAttribute(name, value)) attributes.push([name, value]);
         }
         // Use the applied appearance so that parent-only CSS selectors need not exist in the child.
         const style = element.ownerDocument.defaultView?.getComputedStyle(element);
@@ -41,7 +41,7 @@ export function captureNativeFieldDrawing(root: SVGGraphicsElement): Pick<Native
             const computed = style.getPropertyValue(name);
             const value = name === 'font-size' || name === 'stroke-width' ? computed.replace(/px$/, '') : computed;
             const index = attributes.findIndex(([key]) => key === name);
-            if (safeAttribute(name, value)) {
+            if (isSafeSvgDrawingAttribute(name, value)) {
                 const attribute: [string, string] = [name, value];
                 if (index === -1) attributes.push(attribute);
                 else attributes[index] = attribute;

@@ -6,7 +6,10 @@ import {chromium, type Locator, type Page} from 'playwright';
 
 const directory = resolve(process.argv[2]);
 const layout = process.argv.includes('--layout');
+const resources = process.argv[3] === '--resources';
+const fontFile = resources ? await readFile(process.argv[4]) : undefined;
 const origin = 'http://localhost:15107';
+const assetOrigin = 'https://field-assets.test';
 const prefix = '/turbowarp-plus-editor/';
 const [driver, extension] = await Promise.all([
     build({
@@ -36,7 +39,8 @@ const [driver, extension] = await Promise.all([
     transform(await readFile(new URL('fixtures/native-extension.ts', import.meta.url), 'utf8'), {
         loader: 'ts', format: 'iife', define: {
             TW_TEST_NATIVE_SVG: 'false', TW_TEST_PARENT_DOCUMENT: 'true', TW_TEST_NATIVE_CSS: 'true',
-            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout), TW_TEST_LAYOUT_CSS: String(layout)
+            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources),
+            TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources)
         }
     })
 ]);
@@ -46,9 +50,38 @@ try {
     const context = await browser.newContext({viewport: {width: 1280, height: 900}});
     context.setDefaultTimeout(12000);
     const errors: string[] = [];
+    const requests: {path: string; page: string; cookie?: string; referer?: string}[] = [];
+    let png: Buffer;
     context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
+        if (resources && url.hostname === 'field-assets.test') {
+            const request = route.request();
+            const {cookie, referer} = await request.allHeaders();
+            requests.push({path: url.pathname, page: request.frame().url(), cookie, referer});
+            const headers = {'access-control-allow-origin': origin};
+            if (url.pathname === '/picture.png') {
+                return route.fulfill({headers, contentType: 'image/png', body: png});
+            }
+            if (url.pathname === '/vector.svg') {
+                return route.fulfill({headers, contentType: 'image/svg+xml', body: `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="8">
+                      <rect width="12" height="8" fill="#1255cc"/>
+                      <image href="${assetOrigin}/nested.png" width="12" height="8"/>
+                      <script>fetch('${assetOrigin}/executed')</script>
+                    </svg>`});
+            }
+            if (url.pathname === '/caption.woff2') {
+                return route.fulfill({headers, contentType: 'font/woff2', body: fontFile});
+            }
+            if (url.pathname === '/redirect.png') {
+                return route.fulfill({status: 302, headers: {...headers, location: assetOrigin + '/followed.png'}});
+            }
+            if (url.pathname === '/wrong-type.png') {
+                return route.fulfill({headers, contentType: 'text/plain', body: png});
+            }
+            return route.abort();
+        }
         if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
         const path = resolve(directory, decodeURIComponent(url.pathname.slice(prefix.length)));
         if (!path.startsWith(directory + sep)) return route.abort();
@@ -69,6 +102,28 @@ try {
     const editor = await context.newPage();
     await editor.goto(origin + prefix + 'editor.html?lang=en&twPlusStandardLayout=0');
     await editor.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    if (resources) {
+        await context.addCookies([{name: 'test-session', value: 'fixture', url: assetOrigin, sameSite: 'None', secure: true}]);
+        png = Buffer.from(await editor.evaluate(() => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 12;
+            canvas.height = 8;
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#218348';
+            context.fillRect(0, 0, 12, 8);
+            return canvas.toDataURL().split(',')[1];
+        }), 'base64');
+        await editor.evaluate(assetOrigin => {
+            const security = window.vm.securityManager;
+            const canFetch = security.canFetch.bind(security);
+            window['fieldResourceDecisions'] = [];
+            security.canFetch = url => {
+                if (!url.startsWith(assetOrigin + '/')) return canFetch(url);
+                window['fieldResourceDecisions'].push(url);
+                return !url.endsWith('/denied.png');
+            };
+        }, assetOrigin);
+    }
     const sprite = await editor.evaluate(async url => {
         const {vm} = window;
         const target = vm.editingTarget;
@@ -142,7 +197,8 @@ try {
     const widget = await openWidget(a);
     assert.equal(await a.locator('#tw-test-native-field-css').count(), 0);
     const group = widget.locator('fieldset');
-    const animation = layout ? undefined : await checkAnimation(group);
+    const animation = layout || resources ? undefined : await checkAnimation(group);
+    const family = resources ? await checkResources(widget) : undefined;
     if (layout) {
         await checkLayout(editor.locator('[data-tw-parent-document-caption] [aria-label="Caption layout"]'), false);
         await checkLayout(widget.locator('[aria-label="Caption layout"]'), true);
@@ -158,6 +214,7 @@ try {
     await widget.getByRole('button', {name: 'Apply caption'}).click();
     await widget.waitFor({state: 'detached'});
     if (animation) assert.equal(await animation.evaluate(effect => effect.playState), 'idle');
+    if (family) assert.equal(await a.evaluate(family => [...document.fonts].some(face => face.family === family), family), false);
     await checkValue(edited, [a, b]);
     await focus(b);
     await b.locator('#undo').click();
@@ -178,7 +235,15 @@ try {
     await focus(reopened);
     const restored = await openWidget(reopened);
     assert.equal(await restored.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
-    if (layout) {
+    if (resources) {
+        await checkResources(restored);
+        const decisions = await editor.evaluate(() => window['fieldResourceDecisions'] as string[]);
+        assert.ok(decisions.includes(assetOrigin + '/denied.png'));
+        assert.deepEqual([...new Set(requests.map(request => request.path))].sort(),
+            ['/caption.woff2', '/picture.png', '/redirect.png', '/vector.svg', '/wrong-type.png']);
+        assert.ok(requests.every(request => request.page.startsWith(origin + prefix + 'editor.html') &&
+            !request.cookie && !request.referer));
+    } else if (layout) {
         await checkLayout(restored.locator('[aria-label="Caption layout"]'), true);
     } else {
         assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 1);
@@ -191,7 +256,8 @@ try {
     }
     await dock(reopened);
     assert.deepEqual(errors, []);
-    const displayCheck = layout ? 'Grid tracks and spans, Flexbox alignment and gaps, popup reflow' :
+    const displayCheck = resources ? 'parent-only PNG, SVG and WOFF2 loading and resource filtering' :
+        layout ? 'Grid tracks and spans, Flexbox alignment and gaps, popup reflow' :
         'popup keyframes, resource filtering, reduced motion';
     console.log(`Chromium ${browser.version()}: ${displayCheck}, shared edit/Undo/Redo, docking and SB3 reload passed.`);
 } finally {
@@ -222,6 +288,33 @@ async function checkAnimation(group: Locator) {
     assert.equal(samples.values[2].opacity, '0.65');
     assert.ok(samples.values.every(value => value.transform === 'none' && value.backgroundImage === 'none'));
     return animation;
+}
+
+async function checkResources(widget: Locator) {
+    for (const [label, expected] of [['Remote PNG', [33, 131, 72, 255]], ['Remote SVG', [18, 85, 204, 255]]] as const) {
+        const image = widget.locator(`img[alt="${label}"][src^="data:image/png"]`);
+        const pixels = await image.evaluate(async (node: HTMLImageElement) => {
+            await node.decode();
+            const canvas = node.ownerDocument.createElement('canvas');
+            canvas.width = canvas.height = 1;
+            const context = canvas.getContext('2d');
+            context.drawImage(node, 0, 0, 1, 1);
+            return [...context.getImageData(0, 0, 1, 1).data];
+        });
+        assert.deepEqual(pixels, expected);
+    }
+    const input = widget.locator('textarea[style*="tw-field-font-"]');
+    const family = await input.evaluate(node => {
+        const family = getComputedStyle(node).fontFamily;
+        const face = [...node.ownerDocument.fonts].find(face => face.family === family);
+        return face?.status === 'loaded' ? family : null;
+    });
+    assert.match(family, /^tw-field-font-/);
+    assert.equal(await widget.locator('img[alt="Insecure image"], img[alt="Unmarked image"]').count(), 0);
+    for (const label of ['Denied image', 'Redirected image', 'Wrong MIME']) {
+        assert.equal(await widget.getByAltText(label).getAttribute('src'), null);
+    }
+    return family;
 }
 
 async function checkLayout(grid: Locator, mirrored: boolean) {

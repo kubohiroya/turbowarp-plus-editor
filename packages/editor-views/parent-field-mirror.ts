@@ -1,4 +1,5 @@
 import {createFieldLayoutMirror} from './parent-field-layout.ts';
+import {createFieldResources, type FieldResourceOptions} from './parent-field-resources.ts';
 
 const htmlNamespace = 'http://www.w3.org/1999/xhtml';
 const elements = new Set(['div', 'span', 'p', 'fieldset', 'legend', 'label', 'textarea', 'input', 'button']);
@@ -68,9 +69,11 @@ function mirrorWidgetAnimations(host: HTMLElement, nodes: [HTMLElement, HTMLElem
     return stop;
 }
 
-function copyAppearance(source: CSSStyleDeclaration, target: CSSStyleDeclaration, {pseudo = false, priority = ''} = {}) {
+function copyAppearance(source: CSSStyleDeclaration, target: CSSStyleDeclaration, {
+    pseudo = false, priority = '', fontFamily = ''
+} = {}) {
     const copy = (name: string, accept: (value: string) => boolean) => {
-        const value = source.getPropertyValue(name);
+        const value = name === 'font-family' && fontFamily ? fontFamily : source.getPropertyValue(name);
         const safe = value.length <= 128 && accept(value) ? value : '';
         if (target.getPropertyValue(name) !== safe) target.setProperty(name, safe, priority);
     };
@@ -141,11 +144,13 @@ function mirrorWidgetStyles(parent: Window, host: HTMLElement, nodes: [HTMLEleme
 type TextControl = HTMLInputElement | HTMLTextAreaElement;
 
 /** The parent's widget remains authoritative, including its document-level handlers. */
-export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid: () => boolean) {
+export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid: () => boolean, options?: FieldResourceOptions) {
     const parent = source.ownerDocument.defaultView;
     if (!parent) return;
     const sync: (() => void)[] = [];
     const nodes: [HTMLElement, HTMLElement][] = [];
+    const resources = createFieldResources(source, options, valid);
+    const fonts = new WeakMap<HTMLElement, string>();
     let remaining = 128;
     let controls = 0;
 
@@ -160,7 +165,7 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
         if (node.nodeType !== 1) return;
         const original = node as HTMLElement;
         const tag = original.localName;
-        if (original.namespaceURI !== htmlNamespace || !elements.has(tag)) return;
+        if (original.namespaceURI !== htmlNamespace || !(elements.has(tag) || (tag === 'img' && resources.hasImage(original)))) return;
         if (tag === 'input' && !inputTypes.has((original as HTMLInputElement).type)) return;
         if (tag === 'button' && (original as HTMLButtonElement).form && (original as HTMLButtonElement).type !== 'button') return;
         const proxy = host.ownerDocument.createElement(tag);
@@ -169,12 +174,19 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
         sync.push(() => {
             proxy.hidden = original.hidden;
             const computed = parent.getComputedStyle(original);
-            copyAppearance(computed, proxy.style);
+            copyAppearance(computed, proxy.style, {fontFamily: fonts.get(proxy)});
             mirrorLayout(computed);
         });
         for (const name of attributes) {
             const value = original.getAttribute(name);
             if (value !== null) proxy.setAttribute(name, value.slice(0, 1024));
+        }
+        if (tag === 'img') {
+            proxy.setAttribute('alt', (original.getAttribute('alt') ?? '').slice(0, 1024));
+            for (const name of ['width', 'height']) {
+                const size = original.getAttribute(name) ?? '';
+                if (/^[1-9]\d{0,2}$/.test(size) && Number(size) <= 512) proxy.setAttribute(name, size);
+            }
         }
         const canRelay = () => valid() && source.contains(original);
         if (tag === 'input' || tag === 'textarea') {
@@ -233,5 +245,16 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
     if (!controls) return;
     sync.push(mirrorWidgetStyles(parent, host, nodes));
     refresh();
-    return mirrorWidgetAnimations(host, nodes);
+    const stopAnimations = mirrorWidgetAnimations(host, nodes);
+    for (const [original, proxy] of nodes) {
+        void resources.attach(original, proxy)?.then(family => {
+            if (!family || !valid()) return;
+            fonts.set(proxy, family);
+            proxy.style.fontFamily = family;
+        });
+    }
+    return () => {
+        resources.dispose();
+        stopAnimations();
+    };
 }
