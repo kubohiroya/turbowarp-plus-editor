@@ -1,7 +1,9 @@
+import {getCustomFields, registerCustomFields, type CustomField} from './custom-extension-fields.ts';
+
 type BlockDefinition = {type: string; [key: string]: unknown};
 type Category = {id: string; xml: string};
 type DynamicShape = {mutation: string; json: BlockDefinition};
-export type CodeExtensions = {definitions: BlockDefinition[]; categories: Category[]; dynamicDefaults: DynamicShape[]};
+export type CodeExtensions = {definitions: BlockDefinition[]; categories: Category[]; dynamicDefaults: DynamicShape[]; customFields: CustomField[]};
 
 const safeImage = (source: unknown): source is string =>
     typeof source === 'string' && /^(?:data:image\/|media:\/\/)/i.test(source);
@@ -42,13 +44,20 @@ function convertDynamicShape(runtime, category, opcode: string, info) {
     return runtime._convertBlockForScratchBlocks({...info, opcode, isDynamic: true}, category).json;
 }
 
-export function attachDockedDynamicBranches({vm, ScratchBlocks}) {
+export function attachDockedCodeExtensions({vm, ScratchBlocks}) {
     const {runtime} = vm;
     const definitions = ScratchBlocks.Blocks;
     const installed = new Map();
+    const fieldRegistrations = new Map<string, () => void>();
     let disposed = false;
 
     function install(category) {
+        fieldRegistrations.get(category.id)?.();
+        const fields = getCustomFields(category);
+        if (fields.length) {
+            fieldRegistrations.set(category.id, registerCustomFields(ScratchBlocks, fields.map(({declaration}) => declaration)));
+        } else fieldRegistrations.delete(category.id);
+
         for (const entry of category.blocks ?? []) {
             if (!entry.info?.isDynamic) continue;
             const type = entry.json?.type;
@@ -94,6 +103,7 @@ export function attachDockedDynamicBranches({vm, ScratchBlocks}) {
         disposed = true;
         vm.removeListener('EXTENSION_ADDED', install);
         vm.removeListener('BLOCKSINFO_UPDATE', install);
+        for (const unregister of fieldRegistrations.values()) unregister();
         for (const [type, {native, replacement}] of installed) {
             if (definitions[type] === replacement) definitions[type] = native;
         }
@@ -104,7 +114,12 @@ export function attachDockedDynamicBranches({vm, ScratchBlocks}) {
 export function getCodeExtensions(runtime, target): CodeExtensions {
     const definitions: BlockDefinition[] = [];
     const dynamicDefaults: DynamicShape[] = [];
+    const customFields: CustomField[] = [];
     for (const category of runtime._blockInfo ?? []) {
+        for (const {declaration, definition} of getCustomFields(category)) {
+            customFields.push(declaration);
+            definitions.push(projectDefinition(definition, runtime, target));
+        }
         for (const entry of [...(category.menus ?? []), ...(category.blocks ?? [])]) {
             const json = entry.json;
             if (!json?.type?.startsWith(`${category.id}_`)) continue;
@@ -120,7 +135,7 @@ export function getCodeExtensions(runtime, target): CodeExtensions {
     } catch {
         // Invalid palette metadata must not prevent existing blocks from loading.
     }
-    return {definitions, categories, dynamicDefaults};
+    return {definitions, categories, dynamicDefaults, customFields};
 }
 
 export function getCodeDynamicShapes(runtime, target): DynamicShape[] {
@@ -159,6 +174,7 @@ export function createCodeExtensionPalette(blocks) {
     const dynamicTypes = new Set<string>();
     const defaults = new Map<string, BlockDefinition>();
     let shapes = new Map<string, BlockDefinition>();
+    let unregisterFields: (() => void) | undefined;
 
     function canInstall(json: BlockDefinition) {
         const registry = blocks.Field?.TYPE_MAP_;
@@ -217,7 +233,9 @@ export function createCodeExtensionPalette(blocks) {
     }
 
     return {
-        update({definitions, categories, dynamicDefaults}: CodeExtensions) {
+        update({definitions, categories, dynamicDefaults, customFields}: CodeExtensions) {
+            unregisterFields?.();
+            unregisterFields = registerCustomFields(blocks, customFields);
             for (const type of installed) delete blocks.Blocks[type];
             installed.clear();
             dynamicTypes.clear();
