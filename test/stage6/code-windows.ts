@@ -34,7 +34,7 @@ await context.route('**/*', async route => {
 });
 
 async function start(extra = '', language = 'en', standardLayout = false) {
-    const layout = standardLayout ? '' : '&twPlusStandardLayout=0';
+    const layout = standardLayout ? '&twPlusDockview=0' : '&twPlusStandardLayout=0';
     await page.goto(origin + prefix + 'editor.html?lang=' + language + flags + layout + extra);
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
 }
