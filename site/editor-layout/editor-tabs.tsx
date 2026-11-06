@@ -1,16 +1,17 @@
 import React from 'react';
+import {createAssetTransferPanel, type ProjectAssetTransferPort} from '@kubohiroya/turbowarp-script-transfer';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane';
-import type {SpriteAssetKind, SpriteAssetPreviewData} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
-import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, layoutFlags, WindowLayoutContext} from './index.tsx';
+import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext} from './context.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
@@ -59,6 +60,37 @@ const resizeCode = () => {
     if (workspace?.getInjectionDiv()?.clientWidth) blocks.svgResize(workspace);
 };
 
+type TransferKind = 'costume' | 'sound';
+const assetTransferPort = () => (window as Window & {
+    EditorPreload?: {projectAssetTransfer?: ProjectAssetTransferPort};
+}).EditorPreload?.projectAssetTransfer;
+
+function DesktopAssetPanel({vm, kind, locale, port, selection, child}: {
+    vm: Parameters<typeof createAssetTransferPanel>[0];
+    kind: TransferKind;
+    locale: string;
+    port: ProjectAssetTransferPort;
+    selection?: SpriteAssetSelection;
+    child: React.ReactElement<{assetSelection?: SpriteAssetSelection}>;
+}) {
+    const container = React.useRef<HTMLDivElement>(null);
+    const toolbar = React.useRef<HTMLDivElement>(null);
+    const controller = React.useMemo(() => createAssetTransferPanel(vm, kind, locale, port), [vm, kind, locale, port]);
+    React.useLayoutEffect(() => controller.mount(toolbar.current, container.current), [controller]);
+    const bridge = React.useMemo<SpriteAssetSelection>(() => ({
+        ...selection,
+        restore: selection?.restore ?? (() => undefined),
+        remember(target, asset, select) {
+            selection?.remember(target, asset, select);
+            controller.remember(target, asset);
+        }
+    }), [controller, selection]);
+    return <div ref={container} style={{display: 'flex', flex: 1, flexDirection: 'column', minWidth: 0, minHeight: 0}}>
+        <div ref={toolbar} />
+        {React.cloneElement(child, {assetSelection: bridge})}
+    </div>;
+}
+
 export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
     const host = useWindowHost();
     const {plusLayout} = React.useContext(WindowLayoutContext);
@@ -67,7 +99,7 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
     const layoutStorage = React.useMemo(() => {
-        if (!multiView) return;
+        if (!multiView || externalYamlPort) return;
         try {
             return {storage: window.localStorage, key: 'twPlusDockviewLayout',
                 isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)};
@@ -176,8 +208,11 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
     });
     const connectAssetSelection = (index: number, child: React.ReactNode) => {
         const assetSelection = index === 1 ? spriteTabs.assetSelections?.costumes : index === 2 ? spriteTabs.assetSelections?.sounds : undefined;
-        return assetSelection && React.isValidElement<{assetSelection?: typeof assetSelection}>(child) ?
-            React.cloneElement(child, {assetSelection}) : child;
+        if (!React.isValidElement<{assetSelection?: SpriteAssetSelection}>(child)) return child;
+        const kind = index === 1 ? 'costume' : index === 2 ? 'sound' : undefined;
+        const port = kind && assetTransferPort();
+        if (port) return <DesktopAssetPanel {...{vm, kind, locale, port, selection: assetSelection, child}} />;
+        return assetSelection ? React.cloneElement(child, {assetSelection}) : child;
     };
 
     const content = render({...layout,
