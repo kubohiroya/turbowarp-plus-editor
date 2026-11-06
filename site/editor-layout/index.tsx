@@ -18,12 +18,16 @@ const startupParams = new URLSearchParams(startupSearch);
 export const layoutFlags = readWebStartupFeatureFlags(startupSearch);
 export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
     startupParams.get('twPlusDockviewSpriteTabs') !== '0';
-const desktopYamlPort = typeof window !== 'undefined' && (window as Window & {
-    EditorPreload?: {externalYaml?: ExternalYamlFilePort};
-}).EditorPreload?.externalYaml;
-export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled &&
-    startupParams.get('twPlusDockview') !== '0' && (typeof EditorPreload === 'undefined' || Boolean(desktopYamlPort));
-export const externalYamlPort = dockviewMultiViewEnabled && desktopYamlPort;
+const desktopHost = typeof window !== 'undefined' && (window as Window & {
+    EditorPreload?: {
+        externalYaml?: ExternalYamlFilePort;
+        workspaceLayout?: {read(): string | null; write(raw: string): void};
+    };
+}).EditorPreload;
+export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled && startupParams.get('twPlusDockview') !== '0' &&
+    (typeof EditorPreload === 'undefined' || Boolean(desktopHost && (desktopHost.externalYaml || desktopHost.workspaceLayout)));
+export const externalYamlPort = dockviewMultiViewEnabled && desktopHost && desktopHost.externalYaml;
+export const desktopWorkspaceLayout = dockviewMultiViewEnabled && desktopHost && desktopHost.workspaceLayout;
 export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
     startupParams.get('twPlusStageDrawer') !== '0';
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);

@@ -77,7 +77,7 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
     let entry = externalYamlActions.get(vm);
     if (!entry) {
         entry = createExternalYamlMenuAction({vm, locale, port: externalYamlPort,
-            openPanel: request => getDocumentWorkspace(vm).open(request), document});
+            openPanel: request => getDocumentWorkspace(vm).open({...request, transient: true}), document});
         externalYamlActions.set(vm, entry);
     }
     const action = entry;

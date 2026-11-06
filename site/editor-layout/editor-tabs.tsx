@@ -11,7 +11,7 @@ import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
-import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
+import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext} from './context.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
@@ -99,9 +99,13 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
     const layoutStorage = React.useMemo(() => {
-        if (!multiView || externalYamlPort) return;
+        if (!multiView || (externalYamlPort && !desktopWorkspaceLayout)) return;
         try {
-            return {storage: window.localStorage, key: 'twPlusDockviewLayout',
+            const storage = desktopWorkspaceLayout ? {
+                getItem: () => desktopWorkspaceLayout.read(),
+                setItem: (_key: string, raw: string) => desktopWorkspaceLayout.write(raw)
+            } : window.localStorage;
+            return {storage, key: 'twPlusDockviewLayout',
                 isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)};
         } catch { /* Storage is optional. */ }
     }, [multiView, vm]);
@@ -187,6 +191,20 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
             multiView, layoutStorage, stagePane: stage?.pane, activeTools: renderEditorTabRow(null), viewAdapter: codePaneAdapter,
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
+            getProperties(id) {
+                const target = vm.runtime.getTargetById(id);
+                if (!target || target.isStage) return;
+                const {x, y, size, direction, visible, rotationStyle} = target;
+                return {name: target.getName(), x, y, size, direction, visible, rotationStyle};
+            },
+            writeProperties(id, {name, ...patch}) {
+                const target = vm.runtime.getTargetById(id);
+                if (!target || target !== vm.editingTarget || target.isStage || (vm._dragTarget && vm._dragTarget !== target)) return;
+                if (name !== undefined) {
+                    const trimmed = name.trim();
+                    if (trimmed && trimmed !== target.getName()) vm.renameSprite(id, trimmed);
+                } else vm.postSpriteInfo(patch);
+            },
             writeVariable(id, variableId, value) {
                 const target = vm.runtime.getTargetById(id);
                 const stage = vm.runtime.getTargetForStage();

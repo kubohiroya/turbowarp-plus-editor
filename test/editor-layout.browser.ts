@@ -602,7 +602,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
 
-    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusWindowLayout=1&twPlusStageDrawer=0');
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusDockview=0&twPlusWindowLayout=1&twPlusStageDrawer=0');
     await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
     const japaneseAdd = page.getByRole('button', {name: 'スプライトを追加する', exact: true});
     await japaneseAdd.hover();
@@ -1080,18 +1080,23 @@ test('the Dockview asset connection restores the native costume and sound select
     await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
     await expect(selected).toContainText('Pane sound B');
 
-    await section('Variables').click();
+    await section('Properties & Variables').click();
     const viewIds = await Promise.all([0, 1].map(index => groups.nth(index)
         .getByRole('tab', {name: spriteName, exact: true}).getAttribute('data-tab-panel-id')));
-    const variable = (group: number) => page.locator('[id="' + viewIds[group] + '-content"]')
-        .getByRole('textbox', {name: 'Pane counter'});
+    const pane = (group: number) => page.locator('[id="' + viewIds[group] + '-content"]');
+    const variable = (group: number) => pane(group).getByRole('textbox', {name: 'Pane counter'});
+    const properties = (group: number) => pane(group).getByRole('textbox', {name: 'Sprite name'});
     const first = variable(0);
     await expect(first).toBeEditable();
+    await expect(properties(0)).toBeEditable();
+    await expect(properties(0)).toHaveValue(spriteName);
     const width = (await first.boundingBox()).width;
     await first.fill('17');
     await activate(1);
-    await section('Variables').click();
+    await section('Properties & Variables').click();
     await expect(first).not.toBeEditable();
+    await expect(properties(0)).toBeDisabled();
+    await expect(properties(1)).toBeEditable();
     await expect(first).toHaveValue('17');
     assert.equal((await first.boundingBox()).width, width);
     await expect(variable(1)).toHaveValue('17');
