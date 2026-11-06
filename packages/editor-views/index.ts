@@ -6,24 +6,31 @@ export {encodeEdit} from './protocol.ts';
 // A drop must stay within one target's block and comment history.
 const supportsSharedHistory = script => !script.variables.length && !script.extensionIDs?.length &&
     !Object.keys(script.extensionURLs).length;
-const needsEditingTarget = event => isCommentEdit(event) || event.type === 'change' && event.element === 'field' &&
-    ['VARIABLE', 'LIST', 'BROADCAST_OPTION'].includes(event.name);
-
-const referenceTypes = {VARIABLE: '', LIST: 'list'} as const;
+const referenceTypes = {VARIABLE: '', LIST: 'list', BROADCAST_OPTION: 'broadcast_msg'} as const;
 type ReferenceName = keyof typeof referenceTypes;
 type ReferenceField = {id?: string; value?: string};
 
+const referenceNames = Object.keys(referenceTypes) as ReferenceName[];
+const isReferenceName = (name: unknown): name is ReferenceName =>
+    typeof name === 'string' && Object.hasOwn(referenceTypes, name);
+const needsEditingTarget = event => isCommentEdit(event) ||
+    event.type === 'change' && event.element === 'field' && isReferenceName(event.name);
+
 function referenceField(block: unknown, name: ReferenceName): ReferenceField | undefined {
     const {opcode, fields} = (block ?? {}) as {opcode?: string; fields?: Partial<Record<ReferenceName, ReferenceField>>};
-    return opcode?.startsWith('data_') ? fields?.[name] : undefined;
+    const supported = name === 'BROADCAST_OPTION' ?
+        opcode === 'event_whenbroadcastreceived' || opcode === 'event_broadcast_menu' : opcode?.startsWith('data_');
+    return supported ? fields?.[name] : undefined;
 }
 
-function scopedReference(target, id: unknown, name: ReferenceName) {
-    const variable = typeof id === 'string' ? target.lookupVariableById(id) : undefined;
-    return variable?.type === referenceTypes[name] ? variable : undefined;
+function scopedReference(target, stage, id: unknown, name: ReferenceName) {
+    if (typeof id !== 'string') return undefined;
+    const variable = target.lookupVariableById(id);
+    if (variable?.type !== referenceTypes[name]) return undefined;
+    // Broadcast IDs belong to the stage even when the block is on a sprite.
+    if (name === 'BROADCAST_OPTION' && stage?.variables[id] !== variable) return undefined;
+    return variable;
 }
-
-const referenceNames = Object.keys(referenceTypes) as ReferenceName[];
 
 export function createCodeSession({vm, workspace, ScratchBlocks, document, locale, canUse, onError, receiveBackpackDrop}) {
     const parent = document.defaultView;
@@ -115,7 +122,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                 if (disposed) return;
                 for (const tracked of histories.keys()) {
                     if (!exists(tracked)) continue;
-                    histories.set(tracked, createHistory(tracked));
+                    histories.set(tracked, createHistory(tracked, vm.runtime.getTargetForStage()));
                     publish(tracked, null, false);
                 }
                 dirty.clear();
@@ -123,10 +130,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         }
     }
 
-    function flushWorkspaceSwitch() {
-        if (!switchingWorkspace) return;
-        // The GUI replaces Blockly's contents when the VM selection changes.
-        // Its queued projection events are not user edits and must not reset shared history.
+    function flushWorkspaceProjection() {
+        if (!switchingWorkspace && !owner) return;
+        // Selection changes and refreshes of the inert parent workspace only queue
+        // projection events. Do not let those events reset shared history.
+        switchingWorkspace = true;
         try {
             ScratchBlocks.Events.fireNow_();
         } finally {
@@ -142,7 +150,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         }
         if (target === view.target || !exists(target)) return;
         view.target = target;
-        if (!histories.has(target)) histories.set(target, createHistory(target));
+        if (!histories.has(target)) histories.set(target, createHistory(target, vm.runtime.getTargetForStage()));
         send(view, {type: 'target', targetId: target.id, ...projection(target)});
     }
 
@@ -311,6 +319,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             const {target} = view;
             // Those fields resolve through the VM's current editing target rather than the Blocks container.
             if (vm.runtime.getEditingTarget() !== target && edits.some(needsEditingTarget)) return;
+            const stage = vm.runtime.getTargetForStage();
             const before = capture(target);
             let applied = false;
             const reject = () => {
@@ -320,9 +329,9 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             try {
                 for (const event of edits) {
                     const {name} = event;
-                    if (event.type === 'change' && event.element === 'field' && (name === 'VARIABLE' || name === 'LIST') &&
+                    if (event.type === 'change' && event.element === 'field' && isReferenceName(name) &&
                         referenceField(target.blocks.getBlock(event.blockId), name) &&
-                        !scopedReference(target, event.newValue, name)) {
+                        !scopedReference(target, stage, event.newValue, name)) {
                         reject();
                         return;
                     }
@@ -336,7 +345,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                         const field = referenceField(block, name);
                         const previous = referenceField(before.blocks[id], name);
                         if (!field || (previous && field.id === previous.id && field.value === previous.value)) return false;
-                        const variable = scopedReference(target, field.id, name);
+                        const variable = scopedReference(target, stage, field.id, name);
                         return !variable || variable.name !== field.value;
                     }))) {
                     reject();
@@ -365,7 +374,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         if (target === selectedTarget) return;
         selectedTarget = target;
         switchingWorkspace = true;
-        queueMicrotask(flushWorkspaceSwitch);
+        queueMicrotask(flushWorkspaceProjection);
         if (parentFocused() && activeView && selectable(target)) retarget(activeView, target);
         if (owner && target !== owner.target) revoke();
     }
@@ -379,7 +388,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             selectedTarget = vm.editingTarget;
             updateCatalog();
         }
-        if (!histories.has(target)) histories.set(target, createHistory(target));
+        if (!histories.has(target)) histories.set(target, createHistory(target, vm.runtime.getTargetForStage()));
         const view = {target, port, document: mount.ownerDocument, close, duplicate};
         const listener = event => receive(view, event.data);
         views.add(view);
@@ -416,7 +425,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     workspace.addChangeListener(observeParent);
     parent.addEventListener('focus', parentFocus);
     vm.on('targetsUpdate', targetsUpdated);
-    vm.on('workspaceUpdate', flushWorkspaceSwitch);
+    vm.on('workspaceUpdate', flushWorkspaceProjection);
 
     return {attach, setCanDuplicate(available) {
         if (available === canDuplicate) return;
@@ -436,7 +445,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         workspace.hasRedoStack = nativeHasRedo;
         parent.removeEventListener('focus', parentFocus);
         vm.removeListener('targetsUpdate', targetsUpdated);
-        vm.removeListener('workspaceUpdate', flushWorkspaceSwitch);
+        vm.removeListener('workspaceUpdate', flushWorkspaceProjection);
         container.inert = originalInert;
     }};
 }

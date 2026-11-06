@@ -17,7 +17,10 @@ function fixture(receiveBackpackDrop) {
         addChangeListener() {},
         removeChangeListener() {}
     };
-    const stage = {variables: {}};
+    const stage = {
+        variables: {},
+        createVariable(id, name, type) {this.variables[id] = {name, type, toXML: () => ''};}
+    };
     const makeTarget = id => {
         const blocks = {
             _blocks: {block: {x: 0, reference: 'first'}} as Record<string, any>,
@@ -159,21 +162,27 @@ test('comment edits use the active target and restore serializable comments in t
 
 for (const [kind, type, fieldName, opcode] of [
     ['scalar', '', 'VARIABLE', 'data_variable'],
-    ['list', 'list', 'LIST', 'data_listcontents']
+    ['list', 'list', 'LIST', 'data_listcontents'],
+    ['broadcast', 'broadcast_msg', 'BROADCAST_OPTION', 'event_whenbroadcastreceived']
 ]) {
     test(`${kind} reference edits stay in scope and rejected batches preserve shared history`, () => {
         const {session, connect, target, other, vm} = fixture();
         const variable = {name: 'shared', type, toXML: () => ''};
-        Object.assign(vm.runtime.getTargetForStage().variables, {global: variable});
-        Object.assign(target.variables, {mine: variable, wrongType: {...variable, type: type === '' ? 'list' : ''}});
+        const stage = vm.runtime.getTargetForStage();
+        const broadcast = type === 'broadcast_msg';
+        const visible = broadcast ? stage : target;
+        Object.assign(stage.variables, {global: variable});
+        Object.assign(visible.variables, {mine: variable, wrongType: {...variable, type: type === '' ? 'list' : ''}});
         Object.assign(other.variables, {foreign: variable});
-        const reporter = (id, value = variable.name) => ({opcode, fields: {[fieldName]: {id, value}}});
-        target.blocks._blocks.block = reporter('global');
-        target.blocks._blocks.legacy = reporter('deleted');
+        if (broadcast) Object.assign(target.variables, {local: variable});
+        const reference = (id, value = variable.name, blockOpcode = opcode) =>
+            ({opcode: blockOpcode, fields: {[fieldName]: {id, value}}});
+        target.blocks._blocks.block = reference('global');
+        target.blocks._blocks.legacy = reference('deleted');
         target.blocks.blocklyListen = function (event) {
             if (event.type === 'create') {
                 const [id, name] = event.xml.outerHTML.split(':');
-                this._blocks[event.blockId] = reporter(id, name);
+                this._blocks[event.blockId] = reference(id, name, broadcast ? 'event_broadcast_menu' : opcode);
             } else {
                 this._blocks[event.blockId].fields[fieldName].id = event.newValue;
             }
@@ -190,9 +199,11 @@ for (const [kind, type, fieldName, opcode] of [
         const field = () => target.blocks.getBlock('block').fields[fieldName].id;
         const step = redo => child.send({type: 'step', lease, targetId: target.id, redo});
 
-        for (const edits of [[change('foreign')], [change('wrongType')],
+        const invalid = [[change('foreign')], [change('deleted')], [change('wrongType')],
             [change('mine'), create('foreign:shared')], [create('mine:stale')], [create('wrongType:shared')],
-            [create('mine:shared'), change('foreign', 'new')]]) {
+            [create('mine:shared'), change('foreign', 'new')]];
+        if (broadcast) invalid.push([change('local')], [create('local:shared')]);
+        for (const edits of invalid) {
             send(...edits);
             assert.equal(field(), 'global');
             assert.equal(target.blocks.getBlock('new'), undefined);
@@ -207,7 +218,9 @@ for (const [kind, type, fieldName, opcode] of [
         step(false);
         assert.equal(field(), 'global');
         assert.equal(target.blocks.getBlock('new'), undefined);
+        if (broadcast) delete stage.variables['mine'];
         step(true);
+        if (broadcast) assert.equal(stage.variables['mine']?.name, variable.name);
         assert.equal(field(), 'mine');
         assert.equal(target.blocks.getBlock('new').fields[fieldName].id, 'mine');
         assert.equal(other.blocks.getBlock('new'), undefined);
