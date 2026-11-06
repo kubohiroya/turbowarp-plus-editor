@@ -12,11 +12,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -747,6 +747,14 @@ async function checkCodeComments ({editor, a, b, focus, parent, sprites}) {
     report.checks.push('Attached and workspace comments stay with their target through focus, shared Undo/Redo, docking and SB3');
 }
 
+async function activateCodeView(front, back, focus) {
+    const inert = view => view.child.locator('#mount').evaluate(node => node.inert);
+    await until(async () => {
+        if (!await front.child.evaluate(() => document.hasFocus())) await focus(front.child, front.id);
+        return !await inert(front) && await inert(back);
+    }, 'only the front view can edit');
+}
+
 const variableScopeFixtures = {
     scalar: {name: 'shared counter', type: '', fieldName: 'VARIABLE', reporterOpcode: 'data_variable',
         statementOpcode: 'data_setvariableto', globalId: 'global-counter', localId: 'local-counter'},
@@ -764,13 +772,7 @@ async function checkVariableScope ({editor, a, b, focus, open, parent, sprite, k
     const statement = view => block(view, statementId);
     const field = id => editor.evaluate(({targetId, id, fieldName}) =>
         vm.runtime.getTargetById(targetId).blocks.getBlock(id).fields[fieldName].id, {targetId: sprite.id, id, fieldName});
-    const activate = async (front, back) => {
-        const inert = view => view.child.locator('#mount').evaluate(node => node.inert);
-        await until(async () => {
-            if (!await front.child.evaluate(() => document.hasFocus())) await focus(front.child, front.id);
-            return !await inert(front) && await inert(back);
-        }, 'only the front view can edit');
-    };
+    const activate = (front, back) => activateCodeView(front, back, focus);
     const ja = (await a.child.title()).startsWith('コード');
     const scopeLabel = scope => ja ? (scope === 'Global' ? '全体' : 'このスプライト') : scope;
     const optionLabel = scope => `${scopeLabel(scope)}: ${name}`;
@@ -840,8 +842,114 @@ async function checkVariableScope ({editor, a, b, focus, open, parent, sprite, k
     report.checks.push(`Same-name ${kind} reporter and dropdown retain scope through both-way switching, two views, shared Undo/Redo and SB3`);
 }
 
+const broadcastFixture = {
+    messages: {'broadcast-alpha': 'signal alpha', 'broadcast-beta': 'signal beta'},
+    receive: 'event_whenbroadcastreceived',
+    send: 'event_broadcast',
+    wait: 'event_broadcastandwait'
+};
+
+async function checkCodeBroadcast ({editor, a, b, focus, parent, sprite}) {
+    const {messages, receive, send, wait} = broadcastFixture;
+    const alpha = 'broadcast-alpha';
+    const beta = 'broadcast-beta';
+    const field = (view, opcode) => view.child.locator(`.blocklyBlockCanvas [data-id="${opcode}"] .blocklyDropdownText`);
+    const shows = async (view, blockId, id) =>
+        (await field(view, blockId).textContent()).replace(/\s/g, ' ').includes(messages[id]);
+    const expectMessage = (view, opcode, id) => until(async () => {
+        const reference = await editor.evaluate(({targetId, opcode, receive}) => {
+            const {blocks} = vm.runtime.getTargetById(targetId);
+            const block = blocks.getBlock(`broadcast-test-${opcode}`);
+            const owner = opcode === receive ? block : blocks.getBlock(block.inputs.BROADCAST_INPUT.block);
+            const {id, value} = owner.fields.BROADCAST_OPTION;
+            return {id, value};
+        }, {targetId: sprite.id, opcode, receive});
+        return reference.id === id && reference.value === messages[id] && await shows(view, `broadcast-test-${opcode}`, id);
+    }, `${opcode} reference reaches the VM and the other view`);
+    const choose = async (view, opcode, id) => {
+        await activateCodeView(view, view === a ? b : a, focus);
+        const dropdown = field(view, `broadcast-test-${opcode}`);
+        await dropdown.waitFor();
+        await dropdown.click({force: true});
+        const option = view.child.locator('.blocklyDropDownDiv .goog-menuitem').filter({hasText: messages[id]});
+        await option.waitFor();
+        await option.click({force: true});
+        await option.waitFor({state: 'hidden'});
+    };
+    const step = (view, name) => view.child.getByRole('button', {name, exact: true}).click();
+
+    await activateCodeView(a, b, focus);
+    await choose(a, send, beta);
+    await expectMessage(b, send, beta);
+    await choose(a, receive, beta);
+    await expectMessage(b, receive, beta);
+    const pruned = await editor.evaluate(({id, targetId}) => {
+        const stage = vm.runtime.getTargetForStage();
+        vm.setEditingTarget(stage.id);
+        const removed = !Object.hasOwn(stage.variables, id);
+        vm.setEditingTarget(targetId);
+        return removed;
+    }, {id: alpha, targetId: sprite.id});
+    assert.equal(pruned, true);
+
+    await activateCodeView(b, a, focus);
+    await editor.evaluate(() => vm.refreshWorkspace());
+    await step(b, 'Undo');
+    await expectMessage(a, receive, alpha);
+    await activateCodeView(b, a, focus);
+    await step(b, 'Undo');
+    await expectMessage(a, send, alpha);
+
+    await activateCodeView(a, b, focus);
+    await step(a, 'Redo');
+    await expectMessage(b, send, beta);
+    await activateCodeView(a, b, focus);
+    await step(a, 'Redo');
+    await expectMessage(b, receive, beta);
+    await activateCodeView(a, b, focus);
+    await expectMessage(b, wait, beta);
+    await choose(a, wait, alpha);
+    await expectMessage(b, wait, alpha);
+    await choose(a, wait, beta);
+    await expectMessage(b, wait, beta);
+    await choose(a, wait, alpha);
+    await expectMessage(b, wait, alpha);
+
+    const dock = async view => {
+        await focus(view.child, view.id);
+        await Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
+    };
+    await dock(a);
+    await dock(b);
+    await focus(editor, parent.id);
+    const restored = await editor.evaluate(async ({spriteName, messages, receive, send, wait}) => {
+        await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
+        const target = vm.runtime.targets.find(item => item.getName() === spriteName);
+        const stage = vm.runtime.getTargetForStage();
+        const {blocks} = target;
+        const roots = blocks.getScripts().map(id => blocks.getBlock(id));
+        vm.setEditingTarget(target.id);
+        return {
+            messages: Object.keys(messages).map(id => stage.variables[id]?.name),
+            references: [receive, send, wait].map(opcode => {
+                const root = roots.find(block => block.opcode === opcode);
+                const owner = opcode === receive ? root : blocks.getBlock(root.inputs.BROADCAST_INPUT.block);
+                return {blockId: root.id, id: owner.fields.BROADCAST_OPTION.id};
+            })
+        };
+    }, {spriteName: sprite.name, ...broadcastFixture});
+    assert.deepEqual(restored.messages, Object.values(messages));
+    const expected = [beta, beta, alpha];
+    assert.deepEqual(restored.references.map(({id}) => id), expected);
+
+    for (const [index, {blockId}] of restored.references.entries()) {
+        await until(() => shows({child: editor}, blockId, expected[index]), 'reloaded editor shows the saved message');
+    }
+    report.checks.push('Broadcast send, send and wait, and receive references retain message IDs through two views, VM message pruning, shared Undo/Redo and SB3');
+}
+
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -853,7 +961,7 @@ async function checkCodePopouts ({editor, context, control}, {
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture}) => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
         if (targetSync || comments) {
@@ -897,9 +1005,28 @@ async function checkCodePopouts ({editor, context, control}, {
                     fields: {[fieldName]: {name: fieldName, id: globalId, value: name, variableType: type}}});
             }
         }
+        if (broadcastFixture) {
+            const {messages, receive, send, wait} = broadcastFixture;
+            const stage = vm.runtime.getTargetForStage();
+            for (const [id, name] of Object.entries(messages)) stage.createVariable(id, name, 'broadcast_msg', false);
+            const [alpha, beta] = Object.keys(messages);
+            for (const [index, opcode] of [receive, send, wait].entries()) {
+                const id = opcode === wait ? beta : alpha;
+                const fields = {BROADCAST_OPTION: {name: 'BROADCAST_OPTION', id, value: messages[id], variableType: 'broadcast_msg'}};
+                const blockId = `broadcast-test-${opcode}`;
+                const menu = `${blockId}-menu`;
+                const isReceiver = opcode === receive;
+                first.blocks.createBlock({id: blockId, opcode, x: 135, y: 160 + index * 80,
+                    next: null, parent: null, topLevel: true, shadow: false, fields: isReceiver ? fields : {},
+                    inputs: isReceiver ? {} : {BROADCAST_INPUT: {name: 'BROADCAST_INPUT', block: menu, shadow: menu}}});
+                if (!isReceiver) first.blocks.createBlock({id: menu, opcode: 'event_broadcast_menu', next: null,
+                    parent: blockId, topLevel: false, shadow: true, inputs: {}, fields: structuredClone(fields)});
+            }
+        }
         vm.refreshWorkspace();
         return seeded;
-    }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope]});
+    }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope],
+        broadcastFixture: broadcast ? broadcastFixture : null});
     const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
@@ -946,6 +1073,10 @@ async function checkCodePopouts ({editor, context, control}, {
     }
     if (stageCode) {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
+        return;
+    }
+    if (broadcast) {
+        await checkCodeBroadcast({editor, a, b, focus, parent, sprite: sprites[0]});
         return;
     }
     if (variableScope) {
@@ -1673,6 +1804,7 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
+    else if (testMode === '--code-broadcast') await run('code-popout', env => checkCodePopouts(env, {broadcast: true}));
     else if (testMode === '--code-popout') await run('code-popout', checkCodePopouts);
     else if (testMode === '--target-panels-popout') await run('target-panels', checkExternalTargetPanels);
     else if (testMode === '--stage-display-menu') await run('stage-display-menu', checkStageDisplayMenu);

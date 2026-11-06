@@ -19,7 +19,7 @@ export interface CodeTarget {
         toXML(comments: Record<string, CommentData>): string;
     };
     comments: Record<string, CommentData & {toXML(): string}>;
-    variables: Record<string, {toXML(local?: boolean): string}>;
+    variables: Record<string, {name?: string; type?: string; toXML(local?: boolean): string}>;
     createComment(id: string, blockId: string | null, text: string, x: number, y: number,
         width: number, height: number, minimized: boolean): void;
 }
@@ -46,15 +46,29 @@ export function restore(target: CodeTarget, snapshot: ReturnType<typeof capture>
     target.blocks.emitProjectChanged();
 }
 
-export function createHistory(target: CodeTarget) {
-    const past: ReturnType<typeof capture>[] = [];
-    const future: ReturnType<typeof capture>[] = [];
-    let present = capture(target);
+type BroadcastStage = Pick<CodeTarget, 'variables'> & {
+    createVariable(id: string, name: string, type: 'broadcast_msg', isCloud: false): void;
+};
+
+export function createHistory(target: CodeTarget, stage: BroadcastStage) {
+    const captureRevision = () => {
+        const snapshot = capture(target);
+        const messages = new Map<string, string>();
+        for (const block of Object.values(snapshot.blocks)) {
+            const id = (block as {fields?: {BROADCAST_OPTION?: {id?: string}}}).fields?.BROADCAST_OPTION?.id;
+            const message = id && stage.variables[id];
+            if (message?.type === 'broadcast_msg' && typeof message.name === 'string') messages.set(id, message.name);
+        }
+        return {...snapshot, messages: [...messages]};
+    };
+    const past: ReturnType<typeof captureRevision>[] = [];
+    const future: ReturnType<typeof captureRevision>[] = [];
+    let present = captureRevision();
     let revision = 0;
     return {
         get state() {return {revision, canUndo: past.length > 0, canRedo: future.length > 0};},
         commit() {
-            const next = capture(target);
+            const next = captureRevision();
             if (JSON.stringify(next) === JSON.stringify(present)) return false;
             past.push(present);
             if (past.length > historyLimit) past.shift();
@@ -77,6 +91,11 @@ export function createHistory(target: CodeTarget) {
             if (!next) return false;
             (redo ? past : future).push(present);
             present = next;
+            // The VM prunes unused broadcast IDs on workspace refresh.
+            // Restore messages that were still registered in this revision.
+            for (const [id, name] of present.messages) {
+                if (!Object.hasOwn(stage.variables, id)) stage.createVariable(id, name, 'broadcast_msg', false);
+            }
             restore(target, present);
             revision++;
             return true;
