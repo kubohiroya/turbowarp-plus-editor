@@ -1,44 +1,56 @@
 import assert from 'node:assert/strict';
-import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
-import path from 'node:path';
 import {test} from 'node:test';
-import {runInNewContext} from 'node:vm';
-import {brandEditor} from '../scripts/site/brand-editor.ts';
+import {fetchProjectUrl} from '../site/project-url.ts';
 
-test('the three Web entry points resolve the official rc.79 release before starting the GUI', async t => {
-    const release = 'https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/download/v4.0.0-rc.79/kamishibai-4.0.0-rc.79.sb3';
-    const mirror = 'https://kubohiroya.github.io/turbowarp-kamishibai-app/downloads/kamishibai-4.0.0-rc.79.sb3';
-    const output = await mkdtemp(path.join(tmpdir(), 'twpe-project-url-'));
-    t.after(() => rm(output, {recursive: true, force: true}));
-    const files = ['editor.html', 'fullscreen.html', 'player.html'];
-    await Promise.all(files.map(name => writeFile(path.join(output, name),
-        '<html><head><title>TurboWarp</title></head><body><script src="gui.js"></script></body></html>')));
-    await brandEditor(output);
+const releases = 'https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/download';
+const downloads = 'https://kubohiroya.github.io/turbowarp-kamishibai-app/downloads';
 
-    for (const name of files) {
-        const html = await readFile(path.join(output, name), 'utf8');
-        const script = html.match(/<head>.*?<script>([\s\S]*?)<\/script><\/head>/);
-        assert.ok(script, `${name} installs the resolver before the GUI`);
-        for (const project of [release, mirror, release.replaceAll('rc.79', 'rc.34'),
-            release.replace('github.com/', 'github.com.example/'), 'data:application/octet-stream;base64,AA==', null]) {
-            const url = new URL(name, 'https://kubohiroya.github.io/turbowarp-plus-editor/');
-            url.searchParams.set('lang', 'ja');
-            url.hash = 'example';
-            if (project !== null) url.searchParams.set('project_url', project);
-            let replacement: URL | undefined;
-            const state = {sample: true};
-            runInNewContext(script[1], {URL, location: {href: url.href}, history: {
-                state,
-                replaceState(value: unknown, _unused: string, href: string) {
-                    assert.equal(value, state);
-                    replacement = new URL(href);
-                }
-            }});
-            if (project === release) {
-                url.searchParams.set('project_url', mirror);
-                assert.equal(replacement?.href, url.href);
-            } else assert.equal(replacement, undefined);
-        }
+test('official Kamishibai release links use the available Pages file for the same version', async () => {
+    for (const version of ['4.0.0-rc.79', '4.0.0-rc.78', '5.1.2', '5.1.2-beta.1%2Bbuild.2']) {
+        const project = `${releases}/v${version}/kamishibai-${version}.sb3`;
+        const response = new Response('SB3', {headers: {'content-type': 'application/octet-stream'}});
+        const requests: [string, RequestInit | undefined][] = [];
+        assert.equal(await fetchProjectUrl(project, async (url, init) => {
+            requests.push([String(url), init]);
+            return response;
+        }), response);
+        assert.deepEqual(requests, [[`${downloads}/kamishibai-${version}.sb3`, {redirect: 'error'}]]);
+    }
+});
+
+test('a missing or unavailable Pages file falls back to the exact original URL', async () => {
+    const project = `${releases}/v4.0.0-rc.34/kamishibai-4.0.0-rc.34.sb3`;
+    const mirror = `${downloads}/kamishibai-4.0.0-rc.34.sb3`;
+    for (const result of [new Response(null, {status: 404}), new Response('<html>', {
+        headers: {'content-type': 'text/html; charset=utf-8'}
+    }), new TypeError('Failed to fetch')]) {
+        const requests: string[] = [];
+        const original = new Response('original');
+        assert.equal(await fetchProjectUrl(project, async url => {
+            requests.push(String(url));
+            if (url === project) return original;
+            if (result instanceof Error) throw result;
+            return result;
+        }), original);
+        assert.deepEqual(requests, [mirror, project]);
+    }
+});
+
+test('other project URLs use their original fetch path without probing Pages', async () => {
+    for (const project of [
+        `${downloads}/kamishibai-4.0.0-rc.79.sb3`,
+        `${releases}/v4.0.0-rc.78/kamishibai-4.0.0-rc.79.sb3`,
+        `${releases}/v3.2.3/kamishibai-3.2.sb3`,
+        `${releases}/v4.0.0%2Frc.79/kamishibai-4.0.0%2Frc.79.sb3`,
+        `${releases}/v%FF/kamishibai-%FF.sb3`,
+        `${releases.replace('github.com/', 'github.com.example/')}/v4.0.0/kamishibai-4.0.0.sb3`,
+        'data:application/octet-stream;base64,AA=='
+    ]) {
+        const requests: string[] = [];
+        await fetchProjectUrl(project, async url => {
+            requests.push(String(url));
+            return new Response();
+        });
+        assert.deepEqual(requests, [project]);
     }
 });
