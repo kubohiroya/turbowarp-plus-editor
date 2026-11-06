@@ -45,3 +45,14 @@ Desktop のコード欄から、選択中の対象で別窓を最大2枚開け�
 起動時に `TW_PLUS_DESKTOP_WINDOW_LAYOUT=1`、`TW_PLUS_DESKTOP_INTERNAL_WINDOWS=1`、`TW_PLUS_DESKTOP_CODE_POPOUT=1` を指定する。バックパックも OS の別窓で開く場合は `TW_PLUS_DESKTOP_BACKPACK_POPOUT=1` を加える。⚓ で操作を表示し、コード行の「別画面で開く」を押す。フラグは既定 OFF。子を閉じ、作品を保存してから `TW_PLUS_DESKTOP_CODE_POPOUT` を外して再起動すると、既存のコード画面とアプリ内表示に戻る。
 
 アプリ内の複数コード画面と背面ドロップは別の検証手順を使う。両方の起動フラグが有効な Desktop では、既存の OS 別窓を優先する。 [アプリ内コード画面の検証](sprite-code-windows.md)
+
+### 拡張独自フィールド
+
+親 VM に登録する拡張の `customFieldTypes` で、`implementation` に
+`{type: 'field_input'}` または
+`{type: 'field_dropdown', options: [['表示名', '保存する値']]}` を指定できる。
+独自型名には組み込み引数型と重複しない名前を使う。選択肢の表示名と保存値には文字列を使う。ScratchBlocks が編集 UI を生成し、VM の独自フィールド名と保存値はそのまま SB3 に入る。任意の `fromJson` や独自 UI コードはこの接続の対象外。
+
+製品版 Electron の検証用コピーに対して
+`node test/stage3/check-desktop.ts /path/to/TurboWarp.app --code-custom-fields`
+を実行する。Playwright／CDP で、別窓間のテキストと選択値の反映、共有履歴、ドック復帰、SB3 再読込を確認する。

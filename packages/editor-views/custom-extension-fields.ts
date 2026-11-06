@@ -1,0 +1,51 @@
+type FieldEditor = {type: 'field_input'} | {type: 'field_dropdown'; options: [string, string][]};
+export type CustomField = {name: string; editor: FieldEditor};
+
+function readEditor(implementation): FieldEditor | undefined {
+    if (implementation?.type === 'field_input') return {type: 'field_input'};
+    if (implementation?.type !== 'field_dropdown' || !Array.isArray(implementation.options) ||
+        !implementation.options.length) return;
+    const options: [string, string][] = [];
+    for (const option of implementation.options) {
+        if (!Array.isArray(option) || option.length !== 2 ||
+            typeof option[0] !== 'string' || typeof option[1] !== 'string') return;
+        options.push([option[0], option[1]]);
+    }
+    return {type: 'field_dropdown', options};
+}
+
+export function getCustomFields(category) {
+    const fields: {declaration: CustomField; definition: {type: string; [key: string]: unknown}}[] = [];
+    for (const {extendedName, fieldImplementation, scratchBlocksDefinition} of Object.values(category.customFieldTypes ?? {}) as {
+        extendedName: string; fieldImplementation: unknown; scratchBlocksDefinition?: {json: {type: string}}
+    }[]) {
+        if (!extendedName?.startsWith(`${category.id}_`) || scratchBlocksDefinition?.json?.type !== extendedName) continue;
+        const editor = readEditor(fieldImplementation);
+        if (editor) fields.push({declaration: {name: `field_${extendedName}`, editor}, definition: scratchBlocksDefinition.json});
+    }
+    return fields;
+}
+
+export function registerCustomFields(blocks, declarations: CustomField[]) {
+    const registry = blocks.Field?.TYPE_MAP_;
+    const registered = new Map();
+    if (registry) {
+        for (const {name, editor} of declarations) {
+            if (Object.hasOwn(registry, name)) continue;
+            const factory = {
+                fromJson() {
+                    if (editor.type === 'field_input') return new blocks.FieldTextInput('');
+                    // The native dropdown preserves a saved value even if it leaves the option list.
+                    return new blocks.FieldDropdown(editor.options.map(([label, value]) => [label, value]));
+                }
+            };
+            blocks.Field.register(name, factory);
+            registered.set(name, factory);
+        }
+    }
+    return () => {
+        for (const [name, factory] of registered) {
+            if (registry[name] === factory) delete registry[name];
+        }
+    };
+}
