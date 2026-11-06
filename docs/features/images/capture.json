@@ -58,6 +58,16 @@
       "minimap-current.png": "Default workspace with five test blocks added to illustrate the minimap."
     }
   },
+  "publicSpriteTabs": {
+    "date": "2026-11-06",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "7e7f4977ef877db31ad5dcba72b7936ca0be9686",
+    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
+    "image": "sprite-tabs-public.png",
+    "viewport": {"width": 1440, "height": 1000},
+    "crop": {"x": 0, "y": 47, "width": 750, "height": 130},
+    "note": "Two tabs after duplicating the starter sprite in the public Japanese Editor. The toolbar label is プロパティ・変数."
+  },
   "operationDetails": {
     "date": "2026-11-06",
     "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
