@@ -3,6 +3,9 @@ declare const TW_TEST_PARENT_DOCUMENT: boolean;
 declare const TW_TEST_NATIVE_CSS: boolean;
 declare const TW_TEST_PSEUDO_CSS: boolean;
 declare const TW_TEST_ANIMATION_CSS: boolean;
+declare const TW_TEST_LAYOUT_CSS: boolean;
+
+const useLayout = typeof TW_TEST_LAYOUT_CSS !== 'undefined' && TW_TEST_LAYOUT_CSS;
 
 declare const Scratch: {
     BlockType: {REPORTER: string};
@@ -87,6 +90,27 @@ if (TW_TEST_NATIVE_CSS && !document.getElementById('tw-test-native-field-css')) 
             }
         }
     `;
+    if (useLayout) sheet.textContent += `
+        .tw-test-caption-grid {
+            display: grid;
+            width: 360px;
+            grid-template-columns: 1fr 2fr;
+            grid-template-rows: auto auto;
+            gap: 12px 18px;
+            align-items: start;
+        }
+        .tw-test-caption-grid textarea { grid-column: 2; min-width: 0; }
+        .tw-test-caption-footer {
+            display: flex;
+            grid-column: 1 / span 2;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+        .tw-test-caption-footer span { flex: 1 1 0px; min-width: 0; }
+        .tw-test-caption-footer button { flex: 0 0 auto; }
+        .tw-test-unsupported-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+    `;
     document.head.append(sheet);
 }
 
@@ -170,7 +194,27 @@ Scratch.extensions.register({
                                 WidgetDiv.show(field, false);
                                 apply.addEventListener('click', () => commit(input.value));
                             }
-                            group.append(heading, input, apply);
+                            group.append(heading);
+                            if (useLayout) {
+                                const grid = document.createElement('div');
+                                grid.className = 'tw-test-caption-grid';
+                                grid.setAttribute('aria-label', 'Caption layout');
+                                const label = document.createElement('span');
+                                label.textContent = 'Caption';
+                                const footer = document.createElement('div');
+                                footer.className = 'tw-test-caption-footer';
+                                const hint = document.createElement('span');
+                                hint.textContent = 'Enter a caption';
+                                footer.append(hint, apply);
+                                grid.append(label, input, footer);
+                                const unsupported = document.createElement('div');
+                                unsupported.className = 'tw-test-unsupported-grid';
+                                unsupported.setAttribute('aria-label', 'Unsupported grid');
+                                unsupported.textContent = 'Plain text remains visible';
+                                group.append(grid, unsupported);
+                            } else {
+                                group.append(input, apply);
+                            }
                             if (TW_TEST_PARENT_DOCUMENT) {
                                 const link = document.createElement('a');
                                 link.href = '#parent-only';

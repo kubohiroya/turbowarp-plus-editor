@@ -176,3 +176,22 @@ node test/stage6/css-animation-fields.ts "$trial/build"
 再生時刻ごとの見た目、動きを減らす設定、共有 Undo／Redo、ドック復帰、SB3 再読込後の値と再生を確認する。
 ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で通過した。
 切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。
+
+### Flexbox・Grid の互換性試作
+
+`implementation.parentDocument = true` の固定構造の HTML フィールドで、`WidgetDiv` 内の
+許可した要素に Flexbox と Grid のレイアウト値を適用する。Flexbox は方向、折り返し、間隔、
+整列、子要素の伸縮率と基準幅を扱う。Grid は各軸8トラックまでの `px`・`fr`・`auto` のトラック、
+数値による配置とスパン、間隔と整列を扱う。Grid のトラックは親の計測幅に固定せず、別窓側で
+再計算する。拡張の実行と値の確定は親 VM 側で行う。
+
+対応外のグリッドテンプレートは、別窓では通常の要素配置で表示する。`repeat()`・`minmax()`・
+名前付きトラックや領域、暗黙トラックの寸法指定、CSS クエリによる別窓側でのルールの再評価、
+絶対配置・重なり・変形、ウィジェット本体のレイアウトは残課題。Grid のトラック取得には
+`computedStyleMap()` を使い、利用できない環境では通常の要素配置で表示する。
+
+上の手順でビルドした後、`node test/stage6/css-animation-fields.ts "$trial/build" --layout` を実行する。
+ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で、親と別窓の列幅・行間隔、
+Grid のスパン、Flexbox の整列、別窓内での幅変更による再計算、対応外 Grid の表示を確認した。
+編集と別ビューへの反映、共有 Undo／Redo、ドック復帰、SB3 再読込後の値とレイアウトも確認した。
+切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。

@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import {readFile, stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
 import {build, transform} from 'esbuild';
-import {chromium, type Page} from 'playwright';
+import {chromium, type Locator, type Page} from 'playwright';
 
 const directory = resolve(process.argv[2]);
+const layout = process.argv.includes('--layout');
 const origin = 'http://localhost:15107';
 const prefix = '/turbowarp-plus-editor/';
 const [driver, extension] = await Promise.all([
@@ -35,7 +36,7 @@ const [driver, extension] = await Promise.all([
     transform(await readFile(new URL('fixtures/native-extension.ts', import.meta.url), 'utf8'), {
         loader: 'ts', format: 'iife', define: {
             TW_TEST_NATIVE_SVG: 'false', TW_TEST_PARENT_DOCUMENT: 'true', TW_TEST_NATIVE_CSS: 'true',
-            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: 'true'
+            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout), TW_TEST_LAYOUT_CSS: String(layout)
         }
     })
 ]);
@@ -141,6 +142,63 @@ try {
     const widget = await openWidget(a);
     assert.equal(await a.locator('#tw-test-native-field-css').count(), 0);
     const group = widget.locator('fieldset');
+    const animation = layout ? undefined : await checkAnimation(group);
+    if (layout) {
+        await checkLayout(editor.locator('[data-tw-parent-document-caption] [aria-label="Caption layout"]'), false);
+        await checkLayout(widget.locator('[aria-label="Caption layout"]'), true);
+        const originalFallback = editor.locator('[data-tw-parent-document-caption] [aria-label="Unsupported grid"]');
+        assert.equal(await originalFallback.evaluate(node => getComputedStyle(node).display), 'grid');
+        const fallback = widget.locator('[aria-label="Unsupported grid"]');
+        assert.equal(await fallback.textContent(), 'Plain text remains visible');
+        assert.equal(await fallback.evaluate(node => getComputedStyle(node).display), 'block');
+    }
+
+    const edited = '改訂<&>';
+    await widget.getByRole('textbox', {name: 'Caption'}).fill(edited);
+    await widget.getByRole('button', {name: 'Apply caption'}).click();
+    await widget.waitFor({state: 'detached'});
+    if (animation) assert.equal(await animation.evaluate(effect => effect.playState), 'idle');
+    await checkValue(edited, [a, b]);
+    await focus(b);
+    await b.locator('#undo').click();
+    await checkValue('original', [a, b]);
+    await focus(a);
+    await a.locator('#redo').click();
+    await checkValue(edited, [a, b]);
+    await dock(a);
+    await dock(b);
+    await focus(editor);
+    await editor.evaluate(async name => {
+        await window.vm.loadProject(await (await window.vm.saveProjectSb3()).arrayBuffer());
+        const target = window.vm.runtime.targets.find(item => item.getName() === name);
+        window.vm.setEditingTarget(target.id);
+    }, sprite);
+    await checkValue(edited, [editor]);
+    const reopened = await open();
+    await focus(reopened);
+    const restored = await openWidget(reopened);
+    assert.equal(await restored.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
+    if (layout) {
+        await checkLayout(restored.locator('[aria-label="Caption layout"]'), true);
+    } else {
+        assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 1);
+        await reopened.emulateMedia({reducedMotion: 'reduce'});
+        await reopened.waitForFunction(() => document.querySelector('[data-plus-native-field] fieldset').getAnimations().length === 0);
+        await reopened.keyboard.press('Escape');
+        await restored.waitFor({state: 'detached'});
+        await openWidget(reopened);
+        assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 0);
+    }
+    await dock(reopened);
+    assert.deepEqual(errors, []);
+    const displayCheck = layout ? 'Grid tracks and spans, Flexbox alignment and gaps, popup reflow' :
+        'popup keyframes, resource filtering, reduced motion';
+    console.log(`Chromium ${browser.version()}: ${displayCheck}, shared edit/Undo/Redo, docking and SB3 reload passed.`);
+} finally {
+    await browser.close();
+}
+
+async function checkAnimation(group: Locator) {
     const animation = await group.evaluateHandle(node => node.getAnimations()[0]);
     const samples = await group.evaluate(async node => {
         const [effect] = node.getAnimations();
@@ -163,42 +221,52 @@ try {
     ]);
     assert.equal(samples.values[2].opacity, '0.65');
     assert.ok(samples.values.every(value => value.transform === 'none' && value.backgroundImage === 'none'));
+    return animation;
+}
 
-    const edited = '改訂<&>';
-    await widget.getByRole('textbox', {name: 'Caption'}).fill(edited);
-    await widget.getByRole('button', {name: 'Apply caption'}).click();
-    await widget.waitFor({state: 'detached'});
-    assert.equal(await animation.evaluate(effect => effect.playState), 'idle');
-    await checkValue(edited, [a, b]);
-    await focus(b);
-    await b.locator('#undo').click();
-    await checkValue('original', [a, b]);
-    await focus(a);
-    await a.locator('#redo').click();
-    await checkValue(edited, [a, b]);
-    await dock(a);
-    await dock(b);
-    await focus(editor);
-    await editor.evaluate(async name => {
-        await window.vm.loadProject(await (await window.vm.saveProjectSb3()).arrayBuffer());
-        const target = window.vm.runtime.targets.find(item => item.getName() === name);
-        window.vm.setEditingTarget(target.id);
-    }, sprite);
-    await checkValue(edited, [editor]);
-    const reopened = await open();
-    await focus(reopened);
-    const restored = await openWidget(reopened);
-    assert.equal(await restored.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
-    assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 1);
-    await reopened.emulateMedia({reducedMotion: 'reduce'});
-    await reopened.waitForFunction(() => document.querySelector('[data-plus-native-field] fieldset').getAnimations().length === 0);
-    await reopened.keyboard.press('Escape');
-    await restored.waitFor({state: 'detached'});
-    await openWidget(reopened);
-    assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 0);
-    await dock(reopened);
-    assert.deepEqual(errors, []);
-    console.log(`Chromium ${browser.version()}: popup keyframes, resource filtering, reduced motion, shared edit/Undo/Redo, docking and SB3 reload passed.`);
-} finally {
-    await browser.close();
+async function checkLayout(grid: Locator, mirrored: boolean) {
+    const geometry = await grid.evaluate((node: HTMLElement, mirrored) => {
+        const [label, input, footer] = node.children;
+        const [hint, apply] = footer.children;
+        const bounds = (element: Element) => element.getBoundingClientRect();
+        const gridStyle = getComputedStyle(node);
+        const footerStyle = getComputedStyle(footer);
+        const result = {
+            display: gridStyle.display, columns: gridStyle.gridTemplateColumns, width: bounds(node).width,
+            labelStart: bounds(label).left - bounds(node).left,
+            inputStart: bounds(input).left - bounds(node).left,
+            rowGap: bounds(footer).top - bounds(input).bottom,
+            footerWidth: bounds(footer).width,
+            footerDisplay: footerStyle.display, wrap: footerStyle.flexWrap, align: footerStyle.alignItems,
+            footerGap: bounds(apply).left - bounds(hint).right,
+            buttonInset: bounds(footer).right - bounds(apply).right,
+            backgroundImage: getComputedStyle(input).backgroundImage,
+            declaredColumns: node.style.gridTemplateColumns,
+            resizedColumns: ''
+        };
+        if (mirrored) {
+            const width = node.style.width;
+            node.style.width = '300px';
+            result.resizedColumns = getComputedStyle(node).gridTemplateColumns;
+            node.style.width = width;
+        }
+        return result;
+    }, mirrored);
+    assert.equal(geometry.display, 'grid');
+    assert.equal(geometry.columns, '114px 228px');
+    assert.equal(geometry.width, 360);
+    assert.equal(geometry.labelStart, 0);
+    assert.equal(geometry.inputStart, 132);
+    assert.equal(geometry.rowGap, 12);
+    assert.equal(geometry.footerWidth, 360);
+    assert.deepEqual([geometry.footerDisplay, geometry.wrap, geometry.align], ['flex', 'wrap', 'center']);
+    assert.equal(geometry.footerGap, 12);
+    assert.equal(geometry.buttonInset, 0);
+    if (mirrored) {
+        assert.equal(geometry.declaredColumns, '1fr 2fr');
+        assert.equal(geometry.resizedColumns, '94px 188px');
+        assert.equal(geometry.backgroundImage, 'none');
+    } else {
+        assert.match(geometry.backgroundImage, /data:image\/svg\+xml/);
+    }
 }
