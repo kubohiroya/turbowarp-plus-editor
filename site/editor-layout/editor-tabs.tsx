@@ -136,13 +136,15 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
     const tabAction = showUndock && title && <div className={`${styles.tabAction} ${styles.openWindowAction}`} ref={action}>
         <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
     </div>;
+    const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
+        <div className={styles.tabRow}>{tabs}{tabAction}</div>;
     const spriteTabs = useSpriteTabs({
         available: dockviewSpriteTabsEnabled, enabled: workspaceEnabled && dockviewSpriteTabsEnabled,
         vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
         activateSection: onActivateEditorTab,
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, stagePane: stage?.pane, activeTools: tabAction, viewAdapter: codePaneAdapter,
+            multiView, stagePane: stage?.pane, activeTools: renderEditorTabRow(null), viewAdapter: codePaneAdapter,
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             writeVariable(id, variableId, value) {
@@ -169,9 +171,6 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
         return assetSelection && React.isValidElement<{assetSelection?: typeof assetSelection}>(child) ?
             React.cloneElement(child, {assetSelection}) : child;
     };
-
-    const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
-        <div className={styles.tabRow}>{tabs}{tabAction}</div>;
 
     const content = render({...layout,
         renderEditorTabRow: tabs => {

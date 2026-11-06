@@ -90,6 +90,9 @@ test('the removed switches turned off change nothing and nothing is fetched befo
     await dialog.getByRole('textbox', {name: 'HTTPS URL', exact: true}).fill(sourceURL);
     await expect(dialog.getByRole('button', {name: '取得してプレビュー', exact: true})).toBeVisible();
     await dialog.getByRole('button', {name: 'キャンセル', exact: true}).click();
+    const confirmation = page.getByRole('dialog', {name: '変更を保存して文書を閉じますか？', exact: true});
+    await expect(confirmation.getByRole('button', {name: '保存して閉じる', exact: true})).toBeDisabled();
+    await confirmation.getByRole('button', {name: '破棄して閉じる', exact: true}).click();
     await expect(dialog).toBeHidden();
     expect(requests).toEqual([]);
     expect(await project(page)).toBe(before);
