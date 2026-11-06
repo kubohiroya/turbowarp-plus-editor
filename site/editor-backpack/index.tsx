@@ -29,7 +29,7 @@ function WebBackpackSurface({setExpanded, ...props}: Pick<
             openLabel={getBackpackOpenLabel(locale)} launchClassName={styles.backpackActions}
             renderLaunchButton={button => <span className={styles.openWindowAction}><OpenWindowButton {...button} /></span>} />
     </div>;
-    return plusLayout ? <layoutViews.EdgeDrawer edge="bottom" onOpenChange={setOpen}
+    return plusLayout ? <layoutViews.EdgeDrawer edge="bottom" onOpenChange={setOpen} holdOpenSelector={undefined}
         label={/^ja(?:-|$)/i.test(locale) ? 'バックパックを展開' : 'Reveal Backpack'}>{content}</layoutViews.EdgeDrawer> : content;
 }
 
