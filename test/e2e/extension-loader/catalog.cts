@@ -65,7 +65,9 @@ const form = (page, spec, distribution = spec.distribution) =>
 
 // The menu labels are the GUI's. The tests run in Japanese unless they name the English label.
 async function openExtensionLibrary(page, fileLabel = 'ファイル', addLabel = '機能拡張の追加') {
-    await page.getByText(fileLabel, {exact: true}).click();
+    // The menu text is hidden at phone widths, while its icon remains clickable.
+    await page.locator('[class*="menu-bar_menu-bar-item_"]')
+        .filter({has: page.getByText(fileLabel, {exact: true})}).click();
     await page.getByRole('button', {name: addLabel, exact: true}).click();
 }
 
