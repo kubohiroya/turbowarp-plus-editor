@@ -1,6 +1,6 @@
 import React from 'react';
 import {SpritePropertiesPanel as Panel, spritePropertiesTitle} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
-import {layoutFlags, layoutViews} from '../../editor-layout/index.tsx';
+import {dockviewMultiViewEnabled, layoutFlags, layoutViews} from '../../editor-layout/index.tsx';
 import {BasicPanel} from '../../editor-layout/basic-panel.tsx';
 import {createDesktopPanelHost} from '../../editor-layout/desktop-panel-host.ts';
 import {decorateSurface} from '../../editor-backpack/surface-styles.ts';
@@ -12,7 +12,7 @@ export function SpritePropertiesPanel({fallback, ...props}: React.ComponentProps
     const title = spritePropertiesTitle(props.locale ?? 'en');
     const panel = renderDockHeading => <BasicPanel id="sprite-properties" title={title} externalHost={desktopPopout}
         decorate={decorateSurface} renderDockHeading={renderDockHeading} renderInExternalDocument><Panel {...props} /></BasicPanel>;
-    return <SpritePropertiesSection fallback={layoutFlags.spriteProperties ? panel(undefined) : fallback}>
+    return <SpritePropertiesSection inEditor={dockviewMultiViewEnabled} fallback={layoutFlags.spriteProperties ? panel(undefined) : fallback}>
         {panel(action => action)}
     </SpritePropertiesSection>;
 }

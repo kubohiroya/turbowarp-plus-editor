@@ -191,6 +191,20 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
             multiView, layoutStorage, stagePane: stage?.pane, activeTools: renderEditorTabRow(null), viewAdapter: codePaneAdapter,
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
+            getProperties(id) {
+                const target = vm.runtime.getTargetById(id);
+                if (!target || target.isStage) return;
+                const {x, y, size, direction, visible, rotationStyle} = target;
+                return {name: target.getName(), x, y, size, direction, visible, rotationStyle};
+            },
+            writeProperties(id, {name, ...patch}) {
+                const target = vm.runtime.getTargetById(id);
+                if (!target || target !== vm.editingTarget || target.isStage || (vm._dragTarget && vm._dragTarget !== target)) return;
+                if (name !== undefined) {
+                    const trimmed = name.trim();
+                    if (trimmed && trimmed !== target.getName()) vm.renameSprite(id, trimmed);
+                } else vm.postSpriteInfo(patch);
+            },
             writeVariable(id, variableId, value) {
                 const target = vm.runtime.getTargetById(id);
                 const stage = vm.runtime.getTargetForStage();

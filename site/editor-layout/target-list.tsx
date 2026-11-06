@@ -1,4 +1,5 @@
 import React from 'react';
+import {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 import {createPortal} from 'react-dom';
 import {BasicPanel} from './basic-panel.tsx';
 import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.ts';
@@ -32,7 +33,10 @@ const targetListEnabled = layoutFlags.targetList || layoutFlags.standardLayout;
 export const TargetListLayout = targetListEnabled ?
     props => <layoutViews.TargetLayout {...props} compact={layoutFlags.targetList} /> : undefined;
 export const TargetListPanel = targetListEnabled ? DockableTargetList : undefined;
-export const SpriteGrid = targetListEnabled ? layoutViews.SpriteGrid : undefined;
+export const SpriteGrid = targetListEnabled ? function HostedSpriteGrid(props) {
+    const commands = useSpriteCodeWindows();
+    return <layoutViews.SpriteGrid {...props} onRename={commands?.rename} />;
+} : undefined;
 export const BackdropTile = targetListEnabled ? layoutViews.BackdropTile : undefined;
 export const BackdropListActions = targetListEnabled ?
     props => <layoutViews.BackdropActions {...props} compact={layoutFlags.targetList} /> : undefined;
