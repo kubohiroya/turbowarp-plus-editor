@@ -30,11 +30,10 @@ for (const name of requiredFamilyPackages) {
     assert.ok(family.packages.some(entry => entry.package === name), `Bundled family package without notices: ${name}`);
 }
 const lock = JSON.parse(await fs.readFile(new URL('../../package-lock.json', import.meta.url), 'utf8'));
-if (pins.spritePropertiesPackage) {
-    const properties = family.packages.find(entry => entry.package === pins.spritePropertiesPackage);
-    assert.equal(properties?.version, pins.spritePropertiesVersion);
-    assert.equal(properties.source.integrity, pins.spritePropertiesIntegrity);
-}
+const layout = '@kubohiroya/turbowarp-plus-editor-layout';
+const layoutVersion = lock.packages[`node_modules/${layout}`]?.version;
+assert.ok(layoutVersion && family.packages.some(entry => entry.package === layout && entry.version === layoutVersion),
+    `Bundled family package without notices: ${layout}`);
 for (const entry of family.packages) {
     const installed = lock.packages[`node_modules/${entry.package}`];
     if (installed?.resolved?.startsWith('file:vendor/') && installed.version === entry.version) {

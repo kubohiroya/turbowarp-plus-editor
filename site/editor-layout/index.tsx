@@ -4,8 +4,8 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-layout/standard-layout';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import targetStyles from '@kubohiroya/turbowarp-plus-editor-layout/targets.css';
-import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-editor-windows';
-import '@kubohiroya/turbowarp-editor-windows/styles.css';
+import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
+import '@kubohiroya/turbowarp-plus-editor-layout/windows.css';
 import {EditorTabLayout} from './editor-tabs.tsx';
 import {StageDisplayMenuContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';

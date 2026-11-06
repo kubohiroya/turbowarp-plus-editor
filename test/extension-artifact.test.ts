@@ -100,8 +100,8 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         assert.match(check().stderr, /Bundled family package without notices/);
         family.packages.push(vmNotice);
         await writeFamily();
-        const properties = family.packages.find(entry => entry.package === pins.spritePropertiesPackage);
-        const sourceArchive = path.join(directory, properties.source.tarball);
+        const layout = family.packages.find(entry => entry.package === '@kubohiroya/turbowarp-plus-editor-layout');
+        const sourceArchive = path.join(directory, layout.source.tarball);
         const originalArchive = await fs.readFile(sourceArchive);
         await fs.appendFile(sourceArchive, 'unreviewed replacement');
         assert.match(check().stderr, /Source archive differs from the pin/);

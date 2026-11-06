@@ -118,27 +118,10 @@ Plus 標準配置では既定で、ファイルメニューの項目にアイコ
 
 項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu` が担当する。Editor は Scratch GUI #170 で提供された接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。拡張カタログの画面操作はデスクトップ幅で検証する。
 
-## Issue #175 スプライト設定パネルの任意接続
+## 別窓ステージ入力とスプライト設定の接続
 
-設定フォームとスタイルは独立パッケージ `@kubohiroya/turbowarp-editor-sprite-properties` に置く。Editor は `site/source.json` のパッケージ名・版・ソースコミットと、`vendor/` のローカル配布用 tarball を固定する。サイトのソース検証では、manifest と lockfile の相対パス、tarball の SHA-512、インストール済みの JavaScript と CSS の SHA-512 を照合する。Editor は起動時に既定 OFF の `twPlusSpriteProperties=1` を読み、パネルを既存の GUI 接続口に渡す。GUI は既存の選択情報・VM 更新経路を利用する。パネルと一覧は最小ドック内でそれぞれスクロールできる。
+独立した `@kubohiroya/turbowarp-plus-editor-layout` が、別窓ステージの入力管理、スプライト設定フォーム、ウィンドウ部品とスタイルを提供する。Editor は起動設定と表示先を接続する。`site/source.json` の GUI 固定先は、Scratch GUI #172 の接続変更を含む `a8fcdd7a2`。スプライト設定は Plus 配置または起動オプション `twPlusSpriteProperties=1` から利用できる。
 
-Editor 側の `npm ci` で、同梱 tarball が `node_modules` に展開される。独立パッケージの作業ディレクトリを参照する環境変数は不要。既定 OFF と ON のドック動作をローカルで検証する。
+`package.json` と `package-lock.json` は layout 0.1.2 の同梱アーカイブと SHA-512 を固定する。アーカイブは独立リポジトリのコミット `835ab558ca7ca2054bfd0f89b948e28f3cd12804` から `npm ci` と `npm pack` で再生成できる。配信時は `notices/family.json` にライセンスと同梱ソースを記録する。
 
-```sh
-# Editor の作業ツリー
-npm ci
-node --test test/sprite-properties-source.test.ts test/family-notices.test.ts
-editor_root="$PWD"
-# GUI の作業ツリーは site/source.json に固定されたコミットを用意する
-cd ../gui-sprite175
-CI=1 E2E_GUI_ROOT="$PWD" DISABLE_V8_COMPILE_CACHE=1 node node_modules/webpack/bin/webpack.js \
-  --config "$editor_root/scripts/site/webpack.config.cts" --output-path /private/tmp/tw175-host-build --bail
-cd "$editor_root"
-node test/sprite-properties/dock.ts /private/tmp/tw175-host-build
-```
-
-tarball の再現には、`spritePropertiesRevision` に固定した独立パッケージをクリーンなディレクトリへ展開し、そこで `npm ci`、`npm pack` を実行する。生成した tarball と Editor の固定ファイルを `cmp` で比較する。正式な npm 依存へ切り替える際は公開済みの版と integrity を確認する。
-
-独立パッケージは `GPL-3.0-or-later` を宣言し、`LICENSE`、ソース、ビルドスクリプトを同梱する。配信ビルドは `notices/family.json` にライセンスとソースアーカイブを記録する。ローカル tarball の SHA-512 を照合し、配信成果物の `notices/` にそのまま収録する。
-
-切り戻す場合は URL の `twPlusSpriteProperties=1` を外して再起動する。通常の設定欄に戻り、作品へ確定済みの変更は残る。配布依存も切り戻す場合は、パネル取り付けと配布成果物・依存固定を追加前の版へ戻す。
+`node --test test/layout-package.test.ts test/family-notices.test.ts test/extension-artifact.test.ts` で固定と配信情報を検証する。ドックと別窓の入力は `test/editor-layout.browser.ts` が検証する。切り戻す場合はこの組み込み変更を revert する。作品の保存形式は共通。

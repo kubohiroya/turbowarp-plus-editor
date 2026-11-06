@@ -2,7 +2,7 @@ import React from 'react';
 import {createPortal, flushSync} from 'react-dom';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import type {SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
-import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-editor-windows';
+import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import {WindowLayoutContext} from './index.tsx';
 import {PopupLayout} from './popup-layout.tsx';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';

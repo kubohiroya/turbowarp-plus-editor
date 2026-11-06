@@ -40,26 +40,6 @@ const injections = {
     __TW_PLUS_FILE_UPLOADER__: path.join(gui, 'src', 'lib', 'file-uploader.js'),
     __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json')
 };
-const {spritePropertiesPackage, spritePropertiesVersion} = rootRequire('./site/source.json');
-if (spritePropertiesPackage) {
-    const spriteProperties = path.join(__dirname, '..', '..', 'node_modules', spritePropertiesPackage);
-    const manifest = JSON.parse(fs.readFileSync(path.join(spriteProperties, 'package.json'), 'utf8'));
-    if (manifest.name !== spritePropertiesPackage || manifest.version !== spritePropertiesVersion) {
-        throw new Error('Sprite properties package differs from the source pin');
-    }
-    const css = fs.realpathSync(path.join(spriteProperties, manifest.exports['./styles.css']));
-    const entry = fs.realpathSync(path.join(spriteProperties, manifest.module));
-    config.resolve.alias[`${spritePropertiesPackage}$`] = entry;
-    config.resolve.alias[`${spritePropertiesPackage}/styles.css$`] = css;
-    // The standalone package publishes global class names alongside its React entry.
-    const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
-    cssModules.exclude = css;
-    config.module.rules.push({test: /\.css$/, include: css,
-        use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
-    Object.assign(injections, {__TW_SPRITE_PROPERTIES_PANEL__: [
-        path.join(path.dirname(bridge), 'lib', 'tw-sprite-properties-panel.tsx'), 'SpritePropertiesPanel'
-    ]});
-}
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 // Resolve shared packages to the host's copies, once.
 //
@@ -104,9 +84,9 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-window
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.css', 'sprite-editor-toolbar.css',
-    'sprite-properties.css'];
+    'sprite-properties.css', 'windows.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
-    'sprite-properties', 'sprite-tabs', 'dockview-styles']) {
+    'sprite-properties', 'sprite-tabs', 'dockview-styles', 'windows']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -141,12 +121,10 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
     {from: path.join(path.dirname(dockviewRequire.resolve('dockview-core/package.json')), 'LICENCE.md'),
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
-const windowStyles = rootRequire.resolve('@kubohiroya/turbowarp-editor-windows/styles.css');
-config.resolve.alias['@kubohiroya/turbowarp-editor-windows/styles.css$'] = windowStyles;
 const globalLayoutStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
-cssModules.exclude = [cssModules.exclude, windowStyles, dockviewStyles, ...globalLayoutStyles].filter(Boolean);
-config.module.rules.push({test: /\.css$/, include: [windowStyles, dockviewStyles, ...globalLayoutStyles],
+cssModules.exclude = [cssModules.exclude, dockviewStyles, ...globalLayoutStyles].filter(Boolean);
+config.module.rules.push({test: /\.css$/, include: [dockviewStyles, ...globalLayoutStyles],
     use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
 config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
