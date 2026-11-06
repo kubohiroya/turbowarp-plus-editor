@@ -17,11 +17,13 @@ function fixture(receiveBackpackDrop) {
         addChangeListener() {},
         removeChangeListener() {}
     };
+    const stage = {variables: {}};
     const makeTarget = id => {
         const blocks = {
-            _blocks: {block: {x: 0, reference: 'first'}},
+            _blocks: {block: {x: 0, reference: 'first'}} as Record<string, any>,
             _scripts: ['block'],
             getScripts() {return this._scripts;},
+            getBlock(id) {return this._blocks[id];},
             toXML() {return '';},
             blocklyListen(event) {this._blocks.block.x = event.newCoordinate.x;},
             updateAssetName(before, after) {
@@ -30,7 +32,8 @@ function fixture(receiveBackpackDrop) {
             resetCache() {},
             emitProjectChanged() {}
         };
-        return {id, name: id, isOriginal: true, blocks, variables: {}, comments: {}, getName() {return this.name;}};
+        return {id, name: id, isOriginal: true, blocks, variables: {}, comments: {},
+            lookupVariableById(id) {return this.variables[id] ?? stage.variables[id];}, getName() {return this.name;}};
     };
     const target = makeTarget('first');
     const other = makeTarget('other');
@@ -38,7 +41,7 @@ function fixture(receiveBackpackDrop) {
         editingTarget: target,
         runtime: {
             targets: [target, other],
-            getTargetForStage: () => ({variables: {}}),
+            getTargetForStage: () => stage,
             getTargetById: id => [target, other].find(sprite => sprite.id === id),
             getEditingTarget: () => vm.editingTarget
         },
@@ -151,6 +154,59 @@ test('comment edits use the active target and restore serializable comments in t
     edit('late', 'stale draft');
     assert.equal(Object.hasOwn(target.comments, 'late'), false);
     assert.deepEqual(other.comments, {});
+    session.dispose();
+});
+
+test('scalar reference edits stay in scope and rejected batches preserve shared history', () => {
+    const {session, connect, target, other, vm} = fixture();
+    const scalar = {name: 'counter', type: '', toXML: () => ''};
+    Object.assign(vm.runtime.getTargetForStage().variables, {global: scalar});
+    Object.assign(target.variables, {mine: scalar, list: {...scalar, type: 'list'}});
+    Object.assign(other.variables, {foreign: scalar});
+    const reporter = (id, value = scalar.name) => ({opcode: 'data_variable', fields: {VARIABLE: {id, value}}});
+    target.blocks._blocks.block = reporter('global');
+    target.blocks._blocks.legacy = reporter('deleted');
+    target.blocks.blocklyListen = function (event) {
+        if (event.type === 'create') {
+            const [id, name] = event.xml.outerHTML.split(':');
+            this._blocks[event.blockId] = reporter(id, name);
+        } else {
+            this._blocks[event.blockId].fields.VARIABLE.id = event.newValue;
+        }
+    };
+
+    const child = connect(target);
+    const mirror = connect(target);
+    child.focus();
+    const {lease} = child.messages.at(-1);
+    const send = (...events) => child.send({type: 'edits', lease, targetId: target.id, events});
+    const change = (newValue, blockId = 'block') => ({type: 'change', element: 'field', blockId,
+        name: 'VARIABLE', newValue});
+    const create = xml => ({type: 'create', blockId: 'new', xml});
+    const field = () => target.blocks.getBlock('block').fields.VARIABLE.id;
+    const step = redo => child.send({type: 'step', lease, targetId: target.id, redo});
+
+    for (const edits of [[change('foreign')], [change('list')],
+        [change('mine'), create('foreign:counter')], [create('mine:stale')],
+        [create('mine:counter'), change('foreign', 'new')]]) {
+        send(...edits);
+        assert.equal(field(), 'global');
+        assert.equal(target.blocks.getBlock('new'), undefined);
+        assert.equal(child.messages.at(-1).canUndo, false);
+    }
+
+    send(change('mine'), create('mine:counter'));
+    assert.equal(field(), 'mine');
+    assert.equal(target.blocks.getBlock('new').fields.VARIABLE.id, 'mine');
+    assert.equal(target.blocks.getBlock('legacy').fields.VARIABLE.id, 'deleted');
+    assert.equal(mirror.messages.at(-1).canUndo, true);
+    step(false);
+    assert.equal(field(), 'global');
+    assert.equal(target.blocks.getBlock('new'), undefined);
+    step(true);
+    assert.equal(field(), 'mine');
+    assert.equal(target.blocks.getBlock('new').fields.VARIABLE.id, 'mine');
+    assert.equal(other.blocks.getBlock('new'), undefined);
     session.dispose();
 });
 
