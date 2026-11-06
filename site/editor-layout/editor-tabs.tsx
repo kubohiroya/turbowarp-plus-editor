@@ -12,7 +12,7 @@ import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
-import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {BackCodeWindows, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
 const thumbnails = new WeakMap<object, string>();
@@ -61,6 +61,7 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
     const host = useWindowHost();
     const {plusLayout} = React.useContext(WindowLayoutContext);
     const multiView = plusLayout && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
+    const codePaneAdapter = React.useMemo(() => createCodePaneAdapter(vm, locale), [vm, locale]);
     const code = useCodeWindows({vm, host, locale,
         enabled: !multiView && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
@@ -137,7 +138,7 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
         activateSection: onActivateEditorTab,
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, activeTools: tabAction,
+            multiView, activeTools: tabAction, viewAdapter: codePaneAdapter,
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             writeVariable(id, variableId, value) {

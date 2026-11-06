@@ -1072,3 +1072,72 @@ test('the Dockview asset connection restores the native costume and sound select
     assert.equal(await page.evaluate(() => window.vm.editingTarget.variables['dockview-counter'].value), 23);
     assert.deepEqual(errors, []);
 });
+
+test('two Dockview code panes keep independent positions and zoom for the same sprite', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    const targetId = await page.evaluate(() => window.vm.editingTarget.id);
+    await page.evaluate(() => {
+        const blocks = window.ScratchBlocks;
+        const xml = blocks.Xml.textToDom('<xml><block id="pane-block" type="looks_show" x="420" y="360"/>' +
+            '<block id="pane-distant-block" type="looks_hide" x="980" y="860"/></xml>');
+        blocks.Xml.domToWorkspace(xml, blocks.getMainWorkspace());
+        blocks.Events.fireNow_();
+    });
+
+    const groups = page.locator('.dv-groupview');
+    const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
+    const preview = (group: number) => groups.nth(group).getByRole('button', {name: 'Edit code in this pane'});
+    const canvas = (scope: ReturnType<typeof page.locator>) =>
+        scope.locator('.blocklyBlockCanvas').filter({has: page.locator('[data-id="pane-block"]')});
+    const readViewport = (scope: ReturnType<typeof page.locator>) => canvas(scope).evaluate(node => {
+        const {a, e, f} = (node as SVGGraphicsElement).transform.baseVal.consolidate().matrix;
+        return [Math.round(e), Math.round(f), Math.round(a * 100)];
+    });
+    const setViewport = (scale: number, x: number, y: number) => page.evaluate(({scale, x, y}) => {
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        workspace.setScale(scale);
+        const metrics = workspace.getMetrics();
+        workspace.scrollbar.set(metrics.absoluteLeft - x - metrics.contentLeft,
+            metrics.absoluteTop - y - metrics.contentTop);
+    }, {scale, x, y});
+    await expect(canvas(editor)).toBeVisible();
+    await groups.first().getByRole('button', {name: 'Editor panel layout'}).click();
+    await page.getByRole('menuitem', {name: 'Split right'}).click();
+    await expect(groups).toHaveCount(2);
+    await expect(preview(0)).toBeVisible();
+
+    await setViewport(1.1, -247, -189);
+    const right = await readViewport(editor);
+    await preview(0).click();
+    await expect(preview(1)).toBeVisible();
+    await setViewport(0.75, -85, -46);
+    const left = await readViewport(editor);
+    assert.notEqual(left[0], right[0]);
+    assert.notEqual(left[1], right[1]);
+    assert.notEqual(left[2], right[2]);
+    await expect.poll(() => readViewport(preview(1))).toEqual(right);
+
+    await preview(1).press('Enter');
+    await expect.poll(() => readViewport(editor)).toEqual(right);
+    await expect.poll(() => readViewport(preview(0))).toEqual(left);
+    await page.evaluate(() => {
+        const blocks = window.ScratchBlocks;
+        const xml = blocks.Xml.textToDom('<xml><block id="pane-added-block" type="looks_show" x="450" y="380"/></xml>');
+        blocks.Xml.domToWorkspace(xml, blocks.getMainWorkspace());
+        blocks.Events.fireNow_();
+    });
+    await expect(preview(0).locator('[data-id="pane-added-block"]')).toBeAttached();
+
+    await preview(0).click();
+    await expect.poll(() => readViewport(editor)).toEqual(left);
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    await toolbar.getByRole('tab', {name: 'Costumes', exact: true}).click();
+    await toolbar.getByRole('tab', {name: 'Code', exact: true}).click();
+    await expect.poll(() => readViewport(editor)).toEqual(left);
+    assert.equal(await page.evaluate(() => window.vm.editingTarget.id), targetId);
+    assert.deepEqual(errors, []);
+});
