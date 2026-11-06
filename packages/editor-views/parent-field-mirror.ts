@@ -3,6 +3,34 @@ const elements = new Set(['div', 'span', 'p', 'fieldset', 'legend', 'label', 'te
 const inputTypes = new Set(['text', 'number', 'range']);
 const attributes = ['aria-label', 'title', 'placeholder', 'min', 'max', 'step', 'maxlength'];
 
+const sides = ['top', 'right', 'bottom', 'left'];
+const colors = ['color', 'background-color', ...sides.map(side => `border-${side}-color`)];
+const lengths = ['font-size', 'line-height', ...sides.flatMap(side => [`padding-${side}`, `border-${side}-width`]),
+    'border-top-left-radius', 'border-top-right-radius', 'border-bottom-right-radius', 'border-bottom-left-radius'];
+const borderStyles = sides.map(side => `border-${side}-style`);
+const typography = ['font-family', 'font-style', 'font-weight'];
+const length = /^\d+(?:\.\d+)?px$/;
+const color = /^(?:#[\da-f]{3,8}|[a-z]+|rgba?\([\d.,%\s]+\))$/i;
+
+function mirrorAppearance(original: HTMLElement, proxy: HTMLElement) {
+    const computed = original.ownerDocument.defaultView?.getComputedStyle(original);
+    if (!computed) return;
+    const copy = (name: string, accept: (value: string) => boolean) => {
+        const value = computed.getPropertyValue(name);
+        const safe = value.length <= 128 && accept(value) ? value : '';
+        if (proxy.style.getPropertyValue(name) !== safe) proxy.style.setProperty(name, safe);
+    };
+    for (const name of colors) copy(name, value => color.test(value));
+    for (const name of lengths) copy(name, value => (name === 'line-height' && value === 'normal') ||
+        (length.test(value) && Number.parseFloat(value) <= 128));
+    for (const name of borderStyles) copy(name, value => /^(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset)$/.test(value));
+    for (const name of typography) copy(name, value => {
+        if (name === 'font-family') return /^[\w ,'"-]+$/.test(value);
+        if (name === 'font-style') return /^(normal|italic|oblique)$/.test(value);
+        return /^(normal|bold|[1-9]00)$/.test(value);
+    });
+}
+
 type TextControl = HTMLInputElement | HTMLTextAreaElement;
 
 /** The parent's widget remains authoritative, including its document-level handlers. */
@@ -28,7 +56,10 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
         if (tag === 'input' && !inputTypes.has((original as HTMLInputElement).type)) return;
         if (tag === 'button' && (original as HTMLButtonElement).form && (original as HTMLButtonElement).type !== 'button') return;
         const proxy = host.ownerDocument.createElement(tag);
-        sync.push(() => {proxy.hidden = original.hidden;});
+        sync.push(() => {
+            proxy.hidden = original.hidden;
+            mirrorAppearance(original, proxy);
+        });
         for (const name of attributes) {
             const value = original.getAttribute(name);
             if (value !== null) proxy.setAttribute(name, value.slice(0, 1024));

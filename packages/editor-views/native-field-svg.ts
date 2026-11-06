@@ -4,6 +4,8 @@ const numbers = /^[\d.eE+,%\s-]+$/;
 const geometry = new Set(['x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'cx', 'cy', 'r', 'rx', 'ry', 'dx', 'dy',
     'points', 'stroke-width', 'opacity', 'fill-opacity', 'stroke-opacity', 'font-size']);
 const paint = /^(?:#[\da-f]{3,8}|[a-z]+|rgba?\([\d.,%\s]+\))$/i;
+const svgPaint = ['fill', 'stroke', 'stroke-width', 'opacity', 'fill-opacity', 'stroke-opacity'];
+const svgTypography = ['font-size', 'font-family', 'font-weight', 'font-style'];
 const textStyle = new Set(['text-anchor', 'dominant-baseline', 'alignment-baseline', 'font-weight', 'font-style']);
 
 type Drawing = {tag: string; attributes: [string, string][]; children: (Drawing | string)[]};
@@ -17,7 +19,7 @@ function safeAttribute(name: string, value: string) {
     if (name === 'fill' || name === 'stroke') return paint.test(value);
     if (name === 'd') return /^[\d.aAcCeEhHlLmMqQsStTvVzZ+,\s-]+$/.test(value);
     if (name === 'transform') return /^(?:(?:matrix|translate|scale|rotate|skewX|skewY)\([\d.eE+,\s-]+\)[\s,]*)+$/.test(value);
-    if (name === 'font-family') return /^[\w ,'-]+$/.test(value);
+    if (name === 'font-family') return /^[\w ,'"-]+$/.test(value);
     return textStyle.has(name) && /^[\w-]+$/.test(value);
 }
 
@@ -32,13 +34,19 @@ export function captureNativeFieldDrawing(root: SVGGraphicsElement): Pick<Native
         for (const {name, value} of element.attributes) {
             if ((depth || name !== 'transform') && safeAttribute(name, value)) attributes.push([name, value]);
         }
-        // The native Blockly text class has a window-local stylesheet.
-        if (tag === 'text' || tag === 'tspan') {
-            const style = element.ownerDocument.defaultView?.getComputedStyle(element);
-            if (style) for (const name of ['fill', 'font-size', 'font-family', 'font-weight']) {
-                const computed = style.getPropertyValue(name);
-                const value = name === 'font-size' ? computed.replace(/px$/, '') : computed;
-                if (!attributes.some(([key]) => key === name) && safeAttribute(name, value)) attributes.push([name, value]);
+        // Use the applied appearance so that parent-only CSS selectors need not exist in the child.
+        const style = element.ownerDocument.defaultView?.getComputedStyle(element);
+        const properties = tag === 'text' || tag === 'tspan' ? [...svgPaint, ...svgTypography] : svgPaint;
+        if (style) for (const name of properties) {
+            const computed = style.getPropertyValue(name);
+            const value = name === 'font-size' || name === 'stroke-width' ? computed.replace(/px$/, '') : computed;
+            const index = attributes.findIndex(([key]) => key === name);
+            if (safeAttribute(name, value)) {
+                const attribute: [string, string] = [name, value];
+                if (index === -1) attributes.push(attribute);
+                else attributes[index] = attribute;
+            } else if (computed && index !== -1) {
+                attributes.splice(index, 1);
             }
         }
         const children: (Drawing | string)[] = [];

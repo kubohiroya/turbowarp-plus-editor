@@ -1,5 +1,6 @@
 declare const TW_TEST_NATIVE_SVG: boolean;
 declare const TW_TEST_PARENT_DOCUMENT: boolean;
+declare const TW_TEST_NATIVE_CSS: boolean;
 
 declare const Scratch: {
     BlockType: {REPORTER: string};
@@ -19,6 +20,33 @@ const parentWindow = window as Window & {
         WidgetDiv: {DIV: HTMLDivElement; show(owner: unknown, rtl: boolean, dispose?: () => void): void; hide(): void};
     };
 };
+
+if (TW_TEST_NATIVE_CSS && !document.getElementById('tw-test-native-field-css')) {
+    const sheet = document.createElement('style');
+    sheet.id = 'tw-test-native-field-css';
+    sheet.textContent = `
+        .tw-test-caption-widget {
+            background-color: #edf6ff;
+            padding: 9px;
+        }
+        .tw-test-caption-input {
+            color: #13304b;
+            background-color: #fff8e1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E");
+            border: 3px solid #166534;
+            padding-left: 11px;
+            font-size: 15px;
+        }
+        .tw-test-caption-apply {
+            color: #fff;
+            background-color: #7c2d12;
+        }
+        .tw-test-caption-original { fill: #15803d; }
+        .tw-test-caption-edited { fill: #c2410c; }
+        .tw-test-caption-docked { fill: #1d4ed8; }
+    `;
+    document.head.append(sheet);
+}
 
 Scratch.extensions.register({
     getInfo() {
@@ -44,9 +72,14 @@ Scratch.extensions.register({
                                 const root = field.getSvgRoot();
                                 if (!root) return;
                                 const value = field.getValue();
-                                const color = value === 'original' ? '#15803d' :
-                                    value === 'edited after dock' ? '#1d4ed8' : '#c2410c';
-                                marker.setAttribute('fill', color);
+                                if (TW_TEST_NATIVE_CSS) {
+                                    const state = value === 'original' ? 'original' : value === 'edited after dock' ? 'docked' : 'edited';
+                                    marker.setAttribute('class', `tw-test-caption-${state}`);
+                                } else {
+                                    const color = value === 'original' ? '#15803d' :
+                                        value === 'edited after dock' ? '#1d4ed8' : '#c2410c';
+                                    marker.setAttribute('fill', color);
+                                }
                                 if (marker.parentNode !== root) root.append(marker);
                             };
                         }
@@ -60,6 +93,11 @@ Scratch.extensions.register({
                             const apply = document.createElement('button');
                             apply.type = 'button';
                             apply.textContent = 'Apply caption';
+                            if (TW_TEST_NATIVE_CSS) {
+                                group.className = 'tw-test-caption-widget';
+                                input.className = 'tw-test-caption-input';
+                                apply.className = 'tw-test-caption-apply';
+                            }
                             const commit = (value: string) => {
                                 if (!parentWindow.vm) throw new Error('Missing parent VM');
                                 field.setValue(value);
