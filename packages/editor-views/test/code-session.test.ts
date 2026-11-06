@@ -262,7 +262,7 @@ test('code extension projections send definitions and resolve menus only for the
     assert.deepEqual(structuredClone(editable), editable);
 });
 
-test('custom extension fields project only declarative editors and keep native field registrations', () => {
+test('custom extension fields project data-only editors and keep existing field registrations', () => {
     const info = (name, implementation) => ({
         extendedName: `fixture_${name}`, fieldImplementation: implementation,
         scratchBlocksDefinition: {json: {type: `fixture_${name}`, args0: [{type: `field_fixture_${name}`}]}}
@@ -276,10 +276,11 @@ test('custom extension fields project only declarative editors and keep native f
     };
     const projected = getCodeExtensions({_blockInfo: [{id: 'fixture', customFieldTypes}]}, {});
     assert.deepEqual(structuredClone(projected), projected);
-    assert.deepEqual(projected.definitions.map(definition => definition.type), ['fixture_mode', 'fixture_name']);
+    assert.deepEqual(projected.definitions.map(definition => definition.type), ['fixture_mode', 'fixture_name', 'fixture_unsafe']);
     assert.deepEqual(projected.customFields, [
         {name: 'field_fixture_mode', editor: {type: 'field_dropdown', options}},
-        {name: 'field_fixture_name', editor: {type: 'field_input'}}
+        {name: 'field_fixture_name', editor: {type: 'field_input'}},
+        {name: 'field_fixture_unsafe', editor: {type: 'native_widget'}}
     ]);
     assert.notEqual(projected.customFields[0].editor.options[0], options[0]);
 
