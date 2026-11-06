@@ -1,3 +1,4 @@
+import {getCodeExtensions} from './code-extensions.ts';
 import {capture, createHistory, restore, workspaceXML} from './history.ts';
 import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
 import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.ts';
@@ -70,6 +71,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         container.inert = originalInert || Boolean(owner || pending || dropJob);
     };
     const projection = target => ({...histories.get(target).state, xml: workspaceXML(vm, target)});
+    const extensionsFor = target => getCodeExtensions(vm.runtime, target);
     const send = (view, message) => view.port.postMessage(message);
 
     function updateCatalog() {
@@ -152,7 +154,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         if (target === view.target || !exists(target)) return;
         view.target = target;
         if (!histories.has(target)) histories.set(target, createHistory(target, vm.runtime.getTargetForStage()));
-        send(view, {type: 'target', targetId: target.id, ...projection(target)});
+        send(view, {type: 'target', targetId: target.id, extensions: extensionsFor(target), ...projection(target)});
     }
 
     function grant() {
@@ -177,7 +179,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         view.lease = ++lease;
         view.draining = false;
         updateInput();
-        send(view, {type: 'grant', lease: view.lease, ...projection(view.target)});
+        send(view, {type: 'grant', lease: view.lease, extensions: extensionsFor(view.target), ...projection(view.target)});
     }
 
     function revoke() {
@@ -383,6 +385,10 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         if (owner && target !== owner.target) revoke();
     }
 
+    function extensionsUpdated() {
+        for (const view of views) send(view, {type: 'extensions', extensions: extensionsFor(view.target)});
+    }
+
     function attach({target, mount, port, close, duplicate, layoutMenu}) {
         if (disposed || !exists(target)) {
             close();
@@ -400,7 +406,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         port.start();
         send(view, {type: 'snapshot', targetId: target.id, targets: catalog, locale,
             backpackDrop: Boolean(receiveBackpackDrop), layoutMenu: Boolean(layoutMenu),
-            canDuplicate: Boolean(duplicate && canDuplicate), ...projection(target)});
+            canDuplicate: Boolean(duplicate && canDuplicate), extensions: extensionsFor(target), ...projection(target)});
         return () => {
             views.delete(view);
             port.removeEventListener('message', listener);
@@ -430,6 +436,8 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     parent.addEventListener('focus', parentFocus);
     vm.on('targetsUpdate', targetsUpdated);
     vm.on('workspaceUpdate', flushWorkspaceProjection);
+    vm.on('EXTENSION_ADDED', extensionsUpdated);
+    vm.on('BLOCKSINFO_UPDATE', extensionsUpdated);
 
     return {attach, setCanDuplicate(available) {
         if (available === canDuplicate) return;
@@ -450,6 +458,8 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         parent.removeEventListener('focus', parentFocus);
         vm.removeListener('targetsUpdate', targetsUpdated);
         vm.removeListener('workspaceUpdate', flushWorkspaceProjection);
+        vm.removeListener('EXTENSION_ADDED', extensionsUpdated);
+        vm.removeListener('BLOCKSINFO_UPDATE', extensionsUpdated);
         container.inert = originalInert;
     }};
 }

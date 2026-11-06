@@ -5,6 +5,7 @@ import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {installProcedureEditor} from '@kubohiroya/turbowarp-plus-editor-views/procedure-editor';
+import {createCodeExtensionPalette} from '@kubohiroya/turbowarp-plus-editor-views/code-extensions';
 import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-views';
 import {installScopedVariableReferences} from '@kubohiroya/turbowarp-plus-editor-views/variable-references';
 import {TargetCombobox} from '@kubohiroya/turbowarp-plus-editor-views/target-combobox';
@@ -24,18 +25,22 @@ const motion = `<category name="Motion" colour="#4c97ff" secondaryColour="#3373c
     <block type="motion_movesteps"><value name="STEPS"><shadow type="math_number"><field name="NUM">10</field></shadow></value></block>
     <block type="motion_turnright"><value name="DEGREES"><shadow type="math_number"><field name="NUM">15</field></shadow></value></block>
     </category>`;
-const toolbox = isStage => `<xml>${isStage ? '' : motion}
+const toolbox = (isStage, extensions = '') => `<xml>${isStage ? '' : motion}
     <category name="Looks" colour="#9966ff" secondaryColour="#774dcb">
         ${isStage ? '<block type="looks_nextbackdrop"></block><block type="looks_backdropnumbername"></block>' :
         '<block type="looks_show"></block><block type="looks_hide"></block>'}
     </category>
-    <category name="My Blocks" colour="#ff6680" secondaryColour="#ff4d6a" custom="PROCEDURE"></category></xml>`;
+    <category name="My Blocks" colour="#ff6680" secondaryColour="#ff4d6a" custom="PROCEDURE"></category>${extensions}</xml>`;
 
 const workspace = ScratchBlocks.inject(mount, {
     media: 'static/blocks-media/default/', toolbox: toolbox(false), scrollbars: true, comments: true, zoom: {controls: true}
 });
 let navigation;
+const extensionPalette = createCodeExtensionPalette(ScratchBlocks);
 let stageToolbox = false;
+let extensionCategories = '';
+let extensionSignature = '';
+let blockedSnapshot;
 let port;
 let targetId;
 let targets = [];
@@ -48,7 +53,7 @@ let group;
 let edits = [];
 installScopedVariableReferences(ScratchBlocks, workspace, () => locale);
 const procedureEditor = installProcedureEditor({
-    blocks: ScratchBlocks, workspace, getLocale: () => locale, canEdit: () => editable && document.hasFocus(),
+    blocks: ScratchBlocks, workspace, getLocale: () => locale, canEdit: () => editable && !blockedSnapshot && document.hasFocus(),
     commit(apply) {
         drain();
         apply();
@@ -64,18 +69,34 @@ function buttons() {
 
 function setEditable(value) {
     editable = value;
-    mount.inert = !value;
-    dropZone.hidden = value || !backpackDrop;
-    status.textContent = value ? 'Editing' : 'Read only';
+    updateWorkspaceAccess();
     buttons();
     renderTarget();
+}
+
+function updateWorkspaceAccess() {
+    mount.inert = !editable || Boolean(blockedSnapshot);
+    dropZone.hidden = editable || !backpackDrop || Boolean(blockedSnapshot);
+    status.textContent = blockedSnapshot ?
+        (/^ja(?:-|$)/i.test(locale) ? 'この別窓で表示できない拡張ブロックがあります' : 'This view cannot display some extension blocks') :
+        (editable ? 'Editing' : 'Read only');
+}
+
+function updateExtensions(extensions) {
+    const signature = JSON.stringify(extensions);
+    if (signature === extensionSignature) return;
+    extensionSignature = signature;
+    extensionCategories = extensionPalette.update(extensions);
+    const target = targets.find(candidate => candidate.id === targetId);
+    stageToolbox = Boolean(target?.isStage);
+    workspace.updateToolbox(toolbox(stageToolbox, extensionCategories));
 }
 
 function renderTarget() {
     const target = targets.find(candidate => candidate.id === targetId);
     const name = target?.name;
     if (target && target.isStage !== stageToolbox) {
-        workspace.updateToolbox(toolbox(target.isStage));
+        workspace.updateToolbox(toolbox(target.isStage, extensionCategories));
         stageToolbox = target.isStage;
     }
     const code = /^ja(?:-|$)/i.test(locale) ? 'コード' : 'Code';
@@ -105,16 +126,21 @@ function renderLayout(canDuplicate) {
 
 function snapshot(message) {
     history = message;
+    if (message.extensions) updateExtensions(message.extensions);
     if (message.xml) {
         procedureEditor.cancel();
         ScratchBlocks.Events.disable();
         try {
-            ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(ScratchBlocks.Xml.textToDom(message.xml), workspace);
+            const xml = ScratchBlocks.Xml.textToDom(message.xml);
+            blockedSnapshot = extensionPalette.supports(xml) ? undefined : message.xml;
+            if (blockedSnapshot) workspace.clear();
+            else ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(xml, workspace);
             workspace.clearUndo();
         } finally {
             ScratchBlocks.Events.enable();
         }
     }
+    updateWorkspaceAccess();
     buttons();
 }
 
@@ -190,6 +216,10 @@ function receive({data: message}) {
                 else release();
             }
             break;
+        case 'extensions':
+            updateExtensions(message.extensions);
+            if (blockedSnapshot) snapshot({...history, xml: blockedSnapshot, extensions: undefined});
+            break;
         case 'targets':
             targets = message.targets;
             renderTarget();
@@ -249,7 +279,7 @@ dock.addEventListener('click', () => {
 });
 
 function acceptsBackpack(event) {
-    return backpackDrop && event.dataTransfer?.types.includes(transferMime);
+    return !blockedSnapshot && backpackDrop && event.dataTransfer?.types.includes(transferMime);
 }
 
 workspaceArea.addEventListener('dragover', event => {
