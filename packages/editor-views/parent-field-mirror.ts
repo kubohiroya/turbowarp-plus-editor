@@ -11,14 +11,15 @@ const borderStyles = sides.map(side => `border-${side}-style`);
 const typography = ['font-family', 'font-style', 'font-weight'];
 const length = /^\d+(?:\.\d+)?px$/;
 const color = /^(?:#[\da-f]{3,8}|[a-z]+|rgba?\([\d.,%\s]+\))$/i;
+const generatedText = /^(?:"[^"\\\x00-\x1f]{0,120}"|none|normal)$/;
+const stateSelector = /^\.([\w-]+)(:hover|:focus|:focus-visible)(::before|::after)?$/;
+const pseudoElements = ['::before', '::after'];
 
-function mirrorAppearance(original: HTMLElement, proxy: HTMLElement) {
-    const computed = original.ownerDocument.defaultView?.getComputedStyle(original);
-    if (!computed) return;
+function copyAppearance(source: CSSStyleDeclaration, target: CSSStyleDeclaration, {pseudo = false, priority = ''} = {}) {
     const copy = (name: string, accept: (value: string) => boolean) => {
-        const value = computed.getPropertyValue(name);
+        const value = source.getPropertyValue(name);
         const safe = value.length <= 128 && accept(value) ? value : '';
-        if (proxy.style.getPropertyValue(name) !== safe) proxy.style.setProperty(name, safe);
+        if (target.getPropertyValue(name) !== safe) target.setProperty(name, safe, priority);
     };
     for (const name of colors) copy(name, value => color.test(value));
     for (const name of lengths) copy(name, value => (name === 'line-height' && value === 'normal') ||
@@ -29,6 +30,59 @@ function mirrorAppearance(original: HTMLElement, proxy: HTMLElement) {
         if (name === 'font-style') return /^(normal|italic|oblique)$/.test(value);
         return /^(normal|bold|[1-9]00)$/.test(value);
     });
+    if (pseudo) copy('content', value => generatedText.test(value));
+}
+
+function readStateRules(document: Document) {
+    const rules: {className: string; state: string; pseudo: string; style: CSSStyleDeclaration}[] = [];
+    for (const sheet of document.styleSheets) {
+        if (sheet.disabled || (sheet.media.mediaText && !document.defaultView?.matchMedia(sheet.media.mediaText).matches)) continue;
+        let source: CSSRuleList;
+        try {
+            source = sheet.cssRules;
+        } catch {
+            continue; // Cross-origin stylesheets are opaque.
+        }
+        for (const rule of source) {
+            if (rule.type !== 1) continue;
+            const {selectorText, style} = rule as CSSStyleRule;
+            const match = stateSelector.exec(selectorText);
+            if (match) rules.push({className: match[1], state: match[2], pseudo: match[3] ?? '', style});
+        }
+    }
+    return rules;
+}
+
+function mirrorWidgetStyles(parent: Window, host: HTMLElement, nodes: [HTMLElement, HTMLElement][]) {
+    const style = host.ownerDocument.createElement('style');
+    host.append(style);
+    const sheet = style.sheet;
+    if (!sheet) return () => {};
+    const stateRules = readStateRules(parent.document);
+    const refresh: (() => void)[] = [];
+    nodes.forEach(([original, proxy], index) => {
+        proxy.dataset.plusNativeFieldNode = String(index);
+        const selector = `[data-plus-native-field] [data-plus-native-field-node="${index}"]`;
+        const add = (suffix: string) => {
+            const index = sheet.insertRule(`${selector}${suffix} {}`, sheet.cssRules.length);
+            return (sheet.cssRules[index] as CSSStyleRule).style;
+        };
+        for (const pseudo of pseudoElements) {
+            let target: CSSStyleDeclaration | undefined;
+            refresh.push(() => {
+                const computed = parent.getComputedStyle(original, pseudo);
+                if (!target && (!generatedText.test(computed.content) || !computed.content.startsWith('"'))) return;
+                target ??= add(pseudo);
+                copyAppearance(computed, target, {pseudo: true});
+            });
+        }
+        for (const {className, state, pseudo, style} of stateRules) {
+            if (!original.classList.contains(className)) continue;
+            // Override the inline baseline while letting the child browser resolve the state.
+            copyAppearance(style, add(state + pseudo), {pseudo: Boolean(pseudo), priority: 'important'});
+        }
+    });
+    return () => {for (const update of refresh) update();};
 }
 
 type TextControl = HTMLInputElement | HTMLTextAreaElement;
@@ -38,6 +92,7 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
     const parent = source.ownerDocument.defaultView;
     if (!parent) return false;
     const sync: (() => void)[] = [];
+    const nodes: [HTMLElement, HTMLElement][] = [];
     let remaining = 128;
     let controls = 0;
 
@@ -56,9 +111,10 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
         if (tag === 'input' && !inputTypes.has((original as HTMLInputElement).type)) return;
         if (tag === 'button' && (original as HTMLButtonElement).form && (original as HTMLButtonElement).type !== 'button') return;
         const proxy = host.ownerDocument.createElement(tag);
+        nodes.push([original, proxy]);
         sync.push(() => {
             proxy.hidden = original.hidden;
-            mirrorAppearance(original, proxy);
+            copyAppearance(parent.getComputedStyle(original), proxy.style);
         });
         for (const name of attributes) {
             const value = original.getAttribute(name);
@@ -119,6 +175,7 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
         if (copy) host.append(copy);
     }
     if (!controls) return false;
+    sync.push(mirrorWidgetStyles(parent, host, nodes));
     refresh();
     return true;
 }

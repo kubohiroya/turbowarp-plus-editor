@@ -1,6 +1,7 @@
 declare const TW_TEST_NATIVE_SVG: boolean;
 declare const TW_TEST_PARENT_DOCUMENT: boolean;
 declare const TW_TEST_NATIVE_CSS: boolean;
+declare const TW_TEST_PSEUDO_CSS: boolean;
 
 declare const Scratch: {
     BlockType: {REPORTER: string};
@@ -44,6 +45,34 @@ if (TW_TEST_NATIVE_CSS && !document.getElementById('tw-test-native-field-css')) 
         .tw-test-caption-original { fill: #15803d; }
         .tw-test-caption-edited { fill: #c2410c; }
         .tw-test-caption-docked { fill: #1d4ed8; }
+    `;
+    if (TW_TEST_PSEUDO_CSS) sheet.textContent += `
+        .tw-test-caption-widget::before {
+            content: "Caption hint";
+            color: #1e40af;
+            font-weight: 700;
+        }
+        .tw-test-caption-input:focus {
+            border-color: #9333ea;
+        }
+        .tw-test-caption-input:focus-visible {
+            background-color: #dcfce7;
+        }
+        .tw-test-caption-apply::after {
+            content: " ready";
+            color: #fef3c7;
+        }
+        .tw-test-caption-apply:hover {
+            background-color: #9a3412;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E");
+        }
+        .tw-test-caption-apply:hover::after {
+            content: " now";
+            color: #ffffff;
+        }
+        .tw-test-caption-apply::before {
+            content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E");
+        }
     `;
     document.head.append(sheet);
 }

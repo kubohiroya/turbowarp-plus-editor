@@ -13,11 +13,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--code-css-fields', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--code-css-fields', '--code-css-pseudo-fields', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--code-css-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--code-dynamic-branches', '--code-custom-fields', '--code-programmatic-fields', '--code-native-fields', '--code-svg-fields', '--code-parent-document-fields', '--code-css-fields', '--code-css-pseudo-fields', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1474,7 +1474,7 @@ Scratch.extensions.register({
 });
 `;
 
-async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields, svgFields, parentDocumentFields, cssFields}) {
+async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite, programmaticFields, nativeFields, svgFields, parentDocumentFields, cssFields, pseudoCSS}) {
     const editedText = '改訂 <&> note';
     const state = (reload = false) => editor.evaluate(async ({name, reload}) => {
         if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
@@ -1549,6 +1549,36 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
             assert.match(image, /data:image\/svg\+xml/);
         }
     };
+    const checkPseudoStyles = async (widget, mirror) => {
+        if (!pseudoCSS) return;
+        const input = widget.getByRole('textbox', {name: 'Caption'});
+        const button = widget.getByRole('button', {name: 'Apply caption'});
+        const group = widget.locator('fieldset');
+        const read = (locator, pseudo, property) => locator.evaluate((node, {pseudo, property}) =>
+            getComputedStyle(node, pseudo).getPropertyValue(property), {pseudo, property});
+        assert.equal(await read(group, '::before', 'content'), '"Caption hint"');
+        assert.equal(await read(group, '::before', 'color'), 'rgb(30, 64, 175)');
+        if (mirror) assert.equal(await read(button, '::before', 'content'), 'none');
+        else assert.match(await read(button, '::before', 'content'), /data:image\/svg\+xml/);
+
+        await input.hover();
+        assert.equal(await read(button, '::after', 'content'), '" ready"');
+        assert.equal(await read(button, null, 'background-color'), 'rgb(124, 45, 18)');
+        await input.focus();
+        assert.equal(await read(input, null, 'border-top-color'), 'rgb(147, 51, 234)');
+        assert.equal(await read(input, null, 'background-color'), 'rgb(220, 252, 231)');
+        await input.evaluate(node => node.blur());
+        assert.equal(await read(input, null, 'border-top-color'), 'rgb(22, 101, 52)');
+        assert.equal(await read(input, null, 'background-color'), 'rgb(255, 248, 225)');
+        await button.hover();
+        assert.equal(await read(button, null, 'background-color'), 'rgb(154, 52, 18)');
+        assert.equal(await read(button, '::after', 'content'), '" now"');
+        assert.equal(await read(button, '::after', 'color'), 'rgb(255, 255, 255)');
+        if (mirror) assert.equal(await read(button, null, 'background-image'), 'none');
+        await input.hover();
+        assert.equal(await read(button, '::after', 'content'), '" ready"');
+        assert.equal(await read(button, null, 'background-color'), 'rgb(124, 45, 18)');
+    };
     const original = await state();
     assert.deepEqual(original.values, ['original', 'first-id']);
     for (const page of [editor, a.child, b.child]) await checkView(page, original);
@@ -1566,6 +1596,7 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
             }, value), 'the original input stays in the parent document and its delegated listener receives the edit');
         };
         await checkWidgetStyles(widget, true);
+        await checkPseudoStyles(widget, true);
         if (cssFields) {
             assert.equal(await editor.locator('#tw-test-native-field-css').count(), 1);
             assert.equal(await a.child.locator('#tw-test-native-field-css').count(), 0);
@@ -1636,6 +1667,7 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
         await field(editor, original.ids[0]).locator('.blocklyEditableText').click({force: true});
         const widget = editor.locator('.blocklyWidgetDiv');
         await checkWidgetStyles(widget, false);
+        await checkPseudoStyles(widget, false);
         await widget.getByRole('textbox', {name: 'Caption'}).fill('edited after dock');
         await widget.getByRole('button', {name: 'Apply caption'}).click();
         await expectValues(editor, ['edited after dock', selection]);
@@ -1674,9 +1706,11 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
         await until(() => reopened.child.locator('#mount').evaluate(node => !node.inert), 'the reopened code view can edit');
         await field(reopened.child, restored.ids[0]).locator('.blocklyEditableText').click({force: true});
         await checkWidgetStyles(reopened.child.locator('[data-plus-native-field]'), true);
+        await checkPseudoStyles(reopened.child.locator('[data-plus-native-field]'), true);
     }
     await dock(reopened);
     if (cssFields) report.checks.push('The mirrored widget and its SVG field retain the supported computed styles without copying the parent stylesheet or image reference.');
+    if (pseudoCSS) report.checks.push('The mirrored widget reproduces hover, focus, focus-visible and text before/after with local browser state, including after SB3 reload.');
     if (parentDocumentFields) {
         report.checks.push('The editor DOM stays in the parent document; mirrored input and click events reach its delegated listeners.');
     }
@@ -1687,7 +1721,7 @@ async function checkCodeCustomFields ({editor, a, b, focus, open, parent, sprite
 }
 
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false, svgFields = false, parentDocumentFields = false, cssFields = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false, dynamicBranches = false, customFields = false, programmaticFields = false, nativeFields = false, svgFields = false, parentDocumentFields = false, cssFields = false, pseudoCSS = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1704,7 +1738,7 @@ async function checkCodePopouts ({editor, context, control}, {
             '../stage6/fixtures/programmatic-extension.ts', import.meta.url), 'utf8'),
         {loader: 'ts', format: 'iife', define: {
             TW_TEST_NATIVE_SVG: String(svgFields), TW_TEST_PARENT_DOCUMENT: String(parentDocumentFields),
-            TW_TEST_NATIVE_CSS: String(cssFields)
+            TW_TEST_NATIVE_CSS: String(cssFields), TW_TEST_PSEUDO_CSS: String(pseudoCSS)
         }}
     )).code : customFieldsFixture;
     const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions, dynamicFixture, customFieldsURL, trustedFieldFixture}) => {
@@ -1885,7 +1919,7 @@ async function checkCodePopouts ({editor, context, control}, {
         return;
     }
     if (customFields || programmaticFields || nativeFields) {
-        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields, svgFields, parentDocumentFields, cssFields});
+        await checkCodeCustomFields({editor, a, b, focus, open, parent, sprite: sprites[0], programmaticFields, nativeFields, svgFields, parentDocumentFields, cssFields, pseudoCSS});
         return;
     }
     if (dynamicBranches) {
@@ -2633,8 +2667,11 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
-    else if (testMode === '--code-css-fields') {
-        await run('code-popout', env => checkCodePopouts(env, {nativeFields: true, parentDocumentFields: true, svgFields: true, cssFields: true}));
+    else if (testMode === '--code-css-fields' || testMode === '--code-css-pseudo-fields') {
+        await run('code-popout', env => checkCodePopouts(env, {
+            nativeFields: true, parentDocumentFields: true, svgFields: true, cssFields: true,
+            pseudoCSS: testMode === '--code-css-pseudo-fields'
+        }));
     }
     else if (testMode === '--code-parent-document-fields') {
         await run('code-popout', env => checkCodePopouts(env, {nativeFields: true, parentDocumentFields: true}));
