@@ -23,7 +23,8 @@ module.exports = function loadPreviewReloadCss(input) {
         }
         const bytes = local ? await fs.readFile(local) : await fetchStyles();
         assert.equal(createHash('sha256').update(bytes).digest('hex'), sha256, 'Kamishibai preview CSS pin mismatch');
-        return bytes.toString('utf8');
+        return `/*! Kamishibai preview reload CSS, Copyright 2026 Hiroya Kubo, MPL-2.0. Source: ${url} */\n` +
+            bytes.toString('utf8');
     };
     readStyles().then(css => done(null, css), done);
 };

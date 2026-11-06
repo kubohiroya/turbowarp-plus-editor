@@ -8,6 +8,9 @@ Integrated GUI builds include kubohiroya/scratch-gui and its third-party notices
 They also bundle turbowarp-plus family packages (MPL-2.0 unless stated otherwise) and the
 kubohiroya/scratch-vm fork (MPL-2.0); notices/family.json lists each one's license files and source.
 Library names identify independently licensed components; their licenses remain applicable.
+The bundled Kamishibai preview reload stylesheet is licensed under MPL-2.0.
+Its source is src/builder/dsl4-preview-reload.css in https://github.com/kubohiroya/turbowarp-kamishibai-app
+at the revision listed under previewReloadStyles in build-info.json.
 
 The optional embedded-YAML editor uses the independent turbowarp-embedded-yaml package (MPL-2.0).
 The generated yaml-editor/notices/ directory retains that package's license.
