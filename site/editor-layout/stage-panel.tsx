@@ -10,6 +10,7 @@ import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 const externalHost = desktopPopout ?? (layoutFlags.standardLayout ? createWebPanelHost('stage', 680, 520) : null);
+
 const StageSurface = createStageSurface(React, {
     context: WindowLayoutContext, EdgeDrawer: layoutViews.EdgeDrawer, Panel: BasicPanel
 });
@@ -58,9 +59,11 @@ function StageResizeHandle({edge, aspect, width, limits, label}) {
     />;
 }
 
-function StageViewport({aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen, inputDocument}) {
+function StageViewport({aspect, width, defaultWidth, floating, workspace, useNativeKeyboard, render, renderHeader,
+    isFullScreen, inputDocument}) {
     const {stageDrawer, stageHidden, stageResize, locale} = React.useContext(WindowLayoutContext);
-    const resizable = !floating && stageResize;
+    const fit = floating || workspace;
+    const resizable = !fit && stageResize;
     const resizeLabel = /^ja(?:-|$)/i.test(locale) ? 'ステージのサイズを変更' : 'Resize stage';
     const viewport = React.useRef(null);
     const header = React.useRef(null);
@@ -77,30 +80,37 @@ function StageViewport({aspect, width, defaultWidth, floating, render, renderHea
         return () => cancelAnimationFrame(frame);
     }, [inputDocument, externalBounds]);
     React.useLayoutEffect(() => {
-        if (!floating) return;
+        if (!fit) return;
         const node = viewport.current;
         const measure = () => {
             const height = node.clientHeight - (header.current?.offsetHeight ?? 0) - 8;
             if (node.clientWidth < 12 || height < 1) return;
-            setFloatingWidth(Math.max(1, Math.floor(Math.min(node.clientWidth - 12, height * aspect))));
+            const limit = workspace ? defaultWidth : Infinity;
+            setFloatingWidth(Math.max(1, Math.floor(Math.min(node.clientWidth - 12, height * aspect, limit))));
         };
         const observer = new (inputDocument?.defaultView.ResizeObserver ?? ResizeObserver)(measure);
         measure();
         observer.observe(node);
+        if (header.current) observer.observe(header.current);
         return () => observer.disconnect();
-    }, [aspect, floating, inputDocument]);
+    }, [aspect, defaultWidth, fit, inputDocument, workspace]);
 
-    const displayWidth = floating ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width;
+    const displayWidth = fit ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width;
     const canvas = <>
-        {render(displayWidth, Boolean(stageDrawer || floating || externalBounds || resizable), inputDocument)}
+        {render(displayWidth, Boolean(stageDrawer || fit || externalBounds || resizable), inputDocument)}
         {resizable && ['left', 'bottom', 'corner'].map(edge => <StageResizeHandle key={edge}
             {...{edge, aspect, width}} limits={stageResize} label={resizeLabel} />)}
     </>;
-    return <div className={styles.stageViewport} data-floating={floating} data-stage-hidden={stageHidden || undefined}
+    return <div className={styles.stageViewport} data-floating={fit} data-stage-hidden={stageHidden || undefined}
         data-resizable={resizable ? true : undefined} data-focusable={stageCanUndock || undefined} ref={viewport}
         tabIndex={stageCanUndock ? -1 : undefined}
         onClick={event => {
             const node = event.currentTarget;
+            if (useNativeKeyboard && !inputDocument && (event.target as HTMLElement).matches('canvas')) {
+                // The GUI routes project key presses from the document body.
+                (node.ownerDocument.activeElement as HTMLElement)?.blur();
+                return;
+            }
             if (stageCanUndock && !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
         }}>
         {renderHeader ? <div className={styles.stageFrame} data-fullscreen={isFullScreen || undefined} data-plus-stage-frame="">
@@ -113,10 +123,30 @@ function StageViewport({aspect, width, defaultWidth, floating, render, renderHea
 function AppStagePanel({aspect, width, defaultWidth, render, renderHeader, isFullScreen}) {
     const {stageActionMount} = React.useContext(WindowLayoutContext);
     const menu = React.useContext(StageDisplayMenuContext);
-    return <StageSurface externalHost={externalHost} decorate={decorateSurface}
+    const stage = menu?.stage;
+    const suspend = stage?.suspend;
+    const surface = stage?.surface;
+    const resizeStage = menu?.resizeStage;
+    React.useLayoutEffect(() => {
+        suspend?.(Boolean(isFullScreen));
+    }, [suspend, isFullScreen]);
+    React.useLayoutEffect(() => {
+        if (!surface) return;
+        // The native update can run while the drawer anchor is still hidden.
+        const resize = () => resizeStage(surface);
+        const observer = new ResizeObserver(resize);
+        observer.observe(surface);
+        const frame = requestAnimationFrame(resize);
+        return () => {
+            observer.disconnect();
+            cancelAnimationFrame(frame);
+        };
+    }, [surface, resizeStage, stage?.docked, isFullScreen]);
+    return <StageSurface placement={stage} externalHost={externalHost} decorate={decorateSurface}
         actionMount={stageActionMount ?? null} onDockActionChange={layoutFlags.stageDisplayMenu ? menu?.setDockAction : undefined}
         dockHeight={Math.round((width ?? defaultWidth) / aspect) + (renderHeader ? 44 : 0)}
         render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen}}
+            workspace={Boolean(stage?.docked && !isFullScreen)} useNativeKeyboard={Boolean(stage)}
             inputDocument={mount?.ownerDocument} />}
     />;
 }

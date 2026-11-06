@@ -11,6 +11,7 @@ import '@kubohiroya/turbowarp-plus-editor-layout/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, layoutFlags, WindowLayoutContext} from './index.tsx';
+import {StageDisplayMenuContext} from './context.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {BackCodeWindows, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
@@ -60,7 +61,10 @@ const resizeCode = () => {
 export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
     const host = useWindowHost();
     const {plusLayout} = React.useContext(WindowLayoutContext);
-    const multiView = plusLayout && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
+    const stage = React.useContext(StageDisplayMenuContext)?.stage;
+    // The stage uses the native fullscreen surface while Dockview keeps its panel and layout.
+    const workspaceEnabled = plusLayout || Boolean(stage);
+    const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
     const codePaneAdapter = React.useMemo(() => createCodePaneAdapter(vm, locale), [vm, locale]);
     const code = useCodeWindows({vm, host, locale,
         enabled: !multiView && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
@@ -133,12 +137,12 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
         <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
     </div>;
     const spriteTabs = useSpriteTabs({
-        available: dockviewSpriteTabsEnabled, enabled: plusLayout && dockviewSpriteTabsEnabled,
+        available: dockviewSpriteTabsEnabled, enabled: workspaceEnabled && dockviewSpriteTabsEnabled,
         vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
         activateSection: onActivateEditorTab,
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, activeTools: tabAction, viewAdapter: codePaneAdapter,
+            multiView, stagePane: stage?.pane, activeTools: tabAction, viewAdapter: codePaneAdapter,
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             writeVariable(id, variableId, value) {

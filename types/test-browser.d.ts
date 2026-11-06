@@ -44,6 +44,8 @@ interface Window {
     initialStageCanvas: Element | null;
     initialStageControls: Element | null;
     stageControlCalls: string[];
+    dockviewStageIdentity: {vm: object; renderer: object; canvas: Element | null};
+    dockviewStageControls: string[];
     originalSpriteNameInput: Element;
     originalBackdropTile: Element;
     originalStageCanvas: Element;

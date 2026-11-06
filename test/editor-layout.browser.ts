@@ -1174,3 +1174,142 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     assert.equal(await page.evaluate(() => window.vm.editingTarget.id), targetId);
     assert.deepEqual(errors, []);
 });
+
+test('the Dockview stage keeps its renderer, controls and input through split and tab moves', {timeout: 60_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.setDefaultTimeout(8000);
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.vm.renderer);
+    const canvas = page.locator('[data-gui-stage] canvas').first();
+    const reveal = page.getByRole('button', {name: 'Reveal stage', exact: true});
+    const revealStage = async () => {
+        await reveal.click();
+        await expect(reveal).toHaveAttribute('aria-expanded', 'true');
+        await expect(canvas).toBeVisible();
+    };
+    await reveal.hover();
+    await expect(canvas).toBeVisible();
+    const {spriteName, spriteId} = await page.evaluate(() => {
+        const {vm} = window;
+        const target = vm.editingTarget;
+        target.setXY(0, 0);
+        window.dockviewStageIdentity = {vm, renderer: vm.renderer, canvas: document.querySelector('[data-gui-stage] canvas')};
+        window.dockviewStageControls = [];
+        for (const method of ['greenFlag', 'stopAll']) {
+            const native = vm[method].bind(vm);
+            vm[method] = (...args) => {
+                window.dockviewStageControls.push(method);
+                return native(...args);
+            };
+        }
+        return {spriteName: target.getName(), spriteId: target.id};
+    });
+
+    const workspace = page.locator('[data-multi-view] .dockview-theme-light');
+    const groups = workspace.locator('.dv-groupview');
+    const dockedStage = page.locator('.tw-plus-dockview-stage-slot');
+    const stageTab = workspace.getByRole('tab', {name: 'Stage', exact: true});
+    const codeTab = workspace.getByRole('tab', {name: spriteName, exact: true});
+    const stageGroup = groups.filter({has: page.getByRole('tab', {name: 'Stage', exact: true})});
+    const codeGroup = groups.filter({has: page.getByRole('tab', {name: spriteName, exact: true})});
+    const display = page.getByRole('button', {name: 'Stage display', exact: true});
+    const selectDisplay = async (name: string, role: 'menuitem' | 'menuitemradio' = 'menuitem') => {
+        await display.click();
+        await page.getByRole(role, {name, exact: true}).click();
+    };
+    const assertStage = async () => {
+        await expect(canvas).toBeVisible();
+        await expect.poll(() => page.evaluate(() => {
+            const saved = window.dockviewStageIdentity;
+            const {vm} = window;
+            const canvas = document.querySelector('[data-gui-stage] canvas');
+            const bounds = canvas.getBoundingClientRect();
+            const details = {sameVm: vm === saved.vm, sameRenderer: vm.renderer === saved.renderer,
+                sameCanvas: canvas === saved.canvas, aspect: Math.round(bounds.width / bounds.height * 100)};
+
+            vm.renderer.dirty = true;
+            vm.renderer.draw();
+            const gl = vm.renderer._gl;
+            const width = gl.drawingBufferWidth;
+            const height = gl.drawingBufferHeight;
+            const pixels = new Uint8Array(width * height * 4);
+            gl.readPixels(0, 0, width, height,
+                gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+            return {...details, colored: pixels.some((value, index) => index % 4 === 0 &&
+                Math.max(value, pixels[index + 1], pixels[index + 2]) - Math.min(value, pixels[index + 1], pixels[index + 2]) > 25)};
+        })).toEqual({sameVm: true, sameRenderer: true, sameCanvas: true, aspect: 133, colored: true});
+        const bounds = await canvas.boundingBox();
+        for (const [fx, fy, x, y] of [[0.75, 0.25, 120, 90], [0.25, 0.75, -120, -90]]) {
+            await page.mouse.click(bounds.x + bounds.width * fx, bounds.y + bounds.height * fy);
+            const position = await page.evaluate(() => {
+                const mouse = window.vm.runtime.ioDevices.mouse;
+                return [mouse.getScratchX(), mouse.getScratchY()];
+            });
+            assert.ok(Math.abs(position[0] - x) <= 3 && Math.abs(position[1] - y) <= 3, JSON.stringify(position));
+        }
+        await page.keyboard.down('Space');
+        assert.equal(await page.evaluate(() => window.vm.runtime.ioDevices.keyboard.getKeyIsDown('space')), true);
+        await page.keyboard.up('Space');
+    };
+
+    await selectDisplay('Open stage in workspace');
+    await expect(groups).toHaveCount(2);
+    await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
+    assert.ok((await stageGroup.boundingBox()).x > (await codeGroup.boundingBox()).x);
+    await assertStage();
+
+    const sash = workspace.locator('.dv-sash:visible').first();
+    const split = await sash.boundingBox();
+    await page.mouse.move(split.x + split.width / 2, split.y + split.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(split.x + split.width / 2 + 230, split.y + split.height / 2, {steps: 8});
+    await page.mouse.up();
+    await expect.poll(async () => (await canvas.boundingBox()).width).toBeLessThan(450);
+    await assertStage();
+
+    const codeContent = codeGroup.locator('.dv-content-container').first();
+    const content = await codeContent.boundingBox();
+    await stageTab.dragTo(codeContent, {targetPosition: {x: content.width / 2, y: content.height - 12}});
+    await expect.poll(async () => (await stageGroup.boundingBox()).y).toBeGreaterThan((await codeGroup.boundingBox()).y);
+    await expect(groups).toHaveCount(2);
+    await assertStage();
+
+    await stageTab.dragTo(codeTab);
+    await expect(groups).toHaveCount(1);
+    await codeTab.click();
+    await expect(canvas).toBeHidden();
+    await expect(codeGroup.locator('.tw-plus-sprite-tab-editor .blocklySvg').first()).toBeVisible();
+    await stageTab.click();
+    await assertStage();
+    await dockedStage.getByTitle('Go', {exact: true}).click();
+    await dockedStage.getByTitle('Stop', {exact: true}).click();
+    await expect.poll(() => page.evaluate(() => window.dockviewStageControls.slice(-2))).toEqual(['greenFlag', 'stopAll']);
+
+    await selectDisplay('Switch to small stage', 'menuitemradio');
+    await expect.poll(async () => (await canvas.boundingBox()).width).toBe(240);
+    await selectDisplay('Enter full screen mode');
+    await expect(dockedStage.locator('[data-gui-stage] canvas')).toHaveCount(0);
+    await assertStage();
+    await page.getByRole('img', {name: 'Exit full screen mode', exact: true}).click();
+    await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
+    await assertStage();
+
+    await stageTab.getByRole('button', {name: 'Close Stage', exact: true}).click();
+    await expect(stageTab).toHaveCount(0);
+    await expect(dockedStage.locator('[data-gui-stage] canvas')).toHaveCount(0);
+    await revealStage();
+    await assertStage();
+    await selectDisplay('Hide stage');
+    await expect(canvas).toBeHidden();
+    await selectDisplay('Open stage in workspace');
+    await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
+    await assertStage();
+    await selectDisplay('Return stage from workspace');
+    await expect(stageTab).toHaveCount(0);
+    await revealStage();
+    await assertStage();
+    assert.equal(await page.evaluate(() => window.vm.editingTarget.id), spriteId);
+    assert.deepEqual(errors, []);
+});
