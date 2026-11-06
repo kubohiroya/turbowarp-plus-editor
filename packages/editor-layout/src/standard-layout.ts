@@ -11,6 +11,7 @@ export function createStandardLayout(React, {styles, targetStyles, context, Layo
     const Splitter = createSplitter(React);
     const targets = createTargetList(React, targetStyles);
     const targetSearch = React.createContext('');
+    const targetTools = React.createContext(null);
 
     function StandardLayout({
         enabled, splitter, windowLayout, stageActionEnabled, onPaletteModeChange, windowTools, Container, render, ...props
@@ -197,11 +198,12 @@ export function createStandardLayout(React, {styles, targetStyles, context, Layo
 
     function TargetLayout({compact, render}) {
         const {plusLayout, targetsPinned, locale} = useContext(context);
+        const tools = useState(null);
         const panel = render(plusLayout || compact);
         return plusLayout ? element(EdgeDrawer, {
             edge: 'left', pinned: targetsPinned,
             label: isJapanese(locale) ? 'スプライト一覧を展開' : 'Reveal sprite list'
-        }, panel) : panel;
+        }, element(targetTools.Provider, {value: tools}, panel)) : panel;
     }
 
     function SpriteGrid(props) {
@@ -218,9 +220,65 @@ export function createStandardLayout(React, {styles, targetStyles, context, Layo
 
     function SpritePropertiesSection({fallback, children}) {
         const {plusLayout, locale} = useContext(context);
-        return plusLayout ? element('details', {className: styles.spriteProperties},
-            element('summary', null, isJapanese(locale) ? 'スプライト' : 'Sprite'), children) : fallback;
+        const [expanded, setExpanded] = useState(false);
+        const tools = useContext(targetTools);
+        return plusLayout ? element('div', {className: styles.spriteProperties},
+            element('button', {
+                type: 'button', className: styles.spritePropertiesToggle, 'aria-expanded': expanded,
+                onClick: () => setExpanded(open => !open)
+            }, isJapanese(locale) ? 'スプライト' : 'Sprite'),
+            element('div', {ref: tools?.[1]}),
+            element('div', {className: styles.spritePropertiesContent, hidden: !expanded}, children)
+        ) : fallback;
     }
 
-    return {StandardLayout, EdgeDrawer, TargetLayout, TargetSearchProvider: targetSearch.Provider, SpriteGrid, BackdropTile: targets.BackdropTile, BackdropActions, SpritePropertiesSection};
+    function useSpriteListTools() {
+        const {locale, targetsPinned, setTargetsPinned} = useContext(context);
+        const [mount] = useContext(targetTools) ?? [];
+        const [searching, setSearching] = useState(false);
+        const [query, setQuery] = useState('');
+        const searchButton = useRef(null);
+        const searchInput = useRef(null);
+        const japanese = isJapanese(locale);
+        const pinLabel = japanese ? 'スプライト一覧を固定表示' : 'Pin sprite list';
+        const searchLabel = japanese ? 'スプライトを検索' : 'Search sprites';
+        useLayoutEffect(() => {
+            if (searching) searchInput.current?.focus({preventScroll: true});
+        }, [searching]);
+        const closeSearch = () => {
+            setSearching(false);
+            setQuery('');
+            searchButton.current?.focus();
+        };
+        const renderTools = openAction => element(React.Fragment, null,
+            element('div', {className: styles.targetListTools, role: 'group',
+                'aria-label': japanese ? 'スプライト一覧の操作' : 'Sprite list tools'},
+            element('button', {type: 'button', ref: searchButton, 'aria-label': searchLabel, 'aria-expanded': searching,
+                title: searchLabel, onClick: () => searching ? closeSearch() : setSearching(true)},
+            element('svg', {'aria-hidden': true, width: 14, height: 14, viewBox: '0 0 16 16',
+                fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round'},
+            element('circle', {cx: 6.5, cy: 6.5, r: 4}), element('path', {d: 'm9.5 9.5 4 4'}))),
+            element('button', {type: 'button', className: styles.drawerPin, 'aria-label': pinLabel, 'aria-pressed': targetsPinned,
+                title: pinLabel, onClick: () => setTargetsPinned(value => !value)},
+            element('svg', {'aria-hidden': true, width: 14, height: 14, viewBox: '0 0 16 16',
+                fill: targetsPinned ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: 1.2, strokeLinejoin: 'round'},
+            element('path', {d: 'M9 2 14 7 12 8l-2 3-5-5 3-2 1-2Z'}), element('path', {d: 'm7.5 8.5-4 4'}))),
+            openAction),
+            searching && element('input', {type: 'search', className: styles.targetListSearch, 'aria-label': searchLabel,
+                ref: searchInput, placeholder: japanese ? '名前' : 'Name', value: query,
+                onChange: event => setQuery(event.currentTarget.value),
+                onKeyDown: event => {
+                    if (event.key === 'Escape') {
+                        event.stopPropagation();
+                        closeSearch();
+                    }
+                }}));
+        return {
+            mount, query, renderTools,
+            title: japanese ? 'スプライト一覧' : 'Sprite list',
+            openLabel: japanese ? 'アンドック' : 'Undock sprite list'
+        };
+    }
+
+    return {StandardLayout, EdgeDrawer, TargetLayout, useSpriteListTools, TargetSearchProvider: targetSearch.Provider, SpriteGrid, BackdropTile: targets.BackdropTile, BackdropActions, SpritePropertiesSection};
 }

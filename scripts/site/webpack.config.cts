@@ -94,7 +94,7 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
 const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'backpack', 'views'].map(feature => {
-    const name = `@kubohiroya/turbowarp-editor-${feature}`;
+    const name = `@kubohiroya/turbowarp-${feature === 'layout' ? 'plus-' : ''}editor-${feature}`;
     const entry = rootRequire.resolve(name);
     config.resolve.alias[`${name}$`] = entry;
     return [feature, path.dirname(entry)];
@@ -104,7 +104,7 @@ config.resolve.alias['@kubohiroya/turbowarp-editor-views/sprite-code-windows$'] 
 config.resolve.alias['@kubohiroya/turbowarp-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-editor-views/target-combobox');
 for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
-    const specifier = `@kubohiroya/turbowarp-editor-layout/${entry}`;
+    const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');

@@ -1,5 +1,5 @@
 {
-  "name": "@kubohiroya/turbowarp-editor-layout",
+  "name": "@kubohiroya/turbowarp-plus-editor-layout",
   "version": "0.1.0",
   "description": "Resizable panes for the TurboWarp editor",
   "type": "module",

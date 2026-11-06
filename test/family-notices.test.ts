@@ -113,7 +113,7 @@ test('this repository records every family package it supplies, dev entries incl
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
         assert.ok(built.packages.includes(`${pins.spritePropertiesPackage}@${pins.spritePropertiesVersion}`));
-        const layout = index.packages.find(entry => entry.package === '@kubohiroya/turbowarp-editor-layout');
+        const layout = index.packages.find(entry => entry.package === '@kubohiroya/turbowarp-plus-editor-layout');
         assert.equal(layout.source.npm, null);
         assert.equal(layout.source.repository, 'https://github.com/kubohiroya/turbowarp-plus-editor');
         assert.equal(layout.source.directory, 'packages/editor-layout');

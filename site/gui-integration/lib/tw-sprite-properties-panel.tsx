@@ -11,9 +11,9 @@ const desktopPopout = createDesktopPanelHost('sprite-properties', 'twPlusTargetP
 export function SpritePropertiesPanel({fallback, ...props}: React.ComponentProps<typeof Panel> & {fallback?: React.ReactNode}) {
     const {SpritePropertiesSection} = layoutViews;
     const title = /^ja(?:-|$)/i.test(props.locale) ? 'スプライト' : 'Sprite';
-    const panel = <BasicPanel id="sprite-properties" title={title} externalHost={desktopPopout}
-        decorate={decorateSurface} renderInExternalDocument><Panel {...props} /></BasicPanel>;
-    return <SpritePropertiesSection fallback={layoutFlags.spriteProperties ? panel : fallback}>
-        {panel}
+    const panel = renderDockHeading => <BasicPanel id="sprite-properties" title={title} externalHost={desktopPopout}
+        decorate={decorateSurface} renderDockHeading={renderDockHeading} renderInExternalDocument><Panel {...props} /></BasicPanel>;
+    return <SpritePropertiesSection fallback={layoutFlags.spriteProperties ? panel(undefined) : fallback}>
+        {panel(action => action)}
     </SpritePropertiesSection>;
 }
