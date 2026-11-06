@@ -49,6 +49,8 @@ export const installProjectToolsHost = (vm, settings: Parameters<typeof installE
 
 export const loadedProjectTitle = vm => projects.get(vm)?.properties.loadedTitle();
 export const restoreProjectTitle = vm => projects.get(vm)?.properties.restoreTitle();
+export const isProjectLoading = vm => Boolean(projects.get(vm)?.properties.snapshot().loading);
+export const subscribeProjectLoad = (vm, listener: () => void) => projects.get(vm)?.properties.subscribe(listener);
 
 /** The GUI supplies its native menu components; this host owns the added entries and dialogs. */
 export const renderFileMenu = ({vm, locale = 'en', MenuSection, MenuItem, onRequestClose}) => {
