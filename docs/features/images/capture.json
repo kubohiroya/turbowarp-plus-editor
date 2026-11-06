@@ -143,5 +143,29 @@
       "stage-menu.png": "Public stage drawer with the display menu open.",
       "stage-workspace-current.png": "Stage opened in a workspace tab using the public display menu. Its canvas is 480 CSS pixels wide."
     }
+  },
+  "publicUiRefresh": {
+    "date": "2026-11-07",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "0fc3cb7398c9933416ccd4ca41af317514b3b959",
+    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
+    "layoutVersion": "0.1.14",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": {
+      "file-menu-public-014.png": "File menu in the default pinned layout, cropped around the menu.",
+      "plus-workspace-pinned.png": "Fresh startup with the sprite list pinned by default.",
+      "sprite-search-public-014.png": "Pinned sprite list with a matching tile highlighted after searching for 2.",
+      "stage-menu-public-014.png": "Right-edge stage with the current display menu open.",
+      "sprite-divider-public-014.png": "Focused divider after increasing the pinned sprite list width with ArrowRight.",
+      "project-properties-current.png": "Project properties in the default pinned layout with fictional sample inputs.",
+      "media-panes-0fc3.png": "Split costume preview and sound editor in the default pinned layout.",
+      "properties-variables-0fc3.png": "Public Properties and Variables tab beside a script that uses the sprite's speed variable.",
+      "stage-tab-0fc3.png": "Stage opened in a workspace tab, with the current display menu and tab return action visible.",
+      "sprite-undocked-0fc3.png": "Sprite list detached into an in-editor window with its layout menu open.",
+      "script-transfer-0fc3.png": "Block context menu in the pinned layout with twPlusContextMenuIcons=1."
+    }
   }
 }

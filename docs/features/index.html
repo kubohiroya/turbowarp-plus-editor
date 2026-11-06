@@ -15,7 +15,7 @@
 <p><a href="../editor.html?lang=ja">日本語でエディターを開く</a> · <a href="images/capture.json">掲載画面の撮影条件</a></p>
 <p>Scratch 3と標準TurboWarpで保存したSB3は、どちらもPlus Editorで開けます。Plus固有の機能には、対応する拡張や専用データなどが必要なものがあります。</p>
 <p><a href="sb3-compatibility.md">Scratch・TurboWarpのSB3互換性と機能一覧（Markdown）</a></p>
-<p class="guide-note">「公開版」はブラウザーで使える配信版です。「開発中」は試作や開発版で確認した機能、「一部の機能拡張で利用可能」は対応する拡張が必要な機能を示します。画面画像は撮影時点の表示で、選ぶと元の大きさで開けます。公開版と比較した時点は<a href="images/capture.json">撮影条件</a>も参照してください。</p>
+<p class="guide-note">操作名と配置は2026年11月7日時点の公開版で確認しています。「開発中」は試作や開発版で確認した機能、「一部の機能拡張で利用可能」は対応する拡張が必要な機能です。図版は撮影時点の画面です。画像を選ぶと元の大きさで開けます。 <a href="images/capture.json">撮影条件</a></p>
 <div id="comparison">
 <h2>標準のTurboWarpに加わる機能</h2>
 <div class="table-scroll" role="region" aria-label="標準TurboWarpとPlusの機能比較" tabindex="0">
@@ -38,7 +38,7 @@
 <div><h2>画面を整える</h2>
 <ol start="5">
 <li><a href="#layout">Plus標準配置とScratch配置を使い分ける</a></li>
-<li><a href="#sprite-drawer">左端からスプライトを探す</a></li>
+<li><a href="#sprite-drawer">左の一覧でスプライトを探す</a></li>
 <li><a href="#stage-controls">ステージを展開して作品を動かす</a></li>
 <li><a href="#splitter">境界を動かして作業領域を調整する</a></li>
 <li><a href="#sprite-tabs">スプライトごとのタブで作業を切り替える</a></li>
@@ -105,7 +105,7 @@
 <h2>2. 作品を新しく作る・SB3を開く</h2>
 
 <p>公開版の<a href="../editor.html?lang=ja">エディターを日本語で開く</a>と、新しい作品から始められます。作業中に新しい作品へ切り替えるには「ファイル」から「新規」を選びます。手元のSB3を編集するには、同じメニューの「コンピューターから読み込む」を選び、ファイルを指定します。</p>
-<figure><a href="images/current-file-menu.png"><img src="images/current-file-menu.png" width="1440" height="1000" alt="公開Web版のファイルメニュー。作品の読み込み、診断、作品データの形式、機能拡張の追加が並ぶ。" loading="lazy"></a><figcaption>ファイルメニューから作品を開き、拡張を追加したり保存するデータの形式を選んだりできます。</figcaption></figure>
+<figure class="guide-detail"><a href="images/file-menu-public-014.png"><img src="images/file-menu-public-014.png" width="760" height="475" alt="公開版のファイルメニュー。上部に新規とコンピューターから読み込むが並ぶ。" loading="lazy"></a><figcaption>公開版の「ファイル」メニュー。「新規」と「コンピューターから読み込む」は上部にあります。</figcaption></figure>
 
 </section>
 
@@ -114,7 +114,7 @@
 <h2>3. 作品に拡張を追加し、実行条件を確認する</h2>
 
 <h3>TurboWarp Plusの一覧から追加する</h3>
-<p>公開版のPlus標準配置では「ファイル」から「機能拡張の追加」を開き、「TurboWarp Plus」を選びます。Scratch配置では左下の拡張ボタンが入口です。追加する拡張をチェックすると、必要な依存拡張も選ばれます。読み込みと保存の方法を一括または個別に設定し、「追加」を押します。</p>
+<p>公開版のPlus標準配置では「ファイル」から「機能拡張の追加」を開き、「TurboWarp Plus」を選びます。Scratch配置では左下の拡張ボタンが入口です。追加する拡張をチェックすると、その拡張が必要とする拡張も自動で選ばれます。読み込み元は「すべての読み込み元」でまとめて設定するか、拡張ごとに設定して「追加」を押します。</p>
 <figure><a href="images/catalog-current.png"><img src="images/catalog-current.png" width="1440" height="1000" alt="TurboWarp Plus拡張の追加画面。撮影時の一覧でTurboWarp-Markdownを選んでいる。各行に拡張のアイコン・名前・ID・版・説明・製作者と、TurboWarp Plusのロゴに緑のチェックを重ねた信頼の印、読込方法の選択肢が並ぶ。" loading="lazy"></a><figcaption>撮影時の一覧で1件を選んだ例。チェックボックスのほか、拡張のアイコンを押しても選べます。名前の横の、TurboWarp Plusのロゴに緑のチェックを重ねた印は、このEditorが信頼する拡張であることを示します。安全を保証する印ではありません。</figcaption></figure>
 <h3>作品を開くときに取得元と実行方法を確認する</h3>
 <p>確認が必要な拡張を含む作品を開くと、実行前に一覧が出ます。Plus形式の拡張と通常のカスタム拡張をまとめて確認し、取得元を見ながら実行の可否と実行方法を選びます。「サンドボックスなしが必要」と表示された拡張を使う作品は、その条件を許可した場合に開きます。拡張にサンドボックス内で動かす指定があれば、その指定が優先されます。</p>
@@ -153,17 +153,18 @@
 <h2>5. Plus標準配置とScratch配置を使い分ける</h2>
 
 <p>Plus標準配置では、左側にスプライト一覧が固定表示された状態で開きます。中央でコードや素材を編集し、右端からステージ、下端からバックパックを開けます。従来のScratch配置で作業するには、エディターのURLに <code>twPlusStandardLayout=0</code> を指定して開き直します。</p>
-<figure><a href="images/plus-workspace.png"><img src="images/plus-workspace.png" width="1440" height="1000" alt="Plus標準配置で、中央にコード、左右の端に折りたたまれたスプライト一覧とステージがある。" loading="lazy"></a><figcaption>Plus標準配置でスプライト一覧のピンを外し、一覧とステージを閉じた状態。</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/221">Plus標準配置</a></p>
+<figure><a href="images/plus-workspace-pinned.png"><img src="images/plus-workspace-pinned.png" width="1440" height="1000" alt="起動直後のPlus標準配置。左に固定表示されたスプライト一覧、中央にコード領域があり、右端のステージと下端のバックパックは閉じている。" loading="lazy"></a><figcaption>公開版の起動直後。左にスプライト一覧が固定表示されています。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/221">Plus標準配置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/292">起動時のスプライト一覧</a></p>
 
 </section>
 
 <section id="sprite-drawer">
 
-<h2>6. 左端からスプライトを探す</h2>
+<h2>6. 左の一覧でスプライトを探す</h2>
 
-<p>左側のスプライト一覧で対象を選びます。ピンを外した場合は、左端にポインターを置くか「スプライト一覧を展開」を押すと一覧が開きます。「スプライトを検索」で名前の一部を入力すると、最初に一致したタイルが強調表示されます。固定表示中に幅を広げると、タイルを複数列に並べられます。「背景」のタイルからはステージの背景を開けます。</p>
-<figure><a href="images/sprite-drawer.png"><img src="images/sprite-drawer.png" width="1440" height="1000" alt="左端から展開したスプライト一覧と検索・固定表示の操作。" loading="lazy"></a><figcaption>一覧を展開し、スプライトを選べる状態。</figcaption></figure>
+<p>左側のスプライト一覧で編集する対象を選びます。「スプライトを検索」で名前の一部を入力すると、最初に一致したタイルまでスクロールし、そのタイルを枠で強調します。編集するにはタイルを選びます。「背景」のタイルからはステージの背景を開けます。</p>
+<figure class="guide-detail"><a href="images/sprite-search-public-014.png"><img src="images/sprite-search-public-014.png" width="550" height="390" alt="スプライト一覧の検索欄に2を入力し、スプライト2が枠で強調表示されている。" loading="lazy"></a><figcaption>「2」で検索すると、一致したスプライト2に枠が付きます。</figcaption></figure>
+<p>固定表示を解除したあとは、左端にポインターを置くか「スプライト一覧を展開」を押すと一覧が開きます。固定表示中に一覧の幅を広げると、タイルを複数列に並べられます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/225">一覧の展開・検索・固定</a></p>
 
 </section>
@@ -172,8 +173,9 @@
 
 <h2>7. ステージを展開して作品を動かす</h2>
 
-<p>Plus標準配置では、右端の「ステージを展開」を押すと作品の画面が開きます。緑旗で実行を始め、一時停止や停止で動きを確認できます。「ステージの表示」からは「ステージを全画面表示にする」や「ステージを隠す」を選べます。ステージを隠している間も作品の実行は続きます。</p>
-<figure><a href="images/stage-menu.png"><img src="images/stage-menu.png" width="1440" height="1000" alt="右端から開いたステージと、全画面表示、非表示、タブ、別窓を選べる表示メニュー。" loading="lazy"></a><figcaption>右端のステージで「ステージの表示」を開いたところ。</figcaption></figure>
+<p>Plus標準配置では、右端の「ステージを展開」を押すとステージが開きます。緑旗で実行を始め、一時停止や停止で動きを確認できます。右端に開いたステージは、左辺や下辺の境界をドラッグしてサイズを変えられます。</p>
+<p>「ステージの表示」からは「ステージを全画面表示にする」や「ステージを隠す」を選べます。ステージを隠している間も作品の実行は続きます。タブと別ウィンドウへの移動は<a href="#dock">14章</a>で説明します。</p>
+<figure><a href="images/stage-menu-public-014.png"><img src="images/stage-menu-public-014.png" width="1440" height="1000" alt="右端から開いたステージと表示メニュー。全画面表示にする、ステージを隠す、ステージをタブで開く、ステージを別ウィンドウで開くが並ぶ。" loading="lazy"></a><figcaption>公開版で右端の「ステージの表示」を開いたところ。撮影時の全画面表示メニューは「全画面表示にする」です。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">右端のステージと別窓</a></p>
 
 </section>
@@ -183,8 +185,8 @@
 <h2>8. 境界を動かして作業領域を調整する</h2>
 
 <p>境界にある3点のグリップをドラッグして、隣り合う領域の大きさを変えます。Plus標準配置では、固定したスプライト一覧の幅を調整できます。Scratch配置では、コード領域とステージ側の幅、ステージとスプライト一覧の高さを調整できます。</p>
-<figure class="guide-detail"><a href="images/plus-sprite-splitter.png"><img src="images/plus-sprite-splitter.png" width="660" height="665" alt="Plus配置で固定したスプライト一覧とコード領域の間に、3点のグリップがある。" loading="lazy"></a><figcaption>スプライト一覧をピンで固定すると、コード領域との境界をドラッグできます。</figcaption></figure>
-<p>境界にフォーカスを移すと、矢印キーでも調整できます。Enterで初期値に戻ります。Scratch配置で調整した比率はブラウザーに保存されます。スプリッターを外して起動するには、URLに <code>twPlusSplitter=0</code> を指定します。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/227">境界のグリップ</a></p>
+<figure class="guide-detail"><a href="images/sprite-divider-public-014.png"><img src="images/sprite-divider-public-014.png" width="680" height="560" alt="公開版の固定スプライト一覧とコード領域の境界。フォーカスした境界が赤く表示され、中央付近に3点のグリップがある。" loading="lazy"></a><figcaption>固定したスプライト一覧とコード領域の境界。矢印キーで一覧を広げたところ。</figcaption></figure>
+<p>境界にフォーカスを移すと、矢印キーでも調整できます。Enterで初期値に戻ります。Scratch配置で調整した比率はブラウザーに保存されます。URLに <code>twPlusSplitter=0</code> を指定して開き直すと、この章で扱う境界がなくなります。Plus標準配置でもステージ自体のサイズ調整や<a href="#split-panes">編集パネルの分割</a>は引き続き使えます。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/227">境界のグリップ</a></p>
 
 </section>
 
@@ -221,7 +223,7 @@
 
 <p>公開版で同じスプライトのコードを二つのペインに表示すると、スクロール位置とズーム倍率を別々に保てます。片方で初期化のコードを見ながら、もう片方でイベントのコードを編集するときに使えます。編集したブロックは両方に反映されます。編集するペインを切り替えるには、そのペインをクリックするか、フォーカスを当ててEnterを押します。</p>
 <div class="flow" role="img" aria-label="同じスプライトのコードを二つのペインで共有し、それぞれ別の範囲と倍率で表示する。"><div>コード画面 A<br><small>初期化のブロックを表示</small></div><span>↔</span><div>同じスプライト<br><small>ブロックの編集を共有</small></div><span>↔</span><div>コード画面 B<br><small>イベントのブロックを表示</small></div></div>
-<p><span class="badge planned">開発中</span> macOS向けDesktop開発版では、同じスプライトをOSの別ウィンドウで開き、基本的なコード編集と「取り消し」「やり直し」を共有する動作も検証しています。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/255">公開版のコードペイン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/196">Desktopのコード別窓</a></p>
+<p><span class="badge planned">開発中</span> macOS向けDesktop開発版では、同じスプライトをOSの別ウィンドウで開き、コード編集と「取り消し」「やり直し」を共有する動作を検証しています。機能拡張独自の入力欄を別ウィンドウで使う試作は、対応する形式に限って検証しています。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/255">公開版のコードペイン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/test/stage6/README.md">Desktopのコード別窓と検証範囲</a></p>
 
 </section>
 
@@ -231,8 +233,9 @@
 
 <p>「編集パネルのレイアウト」から「パネルを横に分割」を選び、同じスプライトの「コスチューム」と「音」を左右に開きます。「音」で素材を選ぶと波形が表示され、その下の再生ボタンで試聴できます。音の一覧が空の場合は「音」タブから追加します。</p>
 <p>別のペインに移っても、開いていたタブと選んだ素材はペインごとに保持されます。編集を再開するには、元のペインをクリックするか、ペインにフォーカスを当ててEnterを押します。</p>
-<figure><a href="images/local-media-panes.png"><img src="images/local-media-panes.png" width="1440" height="575" alt="ローカル統合版のPlus配置。左ペインにコスチュームの全体像、右ペインに音の波形と再生ボタンが表示され、両方の検索欄が各ペインの右端にある。" loading="lazy"></a><figcaption>ローカル統合版。左にコスチュームのプレビュー、右に確認用の音の波形と再生ボタン。</figcaption></figure>
-<p><span class="badge planned">開発中</span> ローカル統合版では、操作していないペインのコスチュームプレビューが大きくなりすぎないよう、高さに上限があります。「検索」は各ペインの右端に揃います。公開版でも素材の選択は保持され、音を再生できます。縦長のペインではプレビューが大きく表示され、「音」のペインでは検索欄の右に操作ボタンが並びます。</p>
+<figure><a href="images/media-panes-0fc3.png"><img src="images/media-panes-0fc3.png" width="1440" height="1000" alt="公開版のPlus配置。左のペインに縦長のコスチュームプレビュー、右のペインに音の波形と再生ボタン。右の検索欄の隣に別画面で開くボタンがある。" loading="lazy"></a><figcaption>公開版。左にコスチューム、右に確認用の音の波形と再生ボタンを表示しています。</figcaption></figure>
+<p><span class="badge planned">開発中</span> ローカル統合版では、操作していないペインのコスチュームプレビューの高さに上限を設け、「検索」を各ペインの右端に揃えています。</p>
+<figure><a href="images/local-media-panes.png"><img src="images/local-media-panes.png" width="1440" height="575" alt="ローカル統合版の左ペインに高さを抑えたコスチュームプレビュー、右ペインに音の波形と再生ボタン。検索欄は両ペインの右端にある。" loading="lazy"></a><figcaption>ローカル統合版の比較画像。コスチュームのプレビューを小さく収め、検索欄をペインの右端に配置しています。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">素材の選択と編集状態</a></p>
 
 </section>
@@ -241,9 +244,10 @@
 
 <h2>13. 変数を見ながらコードを編集する</h2>
 
-<p>ペインを横に分割し、片方に変数、もう片方にコードを表示します。値の欄を編集し、Enterで確定すると、同じ変数を表示しているほかのペインにも新しい値が反映されます。</p>
+<p>公開版ではペインを横に分割し、片方で「プロパティ・変数」、もう片方で「コード」を開きます。変数名の下に「作品」とあれば全スプライトで使う変数、「スプライト」とあれば選択したスプライト用の変数です。値を入力してEnterを押すか、入力欄からフォーカスを外すと確定します。確定前にEscを押すと入力を取り消せます。</p>
+<figure><a href="images/properties-variables-0fc3.png"><img src="images/properties-variables-0fc3.png" width="1440" height="523" alt="公開版のプロパティ・変数タブに、スプライト用の速さと作品全体のスコアが表示されている。隣のコードに速さのブロックがある。" loading="lazy"></a><figcaption>公開版。「プロパティ・変数」で「速さ」を8に設定し、隣のコードで参照しています。</figcaption></figure>
+<p><span class="badge planned">開発中</span> ローカル統合版では「変数」タブを独立させ、「すべてのスプライト用」と「このスプライトのみ」の見出しで変数をまとめています。</p>
 <figure><a href="images/local-variable-pane.png"><img src="images/local-variable-pane.png" width="1440" height="405" alt="ローカル統合版の左ペインに、すべてのスプライト用のスコアと、このスプライトのみの速さが別の見出しで表示されている。速さの値は8。右ペインに速さを使って移動するコードがある。" loading="lazy"></a><figcaption>ローカル統合版。「変数」タブで「速さ」を8に確定したところ。隣のコードでは「速さ」を移動量に使っています。</figcaption></figure>
-<p><span class="badge planned">開発中</span> ローカル統合版の「変数」タブでは、「すべてのスプライト用」と「このスプライトのみ」の見出しで変数がまとまっています。値の列は名前の列より広く、入力欄からフォーカスを外しても確定できます。確定前にEscを押すと入力を取り消せます。公開版では「プロパティ・変数」タブを開き、変数名に添えられた「作品」または「スプライト」の表示で範囲を確認します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">変数タブ</a></p>
 
 </section>
@@ -252,12 +256,13 @@
 
 <h2>14. ステージを作業領域や別窓に移す</h2>
 
-<p>右端からステージを展開し、「ステージの表示」→「ステージをタブで開く」を選ぶと、コードの隣にステージタブを開けます。同じメニューから「別窓で開く」も選べます。右端に戻すには「ステージを元の位置に戻す」を選ぶか、ステージタブを閉じます。</p>
+<p>右端からステージを展開し、「ステージの表示」を開きます。コードの隣に置くには「ステージをタブで開く」を選びます。右端へ戻すときは、同じメニューから「ステージを元の位置に戻す」を選ぶか、「ステージ」タブを閉じます。</p>
+<p>ブラウザーの別ウィンドウで使うには「ステージを別ウィンドウで開く」を選びます。別ウィンドウの「ステージの表示」から「ステージをエディターに戻す」を選ぶと復帰します。</p>
 <div class="flow" role="img" aria-label="右端のステージを作業領域のタブまたはブラウザー別窓に移し、右端に戻す。"><div>右端のステージ</div><span>↔</span><div>作業領域のタブ<br><small>またはブラウザーの別窓</small></div></div>
-<figure><a href="images/stage-workspace-current.png"><img src="images/stage-workspace-current.png" width="1440" height="1000" alt="左にコード、右にステージタブを表示。ステージの表示メニューから右端に戻す操作や別窓へ移す操作を選べる。" loading="lazy"></a><figcaption>公開版で「ステージの表示」を開いたところ。撮影時は戻す操作が「作業領域から戻す」と表示されていました。</figcaption></figure>
+<figure><a href="images/stage-tab-0fc3.png"><img src="images/stage-tab-0fc3.png" width="1440" height="1000" alt="公開版の右側にステージタブ。「ステージの表示」メニューに「ステージを元の位置に戻す」と「ステージを別ウィンドウで開く」がある。" loading="lazy"></a><figcaption>公開版のステージタブ。表示メニューから元の位置へ戻すか、別ウィンドウに移せます。</figcaption></figure>
 <p><span class="badge planned">開発中</span> ペインの広さに合わせてステージを拡大・縮小する動作は、ローカル統合版で確認しています。掲載した公開版の通常表示ではステージの幅は480pxです。</p>
 <figure><a href="images/local-stage-workspace.png"><img src="images/local-stage-workspace.png" width="1440" height="1000" alt="ローカル統合版で左にコード、右にペインの幅に合わせたステージを表示。" loading="lazy"></a><figcaption>ローカル統合版の比較画像。幅715pxのペインにステージを幅703pxで表示。メニューは撮影時点の開発版です。</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">ステージの表示メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">別窓とドック復帰</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">ステージの表示メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/290">別ウィンドウからエディターへ戻す操作</a></p>
 
 </section>
 
@@ -265,8 +270,9 @@
 
 <h2>15. スプライト一覧を切り離して元に戻す</h2>
 
-<p>Plus標準配置では、左側のスプライト一覧で「アンドック」を押すと、一覧をエディター内の小窓に移せます。小窓の「レイアウト変更」から「別窓で開く（アンドック）」を選ぶとブラウザーの別ウィンドウに移り、「元の画面に戻す（ドックする）」を選ぶと左端に戻ります。</p>
+<p>Plus標準配置では、起動時から左側にスプライト一覧が固定されています。一覧の「アンドック」を押すと、エディター内の小窓に移せます。小窓の「レイアウト変更」から「別窓で開く（アンドック）」を選ぶとブラウザーの別ウィンドウに移り、「元の画面に戻す（ドックする）」を選ぶと左端に戻ります。</p>
 <figure class="guide-schematic"><div class="schematic-panels"><div class="schematic-panel"><strong>ドック中</strong><div class="schematic-cells"><span>左端：スプライト一覧</span><span>中央：コード</span></div></div><div class="schematic-panel"><strong>切り離したあと</strong><div class="schematic-cells"><span>左端：元の枠</span><span>中央：コード</span><span>移動できる一覧</span></div></div></div><figcaption>概念図。切り離した一覧を移動し、使い終えたら元の枠に戻します。</figcaption></figure>
+<figure><a href="images/sprite-undocked-0fc3.png"><img src="images/sprite-undocked-0fc3.png" width="1440" height="1000" alt="公開版で切り離したスプライト一覧。「レイアウト変更」に別窓で開く操作と元の画面に戻す操作がある。" loading="lazy"></a><figcaption>公開版で一覧を切り離し、レイアウト変更メニューを開いたところ。</figcaption></figure>
 <p><span class="badge planned">開発中</span> macOSのDesktop開発版では、ステージ・スプライト設定・一覧をアプリの別ウィンドウに移して元に戻す操作も確認しています。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/189">macOSでの確認範囲</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/224">レイアウト変更メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/issues/11">Desktopへの導入状況</a></p>
 
 </section>
@@ -281,7 +287,7 @@
 <tr><th scope="row">タブの順序・分割・選択状態</th><td>同じブラウザープロファイル内のエディターの保存領域</td><td>同じエディターで前回の作品を開く</td></tr>
 <tr><th scope="row">ブロックや素材、確定した作品内文書</th><td>作品のSB3</td><td>編集を反映し、ファイルメニューで保存する</td></tr>
 </tbody></table></div>
-<p>ブラウザーに残るのは直近の配置です。作品の内容はSB3に保存します。従来の編集レイアウトや文書ダイアログを使うには、作品を保存してから <code>twPlusDockview=0</code> を指定して開き直します。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/264">再起動後の配置復元</a></p>
+<p>ブラウザーに残るのは直近の配置です。作品の内容はSB3に保存します。従来の編集レイアウトや文書ダイアログを使うには、作品を保存してから <code>twPlusDockview=0</code> を指定して開き直します。Desktop開発版で直接開いた外部YAMLファイルのタブは、復元対象から外れます。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/264">再起動後の配置復元</a></p>
 
 </section>
 
@@ -315,7 +321,7 @@
 
 <h2>19. カテゴリの順序を変え、ブロックを整理する</h2>
 
-<p>公開版では、カテゴリを長押しし、移動先を示す印に合わせて離すと並べ替えられます。パレットの外で離すかEscを押すと取り消せます。並び順は横表示と縦表示を切り替えても保持され、ページを再読み込みすると初期の順序に戻ります。</p>
+<p>公開版では、カテゴリを長押しし、移動先を示す印に合わせて離すと並べ替えられます。パレットの外で離すかEscを押すと取り消せます。ページを再読み込みすると初期の順序に戻ります。<code>twPlusHorizontalBlockPalette=1</code> を付けて起動した場合は、パレットを右クリックして横表示と縦表示を切り替えられ、並べ替えた順序も引き継がれます。</p>
 <figure class="guide-detail"><a href="images/palette-order-detail.png"><img src="images/palette-order-detail.png" width="540" height="126" alt="横型パレットで動きのカテゴリを長押しし、音の位置へ移動している途中。" loading="lazy"></a><figcaption>長押ししたカテゴリと移動先の表示を見ながら並べ替えます。</figcaption></figure>
 <p>コード領域からブロックをパレットにドラッグすると、そこで離せば削除される位置にゴミ箱が表示されます。右クリックメニューの操作アイコンについては<a href="#transfer">27章</a>を参照してください。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/250">カテゴリの並べ替え</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/243">削除予告</a></p>
 
@@ -385,12 +391,12 @@
 
 <section id="asset-preview">
 
-<h2>24. 素材を見たり再生したりして選ぶ <span class="badge planned">開発中</span></h2>
+<h2>24. 素材を見たり再生したりして選ぶ <span class="badge">一部の機能拡張で利用可能</span></h2>
 
-<p>紙芝居拡張の開発版では、素材ブロックのアイコンからフォームを開くと、指定した素材がフォームの隣に表示されます。素材の指定を変えると、保存前に新しい画像を見たり、音声や動画を再生したりできます。寸法やファイルサイズ、外部から取得するか作品に同梱するかも確認できます。</p>
-<figure class="guide-detail"><a href="images/asset-preview-development.png"><img src="images/asset-preview-development.png" width="374" height="319" alt="紙芝居の開発版で表示した画像素材のプレビュー。画像、ピクセル寸法、バイト数、保持形態が表示されている。" loading="lazy"></a><figcaption>紙芝居の開発版で、外部画像の見た目と保持形態を確認した例。</figcaption></figure>
-<p>この画面には素材プレビューに対応する紙芝居拡張が必要です。比較した公開版の紙芝居拡張（rc.79）で利用できるのは<a href="#runtime">場面や動作のプレビュー</a>です。図の素材プレビューはその後の開発版で追加されました。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1132">紙芝居拡張の素材プレビュー</a> · <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/tag/v4.0.0-rc.79">紙芝居拡張の公開版</a></p>
+<p>公開された紙芝居拡張rc.87では、編集用作品にある素材ブロック（Asset）のアイコンを押すと、フォームと一緒に素材のプレビューが開きます。素材の指定を変えると、保存前に新しい画像を見たり、音声や動画を再生したりできます。画像や動画の寸法、ファイルサイズ、素材の保持形態も確認できます。対応するTeachable Machineの認識モデルでは、カメラやマイクを開始して認識結果を試せます。</p>
+<figure class="guide-detail"><a href="images/asset-preview-development.png"><img src="images/asset-preview-development.png" width="374" height="319" alt="公開前の紙芝居開発版で撮影した画像素材のプレビュー。画像、ピクセル寸法、バイト数、保持形態が表示されている。" loading="lazy"></a><figcaption>公開前の開発版で撮影した例。外部画像の見た目と保持形態を確認できます。</figcaption></figure>
+<p>rc.87の素材プレビューは既定で有効です。フォームだけを開く場合は、エディターの起動URLに <code>twPlusBlockPreview=0</code> を指定します。<a href="#runtime">場面や動作のプレビュー</a>には別途、有効化の指定が必要です。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/tag/v4.0.0-rc.87">紙芝居拡張rc.87の公開情報</a> · <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">プレビューの対象と設定</a></p>
 
 </section>
 
@@ -398,10 +404,11 @@
 
 <h2>25. 場面や動作をプレビューしてから反映する <span class="badge">一部の機能拡張で利用可能</span></h2>
 
-<p>公開版でも、拡張がプレビューを登録したブロックでは、フォームを編集中に下書きの値で表示や動作を確かめられます。たとえば紙芝居の対応する吹き出しブロックなら、せりふや表示時間を変えて見え方を確認できます。紙芝居拡張の公開版rc.79では、起動URLに <code>twPlusBlockPreview=1</code> を指定すると対応する場面や動作のプレビューが有効になります。</p>
+<p>公開版では、拡張がプレビューを登録したブロックで、フォームの下書きを使って表示や動作を確かめられます。たとえば紙芝居の対応する吹き出しブロックなら、せりふや表示時間を変えて見え方を確認できます。</p>
+<p>紙芝居拡張rc.87で場面や動作を試すには、エディターの起動URLに <code>twPlusBlockPreview=1</code> を指定し、対応する場面・動作ブロックを含む編集用作品を開きます。</p>
 <figure class="guide-flow"><div class="flow" role="img" aria-label="フォームで下書き。文と表示時間を調整。次に、場面を再生。読める長さかを確認。次に、すべて保存。確定した値をブロックに反映"><div>フォームで下書き<br><small>文と表示時間を調整</small></div><span aria-hidden="true">→</span><div>場面を再生<br><small>読める長さかを確認</small></div><span aria-hidden="true">→</span><div>すべて保存<br><small>確定した値をブロックに反映</small></div></div><figcaption>例。吹き出しの表示を確かめてから、ブロックへ反映する。</figcaption></figure>
 <p>気に入った設定は、フォームの「すべて保存」でブロックに反映します。ステージの近くに拡張が追加する操作ボタンもあり、表示される条件と動作は拡張ごとに異なります。たとえば紙芝居の制作中に表示されるリロード操作は、紙芝居拡張が提供します。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/issues/1100">紙芝居拡張の場面・動作プレビュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張が追加するステージ操作</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">紙芝居拡張の場面・動作プレビュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張が追加するステージ操作</a></p>
 
 </section>
 
@@ -417,7 +424,7 @@
 
 <p>公開版のPlus配置では、編集画面の下端にポインターを置くとバックパックが開きます。コピー先のスプライトを選び、再利用したいスクリプトをバックパックからコード画面へドラッグします。開いた領域の外にポインターを移すと、バックパックは下端に戻ります。</p>
 <figure class="guide-flow"><div class="flow" role="img" aria-label="スプライトを選択。コピー先を確認。次に、下端にポインターを置く。バックパックを展開。次に、コード画面にドラッグ。スクリプトをコピー"><div>スプライトを選択<br><small>コピー先を確認</small></div><span aria-hidden="true">→</span><div>下端にポインターを置く<br><small>バックパックを展開</small></div><span aria-hidden="true">→</span><div>コード画面にドラッグ<br><small>スクリプトをコピー</small></div></div><figcaption>バックパックから再利用するスクリプトを選ぶ流れ。</figcaption></figure>
-<p>「バックパックを別画面で開く」を押すと、エディター内の小窓に移せます。切り離したバックパックからは、対応する標準ブロックのスクリプトを「スクリプトをコードへドラッグ」でコード画面にコピーできます。下端へ戻すには「レイアウト変更」から「元の画面に戻す（ドックする）」を選びます。</p>
+<p>「バックパックを別画面で開く」を押すと、エディター内の小窓に移せます。「レイアウト変更」からブラウザーの別ウィンドウにも移せます。切り離したバックパックからは、対応するスクリプトを「スクリプトをコードへドラッグ」でコード画面にコピーできます。下端へ戻すには「レイアウト変更」から「元の画面に戻す（ドックする）」を選びます。</p>
 <p><span class="badge planned">開発中</span> macOSのDesktop開発版では、背面にあるコードの別ウィンドウへのドロップと、コピー操作を共有の履歴から取り消せることも確認しています。コードの別ウィンドウからバックパックへ戻す操作や、画像・音・スプライトを別ウィンドウ間で移す操作は、経路ごとに検証しています。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/226">下端のバックパック</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/196">macOSの背面ドロップ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/178">残りの転送経路</a></p>
 
@@ -428,8 +435,9 @@
 <h2>27. スクリプトとステージを別作品へ転送する</h2>
 
 <p>移したいスクリプトのブロックを右クリックします。「スクリプトを書き出し」と「コピー」は、右クリックしたブロックを含む、つながった一組のブロック全体に適用されます。転送先ではコード領域の空白を右クリックし、ファイルなら「スクリプトを読み込み」、コピーした内容なら「貼り付け」を選びます。コピーと貼り付けにはCtrl／Cmd+C・Vも使えます。</p>
-<figure class="guide-detail"><a href="images/local-script-transfer.png"><img src="images/local-script-transfer.png" width="690" height="559" alt="ローカル統合版のPlus配置で、ブロックを右クリックしたところ。スクリプトを書き出し、コピー、複製、削除などの項目の左に操作アイコンが並ぶ。" loading="lazy"></a><figcaption>ローカル統合版のブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンで見分けられます。</figcaption></figure>
-<p><span class="badge planned">開発中</span> ローカル統合版は通常の起動でアイコンを表示します。公開版でアイコンを表示するには、URLに <code>twPlusContextMenuIcons=1</code> を指定します。転送操作はどちらの版でも<a href="../editor.html?lang=ja">通常の起動</a>で使えます。</p>
+<figure class="guide-detail"><a href="images/script-transfer-0fc3.png"><img src="images/script-transfer-0fc3.png" width="750" height="559" alt="公開版でアイコン表示を有効にした右クリックメニュー。スクリプトを書き出し、コピー、複製、削除などの項目に操作アイコンが並ぶ。" loading="lazy"></a><figcaption>公開版で操作アイコンを有効にしたところ。書き出しは下向き矢印、削除はゴミ箱のアイコンです。</figcaption></figure>
+<p>転送は公開版の<a href="../editor.html?lang=ja">通常の起動</a>で使えます。図と同じようにアイコンを表示するには、URLに <code>twPlusContextMenuIcons=1</code> を指定します。</p>
+<p><span class="badge planned">開発中</span> ローカル統合版では、通常の起動時からアイコンを表示する設定を確認しています。</p>
 <ul><li><strong>.blocks3</strong> にはスクリプトと、それが使うブロック定義・変数・リスト・メッセージ・拡張の情報が含まれます。同じオリジンで開いたウィンドウ間では、OSのクリップボードへのアクセスを許可していなくてもコピーと貼り付けができます。別のオリジン間では、対応ブラウザーとクリップボードの読み取り許可が必要です。</li><li><strong>.stage3</strong> は、Plus配置なら背景タイル、Scratch配置ならステージを右クリックして書き出します。Scratch配置で取り込むには、背景の「選ぶ」メニューで「ステージを読み込み（追加）」を選びます。背景・音・スクリプトが現在のステージに追加されます。</li><li>変数やリストの名前と範囲・種類が一致する場合は、読み込み先の項目とその値を使います。名前が衝突するブロック定義や素材は必要に応じて改名します。計算で決まる背景・音の名前や番号は自動変換の対象外です。</li><li>拡張を実行できるかどうかは、転送先の設定や承認で決まります。</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a></p>
 
@@ -463,7 +471,7 @@
 
 <p>公開版の「ファイル」→「作品のプロパティ…」で、タイトルや概要、作者名を記録できます。</p>
 <ol><li>作品タイトル、作品概要、作者名、連絡先を入力します。作品概要は複数行で書けます。</li><li>「適用」を押すと現在の作品に反映され、エディター上部のタイトルも更新されます。「キャンセル」を押すと入力中の変更を取り消せます。</li><li>「ファイル」からSB3を保存すると、作品ファイルに情報が記録されます。</li></ol>
-<figure><a href="images/plus-project-properties.png"><img src="images/plus-project-properties.png" width="1440" height="1000" alt="Plus配置のエディターで作品のプロパティを開き、架空の作品のタイトル、URI、概要、作者名、連絡先を入力した例。" loading="lazy"></a><figcaption>Plus配置の「ファイル」から作品のプロパティを開いた例。入力内容は説明用です。</figcaption></figure>
+<figure><a href="images/project-properties-current.png"><img src="images/project-properties-current.png" width="1440" height="1000" alt="公開版のPlus配置。左のスプライト一覧を表示したまま、作品のプロパティに説明用のタイトル、URI、概要、作者名、連絡先を入力した画面。" loading="lazy"></a><figcaption>公開版の「ファイル」から「作品のプロパティ…」を開いたところ。入力内容は説明用です。</figcaption></figure>
 <h3>作者名と連絡先：直近5件から選択、または新規入力</h3>
 <p>適用した作者名と連絡先は、それぞれ直近5件までブラウザーに記録されます。同じ値を使うと履歴の先頭に移り、選んだ候補は編集できます。SB3に入るのは今回適用した値です。ブラウザーの保存機能が使えない場合、候補の履歴はエディターを開いている間だけ利用できます。</p>
 <p>連絡先のメールアドレスや<code>mailto:</code>はメール用リンクに、<code>https:</code>はWebリンクになります。メールリンクは利用環境のメールアプリ、Webリンクは別タブで開きます。作品概要はプレーンテキストとして入力し、プレビュー内のHTTPS URLをリンクとして開けます。</p>
