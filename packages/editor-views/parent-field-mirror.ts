@@ -1,3 +1,5 @@
+import {createFieldLayoutMirror} from './parent-field-layout.ts';
+
 const htmlNamespace = 'http://www.w3.org/1999/xhtml';
 const elements = new Set(['div', 'span', 'p', 'fieldset', 'legend', 'label', 'textarea', 'input', 'button']);
 const inputTypes = new Set(['text', 'number', 'range']);
@@ -162,10 +164,13 @@ export function mirrorParentField(source: HTMLElement, host: HTMLElement, valid:
         if (tag === 'input' && !inputTypes.has((original as HTMLInputElement).type)) return;
         if (tag === 'button' && (original as HTMLButtonElement).form && (original as HTMLButtonElement).type !== 'button') return;
         const proxy = host.ownerDocument.createElement(tag);
+        const mirrorLayout = createFieldLayoutMirror(original, proxy);
         nodes.push([original, proxy]);
         sync.push(() => {
             proxy.hidden = original.hidden;
-            copyAppearance(parent.getComputedStyle(original), proxy.style);
+            const computed = parent.getComputedStyle(original);
+            copyAppearance(computed, proxy.style);
+            mirrorLayout(computed);
         });
         for (const name of attributes) {
             const value = original.getAttribute(name);
