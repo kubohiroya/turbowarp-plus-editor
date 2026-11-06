@@ -5,7 +5,7 @@ import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import {layoutFlags} from './index.tsx';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
-import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-editor-views/sprite-code-windows';
+import {BackCodeWindows, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
 const resizeCode = () => {
@@ -101,6 +101,6 @@ export function EditorTabLayout({vm, activeEditorTab, editorTargetIsStage, showU
     return <SpriteCodeProvider value={code?.context ?? null}>
         {content}
         {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front}
-            previewClass={styles.codePreview} attachBackpackDrop={attachBackpackDrop} />}
+            attachBackpackDrop={attachBackpackDrop} />}
     </SpriteCodeProvider>;
 }

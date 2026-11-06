@@ -1,5 +1,6 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
+import './preview.css';
 import {getCodeSession} from './workspace.ts';
 
 export {attachCodeWorkspace} from './workspace.ts';
@@ -18,13 +19,14 @@ export function useCodeWindows({vm, host, locale, enabled}) {
     const title = target => japanese ? `${target.getName()}のコード` : `Code · ${target.getName()}`;
     function publish(windows, front) {
         current.current = {windows, front};
+        session.frontView = front;
         if (mounted.current) setState(current.current);
     }
 
     function activated(view) {
         const {windows, front} = current.current;
         if (!windows.includes(view) || front === view && !view.minimized) return;
-        if (!session.bridge?.select(view.target)) return;
+        if (!session.bridge?.select(view)) return;
         view.minimized = false;
         publish([...windows.filter(item => item !== view), view], view);
     }
@@ -100,6 +102,7 @@ export function useCodeWindows({vm, host, locale, enabled}) {
             vm.removeListener('targetsUpdate', updateTargets);
             const {windows} = current.current;
             current.current = {windows: [], front: null};
+            session.frontView = null;
             for (const view of windows) view.connection.close();
         };
     }, [enabled, vm, host]);
@@ -117,10 +120,11 @@ export function useCodeWindows({vm, host, locale, enabled}) {
     } : null;
 }
 
-function Preview({vm, view, className, attachBackpackDrop}) {
+function Preview({vm, view, attachBackpackDrop}) {
     const {target} = view;
     const drop = React.useRef(null);
     const ref = React.useRef(null);
+    const chrome = React.useRef(null);
     React.useLayoutEffect(() => {
         const session = getCodeSession(vm);
         let bridge;
@@ -131,7 +135,7 @@ function Preview({vm, view, className, attachBackpackDrop}) {
                 dropBinding?.dispose();
                 preview?.dispose();
                 bridge = session.bridge;
-                preview = bridge?.preview(ref.current, target);
+                preview = bridge?.preview(ref.current, chrome.current, view);
                 if (preview) {
                     const boundBridge = bridge;
                     const canCommit = () => session.bridge === boundBridge && !view.connection.disconnected.aborted;
@@ -157,12 +161,13 @@ function Preview({vm, view, className, attachBackpackDrop}) {
             preview?.dispose();
         };
     }, [vm, view, target, attachBackpackDrop]);
-    return <div ref={drop} className={className} data-code-preview="" aria-hidden="true">
+    return <div ref={drop} data-code-preview="" aria-hidden="true">
         <div ref={ref} {...{inert: ''}} />
+        <div ref={chrome} className="tw-code-preview-chrome" {...{inert: ''}} />
     </div>;
 }
 
-export function BackCodeWindows({vm, windows, front, previewClass, attachBackpackDrop}) {
+export function BackCodeWindows({vm, windows, front, attachBackpackDrop}) {
     return windows.filter(view => view !== front && !view.minimized && view.mount).map(view =>
-        createPortal(<Preview vm={vm} view={view} className={previewClass} attachBackpackDrop={attachBackpackDrop} />, view.mount, view.id));
+        createPortal(<Preview vm={vm} view={view} attachBackpackDrop={attachBackpackDrop} />, view.mount, view.id));
 }

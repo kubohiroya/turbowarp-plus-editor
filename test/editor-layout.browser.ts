@@ -632,7 +632,50 @@ test('the default editor reveals the sprite drawer and exposes the detached wind
 
 });
 
-test('a background sprite code window fits scripts far from the origin', {timeout: 30_000}, async t => {
+test('a background code view retains its layout, pan and zoom', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    await page.getByRole('tab', {name: 'Code', exact: true}).focus();
+    await page.getByRole('button', {name: 'Open in another window', exact: true}).press('Enter');
+
+    const first = page.getByRole('region', {name: /^Code · /}).first();
+    const canvas = first.locator('.tw-dockable-panel--floating .blocklySvg .blocklyBlockCanvas');
+    await expect(first.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
+    await page.evaluate(() => {
+        const {ScratchBlocks} = window;
+        const workspace = ScratchBlocks.getMainWorkspace();
+        const xml = ScratchBlocks.Xml.textToDom('<xml><block id="preview-block" type="looks_show" x="180" y="75"/></xml>');
+        ScratchBlocks.Xml.domToWorkspace(xml, workspace);
+        ScratchBlocks.Events.fireNow_();
+    });
+    await expect(canvas.locator('[data-id="preview-block"]')).toBeVisible();
+    await first.locator('[data-plus-zoom-action="in"]').click();
+    await page.evaluate(() => {
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        workspace.scrollX = -29;
+        workspace.scrollY = 10;
+        const {absoluteLeft, absoluteTop} = workspace.getMetrics();
+        workspace.translate(workspace.scrollX + absoluteLeft, workspace.scrollY + absoluteTop);
+    });
+    const transform = await canvas.getAttribute('transform');
+
+    await first.getByRole('button', {name: 'Window layout'}).click();
+    await first.getByRole('button', {name: 'Open another view of this editor'}).click();
+    const preview = first.locator('[data-code-preview]');
+    const chrome = preview.locator('[data-code-preview-chrome]');
+    await expect(preview.locator('.blocklySvg .blocklyBlockCanvas')).toHaveAttribute('transform', transform);
+    await expect(preview.locator('.blocklySvg .blocklyMainBackground')).toHaveCSS('fill', /url\(/);
+    await expect(chrome.locator('[data-horizontal-block-palette]')).toBeVisible();
+    await expect(chrome.locator('[data-workspace-minimap]')).toBeVisible();
+    await expect(chrome.locator('[data-plus-horizontal-zoom]')).toBeVisible();
+    await expect(chrome.locator('[data-plus-workspace-watermark] img')).toBeVisible();
+    await expect(chrome).toHaveAttribute('inert', '');
+    await expect(page.getByRole('region', {name: /^Code · /}).nth(1)
+        .locator('.tw-dockable-panel--floating [data-horizontal-block-palette]')).toBeVisible();
+});
+
+test('a background sprite code window fits scripts when the foreground shows none', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.addInitScript(() => localStorage.setItem('tw:theme', 'dark'));
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');
@@ -654,6 +697,14 @@ test('a background sprite code window fits scripts far from the origin', {timeou
     await tile('Preview sprite').click();
     const back = page.getByRole('region', {name: 'Code · Preview sprite', exact: true});
     await expect(back.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
+    // The native editor may automatically pan towards a distant script when the window opens.
+    await page.evaluate(() => {
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        const {absoluteLeft, absoluteTop} = workspace.getMetrics();
+        workspace.scrollX = 0;
+        workspace.scrollY = 0;
+        workspace.translate(absoluteLeft, absoluteTop);
+    });
     await tile('Editing sprite').click();
     const front = page.getByRole('region', {name: 'Code · Editing sprite', exact: true});
     await expect(front.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
