@@ -2,8 +2,23 @@ import {attachNativeFieldGraphic, type NativeFieldGraphic} from './native-field-
 import type {ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 
 type FieldEditor = {type: 'field_input' | 'turbowarp_plus_actions' | 'native_widget'} | {type: 'field_dropdown'; options: [string, string][]};
-type NativeFactory = {fromJson(options: unknown): unknown; parentDocument?: boolean; resources?: unknown; asyncCommit?: boolean};
+type NativeFactory = {fromJson(options: unknown): unknown; parentDocument?: boolean; resources?: unknown;
+    asyncCommit?: boolean; isolatedEditor?: boolean};
 export type CustomField = {name: string; editor: FieldEditor};
+const isolatedFactory = Symbol.for('turbowarp-plus-editor.isolated-native-field');
+const nativeInstances = new WeakMap<object, 'docked' | 'isolated'>();
+
+function cloneOptions(options: unknown) {
+    try {
+        return structuredClone(options);
+    } catch {
+        // Preserve the docked factory for extensions whose options cannot be copied.
+    }
+}
+
+export function createIsolatedNativeField(field, native: NativeFactory) {
+    return field?.[isolatedFactory]?.(native);
+}
 
 function readEditor(implementation): FieldEditor | undefined {
     if (implementation?.type === 'turbowarp_plus_actions' &&
@@ -60,7 +75,29 @@ export function registerCustomFields(blocks, declarations: CustomField[], openCu
             const factory = {
                 fromJson(options: unknown) {
                     const native = getNative?.(name);
-                    if (native) return native.fromJson(options);
+                    if (native) {
+                        const snapshot = native.parentDocument === true && native.isolatedEditor === true ?
+                            cloneOptions(options) : undefined;
+                        const field = native.fromJson(options);
+                        if (!field || typeof field !== 'object') return field;
+                        if (nativeInstances.get(field) === 'isolated') return;
+                        nativeInstances.set(field, 'docked');
+                        if (snapshot !== undefined && Object.isExtensible(field)) {
+                            Object.defineProperty(field, isolatedFactory, {configurable: true, value: (current: NativeFactory) => {
+                                if (current.parentDocument !== true || current.isolatedEditor !== true) return;
+                                const editor = current.fromJson(structuredClone(snapshot)) as {
+                                    sourceBlock_?: unknown; setValue(value: unknown): void;
+                                    getValue(): unknown; showEditor_(): void;
+                                };
+                                if (!editor || typeof editor !== 'object' || editor.sourceBlock_ || nativeInstances.has(editor) ||
+                                    typeof editor.showEditor_ !== 'function' || typeof editor.getValue !== 'function' ||
+                                    typeof editor.setValue !== 'function') return;
+                                nativeInstances.set(editor, 'isolated');
+                                return editor;
+                            }});
+                        }
+                        return field;
+                    }
                     if (editor.type !== 'field_dropdown') {
                         const field = new blocks.FieldTextInput('');
                         if (editor.type === 'native_widget' && getGraphic) {

@@ -207,7 +207,7 @@ node test/stage6/css-animation-fields.ts "$trial/build"
 確定時に、開いている編集 UI、対象フィールド、元の値、ビューの編集権を照合する。
 確定した変更は共有履歴の1件として保存する。編集 UI の閉鎖、別ビューへのフォーカス移動、
 対象やフィールドの入れ替わりで、以前のセッションから届く結果は無効になる。
-任意の遅延 `field.setValue` は検証範囲外。
+フィールド自身が遅延して `setValue` を呼ぶ場合は、次節の独立した編集インスタンスを使う。
 
 上の手順でビルドした後、`node test/stage6/css-animation-fields.ts "$trial/build" --async-commit` を実行する。
 フォーカス通知を検証ハーネスで供給し、前面を行き来して同じフィールドを開き直した後に、古い処理を
@@ -215,6 +215,26 @@ node test/stage6/css-animation-fields.ts "$trial/build"
 除外、別ビューへの反映、共有 Undo／Redo、ドック復帰、SB3 再読込後の値を検証する。
 ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で通過した。
 切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。
+
+### 遅延した直接の `field.setValue` の試作
+
+`implementation.parentDocument = true` と `implementation.isolatedEditor = true` を指定する。
+別窓で編集 UI を開くたびに、親側で登録済みの `fromJson` とコピー可能な設定から編集専用フィールドを作る。
+フィールドはブロックに取り付けず、保存済みの文字列を初期値にする。拡張の非同期処理は親で実行し、
+その回のフィールドに直接 `field.setValue(value)` を呼べる。編集 UI の閉鎖と共有履歴への確定は Editor が担う。
+
+フィールドの使い回しや、ブロックに結び付いたフィールドを編集専用に使う試みは拒否する。
+編集権を失って閉じたインスタンスへの遅延呼び出しは破棄する。
+ドック中の実フィールドを参照し続ける処理、ブロックに接続して初めて動作する編集 UI、
+遅延処理からのグローバルな `WidgetDiv.hide()` や VM の直接更新は検証範囲外。
+
+上の手順でビルドした後、`node test/stage6/css-animation-fields.ts "$trial/build" --delayed-set-value` を実行する。
+編集権を別ビューに渡し、前面に戻って編集 UI を開き直してから古い `setValue` を実行する。
+古い値が共有履歴や新しい編集 UI に混入しないこと、新しい確定、別窓への反映、共有 Undo／Redo、
+ドック復帰後の編集、SB3 再読込後の値と再登録された定義での編集 UI を確認する。
+フォーカス通知は検証ハーネスから供給する。ヘッドレス Chromium 156.0.8078.4
+（GUI `15edb7930`、VM `78e5f032`）で通過した。
+切り戻し時は作品を保存してコード別窓をドックに戻し、この段階の `editor-views` の差分を戻す。
 
 ### Flexbox・Grid の互換性試作
 

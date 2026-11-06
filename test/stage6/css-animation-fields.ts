@@ -10,6 +10,7 @@ await verifyWebEditor(directory);
 const layout = process.argv.includes('--layout');
 const resources = process.argv[3] === '--resources';
 const asyncField = process.argv[3] === '--async-commit';
+const delayedField = process.argv[3] === '--delayed-set-value';
 const programmaticPromise = process.argv[3] === '--programmatic-promise';
 const programmatic = programmaticPromise || process.argv[3] === '--programmatic-sync';
 const fontFile = resources ? await readFile(process.argv[4]) : undefined;
@@ -49,9 +50,9 @@ const [driver, extension] = await Promise.all([
         'fixtures/native-extension.ts', import.meta.url), 'utf8'), {
         loader: 'ts', format: 'iife', define: {
             TW_TEST_NATIVE_SVG: 'false', TW_TEST_PARENT_DOCUMENT: 'true', TW_TEST_NATIVE_CSS: 'true',
-            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources && !asyncField),
+            TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources && !asyncField && !delayedField),
             TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources), TW_TEST_ASYNC_FIELD: String(asyncField),
-            TW_TEST_PROGRAMMATIC_PROMISE: String(programmaticPromise)
+            TW_TEST_PROGRAMMATIC_PROMISE: String(programmaticPromise), TW_TEST_DELAYED_FIELD: String(delayedField)
         }
     })
 ]);
@@ -223,7 +224,7 @@ try {
     let widget = programmatic ? await openAction(a, 'original') : await openWidget(a);
     assert.equal(await a.locator('#tw-test-native-field-css').count(), 0);
     const group = widget.locator('fieldset');
-    const animation = layout || resources || asyncField || programmatic ? undefined : await checkAnimation(group);
+    const animation = layout || resources || asyncField || delayedField || programmatic ? undefined : await checkAnimation(group);
     const family = resources ? await checkResources(widget) : undefined;
     if (layout) {
         await checkLayout(editor.locator('[data-tw-parent-document-caption] [aria-label="Caption layout"]'), false);
@@ -262,7 +263,7 @@ try {
             await programmaticJobs(3);
             await resolveAction(2, edited);
         }
-    } else if (asyncField) {
+    } else if (asyncField || delayedField) {
         const jobCount = (count: number) => editor.waitForFunction(count =>
             window['testAsyncFieldJobs']?.length === count, count);
         const finish = async (index: number) => {
@@ -275,7 +276,7 @@ try {
         assert.equal(await undoDisabled(a), true);
         await focus(b);
         await widget.waitFor({state: 'detached'});
-        assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][0].signal.aborted), true);
+        if (asyncField) assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][0].signal.aborted), true);
         assert.equal(await undoDisabled(b), true);
 
         await focus(a);
@@ -286,7 +287,12 @@ try {
         await checkValue('original', [a, b]);
         assert.equal(await undoDisabled(a), true);
         assert.equal(await widget.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
-        assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][1].signal.aborted), false);
+        if (delayedField) {
+            assert.deepEqual(await editor.evaluate(() => window['testAsyncFieldJobs'].map(job => job.detached)), [true, true]);
+            assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][0].result), 'original');
+        } else {
+            assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][1].signal.aborted), false);
+        }
         await finish(1);
     } else {
         await submit(edited);
@@ -298,7 +304,7 @@ try {
     await focus(b);
     await b.locator('#undo').click();
     await checkValue('original', [a, b]);
-    if (asyncField || programmaticPromise) assert.equal(await undoDisabled(b), true);
+    if (asyncField || delayedField || programmaticPromise) assert.equal(await undoDisabled(b), true);
     await focus(a);
     await a.locator('#redo').click();
     await checkValue(edited, [a, b]);
@@ -314,6 +320,14 @@ try {
             await resolveAction(3, 'original');
         }
         await checkValue('original', [editor]);
+        await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
+        await checkValue(edited, [editor]);
+    } else if (delayedField) {
+        await field(editor, (await readValue()).id).click({force: true});
+        const dockedWidget = editor.locator('[data-tw-parent-document-caption]');
+        await dockedWidget.getByRole('textbox', {name: 'Caption'}).fill('edited after dock');
+        await dockedWidget.getByRole('button', {name: 'Apply caption'}).click();
+        await checkValue('edited after dock', [editor]);
         await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
         await checkValue(edited, [editor]);
     }
@@ -341,7 +355,7 @@ try {
             !request.cookie && !request.referer));
     } else if (layout) {
         await checkLayout(restored.locator('[aria-label="Caption layout"]'), true);
-    } else if (!asyncField && !programmatic) {
+    } else if (!asyncField && !delayedField && !programmatic) {
         assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 1);
         await reopened.emulateMedia({reducedMotion: 'reduce'});
         await reopened.waitForFunction(() => document.querySelector('[data-plus-native-field] fieldset').getAnimations().length === 0);
@@ -354,6 +368,7 @@ try {
     assert.deepEqual(errors, []);
     const displayCheck = programmaticPromise ? 'applyAction Promise, stale result filtering and rejection recovery' :
         programmatic ? 'synchronous applyAction' :
+        delayedField ? 'direct delayed setValue, detached field instances and stale writes after reacquiring edit access' :
         asyncField ? 'async commit, stale completion after reacquiring edit access and duplicate callback filtering' :
         resources ? 'parent-only PNG, SVG and WOFF2 loading and resource filtering' :
         layout ? 'Grid tracks and spans, Flexbox alignment and gaps, popup reflow' :
