@@ -1242,7 +1242,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
         })).toEqual({sameVm: true, sameRenderer: true, sameCanvas: true, aspect: 133, colored: true});
         const bounds = await canvas.boundingBox();
         for (const [fx, fy, x, y] of [[0.75, 0.25, 120, 90], [0.25, 0.75, -120, -90]]) {
-            await page.mouse.click(bounds.x + bounds.width * fx, bounds.y + bounds.height * fy);
+            await canvas.click({position: {x: bounds.width * fx, y: bounds.height * fy}});
             const position = await page.evaluate(() => {
                 const mouse = window.vm.runtime.ioDevices.mouse;
                 return [mouse.getScratchX(), mouse.getScratchY()];
@@ -1297,6 +1297,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await assertStage();
     await page.getByRole('img', {name: 'Exit full screen mode', exact: true}).click();
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
+    await expect.poll(async () => (await canvas.boundingBox()).width).toBe(240);
     await assertStage();
 
     await stageTab.getByRole('button', {name: 'Close Stage', exact: true}).click();

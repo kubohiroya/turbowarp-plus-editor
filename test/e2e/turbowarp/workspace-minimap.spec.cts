@@ -3,6 +3,11 @@ const {test, expect} = require('./fixtures.cts');
 test('the sprite costume stays aligned above the minimap when its code is undocked', async ({page}) => {
     await page.goto('editor.html?lang=en&twPlusDockview=0');
     await page.waitForFunction(() => window.vm?.editingTarget && window.ScratchBlocks?.getMainWorkspace());
+    await page.locator('[data-plus-workspace-watermark]').waitFor({state: 'attached'});
+    // Scratch GUI ignores asset-only updates within 500 ms of rendering its watermark.
+    await page.clock.install();
+    await page.clock.fastForward(501);
+    const watermark = page.locator('[data-plus-workspace-watermark] img[src]');
     await page.evaluate(async () => {
         const target = vm.editingTarget;
         const storage = vm.runtime.storage;
@@ -13,7 +18,6 @@ test('the sprite costume stays aligned above the minimap when its code is undock
         target.setCostume(target.getCostumes().length - 1);
         vm.emitTargetsUpdate();
     });
-    const watermark = page.locator('[data-plus-workspace-watermark] img[src]');
     const minimap = page.locator('[data-workspace-minimap]');
     const checkWatermark = async () => {
         await expect(watermark).toBeVisible();

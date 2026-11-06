@@ -38,8 +38,12 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const source = (page: Page, id: string) => docPanel(page, id).locator('.twpe-yaml-source-preview textarea');
     const committed = (page: Page) => page.evaluate(() => window.vm.runtime.extensionStorage.twpeyamlsettings.documents);
     const confirm = (page: Page) => page.locator('.twpe-yaml-confirmation:modal');
-    async function load(page: Page) {
-        await page.goto(`${base}editor.html?lang=ja&project_url=${encodeURIComponent(projectUrl)}`);
+    async function load(page: Page, rollback = false) {
+        const url = new URL('editor.html', base);
+        url.searchParams.set('lang', 'ja');
+        url.searchParams.set('project_url', projectUrl);
+        if (rollback) url.searchParams.set('twPlusDockview', '0');
+        await page.goto(url.href);
         const security = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
         await security.waitFor({timeout: 60000});
         await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
@@ -170,5 +174,15 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     await workspace(reloaded).getByRole('tab', {name: codeName, exact: true}).click();
     await open(reloaded, 1, 'labels');
     await expect(source(reloaded, 'labels')).toHaveValue(labels);
+
+    const rolledBack = await context.newPage();
+    await load(rolledBack, true);
+    await expect(rolledBack.locator('[data-multi-view]')).toHaveCount(0);
+    await hats(rolledBack).first().focus();
+    await rolledBack.keyboard.press('Enter');
+    const legacy = rolledBack.locator('dialog.twpe-yaml-window:modal');
+    await expect(legacy.locator('#twpe-yaml-preview')).toHaveValue(settings);
+    await legacy.locator('#twpe-yaml-document').selectOption(JSON.stringify(['twpeyamlsettings', 'labels']));
+    await expect(legacy.locator('#twpe-yaml-preview')).toHaveValue(labels);
     assert.deepEqual(errors, []);
 });
