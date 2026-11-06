@@ -177,6 +177,26 @@ node test/stage6/css-animation-fields.ts "$trial/build"
 ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で通過した。
 切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。
 
+### 拡張フィールドの非同期確定の試作
+
+`implementation.parentDocument = true` と `implementation.asyncCommit = true` を指定した
+フィールドでは、別窓で編集 UI を開くたびに親側の `showEditor_` に `NativeFieldEditSession` を渡す。
+拡張は親で非同期処理を実行し、結果の文字列をその回の `edit.commit(value)` で確定する。
+終了したセッションの `edit.signal` は中断される。ドックで直接開いた場合の引数は従来どおりで、
+拡張は自身のドック用の確定処理を使う。
+
+確定時に、開いている編集 UI、対象フィールド、元の値、ビューの編集権を照合する。
+確定した変更は共有履歴の1件として保存する。編集 UI の閉鎖、別ビューへのフォーカス移動、
+対象やフィールドの入れ替わりで、以前のセッションから届く結果は無効になる。
+任意の遅延 `field.setValue` や `ProgrammaticExtensionField` の Promise 戻り値は検証範囲外。
+
+上の手順でビルドした後、`node test/stage6/css-animation-fields.ts "$trial/build" --async-commit` を実行する。
+フォーカス通知を検証ハーネスで供給し、前面を行き来して同じフィールドを開き直した後に、古い処理を
+完了させる。値・共有履歴・新しい編集 UI への混入を防げることを確認し、新しい処理の確定、重複コールバックの
+除外、別ビューへの反映、共有 Undo／Redo、ドック復帰、SB3 再読込後の値を検証する。
+ヘッドレス Chromium 156.0.8078.4（GUI `15edb7930`、VM `78e5f032`）で通過した。
+切り戻し時は作品を保存してコード別窓をドックへ戻し、この段階の `editor-views` の差分を戻す。
+
 ### Flexbox・Grid の互換性試作
 
 `implementation.parentDocument = true` の固定構造の HTML フィールドで、`WidgetDiv` 内の

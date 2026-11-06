@@ -8,6 +8,7 @@ import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
 import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.ts';
 
 export {attachDockedCodeExtensions} from './code-extensions.ts';
+export type {NativeFieldEditSession} from './native-extension-field.ts';
 export type {FieldActionPanel, ProgrammaticExtensionField} from './programmatic-extension-field.ts';
 export {encodeEdit} from './protocol.ts';
 
@@ -306,6 +307,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             view.closeNativeField = openNativeField({
                 blocks: ScratchBlocks, field, document: view.document, anchor,
                 parentDocument: definition.native.parentDocument === true,
+                asyncCommit: definition.native.asyncCommit === true,
                 resources: {manifest: definition.native.resources, canFetch: url => vm.securityManager.canFetch(url)},
                 valid: () => owns(view, {targetId: target.id, lease}) && !view.draining && viewFocused(view) &&
                     vm.editingTarget === target && workspace.getBlockById(blockId)?.getField(name) === field &&
