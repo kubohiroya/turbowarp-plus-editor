@@ -44,6 +44,7 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
             repository: `https://github.com/${pins.guiRepository}`, revision: pins.guiRevision,
             coreRepository: `https://github.com/${pins.coreRepository}`, coreRevision: pins.coreRevision, coreVersion: pins.coreVersion,
             securityPackage: pins.securityPackage, securityVersion: pins.securityVersion, securityRevision: pins.securityRevision,
+            previewReloadStyles: pins.previewReloadStyles,
             extensionIntegration: integration, familyNotices};
         const writeInfo = () => fs.writeFile(path.join(directory, 'build-info.json'), JSON.stringify(info));
         const familyPath = path.join(directory, familyNotices.index);
@@ -65,6 +66,10 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         await writeInfo();
         assert.notEqual(check().status, 0);
         info.securityRevision = pins.securityRevision;
+        info.previewReloadStyles = {...pins.previewReloadStyles, sha256: 'f'.repeat(64)};
+        await writeInfo();
+        assert.match(check().stderr, /Kamishibai preview CSS differs from the pin/);
+        info.previewReloadStyles = pins.previewReloadStyles;
         await writeInfo();
         info.coreVersion = '0.5.0';
         await writeInfo();

@@ -3,10 +3,12 @@ const {createHash} = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
-module.exports = function loadPreviewReloadCss(input) {
+module.exports = function loadPreviewReloadCss() {
     const done = this.async();
+    const pinsPath = path.join(__dirname, '../../site/source.json');
+    this.addDependency(pinsPath);
     const readStyles = async () => {
-        const {previewReloadStyles: {revision, sha256}} = JSON.parse(input);
+        const {previewReloadStyles: {revision, sha256}} = JSON.parse(await fs.readFile(pinsPath, 'utf8'));
         assert.match(revision, /^[a-f0-9]{40}$/);
         assert.match(sha256, /^[a-f0-9]{64}$/);
         const local = process.env.TW_PLUS_PREVIEW_RELOAD_STYLES;

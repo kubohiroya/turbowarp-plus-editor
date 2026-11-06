@@ -1,4 +1,4 @@
-import './source.json?kamishibai-preview-styles';
+import './styles/preview-reload.css';
 
 /**
  * This distribution's features, consumed by its own GUI bridge.

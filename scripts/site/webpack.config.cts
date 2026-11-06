@@ -123,14 +123,13 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
 ]}));
 const globalLayoutStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
-cssModules.exclude = [cssModules.exclude, dockviewStyles, ...globalLayoutStyles].filter(Boolean);
+const previewReloadStyles = path.join(siteSource, 'styles', 'preview-reload.css');
+cssModules.exclude = [cssModules.exclude, dockviewStyles, ...globalLayoutStyles, previewReloadStyles].filter(Boolean);
 config.module.rules.push({test: /\.css$/, include: [dockviewStyles, ...globalLayoutStyles],
     use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
 // Bundle the pinned stylesheet for all renderers, including Desktop and offline projects.
 config.module.rules.push({
-    include: path.join(siteSource, 'source.json'),
-    resourceQuery: /^\?kamishibai-preview-styles$/,
-    type: 'javascript/auto',
+    include: previewReloadStyles,
     use: ['style-loader', {loader: 'css-loader', options: {modules: false}},
         path.join(__dirname, 'load-preview-reload-css.cts')]
 });
