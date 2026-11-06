@@ -16,7 +16,6 @@
 
 .horizontal:global(.blocklyToolboxDiv)[data-horizontal-block-palette] {
     inset: 0 var(--plus-stage-overlap, 0px) auto 0;
-    left: calc(var(--plus-extension-button-width, 3.75rem) + var(--plus-extension-button-gap, 0px)) !important;
     height: auto !important;
     overflow-x: auto;
     overflow-y: hidden;

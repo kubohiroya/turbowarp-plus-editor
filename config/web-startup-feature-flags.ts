@@ -19,6 +19,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusTargetList: params.get('twPlusTargetList'),
         twPlusSpriteCodeWindows: params.get('twPlusSpriteCodeWindows'),
         twPlusStandardLayout: standardLayout,
+        twPlusExtensionFileMenu: params.get('twPlusExtensionFileMenu'),
         twPlusPaletteDeletePreview: params.get('twPlusPaletteDeletePreview'),
         twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette'),
         twPlusContextMenuIcons: params.get('twPlusContextMenuIcons'),
