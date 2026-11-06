@@ -1080,7 +1080,7 @@ test('the Dockview asset connection restores the native costume and sound select
     await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
     await expect(selected).toContainText('Pane sound B');
 
-    await section('Variables').click();
+    await section('Properties & Variables').click();
     const viewIds = await Promise.all([0, 1].map(index => groups.nth(index)
         .getByRole('tab', {name: spriteName, exact: true}).getAttribute('data-tab-panel-id')));
     const pane = (group: number) => page.locator('[id="' + viewIds[group] + '-content"]');
@@ -1093,7 +1093,7 @@ test('the Dockview asset connection restores the native costume and sound select
     const width = (await first.boundingBox()).width;
     await first.fill('17');
     await activate(1);
-    await section('Variables').click();
+    await section('Properties & Variables').click();
     await expect(first).not.toBeEditable();
     await expect(properties(0)).toBeDisabled();
     await expect(properties(1)).toBeEditable();
