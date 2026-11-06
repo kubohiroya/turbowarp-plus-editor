@@ -15,7 +15,6 @@ const checkSteps = {
     package: ['package-tests'],
     unit: ['unit-tests'],
     infrastructure: ['infrastructure-tests'],
-    'layout-unit': ['layout-unit'],
     'views-unit': ['views-unit'],
     'backpack-unit': ['backpack-unit'],
     'pinned-gui-unit': ['pinned-gui-unit'],

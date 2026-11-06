@@ -68,7 +68,6 @@
     "editor:sb3-format": "node scripts/sb3-save-format/cli.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
-    "prepare": "npm run build --prefix packages/editor-layout",
     "prepack": "npm run build",
     "build:test-driver": "tsc -p test/vscode-edit-driver/tsconfig.json",
     "test:package": "npm run build && node --test test/package/*.test.ts",
@@ -80,7 +79,7 @@
   "devDependencies": {
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
     "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
-    "@kubohiroya/turbowarp-plus-editor-layout": "file:packages/editor-layout",
+    "@kubohiroya/turbowarp-plus-editor-layout": "file:vendor/turbowarp-plus-editor-layout-0.1.0.tgz",
     "@kubohiroya/turbowarp-editor-sprite-properties": "file:vendor/turbowarp-editor-sprite-properties-0.1.1.tgz",
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
     "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",

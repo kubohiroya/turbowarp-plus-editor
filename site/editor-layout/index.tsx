@@ -11,7 +11,10 @@ import {StageDisplayMenuContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
-export const layoutFlags = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
+const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
+export const layoutFlags = readWebStartupFeatureFlags(startupSearch);
+export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
+    new URLSearchParams(startupSearch).get('twPlusDockviewSpriteTabs') !== '0';
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
 const layoutMenuIcon = (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 
 const allChecks = [
     'documentation', 'typecheck', 'package', 'unit', 'infrastructure',
-    'layout-unit', 'views-unit', 'backpack-unit', 'pinned-gui-unit', 'extension-host',
+    'views-unit', 'backpack-unit', 'pinned-gui-unit', 'extension-host',
     'gui-integration', 'script-transfer', 'project-tools', 'site-build',
     'layout-browser', 'code-windows-browser', 'yaml-browser', 'editor-browser', 'extension-loader-browser'
 ] as const;
@@ -12,9 +12,6 @@ type Check = typeof allChecks[number];
 
 const rules: {area: string; path: RegExp; checks: readonly Check[]}[] = [
     {area: 'documentation', path: /^(?:README(?:\.ja)?\.md|docs\/.+\.md)$/, checks: ['documentation']},
-    {area: 'layout-tests', path: /^packages\/editor-layout\/test\/.+\.test\.(?:ts|js|mjs)$/, checks: ['layout-unit']},
-    {area: 'layout', path: /^packages\/editor-layout\/src\//,
-        checks: ['typecheck', 'layout-unit', 'gui-integration', 'site-build', 'layout-browser', 'editor-browser']},
     {area: 'views-tests', path: /^packages\/editor-views\/test\/.+\.test\.(?:ts|js|mjs)$/, checks: ['views-unit']},
     {area: 'views', path: /^packages\/editor-views\/[^/]+\.(?:[jt]sx?|css)$/,
         checks: ['typecheck', 'views-unit', 'gui-integration', 'site-build', 'code-windows-browser', 'editor-browser']},
