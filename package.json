@@ -79,7 +79,7 @@
   "devDependencies": {
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
     "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
-    "@kubohiroya/turbowarp-plus-editor-layout": "0.1.11",
+    "@kubohiroya/turbowarp-plus-editor-layout": "0.1.12",
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
     "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",
     "@kubohiroya/turbowarp-plus-editor-views": "file:packages/editor-views",
