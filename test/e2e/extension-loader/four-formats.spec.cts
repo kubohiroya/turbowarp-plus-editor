@@ -13,11 +13,11 @@ test.use({userAgent: devices['Pixel 7'].userAgent});
 // Manifest and carried by the SB3; the person opening it may only decline a remote-cacheable copy.
 const forms = ['remote-non-cacheable', 'remote-cacheable', 'embedded-file', 'embedded-data'];
 const labels = {
-    ja: {add: '拡張機能を追加', addButton: '追加', loading: '読み込み元', openTitle: 'この作品は機能拡張を使います',
+    ja: {file: 'ファイル', add: '機能拡張の追加', addButton: '追加', loading: '読み込み元', openTitle: 'この作品は機能拡張を使います',
         ok: 'OK', cancel: 'キャンセル', forms: {
             'remote-cacheable': 'キャッシュを残す（既定）', 'remote-non-cacheable': '毎回取得する',
             'embedded-file': '作品の中から', 'embedded-data': '作品の中の data: アドレスから'}},
-    en: {add: 'Add Extension', addButton: 'Add', loading: 'Where it loads from', openTitle: 'This project wants to run extensions',
+    en: {file: 'File', add: 'Add Extension', addButton: 'Add', loading: 'Where it loads from', openTitle: 'This project wants to run extensions',
         ok: 'OK', cancel: 'Cancel', forms: {
             'remote-cacheable': 'Keep a copy (default)', 'remote-non-cacheable': 'Fetch each time',
             'embedded-file': 'In the project', 'embedded-data': 'In the project, as a data address'}}
@@ -199,7 +199,7 @@ for (const lang of ['ja', 'en']) {
         const words = labels[lang];
         await installFixtures(context);
         await openEditor(page, lang);
-        await openCatalog(page, specifications.length, words.add);
+        await openCatalog(page, specifications.length, words.file, words.add);
         const first = row(page, specifications[0]);
         await expect(first).toContainText(words.loading);
         for (const distribution of forms) {

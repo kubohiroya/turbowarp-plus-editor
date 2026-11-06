@@ -14,7 +14,11 @@
       "default": "./dist/standard-layout.js"
     },
     "./editor.css": "./src/editor.css",
-    "./targets.css": "./src/targets.css"
+    "./targets.css": "./src/targets.css",
+    "./extension-file-menu": {
+      "types": "./dist/extension-file-menu.d.ts",
+      "default": "./dist/extension-file-menu.js"
+    }
   },
   "files": [
     "dist",

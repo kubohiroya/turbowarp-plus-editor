@@ -313,6 +313,15 @@
     padding-left: 0.5rem;
 }
 
+:global([data-horizontal-block-palette]) {
+    left: 0 !important;
+}
+
+:global([class*="gui_blocks-wrapper_"]):has(+ :global([class*="gui_extension-button-container_"]))
+    :global([data-horizontal-block-palette]) {
+    left: calc(var(--plus-extension-button-width, 3.75rem) + var(--plus-extension-button-gap, 0px)) !important;
+}
+
 .standard-body .tab-row {
     padding-right: var(--plus-stage-tab-inset, 0px);
 }

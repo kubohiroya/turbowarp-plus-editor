@@ -64,8 +64,13 @@ const form = (page, spec, distribution = spec.distribution) =>
     row(page, spec).locator(`input[name="loading-${spec.id}"][value="${distribution}"]`);
 
 // The menu labels are the GUI's. The tests run in Japanese unless they name the English label.
-async function openCatalog(page, count = specifications.length, addLabel = '拡張機能を追加') {
+async function openExtensionLibrary(page, fileLabel = 'ファイル', addLabel = '機能拡張の追加') {
+    await page.getByText(fileLabel, {exact: true}).click();
     await page.getByRole('button', {name: addLabel, exact: true}).click();
+}
+
+async function openCatalog(page, count = specifications.length, fileLabel, addLabel) {
+    await openExtensionLibrary(page, fileLabel, addLabel);
     await page.getByText('TurboWarp Plus', {exact: true}).click();
     await expect(selection(page)).toBeVisible();
     await expect(selection(page).locator('.twextsec-row')).toHaveCount(count);
@@ -85,5 +90,5 @@ async function reopenSB3(page, bytes, name = 'catalog-authored.sb3') {
     await (await choosing).setFiles({name, mimeType: 'application/octet-stream', buffer: bytes});
 }
 
-module.exports = {catalogURL, fixture, specifications, installFixtures, selection, row, form, openCatalog,
+module.exports = {catalogURL, fixture, specifications, installFixtures, selection, row, form, openExtensionLibrary, openCatalog,
     saveSB3, reopenSB3};

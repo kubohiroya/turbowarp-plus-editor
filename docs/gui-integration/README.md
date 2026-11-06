@@ -107,6 +107,14 @@ UI パッケージは Editor リポジトリ内の `file:` 依存として Web �
 
 受け入れ基準は、ステージで従来の表示と操作が再現され、別のツールバーからステージの状態や GUI 接続に依存せずに呼び出せること。抽出を戻す場合は、ステージの呼び出しと共通部品を同じ差分で戻す。
 
+### ファイルメニューの機能拡張コマンド
+
+新機能は原則として既定で有効にし、起動設定で切り戻せるようにする。段階導入で既定 OFF にする場合は、対象と条件を事前に合意する。
+
+Plus 標準配置では既定で、ファイルメニューの項目にアイコンが付き、末尾の「機能拡張の追加」から既存のライブラリを開く。切り戻す場合は URL に `twPlusExtensionFileMenu=0` を指定して再読み込みする。
+
+項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu` が担当する。Editor は Scratch GUI #170 で提供された接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。拡張カタログの画面操作はデスクトップ幅で検証する。
+
 ## Issue #175 スプライト設定パネルの任意接続
 
 設定フォームとスタイルは独立パッケージ `@kubohiroya/turbowarp-editor-sprite-properties` に置く。Editor は `site/source.json` のパッケージ名・版・ソースコミットと、`vendor/` のローカル配布用 tarball を固定する。サイトのソース検証では、manifest と lockfile の相対パス、tarball の SHA-512、インストール済みの JavaScript と CSS の SHA-512 を照合する。Editor は起動時に既定 OFF の `twPlusSpriteProperties=1` を読み、パネルを既存の GUI 接続口に渡す。GUI は既存の選択情報・VM 更新経路を利用する。パネルと一覧は最小ドック内でそれぞれスクロールできる。

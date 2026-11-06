@@ -14,7 +14,7 @@ const cancel = page => modal(page).getByRole('button', {name: 'キャンセル',
 
 const start = async page => {
     await page.goto('editor.html?lang=ja');
-    await expect(page.getByRole('button', {name: '拡張機能を追加', exact: true})).toBeVisible();
+    await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
 };
 
 const expectSampleLoaded = async page => {
@@ -56,7 +56,8 @@ const loadSample = async (page, baseURL) => {
         dependencies: [], unsandboxed: 'required'}]}, headers: {'access-control-allow-origin': '*'}}));
     await page.context().route(sampleURL, route => route.fulfill({body: source,
         headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}));
-    await page.getByRole('button', {name: '拡張機能を追加', exact: true}).click();
+    await page.getByText('ファイル', {exact: true}).click();
+    await page.getByRole('button', {name: '機能拡張の追加', exact: true}).click();
     await page.getByText('TurboWarp Plus', {exact: true}).click();
     const selection = page.locator('.twextsec-review');
     const row = selection.locator('.twextsec-row[data-key="blockeditordemo"]');

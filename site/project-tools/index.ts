@@ -72,7 +72,7 @@ export const renderFileMenu = ({vm, locale = 'en', MenuSection, MenuItem, onRequ
         ['diagnostics', '作品の診断…', 'Project Diagnostics…', true]
     ].filter(([, , , enabled]) => enabled);
     return React.createElement(MenuSection, null, ...entries.map(([type, ja, en]) =>
-        React.createElement(MenuItem, {key: type, onClick: () => open(type)},
+        React.createElement(MenuItem, {key: type, command: type, onClick: () => open(type)},
         React.createElement('span', {role: 'button', tabIndex: 0, onKeyDown: event => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault(); event.stopPropagation(); open(type);

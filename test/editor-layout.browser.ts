@@ -232,6 +232,40 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.getByRole('separator')).toHaveCount(0);
 });
 
+test('the Plus File menu has action icons and opens the extension library from its last item', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const start = suffix => page.goto(origin + buildPrefix + 'editor.html?lang=ja' + suffix);
+    const paletteButton = page.getByRole('button', {name: '拡張機能を追加', exact: true});
+    const add = page.getByRole('button', {name: '機能拡張の追加', exact: true});
+    const openFile = () => page.getByText('ファイル', {exact: true}).click();
+    await start('&twPlusExtensionFileMenu=0');
+    await expect(paletteButton).toBeVisible();
+    await openFile();
+    await expect(add).toHaveCount(0);
+    await expect(page.locator('[data-file-menu-icon]')).toHaveCount(0);
+
+    await start('');
+    await expect(paletteButton).toHaveCount(0);
+    const palette = page.locator('[data-horizontal-block-palette]');
+    const motion = page.getByRole('button', {name: '動き', exact: true});
+    await expect(motion).toBeVisible();
+    const [paletteBounds, motionBounds] = await Promise.all([palette.boundingBox(), motion.boundingBox()]);
+    assert.ok(motionBounds.x - paletteBounds.x < 8);
+    await openFile();
+    const items = page.getByRole('list').filter({has: add}).locator(':scope > li');
+    await expect(items.last()).toHaveText('機能拡張の追加');
+    assert.ok(await items.evaluateAll(rows => rows.every(row => row.querySelector('[data-file-menu-icon]'))));
+    await expect(items.last().locator('[data-file-menu-icon="extension"]')).toBeVisible();
+    await add.press('Enter');
+    await expect(page.getByText('機能拡張を作品に追加する', {exact: true})).toBeVisible();
+    await expect(add).toBeHidden();
+
+    await start('&twPlusStandardLayout=0&twPlusExtensionFileMenu=1');
+    await expect(paletteButton).toBeVisible();
+    await openFile();
+    await expect(add).toHaveCount(0);
+});
+
 test('the Plus project menu and the complete stage panel work by default', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');
@@ -319,9 +353,10 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(tabs).toHaveCount(3);
     assert.ok(await tabs.evaluateAll(items => items.every(tab => tab.scrollWidth <= tab.clientWidth &&
         parseFloat(getComputedStyle(tab).paddingInlineStart) >= 12)));
-    const extension = await page.getByRole('button', {name: 'Add Extension', exact: true}).boundingBox();
-    const motion = await toolbox.locator('.scratchCategoryId-motion .scratchCategoryItemBubble').boundingBox();
-    assert.ok(extension.width < 48 && motion.x - (extension.x + extension.width) >= 23, JSON.stringify({extension, motion}));
+    await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toHaveCount(0);
+    const motion = await page.getByRole('button', {name: 'Motion', exact: true}).boundingBox();
+    const toolboxBounds = await toolbox.boundingBox();
+    assert.ok(motion.x - toolboxBounds.x < 8);
     await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
     await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     await expect(grid).toBeVisible();

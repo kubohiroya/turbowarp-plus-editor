@@ -107,6 +107,8 @@ for (const entry of ['standard-layout', 'editor.css', 'targets.css']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
+const extensionFileMenuEntry = '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
+config.resolve.alias[`${extensionFileMenuEntry}$`] = rootRequire.resolve(extensionFileMenuEntry);
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 const paletteResizeEntry = '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';

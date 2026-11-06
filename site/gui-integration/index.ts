@@ -1,4 +1,6 @@
 import React from 'react';
+import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
+import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import StageControlsView from '../stage-controls/view.tsx';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
@@ -8,7 +10,7 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 export * from './lib/tw-plus-integration-points.ts';
-export {renderFileMenu, loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
+export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
 export * from './lib/tw-plus-transfer.ts';
 export * from './lib/tw-plus-extension-host.ts';
@@ -57,3 +59,8 @@ export {BackpackSurface} from '../editor-backpack/index.tsx';
 export {StagePanel, attachStageMonitorDrag} from '../editor-layout/stage-panel.tsx';
 export {StageDisplayMenu} from '../editor-layout/stage-display-menu.tsx';
 export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropListActions} from '../editor-layout/target-list.tsx';
+
+export const extensionInFileMenu = startup.extensionFileMenu;
+export const createFileMenuItem = extensionInFileMenu ? createIconFileMenuItem : undefined;
+export const renderFileMenu = props => React.createElement(React.Fragment, null,
+    renderProjectFileMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
