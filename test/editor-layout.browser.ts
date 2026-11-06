@@ -737,9 +737,11 @@ test('a background sprite code window fits scripts when the foreground shows non
     await page.getByRole('button', {name: 'Reveal sprite list', exact: true}).hover();
     await page.getByRole('button', {name: 'Pin sprite list', exact: true}).click();
     const tile = name => page.locator('[class*="sprite-selector-item_sprite-name"]').getByText(name, {exact: true});
-    await tile('Preview sprite').click();
-    const openCodeWindow = page.getByRole('button', {name: 'Open in another window', exact: true});
-    await openCodeWindow.press('Enter');
+    const openCodeWindow = async name => {
+        await tile(name).click({button: 'right'});
+        await page.locator('.react-contextmenu--visible').getByRole('menuitem', {name: 'Open', exact: true}).click();
+    };
+    await openCodeWindow('Preview sprite');
     const back = page.getByRole('region', {name: 'Code · Preview sprite', exact: true});
     await expect(back.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
     // The native editor may automatically pan towards a distant script when the window opens.
@@ -750,8 +752,7 @@ test('a background sprite code window fits scripts when the foreground shows non
         workspace.scrollY = 0;
         workspace.translate(absoluteLeft, absoluteTop);
     });
-    await tile('Editing sprite').click();
-    await openCodeWindow.press('Enter');
+    await openCodeWindow('Editing sprite');
     const front = page.getByRole('region', {name: 'Code · Editing sprite', exact: true});
     await expect(front.locator('.tw-dockable-panel--floating .blocklySvg').first()).toBeVisible();
 
