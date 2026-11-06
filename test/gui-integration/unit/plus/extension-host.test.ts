@@ -174,3 +174,43 @@ test('a supplied native loading policy bypasses the batch review and stays bound
     await dispose();
     assert.equal(canLoadPlusExtension(security, 'https://example.test/x.js'), true);
 });
+
+test('a locale remount keeps the VM host and routes reviews to the new view', async () => {
+    const vm = {extensionManager: {securityManager: {}}};
+    let installations = 0;
+    let disposals = 0;
+    let restore = 0;
+    let showReview;
+    let getLocale;
+    const integration = {
+        installExtensionHost (_, settings) {
+            installations++;
+            getLocale = settings.getLocale;
+            return {enabled: true, dispose: () => { disposals++; }};
+        },
+        securityReview: {
+            installBatchLoader (options) {
+                showReview = options.showReview;
+                return () => { restore++; };
+            },
+            render: ({locale, DialogFrame}) => [locale, DialogFrame]
+        }
+    };
+    const mount = locale => installSecurityHost(vm, {
+        securityManager: {}, locale, projectState: undefined, extensionLibrary: [],
+        isTrusted: () => false, DialogFrame: locale, requestModal: render => render(() => {}, locale)
+    }, integration);
+    const unmount = mount('en');
+    assert.deepEqual(showReview([], new Map()), ['en', 'en']);
+    const replaced = unmount();
+    assert.equal(showReview([], new Map()), null);
+    const unmountJapanese = mount('ja');
+    await replaced;
+    assert.equal(getLocale(), 'ja');
+    assert.deepEqual(showReview([], new Map()), ['ja', 'ja']);
+    assert.equal(installations, 1);
+    assert.equal(disposals, 0);
+    await unmountJapanese();
+    assert.equal(disposals, 1);
+    assert.equal(restore, 1);
+});

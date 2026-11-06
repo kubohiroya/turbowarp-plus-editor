@@ -60,6 +60,7 @@ export interface ExtensionHostOptions {
     enabled?: boolean;
     document?: Document;
     locale?: string;
+    getLocale?: () => string | undefined;
     fetchImpl?: typeof fetch;
     cache?: LoaderPorts['cache'];
     requestApproval?: ReturnType<typeof createPlusPermissionUI>['requestApproval'];
@@ -84,7 +85,7 @@ export interface ExtensionHostOptions {
 
 /** Host-controlled wiring shared by the Editor and the bundled HTML runtime. */
 export function installPlusExtensionHost (vm, {
-    enabled = false, document = globalThis.document, locale = 'ja', fetchImpl = globalThis.fetch,
+    enabled = false, document = globalThis.document, locale = 'ja', getLocale, fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
     fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
     onProjectURI, addressProject, onProjectManifest, createPayloads, showDiagnostics = true
@@ -93,9 +94,25 @@ export function installPlusExtensionHost (vm, {
     // A single HTML has no catalog to read; its build embeds the digests the catalog listed.
     const trusted = trustedCatalog === null && Array.isArray(trustedDigests) ?
         digestTrustedCatalog(trustedDigests) : trustedCatalog;
-    const ui = createPlusPermissionUI(document, locale, {showDiagnostics, onDiagnostic: report});
+    const createUI = language => createPlusPermissionUI(document, language, {showDiagnostics, onDiagnostic: report});
+    let uiLocale = getLocale?.() ?? locale;
+    let ui = createUI(uiLocale);
+    let uiDisposed = false;
+    const disposeUI = () => {
+        uiDisposed = true;
+        ui.dispose();
+    };
+    const permissionUI = () => {
+        const nextLocale = getLocale?.() ?? locale;
+        if (!uiDisposed && nextLocale !== uiLocale) {
+            ui.dispose();
+            uiLocale = nextLocale;
+            ui = createUI(uiLocale);
+        }
+        return ui;
+    };
     const diagnostics = event => {
-        ui.diagnostics(event);
+        permissionUI().diagnostics(event);
     };
     // The Loader reports the retry it is about to wait for, and how many attempts this fetch can
     // make in all; the attempt the wait leads to is the next one. Counting them here from the retry
@@ -108,7 +125,7 @@ export function installPlusExtensionHost (vm, {
         message: url
     });
     const projectIO = createProjectIO({zip: JSZip, ...archiveOptions});
-    const approve = requestApproval || ui.requestApproval;
+    const approve = requestApproval || ((code, options) => permissionUI().requestApproval(code, options));
     // What the open review answered for the load in progress. The Loader asks about each row only
     // after the review has, so its approval is read from here instead of being put to the person a
     // second time; a row the review did not answer still gets the dialog.
@@ -183,7 +200,7 @@ export function installPlusExtensionHost (vm, {
     } catch (error) {
         authoring?.dispose();
         payloads?.dispose();
-        ui.dispose();
+        disposeUI();
         trustProvider.revokeAll();
         throw error;
     }
@@ -196,7 +213,7 @@ export function installPlusExtensionHost (vm, {
                 if (authoring) setAuthoringHost(vm, null);
                 authoring?.dispose();
                 payloads?.dispose();
-                ui.dispose();
+                disposeUI();
                 trustProvider.revokeAll();
                 disposal = Promise.resolve(uninstall()).then(() => loader.unload());
             }

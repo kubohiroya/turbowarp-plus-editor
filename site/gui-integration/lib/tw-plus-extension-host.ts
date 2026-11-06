@@ -57,9 +57,41 @@ export function startupPlusExtensionHost (vm, options: {search?: string; [key: s
  * Mount the review beneath the project loader. The GUI has already installed its native policy
  * and supplies a modal queue, its trusted sources and the built-in library metadata.
  */
-export function installSecurityHost (vm, {
+type SecurityHostOptions = Parameters<typeof attachSecurityHost>[1];
+const mountedHosts = new WeakMap<object, {
+    options: SecurityHostOptions | null;
+    pending?: Promise<void>;
+    dispose: ReturnType<typeof attachSecurityHost>;
+}>();
+
+export function installSecurityHost (vm, options: SecurityHostOptions, integration = hostIntegration()) {
+    let mounted = mountedHosts.get(vm);
+    if (mounted?.options) throw new Error('The security host is already mounted');
+    if (!mounted) {
+        mounted = {options, dispose: attachSecurityHost(vm, options, () => mounted?.options ?? null, integration)};
+        mountedHosts.set(vm, mounted);
+    } else {
+        mounted.options = options;
+        mounted.pending = undefined;
+    }
+    let disposal: Promise<void>;
+    return () => {
+        if (disposal) return disposal;
+        mounted.options = null;
+        // A locale change replaces the GUI in one React commit while keeping the VM.
+        // Let the new view take over before unloading the project's extensions.
+        mounted.pending = disposal = Promise.resolve().then(() => {
+            if (mounted.pending !== disposal) return;
+            mountedHosts.delete(vm);
+            return mounted.dispose();
+        });
+        return disposal;
+    };
+}
+
+function attachSecurityHost (vm, {
     securityManager, locale, projectState, extensionLibrary, isTrusted, DialogFrame, requestModal
-}, integration = hostIntegration()) {
+}, getMount: () => {locale: typeof locale; DialogFrame: typeof DialogFrame; requestModal: typeof requestModal} | null, integration) {
     const security = vm.extensionManager.securityManager;
     const {canLoadExtensionFromProject, getSandboxMode} = securityManager;
     const review = hostSecurityReview(integration);
@@ -80,14 +112,17 @@ export function installSecurityHost (vm, {
                 vm, defaultURLs: defaultExtensionURLs, isTrusted,
                 bannerFor: ({ids, url}) => extensionLibrary.find(item => ids.includes(item.extensionId) ||
                     (item.extensionURL && item.extensionURL === url))?.iconURL,
-                showReview: (entries, initialChoices) => active ? requestModal(
-                    (onComplete, currentLocale) => review.render({
-                        entries, initialChoices, locale: currentLocale, DialogFrame, onComplete
-                    }), null
-                ) : null
+                showReview: (entries, initialChoices) => {
+                    const mount = getMount();
+                    return active && mount ? mount.requestModal(
+                        (onComplete, currentLocale) => review.render({
+                            entries, initialChoices, locale: currentLocale, DialogFrame: mount.DialogFrame, onComplete
+                        }), null
+                    ) : null;
+                }
             });
         }
-        host = startupPlusExtensionHost(vm, {locale, projectState, hostPolicy}, integration);
+        host = startupPlusExtensionHost(vm, {locale, getLocale: () => getMount()?.locale ?? locale, projectState, hostPolicy}, integration);
     } catch (error) {
         active = false;
         setPlusHostPolicy(security, null);

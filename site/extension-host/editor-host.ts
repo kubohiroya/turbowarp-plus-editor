@@ -69,7 +69,7 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
         archiveOptions: extensionProjectArchiveOptions,
         createPayloads: ports => createProjectPayloadHost(vm, {...ports, canEdit: payloadsEnabled, vmModules: settings.vmModules,
             approve: (urls, cacheable, signal) => approveProjectPayloads(
-                settings.document || globalThis.document, settings.locale, urls, cacheable, signal)
+                settings.document || globalThis.document, settings.getLocale?.() ?? settings.locale, urls, cacheable, signal)
         })
     };
     if (enabled !== true) return installPlusExtensionHost(vm, {...base, ...rest, enabled});
