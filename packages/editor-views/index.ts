@@ -1,4 +1,4 @@
-import {getCodeExtensions} from './code-extensions.ts';
+import {getCodeDynamicShapes, getCodeExtensions} from './code-extensions.ts';
 import {capture, createHistory, restore, workspaceXML} from './history.ts';
 import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
 import {decodeEdit, isCodeEdit, isCommentEdit} from './protocol.ts';
@@ -70,7 +70,10 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     const updateInput = () => {
         container.inert = originalInert || Boolean(owner || pending || dropJob);
     };
-    const projection = target => ({...histories.get(target).state, xml: workspaceXML(vm, target)});
+    const dynamicShapesFor = target => getCodeDynamicShapes(vm.runtime, target);
+    const projection = target => ({
+        ...histories.get(target).state, xml: workspaceXML(vm, target), dynamicShapes: dynamicShapesFor(target)
+    });
     const extensionsFor = target => getCodeExtensions(vm.runtime, target);
     const send = (view, message) => view.port.postMessage(message);
 
@@ -386,7 +389,9 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     }
 
     function extensionsUpdated() {
-        for (const view of views) send(view, {type: 'extensions', extensions: extensionsFor(view.target)});
+        for (const view of views) send(view, {
+            type: 'extensions', extensions: extensionsFor(view.target), dynamicShapes: dynamicShapesFor(view.target)
+        });
     }
 
     function attach({target, mount, port, close, duplicate, layoutMenu}) {

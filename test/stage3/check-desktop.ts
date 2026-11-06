@@ -12,11 +12,11 @@ import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixt
 
 const testMode = [
     '--sprite-properties', '--code-backpack-native', '--code-backpack', '--code-target-sync', '--code-stage', '--code-comments',
-    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--target-panels-popout',
+    '--code-popout', '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--target-panels-popout',
     '--stage-popout', '--stage-display-menu', '--stage-panel', '--internal', '--plus-layout'
 ].find(flag => process.argv.includes(flag));
 const usesSystemInput = !['--code-backpack', '--code-target-sync', '--code-stage', '--code-comments', '--code-popout',
-    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
+    '--code-scalar-scope', '--code-list-scope', '--code-broadcast', '--code-procedures', '--code-extensions', '--code-dynamic', '--stage-display-menu', '--stage-panel', '--plus-layout'].includes(testMode);
 if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
     throw new Error('Set TW_PLUS_NATIVE_INPUT=1 to run the macOS system input test.');
 }
@@ -1217,8 +1217,121 @@ async function checkCodeExtensions ({editor, a, b, focus, parent, sprite}) {
     report.checks.push('Parent VM extension blocks and menus work in two views, shared Undo/Redo and SB3; a late custom extension appears in both palettes');
 }
 
+const dynamicExtensionFixture = `
+Scratch.extensions.register({
+    getInfo() {
+        return {id: 'windowdynamic', name: 'Window dynamic', blocks: [{
+            opcode: 'shape', isDynamic: true, blockType: Scratch.BlockType.COMMAND,
+            text: 'dynamic default [VALUE]', arguments: {VALUE: {type: Scratch.ArgumentType.NUMBER, defaultValue: 9}}
+        }]};
+    },
+    shape() {return 0;}
+});
+`;
+const dynamicShapeMutation = (blockType, label, input) =>
+    `<mutation blockInfo='${JSON.stringify({
+        opcode: 'shape', isDynamic: true, blockType, text: `${label} [${input}]`,
+        arguments: {[input]: {type: 'number'}}
+    })}'></mutation>`;
+
+async function checkCodeDynamic ({editor, a, b, focus, open, parent, sprite}) {
+    const escapeId = id => id.replace(/[\\"]/g, '\\$&');
+    const block = (page, id) => page.locator(`.blocklyBlockCanvas [data-id="${escapeId(id)}"]`);
+    const state = (reload = false) => editor.evaluate(async ({name, reload}) => {
+        if (reload) await vm.loadProject(await (await vm.saveProjectSb3()).arrayBuffer());
+        const target = vm.runtime.targets.find(item => item.getName() === name);
+        if (reload) vm.setEditingTarget(target.id);
+        const {blocks} = target;
+        const roots = blocks.getScripts().map(id => blocks.getBlock(id));
+        const info = block => block?.mutation?.blockInfo;
+        const command = roots.find(block => block.opcode === 'windowdynamic_shape' && info(block)?.blockType === 'command');
+        const branch = roots.find(block => block.opcode === 'control_if');
+        const amount = blocks.getBlock(command.inputs.AMOUNT.block);
+        const reporter = info(amount) ? amount : roots.find(block => block.opcode === 'windowdynamic_shape' && info(block)?.blockType === 'reporter');
+        const predicate = blocks.getBlock(branch.inputs.CONDITION.block);
+        return {
+            ids: {command: command.id, reporter: reporter.id, predicate: predicate.id, branch: branch.id, tail: command.next},
+            mutations: [info(command), info(reporter), info(predicate)],
+            attached: amount === reporter,
+            numbers: [reporter.inputs.VALUE, predicate.inputs.FLAG].map(input => String(blocks.getBlock(input.block).fields.NUM.value)),
+            shadow: String(blocks.getBlock(command.inputs.AMOUNT.shadow).fields.NUM.value),
+            tail: blocks.getBlock(command.next).opcode
+        };
+    }, {name: sprite.name, reload});
+    const original = await state();
+    assert.deepEqual(original.mutations.map(info => info.blockType), ['command', 'reporter', 'Boolean']);
+    assert.deepEqual([original.attached, original.numbers, original.shadow, original.tail], [true, ['3', '4'], '9', 'looks_show']);
+    const checkView = async (page, attached, current) => {
+        const {ids} = current;
+        for (const [id, label, shape] of [
+            [ids.command, 'command', 'stack'], [ids.reporter, 'reporter', 'round'], [ids.predicate, 'predicate', 'boolean']
+        ]) {
+            await block(page, id).getByText(`dynamic ${label}`, {exact: true}).waitFor();
+            assert.ok((await block(page, id).getAttribute('data-shapes')).split(' ').includes(shape));
+        }
+        await until(async () => {
+            const contains = (root, child) => block(page, root).locator(`[data-id="${escapeId(child)}"]`).count();
+            return !!await contains(ids.command, ids.reporter) === attached &&
+                !!await contains(ids.branch, ids.predicate) && !!await contains(ids.command, ids.tail);
+        }, 'the displayed dynamic reporter, predicate, and command stack match the VM');
+    };
+    const expectConnection = async (view, attached) => {
+        const current = await until(async () => {
+            const result = await state();
+            return result.attached === attached && result;
+        }, 'the VM stores the changed dynamic reporter connection');
+        assert.deepEqual(current.mutations, original.mutations);
+        assert.deepEqual([current.numbers, current.shadow, current.tail], [original.numbers, original.shadow, original.tail]);
+        await checkView(view.child, attached, current);
+    };
+    await checkView(a.child, true, original);
+    await checkView(b.child, true, original);
+
+    await activateCodeView(a, b, focus);
+    await a.child.locator('.scratchCategoryMenuItemLabel').filter({hasText: /^Window dynamic$/}).click();
+    await a.child.locator('.blocklyFlyout').getByText('dynamic default', {exact: true}).waitFor();
+    const label = block(a.child, original.ids.reporter).getByText('dynamic reporter', {exact: true});
+    const origin = await label.boundingBox();
+    assert.ok(origin);
+    const mouse = a.child.mouse;
+    const x = origin.x + origin.width / 2;
+    const y = origin.y + origin.height / 2;
+    assert.equal(await label.evaluate((element, {x, y}) =>
+        document.elementFromPoint(x, y)?.closest('[data-id]') === element.closest('[data-id]'), {x, y}), true);
+    await mouse.move(x, y);
+    await mouse.down();
+    await mouse.move(x + 45, y + 25, {steps: 6});
+    await mouse.move(650, 420, {steps: 18});
+    await mouse.up();
+    await expectConnection(b, false);
+
+    await activateCodeView(b, a, focus);
+    await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
+    await expectConnection(a, true);
+    await activateCodeView(a, b, focus);
+    await a.child.getByRole('button', {name: 'Redo', exact: true}).click();
+    await expectConnection(b, false);
+    await activateCodeView(b, a, focus);
+    await b.child.getByRole('button', {name: 'Undo', exact: true}).click();
+    await expectConnection(a, true);
+
+    for (const view of [a, b]) {
+        await focus(view.child, view.id);
+        await Promise.all([view.child.waitForEvent('close'), view.child.locator('#dock').click()]);
+    }
+    await focus(editor, parent.id);
+    const restored = await state(true);
+    assert.deepEqual({...restored, ids: original.ids}, original);
+    await checkView(editor, true, restored);
+    const reopened = await open(restored.ids.command);
+    await checkView(reopened.child, true, restored);
+    await focus(reopened.child, reopened.id);
+    await Promise.all([reopened.child.waitForEvent('close'), reopened.child.locator('#dock').click()]);
+    report.checks.push('A parent-loaded dynamic opcode renders command, reporter, and Boolean shapes in two code windows. Reporter detachment, shared Undo/Redo, and SB3 reload preserve mutations and connections.');
+}
+
 async function checkCodePopouts ({editor, context, control}, {
-    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false
+    withBackpack = false, native = false, targetSync = false, stageCode = false, comments = false, variableScope = null, broadcast = false, procedures = false, extensions = false, dynamic = false
 } = {}) {
     const id = 'stage-six-shared-block';
     const parent = (await control('windows')).find(window => window.kind === 'editor');
@@ -1230,7 +1343,7 @@ async function checkCodePopouts ({editor, context, control}, {
         }, 'native window focus');
     };
     const backpackTargets = withBackpack ? await seedBackpack(editor) : null;
-    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions}) => {
+    const sprites = await editor.evaluate(async ({blockId, targetSync, comments, scopeFixture, broadcastFixture, procedureFixture, extensions, dynamicFixture}) => {
         const first = vm.editingTarget;
         const seeded = [{id: first.id, name: first.getName(), blockId}];
         if (targetSync || comments) {
@@ -1304,10 +1417,41 @@ async function checkCodePopouts ({editor, context, control}, {
             source.querySelector('value[name="VALUE"] shadow').setAttribute('id', 'extension-test-value');
             first.blocks.blocklyListen({type: 'create', blockId: 'extension-test-pen', xml: {outerHTML: source.outerHTML}});
         }
+        if (dynamicFixture) {
+            await vm.extensionManager.loadExtensionURL(dynamicFixture.url);
+            for (const {id, xml} of dynamicFixture.stacks) {
+                first.blocks.blocklyListen({type: 'create', blockId: id, xml: {outerHTML: xml.trim().replace(/>\s+</g, '><')}});
+            }
+        }
         vm.refreshWorkspace();
         return seeded;
     }, {blockId: id, targetSync, comments, scopeFixture: variableScopeFixtures[variableScope],
-        broadcastFixture: broadcast ? broadcastFixture : null, procedureFixture: procedures ? procedureFixture : null, extensions});
+        broadcastFixture: broadcast ? broadcastFixture : null, procedureFixture: procedures ? procedureFixture : null, extensions,
+        dynamicFixture: dynamic ? {
+            url: `data:text/javascript,${encodeURIComponent(dynamicExtensionFixture)}`,
+            stacks: [{
+                id: 'dynamic-test-command',
+                xml: `<block type="windowdynamic_shape" id="dynamic-test-command" x="80" y="155">
+                    ${dynamicShapeMutation('command', 'dynamic command', 'AMOUNT')}
+                    <value name="AMOUNT">
+                        <shadow type="math_number" id="dynamic-test-fallback"><field name="NUM">9</field></shadow>
+                        <block type="windowdynamic_shape" id="dynamic-test-reporter">
+                            ${dynamicShapeMutation('reporter', 'dynamic reporter', 'VALUE')}
+                            <value name="VALUE"><shadow type="math_number" id="dynamic-test-number"><field name="NUM">3</field></shadow></value>
+                        </block>
+                    </value>
+                    <next><block type="looks_show" id="dynamic-test-tail"></block></next>
+                </block>`
+            }, {
+                id: 'dynamic-test-if',
+                xml: `<block type="control_if" id="dynamic-test-if" x="80" y="260">
+                    <value name="CONDITION"><block type="windowdynamic_shape" id="dynamic-test-predicate">
+                        ${dynamicShapeMutation('Boolean', 'dynamic predicate', 'FLAG')}
+                        <value name="FLAG"><shadow type="math_number" id="dynamic-test-flag"><field name="NUM">4</field></shadow></value>
+                    </block></value>
+                </block>`
+            }]
+        } : null});
     const targetId = sprites[0].id;
     const coordinates = () => editor.evaluate(({targetId, id}) => {
         const {x, y} = vm.runtime.getTargetById(targetId).blocks.getBlock(id);
@@ -1354,6 +1498,10 @@ async function checkCodePopouts ({editor, context, control}, {
     }
     if (stageCode) {
         await checkStageCode({editor, a, b, focus, parent, sprite: sprites[0]});
+        return;
+    }
+    if (dynamic) {
+        await checkCodeDynamic({editor, a, b, focus, open, parent, sprite: sprites[0]});
         return;
     }
     if (extensions) {
@@ -2093,6 +2241,7 @@ try {
             variableScope: testMode === '--code-list-scope' ? 'list' : 'scalar'
         }));
     }
+    else if (testMode === '--code-dynamic') await run('code-popout', env => checkCodePopouts(env, {dynamic: true}));
     else if (testMode === '--code-extensions') await run('code-popout', env => checkCodePopouts(env, {extensions: true}));
     else if (testMode === '--code-procedures') await run('code-popout', env => checkCodePopouts(env, {procedures: true}));
     else if (testMode === '--code-broadcast') await run('code-popout', env => checkCodePopouts(env, {broadcast: true}));

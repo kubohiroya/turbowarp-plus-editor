@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
-import {getCodeExtensions} from '../code-extensions.ts';
+import {getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
 
@@ -259,6 +259,47 @@ test('code extension projections send definitions and resolve menus only for the
     assert.deepEqual(editable.definitions[1].args0, [{type: 'field_image', src: ''}]);
     assert.equal(editable.categories[0].xml, 'active palette');
     assert.deepEqual(structuredClone(editable), editable);
+});
+
+test('dynamic extension projections use the registered opcode and each supported saved shape', () => {
+    const opcode = 'fixture_shape';
+    const command = {opcode: 'other', blockType: 'command', text: 'command [AMOUNT]'};
+    const reporter = {blockType: 'reporter', text: 'reporter [VALUE]'};
+    const unsupported = {blockType: 'conditional', branchCount: 1, text: 'conditional'};
+    const category = {id: 'fixture', blocks: [{
+        info: {opcode: 'shape', isDynamic: true, blockType: 'command', text: 'default'},
+        json: {type: opcode, nextStatement: null}
+    }]};
+    const block = (blockInfo, type = opcode) => ({opcode: type, mutation: {blockInfo}});
+    const target = {blocks: {_blocks: {
+        a: block(command), b: block(reporter), duplicate: block(reporter),
+        unsupported: block(unsupported), unregistered: block(command, 'other_shape')
+    }}};
+    const calls = [];
+    const runtime = {
+        _blockInfo: [category],
+        _convertBlockForScratchBlocks(info, owner) {
+            assert.equal(owner, category);
+            calls.push(info);
+            return {json: {type: opcode, message0: info.text, ...(info.blockType === 'reporter' ? {output: 'String'} : {
+                nextStatement: null
+            })}};
+        }
+    };
+
+    const extensions = getCodeExtensions(runtime, target);
+    assert.deepEqual(extensions.definitions, []);
+    assert.deepEqual(extensions.dynamicDefaults, [{
+        mutation: JSON.stringify(category.blocks[0].info), json: category.blocks[0].json
+    }]);
+    const shapes = getCodeDynamicShapes(runtime, target);
+    assert.deepEqual(shapes, [
+        {mutation: JSON.stringify(command), json: {type: opcode, message0: command.text, nextStatement: null}},
+        {mutation: JSON.stringify(reporter), json: {type: opcode, message0: reporter.text, output: 'String'}}
+    ]);
+    assert.deepEqual(calls, [command, reporter].map(info => ({...info, opcode: 'shape', isDynamic: true})));
+    assert.equal(command.opcode, 'other');
+    assert.deepEqual(structuredClone(shapes), shapes);
 });
 
 test('procedure edits remove only obsolete slots and their shadows', () => {
