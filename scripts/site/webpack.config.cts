@@ -41,6 +41,14 @@ const injections = {
     __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json')
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
+if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
+    // Give only the GUI project URL fetcher the browser host's URL resolution.
+    config.module.rules.push({
+        include: fs.realpathSync(path.join(gui, 'src/lib/project-fetcher-hoc.jsx')),
+        enforce: 'pre',
+        use: path.join(__dirname, 'connect-project-fetch.cts')
+    });
+}
 // Resolve shared packages to the host's copies, once.
 //
 // A module this repository supplies is resolved from here, so `react` would come from this
