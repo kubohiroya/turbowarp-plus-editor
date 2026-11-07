@@ -155,6 +155,52 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout).toBeVisible();
 });
 
+test('自動で隠すアドオンが有効でも横パレットの小窓とハンドルはずれない', async ({page}) => {
+    await page.addInitScript(() => {
+        localStorage.setItem('tw:addons', JSON.stringify({
+            _: 5,
+            'hide-flyout': {enabled: true, toggle: 'cathover', speed: 'none'}
+        }));
+    });
+    // The addon expects the standalone extension button when it installs hover listeners.
+    await page.goto('editor.html?lang=en&twPlusHorizontalBlockPalette=1&twPlusExtensionFileMenu=0');
+    const toolbox = page.locator('.blocklyToolboxDiv');
+    const control = toolbox.locator('.scratchCategoryId-control');
+    const flyout = page.locator('.blocklyFlyout');
+    const scrollbar = page.locator('.blocklyFlyoutScrollbar');
+    const handle = page.locator('[data-palette-resize-handle]');
+    const lock = flyout.locator('.sa-lock-object');
+
+    await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+    await expect(lock).toBeAttached();
+    await control.click();
+    await expect(control).toHaveAttribute('aria-expanded', 'true');
+    await expect(handle).toBeVisible();
+    await expect(scrollbar).toBeVisible();
+    const panelBox = await flyout.boundingBox();
+    const scrollbarBox = await scrollbar.boundingBox();
+    const handleBox = await handle.boundingBox();
+    const {x, y, width} = await control.boundingBox();
+
+    await page.mouse.move(x + width / 2, y - 5);
+    expect(await flyout.boundingBox()).toEqual(panelBox);
+    expect(await scrollbar.boundingBox()).toEqual(scrollbarBox);
+    expect(await handle.boundingBox()).toEqual(handleBox);
+    await control.hover();
+    expect(await flyout.boundingBox()).toEqual(panelBox);
+    await expect(lock).toBeHidden();
+
+    await page.keyboard.press('Escape');
+    await expect(flyout).toBeHidden();
+    await expect(handle).toBeHidden();
+    await useLayout(page, 'Use vertical palette');
+    await expect(lock).toBeVisible();
+    await toolbox.hover();
+    const verticalX = (await flyout.boundingBox()).x;
+    await page.mouse.move(1, 1);
+    await expect.poll(async () => (await flyout.boundingBox()).x).toBeLessThan(verticalX);
+});
+
 test('横パレットの小窓を編集領域内でリサイズし、カテゴリ別に復元する', async ({page, evidence}) => {
     await page.goto('editor.html?lang=en');
     const toolbox = page.locator('.blocklyToolboxDiv');
