@@ -354,9 +354,6 @@ test('横パレットの小窓を編集領域内でリサイズし、カテゴ�
     const corner = await handle.boundingBox();
     await dragHandle(viewport.width - corner.x - corner.width / 2 - 1,
         viewport.height - corner.y - corner.height / 2 - 1);
-    // Leaving the bottom edge closes the backpack drawer that temporarily shortens the editor.
-    await page.mouse.move(viewport.width - 1, 1);
-    await expect(page.getByRole('button', {name: 'Reveal Backpack'})).toHaveAttribute('aria-expanded', 'false');
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tw-plus-palette-size:motion')));
     await expect.poll(() => sizeDifference(saved)).toBeLessThanOrEqual(1);
     const largest = await size();

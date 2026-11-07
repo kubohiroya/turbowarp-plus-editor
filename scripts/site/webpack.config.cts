@@ -146,6 +146,9 @@ for (const entry of ['palette-category-reorder', 'palette-dropdown-resize', 'pro
 }
 config.resolve.extensions = [...(config.resolve.extensions || ['.wasm', '.mjs', '.js', '.json']), '.ts', '.tsx'];
 const siteSource = path.join(__dirname, '..', '..', 'site');
+// Both the web and Desktop renderers request the upstream Backpack container.
+config.resolve.alias['../../containers/backpack.jsx$'] =
+    path.join(siteSource, 'gui-integration', 'containers', 'tw-disabled-backpack.ts');
 // Share the original fullscreen artwork with the stage display menu.
 config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
     path.join(gui, 'src', 'components', 'stage-header', 'icon--fullscreen.svg');

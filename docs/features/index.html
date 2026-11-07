@@ -23,7 +23,7 @@
 <tr><th scope="row">作品を開く</th><td>SB3の読み込みと拡張の実行確認</td><td><a href="#extensions">公式カタログ</a>と<a href="#project-diagnostics">読み込みの診断</a></td></tr>
 <tr><th scope="row">作業画面を整える</th><td>コード・ステージ・スプライトの基本配置</td><td><a href="#split-panes">タブの分割</a>、<a href="#dock">ステージの別表示</a>、<a href="#workspace-restore">配置復元</a></td></tr>
 <tr><th scope="row">編集する</th><td>ブロックの入力欄やメニュー</td><td><a href="#palette">横型パレット</a>、<a href="#minimap">ミニマップ</a>、対応する<a href="#forms">フォーム</a>と<a href="#yaml-tabs">YAMLタブ</a></td></tr>
-<tr><th scope="row">再利用する</th><td>バックパックなどで再利用</td><td><a href="#backpack">バックパックの別表示</a>、<a href="#transfer">スクリプトやステージのファイル転送</a>、<a href="#bundle-assets">バンドル素材の追加</a></td></tr>
+<tr><th scope="row">再利用する</th><td>バックパックなどで再利用</td><td><a href="#transfer">スクリプトやステージのファイル転送</a>、<a href="#bundle-assets">バンドル素材の追加</a></td></tr>
 <tr><th scope="row">保存して渡す</th><td>SB3の保存と標準Packager</td><td><a href="#payload-formats">作品データの格納方式</a>、<a href="#storage">拡張コードの保存方式</a>、<a href="#packager">Plus拡張を同梱したHTML</a></td></tr>
 </tbody></table></div>
 </div>
@@ -67,7 +67,7 @@
 </ol></div>
 <div><h2>素材とスクリプトを再利用する</h2>
 <ol start="26">
-<li><a href="#backpack">バックパックを下端から出して再利用する</a></li>
+<li><a href="#backpack">バックパックから転送機能へ</a></li>
 <li><a href="#transfer">スクリプトとステージを別作品へ転送する</a></li>
 <li><a href="#bundle-assets">バンドル素材を背景・コスチューム・音に追加する</a></li>
 </ol></div>
@@ -152,8 +152,8 @@
 
 <h2>5. Plus標準配置とScratch配置を使い分ける</h2>
 
-<p>Plus標準配置では、左側にスプライト一覧が固定表示された状態で開きます。中央でコードや素材を編集し、右端からステージ、下端からバックパックを開けます。従来のScratch配置で作業するには、エディターのURLに <code>twPlusStandardLayout=0</code> を指定して開き直します。</p>
-<figure><a href="images/plus-workspace-pinned.png"><img src="images/plus-workspace-pinned.png" width="1440" height="1000" alt="起動直後のPlus標準配置。左に固定表示されたスプライト一覧、中央にコード領域があり、右端のステージと下端のバックパックは閉じている。" loading="lazy"></a><figcaption>公開版の起動直後。左にスプライト一覧が固定表示されています。</figcaption></figure>
+<p>Plus標準配置では、左側にスプライト一覧が固定表示された状態で開きます。中央でコードや素材を編集し、右端からステージを開けます。従来のScratch配置で作業するには、エディターのURLに <code>twPlusStandardLayout=0</code> を指定して開き直します。</p>
+<figure><a href="images/plus-workspace-pinned.png"><img src="images/plus-workspace-pinned.png" width="1440" height="1000" alt="起動直後のPlus標準配置。左に固定表示されたスプライト一覧、中央にコード領域があり、右端のステージは閉じている。" loading="lazy"></a><figcaption>公開版の起動直後。左にスプライト一覧が固定表示されています。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/221">Plus標準配置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/292">起動時のスプライト一覧</a></p>
 
 </section>
@@ -420,13 +420,9 @@
 
 <section id="backpack">
 
-<h2>26. バックパックを下端から出して再利用する</h2>
+<h2>26. バックパックから転送機能へ</h2>
 
-<p>公開版のPlus配置では、編集画面の下端にポインターを置くとバックパックが開きます。コピー先のスプライトを選び、再利用したいスクリプトをバックパックからコード画面へドラッグします。開いた領域の外にポインターを移すと、バックパックは下端に戻ります。</p>
-<figure class="guide-flow"><div class="flow" role="img" aria-label="スプライトを選択。コピー先を確認。次に、下端にポインターを置く。バックパックを展開。次に、コード画面にドラッグ。スクリプトをコピー"><div>スプライトを選択<br><small>コピー先を確認</small></div><span aria-hidden="true">→</span><div>下端にポインターを置く<br><small>バックパックを展開</small></div><span aria-hidden="true">→</span><div>コード画面にドラッグ<br><small>スクリプトをコピー</small></div></div><figcaption>バックパックから再利用するスクリプトを選ぶ流れ。</figcaption></figure>
-<p>「バックパックを別画面で開く」を押すと、エディター内の小窓に移せます。「レイアウト変更」からブラウザーの別ウィンドウにも移せます。切り離したバックパックからは、対応するスクリプトを「スクリプトをコードへドラッグ」でコード画面にコピーできます。下端へ戻すには「レイアウト変更」から「元の画面に戻す（ドックする）」を選びます。</p>
-<p><span class="badge planned">開発中</span> macOSのDesktop開発版では、背面にあるコードの別ウィンドウへのドロップと、コピー操作を共有の履歴から取り消せることも確認しています。コードの別ウィンドウからバックパックへ戻す操作や、画像・音・スプライトを別ウィンドウ間で移す操作は、経路ごとに検証しています。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/226">下端のバックパック</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/196">macOSの背面ドロップ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/178">残りの転送経路</a></p>
+<p>TurboWarp Plus Editor では、編集画面の下端にあったバックパックを廃止しました。スクリプトの再利用には<a href="#transfer">コピー・貼り付けや .blocks3 の書き出し・読み込み</a>を使います。ステージは .stage3、スプライト全体は .sprite3 で別の作品へ移せます。</p>
 
 </section>
 
