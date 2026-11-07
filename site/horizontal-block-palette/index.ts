@@ -57,6 +57,11 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         flyout.hide();
     };
 
+    const closeIfUnpinned = () => {
+        const pin = panel.querySelector(':scope > .sa-lock-object.locked');
+        if (!pin || win.getComputedStyle(pin).display === 'none') close();
+    };
+
     const showCategory = (category, scroll) => {
         const label = doc.createElement('label');
         label.setAttribute('text', category.name_);
@@ -245,7 +250,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     closeOnDragExit.set(flyout, ({clientX, clientY}) => {
         if (openId === null) return;
         const {left, right, top, bottom} = panel.getBoundingClientRect();
-        if (clientX < left || clientX > right || clientY < top || clientY > bottom) close();
+        if (clientX < left || clientX > right || clientY < top || clientY > bottom) closeIfUnpinned();
     });
 
     const setMode = next => {
@@ -324,9 +329,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         WidgetDiv.hideIfOwner(toolbox);
         if (openId === null || resizer.contains(event.target) || [menu, panel, scrollbar, DropDownDiv.DIV]
             .some(element => element?.contains(event.target))) return;
-
-        const pin = panel.querySelector(':scope > .sa-lock-object.locked');
-        if (!pin || win.getComputedStyle(pin).display === 'none') close();
+        closeIfUnpinned();
     }, capture);
     doc.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
