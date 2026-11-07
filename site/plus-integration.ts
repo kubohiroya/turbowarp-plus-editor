@@ -32,7 +32,7 @@ import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './conte
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
 import {attachWorkspaceNavigation} from './workspace-minimap/index.ts';
 
-const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap} =
+const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap, localGit} =
     readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
@@ -165,7 +165,7 @@ export const createPlusIntegration = ({
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
-        attached.push(attachProjectFolder(vm, hostDocument));
+        attached.push(attachProjectFolder(vm, hostDocument, localGit));
         const workspace = getDocumentWorkspace(vm);
         const documents = mountEditor({
             vm,

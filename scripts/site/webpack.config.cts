@@ -115,8 +115,10 @@ for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
-config.resolve.alias['@kubohiroya/turbowarp-plus-editor-project-folder$'] =
-    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-project-folder');
+for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder',
+    '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
+    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+}
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 for (const entry of ['palette-category-reorder', 'palette-dropdown-resize']) {
@@ -148,11 +150,12 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
     {from: path.join(path.dirname(dockviewRequire.resolve('dockview-core/package.json')), 'LICENCE.md'),
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
-const globalLayoutStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
+const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
+globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$']);
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
 const previewReloadStyles = path.join(siteSource, 'styles', 'preview-reload.css');
-cssModules.exclude = [cssModules.exclude, dockviewStyles, ...globalLayoutStyles, previewReloadStyles].filter(Boolean);
-config.module.rules.push({test: /\.css$/, include: [dockviewStyles, ...globalLayoutStyles],
+cssModules.exclude = [cssModules.exclude, dockviewStyles, ...globalStyles, previewReloadStyles].filter(Boolean);
+config.module.rules.push({test: /\.css$/, include: [dockviewStyles, ...globalStyles],
     use: ['style-loader', {loader: 'css-loader', options: {modules: false}}]});
 // Bundle the pinned stylesheet for all renderers, including Desktop and offline projects.
 config.module.rules.push({

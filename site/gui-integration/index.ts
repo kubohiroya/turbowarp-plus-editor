@@ -6,6 +6,8 @@ import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
 import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
+import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
+import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import {renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '../stage-controls/view.tsx';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
@@ -90,4 +92,4 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
         }}, action.label));
 };
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
-    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderGitMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));

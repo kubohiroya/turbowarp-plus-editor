@@ -119,9 +119,14 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'manualProjectURI', 'payloadFormats', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'stageDisplayMenu', 'targetList', 'spriteCodeWindows', 'standardLayout', 'extensionFileMenu', 'paletteDeletePreview', 'paletteCategoryReorder', 'horizontalBlockPalette', 'contextMenuIcons', 'workspaceMinimap']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'manualProjectURI', 'payloadFormats', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'stageDisplayMenu', 'targetList', 'spriteCodeWindows', 'standardLayout', 'extensionFileMenu', 'paletteDeletePreview', 'paletteCategoryReorder', 'horizontalBlockPalette', 'contextMenuIcons', 'localGit', 'workspaceMinimap']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
+});
+
+test('the local Git panel defaults on and supports startup rollback', () => {
+    assert.equal(readWebStartupFeatureFlags().localGit, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusLocalGit=0').localGit, false);
 });
 
 test('splitter opt-in does not change other startup flag defaults', () => {
@@ -129,7 +134,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: false, localGit: true, workspaceMinimap: true});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -156,7 +161,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: false, workspaceMinimap: true});
+        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: false, localGit: true, workspaceMinimap: true});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
