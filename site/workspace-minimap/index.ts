@@ -8,12 +8,18 @@ const MAX_WATERMARK_SIZE = 64;
 const MAX_MAP_WIDTH = 164;
 const MAX_MAP_HEIGHT = 104;
 const CONTROLS_GAP = 8;
+const CONTROLS_OFFSET = 8;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+
+function navigationCorner(workspace, ScratchBlocks, metrics) {
+    const {right, bottom} = workspaceControlsCorner(workspace, ScratchBlocks, metrics);
+    return {right: right + CONTROLS_OFFSET, bottom: bottom + CONTROLS_OFFSET};
+}
 
 export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZoom, minimap}) {
     const container = workspace.getInjectionDiv();
     const getCorner = metrics => {
-        const corner = workspaceControlsCorner(workspace, ScratchBlocks, metrics);
+        const corner = navigationCorner(workspace, ScratchBlocks, metrics);
         const stage = container.closest('[class*="editor_standard-body_"]')?.querySelector('[data-plus-stage-frame]');
         if (!stage || stage.closest('[data-stage-hidden="true"]')) return corner;
 
@@ -27,7 +33,7 @@ export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZ
         const mapWidth = MAX_MAP_WIDTH * SIZE_FACTOR;
         if (stageLeft >= mapWidth + 24 && right > stageRect.left && right - mapWidth < stageRect.right &&
                 bottom > stageRect.top && bottom - stackHeight < stageRect.bottom) {
-            return {...corner, right: stageLeft - 12};
+            return {...corner, right: stageLeft - 12 + CONTROLS_OFFSET};
         }
         return corner;
     };
@@ -41,7 +47,7 @@ export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZ
 
 export function attachCodePreviewMinimap(workspace, ScratchBlocks, watermark: HTMLElement) {
     return attachWorkspaceMinimap(workspace, ScratchBlocks, null,
-        metrics => workspaceControlsCorner(workspace, ScratchBlocks, metrics), watermark);
+        metrics => navigationCorner(workspace, ScratchBlocks, metrics), watermark);
 }
 
 function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner, previewWatermark?: HTMLElement) {
