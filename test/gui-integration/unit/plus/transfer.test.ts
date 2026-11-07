@@ -49,7 +49,10 @@ test('the host receives the GUI context and supplies stage actions through the n
     assert.equal(trigger.props.id, renderedMenu.props.id);
     assert.equal(renderedMenu.props.children[0].type, primitives.MenuItem);
     assert.equal(renderedMenu.props.children[0].props.onClick, onExport);
-    assert.equal(renderedMenu.props.children[0].props.children, 'export');
+    const [icon, label] = renderedMenu.props.children[0].props.children.props.children;
+    assert.equal(icon.type, 'svg');
+    assert.equal(icon.props['aria-hidden'], 'true');
+    assert.equal(label, 'export');
 });
 
 test('the host chooses the compact backdrop menu items from its layout context', () => {
