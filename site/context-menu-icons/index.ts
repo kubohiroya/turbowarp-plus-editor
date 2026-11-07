@@ -149,6 +149,7 @@ function createContextMenuIcon (document, action) {
 export function attachAssetContextMenuIcons (document, getMessages) {
     if (!enabled || !getMessages) return null;
     const window = document.defaultView;
+    if (!window) return null;
     const onShow = ({detail}) => {
         const target = detail?.target;
         if (!target?.matches('[class*="sprite-selector-item_sprite-selector-item_"]')) return;
