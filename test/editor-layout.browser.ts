@@ -1140,6 +1140,31 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
     const preview = (group: number) => groups.nth(group).getByRole('button', {name: 'Edit code in this pane'});
     const palette = (scope: ReturnType<typeof page.locator>) => scope.locator('.blocklyToolboxDiv');
+    const thumbnail = (scope: ReturnType<typeof page.locator>) => scope.locator('[data-dockview-costume-thumbnail] img');
+    const assertNavigation = async (scope: ReturnType<typeof page.locator>, editable: boolean) => {
+        const map = scope.locator('[data-workspace-minimap]');
+        const zoom = scope.locator('[data-plus-horizontal-zoom]');
+        await expect(thumbnail(scope)).toBeVisible();
+        await expect(thumbnail(scope)).toHaveCSS('opacity', '0.6');
+        await expect(map).toBeVisible();
+        if (editable) {
+            await expect(zoom.locator('[data-plus-zoom-action]')).toHaveCount(3);
+            await expect(zoom).toBeVisible();
+        } else {
+            await expect(zoom).toHaveCount(0);
+        }
+        await expect.poll(async () => {
+            const [pane, image, minimap, buttons] = await Promise.all([
+                scope.boundingBox(), thumbnail(scope).boundingBox(), map.boundingBox(),
+                editable ? zoom.boundingBox() : null
+            ]);
+            return Boolean(pane && image && minimap &&
+                Math.abs(image.x + image.width - minimap.x - minimap.width) < 2 &&
+                image.y >= pane.y && image.y + image.height < minimap.y &&
+                pane.x + pane.width - minimap.x - minimap.width < 45 &&
+                (editable ? buttons && minimap.y + minimap.height < buttons.y : true));
+        }).toBe(true);
+    };
     const groupBounds = () => Promise.all([0, 1].map(index => groups.nth(index).boundingBox()));
     const canvas = (scope: ReturnType<typeof page.locator>) =>
         scope.locator('.blocklyBlockCanvas').filter({has: page.locator('[data-id="pane-block"]')});
@@ -1155,12 +1180,25 @@ test('two Dockview code panes keep independent positions and zoom for the same s
             metrics.absoluteTop - y - metrics.contentTop);
     }, {scale, x, y});
     await expect(canvas(editor)).toBeVisible();
+    await assertNavigation(editor, true);
     await groups.first().getByRole('button', {name: 'Editor panel layout'}).click();
     await page.getByRole('menuitem', {name: 'Split right'}).click();
     await expect(groups).toHaveCount(2);
     await expect(preview(0)).toBeVisible();
     await expect(palette(preview(0))).toBeHidden();
     await expect(palette(editor)).toBeVisible();
+    await assertNavigation(preview(0), false);
+    const costume = await page.evaluate(async () => {
+        const {vm} = window;
+        const storage = vm.runtime.storage;
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="20"/></svg>';
+        const asset = storage.createAsset(storage.AssetType.ImageVector, 'svg', new TextEncoder().encode(svg), null, true);
+        await vm.addCostume(`${asset.assetId}.svg`, {name: 'Pane thumbnail', asset, assetId: asset.assetId,
+            dataFormat: 'svg', rotationCenterX: 20, rotationCenterY: 20}, vm.editingTarget.id);
+        return asset.encodeDataURI();
+    });
+    await expect(thumbnail(editor)).toHaveAttribute('src', costume);
+    await expect(thumbnail(preview(0))).toHaveAttribute('src', costume);
     const splitBounds = await groupBounds();
 
     await setViewport(1.1, -247, -189);
@@ -1169,6 +1207,8 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     await expect(preview(1)).toBeVisible();
     await expect(palette(preview(1))).toBeHidden();
     await expect(palette(editor)).toBeVisible();
+    await assertNavigation(editor, true);
+    await assertNavigation(preview(1), false);
     assert.deepEqual(await groupBounds(), splitBounds);
     await setViewport(0.75, -85, -46);
     const left = await readViewport(editor);
@@ -1200,6 +1240,16 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     await expect(palette(editor)).toBeVisible();
     await expect.poll(() => readViewport(editor)).toEqual(left);
     assert.equal(await page.evaluate(() => window.vm.editingTarget.id), targetId);
+
+    const otherCostume = await page.evaluate(async id => {
+        await window.vm.duplicateSprite(id);
+        const target = window.vm.editingTarget;
+        target.setCostume(0);
+        return target.getCostumes()[target.currentCostume].asset.encodeDataURI();
+    }, targetId);
+    assert.ok(otherCostume !== costume, 'The two sprites have different current costumes');
+    await expect(thumbnail(editor)).toHaveAttribute('src', otherCostume);
+    await expect(thumbnail(preview(1))).toHaveAttribute('src', costume);
     assert.deepEqual(errors, []);
 });
 
@@ -1287,11 +1337,14 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
     assert.ok((await stageGroup.boundingBox()).x > (await codeGroup.boundingBox()).x);
     const palette = codeGroup.locator('.blocklyToolboxDiv');
+    const zoom = codeGroup.locator('[data-plus-horizontal-zoom]');
     await stageTab.click();
     await expect(codeGroup.locator('.blocklySvg').first()).toBeVisible();
     await expect(palette).toBeHidden();
+    await expect(zoom).toBeHidden();
     await codeTab.click();
     await expect(palette).toBeVisible();
+    await expect(zoom).toBeVisible();
     await assertStage();
 
     const sash = workspace.locator('.dv-sash:visible').first();

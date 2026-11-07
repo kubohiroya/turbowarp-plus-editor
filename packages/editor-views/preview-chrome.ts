@@ -5,7 +5,8 @@ export type PresentationElements = (injection: HTMLElement) => {
 };
 
 // These are display-only copies of the controls that belong to the shared editable workspace.
-export function captureCodePreviewChrome(workspace, target, presentationElements: PresentationElements | null) {
+export function captureCodePreviewChrome(workspace, target, presentationElements: PresentationElements | null,
+    includeNavigation: boolean) {
     const injection: HTMLElement = workspace.getInjectionDiv();
     const svg = workspace.getParentSvg();
     const {wrapper, extensionButton, watermark} = presentationElements?.(injection) ?? {};
@@ -44,7 +45,7 @@ export function captureCodePreviewChrome(workspace, target, presentationElements
     copy(injection.querySelector<HTMLElement | SVGElement>(':scope > .blocklyFlyout'));
     copy(injection.querySelector<HTMLElement | SVGElement>(':scope > .blocklyFlyoutScrollbar'));
     copy(extensionButton);
-    const zoom = svg.querySelector('.blocklyZoom');
+    const zoom = includeNavigation && svg.querySelector('.blocklyZoom');
     if (zoom) {
         const shell = copy(svg, {right: true, bottom: true, deep: false});
         if (shell) {
@@ -54,18 +55,20 @@ export function captureCodePreviewChrome(workspace, target, presentationElements
     }
     copy(injection.querySelector<HTMLElement | SVGElement>(':scope > .blocklyScrollbarVertical.blocklyMainWorkspaceScrollbar'), {right: true});
     copy(injection.querySelector<HTMLElement | SVGElement>(':scope > .blocklyScrollbarHorizontal.blocklyMainWorkspaceScrollbar'), {bottom: true});
-    const minimap = copy(injection.querySelector<HTMLElement | SVGElement>(':scope > [data-workspace-minimap]'), {right: true, bottom: true});
-    const image = copy(watermark, {right: true, bottom: true});
-    // The GUI throttles costume changes, so the last frame may still show the previous target.
-    const asset = target.getCostumes()[target.currentCostume]?.asset;
-    if (minimap && watermark && asset) {
-        const mark = image ?? watermark.cloneNode(false) as HTMLElement;
-        const img = mark.ownerDocument.createElement('img');
-        img.src = asset.encodeDataURI();
-        mark.replaceChildren(img);
-        mark.style.cssText = watermark.style.cssText;
-        mark.style.position = 'absolute';
-        chrome.appendChild(mark);
+    if (includeNavigation) {
+        const minimap = copy(injection.querySelector<SVGElement>(':scope > [data-workspace-minimap]'), {right: true, bottom: true});
+        const image = copy(watermark, {right: true, bottom: true});
+        // The GUI throttles costume changes, so the last frame may still show the previous target.
+        const asset = target.getCostumes()[target.currentCostume]?.asset;
+        if (minimap && watermark && asset) {
+            const mark = image ?? watermark.cloneNode(false) as HTMLElement;
+            const img = mark.ownerDocument.createElement('img');
+            img.src = asset.encodeDataURI();
+            mark.replaceChildren(img);
+            mark.style.cssText = watermark.style.cssText;
+            mark.style.position = 'absolute';
+            chrome.appendChild(mark);
+        }
     }
     return {
         mount(container) {
