@@ -146,8 +146,8 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-for (const entry of ['busy-cursor', 'palette-category-reorder', 'palette-category-search', 'palette-dropdown-resize',
-    'project-search', 'project-info-menu']) {
+for (const entry of ['busy-cursor', 'detached-block-palette', 'palette-category-reorder', 'palette-category-search',
+    'palette-dropdown-resize', 'project-search', 'project-info-menu']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -202,6 +202,9 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     chunks: ['stage-popout'], filename: 'stage-popout.html',
     title: 'Stage',
     template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
+}));
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: [], filename: 'dockview-popout.html', title: 'TurboWarp Plus Editor'
 }));
 config.module.rules.push({test: /\.tsx?$/, include: [
     siteSource,

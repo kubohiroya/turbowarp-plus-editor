@@ -2,6 +2,8 @@ import {attachPaletteCategoryReorder} from '@kubohiroya/turbowarp-plus-editor-ui
 import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} from
     '@kubohiroya/turbowarp-plus-editor-ui/palette-category-search';
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';
+import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
+    '@kubohiroya/turbowarp-plus-editor-ui/detached-block-palette';
 import styles from './palette.css';
 
 const installed = new WeakSet();
@@ -12,6 +14,11 @@ let horizontalLayout = false;
 export const setHorizontalBlockPalette = (horizontal: boolean) => {
     horizontalLayout = horizontal;
     for (const setMode of palettes) setMode(horizontal);
+};
+
+export const openDetachedBlockPalette = options => {
+    const workspace = window.ScratchBlocks?.getMainWorkspace();
+    if (workspace) openPaletteWindow(workspace, options);
 };
 
 const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder}) => {
@@ -47,6 +54,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     };
 
     let horizontal = false;
+    let detached = false;
     let openId = null;
     let layoutWidth;
     let scrollBeforeSearch = 0;
@@ -151,7 +159,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     };
 
     toolbox.getWidth = () => horizontal ? 0 : original.getWidth.call(toolbox);
-    toolbox.getHeight = () => horizontal ? menu.offsetHeight : original.getHeight.call(toolbox);
+    toolbox.getHeight = () => horizontal ? (detached ? 0 : menu.offsetHeight) : original.getHeight.call(toolbox);
     // The menu stays a drop-to-delete target even when the popover is closed.
     toolbox.getClientRect = () => {
         if (!horizontal) return original.getClientRect.call(toolbox);
@@ -225,13 +233,14 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const getBounds = () => {
         const surfaceRect = surface.getBoundingClientRect();
         const menuRect = menu.getBoundingClientRect();
+        const viewport = surface.ownerDocument.documentElement;
         return {
             surfaceLeft: surfaceRect.left,
             left: Math.max(0, menuRect.left - surfaceRect.left, -surfaceRect.left),
             right: Math.min(surface.clientWidth, menuRect.right - surfaceRect.left,
-                doc.documentElement.clientWidth - surfaceRect.left),
+                viewport.clientWidth - surfaceRect.left),
             top: Math.max(menu.offsetHeight, -surfaceRect.top),
-            bottom: Math.min(surface.clientHeight, doc.documentElement.clientHeight - surfaceRect.top) - 4
+            bottom: Math.min(surface.clientHeight, viewport.clientHeight - surfaceRect.top) - 4
         };
     };
     const getWidth = ({left, right}) => {
@@ -285,7 +294,10 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const reposition = () => {
         if (openId !== null) flyout.position();
     };
-    const resizeObserver = new win.ResizeObserver(reposition);
+    const resizeObserver = new win.ResizeObserver(() => {
+        syncInputDocument();
+        reposition();
+    });
     resizeObserver.observe(surface);
     resizeObserver.observe(menu);
     win.addEventListener('resize', reposition, {signal: events.signal});
@@ -376,19 +388,55 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         event.preventDefault();
         menu.scrollLeft += event.deltaY * (event.deltaMode === 1 ? 16 : 1);
     }, {passive: false, signal: events.signal});
-    doc.addEventListener('pointerdown', event => {
+    const onPointerDown = event => {
         if (WidgetDiv.DIV?.contains(event.target)) return;
         WidgetDiv.hideIfOwner(toolbox);
         if (openId === null || resizer.contains(event.target) || search.contains(event.target) || [menu, panel, scrollbar, DropDownDiv.DIV]
             .some(element => element?.contains(event.target))) return;
         closeIfUnpinned();
-    }, capture);
-    doc.addEventListener('keydown', event => {
+    };
+    const onKeyDown = event => {
         if (event.key !== 'Escape' || event.isComposing) return;
         if (WidgetDiv.owner_ === toolbox) WidgetDiv.hideIfOwner(toolbox);
         else if (!WidgetDiv.isVisible() && !DropDownDiv.isVisible()) close();
-    }, capture);
+    };
+    const onWorkspaceKeyDown = event => {
+        if (surface.contains(event.target)) ScratchBlocks.onKeyDown_(event);
+    };
+    let inputDocument: Document;
+    function syncInputDocument() {
+        const current = surface.ownerDocument;
+        if (current === inputDocument) return;
+        if (inputDocument) workspace.cancelCurrentGesture();
+        moveBlockWidgets(ScratchBlocks, current);
+        inputDocument?.removeEventListener('pointerdown', onPointerDown, true);
+        inputDocument?.removeEventListener('keydown', onKeyDown, true);
+        inputDocument?.removeEventListener('keydown', onWorkspaceKeyDown);
+        inputDocument = current;
+        inputDocument.addEventListener('pointerdown', onPointerDown, capture);
+        inputDocument.addEventListener('keydown', onKeyDown, capture);
+        if (current !== doc) inputDocument.addEventListener('keydown', onWorkspaceKeyDown, {signal: events.signal});
+    }
+    syncInputDocument();
+    const disconnectPalette = connectDetachedBlockPalette({
+        blocks: ScratchBlocks, workspace, flyout, menu,
+        categories: () => toolbox.categoryMenu_.categories_.map(({id_, name_}) =>
+            ({id: id_, label: ScratchBlocks.utils.replaceMessageReferences(name_)})),
+        show(id) {
+            const category = categoryById(id);
+            if (category) showCategory(category, 0);
+        },
+        setDetached(value) {
+            close();
+            detached = value;
+            for (const element of [menu, panel, scrollbar]) element.toggleAttribute('data-detached-palette-source', value);
+            if (!value) flyout.hide();
+            workspace.resize();
+        }
+    });
     toolbox.dispose = () => {
+        disconnectPalette();
+        if (inputDocument !== doc) moveBlockWidgets(ScratchBlocks, doc);
         palettes.delete(setMode);
         closeOnDragExit.delete(flyout);
         resizeObserver.disconnect();
@@ -408,6 +456,7 @@ export const installHorizontalBlockPalette = (ScratchBlocks,
     const toolbox = ScratchBlocks.Toolbox?.prototype;
     if (!toolbox?.init || installed.has(toolbox)) return;
     installed.add(toolbox);
+    installGestureOwnerDocument(ScratchBlocks);
 
     const gesture = ScratchBlocks.Gesture.prototype;
     const {handleMove} = gesture;
