@@ -7,8 +7,8 @@
  */
 
 // Legacy projects can embed large JavaScript bundles in project.json.
-// Allow 24 MiB legacy documents while retaining archive, total, ratio and code bounds.
+const projectBytes = 64 * 1024 * 1024;
 export const extensionProjectArchiveOptions = Object.freeze({
-    maxProjectBytes: 32 * 1024 * 1024,
-    maxEntryBytes: 32 * 1024 * 1024
+    maxProjectBytes: projectBytes,
+    maxEntryBytes: projectBytes
 });

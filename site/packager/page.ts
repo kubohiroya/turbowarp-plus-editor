@@ -43,7 +43,7 @@ file.addEventListener('change', async () => {
     if (!file.files[0] || pending) return;
     try {
         // The core checks Blob.size before reading or inflating the selected file.
-        await createProjectIO({zip: JSZip}).prepare(file.files[0]);
+        await createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions}).prepare(file.files[0]);
         setInput(file.files[0], file.files[0].name);
     } catch (error) {
         input = null;
@@ -74,7 +74,7 @@ generate.addEventListener('click', async () => {
         await trusted.isTrustedCode(code) || ui.requestApproval(code, options)});
     try {
         status.textContent = '作品と拡張のバイト列を検証しています…';
-        const io = createProjectIO({zip: JSZip});
+        const io = createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions});
         const prepared = await io.prepare(input);
         if (!prepared.manifest) throw new Error('Plus Manifestがありません。通常の作品には標準Packagerを使用してください。');
         const resourceDependencies = Object.fromEntries(prepared.manifest.extensions.map(spec => [spec.id, [] as never[]]));
