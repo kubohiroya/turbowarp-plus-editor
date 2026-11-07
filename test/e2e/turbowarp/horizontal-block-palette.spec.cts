@@ -171,7 +171,13 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     const handle = page.locator('[data-palette-resize-handle]');
     const lock = flyout.locator('.sa-lock-object');
     const pinButton = lock.locator('button');
-    const clickOutside = () => page.locator('.blocklySvg').first().click({position: {x: 12, y: 430}});
+    const workspace = page.locator('.blocklySvg').first();
+    const outside = {x: 12, y: 430};
+    const clickOutside = () => workspace.click({position: outside});
+    const moveOutside = async () => {
+        const {x, y} = await workspace.boundingBox();
+        await page.mouse.move(x + outside.x, y + outside.y, {steps: 12});
+    };
     const expectPinInCorner = async () => {
         await expect(pinButton).toBeVisible();
         const panel = await flyout.boundingBox();
@@ -220,10 +226,27 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     await expect(lock).toHaveClass(/\blocked\b/);
     await expect(pinButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(pinButton).toHaveCSS('border-top-color', 'rgb(255, 255, 255)');
+    await moveOutside();
+    expect(await control.getAttribute('aria-expanded')).toBe('true');
     await clickOutside();
     expect(await control.getAttribute('aria-expanded')).toBe('true');
     await expect(flyout).toBeVisible();
     await expect(handle).toBeVisible();
+
+    const source = flyout.locator('.blocklyDraggable').filter({has: page.getByText('wait', {exact: true})}).first();
+    await expect(source).toBeVisible();
+    const from = await source.boundingBox();
+    await page.mouse.move(from.x + 12, from.y + 12);
+    await page.mouse.down();
+    try {
+        await moveOutside();
+        expect(await control.getAttribute('aria-expanded')).toBe('true');
+    } finally {
+        await page.mouse.up();
+    }
+    await expect(workspace.locator('> .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable')).toHaveCount(1);
+    await expect(flyout).toBeVisible();
+
     await pinButton.click();
     await expect(lock).not.toHaveClass(/\blocked\b/);
     await expect(pinButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
