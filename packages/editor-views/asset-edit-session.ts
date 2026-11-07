@@ -56,6 +56,9 @@ export function createAssetEditSession(kind: 'costume' | 'sound') {
                 started.vm.runtime.getTargetById(started.target.id) === started.target &&
                 assets(started.target)[started.index] === started.asset;
         },
+        cancelPending() {
+            if (selection) pendingEdits.delete(selection.asset);
+        },
         close() {
             selection = undefined;
         }
