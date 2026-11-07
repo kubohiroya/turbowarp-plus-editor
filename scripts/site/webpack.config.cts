@@ -40,8 +40,16 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [{
     transform: (source, file) => rootRequire('esbuild').transformSync(source.toString(),
         {loader: 'ts', target: 'es2017', sourcefile: file}).code
 }]}));
+const bffOrigin = process.env.TW_PLUS_GIT_BFF_ORIGIN;
+const proxyOrigin = process.env.TW_PLUS_GIT_PROXY_ORIGIN;
+const cloudflareGit = bffOrigin || proxyOrigin ? {bffOrigin, proxyOrigin} : null;
+if (cloudflareGit && ![bffOrigin, proxyOrigin].every(value => {
+    const url = value && URL.parse(value);
+    return url && url.protocol === 'https:' && url.origin === value;
+})) throw new Error('Cloudflare Git requires both exact HTTPS origins');
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
-    __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog)
+    __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog),
+    __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit)
 }));
 // The host owns every additional module; the fork only consults this optional build-time value.
 const bridge = path.join(__dirname, '..', '..', 'site', 'gui-integration', 'index.ts');
@@ -115,7 +123,7 @@ for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
-for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder',
+for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
