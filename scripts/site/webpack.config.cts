@@ -140,7 +140,7 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-for (const entry of ['palette-category-reorder', 'palette-dropdown-resize', 'project-search']) {
+for (const entry of ['palette-category-reorder', 'palette-category-search', 'palette-dropdown-resize', 'project-search']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }

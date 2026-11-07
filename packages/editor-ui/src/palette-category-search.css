@@ -1,0 +1,15 @@
+.input[type='search'] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 32;
+    box-sizing: border-box;
+    height: 28px;
+    padding-inline: 0.65rem;
+    border: 1px solid var(--ui-black-transparent, #c2c7d0);
+    border-radius: 999px;
+    background: var(--input-background, white);
+    color: var(--text-primary, #575e75);
+    font: inherit;
+    font-size: 0.8125rem;
+}

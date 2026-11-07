@@ -36,7 +36,7 @@ test('the migrated suite includes both SB3 routes, both themes and every securit
     assert.equal(result.status,0,result.stderr);
     const collect=suite=>[...(suite.specs||[]),...(suite.suites||[]).flatMap(collect)];
     const cases=JSON.parse(result.stdout).suites.flatMap(collect).flatMap(spec=>spec.tests.map(entry=>({...entry,file:spec.file,title:spec.title})));
-    assert.equal(cases.length,40);
+    assert.equal(cases.length,41);
     assert.equal(cases.filter(entry=>entry.file==='editor.spec.cts').length,4);
     assert.equal(cases.filter(entry=>entry.file==='document-layout.spec.cts').length,1);
     assert.equal(cases.filter(entry=>entry.file==='document-source.spec.cts').length,2);
@@ -46,7 +46,7 @@ test('the migrated suite includes both SB3 routes, both themes and every securit
     assert.equal(cases.filter(entry=>entry.file==='landing.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='script-transfer.spec.cts').length,4);
     assert.equal(cases.filter(entry=>entry.file==='palette-delete-preview.spec.cts').length,2);
-    assert.equal(cases.filter(entry=>entry.file==='horizontal-block-palette.spec.cts').length,8);
+    assert.equal(cases.filter(entry=>entry.file==='horizontal-block-palette.spec.cts').length,9);
     assert.equal(cases.filter(entry=>entry.file==='workspace-minimap.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.title==='real mobile context keeps the shared review inside the visual viewport').length,1);
     for (const entry of cases) assert.equal(entry.expectedStatus,'passed');
@@ -74,7 +74,7 @@ test('the full integration profile includes every fixed-input case without skips
     assert.equal(result.status,0,result.stderr);
     const collect=suite=>[...(suite.specs||[]),...(suite.suites||[]).flatMap(collect)];
     const cases=JSON.parse(result.stdout).suites.flatMap(collect).flatMap(spec=>spec.tests.map(entry=>({...entry,file:spec.file,title:spec.title})));
-    assert.equal(cases.length,47);
+    assert.equal(cases.length,48);
     assert.equal(cases.filter(entry=>entry.file==='fixed-inputs.spec.cts').length,5);
     assert.equal(cases.filter(entry=>entry.file==='document-layout.spec.cts').length,1);
     assert.equal(cases.filter(entry=>entry.file==='document-source.spec.cts').length,2);
@@ -82,7 +82,7 @@ test('the full integration profile includes every fixed-input case without skips
     assert.equal(cases.filter(entry=>entry.file==='block-icon-preview.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='script-transfer.spec.cts').length,4);
     assert.equal(cases.filter(entry=>entry.file==='palette-delete-preview.spec.cts').length,2);
-    assert.equal(cases.filter(entry=>entry.file==='horizontal-block-palette.spec.cts').length,8);
+    assert.equal(cases.filter(entry=>entry.file==='horizontal-block-palette.spec.cts').length,9);
     assert.equal(cases.filter(entry=>entry.file==='workspace-minimap.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.title==='real mobile context keeps the shared review inside the visual viewport').length,1);
     for (const entry of cases) assert.equal(entry.expectedStatus,'passed');
