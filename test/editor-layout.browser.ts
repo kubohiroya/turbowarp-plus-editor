@@ -1150,10 +1150,31 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await expect(groups).toHaveCount(1);
     const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
     const tabs = () => page.getByRole('tab', {name: spriteName, exact: true});
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     const menu = (group: ReturnType<typeof page.locator>) => group.getByRole('button', {name: 'Editor panel layout'});
     await expect(tabs()).toHaveCount(1);
+    await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
+    const code = section('Code');
+    const costumes = section('Costumes');
+    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables'];
+    await expect(toolbar.getByRole('tab')).toHaveCount(sections.length);
+    const bounds = await Promise.all(sections.map(async name => {
+        const tab = section(name);
+        await expect(tab).toHaveText('');
+        return tab.boundingBox();
+    }));
+    const contentBounds = await page.locator('.tw-plus-sprite-tab-body:visible').boundingBox();
+    assert(contentBounds && bounds.every((tab, index) => tab && tab.height >= 44 &&
+        tab.x === bounds[0].x && tab.x + tab.width <= contentBounds.x &&
+        (index === 0 || tab.y > bounds[index - 1].y)));
+    await code.hover();
+    await expect(page.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('Code');
+    await code.press('ArrowDown');
+    await expect(costumes).toBeFocused();
+    await expect(costumes).toHaveAttribute('aria-selected', 'true');
+    await costumes.press('ArrowUp');
+    await expect(code).toHaveAttribute('aria-selected', 'true');
     await page.evaluate(() => document.documentElement.style.setProperty('--ui-white', 'rgb(38, 47, 65)'));
     await expect(groups.first().getByRole('tab', {name: spriteName, exact: true}))
         .toHaveCSS('background-color', 'rgb(38, 47, 65)');
@@ -1223,7 +1244,7 @@ test('the Dockview asset connection restores the native costume and sound select
         .filter({has: page.getByText(spriteName, {exact: true})});
     await sprite.hover();
     await expect(sprite).toHaveAttribute('title', spriteName);
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
     const card = (name: string) => editor.locator('[class*="selector_list-item_"]:visible').filter({hasText: name});
@@ -1274,11 +1295,11 @@ test('the Dockview asset connection restores the native costume and sound select
     const bounds = async (pane: ReturnType<typeof page.locator>) => {
         const list = await pane.locator('[class*="selector_wrapper_"]').boundingBox();
         const body = await pane.locator('[class*="asset-panel_detail-area_"]').boundingBox();
-        const toolbarHeight = await pane.evaluate(node => node.closest('.tw-plus-sprite-tab-slot--split')
-            .querySelector('.tw-plus-sprite-toolbar').getBoundingClientRect().height);
+        const topInset = await pane.evaluate(node => node.closest('.tw-plus-sprite-tab-body').getBoundingClientRect().top -
+            node.closest('.tw-plus-sprite-tab-slot--split').getBoundingClientRect().top);
         assert(list && body);
-        // The active toolbar can wrap when its additional controls need another row.
-        return {list: list.width, detail: body.width, heightWithToolbar: body.height + toolbarHeight};
+        // The active pane can reserve space above the body for its extra controls.
+        return {list: list.width, detail: body.width, heightWithToolbar: body.height + topInset};
     };
     const sameBounds = (before: Awaited<ReturnType<typeof bounds>>, after: typeof before) => {
         for (const key of ['list', 'detail', 'heightWithToolbar'] as const) {
@@ -1501,7 +1522,7 @@ test('two Dockview code panes keep independent positions and zoom for the same s
 
     await preview(0).click();
     await expect.poll(() => readViewport(editor)).toEqual(left);
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     await toolbar.getByRole('tab', {name: 'Costumes', exact: true}).click();
     await expect(page.locator('.tw-plus-sprite-tab-slot--split .blocklyToolboxDiv:visible')).toHaveCount(0);
     await toolbar.getByRole('tab', {name: 'Code', exact: true}).click();
