@@ -60,7 +60,38 @@
     margin-left: 0;
 }
 
-.panel :global(.sa-lock-object),
+.panel:global(.blocklyFlyout) > :global(.sa-lock-object) {
+    /* Anchor the addon's SVG control to the current flyout viewport. */
+    x: max(0px, calc(100% - 32px - 15px));
+    y: 3px;
+    width: min(32px, 100%);
+    transform: none;
+}
+
+.panel:global(.blocklyFlyout) > :global(.sa-lock-object) > :global(.sa-lock-button) {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--text-primary, #575e75);
+}
+
+.panel:global(.blocklyFlyout) > :global(.sa-lock-object.locked) > :global(.sa-lock-button) {
+    border-color: white;
+    color: white;
+    filter: drop-shadow(0 0 1px rgb(0 0 0 / 55%));
+}
+
+.panel:global(.blocklyFlyout) :global(.sa-lock-button) img {
+    display: none;
+}
+
+.panel:global(.blocklyFlyout) :global(.sa-lock-button)::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    mask: url('./pin.svg') center / contain no-repeat;
+}
+
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) > :global(.sa-flyout-placeHolder) {
     display: none !important;
 }
