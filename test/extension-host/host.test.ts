@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {extensionProjectArchiveOptions} from '../../site/extension-host/config.ts';
 import {installPlusExtensionHost} from '../../site/extension-host/host.ts';
 
 import {guiRequire, vmModules} from './pinned-host.ts';
@@ -134,21 +135,16 @@ test('real VM project loading waits for DOM consent, preserves metadata and reop
     }
 });
 
-// The limits are the GUI's `src/config/extension-project-limits.js`, handed over when it asks for
-// a host. They are stated here rather than read, because what this checks is that the wiring
-// applies the limits it is given: 24 MiB of legacy JSON opens, and 32 MiB does not.
-const legacyLimits = Object.freeze({maxProjectBytes: 32 * 1024 * 1024, maxEntryBytes: 32 * 1024 * 1024});
-
-test('the limits the GUI hands over open 24 MiB legacy JSON and SB3 and reject entries above 32 MiB', async () => {
+test('the Editor opens 40 MiB legacy project JSON and SB3 and rejects oversized projects', async () => {
     const vm = new VM();
     let prompts = 0;
     const host = installPlusExtensionHost(vm, {enabled: true, document: undefined, vmModules,
-        archiveOptions: legacyLimits, requestApproval: async () => { prompts++; return false; }});
+        archiveOptions: extensionProjectArchiveOptions, requestApproval: async () => { prompts++; return false; }});
     try {
         const legacy = structuredClone(project);
         delete legacy.turboWarpPlus;
         const Zip = require('@turbowarp/jszip');
-        legacy.meta.agent = 'x'.repeat(24 * 1024 * 1024);
+        legacy.meta.agent = 'x'.repeat(40 * 1024 * 1024);
         const json = JSON.stringify(legacy);
         await vm.loadProject(json);
         const archive = await new Zip().file('project.json', json).generateAsync({type: 'uint8array', compression: 'STORE'});
@@ -156,7 +152,7 @@ test('the limits the GUI hands over open 24 MiB legacy JSON and SB3 and reject e
         assert.equal(vm.runtime.targets.length, 1);
         assert.equal(prompts, 0);
         const saved = vm.toJSON();
-        legacy.meta.agent = 'x'.repeat(32 * 1024 * 1024);
+        legacy.meta.agent = 'x'.repeat(64 * 1024 * 1024);
         const oversizedJSON = JSON.stringify(legacy);
         await assert.rejects(vm.loadProject(oversizedJSON), {code: 'INVALID_ARCHIVE'});
         const oversizedZip = await new Zip().file('project.json', oversizedJSON)
