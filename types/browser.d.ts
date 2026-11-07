@@ -31,6 +31,9 @@ declare module '@tw-plus/gui-stage-fullscreen-icon' {
     const url: string;
     export default url;
 }
+declare module '@tw-plus/gui-block-category-artwork' {
+    export const resources: Readonly<Record<string, string>>;
+}
 declare module '@tw-plus/upstream-hide-delete-button-manifest';
 declare module '@tw-plus/backpack-window-host' {
     export function openBackpackWindow(url: URL, ticket: string): Window | null;
