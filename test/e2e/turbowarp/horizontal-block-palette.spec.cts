@@ -172,6 +172,7 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     const handle = page.locator('[data-palette-resize-handle]');
     const lock = flyout.locator('.sa-lock-object');
     const pinButton = lock.locator('button');
+    const pinMask = () => pinButton.evaluate(button => getComputedStyle(button, '::before').maskImage);
     const unpinnedColor = 'rgba(128, 128, 128, 0.88)';
     const workspace = page.locator('.blocklySvg').first();
     const outside = {x: 12, y: 430};
@@ -213,7 +214,8 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     expect(await flyout.boundingBox()).toEqual(panelBox);
     await expectPinInCorner();
     await expect(pinButton.locator('img')).toBeHidden();
-    expect(await pinButton.evaluate(button => getComputedStyle(button, '::before').maskImage)).toMatch(/^url\(/);
+    const unpinnedMask = await pinMask();
+    expect(unpinnedMask).toMatch(/^url\(/);
     await expectPinAppearance(unpinnedColor);
 
     for (const delta of [60, -90]) {
@@ -231,6 +233,9 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     }
     await pinButton.click();
     await expect(lock).toHaveClass(/\blocked\b/);
+    const pinnedMask = await pinMask();
+    expect(pinnedMask).toMatch(/^url\(/);
+    expect(pinnedMask).not.toBe(unpinnedMask);
     await expectPinAppearance('rgb(64, 64, 64)', 'rgb(64, 64, 64)');
     await moveOutside();
     expect(await control.getAttribute('aria-expanded')).toBe('true');
@@ -255,6 +260,7 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
 
     await pinButton.click();
     await expect(lock).not.toHaveClass(/\blocked\b/);
+    expect(await pinMask()).toBe(unpinnedMask);
     await expectPinAppearance(unpinnedColor);
 
     await clickOutside();

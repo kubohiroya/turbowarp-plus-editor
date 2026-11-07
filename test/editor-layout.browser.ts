@@ -638,9 +638,11 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
     const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
     const pin = page.getByRole('button', {name: 'Pin sprite list', exact: true});
+    const slash = pin.locator('svg path[d="M2 2l12 12"]');
     const undock = page.getByRole('button', {name: 'Undock sprite list', exact: true});
     const backdrop = page.locator('[data-backdrop-placement] img').first();
     await expect(pin).toHaveAttribute('aria-pressed', 'true');
+    await expect(slash).toHaveCount(0);
     await expect(sprites).toBeHidden();
     await expect(backdrop).toBeVisible();
 
@@ -650,6 +652,8 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await expect(backdrop).toBeHidden();
     await sprites.hover();
     await expect(pin).toHaveAttribute('aria-pressed', 'false');
+    await expect(slash).toBeVisible();
+    await expect(pin).toHaveCSS('opacity', '0.55');
     await expect(backdrop).toBeVisible();
     await expect(undock).toBeVisible();
     await page.mouse.move(500, 400);
@@ -659,6 +663,7 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await pin.click();
     await page.mouse.move(500, 400);
     await expect(pin).toHaveAttribute('aria-pressed', 'true');
+    await expect(slash).toHaveCount(0);
     await expect(backdrop).toBeVisible();
     await expect(page.getByRole('heading', {name: 'Sprite list', exact: true})).toHaveCount(0);
     const tools = page.getByRole('group', {name: 'Sprite list tools', exact: true});
