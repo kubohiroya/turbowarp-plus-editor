@@ -78,6 +78,8 @@ export interface ExtensionHostOptions {
     onProjectURI?: (uri: string | undefined) => void;
     addressProject?: ReturnType<typeof createProjectAddresser>;
     onProjectManifest?: (manifest: unknown) => void;
+    runProjectLoad?: <T>(run: () => Promise<T>) => Promise<T>;
+    waitForUser?: <T>(ask: () => T) => Promise<Awaited<T>>;
     createPayloads?: (ports: {fetch: typeof fetch; cache: LoaderPorts['cache'];
         validate: ReturnType<typeof createProjectIO>['prepare']}) => ReturnType<typeof createProjectPayloadHost>;
     showDiagnostics?: boolean;
@@ -88,7 +90,7 @@ export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', getLocale, fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
     fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
-    onProjectURI, addressProject, onProjectManifest, createPayloads, showDiagnostics = true
+    onProjectURI, addressProject, onProjectManifest, runProjectLoad, waitForUser, createPayloads, showDiagnostics = true
 }: ExtensionHostOptions = {}) {
     if (enabled !== true) return Object.freeze({enabled: false, dispose: async () => {}});
     // A single HTML has no catalog to read; its build embeds the digests the catalog listed.
@@ -125,7 +127,9 @@ export function installPlusExtensionHost (vm, {
         message: url
     });
     const projectIO = createProjectIO({zip: JSZip, ...archiveOptions});
-    const approve = requestApproval || ((code, options) => permissionUI().requestApproval(code, options));
+    const request = requestApproval || ((code, options) => permissionUI().requestApproval(code, options));
+    const approve: typeof request = (code, options) =>
+        waitForUser ? waitForUser(() => request(code, options)) : request(code, options);
     // What the open review answered for the load in progress. The Loader asks about each row only
     // after the review has, so its approval is read from here instead of being put to the person a
     // second time; a row the review did not answer still gets the dialog.
@@ -195,7 +199,7 @@ export function installPlusExtensionHost (vm, {
     let uninstall;
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
-            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest, payloads,
+            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest, payloads, runProjectLoad,
             onProjectLoadStart: authoring ? authoring.projectLoadStarted : undefined}, loader);
     } catch (error) {
         authoring?.dispose();

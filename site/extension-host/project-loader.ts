@@ -198,7 +198,7 @@ export function installExtensionLoader(host, loader) {
                 activeController = null;
             }
         };
-        const result = queue.then(run);
+        const result = queue.then(() => host.runProjectLoad ? host.runProjectLoad(run) : run());
         queue = result.catch(() => {});
         return result.finally(() => { pending--; });
     };

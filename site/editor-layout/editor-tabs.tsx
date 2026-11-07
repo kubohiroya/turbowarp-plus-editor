@@ -16,7 +16,7 @@ import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
-import {StageDisplayMenuContext} from './context.ts';
+import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
 import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
@@ -109,6 +109,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     const host = useWindowHost();
     const {plusLayout} = React.useContext(WindowLayoutContext);
     const stage = React.useContext(StageDisplayMenuContext)?.stage;
+    const targetSwitch = React.useContext(TargetSwitchContext);
     // The stage uses the native fullscreen surface while Dockview keeps its panel and layout.
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
@@ -201,6 +202,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         available: dockviewSpriteTabsEnabled, enabled: workspaceEnabled && dockviewSpriteTabsEnabled,
         vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
         activateSection: onActivateEditorTab,
+        ...{runTargetSwitch: targetSwitch?.select},
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
             multiView, layoutStorage, stagePane: stage?.pane, viewAdapter: codePaneAdapter,

@@ -72,6 +72,11 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-hide-flyout.cts')
 });
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/containers/sb3-downloader.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-save.cts')
+});
 if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
     // Give only the GUI project URL fetcher the browser host's URL resolution.
     config.module.rules.push({
@@ -130,13 +135,18 @@ for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
+config.module.rules.push({
+    include: fs.realpathSync(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-sprite-tabs.cts')
+});
 for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-for (const entry of ['palette-category-reorder', 'palette-category-search', 'palette-dropdown-resize',
+for (const entry of ['busy-cursor', 'palette-category-reorder', 'palette-category-search', 'palette-dropdown-resize',
     'project-search', 'project-info-menu']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);

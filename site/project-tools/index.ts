@@ -1,4 +1,5 @@
 import React from 'react';
+import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 import {MANUAL_PROJECT_URI_ENABLED, PROJECT_TOOLS_ENABLED} from './config.ts';
 import {installProjectProperties} from './properties.ts';
 import {createAuthorHistory} from './history.ts';
@@ -15,11 +16,13 @@ const storageFor = document => {
 /** Compose this host's project tools with its existing extension host. */
 export const installProjectToolsHost = (vm, settings: Parameters<typeof installEditorExtensionHost>[1] & Parameters<typeof installProjectProperties>[1] = {}, enabled = PROJECT_TOOLS_ENABLED) => {
     const diagnostics = createProjectDiagnostics();
-    const host = installEditorExtensionHost(vm, {...settings, showDiagnostics: false,
+    const document = settings.document || globalThis.document;
+    const runProjectLoad = document ? <T>(run: () => Promise<T>) => withWaitCursor([document], run) : undefined;
+    const host = installEditorExtensionHost(vm, {...settings, showDiagnostics: false, runProjectLoad,
+        waitForUser: document ? ask => withoutWaitCursor(document, ask) : undefined,
         diagnostics: event => { diagnostics.record(event); settings.diagnostics?.(event); },
         onProjectManifest: manifest => { diagnostics.describe(manifest); settings.onProjectManifest?.(manifest); }});
-    const document = settings.document || globalThis.document;
-    const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled});
+    const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled, runProjectLoad});
     const history = enabled ? createAuthorHistory(document ? storageFor(document) : undefined) : null;
     const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics,
         {locale: settings.locale, getLocale: settings.getLocale}) : null;

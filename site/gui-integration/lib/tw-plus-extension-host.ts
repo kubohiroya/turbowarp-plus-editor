@@ -14,6 +14,7 @@
  */
 
 /* global __TW_PLUS_FILE_UPLOADER__ */
+import {withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 import {loadCostume} from 'scratch-vm/src/import/load-costume.js';
 import {loadSound} from 'scratch-vm/src/import/load-sound.js';
 import ScratchCommon from 'scratch-vm/src/extension-support/tw-extension-api-common.js';
@@ -114,11 +115,11 @@ function attachSecurityHost (vm, {
                     (item.extensionURL && item.extensionURL === url))?.iconURL,
                 showReview: (entries, initialChoices) => {
                     const mount = getMount();
-                    return active && mount ? mount.requestModal(
+                    return active && mount ? withoutWaitCursor(document, () => mount.requestModal(
                         (onComplete, currentLocale) => review.render({
                             entries, initialChoices, locale: currentLocale, DialogFrame: mount.DialogFrame, onComplete
                         }), null
-                    ) : null;
+                    )) : null;
                 }
             });
         }

@@ -7,6 +7,7 @@
   "license": "GPL-3.0-or-later",
   "exports": {
     ".": "./src/icon-menu-button.tsx",
+    "./busy-cursor": "./src/busy-cursor.ts",
     "./palette-category-reorder": "./src/palette-category-reorder.ts",
     "./palette-category-search": "./src/palette-category-search.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",

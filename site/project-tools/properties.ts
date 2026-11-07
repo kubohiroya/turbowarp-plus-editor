@@ -51,8 +51,9 @@ interface LoadState {
     message?: string;
 }
 export function installProjectProperties(vm, {
-    projectState = {}, now = () => new Date().toISOString(), metadataEnabled = true
-}: {projectState?: ProjectState; now?: () => string; metadataEnabled?: boolean} = {}) {
+    projectState = {}, now = () => new Date().toISOString(), metadataEnabled = true, runProjectLoad
+}: {projectState?: ProjectState; now?: () => string; metadataEnabled?: boolean;
+    runProjectLoad?: <T>(run: () => Promise<T>) => Promise<T>} = {}) {
     // Diagnostics observes loads even when metadata editing and serialization are disabled.
     const names = ['loadProject', ...(metadataEnabled ?
         ['toJSON', 'saveProjectSb3', 'saveProjectSb3Stream', 'saveProjectSb3DontZip'] : [])];
@@ -148,7 +149,7 @@ export function installProjectProperties(vm, {
                     throw error;
                 }
             };
-            const result = loadQueue.then(run);
+            const result = loadQueue.then(() => runProjectLoad ? runProjectLoad(run) : run());
             loadQueue = result.catch(() => {});
             return result.finally(() => { loading--; });
         },
