@@ -17,9 +17,10 @@ function LayoutIcon({path}: {path: string}) {
         strokeLinecap="round" strokeLinejoin="round"><path d={path} /></svg>;
 }
 
-export default function Palette({source, locale, close, startDrag, endDrag}: {
+export default function Palette({source, locale, categoryIcons, close, startDrag, endDrag}: {
     source: PaletteSource;
     locale: string;
+    categoryIcons: Readonly<Record<string, string>>;
     close(): void;
     startDrag(item: PaletteItem, data: DataTransfer): void;
     endDrag(): void;
@@ -29,6 +30,7 @@ export default function Palette({source, locale, close, startDrag, endDrag}: {
     const [categoryId, setCategory] = React.useState('');
     const [revision, refresh] = React.useReducer(value => value + 1, 0);
     const [items, setItems] = React.useState<PaletteItem[]>([]);
+    const [tooltip, setTooltip] = React.useState<{label: string; position: React.CSSProperties} | null>(null);
     const categories = source.categories();
     const selected = categories.find(category => category.id === categoryId) ?? categories[0];
     const selectedId = selected?.id;
@@ -37,11 +39,37 @@ export default function Palette({source, locale, close, startDrag, endDrag}: {
         setItems(selectedId ? source.read(selectedId) : []);
     }, [source, selectedId, revision]);
 
+    function showLabel(button: HTMLButtonElement, label: string) {
+        const {left, right, top, height} = button.getBoundingClientRect();
+        const viewport = button.ownerDocument.documentElement;
+        setTooltip({label, position: {
+            top: top + height / 2,
+            ...(left < viewport.clientWidth / 2 ? {left: right + 8} : {right: viewport.clientWidth - left + 8})
+        }});
+    }
+
     return <main className={styles.palette} data-palette-orientation={vertical ? 'vertical' : 'horizontal'}>
         <div className={styles.content}>
-            <div className={styles.categories} role="group" aria-label={ja ? 'ブロックのカテゴリ' : 'Block categories'}>
-                {categories.map(({id, label}) => <button key={id} type="button" aria-pressed={id === selectedId}
-                    onClick={() => setCategory(id)}>{label}</button>)}
+            <div className={styles.categories} role="group" aria-label={ja ? 'ブロックのカテゴリ' : 'Block categories'}
+                onScroll={() => setTooltip(null)}>
+                {categories.map(({id, label, color, image}) => {
+                    const artwork = categoryIcons[id];
+                    const backgroundImage = image || (artwork ? `url("${artwork}")` : undefined);
+                    return <button key={id} type="button" aria-label={label} aria-pressed={id === selectedId}
+                        onMouseEnter={event => showLabel(event.currentTarget, label)}
+                        onMouseLeave={() => setTooltip(null)}
+                        onFocus={event => showLabel(event.currentTarget, label)}
+                        onBlur={() => setTooltip(null)}
+                        onKeyDown={event => { if (event.key === 'Escape') setTooltip(null); }}
+                        onClick={() => {
+                            setCategory(id);
+                            setTooltip(null);
+                        }}>
+                        <span aria-hidden="true" className={styles.categoryIcon} style={{backgroundColor: color, backgroundImage}}>
+                            {!backgroundImage && <LayoutIcon path="M2 4h5V2h3v2h4v8H2z" />}
+                        </span>
+                    </button>;
+                })}
             </div>
             <div className={styles.blocks} role="group" aria-label={selected?.label}>
                 {items.map((item, index) => item.insert ? <button key={index} type="button" aria-label={item.label}
@@ -52,6 +80,7 @@ export default function Palette({source, locale, close, startDrag, endDrag}: {
                 </button> : <span key={index}>{item.label}</span>)}
             </div>
         </div>
+        {tooltip && <div className={styles.tooltip} role="tooltip" style={tooltip.position}>{tooltip.label}</div>}
         <footer className={styles.footer}>
             <IconMenuButton label={ja ? 'ブロックパレットのレイアウト' : 'Block palette layout'}
                 icon={<LayoutIcon path="M2.5 3.5h11v9h-11zM2.5 7h11" />} items={[

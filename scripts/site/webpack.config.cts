@@ -164,6 +164,8 @@ config.resolve.alias['../../containers/backpack.jsx$'] =
 // Share the original fullscreen artwork with the stage display menu.
 config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
     path.join(gui, 'src', 'components', 'stage-header', 'icon--fullscreen.svg');
+config.resolve.alias['@tw-plus/gui-block-category-artwork$'] =
+    path.join(gui, 'src', 'addons', 'addons', 'block-palette-icons', '_runtime_entry.js');
 // Override the addon default in Plus without changing the pinned GUI sources.
 const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';
 config.resolve.alias[`${hideDeleteButtonManifest}$`] = path.join(siteSource, 'hide-delete-button-manifest.ts');

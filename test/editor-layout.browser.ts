@@ -1135,6 +1135,8 @@ test('the editor layout menu opens the live block palette and the Dockview panel
 
     await expect(page.getByRole('group', {name: 'Sprite list tools'})).toBeVisible();
     await expect(page.getByText('Sprite', {exact: true})).toHaveCount(0);
+    await expect(toolbox).toBeVisible();
+    await page.evaluate(() => window.vm.extensionManager.loadExtensionURL('pen'));
     const popup = await open('Open block palette in another window');
     const palette = popup.locator('[data-palette-orientation]');
     const paletteMenu = popup.getByRole('button', {name: 'Block palette layout', exact: true});
@@ -1142,23 +1144,44 @@ test('the editor layout menu opens the live block palette and the Dockview panel
     await expect(palette).toHaveAttribute('data-palette-orientation', 'horizontal');
     const motion = palette.getByRole('group', {name: 'Motion', exact: true});
     const categories = palette.getByRole('group', {name: 'Block categories', exact: true});
-    await expect(categories).toHaveCSS('flex-direction', 'row');
+    const motionButton = categories.getByRole('button', {name: 'Motion', exact: true});
+    const looksButton = categories.getByRole('button', {name: 'Looks', exact: true});
+    const penButton = categories.getByRole('button', {name: 'Pen', exact: true});
+    await expect(categories).toHaveCSS('flex-direction', 'column');
+    await expect(motionButton).toHaveText('');
+    await expect(motionButton).toHaveCSS('border-radius', '50%');
+    await expect(motionButton.locator('span')).toHaveCSS('background-image', /^url\(/);
+    await expect(penButton.locator('span')).toHaveCSS('background-image', /^url\(/);
+    await motionButton.focus();
+    await expect(popup.getByRole('tooltip')).toHaveText('Motion');
+    await looksButton.hover();
+    await expect(popup.getByRole('tooltip')).toHaveText('Looks');
     await expect(motion).toHaveCSS('flex-direction', 'row');
     const move = motion.getByRole('button', {name: /^move 10 steps$/i});
     await expect(move.locator('svg')).toBeVisible();
     await move.click();
     await expect(blocks).toHaveCount(1);
 
+    await penButton.click();
+    await expect(penButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(palette.getByRole('group', {name: 'Pen', exact: true})).toBeVisible();
+    await looksButton.click();
+    const looks = palette.getByRole('group', {name: 'Looks', exact: true});
+    const expectPreset = async (orientation: 'horizontal' | 'vertical') => {
+        await expect(palette).toHaveAttribute('data-palette-orientation', orientation);
+        await expect(looksButton).toHaveAttribute('aria-pressed', 'true');
+        await expect(looks).toHaveCSS('flex-direction', orientation === 'horizontal' ? 'row' : 'column');
+        const [rail, list] = await Promise.all([categories.boundingBox(), looks.boundingBox()]);
+        assert.ok(rail && list);
+        assert.ok(orientation === 'horizontal' ? rail.x + rail.width <= list.x : list.x + list.width <= rail.x);
+    };
+    await expectPreset('horizontal');
     await paletteMenu.click();
     await popup.getByRole('menuitemradio', {name: 'Arrange vertically', exact: true}).click();
-    await expect(palette).toHaveAttribute('data-palette-orientation', 'vertical');
-    await expect(categories).toHaveCSS('flex-direction', 'column');
-    await expect(motion).toHaveCSS('flex-direction', 'column');
+    await expectPreset('vertical');
     await paletteMenu.click();
     await popup.getByRole('menuitemradio', {name: 'Arrange horizontally', exact: true}).click();
-    await expect(palette).toHaveAttribute('data-palette-orientation', 'horizontal');
-    await expect(categories).toHaveCSS('flex-direction', 'row');
-    await expect(motion).toHaveCSS('flex-direction', 'row');
+    await expectPreset('horizontal');
     await paletteMenu.click();
     await Promise.all([popup.waitForEvent('close'),
         popup.getByRole('menuitem', {name: 'Return this panel to the editor', exact: true}).click()]);
