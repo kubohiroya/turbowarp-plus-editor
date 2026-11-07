@@ -1,10 +1,9 @@
 /**
  * The Editor's answer to `@kubohiroya/turbowarp-app-shell`'s runtime controls dock.
  *
- * A packaged player has no toolbar, so app-shell builds a floating dock of its own. The Editor has
- * a stage control bar, and an extension's control belongs there rather than floating over the
- * stage. app-shell shares a dock through a symbol on the document precisely so an independently
- * bundled copy finds the same one, so installing ours there is how the Editor says "use mine".
+ * A packaged player has no toolbar, so app-shell builds a floating dock of its own. The Editor
+ * supplies a controls area in its menu bar. app-shell shares a dock through a symbol on the
+ * document so an independently bundled copy can use the Editor's controls.
  *
  * Nothing here knows about any particular extension. `@kubohiroya/turbowarp-camera-source` reaches
  * this through app-shell, as would anything else that registers a control.
@@ -25,7 +24,7 @@ export const createControlsDock = service => ({
     // The Editor's bar is fixed in place, so the parts of a floating dock's state that describe
     // where it sits are reported as settled rather than left undefined.
     getSnapshot: () => ({
-        edge: 'bottom',
+        edge: 'top',
         autoHide: false,
         expanded: service.snapshot().some(control => control.expanded),
         count: service.snapshot().filter(control => control.visible).length

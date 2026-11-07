@@ -29,3 +29,35 @@
 .panel {
     display: contents;
 }
+
+.menuDock {
+    align-self: center;
+    position: relative;
+    min-inline-size: 0;
+    max-inline-size: 40%;
+    margin-inline-end: 0.375rem;
+}
+
+.controlGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1875rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border: 1px solid var(--ui-black-transparent);
+    border-radius: 0.5rem;
+}
+
+.controlGroup > .control {
+    flex: none;
+    margin: 0;
+}
+
+.menuPanel {
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline-end: 0;
+    display: flex;
+    justify-content: flex-end;
+}

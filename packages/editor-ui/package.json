@@ -13,7 +13,9 @@
     "./palette-category-search": "./src/palette-category-search.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",
     "./project-search": "./src/project-search-box.tsx",
-    "./project-info-menu": "./src/info-menu.tsx"
+    "./project-info-menu": "./src/info-menu.tsx",
+    "./stage-controls": "./src/stage-controls.ts",
+    "./stage-controls-view": "./src/stage-controls-view.tsx"
   },
   "peerDependencies": {
     "react": ">=16.8",

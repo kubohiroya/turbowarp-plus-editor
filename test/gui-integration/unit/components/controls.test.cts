@@ -14,8 +14,8 @@ const ReactDOM = require('react-dom');
 globalThis.MessageChannel = MessageChannel;
 const {IntlProvider} = require('react-intl');
 const Controls = require('../../../src/components/controls/controls.jsx').default;
-const StageControlsView = require('../../../../site/stage-controls/view.tsx').default;
-const {createStageControlsService} = require('../../../../site/stage-controls.ts');
+const StageControlsView = require('../../../../packages/editor-ui/src/stage-controls-view.tsx').default;
+const {createStageControlsService} = require('../../../../packages/editor-ui/src/stage-controls.ts');
 
 const trackedService = () => {
     const service = createStageControlsService();

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {createStageControlsService} from '../site/stage-controls.ts';
-import getStageControls from '../site/stage-controls.ts';
+import {createStageControlsService} from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
+import getStageControls from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
 import {createPlusIntegration} from '../site/plus-integration.ts';
 
 // Moved here from the fork's test/unit/stage-controls/service.test.mjs, unchanged in substance:

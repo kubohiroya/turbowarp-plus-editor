@@ -291,6 +291,7 @@ test('the first menu row orders the Plus logo, project title, File, Edit, and se
     const controls = [logo, title, file, edit, search];
 
     for (const control of controls) await expect(control).toBeVisible();
+    await expect(logo).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     const positions = await Promise.all(controls.map(control => control.boundingBox()));
     for (let index = 1; index < positions.length; index++) {
         const previous = positions[index - 1];
@@ -313,6 +314,9 @@ test('the first menu row orders the Plus logo, project title, File, Edit, and se
     await logo.click();
     const menu = page.getByRole('navigation', {name: label});
     const links = menu.getByRole('link');
+    await expect(logo).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(menu.getByRole('separator')).toBeVisible();
+    await expect(menu.locator('hr + a')).toHaveText('ソースコード');
     await expect(links.first()).toHaveText(`TurboWarp Plus Editor ${editorPackage.version}について`);
     for (const name of ['ソースコード', 'ライセンスとクレジット']) {
         await expect(links.getByText(name, {exact: true}).locator('svg[aria-hidden="true"]')).toBeVisible();
@@ -320,6 +324,70 @@ test('the first menu row orders the Plus logo, project title, File, Edit, and se
     await expect(menu.getByRole('button', {name: /ピン留め/})).toHaveCount(0);
     await page.keyboard.press('Escape');
     for (const control of controls) await expect(control).toBeVisible();
+});
+
+test('extension controls sit at the end of the menu bar and the stage can still shrink', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.setViewportSize({width: 1024, height: 800});
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0');
+    const menuBar = projectInfoMenuButton(page).locator('../../..');
+    const controls = menuBar.getByRole('group', {name: 'Extension controls', exact: true});
+    const stage = page.locator('[data-plus-stage-frame]');
+    const canvas = stage.locator('canvas').first();
+    const resize = page.locator('[data-stage-resize="left"]');
+    await expect(canvas).toBeVisible();
+    await expect(controls).toHaveCount(0);
+    const originalWidth = (await canvas.boundingBox()).width;
+    await page.waitForFunction(() =>
+        Boolean(document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')]));
+    await page.evaluate(() => {
+        const dock = document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')];
+        const panel = document.createElement('button');
+        panel.textContent = 'Camera settings panel';
+        Object.assign(panel.style, {position: 'fixed', width: '320px'});
+        const camera = dock.stageControls.addButton({id: 'camera', label: 'Camera', text: 'Camera', icon: '📷',
+            onClick() {
+                const open = dock.getSnapshot().expanded;
+                camera.update({expanded: !open});
+                dock.placePanel(open ? null : panel);
+                if (open) camera.focus();
+            }});
+        panel.onclick = () => {
+            camera.update({expanded: false});
+            dock.placePanel(null);
+            camera.focus();
+        };
+        camera.update({visible: true});
+        for (const [id, label, icon] of [['model', 'Teachable Machine', '🧠'], ['debug', 'Debug', '⚙']]) {
+            dock.stageControls.addButton({id, label, text: label, icon, onClick() {}}).update({visible: true});
+        }
+    });
+    const camera = controls.getByRole('button', {name: 'Camera', exact: true});
+    await expect(controls.getByRole('button')).toHaveCount(3);
+    await expect(controls).toHaveCSS('border-top-left-radius', '8px');
+    await expect(stage.locator('[data-extension-stage-control]')).toHaveCount(0);
+    await expect(stage.getByTitle('Go', {exact: true})).toBeVisible();
+    await expect(stage.getByTitle('Stop', {exact: true})).toBeVisible();
+    const [barBounds, controlsBounds] = await Promise.all([menuBar.boundingBox(), controls.boundingBox()]);
+    assert.ok(Math.abs(barBounds.x + barBounds.width - controlsBounds.x - controlsBounds.width) <= 8);
+    assert.equal((await canvas.boundingBox()).width, originalWidth);
+    await resize.press('Home');
+    await expect.poll(async () => (await canvas.boundingBox()).width).toBeLessThan(originalWidth);
+
+    await camera.press('Enter');
+    const panel = page.getByRole('button', {name: 'Camera settings panel'});
+    await expect(panel).toBeInViewport({ratio: 1});
+    await expect(camera).toHaveAttribute('aria-expanded', 'true');
+    await panel.click();
+    await expect(panel).toHaveCount(0);
+    await expect(camera).toBeFocused();
+
+    await stage.getByRole('button', {name: 'Stage display', exact: true}).click();
+    await stage.getByRole('menuitem', {name: 'Enter full screen mode', exact: true}).click();
+    await expect(controls).toHaveCount(0);
+    await expect(page.getByRole('button', {name: 'Camera', exact: true})).toBeVisible();
+    await page.getByAltText('Exit full screen mode', {exact: true}).click();
+    await expect(camera).toBeVisible();
 });
 
 test('the Plus project menu relocates display settings, runtime actions, and settings dialogs', {timeout: 30_000}, async t => {
