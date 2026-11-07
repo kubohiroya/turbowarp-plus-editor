@@ -7,7 +7,7 @@ import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar';
-import {mountProjectSearchHeader} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {connectProjectSearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
@@ -211,19 +211,6 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                     onSectionChange={next => actions.setSection(spriteEditorSections.indexOf(next))}
                     actions={view.active && section !== 'variables' ? renderEditorTabRow(null) : undefined} />;
             },
-            mountHeaderSearch(context: Parameters<typeof mountProjectSearchHeader>[0]) {
-                return mountProjectSearchHeader(context, {
-                    locale, project: vm.runtime, getMessages: () => window.ScratchBlocks?.Msg ?? {}
-                }, {
-                    getViews: () => spriteTabs.controller.current,
-                    getTarget: id => vm.runtime.getTargetById(id),
-                    getEditingTarget: () => vm.editingTarget,
-                    centerBlock(id) {
-                        const workspace = window.ScratchBlocks?.getMainWorkspace();
-                        if (workspace?.getBlockById(id)) workspace.centerOnBlock(id);
-                    }
-                });
-            },
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             getProperties(id) {
@@ -248,6 +235,18 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             }
         })
     });
+    React.useLayoutEffect(() => {
+        if (!multiView) return;
+        return connectProjectSearchNavigation(vm.runtime, {
+            getViews: () => spriteTabs.controller.current,
+            getTarget: id => vm.runtime.getTargetById(id),
+            getEditingTarget: () => vm.editingTarget,
+            centerBlock(id) {
+                const workspace = window.ScratchBlocks?.getMainWorkspace();
+                if (workspace?.getBlockById(id)) workspace.centerOnBlock(id);
+            }
+        });
+    }, [multiView, vm, spriteTabs.controller]);
     const connectAssetSelection = (index: number, child: React.ReactNode) => {
         const assetSelection = index === 1 ? spriteTabs.assetSelections?.costumes : index === 2 ? spriteTabs.assetSelections?.sounds : undefined;
         if (!React.isValidElement<{assetSelection?: SpriteAssetSelection}>(child)) return child;

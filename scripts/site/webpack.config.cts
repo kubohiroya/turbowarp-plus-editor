@@ -48,6 +48,7 @@ if (cloudflareGit && ![bffOrigin, proxyOrigin].every(value => {
     return url && url.protocol === 'https:' && url.origin === value;
 })) throw new Error('Cloudflare Git requires both exact HTTPS origins');
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
+    __TW_PLUS_EDITOR_VERSION__: JSON.stringify(rootRequire('./package.json').version),
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog),
     __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit)
 }));
@@ -129,18 +130,14 @@ for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
-config.module.rules.push({
-    include: fs.realpathSync(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs')),
-    enforce: 'pre',
-    use: path.join(__dirname, 'connect-project-search-header.cts')
-});
 for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-for (const entry of ['palette-category-reorder', 'palette-category-search', 'palette-dropdown-resize', 'project-search']) {
+for (const entry of ['palette-category-reorder', 'palette-category-search', 'palette-dropdown-resize',
+    'project-search', 'project-info-menu']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }

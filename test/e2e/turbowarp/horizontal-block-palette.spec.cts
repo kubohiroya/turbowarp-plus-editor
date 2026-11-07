@@ -1,4 +1,5 @@
 const {test, expect} = require('./fixtures.cts');
+const {openDisplaySettings} = require('../../fixtures/layout-menu.ts');
 
 const useLayout = async (page, name) => {
     await page.locator('.blocklyToolboxDiv .scratchCategoryId-motion').click({button: 'right'});
@@ -323,8 +324,8 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     await expect(flyout).toBeHidden();
     await expect(handle).toBeHidden();
 
-    await page.getByText('Settings', {exact: true}).click();
-    await page.getByText('Switch To Dark Mode', {exact: true}).click();
+    const display = await openDisplaySettings(page);
+    await display.getByText('Switch To Dark Mode', {exact: true}).click();
     await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
     await control.click();
     await expectPinAppearance(unpinnedColor);

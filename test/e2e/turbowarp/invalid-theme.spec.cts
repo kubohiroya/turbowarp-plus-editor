@@ -1,5 +1,6 @@
 const {test, expect, editorDialog, approveProjectExtensions} = require('./fixtures.cts');
 const fixture = require('./theme-project.cts');
+const {openDisplaySettings, projectInfoMenuButton} = require('../../fixtures/layout-menu.ts');
 
 const themes = {
     light: {red: 'rgb(198, 40, 40)',
@@ -30,15 +31,17 @@ const load = async (page, baseURL, theme) => {
     await page.goto(url.href);
     await approveProjectExtensions(page, fixture.sources, 'en');
     await expect(page.locator('[data-block-editor-icon]')).toHaveCount(3);
-    await page.getByText('Settings', {exact: true}).click();
-    const switchTo = page.getByText(theme === 'dark' ? 'Switch To Dark Mode' : 'Switch To Light Mode', {exact: true});
-    if (await switchTo.count()) await switchTo.click();
-    else await page.getByText('Settings', {exact: true}).click();
+    const display = await openDisplaySettings(page);
+    const switchTo = display.getByText(theme === 'dark' ? 'Switch To Dark Mode' : 'Switch To Light Mode', {exact: true});
+    if (await switchTo.count()) {
+        await switchTo.click();
+        await expect(display).toHaveCount(0);
+        await openDisplaySettings(page);
+    }
     // The menu's inverse action proves the host theme changed, rather than only CSS media emulation.
-    await page.getByText('Settings', {exact: true}).click();
-    await expect(page.getByText(theme === 'dark' ? 'Switch To Light Mode' : 'Switch To Dark Mode', {exact: true}))
+    await expect(display.getByText(theme === 'dark' ? 'Switch To Light Mode' : 'Switch To Dark Mode', {exact: true}))
         .toBeVisible();
-    await page.getByText('Settings', {exact: true}).click();
+    await projectInfoMenuButton(page).click();
 };
 
 const open = async (page, id) => {
