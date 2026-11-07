@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../../scripts/site/editor-revision.ts';
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
@@ -7,6 +8,7 @@ import {toggleUndockButtons} from '../fixtures/layout-menu.ts';
 const origin = 'http://localhost:15106';
 const prefix = process.env.TW151_STAGE5_PREFIX || '/';
 const build = resolve(process.argv[2] || '/private/tmp/tw176-targets-web');
+await verifyWebEditor(build);
 const browser = await chromium.launch({executablePath: process.env.TW151_CHROME,
     args: ['--enable-unsafe-swiftshader']});
 const context = await browser.newContext({viewport: {width: 1400, height: 900}});

@@ -59,7 +59,7 @@ module.exports = defineConfig({
             testMatch: fixedInputs ? '*.spec.cts' : ['editor.spec.cts', 'invalid-theme.spec.cts', 'extension-security.spec.cts', 'landing.spec.cts', 'script-transfer.spec.cts', 'document-layout.spec.cts', 'document-source.spec.cts', 'document-refusal.spec.cts', 'palette-delete-preview.spec.cts', 'horizontal-block-palette.spec.cts', 'workspace-minimap.spec.cts'],
             use: {browserName: 'chromium'}}
     ],
-    ...(process.env.E2E_BASE_URL ? {} : {webServer: {
+    ...(process.env.E2E_BASE_URL ? {globalSetup: require.resolve('./verify-remote-editor.cts')} : {webServer: {
         command: 'node test/e2e/turbowarp/serve.cts',
         cwd: root,
         url: `${baseURL}build-info.json`,

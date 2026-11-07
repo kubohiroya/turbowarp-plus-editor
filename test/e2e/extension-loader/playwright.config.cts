@@ -26,7 +26,7 @@ module.exports = defineConfig({
     use: {baseURL,
         headless: true, ignoreHTTPSErrors: !process.env.E2E_BASE_URL,
         viewport: {width: 1280, height: 900}, locale: 'ja-JP', trace: 'retain-on-failure'},
-    ...(process.env.E2E_BASE_URL ? {} : {webServer: {command: 'node test/e2e/turbowarp/serve.cts', cwd: root,
+    ...(process.env.E2E_BASE_URL ? {globalSetup: require.resolve('../turbowarp/verify-remote-editor.cts')} : {webServer: {command: 'node test/e2e/turbowarp/serve.cts', cwd: root,
         url: 'http://127.0.0.1:8744/turbowarp-plus-editor/build-info.json', reuseExistingServer: false,
         env: {E2E_PORT: '8744', E2E_PATH_PREFIX: '/turbowarp-plus-editor/'}}})
 });

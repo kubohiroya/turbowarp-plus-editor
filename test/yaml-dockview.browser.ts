@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
@@ -11,6 +12,7 @@ import {startYamlEditorHost} from '../scripts/yaml-editor/host.ts';
 test('same-named project YAML documents retain drafts across Dockview moves and round-trip in SB3', {timeout: 180000}, async t => {
     const site = process.env.TWPE_YAML_SITE, fixture = process.env.TWPE_YAML_FIXTURE;
     assert(site && fixture);
+    await verifyWebEditor(site);
     const dataDirectory = await mkdtemp(path.join(tmpdir(), 'twpe-dockview-yaml-'));
     t.after(() => rm(dataDirectory, {recursive: true, force: true}));
     const host = await startYamlEditorHost({siteDirectory: site, dataDirectory});

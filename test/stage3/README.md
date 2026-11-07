@@ -14,6 +14,8 @@ Editor の `feat/backpack/product-integration` と、`site/source.json` が参�
 
 ## 再現と受け入れ基準
 
+[Editor の版の指定手順](../../docs/architecture.md#実験で起動する-editor-の版)に従い、起動前に `E2E_EXPECT_SITE_REVISION` を設定する。
+
 各作業ツリーで依存と scratch-gui の生成済みソースを用意する。実ドラッグの試験には macOS の Chrome と、CoreGraphics からマウス入力を送信できる GUI セッションが必要。
 
 ```sh

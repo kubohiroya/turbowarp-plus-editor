@@ -10,6 +10,8 @@
 
 ## ローカル検証
 
+[Editor の版の指定手順](../../docs/architecture.md#実験で起動する-editor-の版)に従い、起動前に `E2E_EXPECT_SITE_REVISION` を設定する。
+
 公式 Desktop の固定ソースと、Editor の `site/source.json` が指す scratch-gui の作業ツリーおよび依存を用意する。
 
 ```sh

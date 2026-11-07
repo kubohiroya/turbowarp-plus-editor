@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import type {FixtureYamlMapping} from './helpers/fixture-types.ts';
 import test from 'node:test';
@@ -35,6 +36,7 @@ test(
         const owned = await mkdtemp(path.join(tmpdir(), 'twpe-yaml-block-site-')),
             site = path.join(owned, 'site');
         await cp(input, site, { recursive: true });
+        await verifyWebEditor(site);
         const host = await startYamlEditorHost({
             siteDirectory: site,
             dataDirectory: path.join(owned, 'work'),

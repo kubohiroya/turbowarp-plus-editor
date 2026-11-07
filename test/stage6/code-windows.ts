@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../../scripts/site/editor-revision.ts';
 import assert from 'node:assert/strict';
 import {stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
@@ -7,6 +8,7 @@ import {readUndockButtonsChecked, toggleUndockButtons} from '../fixtures/layout-
 const origin = 'http://localhost:15107';
 const prefix = '/turbowarp-plus-editor/';
 const build = resolve(process.argv[2]);
+await verifyWebEditor(build);
 const chrome = process.env.TW151_CHROME;
 const browser = await chromium.launch({
     executablePath: chrome, headless: true, args: ['--enable-unsafe-swiftshader']

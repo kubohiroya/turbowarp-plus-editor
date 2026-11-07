@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../../scripts/site/editor-revision.ts';
 import assert from 'node:assert/strict';
 import {readFile, stat} from 'node:fs/promises';
 import {resolve, sep} from 'node:path';
@@ -5,6 +6,7 @@ import {build, transform} from 'esbuild';
 import {chromium, type Locator, type Page} from 'playwright';
 
 const directory = resolve(process.argv[2]);
+await verifyWebEditor(directory);
 const layout = process.argv.includes('--layout');
 const resources = process.argv[3] === '--resources';
 const asyncField = process.argv[3] === '--async-commit';

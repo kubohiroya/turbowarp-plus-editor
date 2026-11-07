@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,6 +27,7 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
     await mkdir(output, {recursive: true});
     const owned = await mkdtemp(path.join(tmpdir(), 'twpe-multi-'));
     const site = path.join(owned, 'site'); await cp(siteInput, site, {recursive: true});
+    await verifyWebEditor(site);
     await copyFile(fixture, path.join(site, 'static/two-settings-documents.sb3'));
     const launches = [];
     const host = await startYamlEditorHost({siteDirectory: site, dataDirectory: path.join(owned, 'work'), launchEditor: async (file, profile) => { launches.push({file, profile}); }});

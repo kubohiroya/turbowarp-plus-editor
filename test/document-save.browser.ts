@@ -1,3 +1,4 @@
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,7 +8,9 @@ import {chromium,expect} from '@playwright/test';import JSZip from '@turbowarp/j
 import {startYamlEditorHost} from '../scripts/yaml-editor/host.ts';
 const docs=p=>p.extensionStorage.kubohiroyadocumentdata.documents;
 test('dialog Save validates the saved work copy and updates the Editor; X and Cancel discard without downloading',{timeout:180000},async()=>{
- const input=process.env.TWPE_YAML_SITE,fixture=process.env.TWPE_YAML_FIXTURE;assert(input&&fixture);const out=process.env.TWPE_YAML_EVIDENCE||await mkdtemp(path.join(tmpdir(),'twpe-dialog-save-'));await mkdir(out,{recursive:true});const owned=await mkdtemp(path.join(tmpdir(),'twpe-dialog-save-site-')),site=path.join(owned,'site');await cp(input,site,{recursive:true});await copyFile(fixture,path.join(site,'static/source-docs.sb3'));let working,launches=0;
+ const input=process.env.TWPE_YAML_SITE,fixture=process.env.TWPE_YAML_FIXTURE;assert(input&&fixture);const out=process.env.TWPE_YAML_EVIDENCE||await mkdtemp(path.join(tmpdir(),'twpe-dialog-save-'));await mkdir(out,{recursive:true});const owned=await mkdtemp(path.join(tmpdir(),'twpe-dialog-save-site-')),site=path.join(owned,'site');await cp(input,site,{recursive:true});
+ await verifyWebEditor(site);
+ await copyFile(fixture,path.join(site,'static/source-docs.sb3'));let working,launches=0;
  const host=await startYamlEditorHost({siteDirectory:site,dataDirectory:path.join(owned,'work'),launchEditor:async file=>{working=file;launches++;}});const browser=await chromium.launch({headless:true,executablePath:process.env.TWPE_CHROME_EXECUTABLE});const page=await browser.newPage({viewport:{width:1440,height:1100},locale:'ja-JP',acceptDownloads:true}),errors=[];let downloads=0;page.on('pageerror',e=>errors.push(e.message));page.on('download',()=>downloads++);await page.addInitScript(()=>{delete window.showSaveFilePicker;});const base=host.apiOrigin+'/turbowarp-plus-editor/';let stage='load';
  // Expanded YAML blocks can cover another hat, so open it from the keyboard.
  async function open(blockId='document-yaml'){await page.locator(`[data-id="${blockId}"] [data-twpe-yaml-hat-icon]`).focus();await page.keyboard.press('Enter');const d=page.getByRole('dialog',{name:'データソース',exact:true});await expect(d).toBeVisible();return d;}

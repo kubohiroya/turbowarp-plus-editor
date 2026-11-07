@@ -8,6 +8,8 @@
 
 ## 検証
 
+[Editor の版の指定手順](../../docs/architecture.md#実験で起動する-editor-の版)に従い、起動前に `E2E_EXPECT_SITE_REVISION` を設定する。
+
 [既存の Desktop コピー作成手順](../stage5/stage-popout-desktop.md)で、GUI の固定版と公式 TurboWarp Desktop 1.17.1 から試験用アプリを作る。macOS の製品版ローカルコピーは次のコマンドで検証する。
 
 ```sh

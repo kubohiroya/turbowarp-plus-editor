@@ -8,6 +8,7 @@ import {createInterface} from 'node:readline';
 import {setTimeout as delay} from 'node:timers/promises';
 import {promisify} from 'node:util';
 import {transform} from 'esbuild';
+import {verifyDesktopEditor} from '../../scripts/desktop/check-editor-revision.ts';
 import {chromium} from 'playwright';
 import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons} from '../fixtures/layout-menu.ts';
 
@@ -23,6 +24,7 @@ if (usesSystemInput && process.env.TW_PLUS_NATIVE_INPUT !== '1') {
 }
 
 const app = resolve(process.argv[2] || '/private/tmp/tw151-desktop23/TurboWarp-Plus-Backpack.app');
+await verifyDesktopEditor(app, 'gui');
 const mime = 'application/x-turbowarp-editor-transfer';
 const itemName = 'Desktop native Backpack stack';
 const undockLabel = /^(Open Backpack in a separate window|バックパックを別ウィンドウで開く)$/;
