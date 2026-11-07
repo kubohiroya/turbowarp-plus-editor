@@ -52,7 +52,10 @@ if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI
 const injections = {
     __TW_GUI_HOST__: bridge,
     __TW_PLUS_FILE_UPLOADER__: path.join(gui, 'src', 'lib', 'file-uploader.js'),
-    __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json')
+    __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json'),
+    __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: [path.join(gui, 'src', 'reducers', 'tw.js'), 'setFileHandle'],
+    __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: [path.join(gui, 'src', 'reducers', 'project-changed.js'), 'setProjectUnchanged'],
+    __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle']
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
@@ -167,7 +170,8 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
 }));
 config.module.rules.push({test: /\.tsx?$/, include: [
-    siteSource, path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), path.dirname(editorUiEntry)
+    siteSource, path.resolve(__dirname, '../../packages/editor-project-folder/src'),
+    path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), path.dirname(editorUiEntry)
 ], loader: path.join(__dirname, 'transpile-local-typescript.cts')});
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),

@@ -23,6 +23,7 @@ import {plusLibraryTab} from './extension-library/tab.ts';
 import {plusProjectPackager} from './packager/handoff.ts';
 
 import {installControlsDock} from './controls-dock.ts';
+import {attachProjectFolder} from './project-folder-host.ts';
 import getStageControls from './stage-controls.ts';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
@@ -164,6 +165,7 @@ export const createPlusIntegration = ({
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
+        attached.push(attachProjectFolder(vm, hostDocument));
         const workspace = getDocumentWorkspace(vm);
         const documents = mountEditor({
             vm,
