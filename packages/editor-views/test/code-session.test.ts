@@ -3,7 +3,7 @@ import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
 import {attachDockedCodeExtensions, getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
 import {captureNativeFieldDrawing} from '../native-field-svg.ts';
-import {registerCustomFields} from '../custom-extension-fields.ts';
+import {createIsolatedNativeField, registerCustomFields} from '../custom-extension-fields.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
 
@@ -295,6 +295,36 @@ test('custom extension fields project data-only editors and keep existing field 
     assert.equal(registry.field_fixture_name, native);
     unregister();
     assert.deepEqual(registry, {field_fixture_name: native});
+});
+
+test('isolated native editors use fresh fields and preserve factory options', () => {
+    const name = 'field_fixture_isolated';
+    const registry = {};
+    let cached;
+    const factory = {
+        parentDocument: true,
+        isolatedEditor: true,
+        fromJson(options) {
+            const value = options.value;
+            options.value = 'mutated by factory';
+            return cached ?? {getValue: () => value, setValue() {}, showEditor_() {}};
+        }
+    };
+    const unregister = registerCustomFields({
+        Field: {TYPE_MAP_: registry, register(name, field) {registry[name] = field;}}
+    }, [{name, editor: {type: 'native_widget'}}], undefined, () => factory);
+    const docked = registry[name].fromJson({value: 'saved option'});
+    assert.equal(createIsolatedNativeField(docked, {...factory, isolatedEditor: false}), undefined);
+    cached = docked;
+    assert.equal(createIsolatedNativeField(docked, factory), undefined);
+    cached = undefined;
+    const isolated = createIsolatedNativeField(docked, {...factory});
+    assert.notEqual(isolated, docked);
+    assert.equal(isolated.getValue(), 'saved option');
+    cached = isolated;
+    assert.equal(createIsolatedNativeField(docked, factory), undefined);
+    assert.equal(registry[name].fromJson({value: 'other'}), undefined);
+    unregister();
 });
 
 test('native SVG projection keeps visible shapes and omits executable and externally linked content', () => {

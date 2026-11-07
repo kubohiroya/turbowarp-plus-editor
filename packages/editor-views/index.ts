@@ -1,5 +1,5 @@
 import {getCodeDynamicShapes, getCodeExtensions} from './code-extensions.ts';
-import {customField} from './custom-extension-fields.ts';
+import {createIsolatedNativeField, customField} from './custom-extension-fields.ts';
 import {projectNativeFieldGraphics} from './native-field-svg.ts';
 import {openNativeField} from './native-extension-field.ts';
 import {readFieldActionPanel, runFieldAction, type FieldActionPanel, type ProgrammaticExtensionField} from './programmatic-extension-field.ts';
@@ -309,8 +309,20 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             if (!Number.isFinite(anchor?.left) || !Number.isFinite(anchor?.bottom)) return;
             closeNativeEditor(view);
             const field = workspace.getBlockById(blockId)?.getField(name);
+            const isolated = definition.native.isolatedEditor === true;
+            let editorField = field;
+            if (isolated) {
+                try {
+                    editorField = createIsolatedNativeField(field, definition.native);
+                    if (!editorField) return;
+                } catch (error) {
+                    onError?.(error);
+                    return;
+                }
+            }
             view.closeNativeField = openNativeField({
-                blocks: ScratchBlocks, field, document: view.document, anchor,
+                blocks: ScratchBlocks, field: editorField, document: view.document, anchor,
+                isolatedValue: isolated ? value : undefined,
                 parentDocument: definition.native.parentDocument === true,
                 asyncCommit: definition.native.asyncCommit === true,
                 resources: {manifest: definition.native.resources, canFetch: url => vm.securityManager.canFetch(url)},
