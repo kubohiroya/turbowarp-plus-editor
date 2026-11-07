@@ -58,16 +58,6 @@
       "minimap-current.png": "Default workspace with five test blocks added to illustrate the minimap."
     }
   },
-  "publicSpriteTabs": {
-    "date": "2026-11-06",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "7e7f4977ef877db31ad5dcba72b7936ca0be9686",
-    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
-    "image": "sprite-tabs-public.png",
-    "viewport": {"width": 1440, "height": 1000},
-    "crop": {"x": 0, "y": 47, "width": 750, "height": 130},
-    "note": "Two tabs after duplicating the starter sprite in the public Japanese Editor. The toolbar label is プロパティ・変数."
-  },
   "operationDetails": {
     "date": "2026-11-06",
     "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
@@ -155,17 +145,37 @@
       "height": 1000
     },
     "images": {
+      "project-properties-current.png": "Project properties in the default pinned layout with fictional sample inputs."
+    }
+  },
+  "publicVariablesTabRefresh": {
+    "date": "2026-11-07",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "66adbad645afe2ec82b0a5cb9658ef14b03d77c0",
+    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
+    "layoutVersion": "0.1.16",
+    "viewport": {"width": 1440, "height": 1000},
+    "note": "Captured from the public Japanese Editor with default features. The toolbar label is 変数など and its search field is at the right edge of each pane.",
+    "images": {
       "file-menu-public-014.png": "File menu in the default pinned layout, cropped around the menu.",
       "plus-workspace-pinned.png": "Fresh startup with the sprite list pinned by default.",
       "sprite-search-public-014.png": "Pinned sprite list with a matching tile highlighted after searching for 2.",
       "stage-menu-public-014.png": "Right-edge stage with the current display menu open.",
       "sprite-divider-public-014.png": "Focused divider after increasing the pinned sprite list width with ArrowRight.",
-      "project-properties-current.png": "Project properties in the default pinned layout with fictional sample inputs.",
-      "media-panes-0fc3.png": "Split costume preview and sound editor in the default pinned layout.",
-      "properties-variables-0fc3.png": "Public Properties and Variables tab beside a script that uses the sprite's speed variable.",
+      "sprite-tabs-public.png": "Two tabs after duplicating the starter sprite, cropped to show the tab strip and editing sections.",
+      "media-panes-0fc3.png": "Split costume preview and sound editor with a generated sample tone.",
+      "properties-variables-0fc3.png": "The 変数など tab shows the local speed variable set to 8 and a project-wide score variable. The adjacent script uses the local speed variable.",
       "stage-tab-0fc3.png": "Stage opened in a workspace tab, with the current display menu and tab return action visible.",
       "sprite-undocked-0fc3.png": "Sprite list detached into an in-editor window with its layout menu open.",
-      "script-transfer-0fc3.png": "Block context menu in the pinned layout with twPlusContextMenuIcons=1."
+      "script-transfer-0fc3.png": "Block context menu in the pinned layout with its default action icons."
+    },
+    "crops": {
+      "file-menu-public-014.png": {"x": 0, "y": 0, "width": 760, "height": 525},
+      "sprite-search-public-014.png": {"x": 0, "y": 47, "width": 550, "height": 390},
+      "sprite-divider-public-014.png": {"x": 0, "y": 47, "width": 680, "height": 560},
+      "sprite-tabs-public.png": {"x": 112, "y": 47, "width": 750, "height": 130},
+      "properties-variables-0fc3.png": {"x": 0, "y": 0, "width": 1440, "height": 523},
+      "script-transfer-0fc3.png": {"x": 0, "y": 0, "width": 750, "height": 559}
     }
   }
 }

@@ -975,6 +975,27 @@ test('the Dockview asset connection restores the native costume and sound select
     await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1');
     const groups = page.locator('.dv-groupview');
     await expect(groups).toHaveCount(1);
+    const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
+    const sprite = page.locator('[class*="sprite-selector_sprite_"]:visible')
+        .filter({has: page.getByText(spriteName, {exact: true})});
+    await sprite.hover();
+    await expect(sprite).toHaveAttribute('title', spriteName);
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
+    const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
+    const card = (name: string) => editor.locator('[class*="selector_list-item_"]:visible').filter({hasText: name});
+    await section('Costumes').click();
+    const initialCostume = await page.evaluate(() => window.vm.editingTarget.getCurrentCostume().name);
+    await expect(card(initialCostume)).toHaveAttribute('title', initialCostume);
+    await section('Sounds').click();
+    await expect(editor.getByText('No sounds', {exact: true})).toBeVisible();
+    const addSound = editor.getByRole('button', {name: 'Choose a Sound', exact: true})
+        .and(page.locator('[class*="action-menu_main-button_"]'));
+    await addSound.click();
+    const soundLibrary = page.getByRole('dialog', {name: 'Choose a Sound', exact: true});
+    await expect(soundLibrary).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(soundLibrary).toBeHidden();
     await page.evaluate(async prefix => {
         const vm = window.vm;
         const target = vm.editingTarget;
@@ -996,11 +1017,9 @@ test('the Dockview asset connection restores the native costume and sound select
         await vm.addSound({...sound, name: 'Pane sound A'}, target.id);
         await vm.addSound({...sound, name: 'Pane sound B'}, target.id);
     }, buildPrefix);
-    const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
-    const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
-    const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
-    const card = (name: string) => editor.locator('[class*="selector_list-item_"]:visible').filter({hasText: name});
+    await expect(editor.getByText('No sounds', {exact: true})).toHaveCount(0);
+    await card('Pane sound A').hover();
+    await expect(card('Pane sound A')).toHaveAttribute('title', 'Pane sound A');
     const selectedItem = '[class*="selector_list-item_"][class*="sprite-selector-item_is-selected_"]:visible';
     const selected = editor.locator(selectedItem);
     const choose = async (name: string) => {
@@ -1027,6 +1046,12 @@ test('the Dockview asset connection restores the native costume and sound select
 
     await section('Costumes').click();
     await choose('Pane costume A');
+    await card('Pane costume A').hover();
+    await expect(card('Pane costume A')).toHaveAttribute('title', 'Pane costume A');
+    await expect(selected.locator('[class*="sprite-selector-item_delete-button_"]')).toBeHidden();
+    await card('Pane costume A').click({button: 'right'});
+    await expect(page.locator('.react-contextmenu--visible').getByRole('menuitem', {name: 'delete', exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
     await groups.first().getByRole('button', {name: 'Editor panel layout'}).click();
     await page.getByRole('menuitem', {name: 'Split right'}).click();
     await expect(groups).toHaveCount(2);

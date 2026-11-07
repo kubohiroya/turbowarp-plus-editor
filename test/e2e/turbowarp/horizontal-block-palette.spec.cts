@@ -172,6 +172,7 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     const handle = page.locator('[data-palette-resize-handle]');
     const lock = flyout.locator('.sa-lock-object');
     const pinButton = lock.locator('button');
+    const clickOutside = () => page.locator('.blocklySvg').first().click({position: {x: 12, y: 430}});
     const expectPinAppearance = async (color, border = 'rgba(0, 0, 0, 0)') => {
         await expect(pinButton).toHaveCSS('color', color);
         await expect(pinButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
@@ -224,11 +225,19 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     await pinButton.click();
     await expect(lock).toHaveClass(/\blocked\b/);
     await expectPinAppearance('rgb(64, 64, 64)', 'rgb(64, 64, 64)');
+    await clickOutside();
+    expect(await control.getAttribute('aria-expanded')).toBe('true');
+    await expect(flyout).toBeVisible();
+    await expect(handle).toBeVisible();
     await pinButton.click();
     await expect(lock).not.toHaveClass(/\blocked\b/);
     await expectPinAppearance('rgb(128, 128, 128)');
 
-    await page.keyboard.press('Escape');
+    await clickOutside();
+    await expect(control).toHaveAttribute('aria-expanded', 'false');
+    await expect(flyout).toBeHidden();
+    await expect(handle).toBeHidden();
+
     await page.getByText('Settings', {exact: true}).click();
     await page.getByText('Switch To Dark Mode', {exact: true}).click();
     await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
