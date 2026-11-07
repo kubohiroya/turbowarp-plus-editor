@@ -1179,6 +1179,8 @@ async function checkCodeExtensions ({editor, a, b, focus, parent, sprite}) {
     await category(b).waitFor();
     await activate(a, b);
     await category(a).click();
+    // Wait for the category scroll to settle before sampling the drag origin.
+    await a.child.waitForFunction(() => !window['Blockly'].getMainWorkspace().getFlyout().scrollTarget);
     const entry = a.child.locator('.blocklyFlyout [data-id]').filter({hasText: /fixture\s+level/}).first();
     const origin = await until(async () => entry.evaluate(element => {
         const bounds = element.getBoundingClientRect();
