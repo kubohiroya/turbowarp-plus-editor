@@ -48,7 +48,12 @@ function fixture() {
     const bird = target('Bird', false, {
         bird_flag: block('event_whenflagclicked', null, null, {}, {x: 40, y: 60})
     }, [costume]);
-    const project = {targets: [target('Stage', true, {}, [costume]), cat, bird],
+    const stage = target('Stage', true, {
+        loop_flag: block('event_whenflagclicked', 'loop_forever', null, {}, {x: 40, y: 60}),
+        loop_forever: block('control_forever', null, 'loop_flag', {SUBSTACK: [2, 'loop_wait']}),
+        loop_wait: block('control_wait', null, 'loop_forever', {DURATION: [1, [5, '1']]})
+    }, [costume]);
+    const project = {targets: [stage, cat, bird],
         monitors: [], extensions: [], meta: {semver: '3.0.0'}, retainedTopLevel: {version: 42}};
     return {project, costume, sound, svg, wav};
 }
@@ -84,7 +89,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     t.after(() => browser.close());
     const page = await browser.newPage({viewport: {width: 1280, height: 920}});
     const errors: string[] = [];
-    page.on('pageerror', error => errors.push(error.message));
+    page.on('pageerror', error => errors.push(error.stack || error.message));
     const diagnostics: string[] = [];
     page.on('console', message => {if (message.type() === 'error') diagnostics.push(message.text());});
     await page.route('**/*', async route => {
@@ -329,6 +334,117 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await nestedSteps(), '60');
     assert.deepEqual(await readFile(indexPath), stagedIndex);
     assert.equal(await page.evaluate(() => (window as any).folderTest.picks.filter(id => id === 'turbowarp-plus-git-root').length), 1);
+    // Re-open the nested folder to establish a fresh baseline before observing file reads.
+    await showGit();
+    await panel.getByRole('button', {name: 'Reload Project'}).click();
+    await expect(panel.getByRole('button', {name: 'Reload Project'})).toBeEnabled();
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    const notice = page.locator('[data-project-folder-external]');
+    const reload = notice.getByRole('button', {name: 'Reload from Disk'});
+    await expect(notice).toBeHidden();
+    await page.evaluate(() => {
+        const state = (window as any).folderTest;
+        const vm = window.vm;
+        const cat = vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
+        vm.setEditingTarget(cat.id);
+        state.stage = vm.runtime.getTargetForStage();
+        state.cat = cat;
+        state.bird = vm.runtime.targets.find(entry => entry.sprite.name === 'Bird');
+        state.flag = cat.blocks.getBlock('flag_A');
+        state.move = cat.blocks.getBlock('move_B');
+        state.reads = [];
+        const getFile = FileSystemFileHandle.prototype.getFile;
+        const read = Blob.prototype.arrayBuffer;
+        const names = new WeakMap<Blob, string>();
+        FileSystemFileHandle.prototype.getFile = async function() {
+            const file = await getFile.call(this);
+            names.set(file, this.name);
+            return file;
+        };
+        Blob.prototype.arrayBuffer = function() {
+            const name = names.get(this);
+            if (name) state.reads.push(name);
+            return read.call(this);
+        };
+    });
+    const memory = () => page.evaluate(() => {
+        const state = (window as any).folderTest;
+        const vm = window.vm;
+        const cat = vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
+        const bird = vm.runtime.targets.find(entry => entry.sprite.name === 'Bird');
+        const {flag_A, move_B} = JSON.parse(vm.toJSON(undefined, {allowOptimization: false}))
+            .targets.find(entry => entry.name === 'Cat').blocks;
+        return {value: move_B.inputs.STEPS[1][1], x: flag_A.x, y: flag_A.y,
+            same: state.stage === vm.runtime.getTargetForStage() && state.bird === bird && state.cat === cat &&
+                state.flag === cat.blocks.getBlock('flag_A') && state.move === cat.blocks.getBlock('move_B') && vm.editingTarget === cat};
+    });
+    const notifyFocus = () => page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    const diskEdit = async (value: string, position?: {x: number; y: number}) => {
+        const project = JSON.parse(await readFile(nestedFile, 'utf8'));
+        project.targets[1].blocks.move_B.inputs.STEPS[1][1] = value;
+        if (position) Object.assign(project.targets[1].blocks.flag_A, position);
+        const text = stringify(project);
+        await writeFile(nestedFile, text);
+        await notifyFocus();
+        return text;
+    };
+    const workspaceValue = () => page.evaluate(() =>
+        window.ScratchBlocks.getMainWorkspace().getBlockById('move_B')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM'));
+    const ioBefore = await observe();
+    const disk = await diskEdit('71', {x: 180, y: 130});
+    await expect(notice).toContainText('External changes detected.');
+    await expect(reload).toBeEnabled();
+    assert.equal((await memory()).value, '60');
+    await reload.click();
+    await expect(notice).toBeHidden();
+    assert.deepEqual(await memory(), {value: '71', x: 180, y: 130, same: true});
+    await expect.poll(workspaceValue).toBe('71');
+    const coordinates = await page.evaluate(() => {
+        const {x, y} = window.ScratchBlocks.getMainWorkspace().getBlockById('flag_A').getRelativeToSurfaceXY();
+        return {x, y};
+    });
+    assert.deepEqual(coordinates, {x: 180, y: 130});
+    assert.deepEqual(await page.evaluate(() => (window as any).folderTest.reads), [projectFile]);
+    assert.deepEqual(await observe(), ioBefore);
+    assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
+    assert.equal(await readFile(nestedFile, 'utf8'), disk);
+    assert.deepEqual(await readFile(indexPath), stagedIndex);
+
+    const mixed = JSON.parse(disk);
+    mixed.targets[1].blocks.move_B.inputs.STEPS[1][1] = '99';
+    mixed.targets[1].blocks.move_B.next = null;
+    await writeFile(nestedFile, stringify(mixed));
+    await notifyFocus();
+    await expect(notice).toContainText('cannot be applied as a partial reload');
+    await expect(reload).toBeDisabled();
+    assert.deepEqual(await memory(), {value: '71', x: 180, y: 130, same: true});
+    await writeFile(nestedFile, disk);
+    await notifyFocus();
+    await expect(notice).toBeHidden();
+
+    // Start the stage loop alone. The Cat fixture's speech bubble needs fonts served outside this test.
+    await page.evaluate(() => window.vm.runtime.startHats('event_whenflagclicked', undefined,
+        window.vm.runtime.getTargetForStage()));
+    await page.waitForFunction(() => (window as any).ReduxStore.getState().scratchGui.vmStatus.running);
+    const runningDisk = await diskEdit('72');
+    await expect(notice).toContainText('Stop the project before reloading.');
+    await expect(reload).toBeDisabled();
+    assert.equal((await memory()).value, '71');
+    await page.evaluate(() => window.vm.stopAll());
+    await expect(reload).toBeEnabled();
+    assert.equal((await memory()).value, '71');
+    await reload.click();
+    await expect(notice).toBeHidden();
+    assert.deepEqual(await memory(), {value: '72', x: 180, y: 130, same: true});
+    assert.equal(await readFile(nestedFile, 'utf8'), runningDisk);
+
+    await edit('value', '73');
+    const dirtyDisk = await diskEdit('74');
+    await expect(notice).toContainText('unsaved edits');
+    await expect(reload).toBeDisabled();
+    assert.equal((await memory()).value, '73');
+    assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
+    assert.deepEqual(await observe(), ioBefore);
     await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
     await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
     await page.getByText('File', {exact: true}).click();
