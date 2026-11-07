@@ -71,7 +71,7 @@
 .panel:global(.blocklyFlyout) > :global(.sa-lock-object) > :global(.sa-lock-button) {
     background-color: transparent;
     border-color: transparent;
-    color: #808080;
+    color: rgb(128 128 128 / 88%);
 }
 
 .panel:global(.blocklyFlyout) > :global(.sa-lock-object.locked) > :global(.sa-lock-button) {
