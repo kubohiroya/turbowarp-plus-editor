@@ -156,6 +156,8 @@ E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 
 GUIとPackagerは `site/source.json` に記録したSHAをチェックアウトします。GUIの依存をインストールし、`node scripts/prepublish.mjs` で準備します。ビルドはGUIのSHA、実際にインストールされたdata-editorのSHA、security-dialogのバージョンが固定値と一致することを確認します。Pagesは統合検証に成功したmainから配信します。リリースのタグはnpmのバージョンと一致させます。
 
+ローカル Git パネルの Cloudflare 方式を有効にするには、ビルド時に `TW_PLUS_GIT_BFF_ORIGIN` と `TW_PLUS_GIT_PROXY_ORIGIN` の両方に正確な HTTPS オリジンを指定します。Desktop ローカル方式は、ホストが `EditorPreload.localGit` を公開すると選べます。起動 URL の `twPlusLocalGit=0` で Git パネルを非表示にできます。
+
 統合Editorの動作確認はこのリポジトリが担当します。既存の上流ライブラリの単体テストとGUIの機能フラグは維持します。新配信先の確認後、各参照先を移行し、旧data-editorのPagesを停止します。旧サイトへのリダイレクト配信は残しません。切戻しは直前のGUI固定SHA・サイト差分へのrevertと直前成果物の再配信で行います。
 
 ### CI の検証範囲

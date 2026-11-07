@@ -144,6 +144,8 @@ The review dialog is a Git dependency whose build reads its own revision, and np
 
 Check out the GUI and Packager SHAs recorded in `site/source.json`. Install the GUI dependencies and prepare that upstream checkout with `node scripts/prepublish.mjs`. The build verifies the GUI SHA, installed data-editor SHA, and security-dialog version against the pins. Pages deploys from main after successful integration checks. Release tags must match the npm version.
 
+For the Cloudflare option in the Local Git panel, set both `TW_PLUS_GIT_BFF_ORIGIN` and `TW_PLUS_GIT_PROXY_ORIGIN` to exact HTTPS origins at build time. The Desktop local option is available when the host exposes `EditorPreload.localGit`. Use `twPlusLocalGit=0` to hide the Git panel at startup.
+
 This repository verifies the integrated Editor. Existing upstream unit tests and GUI feature flags are preserved. After verifying the new distribution, migrate references and stop the former data-editor Pages site without leaving a redirect deployment. To roll back, revert to the previous GUI pin and site changes, then redeploy the previous artifact. To undo the TypeScript migration, revert its changes and restore the previous JavaScript sources and package configuration.
 
 ## Editing embedded documents (0.2.0-rc.1)
