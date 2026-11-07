@@ -68,6 +68,16 @@
     transform: none;
 }
 
+.panel:global(.blocklyFlyout) > :global(.sa-lock-object) > :global(.sa-lock-button) {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.panel:global(.blocklyFlyout) > :global(.sa-lock-object.locked) > :global(.sa-lock-button) {
+    border-color: white;
+    filter: drop-shadow(0 0 1px rgb(0 0 0 / 55%));
+}
+
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) > :global(.sa-flyout-placeHolder) {
     display: none !important;
 }

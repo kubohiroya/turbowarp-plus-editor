@@ -197,6 +197,8 @@ test('自動で隠すアドオンが有効でも横パレットの鍵はリサ�
     await control.hover();
     expect(await flyout.boundingBox()).toEqual(panelBox);
     await expectLockInCorner();
+    await expect(lockButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(lockButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
 
     for (const delta of [60, -90]) {
         const {width: oldWidth} = await flyout.boundingBox();
@@ -213,8 +215,11 @@ test('自動で隠すアドオンが有効でも横パレットの鍵はリサ�
     }
     await lockButton.click();
     await expect(lock).toHaveClass(/\blocked\b/);
+    await expect(lockButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(lockButton).toHaveCSS('border-top-color', 'rgb(255, 255, 255)');
     await lockButton.click();
     await expect(lock).not.toHaveClass(/\blocked\b/);
+    await expect(lockButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
 
     await page.keyboard.press('Escape');
     await expect(flyout).toBeHidden();
