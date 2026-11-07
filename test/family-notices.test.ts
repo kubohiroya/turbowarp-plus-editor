@@ -102,7 +102,7 @@ test('this repository records every family package it supplies, dev entries incl
             const installed = lock.packages[`node_modules/${entry.package}`];
             if (installed?.resolved?.startsWith('file:vendor/')) {
                 const tarball = `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`;
-                assert.equal(entry.license, 'GPL-3.0-or-later');
+                assert.equal(entry.license, installed.license);
                 assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity});
                 assert.deepEqual(await fs.readFile(path.join(output, tarball)),
                     await fs.readFile(path.join(root, installed.resolved.slice('file:'.length))));

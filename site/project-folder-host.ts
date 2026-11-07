@@ -1,5 +1,5 @@
-import {mountProjectFolder} from '../packages/editor-project-folder/src/index.ts';
-import type {FolderVM} from '../packages/editor-project-folder/src/session.ts';
+import {mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import type {FolderVM} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import {loadedProjectTitle} from './project-tools/index.ts';
 
 type Action = {type: string};

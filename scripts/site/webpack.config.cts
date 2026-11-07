@@ -115,6 +115,8 @@ for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
+config.resolve.alias['@kubohiroya/turbowarp-plus-editor-project-folder$'] =
+    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-project-folder');
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 for (const entry of ['palette-category-reorder', 'palette-dropdown-resize']) {
@@ -170,7 +172,7 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
 }));
 config.module.rules.push({test: /\.tsx?$/, include: [
-    siteSource, path.resolve(__dirname, '../../packages/editor-project-folder/src'),
+    siteSource,
     path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), path.dirname(editorUiEntry)
 ], loader: path.join(__dirname, 'transpile-local-typescript.cts')});
 config.module.rules.push({test: /\.jsx?$/, include: [

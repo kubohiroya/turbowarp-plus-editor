@@ -6,7 +6,7 @@ import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
 import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
-import {renderProjectFolderMenu} from '../../packages/editor-project-folder/src/index.ts';
+import {renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '../stage-controls/view.tsx';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
