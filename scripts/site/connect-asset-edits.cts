@@ -54,13 +54,29 @@ const connections: Record<string, [string, string][]> = {
         this.costumeEdits.select(nextProps.vm, nextProps.selectedCostumeIndex);`],
         ['componentWillUnmount () {', `componentWillUnmount () {
         this.costumeEdits.close();`],
-        ['fontInlineFn={this.fontInlineFn}', 'fontInlineFn={this.fontInlineFn}\n                beginCostumeEdit={this.costumeEdits.begin}']
+        ['fontInlineFn={this.fontInlineFn}', `fontInlineFn={this.fontInlineFn}
+                beginCostumeEdit={this.costumeEdits.begin}
+                cancelCostumeEdit={this.costumeEdits.cancelPending}`]
     ],
     'paint-editor.jsx': [
-        ['convertToBitmap(this.props.clearSelectedItems, this.props.onUpdateImage, this.props.fontInlineFn);',
-            `convertToBitmap(this.props.clearSelectedItems, this.props.onUpdateImage, this.props.fontInlineFn,
-                this.props.beginCostumeEdit && this.props.beginCostumeEdit());`],
-        ['fontInlineFn: PropTypes.func,', 'fontInlineFn: PropTypes.func,\n    beginCostumeEdit: PropTypes.func,']
+        ['} else if (isVector(prevProps.format) && this.props.format === Formats.BITMAP) {\n' +
+            '            convertToBitmap(this.props.clearSelectedItems, this.props.onUpdateImage, this.props.fontInlineFn);\n        }',
+        '}'],
+        ["            'switchModeForFormat',", "            'switchModeForFormat',\n            'handleConvertToBitmap',"],
+        ['    switchModeForFormat (newFormat) {', `    handleConvertToBitmap () {
+        const isCurrent = this.props.beginCostumeEdit();
+        convertToBitmap(this.props.clearSelectedItems, (...args) => {
+            this.props.onUpdateImage(...args);
+            this.props.handleSwitchToBitmap();
+        }, this.props.fontInlineFn, isCurrent);
+    }
+    switchModeForFormat (newFormat) {`],
+        ['onSwitchToBitmap={this.props.handleSwitchToBitmap}', 'onSwitchToBitmap={this.handleConvertToBitmap}'],
+        ['    onMouseDown (event) {', `    onMouseDown (event) {
+        if (event.target === this.canvas) this.props.cancelCostumeEdit();`],
+        ['fontInlineFn: PropTypes.func,', `fontInlineFn: PropTypes.func,
+    beginCostumeEdit: PropTypes.func.isRequired,
+    cancelCostumeEdit: PropTypes.func.isRequired,`]
     ],
     'virtual-machine.js': [
         [`_updateBitmap (costume, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
