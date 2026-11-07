@@ -155,7 +155,7 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout).toBeVisible();
 });
 
-test('自動で隠すアドオンが有効でも横パレットの鍵はリサイズ中に右上隅に追従する', async ({page}) => {
+test('自動で隠すアドオンが有効でも横パレットのピンはリサイズ中に右上隅に追従する', async ({page}) => {
     await page.addInitScript(() => {
         localStorage.setItem('tw:addons', JSON.stringify({
             _: 5,
@@ -170,11 +170,11 @@ test('自動で隠すアドオンが有効でも横パレットの鍵はリサ�
     const scrollbar = page.locator('.blocklyFlyoutScrollbar');
     const handle = page.locator('[data-palette-resize-handle]');
     const lock = flyout.locator('.sa-lock-object');
-    const lockButton = lock.locator('button');
-    const expectLockInCorner = async () => {
-        await expect(lockButton).toBeVisible();
+    const pinButton = lock.locator('button');
+    const expectPinInCorner = async () => {
+        await expect(pinButton).toBeVisible();
         const panel = await flyout.boundingBox();
-        const button = await lockButton.boundingBox();
+        const button = await pinButton.boundingBox();
         expect(Math.abs(panel.x + panel.width - button.x - button.width - 15)).toBeLessThanOrEqual(1);
         expect(Math.abs(button.y - panel.y - 3)).toBeLessThanOrEqual(1);
     };
@@ -196,9 +196,11 @@ test('自動で隠すアドオンが有効でも横パレットの鍵はリサ�
     expect(await handle.boundingBox()).toEqual(handleBox);
     await control.hover();
     expect(await flyout.boundingBox()).toEqual(panelBox);
-    await expectLockInCorner();
-    await expect(lockButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(lockButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+    await expectPinInCorner();
+    await expect(pinButton.locator('img')).toBeHidden();
+    expect(await pinButton.evaluate(button => getComputedStyle(button, '::before').maskImage)).toMatch(/^url\(/);
+    await expect(pinButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(pinButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
 
     for (const delta of [60, -90]) {
         const {width: oldWidth} = await flyout.boundingBox();
@@ -209,23 +211,24 @@ test('自動で隠すアドオンが有効でも横パレットの鍵はリサ�
         await page.mouse.down();
         await page.mouse.move(startX + delta, startY, {steps: 6});
         expect((await flyout.boundingBox()).width).toBeCloseTo(oldWidth + delta);
-        await expectLockInCorner();
+        await expectPinInCorner();
         await page.mouse.up();
-        await expectLockInCorner();
+        await expectPinInCorner();
     }
-    await lockButton.click();
+    await pinButton.click();
     await expect(lock).toHaveClass(/\blocked\b/);
-    await expect(lockButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(lockButton).toHaveCSS('border-top-color', 'rgb(255, 255, 255)');
-    await lockButton.click();
+    await expect(pinButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(pinButton).toHaveCSS('border-top-color', 'rgb(255, 255, 255)');
+    await pinButton.click();
     await expect(lock).not.toHaveClass(/\blocked\b/);
-    await expect(lockButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+    await expect(pinButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
 
     await page.keyboard.press('Escape');
     await expect(flyout).toBeHidden();
     await expect(handle).toBeHidden();
     await useLayout(page, 'Use vertical palette');
     await expect(lock).toBeVisible();
+    await expect(pinButton.locator('img')).toBeVisible();
     await toolbox.hover();
     const verticalX = (await flyout.boundingBox()).x;
     await page.mouse.move(1, 1);
