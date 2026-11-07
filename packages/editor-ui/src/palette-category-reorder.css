@@ -12,3 +12,11 @@
     outline: 2px solid currentColor;
     outline-offset: -2px;
 }
+
+.dragPreview {
+    position: fixed;
+    z-index: 1000;
+    box-sizing: border-box;
+    pointer-events: none;
+    opacity: 0.65;
+}
