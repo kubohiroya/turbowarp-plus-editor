@@ -19,7 +19,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     if (workspace.isMutator || toolbox.horizontalLayout_ || flyout.svgGroup_.tagName.toLowerCase() !== 'svg') return;
 
     const panel = flyout.svgGroup_;
-    const scrollbar = flyout.scrollbar_.svgGroup_;
+    const scrollbar = flyout.scrollbar_.outerSvg_;
     const surface = workspace.getParentSvg();
     const doc = menu.ownerDocument;
     const win = doc.defaultView;

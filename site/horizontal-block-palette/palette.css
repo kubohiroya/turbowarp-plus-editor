@@ -53,3 +53,14 @@
 .scrollbar:global(.blocklyFlyoutScrollbar) {
     z-index: 31;
 }
+
+/* The auto-hide addon slides the vertical flyout away by changing its left margin. */
+:global(.injectionDiv) > .panel:global(.blocklyFlyout.sa-flyoutClose),
+:global(.injectionDiv) > .scrollbar:global(.blocklyFlyoutScrollbar.sa-flyoutClose) {
+    margin-left: 0;
+}
+
+.panel :global(.sa-lock-object),
+:global([class*="gui_blocks-wrapper_"]):has(.horizontal) > :global(.sa-flyout-placeHolder) {
+    display: none !important;
+}
