@@ -31,6 +31,12 @@ export function prepareAssetHistoryMove<T>(from: T[], to: T[], getCurrent: () =>
     };
 }
 
+export function captureRecordingTarget(vm: AssetVM) {
+    const target = vm.editingTarget;
+    return (currentVm: AssetVM) =>
+        currentVm === vm && target && vm.runtime.getTargetById(target.id) === target ? target.id : undefined;
+}
+
 export function createAssetEditSession(kind: 'costume' | 'sound') {
     const assets = (target: AssetTarget) => kind === 'costume' ? target.getCostumes() : target.getSounds();
     let selection: {vm: AssetVM; target: AssetTarget; index: number; asset: object} | undefined;

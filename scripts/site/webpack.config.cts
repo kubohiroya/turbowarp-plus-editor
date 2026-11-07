@@ -192,6 +192,8 @@ const paintSource = path.join(path.dirname(hostRequire.resolve('scratch-paint/pa
 config.module.rules.push({
     include: [
         path.join(gui, 'src/containers/sound-editor.jsx'),
+        path.join(gui, 'src/containers/record-modal.jsx'),
+        path.join(gui, 'src/lib/audio/audio-util.js'),
         path.join(gui, 'src/containers/paint-editor-wrapper.jsx'),
         path.join(paintSource, 'containers/paint-editor.jsx'),
         path.join(paintSource, 'helper/bitmap.js'),

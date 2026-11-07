@@ -3,6 +3,7 @@ const path = require('node:path');
 const session = path.resolve(__dirname, '../../packages/editor-views/asset-edit-session.ts');
 const imports: Record<string, string> = {
     'sound-editor.jsx': `import {createAssetEditSession, prepareAssetHistoryMove} from ${JSON.stringify(session)};\n`,
+    'record-modal.jsx': `import {captureRecordingTarget} from ${JSON.stringify(session)};\n`,
     'paint-editor-wrapper.jsx': `import {createAssetEditSession} from ${JSON.stringify(session)};\n`,
     'virtual-machine.js': `const {commitCostumeImage} = require(${JSON.stringify(session)});\n`
 };
@@ -45,6 +46,36 @@ const connections: Record<string, [string, string][]> = {
         if (samples) {
             return this.submitNewSamples(samples, sampleRate, history.commit).then(success => {`];
         })
+    ],
+    'record-modal.jsx': [
+        ['handleRecord () {', `handleRecord () {
+        this.recordingTarget = captureRecordingTarget(this.props.vm);`],
+        ['handleSubmit () {', `handleSubmit () {
+        const resolveTargetId = this.recordingTarget;
+        if (!resolveTargetId) return;`],
+        [`                () => {
+                    this.props.onClose();
+                    this.props.onNewSound();
+                });`,
+        `                targetId => {
+                    this.props.onClose();
+                    const activeTarget = this.props.vm.editingTarget;
+                    if (targetId && activeTarget && activeTarget.id === targetId) this.props.onNewSound();
+                }, resolveTargetId);`]
+    ],
+    'audio-util.js': [
+        ['function (vm, samples, sampleRate, name, callback) {',
+            'function (vm, samples, sampleRate, name, callback, resolveTargetId) {'],
+        ['}).then(wavBuffer => {', `}).then(wavBuffer => {
+        const targetId = resolveTargetId && resolveTargetId(vm);
+        if (resolveTargetId && !targetId) {
+            if (callback) callback();
+            return;
+        }`],
+        [`vm.addSound(vmSound).then(() => {
+            if (callback) callback();`,
+        `vm.addSound(vmSound, targetId).then(() => {
+            if (callback) callback(targetId);`]
     ],
     'paint-editor-wrapper.jsx': [
         ['super(props);', `super(props);
