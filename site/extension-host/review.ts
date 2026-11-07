@@ -13,7 +13,7 @@
  */
 
 import JSZip from '@turbowarp/jszip';
-import {discoverManifest} from '@kubohiroya/turbowarp-extension-loader';
+import {discoverManifest, LoaderError} from '@kubohiroya/turbowarp-extension-loader';
 import {
     createDecisionStorage, initialDecisions, loadExtensionInfo, requiresReview
 } from '@kubohiroya/turbowarp-extension-security-dialog';
@@ -173,7 +173,12 @@ export const createSecurityReview = ({
             },
             applyDecisions: decisions => {
                 const channel = pendingPlusReview(vm);
-                if (channel) channel.decisions = decisions;
+                if (!channel) return;
+                // A denied Plus row already prevents the whole project from opening. Stop here
+                // before the batch starts legacy extensions or the Loader resolves remote code.
+                const denied = channel.manifest.extensions.find(spec => decisions.get(spec.id)?.execution === 'deny');
+                if (denied) throw new LoaderError('TRUST_DENIED', 'Host did not approve this exact extension digest', denied.id);
+                channel.decisions = decisions;
             }
         });
     },

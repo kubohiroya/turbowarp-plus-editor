@@ -63,10 +63,15 @@ function install (answer) {
         async get () { return null; },
         async put (key) { writes.push(key); }
     };
+    const fetched = [];
     const events = [];
-    const host = installPlusExtensionHost(vm, {enabled: true, document: null, fetchImpl, cache, vmModules,
+    const host = installPlusExtensionHost(vm, {enabled: true, document: null, cache, vmModules,
+        fetchImpl: url => {
+            fetched.push(url);
+            return fetchImpl(url);
+        },
         diagnostics: event => events.push(event.type)});
-    return {vm, host, restore, asked, writes, legacyLoads, events,
+    return {vm, host, restore, asked, writes, legacyLoads, events, fetched,
         async dispose () {
             await host.dispose();
             restore();
@@ -102,6 +107,23 @@ test('an opener who declines the copy of a remote-cacheable row loads it without
         await fixture.vm.loadProject(JSON.stringify(project()));
         assert.equal(fixture.vm.extensionManager.isExtensionLoaded('unifiedfixture'), true);
         assert.deepEqual(fixture.writes, [], 'nothing was written to the cache');
+    } finally {
+        await fixture.dispose();
+    }
+});
+
+test('an explicit refusal stops the whole batch before fetching or starting extensions', async () => {
+    const fixture = install(entries => keyed(entries, entry => ({
+        execution: entry.source.kind === 'legacy' ? 'unsandboxed' : 'deny',
+        loading: 'remote-cacheable'
+    })));
+    try {
+        await assert.rejects(fixture.vm.loadProject(JSON.stringify(project())),
+            {code: 'TRUST_DENIED', extensionId: 'unifiedfixture'});
+        assert.deepEqual(fixture.fetched, []);
+        assert.deepEqual(fixture.legacyLoads, []);
+        assert.deepEqual(fixture.writes, []);
+        assert.equal(fixture.vm.unifiedExecuted, undefined);
     } finally {
         await fixture.dispose();
     }
