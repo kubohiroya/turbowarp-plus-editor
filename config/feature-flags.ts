@@ -19,6 +19,7 @@ export function readStartupFeatureFlags({
     twPlusPaletteCategoryReorder: paletteCategoryReorder = null,
     twPlusHorizontalBlockPalette: horizontalBlockPalette = null,
     twPlusContextMenuIcons: contextMenuIcons = null,
+    twPlusLocalGit: localGit = null,
     twPlusWorkspaceMinimap: workspaceMinimap = null
 } = {}) {
     return Object.freeze({
@@ -41,6 +42,7 @@ export function readStartupFeatureFlags({
         paletteCategoryReorder: paletteCategoryReorder === null || paletteCategoryReorder === '1',
         horizontalBlockPalette: horizontalBlockPalette === '1',
         contextMenuIcons: contextMenuIcons === '1',
+        localGit: localGit === null || localGit === '1',
         workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1'
     });
 }

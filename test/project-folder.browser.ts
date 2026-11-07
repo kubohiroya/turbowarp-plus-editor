@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {cp, mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {chromium, expect} from '@playwright/test';
@@ -98,7 +98,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     });
     await page.addInitScript(() => {
         const state = window as any;
-        state.folderTest = {writes: 0, loads: [], zipSaves: 0};
+        state.folderTest = {writes: 0, loads: [], zipSaves: 0, picks: []};
         const testState = state.folderTest;
         // CDP supplies the actual local directory handle. Only the picker interaction is substituted.
         for (const type of ['dragenter', 'dragover', 'drop']) {
@@ -115,6 +115,7 @@ test('the browser folder commands save localized Git diffs to the original worki
         }
         state.showDirectoryPicker = async options => {
             testState.options = options;
+            testState.picks.push(options.id);
             return testState.handle;
         };
         const createWritable = FileSystemFileHandle.prototype.createWritable;
@@ -253,6 +254,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await page.exposeFunction('changeFolderFileDuringWrite', () => writeFile(path.join(folder, projectFile), concurrent));
     await page.evaluate(() => {
         const write = FileSystemWritableFileStream.prototype.write;
+        (window as any).folderTest.originalWrite = write;
         FileSystemWritableFileStream.prototype.write = async function(data) {
             await write.call(this, data);
             await (window as any).changeFolderFileDuringWrite();
@@ -261,5 +263,71 @@ test('the browser folder commands save localized Git diffs to the original worki
     await save('The project folder changed outside the editor or is no longer open. Your edits are still in the editor.');
     assert.equal(await read(), concurrent);
     assert.equal((await observe()).writes, 4);
+    await page.evaluate(() => {
+        FileSystemWritableFileStream.prototype.write = (window as any).folderTest.originalWrite;
+    });
+
+    // The Git panel reuses one granted repository handle to open a nested project.
+    const nested = path.join(folder, 'projects', 'demo');
+    await mkdir(nested, {recursive: true});
+    for (const name of [projectFile, 'sb3-source.json', 'embedded-extensions.json', 'assets', 'extensions']) {
+        await cp(path.join(folder, name), path.join(nested, name), {recursive: true});
+    }
+    const indexPath = path.join(folder, '.git', 'index');
+    const indexBefore = await readFile(indexPath);
+    const panel = page.getByRole('dialog', {name: 'Local Git'});
+    const showGit = async () => {
+        await page.getByText('File', {exact: true}).click();
+        await page.getByText('Local Git…', {exact: true}).click();
+        await expect(panel).toBeVisible();
+    };
+    await showGit();
+    await panel.getByRole('button', {name: 'Choose Repository…'}).click();
+    await expect(panel.getByRole('button', {name: 'fixture', exact: true})).toBeVisible();
+    await panel.getByText('Choose a project inside this repository', {exact: true}).click();
+    await panel.getByRole('button', {name: 'projects/', exact: true}).click();
+    await panel.getByRole('button', {name: 'demo/', exact: true}).click();
+    page.once('dialog', dialog => dialog.accept());
+    await panel.getByRole('button', {name: 'Open This Project'}).click();
+    await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
+    await panel.locator('[data-git-group="untracked"]').filter({hasText: 'projects/demo/project.source.json'}).click();
+    await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
+    assert.deepEqual(await readFile(indexPath), indexBefore);
+
+    const nestedFile = path.join(nested, projectFile);
+    const nestedSteps = async () => JSON.parse(await readFile(nestedFile, 'utf8')).targets[1].blocks.move_B.inputs.STEPS[1][1];
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await edit('value', '45');
+    await save();
+    assert.equal(await nestedSteps(), '45');
+    assert.equal(await read(), concurrent);
+
+    git('add', 'projects/demo');
+    const stagedIndex = await readFile(indexPath);
+    await showGit();
+    await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
+    await expect(panel.locator('[data-git-group="staged"]').filter({hasText: 'projects/demo/project.source.json'})).toBeVisible();
+    assert.deepEqual(await readFile(indexPath), stagedIndex);
+    const externalProject = JSON.parse(await readFile(nestedFile, 'utf8'));
+    externalProject.targets[1].blocks.move_B.inputs.STEPS[1][1] = '50';
+    await writeFile(nestedFile, stringify(externalProject));
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await edit('value', '55');
+    await showGit();
+    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has unsaved changes.');
+    page.once('dialog', dialog => dialog.dismiss());
+    await panel.getByRole('button', {name: 'Reload Project'}).click();
+    await expect(panel.getByRole('button', {name: 'Reload Project'})).toBeEnabled();
+    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has unsaved changes.');
+    page.once('dialog', dialog => dialog.accept());
+    await panel.getByRole('button', {name: 'Reload Project'}).click();
+    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has no unsaved changes.');
+    await expect(panel.locator('[data-git-group="unstaged"]').filter({hasText: 'projects/demo/project.source.json'})).toBeVisible();
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await edit('value', '60');
+    await save();
+    assert.equal(await nestedSteps(), '60');
+    assert.deepEqual(await readFile(indexPath), stagedIndex);
+    assert.equal(await page.evaluate(() => (window as any).folderTest.picks.filter(id => id === 'turbowarp-plus-git-root').length), 1);
     assert.deepEqual(errors, []);
 });
