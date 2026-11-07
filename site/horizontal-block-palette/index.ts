@@ -420,8 +420,12 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     syncInputDocument();
     const disconnectPalette = connectDetachedBlockPalette({
         blocks: ScratchBlocks, workspace, flyout, menu,
-        categories: () => toolbox.categoryMenu_.categories_.map(({id_, name_}) =>
-            ({id: id_, label: ScratchBlocks.utils.replaceMessageReferences(name_)})),
+        categories: () => toolbox.categoryMenu_.categories_.map(({id_, name_, item_}) => ({
+            id: id_,
+            label: ScratchBlocks.utils.replaceMessageReferences(name_),
+            color: item_.querySelector('.scratchCategoryItemBubble')?.style.backgroundColor,
+            image: item_.querySelector('.scratchCategoryItemIcon')?.style.backgroundImage
+        })),
         show(id) {
             const category = categoryById(id);
             if (category) showCategory(category, 0);

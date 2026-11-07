@@ -18,6 +18,7 @@ import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLay
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';
 import {openDetachedBlockPalette} from '../horizontal-block-palette/index.ts';
+import {resources as categoryArtwork} from '@tw-plus/gui-block-category-artwork';
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
@@ -25,6 +26,18 @@ import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, Sprite
 
 const codeTab = 0;
 const soundsTab = 2;
+const categoryIcons = {
+    motion: categoryArtwork['icons/motion_icon.svg'],
+    looks: categoryArtwork['icons/looks_icon.svg'],
+    sound: categoryArtwork['icons/sound_icon.svg'],
+    events: categoryArtwork['icons/events_icon.svg'],
+    control: categoryArtwork['icons/control_icon.svg'],
+    sensing: categoryArtwork['icons/sensing_icon.svg'],
+    operators: categoryArtwork['icons/operators_icon.svg'],
+    variables: categoryArtwork['icons/variables_icon.svg'],
+    lists: categoryArtwork['icons/list_icon.svg'],
+    myBlocks: categoryArtwork['icons/block_icon.svg']
+};
 
 function AttachedCodePanel({children}: {children: React.ReactNode}) {
     const [attached, setAttached] = React.useState(false);
@@ -130,7 +143,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         createCodePaneAdapter(vm, locale, layoutFlags.workspaceMinimap ? attachCodePreviewMinimap : undefined), [vm, locale]);
     const popouts = React.useMemo(() => ({
         url: new URL('dockview-popout.html', window.location.href).href,
-        openPalette: () => openDetachedBlockPalette({locale, decorate: decorateSurface})
+        openPalette: () => openDetachedBlockPalette({locale, categoryIcons, decorate: decorateSurface})
     }), [locale]);
     const code = useCodeWindows({vm, host, locale,
         enabled: !multiView && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import Palette from './detached-block-palette-view.tsx';
 
 type Point = {x: number; y: number};
-type PaletteCategory = {id: string; label: string};
+type PaletteCategory = {id: string; label: string; color?: string; image?: string};
 export type PaletteItem = {
     label: string;
     preview?: SVGSVGElement;
@@ -21,6 +21,7 @@ export type PaletteSource = {
 
 type PaletteWindowOptions = {
     locale: string;
+    categoryIcons: Readonly<Record<string, string>>;
     decorate(document: Document): () => void;
 };
 
@@ -28,7 +29,7 @@ const sources = new WeakMap<object, PaletteSource>();
 const opened = new WeakMap<PaletteSource, {popup: Window; close(): void}>();
 const dragType = 'application/x-tw-plus-palette-block';
 
-export function openDetachedBlockPalette(workspace: object, {locale, decorate}: PaletteWindowOptions) {
+export function openDetachedBlockPalette(workspace: object, {locale, categoryIcons, decorate}: PaletteWindowOptions) {
     const source = sources.get(workspace);
     const owner = source?.surface.ownerDocument.defaultView;
     if (!owner) return;
@@ -74,7 +75,7 @@ export function openDetachedBlockPalette(workspace: object, {locale, decorate}: 
     try {
         source.setDetached(true);
         ReactDOM.render(React.createElement(Palette, {
-            source, locale, close,
+            source, locale, categoryIcons, close,
             startDrag(item, data) {
                 drag = item;
                 data.effectAllowed = 'copy';
