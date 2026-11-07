@@ -1,11 +1,14 @@
 import {mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderVM} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-views';
 import {mountGitPanel} from '@kubohiroya/turbowarp-plus-editor-git';
 import {loadedProjectTitle} from './project-tools/index.ts';
 
+type RuntimeThread = {updateMonitor?: boolean};
+type Runtime = FolderVM['runtime'] & {threads: RuntimeThread[]; isActiveThread(thread: RuntimeThread): boolean};
 type Action = {type: string};
 type GuiStore = {
-    getState(): {scratchGui: {vm: FolderVM; projectChanged: boolean}};
+    getState(): {scratchGui: {vm: FolderVM; projectChanged: boolean; vmStatus: {running: boolean}}};
     dispatch(action: Action): void;
     subscribe(listener: () => void): () => void;
 };
@@ -13,7 +16,7 @@ declare const __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: (handle: null) => Acti
 declare const __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: () => Action;
 declare const __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: (title: string) => Action;
 
-export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean) {
+export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean, locale: string) {
     const view = document?.defaultView as Window & {EditorPreload?: unknown; ReduxStore?: GuiStore};
     if (!view || view.EditorPreload || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
     const store = view.ReduxStore;
@@ -21,7 +24,18 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
     const markSaved = () => store.dispatch(__TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__());
     let gitPanel: ReturnType<typeof mountGitPanel> = null;
     const isProjectDirty = () => store.getState().scratchGui.projectChanged;
-    const folder = mountProjectFolder({vm, document, host: {
+    const runtime = vm.runtime as Runtime;
+    const isRunning = () => store.getState().scratchGui.vmStatus.running ||
+        runtime.threads.some(thread => !thread.updateMonitor && runtime.isActiveThread(thread));
+    const folder = mountProjectFolder({vm, document, locale, host: {
+        blockReload: {
+            isRunning,
+            subscribe: listener => store.subscribe(listener),
+            onApplied(targets) {
+                refreshExternalBlockViews(vm, targets);
+                markSaved();
+            }
+        },
         isProjectDirty,
         beforeLoad: () => store.dispatch(__TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__(null)),
         onOpened(title) {

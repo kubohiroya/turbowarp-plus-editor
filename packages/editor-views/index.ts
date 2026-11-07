@@ -41,6 +41,14 @@ function scopedReference(target, stage, id: unknown, name: ReferenceName) {
     return variable;
 }
 
+// The VM workspace emitter also removes unused broadcasts. Project a read-only XML view here.
+export function refreshExternalBlockViews(vm, targets) {
+    if (targets.includes(vm.editingTarget)) {
+        vm.emit('workspaceUpdate', {xml: workspaceXML(vm, vm.editingTarget)});
+    }
+    vm.emit('EXTERNAL_BLOCKS_RELOADED', targets);
+}
+
 export function createCodeSession({vm, workspace, ScratchBlocks, document, locale, canUse, onError, receiveBackpackDrop}) {
     const parent = document.defaultView;
     const container = workspace.getParentSvg().parentElement;
@@ -583,6 +591,15 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     workspace.hasRedoStack = function () {
         return histories.get(vm.editingTarget)?.state.canRedo ?? nativeHasRedo.call(this);
     };
+    const externalBlocksReloaded = targets => {
+        for (const target of targets) {
+            if (!exists(target) || !histories.has(target)) continue;
+            dirty.delete(target);
+            histories.set(target, createHistory(target, vm.runtime.getTargetForStage()));
+            publish(target, null, false);
+        }
+    };
+    vm.on('EXTERNAL_BLOCKS_RELOADED', externalBlocksReloaded);
     workspace.addChangeListener(observeParent);
     parent.addEventListener('focus', parentFocus);
     vm.on('targetsUpdate', targetsUpdated);
@@ -609,6 +626,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         parent.removeEventListener('focus', parentFocus);
         vm.removeListener('targetsUpdate', targetsUpdated);
         vm.removeListener('workspaceUpdate', flushWorkspaceProjection);
+        vm.removeListener('EXTERNAL_BLOCKS_RELOADED', externalBlocksReloaded);
         vm.removeListener('EXTENSION_ADDED', extensionsUpdated);
         vm.removeListener('BLOCKSINFO_UPDATE', extensionsUpdated);
         container.inert = originalInert;

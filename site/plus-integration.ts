@@ -165,7 +165,7 @@ export const createPlusIntegration = ({
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
-        attached.push(attachProjectFolder(vm, hostDocument, localGit));
+        attached.push(attachProjectFolder(vm, hostDocument, localGit, locale));
         const workspace = getDocumentWorkspace(vm);
         const documents = mountEditor({
             vm,
