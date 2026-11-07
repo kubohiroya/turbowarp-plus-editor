@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
-import {chromium, expect} from '@playwright/test';
+import {chromium, expect, type Page} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
 import pinnedGui from './pinned-gui.ts';
 import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons, undockButtons} from './fixtures/layout-menu.ts';
@@ -15,6 +15,8 @@ const types = {
 const origin = 'http://layout.test';
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
+const projectSearch = (page: Page) => page.locator('.dv-groupview.dv-active-group > .dv-tabs-and-actions-container')
+    .getByRole('combobox', {name: 'Search project'});
 
 async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui = false) {
     if (!bareGui) await verifyWebEditor(root);
@@ -930,8 +932,10 @@ test('the default Dockview splits one sprite editor and restores each view secti
         };
         return block.id;
     });
-    const search = toolbar.getByRole('combobox', {name: 'Search within this sprite'});
+    await expect.poll(() => page.evaluate(id => Boolean(window.vm.editingTarget.blocks.getBlock(id)), blockId)).toBe(true);
+    const search = projectSearch(page);
     await search.fill('move');
+    await expect(page.getByRole('group', {name: /^Blocks\b/}).getByRole('option')).toContainText(spriteName);
     await search.press('ArrowDown');
     await search.press('Enter');
     await expect(page.locator('html')).toHaveAttribute('data-test-centered-block', blockId);
@@ -1083,9 +1087,9 @@ test('the Dockview asset connection restores the native costume and sound select
     await choose('Pane sound A');
     await activate(0);
     await section('Sounds').click();
-    const search = toolbar.getByRole('combobox', {name: 'Search within this sprite'});
+    const search = projectSearch(page);
     await search.fill('Pane sound B');
-    await page.getByRole('option', {name: 'Pane sound B'}).click();
+    await page.getByRole('group', {name: /^Sounds\b/}).getByRole('option', {name: /^Pane sound B\b/}).click();
     await expect(selected).toContainText('Pane sound B');
     const soundLayout = await bounds(editor);
     await activate(1);
