@@ -11,17 +11,22 @@ export type NativeFieldEditSession = {
 
 /** The parent field owns the widget and its value. */
 export function openNativeField({blocks, field, document, anchor, parentDocument = false, asyncCommit = false, isolatedValue,
-    resources, valid, commit, onError}: {
+    onAttachedClose, resources, valid, commit, onError}: {
     blocks; field; document: Document; anchor: Anchor; parentDocument?: boolean; asyncCommit?: boolean; isolatedValue?: string;
     resources?: FieldResourceOptions;
     valid(): boolean; commit(value: string): void;
+    onAttachedClose?(): void;
     onError?(error: unknown): void;
 }) {
     const widget = blocks.WidgetDiv;
     const original = widget?.DIV;
     const window = document.defaultView;
-    if (!window || !original || typeof field?.showEditor_ !== 'function') return;
+    if (!window || !original || typeof field?.showEditor_ !== 'function') {
+        onAttachedClose?.();
+        return;
+    }
     const isolated = isolatedValue !== undefined;
+    const oneUse = isolated || Boolean(onAttachedClose);
     const value = isolated ? isolatedValue : field.getValue();
     const setValue = field.setValue;
     const host = document.createElement('div');
@@ -37,7 +42,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
     let closed = false;
     let queued = false;
     const editController = parentDocument && asyncCommit ? new AbortController() : undefined;
-    const scoped = Boolean(editController || isolated);
+    const scoped = Boolean(editController || oneUse);
 
     function withoutEvents(apply: () => void) {
         blocks.Events.disable();
@@ -70,7 +75,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
                 original.style.opacity = originalOpacity;
                 original.inert = originalInert;
             }
-            field.setValue = isolated ? () => {} : setValue;
+            field.setValue = oneUse ? () => {} : setValue;
             host.remove();
             if (isolated) {
                 try {
@@ -85,6 +90,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
                     onError?.(error);
                 }
             }
+            onAttachedClose?.();
         }
     }
 
@@ -105,7 +111,7 @@ export function openNativeField({blocks, field, document, anchor, parentDocument
     const ownsOpenWidget = () => !scoped ||
         (widget.DIV === widgetHost && widget.owner_ === widgetOwner && widget.isVisible());
     function stageValue(next: unknown) {
-        if (closed || (isolated && queued) || !valid() || !ownsOpenWidget()) return;
+        if (closed || (oneUse && queued) || !valid() || !ownsOpenWidget()) return;
         withoutEvents(() => setValue.call(field, next));
         if (queued || field.getValue() === value) return;
         queued = true;

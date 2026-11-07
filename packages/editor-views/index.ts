@@ -1,5 +1,5 @@
 import {getCodeDynamicShapes, getCodeExtensions} from './code-extensions.ts';
-import {createIsolatedNativeField, customField} from './custom-extension-fields.ts';
+import {createIsolatedNativeField, customField, reserveAttachedNativeField, usesAttachedNativeEditor} from './custom-extension-fields.ts';
 import {projectNativeFieldGraphics} from './native-field-svg.ts';
 import {openNativeField} from './native-extension-field.ts';
 import {readFieldActionPanel, runFieldAction, type FieldActionPanel, type ProgrammaticExtensionField} from './programmatic-extension-field.ts';
@@ -109,6 +109,17 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         close?.();
     }
 
+    function refreshParentWorkspace(xml: string) {
+        projecting = true;
+        ScratchBlocks.Events.disable();
+        try {
+            vm.emit('workspaceUpdate', {xml});
+        } finally {
+            ScratchBlocks.Events.enable();
+            projecting = false;
+        }
+    }
+
     function publish(target, source, refreshParent) {
         for (const view of views) {
             if (view.target !== target) continue;
@@ -116,16 +127,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             closeNativeEditor(view);
         }
         const xml = workspaceXML(vm, target);
-        if (refreshParent && vm.editingTarget === target) {
-            projecting = true;
-            ScratchBlocks.Events.disable();
-            try {
-                vm.emit('workspaceUpdate', {xml});
-            } finally {
-                ScratchBlocks.Events.enable();
-                projecting = false;
-            }
-        }
+        if (refreshParent && vm.editingTarget === target) refreshParentWorkspace(xml);
         if (!views.size) return;
         const data = projection(target, xml);
         for (const view of views) {
@@ -310,6 +312,8 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             closeNativeEditor(view);
             const field = workspace.getBlockById(blockId)?.getField(name);
             const isolated = definition.native.isolatedEditor === true;
+            const attached = usesAttachedNativeEditor(definition.native);
+            if (attached && !reserveAttachedNativeField(field, definition.native)) return;
             let editorField = field;
             if (isolated) {
                 try {
@@ -323,6 +327,14 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             view.closeNativeField = openNativeField({
                 blocks: ScratchBlocks, field: editorField, document: view.document, anchor,
                 isolatedValue: isolated ? value : undefined,
+                onAttachedClose: attached ? () => {
+                    // A commit already refreshes the projection. Replace the retired field only if it is still installed.
+                    queueMicrotask(() => {
+                        if (vm.editingTarget === target && workspace.getBlockById(blockId)?.getField(name) === field) {
+                            refreshParentWorkspace(workspaceXML(vm, target));
+                        }
+                    });
+                } : undefined,
                 parentDocument: definition.native.parentDocument === true,
                 asyncCommit: definition.native.asyncCommit === true,
                 resources: {manifest: definition.native.resources, canFetch: url => vm.securityManager.canFetch(url)},

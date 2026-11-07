@@ -236,6 +236,25 @@ node test/stage6/css-animation-fields.ts "$trial/build"
 （GUI `15edb7930`、VM `78e5f032`）で通過した。
 切り戻し時は作品を保存してコード別窓をドックに戻し、この段階の `editor-views` の差分を戻す。
 
+### ドック側の実フィールドへの遅延 `setValue` の試作
+
+`implementation.parentDocument = true` と `implementation.attachedEditor = true` を指定する。
+別窓から編集 UI を開いたとき、親ワークスペースのブロックに取り付けられた実フィールドで
+`showEditor_` を実行する。拡張がそのインスタンスを保持して遅延 `field.setValue(value)` を呼べるようにし、
+編集権が有効な間に受理した変更を親 VM の共有履歴へ1件記録する。
+
+閉鎖したインスタンスの `setValue` は無効にし、既存のワークスペース投影で VM の状態からフィールドを作り直す。
+再投影の際に同じインスタンスを返すファクトリーは対象外。ドック画面から直接開いた UI の遅延確定、
+グローバルな `WidgetDiv.hide()` の遅延呼び出し、VM の直接更新は残課題。
+この試作では `isolatedEditor` を同時に指定すると、従来の編集専用インスタンスを使う。
+
+上の手順でビルドした後、`node test/stage6/css-animation-fields.ts "$trial/build" --attached-set-value` を実行する。
+別窓 A、B、再び A の順に編集権を渡す。各回で拡張が親の実フィールドを受け取ることを確かめ、
+B の編集中と A が編集を再開した後に古い呼び出しを完了させて、値と共有履歴への混入を検査する。
+有効な確定の両ビューへの同期、共有 Undo／Redo 各1回、ドック復帰後の編集、SB3 再読込後の値も検証する。
+フォーカス通知は検証ハーネスが供給する。切り戻し時は作品を保存してコード別窓をドックに戻し、
+この試作の差分を戻す。
+
 ### Flexbox・Grid の互換性試作
 
 `implementation.parentDocument = true` の固定構造の HTML フィールドで、`WidgetDiv` 内の

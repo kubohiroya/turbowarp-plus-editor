@@ -10,7 +10,8 @@ await verifyWebEditor(directory);
 const layout = process.argv.includes('--layout');
 const resources = process.argv[3] === '--resources';
 const asyncField = process.argv[3] === '--async-commit';
-const delayedField = process.argv[3] === '--delayed-set-value';
+const attachedField = process.argv[3] === '--attached-set-value';
+const delayedField = attachedField || process.argv[3] === '--delayed-set-value';
 const programmaticPromise = process.argv[3] === '--programmatic-promise';
 const programmatic = programmaticPromise || process.argv[3] === '--programmatic-sync';
 const fontFile = resources ? await readFile(process.argv[4]) : undefined;
@@ -52,7 +53,8 @@ const [driver, extension] = await Promise.all([
             TW_TEST_NATIVE_SVG: 'false', TW_TEST_PARENT_DOCUMENT: 'true', TW_TEST_NATIVE_CSS: 'true',
             TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources && !asyncField && !delayedField),
             TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources), TW_TEST_ASYNC_FIELD: String(asyncField),
-            TW_TEST_PROGRAMMATIC_PROMISE: String(programmaticPromise), TW_TEST_DELAYED_FIELD: String(delayedField)
+            TW_TEST_PROGRAMMATIC_PROMISE: String(programmaticPromise),
+            TW_TEST_DELAYED_FIELD: String(delayedField && !attachedField), TW_TEST_ATTACHED_FIELD: String(attachedField)
         }
     })
 ]);
@@ -278,22 +280,40 @@ try {
         await widget.waitFor({state: 'detached'});
         if (asyncField) assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][0].signal.aborted), true);
         assert.equal(await undoDisabled(b), true);
+        if (attachedField) {
+            widget = await openWidget(b);
+            await submit('stale after reacquiring');
+            await jobCount(2);
+            await finish(0);
+            assert.equal((await readValue()).value, 'original', 'revoked field changed the VM while B owned editing');
+            await checkValue('original', [editor, a, b]);
+            assert.equal(await undoDisabled(b), true);
+        }
 
         await focus(a);
         widget = await openWidget(a);
         await submit(edited);
-        await jobCount(2);
-        await finish(0);
+        const currentJob = attachedField ? 2 : 1;
+        await jobCount(currentJob + 1);
+        await finish(currentJob - 1);
+        if (attachedField) {
+            assert.equal((await readValue()).value, 'original', 'revoked field changed the VM after A reopened the editor');
+        }
         await checkValue('original', [a, b]);
         assert.equal(await undoDisabled(a), true);
         assert.equal(await widget.getByRole('textbox', {name: 'Caption'}).inputValue(), edited);
-        if (delayedField) {
+        if (attachedField) {
+            assert.deepEqual(await editor.evaluate(() => {
+                const jobs = window['testAsyncFieldJobs'];
+                return {attached: jobs.every(job => job.attached), instances: new Set(jobs.map(job => job.field)).size};
+            }), {attached: true, instances: 3});
+        } else if (delayedField) {
             assert.deepEqual(await editor.evaluate(() => window['testAsyncFieldJobs'].map(job => job.detached)), [true, true]);
             assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][0].result), 'original');
         } else {
             assert.equal(await editor.evaluate(() => window['testAsyncFieldJobs'][1].signal.aborted), false);
         }
-        await finish(1);
+        await finish(currentJob);
     } else {
         await submit(edited);
     }
@@ -368,6 +388,7 @@ try {
     assert.deepEqual(errors, []);
     const displayCheck = programmaticPromise ? 'applyAction Promise, stale result filtering and rejection recovery' :
         programmatic ? 'synchronous applyAction' :
+        attachedField ? 'direct delayed setValue on actual docked fields, stale writes after revocation and reacquisition' :
         delayedField ? 'direct delayed setValue, detached field instances and stale writes after reacquiring edit access' :
         asyncField ? 'async commit, stale completion after reacquiring edit access and duplicate callback filtering' :
         resources ? 'parent-only PNG, SVG and WOFF2 loading and resource filtering' :

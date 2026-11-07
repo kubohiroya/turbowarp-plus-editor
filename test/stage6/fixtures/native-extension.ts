@@ -9,11 +9,13 @@ declare const TW_TEST_LAYOUT_CSS: boolean;
 declare const TW_TEST_EXTERNAL_FIELDS: boolean;
 declare const TW_TEST_ASYNC_FIELD: boolean;
 declare const TW_TEST_DELAYED_FIELD: boolean;
+declare const TW_TEST_ATTACHED_FIELD: boolean;
 
 const useLayout = typeof TW_TEST_LAYOUT_CSS !== 'undefined' && TW_TEST_LAYOUT_CSS;
 const externalFields = typeof TW_TEST_EXTERNAL_FIELDS !== 'undefined' && TW_TEST_EXTERNAL_FIELDS;
 const asyncField = typeof TW_TEST_ASYNC_FIELD !== 'undefined' && TW_TEST_ASYNC_FIELD;
 const delayedField = typeof TW_TEST_DELAYED_FIELD !== 'undefined' && TW_TEST_DELAYED_FIELD;
+const attachedField = typeof TW_TEST_ATTACHED_FIELD !== 'undefined' && TW_TEST_ATTACHED_FIELD;
 const assetRoot = 'https://field-assets.test/';
 
 declare const Scratch: {
@@ -23,7 +25,8 @@ declare const Scratch: {
 
 const parentWindow = window as Window & {
     vm?: unknown;
-    testAsyncFieldJobs?: {finish(): void; signal?: AbortSignal; delivered: boolean; detached: boolean; result?: string}[];
+    testAsyncFieldJobs?: {finish(): void; field: object; signal?: AbortSignal; delivered: boolean; detached: boolean;
+        attached: boolean; result?: string}[];
     ScratchBlocks?: {
         FieldTextInput: new (value: string) => {
             sourceBlock_?: unknown;
@@ -134,6 +137,7 @@ Scratch.extensions.register({
                     parentDocument: TW_TEST_PARENT_DOCUMENT,
                     asyncCommit: asyncField,
                     isolatedEditor: delayedField,
+                    attachedEditor: attachedField,
                     resources: externalFields ? {
                         picture: {kind: 'image', url: assetRoot + 'picture.png'},
                         vector: {kind: 'image', url: assetRoot + 'vector.svg'},
@@ -188,11 +192,14 @@ Scratch.extensions.register({
                             }
                             const commit = (value: string) => {
                                 if (!parentWindow.vm) throw new Error('Missing parent VM');
-                                if (edit || (delayedField && !field.sourceBlock_)) {
+                                if (edit || (delayedField && !field.sourceBlock_) || (attachedField && WidgetDiv.DIV.inert)) {
                                     apply.disabled = true;
                                     let finish: () => void;
                                     const ready = new Promise<void>(resolve => {finish = resolve;});
-                                    const job = {finish, signal: edit?.signal, delivered: false, detached: !field.sourceBlock_,
+                                    const workspaceField = parentWindow.ScratchBlocks.getMainWorkspace()
+                                        .getBlockById(field.sourceBlock_?.id)?.getField(options.name);
+                                    const job = {finish, field, signal: edit?.signal, delivered: false, detached: !field.sourceBlock_,
+                                        attached: workspaceField === field,
                                         result: undefined as string | undefined};
                                     (parentWindow.testAsyncFieldJobs ??= []).push(job);
                                     void ready.then(() => {
