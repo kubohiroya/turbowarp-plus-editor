@@ -124,17 +124,23 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$']
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.css', 'sprite-editor-toolbar.css',
     'sprite-properties.css', 'windows.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
+    'sprite-editor-toolbar',
     'sprite-properties', 'sprite-tabs', 'stage-surface', 'dockview-styles', 'windows']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
+config.module.rules.push({
+    include: fs.realpathSync(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-search-header.cts')
+});
 for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-for (const entry of ['palette-category-reorder', 'palette-dropdown-resize']) {
+for (const entry of ['palette-category-reorder', 'palette-dropdown-resize', 'project-search']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }

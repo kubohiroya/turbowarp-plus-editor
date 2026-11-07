@@ -6,6 +6,8 @@ import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbow
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar';
+import {mountProjectSearchHeader} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
@@ -201,7 +203,27 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         activateSection: onActivateEditorTab,
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, layoutStorage, stagePane: stage?.pane, activeTools: renderEditorTabRow(null), viewAdapter: codePaneAdapter,
+            multiView, layoutStorage, stagePane: stage?.pane, viewAdapter: codePaneAdapter,
+            renderToolbar(view, actions) {
+                const section = spriteEditorSections[view.section] ?? 'code';
+                return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}
+                    activeGroup={view.groupActive} propertiesInVariables
+                    onSectionChange={next => actions.setSection(spriteEditorSections.indexOf(next))}
+                    actions={view.active && section !== 'variables' ? renderEditorTabRow(null) : undefined} />;
+            },
+            mountHeaderSearch(context: Parameters<typeof mountProjectSearchHeader>[0]) {
+                return mountProjectSearchHeader(context, {
+                    locale, project: vm.runtime, getMessages: () => window.ScratchBlocks?.Msg ?? {}
+                }, {
+                    getViews: () => spriteTabs.controller.current,
+                    getTarget: id => vm.runtime.getTargetById(id),
+                    getEditingTarget: () => vm.editingTarget,
+                    centerBlock(id) {
+                        const workspace = window.ScratchBlocks?.getMainWorkspace();
+                        if (workspace?.getBlockById(id)) workspace.centerOnBlock(id);
+                    }
+                });
+            },
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             getProperties(id) {
@@ -223,17 +245,6 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 const stage = vm.runtime.getTargetForStage();
                 const owner = target?.variables[variableId] ? target : stage?.variables[variableId] ? stage : undefined;
                 if (owner && vm.setVariableValue(owner.id, variableId, value)) vm.runtime.emitProjectChanged();
-            },
-            getCodeSearchItems(id) {
-                if (vm.editingTarget?.id !== id) return [];
-                const workspace = window.ScratchBlocks?.getMainWorkspace();
-                return (workspace?.getAllBlocks(false) ?? []).filter(block => !block.isShadow())
-                    .map(block => ({id: block.id, label: block.toString(160)}));
-            },
-            openCodeSearchResult(id, blockId) {
-                if (vm.editingTarget?.id !== id) return;
-                const workspace = window.ScratchBlocks?.getMainWorkspace();
-                if (workspace?.getBlockById(blockId)) workspace.centerOnBlock(blockId);
             }
         })
     });
