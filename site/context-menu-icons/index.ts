@@ -8,6 +8,7 @@ const {contextMenuIcons: enabled} = readWebStartupFeatureFlags(
 );
 
 const paths = {
+    open: 'M13 4h7v7m0-7-9 9m-1-8H4v15h15v-6',
     duplicate: 'M8 8V4h12v12h-4M4 8h12v12H4z',
     copy: 'M8 4h12v12M4 8h12v12H4zM7 12h6m-6 4h4',
     cut: 'M8 8 20 20M8 16 20 4M8 8a3 3 0 1 0-6 0 3 3 0 0 0 6 0Zm0 8a3 3 0 1 0-6 0 3 3 0 0 0 6 0Z',
@@ -29,6 +30,8 @@ const paths = {
     folderMove: 'M3 5h7l2 2h9v13H3zM7 13h10m-3-3 3 3-3 3',
     collapse: 'm6 3 6 6 6-6M6 21l6-6 6 6',
     expand: 'm6 9 6-6 6 6M6 15l6 6 6-6',
+    paletteHorizontal: 'M3 4h18v16H3zM3 9h18M7 6.5h.01m4 0h.01m4 0h.01',
+    paletteVertical: 'M3 4h18v16H3zM9 4v16M6 8h.01m0 4h.01m0 4h.01',
     switch: 'M3 8h17m-4-4 4 4-4 4M21 16H4m4-4-4 4 4 4',
     locate: 'M12 2v4m0 12v4M2 12h4m12 0h4M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12z',
     help: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4m0 3h.01'
@@ -90,7 +93,8 @@ const assetActions = {
 };
 
 const defaultAssetActions = new Map([
-    ['duplicate', 'duplicate'], ['export', 'export'], ['rename', 'edit'], ['delete', 'delete']
+    ['duplicate', 'duplicate'], ['export', 'export'], ['rename', 'edit'], ['delete', 'delete'],
+    ['Open', 'open'], ['開く', 'open']
 ]);
 
 const assetAddonActions = {
@@ -130,7 +134,7 @@ const svgNamespace = 'http://www.w3.org/2000/svg';
 const installed = new WeakSet();
 
 function createContextMenuIcon (document, action) {
-    if (!enabled || !paths[action]) return null;
+    if (!Object.hasOwn(paths, action)) return null;
     const icon = document.createElementNS(svgNamespace, 'svg');
     icon.setAttribute('class', styles.icon);
     icon.setAttribute('aria-hidden', 'true');
@@ -167,8 +171,8 @@ export function attachAssetContextMenuIcons (document, getMessages) {
     return {dispose: () => window.removeEventListener('REACT_CONTEXTMENU_SHOW', onShow)};
 }
 
-export function installBlockContextMenuIcons (ScratchBlocks) {
-    if (!enabled || installed.has(ScratchBlocks)) return;
+export function installBlockContextMenuIcons (ScratchBlocks, showIcons = enabled) {
+    if (!showIcons || installed.has(ScratchBlocks)) return;
     const {ContextMenu, WidgetDiv} = ScratchBlocks;
     const populate = ContextMenu.populate_;
     const data = ScratchBlocks.Constants.Data;
@@ -192,7 +196,7 @@ export function installBlockContextMenuIcons (ScratchBlocks) {
         const decorated = options.map(option => {
             const {text} = option;
             if (typeof text !== 'string') return option;
-            const action = (variableChoices.has(option.callback) && 'switch') ||
+            const action = option.twPlusMenuIcon || (variableChoices.has(option.callback) && 'switch') ||
                 localizedAction(text, Msg, messageActions, '%1') || transferActions.get(text) ||
                 localizedAction(text, addonMessages, blockAddonActions, '{var}') ||
                 ((isArgument || Object.keys(addonMessages).some(key => key.startsWith('block-switching/') &&
