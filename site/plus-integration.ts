@@ -24,7 +24,7 @@ import {plusProjectPackager} from './packager/handoff.ts';
 
 import {installControlsDock} from './controls-dock.ts';
 import {attachProjectFolder} from './project-folder-host.ts';
-import getStageControls from './stage-controls.ts';
+import getStageControls from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 import {installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';

@@ -17,7 +17,7 @@
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 0.25rem;
-    background: var(--ui-white);
+    background: transparent;
     cursor: pointer;
 }
 
@@ -61,6 +61,12 @@
 
 .leading .flyout {
     inset-inline: 100% auto;
+}
+
+.divider {
+    margin: 0.25rem 0;
+    border: 0;
+    border-block-start: 1px solid var(--ui-black-transparent);
 }
 
 .display {

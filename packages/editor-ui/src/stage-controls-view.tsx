@@ -1,12 +1,13 @@
 import React from 'react';
-import type {createStageControlsService} from '../stage-controls.ts';
-import styles from './view.css';
+import type {createStageControlsService} from './stage-controls.ts';
+import styles from './stage-controls.css';
 
 /** The distribution owns both the registered controls and the view of their service. */
 type Service = ReturnType<typeof createStageControlsService>;
 interface StageControlsProps {
     service: Service;
     isSmall?: boolean;
+    menuLocale?: string;
 }
 interface StageControlsState {
     controls: ReturnType<Service['snapshot']>;
@@ -55,28 +56,38 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
         if (node && panel && panel.parentNode !== node) node.appendChild(panel);
     }
     render () {
-        return (
-            <React.Fragment>
-                {this.state.controls.filter(control => control.visible).map(control => (
-                    <button
-                        aria-expanded={control.expanded}
-                        aria-haspopup="dialog"
-                        aria-label={control.label}
-                        className={styles.control}
-                        data-extension-stage-control={control.id}
-                        key={control.id}
-                        ref={control.ref}
-                        title={control.label}
-                        type="button"
-                        onClick={control.onClick}
-                    >
-                        <span aria-hidden="true">{control.icon}</span>
-                        {!this.props.isSmall && <span className={styles.label}>{control.text}</span>}
-                    </button>
-                ))}
-                {this.state.panel && <div className={styles.panel} ref={this.mountPanel} />}
-            </React.Fragment>
-        );
+        const {isSmall, menuLocale} = this.props;
+        const {panel} = this.state;
+        const buttons = this.state.controls.filter(control => control.visible).map(control => (
+            <button
+                aria-expanded={control.expanded}
+                aria-haspopup="dialog"
+                aria-label={control.label}
+                className={styles.control}
+                data-extension-stage-control={control.id}
+                data-runtime-dock-control={control.id}
+                key={control.id}
+                ref={control.ref}
+                title={control.label}
+                type="button"
+                onClick={control.onClick}
+            >
+                <span aria-hidden="true">{control.icon}</span>
+                {!isSmall && <span className={styles.label}>{control.text}</span>}
+            </button>
+        ));
+        if (menuLocale === undefined) return <>
+            {buttons}
+            {panel && <div className={styles.panel} ref={this.mountPanel} />}
+        </>;
+        if (!buttons.length && !panel) return null;
+        const label = /^ja(?:-|$)/i.test(menuLocale) ? '機能拡張コントロールボタン領域' : 'Extension controls';
+        return <div className={styles.menuDock}>
+            {buttons.length > 0 && <div className={styles.controlGroup} role="group" aria-label={label}>
+                {buttons}
+            </div>}
+            {panel && <div className={styles.menuPanel} ref={this.mountPanel} />}
+        </div>;
     }
 }
 

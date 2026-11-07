@@ -28,4 +28,4 @@ GUIの接続テストはGUI側、実ブロック・ダイアログの挙動は `
 
 移管前の段階導入・測定値・当時の依存は、[GUIの調査基準コミット](https://github.com/kubohiroya/scratch-gui/tree/3df07d08bc5ac114ca5aa6b88dd500b8a6a39f15/docs)と関連Issueに残します。
 過去のフラグ16組合せや公開物ハッシュを、現行配信物の検証結果として読み替えません。
-カメラ固有の旧入口に代わる汎用操作列は `site/stage-controls.ts` と `site/controls-dock.ts` が所有します。
+拡張操作のサービスと描画は `packages/editor-ui` が担当し、`site/controls-dock.ts` が拡張向けの接続を提供します。

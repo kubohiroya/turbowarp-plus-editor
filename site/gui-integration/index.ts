@@ -1,4 +1,5 @@
 import React from 'react';
+import {connect} from 'react-redux';
 import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {externalYamlPort} from '../editor-layout/index.tsx';
@@ -9,7 +10,7 @@ import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import {renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
-import StageControlsView from '../stage-controls/view.tsx';
+import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
@@ -37,10 +38,14 @@ export {default as createPreviewVm} from './lib/tw-preview-vm.ts';
 export {default as createBlocksWrapper} from './containers/tw-plus-blocks.tsx';
 export {createWorkspaceAttachment} from './containers/tw-plus-workspace-attachment.tsx';
 
-export const renderStageControls = ({vm, isSmall}) => {
+const ExtensionControls = connect(({scratchGui: {mode}}) => ({
+    stageOnly: mode.isPlayerOnly || mode.isFullScreen
+}))(({vm, isSmall, menuLocale, stageOnly}) => {
+    if (stageOnly !== (menuLocale === undefined)) return null;
     const service = hostStageControls(vm, hostIntegration());
-    return service ? React.createElement(StageControlsView, {service, isSmall}) : null;
-};
+    return service ? React.createElement(StageControlsView, {service, isSmall, menuLocale}) : null;
+});
+export const renderStageControls = props => React.createElement(ExtensionControls, props);
 
 export const attachHostScriptTransfer = (context, integration) => {
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);

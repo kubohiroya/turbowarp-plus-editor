@@ -171,6 +171,7 @@ export function ProjectInfoMenu({
             </div>}
             {action(japanese ? 'アドオン' : 'Addons', addons)}
             {action(japanese ? '高度な設定' : 'Advanced Settings', advanced)}
+            <hr className={styles.divider} />
             <a className={styles.entry} href="https://github.com/kubohiroya/turbowarp-plus-editor"
                 target="_blank" rel="noreferrer" onClick={close}>
                 <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d={githubPath} /></svg>
