@@ -1,6 +1,7 @@
 import React from 'react';
 import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
+import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-layout/standard-layout';
@@ -9,7 +10,7 @@ import targetStyles from '@kubohiroya/turbowarp-plus-editor-layout/targets.css';
 import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import '@kubohiroya/turbowarp-plus-editor-layout/windows.css';
 import {EditorTabLayout} from './editor-tabs.tsx';
-import {StageDisplayMenuContext, WindowLayoutContext} from './context.ts';
+import {StageDisplayMenuContext, TargetSwitchContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
@@ -62,6 +63,8 @@ const getStorage = () => {
 const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, vm, ...props}) => {
     const {StandardLayout} = layoutViews;
     const [dockAction, setDockAction] = React.useState(null);
+    const targetSwitch = React.useMemo(() => createTargetSwitchFeedback(vm, document), [vm]);
+    React.useLayoutEffect(() => targetSwitch.cancel, [targetSwitch]);
     const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
     const resizeStage = React.useCallback((surface: HTMLElement) => {
         const renderer = vm.renderer;
@@ -69,7 +72,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
         const {width, height} = renderer.canvas.getBoundingClientRect();
         if (width > 0 && height > 0) renderer.resize(width, height);
     }, [vm]);
-    return <StageDisplayMenuContext.Provider value={{dockAction, setDockAction, stage, resizeStage}}>
+    const layout = (
         <StandardLayout
             {...props}
             enabled={layoutFlags.standardLayout}
@@ -96,7 +99,12 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
                 render={props.render}
             /> : props.render}
         />
-    </StageDisplayMenuContext.Provider>;
+    );
+    return <TargetSwitchContext.Provider value={targetSwitch}>
+        <StageDisplayMenuContext.Provider value={{dockAction, setDockAction, stage, resizeStage}}>
+            {layout}
+        </StageDisplayMenuContext.Provider>
+    </TargetSwitchContext.Provider>;
 };
 
 export const EditorLayout = layoutFlags.standardLayout || layoutFlags.splitter || layoutFlags.windowLayout ? WebLayout : undefined;

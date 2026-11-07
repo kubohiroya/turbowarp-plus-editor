@@ -17,9 +17,12 @@ test('local Packager asks permission, downloads one HTML and executes it offline
         await page.getByTestId('plus-package-resources').check();
         await page.getByTestId('plus-package-generate').click();
         await expect(page.getByTestId('tw-plus-permission')).toBeVisible();
+        const waitCursor = page.locator('style[data-tw-plus-wait-cursor]');
+        await expect(waitCursor).toHaveAttribute('media', 'not all');
         await expect(page.getByTestId('tw-plus-permission').locator('[data-field="sha256"]')).toHaveText(digest);
         await page.getByTestId('tw-plus-allow').click();
         await expect(page.getByTestId('plus-package-download')).toBeVisible();
+        await expect(waitCursor).toHaveCount(0);
         await expect(page.getByTestId('plus-package-status'))
             .toHaveText('HTMLを生成しました。カタログにない拡張があるので、このHTMLを開くたびに、その拡張を許可するか確認します。');
         expect(await page.evaluate(() => globalThis.__plusFixtureStarted || 0)).toBe(0);

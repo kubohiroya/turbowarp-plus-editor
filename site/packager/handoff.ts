@@ -14,6 +14,7 @@
 
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import JSZip from '@turbowarp/jszip';
+import {withWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {PLUS_EXTENSION_LOADER_ENABLED} from '../extension-library/flags.ts';
@@ -59,14 +60,17 @@ export const createProjectPackager = ({
          */
         async open ({popup, vm, name, fallbackURL}) {
             try {
-                const buffer = await saveProjectForPackager(vm);
-                if (popup.closed) return;
-                if (!await readProject(buffer)) {
-                    popup.location.href = fallbackURL;
-                    return;
-                }
-                pending = {window: popup, buffer, name};
-                popup.location.href = page();
+                await withWaitCursor([globalThis.document], async () => {
+                    if (popup.closed) return;
+                    const buffer = await saveProjectForPackager(vm);
+                    if (popup.closed) return;
+                    if (!await readProject(buffer)) {
+                        popup.location.href = fallbackURL;
+                        return;
+                    }
+                    pending = {window: popup, buffer, name};
+                    popup.location.href = page();
+                });
             } catch (error) {
                 popup.close();
                 console.error(error);
@@ -81,7 +85,7 @@ export const createProjectPackager = ({
          * @returns {Promise<boolean>} True when this window was taken over.
          */
         async claim ({source, buffer, name, cancelImport}) {
-            if (!await readProject(buffer)) return false;
+            if (!await withWaitCursor([globalThis.document], () => readProject(buffer))) return false;
             // Tell the upstream Packager first: it is showing a loading screen for an import that
             // is not going to arrive.
             cancelImport();

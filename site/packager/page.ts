@@ -13,6 +13,7 @@ import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-co
 import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
 import JSZip from '@turbowarp/jszip';
 import Packager from '@turbowarp/packager-web';
+import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {createPlusPermissionUI} from '../extension-host/permission-ui.ts';
@@ -40,15 +41,17 @@ const setInput = (bytes, name) => {
     download.hidden = true;
 };
 file.addEventListener('change', async () => {
-    if (!file.files[0] || pending) return;
+    const selected = file.files[0];
+    if (!selected || pending) return;
+    generate.disabled = true;
+    download.hidden = true;
     try {
         // The core checks Blob.size before reading or inflating the selected file.
-        await createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions}).prepare(file.files[0]);
-        setInput(file.files[0], file.files[0].name);
+        await withWaitCursor([document], () => createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions}).prepare(selected));
+        if (file.files[0] === selected) setInput(selected, selected.name);
     } catch (error) {
+        if (file.files[0] !== selected) return;
         input = null;
-        generate.disabled = true;
-        download.hidden = true;
         status.textContent = `作品を読み込めませんでした: ${error.code || ''} ${error.message}`;
     }
 });
@@ -68,10 +71,19 @@ generate.addEventListener('click', async () => {
     pending = true;
     generate.disabled = true;
     download.hidden = true;
+    try {
+        await withWaitCursor([document], generateHTML);
+    } finally {
+        pending = false;
+        generate.disabled = false;
+    }
+});
+
+async function generateHTML() {
     // What the host's catalog lists is trusted like TurboWarp's official gallery, as in the Editor.
     const trusted = plusTrustedExtensions.catalog;
     const trustProvider = createSessionTrustProvider({requestApproval: async (code, options) =>
-        await trusted.isTrustedCode(code) || ui.requestApproval(code, options)});
+        await trusted.isTrustedCode(code) || withoutWaitCursor(document, () => ui.requestApproval(code, options))});
     try {
         status.textContent = '作品と拡張のバイト列を検証しています…';
         const io = createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions});
@@ -113,7 +125,5 @@ generate.addEventListener('click', async () => {
         ui.diagnostics({type: 'error', code: error.code, message: error.message});
     } finally {
         trustProvider.revokeAll();
-        pending = false;
-        generate.disabled = false;
     }
-});
+}
