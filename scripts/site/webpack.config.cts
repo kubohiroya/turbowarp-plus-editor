@@ -188,6 +188,17 @@ config.module.rules.push({test: /\.jsx?$/, include: [
             hostRequire.resolve('@babel/preset-react')]}});
 // Also transpile a local VM source checkout used by integration previews.
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
+const paintSource = path.join(path.dirname(hostRequire.resolve('scratch-paint/package.json')), 'src');
+config.module.rules.push({
+    include: [
+        path.join(gui, 'src/containers/sound-editor.jsx'),
+        path.join(gui, 'src/containers/paint-editor-wrapper.jsx'),
+        path.join(paintSource, 'containers/paint-editor.jsx'),
+        path.join(paintSource, 'helper/bitmap.js')
+    ].map(filename => fs.realpathSync(filename)),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-asset-edits.cts')
+});
 if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
     config.module.rules.push({test: /\.jsx?$/, include: [vmSource], loader: hostRequire.resolve('babel-loader'),
         options: {babelrc: false, configFile: false,
