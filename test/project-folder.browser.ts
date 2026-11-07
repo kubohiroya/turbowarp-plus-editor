@@ -329,5 +329,10 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await nestedSteps(), '60');
     assert.deepEqual(await readFile(indexPath), stagedIndex);
     assert.equal(await page.evaluate(() => (window as any).folderTest.picks.filter(id => id === 'turbowarp-plus-git-root').length), 1);
+    await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
+    await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
+    await page.getByText('File', {exact: true}).click();
+    await expect(page.getByText('Open Project Folder…', {exact: true})).toBeVisible();
+    await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
     assert.deepEqual(errors, []);
 });
