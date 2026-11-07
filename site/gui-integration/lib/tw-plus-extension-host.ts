@@ -115,11 +115,14 @@ function attachSecurityHost (vm, {
                     (item.extensionURL && item.extensionURL === url))?.iconURL,
                 showReview: (entries, initialChoices) => {
                     const mount = getMount();
-                    return active && mount ? withoutWaitCursor(document, () => mount.requestModal(
+                    if (!active || !mount) return null;
+                    const ask = () => mount.requestModal(
                         (onComplete, currentLocale) => review.render({
                             entries, initialChoices, locale: currentLocale, DialogFrame: mount.DialogFrame, onComplete
                         }), null
-                    )) : null;
+                    );
+                    const document = globalThis.document;
+                    return document ? withoutWaitCursor(document, ask) : ask();
                 }
             });
         }
