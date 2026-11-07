@@ -177,12 +177,22 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     fixture.dropPush = true;
     const beforeDrop = pushes();
     const beforeBrowser = browserPushes;
+    const beforeReceived = fixture.requests.length;
+    const duplicateResponse = page.waitForResponse(response =>
+        response.url().startsWith(fixture.origin) && response.url().endsWith('/git-receive-pack') &&
+        response.status() === 409);
     page.once('dialog', dialog => dialog.accept());
     await button('Push').click();
+    assert.equal((await (await duplicateResponse).json()).code, 'PUSH_DUPLICATE');
     await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
     assert.equal(browserPushes, beforeBrowser + 1);
     assert.equal(git(bare, 'rev-parse', 'main'), dropped);
-    t.diagnostic('Git receive-pack requests after a pre-header disconnect: ' + (pushes() - beforeDrop));
+    const replays = fixture.requests.slice(beforeReceived).filter(request => request.method === 'POST' &&
+        request.url.endsWith('/git-receive-pack'));
+    assert.equal(replays.length, 2);
+    assert.equal(replays[0].headers['git-push-id'], replays[1].headers['git-push-id']);
+    assert.equal(pushes(), beforeDrop + 1);
+    t.diagnostic('Desktop: two receive-pack requests, one upstream');
     fixture.dropPush = false;
 
     const oauthState = 's'.repeat(43);
@@ -190,6 +200,7 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const cloudBearer = oauthState + '.' + 'c'.repeat(43);
     const cloudProxy = 'https://proxy.git.test';
     const cloudAuth: {method: string; write?: boolean}[] = [];
+    let replayCloudPush = false;
     // Route the two HTTPS endpoints through the local fixture. The Desktop path above uses real CORS.
     fixture.sessions.set(cloudBearer, {mode: 'desktop', write: true});
     await page.route('https://bff.git.test/v1/git-auth/**', async route => {
@@ -213,8 +224,17 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         const headers = await request.allHeaders();
         delete headers.host;
         delete headers['content-length'];
-        const response = await route.fetch({url: fixture.origin + url.pathname + url.search,
+        const forward = () => route.fetch({url: fixture.origin + url.pathname + url.search,
             headers: {...headers, origin}, maxRedirects: 0});
+        const response = await forward();
+        if (replayCloudPush && request.method() === 'POST' && url.pathname.endsWith('/git-receive-pack')) {
+            replayCloudPush = false;
+            assert.equal(response.status(), 200);
+            const duplicate = await forward();
+            assert.equal(duplicate.status(), 409);
+            assert.equal((await duplicate.json()).code, 'PUSH_DUPLICATE');
+            return route.fulfill({response: duplicate});
+        }
         return route.fulfill({response});
     });
     await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('cloudflare');
@@ -240,6 +260,23 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await button('Push').click();
     await expect(notice).toBeVisible();
     assert.equal(git(bare, 'rev-parse', 'main'), cloudOutgoing);
+    await writeFile(source, 'cloud replay\n');
+    const cloudReplayed = commit(client, 'cloud replay');
+    const beforeCloudReplay = pushes();
+    replayCloudPush = true;
+    page.once('dialog', dialog => dialog.accept());
+    await button('Push').click();
+    await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
+    assert.equal(pushes(), beforeCloudReplay + 1);
+    assert.equal(git(bare, 'rev-parse', 'main'), cloudReplayed);
+    page.once('dialog', dialog => dialog.accept());
+    await button('Push').click();
+    await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
+    assert.equal(pushes(), beforeCloudReplay + 1);
+    await button('Fetch').click();
+    await expect(notice).toBeVisible();
+    assert.equal(git(client, 'rev-parse', 'refs/remotes/origin/main'), cloudReplayed);
+    t.diagnostic('Cloudflare: duplicate mapped to unknown, fetch reconciled the ref');
 
     git(seed, 'pull', '--ff-only', bare, 'main');
     await writeFile(path.join(seed, 'project.txt'), 'remote diverged\n');
