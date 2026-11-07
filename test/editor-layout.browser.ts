@@ -1073,6 +1073,9 @@ test('the editor layout menu opens the live block palette and the Dockview panel
     await expect(toolbox).toBeHidden();
     await expect(palette).toHaveAttribute('data-palette-orientation', 'horizontal');
     const motion = palette.getByRole('group', {name: 'Motion', exact: true});
+    const categories = palette.getByRole('group', {name: 'Block categories', exact: true});
+    await expect(categories).toHaveCSS('flex-direction', 'row');
+    await expect(motion).toHaveCSS('flex-direction', 'row');
     const move = motion.getByRole('button', {name: /^move 10 steps$/i});
     await expect(move.locator('svg')).toBeVisible();
     await move.click();
@@ -1081,9 +1084,13 @@ test('the editor layout menu opens the live block palette and the Dockview panel
     await paletteMenu.click();
     await popup.getByRole('menuitemradio', {name: 'Arrange vertically', exact: true}).click();
     await expect(palette).toHaveAttribute('data-palette-orientation', 'vertical');
+    await expect(categories).toHaveCSS('flex-direction', 'column');
+    await expect(motion).toHaveCSS('flex-direction', 'column');
     await paletteMenu.click();
     await popup.getByRole('menuitemradio', {name: 'Arrange horizontally', exact: true}).click();
     await expect(palette).toHaveAttribute('data-palette-orientation', 'horizontal');
+    await expect(categories).toHaveCSS('flex-direction', 'row');
+    await expect(motion).toHaveCSS('flex-direction', 'row');
     await paletteMenu.click();
     await Promise.all([popup.waitForEvent('close'),
         popup.getByRole('menuitem', {name: 'Return this panel to the editor', exact: true}).click()]);
