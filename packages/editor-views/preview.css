@@ -16,3 +16,12 @@
     inset: 0;
     overflow: hidden;
 }
+
+/* Keep Blockly's measurements and viewport while another Dockview group is selected. */
+:global(.dv-inactive-group .tw-plus-sprite-tab-slot--split .blocklyToolboxDiv),
+:global(.dv-inactive-group .tw-plus-sprite-tab-slot--split .blocklyFlyout),
+:global(.dv-inactive-group .tw-plus-sprite-tab-slot--split .blocklyFlyoutScrollbar),
+:global(.dv-inactive-group .tw-plus-sprite-tab-slot--split [class*="gui_extension-button-container_"]) {
+    visibility: hidden;
+    clip-path: inset(50%);
+}
