@@ -17,6 +17,8 @@ import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext} from './context.ts';
+import {openDetachedBlockPalette} from '../horizontal-block-palette/index.ts';
+import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
 import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
@@ -125,6 +127,10 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     }, [multiView, vm]);
     const codePaneAdapter = React.useMemo(() =>
         createCodePaneAdapter(vm, locale, layoutFlags.workspaceMinimap ? attachCodePreviewMinimap : undefined), [vm, locale]);
+    const popouts = React.useMemo(() => ({
+        url: new URL('dockview-popout.html', window.location.href).href,
+        openPalette: () => openDetachedBlockPalette({locale, decorate: decorateSurface})
+    }), [locale]);
     const code = useCodeWindows({vm, host, locale,
         enabled: !multiView && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
@@ -192,9 +198,11 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title, rememberPlacement: true});
     }
 
-    const tabAction = showUndock && title && <div className={`${styles.tabAction} ${styles.openWindowAction}`} ref={action}>
-        <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
-    </div>;
+    const tabAction = showUndock && title && (!multiView || activeEditorTab !== codeTab) && (
+        <div className={`${styles.tabAction} ${styles.openWindowAction}`} ref={action}>
+            <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
+        </div>
+    );
     const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
         <div className={styles.tabRow}>{tabs}{tabAction}</div>;
     const spriteTabs = useSpriteTabs({
@@ -203,7 +211,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         activateSection: onActivateEditorTab,
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, layoutStorage, stagePane: stage?.pane, viewAdapter: codePaneAdapter,
+            multiView, layoutStorage, stagePane: stage?.pane, viewAdapter: codePaneAdapter, popouts,
             renderToolbar(view, actions) {
                 const section = spriteEditorSections[view.section] ?? 'code';
                 return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}

@@ -1046,6 +1046,94 @@ test('utility panels and menus stay above the code workspace and its palette', {
     await expect(code).toHaveCount(0);
 });
 
+test('the editor layout menu opens the live block palette and the Dockview panel in separate windows', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    const layout = page.getByRole('button', {name: 'Editor panel layout', exact: true});
+    const toolbox = page.locator('[data-horizontal-block-palette]').first();
+    const blockSelector = '.blocklySvg > .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable';
+    const blocks = page.locator(blockSelector);
+    const open = async name => {
+        await layout.click();
+        const item = page.getByRole('menuitem', {name, exact: true});
+        await expect(item.locator('svg')).toBeVisible();
+        const [popup] = await Promise.all([page.waitForEvent('popup'), item.click()]);
+        popup.setDefaultTimeout(7_000);
+        popup.on('pageerror', error => errors.push(error.stack));
+        return popup;
+    };
+
+    await expect(page.getByRole('group', {name: 'Sprite list tools'})).toBeVisible();
+    await expect(page.getByText('Sprite', {exact: true})).toHaveCount(0);
+    const popup = await open('Open block palette in another window');
+    const palette = popup.locator('[data-palette-orientation]');
+    const paletteMenu = popup.getByRole('button', {name: 'Block palette layout', exact: true});
+    await expect(toolbox).toBeHidden();
+    await expect(palette).toHaveAttribute('data-palette-orientation', 'horizontal');
+    const motion = palette.getByRole('group', {name: 'Motion', exact: true});
+    const move = motion.getByRole('button', {name: /^move 10 steps$/i});
+    await expect(move.locator('svg')).toBeVisible();
+    await move.click();
+    await expect(blocks).toHaveCount(1);
+
+    await paletteMenu.click();
+    await popup.getByRole('menuitemradio', {name: 'Arrange vertically', exact: true}).click();
+    await expect(palette).toHaveAttribute('data-palette-orientation', 'vertical');
+    await paletteMenu.click();
+    await popup.getByRole('menuitemradio', {name: 'Arrange horizontally', exact: true}).click();
+    await expect(palette).toHaveAttribute('data-palette-orientation', 'horizontal');
+    await paletteMenu.click();
+    await Promise.all([popup.waitForEvent('close'),
+        popup.getByRole('menuitem', {name: 'Return this panel to the editor', exact: true}).click()]);
+    await expect(toolbox).toBeVisible();
+    const secondPalette = await open('Open block palette in another window');
+    await expect(secondPalette.locator('[data-palette-orientation]')).toBeVisible();
+    await secondPalette.getByRole('button', {name: /^move 10 steps$/i}).evaluate(node => {
+        const dataTransfer = new DataTransfer();
+        const surface = window.opener.document.querySelector('.blocklySvg');
+        const bounds = surface.getBoundingClientRect();
+        node.dispatchEvent(new DragEvent('dragstart', {bubbles: true, dataTransfer}));
+        surface.dispatchEvent(new window.opener.DragEvent('drop', {bubbles: true, cancelable: true, dataTransfer,
+            clientX: bounds.x + bounds.width * 0.4, clientY: bounds.y + bounds.height * 0.6}));
+        node.dispatchEvent(new DragEvent('dragend', {bubbles: true, dataTransfer}));
+    });
+    await expect(blocks).toHaveCount(2);
+    await secondPalette.close();
+    await expect(toolbox).toBeVisible();
+
+    const panel = await open('Open panel in another window');
+    await expect(panel).toHaveURL(/dockview-popout\.html$/);
+    await expect(panel.getByRole('tab', {name: 'Code', exact: true})).toBeVisible();
+    await expect(panel.locator('[data-horizontal-block-palette]')).toBeVisible();
+    await expect(toolbox).toHaveCount(0);
+    await panel.getByRole('tab', {name: 'Costumes', exact: true}).click();
+    await expect(panel.getByRole('tab', {name: 'Costumes', exact: true})).toHaveAttribute('aria-selected', 'true');
+    await panel.getByRole('tab', {name: 'Code', exact: true}).click();
+    await expect(panel.locator('[data-horizontal-block-palette]')).toBeVisible();
+    await expect(panel.locator(blockSelector)).toHaveCount(2);
+    await panel.getByRole('button', {name: 'Motion', exact: true}).click();
+    const flyoutBlock = panel.locator('.blocklyFlyout .blocklyDraggable').first();
+    const from = await flyoutBlock.boundingBox();
+    const surface = await panel.locator('.blocklySvg').first().boundingBox();
+    await panel.mouse.move(from.x + 12, from.y + 12);
+    await panel.mouse.down();
+    await panel.mouse.move(surface.x + surface.width * 0.65, surface.y + 260, {steps: 16});
+    await panel.mouse.up();
+    await expect(panel.locator(blockSelector)).toHaveCount(3);
+    await panel.locator(blockSelector).filter({hasText: 'move'}).first().getByText('10', {exact: true}).click();
+    const value = panel.locator('input.blocklyHtmlInput');
+    await expect(value).toBeVisible();
+    await value.fill('12');
+    await value.press('Enter');
+    await expect(panel.locator(blockSelector).getByText('12', {exact: true})).toBeVisible();
+    await panel.close();
+    await expect(toolbox).toBeVisible();
+    await expect(blocks).toHaveCount(3);
+    assert.deepEqual(errors, []);
+});
+
 test('the default Dockview splits one sprite editor and restores each view section', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     page.setDefaultTimeout(8_000);
