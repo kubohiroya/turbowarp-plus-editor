@@ -13,7 +13,7 @@ export function attachPaletteCategoryReorder(
     const events = new AbortController();
     const capture = {capture: true, signal: events.signal};
     let press: Press | undefined;
-    let dragging = false;
+    let preview: HTMLElement | undefined;
     let suppressRelease = false;
     let target: HTMLElement | undefined;
 
@@ -29,7 +29,8 @@ export function attachPaletteCategoryReorder(
         win.clearTimeout(timer);
         markTarget();
         press = undefined;
-        dragging = false;
+        preview?.remove();
+        preview = undefined;
         source.removeAttribute('data-palette-reorder-source');
         menu.classList.remove(styles.reordering);
         menu.removeAttribute('data-palette-reordering');
@@ -74,7 +75,21 @@ export function attachPaletteCategoryReorder(
                 // The pointer may have been released outside the browser during the hold.
                 return cancel();
             }
-            dragging = suppressRelease = true;
+            const {left, top, width, height} = source.getBoundingClientRect();
+            const {backgroundColor, color, direction, font, padding, whiteSpace} = win.getComputedStyle(source);
+            preview = source.cloneNode(true) as HTMLElement;
+            preview.classList.add(styles.dragPreview);
+            preview.setAttribute('data-palette-reorder-preview', '');
+            preview.inert = true;
+            Object.assign(preview.style, {
+                left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px`,
+                backgroundColor: backgroundColor === 'rgba(0, 0, 0, 0)' ?
+                    win.getComputedStyle(menu).backgroundColor : backgroundColor,
+                color, direction, font, padding, whiteSpace
+            });
+            // Mount outside the toolbox so its scrolling and clipping don't constrain the preview.
+            doc.body.append(preview);
+            suppressRelease = true;
             menu.classList.add(styles.reordering);
             menu.setAttribute('data-palette-reordering', '');
             source.setAttribute('data-palette-reorder-source', '');
@@ -84,13 +99,16 @@ export function attachPaletteCategoryReorder(
 
     doc.addEventListener('pointermove', event => {
         if (press?.pointerId !== event.pointerId) return;
-        if (dragging) markTarget(itemAt(event, getItems()));
+        if (preview) {
+            preview.style.transform = `translate(${event.clientX - press.x}px, ${event.clientY - press.y}px)`;
+            markTarget(itemAt(event, getItems()));
+        }
         else if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > movementThreshold) cancel();
     }, capture);
 
     doc.addEventListener('pointerup', event => {
         if (press?.pointerId !== event.pointerId) return;
-        if (!dragging) return cancel();
+        if (!preview) return cancel();
         const items = getItems();
         const from = items.indexOf(press.source);
         const to = items.indexOf(itemAt(event, items));
@@ -106,7 +124,7 @@ export function attachPaletteCategoryReorder(
     }, capture);
     win.addEventListener('blur', cancel, capture);
     doc.addEventListener('keydown', event => {
-        if (!dragging || event.key !== 'Escape') return;
+        if (!preview || event.key !== 'Escape') return;
         event.stopImmediatePropagation();
         cancel();
     }, capture);
@@ -120,7 +138,7 @@ export function attachPaletteCategoryReorder(
     menu.addEventListener('mouseup', swallowRelease, capture);
     menu.addEventListener('touchend', swallowRelease, {...capture, passive: false});
     menu.addEventListener('touchmove', event => {
-        if (dragging) event.preventDefault();
+        if (preview) event.preventDefault();
     }, {...capture, passive: false});
     doc.addEventListener('contextmenu', event => {
         if (!press || !menu.contains(event.target as Node)) return;

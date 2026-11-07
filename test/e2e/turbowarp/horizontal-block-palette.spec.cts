@@ -328,10 +328,12 @@ for (const horizontal of [false, true]) {
             const motion = toolbox.locator('.scratchCategoryId-motion');
             const looks = toolbox.locator('.scratchCategoryId-looks');
             const sound = toolbox.locator('.scratchCategoryId-sound');
+            const preview = page.locator('[data-palette-reorder-preview]');
             const order = () => toolbox.locator('.scratchCategoryMenuItemLabel').allTextContents();
             const moveTo = async locator => {
                 const {x, y, width, height} = await locator.boundingBox();
                 await page.mouse.move(x + width / 2, y + height / 2, {steps: 5});
+                return {x, y, width, height};
             };
 
             await expect(sound).toBeVisible();
@@ -339,12 +341,19 @@ for (const horizontal of [false, true]) {
             const initial = await order();
 
             evidence.stage('reorder-categories');
-            await moveTo(motion);
+            const start = await moveTo(motion);
             await page.mouse.down();
             await expect(motion).toHaveAttribute('data-palette-reorder-source', '');
-            await moveTo(sound);
+            await expect(preview).toHaveText('Motion');
+            await expect(preview).toHaveCSS('opacity', '0.65');
+            expect(await preview.boundingBox()).toEqual(start);
+            const destination = await moveTo(sound);
             await expect(sound).toHaveAttribute('data-palette-reorder-target', '');
+            const moved = await preview.boundingBox();
+            expect(moved.x + moved.width / 2).toBeCloseTo(destination.x + destination.width / 2);
+            expect(moved.y + moved.height / 2).toBeCloseTo(destination.y + destination.height / 2);
             await page.mouse.up();
+            await expect(preview).toHaveCount(0);
             await expect(toolbox).not.toHaveAttribute('data-palette-reordering');
             const expected = ['Looks', 'Sound', 'Motion', ...initial.slice(3)];
             expect(await order()).toEqual(expected);
@@ -365,8 +374,21 @@ for (const horizontal of [false, true]) {
             await moveTo(motion);
             await expect(motion).toHaveAttribute('data-palette-reorder-target', '');
             await page.mouse.move(500, 350, {steps: 6});
+            await expect(preview).toBeInViewport();
+            const outside = await preview.boundingBox();
+            expect(outside.x + outside.width / 2).toBeCloseTo(500);
+            expect(outside.y + outside.height / 2).toBeCloseTo(350);
             await page.mouse.up();
+            await expect(preview).toHaveCount(0);
             await expect(toolbox).not.toHaveAttribute('data-palette-reordering');
+            expect(await order()).toEqual(expected);
+
+            await moveTo(looks);
+            await page.mouse.down();
+            await expect(preview).toHaveText('Looks');
+            await page.keyboard.press('Escape');
+            await expect(preview).toHaveCount(0);
+            await page.mouse.up();
             expect(await order()).toEqual(expected);
 
             await looks.click();
