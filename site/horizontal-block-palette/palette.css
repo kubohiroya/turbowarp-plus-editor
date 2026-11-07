@@ -71,13 +71,13 @@
 .panel:global(.blocklyFlyout) > :global(.sa-lock-object) > :global(.sa-lock-button) {
     background-color: transparent;
     border-color: transparent;
-    color: var(--text-primary, #575e75);
+    color: #808080;
 }
 
 .panel:global(.blocklyFlyout) > :global(.sa-lock-object.locked) > :global(.sa-lock-button) {
-    border-color: white;
-    color: white;
-    filter: drop-shadow(0 0 1px rgb(0 0 0 / 55%));
+    border-color: currentColor;
+    color: var(--text-primary, #404040);
+    color: light-dark(#404040, #d4d4d4);
 }
 
 .panel:global(.blocklyFlyout) :global(.sa-lock-button) img {
