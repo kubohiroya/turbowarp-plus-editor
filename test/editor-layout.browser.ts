@@ -7,7 +7,9 @@ import {chromium, expect, type Page} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
 import editorPackage from '../package.json' with {type: 'json'};
 import pinnedGui from './pinned-gui.ts';
-import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons, undockButtons} from './fixtures/layout-menu.ts';
+import {
+    layoutMenu, openDisplaySettings, projectInfoMenuButton, readUndockButtonsChecked, toggleUndockButtons, undockButtons
+} from './fixtures/layout-menu.ts';
 
 const types = {
     '.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
@@ -103,9 +105,9 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     };
     const originalAccent = await themeColor('--looks-secondary');
     await checkDividerColor();
-    await page.getByText('Settings', {exact: true}).click();
-    await page.getByText('Accent', {exact: true}).click();
-    await page.getByText('Blue', {exact: true}).click();
+    const display = await openDisplaySettings(page);
+    await display.getByText('Accent', {exact: true}).click();
+    await display.getByText('Blue', {exact: true}).click();
     assert.notEqual(await themeColor('--looks-secondary'), originalAccent);
     await checkDividerColor();
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0'));
@@ -1009,16 +1011,17 @@ test('utility panels and menus stay above the code workspace and its palette', {
     const flyout = page.locator('.blocklyFlyout').first();
     await expect(flyout).toBeVisible();
     // Keep the flyout open while exercising the menu's click handler.
-    await page.getByText('File', {exact: true}).evaluate(node => (node as HTMLElement).click());
-    const fileMenu = page.locator('[class*="menu_menu_"]').filter({hasText: /Save/});
-    await expect(fileMenu).toBeVisible();
-    assert.ok(await fileMenu.evaluate((menu, palette) => {
+    await projectInfoMenuButton(page).evaluate(node => (node as HTMLElement).click());
+    const plusMenu = page.getByRole('navigation', {name: 'TurboWarp Plus project information'});
+    await expect(plusMenu).toBeVisible();
+    assert.ok(await plusMenu.evaluate((menu, palette) => {
         const bounds = menu.getBoundingClientRect();
-        const x = Math.max(bounds.left, palette.x) + 8;
-        const y = Math.max(bounds.top, palette.y) + 8;
-        return x < Math.min(bounds.right, palette.x + palette.width) &&
-            y < Math.min(bounds.bottom, palette.y + palette.height) &&
-            menu.contains(document.elementFromPoint(x, y));
+        const left = Math.max(bounds.left, palette.x);
+        const right = Math.min(bounds.right, palette.x + palette.width);
+        const top = Math.max(bounds.top, palette.y);
+        const bottom = Math.min(bounds.bottom, palette.y + palette.height);
+        return left < right && top < bottom &&
+            menu.contains(document.elementFromPoint((left + right) / 2, (top + bottom) / 2));
     }, await flyout.boundingBox()));
     await page.keyboard.press('Escape');
 

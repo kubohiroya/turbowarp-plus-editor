@@ -1,3 +1,14 @@
+import type {Page} from '@playwright/test';
+
+export const projectInfoMenuButton = (page: Page) =>
+    page.getByLabel('TurboWarp Plus project information', {exact: true}).first();
+
+export async function openDisplaySettings(page: Page) {
+    await projectInfoMenuButton(page).click();
+    await page.getByRole('button', {name: 'Display settings', exact: true}).click();
+    return page.getByRole('list', {name: 'Display settings', exact: true});
+}
+
 export const layoutMenu = page => page.getByRole('button', {name: /^(Layout options|配置メニュー)$/});
 
 export const undockButtons = page => page.getByRole('menuitemcheckbox', {
