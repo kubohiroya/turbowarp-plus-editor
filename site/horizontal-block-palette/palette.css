@@ -89,7 +89,11 @@
     width: 20px;
     height: 20px;
     background-color: currentColor;
-    mask: url('./pin.svg') center / contain no-repeat;
+    mask: url('./pin-off.svg') center / contain no-repeat;
+}
+
+.panel:global(.blocklyFlyout) :global(.sa-lock-object.locked .sa-lock-button)::before {
+    mask-image: url('./pin.svg');
 }
 
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) > :global(.sa-flyout-placeHolder) {
