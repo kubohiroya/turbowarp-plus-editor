@@ -1139,6 +1139,8 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     const groups = page.locator('.dv-groupview');
     const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
     const preview = (group: number) => groups.nth(group).getByRole('button', {name: 'Edit code in this pane'});
+    const palette = (scope: ReturnType<typeof page.locator>) => scope.locator('.blocklyToolboxDiv');
+    const groupBounds = () => Promise.all([0, 1].map(index => groups.nth(index).boundingBox()));
     const canvas = (scope: ReturnType<typeof page.locator>) =>
         scope.locator('.blocklyBlockCanvas').filter({has: page.locator('[data-id="pane-block"]')});
     const readViewport = (scope: ReturnType<typeof page.locator>) => canvas(scope).evaluate(node => {
@@ -1157,11 +1159,17 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     await page.getByRole('menuitem', {name: 'Split right'}).click();
     await expect(groups).toHaveCount(2);
     await expect(preview(0)).toBeVisible();
+    await expect(palette(preview(0))).toBeHidden();
+    await expect(palette(editor)).toBeVisible();
+    const splitBounds = await groupBounds();
 
     await setViewport(1.1, -247, -189);
     const right = await readViewport(editor);
     await preview(0).click();
     await expect(preview(1)).toBeVisible();
+    await expect(palette(preview(1))).toBeHidden();
+    await expect(palette(editor)).toBeVisible();
+    assert.deepEqual(await groupBounds(), splitBounds);
     await setViewport(0.75, -85, -46);
     const left = await readViewport(editor);
     assert.notEqual(left[0], right[0]);
@@ -1172,6 +1180,9 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     await preview(1).press('Enter');
     await expect.poll(() => readViewport(editor)).toEqual(right);
     await expect.poll(() => readViewport(preview(0))).toEqual(left);
+    await expect(palette(preview(0))).toBeHidden();
+    await expect(palette(editor)).toBeVisible();
+    assert.deepEqual(await groupBounds(), splitBounds);
     await page.evaluate(() => {
         const blocks = window.ScratchBlocks;
         const xml = blocks.Xml.textToDom('<xml><block id="pane-added-block" type="looks_show" x="450" y="380"/></xml>');
@@ -1184,7 +1195,9 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     await expect.poll(() => readViewport(editor)).toEqual(left);
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
     await toolbar.getByRole('tab', {name: 'Costumes', exact: true}).click();
+    await expect(page.locator('.tw-plus-sprite-tab-slot--split .blocklyToolboxDiv:visible')).toHaveCount(0);
     await toolbar.getByRole('tab', {name: 'Code', exact: true}).click();
+    await expect(palette(editor)).toBeVisible();
     await expect.poll(() => readViewport(editor)).toEqual(left);
     assert.equal(await page.evaluate(() => window.vm.editingTarget.id), targetId);
     assert.deepEqual(errors, []);
@@ -1273,6 +1286,12 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await expect(groups).toHaveCount(2);
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
     assert.ok((await stageGroup.boundingBox()).x > (await codeGroup.boundingBox()).x);
+    const palette = codeGroup.locator('.blocklyToolboxDiv');
+    await stageTab.click();
+    await expect(codeGroup.locator('.blocklySvg').first()).toBeVisible();
+    await expect(palette).toBeHidden();
+    await codeTab.click();
+    await expect(palette).toBeVisible();
     await assertStage();
 
     const sash = workspace.locator('.dv-sash:visible').first();
