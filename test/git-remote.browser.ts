@@ -184,6 +184,63 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     assert.equal(git(bare, 'rev-parse', 'main'), dropped);
     t.diagnostic('Git receive-pack requests after a pre-header disconnect: ' + (pushes() - beforeDrop));
     fixture.dropPush = false;
+
+    const oauthState = 's'.repeat(43);
+    const cloudTicket = oauthState + '.' + 't'.repeat(43);
+    const cloudBearer = oauthState + '.' + 'c'.repeat(43);
+    const cloudProxy = 'https://proxy.git.test';
+    const cloudAuth: {method: string; write?: boolean}[] = [];
+    // Route the two HTTPS endpoints through the local fixture. The Desktop path above uses real CORS.
+    fixture.sessions.set(cloudBearer, {mode: 'desktop', write: true});
+    await page.route('https://bff.git.test/v1/git-auth/**', async route => {
+        const request = route.request();
+        const headers = {'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'GET,POST,DELETE',
+            'Access-Control-Allow-Headers': 'Authorization,Content-Type'};
+        if (request.method() === 'OPTIONS') return route.fulfill({status: 204, headers});
+        if (request.method() === 'POST') {
+            cloudAuth.push({method: 'POST', write: request.postDataJSON().write});
+            return route.fulfill({headers, json: {ticket: cloudTicket,
+                authorizationUrl: 'https://github.com/login/oauth/authorize?state=' + oauthState}});
+        }
+        assert.equal((await request.allHeaders()).authorization, 'Bearer ' + cloudTicket);
+        cloudAuth.push({method: request.method()});
+        return route.fulfill({headers, json: {connection: {mode: 'cloudflare', proxyOrigin: cloudProxy},
+            account: {login: 'cloud-fixture'}, bearer: cloudBearer, expiresAt: Date.now() + 60_000}});
+    });
+    await page.route(cloudProxy + '/v1/git/**', async route => {
+        const request = route.request();
+        const url = new URL(request.url());
+        const headers = await request.allHeaders();
+        delete headers.host;
+        delete headers['content-length'];
+        const response = await route.fetch({url: fixture.origin + url.pathname + url.search,
+            headers: {...headers, origin}, maxRedirects: 0});
+        return route.fulfill({response});
+    });
+    await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('cloudflare');
+    await expect(status).toHaveText('Disconnected');
+    await button('Connect to GitHub').click();
+    await expect(panel.getByRole('link', {name: 'Open GitHub authorization'})).toBeVisible();
+    await button('Check connection').click();
+    await expect(status).toHaveText('Connected');
+    assert.deepEqual(cloudAuth[0], {method: 'POST', write: true});
+    await button('Fetch').click();
+    await expect(notice).toBeVisible();
+    git(seed, 'pull', '--ff-only', bare, 'main');
+    await writeFile(path.join(seed, 'project.txt'), 'cloud incoming\n');
+    const cloudIncoming = commit(seed, 'cloud incoming');
+    git(seed, 'push', bare, 'main');
+    await button('Pull (fast-forward only)').click();
+    await expect(notice).toBeVisible();
+    assert.equal(git(client, 'rev-parse', 'HEAD'), cloudIncoming);
+    assert.equal(await readFile(source, 'utf8'), 'cloud incoming\n');
+    await writeFile(source, 'cloud outgoing\n');
+    const cloudOutgoing = commit(client, 'cloud outgoing');
+    page.once('dialog', dialog => dialog.accept());
+    await button('Push').click();
+    await expect(notice).toBeVisible();
+    assert.equal(git(bare, 'rev-parse', 'main'), cloudOutgoing);
+
     git(seed, 'pull', '--ff-only', bare, 'main');
     await writeFile(path.join(seed, 'project.txt'), 'remote diverged\n');
     commit(seed, 'remote diverged');
