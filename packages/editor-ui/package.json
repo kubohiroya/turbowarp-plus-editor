@@ -9,7 +9,8 @@
     ".": "./src/icon-menu-button.tsx",
     "./palette-category-reorder": "./src/palette-category-reorder.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",
-    "./project-search": "./src/project-search-box.tsx"
+    "./project-search": "./src/project-search-box.tsx",
+    "./browser-tab-title": "./src/browser-tab-title.ts"
   },
   "peerDependencies": {
     "react": ">=16.8",

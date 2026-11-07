@@ -40,6 +40,41 @@ async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui 
     return context.newPage();
 }
 
+test('the browser tab follows the current project title', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.on('dialog', dialog => dialog.accept());
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const title = page.getByPlaceholder('Project title here');
+    await expect(title).toHaveValue('Project');
+    await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
+
+    await title.fill('秋の作品');
+    await title.press('Enter');
+    await expect(page).toHaveTitle('秋の作品 - TurboWarp Plus Editor');
+
+    await title.fill('');
+    await title.press('Enter');
+    await expect(page).toHaveTitle('TurboWarp Plus Editor');
+
+    const bytes = await page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
+    const openFileMenu = () => page.getByText('File', {exact: true}).click();
+    await openFileMenu();
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByText('Load from your computer', {exact: true}).click();
+    await (await chooser).setFiles({
+        name: '読み込んだ作品.sb3',
+        mimeType: 'application/octet-stream',
+        buffer: Buffer.from(bytes)
+    });
+    await expect(title).toHaveValue('読み込んだ作品');
+    await expect(page).toHaveTitle('読み込んだ作品 - TurboWarp Plus Editor');
+
+    await openFileMenu();
+    await page.getByText('New', {exact: true}).click();
+    await expect(title).toHaveValue('Project');
+    await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
+});
+
 test('the real editor resizes both dividers and preserves editing and stage input', {timeout: 90_000}, async t => {
     const build = path.join(pinnedGui(), 'build');
     const page = await openBrowser(t, build, buildPrefix);
