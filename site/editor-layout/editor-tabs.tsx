@@ -15,7 +15,8 @@ import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLay
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext} from './context.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
-import {BackCodeWindows, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
+import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
 
@@ -117,7 +118,8 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
                 isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)};
         } catch { /* Storage is optional. */ }
     }, [multiView, vm]);
-    const codePaneAdapter = React.useMemo(() => createCodePaneAdapter(vm, locale), [vm, locale]);
+    const codePaneAdapter = React.useMemo(() =>
+        createCodePaneAdapter(vm, locale, layoutFlags.workspaceMinimap ? attachCodePreviewMinimap : undefined), [vm, locale]);
     const code = useCodeWindows({vm, host, locale,
         enabled: !multiView && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
@@ -253,7 +255,10 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
                 mount={getMount(index)}
                 onDock={() => index === codeTab && code?.front ? code.front.connection.close() : surfaces[index].dock()}
                 onResize={index === codeTab ? resizeCode : undefined}
-            >{index === codeTab ? <AttachedCodePanel>{children}</AttachedCodePanel> :
+            >{index === codeTab ? <AttachedCodePanel>
+                {children}
+                {multiView && <CodePaneCostumeThumbnail adapter={codePaneAdapter} />}
+            </AttachedCodePanel> :
                 connectAssetSelection(index, children)}</DockablePanel>;
             return spriteTabs.renderEditorPanel ? spriteTabs.renderEditorPanel(index, panel) : panel;
         }

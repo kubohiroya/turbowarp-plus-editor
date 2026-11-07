@@ -1,10 +1,19 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
 import './preview.css';
+import type {createCodePaneAdapter} from './code-pane.ts';
 import {getCodeSession} from './workspace.ts';
 
 export {attachCodeWorkspace} from './workspace.ts';
 export {createCodePaneAdapter} from './code-pane.ts';
+
+export function CodePaneCostumeThumbnail({adapter}: {adapter: ReturnType<typeof createCodePaneAdapter>}) {
+    const image = React.useRef<HTMLImageElement>(null);
+    React.useLayoutEffect(() => adapter.watchEditingCostume(image.current), [adapter]);
+    return <div data-dockview-costume-thumbnail="" aria-hidden="true">
+        <img ref={image} alt="" />
+    </div>;
+}
 
 const SpriteCodeContext = React.createContext(null);
 export const SpriteCodeProvider = SpriteCodeContext.Provider;

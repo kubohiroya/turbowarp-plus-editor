@@ -2,6 +2,8 @@ import type {CodeTarget} from './history.ts';
 import {captureCodePreviewChrome} from './preview-chrome.ts';
 import type {PresentationElements} from './preview-chrome.ts';
 
+export type AttachPreviewMinimap = (workspace, ScratchBlocks, watermark: HTMLElement) => {dispose(): void};
+
 // Keep VM identity and workspace lifetime separate from the lifetime of a floating window.
 interface Presentation {
     scale: number;
@@ -81,7 +83,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
         blocks.Events.fireNow_();
     }
 
-    function capturePresentation(preserveViewport = false): Presentation | undefined {
+    function capturePresentation({preserveViewport = false, includeNavigation = true} = {}): Presentation | undefined {
         const metrics = workspace.getMetrics();
         if (!metrics || !loadedTarget) return;
         const area = workspace.getParentSvg().getBoundingClientRect();
@@ -96,7 +98,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             x: workspace.scrollX + metrics.absoluteLeft,
             y: workspace.scrollY + metrics.absoluteTop,
             visible,
-            chrome: captureCodePreviewChrome(workspace, loadedTarget, presentationElements)
+            chrome: captureCodePreviewChrome(workspace, loadedTarget, presentationElements, includeNavigation)
         };
     }
 
@@ -111,7 +113,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
     const bridge = {
         onError,
         capturePane(targetId: string) {
-            if (loadedTarget?.id === targetId) return capturePresentation(true);
+            if (loadedTarget?.id === targetId) return capturePresentation({preserveViewport: true, includeNavigation: false});
         },
         restorePane(targetId: string, presentation: Presentation) {
             const injection = workspace.getInjectionDiv();
@@ -193,7 +195,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             return true;
         },
         preview(element, chrome, view) {
-            const {target, presentation} = view;
+            const {target, presentation, attachMinimap, watermark} = view;
             const preview = withoutEvents(blocks, () => blocks.inject(element, {
                 readOnly: true, scrollbars: false, sounds: false, media: options.media, rtl: options.rtl,
                 colours: options.colours, grid: options.grid,
@@ -201,6 +203,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             }));
             workspace.markFocused();
             presentation?.chrome?.mount(chrome);
+            const minimap = attachMinimap?.(preview, blocks, watermark);
             let renderedXml;
             const resize = () => {
                 blocks.svgResize(preview);
@@ -246,6 +249,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 },
                 dispose() {
                     observer.disconnect();
+                    minimap?.dispose();
                     presentation?.chrome?.dispose();
                     withoutEvents(blocks, () => preview.dispose());
                 }

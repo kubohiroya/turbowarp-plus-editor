@@ -17,7 +17,25 @@
     overflow: hidden;
 }
 
+:global([data-dockview-costume-thumbnail]) {
+    position: absolute;
+    inset: auto var(--plus-watermark-right, 12px) var(--plus-watermark-bottom, 12px) auto;
+    pointer-events: none;
+}
+
+:global([data-dockview-costume-thumbnail]) > img[src] {
+    display: block;
+    max-width: var(--plus-watermark-size, 64px);
+    max-height: var(--plus-watermark-size, 64px);
+    opacity: 0.6;
+}
+
+:global(:has(> [data-dockview-costume-thumbnail])) > :global([class*="gui_watermark_"]) {
+    display: none;
+}
+
 /* Keep Blockly's measurements and viewport while another Dockview group is selected. */
+:global(.dv-inactive-group .tw-plus-sprite-tab-slot--split .blocklyZoom),
 :global(.dv-inactive-group .tw-plus-sprite-tab-slot--split .blocklyToolboxDiv),
 :global(.dv-inactive-group .tw-plus-sprite-tab-slot--split .blocklyFlyout),
 :global(.dv-inactive-group .tw-plus-sprite-tab-slot--split .blocklyFlyoutScrollbar),

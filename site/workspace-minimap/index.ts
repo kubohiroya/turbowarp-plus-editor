@@ -32,23 +32,23 @@ export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZ
         return corner;
     };
     const zoom = horizontalZoom ? attachHorizontalWorkspaceZoom(workspace, ScratchBlocks, getCorner) : null;
-    const map = minimap ? attachWorkspaceMinimap(workspace, ScratchBlocks, zoom, getCorner) : null;
+    const map = minimap ? attachWorkspaceMinimap(workspace, ScratchBlocks, zoom, zoom ? getCorner : undefined) : null;
     return {dispose() {
         map?.dispose();
         zoom?.dispose();
     }};
 }
 
-function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner) {
+export function attachCodePreviewMinimap(workspace, ScratchBlocks, watermark: HTMLElement) {
+    return attachWorkspaceMinimap(workspace, ScratchBlocks, null,
+        metrics => workspaceControlsCorner(workspace, ScratchBlocks, metrics), watermark);
+}
+
+function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner, previewWatermark?: HTMLElement) {
     const container = workspace.getInjectionDiv();
     const canvas = workspace.getCanvas();
     const workspaceSvg = workspace.getParentSvg();
-    const watermark = zoom && container.closest('[class*="gui_blocks-wrapper_"]')?.parentElement
-        .querySelector(':scope > [class*="gui_watermark_"]');
-    if (watermark) {
-        watermark.classList.add(styles.workspaceWatermark);
-        watermark.dataset.plusWorkspaceWatermark = '';
-    }
+    let watermark = previewWatermark;
     const document = container.ownerDocument;
     const window = document.defaultView;
     const createSvg = name => document.createElementNS(SVG, name);
@@ -94,7 +94,18 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner) {
             minimap.style.display = 'none';
             return;
         }
-        const corner = zoom && getCorner(metrics);
+        // Blockly attaches before React has mounted the adjacent costume watermark.
+        if ((!watermark || !watermark.isConnected) && zoom) {
+            const wrapper: Element | null = container.closest('[class*="gui_blocks-wrapper_"]');
+            const host = wrapper?.parentElement;
+            const thumbnail = host?.querySelector<HTMLElement>(':scope > [data-dockview-costume-thumbnail]');
+            watermark = thumbnail ?? host?.querySelector<HTMLElement>(':scope > [class*="gui_watermark_"]');
+            if (watermark && !thumbnail) {
+                watermark.classList.add(styles.workspaceWatermark);
+                watermark.dataset.plusWorkspaceWatermark = '';
+            }
+        }
+        const corner = getCorner?.(metrics);
         const scale = workspace.scale;
         const x = metrics.viewLeft / scale;
         const y = metrics.viewTop / scale;
@@ -103,12 +114,22 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner) {
         minimap.style.display = '';
         if (blocksChanged) drawBlocks();
         // Use the scrollable area so the viewport outline stays visible even with few blocks.
-        const area = workspace.scrollbar && metrics.contentWidth > 0 && metrics.contentHeight > 0 ? {
+        let area = workspace.scrollbar && metrics.contentWidth > 0 && metrics.contentHeight > 0 ? {
             x: metrics.contentLeft / scale,
             y: metrics.contentTop / scale,
             width: metrics.contentWidth / scale,
             height: metrics.contentHeight / scale
         } : {x, y, width, height};
+        // Preview workspaces have no scrollbars, so include blocks outside the viewport explicitly.
+        if (previewWatermark && metrics.contentWidth > 0 && metrics.contentHeight > 0) {
+            const left = Math.min(x, metrics.contentLeft / scale);
+            const top = Math.min(y, metrics.contentTop / scale);
+            area = {
+                x: left, y: top,
+                width: Math.max(x + width, (metrics.contentLeft + metrics.contentWidth) / scale) - left,
+                height: Math.max(y + height, (metrics.contentTop + metrics.contentHeight) / scale) - top
+            };
+        }
         const viewBox = `${area.x} ${area.y} ${area.width} ${area.height}`;
         minimap.setAttribute('viewBox', viewBox);
         // Clip the viewport frame to the map even where the SVG is letterboxed.
@@ -126,17 +147,18 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner) {
         let mapHeight = Math.min(MAX_MAP_HEIGHT, metrics.viewHeight * 0.35) * SIZE_FACTOR;
         if (corner) {
             const {right, bottom} = corner;
-            const spaceAboveZoom = Math.max(0, bottom - zoom.height - 2 * CONTROLS_GAP);
-            if (watermark) mapHeight = Math.min(mapHeight, spaceAboveZoom * 0.6);
+            const zoomSpace = zoom ? zoom.height + CONTROLS_GAP : 0;
+            const availableHeight = Math.max(0, bottom - zoomSpace - CONTROLS_GAP);
+            if (watermark) mapHeight = Math.min(mapHeight, availableHeight * 0.6);
             const rightInset = container.clientWidth - right;
-            const bottomInset = container.clientHeight - bottom + zoom.height + CONTROLS_GAP;
+            const bottomInset = container.clientHeight - bottom + zoomSpace;
             if (watermark) {
                 // The watermark is outside Blockly's border while the minimap is inside it.
                 const rightBorder = container.offsetWidth - container.clientWidth - container.clientLeft;
                 const bottomBorder = container.offsetHeight - container.clientHeight - container.clientTop;
                 watermark.style.setProperty('--plus-watermark-right', `${rightInset + rightBorder}px`);
                 watermark.style.setProperty('--plus-watermark-bottom', `${bottomInset + bottomBorder + mapHeight + CONTROLS_GAP}px`);
-                watermark.style.setProperty('--plus-watermark-size', `${Math.min(MAX_WATERMARK_SIZE, spaceAboveZoom - mapHeight)}px`);
+                watermark.style.setProperty('--plus-watermark-size', `${Math.min(MAX_WATERMARK_SIZE, availableHeight - mapHeight)}px`);
             }
             minimap.style.right = `${rightInset}px`;
             minimap.style.bottom = `${bottomInset}px`;
