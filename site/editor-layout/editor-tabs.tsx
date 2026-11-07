@@ -1,4 +1,5 @@
 import React from 'react';
+import {connect} from 'react-redux';
 import {createAssetTransferPanel, type ProjectAssetTransferPort} from '@kubohiroya/turbowarp-script-transfer';
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
@@ -19,6 +20,7 @@ import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
 import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
+const soundsTab = 2;
 
 function AttachedCodePanel({children}: {children: React.ReactNode}) {
     const [attached, setAttached] = React.useState(false);
@@ -100,7 +102,8 @@ function DesktopAssetPanel({vm, kind, locale, port, selection, child}: {
     </div>;
 }
 
-export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, editorTargetIsStage, showUndock, locale, layout, render}) {
+function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsStage, showUndock, locale, layout, render,
+    soundRecorderVisible}) {
     const host = useWindowHost();
     const {plusLayout} = React.useContext(WindowLayoutContext);
     const stage = React.useContext(StageDisplayMenuContext)?.stage;
@@ -248,7 +251,8 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
             const row = multiView ? tabs : renderEditorTabRow(tabs);
             return spriteTabs.renderEditorTabRow ? spriteTabs.renderEditorTabRow(row) : row;
         },
-        isEditorPanelOpen: index => Boolean(getMount(index)),
+        // The recorder is hosted by the sound panel and must survive editor tab switches.
+        isEditorPanelOpen: index => Boolean(getMount(index)) || (index === soundsTab && soundRecorderVisible),
         renderEditorPanel: (index, children) => {
             const panel = <DockablePanel
                 dockLabel={dockLabel}
@@ -271,3 +275,7 @@ export function EditorTabLayout({vm, activeEditorTab, onActivateEditorTab, edito
             attachBackpackDrop={attachBackpackDrop} />}
     </SpriteCodeProvider>;
 }
+
+export const EditorTabLayout = connect(state => ({
+    soundRecorderVisible: state.scratchGui.modals.soundRecorder
+}))(EditorTabs);
