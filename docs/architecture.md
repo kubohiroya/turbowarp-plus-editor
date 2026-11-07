@@ -55,6 +55,34 @@ PRやfork、失敗CI、古いmain、API確認不能、未完了/失敗した最�
 
 案内画面の遷移2件は、案内HTML/CSS/JSを実配信から取得し、遷移先のEditor HTMLだけをfixtureへ差し替えてURLを確認します。Editorの機能自体は他の統合シナリオで実アプリを使って検証します。
 
+### Pages デプロイがタイムアウトしたとき
+
+公開 URL の `build-info.json` をキャッシュを避けて取得し、配信中の `siteRevision` を確認します。期待する SHA は `main` と成功した通常の push CI から決めます。対象がすでに配信されていれば、公開版の動作確認へ進みます。
+
+```sh
+curl -fsS -H 'Cache-Control: no-cache' \
+  "https://kubohiroya.github.io/turbowarp-plus-editor/build-info.json?verify=$(date +%s)" \
+  | jq -r .siteRevision
+```
+
+#### 保存するログと停止箇所
+
+関連 Issue に、対象 SHA、タイムアウト時に配信されていた SHA、通常 CI と Pages の run・attempt・job の URL、成果物 ID、デプロイ ID を残します。タイムゾーン付きでデプロイ受理・タイムアウト・取消の時刻と、最後に返った状態または API エラーを記録します。
+
+`Created deployment` より前の失敗は、CI、成果物の有無と出所、公開権限、API エラーを該当箇所から確認します。受理後に `syncing_files`、`finished_file_sync`、空欄などで止まった場合は、Pages API と GitHub Status を照合します。`finished_file_sync` はファイル同期の完了を示します。配信成功は `succeed` と公開 URL の両方で確認します。 [Pages API](https://docs.github.com/en/rest/pages/pages#get-a-github-pages-deployment) · [GitHub Status](https://www.githubstatus.com/)
+
+#### 再実行の条件と打ち切り
+
+対象が最新 `main` で、その SHA の通常の push CI が成功し、前回の配信が終了していて、競合する配信が進行していない場合に、失敗した公開処理の再実行を1回試します。権限や成果物のエラーがあれば先に解消します。同じ SHA で再発したら再実行を打ち切ります。`deploy-pages@v4` は `GITHUB_SHA` をビルドバージョンに使います。同じ SHA の手動実行で新しい成果物 ID が割り当てられても、ビルドバージョンはその SHA です。v4 の待機上限は10分です。 [ビルドバージョンの実装](https://github.com/actions/deploy-pages/blob/v4/src/internal/context.js) · [タイムアウトの実装](https://github.com/actions/deploy-pages/blob/v4/src/internal/deployment.js)
+
+対象の修正を含む後続コミットが `main` にあれば、差分を確認し、その SHA の通常 CI と自動公開を追います。新しい公開がすでに進行中の場合も、その結果を待ちます。後続の公開候補がない場合や別の SHA でも再発する場合は、配信中の版を維持し、記録したログと ID を添えて Pages 側の調査に引き継ぎます。`d14d065` の3回の失敗と `f59f954` での復旧は Issue #177 に記録しています。Pages 内部の原因は未確定です。 [復旧時の記録](https://github.com/kubohiroya/turbowarp-plus-editor/issues/177#issuecomment-6702835809)
+
+#### 公開版での復旧確認
+
+配信と公開後検証の結果を確認し、公開 URL の `siteRevision` が対象 SHA または修正を含むと照合済みの後続 SHA に一致することを確かめます。公開 Editor をヘッドレス Chromium で開き、変更箇所を操作します。Dockview のコードパネルの場合は、左右をタブクリックと Enter キーで切り替えます。選択中だけにパレットとズームボタンが出ること、両パネルに半透明の衣装サムネイルとミニマップが出ること、衣装が各スプライトに対応することを確認します。パネルの位置と大きさ、ズームインの動作も確認し、配信 SHA と結果を関連 Issue に残します。 [公開 Editor](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html)
+
+公開後に機能の回帰が見つかった場合は、問題の差分を取り消す変更を通常 CI と公開ゲートに通し、同じ手順で切り戻しを確認します。
+
 ## npm公開
 
 npmパッケージはブランド資産・編集ボタン用のAPI・固定ソースの記録を提供します。GUIの巨大なビルド一式をnpmへ同梱せず、実行するEditorはGitHub Pagesで配信します。
