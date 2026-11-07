@@ -3,10 +3,11 @@ import type {ProgrammaticExtensionField} from './programmatic-extension-field.ts
 
 type FieldEditor = {type: 'field_input' | 'turbowarp_plus_actions' | 'native_widget'} | {type: 'field_dropdown'; options: [string, string][]};
 type NativeFactory = {fromJson(options: unknown): unknown; parentDocument?: boolean; resources?: unknown;
-    asyncCommit?: boolean; isolatedEditor?: boolean};
+    asyncCommit?: boolean; isolatedEditor?: boolean; attachedEditor?: boolean};
 export type CustomField = {name: string; editor: FieldEditor};
 const isolatedFactory = Symbol.for('turbowarp-plus-editor.isolated-native-field');
-const nativeInstances = new WeakMap<object, 'docked' | 'isolated'>();
+const reserveAttached = Symbol.for('turbowarp-plus-editor.reserve-attached-native-field');
+const nativeInstances = new WeakMap<object, 'docked' | 'isolated' | 'reserved'>();
 
 function cloneOptions(options: unknown) {
     try {
@@ -18,6 +19,13 @@ function cloneOptions(options: unknown) {
 
 export function createIsolatedNativeField(field, native: NativeFactory) {
     return field?.[isolatedFactory]?.(native);
+}
+
+export const usesAttachedNativeEditor = (native: NativeFactory) =>
+    native.parentDocument === true && native.attachedEditor === true && native.isolatedEditor !== true;
+
+export function reserveAttachedNativeField(field, native: NativeFactory) {
+    return Boolean(field?.sourceBlock_) && field[reserveAttached]?.(native) === true;
 }
 
 function readEditor(implementation): FieldEditor | undefined {
@@ -80,8 +88,17 @@ export function registerCustomFields(blocks, declarations: CustomField[], openCu
                             cloneOptions(options) : undefined;
                         const field = native.fromJson(options);
                         if (!field || typeof field !== 'object') return field;
-                        if (nativeInstances.get(field) === 'isolated') return;
+                        const previous = nativeInstances.get(field);
+                        if (previous && previous !== 'docked') return;
                         nativeInstances.set(field, 'docked');
+                        if (usesAttachedNativeEditor(native) && Object.isExtensible(field)) {
+                            Object.defineProperty(field, reserveAttached, {configurable: true, value: (current: NativeFactory) => {
+                                if (!usesAttachedNativeEditor(current) || nativeInstances.get(field) !== 'docked') return false;
+                                // An outstanding callback can keep this exact object after the editor closes.
+                                nativeInstances.set(field, 'reserved');
+                                return true;
+                            }});
+                        }
                         if (snapshot !== undefined && Object.isExtensible(field)) {
                             Object.defineProperty(field, isolatedFactory, {configurable: true, value: (current: NativeFactory) => {
                                 if (current.parentDocument !== true || current.isolatedEditor !== true) return;

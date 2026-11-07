@@ -3,7 +3,7 @@ import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
 import {attachDockedCodeExtensions, getCodeDynamicShapes, getCodeExtensions} from '../code-extensions.ts';
 import {captureNativeFieldDrawing} from '../native-field-svg.ts';
-import {createIsolatedNativeField, registerCustomFields} from '../custom-extension-fields.ts';
+import {createIsolatedNativeField, registerCustomFields, reserveAttachedNativeField} from '../custom-extension-fields.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
 
@@ -324,6 +324,24 @@ test('isolated native editors use fresh fields and preserve factory options', ()
     cached = isolated;
     assert.equal(createIsolatedNativeField(docked, factory), undefined);
     assert.equal(registry[name].fromJson({value: 'other'}), undefined);
+    unregister();
+});
+
+test('an attached native editor cannot reserve or register the same field twice', () => {
+    const name = 'field_fixture_attached';
+    const registry = {};
+    const field = {sourceBlock_: undefined};
+    const factory = {parentDocument: true, attachedEditor: true, fromJson: () => field};
+    const unregister = registerCustomFields({
+        Field: {TYPE_MAP_: registry, register(name, field) {registry[name] = field;}}
+    }, [{name, editor: {type: 'native_widget'}}], undefined, () => factory);
+    assert.equal(registry[name].fromJson({}), field);
+    assert.equal(reserveAttachedNativeField(field, factory), false);
+    field.sourceBlock_ = {};
+    assert.equal(reserveAttachedNativeField(field, {...factory, attachedEditor: false}), false);
+    assert.equal(reserveAttachedNativeField(field, {...factory}), true);
+    assert.equal(reserveAttachedNativeField(field, factory), false);
+    assert.equal(registry[name].fromJson({}), undefined);
     unregister();
 });
 
