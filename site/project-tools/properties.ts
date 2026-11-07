@@ -1,4 +1,5 @@
 import JSZip from '@turbowarp/jszip';
+import {beginProjectLoad} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
 
 export const PROJECT_INFO_KEY = 'turboWarpPlusProject';
 const fields = ['title', 'description', 'author', 'contact'];
@@ -115,11 +116,13 @@ export function installProjectProperties(vm, {
         loadProject(input, ...args) {
             if (disposed) return Promise.reject(new Error('Project properties were disposed'));
             loading++;
+            const progress = beginProjectLoad(vm, input);
             const isNew = projectState.isNew?.() === true;
             // The authoring controller identifies its own load in the synchronous start callback.
             // Metadata reading must not defer that callback beyond the caller's ownership scope.
             let nativeLoad;
-            try { nativeLoad = originals.loadProject.call(vm, input, ...args); }
+            const invoke = () => originals.loadProject.call(vm, input, ...args);
+            try { nativeLoad = progress ? progress.invoke(invoke) : invoke(); }
             catch (error) { nativeLoad = Promise.reject(error); }
             const settled = Promise.resolve(nativeLoad).then(value => ({value}), error => ({error, failed: true}));
             const run = async () => {
@@ -151,7 +154,10 @@ export function installProjectProperties(vm, {
             };
             const result = loadQueue.then(() => runProjectLoad ? runProjectLoad(run) : run());
             loadQueue = result.catch(() => {});
-            return result.finally(() => { loading--; });
+            return result.finally(() => {
+                loading--;
+                progress?.finish();
+            });
         },
         toJSON(...args) {
             const raw = originals.toJSON.apply(vm, args);

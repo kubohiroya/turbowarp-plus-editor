@@ -12,6 +12,8 @@
     "./palette-category-reorder": "./src/palette-category-reorder.ts",
     "./palette-category-search": "./src/palette-category-search.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",
+    "./project-load-progress": "./src/project-load-progress.ts",
+    "./project-load-progress-view": "./src/project-load-progress-view.tsx",
     "./project-search": "./src/project-search-box.tsx",
     "./project-info-menu": "./src/info-menu.tsx",
     "./stage-controls": "./src/stage-controls.ts",

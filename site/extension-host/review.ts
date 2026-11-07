@@ -26,6 +26,7 @@ import React from 'react';
 
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
 import {pendingPlusReview} from './review-channel.ts';
+import {duringProjectLoadApproval} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
 import styles from './review.css';
 
 const hex = bytes => Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
@@ -162,7 +163,7 @@ export const createSecurityReview = ({
             }));
             const starting = initialDecisions(rows, 'open', {recorded: initial});
             if (!requiresReview(rows)) return starting;
-            return showReview(rows, starting);
+            return duringProjectLoadApproval(vm, () => showReview(rows, starting));
         }, defaultURLs, storage, {
             identify,
             // The Plus host opens a channel for the load it drives, so its rows are asked about on

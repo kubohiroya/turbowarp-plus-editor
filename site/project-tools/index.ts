@@ -1,5 +1,7 @@
 import React from 'react';
 import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {captureProjectLoad, duringProjectLoadApproval, reportProjectAssets, reportProjectFinishing}
+    from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
 import {MANUAL_PROJECT_URI_ENABLED, PROJECT_TOOLS_ENABLED} from './config.ts';
 import {installProjectProperties} from './properties.ts';
 import {createAuthorHistory} from './history.ts';
@@ -19,10 +21,15 @@ export const installProjectToolsHost = (vm, settings: Parameters<typeof installE
     const document = settings.document || globalThis.document;
     const runProjectLoad = document ? <T>(run: () => Promise<T>) => withWaitCursor([document], run) : undefined;
     const host = installEditorExtensionHost(vm, {...settings, showDiagnostics: false, runProjectLoad,
-        waitForUser: document ? ask => withoutWaitCursor(document, ask) : undefined,
+        captureProjectProgress: () => captureProjectLoad(vm),
+        waitForUser: document ? ask => duringProjectLoadApproval(vm, () => withoutWaitCursor(document, ask)) : undefined,
         diagnostics: event => { diagnostics.record(event); settings.diagnostics?.(event); },
         onProjectManifest: manifest => { diagnostics.describe(manifest); settings.onProjectManifest?.(manifest); }});
     const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled, runProjectLoad});
+    const reportAssets = (finished: number, total: number) => reportProjectAssets(vm, finished, total);
+    const finishProject = () => reportProjectFinishing(vm);
+    vm.on?.('ASSET_PROGRESS', reportAssets);
+    vm.runtime?.on?.('PROJECT_LOADED', finishProject);
     const history = enabled ? createAuthorHistory(document ? storageFor(document) : undefined) : null;
     const dialogs = document?.body ? createProjectDialogs(document, properties, history, diagnostics,
         {locale: settings.locale, getLocale: settings.getLocale}) : null;
@@ -43,6 +50,8 @@ export const installProjectToolsHost = (vm, settings: Parameters<typeof installE
     let disposal;
     return {...host, dispose () {
         disposal ??= (async () => {
+            vm.off?.('ASSET_PROGRESS', reportAssets);
+            vm.runtime?.off?.('PROJECT_LOADED', finishProject);
             unsubscribe(); dialogs?.dispose(); properties.dispose(); diagnostics.dispose(); projects.delete(vm);
             await host.dispose();
         })();

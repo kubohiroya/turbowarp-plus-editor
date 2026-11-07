@@ -134,6 +134,7 @@ export function installExtensionLoader(host, loader) {
     };
     const loadProject = function(input, ...args) {
         checkActive();
+        const progress = host.captureProjectProgress?.();
         if (host.onProjectLoadStart) host.onProjectLoadStart(input);
         payloads?.loadStarted();
         pending++;
@@ -143,7 +144,9 @@ export function installExtensionLoader(host, loader) {
             activeController = controller;
             let touchedHost = false;
             try {
+                if (payloads) progress?.('payloads');
                 const restoredPayloads = payloads ? await payloads.read(input, controller.signal) : null;
+                progress?.('archive');
                 const prepared = await io.prepare(restoredPayloads?.input ?? input, {signal: controller.signal});
                 checkActive();
                 if (!prepared || !Object.hasOwn(prepared, 'manifest') || !Object.hasOwn(prepared, 'input')) {
@@ -162,7 +165,8 @@ export function installExtensionLoader(host, loader) {
                 checkActive();
                 const context = prepared.context ?? null;
                 if (io.activate) io.activate(context);
-                loading = {manifest: prepared.manifest, signal: controller.signal, loaded: false, registration: null};
+                loading = {manifest: prepared.manifest, signal: controller.signal, loaded: false, registration: null, progress};
+                progress?.('project');
                 const result = await originals.loadProject.call(vm, prepared.input, ...args);
                 checkActive();
                 // A VM that never invokes the extension hook cannot load Plus projects.
@@ -216,6 +220,7 @@ export function installExtensionLoader(host, loader) {
     };
     const loadExtensions = async function(ids, urls = new Map(), ...args) {
         checkActive();
+        if (loading?.progress && [...ids].length) loading.progress('extensions');
         if (!loading || loading.manifest === null) {
             return extensionStep(() => originals._loadExtensions.call(vm, ids, urls, ...args));
         }
