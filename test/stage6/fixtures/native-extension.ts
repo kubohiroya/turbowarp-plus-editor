@@ -10,12 +10,14 @@ declare const TW_TEST_EXTERNAL_FIELDS: boolean;
 declare const TW_TEST_ASYNC_FIELD: boolean;
 declare const TW_TEST_DELAYED_FIELD: boolean;
 declare const TW_TEST_ATTACHED_FIELD: boolean;
+declare const TW_TEST_DOCKED_FIELD: boolean;
 
 const useLayout = typeof TW_TEST_LAYOUT_CSS !== 'undefined' && TW_TEST_LAYOUT_CSS;
 const externalFields = typeof TW_TEST_EXTERNAL_FIELDS !== 'undefined' && TW_TEST_EXTERNAL_FIELDS;
 const asyncField = typeof TW_TEST_ASYNC_FIELD !== 'undefined' && TW_TEST_ASYNC_FIELD;
 const delayedField = typeof TW_TEST_DELAYED_FIELD !== 'undefined' && TW_TEST_DELAYED_FIELD;
 const attachedField = typeof TW_TEST_ATTACHED_FIELD !== 'undefined' && TW_TEST_ATTACHED_FIELD;
+const dockedField = typeof TW_TEST_DOCKED_FIELD !== 'undefined' && TW_TEST_DOCKED_FIELD;
 const assetRoot = 'https://field-assets.test/';
 
 declare const Scratch: {
@@ -192,7 +194,7 @@ Scratch.extensions.register({
                             }
                             const commit = (value: string) => {
                                 if (!parentWindow.vm) throw new Error('Missing parent VM');
-                                if (edit || (delayedField && !field.sourceBlock_) || (attachedField && WidgetDiv.DIV.inert)) {
+                                if (edit || dockedField || (delayedField && !field.sourceBlock_) || (attachedField && WidgetDiv.DIV.inert)) {
                                     apply.disabled = true;
                                     let finish: () => void;
                                     const ready = new Promise<void>(resolve => {finish = resolve;});

@@ -1,5 +1,6 @@
 import type {NativeFieldGraphic} from './native-field-svg.ts';
-import {getCustomFields, programmaticField, registerCustomFields, type CustomField} from './custom-extension-fields.ts';
+import {customField, getCustomFields, programmaticField, registerCustomFields, reserveAttachedNativeField, type CustomField} from './custom-extension-fields.ts';
+import {openNativeField} from './native-extension-field.ts';
 
 import {createFieldActionDialog, readFieldActionPanel, runFieldAction} from './programmatic-extension-field.ts';
 export {createFieldActionDialog} from './programmatic-extension-field.ts';
@@ -56,7 +57,65 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale,
     let disposed = false;
     const dialog = document && createFieldActionDialog(document);
     let fieldRequest = 0;
-    const invalidateFieldAction = () => {fieldRequest++;};
+    let closeNativeEditor: (() => void) | undefined;
+    const invalidateFieldAction = () => {
+        fieldRequest++;
+        const close = closeNativeEditor;
+        closeNativeEditor = undefined;
+        close?.();
+    };
+
+    function openDockedNative(field, name: string) {
+        const block = field.sourceBlock_;
+        if (!document || disposed || !block || block.isInFlyout) return;
+        invalidateFieldAction();
+        const request = fieldRequest;
+        const target = runtime.getEditingTarget();
+        const workspace = block.workspace;
+        const vmBlock = target?.blocks.getBlock(block.id);
+        const value = vmBlock?.fields?.[name]?.value;
+        const native = customField(runtime, block.type, name)?.native;
+        if (!native || typeof value !== 'string' || field.getValue() !== value) return;
+        const sameTarget = () => vm.editingTarget === target && runtime.getEditingTarget() === target &&
+            runtime.getTargetById(target.id) === target;
+        const stillInstalled = () => sameTarget() && field.sourceBlock_ === block &&
+            workspace.getBlockById(block.id)?.getField(name) === field;
+        const current = () => !disposed && request === fieldRequest && stillInstalled() && document.hasFocus() &&
+            !workspace.getParentSvg().parentElement.inert && target.blocks.getBlock(block.id) === vmBlock &&
+            vmBlock.fields[name]?.value === value && customField(runtime, block.type, name)?.native === native;
+        if (!current() || !reserveAttachedNativeField(field, native)) return;
+        const setValue = field.setValue.bind(field);
+        closeNativeEditor = openNativeField({
+            blocks: ScratchBlocks, field, document, parentDocument: true, asyncCommit: native.asyncCommit === true,
+            valid: current,
+            commit(next) {
+                // Deliver the normal Blockly change before replacing the retired field.
+                setValue(next);
+                ScratchBlocks.Events.fireNow_();
+            },
+            onAttachedClose() {
+                queueMicrotask(() => {
+                    if (!stillInstalled()) return;
+                    ScratchBlocks.Events.fireNow_();
+                    if (!stillInstalled()) return;
+                    // The GUI clears the workspace history on refresh, even for the same target.
+                    const undo = workspace.undoStack_.slice();
+                    const redo = workspace.redoStack_.slice();
+                    ScratchBlocks.Events.disable();
+                    try {
+                        vm.refreshWorkspace();
+                    } finally {
+                        if (sameTarget()) {
+                            workspace.undoStack_ = undo;
+                            workspace.redoStack_ = redo;
+                        }
+                        ScratchBlocks.Events.enable();
+                    }
+                });
+            },
+            onError: onFieldError
+        });
+    }
 
     function openProgrammatic(field, name: string) {
         const block = field.sourceBlock_;
@@ -90,7 +149,7 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale,
         const fields = getCustomFields(category);
         if (fields.length) {
             fieldRegistrations.set(category.id, registerCustomFields(ScratchBlocks, fields.map(({declaration}) => declaration), openProgrammatic,
-                name => fields.find(field => field.declaration.name === name)?.native));
+                name => fields.find(field => field.declaration.name === name)?.native, undefined, openDockedNative));
         } else fieldRegistrations.delete(category.id);
 
         for (const entry of category.blocks ?? []) {
@@ -138,6 +197,7 @@ export function attachDockedCodeExtensions({vm, ScratchBlocks, document, locale,
 
     return {dispose() {
         disposed = true;
+        invalidateFieldAction();
         dialog?.close();
         vm.removeListener('EXTENSION_ADDED', install);
         vm.removeListener('BLOCKSINFO_UPDATE', install);

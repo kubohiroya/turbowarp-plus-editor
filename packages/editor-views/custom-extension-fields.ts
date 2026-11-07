@@ -7,6 +7,7 @@ type NativeFactory = {fromJson(options: unknown): unknown; parentDocument?: bool
 export type CustomField = {name: string; editor: FieldEditor};
 const isolatedFactory = Symbol.for('turbowarp-plus-editor.isolated-native-field');
 const reserveAttached = Symbol.for('turbowarp-plus-editor.reserve-attached-native-field');
+const nativeEditor = Symbol.for('turbowarp-plus-editor.native-field-editor');
 const nativeInstances = new WeakMap<object, 'docked' | 'isolated' | 'reserved'>();
 
 function cloneOptions(options: unknown) {
@@ -26,6 +27,11 @@ export const usesAttachedNativeEditor = (native: NativeFactory) =>
 
 export function reserveAttachedNativeField(field, native: NativeFactory) {
     return Boolean(field?.sourceBlock_) && field[reserveAttached]?.(native) === true;
+}
+
+export function getNativeFieldEditor(field) {
+    const show = field?.[nativeEditor] ?? field?.showEditor_;
+    return typeof show === 'function' ? show.bind(field) : undefined;
 }
 
 function readEditor(implementation): FieldEditor | undefined {
@@ -74,7 +80,8 @@ export function customField(runtime, opcode: string, name: string) {
 export const programmaticField = (runtime, opcode: string, name: string) => customField(runtime, opcode, name)?.programmatic;
 
 export function registerCustomFields(blocks, declarations: CustomField[], openCustomEditor?, getNative?: (name: string) => NativeFactory,
-    getGraphic?: (blockId: string, name: string, value: string) => NativeFieldGraphic | undefined) {
+    getGraphic?: (blockId: string, name: string, value: string) => NativeFieldGraphic | undefined,
+    openDockedNative?: (field, name: string) => void) {
     const registry = blocks.Field?.TYPE_MAP_;
     const registered = new Map();
     if (registry) {
@@ -98,6 +105,12 @@ export function registerCustomFields(blocks, declarations: CustomField[], openCu
                                 nativeInstances.set(field, 'reserved');
                                 return true;
                             }});
+                            if (openDockedNative && 'showEditor_' in field && typeof field.showEditor_ === 'function') {
+                                if (!Object.hasOwn(field, nativeEditor)) {
+                                    Object.defineProperty(field, nativeEditor, {value: field.showEditor_});
+                                }
+                                field.showEditor_ = () => openDockedNative(field, name);
+                            }
                         }
                         if (snapshot !== undefined && Object.isExtensible(field)) {
                             Object.defineProperty(field, isolatedFactory, {configurable: true, value: (current: NativeFactory) => {

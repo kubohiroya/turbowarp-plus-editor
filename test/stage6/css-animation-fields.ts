@@ -10,7 +10,8 @@ await verifyWebEditor(directory);
 const layout = process.argv.includes('--layout');
 const resources = process.argv[3] === '--resources';
 const asyncField = process.argv[3] === '--async-commit';
-const attachedField = process.argv[3] === '--attached-set-value';
+const dockedField = process.argv[3] === '--docked-set-value';
+const attachedField = dockedField || process.argv[3] === '--attached-set-value';
 const delayedField = attachedField || process.argv[3] === '--delayed-set-value';
 const programmaticPromise = process.argv[3] === '--programmatic-promise';
 const programmatic = programmaticPromise || process.argv[3] === '--programmatic-sync';
@@ -54,7 +55,8 @@ const [driver, extension] = await Promise.all([
             TW_TEST_PSEUDO_CSS: 'false', TW_TEST_ANIMATION_CSS: String(!layout && !resources && !asyncField && !delayedField),
             TW_TEST_LAYOUT_CSS: String(layout), TW_TEST_EXTERNAL_FIELDS: String(resources), TW_TEST_ASYNC_FIELD: String(asyncField),
             TW_TEST_PROGRAMMATIC_PROMISE: String(programmaticPromise),
-            TW_TEST_DELAYED_FIELD: String(delayedField && !attachedField), TW_TEST_ATTACHED_FIELD: String(attachedField)
+            TW_TEST_DELAYED_FIELD: String(delayedField && !attachedField), TW_TEST_ATTACHED_FIELD: String(attachedField),
+            TW_TEST_DOCKED_FIELD: String(dockedField)
         }
     })
 ]);
@@ -106,7 +108,7 @@ try {
     // while keeping the production focus handlers, edit lease and MessagePort protocol.
     await context.addInitScript(() => {
         let focused = !window.opener;
-        Object.defineProperty(document, 'hasFocus', {value: () => focused});
+        Object.defineProperty(Document.prototype, 'hasFocus', {value: () => focused});
         window['setTestCodeFocus'] = (next: boolean) => {
             if (next === focused) return;
             focused = next;
@@ -198,8 +200,11 @@ try {
         }, {sprite, id, value});
     };
     const openWidget = async (page: Page) => {
-        await field(page, (await readValue()).id).click({force: true});
-        const widget = page.locator('[data-plus-native-field]');
+        if (page === editor) {
+            await editor.waitForFunction(() => !window.ScratchBlocks.getMainWorkspace().getParentSvg().parentElement.inert);
+        }
+        await field(page, (await readValue()).id).click({force: page !== editor});
+        const widget = page.locator(page === editor ? '[data-tw-parent-document-caption]' : '[data-plus-native-field]');
         await widget.waitFor();
         return widget;
     };
@@ -215,6 +220,12 @@ try {
         window['testProgrammaticJobs'][index].resolve(value);
     }, {index, value});
     const undoDisabled = (page: Page) => page.locator('#undo').evaluate((node: HTMLButtonElement) => node.disabled);
+    const jobCount = (count: number) => editor.waitForFunction(count =>
+        window['testAsyncFieldJobs']?.length === count, count);
+    const finish = async (index: number) => {
+        await editor.evaluate(index => window['testAsyncFieldJobs'][index].finish(), index);
+        await editor.waitForFunction(index => window['testAsyncFieldJobs'][index].delivered, index);
+    };
     const dock = async (page: Page) => {
         await focus(page);
         await Promise.all([page.waitForEvent('close'), page.locator('#dock').click()]);
@@ -222,8 +233,8 @@ try {
 
     const a = await open();
     const b = await open();
-    await focus(a);
-    let widget = programmatic ? await openAction(a, 'original') : await openWidget(a);
+    await focus(dockedField ? editor : a);
+    let widget = programmatic ? await openAction(a, 'original') : await openWidget(dockedField ? editor : a);
     assert.equal(await a.locator('#tw-test-native-field-css').count(), 0);
     const group = widget.locator('fieldset');
     const animation = layout || resources || asyncField || delayedField || programmatic ? undefined : await checkAnimation(group);
@@ -266,12 +277,6 @@ try {
             await resolveAction(2, edited);
         }
     } else if (asyncField || delayedField) {
-        const jobCount = (count: number) => editor.waitForFunction(count =>
-            window['testAsyncFieldJobs']?.length === count, count);
-        const finish = async (index: number) => {
-            await editor.evaluate(index => window['testAsyncFieldJobs'][index].finish(), index);
-            await editor.waitForFunction(index => window['testAsyncFieldJobs'][index].delivered, index);
-        };
         await submit('stale value');
         await jobCount(1);
         await checkValue('original', [a, b]);
@@ -290,8 +295,8 @@ try {
             assert.equal(await undoDisabled(b), true);
         }
 
-        await focus(a);
-        widget = await openWidget(a);
+        await focus(dockedField ? editor : a);
+        widget = await openWidget(dockedField ? editor : a);
         await submit(edited);
         const currentJob = attachedField ? 2 : 1;
         await jobCount(currentJob + 1);
@@ -347,15 +352,50 @@ try {
         const dockedWidget = editor.locator('[data-tw-parent-document-caption]');
         await dockedWidget.getByRole('textbox', {name: 'Caption'}).fill('edited after dock');
         await dockedWidget.getByRole('button', {name: 'Apply caption'}).click();
+        if (dockedField) {
+            await jobCount(4);
+            await finish(3);
+        }
         await checkValue('edited after dock', [editor]);
-        await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
+        if (dockedField) {
+            await editor.evaluate(() => {
+                const {ScratchBlocks} = window;
+                const workspace = ScratchBlocks.getMainWorkspace();
+                ScratchBlocks.Workspace.prototype.undo.call(workspace, false);
+            });
+        } else {
+            await editor.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
+        }
         await checkValue(edited, [editor]);
+    }
+    if (dockedField) {
+        widget = await openWidget(editor);
+        await submit('stale after switching targets');
+        await jobCount(5);
+        const originalTargetId = await editor.evaluate(async () => {
+            const {vm} = window;
+            const id = vm.editingTarget.id;
+            await vm.duplicateSprite(id);
+            return id;
+        });
+        await widget.waitFor({state: 'detached'});
+        await finish(4);
+        assert.equal((await readValue()).value, edited);
+        assert.deepEqual(await editor.evaluate(() => Object.values(window.vm.editingTarget.blocks._blocks)
+            .filter((block: any) => block.opcode === 'windowfields_caption')
+            .map((block: any) => block.fields.field_windowfields_caption.value)), [edited]);
+        await editor.evaluate(id => window.vm.setEditingTarget(id), originalTargetId);
+
+        widget = await openWidget(editor);
+        await submit('stale after reloading the project');
+        await jobCount(6);
     }
     await editor.evaluate(async name => {
         await window.vm.loadProject(await (await window.vm.saveProjectSb3()).arrayBuffer());
         const target = window.vm.runtime.targets.find(item => item.getName() === name);
         window.vm.setEditingTarget(target.id);
     }, sprite);
+    if (dockedField) await finish(5);
     await checkValue(edited, [editor]);
     const reopened = await open();
     await focus(reopened);
@@ -384,9 +424,25 @@ try {
         await openWidget(reopened);
         assert.equal(await restored.locator('fieldset').evaluate(node => node.getAnimations().length), 0);
     }
-    await dock(reopened);
+    if (dockedField) {
+        await restored.getByRole('textbox', {name: 'Caption'}).fill('stale after closing the window');
+        await restored.getByRole('button', {name: 'Apply caption'}).click();
+        await jobCount(7);
+        await reopened.close();
+        await focus(editor);
+        await editor.waitForFunction(() => !window.ScratchBlocks.getMainWorkspace().getParentSvg().parentElement.inert);
+        await finish(6);
+        await checkValue(edited, [editor]);
+        const connectedAgain = await open();
+        await focus(connectedAgain);
+        assert.equal(await undoDisabled(connectedAgain), true);
+        await dock(connectedAgain);
+    } else {
+        await dock(reopened);
+    }
     assert.deepEqual(errors, []);
-    const displayCheck = programmaticPromise ? 'applyAction Promise, stale result filtering and rejection recovery' :
+    const displayCheck = dockedField ? 'docked native editor sessions, stale writes across focus and target changes, project reload and window close, native Undo' :
+        programmaticPromise ? 'applyAction Promise, stale result filtering and rejection recovery' :
         programmatic ? 'synchronous applyAction' :
         attachedField ? 'direct delayed setValue on actual docked fields, stale writes after revocation and reacquisition' :
         delayedField ? 'direct delayed setValue, detached field instances and stale writes after reacquiring edit access' :
