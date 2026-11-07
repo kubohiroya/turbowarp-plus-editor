@@ -1,7 +1,11 @@
 const path = require('node:path');
 
 const session = path.resolve(__dirname, '../../packages/editor-views/asset-edit-session.ts');
-const importSession = `import {createAssetEditSession} from ${JSON.stringify(session)};\n`;
+const imports: Record<string, string> = {
+    'sound-editor.jsx': `import {createAssetEditSession, prepareAssetHistoryMove} from ${JSON.stringify(session)};\n`,
+    'paint-editor-wrapper.jsx': `import {createAssetEditSession} from ${JSON.stringify(session)};\n`,
+    'virtual-machine.js': `const {commitCostumeImage} = require(${JSON.stringify(session)});\n`
+};
 
 // The pinned editors own rendering and encoding. Connect their lifecycle and
 // asynchronous completion points to the host's asset edit session.
@@ -14,15 +18,33 @@ const connections: Record<string, [string, string][]> = {
         this.soundEdits.select(newProps.vm, newProps.soundIndex);`],
         ['componentWillUnmount () {', `componentWillUnmount () {
         this.soundEdits.close();`],
-        ['submitNewSamples (samples, sampleRate, skipUndo) {', `submitNewSamples (samples, sampleRate, skipUndo, isCurrent = this.soundEdits.begin()) {
+        ['submitNewSamples (samples, sampleRate, skipUndo) {', `submitNewSamples (samples, sampleRate, updateHistory, isCurrent = this.soundEdits.begin()) {
         if (!isCurrent()) return Promise.resolve(false);`],
         ['}).then(wavBuffer => {', `}).then(wavBuffer => {
                     if (!isCurrent()) return false;`],
-        ['handleEffect (name) {', `handleEffect (name) {
-        const isCurrent = this.soundEdits.begin();
-        if (!isCurrent()) return;`],
+        ['if (!skipUndo) {', 'if (updateHistory) {\n                        updateHistory();\n                    } else {'],
+        ['const effects = new AudioEffects(', `const isCurrent = this.soundEdits.begin();
+        if (!isCurrent()) return;
+        const effects = new AudioEffects(`],
         ['this.submitNewSamples(samples, sampleRate).then(success => {\n                if (success) {',
-            'this.submitNewSamples(samples, sampleRate, false, isCurrent).then(success => {\n                if (success && isCurrent()) {']
+            'this.submitNewSamples(samples, sampleRate, false, isCurrent).then(success => {\n                if (success && isCurrent()) {'],
+        ...(['Undo', 'Redo'] as const).map((action): [string, string] => {
+            const from = action.toLowerCase();
+            const to = action === 'Undo' ? 'redo' : 'undo';
+            const readItem = `const {samples, sampleRate, trimStart, trimEnd} = this.${from}Stack.pop();`;
+            const pushItem = `this.${to}Stack.push(this.getUndoItem());`;
+            const move = action === 'Undo' ? `${pushItem}\n        ${readItem}\n        if (samples) {` :
+                `${readItem}\n        if (samples) {\n            ${pushItem}`;
+            return [`handle${action} () {
+        ${move}
+            return this.submitNewSamples(samples, sampleRate, true).then(success => {`,
+            `handle${action} () {
+        const history = prepareAssetHistoryMove(this.${from}Stack, this.${to}Stack, () => this.getUndoItem());
+        if (!history.item) return;
+        const {samples, sampleRate, trimStart, trimEnd} = history.item;
+        if (samples) {
+            return this.submitNewSamples(samples, sampleRate, history.commit).then(success => {`];
+        })
     ],
     'paint-editor-wrapper.jsx': [
         ['super(props);', `super(props);
@@ -40,6 +62,16 @@ const connections: Record<string, [string, string][]> = {
                 this.props.beginCostumeEdit && this.props.beginCostumeEdit());`],
         ['fontInlineFn: PropTypes.func,', 'fontInlineFn: PropTypes.func,\n    beginCostumeEdit: PropTypes.func,']
     ],
+    'virtual-machine.js': [
+        [`_updateBitmap (costume, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
+        if (!(costume && this.runtime && this.runtime.renderer)) return;`,
+        `_updateBitmap (costume, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
+        if (!(costume && this.runtime && this.runtime.renderer)) return;
+        const isCurrentImage = commitCostumeImage(costume);`],
+        ["reader.addEventListener('loadend', () => {", "reader.addEventListener('loadend', () => {\n                if (!isCurrentImage()) return;"],
+        ['_updateSvg (costume, svg, rotationCenterX, rotationCenterY) {',
+            '_updateSvg (costume, svg, rotationCenterX, rotationCenterY) {\n        if (costume) commitCostumeImage(costume);']
+    ],
     'bitmap.js': [
         ['const convertToBitmap = function (clearSelectedItems, onUpdateImage, optFontInlineFn) {',
             `const convertToBitmap = function (clearSelectedItems, onUpdateImage, optFontInlineFn, isCurrent = () => true) {
@@ -52,7 +84,7 @@ const connections: Record<string, [string, string][]> = {
     ]
 };
 
-module.exports = function (source: string) {
+module.exports = function (this: {resourcePath: string}, source: string) {
     const filename = path.basename(this.resourcePath);
     for (const [before, after] of connections[filename]) {
         const first = source.indexOf(before);
@@ -61,5 +93,5 @@ module.exports = function (source: string) {
         }
         source = source.replace(before, () => after);
     }
-    return filename === 'sound-editor.jsx' || filename === 'paint-editor-wrapper.jsx' ? importSession + source : source;
+    return (imports[filename] || '') + source;
 };

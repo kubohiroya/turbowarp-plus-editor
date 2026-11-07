@@ -194,7 +194,8 @@ config.module.rules.push({
         path.join(gui, 'src/containers/sound-editor.jsx'),
         path.join(gui, 'src/containers/paint-editor-wrapper.jsx'),
         path.join(paintSource, 'containers/paint-editor.jsx'),
-        path.join(paintSource, 'helper/bitmap.js')
+        path.join(paintSource, 'helper/bitmap.js'),
+        path.join(vmSource, 'virtual-machine.js')
     ].map(filename => fs.realpathSync(filename)),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-asset-edits.cts')
