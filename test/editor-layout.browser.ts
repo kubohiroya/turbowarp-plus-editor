@@ -815,31 +815,23 @@ test('a background sprite code window fits scripts when the foreground shows non
     assert.equal(await page.evaluate(() => vm.editingTarget.getName()), 'Editing sprite');
 });
 
-test('the default editor expands the Backpack at the bottom edge', {timeout: 30_000}, async t => {
+test('the editor leaves the bottom edge free of Backpack controls', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
-    const backpack = page.getByRole('button', {name: 'Reveal Backpack', exact: true});
+    const url = origin + buildPrefix + 'editor.html?lang=en';
+    const backpack = page.getByRole('button', {name: /backpack/i, includeHidden: true});
+    const header = page.locator('[class*="backpack_backpack-header"]');
     const workspace = page.locator('.blocklySvg').first();
-    const map = page.locator('[data-workspace-minimap]');
-    const zoom = page.locator('[data-plus-horizontal-zoom]');
-    await expect(backpack).toHaveAttribute('aria-expanded', 'false');
-    await expect(workspace).toBeVisible();
-    const height = (await workspace.boundingBox()).height;
-    await backpack.hover();
-    await expect(backpack).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.getByRole('button', {name: 'Undock Backpack', exact: true})).toBeVisible();
-    await expect.poll(async () => (await workspace.boundingBox()).height).toBeLessThan(height);
-    const mapBounds = await map.boundingBox();
-    const zoomBounds = await zoom.boundingBox();
-    const trigger = await backpack.boundingBox();
-    assert.ok(mapBounds.y + mapBounds.height < zoomBounds.y && zoomBounds.y + zoomBounds.height < trigger.y);
-    await page.mouse.move(500, 400);
-    await expect(backpack).toHaveAttribute('aria-expanded', 'false');
-    await expect.poll(async () => (await workspace.boundingBox()).height).toBe(height);
+    for (const query of ['', '&twPlusStandardLayout=0&twPlusWindowLayout=1&twPlusBackpackPopout=1']) {
+        await page.goto(url + query);
+        await expect(workspace).toBeVisible();
+        const {width, height} = page.viewportSize();
+        await page.mouse.move(width / 2, height - 1);
+        await expect(backpack).toHaveCount(0);
+        await expect(header).toHaveCount(0);
+    }
 });
 
 test('utility panels and menus stay above the code workspace and its palette', {timeout: 45_000}, async t => {
-    // The Backpack transfer session uses crypto.randomUUID in a secure context.
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0');
@@ -880,16 +872,6 @@ test('utility panels and menus stay above the code workspace and its palette', {
     await expect(spriteWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
     await page.keyboard.press('Escape');
 
-    const backpack = page.getByRole('button', {name: 'Reveal Backpack', exact: true});
-    await backpack.hover();
-    await expect(backpack).toHaveAttribute('aria-expanded', 'true');
-    await page.getByRole('button', {name: 'Undock Backpack', exact: true}).click();
-    const backpackWindow = page.getByRole('region', {name: 'Backpack', exact: true});
-    await expect(backpackWindow).toBeVisible();
-    await code.click({position: {x: 780, y: 430}});
-    await backpackWindow.getByRole('button', {name: 'Window layout'}).click();
-    await expect(backpackWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
-    await page.keyboard.press('Escape');
     await code.getByRole('button', {name: 'Window layout'}).click();
     await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
     await expect(code).toHaveCount(0);
