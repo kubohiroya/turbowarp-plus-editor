@@ -41,7 +41,7 @@ export function readStartupFeatureFlags({
         paletteDeletePreview: paletteDeletePreview === null || paletteDeletePreview === '1',
         paletteCategoryReorder: paletteCategoryReorder === null || paletteCategoryReorder === '1',
         horizontalBlockPalette: horizontalBlockPalette === '1',
-        contextMenuIcons: contextMenuIcons === '1',
+        contextMenuIcons: contextMenuIcons === null || contextMenuIcons === '1',
         localGit: localGit === null || localGit === '1',
         workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1'
     });

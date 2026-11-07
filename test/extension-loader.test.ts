@@ -134,7 +134,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: false, localGit: true, workspaceMinimap: true});
+        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, workspaceMinimap: true});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -161,7 +161,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: false, localGit: true, workspaceMinimap: true});
+        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, workspaceMinimap: true});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -233,8 +233,9 @@ test('the horizontal block palette is opt-in at startup', () => {
     assert.equal(readWebStartupFeatureFlags('?twPlusHorizontalBlockPalette=1').horizontalBlockPalette, true);
 });
 
-test('context menu icons require explicit startup opt-in', () => {
-    for (const search of ['', '?twPlusContextMenuIcons=0', '?twPlusContextMenuIcons=true']) {
+test('context menu icons default on with a startup opt-out', () => {
+    assert.equal(readWebStartupFeatureFlags().contextMenuIcons, true);
+    for (const search of ['?twPlusContextMenuIcons=0', '?twPlusContextMenuIcons=true']) {
         assert.equal(readWebStartupFeatureFlags(search).contextMenuIcons, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusContextMenuIcons=1').contextMenuIcons, true);

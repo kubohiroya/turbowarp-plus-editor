@@ -282,6 +282,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         // The addon wrapper for ContextMenu.show expects an active Blockly gesture.
         const popup = ContextMenu.populate_([{
             text,
+            twPlusMenuIcon: horizontal ? 'paletteVertical' : 'paletteHorizontal',
             enabled: true,
             callback: () => {
                 WidgetDiv.hideIfOwner(toolbox);

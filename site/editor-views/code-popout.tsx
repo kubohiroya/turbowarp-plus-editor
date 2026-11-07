@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {PopupLayout} from '../editor-layout/popup-layout.tsx';
 import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
+import {installBlockContextMenuIcons} from '../context-menu-icons/index.ts';
+import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {installProcedureEditor} from '@kubohiroya/turbowarp-plus-editor-views/procedure-editor';
@@ -345,9 +347,12 @@ for (const name of ['keydown', 'keyup']) {
 }
 
 function connect(event) {
-    if (event.source !== window.opener || event.origin !== location.origin ||
+    const parent = window.opener;
+    if (!parent || event.source !== parent || event.origin !== location.origin ||
         event.data?.type !== 'stage2/connect' || event.data.ticket !== ticket || event.ports.length !== 1) return;
     window.removeEventListener('message', connect);
+    const {contextMenuIcons} = readWebStartupFeatureFlags(parent.location.search);
+    installBlockContextMenuIcons(ScratchBlocks, contextMenuIcons);
     [port] = event.ports;
     port.addEventListener('message', receive);
     port.start();

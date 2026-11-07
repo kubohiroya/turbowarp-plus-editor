@@ -71,7 +71,12 @@ export function installScopedVariableReferences(blocks, workspace, getLocale: ()
                 for (const variable of variables.sort((a, b) => a.name.localeCompare(b.name))) {
                     const id = variable.getId();
                     if (id !== field.getValue()) {
-                        options.push({text: scopedLabel(variable, variables), enabled: true, callback: () => field.setValue(id)});
+                        options.push({
+                            text: scopedLabel(variable, variables),
+                            twPlusMenuIcon: 'switch',
+                            enabled: true,
+                            callback: () => field.setValue(id)
+                        });
                     }
                 }
             };
