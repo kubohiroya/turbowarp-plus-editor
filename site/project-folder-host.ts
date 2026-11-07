@@ -60,6 +60,7 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
         connectionSettings,
         openProject: folder.openDirectory,
         isProjectDirty,
+        isProjectRunning: isRunning,
         subscribe(listener) {
             const loaded = () => listener('loaded');
             const unsubscribe = store.subscribe(() => listener('changed'));
