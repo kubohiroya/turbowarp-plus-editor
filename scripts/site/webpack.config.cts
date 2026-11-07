@@ -66,6 +66,11 @@ const injections = {
     __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle']
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/addons/addons/hide-flyout/userscript.js')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-hide-flyout.cts')
+});
 if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
     // Give only the GUI project URL fetcher the browser host's URL resolution.
     config.module.rules.push({

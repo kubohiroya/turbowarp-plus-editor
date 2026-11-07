@@ -155,15 +155,15 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout).toBeVisible();
 });
 
-test('自動で隠すアドオンが有効でも横パレットのピンはリサイズ中に右上隅に追従する', async ({page}) => {
+test('既定のファイルメニュー構成で横パレットのピンと縦パレットの自動非表示が動く', async ({page}) => {
     await page.addInitScript(() => {
         localStorage.setItem('tw:addons', JSON.stringify({
             _: 5,
             'hide-flyout': {enabled: true, toggle: 'cathover', speed: 'none'}
         }));
     });
-    // The addon expects the standalone extension button when it installs hover listeners.
-    await page.goto('editor.html?lang=en&twPlusHorizontalBlockPalette=1&twPlusExtensionFileMenu=0');
+    await page.goto('editor.html?lang=en&twPlusHorizontalBlockPalette=1');
+    await expect(page.getByRole('button', {name: 'Add Extension', exact: true})).toHaveCount(0);
     const toolbox = page.locator('.blocklyToolboxDiv');
     const control = toolbox.locator('.scratchCategoryId-control');
     const flyout = page.locator('.blocklyFlyout');
@@ -233,6 +233,8 @@ test('自動で隠すアドオンが有効でも横パレットのピンはリ�
     const verticalX = (await flyout.boundingBox()).x;
     await page.mouse.move(1, 1);
     await expect.poll(async () => (await flyout.boundingBox()).x).toBeLessThan(verticalX);
+    await toolbox.hover();
+    await expect.poll(async () => (await flyout.boundingBox()).x).toBeCloseTo(verticalX);
 });
 
 test('横パレットの小窓を編集領域内でリサイズし、カテゴリ別に復元する', async ({page, evidence}) => {
