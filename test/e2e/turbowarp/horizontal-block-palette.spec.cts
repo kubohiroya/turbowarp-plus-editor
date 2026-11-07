@@ -172,6 +172,7 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     const handle = page.locator('[data-palette-resize-handle]');
     const lock = flyout.locator('.sa-lock-object');
     const pinButton = lock.locator('button');
+    const unpinnedColor = 'rgba(128, 128, 128, 0.88)';
     const workspace = page.locator('.blocklySvg').first();
     const outside = {x: 12, y: 430};
     const clickOutside = () => workspace.click({position: outside});
@@ -213,7 +214,7 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     await expectPinInCorner();
     await expect(pinButton.locator('img')).toBeHidden();
     expect(await pinButton.evaluate(button => getComputedStyle(button, '::before').maskImage)).toMatch(/^url\(/);
-    await expectPinAppearance('rgb(128, 128, 128)');
+    await expectPinAppearance(unpinnedColor);
 
     for (const delta of [60, -90]) {
         const {width: oldWidth} = await flyout.boundingBox();
@@ -254,7 +255,7 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
 
     await pinButton.click();
     await expect(lock).not.toHaveClass(/\blocked\b/);
-    await expectPinAppearance('rgb(128, 128, 128)');
+    await expectPinAppearance(unpinnedColor);
 
     await clickOutside();
     await expect(control).toHaveAttribute('aria-expanded', 'false');
@@ -265,11 +266,11 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     await page.getByText('Switch To Dark Mode', {exact: true}).click();
     await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
     await control.click();
-    await expectPinAppearance('rgb(128, 128, 128)');
+    await expectPinAppearance(unpinnedColor);
     await pinButton.click();
     await expectPinAppearance('rgb(212, 212, 212)', 'rgb(212, 212, 212)');
     await pinButton.click();
-    await expectPinAppearance('rgb(128, 128, 128)');
+    await expectPinAppearance(unpinnedColor);
 
     await page.keyboard.press('Escape');
     await expect(flyout).toBeHidden();
