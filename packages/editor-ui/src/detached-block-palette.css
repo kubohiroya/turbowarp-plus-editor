@@ -36,7 +36,8 @@
     align-content: flex-start;
 }
 
-.palette[data-palette-orientation="vertical"] :is(.categories, .blocks) {
+.palette[data-palette-orientation="vertical"] .categories,
+.palette[data-palette-orientation="vertical"] .blocks {
     flex-flow: column nowrap;
 }
 
