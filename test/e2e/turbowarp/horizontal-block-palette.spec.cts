@@ -171,6 +171,7 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     const handle = page.locator('[data-palette-resize-handle]');
     const lock = flyout.locator('.sa-lock-object');
     const pinButton = lock.locator('button');
+    const clickOutside = () => page.locator('.blocklySvg').first().click({position: {x: 12, y: 430}});
     const expectPinInCorner = async () => {
         await expect(pinButton).toBeVisible();
         const panel = await flyout.boundingBox();
@@ -219,11 +220,16 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     await expect(lock).toHaveClass(/\blocked\b/);
     await expect(pinButton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(pinButton).toHaveCSS('border-top-color', 'rgb(255, 255, 255)');
+    await clickOutside();
+    expect(await control.getAttribute('aria-expanded')).toBe('true');
+    await expect(flyout).toBeVisible();
+    await expect(handle).toBeVisible();
     await pinButton.click();
     await expect(lock).not.toHaveClass(/\blocked\b/);
     await expect(pinButton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
 
-    await page.keyboard.press('Escape');
+    await clickOutside();
+    await expect(control).toHaveAttribute('aria-expanded', 'false');
     await expect(flyout).toBeHidden();
     await expect(handle).toBeHidden();
     await useLayout(page, 'Use vertical palette');

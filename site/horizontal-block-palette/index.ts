@@ -322,8 +322,11 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     doc.addEventListener('pointerdown', event => {
         if (WidgetDiv.DIV?.contains(event.target)) return;
         WidgetDiv.hideIfOwner(toolbox);
-        if (openId !== null && !resizer.contains(event.target) && ![menu, panel, scrollbar, DropDownDiv.DIV]
-            .some(element => element?.contains(event.target))) close();
+        if (openId === null || resizer.contains(event.target) || [menu, panel, scrollbar, DropDownDiv.DIV]
+            .some(element => element?.contains(event.target))) return;
+
+        const pin = panel.querySelector(':scope > .sa-lock-object.locked');
+        if (!pin || win.getComputedStyle(pin).display === 'none') close();
     }, capture);
     doc.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
