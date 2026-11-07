@@ -17,7 +17,7 @@ import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-poin
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
 import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {attachDockedCodeExtensions} from '@kubohiroya/turbowarp-plus-editor-views';
+import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 
@@ -51,7 +51,9 @@ export const attachHostScriptTransfer = (context, integration) => {
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);
     const code = attachDesktopCode({...context, receiveBackpackDrop});
     const extensions = attachDockedCodeExtensions(context);
+    const prewarm = startup.stageCodePrewarm ? attachStageCodePrewarm(context) : undefined;
     return {dispose() {
+        prewarm?.dispose();
         extensions.dispose();
         code?.dispose();
         transfer?.dispose();

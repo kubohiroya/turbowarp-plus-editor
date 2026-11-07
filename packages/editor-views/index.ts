@@ -632,3 +632,5 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         container.inert = originalInert;
     }};
 }
+
+export {attachStageCodePrewarm} from './stage-code-prewarm.ts';

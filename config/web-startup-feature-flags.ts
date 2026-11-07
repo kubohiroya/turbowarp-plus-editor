@@ -25,6 +25,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusHorizontalBlockPalette: params.get('twPlusHorizontalBlockPalette'),
         twPlusContextMenuIcons: params.get('twPlusContextMenuIcons'),
         twPlusLocalGit: params.get('twPlusLocalGit'),
-        twPlusWorkspaceMinimap: params.get('twPlusWorkspaceMinimap')
+        twPlusWorkspaceMinimap: params.get('twPlusWorkspaceMinimap'),
+        twPlusStageCodePrewarm: params.get('twPlusStageCodePrewarm')
     });
 }
