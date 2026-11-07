@@ -1,19 +1,17 @@
 import React from 'react';
-import {createPortal, render, unmountComponentAtNode} from 'react-dom';
+import {createPortal} from 'react-dom';
 import {searchProject, type ProjectSearchResult, type SearchProject} from './project-search.ts';
 import styles from './project-search.css';
 
 const pageSize = 60;
 type SearchBoxProps = {
-    id: string;
     locale: string;
     project: SearchProject;
     getMessages(): Record<string, string>;
     select(result: ProjectSearchResult): void;
-    isActive(): boolean;
 };
 
-function ProjectSearchBox({id, locale, project, getMessages, select, isActive}: SearchBoxProps) {
+function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps) {
     const japanese = /^ja(?:-|$)/i.test(locale);
     const [query, setQuery] = React.useState('');
     const [open, setOpen] = React.useState(false);
@@ -27,7 +25,7 @@ function ProjectSearchBox({id, locale, project, getMessages, select, isActive}: 
     const activeIndex = visible.indexOf(active);
     const show = open && Boolean(query.trim());
     const more = groups.some(group => group.results.length > limit);
-    const listId = `${id}-project-search-results`;
+    const listId = 'tw-plus-project-search-results';
     const optionId = (index: number) => `${listId}-${index}`;
 
     React.useEffect(() => {
@@ -35,7 +33,7 @@ function ProjectSearchBox({id, locale, project, getMessages, select, isActive}: 
         const win = field.ownerDocument.defaultView;
         const shortcut = (event: KeyboardEvent) => {
             if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey &&
-                    event.key.toLowerCase() === 'f' && field.offsetWidth && isActive()) {
+                    event.key.toLowerCase() === 'f' && field.offsetWidth) {
                 event.preventDefault();
                 event.stopPropagation();
                 field.focus();
@@ -44,7 +42,7 @@ function ProjectSearchBox({id, locale, project, getMessages, select, isActive}: 
         };
         win.addEventListener('keydown', shortcut, true);
         return () => win.removeEventListener('keydown', shortcut, true);
-    }, [isActive]);
+    }, []);
 
     React.useLayoutEffect(() => {
         if (!show) return;
@@ -151,11 +149,6 @@ function ProjectSearchBox({id, locale, project, getMessages, select, isActive}: 
     </div>;
 }
 
-type SearchHeader = {
-    id: string;
-    api: {isActive: boolean; onDidActivePanelChange(listener: () => void): {dispose(): void}};
-};
-
 type SearchView = {id: string; groupId: string; targetId: string; section: number};
 type SearchViews = {
     views(): SearchView[];
@@ -173,32 +166,59 @@ type SearchNavigation = {
     centerBlock(id: string): void;
 };
 
-export function mountProjectSearchHeader({group, menu, hasSpriteTab}: {
-    group: SearchHeader;
-    menu: {element: HTMLElement; dispose?(): void};
-    hasSpriteTab(): boolean;
-}, search: Omit<SearchBoxProps, 'id' | 'isActive' | 'select'>, navigation: SearchNavigation) {
-    const doc = menu.element.ownerDocument;
-    const element = doc.createElement('div');
-    const slot = doc.createElement('div');
-    element.className = styles.header;
-    element.append(slot, menu.element);
-    const isActive = () => group.api.isActive && hasSpriteTab();
-    let frame: number;
+type SearchConnection = {
+    navigation?: SearchNavigation;
+    listeners: Set<() => void>;
+};
+const connections = new WeakMap<SearchProject, SearchConnection>();
+
+function connectionFor(project: SearchProject) {
+    let connection = connections.get(project);
+    if (!connection) {
+        connection = {listeners: new Set()};
+        connections.set(project, connection);
+    }
+    return connection;
+}
+
+export function connectProjectSearchNavigation(project: SearchProject, navigation: SearchNavigation) {
+    const connection = connectionFor(project);
+    connection.navigation = navigation;
+    connection.listeners.forEach(listener => listener());
+    return () => {
+        if (connection.navigation !== navigation) return;
+        connection.navigation = undefined;
+        connection.listeners.forEach(listener => listener());
+    };
+}
+
+export function ProjectSearch(search: Omit<SearchBoxProps, 'select'>) {
+    const connection = connectionFor(search.project);
+    const [navigation, setNavigation] = React.useState(connection.navigation);
+    const frame = React.useRef<number>();
+    React.useLayoutEffect(() => {
+        const update = () => setNavigation(connection.navigation);
+        connection.listeners.add(update);
+        update();
+        return () => { connection.listeners.delete(update); };
+    }, [connection]);
+    React.useLayoutEffect(() => () => window.cancelAnimationFrame(frame.current), [navigation]);
+
+    if (!navigation) return null;
     const select = (result: ProjectSearchResult) => {
         const {target} = result;
         const views = navigation.getViews();
         if (!views || navigation.getTarget(target.id) !== target) return;
-        const localView = views.views().find(view => view.groupId === group.id && view.targetId === target.id);
+        const groupId = views.currentView()?.groupId;
+        const localView = views.views().find(view => view.groupId === groupId && view.targetId === target.id);
         if (localView) views.activateView(localView.id);
         else views.select(target.id);
         const destination = views.currentView();
         if (destination?.targetId !== target.id) return;
         const section = result.kind === 'sound' ? 2 : 'asset' in result ? 1 : 0;
         views.setViewSection(destination.id, section);
-        const win = doc.defaultView;
-        win.cancelAnimationFrame(frame);
-        frame = win.requestAnimationFrame(() => {
+        window.cancelAnimationFrame(frame.current);
+        frame.current = window.requestAnimationFrame(() => {
             const current = views.currentView();
             if (navigation.getViews() !== views || navigation.getEditingTarget() !== target ||
                 current?.id !== destination.id || current.section !== section) return;
@@ -212,22 +232,5 @@ export function mountProjectSearchHeader({group, menu, hasSpriteTab}: {
             }
         });
     };
-    const update = () => {
-        if (hasSpriteTab()) render(<ProjectSearchBox {...search} id={group.id} isActive={isActive} select={select} />, slot);
-        else unmountComponentAtNode(slot);
-    };
-    let subscription: ReturnType<SearchHeader['api']['onDidActivePanelChange']>;
-    return {
-        element,
-        init() {
-            update();
-            subscription = group.api.onDidActivePanelChange(update);
-        },
-        dispose() {
-            doc.defaultView.cancelAnimationFrame(frame);
-            subscription?.dispose();
-            unmountComponentAtNode(slot);
-            menu.dispose?.();
-        }
-    };
+    return <ProjectSearchBox {...search} select={select} />;
 }

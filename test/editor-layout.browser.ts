@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium, expect, type Page} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
+import editorPackage from '../package.json' with {type: 'json'};
 import pinnedGui from './pinned-gui.ts';
 import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons, undockButtons} from './fixtures/layout-menu.ts';
 
@@ -15,8 +16,7 @@ const types = {
 const origin = 'http://layout.test';
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
-const projectSearch = (page: Page) => page.locator('.dv-groupview.dv-active-group > .dv-tabs-and-actions-container')
-    .getByRole('combobox', {name: 'Search project'});
+const projectSearch = (page: Page) => page.getByRole('combobox', {name: 'Search project'});
 
 async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui = false) {
     if (!bareGui) await verifyWebEditor(root);
@@ -234,6 +234,12 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.locator('[data-gui-stage] canvas').first()).toBeVisible();
     await expect(page.getByRole('button', {name: 'Show undock buttons'})).toHaveCount(0);
     await expect(page.getByRole('separator')).toHaveCount(0);
+    await expect(page.getByText('Settings', {exact: true})).toBeVisible();
+    await expect(page.getByText('Addons', {exact: true})).toBeVisible();
+    await expect(page.getByText('Advanced', {exact: true})).toBeVisible();
+    await page.getByText('Edit', {exact: true}).click();
+    await expect(page.getByText('Turn on Turbo Mode', {exact: true})).toBeVisible();
+    await expect(page.getByText('Advanced Settings', {exact: true})).toBeVisible();
 });
 
 test('the Plus File menu has action icons and opens the extension library from its last item', {timeout: 30_000}, async t => {
@@ -270,6 +276,161 @@ test('the Plus File menu has action icons and opens the extension library from i
     await expect(add).toHaveCount(0);
 });
 
+test('the first menu row orders the Plus logo, project title, File, Edit, and search', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    const label = 'TurboWarp Plus プロジェクト情報';
+    const logo = page.getByLabel(label, {exact: true}).first();
+    const row = logo.locator('../..');
+    const title = row.getByRole('textbox');
+    const file = row.getByText('ファイル', {exact: true});
+    const edit = row.getByText('編集', {exact: true});
+    const search = row.getByRole('combobox', {name: '作品全体を検索'});
+    const controls = [logo, title, file, edit, search];
+
+    for (const control of controls) await expect(control).toBeVisible();
+    const positions = await Promise.all(controls.map(control => control.boundingBox()));
+    for (let index = 1; index < positions.length; index++) {
+        const previous = positions[index - 1];
+        const current = positions[index];
+        assert.ok(previous.x + previous.width <= current.x);
+        assert.ok(Math.abs(previous.y + previous.height / 2 - current.y - current.height / 2) <= 2);
+    }
+    await expect(page.locator('.dv-tabs-and-actions-container').getByRole('combobox')).toHaveCount(0);
+    await expect(page.getByRole('combobox', {name: '作品全体を検索'})).toHaveCount(1);
+
+    await logo.focus();
+    await page.keyboard.press('Tab');
+    await expect(title).toBeFocused();
+    await title.fill('検索の配置');
+    await title.press('Enter');
+    await expect(title).toHaveValue('検索の配置');
+    await page.keyboard.press('Control+f');
+    await expect(search).toBeFocused();
+
+    await logo.click();
+    const menu = page.getByRole('navigation', {name: label});
+    const links = menu.getByRole('link');
+    await expect(links.first()).toHaveText(`TurboWarp Plus Editor ${editorPackage.version}について`);
+    for (const name of ['ソースコード', 'ライセンスとクレジット']) {
+        await expect(links.getByText(name, {exact: true}).locator('svg[aria-hidden="true"]')).toBeVisible();
+    }
+    await expect(menu.getByRole('button', {name: /ピン留め/})).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    for (const control of controls) await expect(control).toBeVisible();
+});
+
+test('the Plus project menu relocates display settings, runtime actions, and settings dialogs', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const name = 'TurboWarp Plus project information';
+    const logo = page.getByLabel(name, {exact: true}).first();
+    const nav = page.getByRole('navigation', {name});
+    const menuBar = logo.locator('../..');
+    await expect(menuBar.getByText('Settings', {exact: true})).toHaveCount(0);
+    await expect(menuBar.getByText('Addons', {exact: true})).not.toBeVisible();
+    await expect(menuBar.getByText('Advanced', {exact: true})).toHaveCount(0);
+    await menuBar.getByText('Edit', {exact: true}).click();
+    await expect(menuBar.getByText(/restore/i).first()).toBeVisible();
+    for (const label of ['Turn on Turbo Mode', 'Turn on 60 FPS Mode', 'Change Username',
+        'Cloud Variables are not Available', 'Advanced Settings']) {
+        await expect(menuBar.getByText(label, {exact: true})).not.toBeVisible();
+    }
+
+    await logo.click();
+    const entries = nav.locator(':scope > a, :scope > button, :scope > div > button');
+    await expect(entries).toHaveText([
+        `About TurboWarp Plus Editor ${editorPackage.version}`, 'Display settings', 'Runtime settings', 'Addons',
+        'Advanced Settings', 'Source code', 'Licenses and credits'
+    ]);
+    const displayToggle = nav.getByRole('button', {name: 'Display settings'});
+    const display = nav.getByRole('list', {name: 'Display settings'});
+    await displayToggle.click();
+    await expect(display.getByText('Language', {exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(display).toHaveCount(0);
+    const runtimeToggle = nav.getByRole('button', {name: 'Runtime settings'});
+    await runtimeToggle.press('Enter');
+    const runtime = nav.getByRole('group', {name: 'Runtime settings'});
+    await expect(runtime.getByRole('button')).toHaveText([
+        'Turn on Turbo Mode', 'Turn on 60 FPS Mode', 'Change Username', 'Cloud Variables are not Available'
+    ]);
+    await runtimeToggle.press('Tab');
+    const turbo = runtime.getByRole('button', {name: 'Turn on Turbo Mode'});
+    await expect(turbo).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(runtime.getByRole('button', {name: 'Turn off Turbo Mode'})).toBeVisible();
+    await runtime.getByRole('button', {name: 'Turn on 60 FPS Mode'}).click();
+    await expect(runtime.getByRole('button', {name: 'Turn off 60 FPS Mode'})).toBeVisible();
+    let cloudAlert: string;
+    page.once('dialog', async dialog => {
+        cloudAlert = dialog.message();
+        await dialog.accept();
+    });
+    await runtime.getByRole('button', {name: 'Cloud Variables are not Available'}).click();
+    assert.match(cloudAlert, /cannot use cloud variables/i);
+    await runtime.getByRole('button', {name: 'Change Username'}).click();
+    const username = page.getByRole('dialog', {name: 'Change Username'});
+    await expect(username).toBeVisible();
+    await expect(nav).toBeHidden();
+    await page.keyboard.press('Escape');
+    await expect(username).toHaveCount(0);
+
+    await logo.click();
+    await displayToggle.press('Enter');
+    await expect(display.getByText('Block Colors', {exact: true})).toBeVisible();
+    await expect(display.getByText('Accent', {exact: true})).toBeVisible();
+    await displayToggle.press('Tab');
+    const language = display.locator(':scope > li').filter({has: page.getByText('Language', {exact: true})});
+    await expect(language).toBeFocused();
+    await page.keyboard.press('Enter');
+    const japanese = display.getByText('日本語', {exact: true});
+    await expect(japanese).toBeVisible();
+    await japanese.scrollIntoViewIfNeeded();
+    const [displayBounds, languageOptionBounds] = await Promise.all([display.boundingBox(), japanese.boundingBox()]);
+    assert.ok(languageOptionBounds.x >= displayBounds.x + displayBounds.width - 5);
+    await page.keyboard.press('Escape');
+    await expect(display).toHaveCount(0);
+    await expect(displayToggle).toBeFocused();
+    await displayToggle.click();
+    const theme = display.locator(':scope > li').filter({hasText: 'Switch To Dark Mode'});
+    await theme.press('Enter');
+    await expect(nav).toBeHidden();
+
+    await logo.click();
+    await displayToggle.click();
+    await expect(display.getByText('Switch To Light Mode', {exact: true})).toBeVisible();
+    await runtimeToggle.click();
+    await expect(display).toHaveCount(0);
+    await nav.getByRole('button', {name: 'Advanced Settings'}).click();
+    const advanced = page.getByRole('dialog', {name: 'Advanced Settings'});
+    await expect(advanced).toBeVisible();
+    await expect(nav).toBeHidden();
+    await page.keyboard.press('Escape');
+    await expect(advanced).toHaveCount(0);
+
+    await logo.click();
+    const [addons] = await Promise.all([
+        page.waitForEvent('popup'),
+        nav.getByRole('button', {name: 'Addons'}).click()
+    ]);
+    await expect(addons).toHaveURL(/addons\.html$/);
+    await addons.close();
+    await expect(nav).toBeHidden();
+
+    await logo.click();
+    await displayToggle.click();
+    await language.press('Enter');
+    await display.getByText('日本語', {exact: true}).click();
+    const japaneseName = 'TurboWarp Plus プロジェクト情報';
+    await page.getByLabel(japaneseName, {exact: true}).first().click();
+    await expect(page.getByRole('navigation', {name: japaneseName})
+        .locator(':scope > a, :scope > button, :scope > div > button')).toHaveText([
+        `TurboWarp Plus Editor ${editorPackage.version}について`, '表示設定', '動作設定', 'アドオン',
+        '高度な設定', 'ソースコード', 'ライセンスとクレジット'
+    ]);
+});
+
 test('the Plus project menu and previous stage layout remain available', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0');
@@ -277,7 +438,7 @@ test('the Plus project menu and previous stage layout remain available', {timeou
     await expect(page.getByText('TurboWarp Feedback', {exact: true})).toHaveCount(0);
     const project = page.getByLabel('TurboWarp Plus project information', {exact: true}).first();
     await project.click();
-    await expect(page.getByRole('link', {name: 'About TurboWarp Plus Editor'})).toBeVisible();
+    await expect(page.getByRole('link', {name: `About TurboWarp Plus Editor ${editorPackage.version}`})).toBeVisible();
     await expect(page.getByRole('link', {name: 'Source code'})).toBeVisible();
     await expect(page.getByRole('link', {name: 'Licenses and credits'})).toBeVisible();
     await page.keyboard.press('Escape');

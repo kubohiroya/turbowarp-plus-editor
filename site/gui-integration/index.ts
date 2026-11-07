@@ -18,10 +18,15 @@ import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-tr
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {attachDockedCodeExtensions} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 
 export * from './lib/tw-plus-integration-points.ts';
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
+const getProjectSearchMessages = () => window.ScratchBlocks?.Msg ?? {};
+export const renderProjectSearch = ({vm, locale}) => React.createElement(ProjectSearch, {
+    project: vm.runtime, locale, getMessages: getProjectSearchMessages
+});
 export * from './lib/tw-plus-transfer.ts';
 export * from './lib/tw-plus-extension-host.ts';
 export * from './lib/tw-plus-extension-permissions.ts';
