@@ -155,7 +155,7 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout).toBeVisible();
 });
 
-test('自動で隠すアドオンが有効でも横パレットの小窓とハンドルはずれない', async ({page}) => {
+test('自動で隠すアドオンが有効でも横パレットの鍵はリサイズ中に右上隅に追従する', async ({page}) => {
     await page.addInitScript(() => {
         localStorage.setItem('tw:addons', JSON.stringify({
             _: 5,
@@ -170,6 +170,14 @@ test('自動で隠すアドオンが有効でも横パレットの小窓とハ�
     const scrollbar = page.locator('.blocklyFlyoutScrollbar');
     const handle = page.locator('[data-palette-resize-handle]');
     const lock = flyout.locator('.sa-lock-object');
+    const lockButton = lock.locator('button');
+    const expectLockInCorner = async () => {
+        await expect(lockButton).toBeVisible();
+        const panel = await flyout.boundingBox();
+        const button = await lockButton.boundingBox();
+        expect(Math.abs(panel.x + panel.width - button.x - button.width - 15)).toBeLessThanOrEqual(1);
+        expect(Math.abs(button.y - panel.y - 3)).toBeLessThanOrEqual(1);
+    };
 
     await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
     await expect(lock).toBeAttached();
@@ -188,7 +196,25 @@ test('自動で隠すアドオンが有効でも横パレットの小窓とハ�
     expect(await handle.boundingBox()).toEqual(handleBox);
     await control.hover();
     expect(await flyout.boundingBox()).toEqual(panelBox);
-    await expect(lock).toBeHidden();
+    await expectLockInCorner();
+
+    for (const delta of [60, -90]) {
+        const {width: oldWidth} = await flyout.boundingBox();
+        const grip = await handle.boundingBox();
+        const startX = grip.x + grip.width / 2;
+        const startY = grip.y + grip.height / 2;
+        await page.mouse.move(startX, startY);
+        await page.mouse.down();
+        await page.mouse.move(startX + delta, startY, {steps: 6});
+        expect((await flyout.boundingBox()).width).toBeCloseTo(oldWidth + delta);
+        await expectLockInCorner();
+        await page.mouse.up();
+        await expectLockInCorner();
+    }
+    await lockButton.click();
+    await expect(lock).toHaveClass(/\blocked\b/);
+    await lockButton.click();
+    await expect(lock).not.toHaveClass(/\blocked\b/);
 
     await page.keyboard.press('Escape');
     await expect(flyout).toBeHidden();
