@@ -908,34 +908,27 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await expect(page.locator('[data-sprite-search-match]')).toBeVisible();
     await search.press('Escape');
     await expect(search).toHaveCount(0);
+    await page.evaluate(() => {
+        const open = window.open;
+        window.open = () => {
+            window.open = open;
+            return null;
+        };
+    });
     await undock.click();
-    const window = page.getByRole('region', {name: 'Sprite list', exact: true});
-    const menu = window.getByRole('button', {name: 'Window layout', exact: true});
-    await expect(window.locator('[data-backdrop-placement]')).toBeVisible();
-    await menu.click();
-    await expect(window.getByRole('list', {name: 'Window layout'}).getByRole('button')).toHaveCount(6);
-    await expect(window.getByRole('button', {name: 'Restore normal window'})).toBeDisabled();
-    await expect(window.getByRole('button', {name: 'Open another view of this editor'})).toBeDisabled();
-    await window.getByRole('button', {name: 'Maximize this window'}).click();
-    await menu.click();
-    await expect(window.getByRole('button', {name: 'Maximize this window'})).toBeDisabled();
-    await window.getByRole('button', {name: 'Restore normal window'}).click();
-    await menu.click();
-    await window.getByRole('button', {name: 'Minimize this window'}).click();
-    await expect(window).toBeHidden();
-    await page.getByRole('button', {name: 'Windows', exact: true}).click();
-    await page.getByRole('button', {name: 'Sprite list', exact: true}).click();
-    await menu.click();
-    await window.getByRole('button', {name: 'Return to the editor (dock)'}).click();
-    await expect(window).toHaveCount(0);
     await expect(backdrop).toBeVisible();
+    await expect(undock).toBeEnabled();
 
-    await undock.click();
-    await menu.click();
-    const [child] = await Promise.all([
-        page.waitForEvent('popup'),
-        window.getByRole('button', {name: 'Open in a separate window (undock)'}).click()
-    ]);
+    const openSpriteList = async () => {
+        const [child] = await Promise.all([page.waitForEvent('popup', {timeout: 7_000}), undock.click()]);
+        await expect(child).toHaveTitle('Sprite list');
+        await expect(child.locator('[data-backdrop-placement]')).toBeVisible();
+        await expect(page.locator('[data-backdrop-placement]')).toHaveCount(0);
+        return child;
+    };
+    const child = await openSpriteList();
+    await child.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
     const popupMenu = child.getByRole('button', {name: 'Window layout', exact: true});
     const commands = child.getByRole('menu', {name: 'Window layout', exact: true});
     const current = commands.getByRole('menuitem', {name: 'Open in a separate window (undock)'});
@@ -958,6 +951,10 @@ test('the default editor pins the sprite list and supports the drawer and detach
     })]);
     await expect(backdrop).toBeVisible();
 
+    const reopened = await openSpriteList();
+    await reopened.close();
+    await expect(backdrop).toBeVisible();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
 });
 
 test('a background code view retains its layout, pan and zoom', {timeout: 45_000}, async t => {
@@ -1067,7 +1064,7 @@ test('the editor leaves the bottom edge free of Backpack controls', {timeout: 30
     }
 });
 
-test('utility panels and menus stay above the code workspace and its palette', {timeout: 45_000}, async t => {
+test('the project information menu stays above the block palette', {timeout: 45_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0');
@@ -1091,27 +1088,6 @@ test('utility panels and menus stay above the code workspace and its palette', {
         return left < right && top < bottom &&
             menu.contains(document.elementFromPoint((left + right) / 2, (top + bottom) / 2));
     }, await flyout.boundingBox()));
-    await page.keyboard.press('Escape');
-
-    await page.getByRole('tab', {name: 'Code', exact: true}).focus();
-    await page.getByRole('button', {name: 'Open in another window', exact: true}).click();
-    const code = page.getByRole('region', {name: /^Code · /});
-    await code.getByRole('button', {name: 'Window layout'}).click();
-    await code.getByRole('button', {name: 'Maximize this window'}).click();
-
-    await sprites.hover();
-    await expect(sprites).toHaveAttribute('aria-expanded', 'true');
-    await page.getByRole('button', {name: 'Undock sprite list', exact: true}).click();
-    const spriteWindow = page.getByRole('region', {name: 'Sprite list', exact: true});
-    await expect(spriteWindow).toBeVisible();
-    await code.click({position: {x: 780, y: 430}});
-    await spriteWindow.getByRole('button', {name: 'Window layout'}).click();
-    await expect(spriteWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
-    await page.keyboard.press('Escape');
-
-    await code.getByRole('button', {name: 'Window layout'}).click();
-    await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
-    await expect(code).toHaveCount(0);
 });
 
 test('the editor layout menu opens the live block palette and the Dockview panel in separate windows', {timeout: 45_000}, async t => {

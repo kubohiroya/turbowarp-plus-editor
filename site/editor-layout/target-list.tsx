@@ -8,7 +8,8 @@ import {layoutFlags, layoutViews, WindowLayoutContext} from './index.tsx';
 import {TargetSwitchContext} from './context.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
-const desktopPopout = createDesktopPanelHost('sprite-list', 'twPlusTargetPanelsPopout', 540, 420);
+const desktopPopout = createDesktopPanelHost('sprite-list', 'twPlusSpriteListPopout', 540, 420) ??
+    createDesktopPanelHost('sprite-list', 'twPlusTargetPanelsPopout', 540, 420);
 const externalHost = desktopPopout ?? (layoutFlags.standardLayout ? createWebPanelHost('sprite-list', 540, 420) : null);
 const TargetListDocument = React.createContext<Document | undefined>(undefined);
 
@@ -21,7 +22,7 @@ function DockableTargetList({children}) {
     };
     if (!plusLayout && !layoutFlags.targetList) return children;
     return <BasicPanel id="sprite-list" title={title}
-        className={styles.targetListPanel} externalHost={externalHost} decorate={decorateSurface}
+        className={styles.targetListPanel} externalHost={externalHost} externalOnly={Boolean(externalHost)} decorate={decorateSurface}
         layer={plusLayout ? 'utility' : undefined} alwaysShowUndock={plusLayout} renderDockHeading={plusLayout ? dockHeading : undefined}
         openLabel={plusLayout ? openLabel : undefined}
         renderInExternalDocument render={(_floating, mount) => (
