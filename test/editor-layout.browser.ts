@@ -43,6 +43,41 @@ async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui 
     return context.newPage();
 }
 
+test('the browser tab follows the current project title', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.on('dialog', dialog => dialog.accept());
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const title = page.getByPlaceholder('Project title here');
+    await expect(title).toHaveValue('Project');
+    await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
+
+    await title.fill('秋の作品');
+    await title.press('Enter');
+    await expect(page).toHaveTitle('秋の作品 - TurboWarp Plus Editor');
+
+    await title.fill('');
+    await title.press('Enter');
+    await expect(page).toHaveTitle('TurboWarp Plus Editor');
+
+    const bytes = await page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
+    const openFileMenu = () => page.getByText('File', {exact: true}).click();
+    await openFileMenu();
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByText('Open SB3 File…', {exact: true}).click();
+    await (await chooser).setFiles({
+        name: '読み込んだ作品.sb3',
+        mimeType: 'application/octet-stream',
+        buffer: Buffer.from(bytes)
+    });
+    await expect(title).toHaveValue('読み込んだ作品');
+    await expect(page).toHaveTitle('読み込んだ作品 - TurboWarp Plus Editor');
+
+    await openFileMenu();
+    await page.getByText('Create New Project', {exact: true}).click();
+    await expect(title).toHaveValue('Project');
+    await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
+});
+
 test('the real editor resizes both dividers and preserves editing and stage input', {timeout: 90_000}, async t => {
     const build = path.join(pinnedGui(), 'build');
     const page = await openBrowser(t, build, buildPrefix);
@@ -1437,9 +1472,13 @@ test('the default Dockview splits one sprite editor and restores each view secti
         return tab.boundingBox();
     }));
     const contentBounds = await page.locator('.tw-plus-sprite-tab-body:visible').boundingBox();
-    assert(contentBounds && bounds.every((tab, index) => tab && tab.height >= 44 &&
+    // The buttons are squares the size of what they show; the rail is not divided among them.
+    assert(contentBounds && bounds.every((tab, index) => tab && tab.height === 28 && tab.width === 28 &&
         tab.x === bounds[0].x && tab.x + tab.width <= contentBounds.x &&
         (index === 0 || tab.y > bounds[index - 1].y)));
+    const railBounds = await toolbar.boundingBox();
+    const lastTab = bounds.at(-1);
+    assert(railBounds && lastTab && lastTab.y + lastTab.height < railBounds.y + railBounds.height - 40);
     await code.hover();
     await expect(page.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('Code');
     await code.press('ArrowDown');

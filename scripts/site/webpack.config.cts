@@ -106,6 +106,12 @@ if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
         enforce: 'pre',
         use: path.join(__dirname, 'connect-project-fetch.cts')
     });
+    // The web editor supplies its own project-title callback at the existing mount.
+    config.module.rules.push({
+        include: fs.realpathSync(path.join(gui, 'src/playground/editor.jsx')),
+        enforce: 'pre',
+        use: path.join(__dirname, 'connect-editor-tab-title.cts')
+    });
 }
 // Resolve shared packages to the host's copies, once.
 //
@@ -171,7 +177,7 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 for (const entry of ['busy-cursor', 'detached-block-palette', 'edit-menu', 'palette-category-reorder', 'palette-category-search',
     'palette-dropdown-resize', 'project-load-progress', 'project-load-progress-view',
     'project-search', 'project-search-connections', 'project-info-menu', 'project-file-dialogs', 'project-file-menu',
-    'stage-controls', 'stage-controls-view']) {
+    'stage-controls', 'stage-controls-view', 'browser-tab-title']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }

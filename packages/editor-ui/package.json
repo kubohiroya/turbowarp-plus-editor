@@ -21,7 +21,8 @@
     "./stage-controls": "./src/stage-controls.ts",
     "./stage-controls-view": "./src/stage-controls-view.tsx",
     "./project-file-dialogs": "./src/project-file-dialogs.ts",
-    "./project-file-menu": "./src/project-file-menu.tsx"
+    "./project-file-menu": "./src/project-file-menu.tsx",
+    "./browser-tab-title": "./src/browser-tab-title.ts"
   },
   "peerDependencies": {
     "react": ">=16.8",

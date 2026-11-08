@@ -67,7 +67,7 @@
 <h2>6.3 カテゴリの小窓を見やすい大きさにする</h2>
 
 <p>横型パレットでは、小窓の右下にある斜線をドラッグして幅と高さを調整できます。変更したサイズはカテゴリごとにブラウザーに保存されます。ペインや画面が狭いときは表示できる範囲に収まり、十分な広さに戻ると保存したサイズで開きます。</p>
-<figure class="guide-detail"><a href="../images/palette-resize-detail.png"><img src="../images/palette-resize-detail.png" width="330" height="230" alt="横型パレットから開いた小窓。右下に幅と高さを調整するハンドルがある。" loading="lazy"></a><figcaption>小窓右下の斜線がリサイズのハンドルです（前回の撮影）。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/palette-resize-detail.png"><img src="../images/palette-resize-detail.png" width="330" height="230" alt="横型パレットから開いた小窓。右下に幅と高さを調整するハンドルがある。" loading="lazy"></a><figcaption>小窓右下の斜線がリサイズのハンドルです。</figcaption></figure>
 <p>大きな画面でパレットを常に表示しておきたいときは、<a href="#palette-popout">ブロックパレットを別画面で開く</a>こともできます。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/239">小窓のリサイズ</a></p>
 
 </section>
@@ -106,7 +106,7 @@
 <h2>6.7 ミニマップとズームで長いコードを移動する</h2>
 
 <p>Plus配置では、コード画面右下のミニマップでブロック全体の位置を見渡せます。枠は現在の表示範囲です。離れたブロックへ移動するときは、ミニマップ内の移動先をクリックするか、枠をドラッグします。下に並ぶボタンで縮小・拡大したり、倍率を初期値に戻したりできます。</p>
-<figure><a href="../images/minimap-current.png"><img src="../images/minimap-current.png" width="1440" height="1000" alt="離れた位置にブロックを配置したコード画面。右下にミニマップと縮小・拡大・リセットのボタンが並ぶ。" loading="lazy"></a><figcaption>右下のミニマップにはブロック全体が表示され、枠が現在の表示範囲を示します（前回の撮影）。</figcaption></figure>
+<figure><a href="../images/minimap-current.png"><img src="../images/minimap-current.png" width="1440" height="1000" alt="離れた位置にスクリプトを置いたコード画面。右下にミニマップと縮小・拡大・リセットのボタンが並ぶ。" loading="lazy"></a><figcaption>右下のミニマップには作品のスクリプト全体が表示され、枠が現在の表示範囲を示します。</figcaption></figure>
 <p>ミニマップを外すには <code>twPlusWorkspaceMinimap=0</code> を指定します。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/200">ミニマップの操作</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/222">ズームと配置</a></p>
 
 </section>
@@ -116,15 +116,17 @@
 <h2>6.8 右クリックメニューで操作する</h2>
 
 <p>ブロック、コード領域の空白、スプライトのタイル、コスチュームや音などの右クリックメニューを整理し、各項目に操作を表すアイコンを付けました。</p>
-<figure class="guide-detail"><a href="../images/script-transfer-0fc3.png"><img src="../images/script-transfer-0fc3.png" width="750" height="559" alt="ブロックの右クリックメニュー。スクリプトを書き出し、コピー、複製、削除などの項目にアイコンが並ぶ。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンです。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/workspace-context-menu.png"><img src="../images/workspace-context-menu.png" width="520" height="420" alt="コード領域の空白の右クリックメニュー。取り消し、やり直し、きれいにする、コメントを追加、ブロックを削除、スクリプトを読み込み、貼り付けにアイコンが並ぶ。" loading="lazy"></a><figcaption>コード領域の空白の右クリックメニュー。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/sprite-context-menu.png"><img src="../images/sprite-context-menu.png" width="420" height="340" alt="スプライトのタイルの右クリックメニュー。開く、複製、書き出し、名前を変える、削除、フォルダーを作成にアイコンが並ぶ。" loading="lazy"></a><figcaption>スプライトのタイルの右クリックメニュー。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/block-context-menu.png"><img src="../images/block-context-menu.png" width="640" height="480" alt="ブロックの右クリックメニュー。複製、コメントを追加、ブロックを削除、スクリプトを書き出し、コピー、スペースを確保、すべてコピー、ブロックをコピー、ブロックを切り取りにアイコンが並ぶ。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンです。</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="右クリックメニューの主な項目" tabindex="0">
 <table><caption>主な項目</caption><thead><tr><th scope="col">右クリックする場所</th><th scope="col">主な項目</th></tr></thead><tbody>
-<tr><th scope="row">ブロック</th><td>複製、コメントを追加、削除、スクリプトを書き出し、コピー</td></tr>
-<tr><th scope="row">コード領域の空白</th><td>元に戻す、やり直し、きれいにする、コメントを追加、スクリプトを読み込み、貼り付け</td></tr>
+<tr><th scope="row">ブロック</th><td>複製、コメントを追加、ブロックを削除、スクリプトを書き出し、コピー。アドオンによる「スペースを確保」「すべてコピー」「ブロックをコピー」「ブロックを切り取り」</td></tr>
+<tr><th scope="row">コード領域の空白</th><td>取り消し、やり直し、きれいにする、コメントを追加、ブロックを削除、スクリプトを読み込み、貼り付け</td></tr>
 <tr><th scope="row">スプライトのタイル</th><td>開く、複製、書き出し、名前を変える、削除、フォルダーを作成</td></tr>
 <tr><th scope="row">コスチューム・音</th><td>複製、書き出し、削除</td></tr>
 </tbody></table></div>
-<p>アドオンが追加する項目（ブロックの画像書き出し、ローカル変数とグローバル変数の切り替え、最前面・最背面への移動など）にもアイコンが付きます。スクリプトの書き出し・読み込みとコピー・貼り付けの使い方は<a href="../reuse/#transfer">スクリプトとステージを別作品へ転送する</a>で説明しています。</p>
+<p>このほか、アドオンが追加する項目（ブロックの画像書き出し、ローカル変数とグローバル変数の切り替え、最前面・最背面への移動など）にもアイコンが付きます。スクリプトの書き出し・読み込みとコピー・貼り付けの使い方は<a href="../reuse/#transfer">スクリプトとステージを別作品へ転送する</a>で説明しています。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューの操作アイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">既定で表示</a></p>
 
 </section>
