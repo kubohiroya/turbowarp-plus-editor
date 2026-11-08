@@ -18,7 +18,7 @@ type SearchViews = {
     selectAsset(id: string, kind: 'costumes' | 'sounds', index: number): void;
 };
 type Target = ProjectSearchResult['target'];
-type SearchNavigation = {
+export type SearchNavigation = {
     getViews(): SearchViews | null;
     getTarget(id: string): Target | undefined;
     getEditingTarget(): Target | undefined;
@@ -43,6 +43,20 @@ export function connectionFor(project: SearchProject) {
         connections.set(project, connection);
     }
     return connection;
+}
+
+/** Open a target's view in the active group and switch it to a section. */
+export function activateTargetView(navigation: SearchNavigation, targetId: string, section: number) {
+    const views = navigation.getViews();
+    if (!views) return undefined;
+    const groupId = views.currentView()?.groupId;
+    const local = views.views().find(view => view.groupId === groupId && view.targetId === targetId);
+    if (local) views.activateView(local.id);
+    else views.select(targetId);
+    const destination = views.currentView();
+    if (destination?.targetId !== targetId) return undefined;
+    views.setViewSection(destination.id, section);
+    return {views, viewId: destination.id, section};
 }
 
 export function connectProjectSearchNavigation(project: SearchProject, navigation: SearchNavigation) {

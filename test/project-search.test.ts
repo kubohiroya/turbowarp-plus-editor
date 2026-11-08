@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {searchProject, searchYamlDocuments, type SearchKind, type SearchProject} from '../packages/editor-ui/src/project-search.ts';
-import {applyProjectSearchReplacement, replacementText, type ReplaceBlockly, type ReplaceWorkspace} from '../packages/editor-ui/src/project-search-replace.ts';
+import {applyProjectSearchReplacement, renameProjectMessage, replacementText, type ReplaceBlockly, type ReplaceWorkspace} from '../packages/editor-ui/src/project-search-replace.ts';
 
 type Target = SearchProject['targets'][number];
 type Block = ReturnType<Target['blocks']['getBlock']>;
@@ -100,4 +100,43 @@ test('replacement splices a literal match and rejects a renamed or conflicting v
     assert.equal(applyProjectSearchReplacement(project, workspace, Blockly, result, 'new.score'), 'conflict');
     field.id = 'conflict';
     assert.equal(applyProjectSearchReplacement(project, workspace, Blockly, result, 'other.score'), 'stale');
+});
+
+test('renaming a message from the message section keeps the block references and refuses a taken name', () => {
+    const option = {id: 'go', value: '開始'};
+    const stage = target('stage', ['receive'], [
+        {id: 'receive', opcode: 'event_whenbroadcastreceived', fields: {BROADCAST_OPTION: option}}
+    ], {isStage: true, variables: {
+        go: {name: '開始', type: 'broadcast_msg', value: '開始'},
+        done: {name: '完了', type: 'broadcast_msg', value: '完了'},
+        score: {name: '点', type: ''}
+    }});
+    let changed;
+    const project = {
+        targets: [stage],
+        resetAllCaches: () => undefined,
+        emitProjectChanged: () => undefined
+    } as unknown as SearchProject;
+    const workspace = {
+        options: {readOnly: false},
+        isDragging: () => false,
+        getVariableById: (id: string) => stage.variables[id],
+        renameVariableById(id: string, name: string) {
+            stage.variables[id].name = name;
+            changed?.({type: 'var_rename', varId: id, newName: name});
+        },
+        addChangeListener(listener: (event: {type: string; varId?: string; newName?: string}) => void) {
+            changed = listener;
+        }
+    } as unknown as ReplaceWorkspace;
+
+    assert.equal(renameProjectMessage(project, workspace, 'go', '完了'), 'conflict');
+    assert.equal(renameProjectMessage(project, workspace, 'go', '  '), 'invalid');
+    assert.equal(renameProjectMessage(project, workspace, 'score', '合図'), 'stale');
+    assert.equal(renameProjectMessage(project, workspace, 'go', '合図'), 'applied');
+    assert.equal(stage.variables.go.name, '合図');
+    // The references a renamed message leaves in the blocks are brought along.
+    assert.equal(option.value, '合図');
+    assert.deepEqual(searchProject(project, {}, '合図', true, new Set(['message']))
+        .flatMap(group => group.results.map(result => result.label)), ['合図']);
 });
