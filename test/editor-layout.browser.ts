@@ -25,6 +25,7 @@ async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui 
     const browser = await chromium.launch({args: ['--enable-unsafe-swiftshader']});
     t.after(() => browser.close());
     const context = await browser.newContext({viewport: {width: 1360, height: 900}});
+    await context.addInitScript(() => {delete window.showSaveFilePicker;});
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin !== routeOrigin || !url.pathname.startsWith(prefix)) return route.abort();
@@ -200,7 +201,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
 
     await page.getByText('File', {exact: true}).click();
     const pending = page.waitForEvent('download');
-    await page.getByRole('listitem').filter({hasText: /^(Save as\.\.\.|Save to your computer)$/}).click();
+    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
+    await page.getByRole('dialog', {name: 'Save As'}).getByRole('button', {name: 'Save', exact: true}).click();
     const archive = await readFile(await (await pending).path());
     const zip = await JSZip.loadAsync(archive, {checkCRC32: true});
     const json = await zip.file('project.json').async('string');
@@ -244,7 +246,7 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.getByText('Advanced Settings', {exact: true})).toBeVisible();
 });
 
-test('the Plus File menu has action icons and opens the extension library from its last item', {timeout: 30_000}, async t => {
+test('the Plus File menu groups project settings and opens the extension library', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const start = suffix => page.goto(origin + buildPrefix + 'editor.html?lang=ja' + suffix);
     const paletteButton = page.getByRole('button', {name: '拡張機能を追加', exact: true});
@@ -264,11 +266,11 @@ test('the Plus File menu has action icons and opens the extension library from i
     const [paletteBounds, motionBounds] = await Promise.all([palette.boundingBox(), motion.boundingBox()]);
     assert.ok(motionBounds.x - paletteBounds.x < 8);
     await openFile();
-    const items = page.getByRole('list').filter({has: add}).locator(':scope > li');
-    await expect(items.last()).toHaveText('機能拡張の追加');
-    assert.ok(await items.evaluateAll(rows => rows.every(row => row.querySelector('[data-file-menu-icon]'))));
-    await expect(items.last().locator('[data-file-menu-icon="extension"]')).toBeVisible();
-    await add.press('Enter');
+    const extensions = page.getByRole('button', {name: '機能拡張…', exact: true});
+    const item = page.getByRole('listitem').filter({has: extensions});
+    await expect(item.locator('[data-file-menu-icon="extension"]')).toBeVisible();
+    await extensions.press('Enter');
+    await add.click();
     await expect(page.getByText('機能拡張を作品に追加する', {exact: true})).toBeVisible();
     await expect(add).toBeHidden();
 

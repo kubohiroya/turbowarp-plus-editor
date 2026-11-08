@@ -10,7 +10,7 @@ const firstURI = 'https://example.invalid/first.sb3';
 const nextURI = 'https://example.invalid/published.sb3';
 const uriField = page => page.getByRole('textbox', {name: '作品の URI'});
 const uriDialog = page => page.getByRole('dialog', {name: '作品のプロパティ', exact: true});
-const propertiesMenuItem = page => page.getByRole('button', {name: '作品のプロパティ…', exact: true});
+const propertiesMenuItem = page => page.getByRole('button', {name: '作品のプロパティ', exact: true});
 const openFileMenu = page => page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
 
 async function openProperties(page) {

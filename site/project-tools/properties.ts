@@ -1,6 +1,7 @@
 import JSZip from '@turbowarp/jszip';
 import {beginProjectLoad} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
 import {beginProjectArchiveRead} from '../extension-host/shared-project-archive.ts';
+import {projectSerializationOptions} from '../extension-host/serialization-context.ts';
 import type {ProjectArchive} from '../extension-host/shared-project-archive.ts';
 
 export const PROJECT_INFO_KEY = 'turboWarpPlusProject';
@@ -85,7 +86,7 @@ export function installProjectProperties(vm, {
     };
     const current = () => {
         const value = normalize(info);
-        value.title = projectState.getTitle?.() ?? value.title;
+        value.title = projectSerializationOptions(vm)?.title ?? projectState.getTitle?.() ?? value.title;
         return value;
     };
     const fingerprint = () => {
@@ -105,6 +106,8 @@ export function installProjectProperties(vm, {
     };
     const save = (original, args, stream = false) => {
         if (loading) throw new Error('Wait for project loading to finish before saving');
+        const options = projectSerializationOptions(vm);
+        if (options?.preview) return original.apply(vm, args);
         const print = fingerprint();
         const value = info?.schemaVersion === 1 ? current() : info;
         const receipt = {generation, serial: ++saveSerial, fingerprint: print, previous: JSON.stringify(info),
@@ -113,7 +116,9 @@ export function installProjectProperties(vm, {
         transaction = receipt;
         let result;
         try { result = original.apply(vm, args); } finally { transaction = null; }
-        if (stream) {
+        if (options?.deferCommit) {
+            options.deferCommit(() => commit(receipt));
+        } else if (stream) {
             result.on('end', () => commit(receipt));
         } else if (result && typeof result.then === 'function') {
             return result.then(output => { commit(receipt); return output; });

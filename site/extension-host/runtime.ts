@@ -8,6 +8,7 @@
  */
 
 import {installPlusExtensionHost as install} from './host.ts';
+import {createProjectPayloadHost} from '../project-payloads/host.ts';
 import * as vmModules from './vm-modules.ts';
 
 /**
@@ -16,8 +17,10 @@ import * as vmModules from './vm-modules.ts';
  * @param {object} [options] What the build embedded: enabled, locale, digests, archive limits.
  * @returns {object} The installed host.
  */
-export const installPlusExtensionHost = (vm, options = {}) =>
+export const installPlusExtensionHost = (vm, {embeddedProjectData = false, ...options} = {}) =>
     // No authoring controller is supplied: a built HTML plays a project, and the library that would
     // add an extension to one is not in it. That absence is what keeps the controller, and the
     // packages behind it, out of this bundle.
-    install(vm, {vmModules, ...options});
+    install(vm, {vmModules, ...options, createPayloads: embeddedProjectData ? ports => createProjectPayloadHost(vm, {
+        ...ports, canEdit: false, vmModules, approve: undefined
+    }) : undefined});

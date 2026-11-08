@@ -1,12 +1,16 @@
 import {configurePayloads, decodePayloads, encodePayloads, inventory} from './codec.ts';
 import {nativeAssetConversion} from './native-assets.ts';
+import {withProjectSerialization} from '../extension-host/serialization-context.ts';
 import type {ProjectArchive} from '../extension-host/shared-project-archive.ts';
 
 const projectFiles = vm => Object.fromEntries(vm.serializeAssets().map(({fileName, fileContent}) =>
     [fileName, fileContent]));
 
 const installed = new WeakMap();
-export const saveProjectForPackager = vm => installed.get(vm)?.saveExpanded() ?? vm.saveProjectSb3('arraybuffer');
+export const saveProjectForPackager = vm => withProjectSerialization(vm, {preview: true}, () => {
+    const save = () => vm.saveProjectSb3('arraybuffer');
+    return installed.get(vm)?.withEmbedded(save) ?? save();
+});
 
 export function createProjectPayloadHost(vm, {fetch, cache, approve, validate, canEdit, vmModules}) {
     let selection = new Map();
@@ -74,9 +78,17 @@ export function createProjectPayloadHost(vm, {fetch, cache, approve, validate, c
             }
             return zip;
         },
-        saveExpanded() {
+        withEmbedded<T>(run: () => T): T {
             expanded++;
-            try { return vm.saveProjectSb3('arraybuffer'); } finally { expanded--; }
+            try { return run(); } finally { expanded--; }
+        },
+        embedOnSave() {
+            const expected = revision;
+            return () => {
+                if (revision !== expected) return;
+                selection = new Map();
+                revision++;
+            };
         }
     };
     installed.set(vm, host);

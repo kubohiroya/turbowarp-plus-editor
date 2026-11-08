@@ -44,7 +44,7 @@ async function makeProject() {
 const settings = page => page.getByRole('dialog', {name: '作品データの形式'});
 async function openSettings(page) {
     await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
-    await page.getByRole('button', {name: '作品データの形式…'}).click();
+    await page.getByRole('button', {name: '組み込みデータ…'}).click();
     await expect(settings(page)).toBeVisible();
 }
 async function start(page, disableFormatEditing = false) {
@@ -172,7 +172,7 @@ for (const format of ['embedded-file', 'embedded-data', 'remote-non-cacheable', 
                 await reopenRemote(page, saved, true, true, false);
                 await waitForOwner(page);
                 await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
-                await expect(page.getByRole('button', {name: '作品データの形式…'})).toHaveCount(0);
+                await expect(page.getByRole('button', {name: '組み込みデータ…'})).toHaveCount(0);
                 await expect(page.getByRole('button', {name: 'バンドル素材を作品に追加…'})).toHaveCount(0);
                 expect(Object.values(requests)).toEqual([3, 3, 3, 3]);
             }
@@ -202,6 +202,7 @@ test('adds bundled images and sound as native project assets that work after reo
     await reopenSB3(page, await input.generateAsync({type: 'nodebuffer'}));
     await waitForOwner(page);
     await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
+    await page.getByRole('button', {name: '組み込みデータ…'}).click();
     await page.getByRole('button', {name: 'バンドル素材を作品に追加…'}).click();
     const dialog = page.getByRole('dialog', {name: 'バンドル素材を作品に追加'});
     const material = dialog.getByRole('combobox', {name: 'バンドル素材'});

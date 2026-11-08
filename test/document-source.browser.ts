@@ -108,7 +108,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
         stage='save';
         // The File menu always downloads; the menu-bar shortcut can sit under the extension status panel.
         await page.getByText('ファイル',{exact:true}).click();
-        const pending=page.waitForEvent('download'); await page.getByRole('listitem').filter({hasText:/^コンピューターに保存する$/}).click();
+        const pending=page.waitForEvent('download'); await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
         const saved=path.join(output,'document-source-edited.sb3'); await (await pending).saveAs(saved);
         const zip=await JSZip.loadAsync(await readFile(saved)), savedProject=JSON.parse(await zip.file('project.json').async('string'));
         assert.equal(documents(savedProject)['yaml-settings'].source,yaml); assert.equal(documents(savedProject)['json-settings'].source,json);

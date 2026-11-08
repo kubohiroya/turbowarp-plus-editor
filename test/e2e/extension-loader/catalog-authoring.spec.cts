@@ -141,12 +141,36 @@ test('catalog writes all four loading forms, restores them, and packages one off
         expect(stored).toMatchObject({execution: 'unsandboxed', sha256: converted.sha256, source: {type: 'embedded-file'}});
         expect(await afterConversion.file(stored.source.path).async('nodebuffer')).toEqual(converted.bytes);
 
+        const exportedAsset = await page.evaluate(async () => {
+            const storage = vm.runtime.storage;
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><rect width="12" height="12"/></svg>';
+            const asset = storage.createAsset(storage.AssetType.ImageVector, 'svg', new TextEncoder().encode(svg), null, true);
+            const key = `${asset.assetId}.svg`;
+            await vm.addCostume(key, {name: 'Export fixture', asset, assetId: asset.assetId,
+                dataFormat: 'svg', rotationCenterX: 6, rotationCenterY: 6}, vm.editingTarget.id);
+            const costume = vm.editingTarget.getCostumes().find(item => item.name === 'Export fixture');
+            return {key, svg, renderedSize: [...costume.size]};
+        });
+        const beforeExport = await page.evaluate(() => {
+            vm.runtime.emitProjectChanged();
+            const state = window.ReduxStore.getState().scratchGui;
+            return {dirty: state.projectChanged, title: state.projectTitle, handle: state.tw.fileHandle,
+                properties: JSON.parse(vm.toJSON()).turboWarpPlusProject};
+        });
+        expect(beforeExport.dirty).toBe(true);
         await page.getByText('ファイル', {exact: true}).click();
         const opening = page.waitForEvent('popup');
+        await page.getByRole('button', {name: '書き出し…', exact: true}).click();
         await page.getByText('プロジェクトをパッケージ化する', {exact: true}).click();
         const builder = await opening;
         await expect(builder).toHaveURL(/\/plus-packager\.html$/);
         await expect(builder.getByTestId('plus-package-generate')).toBeEnabled();
+        expect(await page.evaluate(() => {
+            const state = window.ReduxStore.getState().scratchGui;
+            return {dirty: state.projectChanged, title: state.projectTitle, handle: state.tw.fileHandle,
+                properties: JSON.parse(vm.toJSON()).turboWarpPlusProject};
+        })).toEqual(beforeExport);
+        await builder.getByTestId('plus-package-storage').selectOption('embedded-data');
         await builder.getByTestId('plus-package-resources').check();
         await builder.getByTestId('plus-package-generate').click();
         // The builder reads the same catalog, so building asks nobody either.
@@ -162,6 +186,25 @@ test('catalog writes all four loading forms, restores them, and packages one off
 
         await context.setOffline(true);
         const packaged = await context.newPage();
+        await packaged.addInitScript(() => {
+            Object.defineProperty(globalThis, 'TurboWarpPlusExtensionHost', {
+                configurable: true,
+                set(runtime) {
+                    Object.defineProperty(globalThis, 'TurboWarpPlusExtensionHost', {value: {
+                        ...runtime,
+                        installPlusExtensionHost(vm, options) {
+                            const host = runtime.installPlusExtensionHost(vm, options);
+                            const load = vm.loadProject;
+                            vm.loadProject = function (input, ...args) {
+                                globalThis.packagedProjectBytes = new Uint8Array(input).slice();
+                                return load.call(this, input, ...args);
+                            };
+                            return host;
+                        }
+                    }});
+                }
+            });
+        });
         const external = [];
         const pageErrors = [];
         const consoleErrors = [];
@@ -175,6 +218,20 @@ test('catalog writes all four loading forms, restores them, and packages one off
         await packaged.goto(pathToFileURL(output).href);
         // The offline HTML cannot read the catalog; it trusts the listed digests its builder embedded.
         await expectTrusted(packaged, specifications);
+        const savedRuntime = await packaged.evaluate(() => [...globalThis.packagedProjectBytes]);
+        const runtimeZip = await Zip.loadAsync(Buffer.from(savedRuntime));
+        const runtimeProject = JSON.parse(await runtimeZip.file('project.json').async('string'));
+        const asset = runtimeProject.turboWarpPlusPayloads.entries.find(entry => entry.key === exportedAsset.key);
+        expect(asset).toMatchObject({kind: 'assets', format: 'embedded-data'});
+        expect(Buffer.from(asset.data.split(',')[1], 'base64').toString()).toBe(exportedAsset.svg);
+        expect(runtimeZip.file(exportedAsset.key)).toBeNull();
+        const loadedAsset = await packaged.evaluate(() => {
+            const costume = vm.runtime.targets.flatMap(target => target.getCostumes())
+                .find(costume => costume.name === 'Export fixture');
+            // Packaged VMs discard the source Asset after building its render skin.
+            return {size: costume?.size && [...costume.size], broken: Boolean(costume?.broken)};
+        });
+        expect(loadedAsset).toEqual({size: exportedAsset.renderedSize, broken: false});
         try {
             await assertModes(packaged);
         } catch (error) {
@@ -222,7 +279,7 @@ test('catalog keeps distribution controls off when the Loader startup flag is ex
     expect(await page.evaluate(() => globalThis.__catalogAuthoringRuns || {})).toEqual({});
 });
 
-test('catalog changes a loaded extension form with the same digest and asks nobody', async ({page, context}) => {
+test('the File menu changes a loaded extension form with the same digest and asks nobody', async ({page, context}) => {
     await installFixtures(context);
     await openEditor(page);
     const spec = specifications[3];
@@ -234,11 +291,14 @@ test('catalog changes a loaded extension form with the same digest and asks nobo
     await expect(selection(page)).toHaveCount(0);
     await assertModes(page, [spec]);
 
-    await openCatalog(page);
-    await expect(form(page, spec, 'remote-non-cacheable')).toBeChecked();
-    await form(page, spec, 'embedded-data').check();
-    await applySettings(page);
-    await expect(selection(page)).toHaveCount(0);
+    await page.getByText('ファイル', {exact: true}).click();
+    await page.getByRole('button', {name: '機能拡張…', exact: true}).click();
+    const dialog = page.getByRole('dialog', {name: '機能拡張', exact: true});
+    const storage = dialog.getByRole('combobox', {name: spec.id, exact: true});
+    await expect(storage).toHaveValue('remote-non-cacheable');
+    await storage.selectOption('embedded-data');
+    await dialog.getByRole('button', {name: '格納方式を適用'}).click();
+    await expect(dialog).toHaveCount(0);
     await expect(permission(page)).toHaveCount(0);
     await assertModes(page, [spec]);
     const json = await projectJSON(page);

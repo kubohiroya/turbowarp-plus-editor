@@ -13,6 +13,12 @@ body{margin:0;background:#f1f5f9;color:#172033;font:16px/1.6 system-ui,sans-seri
 <p>Embedded・Remote拡張を検証して同梱し、ネット接続を必要としない1つのHTMLファイルにします。</p>
 <p class="note">生成前に拡張ごとの実行内容を確認します。配布されたHTMLを開く人にも実行許可を確認します。外部API・モデル・画像などの依存資産は自動で同梱できません。</p>
 <label>作品ファイル（SB3）<input type="file" accept=".sb3,application/x.scratch.sb3" data-testid="plus-package-file"></label>
+<label>書き出し時の作品データの格納方式
+<select data-testid="plus-package-storage">
+<option value="standard">SB3 の標準の格納方式</option>
+<option value="embedded-data">台本・素材を作品 JSON 内に同梱</option>
+</select>
+</label>
 <label><input type="checkbox" data-testid="plus-package-resources"> すべてのPlus拡張が外部API・モデル・画像・音声などを使わないことを確認しました。</label>
 <button type="button" disabled data-testid="plus-package-generate">確認してHTMLを生成</button>
 <p role="status" aria-live="polite" data-testid="plus-package-status">Editorから作品を受け取るか、SB3を選んでください。</p>

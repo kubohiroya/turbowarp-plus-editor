@@ -17,7 +17,8 @@
     "./project-search": "./src/project-search-box.tsx",
     "./project-info-menu": "./src/info-menu.tsx",
     "./stage-controls": "./src/stage-controls.ts",
-    "./stage-controls-view": "./src/stage-controls-view.tsx"
+    "./stage-controls-view": "./src/stage-controls-view.tsx",
+    "./project-file-menu": "./src/project-file-menu.tsx"
   },
   "peerDependencies": {
     "react": ">=16.8",
