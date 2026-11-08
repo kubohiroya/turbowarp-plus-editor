@@ -1,7 +1,7 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
 import {searchProject, searchYamlDocuments, type ProjectSearchResult, type SearchKind, type SearchProject, type SearchResult} from './project-search.ts';
-import {connectProjectReplaceOpener, connectionFor, type SearchDocuments} from './project-search-connections.ts';
+import {connectProjectReplaceOpener, connectionFor, projectReplaceShortcut, type SearchDocuments} from './project-search-connections.ts';
 import {applyProjectSearchReplacement, replacementText, type ReplaceOutcome} from './project-search-replace.ts';
 export {connectProjectSearchNavigation} from './project-search-connections.ts';
 import styles from './project-search.css';
@@ -70,28 +70,35 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
     const canEdit = (result: SearchResult) => result.kind === 'yaml' ? Boolean(documents?.stageYamlReplacement) : Boolean(result.edit);
     const proposed = active && canEdit(active) ? replacementText(active, query, replacement) : undefined;
 
-    React.useLayoutEffect(() => connectProjectReplaceOpener(project, () => {
-        setReplaceMode(true);
-        setOpen(true);
-        input.current.focus();
-        input.current.select();
-    }), [project]);
-
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
         const field = input.current;
         const win = field.ownerDocument.defaultView;
+        const focusSearch = () => {
+            field.focus();
+            field.select();
+        };
+        const openReplace = () => {
+            setReplaceMode(true);
+            setOpen(true);
+            focusSearch();
+        };
+        const disconnectReplace = connectProjectReplaceOpener(project, openReplace);
         const shortcut = (event: KeyboardEvent) => {
-            if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey &&
-                    event.key.toLowerCase() === 'f' && field.offsetWidth) {
-                event.preventDefault();
-                event.stopPropagation();
-                field.focus();
-                field.select();
-            }
+            const replace = projectReplaceShortcut.matches(event);
+            const find = (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey &&
+                event.key.toLowerCase() === 'f';
+            if (!field.offsetWidth || (!find && !replace)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            if (find) focusSearch();
+            else if (!event.repeat) openReplace();
         };
         win.addEventListener('keydown', shortcut, true);
-        return () => win.removeEventListener('keydown', shortcut, true);
-    }, []);
+        return () => {
+            win.removeEventListener('keydown', shortcut, true);
+            disconnectReplace();
+        };
+    }, [project]);
 
     React.useLayoutEffect(() => {
         if (!show) return;

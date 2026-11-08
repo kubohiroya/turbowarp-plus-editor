@@ -78,3 +78,15 @@ export function connectProjectReplaceOpener(project: SearchProject, open: () => 
 export function projectReplaceOpener(project?: SearchProject) {
     return project && connections.get(project)?.openReplace;
 }
+
+const replaceKey = 'F';
+
+export const projectReplaceShortcut = {
+    keys: `Control+Shift+${replaceKey}`,
+    label: `Ctrl+Shift+${replaceKey}`,
+    macLabel: `⌃⇧${replaceKey}`,
+    matches(event: KeyboardEvent) {
+        return event.ctrlKey && event.shiftKey && !event.metaKey && !event.altKey && !event.isComposing &&
+            event.key.toUpperCase() === replaceKey;
+    }
+};

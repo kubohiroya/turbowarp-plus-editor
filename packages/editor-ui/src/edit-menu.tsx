@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './edit-menu.css';
-import {projectReplaceOpener} from './project-search-connections.ts';
+import {projectReplaceOpener, projectReplaceShortcut} from './project-search-connections.ts';
 import type {SearchProject} from './project-search.ts';
 
 interface Workspace {
@@ -55,7 +55,10 @@ type Command = (typeof groups)[number][number][0];
 const shortcutKeys = {undo: 'Z', redo: 'Y', cut: 'X', copy: 'C', paste: 'V'};
 
 function shortcutFor(command: Command, mac: boolean) {
-    if (command === 'findAndReplace') return;
+    if (command === 'findAndReplace') {
+        const {label, macLabel, keys} = projectReplaceShortcut;
+        return {label: mac ? macLabel : label, keys};
+    }
     if (mac && command === 'redo') return {label: '⇧⌘Z', keys: 'Meta+Shift+Z'};
     const key = shortcutKeys[command];
     return mac ? {label: `⌘${key}`, keys: `Meta+${key}`} : {label: `Ctrl+${key}`, keys: `Control+${key}`};
