@@ -2562,12 +2562,10 @@ async function checkPlusLayout({editor, context, control}) {
     const trigger = editor.getByRole('button', {name: /^(Reveal sprite list|スプライト一覧を展開)$/, exact: true});
     const openSpritePopup = async () => {
         if (await trigger.isVisible()) await trigger.hover();
-        await editor.getByRole('button', {name: /^(Undock sprite list|アンドック)$/, exact: true}).click();
-        const internal = editor.getByRole('region', {name: /^(Sprite list|スプライト一覧)$/, exact: true});
-        await internal.getByRole('button', {name: /^(Window layout|レイアウト変更)$/, exact: true}).click();
-        const popup = context.waitForEvent('page');
-        await internal.getByRole('button', {name: /^(Open in a separate window \(undock\)|別窓で開く（アンドック）)$/, exact: true}).click();
-        const child = await popup;
+        const [child] = await Promise.all([
+            context.waitForEvent('page'),
+            editor.getByRole('button', {name: /^(Undock sprite list|アンドック)$/, exact: true}).click()
+        ]);
         await child.waitForURL(/sprite-list-popout/);
         await child.locator('[data-backdrop-placement]').waitFor();
         return child;
