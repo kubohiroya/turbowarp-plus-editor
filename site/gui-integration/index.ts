@@ -2,7 +2,8 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
-import {externalYamlPort} from '../editor-layout/index.tsx';
+import {externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
+import {stageLauncherSlot} from '../editor-layout/context.ts';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
@@ -48,9 +49,14 @@ export {createWorkspaceAttachment} from './containers/tw-plus-workspace-attachme
 const ExtensionControls = connect(({scratchGui: {mode}}) => ({
     stageOnly: mode.isPlayerOnly || mode.isFullScreen
 }))(({vm, isSmall, menuLocale, stageOnly}) => {
+    const mountStageLauncher = React.useCallback((element: HTMLDivElement | null) => {
+        if (element) element.appendChild(stageLauncherSlot(vm));
+    }, [vm]);
     if (stageOnly !== (menuLocale === undefined)) return null;
     const service = hostStageControls(vm, hostIntegration());
-    return service ? React.createElement(StageControlsView, {service, isSmall, menuLocale}) : null;
+    return React.createElement(React.Fragment, null,
+        menuLocale !== undefined && stageLauncherEnabled && React.createElement('div', {ref: mountStageLauncher}),
+        service && React.createElement(StageControlsView, {service, isSmall, menuLocale}));
 });
 export const renderStageControls = props => React.createElement(ExtensionControls, props);
 

@@ -143,6 +143,7 @@ function AppStagePanel({aspect, width, defaultWidth, render, renderHeader, isFul
         };
     }, [surface, resizeStage, stage?.docked, isFullScreen]);
     return <StageSurface placement={stage} externalHost={externalHost} decorate={decorateSurface}
+        launcher={menu?.launcher} dockAction={menu?.dockAction}
         actionMount={stageActionMount ?? null} onDockActionChange={layoutFlags.stageDisplayMenu ? menu?.setDockAction : undefined}
         dockHeight={Math.round((width ?? defaultWidth) / aspect) + (renderHeader ? 44 : 0)}
         render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen}}
