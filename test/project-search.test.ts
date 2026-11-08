@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {searchProject, searchYamlDocuments, type SearchKind, type SearchProject} from '../packages/editor-ui/src/project-search.ts';
+import {applyProjectSearchReplacement, replacementText, type ReplaceBlockly, type ReplaceWorkspace} from '../packages/editor-ui/src/project-search-replace.ts';
 
 type Target = SearchProject['targets'][number];
 type Block = ReturnType<Target['blocks']['getBlock']>;
@@ -80,4 +81,23 @@ test('YAML results preserve document identity and UTF-16 offsets for each litera
         assert.equal(document.source.slice(start, end), expectedText);
         assert.equal(expectedText, '開始.');
     }
+});
+
+test('replacement splices a literal match and rejects a renamed or conflicting variable', () => {
+    const field = {id: 'score', value: 'old.score'};
+    const stage = target('stage', ['use'], [{id: 'use', opcode: 'data_showvariable', fields: {VARIABLE: field}}],
+        {isStage: true, variables: {score: {name: 'old.score'}, conflict: {name: 'new.score'}}});
+    const project = {targets: [stage]};
+    const result = searchProject(project, {}, 'old.', false, new Set(['variable']))[0].results[0];
+    assert.equal(replacementText(result, 'old.', '$1.'), '$1.score');
+    assert.equal(replacementText(result, 'old.', 'old.'), undefined);
+
+    const workspace = {
+        options: {readOnly: false}, isDragging: () => false, getVariableById: () => stage.variables.score,
+        renameVariableById: () => assert.fail('The result must be refused before editing the workspace')
+    } as unknown as ReplaceWorkspace;
+    const Blockly = {} as ReplaceBlockly;
+    assert.equal(applyProjectSearchReplacement(project, workspace, Blockly, result, 'new.score'), 'conflict');
+    field.id = 'conflict';
+    assert.equal(applyProjectSearchReplacement(project, workspace, Blockly, result, 'other.score'), 'stale');
 });
