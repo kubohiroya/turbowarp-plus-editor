@@ -1,0 +1,18 @@
+.command {
+    display: block;
+    width: calc(100% + 20px);
+    margin-inline: -10px;
+    padding: 0 10px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: start;
+    cursor: inherit;
+}
+
+.command:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
