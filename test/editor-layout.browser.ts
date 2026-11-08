@@ -1748,12 +1748,13 @@ test('the Dockview variables pane lists only variables owned by the selected tar
     const score = pane.getByRole('textbox', {name: '得点', exact: true});
     const cloud = pane.getByRole('img', {name: 'クラウド変数', exact: true});
     const scope = pane.locator('.tw-sprite-variables__scope');
-    const create = pane.getByRole('form', {name: '変数を作る', exact: true});
-    const rename = pane.getByRole('form', {name: '名前を変更', exact: true});
-    const remove = pane.getByRole('form', {name: '削除', exact: true});
+    // Creating, renaming and deleting open Scratch-style modal dialogs.
+    const create = page.getByRole('dialog', {name: '新しい変数', exact: true});
+    const rename = page.getByRole('dialog', {name: '変数名を変更', exact: true});
+    const remove = page.getByRole('dialog', {name: '変数を削除', exact: true});
     const variableRow = (name: string) => pane.getByRole('row').filter({has: page.getByRole('textbox', {name, exact: true})});
     const startCreate = () => pane.getByRole('button', {name: '変数を作る', exact: true}).click();
-    const submitCreate = () => create.getByRole('button', {name: '変数を作る', exact: true}).click();
+    const submitCreate = () => create.getByRole('button', {name: 'OK', exact: true}).click();
 
     await showVariables();
     await expect.poll(variableIds).toEqual(['local-score']);
@@ -1776,17 +1777,20 @@ test('the Dockview variables pane lists only variables owned by the selected tar
         fields: {VARIABLE: {name: 'VARIABLE', id, value: '速度', variableType: ''}},
         shadow: false, topLevel: true, parent: null, next: null, x: 10, y: 10
     }), speedId);
-    await variableRow('速度').getByRole('button', {name: '名前を変更', exact: true}).click();
+    await variableRow('速度').getByRole('button', {name: '変数名を変更', exact: true}).click();
     await rename.getByRole('textbox').fill('速さ');
-    await rename.getByRole('button', {name: '名前を変更', exact: true}).click();
+    await rename.getByRole('button', {name: 'OK', exact: true}).click();
+    await expect(rename).toHaveCount(0);
     await expect(variableRow('速さ')).toBeVisible();
     assert.equal(await page.evaluate(() => vm.editingTarget.blocks.getBlock('speed-reference').fields.VARIABLE.value), '速さ');
-    await variableRow('速さ').getByRole('button', {name: '削除', exact: true}).click();
+    await variableRow('速さ').getByRole('button', {name: '変数を削除', exact: true}).click();
+    await expect(remove).toContainText('変数「速さ」を削除しますか？');
     await remove.getByRole('button', {name: '削除', exact: true}).click();
     await expect(remove.getByRole('alert')).toContainText('ブロックで使用中です');
     await expect(variableRow('速さ')).toBeVisible();
     await page.evaluate(() => vm.editingTarget.blocks.deleteBlock('speed-reference'));
     await remove.getByRole('button', {name: '削除', exact: true}).click();
+    await expect(remove).toHaveCount(0);
     await expect(variableRow('速さ')).toHaveCount(0);
 
     await page.getByRole('button', {name: '背景', exact: true}).click();
@@ -1948,7 +1952,8 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     page.setDefaultTimeout(8000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1');
+    // The edge handle appears only without the menu bar launcher, which has its own test above.
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1&twPlusStageLauncher=0');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.vm.renderer);
     const canvas = page.locator('[data-gui-stage] canvas').first();
     const reveal = page.getByRole('button', {name: 'Reveal stage', exact: true});
