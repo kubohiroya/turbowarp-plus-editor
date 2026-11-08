@@ -864,8 +864,9 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(stage).toBeInViewport({ratio: 1});
     assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 1);
 
-    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
-    await page.getByRole('tab', {name: 'Backdrops', exact: true}).click();
+    await backdrop.click();
+    const backdropEditor = page.getByRole('tabpanel', {name: 'Backdrops', exact: true});
+    await backdropEditor.getByRole('tab', {name: 'Backdrops', exact: true}).click();
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
 
