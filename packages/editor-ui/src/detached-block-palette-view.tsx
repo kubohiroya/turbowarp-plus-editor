@@ -3,6 +3,9 @@ import {IconMenuButton} from './icon-menu-button.tsx';
 import type {PaletteItem, PaletteSource} from './detached-block-palette.ts';
 import styles from './detached-block-palette.css';
 
+const horizontalLayoutIconPath = 'M2 5h5v6H2zm7 0h5v6H9z';
+const verticalLayoutIconPath = 'M5 2h6v5H5zm0 7h6v5H5z';
+
 function BlockPreview({svg}: {svg: SVGSVGElement}) {
     const ref = React.useRef<HTMLSpanElement>(null);
     React.useLayoutEffect(() => {
@@ -83,11 +86,11 @@ export default function Palette({source, locale, categoryIcons, close, startDrag
         </div>
         {tooltip && <div className={styles.tooltip} role="tooltip" style={tooltip.position}>{tooltip.label}</div>}
         <IconMenuButton className={styles.layoutMenu} label={ja ? 'ブロックパレットのレイアウト' : 'Block palette layout'}
-            icon={<LayoutIcon path="M2.5 3.5h11v9h-11zM2.5 7h11" />} items={[
+            icon={<LayoutIcon path={vertical ? verticalLayoutIconPath : horizontalLayoutIconPath} />} items={[
                 {id: 'horizontal', label: ja ? '横並びにする' : 'Arrange horizontally', checked: !vertical,
-                    icon: <LayoutIcon path="M2 5h5v6H2zm7 0h5v6H9z" />, onSelect: () => setVertical(false)},
+                    icon: <LayoutIcon path={horizontalLayoutIconPath} />, onSelect: () => setVertical(false)},
                 {id: 'vertical', label: ja ? '縦並びにする' : 'Arrange vertically', checked: vertical,
-                    icon: <LayoutIcon path="M5 2h6v5H5zm0 7h6v5H5z" />, onSelect: () => setVertical(true)},
+                    icon: <LayoutIcon path={verticalLayoutIconPath} />, onSelect: () => setVertical(true)},
                 {id: 'dock', label: ja ? 'このパネルを別画面から元に戻す' : 'Return this panel to the editor',
                     icon: <LayoutIcon path="M9 3h4v10H3V9m0-6 6 6M5 9h4V5" />, onSelect: close}
             ]} />

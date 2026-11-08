@@ -1166,6 +1166,7 @@ test('the editor layout menu opens the live block palette and the Dockview panel
     await expect(penButton).toHaveAttribute('aria-pressed', 'true');
     await expect(palette.getByRole('group', {name: 'Pen', exact: true})).toBeVisible();
     await looksButton.click();
+    await popup.setViewportSize({width: 420, height: 420});
     const looks = palette.getByRole('group', {name: 'Looks', exact: true});
     const expectPreset = async (orientation: 'horizontal' | 'vertical') => {
         await expect(palette).toHaveAttribute('data-palette-orientation', orientation);
@@ -1178,18 +1179,27 @@ test('the editor layout menu opens the live block palette and the Dockview panel
         assert.ok(rail && list && menu && windowBounds);
         assert.ok(menu.y - windowBounds.y <= 12);
         assert.ok(windowBounds.x + windowBounds.width - (menu.x + menu.width) <= 12);
+        assert.equal(list.x + list.width, windowBounds.x + windowBounds.width);
         if (orientation === 'horizontal') {
             assert.ok(rail.x + rail.width <= list.x);
-            assert.ok(list.x + list.width <= menu.x);
+            assert.equal(list.y, windowBounds.y);
         } else {
             assert.ok(rail.y + rail.height <= list.y);
             assert.ok(rail.x + rail.width <= menu.x);
         }
     };
+    const horizontalOption = popup.getByRole('menuitemradio', {name: 'Arrange horizontally', exact: true});
+    const verticalOption = popup.getByRole('menuitemradio', {name: 'Arrange vertically', exact: true});
+    const triggerIcon = paletteMenu.locator('svg path');
     await expectPreset('horizontal');
     await paletteMenu.click();
-    await popup.getByRole('menuitemradio', {name: 'Arrange vertically', exact: true}).click();
+    const horizontalIcon = await horizontalOption.locator('svg path').getAttribute('d');
+    const verticalIcon = await verticalOption.locator('svg path').getAttribute('d');
+    assert.ok(horizontalIcon && verticalIcon && horizontalIcon !== verticalIcon);
+    await expect(triggerIcon).toHaveAttribute('d', horizontalIcon);
+    await verticalOption.click();
     await expectPreset('vertical');
+    await expect(triggerIcon).toHaveAttribute('d', verticalIcon);
     await looksButton.focus();
     const tooltip = popup.getByRole('tooltip');
     await expect(tooltip).toHaveText('Looks');
@@ -1200,8 +1210,9 @@ test('the editor layout menu opens the live block palette and the Dockview panel
         paletteMenu.boundingBox(), popup.getByRole('menu', {name: 'Block palette layout', exact: true}).boundingBox()
     ]);
     assert.ok(menuButton && openMenu && openMenu.y >= menuButton.y + menuButton.height);
-    await popup.getByRole('menuitemradio', {name: 'Arrange horizontally', exact: true}).click();
+    await horizontalOption.click();
     await expectPreset('horizontal');
+    await expect(triggerIcon).toHaveAttribute('d', horizontalIcon);
     await paletteMenu.click();
     await Promise.all([popup.waitForEvent('close'),
         popup.getByRole('menuitem', {name: 'Return this panel to the editor', exact: true}).click()]);
