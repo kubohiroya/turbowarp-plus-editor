@@ -85,15 +85,15 @@ function StageViewport({aspect, width, defaultWidth, floating, workspace, useNat
         const measure = () => {
             const height = node.clientHeight - (header.current?.offsetHeight ?? 0) - 8;
             if (node.clientWidth < 12 || height < 1) return;
-            const limit = workspace ? defaultWidth : Infinity;
-            setFloatingWidth(Math.max(1, Math.floor(Math.min(node.clientWidth - 12, height * aspect, limit))));
+            // A tab or separate window is the stage's own space, so the stage grows and shrinks with it.
+            setFloatingWidth(Math.max(1, Math.floor(Math.min(node.clientWidth - 12, height * aspect))));
         };
         const observer = new (inputDocument?.defaultView.ResizeObserver ?? ResizeObserver)(measure);
         measure();
         observer.observe(node);
         if (header.current) observer.observe(header.current);
         return () => observer.disconnect();
-    }, [aspect, defaultWidth, fit, inputDocument, workspace]);
+    }, [aspect, fit, inputDocument]);
 
     const displayWidth = fit ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width;
     const canvas = <>
