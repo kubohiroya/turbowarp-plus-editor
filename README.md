@@ -56,9 +56,9 @@ Project-wide search covers every sprite and the stage, and groups its results by
 
 **Export** packages a project for distribution: an ordinary Scratch 3 or TurboWarp SB3 opens the standard TurboWarp Packager, while a project that records Plus extensions opens the Plus output screen instead. Extension code served over HTTPS is checked against its recorded hash before it goes into the HTML, sandbox requirements are preserved, and catalog extensions that meet the trust conditions run against the bundled hash. A project with no external dependencies then works offline.
 
-The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) walks through all of this in forty steps with real screenshots, workflow diagrams, the comparison table, availability conditions, and saving and compatibility details.
+The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) walks through all of this in eleven topic pages with real screenshots, workflow diagrams, the comparison table, availability conditions, and saving and compatibility details.
 
-[![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
+[![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
 
 ## Editor layout
 

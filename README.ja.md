@@ -56,9 +56,9 @@ Plus固有の機能には、対応する拡張や専用データが必要なも�
 
 **書き出し**は作品を配布用にまとめます。通常のScratch 3やTurboWarpのSB3なら標準のTurboWarp Packagerが開き、Plus形式の拡張を記録した作品では同じ操作でPlus専用の出力画面が開きます。HTTPSで配信される拡張コードも、記録したハッシュと照合したうえでHTMLに入り、サンドボックスの指定は保持されます。カタログの信頼条件を満たす拡張は、同梱されたハッシュと照合して実行します。外部依存のない作品は、そのHTMLだけでオフラインで動きます。
 
-[実画面と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)は、ここまでの内容を40の手順で、実際の画面・操作図・比較表・利用条件・保存と互換性とともに説明しています。
+[実画面と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)は、ここまでの内容を分野別の11ページで、実際の画面・操作図・比較表・利用条件・保存と互換性とともに説明しています。
 
-[![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
+[![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
 
 ## エディターの配置
 
