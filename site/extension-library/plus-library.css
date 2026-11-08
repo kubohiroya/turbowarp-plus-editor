@@ -31,21 +31,23 @@
 
 .message {
     padding: 1rem;
-    background: white;
+    background: var(--ui-modal-background, white);
+    color: var(--ui-modal-foreground, inherit);
     border-radius: .5rem;
 }
 
 .error {
-    color: #9b2020;
+    color: var(--block-editor-error-text, #9b2020);
 }
 
 .plus-tag {
-    background: #d8f3ff;
-    color: #16465e;
+    background: var(--badge-background, #d8f3ff);
+    color: var(--text-primary, #16465e);
+    border-color: var(--badge-border, transparent);
 }
 
 .plus-tag[aria-pressed="true"] {
-    background: #a5e3ff;
+    background: var(--ui-tertiary, #a5e3ff);
 }
 .custom-library .custom-content {
     display: block;
