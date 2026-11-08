@@ -1448,9 +1448,13 @@ test('the default Dockview splits one sprite editor and restores each view secti
         return tab.boundingBox();
     }));
     const contentBounds = await page.locator('.tw-plus-sprite-tab-body:visible').boundingBox();
-    assert(contentBounds && bounds.every((tab, index) => tab && tab.height >= 44 &&
+    // The buttons are squares the size of what they show; the rail is not divided among them.
+    assert(contentBounds && bounds.every((tab, index) => tab && tab.height === 28 && tab.width === 28 &&
         tab.x === bounds[0].x && tab.x + tab.width <= contentBounds.x &&
         (index === 0 || tab.y > bounds[index - 1].y)));
+    const railBounds = await toolbar.boundingBox();
+    const lastTab = bounds.at(-1);
+    assert(railBounds && lastTab && lastTab.y + lastTab.height < railBounds.y + railBounds.height - 40);
     await code.hover();
     await expect(page.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('Code');
     await code.press('ArrowDown');
