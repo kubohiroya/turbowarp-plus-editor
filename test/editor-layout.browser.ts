@@ -399,9 +399,14 @@ test('extension controls sit at the end of the menu bar and the stage can still 
         for (const [id, label, icon] of [['model', 'Teachable Machine', '🧠'], ['debug', 'Debug', '⚙']]) {
             dock.stageControls.addButton({id, label, text: label, icon, onClick() {}}).update({visible: true});
         }
+        // Two controls with no text, whose glyphs are far apart in width: the emoji is about twice
+        // the gear at the same font size.
+        for (const [id, label, icon] of [['wide', 'Wide glyph', '📸'], ['narrow', 'Narrow glyph', '⚙']]) {
+            dock.stageControls.addButton({id, label, icon, onClick() {}}).update({visible: true});
+        }
     });
     const camera = controls.getByRole('button', {name: 'Camera', exact: true});
-    await expect(controls.getByRole('button')).toHaveCount(3);
+    await expect(controls.getByRole('button')).toHaveCount(5);
     await expect(controls).toHaveCSS('border-top-left-radius', '8px');
     await expect(stage.locator('[data-extension-stage-control]')).toHaveCount(0);
     await expect(stage.getByTitle('Go', {exact: true})).toBeVisible();
@@ -415,6 +420,18 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     assert.ok(Math.abs((controlsBounds.y - barBounds.y) -
         (barBounds.height - controlsBounds.height) / 2) <= 1);
     assert.ok(cameraBounds.height < controlsBounds.height);
+    // Inside the frame the controls are even: one height, one baseline, one gap, and a control with
+    // no text is the same square whatever its glyph measures.
+    const boxes = await controls.getByRole('button').evaluateAll(nodes => nodes.map(node => {
+        const {x, y, width, height} = node.getBoundingClientRect();
+        return {id: node.dataset.extensionStageControl, x, y, width, height};
+    }));
+    assert.deepEqual(boxes.map(box => box.height), boxes.map(() => 26));
+    assert.deepEqual(boxes.map(box => box.y), boxes.map(() => cameraBounds.y));
+    assert.deepEqual(boxes.filter(box => box.id === 'wide' || box.id === 'narrow').map(box => box.width),
+        [26, 26]);
+    assert.deepEqual(boxes.slice(1).map((box, index) =>
+        Number((box.x - boxes[index].x - boxes[index].width).toFixed(2))), [3, 3, 3, 3]);
     assert.equal((await canvas.boundingBox()).width, originalWidth);
     await resize.press('Home');
     await expect.poll(async () => (await canvas.boundingBox()).width).toBeLessThan(originalWidth);
@@ -458,8 +475,11 @@ test('the enabled debugger opens from the extension controls even without projec
 
     await expect(group.locator('.sa-debugger-container')).toBeVisible();
     await expect(debuggerButton).toHaveCount(1);
-    // The add-on's button is stage sized on its own; inside the frame it keeps the row's height.
+    // The add-on's button is stage sized on its own; inside the frame it keeps the row's height and
+    // becomes the same square as a control with no text.
     assert.equal((await group.boundingBox()).height, 32);
+    const addOn = await debuggerButton.locator('[class*="stage-header_stage-button_"]').boundingBox();
+    assert.deepEqual([addOn.width, addOn.height], [26, 26]);
     await expect(page.locator('[data-plus-stage-frame]').locator('.sa-debugger-container')).toHaveCount(0);
     await debuggerButton.locator('img').click();
     const panel = page.locator('.sa-debugger-interface');

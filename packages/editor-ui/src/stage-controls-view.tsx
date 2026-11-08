@@ -87,8 +87,8 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
                 type="button"
                 onClick={control.onClick}
             >
-                <span aria-hidden="true">{control.icon}</span>
-                {!isSmall && <span className={styles.label}>{control.text}</span>}
+                <span aria-hidden="true" className={styles.icon}>{control.icon}</span>
+                {!isSmall && control.text !== '' && <span className={styles.label}>{control.text}</span>}
             </button>
         ));
         if (menuLocale === undefined) return <>
