@@ -20,7 +20,8 @@ export function readStartupFeatureFlags({
     twPlusHorizontalBlockPalette: horizontalBlockPalette = null,
     twPlusContextMenuIcons: contextMenuIcons = null,
     twPlusLocalGit: localGit = null,
-    twPlusWorkspaceMinimap: workspaceMinimap = null
+    twPlusWorkspaceMinimap: workspaceMinimap = null,
+    twPlusStageCodePrewarm: stageCodePrewarm = null
 } = {}) {
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
@@ -43,6 +44,7 @@ export function readStartupFeatureFlags({
         horizontalBlockPalette: horizontalBlockPalette === '1',
         contextMenuIcons: contextMenuIcons === null || contextMenuIcons === '1',
         localGit: localGit === null || localGit === '1',
-        workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1'
+        workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1',
+        stageCodePrewarm: stageCodePrewarm === null || stageCodePrewarm === '1'
     });
 }
