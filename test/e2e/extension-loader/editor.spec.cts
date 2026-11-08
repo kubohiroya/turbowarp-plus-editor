@@ -435,7 +435,7 @@ test.describe('local file input', () => {
         await open(page);
         await page.getByText('ファイル', {exact: true}).click();
         const choosing = page.waitForEvent('filechooser');
-        await page.getByText('コンピューターから読み込む', {exact: true}).click();
+        await page.getByText('SB3ファイルを開く…', {exact: true}).click();
         await (await choosing).setFiles({name: 'plus-fixture.sb3', mimeType: 'application/octet-stream', buffer: await project()});
         await answer(page);
         await expect.poll(() => page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(true);
@@ -445,7 +445,7 @@ test.describe('local file input', () => {
         await open(page);
         await page.getByText('ファイル', {exact: true}).click();
         const choosing = page.waitForEvent('filechooser');
-        await page.getByText('コンピューターから読み込む', {exact: true}).click();
+        await page.getByText('SB3ファイルを開く…', {exact: true}).click();
         await (await choosing).setFiles({name: 'failing.sb3', mimeType: 'application/octet-stream', buffer: await failingProject()});
         await expectFailureReported(page);
     });

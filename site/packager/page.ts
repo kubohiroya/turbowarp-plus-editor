@@ -18,6 +18,7 @@ import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-edit
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {createPlusPermissionUI} from '../extension-host/permission-ui.ts';
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
+import {embedPackagedProjectData} from '../project-payloads/codec.ts';
 import {packagePlusHTML} from './html.ts';
 
 const bundledAssets = __TW_PLUS_PACKAGER_ASSETS__;
@@ -26,6 +27,7 @@ const ui = createPlusPermissionUI(document, 'ja');
 const status = document.querySelector('[data-testid="plus-package-status"]');
 const file = document.querySelector<HTMLInputElement>('[data-testid="plus-package-file"]');
 const generate = document.querySelector<HTMLButtonElement>('[data-testid="plus-package-generate"]');
+const storage = document.querySelector<HTMLSelectElement>('[data-testid="plus-package-storage"]');
 const resources = document.querySelector<HTMLInputElement>('[data-testid="plus-package-resources"]');
 const download = document.querySelector<HTMLAnchorElement>('[data-testid="plus-package-download"]');
 let input;
@@ -70,11 +72,13 @@ generate.addEventListener('click', async () => {
     }
     pending = true;
     generate.disabled = true;
+    storage.disabled = true;
     download.hidden = true;
     try {
         await withWaitCursor([document], generateHTML);
     } finally {
         pending = false;
+        storage.disabled = false;
         generate.disabled = false;
     }
 });
@@ -106,12 +110,15 @@ async function generateHTML() {
         const compiled = await prepareOfflinePackage(input, {
             fetcher: createFetchPort(fetch, {onRetry}), trustProvider, diagnostics: ui.diagnostics
         }, {zip: JSZip, archiveOptions: extensionProjectArchiveOptions, resourceDependencies});
+        const embeddedProjectData = storage.value === 'embedded-data';
+        const projectBytes = embeddedProjectData ?
+            await embedPackagedProjectData(compiled.projectBytes, compiled.project) : compiled.projectBytes;
         const runtimeBundle = bundledRuntime;
         const trustedDigests = await plusTrustedExtensions.listDigests(compiled.manifest);
         const packager = new Packager();
         packager.options.app.windowTitle = title;
-        const result = await packagePlusHTML(packager, compiled,
-            {runtimeBundle, scaffoldingAssets: bundledAssets, trustedDigests});
+        const result = await packagePlusHTML(packager, {...compiled, projectBytes},
+            {runtimeBundle, scaffoldingAssets: bundledAssets, trustedDigests, embeddedProjectData});
         if (currentURL) URL.revokeObjectURL(currentURL);
         currentURL = URL.createObjectURL(new Blob([result.data], {type: 'text/html'}));
         download.href = currentURL;

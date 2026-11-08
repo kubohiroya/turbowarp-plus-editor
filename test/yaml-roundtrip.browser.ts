@@ -98,7 +98,7 @@ test('real Editor VM imports YAML, preserves assets, saves SB3, reloads it, and 
         // The File menu stays clear of the floating extension-status badge in the menu bar.
         await page.getByText('ファイル', {exact: true}).click();
         const pending = page.waitForEvent('download');
-        await page.getByRole('listitem').filter({hasText: /^(別ファイルで保存する\.\.\.|コンピューターに保存する)$/u}).click();
+        await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
         const saved = path.join(output, 'edited.sb3');
         await (await pending).saveAs(saved);
         const archive = await JSZip.loadAsync(await readFile(saved));

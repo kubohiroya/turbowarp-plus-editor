@@ -22,8 +22,8 @@ const SHA256 = /^[0-9a-f]{64}$/;
  * The bootstrap is supplied by the trusted build, never by project metadata.
  */
 export function configurePlusPackager(packager, prepared, {
-    runtimeBundle, locale = 'ja', scaffoldingAssets, trustedDigests = []
-}: {runtimeBundle?: string; locale?: string; scaffoldingAssets?: Record<string, string>; trustedDigests?: string[]} = {}) {
+    runtimeBundle, locale = 'ja', scaffoldingAssets, trustedDigests = [], embeddedProjectData = false
+}: {runtimeBundle?: string; locale?: string; scaffoldingAssets?: Record<string, string>; trustedDigests?: string[]; embeddedProjectData?: boolean} = {}) {
     if (!prepared?.offline || !(prepared.projectBytes instanceof Uint8Array) ||
         !prepared.manifest || !packager?.options || typeof packager.package !== 'function') {
         throw failure('INVALID_PACKAGE', 'A verified offline Plus bundle and Packager instance are required');
@@ -70,7 +70,7 @@ export function configurePlusPackager(packager, prepared, {
     const script = runtimeBundle.replace(/<\/script/gi, '<\\/script');
     // The limits travel with the HTML: the runtime bundle no longer holds a copy of them.
     const options = JSON.stringify({enabled: true, locale, trustedDigests,
-        archiveOptions: extensionProjectArchiveOptions}).replace(/</g, '\\u003c');
+        ...(embeddedProjectData ? {embeddedProjectData} : {}), archiveOptions: extensionProjectArchiveOptions}).replace(/</g, '\\u003c');
     packager.options.target = 'html';
     packager.options.cloudVariables = {...packager.options.cloudVariables, mode: 'none'};
     packager.options.custom = {...packager.options.custom, js: `

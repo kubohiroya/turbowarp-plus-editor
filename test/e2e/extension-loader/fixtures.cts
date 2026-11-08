@@ -32,6 +32,8 @@ const test = base.extend({
 });
 async function showProjectDiagnostics(page) {
     await page.getByText(/^(File|ファイル)$/u).locator('xpath=ancestor::div[1]').click();
+    const properties = page.getByRole('button', {name: /^(Project Properties|作品のプロパティ)$/u});
+    if (await properties.count()) await properties.click();
     await page.getByRole('button', {name: /^(Project Diagnostics…|作品の診断…)$/u}).click();
     const dialog = page.getByTestId('project-diagnostics');
     await expect(dialog).toBeVisible();

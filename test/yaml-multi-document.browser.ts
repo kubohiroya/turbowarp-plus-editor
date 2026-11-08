@@ -110,7 +110,7 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
         const saveStarted = Date.now();
         // The File menu always downloads; the menu-bar shortcut can sit under the extension status panel.
         await page.getByText('ファイル', {exact: true}).click();
-        const pending = page.waitForEvent('download'); await page.getByRole('listitem').filter({hasText: /^コンピューターに保存する$/}).click();
+        const pending = page.waitForEvent('download'); await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
         const saved = path.join(output, 'two-edited-documents.sb3'); await (await pending).saveAs(saved);
         const zip = await JSZip.loadAsync(await readFile(saved));
         const savedProject = JSON.parse(await zip.file('project.json').async('string'));

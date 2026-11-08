@@ -66,6 +66,7 @@ const form = (page, spec, distribution = spec.distribution) =>
 // The menu labels are the GUI's. The tests run in Japanese unless they name the English label.
 async function openExtensionLibrary(page, fileLabel = 'ファイル', addLabel = '機能拡張の追加') {
     await page.getByText(fileLabel, {exact: true}).click();
+    await page.getByRole('button', {name: fileLabel === 'File' ? 'Extensions…' : '機能拡張…', exact: true}).click();
     await page.getByRole('button', {name: addLabel, exact: true}).click();
 }
 
@@ -79,14 +80,15 @@ async function openCatalog(page, count = specifications.length, fileLabel, addLa
 async function saveSB3(page) {
     await page.getByText('ファイル', {exact: true}).click();
     const downloading = page.waitForEvent('download');
-    await page.getByRole('listitem').filter({hasText: /^コンピューターに保存する$/}).click();
+    await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click();
+    await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
     return readFile(await (await downloading).path());
 }
 
 async function reopenSB3(page, bytes, name = 'catalog-authored.sb3') {
     await page.getByText('ファイル', {exact: true}).click();
     const choosing = page.waitForEvent('filechooser');
-    await page.getByText('コンピューターから読み込む', {exact: true}).click();
+    await page.getByText('SB3ファイルを開く…', {exact: true}).click();
     await (await choosing).setFiles({name, mimeType: 'application/octet-stream', buffer: bytes});
 }
 

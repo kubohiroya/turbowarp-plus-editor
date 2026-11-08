@@ -68,7 +68,7 @@ const config = withExtensionLoaderWebpack4({
             loader: path.join(__dirname, 'transpile-local-typescript.cts')},
 
         {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src'), vmSource,
-            path.resolve('site')],
+            path.resolve('site'), path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json'))],
             loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
                 presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}},
         {test: /\.png$/, loader: hostRequire.resolve('url-loader'), options: {limit: 1000000}}

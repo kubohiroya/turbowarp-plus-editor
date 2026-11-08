@@ -12,6 +12,14 @@
 
 import {isWorthAskingAgain, validateManifest} from '@kubohiroya/turbowarp-extension-loader';
 
+import {projectSerializationOptions} from './serialization-context.ts';
+
+const isScratch1Project = (input: unknown) => {
+    const header = input instanceof ArrayBuffer ? new Uint8Array(input, 0, Math.min(10, input.byteLength)) :
+        input instanceof Uint8Array ? input.subarray(0, 10) : null;
+    return header && /^ScratchV0[12]$/.test(String.fromCharCode(...header));
+};
+
 const installations = new WeakMap();
 
 /** Open a URI edit for the project currently in this VM. */
@@ -118,7 +126,7 @@ export function installExtensionLoader(host, loader) {
      * @returns {object|null} The context to restore with.
      */
     const contextForSave = () => {
-        if (savedContext === null || projectURI !== undefined || typeof host.addressProject !== 'function' ||
+        if (projectSerializationOptions(vm)?.preview || savedContext === null || projectURI !== undefined || typeof host.addressProject !== 'function' ||
             typeof io.assignProjectURI !== 'function') return savedContext;
         const uri = host.addressProject();
         if (typeof uri !== 'string') return savedContext;
@@ -147,7 +155,10 @@ export function installExtensionLoader(host, loader) {
             try {
                 if (archive) progress?.('archive');
                 const options = {signal: controller.signal, shareArchive: Boolean(archive)};
-                let prepared = archive ? await io.prepare(input, options) : null;
+                // Scratch 1 is a binary project format handled by the VM's native converter.
+                let prepared = isScratch1Project(input) ?
+                    {input, manifest: null, context: null, originalArchive: undefined, vmArchive: undefined} :
+                    archive ? await io.prepare(input, options) : null;
                 if (archive) archive.original = prepared.originalArchive;
                 if (payloads) progress?.('payloads');
                 const restoredPayloads = payloads ? await payloads.read(input, controller.signal, archive?.original) : null;
