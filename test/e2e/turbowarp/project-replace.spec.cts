@@ -35,8 +35,22 @@ test('find and replace uses workspace edits, keeps references and stages YAML fo
     const search = page.getByRole('combobox', {name: '作品全体を検索'});
     const options = page.getByRole('listbox', {name: '検索結果'}).getByRole('option');
     const replacement = page.getByRole('textbox', {name: '置換後の文字列'});
+    const mac = await page.evaluate(() => navigator.platform.startsWith('Mac'));
+    await page.keyboard.press(mac ? 'Meta+f' : 'Control+f');
+    await expect(search).toBeFocused();
+    await expect(replacement).toBeHidden();
+    await search.press('Escape');
+
     await page.getByText('編集', {exact: true}).click();
-    await page.getByRole('button', {name: '検索と置換', exact: true}).click();
+    const menuCommand = page.getByRole('button', {name: '検索と置換', exact: true});
+    await expect(menuCommand).toHaveAttribute('aria-keyshortcuts', 'Control+Shift+F');
+    await expect(menuCommand.locator('kbd')).toHaveText(mac ? '⌃⇧F' : 'Ctrl+Shift+F');
+    await menuCommand.click();
+    await expect(replacement).toBeVisible();
+    await search.press('Escape');
+    await expect(replacement).toBeHidden();
+    await page.keyboard.press('Control+Shift+f');
+    await expect(search).toBeFocused();
     await expect(replacement).toBeVisible();
 
     const edit = async (query, result, value, button = '選択箇所を置換') => {
