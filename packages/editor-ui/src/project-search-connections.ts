@@ -81,12 +81,20 @@ export function projectReplaceOpener(project?: SearchProject) {
 
 const replaceKey = 'F';
 
+export function isMacPlatform() {
+    return typeof navigator !== 'undefined' && /^(Mac|iP)/.test(navigator.platform ?? '');
+}
+
+// Search is the platform's own find shortcut, so replace is the shifted form of it: ⇧⌘F on macOS
+// and Ctrl+Shift+F elsewhere.
 export const projectReplaceShortcut = {
     keys: `Control+Shift+${replaceKey}`,
+    macKeys: `Meta+Shift+${replaceKey}`,
     label: `Ctrl+Shift+${replaceKey}`,
-    macLabel: `⌃⇧${replaceKey}`,
+    macLabel: `⇧⌘${replaceKey}`,
     matches(event: KeyboardEvent) {
-        return event.ctrlKey && event.shiftKey && !event.metaKey && !event.altKey && !event.isComposing &&
+        const primary = isMacPlatform() ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
+        return primary && event.shiftKey && !event.altKey && !event.isComposing &&
             event.key.toUpperCase() === replaceKey;
     }
 };

@@ -32,6 +32,8 @@ test('project search filters uses across sprites and reveals the selected YAML r
     await search.fill(match);
     await expect(matches).toHaveCount(4);
     await search.press('Tab');
+    await expect(page.getByRole('textbox', {name: '置換後の文字列'})).toBeFocused();
+    await page.getByRole('textbox', {name: '置換後の文字列'}).press('Tab');
     await expect(page.getByRole('checkbox', {name: 'ブロック名'})).toBeFocused();
     await page.getByRole('checkbox', {name: 'コメント文'}).uncheck();
     await page.getByRole('checkbox', {name: 'YAML 本文'}).uncheck();

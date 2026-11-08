@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './edit-menu.css';
-import {projectReplaceOpener, projectReplaceShortcut} from './project-search-connections.ts';
+import {isMacPlatform, projectReplaceOpener, projectReplaceShortcut} from './project-search-connections.ts';
 import type {SearchProject} from './project-search.ts';
 
 interface Workspace {
@@ -56,8 +56,8 @@ const shortcutKeys = {undo: 'Z', redo: 'Y', cut: 'X', copy: 'C', paste: 'V'};
 
 function shortcutFor(command: Command, mac: boolean) {
     if (command === 'findAndReplace') {
-        const {label, macLabel, keys} = projectReplaceShortcut;
-        return {label: mac ? macLabel : label, keys};
+        const {label, macLabel, keys, macKeys} = projectReplaceShortcut;
+        return {label: mac ? macLabel : label, keys: mac ? macKeys : keys};
     }
     if (mac && command === 'redo') return {label: '⇧⌘Z', keys: 'Meta+Shift+Z'};
     const key = shortcutKeys[command];
@@ -92,7 +92,7 @@ export function renderEditMenuRestore(label: React.ReactNode, renderIcon: MenuPr
 
 function EditMenu({vm, locale, MenuItem, MenuSection, renderIcon, onRequestClose}: MenuProps) {
     const japanese = /^ja(?:-|$)/i.test(locale);
-    const mac = typeof navigator !== 'undefined' && navigator.platform.startsWith('Mac');
+    const mac = isMacPlatform();
     const context = workspaces.get(vm);
     const openReplace = projectReplaceOpener(vm.runtime);
     return <>{groups.map(group => <MenuSection key={group[0][0]}>
