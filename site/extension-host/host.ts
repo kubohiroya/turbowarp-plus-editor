@@ -29,6 +29,7 @@ import type {HostDiagnostic} from './permission-ui.ts';
 import type {createExtensionAuthoringController, setExtensionAuthoringHost} from './authoring.ts';
 import type {createProjectPayloadHost} from '../project-payloads/host.ts';
 import type {createProjectAddresser} from './project-address.ts';
+import type {editorProjectArchives} from './shared-project-archive.ts';
 
 import {createPlusPermissionUI} from './permission-ui.ts';
 import {installExtensionLoader} from './project-loader.ts';
@@ -79,6 +80,7 @@ export interface ExtensionHostOptions {
     addressProject?: ReturnType<typeof createProjectAddresser>;
     onProjectManifest?: (manifest: unknown) => void;
     captureProjectProgress?: () => ReturnType<typeof import('@kubohiroya/turbowarp-plus-editor-ui/project-load-progress').captureProjectLoad>;
+    projectArchives?: typeof editorProjectArchives;
     runProjectLoad?: <T>(run: () => Promise<T>) => Promise<T>;
     waitForUser?: <T>(ask: () => T) => Promise<Awaited<T>>;
     createPayloads?: (ports: {fetch: typeof fetch; cache: LoaderPorts['cache'];
@@ -91,7 +93,7 @@ export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', getLocale, fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
     fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
-    onProjectURI, addressProject, onProjectManifest, captureProjectProgress, runProjectLoad, waitForUser,
+    onProjectURI, addressProject, onProjectManifest, captureProjectProgress, projectArchives, runProjectLoad, waitForUser,
     createPayloads, showDiagnostics = true
 }: ExtensionHostOptions = {}) {
     if (enabled !== true) return Object.freeze({enabled: false, dispose: async () => {}});
@@ -202,7 +204,7 @@ export function installPlusExtensionHost (vm, {
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
             onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest,
-            captureProjectProgress, payloads, runProjectLoad,
+            captureProjectProgress, projectArchives, payloads, runProjectLoad,
             onProjectLoadStart: authoring ? authoring.projectLoadStarted : undefined}, loader);
     } catch (error) {
         authoring?.dispose();

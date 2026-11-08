@@ -223,6 +223,12 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-project-load-progress.cts')
 });
+const vmRequire = createRequire(hostRequire.resolve('scratch-vm/package.json'));
+config.module.rules.push({
+    include: vmRequire.resolve('scratch-parser'),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-shared-project-archive.cts')
+});
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
     transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views

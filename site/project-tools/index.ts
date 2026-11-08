@@ -9,6 +9,7 @@ import {createProjectDialogs} from './dialog.ts';
 import {installEditorExtensionHost} from '../extension-host/editor-host.ts';
 import {editProjectURI} from '../extension-host/project-loader.ts';
 import {createProjectDiagnostics} from './diagnostics.ts';
+import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
 
 const projects = new WeakMap();
 const storageFor = document => {
@@ -21,11 +22,13 @@ export const installProjectToolsHost = (vm, settings: Parameters<typeof installE
     const document = settings.document || globalThis.document;
     const runProjectLoad = document ? <T>(run: () => Promise<T>) => withWaitCursor([document], run) : undefined;
     const host = installEditorExtensionHost(vm, {...settings, showDiagnostics: false, runProjectLoad,
+        projectArchives: editorProjectArchives,
         captureProjectProgress: () => captureProjectLoad(vm),
         waitForUser: document ? ask => duringProjectLoadApproval(vm, () => withoutWaitCursor(document, ask)) : undefined,
         diagnostics: event => { diagnostics.record(event); settings.diagnostics?.(event); },
         onProjectManifest: manifest => { diagnostics.describe(manifest); settings.onProjectManifest?.(manifest); }});
-    const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled, runProjectLoad});
+    const shareArchives = 'projectIO' in host && 'supportsSharedArchive' in host.projectIO && host.projectIO.supportsSharedArchive === true;
+    const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled, runProjectLoad, shareArchives});
     const reportAssets = (finished: number, total: number) => reportProjectAssets(vm, finished, total);
     const finishProject = () => reportProjectFinishing(vm);
     vm.on?.('ASSET_PROGRESS', reportAssets);

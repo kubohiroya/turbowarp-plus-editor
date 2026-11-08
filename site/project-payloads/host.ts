@@ -1,5 +1,6 @@
 import {configurePayloads, decodePayloads, encodePayloads, inventory} from './codec.ts';
 import {nativeAssetConversion} from './native-assets.ts';
+import type {ProjectArchive} from '../extension-host/shared-project-archive.ts';
 
 const projectFiles = vm => Object.fromEntries(vm.serializeAssets().map(({fileName, fileContent}) =>
     [fileName, fileContent]));
@@ -26,7 +27,9 @@ export function createProjectPayloadHost(vm, {fetch, cache, approve, validate, c
         loadStarted() { revision++; },
         clear() { selection = new Map(); },
         dispose() { installed.delete(vm); },
-        read(input, signal) { return decodePayloads(input, {fetch, cache, approve, validate, signal}); },
+        read(input, signal, archive?: ProjectArchive) {
+            return decodePayloads(input, {fetch, cache, approve, validate, signal, archive});
+        },
         async loaded(result, signal) {
             selection = result.settings;
             revision++;
