@@ -30,6 +30,7 @@ interface MenuProps {
     locale: string;
     MenuItem: React.ComponentType<{className?: string; children: React.ReactNode}>;
     MenuSection: React.ComponentType<{children: React.ReactNode}>;
+    renderIcon(command: Command | 'restoreDeletion'): React.ReactNode;
     onRequestClose(): void;
 }
 
@@ -49,7 +50,14 @@ const groups = [
 ] as const;
 
 type Command = (typeof groups)[number][number][0];
-const shortcuts = {undo: 90, redo: 89, cut: 88, copy: 67, paste: 86};
+const shortcutKeys = {undo: 'Z', redo: 'Y', cut: 'X', copy: 'C', paste: 'V'};
+
+function shortcutFor(command: Command, mac: boolean) {
+    if (command === 'findAndReplace') return;
+    if (mac && command === 'redo') return {label: '⇧⌘Z', keys: 'Meta+Shift+Z'};
+    const key = shortcutKeys[command];
+    return mac ? {label: `⌘${key}`, keys: `Meta+${key}`} : {label: `Ctrl+${key}`, keys: `Control+${key}`};
+}
 
 function canRun(context: WorkspaceContext | undefined, command: Command): boolean {
     if (command === 'findAndReplace' || !context?.canUse()) return false;
@@ -73,19 +81,33 @@ export function renderEditMenu(props: MenuProps) {
     return <EditMenu {...props} />;
 }
 
-function EditMenu({vm, locale, MenuItem, MenuSection, onRequestClose}: MenuProps) {
+export function renderEditMenuRestore(label: React.ReactNode, renderIcon: MenuProps['renderIcon']) {
+    return <span className={styles.restore}>{renderIcon('restoreDeletion')}{label}</span>;
+}
+
+function EditMenu({vm, locale, MenuItem, MenuSection, renderIcon, onRequestClose}: MenuProps) {
     const japanese = /^ja(?:-|$)/i.test(locale);
+    const mac = typeof navigator !== 'undefined' && navigator.platform.startsWith('Mac');
     const context = workspaces.get(vm);
     return <>{groups.map(group => <MenuSection key={group[0][0]}>
-        {group.map(([command, english, translated]) => <MenuItem key={command}>
-            <button className={styles.command} type="button" disabled={!canRun(context, command)} onClick={event => {
-                const current = workspaces.get(vm);
-                if (command === 'findAndReplace' || !canRun(current, command)) return;
-                // Keep cut, copy and paste on the same ScratchBlocks clipboard.
-                current.ScratchBlocks.onKeyDown_({target: event.currentTarget, keyCode: shortcuts[command],
-                    ctrlKey: true, shiftKey: false, preventDefault: () => event.preventDefault()});
-                onRequestClose();
-            }}>{japanese ? translated : english}</button>
-        </MenuItem>)}
+        {group.map(([command, english, translated]) => {
+            const shortcut = shortcutFor(command, mac);
+            return <MenuItem key={command}>
+                <button className={styles.command} type="button" disabled={!canRun(context, command)}
+                    aria-keyshortcuts={shortcut?.keys} onClick={event => {
+                        const current = workspaces.get(vm);
+                        if (command === 'findAndReplace' || !canRun(current, command)) return;
+                        // Keep cut, copy and paste on the same ScratchBlocks clipboard.
+                        current.ScratchBlocks.onKeyDown_({target: event.currentTarget,
+                            keyCode: shortcutKeys[command].charCodeAt(0), ctrlKey: true, shiftKey: false,
+                            preventDefault: () => event.preventDefault()});
+                        onRequestClose();
+                    }}>
+                    {renderIcon(command)}
+                    <span>{japanese ? translated : english}</span>
+                    {shortcut && <kbd className={styles.shortcut} aria-hidden="true">{shortcut.label}</kbd>}
+                </button>
+            </MenuItem>;
+        })}
     </MenuSection>)}</>;
 }
