@@ -13,6 +13,7 @@ kubohiroyaがフォークした[scratch-gui](https://github.com/kubohiroya/scrat
 - サイト: <https://kubohiroya.github.io/turbowarp-plus-editor/>
 - エディター: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja>
 - npm: `@kubohiroya/turbowarp-plus-editor`
+- ファミリーの一覧とダッシュボード: <https://kubohiroya.github.io/turbowarp-plus-packages/>
 
 ## このエディターが引き受けること
 
@@ -81,7 +82,7 @@ TurboWarp Plus 標準配置では、起動時にスプライト一覧が編集�
 
 ## 作品フォルダ・Git・sb3-toolchain
 
-作品はひとつのSB3ファイルである必要はありません。`sb3-toolchain` は手元で使うNode.jsのツールです。`import` がSB3を作品データ・素材・個別の埋め込み拡張に展開してGitから変更が見えるようにし、`check` が展開したデータを検証し、`build` が配布用のSB3を生成します。展開した作品フォルダは、Editorで直接開いて編集することもできます（現時点では試作）。バンドルは各拡張のコードヘッダーから名前・説明・サンドボックスの要件を読み取り、GitHubのコミットやnpmのバージョンを固定し、埋め込むコードのSHA-256を検証し、更新時にはAPIマニフェストで互換性を比較できます。複数の拡張は元のコードを残したまま1つの複合拡張として埋め込めて、実行許可は複合拡張全体に対して判断します。公開版のEditorでは、TurboWarp Plusファミリー公式カタログの条件を満たす拡張を信頼済みとして扱い、記録された取得元とコードのSHA-256を照合してから個別の承認画面を省略します。
+作品はひとつのSB3ファイルである必要はありません。`sb3-toolchain` は手元で使うNode.jsのツールです。`import` がSB3を作品データ・素材・個別の埋め込み拡張に展開してGitから変更が見えるようにし、`check` が展開したデータを検証し、`build` が配布用のSB3を生成します。展開した作品フォルダは、Editorで直接開いて編集することもできます（現時点では試作）。バンドルは各拡張のコードヘッダーから名前・説明・サンドボックスの要件を読み取り、GitHubのコミットやnpmのバージョンを固定し、埋め込むコードのSHA-256を検証し、更新時にはAPIマニフェストで互換性を比較できます。複数の拡張は元のコードを残したまま1つの複合拡張として埋め込めて、実行許可は複合拡張全体に対して判断します。公開版のEditorでは、`turbowarp-plus-packages` が公開する[TurboWarp Plusファミリー公式カタログ](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json)の条件を満たす拡張を信頼済みとして扱い、記録された取得元とコードのSHA-256を照合してから個別の承認画面を省略します。
 
 **「ファイル」→「ローカル Git…」**でリポジトリのルートを開くと、ステージ済み・未ステージ・未追跡の変更を分けて表示し、ファイルのテキスト差分とバイナリ素材のサイズ、現在のブランチ、HEAD、ローカルブランチ、直近50件のコミットと、選んだコミットの第一親との差分を確認できます。ルート配下の `sb3-toolchain` v1 の作品フォルダを選ぶと一覧がそのフォルダに絞られ、「この作品を開く」でEditorに読み込めます。パネルはGitの状態を書き換えません。コマンドラインで操作したあとは「再取得」を、同じ作品を開き直すときは「作品を再読込」を使います（未保存の編集を先に確認します）。接続先が設定された環境では「GitHub 接続」の欄が、HTTPSリモート `origin` に対するfetch、fast-forwardのみのpull、明示的に許可したpushを行います。File System Accessに対応したChromium系ブラウザーが必要です。linked worktree、サブモジュール、シンボリックリンクは対象外で、作業ツリーの実行権限の変更はブラウザーから確認できません。起動URLに `twPlusLocalGit=0` を指定するとパネルを外せます。
 
@@ -104,6 +105,10 @@ plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-tran
 [`site/source.json`](site/source.json) はGUI・VM・data-editorのcore・拡張Loader・Packager・document-editorを40桁のリビジョンで、security-dialogとcoreをnpmの完全版で固定します。checkout・導入済みパッケージ・固定値が一致しなければビルドは進みません。公開成果物の `build-info.json` は実際に組み合わせたGUI・VM・ライブラリ・サイトの版を記録し、`notices/family.json` は同梱した全ファミリーパッケージのライセンス文とソースの入手先を一覧にします。旧data-editorのPagesは廃止対象であり、移行先には本サイトを使用してください。
 
 検証は配信のあとの工程ではなく、配信の一部です。通常CIが単体テスト、統合基盤、固定GUIの接続テスト、ビルド、移設したGUI E2Eを実行します。ブラウザーE2Eは19件、固定入力profileを含めてCIでは24件です。Pagesは、同じSHAの通常CIが全件成功した `main` の成果物だけを配信し、再ビルドせず固定した識別子を照合し、公開後に7件を実行します。npmはTrusted PublisherとOIDCで公開し、workflowはtokenを持たず、既存版とバイト列が異なれば停止します。
+
+本リポジトリがファミリーのどこに位置するかは、上下関係ではなく持ち物の分担です。[`turbowarp-plus-packages`](https://github.com/kubohiroya/turbowarp-plus-packages) はファミリー全体の一覧とダッシュボードで、13カテゴリ・70余のリポジトリを、依存の相関図・デモ・未クローズのissue・リリースの鮮度とともに[1枚のページ](https://kubohiroya.github.io/turbowarp-plus-packages/)に出します。そして、本リポジトリが意図的に持たない3つを持ちます。公式の機能拡張カタログ [`extensions-v1.json`](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json)（各項目がnpmパッケージ名・バージョン・jsDelivrのURL・SHA-256・カテゴリ・unsandboxedの要否を持ちます）、`assets/extension-icons/` に置く拡張の表示名とアイコン、そして設計の正本である `docs/editor-architecture.ja.md` です。本リポジトリの文書は、この正本を書き写さず参照します。
+
+本リポジトリはEditorであり、その3つを使う側です。[`site/plus-catalog.ts`](site/plus-catalog.ts) が固定したURLからカタログを取得し、Editorは拡張の取得元とコードのSHA-256を照合してから個別の承認画面を省きます。GUIに名称変換のロジックは持たせません。導線は逆向きにも通っています。ファミリーのページのデモは、下に書いた編集ボタンでこのEditorを開くので、向こうに載っているパッケージはここで編集するまで1クリックです。
 
 案内画面には `turbowarp-plus-site-header` の共通ヘッダーを読み込みます。エディター本体は全画面GUIとして表示します。
 
