@@ -6,10 +6,12 @@ import {externalYamlPort} from '../editor-layout/index.tsx';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
-import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
+import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
-import {renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import ProjectFileMenu from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import {projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
@@ -116,3 +118,31 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
 };
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
     renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderGitMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+
+export {saveProjectForPackager as serializeProjectForExport} from '../project-payloads/host.ts';
+
+export const projectFileTypes = [
+    {description: 'Scratch 3 Project', accept: {'*/*': ['.sb3']}},
+    {description: 'Scratch 1 and 2 Projects', accept: {'*/*': ['.sb', '.sb2']}}
+];
+
+export const renderProjectFileWorkflow = ({
+    vm, locale = 'en', MenuItem, MenuSection, close, storage, create, newWindow, open, restore, exportProject, addExtension
+}) => {
+    const folder = projectFolderActions(vm, locale);
+    const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension);
+    const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
+    return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
+        ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
+        exportProject: exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject),
+        externalYaml: renderExternalYamlMenu(inline),
+        git: renderGitMenu(React.createElement, inline)
+    }});
+};
+
+export const saveProjectFromFileMenu = (vm, storage, promptForTarget) => {
+    const locale = document.documentElement.lang || 'en';
+    const folder = projectFolderActions(vm, locale);
+    projectSaveShortcut(storage, folder, promptForTarget ?
+        () => projectFileActions(vm, locale, storage, () => folder?.detach()).saveAs?.() : undefined);
+};

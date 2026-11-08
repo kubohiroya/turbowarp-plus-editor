@@ -174,7 +174,7 @@ test('the browser folder commands save localized Git diffs to the original worki
         await expect(status).toHaveText(message);
     };
     const open = () => command('Open Project Folder…', 'Project folder opened.');
-    const save = (message = 'Project folder saved.') => command('Save to Project Folder', message);
+    const save = (message = 'Project folder saved.') => command('Save', message);
     const read = () => readFile(path.join(folder, projectFile), 'utf8');
     const changes = () => git('diff', '--no-color', '--unified=0', '--', projectFile)
         .split('\n').filter(line => /^[+-](?![+-])/u.test(line)).map(line => line[0] + line.slice(1).trim());

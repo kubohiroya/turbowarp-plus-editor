@@ -9,6 +9,11 @@ import {createProjectDialogs} from './dialog.ts';
 import {installEditorExtensionHost} from '../extension-host/editor-host.ts';
 import {editProjectURI} from '../extension-host/project-loader.ts';
 import {createProjectDiagnostics} from './diagnostics.ts';
+import {getExtensionAuthoringHost} from '../extension-host/authoring.ts';
+import {withProjectSerialization} from '../extension-host/serialization-context.ts';
+import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import type {ExtensionSpec} from '@kubohiroya/turbowarp-extension-loader';
 import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
 
 const projects = new WeakMap();
@@ -66,6 +71,82 @@ export const loadedProjectTitle = vm => projects.get(vm)?.properties.loadedTitle
 export const restoreProjectTitle = vm => projects.get(vm)?.properties.restoreTitle();
 export const isProjectLoading = vm => Boolean(projects.get(vm)?.properties.snapshot().loading);
 export const subscribeProjectLoad = (vm, listener: () => void) => projects.get(vm)?.properties.subscribe(listener);
+
+export function projectFileActions(vm, locale: string, storage: ProjectFileStorage, detachFolder: () => void, add?: () => void) {
+    const tools = projects.get(vm);
+    if (!tools?.dialogs) return {};
+    const {dialogs, properties, payloads} = tools;
+    const ja = locale.startsWith('ja');
+    const label = (jp: string, en: string) => ja ? jp : en;
+    const showSaveAs = () => dialogs.showView(label('名前を変えて保存', 'Save As'), locale, (document, close) =>
+        renderSaveAsForm(document, locale, storage, async (name, format, open) => {
+            if (tools.saving) return false;
+            tools.saving = true;
+            const sequence = properties.loadState().sequence;
+            const current = () => open() && projects.get(vm) === tools && properties.loadState().sequence === sequence;
+            let edited = false;
+            const changed = () => {edited = true;};
+            vm.on?.('PROJECT_CHANGED', changed);
+            try {
+                let embed: (() => void) | undefined;
+                let commitMetadata: (() => void) | undefined;
+                return await saveProjectAs(storage, name, {
+                    current,
+                    unchanged: () => !edited,
+                    serialize(title, run) {
+                        embed = format === 'embedded' ? payloads?.embedOnSave() : undefined;
+                        return withProjectSerialization(vm, {title, deferCommit: commit => {commitMetadata = commit;}},
+                            () => embed ? payloads.withEmbedded(run) : run());
+                    },
+                    committed() {
+                        embed?.();
+                        commitMetadata?.();
+                        detachFolder();
+                    }
+                });
+            } finally {
+                vm.off?.('PROJECT_CHANGED', changed);
+                tools.saving = false;
+            }
+        }, close));
+    const openPayloads = () => dialogs.showPayloadFormats(payloads.edit(), locale, payloads.canConvert ? () => {
+        const conversion = payloads.convert();
+        if (conversion) dialogs.showBundleAssetConversion(conversion, locale);
+    } : undefined);
+    const authoring = getExtensionAuthoringHost(vm);
+    const openExtensions = () => dialogs.showView(label('機能拡張', 'Extensions'), locale, (document, close) => {
+        let saved = new Map<string, ExtensionSpec>();
+        return renderExtensionsForm(document, locale, close, add, {
+            async list() {
+                const manifest = await authoring?.inspect();
+                saved = new Map((manifest?.extensions || []).map(spec => [spec.id, spec]));
+                const ids = new Set<string>([...saved.keys(), ...(vm.extensionManager?._loadedExtensions?.keys() || [])]);
+                return [...ids].sort().map(id => {
+                    const spec = saved.get(id);
+                    return {id, format: spec?.source.type, editable: Boolean(spec?.source.url)};
+                });
+            },
+            async change(changes: Map<string, ExtensionStorage>) {
+                await authoring.configure([...changes].map(([id, distribution]) => {
+                    const spec = saved.get(id);
+                    return {id, distribution, url: spec.source.url, execution: spec.execution,
+                        version: spec.version, dependencies: [...spec.dependencies]};
+                }), {});
+            }
+        });
+    });
+    const hasProperties = tools.propertiesEnabled || tools.projectURIEnabled;
+    return {
+        saveAs: showSaveAs,
+        properties: hasProperties ?
+            () => dialogs.showProperties(locale, tools.projectURIEnabled ? editProjectURI(vm) : undefined) : undefined,
+        diagnostics: hasProperties ? undefined : () => dialogs.showDiagnostics(locale),
+        payloads: payloads?.canEdit ? openPayloads : undefined,
+        extensions: add || authoring ? openExtensions : undefined,
+        exportProject: (run: () => void) => dialogs.showView(label('書き出し', 'Export'), locale,
+            (document, close) => renderExportView(document, locale, close, run))
+    };
+}
 
 /** The GUI supplies its native menu components; this host owns the added entries and dialogs. */
 export const renderFileMenu = ({vm, locale = 'en', MenuSection, MenuItem, onRequestClose}) => {

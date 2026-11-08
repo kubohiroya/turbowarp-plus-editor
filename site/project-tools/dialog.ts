@@ -75,6 +75,11 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
         notice.append(show, dismiss); document.body.appendChild(notice);
     });
     const api = {
+        showView(title: string, locale: string, render: (document: Document, close: () => void) => HTMLElement) {
+            const {dialog} = open(title, locale);
+            dialog.append(render(document, () => {if (active === dialog) close();}));
+            dialog.showModal();
+        },
         showProperties(locale = 'en', editURI) {
             const {dialog, label} = open(locale.startsWith('ja') ? '作品のプロパティ' : 'Project Properties', locale);
             dialog.setAttribute('data-testid', 'project-properties');
@@ -164,7 +169,9 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             cancel.addEventListener('click', close);
             const apply = element(document, 'button', label('適用', 'Apply'), {type: 'submit'});
             apply.disabled = value.loading || (!canApplyMetadata && !uriInput);
-            actions.append(cancel, apply); form.appendChild(actions);
+            const diagnosticsButton = element(document, 'button', label('作品の診断…', 'Project Diagnostics…'), {type: 'button'});
+            diagnosticsButton.addEventListener('click', () => api.showDiagnostics(locale));
+            actions.append(cancel, apply, diagnosticsButton); form.appendChild(actions);
             form.addEventListener('submit', async event => {
                 event.preventDefault();
                 if (apply.disabled) return;
@@ -193,10 +200,16 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             dialog.appendChild(form);
             dialog.showModal(); (inputs.title || uriInput)?.focus();
         },
-        showPayloadFormats(edit, locale = 'en') {
+        showPayloadFormats(edit, locale = 'en', addAssets?: () => void) {
             const {dialog} = open(locale.startsWith('ja') ? '作品データの形式' : 'Project Data Formats', locale);
             const {form, dispose} = renderPayloadForm(document, edit, locale, close);
             disposeView = dispose;
+            if (addAssets) {
+                const button = element(document, 'button', locale.startsWith('ja') ?
+                    'バンドル素材を作品に追加…' : 'Add Bundle Material to Project…', {type: 'button'});
+                button.onclick = addAssets;
+                form.prepend(button);
+            }
             dialog.append(form);
             dialog.showModal();
         },
@@ -207,7 +220,7 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             dialog.append(form);
             dialog.showModal();
         },
-        showDiagnostics(locale = 'en', initialSession) {
+        showDiagnostics(locale = 'en', initialSession?: number) {
             const {dialog, label} = open(locale.startsWith('ja') ? '作品の診断' : 'Project Diagnostics', locale);
             dialog.setAttribute('data-testid', 'project-diagnostics');
             const selectorLabel = element(document, 'label', label('読み込みの記録', 'Load attempt'));

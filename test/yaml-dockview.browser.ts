@@ -157,7 +157,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
 
     await page.getByText('ファイル', {exact: true}).click();
     const pending = page.waitForEvent('download');
-    await page.getByRole('listitem').filter({hasText: /^コンピューターに保存する$/}).click();
+    await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
     archive = await readFile(await (await pending).path());
     const saved = await JSZip.loadAsync(archive);
     const project = JSON.parse(await saved.file('project.json').async('string'));

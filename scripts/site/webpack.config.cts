@@ -87,6 +87,16 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-debugger-menu-button.cts')
 });
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/lib/sb-file-uploader-hoc.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-file-picker.cts')
+});
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/lib/tw-packager-integration-hoc.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-export.cts')
+});
 if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
     // Give only the GUI project URL fetcher the browser host's URL resolution.
     config.module.rules.push({
@@ -158,7 +168,7 @@ const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui'
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 for (const entry of ['busy-cursor', 'detached-block-palette', 'edit-menu', 'palette-category-reorder', 'palette-category-search',
     'palette-dropdown-resize', 'project-load-progress', 'project-load-progress-view',
-    'project-search', 'project-info-menu', 'stage-controls', 'stage-controls-view']) {
+    'project-search', 'project-info-menu', 'project-file-dialogs', 'project-file-menu', 'stage-controls', 'stage-controls-view']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
