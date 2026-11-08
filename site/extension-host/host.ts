@@ -78,6 +78,7 @@ export interface ExtensionHostOptions {
     onProjectURI?: (uri: string | undefined) => void;
     addressProject?: ReturnType<typeof createProjectAddresser>;
     onProjectManifest?: (manifest: unknown) => void;
+    captureProjectProgress?: () => ReturnType<typeof import('@kubohiroya/turbowarp-plus-editor-ui/project-load-progress').captureProjectLoad>;
     runProjectLoad?: <T>(run: () => Promise<T>) => Promise<T>;
     waitForUser?: <T>(ask: () => T) => Promise<Awaited<T>>;
     createPayloads?: (ports: {fetch: typeof fetch; cache: LoaderPorts['cache'];
@@ -90,7 +91,8 @@ export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', getLocale, fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
     fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
-    onProjectURI, addressProject, onProjectManifest, runProjectLoad, waitForUser, createPayloads, showDiagnostics = true
+    onProjectURI, addressProject, onProjectManifest, captureProjectProgress, runProjectLoad, waitForUser,
+    createPayloads, showDiagnostics = true
 }: ExtensionHostOptions = {}) {
     if (enabled !== true) return Object.freeze({enabled: false, dispose: async () => {}});
     // A single HTML has no catalog to read; its build embeds the digests the catalog listed.
@@ -199,7 +201,8 @@ export function installPlusExtensionHost (vm, {
     let uninstall;
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
-            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest, payloads, runProjectLoad,
+            onDiagnostic: diagnostics, markFailure: markLoadFailure, review, onProjectURI, addressProject, onProjectManifest,
+            captureProjectProgress, payloads, runProjectLoad,
             onProjectLoadStart: authoring ? authoring.projectLoadStarted : undefined}, loader);
     } catch (error) {
         authoring?.dispose();

@@ -152,7 +152,8 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 for (const entry of ['busy-cursor', 'detached-block-palette', 'palette-category-reorder', 'palette-category-search',
-    'palette-dropdown-resize', 'project-search', 'project-info-menu', 'stage-controls', 'stage-controls-view']) {
+    'palette-dropdown-resize', 'project-load-progress', 'project-load-progress-view',
+    'project-search', 'project-info-menu', 'stage-controls', 'stage-controls-view']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -217,6 +218,11 @@ config.module.rules.push({test: /\.tsx?$/, include: [
     siteSource,
     path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), path.dirname(editorUiEntry)
 ], loader: path.join(__dirname, 'transpile-local-typescript.cts')});
+config.module.rules.push({
+    include: path.join(gui, 'src/components/loader/loader.jsx'),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-load-progress.cts')
+});
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
     transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
