@@ -1,32 +1,81 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
-import {searchProject, type ProjectSearchResult, type SearchProject} from './project-search.ts';
+import {searchProject, searchYamlDocuments, type ProjectSearchResult, type SearchKind, type SearchProject, type SearchResult} from './project-search.ts';
+import {connectProjectReplaceOpener, connectionFor, type SearchDocuments} from './project-search-connections.ts';
+import {applyProjectSearchReplacement, replacementText, type ReplaceOutcome} from './project-search-replace.ts';
+export {connectProjectSearchNavigation} from './project-search-connections.ts';
 import styles from './project-search.css';
 
 const pageSize = 60;
+const filters: {kinds: SearchKind[]; label: [string, string]}[] = [
+    {kinds: ['block'], label: ['ブロック名', 'Block names']},
+    {kinds: ['variable', 'list'], label: ['変数・リスト名', 'Variable and list names']},
+    {kinds: ['message'], label: ['メッセージ名', 'Broadcast names']},
+    {kinds: ['argument'], label: ['引数の値', 'Argument values']},
+    {kinds: ['extension'], label: ['機能拡張名', 'Extension names']},
+    {kinds: ['comment'], label: ['コメント文', 'Comments']},
+    {kinds: ['yaml'], label: ['YAML 本文', 'YAML text']},
+    {kinds: ['costume', 'backdrop', 'sound'], label: ['素材名', 'Asset names']}
+];
 type SearchBoxProps = {
     locale: string;
     project: SearchProject;
     getMessages(): Record<string, string>;
-    select(result: ProjectSearchResult): void;
+    documents?: SearchDocuments;
+    select(result: SearchResult): void;
+    replace(result: SearchResult, value: string): Promise<ReplaceOutcome>;
 };
 
-function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps) {
+const replaceMessages: Record<ReplaceOutcome, [string, string]> = {
+    applied: ['置換しました。', 'Replaced.'],
+    staged: ['YAML の置換内容を確認してください。', 'Review the replacement in the YAML preview.'],
+    stale: ['対象が変更されました。もう一度検索してください。', 'The match changed. Search again.'],
+    conflict: ['同じ名前が既に使われています。', 'That name is already in use.'],
+    invalid: ['この項目に使える値を入力してください。', 'Enter a value this item accepts.'],
+    'read-only': ['この項目は置換できません。', 'This result cannot be replaced.']
+};
+
+function ProjectSearchBox({locale, project, getMessages, documents, select, replace}: SearchBoxProps) {
     const japanese = /^ja(?:-|$)/i.test(locale);
     const [query, setQuery] = React.useState('');
     const [open, setOpen] = React.useState(false);
+    const [replaceMode, setReplaceMode] = React.useState(false);
+    const [replacement, setReplacement] = React.useState('');
+    const [outcome, setOutcome] = React.useState<ReplaceOutcome>();
+    const [replacing, setReplacing] = React.useState(false);
+    const [revision, setRevision] = React.useState(0);
     const [limit, setLimit] = React.useState(pageSize);
-    const [active, setActive] = React.useState<ProjectSearchResult>();
+    const [active, setActive] = React.useState<SearchResult>();
+    const [kinds, setKinds] = React.useState(() => new Set(filters.flatMap(filter => filter.kinds)));
     const input = React.useRef<HTMLInputElement>();
     const popup = React.useRef<HTMLDivElement>();
-    const groups = React.useMemo(() => open ? searchProject(project, getMessages(), query, japanese) : [],
-        [open, project, getMessages, query, japanese]);
+    const replacingMatch = React.useRef(false);
+    const searchYaml = open && kinds.has('yaml') && Boolean(query.trim());
+    const yamlDocuments = React.useMemo(() => searchYaml ? documents?.getSearchableYamlDocuments() ?? [] : [],
+        [searchYaml, documents, revision]);
+    const groups = React.useMemo(() => {
+        if (!open) return [];
+        const groups: {kind: SearchKind; title: string; results: SearchResult[]}[] =
+            searchProject(project, getMessages(), query, japanese, kinds);
+        const yaml = searchYamlDocuments(yamlDocuments, query, japanese);
+        if (yaml.length) groups.push({kind: 'yaml', title: japanese ? 'YAML 本文' : 'YAML text', results: yaml});
+        return groups;
+    }, [open, project, getMessages, query, japanese, kinds, yamlDocuments, revision]);
     const visible = groups.flatMap(group => group.results.slice(0, limit));
     const activeIndex = visible.indexOf(active);
-    const show = open && Boolean(query.trim());
+    const show = open;
     const more = groups.some(group => group.results.length > limit);
     const listId = 'tw-plus-project-search-results';
     const optionId = (index: number) => `${listId}-${index}`;
+    const canEdit = (result: SearchResult) => result.kind === 'yaml' ? Boolean(documents?.stageYamlReplacement) : Boolean(result.edit);
+    const proposed = active && canEdit(active) ? replacementText(active, query, replacement) : undefined;
+
+    React.useLayoutEffect(() => connectProjectReplaceOpener(project, () => {
+        setReplaceMode(true);
+        setOpen(true);
+        input.current.focus();
+        input.current.select();
+    }), [project]);
 
     React.useEffect(() => {
         const field = input.current;
@@ -51,7 +100,7 @@ function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps
         const win = field.ownerDocument.defaultView;
         const place = () => {
             const rect = field.getBoundingClientRect();
-            const width = Math.min(340, win.innerWidth - 16);
+            const width = Math.min(replaceMode ? 430 : 340, win.innerWidth - 16);
             const below = win.innerHeight - rect.bottom - 12;
             const above = rect.top - 12;
             const placeBelow = below >= 160 || below >= above;
@@ -59,10 +108,10 @@ function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps
             panel.style.left = `${Math.max(8, Math.min(rect.right - width, win.innerWidth - width - 8))}px`;
             panel.style.top = placeBelow ? `${rect.bottom + 4}px` : 'auto';
             panel.style.bottom = placeBelow ? 'auto' : `${win.innerHeight - rect.top + 4}px`;
-            panel.style.maxHeight = `${Math.min(320, placeBelow ? below : above)}px`;
+            panel.style.maxHeight = `${Math.min(replaceMode ? 450 : 320, placeBelow ? below : above)}px`;
         };
         place();
-        panel.showPopover?.();
+        if (panel.showPopover && !panel.matches(':popover-open')) panel.showPopover();
         const observer = new win.ResizeObserver(place);
         observer.observe(field);
         win.addEventListener('resize', place);
@@ -72,7 +121,7 @@ function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps
             win.removeEventListener('resize', place);
             win.removeEventListener('scroll', place, true);
         };
-    }, [show]);
+    }, [show, replaceMode]);
 
     React.useLayoutEffect(() => {
         if (activeIndex >= 0) input.current.ownerDocument.getElementById(optionId(activeIndex))?.scrollIntoView({block: 'nearest'});
@@ -83,19 +132,55 @@ function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps
         setActive(undefined);
     }
 
-    function choose(result: ProjectSearchResult) {
+    function choose(result: SearchResult) {
+        if (replaceMode) {
+            setActive(result);
+            setOutcome(undefined);
+            return;
+        }
         close();
         select(result);
     }
 
-    return <div className={styles.field}>
+    async function replaceSelected() {
+        if (replacingMatch.current || !active || proposed === undefined) return;
+        replacingMatch.current = true;
+        setReplacing(true);
+        setOutcome(undefined);
+        try {
+            const result = await replace(active, proposed);
+            setOutcome(result);
+            if (result === 'staged') close();
+            if (result === 'applied' || result === 'stale') {
+                setActive(undefined);
+                setRevision(value => value + 1);
+            }
+            if (result !== 'staged' && !popup.current?.contains(input.current?.ownerDocument.activeElement)) {
+                input.current?.focus({preventScroll: true});
+            }
+        } catch {
+            setOutcome('invalid');
+        } finally {
+            replacingMatch.current = false;
+            setReplacing(false);
+        }
+    }
+
+    return <div className={styles.field} onBlur={event => {
+        if (!replacingMatch.current && !event.currentTarget.contains(event.relatedTarget) &&
+            !popup.current?.contains(event.relatedTarget)) close();
+    }}>
         <input ref={input} type="search" role="combobox" autoComplete="off" aria-autocomplete="list"
             placeholder={japanese ? '検索' : 'Search'} aria-label={japanese ? '作品全体を検索' : 'Search project'}
             aria-expanded={show} aria-controls={show ? listId : undefined}
             aria-activedescendant={activeIndex >= 0 ? optionId(activeIndex) : undefined} value={query}
-            onFocus={() => setOpen(true)} onBlur={close} onPointerDown={event => event.stopPropagation()}
+            onFocus={() => setOpen(true)} onPointerDown={event => {
+                event.stopPropagation();
+                setOpen(true);
+            }}
             onChange={event => {
                 setQuery(event.currentTarget.value);
+                setOutcome(undefined);
                 setLimit(pageSize);
                 setActive(undefined);
                 setOpen(true);
@@ -107,6 +192,12 @@ function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps
                 if (event.key === 'Escape' && open) {
                     event.preventDefault();
                     close();
+                } else if (event.key === 'Tab' && !event.shiftKey && open) {
+                    const firstFilter = popup.current?.querySelector<HTMLInputElement>('input[type=checkbox]');
+                    if (firstFilter) {
+                        event.preventDefault();
+                        firstFilter.focus();
+                    }
                 } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                     event.preventDefault();
                     setOpen(true);
@@ -124,80 +215,115 @@ function ProjectSearchBox({locale, project, getMessages, select}: SearchBoxProps
         {show && input.current && createPortal(
             <div ref={popup} className={styles.popup}
                 {...(typeof input.current.showPopover === 'function' ? {popover: 'manual'} : {})}
-                role="listbox" id={listId} aria-label={japanese ? '検索結果' : 'Search results'}
+                onKeyDown={event => {
+                    const backToSearch = event.key === 'Tab' && event.shiftKey &&
+                        event.target === popup.current.querySelector('input[type=checkbox]');
+                    if (event.key !== 'Escape' && !backToSearch) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    input.current.focus();
+                    if (!backToSearch) close();
+                }}
                 onScroll={event => {
                     const panel = event.currentTarget;
                     if (more && panel.scrollHeight - panel.clientHeight - panel.scrollTop < 30) {
                         setLimit(limit + pageSize);
                     }
                 }}>
-                {groups.map(group => <div key={group.kind} role="group" aria-labelledby={`${listId}-${group.kind}`}>
-                    <div id={`${listId}-${group.kind}`} className={styles.heading}>{group.title} <span>{group.results.length}</span></div>
-                    {group.results.slice(0, limit).map(result => {
-                        const index = visible.indexOf(result);
-                        const name = result.target.isStage ? (japanese ? 'ステージ' : 'Stage') : result.target.getName();
-                        return <div key={index} id={optionId(index)} role="option" className={styles.option}
-                            aria-selected={result === active} onPointerDown={event => event.preventDefault()}
-                            onClick={() => choose(result)}>
-                            <span>{result.label}</span>
-                            <small>{[name, result.detail].filter(Boolean).join(' · ')}</small>
-                        </div>;
-                    })}
-                </div>)}
-                {!groups.length && <div className={styles.empty} role="status">{japanese ? '一致する項目がありません' : 'No matches'}</div>}
+                <fieldset className={styles.filters}>
+                    <legend>{japanese ? '検索対象' : 'Search in'}</legend>
+                    {filters.filter(filter => documents || !filter.kinds.includes('yaml')).map(filter =>
+                        <label key={filter.kinds[0]}>
+                            <input type="checkbox" checked={kinds.has(filter.kinds[0])} onChange={event => {
+                                const checked = event.currentTarget.checked;
+                                const next = new Set(kinds);
+                                filter.kinds.forEach(kind => checked ? next.add(kind) : next.delete(kind));
+                                setKinds(next);
+                                setLimit(pageSize);
+                                setActive(undefined);
+                            }} />
+                            {filter.label[japanese ? 0 : 1]}
+                        </label>
+                    )}
+                </fieldset>
+                <div className={styles.replaceTools}>
+                    <button type="button" aria-pressed={replaceMode} onClick={() => {
+                        setReplaceMode(!replaceMode);
+                        setOutcome(undefined);
+                        setActive(undefined);
+                    }}>{japanese ? '置換モード' : 'Replace mode'}</button>
+                    {replaceMode && <>
+                        <input type="text" autoComplete="off" value={replacement}
+                            placeholder={japanese ? '置換後の文字列' : 'Replace with'}
+                            aria-label={japanese ? '置換後の文字列' : 'Replace with'}
+                            onChange={event => {setReplacement(event.currentTarget.value); setOutcome(undefined);}} />
+                        <button type="button" disabled={replacing || proposed === undefined}
+                            onClick={() => void replaceSelected()}>
+                            {active?.kind === 'yaml' ? (japanese ? 'プレビューで置換' : 'Replace in preview') :
+                                (japanese ? '選択箇所を置換' : 'Replace selected match')}
+                        </button>
+                    </>}
+                </div>
+                {replaceMode && outcome && <div className={styles.empty} role="status">{replaceMessages[outcome][japanese ? 0 : 1]}</div>}
+                <div role="listbox" id={listId} aria-label={japanese ? '検索結果' : 'Search results'}>
+                    {groups.map(group => <div key={group.kind} role="group" aria-labelledby={`${listId}-${group.kind}`}>
+                        <div id={`${listId}-${group.kind}`} className={styles.heading}>{group.title} <span>{group.results.length}</span></div>
+                        {group.results.slice(0, limit).map(result => {
+                            const index = visible.indexOf(result);
+                            const name = result.kind === 'yaml' ? result.document.filename :
+                                result.target.isStage ? (japanese ? 'ステージ' : 'Stage') : result.target.getName();
+                            return <div key={index} id={optionId(index)} role="option" className={styles.option}
+                                aria-selected={result === active} onPointerDown={event => event.preventDefault()}
+                                onClick={() => choose(result)}>
+                                <span>{result.label}</span>
+                                <small>{[name, result.detail, replaceMode && !canEdit(result) &&
+                                    (japanese ? '閲覧専用' : 'Read only')].filter(Boolean).join(' · ')}</small>
+                            </div>;
+                        })}
+                    </div>)}
+                </div>
+                {query.trim() && !groups.length &&
+                    <div className={styles.empty} role="status">{japanese ? '一致する項目がありません' : 'No matches'}</div>}
             </div>, input.current.ownerDocument.body)}
     </div>;
 }
 
-type SearchView = {id: string; groupId: string; targetId: string; section: number};
-type SearchViews = {
-    views(): SearchView[];
-    currentView(): SearchView | undefined;
-    activateView(id: string): boolean;
-    select(id: string): void;
-    setViewSection(id: string, section: number): boolean;
-    selectAsset(id: string, kind: 'costumes' | 'sounds', index: number): void;
+type Point = {x: number; y: number};
+type VisibleComment = {
+    setVisible?(visible: boolean): void;
+    getBoundingRectangle(): {topLeft: Point; bottomRight: Point};
+    select?(): void;
 };
-type Target = ProjectSearchResult['target'];
-type SearchNavigation = {
-    getViews(): SearchViews | null;
-    getTarget(id: string): Target | undefined;
-    getEditingTarget(): Target | undefined;
-    centerBlock(id: string): void;
+type CommentWorkspace = {
+    getBlockById(id: string): {comment?: VisibleComment} | null;
+    getCommentById(id: string): VisibleComment | null;
+    getMetrics(): {contentLeft: number; contentTop: number; viewWidth: number; viewHeight: number};
+    scrollbar?: {set(x: number, y: number): void};
+    scale: number;
 };
-
-type SearchConnection = {
-    navigation?: SearchNavigation;
-    listeners: Set<() => void>;
-};
-const connections = new WeakMap<SearchProject, SearchConnection>();
-
-function connectionFor(project: SearchProject) {
-    let connection = connections.get(project);
-    if (!connection) {
-        connection = {listeners: new Set()};
-        connections.set(project, connection);
-    }
-    return connection;
+export function centerProjectComment(workspace: CommentWorkspace | undefined, id: string, blockId?: string | null) {
+    if (!workspace?.scrollbar) return;
+    const comment = blockId ? workspace.getBlockById(blockId)?.comment : workspace.getCommentById(id);
+    if (!comment) return;
+    comment.setVisible?.(true);
+    const {topLeft, bottomRight} = comment.getBoundingRectangle();
+    const {contentLeft, contentTop, viewWidth, viewHeight} = workspace.getMetrics();
+    workspace.scrollbar.set(
+        (topLeft.x + bottomRight.x) * workspace.scale / 2 - contentLeft - viewWidth / 2,
+        (topLeft.y + bottomRight.y) * workspace.scale / 2 - contentTop - viewHeight / 2
+    );
+    comment.select?.();
 }
-
-export function connectProjectSearchNavigation(project: SearchProject, navigation: SearchNavigation) {
-    const connection = connectionFor(project);
-    connection.navigation = navigation;
-    connection.listeners.forEach(listener => listener());
-    return () => {
-        if (connection.navigation !== navigation) return;
-        connection.navigation = undefined;
-        connection.listeners.forEach(listener => listener());
-    };
-}
-
-export function ProjectSearch(search: Omit<SearchBoxProps, 'select'>) {
+export function ProjectSearch(search: Omit<SearchBoxProps, 'select' | 'replace' | 'documents'>) {
     const connection = connectionFor(search.project);
     const [navigation, setNavigation] = React.useState(connection.navigation);
+    const [documents, setDocuments] = React.useState(connection.documents);
     const frame = React.useRef<number>();
     React.useLayoutEffect(() => {
-        const update = () => setNavigation(connection.navigation);
+        const update = () => {
+            setNavigation(connection.navigation);
+            setDocuments(connection.documents);
+        };
         connection.listeners.add(update);
         update();
         return () => { connection.listeners.delete(update); };
@@ -205,7 +331,7 @@ export function ProjectSearch(search: Omit<SearchBoxProps, 'select'>) {
     React.useLayoutEffect(() => () => window.cancelAnimationFrame(frame.current), [navigation]);
 
     if (!navigation) return null;
-    const select = (result: ProjectSearchResult) => {
+    const moveToResult = (result: ProjectSearchResult) => {
         const {target} = result;
         const views = navigation.getViews();
         if (!views || navigation.getTarget(target.id) !== target) return;
@@ -217,20 +343,56 @@ export function ProjectSearch(search: Omit<SearchBoxProps, 'select'>) {
         if (destination?.targetId !== target.id) return;
         const section = result.kind === 'sound' ? 2 : 'asset' in result ? 1 : 0;
         views.setViewSection(destination.id, section);
+        return () => {
+            const current = views.currentView();
+            return connection.navigation === navigation && navigation.getViews() === views &&
+                navigation.getEditingTarget() === target && current?.id === destination.id && current.section === section;
+        };
+    };
+    const select = (result: SearchResult) => {
+        if (result.kind === 'yaml') {
+            documents?.openYamlPreview(result.document.reference, result.range);
+            return;
+        }
+        const {target} = result;
+        const isDestination = moveToResult(result);
+        if (!isDestination) return;
         window.cancelAnimationFrame(frame.current);
         frame.current = window.requestAnimationFrame(() => {
-            const current = views.currentView();
-            if (navigation.getViews() !== views || navigation.getEditingTarget() !== target ||
-                current?.id !== destination.id || current.section !== section) return;
+            if (!isDestination()) return;
             if ('asset' in result) {
                 const kind = result.kind === 'sound' ? 'sounds' : 'costumes';
                 const assets = kind === 'sounds' ? target.getSounds() : target.getCostumes();
                 const index = assets.indexOf(result.asset);
-                if (index >= 0) views.selectAsset(destination.id, kind, index);
+                if (index >= 0) {
+                    const views = navigation.getViews();
+                    views.selectAsset(views.currentView().id, kind, index);
+                }
+            } else if (result.kind === 'comment') {
+                if (target.comments?.[result.commentId] === result.comment) {
+                    navigation.centerComment(result.commentId, result.comment.blockId);
+                }
             } else if (target.blocks.getBlock(result.block.id) === result.block) {
                 navigation.centerBlock(result.block.id);
             }
         });
     };
-    return <ProjectSearchBox {...search} select={select} />;
+    const replace = async (result: SearchResult, value: string): Promise<ReplaceOutcome> => {
+        if (result.kind === 'yaml') {
+            return documents?.stageYamlReplacement?.(result.document.reference, result.range, result.document.source, value) ?
+                'staged' : 'stale';
+        }
+        if (!result.edit) return 'read-only';
+        const isDestination = moveToResult(result);
+        if (!isDestination) return 'stale';
+        await new Promise(resolve => window.requestAnimationFrame(resolve));
+        if (!isDestination()) return 'stale';
+        const context = navigation.replacementContext?.();
+        if (!context) return 'read-only';
+        const outcome = applyProjectSearchReplacement(search.project, context.workspace, context.Blockly, result, value);
+        // Let the workspace deliver its change event to the VM before querying it again.
+        if (outcome === 'applied') await new Promise(resolve => window.setTimeout(resolve, 0));
+        return outcome;
+    };
+    return <ProjectSearchBox {...search} {...{documents, select, replace}} />;
 }

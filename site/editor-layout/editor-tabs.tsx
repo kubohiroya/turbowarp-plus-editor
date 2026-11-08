@@ -7,7 +7,7 @@ import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar';
-import {connectProjectSearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {centerProjectComment, connectProjectSearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
@@ -267,6 +267,14 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             centerBlock(id) {
                 const workspace = window.ScratchBlocks?.getMainWorkspace();
                 if (workspace?.getBlockById(id)) workspace.centerOnBlock(id);
+            },
+            centerComment(id, blockId) {
+                centerProjectComment(window.ScratchBlocks?.getMainWorkspace(), id, blockId);
+            },
+            replacementContext() {
+                const Blockly = window.ScratchBlocks;
+                const workspace = Blockly?.getMainWorkspace();
+                return workspace?.isVisible() ? {workspace, Blockly} : undefined;
             }
         });
     }, [multiView, vm, spriteTabs.controller]);

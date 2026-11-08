@@ -46,6 +46,52 @@
 
 .heading span { margin-inline-start: 4px; font-weight: 400; }
 
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    min-inline-size: 0;
+    margin: 0 0 4px;
+    padding: 5px 7px;
+    border: 1px solid var(--ui-black-transparent, #c6cfda);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.filters label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+}
+
+.filters input { margin: 0; }
+
+.replaceTools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-block-end: 4px;
+    padding: 2px;
+}
+
+.replaceTools button, .replaceTools input {
+    min-block-size: 26px;
+    min-inline-size: 0;
+    box-sizing: border-box;
+    padding-inline: 6px;
+    border: 1px solid var(--ui-black-transparent, #c6cfda);
+    border-radius: 4px;
+    background: var(--input-background, var(--ui-white, #fff));
+    color: inherit;
+    font: inherit;
+}
+
+.replaceTools input { flex: 1 1 100px; }
+.replaceTools button[aria-pressed="true"] { background: var(--looks-light-transparent, #e6dff3); }
+.replaceTools button:disabled { opacity: .55; }
+
 .option {
     display: flex;
     align-items: baseline;

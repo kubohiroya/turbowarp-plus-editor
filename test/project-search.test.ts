@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {searchProject, type SearchProject} from '../packages/editor-ui/src/project-search.ts';
+import {searchProject, searchYamlDocuments, type SearchKind, type SearchProject} from '../packages/editor-ui/src/project-search.ts';
+import {applyProjectSearchReplacement, replacementText, type ReplaceBlockly, type ReplaceWorkspace} from '../packages/editor-ui/src/project-search-replace.ts';
 
 type Target = SearchProject['targets'][number];
 type Block = ReturnType<Target['blocks']['getBlock']>;
@@ -45,4 +46,58 @@ test('project search groups nested blocks, asset names and variable uses from or
     assert.deepEqual(search('開始').map(group => [group.kind, group.results.map(result => result.target.id)]),
         [['message', ['stage', 'second']], ['backdrop', ['stage']], ['sound', ['second']]]);
     assert.deepEqual(search('math_number'), []);
+});
+
+test('filters separate block names, arguments, extension names and comments', () => {
+    const sprite = target('sprite', ['speak'], [
+        {id: 'speak', opcode: 'talk_speak', inputs: {TEXT: {block: 'text'}}},
+        {id: 'text', opcode: 'text', shadow: true, fields: {TEXT: {value: '合図を出す'}}}
+    ], {comments: {comment: {text: '合図を確認', blockId: 'speak'}}});
+    const project = {
+        targets: [sprite],
+        getLabelForOpcode: () => ({category: 'extension', label: '合図ツール: 合図を話す [TEXT]'})
+    };
+    const search = (...kinds: SearchKind[]) => searchProject(project, {}, '合図', true, new Set(kinds));
+    assert.deepEqual(search('block', 'argument', 'extension', 'comment').map(group => group.kind),
+        ['block', 'argument', 'extension', 'comment']);
+    assert.deepEqual(search('argument').flatMap(group => group.results.map(result => result.label)), ['合図を出す']);
+    assert.deepEqual(search('extension').flatMap(group => group.results.map(result => result.label)), ['合図ツール']);
+    assert.deepEqual(search('comment').flatMap(group => group.results.map(result => result.label)), ['合図を確認']);
+    assert.deepEqual(searchProject(project, {}, '出す', true, new Set(['block'])), []);
+    assert.deepEqual(searchProject(project, {}, 'ツール', true, new Set(['block'])), []);
+});
+
+test('YAML results preserve document identity and UTF-16 offsets for each literal match', () => {
+    const documents = ['a', 'b'].map(documentId => ({
+        reference: {providerId: 'provider', documentId},
+        filename: 'settings.yaml',
+        source: 'key: 📚開始. 開始.\nother: 開始.'
+    }));
+    const results = searchYamlDocuments(documents, '開始.', true);
+    assert.deepEqual(results.map(result => result.document.reference.documentId), ['a', 'a', 'a', 'b', 'b', 'b']);
+    assert.deepEqual(results.slice(0, 3).map(result => result.detail),
+        ['1 行 8 列 · provider/a', '1 行 12 列 · provider/a', '2 行 8 列 · provider/a']);
+    for (const {document, range: {start, end, expectedText}} of results) {
+        assert.equal(document.source.slice(start, end), expectedText);
+        assert.equal(expectedText, '開始.');
+    }
+});
+
+test('replacement splices a literal match and rejects a renamed or conflicting variable', () => {
+    const field = {id: 'score', value: 'old.score'};
+    const stage = target('stage', ['use'], [{id: 'use', opcode: 'data_showvariable', fields: {VARIABLE: field}}],
+        {isStage: true, variables: {score: {name: 'old.score'}, conflict: {name: 'new.score'}}});
+    const project = {targets: [stage]};
+    const result = searchProject(project, {}, 'old.', false, new Set(['variable']))[0].results[0];
+    assert.equal(replacementText(result, 'old.', '$1.'), '$1.score');
+    assert.equal(replacementText(result, 'old.', 'old.'), undefined);
+
+    const workspace = {
+        options: {readOnly: false}, isDragging: () => false, getVariableById: () => stage.variables.score,
+        renameVariableById: () => assert.fail('The result must be refused before editing the workspace')
+    } as unknown as ReplaceWorkspace;
+    const Blockly = {} as ReplaceBlockly;
+    assert.equal(applyProjectSearchReplacement(project, workspace, Blockly, result, 'new.score'), 'conflict');
+    field.id = 'conflict';
+    assert.equal(applyProjectSearchReplacement(project, workspace, Blockly, result, 'other.score'), 'stale');
 });

@@ -115,7 +115,7 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.6.0-rc.2",
-    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#58dd191f21c96ae439399de9e5b4ba17dc936766",
+    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#4efc3ced5aa0742e2b2e11bdd2b2dd2445619384",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
     "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#81219b2b8791eeb1fb781cd873a205614a9fe0a1",
     "@turbowarp/jszip": "^3.12.0"

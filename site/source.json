@@ -17,7 +17,7 @@
   "packagerRevision": "c115bdf525c5f49f0fb689a21b335ccb70fc22d2",
   "coreVersion": "0.8.1",
   "documentEditorRepository": "kubohiroya/turbowarp-document-editor",
-  "documentEditorRevision": "58dd191f21c96ae439399de9e5b4ba17dc936766",
+  "documentEditorRevision": "4efc3ced5aa0742e2b2e11bdd2b2dd2445619384",
   "documentEditorVersion": "0.1.0-rc.8",
   "documentEditorSource": "git",
   "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
