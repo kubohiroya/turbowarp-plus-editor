@@ -234,9 +234,16 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-shared-project-archive.cts')
 });
+// Webpack 4 needs an alias for the protocol export used by the pinned document-data package.
+const documentDataRequire = createRequire(rootRequire.resolve('@kubohiroya/turbowarp-document-data/package.json'));
+const documentSourcePackage = documentDataRequire.resolve('@kubohiroya/turbowarp-document-source/package.json');
+const documentSourceRoot = path.dirname(documentSourcePackage);
+config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.resolve(
+    documentSourceRoot, documentDataRequire(documentSourcePackage).exports['./protocol'].import
+);
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
+    documentSourceRoot, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
