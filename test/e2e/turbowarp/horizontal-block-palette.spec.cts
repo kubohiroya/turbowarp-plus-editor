@@ -145,7 +145,6 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout.getByText('Make a Block', {exact: true})).toBeVisible();
 
     evidence.stage('extension-category');
-    await page.getByRole('button', {name: 'Extensions…', exact: true}).click();
     await addExtension.click();
     await page.getByText('Pen', {exact: true}).click();
     const pen = toolbox.locator('.scratchCategoryId-pen');
