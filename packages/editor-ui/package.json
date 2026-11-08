@@ -16,6 +16,7 @@
     "./project-load-progress": "./src/project-load-progress.ts",
     "./project-load-progress-view": "./src/project-load-progress-view.tsx",
     "./project-search": "./src/project-search-box.tsx",
+    "./project-search-connections": "./src/project-search-connections.ts",
     "./project-info-menu": "./src/info-menu.tsx",
     "./stage-controls": "./src/stage-controls.ts",
     "./stage-controls-view": "./src/stage-controls-view.tsx",
