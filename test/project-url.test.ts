@@ -36,6 +36,39 @@ test('a missing or unavailable Pages file falls back to the exact original URL',
     }
 });
 
+test('Scratch project page URLs load project data through the Scratch project API', async () => {
+    for (const project of [
+        'https://scratch.mit.edu/projects/1390470145/',
+        'https://scratch.mit.edu/projects/1390470145',
+        'http://www.scratch.mit.edu/projects/1390470145/editor/',
+        'https://scratch.mit.edu/projects/1390470145/fullscreen',
+        'https://scratch.mit.edu/projects/1390470145/?foo=1#comments'
+    ]) {
+        const requests: string[] = [];
+        const projectData = new Response('{"targets":[]}');
+        assert.equal(await fetchProjectUrl(project, async url => {
+            requests.push(String(url));
+            if (String(url).startsWith('https://trampoline.turbowarp.org/')) {
+                return Response.json({id: 1390470145, project_token: 'a b'});
+            }
+            return projectData;
+        }), projectData);
+        assert.deepEqual(requests, [
+            'https://trampoline.turbowarp.org/api/projects/1390470145',
+            'https://projects.scratch.mit.edu/1390470145?token=a%20b'
+        ]);
+    }
+});
+
+test('an unavailable Scratch project reports an error instead of fetching the HTML page', async () => {
+    const requests: string[] = [];
+    await assert.rejects(fetchProjectUrl('https://scratch.mit.edu/projects/1/', async url => {
+        requests.push(String(url));
+        return new Response(null, {status: 404});
+    }), /Could not access Scratch project 1: status 404/);
+    assert.deepEqual(requests, ['https://trampoline.turbowarp.org/api/projects/1']);
+});
+
 test('other project URLs use their original fetch path without probing Pages', async () => {
     for (const project of [
         `${downloads}/kamishibai-4.0.0-rc.79.sb3`,
@@ -44,7 +77,10 @@ test('other project URLs use their original fetch path without probing Pages', a
         `${releases}/v4.0.0%2Frc.79/kamishibai-4.0.0%2Frc.79.sb3`,
         `${releases}/v%FF/kamishibai-%FF.sb3`,
         `${releases.replace('github.com/', 'github.com.example/')}/v4.0.0/kamishibai-4.0.0.sb3`,
-        'data:application/octet-stream;base64,AA=='
+        'data:application/octet-stream;base64,AA==',
+        'https://scratch.mit.edu/projects/1390470145/remixes/',
+        'https://scratch.mit.edu/projects/abc/',
+        'https://scratch.mit.edu.example/projects/1390470145/'
     ]) {
         const requests: string[] = [];
         await fetchProjectUrl(project, async url => {
