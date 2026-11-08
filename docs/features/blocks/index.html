@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ブロックを探して置く・整理する — 機能ガイド — TurboWarp-Plus-Editor</title>
+<meta name="description" content="TurboWarp Plusの横型パレット、パレット内検索、パレットの別画面、削除予告、ミニマップ、右クリックメニュー。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 6. ブロックを探して置く・整理する</p>
+<p class="eyebrow">機能ガイド 6/11 · 2026年11月8日更新</p>
+<h1>ブロックを探して置く・整理する</h1>
+<p class="lead">コード画面上部の横型パレットからブロックを探して置きます。長いコードはミニマップで移動し、右クリックメニューで整理します。</p>
+<nav class="topic-nav" aria-label="機能ガイドの分野">
+<ul>
+<li><a href="../open/">作品を開く</a></li>
+<li><a href="../screen/">メニューと画面</a></li>
+<li><a href="../sprites/">スプライトと背景</a></li>
+<li><a href="../stage/">ステージ</a></li>
+<li><a href="../workspace/">作業領域</a></li>
+<li><a href="../blocks/" aria-current="page">ブロック</a></li>
+<li><a href="../search/">検索と置換</a></li>
+<li><a href="../documents/">文書と拡張データ</a></li>
+<li><a href="../reuse/">再利用</a></li>
+<li><a href="../git/">Gitと作品フォルダ</a></li>
+<li><a href="../save/">保存と配布</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="このページの目次">
+<ol>
+<li><a href="#palette">6.1 横型パレットからブロックを置く</a></li>
+<li><a href="#palette-search">6.2 パレットのカテゴリ内でブロックを検索する</a></li>
+<li><a href="#palette-size">6.3 カテゴリの小窓を見やすい大きさにする</a></li>
+<li><a href="#palette-order">6.4 カテゴリの順序を変える</a></li>
+<li><a href="#palette-popout">6.5 ブロックパレットを別画面で開く</a></li>
+<li><a href="#delete-preview">6.6 パレットに戻すとブロックを削除する</a></li>
+<li><a href="#minimap">6.7 ミニマップとズームで長いコードを移動する</a></li>
+<li><a href="#context-menu">6.8 右クリックメニューで操作する</a></li>
+</ol>
+</nav>
+
+<section id="palette">
+
+<h2>6.1 横型パレットからブロックを置く</h2>
+
+<p>Plus配置では、コード画面上部のカテゴリをクリックすると、その下にブロックの小窓が開きます。使いたいブロックをコード領域へドラッグします。変数や自分で定義したブロック、追加した機能拡張のブロックも同じ方法で選べます。小窓を閉じるにはEscを押すか、小窓の外をクリックします。</p>
+<p>カテゴリごとに、最後にスクロールした位置を覚えています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/193">横型パレット</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/216">スクロール位置の復元</a></p>
+
+</section>
+
+<section id="palette-search">
+
+<h2>6.2 パレットのカテゴリ内でブロックを検索する</h2>
+
+<p>小窓の上部にある「ブロックを検索」に語句を入れると、そのカテゴリの見出しとブロックの表示名の部分一致で絞り込めます。日本語入力にも対応し、絞り込んだブロックもそのままドラッグして置けます。一致しないときは「一致するブロックがありません」と表示されます。</p>
+<figure><a href="../images/palette-search.png"><img src="../images/palette-search.png" width="900" height="520" alt="横型パレットの動きを開き、ブロックを検索の欄に歩と入力。10歩動かすブロックだけが表示されている。" loading="lazy"></a><figcaption>「動き」で「歩」と入力し、「10 歩動かす」に絞り込んだところ。</figcaption></figure>
+<p>作品の中にあるブロックを探すには、メニューバーの<a href="../search/#project-search">作品全体の検索</a>を使います。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/355">カテゴリ内検索</a></p>
+
+</section>
+
+<section id="palette-size">
+
+<h2>6.3 カテゴリの小窓を見やすい大きさにする</h2>
+
+<p>横型パレットでは、小窓の右下にある斜線をドラッグして幅と高さを調整できます。変更したサイズはカテゴリごとにブラウザーに保存されます。ペインや画面が狭いときは表示できる範囲に収まり、十分な広さに戻ると保存したサイズで開きます。</p>
+<figure class="guide-detail"><a href="../images/palette-resize-detail.png"><img src="../images/palette-resize-detail.png" width="330" height="230" alt="横型パレットから開いた小窓。右下に幅と高さを調整するハンドルがある。" loading="lazy"></a><figcaption>小窓右下の斜線がリサイズのハンドルです（前回の撮影）。</figcaption></figure>
+<p>大きな画面でパレットを常に表示しておきたいときは、<a href="#palette-popout">ブロックパレットを別画面で開く</a>こともできます。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/239">小窓のリサイズ</a></p>
+
+</section>
+
+<section id="palette-order">
+
+<h2>6.4 カテゴリの順序を変える</h2>
+
+<p>カテゴリを長押しし、移動先を示す印に合わせて離すと並べ替えられます。ドラッグ中はカテゴリのプレビューが表示されます。パレットの外で離すかEscを押すと取り消せます。ページを再読み込みすると初期の順序に戻ります。<code>twPlusHorizontalBlockPalette=1</code> を付けて起動した場合は、パレットを右クリックして横表示と縦表示を切り替えられ、並べ替えた順序も引き継がれます。</p>
+<figure class="guide-detail"><a href="../images/palette-order-detail.png"><img src="../images/palette-order-detail.png" width="540" height="126" alt="横型パレットで動きのカテゴリを長押しし、音の位置へ移動している途中。" loading="lazy"></a><figcaption>長押ししたカテゴリと移動先の表示を見ながら並べ替えます（前回の撮影）。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/250">カテゴリの並べ替え</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/331">ドラッグ中のプレビュー</a></p>
+
+</section>
+
+<section id="palette-popout">
+
+<h2>6.5 ブロックパレットを別画面で開く</h2>
+
+<p>「編集パネルのレイアウト」から「ブロックパレットを別画面で開く」を選ぶと、横型パレットがブラウザーの別ウィンドウに移ります。左端の丸いカテゴリボタンでカテゴリを選び、ブロックをエディターのコード領域へドラッグして置きます。右上のボタンには現在の並び方が表示され、押すと「横並びにする」「縦並びにする」を切り替えられます。</p>
+<figure class="guide-detail"><a href="../images/palette-popout.png"><img src="../images/palette-popout.png" width="520" height="520" alt="別画面で開いたブロックパレット。左端に丸いカテゴリボタンが縦に並び、動きのブロックが表示されている。" loading="lazy"></a><figcaption>別画面で開いたブロックパレット。別画面にある間は、エディター内の横型パレットは表示されません。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/361">パレットの別画面</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/370">丸いカテゴリボタン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/380">並び方の表示</a></p>
+
+</section>
+
+<section id="delete-preview">
+
+<h2>6.6 パレットに戻すとブロックを削除する</h2>
+
+<p>コード領域のブロックをパレットへドラッグすると、そこで離せば削除されることを示すゴミ箱が表示されます。パレットから取り出したブロックを戻すときも同じです。離さずにコード領域へ戻せば、削除は行われません。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/185">削除予告</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/243">取り出したブロックを戻すとき</a></p>
+
+</section>
+
+<section id="minimap">
+
+<h2>6.7 ミニマップとズームで長いコードを移動する</h2>
+
+<p>Plus配置では、コード画面右下のミニマップでブロック全体の位置を見渡せます。枠は現在の表示範囲です。離れたブロックへ移動するときは、ミニマップ内の移動先をクリックするか、枠をドラッグします。下に並ぶボタンで縮小・拡大したり、倍率を初期値に戻したりできます。</p>
+<figure><a href="../images/minimap-current.png"><img src="../images/minimap-current.png" width="1440" height="1000" alt="離れた位置にブロックを配置したコード画面。右下にミニマップと縮小・拡大・リセットのボタンが並ぶ。" loading="lazy"></a><figcaption>右下のミニマップにはブロック全体が表示され、枠が現在の表示範囲を示します（前回の撮影）。</figcaption></figure>
+<p>ミニマップを外すには <code>twPlusWorkspaceMinimap=0</code> を指定します。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/200">ミニマップの操作</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/222">ズームと配置</a></p>
+
+</section>
+
+<section id="context-menu">
+
+<h2>6.8 右クリックメニューで操作する</h2>
+
+<p>ブロック、コード領域の空白、スプライトのタイル、コスチュームや音などの右クリックメニューを整理し、各項目に操作を表すアイコンを付けました。</p>
+<figure class="guide-detail"><a href="../images/script-transfer-0fc3.png"><img src="../images/script-transfer-0fc3.png" width="750" height="559" alt="ブロックの右クリックメニュー。スクリプトを書き出し、コピー、複製、削除などの項目にアイコンが並ぶ。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンです。</figcaption></figure>
+<div class="table-scroll" role="region" aria-label="右クリックメニューの主な項目" tabindex="0">
+<table><caption>主な項目</caption><thead><tr><th scope="col">右クリックする場所</th><th scope="col">主な項目</th></tr></thead><tbody>
+<tr><th scope="row">ブロック</th><td>複製、コメントを追加、削除、スクリプトを書き出し、コピー</td></tr>
+<tr><th scope="row">コード領域の空白</th><td>元に戻す、やり直し、きれいにする、コメントを追加、スクリプトを読み込み、貼り付け</td></tr>
+<tr><th scope="row">スプライトのタイル</th><td>開く、複製、書き出し、名前を変える、削除、フォルダーを作成</td></tr>
+<tr><th scope="row">コスチューム・音</th><td>複製、書き出し、削除</td></tr>
+</tbody></table></div>
+<p>アドオンが追加する項目（ブロックの画像書き出し、ローカル変数とグローバル変数の切り替え、最前面・最背面への移動など）にもアイコンが付きます。スクリプトの書き出し・読み込みとコピー・貼り付けの使い方は<a href="../reuse/#transfer">スクリプトとステージを別作品へ転送する</a>で説明しています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューの操作アイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">既定で表示</a></p>
+
+</section>
+<nav class="pager" aria-label="前後のページ">
+<a class="prev" href="../workspace/"><small>前のページ</small>5. 作業領域を分割・別画面にする</a>
+<a class="next" href="../search/"><small>次のページ</small>7. 作品全体を検索・置換する</a>
+</nav>
+</main>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+</body></html>

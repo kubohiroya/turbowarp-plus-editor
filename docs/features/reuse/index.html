@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>スクリプトと素材を再利用する — 機能ガイド — TurboWarp-Plus-Editor</title>
+<meta name="description" content="TurboWarp Plusでスクリプトやステージを別作品へ転送し、バンドル素材を背景・コスチューム・音として追加する方法。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 9. スクリプトと素材を再利用する</p>
+<p class="eyebrow">機能ガイド 9/11 · 2026年11月8日更新</p>
+<h1>スクリプトと素材を再利用する</h1>
+<p class="lead">スクリプトやステージをファイルやコピー・貼り付けで別の作品へ移し、拡張のバンドル素材を通常の素材として使えます。</p>
+<nav class="topic-nav" aria-label="機能ガイドの分野">
+<ul>
+<li><a href="../open/">作品を開く</a></li>
+<li><a href="../screen/">メニューと画面</a></li>
+<li><a href="../sprites/">スプライトと背景</a></li>
+<li><a href="../stage/">ステージ</a></li>
+<li><a href="../workspace/">作業領域</a></li>
+<li><a href="../blocks/">ブロック</a></li>
+<li><a href="../search/">検索と置換</a></li>
+<li><a href="../documents/">文書と拡張データ</a></li>
+<li><a href="../reuse/" aria-current="page">再利用</a></li>
+<li><a href="../git/">Gitと作品フォルダ</a></li>
+<li><a href="../save/">保存と配布</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="このページの目次">
+<ol>
+<li><a href="#transfer">9.1 スクリプトとステージを別作品へ転送する</a></li>
+<li><a href="#bundle-assets">9.2 バンドル素材を背景・コスチューム・音に追加する</a></li>
+</ol>
+</nav>
+<span id="backpack" hidden data-alias-of="transfer"></span>
+
+<section id="transfer">
+
+<h2>9.1 スクリプトとステージを別作品へ転送する</h2>
+
+<p>TurboWarp Plus Editorには、編集画面の下端にあったバックパックはありません。スクリプトの再利用には、コピー・貼り付けや .blocks3 の書き出し・読み込みを使います。ステージは .stage3、スプライト全体は .sprite3 で別の作品へ移せます。</p>
+<p>移したいスクリプトのブロックを右クリックします。「スクリプトを書き出し」と「コピー」は、右クリックしたブロックを含む、つながった一組のブロック全体に適用されます。転送先ではコード領域の空白を右クリックし、ファイルなら「スクリプトを読み込み」、コピーした内容なら「貼り付け」を選びます。コピーと貼り付けには、<a href="../screen/#edit-menu">編集メニュー</a>やCtrl／Cmd+C・Vも使えます。</p>
+<figure class="guide-detail"><a href="../images/script-transfer-0fc3.png"><img src="../images/script-transfer-0fc3.png" width="750" height="559" alt="右クリックメニュー。スクリプトを書き出し、コピー、複製、削除などの項目に操作アイコンが並ぶ。" loading="lazy"></a><figcaption>右クリックメニュー（前回の撮影）。書き出しは下向き矢印、削除はゴミ箱のアイコンです。</figcaption></figure>
+<ul><li><strong>.blocks3</strong> にはスクリプトと、それが使うブロック定義・変数・リスト・メッセージ・拡張の情報が含まれます。同じオリジンで開いたウィンドウ間では、OSのクリップボードへのアクセスを許可していなくてもコピーと貼り付けができます。別のオリジン間では、対応ブラウザーとクリップボードの読み取り許可が必要です。</li><li><strong>.stage3</strong> は、Plus配置なら背景タイル、Scratch配置ならステージを右クリックして書き出します。Scratch配置で取り込むには、背景の「選ぶ」メニューで「ステージを読み込み（追加）」を選びます。背景・音・スクリプトが現在のステージに追加されます。</li><li>変数やリストの名前と範囲・種類が一致する場合は、読み込み先の項目とその値を使います。名前が衝突するブロック定義や素材は必要に応じて改名します。計算で決まる背景・音の名前や番号は自動変換の対象外です。</li><li>拡張を実行できるかどうかは、転送先の設定や承認で決まります。</li></ul>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/351">バックパックの撤去</a></p>
+
+</section>
+
+<section id="bundle-assets">
+
+<h2>9.2 バンドル素材を背景・コスチューム・音に追加する</h2>
+
+<p>紙芝居などが使う画像や音を、スプライトやステージでも使いたいときに利用します。バンドルに含まれる元の素材は残り、選んだ素材が背景・コスチューム・音として作品に加わります。</p>
+<p>「ファイル」→「組み込みデータ…」を開き、上部の「バンドル素材を作品に追加…」を押します。対応する素材を含む作品で「バンドル素材」「追加する種類」「追加先」を選び、「作品に追加」を押します。追加した内容を残すにはSB3を保存します。対応素材のない作品では、追加できる画像や音がないことが表示されます。</p>
+<div class="table-scroll" role="region" aria-label="素材の種類に応じた追加先" tabindex="0">
+<table><caption>素材の種類に応じた追加先</caption><thead><tr><th scope="col">素材</th><th scope="col">追加する種類</th><th scope="col">追加先</th></tr></thead><tbody>
+<tr><th scope="row">画像（SVG・PNG・JPEG）</th><td>コスチューム</td><td>選んだスプライト</td></tr>
+<tr><th scope="row">画像（SVG・PNG・JPEG）</th><td>背景</td><td>ステージ</td></tr>
+<tr><th scope="row">音声（WAV・MP3・Ogg）</th><td>音</td><td>選んだスプライトまたはステージ</td></tr>
+</tbody></table></div>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/215">バンドル素材の追加</a></p>
+
+</section>
+<nav class="pager" aria-label="前後のページ">
+<a class="prev" href="../documents/"><small>前のページ</small>8. 拡張のデータと文書を編集する</a>
+<a class="next" href="../git/"><small>次のページ</small>10. 作品フォルダとGitで管理する</a>
+</nav>
+</main>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+</body></html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>スプライトと背景を編集する — 機能ガイド — TurboWarp-Plus-Editor</title>
+<meta name="description" content="TurboWarp Plusのスプライト一覧、スプライトのタブと編集ボタン、コスチュームと音、変数とプロパティ、背景の編集。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 3. スプライトと背景を編集する</p>
+<p class="eyebrow">機能ガイド 3/11 · 2026年11月8日更新</p>
+<h1>スプライトと背景を編集する</h1>
+<p class="lead">左のスプライト一覧で対象を選び、編集パネル左端の縦のボタンで、コード・コスチューム・音・変数などを切り替えます。</p>
+<nav class="topic-nav" aria-label="機能ガイドの分野">
+<ul>
+<li><a href="../open/">作品を開く</a></li>
+<li><a href="../screen/">メニューと画面</a></li>
+<li><a href="../sprites/" aria-current="page">スプライトと背景</a></li>
+<li><a href="../stage/">ステージ</a></li>
+<li><a href="../workspace/">作業領域</a></li>
+<li><a href="../blocks/">ブロック</a></li>
+<li><a href="../search/">検索と置換</a></li>
+<li><a href="../documents/">文書と拡張データ</a></li>
+<li><a href="../reuse/">再利用</a></li>
+<li><a href="../git/">Gitと作品フォルダ</a></li>
+<li><a href="../save/">保存と配布</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="このページの目次">
+<ol>
+<li><a href="#sprite-drawer">3.1 スプライト一覧で探す・固定する</a></li>
+<li><a href="#sprite-tabs">3.2 スプライトのタブと編集ボタン</a></li>
+<li><a href="#media-panes">3.3 コスチュームと音を編集する</a></li>
+<li><a href="#variable-pane">3.4 プロパティと変数を編集する</a></li>
+<li><a href="#backdrop">3.5 背景を編集する</a></li>
+</ol>
+</nav>
+
+<section id="sprite-drawer">
+
+<h2>3.1 スプライト一覧で探す・固定する</h2>
+
+<p>左側のスプライト一覧で編集する対象を選びます。一覧上部には「スプライトを検索」「スプライト一覧を固定表示」「アンドック」のボタンが並びます。「スプライトを検索」で名前の一部を入力すると、最初に一致したタイルまでスクロールし、そのタイルを枠で強調します。「背景」のタイルからはステージの背景を開けます。</p>
+<figure class="guide-detail"><a href="../images/sprite-search-public-014.png"><img src="../images/sprite-search-public-014.png" width="550" height="390" alt="スプライト一覧の検索欄に2を入力し、スプライト2が枠で強調表示されている。" loading="lazy"></a><figcaption>「2」で検索すると、一致したスプライト2に枠が付きます（前回の撮影）。</figcaption></figure>
+<p>ピンのボタンで固定表示を解除すると、ピンに斜線が付き、一覧は左端に収まります。左端にポインターを置くか「スプライト一覧を展開」を押すと一覧が開きます。固定表示中に一覧の幅を広げると、タイルを複数列に並べられます。作品全体からブロックや素材を探すには、最上段の<a href="../search/#project-search">検索欄</a>を使います。</p>
+<p>スプライトのタイルを右クリックすると、「開く」「複製」「書き出し」「名前を変える」「削除」「フォルダーを作成」をアイコン付きのメニューから選べます（<a href="../blocks/#context-menu">右クリックメニュー</a>）。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/225">一覧の展開・検索・固定</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/350">未固定のピンの表示</a></p>
+
+</section>
+
+<section id="sprite-tabs">
+
+<h2>3.2 スプライトのタブと編集ボタン</h2>
+
+<p>一覧でスプライトを選ぶと、編集パネルの上段にタブが開きます。開いたスプライトは上段のタブで切り替えられ、タブを右クリックすると名前を変えられます。</p>
+<p>編集パネルの左端には、縦長のボタンが4つ並びます。上から「コード」（&lt;&gt;）、「コスチューム」（筆）、「音」（スピーカー）、「変数など」（[x]）で、選んでいるボタンに色が付きます。ボタンの名前はツールチップで確認できます。</p>
+<figure><a href="../images/plus-workspace-current.png"><img src="../images/plus-workspace-current.png" width="1440" height="1000" alt="編集パネルの左端に、コード・コスチューム・音・変数などの縦長のボタンが並ぶ。" loading="lazy"></a><figcaption>編集パネル左端の縦のボタン。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/248">スプライトの編集タブ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-layout/pull/32">左端のアイコン列</a></p>
+
+</section>
+
+<section id="media-panes">
+
+<h2>3.3 コスチュームと音を編集する</h2>
+
+<p>「編集パネルのレイアウト」から「パネルを横に分割」を選び、同じスプライトの「コスチューム」と「音」を左右に開きます。「音」で素材を選ぶと波形が表示され、その下の再生ボタンで試聴できます。音の一覧が空の場合は「音」から追加します。</p>
+<p>別のペインに移っても、開いていた編集内容と選んだ素材はペインごとに保持されます。録音中にほかの編集内容へ切り替えても録音ダイアログは閉じず、録音した音は録音を始めたスプライトに保存されます。</p>
+<figure><a href="../images/media-panes-0fc3.png"><img src="../images/media-panes-0fc3.png" width="1440" height="1000" alt="Plus配置。左のペインに縦長のコスチュームプレビュー、右のペインに音の波形と再生ボタン。" loading="lazy"></a><figcaption>左にコスチューム、右に確認用の音の波形と再生ボタンを表示した例（前回の撮影。編集内容の切り替えは現在は左端の縦のボタンです）。</figcaption></figure>
+<p><span class="badge planned">開発中</span> ローカル統合版では、操作していないペインのコスチュームプレビューの高さに上限を設けています。</p>
+<figure><a href="../images/local-media-panes.png"><img src="../images/local-media-panes.png" width="1440" height="575" alt="ローカル統合版の左ペインに高さを抑えたコスチュームプレビュー、右ペインに音の波形と再生ボタン。" loading="lazy"></a><figcaption>ローカル統合版の比較画像。コスチュームのプレビューを小さく収めています。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">素材の選択と編集状態</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/326">録音先のスプライト</a></p>
+
+</section>
+
+<section id="variable-pane">
+
+<h2>3.4 プロパティと変数を編集する</h2>
+
+<p>「変数など」を開くと、上部にスプライトのプロパティ、その下に変数の一覧が表示されます。</p>
+<ul><li><strong>プロパティ</strong>：スプライト名、x、y、表示（表示する・隠す）、大きさ、向き、回転方法（自由に回転・左右のみ・回転しない）を編集します。</li><li><strong>変数</strong>：変数名の下に「作品」とあれば全スプライトで使う変数、「スプライト」とあれば選択中のスプライト用の変数です。値を入力してEnterを押すか、入力欄からフォーカスを外すと確定します。確定前にEscを押すと入力を取り消せます。</li></ul>
+<figure><a href="../images/properties-variables-0fc3.png"><img src="../images/properties-variables-0fc3.png" width="1440" height="523" alt="変数などに、スプライトのプロパティと変数の一覧が表示されている。隣のコードに変数のブロックがある。" loading="lazy"></a><figcaption>「変数など」を開き、隣のペインのコードで同じ変数を参照している例。</figcaption></figure>
+<p>パネルを横に分割し、片方で「変数など」、もう片方で「コード」を開くと、値を見ながらコードを編集できます（<a href="../workspace/#split-panes">パネルの分割</a>）。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-layout/pull/15">プロパティ・変数タブの統合</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">分割したペインの編集状態</a></p>
+
+</section>
+
+<section id="backdrop">
+
+<h2>3.5 背景を編集する</h2>
+
+<p>スプライト一覧の下にある「背景」のタイルを選ぶと、ステージの編集パネルが開きます。タブには一覧と同じく「背景」と表示されます。</p>
+<p>左端の縦のボタンは「コード」「背景」「音」です。「背景」でステージの背景画像を、「コード」でステージのスクリプトを、「音」でステージの音を編集します。</p>
+<p>背景のタイルを右クリックすると、ステージを .stage3 に書き出せます（<a href="../reuse/#transfer">スクリプトとステージを別作品へ転送する</a>）。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/403">背景タブの修正</a></p>
+
+</section>
+<nav class="pager" aria-label="前後のページ">
+<a class="prev" href="../screen/"><small>前のページ</small>2. 画面の構成とメニュー</a>
+<a class="next" href="../stage/"><small>次のページ</small>4. ステージを開いて作品を動かす</a>
+</nav>
+</main>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+</body></html>

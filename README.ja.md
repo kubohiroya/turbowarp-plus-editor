@@ -21,14 +21,14 @@ TurboWarp Plusの作品をつくる・開くためのエディターです。kub
 - TurboWarp Plus拡張の取得元・内容・実行条件を確認し、URL参照／SB3への同梱など4つの保存形式を選べます。
 - スクリプト・ステージを `.blocks3` / `.stage3` やウィンドウ間コピー・貼り付けで別作品へ転送できます。
 - 対応文書をYAML/JSON原文やブロックで編集・検証・変換できます。
-- [Project Properties（作品のプロパティ）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-properties)でタイトル・概要・作者・連絡先を編集し、日時とともにSB3へ保存できます。作者名と連絡先は履歴各5件から選択・新規入力でき、メールやHTTPSのリンクも開けます。
-- [Project Diagnostics（作品の診断）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-diagnostics)で検証・実行許可・読み込み・再試行・失敗の記録を確認・コピーできます。
+- [Project Properties（作品のプロパティ）](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/#project-properties)でタイトル・概要・作者・連絡先を編集し、日時とともにSB3へ保存できます。作者名と連絡先は履歴各5件から選択・新規入力でき、メールやHTTPSのリンクも開けます。
+- [Project Diagnostics（作品の診断）](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/#project-diagnostics)で検証・実行許可・読み込み・再試行・失敗の記録を確認・コピーできます。
 
 作品情報と診断は、通常URLの「ファイル」メニュー最下部から利用できます。追加拡張や有効化の設定は不要です。作品情報の「適用」後はSB3を保存してください。診断記録はEditorを開いている間だけ保持し、実行許可を変更する操作はありません。
 
 [実画面と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)では、標準版との比較、操作手順、利用条件、保存と互換性を説明しています。フォーム・文書・プレビューの内容は対応する拡張が提供します。
 
-[![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
+[![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
 
 ## エディターの配置
 

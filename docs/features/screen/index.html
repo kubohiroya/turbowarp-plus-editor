@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>画面の構成とメニュー — 機能ガイド — TurboWarp-Plus-Editor</title>
+<meta name="description" content="TurboWarp Plusの最上段のメニューバー、TurboWarp Plusメニュー、ファイル・編集メニュー、右端の機能拡張ボタン、配置の切り替え。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 2. 画面の構成とメニュー</p>
+<p class="eyebrow">機能ガイド 2/11 · 2026年11月8日更新</p>
+<h1>画面の構成とメニュー</h1>
+<p class="lead">最上段のメニューバーを刷新し、作品の操作をファイル・編集メニューに、拡張の操作を右端にまとめました。</p>
+<nav class="topic-nav" aria-label="機能ガイドの分野">
+<ul>
+<li><a href="../open/">作品を開く</a></li>
+<li><a href="../screen/" aria-current="page">メニューと画面</a></li>
+<li><a href="../sprites/">スプライトと背景</a></li>
+<li><a href="../stage/">ステージ</a></li>
+<li><a href="../workspace/">作業領域</a></li>
+<li><a href="../blocks/">ブロック</a></li>
+<li><a href="../search/">検索と置換</a></li>
+<li><a href="../documents/">文書と拡張データ</a></li>
+<li><a href="../reuse/">再利用</a></li>
+<li><a href="../git/">Gitと作品フォルダ</a></li>
+<li><a href="../save/">保存と配布</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="このページの目次">
+<ol>
+<li><a href="#menu-bar">2.1 最上段のメニューバー</a></li>
+<li><a href="#plus-menu">2.2 TurboWarp Plusメニュー</a></li>
+<li><a href="#file-menu">2.3 ファイルメニュー</a></li>
+<li><a href="#edit-menu">2.4 編集メニューとショートカット</a></li>
+<li><a href="#extension-controls">2.5 右上の機能拡張ボタンとデバッガー</a></li>
+<li><a href="#layout">2.6 Plus標準配置とScratch配置を使い分ける</a></li>
+</ol>
+</nav>
+
+<section id="menu-bar">
+
+<h2>2.1 最上段のメニューバー</h2>
+
+<p>画面最上段には、左から次の要素が並びます。</p>
+<div class="table-scroll" role="region" aria-label="メニューバーの構成" tabindex="0">
+<table><caption>メニューバーの構成</caption><thead><tr><th scope="col">位置</th><th scope="col">要素</th><th scope="col">できること</th></tr></thead><tbody>
+<tr><th scope="row">左端</th><td>TurboWarp Plusのロゴ</td><td><a href="#plus-menu">TurboWarp Plusメニュー</a>を開く</td></tr>
+<tr><th scope="row">左</th><td>作品タイトルの入力欄</td><td>作品の名前を変える</td></tr>
+<tr><th scope="row">左</th><td>「ファイル」「編集」</td><td><a href="#file-menu">作品の操作</a>と<a href="#edit-menu">編集の操作</a></td></tr>
+<tr><th scope="row">中央</th><td>検索欄</td><td><a href="../search/#project-search">作品全体を検索・置換する</a></td></tr>
+<tr><th scope="row">右</th><td>機能拡張のボタン、デバッガー</td><td><a href="#extension-controls">拡張の設定や操作</a></td></tr>
+<tr><th scope="row">右端</th><td>「ステージを開く」</td><td><a href="../stage/#stage-open">ステージを開く</a></td></tr>
+</tbody></table></div>
+<figure><a href="../images/plus-workspace-current.png"><img src="../images/plus-workspace-current.png" width="1440" height="1000" alt="起動直後の画面。最上段にロゴ、作品タイトル、ファイル、編集、検索欄。左に固定表示のスプライト一覧、中央にコード領域と横型パレット、右下にミニマップとズームボタン。" loading="lazy"></a><figcaption>起動直後の画面。</figcaption></figure>
+<p>時間のかかる操作の間は、マウスポインターが待機中の表示に変わります。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">メニューバーの整理</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">メニューバーからステージを開く</a></p>
+
+</section>
+
+<section id="plus-menu">
+
+<h2>2.2 TurboWarp Plusメニュー</h2>
+
+<p>ロゴを押すと「TurboWarp Plus プロジェクト情報」メニューが開きます。TurboWarpの各種設定と、このEditorの情報がまとまっています。</p>
+<figure class="guide-detail"><a href="../images/plus-menu.png"><img src="../images/plus-menu.png" width="720" height="420" alt="ロゴから開いたTurboWarp Plusメニュー。TurboWarp Plus Editorについて、表示設定、動作設定、アドオン、高度な設定、ソースコード、ライセンスとクレジットが並ぶ。" loading="lazy"></a><figcaption>ロゴから開くメニュー。</figcaption></figure>
+<ul><li><strong>TurboWarp Plus Editor …について</strong>：Editorのバージョンと配信元の情報を開きます。</li><li><strong>表示設定</strong>：テーマや言語などを切り替えます。言語を切り替えても、編集中の作品と読み込んだ拡張は保たれます。</li><li><strong>動作設定</strong>：TurboWarpの実行に関する設定です。</li><li><strong>アドオン</strong>・<strong>高度な設定</strong>：TurboWarpのアドオンと詳細設定を開きます。</li><li><strong>ソースコード</strong>・<strong>ライセンスとクレジット</strong>：リポジトリと、同梱するパッケージのライセンスを開きます。</li></ul>
+<p>右端に矢印付きの四角のアイコンがある項目は、別のタブで開きます。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">TurboWarp Plusメニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/392">別タブで開く項目のアイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/284">言語切り替え後も作品を保持</a></p>
+
+</section>
+
+<section id="file-menu">
+
+<h2>2.3 ファイルメニュー</h2>
+
+<p>作品の作成・読み込み・保存・書き出しと、作品の設定は「ファイル」メニューにまとまっています。項目にはアイコンが付き、区切り線で用途ごとに分かれています。</p>
+<div class="table-scroll" role="region" aria-label="ファイルメニューの項目" tabindex="0">
+<table><caption>ファイルメニューの項目</caption><thead><tr><th scope="col">項目</th><th scope="col">できること</th><th scope="col">説明する章</th></tr></thead><tbody>
+<tr><th scope="row">新しいプロジェクトを作成</th><td>編集中の作品を閉じ、新しい作品を始める</td><td>この章</td></tr>
+<tr><th scope="row">SB3ファイルを開く…</th><td>手元の .sb3 を開く。旧形式の .sb、.sb2 も選べる</td><td>この章、<a href="../open/#loading">「読み込みの経過を確かめる」</a></td></tr>
+<tr><th scope="row">プロジェクトフォルダを開く…</th><td>sb3-toolchainで展開した作品フォルダを開く</td><td><a href="../git/#project-folder">「作品フォルダを開いて保存する 試作」</a></td></tr>
+<tr><th scope="row">保存／名前を変えて保存…</th><td>開いたファイルやフォルダを更新する／名前・保存先・格納方式を選んでSB3を作る</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
+<tr><th scope="row">書き出し…</th><td>実行・配布用のファイルを作る</td><td><a href="../save/#packager">「作品を書き出して単一HTMLで配布する」</a></td></tr>
+<tr><th scope="row">作品のプロパティ</th><td>タイトル・URI・作者などを記入し、作品の診断を開く</td><td><a href="../save/#project-properties">「作品情報を記入してSB3に保存する」</a>、<a href="../save/#project-uri">「作品のURIを指定してキャッシュを整理する」</a>、<a href="../open/#project-diagnostics">「作品が開けないときに診断を読む」</a></td></tr>
+<tr><th scope="row">組み込みデータ…</th><td>ソースデータと素材の格納方式を選び、バンドル素材を作品に追加する</td><td><a href="../save/#payload-formats">「ソースデータと素材をどの形式で保存するか選ぶ」</a>、<a href="../reuse/#bundle-assets">「バンドル素材を背景・コスチューム・音に追加する」</a></td></tr>
+<tr><th scope="row">機能拡張…</th><td>使用中の拡張の格納方式を変え、拡張を追加する</td><td><a href="../open/#extensions">「カタログから拡張を追加する」</a>、<a href="../save/#storage">「拡張コードの保存形式を選ぶ」</a></td></tr>
+<tr><th scope="row">復元ポイント</th><td>TurboWarpが定期的に記録した復元ポイントから作品を戻す</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
+<tr><th scope="row">ローカル Git…</th><td>リポジトリの変更・差分・履歴を確認する</td><td><a href="../git/#local-git">「ローカルGitで変更と履歴を確かめる」</a></td></tr>
+</tbody></table></div>
+
+</section>
+
+<section id="edit-menu">
+
+<h2>2.4 編集メニューとショートカット</h2>
+
+<p>「編集」メニューには、「削除の取り消し」「元に戻す」「繰り返し」「切り取り」「コピー」「貼り付け」「検索と置換」が並びます。各項目にはアイコンとショートカットキーが表示されます。</p>
+<figure class="guide-detail"><a href="../images/edit-menu.png"><img src="../images/edit-menu.png" width="720" height="420" alt="編集メニュー。削除の取り消し、元に戻すCtrl+Z、繰り返しCtrl+Y、切り取りCtrl+X、コピーCtrl+C、貼り付けCtrl+V、検索と置換が並ぶ。" loading="lazy"></a><figcaption>編集メニュー。操作できない項目は薄く表示されます。</figcaption></figure>
+<div class="table-scroll" role="region" aria-label="編集のショートカット" tabindex="0">
+<table><caption>ショートカットキー</caption><thead><tr><th scope="col">操作</th><th scope="col">Windows・Linux</th><th scope="col">macOS</th></tr></thead><tbody>
+<tr><th scope="row">元に戻す</th><td>Ctrl+Z</td><td>⌘Z</td></tr>
+<tr><th scope="row">繰り返し</th><td>Ctrl+Y</td><td>⇧⌘Z</td></tr>
+<tr><th scope="row">切り取り・コピー・貼り付け</th><td>Ctrl+X・C・V</td><td>⌘X・C・V</td></tr>
+<tr><th scope="row">作品全体を検索</th><td>Ctrl+F</td><td>⌘F</td></tr>
+<tr><th scope="row">検索と置換</th><td>Ctrl+Shift+F</td><td>⌃⇧F</td></tr>
+<tr><th scope="row">保存</th><td>Ctrl+S</td><td>⌘S</td></tr>
+</tbody></table></div>
+<ul><li>「元に戻す」「繰り返し」は、操作中のコード画面の履歴に対して働きます。</li><li>「切り取り」「コピー」は、コード画面で選んだブロックに対して働きます。「貼り付け」は、コピーしたブロックがあるときに選べます。</li><li>「検索と置換」は、<a href="../search/#project-search">作品全体の検索</a>を置換モードで開きます。</li></ul>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/385">編集メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/399">アイコンとショートカット表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/405">検索と置換のショートカット</a></p>
+
+</section>
+
+<section id="extension-controls">
+
+<h2>2.5 右上の機能拡張ボタンとデバッガー</h2>
+
+<p>カメラの権限やTeachable Machineのモデルの設定など、機能拡張が用意する操作ボタンは、メニューバーの右側にまとまって表示されます。ボタンは拡張が必要なときにだけ表示され、作品を読み込み直すと消えます。押すと、その拡張の設定画面や操作が開きます。</p>
+<ul><li>ボタンの名前は、ポインターを置いたときのツールチップで確認できます。画面が狭いときは文字を省略し、アイコンだけになります。</li><li>TurboWarpのデバッガーも同じ場所に表示されます。</li><li>たとえば紙芝居拡張は、YAML台本の実行中だけ、制作用のリロード操作を表示します。</li></ul>
+<p>拡張の作者は、サンドボックスなしの拡張から <code>Scratch.gui.stageControls.addButton</code> でボタンを登録できます。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/367">拡張操作をメニューバー右端へ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/395">デバッガーの表示位置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張作者向けの仕様</a></p>
+
+</section>
+
+<section id="layout">
+
+<h2>2.6 Plus標準配置とScratch配置を使い分ける</h2>
+
+<p>Plus標準配置では、左側にスプライト一覧が固定表示された状態で開きます。中央でコードや素材を編集し、右端からステージを開けます。従来のScratch配置で作業するには、エディターのURLに <code>twPlusStandardLayout=0</code> を指定して開き直します。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/221">Plus標準配置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/292">起動時のスプライト一覧</a></p>
+
+</section>
+<nav class="pager" aria-label="前後のページ">
+<a class="prev" href="../open/"><small>前のページ</small>1. 作品を開き、拡張を準備する</a>
+<a class="next" href="../sprites/"><small>次のページ</small>3. スプライトと背景を編集する</a>
+</nav>
+</main>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+</body></html>
