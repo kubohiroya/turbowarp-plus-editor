@@ -36,27 +36,37 @@ test('find and replace uses workspace edits, keeps references and stages YAML fo
     const options = page.getByRole('listbox', {name: '検索結果'}).getByRole('option');
     const replacement = page.getByRole('textbox', {name: '置換後の文字列'});
     const mac = await page.evaluate(() => navigator.platform.startsWith('Mac'));
+    const replaceKeys = mac ? 'Meta+Shift+f' : 'Control+Shift+f';
+    // Search and replace share one panel, so the replacement box comes with the search field.
     await page.keyboard.press(mac ? 'Meta+f' : 'Control+f');
     await expect(search).toBeFocused();
-    await expect(replacement).toBeHidden();
+    await expect(replacement).toBeVisible();
     await search.press('Escape');
+    await expect(replacement).toBeHidden();
 
     await page.getByText('編集', {exact: true}).click();
     const menuCommand = page.getByRole('button', {name: '検索と置換', exact: true});
-    await expect(menuCommand).toHaveAttribute('aria-keyshortcuts', 'Control+Shift+F');
-    await expect(menuCommand.locator('kbd')).toHaveText(mac ? '⌃⇧F' : 'Ctrl+Shift+F');
+    await expect(menuCommand).toHaveAttribute('aria-keyshortcuts', mac ? 'Meta+Shift+F' : 'Control+Shift+F');
+    await expect(menuCommand.locator('kbd')).toHaveText(mac ? '⇧⌘F' : 'Ctrl+Shift+F');
     await menuCommand.click();
+    await expect(search).toBeFocused();
     await expect(replacement).toBeVisible();
     await search.press('Escape');
     await expect(replacement).toBeHidden();
-    await page.keyboard.press('Control+Shift+f');
-    await expect(search).toBeFocused();
-    await expect(replacement).toBeVisible();
+    // With something to search for, the replace shortcut goes straight to the replacement box.
+    await search.click();
+    await search.fill('old dialogue');
+    await page.keyboard.press(replaceKeys);
+    await expect(replacement).toBeFocused();
+    await replacement.press('Escape');
+    await expect(replacement).toBeHidden();
 
     const edit = async (query, result, value, button = '選択箇所を置換') => {
         await search.click();
         await search.fill(query);
+        // Choosing a result reveals it and keeps the panel open, so it is also the replace target.
         await options.filter({hasText: result}).first().click();
+        await expect(replacement).toBeVisible();
         await replacement.fill(value);
         await page.getByRole('button', {name: button, exact: true}).click();
         if (button === '選択箇所を置換') await expect(page.getByText('置換しました。', {exact: true})).toBeVisible();

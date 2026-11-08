@@ -89,7 +89,6 @@
 }
 
 .replaceTools input { flex: 1 1 100px; }
-.replaceTools button[aria-pressed="true"] { background: var(--looks-light-transparent, #e6dff3); }
 .replaceTools button:disabled { opacity: .55; }
 
 .option {

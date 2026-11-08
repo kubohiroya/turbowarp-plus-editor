@@ -442,8 +442,8 @@
 <h2>26. 編集メニューで取り消し・コピーを行う</h2>
 
 <p>最上段の「編集」メニューには、「削除の取り消し」「元に戻す」「繰り返し」「切り取り」「コピー」「貼り付け」「検索と置換」が並びます。各項目にはアイコンとショートカットキーが表示されます。</p>
-<figure class="guide-detail"><a href="images/edit-menu.png"><img src="images/edit-menu.png" width="720" height="420" alt="編集メニュー。削除の取り消し、元に戻すCtrl+Z、繰り返しCtrl+Y、切り取りCtrl+X、コピーCtrl+C、貼り付けCtrl+V、検索と置換が並ぶ。" loading="lazy"></a><figcaption>編集メニュー。操作できない項目は薄く表示されます。</figcaption></figure>
-<ul><li>「元に戻す」「繰り返し」は、操作中のコード画面の履歴に対して働きます。macOSでは「繰り返し」のショートカットは⇧⌘Zです。</li><li>「切り取り」「コピー」は、コード画面で選んだブロックに対して働きます。「貼り付け」は、コピーしたブロックがあるときに選べます。</li><li>「検索と置換」は、<a href="#project-search">作品全体の検索</a>を置換モードで開きます。</li></ul>
+<figure class="guide-detail"><a href="images/edit-menu.png"><img src="images/edit-menu.png" width="720" height="420" alt="編集メニュー。削除の取り消し、元に戻すCtrl+Z、繰り返しCtrl+Y、切り取りCtrl+X、コピーCtrl+C、貼り付けCtrl+V、検索と置換Ctrl+Shift+Fが並ぶ。" loading="lazy"></a><figcaption>編集メニュー。操作できない項目は薄く表示されます。</figcaption></figure>
+<ul><li>「元に戻す」「繰り返し」は、操作中のコード画面の履歴に対して働きます。macOSでは「繰り返し」のショートカットは⇧⌘Zです。</li><li>「切り取り」「コピー」は、コード画面で選んだブロックに対して働きます。「貼り付け」は、コピーしたブロックがあるときに選べます。</li><li>「検索と置換」は、<a href="#project-search">作品全体の検索</a>のパネルを開き、「置換後の文字列」の欄にカーソルを移します。最上段の検索欄と同じパネルです。ショートカットは⇧⌘F（WindowsはCtrl+Shift+F）です。</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/385">編集メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/399">アイコンとショートカット表示</a></p>
 
 </section>
@@ -452,8 +452,9 @@
 
 <h2>27. 作品全体を検索し、選択箇所を置換する</h2>
 
-<p>最上段の検索欄に語句を入力すると、すべてのスプライトとステージを横断して検索し、結果を種類ごとにまとめて表示します。結果を選ぶと、該当するスプライトのコードや素材が開きます。</p>
-<figure><a href="images/project-search.png"><img src="images/project-search.png" width="1100" height="560" alt="検索欄に速さと入力した結果。検索対象のチェックボックスと置換モードのボタンの下に、変数の使用箇所2件がネコ・全体として表示されている。" loading="lazy"></a><figcaption>「速さ」で検索した例。各結果の右に、スプライト名と変数の範囲が表示されます。</figcaption></figure>
+<p>最上段の検索欄に語句を入力すると、すべてのスプライトとステージを横断して検索し、結果を種類ごとにまとめて表示します。結果を選ぶと、該当するスプライトのコードや素材が開き、パネルはそのまま開いたままになるので、続けて置換できます。Enterキーで選ぶ場合は、移動と同時にパネルを閉じます。</p>
+<p>検索と置換は1つのパネルにまとまっています。⌘F（WindowsはCtrl+F）で検索欄にカーソルが移り、⇧⌘F（WindowsはCtrl+Shift+F）または「編集」メニューの<a href="#edit-menu">「検索と置換」</a>で同じパネルの「置換後の文字列」の欄に移ります。Escapeキーで閉じます。</p>
+<figure><a href="images/project-search.png"><img src="images/project-search.png" width="1100" height="560" alt="検索欄に速さと入力した結果。置換後の文字列の欄と検索対象のチェックボックスの下に、変数の使用箇所2件がネコ・全体として表示されている。" loading="lazy"></a><figcaption>「速さ」で検索した例。各結果の右に、スプライト名と変数の範囲が表示されます。</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="検索対象" tabindex="0">
 <table><caption>「検索対象」で選べる範囲</caption><thead><tr><th scope="col">検索対象</th><th scope="col">結果の見出し</th></tr></thead><tbody>
 <tr><th scope="row">ブロック名</th><td>ブロック</td></tr>
@@ -466,7 +467,7 @@
 <tr><th scope="row">素材名</th><td>コスチューム、背景、音</td></tr>
 </tbody></table></div>
 <h3>選択箇所を置換する</h3>
-<p>「置換モード」を押すと「置換後の文字列」の欄が現れます。結果を一つ選び、「選択箇所を置換」を押すと、その1か所だけを置き換えます。作品全体を一括で置き換える操作はありません。置き換えられない結果には「閲覧専用」と表示されます。</p>
+<p>「置換後の文字列」の欄は、パネルの中に常に表示されています。結果を一つ選び、「選択箇所を置換」を押すと、その1か所だけを置き換えます。作品全体を一括で置き換える操作はありません。置き換えられない結果には「閲覧専用」と表示されます。</p>
 <p>YAML本文の結果では、ボタンが「プレビューで置換」になります。該当する位置を示したプレビューで置換後の内容を確かめ、文書の検証に通った場合に保存されます。置換した内容を作品ファイルに残すには、最後にSB3を保存します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/346">スプライトとステージの横断検索</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/402">作品内検索と選択箇所の置換</a></p>
 
