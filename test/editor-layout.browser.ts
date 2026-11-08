@@ -393,6 +393,37 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     await expect(camera).toBeVisible();
 });
 
+test('the enabled debugger opens from the extension controls even without project extensions', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const editor = origin + buildPrefix + 'editor.html?lang=en';
+    const group = page.getByRole('group', {name: 'Extension controls', exact: true});
+    const debuggerButton = page.locator('.sa-debugger-container');
+    await page.goto(editor);
+    await expect(projectInfoMenuButton(page)).toBeVisible();
+    await expect(debuggerButton).toHaveCount(0);
+    await expect(group).toHaveCount(0);
+
+    const settings = await page.context().newPage();
+    await settings.goto(origin + buildPrefix + 'addons.html?lang=en');
+    await settings.getByRole('textbox', {name: 'Search', exact: true}).fill('Debugger');
+    const toggle = settings.locator('label').filter({has: settings.getByText('Debugger', {exact: true})})
+        .getByRole('checkbox');
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await settings.close();
+    await page.reload();
+
+    await expect(group.locator('.sa-debugger-container')).toBeVisible();
+    await expect(debuggerButton).toHaveCount(1);
+    await expect(page.locator('[data-plus-stage-frame]').locator('.sa-debugger-container')).toHaveCount(0);
+    await debuggerButton.locator('img').click();
+    const panel = page.locator('.sa-debugger-interface');
+    await expect(panel).toBeVisible();
+    await panel.locator('[class*="close-button_close-button"]').click();
+    await expect(panel).toBeHidden();
+});
+
 test('the Plus project menu relocates display settings, runtime actions, and settings dialogs', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');

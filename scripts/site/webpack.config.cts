@@ -83,6 +83,11 @@ config.module.rules.push({
     use: path.join(__dirname, 'connect-menu-bar-controls.cts')
 });
 config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/addons/addons/debugger/userscript.js')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-debugger-menu-button.cts')
+});
+config.module.rules.push({
     include: fs.realpathSync(path.join(gui, 'src/lib/sb-file-uploader-hoc.jsx')),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-project-file-picker.cts')
