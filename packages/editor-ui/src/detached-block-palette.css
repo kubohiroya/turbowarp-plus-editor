@@ -40,13 +40,9 @@
     align-content: flex-start;
 }
 
-.palette[data-palette-orientation="horizontal"] .content,
-.palette[data-palette-orientation="vertical"] .categories {
-    margin-right: calc(2rem + 12px);
-}
-
 .palette[data-palette-orientation="vertical"] .categories {
     flex-direction: row;
+    margin-right: calc(2rem + 12px);
 }
 
 .palette[data-palette-orientation="vertical"] .blocks {
