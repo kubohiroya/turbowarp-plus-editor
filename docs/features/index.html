@@ -15,13 +15,13 @@
 <p><a href="../editor.html?lang=ja">日本語でエディターを開く</a> · <a href="images/capture.json">掲載画面の撮影条件</a></p>
 <p>Scratch 3と標準TurboWarpで保存したSB3は、どちらもPlus Editorで開けます。Plus固有の機能には、対応する拡張や専用データなどが必要なものがあります。</p>
 <p><a href="sb3-compatibility.md">Scratch・TurboWarpのSB3互換性と機能一覧（Markdown）</a></p>
-<p class="guide-note">操作名と配置は2026年11月8日時点の公開版（<code>c7f25ed</code>、TurboWarp Plus Editor 0.2.0-rc.3）で確認しています。「開発中」は試作や開発版で確認した機能、「試作」は公開版で使えるものの対象を限定している機能、「一部の機能拡張で利用可能」は対応する拡張が必要な機能です。図版は撮影時点の画面で、一部の詳細図は前回の撮影を引き継いでいます。画像を選ぶと元の大きさで開けます。 <a href="images/capture.json">撮影条件</a></p>
+<p class="guide-note">確認した版を個別に記した箇所を除き、操作名と配置は2026年11月8日時点の公開版（<code>c7f25ed</code>、TurboWarp Plus Editor 0.2.0-rc.3）で確認しています。「開発中」は試作や開発版で確認した機能、「試作」は公開版で使えるものの対象を限定している機能、「一部の機能拡張で利用可能」は対応する拡張が必要な機能です。図版は撮影時点の画面で、一部の詳細図は前回の撮影を引き継いでいます。画像を選ぶと元の大きさで開けます。 <a href="images/capture.json">撮影条件</a></p>
 <div id="comparison">
 <h2>標準のTurboWarpに加わる機能</h2>
 <div class="table-scroll" role="region" aria-label="標準TurboWarpとPlusの機能比較" tabindex="0">
 <table><thead><tr><th scope="col">作業</th><th scope="col">標準のTurboWarp</th><th scope="col">Plusで加わる操作</th></tr></thead><tbody>
 <tr><th scope="row">作品を開く</th><td>SB3の読み込みと拡張の実行確認</td><td><a href="#loading">読み込みの経過表示</a>、<a href="#extensions">公式カタログ</a>、<a href="#project-diagnostics">読み込みの診断</a></td></tr>
-<tr><th scope="row">作品を管理する</th><td>SB3ファイル単位の保存</td><td><a href="#project-folder">作品フォルダの読み書き</a>、<a href="#local-git">ローカルGitの差分と履歴</a></td></tr>
+<tr><th scope="row">作品を管理する</th><td>SB3ファイル単位の保存</td><td><a href="#project-folder">作品フォルダの読み書き</a>、<a href="#local-git">ローカルGitの差分と履歴</a>、<a href="#pull-request-review">プルリクエストのブロック比較</a></td></tr>
 <tr><th scope="row">作業画面を整える</th><td>コード・ステージ・スプライトの基本配置</td><td><a href="#split-panes">パネルの分割</a>、<a href="#panel-popout">パネルとパレットの別画面</a>、<a href="#dock">ステージの別表示</a>、<a href="#workspace-restore">配置復元</a></td></tr>
 <tr><th scope="row">編集する</th><td>ブロックの入力欄やメニュー</td><td><a href="#project-search">作品全体の検索と置換</a>、<a href="#edit-menu">編集メニュー</a>、<a href="#palette">検索付きの横型パレット</a>、<a href="#minimap">ミニマップ</a>、対応する<a href="#forms">フォーム</a>と<a href="#yaml-tabs">YAMLタブ</a></td></tr>
 <tr><th scope="row">再利用する</th><td>バックパックなどで再利用</td><td><a href="#transfer">スクリプトやステージのファイル転送</a>、<a href="#bundle-assets">バンドル素材の追加</a></td></tr>
@@ -40,7 +40,7 @@
 <ol start="5">
 <li><a href="#sb3-toolchain">sb3-toolchainで作品と拡張を管理する</a></li>
 <li><a href="#project-folder">作品フォルダを開いて保存する</a></li>
-<li><a href="#local-git">ローカルGitで変更と履歴を確かめる</a></li>
+<li><a href="#local-git">ローカルGitで変更と履歴を確かめる</a>（<a href="#pull-request-review">プルリクエストのレビュー</a>）</li>
 </ol></div>
 <div><h2>画面を整える</h2>
 <ol start="8">
@@ -113,7 +113,7 @@
 <tr><th scope="row">組み込みデータ…</th><td>ソースデータと素材の格納方式を選び、バンドル素材を作品に追加する</td><td><a href="#payload-formats">39章</a>、<a href="#bundle-assets">34章</a></td></tr>
 <tr><th scope="row">機能拡張…</th><td>使用中の拡張の格納方式を変え、拡張を追加する</td><td><a href="#extensions">3章</a>、<a href="#storage">38章</a></td></tr>
 <tr><th scope="row">復元ポイント</th><td>TurboWarpが定期的に記録した復元ポイントから作品を戻す</td><td><a href="#save">35章</a></td></tr>
-<tr><th scope="row">ローカル Git…</th><td>リポジトリの変更・差分・履歴を確認する</td><td><a href="#local-git">7章</a></td></tr>
+<tr><th scope="row">ローカル Git…</th><td>リポジトリの変更・履歴や、プルリクエストの差分を確認する</td><td><a href="#local-git">7章</a></td></tr>
 </tbody></table></div>
 <p>SB3ファイルを開いた場合、旧形式の .sb、.sb2 は上書き保存の対象になりません。編集後は「名前を変えて保存…」で .sb3 として保存します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/387">ファイルメニューと保存・書き出しの整理</a></p>
@@ -217,6 +217,19 @@
 <ul><li><strong>変更と差分。</strong> ステージ済み・未ステージ・未追跡の変更を分けて表示します。ファイルを選ぶとテキストの差分、バイナリの素材ならサイズを確認できます。</li><li><strong>ブランチと履歴。</strong> 現在のブランチ、HEAD、ローカルブランチと直近50件のコミットを表示します。コミットを選ぶと第一親との差分を確認できます。</li><li><strong>外部での操作のあと。</strong> コマンドラインなどでGitを操作したら「再取得」を押します。「作品を再読込」は、Editorの未保存の編集を確認してから同じ作品を開き直します。</li></ul>
 <p>パネルはGitの状態を書き換えません。「GitHub 接続」の欄は、接続先が設定された環境で、現在のブランチとGitHubのHTTPSリモート <code>origin</code> に対するfetch、fast-forwardのみのpull、明示的に許可したpushに使います。File System Accessに対応したChromium系ブラウザーが必要です。linked worktree、サブモジュール、シンボリックリンクは対象外で、作業ツリーの実行権限の変更はブラウザーから確認できません。パネルを外すには起動URLに <code>twPlusLocalGit=0</code> を指定します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/313">ローカルGitパネル</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/316">GitHubへの接続とpush</a></p>
+
+<h3 id="pull-request-review">プルリクエストを選び、変更されたスクリプトを確認する</h3>
+<p>公開GitHubリポジトリのプルリクエスト（PR）を、変更全体の概要から個々のスクリプトまで確認できます。以下は、2026年11月8日の公開版（<code>840d37f</code>）で <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">turbowarp-kamishibai-app の PR #219</a> を開いた例です。</p>
+<ol>
+<li><strong>PRを選ぶ。</strong> 「ファイル」→「ローカル Git…」を開き、「リポジトリを選択…」で、対象の公開GitHubリポジトリが <code>origin</code> に設定されたローカルのリポジトリを選びます。「プルリクエスト」を押し、一覧から対象のPRを選びます。番号で開くには「プルリクエスト番号」に番号（例：<code>219</code>）を入力し、「PR を開く」を押します。</li>
+<li><strong>変更概要を確認する。</strong> 右側の「変更レビュー」でPRのタイトルと説明を読み、変更ファイル数、影響するステージ・スプライト数、比較できるスクリプト数を確認します。説明が省略されているときは「PR 本文を表示」で全文を開けます。
+<figure><a href="images/published-editor-git-pr-overview.png"><img src="images/published-editor-git-pr-overview.png" width="1254" height="848" alt="公開版のローカルGitパネル。左にPRの一覧と番号欄、右にPR #219のタイトル、説明、変更ファイル9件、影響するステージ・スプライト16件、スクリプトの比較26件が表示されている。" loading="lazy"></a><figcaption>公開版でPR #219を開いたところ。左でPRを選び、右で変更の規模を確認します。下の「変更ファイル」から比較を読み進めます。</figcaption></figure>
+</li>
+<li><strong>スクリプトをブロックで比較する。</strong> 「変更ファイル」を下にたどり、<code>project.source.json</code>（この例では <code>app/project.source.json</code>）の中から、対象のステージやスプライトの見出しを探します。その下に並ぶ変更のあったスクリプトから、例の「緑の旗が押されたとき」を展開します。左の「変更前」と右の「変更後」を見比べ、枠で示されたブロックがスクリプトのどこにあるかを確認します。長いスクリプトや横に広いブロックは、比較欄をスクロールして確認できます。
+<figure><a href="images/published-editor-git-pr-script.png"><img src="images/published-editor-git-pr-script.png" width="819" height="542" alt="緑の旗が押されたときのスクリプトを、左の変更前と右の変更後に並べた比較画面。右では緑の旗のすぐ下に追加された変数設定ブロックが緑の枠で囲まれている。" loading="lazy"></a><figcaption>PR #219のスクリプト比較。右側の緑の枠が、開始直後に追加された変数設定ブロックを示します。比較画面に登録されていない拡張ブロックは、元の位置に灰色の「未登録: …」として表示されます。</figcaption></figure>
+</li>
+</ol>
+<p>比較を読み終えたら、スクリプトの下の「確認済み」で進み具合を記録できます。この印は表示中のレビューだけに反映されます。「ローカルの変更」で手元の差分表示に戻れます。</p>
 
 </section>
 
