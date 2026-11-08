@@ -63,7 +63,7 @@ test('the browser tab follows the current project title', {timeout: 30_000}, asy
     const openFileMenu = () => page.getByText('File', {exact: true}).click();
     await openFileMenu();
     const chooser = page.waitForEvent('filechooser');
-    await page.getByText('Load from your computer', {exact: true}).click();
+    await page.getByText('Open SB3 File…', {exact: true}).click();
     await (await chooser).setFiles({
         name: '読み込んだ作品.sb3',
         mimeType: 'application/octet-stream',
@@ -73,7 +73,7 @@ test('the browser tab follows the current project title', {timeout: 30_000}, asy
     await expect(page).toHaveTitle('読み込んだ作品 - TurboWarp Plus Editor');
 
     await openFileMenu();
-    await page.getByText('New', {exact: true}).click();
+    await page.getByText('Create New Project', {exact: true}).click();
     await expect(title).toHaveValue('Project');
     await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
 });
