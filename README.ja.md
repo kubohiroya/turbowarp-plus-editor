@@ -1,9 +1,6 @@
 # TurboWarp-Plus-Editor
 
-scratch-guiの本家に存在しなかった実装・ツール・文書・テストは、本リポジトリに集約します。[移設一覧とビルド契約](docs/gui-integration/README.md)を参照してください。
-
-
-[English](README.md)
+[English](README.md) | 日本語
 
 [![TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/)
 
@@ -141,10 +138,12 @@ const html = renderEditButton({language: 'ja', projectURL: 'https://example.com/
 
 ## 開発と配信
 
+scratch-guiの本家に存在しなかった実装・ツール・文書・テストは、本リポジトリに集約します。[移設一覧とビルド契約](docs/gui-integration/README.md)を参照してください。
+
 Node.js 26を使用します。自作コード・スクリプト・設定・テストはTypeScript（`.ts` / CommonJSの`.cts`）で管理します。開発用スクリプトはNode.jsの型除去で実行します。`npm run build` は公開用JavaScriptと型定義を `dist/` へ生成し、`npm pack` でも自動実行されます。実VSCode検証の前に `npm run build:test-driver` を実行します。
 
 ```sh
-npm ci
+TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
 npm run typecheck
 npm run build
 npm test
@@ -153,6 +152,8 @@ E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
 TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
 E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 ```
+
+レビューダイアログはGitの依存で、ビルドが自身のリビジョンを読みます。npmは履歴のないアーカイブから取得するため、素の `npm ci` はここで止まります。固定値がそのリビジョンなので、インストール時に渡します。ワークフローも同じ形で実行します。
 
 ミニマップだけを検証するには、ビルド後に `E2E_GUI_ROOT` を指定して `npm run test:e2e -- workspace-minimap.spec.cts` を実行します。既定表示、URL での非表示、クリックとドラッグでの移動を確認します。
 
@@ -268,12 +269,6 @@ npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format
 ```
 
 `remote-cacheable` は「開く人のブラウザーが検証済みのキャッシュを保持してよい」と記録するだけです。CLIはそのキャッシュ（IndexedDB）を書くことも読むことも確かめることもできないため、オフラインで動く根拠にはなりません。オフラインで動かすには `embedded-file` か `embedded-data` を選びます。
-
-## English
-
-TurboWarp-Plus-Editor is an independent editor distribution by Hiroya Kubo. This downstream package builds the pinned `kubohiroya/scratch-gui` fork, verifies its library versions and integration, and deploys it to GitHub Pages. The upstream libraries do not build the GUI.
-
-Use the landing page to create a project, open an SB3 URL, or continue to the editor and open a local file. Embed the SVG edit icon with the visible label **Edit in TurboWarp-Plus-Editor** and `assets/edit-button.css`; use `lang=en` and an encoded `project_url`. The snippet above preserves the work’s URL and provides a large keyboard-accessible action.
 
 ## ライセンス・製作者
 

@@ -1,9 +1,6 @@
 # TurboWarp-Plus-Editor
 
-GUI-only implementation files, tools, documentation and tests are owned here. See the [relocation inventory and build contract](docs/gui-integration/README.md).
-
-
-[日本語](README.ja.md)
+English | [日本語](README.ja.md)
 
 [![TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/)
 
@@ -18,7 +15,7 @@ An editor for creating and opening TurboWarp Plus projects. It builds kubohiroya
 ## Added features compared with standard TurboWarp
 
 - Edit supported block data in forms, with validation, save/cancel, and Undo.
-- Review Plus extensions and choose how their code is stored: remote references or embedded in the SB3.
+- Review where TurboWarp Plus extensions come from, what they contain, and the conditions under which they run, then choose one of four storage formats, such as a remote reference or embedding in the SB3.
 - Edit, validate, and convert supported documents as YAML/JSON source or blocks.
 - Transfer scripts and stages to other projects with `.blocks3` / `.stage3` files and cross-window copy/paste.
 - Use [Project Properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-properties) to edit the title, description, author, and contact, and save them with timestamps in the SB3. Author and contact fields accept new text or one of the five most recent entries each, with email and HTTPS links.
@@ -29,6 +26,22 @@ Both tools are at the bottom of the **File** menu on ordinary Editor URLs, with 
 The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) includes real screenshots, workflow diagrams, a comparison table, availability conditions, and saving/compatibility details. Forms, documents, and previews require extensions that provide them.
 
 [![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
+
+## Editor layout
+
+In the standard TurboWarp Plus layout, the sprite list is pinned to the left of the editing area at startup. Unpin it and the list opens when you move the pointer to the left edge. The search icon finds sprites by name. While the list is pinned, dragging the divider adds columns as the width allows. The undock button in the action column moves the list and the backdrop tiles into a separate window. Pick a category in the wide palette at the top centre and drag blocks from below it.
+
+The **Stage display** menu at the top right of the stage switches between full screen, visible, and hidden. The project keeps running while the stage is hidden. With free placement enabled, the layout menu can show undock buttons.
+
+To start with the previous layout, add `twPlusStandardLayout=0` to the Editor URL and reload.
+
+In the standard layout, the code area shows a minimap above the zoom out, zoom in, and reset buttons at the bottom right. Click it or drag the viewport frame to move. To hide it, add `twPlusWorkspaceMinimap=0` to the Editor URL and reload.
+
+Press and hold a category icon to reorder categories in either the vertical or the horizontal palette. Releasing over another position commits the move, and releasing outside the palette cancels it. To disable reordering, add `twPlusPaletteCategoryReorder=0` and reload.
+
+The context menus of the sprite and asset lists, of blocks, and of the code area show an icon next to each action name. To disable the icons, add `twPlusContextMenuIcons=0` to the Editor URL and reload.
+
+Dragging a block from the code area far enough into the palette blurs the palette and shows a wastebasket at its centre. In the horizontal palette it also appears on the category band while the block list is closed. To disable the preview, add `twPlusPaletteDeletePreview=0` and reload. To check the rollback, delete a block by dropping it on the palette and confirm that Undo restores it.
 
 ## Distribution responsibilities
 
@@ -125,6 +138,8 @@ The package includes the brand SVG, button CSS, URL/HTML helpers, and pinned dis
 
 ## Development and deployment
 
+Implementation files, tools, documentation and tests that do not exist upstream in scratch-gui are collected in this repository. See the [relocation inventory and build contract](docs/gui-integration/README.md).
+
 Use Node.js 26. All maintained JavaScript sources, build scripts, configurations, and tests are authored in TypeScript (`.ts`, or `.cts` for CommonJS). Node.js runs development scripts directly with native type stripping. Browser modules are emitted as JavaScript with esbuild, and npm entry points and declarations are compiled into `dist/` with TypeScript.
 
 ```sh
@@ -140,13 +155,23 @@ E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 
 The review dialog is a Git dependency whose build reads its own revision, and npm installs it from an archive with no history to read it from — so a plain `npm ci` stops there. The pin is what it asks for, which is why the install carries it; this is the form the workflows use.
 
+To check the minimap alone, build first and then run `npm run test:e2e -- workspace-minimap.spec.cts` with `E2E_GUI_ROOT` set. It covers the default display, hiding it from the URL, and moving by click and drag.
+
 `npm run build` produces the npm JavaScript and declarations; `npm pack` runs it automatically. `npm run build:test-driver` compiles the optional VSCode test extension before native VSCode checks.
 
 Check out the GUI and Packager SHAs recorded in `site/source.json`. Install the GUI dependencies and prepare that upstream checkout with `node scripts/prepublish.mjs`. The build verifies the GUI SHA, installed data-editor SHA, and security-dialog version against the pins. Pages deploys from main after successful integration checks. Release tags must match the npm version.
 
 For the Cloudflare option in the Local Git panel, set both `TW_PLUS_GIT_BFF_ORIGIN` and `TW_PLUS_GIT_PROXY_ORIGIN` to exact HTTPS origins at build time. The Desktop local option is available when the host exposes `EditorPreload.localGit`. Use `twPlusLocalGit=0` to hide the Git panel at startup.
 
+**Reviewing the changes in a public PR**: choose a repository under **File → Local Git…**, then open **Pull requests** at the top of the panel. In a working folder whose `origin` is GitHub, pick a PR from the list or by number. The PR body and its changed files are shown, and changes to `project.source.json` can be expanded per target and per script. The comparison uses the PR’s merge base and head. Communication with GitHub is read-only through the public API, and the reviewed marks last only while the panel stays open. The public API rate limits apply. Unregistered extension blocks are shown as substitute blocks that convey their names and connections; extension code is never fetched or run. To roll the feature back, revert the Git package pin and the host connection changes together.
+
 This repository verifies the integrated Editor. Existing upstream unit tests and GUI feature flags are preserved. After verifying the new distribution, migrate references and stop the former data-editor Pages site without leaving a redirect deployment. To roll back, revert to the previous GUI pin and site changes, then redeploy the previous artifact. To undo the TypeScript migration, revert its changes and restore the previous JavaScript sources and package configuration.
+
+### CI verification scope
+
+While the repository variable `TW_PLUS_CI_SCOPED` is unset, the previous verification runs in full. Set it to `1` and an ordinary PR runs the items that match its diff, while `main` reuses the items that already passed in a PR CI run with the same Git tree and verification contract. When the diff or the evidence cannot be read, it falls back to full verification. Artifacts for Pages are always built from the `main` revision.
+
+To return to the previous verification, unset the variable or set it to `0`. Before a stable release, run full verification against the commit the tag points at.
 
 ## Editing embedded documents (0.2.0-rc.1)
 
