@@ -938,6 +938,30 @@ test('the menu bar opens one stage in each presentation and focuses the existing
     });
     await expect(page.getByRole('button', {name: 'Camera', exact: true})).toBeInViewport({ratio: 1});
     await expect(open).toBeInViewport({ratio: 1});
+
+    // The launcher is one of the menu bar's own items: on the row's centre line, holding the same
+    // margin to the row's trailing edge that the project icon holds at its leading edge, and inside
+    // the window at the widths where the GUI's page wrapper stops narrowing and the row would
+    // otherwise end outside it.
+    const menuBar = page.locator('[class*="menu-bar_menu-bar_"]').first();
+    const projectIcon = page.getByLabel(/^TurboWarp Plus (プロジェクト情報|project information)$/).first();
+    const launcher = page.locator('[class*="stageLauncher_"]').first();
+    const [barBox, iconBox, launcherBox] = await Promise.all(
+        [menuBar, projectIcon, launcher].map(locator => locator.boundingBox()));
+    assert.equal(Math.round(launcherBox.y + (launcherBox.height / 2)),
+        Math.round(iconBox.y + (iconBox.height / 2)));
+    assert.equal(await launcher.evaluate(element => getComputedStyle(element).marginInlineEnd),
+        await projectIcon.evaluate(element => getComputedStyle(element.parentElement).marginInlineStart));
+    assert.ok(launcherBox.y - barBox.y >= 4, 'the launcher sits off the top edge of the menu bar');
+    assert.ok(barBox.x + barBox.width - (launcherBox.x + launcherBox.width) >= iconBox.x - barBox.x,
+        'the launcher keeps the leading inset of the project icon at the trailing edge of the row');
+    for (const narrow of [900, 800, 700, 640]) {
+        await page.setViewportSize({width: narrow, height: 800});
+        await expect(open).toBeInViewport({ratio: 1});
+        await expect(options).toBeInViewport({ratio: 1});
+    }
+    await page.setViewportSize({width: 1024, height: 800});
+    await expect(open).toBeInViewport({ratio: 1});
     const checkCanvas = async (target: Page) => {
         await expect(stage(target)).toBeVisible();
         assert.equal(await page.evaluate(() => vm.renderer.canvas === window.initialStageCanvas), true);
