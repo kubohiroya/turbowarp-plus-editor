@@ -151,7 +151,7 @@ const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.c
     'sprite-properties.css', 'windows.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-editor-toolbar',
-    'sprite-properties', 'sprite-tabs', 'stage-surface', 'dockview-styles', 'windows']) {
+    'sprite-properties', 'sprite-tabs', 'project-messages', 'stage-surface', 'dockview-styles', 'windows']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }

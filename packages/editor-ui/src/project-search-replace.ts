@@ -105,6 +105,24 @@ function validName(value: string) {
     return Boolean(value.trim()) && value === value.trim() && !/[\u0000-\u001f\u007f]/u.test(value);
 }
 
+/** Rename a message from the message section, where no block result carries the edit. */
+export function renameProjectMessage(project: SearchProject, workspace: ReplaceWorkspace,
+    id: string, next: string): ReplaceOutcome {
+    if (workspace.options.readOnly || workspace.isDragging()) return 'read-only';
+    const owner = project.targets.find(target => Object.hasOwn(target.variables, id));
+    const variable = owner?.variables[id];
+    if (variable?.type !== 'broadcast_msg' || workspace.getVariableById(id)?.name !== variable.name) return 'stale';
+    if (!validName(next)) return 'invalid';
+    const match = next.toLocaleLowerCase();
+    if (project.targets.some(target => Object.entries(target.variables).some(([other, candidate]) =>
+        other !== id && candidate.type === 'broadcast_msg' && candidate.name.toLocaleLowerCase() === match))) {
+        return 'conflict';
+    }
+    maintainBroadcastReferences(project, workspace, id);
+    workspace.renameVariableById(id, next);
+    return workspace.getVariableById(id)?.name === next ? 'applied' : 'conflict';
+}
+
 export function applyProjectSearchReplacement(project: SearchProject, workspace: ReplaceWorkspace,
     Blockly: ReplaceBlockly, result: ProjectSearchResult, next: string): ReplaceOutcome {
     if (workspace.options.readOnly || workspace.isDragging() || !result.edit) return 'read-only';

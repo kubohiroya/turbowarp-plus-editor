@@ -1,9 +1,12 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
 import {searchProject, searchYamlDocuments, type ProjectSearchResult, type SearchKind, type SearchProject, type SearchResult} from './project-search.ts';
-import {connectProjectReplaceOpener, connectionFor, projectReplaceShortcut, type SearchDocuments} from './project-search-connections.ts';
+import {activateTargetView, connectProjectReplaceOpener, connectionFor, projectReplaceShortcut,
+    type SearchDocuments} from './project-search-connections.ts';
 import {applyProjectSearchReplacement, replacementText, type ReplaceOutcome} from './project-search-replace.ts';
 export {connectProjectSearchNavigation} from './project-search-connections.ts';
+export {activateTargetView, type SearchNavigation} from './project-search-connections.ts';
+export {renameProjectMessage} from './project-search-replace.ts';
 import styles from './project-search.css';
 
 const pageSize = 60;
@@ -340,20 +343,15 @@ export function ProjectSearch(search: Omit<SearchBoxProps, 'select' | 'replace' 
     if (!navigation) return null;
     const moveToResult = (result: ProjectSearchResult) => {
         const {target} = result;
-        const views = navigation.getViews();
-        if (!views || navigation.getTarget(target.id) !== target) return;
-        const groupId = views.currentView()?.groupId;
-        const localView = views.views().find(view => view.groupId === groupId && view.targetId === target.id);
-        if (localView) views.activateView(localView.id);
-        else views.select(target.id);
-        const destination = views.currentView();
-        if (destination?.targetId !== target.id) return;
-        const section = result.kind === 'sound' ? 2 : 'asset' in result ? 1 : 0;
-        views.setViewSection(destination.id, section);
+        if (navigation.getTarget(target.id) !== target) return;
+        const moved = activateTargetView(navigation, target.id,
+            result.kind === 'sound' ? 2 : 'asset' in result ? 1 : 0);
+        if (!moved) return;
         return () => {
-            const current = views.currentView();
-            return connection.navigation === navigation && navigation.getViews() === views &&
-                navigation.getEditingTarget() === target && current?.id === destination.id && current.section === section;
+            const current = moved.views.currentView();
+            return connection.navigation === navigation && navigation.getViews() === moved.views &&
+                navigation.getEditingTarget() === target && current?.id === moved.viewId &&
+                current.section === moved.section;
         };
     };
     const select = (result: SearchResult) => {

@@ -81,7 +81,7 @@
     "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
     "@kubohiroya/turbowarp-plus-editor-auth": "file:vendor/kubohiroya-turbowarp-plus-editor-auth-0.3.0.tgz",
     "@kubohiroya/turbowarp-plus-editor-git": "file:vendor/kubohiroya-turbowarp-plus-editor-git-0.4.0.tgz",
-    "@kubohiroya/turbowarp-plus-editor-layout": "0.1.26",
+    "@kubohiroya/turbowarp-plus-editor-layout": "0.1.30",
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
     "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",
     "@kubohiroya/turbowarp-plus-editor-views": "file:packages/editor-views",
