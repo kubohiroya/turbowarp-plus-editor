@@ -529,6 +529,10 @@ test.describe('タッチ操作', () => {
         const motion = toolbox.locator('.scratchCategoryId-motion');
         const looks = toolbox.locator('.scratchCategoryId-looks');
         await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+        // The categories are laid out after the palette turns horizontal, so measuring one before
+        // it is visible returns no box at all.
+        await expect(looks).toBeVisible();
+        await expect(motion).toBeVisible();
         const touchPoint = async locator => {
             const {x, y, width, height} = await locator.boundingBox();
             return {x: x + width / 2, y: y + height / 2};

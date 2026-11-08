@@ -1,9 +1,12 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
 import {searchProject, searchYamlDocuments, type ProjectSearchResult, type SearchKind, type SearchProject, type SearchResult} from './project-search.ts';
-import {connectProjectReplaceOpener, connectionFor, projectReplaceShortcut, type SearchDocuments} from './project-search-connections.ts';
+import {activateTargetView, connectProjectReplaceOpener, connectionFor, projectReplaceShortcut,
+    type SearchDocuments} from './project-search-connections.ts';
 import {applyProjectSearchReplacement, replacementText, type ReplaceOutcome} from './project-search-replace.ts';
 export {connectProjectSearchNavigation} from './project-search-connections.ts';
+export {activateTargetView, type SearchNavigation} from './project-search-connections.ts';
+export {renameProjectMessage} from './project-search-replace.ts';
 import styles from './project-search.css';
 
 const pageSize = 60;
@@ -26,6 +29,7 @@ type SearchBoxProps = {
     replace(result: SearchResult, value: string): Promise<ReplaceOutcome>;
 };
 
+const pickMatch: [string, string] = ['置換する項目を一覧から選んでください。', 'Select a match in the list to replace.'];
 const replaceMessages: Record<ReplaceOutcome, [string, string]> = {
     applied: ['置換しました。', 'Replaced.'],
     staged: ['YAML の置換内容を確認してください。', 'Review the replacement in the YAML preview.'],
@@ -39,7 +43,6 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
     const japanese = /^ja(?:-|$)/i.test(locale);
     const [query, setQuery] = React.useState('');
     const [open, setOpen] = React.useState(false);
-    const [replaceMode, setReplaceMode] = React.useState(false);
     const [replacement, setReplacement] = React.useState('');
     const [outcome, setOutcome] = React.useState<ReplaceOutcome>();
     const [replacing, setReplacing] = React.useState(false);
@@ -48,8 +51,11 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
     const [active, setActive] = React.useState<SearchResult>();
     const [kinds, setKinds] = React.useState(() => new Set(filters.flatMap(filter => filter.kinds)));
     const input = React.useRef<HTMLInputElement>();
+    const box = React.useRef<HTMLDivElement>();
     const popup = React.useRef<HTMLDivElement>();
+    const replaceField = React.useRef<HTMLInputElement>();
     const replacingMatch = React.useRef(false);
+    const revealing = React.useRef(0);
     const searchYaml = open && kinds.has('yaml') && Boolean(query.trim());
     const yamlDocuments = React.useMemo(() => searchYaml ? documents?.getSearchableYamlDocuments() ?? [] : [],
         [searchYaml, documents, revision]);
@@ -78,9 +84,23 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
             field.select();
         };
         const openReplace = () => {
-            setReplaceMode(true);
             setOpen(true);
-            focusSearch();
+            if (!field.value.trim()) {
+                focusSearch();
+                return;
+            }
+            // The popup may mount in this update, so wait for it before reaching into it.
+            const focusReplacement = (retries: number) => {
+                const target = replaceField.current;
+                if (!target) {
+                    if (retries) win.requestAnimationFrame(() => focusReplacement(retries - 1));
+                    else focusSearch();
+                    return;
+                }
+                target.focus();
+                target.select();
+            };
+            win.requestAnimationFrame(() => focusReplacement(2));
         };
         const disconnectReplace = connectProjectReplaceOpener(project, openReplace);
         const shortcut = (event: KeyboardEvent) => {
@@ -107,7 +127,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
         const win = field.ownerDocument.defaultView;
         const place = () => {
             const rect = field.getBoundingClientRect();
-            const width = Math.min(replaceMode ? 430 : 340, win.innerWidth - 16);
+            const width = Math.min(430, win.innerWidth - 16);
             const below = win.innerHeight - rect.bottom - 12;
             const above = rect.top - 12;
             const placeBelow = below >= 160 || below >= above;
@@ -115,20 +135,29 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
             panel.style.left = `${Math.max(8, Math.min(rect.right - width, win.innerWidth - width - 8))}px`;
             panel.style.top = placeBelow ? `${rect.bottom + 4}px` : 'auto';
             panel.style.bottom = placeBelow ? 'auto' : `${win.innerHeight - rect.top + 4}px`;
-            panel.style.maxHeight = `${Math.min(replaceMode ? 450 : 320, placeBelow ? below : above)}px`;
+            panel.style.maxHeight = `${Math.min(450, placeBelow ? below : above)}px`;
         };
         place();
         if (panel.showPopover && !panel.matches(':popover-open')) panel.showPopover();
+        // Revealing a result keeps the panel open, so a press anywhere else has to dismiss it:
+        // blur cannot tell the editor taking focus from the reader turning to something else.
+        const dismiss = (event: Event) => {
+            const target = event.target as Node;
+            if (box.current?.contains(target) || panel.contains(target)) return;
+            close();
+        };
         const observer = new win.ResizeObserver(place);
         observer.observe(field);
+        win.addEventListener('pointerdown', dismiss, true);
         win.addEventListener('resize', place);
         win.addEventListener('scroll', place, true);
         return () => {
             observer.disconnect();
+            win.removeEventListener('pointerdown', dismiss, true);
             win.removeEventListener('resize', place);
             win.removeEventListener('scroll', place, true);
         };
-    }, [show, replaceMode]);
+    }, [show]);
 
     React.useLayoutEffect(() => {
         if (activeIndex >= 0) input.current.ownerDocument.getElementById(optionId(activeIndex))?.scrollIntoView({block: 'nearest'});
@@ -139,12 +168,23 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
         setActive(undefined);
     }
 
+    function reveal(result: SearchResult) {
+        const win = input.current.ownerDocument.defaultView;
+        // Revealing a result moves the editor, and a YAML preview takes focus when it opens. Keep
+        // the panel open through that so the same result is still the one the replacement applies
+        // to, and leave focus wherever the destination put it.
+        revealing.current += 1;
+        select(result);
+        win.setTimeout(() => { revealing.current -= 1; }, 1000);
+    }
+
     function choose(result: SearchResult) {
-        if (replaceMode) {
-            setActive(result);
-            setOutcome(undefined);
-            return;
-        }
+        setActive(result);
+        setOutcome(undefined);
+        reveal(result);
+    }
+
+    function jump(result: SearchResult) {
         close();
         select(result);
     }
@@ -173,8 +213,8 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
         }
     }
 
-    return <div className={styles.field} onBlur={event => {
-        if (!replacingMatch.current && !event.currentTarget.contains(event.relatedTarget) &&
+    return <div ref={box} className={styles.field} onBlur={event => {
+        if (!replacingMatch.current && !revealing.current && !event.currentTarget.contains(event.relatedTarget) &&
             !popup.current?.contains(event.relatedTarget)) close();
     }}>
         <input ref={input} type="search" role="combobox" autoComplete="off" aria-autocomplete="list"
@@ -200,10 +240,10 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                     event.preventDefault();
                     close();
                 } else if (event.key === 'Tab' && !event.shiftKey && open) {
-                    const firstFilter = popup.current?.querySelector<HTMLInputElement>('input[type=checkbox]');
-                    if (firstFilter) {
+                    const first = popup.current?.querySelector<HTMLElement>('input, button');
+                    if (first) {
                         event.preventDefault();
-                        firstFilter.focus();
+                        first.focus();
                     }
                 } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                     event.preventDefault();
@@ -216,7 +256,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                     }
                 } else if (event.key === 'Enter' && visible.length) {
                     event.preventDefault();
-                    choose(active ?? visible[0]);
+                    jump(active ?? visible[0]);
                 }
             }} />
         {show && input.current && createPortal(
@@ -224,7 +264,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                 {...(typeof input.current.showPopover === 'function' ? {popover: 'manual'} : {})}
                 onKeyDown={event => {
                     const backToSearch = event.key === 'Tab' && event.shiftKey &&
-                        event.target === popup.current.querySelector('input[type=checkbox]');
+                        event.target === popup.current.querySelector('input, button');
                     if (event.key !== 'Escape' && !backToSearch) return;
                     event.preventDefault();
                     event.stopPropagation();
@@ -237,6 +277,20 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                         setLimit(limit + pageSize);
                     }
                 }}>
+                <div className={styles.replaceTools}>
+                    <input ref={replaceField} type="text" autoComplete="off" value={replacement}
+                        placeholder={japanese ? '置換後の文字列' : 'Replace with'}
+                        aria-label={japanese ? '置換後の文字列' : 'Replace with'}
+                        onChange={event => {setReplacement(event.currentTarget.value); setOutcome(undefined);}} />
+                    <button type="button" disabled={replacing || proposed === undefined}
+                        onClick={() => void replaceSelected()}>
+                        {active?.kind === 'yaml' ? (japanese ? 'プレビューで置換' : 'Replace in preview') :
+                            (japanese ? '選択箇所を置換' : 'Replace selected match')}
+                    </button>
+                </div>
+                {outcome ? <div className={styles.empty} role="status">{replaceMessages[outcome][japanese ? 0 : 1]}</div> :
+                    replacement && !active ?
+                        <div className={styles.empty} role="status">{pickMatch[japanese ? 0 : 1]}</div> : null}
                 <fieldset className={styles.filters}>
                     <legend>{japanese ? '検索対象' : 'Search in'}</legend>
                     {filters.filter(filter => documents || !filter.kinds.includes('yaml')).map(filter =>
@@ -253,25 +307,6 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                         </label>
                     )}
                 </fieldset>
-                <div className={styles.replaceTools}>
-                    <button type="button" aria-pressed={replaceMode} onClick={() => {
-                        setReplaceMode(!replaceMode);
-                        setOutcome(undefined);
-                        setActive(undefined);
-                    }}>{japanese ? '置換モード' : 'Replace mode'}</button>
-                    {replaceMode && <>
-                        <input type="text" autoComplete="off" value={replacement}
-                            placeholder={japanese ? '置換後の文字列' : 'Replace with'}
-                            aria-label={japanese ? '置換後の文字列' : 'Replace with'}
-                            onChange={event => {setReplacement(event.currentTarget.value); setOutcome(undefined);}} />
-                        <button type="button" disabled={replacing || proposed === undefined}
-                            onClick={() => void replaceSelected()}>
-                            {active?.kind === 'yaml' ? (japanese ? 'プレビューで置換' : 'Replace in preview') :
-                                (japanese ? '選択箇所を置換' : 'Replace selected match')}
-                        </button>
-                    </>}
-                </div>
-                {replaceMode && outcome && <div className={styles.empty} role="status">{replaceMessages[outcome][japanese ? 0 : 1]}</div>}
                 <div role="listbox" id={listId} aria-label={japanese ? '検索結果' : 'Search results'}>
                     {groups.map(group => <div key={group.kind} role="group" aria-labelledby={`${listId}-${group.kind}`}>
                         <div id={`${listId}-${group.kind}`} className={styles.heading}>{group.title} <span>{group.results.length}</span></div>
@@ -283,7 +318,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                                 aria-selected={result === active} onPointerDown={event => event.preventDefault()}
                                 onClick={() => choose(result)}>
                                 <span>{result.label}</span>
-                                <small>{[name, result.detail, replaceMode && !canEdit(result) &&
+                                <small>{[name, result.detail, !canEdit(result) &&
                                     (japanese ? '閲覧専用' : 'Read only')].filter(Boolean).join(' · ')}</small>
                             </div>;
                         })}
@@ -340,20 +375,15 @@ export function ProjectSearch(search: Omit<SearchBoxProps, 'select' | 'replace' 
     if (!navigation) return null;
     const moveToResult = (result: ProjectSearchResult) => {
         const {target} = result;
-        const views = navigation.getViews();
-        if (!views || navigation.getTarget(target.id) !== target) return;
-        const groupId = views.currentView()?.groupId;
-        const localView = views.views().find(view => view.groupId === groupId && view.targetId === target.id);
-        if (localView) views.activateView(localView.id);
-        else views.select(target.id);
-        const destination = views.currentView();
-        if (destination?.targetId !== target.id) return;
-        const section = result.kind === 'sound' ? 2 : 'asset' in result ? 1 : 0;
-        views.setViewSection(destination.id, section);
+        if (navigation.getTarget(target.id) !== target) return;
+        const moved = activateTargetView(navigation, target.id,
+            result.kind === 'sound' ? 2 : 'asset' in result ? 1 : 0);
+        if (!moved) return;
         return () => {
-            const current = views.currentView();
-            return connection.navigation === navigation && navigation.getViews() === views &&
-                navigation.getEditingTarget() === target && current?.id === destination.id && current.section === section;
+            const current = moved.views.currentView();
+            return connection.navigation === navigation && navigation.getViews() === moved.views &&
+                navigation.getEditingTarget() === target && current?.id === moved.viewId &&
+                current.section === moved.section;
         };
     };
     const select = (result: SearchResult) => {

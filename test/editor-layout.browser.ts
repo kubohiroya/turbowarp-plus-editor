@@ -371,8 +371,15 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     await expect(stage.locator('[data-extension-stage-control]')).toHaveCount(0);
     await expect(stage.getByTitle('Go', {exact: true})).toBeVisible();
     await expect(stage.getByTitle('Stop', {exact: true})).toBeVisible();
-    const [barBounds, controlsBounds] = await Promise.all([menuBar.boundingBox(), controls.boundingBox()]);
-    assert.ok(Math.abs(barBounds.x + barBounds.width - controlsBounds.x - controlsBounds.width) <= 8);
+    const [barBounds, controlsBounds, cameraBounds] =
+        await Promise.all([menuBar.boundingBox(), controls.boundingBox(), camera.boundingBox()]);
+    // The frame is one of the menu bar's own controls: its height is the row's button height, it is
+    // centred in the row, and it keeps the row's half-rem margin at the right edge.
+    assert.equal(controlsBounds.height, 32);
+    assert.equal(barBounds.x + barBounds.width - controlsBounds.x - controlsBounds.width, 8);
+    assert.ok(Math.abs((controlsBounds.y - barBounds.y) -
+        (barBounds.height - controlsBounds.height) / 2) <= 1);
+    assert.ok(cameraBounds.height < controlsBounds.height);
     assert.equal((await canvas.boundingBox()).width, originalWidth);
     await resize.press('Home');
     await expect.poll(async () => (await canvas.boundingBox()).width).toBeLessThan(originalWidth);
@@ -416,6 +423,8 @@ test('the enabled debugger opens from the extension controls even without projec
 
     await expect(group.locator('.sa-debugger-container')).toBeVisible();
     await expect(debuggerButton).toHaveCount(1);
+    // The add-on's button is stage sized on its own; inside the frame it keeps the row's height.
+    assert.equal((await group.boundingBox()).height, 32);
     await expect(page.locator('[data-plus-stage-frame]').locator('.sa-debugger-container')).toHaveCount(0);
     await debuggerButton.locator('img').click();
     const panel = page.locator('.sa-debugger-interface');
@@ -1396,7 +1405,7 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
     const code = section('Code');
     const costumes = section('Costumes');
-    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables'];
+    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables', 'Messages'];
     await expect(toolbar.getByRole('tab')).toHaveCount(sections.length);
     const bounds = await Promise.all(sections.map(async name => {
         const tab = section(name);
@@ -1647,6 +1656,96 @@ test('the Dockview asset connection restores the native costume and sound select
     await expect(variable(1)).toHaveValue('23');
     assert.equal(await page.evaluate(() => window.vm.editingTarget.variables['dockview-counter'].value), 23);
     assert.deepEqual(errors, []);
+});
+
+test('the Dockview variables pane lists only variables owned by the selected target', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.setDefaultTimeout(8_000);
+    await page.addInitScript(() => localStorage.setItem('tw:theme', 'dark'));
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    const spriteName = await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const stage = vm.runtime.getTargetForStage();
+        for (const id of Object.keys(stage.variables)) stage.deleteVariable(id);
+        sprite.createVariable('local-score', '得点', '', false);
+        stage.createVariable('project-score', '得点', '', false);
+        stage.createVariable('cloud-score', '☁ 記録', '', true);
+        stage.createVariable('legacy-cloud', '共有記録', '', true);
+        stage.createVariable('plain-cloud-name', '☁ メモ', '', false);
+        stage.createVariable('project-list', 'リスト', 'list', false);
+        vm.emitTargetsUpdate();
+        return sprite.getName();
+    });
+    const showVariables = () => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
+        .getByRole('tab', {name: '変数など', exact: true}).click();
+    const pane = page.getByRole('region', {name: '変数', exact: true});
+    const fields = pane.locator('[data-variable-id]');
+    const variableIds = () => fields.evaluateAll(inputs => inputs.map(input => input.getAttribute('data-variable-id')));
+    const score = pane.getByRole('textbox', {name: '得点', exact: true});
+    const cloud = pane.getByRole('img', {name: 'クラウド変数', exact: true});
+    const scope = pane.locator('.tw-sprite-variables__scope');
+    const create = pane.getByRole('form', {name: '変数を作る', exact: true});
+    const rename = pane.getByRole('form', {name: '名前を変更', exact: true});
+    const remove = pane.getByRole('form', {name: '削除', exact: true});
+    const variableRow = (name: string) => pane.getByRole('row').filter({has: page.getByRole('textbox', {name, exact: true})});
+    const startCreate = () => pane.getByRole('button', {name: '変数を作る', exact: true}).click();
+    const submitCreate = () => create.getByRole('button', {name: '変数を作る', exact: true}).click();
+
+    await showVariables();
+    await expect.poll(variableIds).toEqual(['local-score']);
+    await expect(scope).toHaveCount(0);
+    await expect(cloud).toHaveCount(0);
+    await score.fill('17');
+    await score.press('Enter');
+
+    await startCreate();
+    await create.getByRole('textbox').fill('得点');
+    await submitCreate();
+    await expect(create.getByRole('alert')).toHaveText('同じ名前の変数がすでにあります。');
+    await create.getByRole('textbox').fill('速度');
+    await submitCreate();
+    const speed = pane.getByRole('textbox', {name: '速度', exact: true});
+    await expect(speed).toHaveValue('0');
+    const speedId = await speed.getAttribute('data-variable-id');
+    await page.evaluate(id => vm.editingTarget.blocks.createBlock({
+        id: 'speed-reference', opcode: 'data_variable', inputs: {},
+        fields: {VARIABLE: {name: 'VARIABLE', id, value: '速度', variableType: ''}},
+        shadow: false, topLevel: true, parent: null, next: null, x: 10, y: 10
+    }), speedId);
+    await variableRow('速度').getByRole('button', {name: '名前を変更', exact: true}).click();
+    await rename.getByRole('textbox').fill('速さ');
+    await rename.getByRole('button', {name: '名前を変更', exact: true}).click();
+    await expect(variableRow('速さ')).toBeVisible();
+    assert.equal(await page.evaluate(() => vm.editingTarget.blocks.getBlock('speed-reference').fields.VARIABLE.value), '速さ');
+    await variableRow('速さ').getByRole('button', {name: '削除', exact: true}).click();
+    await remove.getByRole('button', {name: '削除', exact: true}).click();
+    await expect(remove.getByRole('alert')).toContainText('ブロックで使用中です');
+    await expect(variableRow('速さ')).toBeVisible();
+    await page.evaluate(() => vm.editingTarget.blocks.deleteBlock('speed-reference'));
+    await remove.getByRole('button', {name: '削除', exact: true}).click();
+    await expect(variableRow('速さ')).toHaveCount(0);
+
+    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await showVariables();
+    await expect.poll(variableIds).toEqual(['project-score', 'cloud-score', 'legacy-cloud', 'plain-cloud-name']);
+    await expect(scope).toHaveCount(0);
+    await expect(cloud).toHaveCount(2);
+    await expect(cloud.first()).toHaveCSS('color', 'rgb(35, 153, 194)');
+    await expect(pane.getByRole('rowheader')).toHaveText(['得点', '☁︎ 記録', '☁︎ 共有記録', '☁ メモ']);
+    await expect(score).toHaveValue('0');
+    await score.fill('23');
+    await score.press('Enter');
+    await startCreate();
+    await create.getByRole('textbox').fill('作品用');
+    await submitCreate();
+    await expect(variableRow('作品用')).toBeVisible();
+
+    await page.getByRole('tab', {name: spriteName, exact: true}).click();
+    await showVariables();
+    await expect(score).toHaveValue('17');
+    await expect(variableRow('作品用')).toHaveCount(0);
+    assert.equal(await page.evaluate(() => vm.runtime.getTargetForStage().variables['project-score'].value), 23);
 });
 
 test('two Dockview code panes keep independent positions and zoom for the same sprite', {timeout: 45_000}, async t => {

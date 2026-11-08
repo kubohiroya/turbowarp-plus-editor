@@ -107,10 +107,20 @@
 
 <h2>10.6 プルリクエストをスクリプト単位でレビューする</h2>
 
-<p>GitHubを <code>origin</code> に設定した作業フォルダでは、ローカルGitパネル上部の「プルリクエスト」から、公開リポジトリのプルリクエストを確認できます。</p>
-<ol><li>一覧から選ぶか、「プルリクエスト番号」を入力します。オープン・ドラフト・マージ済み・クローズ済みの状態が表示されます。</li><li>「PR 本文を表示」で、作者が書いた目的と確認の観点を読みます。</li><li>変更されたファイルの一覧から、作品ファイルを開きます。作品の変更はステージ・スプライトごとに整理され、変更のあったスクリプトを展開すると、前後のスクリプトがブロックで並びます（<a href="#block-diff">作品の変更をブロックで比べる</a>）。</li><li>確認したスクリプトに「スクリプト確認済み」の印を付けながら進めます。印は表示中だけ保持されます。</li><li>「GitHub で開く」で、GitHub上のプルリクエストに移ってレビューを送ります。</li></ol>
-<p>比較にはプルリクエストのマージベースとheadを使います。GitHubへの通信は公開APIの読み取りだけで、公開APIの利用上限が適用されます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">Editorへの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRをScratchスクリプトでレビュー</a></p>
+<p>公開GitHubリポジトリのプルリクエスト（PR）を、変更全体の概要から個々のスクリプトまで確認できます。以下は、2026年11月8日の公開版（<code>840d37f</code>）で <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">turbowarp-kamishibai-app の PR #219</a> を開いた例です。</p>
+<ol>
+<li><strong>PRを選ぶ。</strong> 「ファイル」→「ローカル Git…」を開き、「リポジトリを選択…」で、対象の公開GitHubリポジトリが <code>origin</code> に設定されたローカルのリポジトリを選びます。「プルリクエスト」を押し、一覧から対象のPRを選びます。番号で開くには「プルリクエスト番号」に番号（例：<code>219</code>）を入力し、「PR を開く」を押します。</li>
+<li><strong>変更概要を確認する。</strong> 右側の「変更レビュー」でPRのタイトルと説明を読み、変更ファイル数、影響するステージ・スプライト数、比較できるスクリプト数を確認します。説明が省略されているときは「PR 本文を表示」で全文を開けます。
+<figure><a href="../images/published-editor-git-pr-overview.png"><img src="../images/published-editor-git-pr-overview.png" width="1254" height="848" alt="公開版のローカルGitパネル。左にPRの一覧と番号欄、右にPR #219のタイトル、説明、変更ファイル9件、影響するステージ・スプライト16件、スクリプトの比較26件が表示されている。" loading="lazy"></a><figcaption>公開版でPR #219を開いたところ。左でPRを選び、右で変更の規模を確認します。下の「変更ファイル」から比較を読み進めます。</figcaption></figure>
+</li>
+<li><strong>スクリプトをブロックで比較する。</strong> 「変更ファイル」を下にたどり、<code>project.source.json</code>（この例では <code>app/project.source.json</code>）の中から、対象のステージやスプライトの見出しを探します。その下に並ぶ変更のあったスクリプトから、例の「緑の旗が押されたとき」を展開します。左の「変更前」と右の「変更後」を見比べ、枠で示されたブロックがスクリプトのどこにあるかを確認します。長いスクリプトや横に広いブロックは、比較欄をスクロールして確認できます。
+<figure><a href="../images/published-editor-git-pr-script.png"><img src="../images/published-editor-git-pr-script.png" width="819" height="542" alt="緑の旗が押されたときのスクリプトを、左の変更前と右の変更後に並べた比較画面。右では緑の旗のすぐ下に追加された変数設定ブロックが緑の枠で囲まれている。" loading="lazy"></a><figcaption>PR #219のスクリプト比較。右側の緑の枠が、開始直後に追加された変数設定ブロックを示します。比較画面に登録されていない拡張ブロックは、元の位置に灰色の「未登録: …」として表示されます。</figcaption></figure>
+</li>
+</ol>
+<p>比較を読み終えたら、スクリプトの下の「確認済み」で進み具合を記録できます。この印は表示中のレビューだけに反映されます。「ローカルの変更」で手元の差分表示に戻れます。</p>
+
+<p>比較にはプルリクエストのマージベースとheadを使います。GitHubへの通信は公開APIの読み取りだけで、公開APIの利用上限が適用されます。比較の仕組みは<a href="#block-diff">作品の変更をブロックで比べる</a>で説明しています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">Editorへの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/418">PRレビューの操作手順</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRをScratchスクリプトでレビュー</a></p>
 
 </section>
 <nav class="pager" aria-label="前後のページ">

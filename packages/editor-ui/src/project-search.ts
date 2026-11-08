@@ -1,3 +1,6 @@
+// The judgement for broadcast blocks lives in the layout package, so the section and this search agree.
+import {messageReference} from '@kubohiroya/turbowarp-plus-editor-layout/project-messages';
+
 type Field = {id?: string; value: unknown};
 type Block = {
     id: string;
@@ -129,13 +132,10 @@ export function searchProject(project: SearchProject, messages: Record<string, s
 
             const variable = block.fields?.VARIABLE;
             const list = block.fields?.LIST;
-            const broadcast = block.fields?.BROADCAST_OPTION ??
-                inputs.find(([key]) => key === 'BROADCAST_INPUT')?.[1].fields?.BROADCAST_OPTION;
-            const isBroadcast = block.opcode === 'event_whenbroadcastreceived' ||
-                block.opcode === 'event_broadcast' || block.opcode === 'event_broadcastandwait';
+            const message = messageReference(target, block, stage);
             const kind = variable ? 'variable' : list ? 'list' : 'message';
-            const reference = variable ?? list ?? (isBroadcast ? broadcast : undefined);
-            const name = reference && fieldText(target, variable ? 'VARIABLE' : list ? 'LIST' : 'BROADCAST_OPTION', reference);
+            const reference = variable ?? list ?? (message && {id: message.id, value: message.fieldValue});
+            const name = variable || list ? fieldText(target, variable ? 'VARIABLE' : 'LIST', reference) : message?.name;
             const opcode = describeOpcode(block.opcode);
             const procedure = block.mutation?.proccode ??
                 inputs.find(([key]) => key === 'custom_block')?.[1].mutation?.proccode;
@@ -157,7 +157,7 @@ export function searchProject(project: SearchProject, messages: Record<string, s
                 const model = owner && owner.variables[reference.id];
                 const edit = model && !model.isCloud ? {
                     type: 'name' as const, id: reference.id, owner, name: model.name,
-                    variableType: model.type ?? (list ? 'list' : isBroadcast ? 'broadcast_msg' : '')
+                    variableType: model.type ?? (list ? 'list' : message ? 'broadcast_msg' : '')
                 } : undefined;
                 add(kind, name, scope || label, edit);
             }
@@ -165,7 +165,7 @@ export function searchProject(project: SearchProject, messages: Record<string, s
             if (kinds.has('argument')) {
                 const addArguments = (owner: Block) => {
                     for (const [key, field] of Object.entries(owner.fields ?? {})) {
-                        if (field === reference) continue;
+                        if (field === reference || (message && key === 'BROADCAST_OPTION')) continue;
                         const value = String(field.value ?? '');
                         if (value && matches(value)) add('argument', value, label,
                             {type: 'field', id: owner.id, field: key, value});

@@ -5,9 +5,11 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
-import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {editSpriteVariable, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar';
-import {centerProjectComment, connectProjectSearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, renameProjectMessage,
+    type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-layout/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
@@ -74,13 +76,10 @@ function readSpriteAssets(vm, targetId: string, kind: SpriteAssetKind): SpriteAs
 
 function readSpriteVariables(vm, id: string): SpriteVariable[] {
     const target = vm.runtime.getTargetById(id);
-    const stage = vm.runtime.getTargetForStage();
-    if (!target) return [];
-    const read = (owner, scope: SpriteVariable['scope']) =>
-        Object.values(owner?.variables ?? {}).flatMap((variable: {id: string; name: string; type: string; value: unknown}) =>
-            variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
-                [{id: variable.id, name: variable.name, value: variable.value, scope}] : []);
-    return target === stage ? read(stage, 'global') : [...read(target, 'local'), ...read(stage, 'global')];
+    return Object.values(target?.variables ?? {}).flatMap((variable: {
+        id: string; name: string; type: string; value: unknown; isCloud?: boolean;
+    }) => variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
+        [{id: variable.id, name: variable.name, value: variable.value, isCloud: variable.isCloud}] : []);
 }
 const resizeCode = () => {
     const blocks = window.ScratchBlocks;
@@ -219,6 +218,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     );
     const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
         <div className={styles.tabRow}>{tabs}{tabAction}</div>;
+    // The message section opens blocks through the same navigation the project search uses.
+    const navigation = React.useRef<SearchNavigation | null>(null);
     const spriteTabs = useSpriteTabs({
         available: dockviewSpriteTabsEnabled, enabled: workspaceEnabled && dockviewSpriteTabsEnabled,
         vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
@@ -232,10 +233,12 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}
                     activeGroup={view.groupActive} propertiesInVariables
                     onSectionChange={next => actions.setSection(spriteEditorSections.indexOf(next))}
-                    actions={view.active && section !== 'variables' ? renderEditorTabRow(null) : undefined} />;
+                    actions={view.active && section !== 'variables' && section !== 'messages' ?
+                        renderEditorTabRow(null) : undefined} />;
             },
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
+            editVariable: (id, edit) => editSpriteVariable(vm, id, edit),
             getProperties(id) {
                 const target = vm.runtime.getTargetById(id);
                 if (!target || target.isStage) return;
@@ -252,15 +255,30 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             writeVariable(id, variableId, value) {
                 const target = vm.runtime.getTargetById(id);
-                const stage = vm.runtime.getTargetForStage();
-                const owner = target?.variables[variableId] ? target : stage?.variables[variableId] ? stage : undefined;
-                if (owner && vm.setVariableValue(owner.id, variableId, value)) vm.runtime.emitProjectChanged();
+                if (target?.variables[variableId]?.type === '' && vm.setVariableValue(id, variableId, value)) {
+                    vm.runtime.emitProjectChanged();
+                }
+            },
+            getMessages: id => scanTargetMessages(vm.runtime, id),
+            openMessage(use) {
+                const search = navigation.current;
+                if (!search || !activateTargetView(search, use.targetId, codeTab)) return;
+                requestAnimationFrame(() => search.centerBlock(use.blockId));
+            },
+            openMessageTarget(id) {
+                if (navigation.current) activateTargetView(navigation.current, id, codeTab);
+            },
+            renameMessage(message, name) {
+                const workspace = window.ScratchBlocks?.getMainWorkspace();
+                if (!workspace || !message.id) return 'unavailable';
+                const outcome = renameProjectMessage(vm.runtime, workspace, message.id, name);
+                return outcome === 'applied' ? undefined : outcome === 'conflict' ? 'duplicateName' : 'unavailable';
             }
         })
     });
     React.useLayoutEffect(() => {
         if (!multiView) return;
-        return connectProjectSearchNavigation(vm.runtime, {
+        const current: SearchNavigation = {
             getViews: () => spriteTabs.controller.current,
             getTarget: id => vm.runtime.getTargetById(id),
             getEditingTarget: () => vm.editingTarget,
@@ -276,7 +294,13 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 const workspace = Blockly?.getMainWorkspace();
                 return workspace?.isVisible() ? {workspace, Blockly} : undefined;
             }
-        });
+        };
+        navigation.current = current;
+        const disconnect = connectProjectSearchNavigation(vm.runtime, current);
+        return () => {
+            if (navigation.current === current) navigation.current = null;
+            disconnect();
+        };
     }, [multiView, vm, spriteTabs.controller]);
     const connectAssetSelection = (index: number, child: React.ReactNode) => {
         const assetSelection = index === 1 ? spriteTabs.assetSelections?.costumes : index === 2 ? spriteTabs.assetSelections?.sounds : undefined;

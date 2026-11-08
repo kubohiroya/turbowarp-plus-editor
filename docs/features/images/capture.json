@@ -14,6 +14,21 @@
   "security": "0.8.4",
   "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
   "note": "Captured from the public Editor. catalog.png chooses TurboWarp-Markdown from the public catalog. review.png opens a project that adds two extensions outside the catalog as data: URLs, one declaring 'Unsandboxed: required'; the catalog extension in the same project needs no review and is not listed.",
+  "pullRequestReview": {
+    "date": "2026-11-08",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "840d37fd0fdf5d631f8db97cd41bf66e78b393b6",
+    "guiRevision": "eac09baf59a1303d58e257ea8b78a3253c0af035",
+    "pullRequest": "https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219",
+    "viewport": {
+      "width": 1330,
+      "height": 940
+    },
+    "images": {
+      "published-editor-git-pr-overview.png": "Local Git panel after opening PR #219 by number (element screenshot).",
+      "published-editor-git-pr-script.png": "Expanded comparison of the green-flag script in app/project.source.json (element screenshot)."
+    }
+  },
   "projectTools": {
     "date": "2026-11-04",
     "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
