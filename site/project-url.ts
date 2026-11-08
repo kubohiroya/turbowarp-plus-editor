@@ -15,7 +15,31 @@ function kamishibaiPagesUrl(projectUrl: string) {
     }
 }
 
+const scratchProjectPagePath = /^\/projects\/(\d+)(?:\/(?:editor|fullscreen|embed)?)?\/?$/;
+
+// A Scratch project page is HTML without CORS headers; its project data comes from the Scratch project API.
+function scratchProjectId(projectUrl: string) {
+    try {
+        const url = new URL(projectUrl);
+        if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.port) return;
+        if (url.hostname !== 'scratch.mit.edu' && url.hostname !== 'www.scratch.mit.edu') return;
+        return scratchProjectPagePath.exec(url.pathname)?.[1];
+    } catch {
+        // Let the normal project fetch handle malformed URLs.
+    }
+}
+
+async function fetchScratchProject(projectId: string, fetchResource: typeof fetch): Promise<Response> {
+    const meta = await fetchResource(`https://trampoline.turbowarp.org/api/projects/${projectId}`);
+    if (!meta.ok) throw new Error(`Could not access Scratch project ${projectId}: status ${meta.status}`);
+    const token = (await meta.json())?.project_token;
+    if (typeof token !== 'string' || !token) throw new Error(`Scratch project ${projectId} has no project token`);
+    return fetchResource(`https://projects.scratch.mit.edu/${projectId}?token=${encodeURIComponent(token)}`);
+}
+
 export async function fetchProjectUrl(projectUrl: string, fetchResource = fetch): Promise<Response> {
+    const scratchId = scratchProjectId(projectUrl);
+    if (scratchId) return fetchScratchProject(scratchId, fetchResource);
     const pagesUrl = kamishibaiPagesUrl(projectUrl);
     if (pagesUrl) {
         try {
