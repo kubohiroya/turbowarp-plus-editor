@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './project-file-menu.css';
 import type {Action, FolderActions, ProjectFileStorage} from './project-file-dialogs.ts';
 
 type Entry = [command: string, label: string, action: Action | undefined];
@@ -29,7 +30,7 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
     const item = ([command, label, action]: Entry) => {
         const run = action && (() => {close(); action();});
         return <MenuItem key={command} command={command} onClick={run}>
-            <span role="button" aria-disabled={!run || undefined} tabIndex={run ? 0 : -1}
+            <span className={styles.item} role="button" aria-disabled={!run || undefined} tabIndex={run ? 0 : -1}
                 style={!run ? {opacity: 0.5, cursor: 'default'} : undefined} onKeyDown={event => {
                     if (!run || (event.key !== 'Enter' && event.key !== ' ')) return;
                     event.preventDefault();

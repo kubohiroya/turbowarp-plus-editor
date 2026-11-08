@@ -1,0 +1,4 @@
+ul:has(> li .item) {
+    background-color: var(--ui-white);
+    color: var(--text-primary);
+}
