@@ -1170,16 +1170,36 @@ test('the editor layout menu opens the live block palette and the Dockview panel
     const expectPreset = async (orientation: 'horizontal' | 'vertical') => {
         await expect(palette).toHaveAttribute('data-palette-orientation', orientation);
         await expect(looksButton).toHaveAttribute('aria-pressed', 'true');
+        await expect(categories).toHaveCSS('flex-direction', orientation === 'horizontal' ? 'column' : 'row');
         await expect(looks).toHaveCSS('flex-direction', orientation === 'horizontal' ? 'row' : 'column');
-        const [rail, list] = await Promise.all([categories.boundingBox(), looks.boundingBox()]);
-        assert.ok(rail && list);
-        assert.ok(orientation === 'horizontal' ? rail.x + rail.width <= list.x : list.x + list.width <= rail.x);
+        const [rail, list, menu, windowBounds] = await Promise.all([
+            categories.boundingBox(), looks.boundingBox(), paletteMenu.boundingBox(), palette.boundingBox()
+        ]);
+        assert.ok(rail && list && menu && windowBounds);
+        assert.ok(menu.y - windowBounds.y <= 12);
+        assert.ok(windowBounds.x + windowBounds.width - (menu.x + menu.width) <= 12);
+        if (orientation === 'horizontal') {
+            assert.ok(rail.x + rail.width <= list.x);
+            assert.ok(list.x + list.width <= menu.x);
+        } else {
+            assert.ok(rail.y + rail.height <= list.y);
+            assert.ok(rail.x + rail.width <= menu.x);
+        }
     };
     await expectPreset('horizontal');
     await paletteMenu.click();
     await popup.getByRole('menuitemradio', {name: 'Arrange vertically', exact: true}).click();
     await expectPreset('vertical');
+    await looksButton.focus();
+    const tooltip = popup.getByRole('tooltip');
+    await expect(tooltip).toHaveText('Looks');
+    const [label, category] = await Promise.all([tooltip.boundingBox(), looksButton.boundingBox()]);
+    assert.ok(label && category && label.y >= category.y + category.height);
     await paletteMenu.click();
+    const [menuButton, openMenu] = await Promise.all([
+        paletteMenu.boundingBox(), popup.getByRole('menu', {name: 'Block palette layout', exact: true}).boundingBox()
+    ]);
+    assert.ok(menuButton && openMenu && openMenu.y >= menuButton.y + menuButton.height);
     await popup.getByRole('menuitemradio', {name: 'Arrange horizontally', exact: true}).click();
     await expectPreset('horizontal');
     await paletteMenu.click();

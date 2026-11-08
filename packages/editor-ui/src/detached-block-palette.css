@@ -2,7 +2,7 @@
     position: fixed;
     inset: 0;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
     color: var(--text-primary, #243248);
     background: var(--ui-primary, #f5f6f8);
     font: 14px system-ui, sans-serif;
@@ -15,7 +15,7 @@
 }
 
 .palette[data-palette-orientation="vertical"] .content {
-    grid-template: "blocks categories" minmax(0, 1fr) / minmax(0, 1fr) auto;
+    grid-template: "categories" auto "blocks" minmax(0, 1fr) / minmax(0, 1fr);
 }
 
 .categories,
@@ -38,6 +38,15 @@
     grid-area: blocks;
     flex-wrap: wrap;
     align-content: flex-start;
+}
+
+.palette[data-palette-orientation="horizontal"] .content,
+.palette[data-palette-orientation="vertical"] .categories {
+    margin-right: calc(2rem + 12px);
+}
+
+.palette[data-palette-orientation="vertical"] .categories {
+    flex-direction: row;
 }
 
 .palette[data-palette-orientation="vertical"] .blocks {
@@ -104,6 +113,10 @@
     pointer-events: none;
 }
 
+.palette[data-palette-orientation="vertical"] .tooltip {
+    transform: none;
+}
+
 .categories button[aria-pressed="true"],
 .categories button:hover,
 .blocks button:not(:disabled):hover {
@@ -119,14 +132,15 @@
     cursor: default;
 }
 
-.footer {
-    display: flex;
-    justify-content: end;
-    padding: 6px 8px;
-    border-block-start: 1px solid var(--ui-black-transparent, #d7dbe6);
-    background: var(--ui-secondary, #eceef4);
+.palette .layoutMenu {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    --tw-plus-icon-menu-max-width: calc(100vw - 16px);
 }
 
-.footer [role="menu"] {
-    inset-block: auto calc(100% + 0.25rem);
+.layoutMenu [role="menu"] {
+    inset-inline-end: auto;
+    right: 0;
 }

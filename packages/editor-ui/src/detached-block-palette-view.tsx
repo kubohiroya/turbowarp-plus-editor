@@ -40,12 +40,13 @@ export default function Palette({source, locale, categoryIcons, close, startDrag
     }, [source, selectedId, revision]);
 
     function showLabel(button: HTMLButtonElement, label: string) {
-        const {left, right, top, height} = button.getBoundingClientRect();
-        const viewport = button.ownerDocument.documentElement;
-        setTooltip({label, position: {
-            top: top + height / 2,
-            ...(left < viewport.clientWidth / 2 ? {left: right + 8} : {right: viewport.clientWidth - left + 8})
-        }});
+        const {left, right, top, bottom, height} = button.getBoundingClientRect();
+        const viewportWidth = button.ownerDocument.documentElement.clientWidth;
+        const positionOnLeft = left < viewportWidth / 2;
+        const position = vertical
+            ? {top: bottom + 8, ...(positionOnLeft ? {left} : {right: viewportWidth - right})}
+            : {top: top + height / 2, ...(positionOnLeft ? {left: right + 8} : {right: viewportWidth - left + 8})};
+        setTooltip({label, position});
     }
 
     return <main className={styles.palette} data-palette-orientation={vertical ? 'vertical' : 'horizontal'}>
@@ -81,16 +82,14 @@ export default function Palette({source, locale, categoryIcons, close, startDrag
             </div>
         </div>
         {tooltip && <div className={styles.tooltip} role="tooltip" style={tooltip.position}>{tooltip.label}</div>}
-        <footer className={styles.footer}>
-            <IconMenuButton label={ja ? 'ブロックパレットのレイアウト' : 'Block palette layout'}
-                icon={<LayoutIcon path="M2.5 3.5h11v9h-11zM2.5 7h11" />} items={[
-                    {id: 'horizontal', label: ja ? '横並びにする' : 'Arrange horizontally', checked: !vertical,
-                        icon: <LayoutIcon path="M2 5h5v6H2zm7 0h5v6H9z" />, onSelect: () => setVertical(false)},
-                    {id: 'vertical', label: ja ? '縦並びにする' : 'Arrange vertically', checked: vertical,
-                        icon: <LayoutIcon path="M5 2h6v5H5zm0 7h6v5H5z" />, onSelect: () => setVertical(true)},
-                    {id: 'dock', label: ja ? 'このパネルを別画面から元に戻す' : 'Return this panel to the editor',
-                        icon: <LayoutIcon path="M9 3h4v10H3V9m0-6 6 6M5 9h4V5" />, onSelect: close}
-                ]} />
-        </footer>
+        <IconMenuButton className={styles.layoutMenu} label={ja ? 'ブロックパレットのレイアウト' : 'Block palette layout'}
+            icon={<LayoutIcon path="M2.5 3.5h11v9h-11zM2.5 7h11" />} items={[
+                {id: 'horizontal', label: ja ? '横並びにする' : 'Arrange horizontally', checked: !vertical,
+                    icon: <LayoutIcon path="M2 5h5v6H2zm7 0h5v6H9z" />, onSelect: () => setVertical(false)},
+                {id: 'vertical', label: ja ? '縦並びにする' : 'Arrange vertically', checked: vertical,
+                    icon: <LayoutIcon path="M5 2h6v5H5zm0 7h6v5H5z" />, onSelect: () => setVertical(true)},
+                {id: 'dock', label: ja ? 'このパネルを別画面から元に戻す' : 'Return this panel to the editor',
+                    icon: <LayoutIcon path="M9 3h4v10H3V9m0-6 6 6M5 9h4V5" />, onSelect: close}
+            ]} />
     </main>;
 }
