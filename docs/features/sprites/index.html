@@ -44,7 +44,7 @@
 <h2>3.1 スプライト一覧で探す・固定する</h2>
 
 <p>左側のスプライト一覧で編集する対象を選びます。一覧上部には「スプライトを検索」「スプライト一覧を固定表示」「アンドック」のボタンが並びます。「スプライトを検索」で名前の一部を入力すると、最初に一致したタイルまでスクロールし、そのタイルを枠で強調します。「背景」のタイルからはステージの背景を開けます。</p>
-<figure class="guide-detail"><a href="../images/sprite-search-public-014.png"><img src="../images/sprite-search-public-014.png" width="550" height="390" alt="スプライト一覧の検索欄に2を入力し、スプライト2が枠で強調表示されている。" loading="lazy"></a><figcaption>「2」で検索すると、一致したスプライト2に枠が付きます（前回の撮影）。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/sprite-search.png"><img src="../images/sprite-search.png" width="560" height="360" alt="スプライト一覧の検索欄にボと入力し、ボールのタイルが枠で強調表示されている。" loading="lazy"></a><figcaption>「ボ」で検索すると、一致した「ボール」のタイルに枠が付きます。</figcaption></figure>
 <p>ピンのボタンで固定表示を解除すると、ピンに斜線が付き、一覧は左端に収まります。左端にポインターを置くか「スプライト一覧を展開」を押すと一覧が開きます。固定表示中に一覧の幅を広げると、タイルを複数列に並べられます。作品全体からブロックや素材を探すには、最上段の<a href="../search/#project-search">検索欄</a>を使います。</p>
 <p>スプライトのタイルを右クリックすると、「開く」「複製」「書き出し」「名前を変える」「削除」「フォルダーを作成」をアイコン付きのメニューから選べます（<a href="../blocks/#context-menu">右クリックメニュー</a>）。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/225">一覧の展開・検索・固定</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/350">未固定のピンの表示</a></p>
@@ -57,7 +57,7 @@
 
 <p>一覧でスプライトを選ぶと、編集パネルの上段にタブが開きます。開いたスプライトは上段のタブで切り替えられ、タブを右クリックすると名前を変えられます。</p>
 <p>編集パネルの左端には、縦長のボタンが5つ並びます。上から「コード」、「コスチューム」（背景では「背景」）、「音」、「変数など」、「メッセージ」で、選んでいるボタンに色が付きます。ボタンの名前はツールチップで確認できます。</p>
-<figure><a href="../images/plus-workspace-current.png"><img src="../images/plus-workspace-current.png" width="1440" height="1000" alt="編集パネルの左端に、コード・コスチューム・音・変数などの縦長のボタンが並ぶ。" loading="lazy"></a><figcaption>編集パネル左端の縦のボタン（撮影時点の画面。「メッセージ」のボタンが加わる前のものです）。</figcaption></figure>
+<figure><a href="../images/plus-workspace-current.png"><img src="../images/plus-workspace-current.png" width="1440" height="1000" alt="編集パネルの左端に、コード・コスチューム・音・変数など・メッセージの縦長のボタンが並ぶ。" loading="lazy"></a><figcaption>起動直後の画面。編集パネルの左端に、コード・コスチューム・音・変数など・メッセージの5つのボタンが並びます。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/248">スプライトの編集タブ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-layout/pull/32">左端のアイコン列</a></p>
 
 </section>
@@ -68,7 +68,7 @@
 
 <p>「編集パネルのレイアウト」から「パネルを横に分割」を選び、同じスプライトの「コスチューム」と「音」を左右に開きます。「音」で素材を選ぶと波形が表示され、その下の再生ボタンで試聴できます。音の一覧が空の場合は「音」から追加します。</p>
 <p>別のペインに移っても、開いていた編集内容と選んだ素材はペインごとに保持されます。録音中にほかの編集内容へ切り替えても録音ダイアログは閉じず、録音した音は録音を始めたスプライトに保存されます。</p>
-<figure><a href="../images/media-panes-0fc3.png"><img src="../images/media-panes-0fc3.png" width="1440" height="1000" alt="Plus配置。左のペインに縦長のコスチュームプレビュー、右のペインに音の波形と再生ボタン。" loading="lazy"></a><figcaption>左にコスチューム、右に確認用の音の波形と再生ボタンを表示した例（前回の撮影。編集内容の切り替えは現在は左端の縦のボタンです）。</figcaption></figure>
+<figure><a href="../images/media-panes.png"><img src="../images/media-panes.png" width="1440" height="1000" alt="左のペインにコスチュームの編集画面、右のペインに音の波形と再生ボタン、効果のボタンが並ぶ。" loading="lazy"></a><figcaption>パネルを横に分割し、左でコスチューム、右で音を開いたところ。</figcaption></figure>
 <p><span class="badge planned">開発中</span> ローカル統合版では、操作していないペインのコスチュームプレビューの高さに上限を設けています。</p>
 <figure><a href="../images/local-media-panes.png"><img src="../images/local-media-panes.png" width="1440" height="575" alt="ローカル統合版の左ペインに高さを抑えたコスチュームプレビュー、右ペインに音の波形と再生ボタン。" loading="lazy"></a><figcaption>ローカル統合版の比較画像。コスチュームのプレビューを小さく収めています。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">素材の選択と編集状態</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/326">録音先のスプライト</a></p>
@@ -82,9 +82,9 @@
 <p>「変数など」を開くと、上部にスプライトのプロパティ、その下に変数の一覧が表示されます。</p>
 <ul><li><strong>プロパティ</strong>：スプライト名、x、y、表示（表示する・隠す）、大きさ、向き、回転方法（自由に回転・左右のみ・回転しない）を編集します。</li><li><strong>変数の一覧</strong>：開いている対象が持つ変数を表示します。スプライトの「変数など」にはそのスプライト用の変数、背景の「変数など」には作品全体で使う変数が並びます。クラウド変数には「クラウド変数」と表示されます。</li><li><strong>値の変更</strong>：値を入力してEnterを押すか、入力欄からフォーカスを外すと確定します。確定前にEscを押すと入力を取り消せます。</li></ul>
 <h3>変数を作る・名前を変える・削除する</h3>
-<p>一覧の「変数を作る」で、開いている対象に新しい変数を作れます。スプライトで作るとそのスプライト用、背景で作ると作品全体用の変数になります。各行の「操作」から「名前を変更」「削除」を選べます。</p>
+<p>一覧の上の「変数を作る」で、開いている対象に新しい変数を作れます。スプライトで作るとそのスプライト用、背景で作ると作品全体用の変数になります。各行の「名前を変更」「削除」で、その変数を操作します。</p>
 <ul><li>名前が空のときや、同じ範囲に同じ名前の変数があるときは、理由が表示されて確定できません。</li><li>削除の前には確認が表示されます。ブロックで使用中の変数は削除できないので、先に参照を外します。</li></ul>
-<figure><a href="../images/properties-variables-0fc3.png"><img src="../images/properties-variables-0fc3.png" width="1440" height="523" alt="変数などに、スプライトのプロパティと変数の一覧が表示されている。隣のコードに変数のブロックがある。" loading="lazy"></a><figcaption>「変数など」を開き、隣のペインのコードで同じ変数を参照している例（前回の撮影。変数の作成・名前変更・削除の操作が加わる前の画面です）。</figcaption></figure>
+<figure><a href="../images/properties-variables.png"><img src="../images/properties-variables.png" width="1440" height="1000" alt="左のペインの変数などに、スプライト名・x・y・表示・大きさ・向き・回転方法と、変数を作るボタン、速さの変数と名前を変更・削除のボタンが並ぶ。右のペインに速さを使うコードがある。" loading="lazy"></a><figcaption>左で「変数など」、右で「コード」を開いたところ。スプライト用の変数「速さ」を、隣のコードで参照しています。</figcaption></figure>
 <p>パネルを横に分割し、片方で「変数など」、もう片方で「コード」を開くと、値を見ながらコードを編集できます（<a href="../workspace/#split-panes">パネルの分割</a>）。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-layout/pull/15">プロパティ・変数タブの統合</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/410">変数の作成・名前変更・削除</a></p>
 
@@ -95,6 +95,8 @@
 <h2>3.5 メッセージの送受信を確かめる</h2>
 
 <p>「変数など」の下の「メッセージ」を開くと、開いているスプライトまたは背景が、どのメッセージをどのブロックで送り、どのメッセージをどのハットブロックで受け取るのかを、「送信」と「受信」に分けて一覧できます。</p>
+<figure><a href="../images/messages-sprite.png"><img src="../images/messages-sprite.png" width="1440" height="1000" alt="左のペインのメッセージに、送信の開始を送るブロック、受信の開始を受け取ったときのブロック、この作品の他の場所のメッセージとしてゲームオーバーが並ぶ。" loading="lazy"></a><figcaption>スプライト「ネコ」の「メッセージ」。「開始」を送り、受け取っています。「ゲームオーバー」はこのスプライトでは使っていません。</figcaption></figure>
+<figure><a href="../images/messages-stage.png"><img src="../images/messages-stage.png" width="1440" height="1000" alt="右のペインの背景のメッセージに、受信の一覧と、送信元・メッセージ・受信先の3列で線を結んだ関係図が表示されている。" loading="lazy"></a><figcaption>背景の「メッセージ」。下の関係図で、どのスプライトがどのメッセージを送り、どこが受け取るかを確かめられます。</figcaption></figure>
 <ul><li>送るブロックしかないメッセージには「受け取るブロックがありません」、受け取るブロックしかないメッセージには「送るブロックがありません」と表示されます。</li><li>「この作品の他の場所のメッセージ」には、作品にはあるものの、この対象では使っていないメッセージが並びます。どこでも使われていないメッセージには「使われていません」と表示されます。</li><li>「このブロックを開く」で、そのブロックのあるコードへ移動します。</li></ul>
 <h3>背景で作品全体の関係を見る</h3>
 <p>背景の「メッセージ」には、一覧に加えて「スプライト・背景とメッセージの関係」の図が表示されます。「送信元」「メッセージ」「受信先」の3列で、作品全体でどのスプライトがどのメッセージを送り、どこが受け取るかを確かめられます。どことも結ばれていないメッセージも図に残ります。「このスプライトを開く」で、そのスプライトのコードへ移動します。</p>

@@ -260,5 +260,59 @@
         "height": 300
       }
     }
+  },
+  "guideRecapture": {
+    "date": "2026-11-08",
+    "url": "http://localhost:8123/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "c9453633f026a3eebbe6f6a831d3a2115d65cb6d",
+    "note": "Built locally from the PR #417 head (main d1d8523 plus the guide restructure; the Editor sources are identical to the published fb5436f) because the public Pages host was not reachable from the capture environment. Served under /turbowarp-plus-editor/ and captured headless with Playwright Chromium in Japanese with default features. The sample project (sprites ネコ and ボール, variables 速さ and スコア, messages 開始 and ゲームオーバー, a generated 440 Hz tone) was built in the page through vm.loadProject and vm.addSound. catalog-current.png answers the catalog URL with entries rebuilt from the npm-published extension packages in the same way as turbowarp-plus-packages scripts/lib/extension-catalog.ts, and answers their jsDelivr URLs with the same npm bytes. review-dialog.png, form-dialog.png and validation-dialog.png open an SB3 that embeds examples/extensions/block-editor.ts (with a header declaring Unsandboxed: required) as a data: URL. The micro:bit hex download was replaced by a local placeholder, which does not affect the captured screens.",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": [
+      "plus-workspace-current.png",
+      "plus-menu.png",
+      "file-menu-current.png",
+      "edit-menu.png",
+      "project-search.png",
+      "palette-search.png",
+      "layout-menu.png",
+      "stage-menu-current.png",
+      "save-as-dialog.png",
+      "export-dialog.png",
+      "project-data-dialog.png",
+      "extensions-dialog.png",
+      "properties-current.png",
+      "project-uri-detail.png",
+      "palette-popout.png",
+      "sprite-list-window.png",
+      "sprite-search.png",
+      "sprite-divider.png",
+      "properties-variables.png",
+      "messages-sprite.png",
+      "messages-stage.png",
+      "media-panes.png",
+      "stage-tab.png",
+      "block-context-menu.png",
+      "workspace-context-menu.png",
+      "sprite-context-menu.png",
+      "palette-resize-detail.png",
+      "minimap-current.png",
+      "catalog-current.png",
+      "review-dialog.png",
+      "form-dialog.png",
+      "validation-dialog.png"
+    ],
+    "notRecaptured": {
+      "palette-order-detail.png": "The long-press drag state could not be reproduced headless; the category bar looks the same.",
+      "project-diagnostics.png": "Diagnostics record Plus-format extension events only; the custom-extension sample records none.",
+      "project-diagnostics-failure.png": "Same as project-diagnostics.png.",
+      "asset-preview-development.png": "Kamishibai development build.",
+      "local-media-panes.png": "Local integrated build comparison.",
+      "local-stage-workspace.png": "Local integrated build comparison.",
+      "published-editor-git-pr-overview.png": "Captured from the published Editor in #418.",
+      "published-editor-git-pr-script.png": "Captured from the published Editor in #418."
+    }
   }
 }
