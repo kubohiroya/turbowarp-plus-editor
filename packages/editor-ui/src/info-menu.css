@@ -108,6 +108,10 @@ button.entry {
     height: 1rem;
 }
 
+.newTabIcon {
+    margin-inline-start: auto;
+}
+
 .entry.indented {
     padding-inline-start: 2.25rem;
 }
