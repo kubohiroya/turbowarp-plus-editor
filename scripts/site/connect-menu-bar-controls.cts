@@ -1,8 +1,18 @@
 module.exports = (source: string) => {
     const end = '{!reorganizeMenuBar && aboutButton}';
-    if (source.indexOf(end) === -1 || source.indexOf(end) !== source.lastIndexOf(end)) {
+    const edit = '</DeletionRestorer>\n                                )}';
+    if ([end, edit].some(slot => source.indexOf(slot) === -1 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
         throw new Error('The pinned GUI menu bar connection has changed');
     }
-    return source.replace(end, `${end}
-                {host?.renderStageControls?.({vm: this.props.vm, menuLocale: this.props.intl.locale})}`);
+    return source
+        .replace(end, `${end}
+                {host?.renderStageControls?.({vm: this.props.vm, menuLocale: this.props.intl.locale})}`)
+        .replace(edit, `${edit}
+                                {!this.props.isPlayerOnly && host?.renderEditMenu?.({
+                                    vm: this.props.vm,
+                                    locale: this.props.intl.locale,
+                                    MenuItem,
+                                    MenuSection,
+                                    onRequestClose: this.props.onRequestCloseEdit
+                                })}`);
 };

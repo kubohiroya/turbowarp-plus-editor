@@ -151,7 +151,7 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-for (const entry of ['busy-cursor', 'detached-block-palette', 'palette-category-reorder', 'palette-category-search',
+for (const entry of ['busy-cursor', 'detached-block-palette', 'edit-menu', 'palette-category-reorder', 'palette-category-search',
     'palette-dropdown-resize', 'project-load-progress', 'project-load-progress-view',
     'project-search', 'project-info-menu', 'stage-controls', 'stage-controls-view']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
