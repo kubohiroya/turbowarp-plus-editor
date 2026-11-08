@@ -1,9 +1,12 @@
 import {mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderVM} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-views';
-import {mountGitPanel} from '@kubohiroya/turbowarp-plus-editor-git';
+import {createScratchBlocksDiffRenderer, mountGitPanel} from '@kubohiroya/turbowarp-plus-editor-git';
 import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
+import type {ScratchBlockDiffRendererOptions} from '@kubohiroya/turbowarp-plus-editor-git';
+import VMBlocks from 'scratch-vm/src/engine/blocks.js';
+import {deserializeBlocks} from 'scratch-vm/src/serialization/sb3.js';
 import {loadedProjectTitle} from './project-tools/index.ts';
 
 type RuntimeThread = {updateMonitor?: boolean};
@@ -19,7 +22,8 @@ declare const __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: () => Action;
 declare const __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: (title: string) => Action;
 declare const __TW_PLUS_GIT_CLOUDFLARE__: {bffOrigin: string; proxyOrigin: string} | null;
 
-export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean, locale: string) {
+export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean, locale: string,
+    getBlockly: ScratchBlockDiffRendererOptions['getBlockly']) {
     const view = document?.defaultView as Window & {EditorPreload?: {localGit?: DesktopGitPreload | null}; ReduxStore?: GuiStore};
     if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
     const connectionSettings = localGit ? createGitConnectionSettings({
@@ -58,6 +62,9 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
     if (!folder || !localGit) return folder;
     gitPanel = mountGitPanel({vm, document, host: {
         connectionSettings,
+        renderReviewBlock: createScratchBlocksDiffRenderer({
+            getBlockly, deserializeBlocks, createBlockContainer: () => new VMBlocks(), showUnregisteredBlocks: true, locale
+        }),
         openProject: folder.openDirectory,
         isProjectDirty,
         isProjectRunning: isRunning,
