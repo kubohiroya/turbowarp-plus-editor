@@ -5,7 +5,7 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
-import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {editSpriteVariable, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar';
 import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, renameProjectMessage,
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
@@ -76,13 +76,10 @@ function readSpriteAssets(vm, targetId: string, kind: SpriteAssetKind): SpriteAs
 
 function readSpriteVariables(vm, id: string): SpriteVariable[] {
     const target = vm.runtime.getTargetById(id);
-    const stage = vm.runtime.getTargetForStage();
-    if (!target) return [];
-    const read = (owner, scope: SpriteVariable['scope']) =>
-        Object.values(owner?.variables ?? {}).flatMap((variable: {id: string; name: string; type: string; value: unknown}) =>
-            variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
-                [{id: variable.id, name: variable.name, value: variable.value, scope}] : []);
-    return target === stage ? read(stage, 'global') : [...read(target, 'local'), ...read(stage, 'global')];
+    return Object.values(target?.variables ?? {}).flatMap((variable: {
+        id: string; name: string; type: string; value: unknown; isCloud?: boolean;
+    }) => variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
+        [{id: variable.id, name: variable.name, value: variable.value, isCloud: variable.isCloud}] : []);
 }
 const resizeCode = () => {
     const blocks = window.ScratchBlocks;
@@ -241,6 +238,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
+            editVariable: (id, edit) => editSpriteVariable(vm, id, edit),
             getProperties(id) {
                 const target = vm.runtime.getTargetById(id);
                 if (!target || target.isStage) return;
@@ -257,9 +255,9 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             writeVariable(id, variableId, value) {
                 const target = vm.runtime.getTargetById(id);
-                const stage = vm.runtime.getTargetForStage();
-                const owner = target?.variables[variableId] ? target : stage?.variables[variableId] ? stage : undefined;
-                if (owner && vm.setVariableValue(owner.id, variableId, value)) vm.runtime.emitProjectChanged();
+                if (target?.variables[variableId]?.type === '' && vm.setVariableValue(id, variableId, value)) {
+                    vm.runtime.emitProjectChanged();
+                }
             },
             getMessages: id => scanTargetMessages(vm.runtime, id),
             openMessage(use) {
