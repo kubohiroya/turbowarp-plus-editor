@@ -22,8 +22,10 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {attachEditMenuWorkspace, renderEditMenu} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
 
 export * from './lib/tw-plus-integration-points.ts';
+export {renderEditMenu};
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
 const getProjectSearchMessages = () => window.ScratchBlocks?.Msg ?? {};
@@ -54,7 +56,9 @@ export const attachHostScriptTransfer = (context, integration) => {
     const code = attachDesktopCode({...context, receiveBackpackDrop});
     const extensions = attachDockedCodeExtensions(context);
     const prewarm = startup.stageCodePrewarm ? attachStageCodePrewarm(context) : undefined;
+    const editMenu = attachEditMenuWorkspace(context);
     return {dispose() {
+        editMenu.dispose();
         prewarm?.dispose();
         extensions.dispose();
         code?.dispose();

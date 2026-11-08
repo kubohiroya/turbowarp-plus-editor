@@ -9,6 +9,7 @@
     ".": "./src/icon-menu-button.tsx",
     "./busy-cursor": "./src/busy-cursor.ts",
     "./detached-block-palette": "./src/detached-block-palette.ts",
+    "./edit-menu": "./src/edit-menu.tsx",
     "./palette-category-reorder": "./src/palette-category-reorder.ts",
     "./palette-category-search": "./src/palette-category-search.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",
