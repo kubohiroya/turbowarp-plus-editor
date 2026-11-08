@@ -9,7 +9,8 @@ import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} f
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
-import {ProjectFileMenu, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import ProjectFileMenu from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import {projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';

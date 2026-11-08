@@ -11,8 +11,8 @@ import {editProjectURI} from '../extension-host/project-loader.ts';
 import {createProjectDiagnostics} from './diagnostics.ts';
 import {getExtensionAuthoringHost} from '../extension-host/authoring.ts';
 import {withProjectSerialization} from '../extension-host/serialization-context.ts';
-import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
-import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import type {ExtensionSpec} from '@kubohiroya/turbowarp-extension-loader';
 import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
 
