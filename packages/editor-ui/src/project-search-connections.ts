@@ -1,8 +1,11 @@
 import type {ProjectSearchResult, SearchProject, YamlSearchDocument, YamlSearchResult} from './project-search.ts';
+import type {ReplaceBlockly, ReplaceWorkspace} from './project-search-replace.ts';
 
 export type SearchDocuments = {
     getSearchableYamlDocuments(): readonly YamlSearchDocument[];
     openYamlPreview(reference: YamlSearchDocument['reference'], range: YamlSearchResult['range']): boolean;
+    stageYamlReplacement?(reference: YamlSearchDocument['reference'], range: YamlSearchResult['range'],
+        source: string, text: string): boolean;
 };
 
 type SearchView = {id: string; groupId: string; targetId: string; section: number};
@@ -21,11 +24,13 @@ type SearchNavigation = {
     getEditingTarget(): Target | undefined;
     centerBlock(id: string): void;
     centerComment(id: string, blockId?: string | null): void;
+    replacementContext?(): {workspace: ReplaceWorkspace; Blockly: ReplaceBlockly} | undefined;
 };
 
 type SearchConnection = {
     navigation?: SearchNavigation;
     documents?: SearchDocuments;
+    openReplace?: () => void;
     listeners: Set<() => void>;
 };
 
@@ -60,4 +65,16 @@ export function connectProjectSearchDocuments(project: SearchProject, documents:
         connection.documents = undefined;
         connection.listeners.forEach(listener => listener());
     };
+}
+
+export function connectProjectReplaceOpener(project: SearchProject, open: () => void) {
+    const connection = connectionFor(project);
+    connection.openReplace = open;
+    return () => {
+        if (connection.openReplace === open) connection.openReplace = undefined;
+    };
+}
+
+export function projectReplaceOpener(project?: SearchProject) {
+    return project && connections.get(project)?.openReplace;
 }

@@ -1,5 +1,7 @@
 import React from 'react';
 import styles from './edit-menu.css';
+import {projectReplaceOpener} from './project-search-connections.ts';
+import type {SearchProject} from './project-search.ts';
 
 interface Workspace {
     options: {readOnly: boolean};
@@ -26,7 +28,7 @@ interface WorkspaceContext {
 }
 
 interface MenuProps {
-    vm: object;
+    vm: {runtime?: SearchProject};
     locale: string;
     MenuItem: React.ComponentType<{className?: string; children: React.ReactNode}>;
     MenuSection: React.ComponentType<{children: React.ReactNode}>;
@@ -59,8 +61,8 @@ function shortcutFor(command: Command, mac: boolean) {
     return mac ? {label: `⌘${key}`, keys: `Meta+${key}`} : {label: `Ctrl+${key}`, keys: `Control+${key}`};
 }
 
-function canRun(context: WorkspaceContext | undefined, command: Command): boolean {
-    if (command === 'findAndReplace' || !context?.canUse()) return false;
+function canRun(context: WorkspaceContext | undefined, command: Exclude<Command, 'findAndReplace'>): boolean {
+    if (!context?.canUse()) return false;
     const {workspace, ScratchBlocks} = context;
     if (ScratchBlocks.getMainWorkspace() !== workspace || workspace.options.readOnly ||
         !workspace.isVisible() || workspace.isDragging() || workspace.getParentSvg().closest('[inert]')) return false;
@@ -89,14 +91,22 @@ function EditMenu({vm, locale, MenuItem, MenuSection, renderIcon, onRequestClose
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mac = typeof navigator !== 'undefined' && navigator.platform.startsWith('Mac');
     const context = workspaces.get(vm);
+    const openReplace = projectReplaceOpener(vm.runtime);
     return <>{groups.map(group => <MenuSection key={group[0][0]}>
         {group.map(([command, english, translated]) => {
             const shortcut = shortcutFor(command, mac);
             return <MenuItem key={command}>
-                <button className={styles.command} type="button" disabled={!canRun(context, command)}
+                <button className={styles.command} type="button"
+                    disabled={command === 'findAndReplace' ? !openReplace : !canRun(context, command)}
                     aria-keyshortcuts={shortcut?.keys} onClick={event => {
+                        if (command === 'findAndReplace') {
+                            if (!openReplace) return;
+                            onRequestClose();
+                            openReplace();
+                            return;
+                        }
                         const current = workspaces.get(vm);
-                        if (command === 'findAndReplace' || !canRun(current, command)) return;
+                        if (!canRun(current, command)) return;
                         // Keep cut, copy and paste on the same ScratchBlocks clipboard.
                         current.ScratchBlocks.onKeyDown_({target: event.currentTarget,
                             keyCode: shortcutKeys[command].charCodeAt(0), ctrlKey: true, shiftKey: false,

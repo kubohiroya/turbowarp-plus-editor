@@ -5,11 +5,12 @@ type Block = {
     next?: string;
     shadow?: boolean;
     fields?: Record<string, Field>;
-    inputs?: Record<string, {block?: string}>;
+    inputs?: Record<string, {block?: string; shadow?: string}>;
     mutation?: {proccode?: string; blockInfo?: {text?: string}};
 };
 type Asset = {name: string};
 type Comment = {text: string; blockId?: string | null};
+type Variable = {name: string; type?: string; isCloud?: boolean; value?: unknown};
 type Target = {
     id: string;
     isStage: boolean;
@@ -17,18 +18,25 @@ type Target = {
     getName(): string;
     getCostumes(): Asset[];
     getSounds(): Asset[];
-    variables: Record<string, {name: string}>;
+    variables: Record<string, Variable>;
     comments?: Record<string, Comment>;
     blocks: {getScripts(): string[]; getBlock(id: string): Block | undefined};
 };
 export type SearchProject = {
     targets: Target[];
     getLabelForOpcode?(opcode: string): {category?: string; label?: string} | undefined;
+    resetAllCaches?(): void;
+    emitProjectChanged?(): void;
 };
 type BlockKind = 'block' | 'variable' | 'list' | 'message' | 'argument' | 'extension';
 type AssetKind = 'costume' | 'backdrop' | 'sound';
 export type SearchKind = BlockKind | AssetKind | 'comment' | 'yaml';
-export type ProjectSearchResult = {label: string; target: Target; detail?: string} & (
+export type SearchEdit =
+    | {type: 'field'; id: string; field: string; value: string}
+    | {type: 'name'; id: string; owner: Target; name: string; variableType: string}
+    | {type: 'procedure'; name: string}
+    | {type: 'comment'; text: string};
+export type ProjectSearchResult = {label: string; target: Target; detail?: string; edit?: SearchEdit} & (
     {kind: BlockKind; block: Block} | {kind: AssetKind; asset: Asset} |
     {kind: 'comment'; comment: Comment; commentId: string}
 );
@@ -38,6 +46,8 @@ export type YamlSearchResult = {
     range: {start: number; end: number; expectedText: string};
 };
 export type SearchResult = ProjectSearchResult | YamlSearchResult;
+export const literalSearchPattern = (query: string, flags: string) =>
+    new RegExp(query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
 
 const headings: Record<Exclude<SearchKind, 'yaml'>, [string, string]> = {
     block: ['ブロック', 'Blocks'],
@@ -133,28 +143,37 @@ export function searchProject(project: SearchProject, messages: Record<string, s
             const template = procedure ? procedure.replace(/%[sbn]/g, '…') :
                 typeof customLabel === 'string' ? customLabel : opcode.text;
             const label = procedure ? template : describe(target, block, inputs, template);
-            const add = (kind: BlockKind, label: string, detail?: string) =>
-                groups.get(kind).results.push({kind, target, block, label, detail});
+            const add = (kind: BlockKind, label: string, detail?: string, edit?: SearchEdit) =>
+                groups.get(kind).results.push({kind, target, block, label, detail, edit});
             if (kinds.has('block') && (matches(template) || matches(block.opcode) ||
                 (block.opcode === 'event_whenflagclicked' && matches(japanese ? '緑の旗' : 'green flag')))) {
-                add('block', label);
+                add('block', label, undefined, procedure ? {type: 'procedure', name: procedure} : undefined);
             }
             if (kinds.has(kind) && name && matches(name)) {
-                const owner = (variable || list) && reference?.id &&
+                const owner = reference?.id &&
                     (target.variables[reference.id] ? target : stage?.variables[reference.id] ? stage : undefined);
-                const scope = owner && (owner.isStage ? (japanese ? '全体' : 'Global') : (japanese ? 'このスプライト' : 'Local'));
-                add(kind, name, scope || label);
+                const scope = (variable || list) && owner &&
+                    (owner.isStage ? (japanese ? '全体' : 'Global') : (japanese ? 'このスプライト' : 'Local'));
+                const model = owner && owner.variables[reference.id];
+                const edit = model && !model.isCloud ? {
+                    type: 'name' as const, id: reference.id, owner, name: model.name,
+                    variableType: model.type ?? (list ? 'list' : isBroadcast ? 'broadcast_msg' : '')
+                } : undefined;
+                add(kind, name, scope || label, edit);
             }
             if (kinds.has('extension') && opcode.extension && matches(opcode.extension)) add('extension', opcode.extension, label);
             if (kinds.has('argument')) {
-                const argument = (field: Field) => {
-                    if (field === reference) return;
-                    const value = String(field.value ?? '');
-                    if (value && matches(value)) add('argument', value, label);
+                const addArguments = (owner: Block) => {
+                    for (const [key, field] of Object.entries(owner.fields ?? {})) {
+                        if (field === reference) continue;
+                        const value = String(field.value ?? '');
+                        if (value && matches(value)) add('argument', value, label,
+                            {type: 'field', id: owner.id, field: key, value});
+                    }
                 };
-                Object.values(block.fields ?? {}).forEach(argument);
+                addArguments(block);
                 for (const [, child] of inputs) {
-                    if (child.shadow) Object.values(child.fields ?? {}).forEach(argument);
+                    if (child.shadow) addArguments(child);
                 }
             }
         }
@@ -162,7 +181,7 @@ export function searchProject(project: SearchProject, messages: Record<string, s
         if (kinds.has('comment')) {
             for (const [commentId, comment] of Object.entries(target.comments ?? {})) {
                 if (matches(comment.text)) groups.get('comment').results.push({
-                    kind: 'comment', target, comment, commentId, label: comment.text
+                    kind: 'comment', target, comment, commentId, label: comment.text, edit: {type: 'comment', text: comment.text}
                 });
             }
         }
@@ -185,7 +204,7 @@ export function searchYamlDocuments(documents: readonly YamlSearchDocument[], qu
     const results: YamlSearchResult[] = [];
     const search = query.trim();
     if (!search) return results;
-    const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
+    const pattern = literalSearchPattern(search, 'giu');
     const seen = new Set<string>();
     const duplicates = new Set<string>();
     for (const {filename} of documents) {

@@ -270,6 +270,11 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             centerComment(id, blockId) {
                 centerProjectComment(window.ScratchBlocks?.getMainWorkspace(), id, blockId);
+            },
+            replacementContext() {
+                const Blockly = window.ScratchBlocks;
+                const workspace = Blockly?.getMainWorkspace();
+                return workspace?.isVisible() ? {workspace, Blockly} : undefined;
             }
         });
     }, [multiView, vm, spriteTabs.controller]);
