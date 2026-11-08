@@ -32,7 +32,7 @@ interface PanelProps {
     decorate?: (document: Document) => () => void;
     renderInExternalDocument?: boolean;
     onDockActionChange?: (actions: {kind: SurfaceState<PanelMount>['kind']; dock(): void;
-        undock(): void; external: boolean} | null) => void;
+        undock(): void; external: boolean; mount?: HTMLElement} | null) => void;
     alwaysShowUndock?: boolean;
     openLabel?: string;
     renderDockHeading?: (action: React.ReactNode) => React.ReactNode;
@@ -96,15 +96,15 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         };
         surface.undock(request);
     }, [surface, id, title, externalHost, externalOnly, plusLayout, layer]);
-    React.useLayoutEffect(() => {
-        if (!onDockActionChange) return;
-        onDockActionChange({kind: state.kind, dock: surface.dock, undock, external: Boolean(externalHost && (externalOnly || !plusLayout))});
-        return () => onDockActionChange(null);
-    }, [onDockActionChange, state.kind, surface, undock, externalHost, externalOnly, plusLayout]);
-
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mount = state.kind === 'external' ? state.target.mount : undefined;
     const externalMount = state.kind === 'external' && state.target.presentation !== 'internal' ? state.target.mount : null;
+    React.useLayoutEffect(() => {
+        if (!onDockActionChange) return;
+        onDockActionChange({kind: state.kind, dock: surface.dock, undock,
+            external: Boolean(externalHost && (externalOnly || !plusLayout)), mount: externalMount ?? undefined});
+        return () => onDockActionChange(null);
+    }, [onDockActionChange, state.kind, surface, undock, externalHost, externalOnly, plusLayout, externalMount]);
     React.useLayoutEffect(() => {
         if (externalMount) externalMount.ownerDocument.title = title;
     }, [externalMount, title]);
