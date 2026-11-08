@@ -255,7 +255,7 @@ export function installExtensionLoader(host, loader) {
             const others = [...ids].filter(id => !listed.has(id));
             const otherURLs = new Map([...urls].filter(([id]) => !listed.has(id)));
             const answer = await extensionStep(() => host.review(context.manifest,
-                () => originals._loadExtensions.call(vm, others, otherURLs, ...args)));
+                () => originals._loadExtensions.call(vm, others, otherURLs, ...args), context.signal));
             checkActive();
             othersLoaded = true;
             context.registration = loader.load(context.manifest,

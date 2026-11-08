@@ -14,6 +14,7 @@
 
 import JSZip from '@turbowarp/jszip';
 import {discoverManifest, LoaderError} from '@kubohiroya/turbowarp-extension-loader';
+import type {ExtensionSpec} from '@kubohiroya/turbowarp-extension-loader';
 import {
     createDecisionStorage, initialDecisions, loadExtensionInfo, requiresReview
 } from '@kubohiroya/turbowarp-extension-security-dialog';
@@ -25,7 +26,9 @@ import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
 import React from 'react';
 
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
+import {embeddedExtensionName} from './embedded-extension-name.ts';
 import {pendingPlusReview} from './review-channel.ts';
+import type {ReadEmbeddedReviewFile} from './review-channel.ts';
 import {reviewedProjectArchive} from './shared-project-archive.ts';
 import {duringProjectLoadApproval} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
 import styles from './review.css';
@@ -69,6 +72,18 @@ export const identifyProject = async input => {
     return `sha256:${hex(await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical)))}`;
 };
 
+async function verifiedEmbeddedName(spec: ExtensionSpec, readFile?: ReadEmbeddedReviewFile) {
+    if (spec.source.type !== 'embedded-file' || !readFile) return;
+    try {
+        const bytes = await readFile(spec.source.path);
+        // The codec returns a fresh ArrayBuffer-backed copy of the archive entry.
+        const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer>);
+        if (hex(digest) === spec.sha256) return embeddedExtensionName(bytes, spec.id);
+    } catch {
+        // Names are optional. The Loader reports any invalid or unavailable code when loading.
+    }
+}
+
 /**
  * A project's Plus manifest as rows of the open review.
  *
@@ -78,15 +93,19 @@ export const identifyProject = async input => {
  * anything runs — is trusted and stated rather than asked about.
  * @param {object} manifest The project's Plus manifest.
  * @param {object} trusted The catalog's trust checks.
+ * @param {Function} [readEmbeddedFile] Reads the current load's ZIP entries.
  * @returns {Promise<Array<object>>} One `ReviewEntry` per manifest extension, keyed by its ID.
  */
-export const plusReviewRows = (manifest, trusted) => Promise.all(manifest.extensions.map(async spec => {
-    const vouched = await trusted.isTrustedCode({source: spec.source, actualSHA256: spec.sha256});
+export const plusReviewRows = (manifest, trusted, readEmbeddedFile?: ReadEmbeddedReviewFile) => Promise.all(manifest.extensions.map(async spec => {
+    const [vouched, name] = await Promise.all([
+        trusted.isTrustedCode({source: spec.source, actualSHA256: spec.sha256}),
+        verifiedEmbeddedName(spec, readEmbeddedFile)
+    ]);
     const source = typeof spec.source.url === 'string' && spec.source.type.startsWith('remote-') ?
         {kind: spec.source.type, url: spec.source.url, sha256: spec.sha256} : {kind: spec.source.type, sha256: spec.sha256};
     return {key: spec.id,
         ids: [spec.id],
-        metadata: {id: spec.id, ...(spec.version ? {version: spec.version} : {}),
+        metadata: {id: spec.id, ...(name ? {name} : {}), ...(spec.version ? {version: spec.version} : {}),
             ...(spec.publisher ? {author: spec.publisher} : {})},
         source,
         requestedExecution: spec.execution,
@@ -173,7 +192,7 @@ export const createSecurityReview = ({
             // this same screen, and the answer goes back for it to hand the Loader.
             collectEntries: async () => {
                 const channel = pendingPlusReview(vm);
-                return channel ? plusReviewRows(channel.manifest, trusted) : [];
+                return channel ? plusReviewRows(channel.manifest, trusted, channel.readEmbeddedFile) : [];
             },
             applyDecisions: decisions => {
                 const channel = pendingPlusReview(vm);

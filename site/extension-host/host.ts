@@ -167,10 +167,12 @@ export function installPlusExtensionHost (vm, {
      * extensions, and turn the answer into what the Loader takes.
      * @param {object} manifest The project's Plus manifest.
      * @param {Function} run Loads the project's other extensions, which is when the review asks.
+     * @param {AbortSignal} signal The current project load's cancellation signal.
      * @returns {Promise<object>} `declineCaching` for `load()`, and `release` once it settles.
      */
-    const review = async (manifest, run) => {
-        const channel = openPlusReview(vm, manifest);
+    const review = async (manifest, run, signal: AbortSignal) => {
+        const channel = openPlusReview(vm, manifest, path =>
+            projectIO.embeddedReader.read(path, {signal, maxBytes: loaderOptions?.maxBytes}));
         try {
             await run();
         } finally {
