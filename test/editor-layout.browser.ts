@@ -371,8 +371,15 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     await expect(stage.locator('[data-extension-stage-control]')).toHaveCount(0);
     await expect(stage.getByTitle('Go', {exact: true})).toBeVisible();
     await expect(stage.getByTitle('Stop', {exact: true})).toBeVisible();
-    const [barBounds, controlsBounds] = await Promise.all([menuBar.boundingBox(), controls.boundingBox()]);
-    assert.ok(Math.abs(barBounds.x + barBounds.width - controlsBounds.x - controlsBounds.width) <= 8);
+    const [barBounds, controlsBounds, cameraBounds] =
+        await Promise.all([menuBar.boundingBox(), controls.boundingBox(), camera.boundingBox()]);
+    // The frame is one of the menu bar's own controls: its height is the row's button height, it is
+    // centred in the row, and it keeps the row's half-rem margin at the right edge.
+    assert.equal(controlsBounds.height, 32);
+    assert.equal(barBounds.x + barBounds.width - controlsBounds.x - controlsBounds.width, 8);
+    assert.ok(Math.abs((controlsBounds.y - barBounds.y) -
+        (barBounds.height - controlsBounds.height) / 2) <= 1);
+    assert.ok(cameraBounds.height < controlsBounds.height);
     assert.equal((await canvas.boundingBox()).width, originalWidth);
     await resize.press('Home');
     await expect.poll(async () => (await canvas.boundingBox()).width).toBeLessThan(originalWidth);
@@ -416,6 +423,8 @@ test('the enabled debugger opens from the extension controls even without projec
 
     await expect(group.locator('.sa-debugger-container')).toBeVisible();
     await expect(debuggerButton).toHaveCount(1);
+    // The add-on's button is stage sized on its own; inside the frame it keeps the row's height.
+    assert.equal((await group.boundingBox()).height, 32);
     await expect(page.locator('[data-plus-stage-frame]').locator('.sa-debugger-container')).toHaveCount(0);
     await debuggerButton.locator('img').click();
     const panel = page.locator('.sa-debugger-interface');
