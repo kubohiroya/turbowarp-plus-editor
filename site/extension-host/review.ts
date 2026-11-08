@@ -26,6 +26,7 @@ import React from 'react';
 
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
 import {pendingPlusReview} from './review-channel.ts';
+import {reviewedProjectArchive} from './shared-project-archive.ts';
 import {duringProjectLoadApproval} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
 import styles from './review.css';
 
@@ -37,6 +38,8 @@ const hex = bytes => Array.from(new Uint8Array(bytes), byte => byte.toString(16)
  * @returns {Promise<object|null>} The parsed document, or null when it cannot be read.
  */
 const readProjectDocument = async input => {
+    const verified = reviewedProjectArchive(input);
+    if (verified) return verified.project;
     if (input && typeof input === 'object' && !ArrayBuffer.isView(input) && !(input instanceof ArrayBuffer)) {
         return input;
     }

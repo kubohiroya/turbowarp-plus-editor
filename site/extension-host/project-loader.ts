@@ -135,6 +135,7 @@ export function installExtensionLoader(host, loader) {
     const loadProject = function(input, ...args) {
         checkActive();
         const progress = host.captureProjectProgress?.();
+        const archive = host.projectArchives?.capture(vm);
         if (host.onProjectLoadStart) host.onProjectLoadStart(input);
         payloads?.loadStarted();
         pending++;
@@ -144,10 +145,17 @@ export function installExtensionLoader(host, loader) {
             activeController = controller;
             let touchedHost = false;
             try {
+                if (archive) progress?.('archive');
+                const options = {signal: controller.signal, shareArchive: Boolean(archive)};
+                let prepared = archive ? await io.prepare(input, options) : null;
+                if (archive) archive.original = prepared.originalArchive;
                 if (payloads) progress?.('payloads');
-                const restoredPayloads = payloads ? await payloads.read(input, controller.signal) : null;
-                progress?.('archive');
-                const prepared = await io.prepare(restoredPayloads?.input ?? input, {signal: controller.signal});
+                const restoredPayloads = payloads ? await payloads.read(input, controller.signal, archive?.original) : null;
+                const restoredInput = restoredPayloads?.input ?? input;
+                if (!prepared || restoredInput !== input) {
+                    progress?.('archive');
+                    prepared = await io.prepare(restoredInput, options);
+                }
                 checkActive();
                 if (!prepared || !Object.hasOwn(prepared, 'manifest') || !Object.hasOwn(prepared, 'input')) {
                     throw failure('INVALID_PROJECT_CODEC', 'The Loader project codec returned no project');
@@ -167,7 +175,9 @@ export function installExtensionLoader(host, loader) {
                 if (io.activate) io.activate(context);
                 loading = {manifest: prepared.manifest, signal: controller.signal, loaded: false, registration: null, progress};
                 progress?.('project');
-                const result = await originals.loadProject.call(vm, prepared.input, ...args);
+                const runVM = input => originals.loadProject.call(vm, input, ...args);
+                const result = await (archive ? host.projectArchives.load(prepared.input, prepared.vmArchive, runVM) :
+                    runVM(prepared.input));
                 checkActive();
                 // A VM that never invokes the extension hook cannot load Plus projects.
                 if (prepared.manifest !== null && !loading.loaded) {

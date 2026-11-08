@@ -28,8 +28,9 @@ for (const cancel of [false, true]) {
         await expect(history).toBeHidden();
         await progress.hover();
         await expect(history).toBeVisible();
-        expect(await history.locator('li').evaluateAll(rows => rows.map(row => row.dataset.phase)))
-            .toEqual(['opening', 'payloads', 'archive']);
+        const phases = await history.locator('li').evaluateAll(rows => rows.map(row => row.dataset.phase));
+        expect(phases[0]).toBe('opening');
+        expect(phases.slice(1).sort()).toEqual(['archive', 'payloads']);
         const times = await history.locator('time').evaluateAll(elements =>
             elements.map(element => ({label: element.textContent, time: Date.parse(element.dateTime)})));
         for (let i = 0; i < times.length; i++) {
