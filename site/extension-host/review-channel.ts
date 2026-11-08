@@ -9,14 +9,17 @@
 
 const pending = new WeakMap();
 
+export type ReadEmbeddedReviewFile = (path: string) => Promise<Uint8Array>;
+
 /**
  * Open the channel for one load: the review may read `manifest` and writes its answer back.
  * @param {object} vm The VM being loaded.
  * @param {object} manifest The project's Plus manifest.
+ * @param {Function} [readEmbeddedFile] Reads JS bytes from this load's prepared archive.
  * @returns {object} The channel, whose `decisions` the review fills in.
  */
-export const openPlusReview = (vm, manifest) => {
-    const channel = {manifest, decisions: null};
+export const openPlusReview = (vm, manifest, readEmbeddedFile?: ReadEmbeddedReviewFile) => {
+    const channel = {manifest, decisions: null, readEmbeddedFile};
     pending.set(vm, channel);
     return channel;
 };
