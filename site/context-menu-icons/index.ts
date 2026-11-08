@@ -21,6 +21,8 @@ const paths = {
     removeComment: 'M5 4h14v13h-8l-5 4v-4H5zM9 10h6',
     undo: 'm9 4-5 5 5 5M4 9h10a5 5 0 0 1 0 10h-3',
     redo: 'm15 4 5 5-5 5m5-5H10a5 5 0 0 0 0 10h3',
+    restoreDeletion: 'M4 7h16M9 7V4h6v3M6 10l1 10h10l1-10m-7 3-2 2 2 2m-2-2h5',
+    findAndReplace: 'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM15 15l5 5',
     cleanup: 'M4 4v16M8 5h12M8 12h8m-8 7h10',
     space: 'M4 4h16M4 20h16M12 7v10m-3-7 3-3 3 3m-6 4 3 3 3-3',
     moveTop: 'M4 3h16m-8 18V7m-5 5 5-5 5 5',
@@ -126,9 +128,11 @@ const localizedAction = (text: string, messages: Record<string, string>, actions
     return actions[id];
 };
 
-export const renderContextMenuIcon = action => enabled && paths[action] ? React.createElement('svg', {
+export const renderMenuIcon = action => paths[action] ? React.createElement('svg', {
     className: styles.icon, 'aria-hidden': 'true', focusable: 'false', viewBox: '0 0 24 24'
 }, React.createElement('path', {d: paths[action]})) : null;
+
+export const renderContextMenuIcon = action => enabled ? renderMenuIcon(action) : null;
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
 const installed = new WeakSet();

@@ -22,10 +22,13 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
-import {attachEditMenuWorkspace, renderEditMenu} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
+import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
+    renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
+import {renderMenuIcon} from '../context-menu-icons/index.ts';
 
 export * from './lib/tw-plus-integration-points.ts';
-export {renderEditMenu};
+export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
+export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
 const getProjectSearchMessages = () => window.ScratchBlocks?.Msg ?? {};
