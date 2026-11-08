@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
 import {buildDocumentEditorMetadata} from '../scripts/site/build-yaml-editor.ts';
+
+const require = createRequire(import.meta.url);
 
 test('distribution keeps licenses and provenance and records that it mounts the document editor', async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twpe-document-build-'));
@@ -22,6 +26,11 @@ test('distribution keeps licenses and provenance and records that it mounts the 
             assert.match(metadata.entrySha256, /^[a-f0-9]{64}$/u);
             assert(built.notices.includes(`notices/turbowarp-${name}-LICENSE`));
         }
+        const {withDocumentEditorWebpack4} = require('@kubohiroya/turbowarp-document-editor/webpack4');
+        const data = '@kubohiroya/turbowarp-document-data';
+        const entry = withDocumentEditorWebpack4({}).resolve.alias[`${data}/composition$`];
+        const bundledHash = createHash('sha256').update(await fs.readFile(entry)).digest('hex');
+        assert.equal(built.packages.find(item => item.package === data).entrySha256, bundledHash);
         assert.deepEqual((await fs.readdir(built.output)).sort(), ['build-info.json', 'notices']);
         await assert.rejects(fs.stat(path.join(directory, 'yaml-editor')), {code: 'ENOENT'});
     } finally { await fs.rm(directory, {recursive: true, force: true}); }
