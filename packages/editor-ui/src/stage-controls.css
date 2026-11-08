@@ -1,0 +1,93 @@
+.control {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    height: 2rem;
+    min-width: 2rem;
+    padding: 0 0.375rem;
+    margin: 0 0.125rem;
+    border: 1px solid var(--ui-black-transparent);
+    border-radius: 0.25rem;
+    background: var(--ui-primary);
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.control:focus-visible {
+    outline: 2px solid var(--looks-secondary);
+    outline-offset: 1px;
+}
+
+.label {
+    font: 0.75rem/1 sans-serif;
+    white-space: nowrap;
+}
+
+.panel {
+    display: contents;
+}
+
+.menuDock {
+    align-self: center;
+    position: relative;
+    min-inline-size: 0;
+    max-inline-size: 40%;
+    margin-inline-end: 0.5rem;
+}
+
+/*
+ * In the menu bar the group is one of that row's controls, so it takes the row's button height
+ * (2rem) rather than growing to whatever the buttons inside it happen to measure. The buttons are
+ * then sized to the space the frame leaves, which also keeps their icons from towering over the
+ * row's own 0.75rem text.
+ */
+.controlGroup {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.1875rem;
+    block-size: 2rem;
+    padding: 0 0.1875rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border: 1px solid var(--ui-black-transparent);
+    border-radius: 0.5rem;
+}
+
+.controlGroup > .control {
+    flex: none;
+    block-size: 1.625rem;
+    min-inline-size: 1.625rem;
+    margin: 0;
+    padding: 0 0.3125rem;
+    font-size: 1rem;
+}
+
+.debuggerButton {
+    flex: none;
+}
+
+.controlGroup > .debuggerButton > :global(.sa-debugger-container) {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+/* The editor add-on's own button is stage sized; in the menu bar frame it matches the rest. */
+.controlGroup > .debuggerButton :global([class*="stage-header_stage-button"]) {
+    box-sizing: border-box;
+    inline-size: 1.625rem;
+    block-size: 1.625rem;
+    padding: 0.25rem;
+}
+
+.menuPanel {
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline-end: 0;
+    display: flex;
+    justify-content: flex-end;
+}

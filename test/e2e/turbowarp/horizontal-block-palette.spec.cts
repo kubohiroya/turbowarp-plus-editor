@@ -1,4 +1,5 @@
 const {test, expect} = require('./fixtures.cts');
+const {openDisplaySettings} = require('../../fixtures/layout-menu.ts');
 
 const useLayout = async (page, name) => {
     await page.locator('.blocklyToolboxDiv .scratchCategoryId-motion').click({button: 'right'});
@@ -134,8 +135,13 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await page.getByRole('button', {name: 'OK', exact: true}).click();
     await toolbox.locator('.scratchCategoryId-variables').click();
     await expect(flyout.getByText('palette test variable', {exact: true}).first()).toBeVisible();
+    const search = page.getByRole('searchbox', {name: 'Search blocks'});
+    await search.fill('set');
+    await expect(flyout.getByText('set', {exact: true})).toBeVisible();
+    await expect(flyout.getByText('change', {exact: true})).toHaveCount(0);
 
     await toolbox.locator('.scratchCategoryId-myBlocks').click();
+    await expect(search).toHaveValue('');
     await expect(flyout.getByText('Make a Block', {exact: true})).toBeVisible();
 
     evidence.stage('extension-category');
@@ -153,6 +159,56 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(page.getByRole('menuitem', {name: 'Use horizontal palette'})).toHaveCount(0);
     await expect(toolbox).not.toHaveAttribute('data-horizontal-block-palette');
     await expect(flyout).toBeVisible();
+});
+
+test('横パレットの見出しとラベルを検索し、絞り込んだブロックを追加できる', async ({page}) => {
+    await page.addInitScript(() => {
+        localStorage.setItem('tw:addons', JSON.stringify({
+            _: 5, 'hide-flyout': {enabled: true, toggle: 'cathover', speed: 'none'}
+        }));
+    });
+    await page.goto('editor.html?lang=ja');
+    const motion = page.locator('[data-horizontal-block-palette] .scratchCategoryId-motion');
+    const flyout = page.locator('.blocklyFlyout');
+    const search = page.getByRole('searchbox', {name: 'ブロックを検索'});
+    const blocks = flyout.locator('.blocklyBlockCanvas > .blocklyDraggable');
+    const workspace = page.locator('.blocklySvg').first();
+    const placed = workspace.locator('> .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable');
+
+    await motion.click();
+    await expect(search).toBeVisible();
+    const fullCount = await blocks.count();
+    expect(fullCount).toBeGreaterThan(1);
+    const input = await search.boundingBox();
+    const pin = await flyout.locator('.sa-lock-button').boundingBox();
+    expect(input.x + input.width).toBeLessThan(pin.x);
+
+    await search.fill('動');
+    await expect(blocks).toHaveCount(fullCount);
+    await search.fill('表示にない語句');
+    await expect(blocks).toHaveCount(0);
+    await expect(flyout.getByText('一致するブロックがありません', {exact: true})).toBeVisible();
+    await search.clear();
+    await expect(blocks).toHaveCount(fullCount);
+
+    await search.evaluate(element => {
+        element.value = '歩動';
+        element.dispatchEvent(new InputEvent('input', {bubbles: true, isComposing: true}));
+    });
+    await expect(blocks).toHaveCount(fullCount);
+    await search.dispatchEvent('compositionend');
+    await expect(blocks).toHaveCount(1);
+    await expect(search).toBeFocused();
+    await expect(blocks.getByText('歩動かす', {exact: true})).toBeVisible();
+
+    const source = await blocks.boundingBox();
+    const surface = await workspace.boundingBox();
+    await page.mouse.move(source.x + 12, source.y + 12);
+    await page.mouse.down();
+    await page.mouse.move(surface.x + surface.width * 0.65, surface.y + 260, {steps: 16});
+    await page.mouse.up();
+    await expect(placed).toHaveCount(1);
+    await expect(search).toBeHidden();
 });
 
 test('既定のファイルメニュー構成で横パレットのピンと縦パレットの自動非表示が動く', async ({page}) => {
@@ -268,8 +324,8 @@ test('既定のファイルメニュー構成で横パレットのピンと縦�
     await expect(flyout).toBeHidden();
     await expect(handle).toBeHidden();
 
-    await page.getByText('Settings', {exact: true}).click();
-    await page.getByText('Switch To Dark Mode', {exact: true}).click();
+    const display = await openDisplaySettings(page);
+    await display.getByText('Switch To Dark Mode', {exact: true}).click();
     await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
     await control.click();
     await expectPinAppearance(unpinnedColor);
@@ -473,6 +529,10 @@ test.describe('タッチ操作', () => {
         const motion = toolbox.locator('.scratchCategoryId-motion');
         const looks = toolbox.locator('.scratchCategoryId-looks');
         await expect(toolbox).toHaveAttribute('data-horizontal-block-palette', '');
+        // The categories are laid out after the palette turns horizontal, so measuring one before
+        // it is visible returns no box at all.
+        await expect(looks).toBeVisible();
+        await expect(motion).toBeVisible();
         const touchPoint = async locator => {
             const {x, y, width, height} = await locator.boundingBox();
             return {x: x + width / 2, y: y + height / 2};

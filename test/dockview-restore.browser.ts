@@ -12,7 +12,8 @@ const storageKey = 'twPlusDockviewLayout';
 const provider = 'twpeyamlsettings';
 const title = (id: string) => `settings.yml (${provider} / ${id})`;
 const dockview = (page: Page) => page.locator('[data-multi-view] .dockview-theme-light');
-const tab = (page: Page, name: string) => dockview(page).getByRole('tab', {name, exact: true});
+const tab = (page: Page, name: string) =>
+    dockview(page).locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
 const panel = (page: Page, id: string) => dockview(page).locator(`.tw-plus-document-slot[data-document-id="${id}"]`);
 const readStorage = (page: Page) => page.evaluate(key => localStorage.getItem(key), storageKey);
 
@@ -72,13 +73,14 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await load(page);
     await selectBackdrop(page);
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2);
-    const stageCode = await page.evaluate(() => window.vm.editingTarget.getName());
+    const stageName = await page.evaluate(() => window.vm.editingTarget.getName());
+    const backdrop = tab(page, '背景');
     const sprite = await page.evaluate(() => window.vm.runtime.targets.find(target => !target.isStage).getName());
 
     await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
     await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
     await page.getByRole('menuitem', {name: 'ステージをタブで開く', exact: true}).click();
-    await tab(page, stageCode).click();
+    await backdrop.click();
     await open(page, 0, 'settings');
     const workspace = dockview(page);
     const groups = workspace.locator('.dv-groupview');
@@ -88,12 +90,12 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await tab(page, title('settings')).dragTo(body, {targetPosition: {x: bounds.width / 2, y: bounds.height - 12}});
     await expect(groups).toHaveCount(3);
 
-    await tab(page, stageCode).click();
+    await backdrop.click();
     await open(page, 1, 'labels');
-    const tabList = tab(page, stageCode).locator('..');
+    const tabList = backdrop.locator('..');
     const order = () => tabList.locator('.dv-tab').evaluateAll(tabs => tabs.map(tab => tab.getAttribute('aria-label')));
     const original = await order();
-    await tab(page, title('labels')).dragTo(tab(page, stageCode), {targetPosition: {x: 14, y: 14}});
+    await tab(page, title('labels')).dragTo(backdrop, {targetPosition: {x: 14, y: 14}});
     await expect.poll(order).not.toEqual(original);
     await expect(groups).toHaveCount(3);
     await tab(page, title('labels')).click();
@@ -118,7 +120,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
         return data?.panels && Object.values(data.panels).filter((panel: any) => panel.kind === 'document').length;
     }).toBe(2);
     const saved = JSON.parse(await readStorage(page));
-    assert.equal(saved.panels[saved.editingView].name, stageCode);
+    assert.equal(saved.panels[saved.editingView].name, stageName);
     await context.close();
 
     page = await start();
@@ -137,7 +139,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await expect(dockview(page).locator('.dv-groupview.dv-active-group').getByRole('tab', {
         name: title('settings'), selected: true, exact: true
     })).toBeVisible();
-    assert.equal(await page.evaluate(() => window.vm.editingTarget.getName()), stageCode);
+    assert.equal(await page.evaluate(() => window.vm.editingTarget.getName()), stageName);
     assert.equal(JSON.parse(await readStorage(page)).activeGroup, saved.activeGroup);
 
     const rollback = await context.newPage();

@@ -2,6 +2,7 @@ import {hostError} from './test-errors.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import JSZip from '@turbowarp/jszip';
 import {installPlusExtensionHost} from '../../site/extension-host/host.ts';
 import {createSecurityReview} from '../../site/extension-host/review.ts';
 
@@ -80,6 +81,52 @@ function install (answer) {
 }
 
 const keyed = (entries, decide) => new Map(entries.map(entry => [entry.key, decide(entry)]));
+
+test('the open review names ZIP extensions from verified source before any extension runs', async () => {
+    const sources = [
+        {id: 'headerfixture', source: '// Name: Header name\nScratch.vm.unifiedExecuted = 1;'},
+        {id: 'literalfixture', source: `Scratch.vm.unifiedExecuted = 1;
+            class Other {getInfo() {return {id: 'other', name: 'Wrong name'};}}
+            Scratch.extensions.register({getInfo() {return {id: 'literalfixture', name: 'Literal name'};}});`},
+        {id: 'dynamicfixture', source: `Scratch.extensions.register({
+            getInfo() {return {id: 'dynamicfixture', name: unknownName()};}
+        });`},
+        {id: 'tamperedfixture', source: '// Name: Unverified name\nScratch.vm.unifiedExecuted = 1;',
+            sha256: '0'.repeat(64)}
+    ];
+    const zip = new JSZip();
+    const extensions = sources.map(({id, source, sha256}) => {
+        const path = `extensions/${id}.js`;
+        zip.file(path, source);
+        return {id, source: {type: 'embedded-file', path}, execution: 'unsandboxed',
+            sha256: sha256 ?? createHash('sha256').update(source).digest('hex')};
+    });
+    const input = project();
+    input.extensions = [...sources.map(({id}) => id), 'legacyfixture'];
+    zip.file('project.json', JSON.stringify({...input, turboWarpPlus: {schemaVersion: 1, extensions}}));
+
+    const fixture = install(entries => {
+        assert.equal(fixture.vm.unifiedExecuted, undefined);
+        const rows = entries.filter(entry => entry.source.kind === 'embedded-file');
+        assert.deepEqual(rows.map(entry => [entry.key, entry.metadata.name]), [
+            ['headerfixture', 'Header name'],
+            ['literalfixture', 'Literal name'],
+            ['dynamicfixture', undefined],
+            ['tamperedfixture', undefined]
+        ]);
+        return keyed(entries, () => ({execution: 'deny'}));
+    });
+    try {
+        await assert.rejects(fixture.vm.loadProject(await zip.generateAsync({type: 'uint8array'})),
+            {code: 'TRUST_DENIED', extensionId: 'headerfixture'});
+        assert.equal(fixture.asked.length, 1);
+        assert.equal(fixture.vm.unifiedExecuted, undefined);
+        assert.deepEqual(fixture.fetched, []);
+        assert.deepEqual(fixture.legacyLoads, []);
+    } finally {
+        await fixture.dispose();
+    }
+});
 
 test('a Plus row and an ordinary custom one are asked about on one screen, and the Loader acts on that answer', async () => {
     const fixture = install(entries => keyed(entries, entry => (entry.source.kind === 'legacy' ?

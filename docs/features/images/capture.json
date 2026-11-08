@@ -14,6 +14,21 @@
   "security": "0.8.4",
   "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
   "note": "Captured from the public Editor. catalog.png chooses TurboWarp-Markdown from the public catalog. review.png opens a project that adds two extensions outside the catalog as data: URLs, one declaring 'Unsandboxed: required'; the catalog extension in the same project needs no review and is not listed.",
+  "pullRequestReview": {
+    "date": "2026-11-08",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "840d37fd0fdf5d631f8db97cd41bf66e78b393b6",
+    "guiRevision": "eac09baf59a1303d58e257ea8b78a3253c0af035",
+    "pullRequest": "https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219",
+    "viewport": {
+      "width": 1330,
+      "height": 940
+    },
+    "images": {
+      "published-editor-git-pr-overview.png": "Local Git panel after opening PR #219 by number (element screenshot).",
+      "published-editor-git-pr-script.png": "Expanded comparison of the green-flag script in app/project.source.json (element screenshot)."
+    }
+  },
   "projectTools": {
     "date": "2026-11-04",
     "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
@@ -176,6 +191,128 @@
       "sprite-tabs-public.png": {"x": 112, "y": 47, "width": 750, "height": 130},
       "properties-variables-0fc3.png": {"x": 0, "y": 0, "width": 1440, "height": 523},
       "script-transfer-0fc3.png": {"x": 0, "y": 0, "width": 750, "height": 559}
+    }
+  },
+  "publicMenuBarRefresh": {
+    "date": "2026-11-08",
+    "url": "http://localhost:8123/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "c7f25ed55e4ba8223a41ea89ea989edb7169476f",
+    "guiRevision": "eac09baf59a1303d58e257ea8b78a3253c0af035",
+    "securityVersion": "0.8.8",
+    "editorVersion": "0.2.0-rc.3",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "note": "The public Pages host was not reachable from the capture environment, so the Editor was built locally from the deployed revision (the same revision the Pages workflow published) and served under the canonical /turbowarp-plus-editor/ prefix. The micro:bit hex download was replaced by a local placeholder, which does not affect the captured screens. Captured headless with Playwright Chromium in Japanese with default features. The sample project (sprites ネコ and ボール, project variable 速さ, broadcast 開始) was built in the page through vm.loadProject; no UI state is fabricated.",
+    "images": {
+      "plus-workspace-current.png": "Fresh startup: menu bar, pinned sprite list, vertical editor section buttons, horizontal palette and minimap.",
+      "plus-menu.png": "TurboWarp Plus menu opened from the logo.",
+      "file-menu-current.png": "File menu of a new project; Save is disabled before a save target exists.",
+      "edit-menu.png": "Edit menu with icons and shortcut hints.",
+      "project-search.png": "Project search for 速さ with the search-scope checkboxes and variable-use results.",
+      "palette-search.png": "Motion category filtered by 歩 with the in-category block search.",
+      "layout-menu.png": "Editor panel layout menu with split and pop-out actions.",
+      "palette-popout.png": "Block palette opened in a separate window, viewport 520x520.",
+      "stage-menu-current.png": "Expanded right-edge stage with the stage display menu open.",
+      "sprite-list-window.png": "Sprite list opened in a separate window from the Undock button.",
+      "save-as-dialog.png": "Save As dialog (element screenshot).",
+      "export-dialog.png": "Export dialog (element screenshot).",
+      "project-data-dialog.png": "Project Data dialog opened from 組み込みデータ… (element screenshot).",
+      "extensions-dialog.png": "Extensions dialog for a project without extensions (element screenshot).",
+      "properties-current.png": "Project Properties dialog with the Project Diagnostics button (element screenshot)."
+    },
+    "crops": {
+      "plus-menu.png": {
+        "x": 0,
+        "y": 0,
+        "width": 720,
+        "height": 420
+      },
+      "file-menu-current.png": {
+        "x": 0,
+        "y": 0,
+        "width": 720,
+        "height": 460
+      },
+      "edit-menu.png": {
+        "x": 0,
+        "y": 0,
+        "width": 720,
+        "height": 420
+      },
+      "project-search.png": {
+        "x": 0,
+        "y": 0,
+        "width": 1100,
+        "height": 560
+      },
+      "palette-search.png": {
+        "x": 100,
+        "y": 40,
+        "width": 900,
+        "height": 520
+      },
+      "layout-menu.png": {
+        "x": 840,
+        "y": 40,
+        "width": 600,
+        "height": 300
+      }
+    }
+  },
+  "guideRecapture": {
+    "date": "2026-11-08",
+    "url": "http://localhost:8123/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "c9453633f026a3eebbe6f6a831d3a2115d65cb6d",
+    "note": "Built locally from the PR #417 head (main d1d8523 plus the guide restructure; the Editor sources are identical to the published fb5436f) because the public Pages host was not reachable from the capture environment. Served under /turbowarp-plus-editor/ and captured headless with Playwright Chromium in Japanese with default features. The sample project (sprites ネコ and ボール, variables 速さ and スコア, messages 開始 and ゲームオーバー, a generated 440 Hz tone) was built in the page through vm.loadProject and vm.addSound. catalog-current.png answers the catalog URL with entries rebuilt from the npm-published extension packages in the same way as turbowarp-plus-packages scripts/lib/extension-catalog.ts, and answers their jsDelivr URLs with the same npm bytes. review-dialog.png, form-dialog.png and validation-dialog.png open an SB3 that embeds examples/extensions/block-editor.ts (with a header declaring Unsandboxed: required) as a data: URL. The micro:bit hex download was replaced by a local placeholder, which does not affect the captured screens.",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "images": [
+      "plus-workspace-current.png",
+      "plus-menu.png",
+      "file-menu-current.png",
+      "edit-menu.png",
+      "project-search.png",
+      "palette-search.png",
+      "layout-menu.png",
+      "stage-menu-current.png",
+      "save-as-dialog.png",
+      "export-dialog.png",
+      "project-data-dialog.png",
+      "extensions-dialog.png",
+      "properties-current.png",
+      "project-uri-detail.png",
+      "palette-popout.png",
+      "sprite-list-window.png",
+      "sprite-search.png",
+      "sprite-divider.png",
+      "properties-variables.png",
+      "messages-sprite.png",
+      "messages-stage.png",
+      "media-panes.png",
+      "stage-tab.png",
+      "block-context-menu.png",
+      "workspace-context-menu.png",
+      "sprite-context-menu.png",
+      "palette-resize-detail.png",
+      "minimap-current.png",
+      "catalog-current.png",
+      "review-dialog.png",
+      "form-dialog.png",
+      "validation-dialog.png"
+    ],
+    "notRecaptured": {
+      "palette-order-detail.png": "The long-press drag state could not be reproduced headless; the category bar looks the same.",
+      "project-diagnostics.png": "Diagnostics record Plus-format extension events only; the custom-extension sample records none.",
+      "project-diagnostics-failure.png": "Same as project-diagnostics.png.",
+      "asset-preview-development.png": "Kamishibai development build.",
+      "local-media-panes.png": "Local integrated build comparison.",
+      "local-stage-workspace.png": "Local integrated build comparison.",
+      "published-editor-git-pr-overview.png": "Captured from the published Editor in #418.",
+      "published-editor-git-pr-script.png": "Captured from the published Editor in #418."
     }
   }
 }

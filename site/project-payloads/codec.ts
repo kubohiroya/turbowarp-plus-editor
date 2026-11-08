@@ -15,6 +15,11 @@ const dataPrefix = 'data:application/octet-stream;base64,';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true});
 const jsonDecoder = new TextDecoder('utf-8', {fatal: true});
+const startsWithJSONObject = (bytes: Uint8Array) => {
+    const bom = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+    return bytes.subarray(bom ? 3 : 0).find(byte =>
+        byte !== 0x20 && byte !== 0x09 && byte !== 0x0a && byte !== 0x0d) === 0x7b;
+};
 const own = (object, key) => object && Object.hasOwn(object, key);
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
 const remote = format => format === 'remote-cacheable' || format === 'remote-non-cacheable';
@@ -231,6 +236,26 @@ export function encodePayloads(project, assets, settings) {
     return {files: {...files, 'project.json': json}, removed};
 }
 
+/** Repack an already verified, expanded project for a single HTML output. */
+export async function embedPackagedProjectData(bytes: Uint8Array, project: Record<string, unknown>) {
+    assert(!own(project, payloadKey), 'Open this project in the Editor before changing its export storage.');
+    const zip = await JSZip.loadAsync(bytes);
+    const assets: Record<string, Uint8Array> = {};
+    let total = 0;
+    for (const name of assetNames(project).keys()) {
+        const bytes = await readEntry(zip, name, maxEntry);
+        total = checkSize(bytes, total);
+        assets[name] = bytes;
+    }
+    const items = inventory(project, assets);
+    const settings = await configurePayloads(items, new Map([...items.keys()].map(id =>
+        [id, {format: 'embedded-data'}])));
+    const {files, removed} = encodePayloads(structuredClone(project), assets, settings);
+    for (const name of removed) zip.remove(name);
+    zip.file('project.json', files['project.json']);
+    return zip.generateAsync({type: 'uint8array', compression: 'DEFLATE'});
+}
+
 const readEntry = async (zip, path, limit) => {
     const entry = zip?.file(path);
     assert(entry, `The SB3 is missing ${path}.`);
@@ -253,10 +278,11 @@ const readEntry = async (zip, path, limit) => {
     });
 };
 
-export async function decodePayloads(input, {fetch = globalThis.fetch, cache, approve, validate, signal}: PayloadStorageOptions & {
+export async function decodePayloads(input, {fetch = globalThis.fetch, cache, approve, validate, signal, archive}: PayloadStorageOptions & {
     cache?: import('@kubohiroya/turbowarp-extension-loader').LoaderPorts['cache'];
     approve?: (urls: string[], cacheable: boolean, signal: AbortSignal) => Promise<boolean | undefined>;
     validate?: (input: unknown, options?: {signal?: AbortSignal}) => Promise<unknown>;
+    archive?: import('../extension-host/shared-project-archive.ts').ProjectArchive;
 } = {}) {
     const {maxProjectBytes} = extensionProjectArchiveOptions;
     if (input instanceof Blob || input instanceof Uint8Array || input instanceof ArrayBuffer) {
@@ -268,11 +294,15 @@ export async function decodePayloads(input, {fetch = globalThis.fetch, cache, ap
         input instanceof ArrayBuffer ? new Uint8Array(input) : input;
     let zip;
     let project;
-    if (bytes instanceof Uint8Array && bytes[0] === 0x50 && bytes[1] === 0x4b) {
+    if (archive) {
+        if (!own(archive.project, payloadKey)) return {input, settings: new Map()};
+        project = structuredClone(archive.project);
+        zip = archive.openZip();
+    } else if (bytes instanceof Uint8Array && bytes[0] === 0x50 && bytes[1] === 0x4b) {
         inspectZip(bytes, extensionProjectArchiveOptions);
         zip = await JSZip.loadAsync(bytes);
         project = JSON.parse(jsonDecoder.decode(await readEntry(zip, 'project.json', extensionProjectArchiveOptions.maxProjectBytes)));
-    } else if (typeof bytes === 'string' || bytes instanceof Uint8Array) {
+    } else if (typeof bytes === 'string' || (bytes instanceof Uint8Array && startsWithJSONObject(bytes))) {
         const json = typeof bytes === 'string' ? bytes : jsonDecoder.decode(bytes);
         if (!json.includes(payloadKey)) return {input, settings: new Map()};
         project = JSON.parse(json);
@@ -283,7 +313,7 @@ export async function decodePayloads(input, {fetch = globalThis.fetch, cache, ap
     if (!own(project, payloadKey)) return {input, settings: new Map()};
     // Validate the original archive as well as the reconstructed one. In particular, moving a
     // selected entry out of the ZIP must not hide a CRC or size error from the Loader.
-    await validate?.(input, {signal});
+    if (!archive) await validate?.(input, {signal});
     assert(record(manifest) && Object.keys(manifest).length === 2 && manifest.version === 1 && Array.isArray(manifest.entries) &&
         manifest.entries.length <= maxEntries, 'Invalid SB3 payload manifest.');
     const sources = sourceSlots(project);

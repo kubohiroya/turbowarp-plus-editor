@@ -5,9 +5,11 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
-import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {editSpriteVariable, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar';
-import {mountProjectSearchHeader} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, renameProjectMessage,
+    type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-layout/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
@@ -16,13 +18,28 @@ import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
-import {StageDisplayMenuContext} from './context.ts';
+import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';
+import {openDetachedBlockPalette} from '../horizontal-block-palette/index.ts';
+import {resources as categoryArtwork} from '@tw-plus/gui-block-category-artwork';
+import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
 import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
 const soundsTab = 2;
+const categoryIcons = {
+    motion: categoryArtwork['icons/motion_icon.svg'],
+    looks: categoryArtwork['icons/looks_icon.svg'],
+    sound: categoryArtwork['icons/sound_icon.svg'],
+    events: categoryArtwork['icons/events_icon.svg'],
+    control: categoryArtwork['icons/control_icon.svg'],
+    sensing: categoryArtwork['icons/sensing_icon.svg'],
+    operators: categoryArtwork['icons/operators_icon.svg'],
+    variables: categoryArtwork['icons/variables_icon.svg'],
+    lists: categoryArtwork['icons/list_icon.svg'],
+    myBlocks: categoryArtwork['icons/block_icon.svg']
+};
 
 function AttachedCodePanel({children}: {children: React.ReactNode}) {
     const [attached, setAttached] = React.useState(false);
@@ -59,13 +76,10 @@ function readSpriteAssets(vm, targetId: string, kind: SpriteAssetKind): SpriteAs
 
 function readSpriteVariables(vm, id: string): SpriteVariable[] {
     const target = vm.runtime.getTargetById(id);
-    const stage = vm.runtime.getTargetForStage();
-    if (!target) return [];
-    const read = (owner, scope: SpriteVariable['scope']) =>
-        Object.values(owner?.variables ?? {}).flatMap((variable: {id: string; name: string; type: string; value: unknown}) =>
-            variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
-                [{id: variable.id, name: variable.name, value: variable.value, scope}] : []);
-    return target === stage ? read(stage, 'global') : [...read(target, 'local'), ...read(stage, 'global')];
+    return Object.values(target?.variables ?? {}).flatMap((variable: {
+        id: string; name: string; type: string; value: unknown; isCloud?: boolean;
+    }) => variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
+        [{id: variable.id, name: variable.name, value: variable.value, isCloud: variable.isCloud}] : []);
 }
 const resizeCode = () => {
     const blocks = window.ScratchBlocks;
@@ -109,6 +123,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     const host = useWindowHost();
     const {plusLayout} = React.useContext(WindowLayoutContext);
     const stage = React.useContext(StageDisplayMenuContext)?.stage;
+    const targetSwitch = React.useContext(TargetSwitchContext);
     // The stage uses the native fullscreen surface while Dockview keeps its panel and layout.
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
@@ -125,6 +140,10 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     }, [multiView, vm]);
     const codePaneAdapter = React.useMemo(() =>
         createCodePaneAdapter(vm, locale, layoutFlags.workspaceMinimap ? attachCodePreviewMinimap : undefined), [vm, locale]);
+    const popouts = React.useMemo(() => ({
+        url: new URL('dockview-popout.html', window.location.href).href,
+        openPalette: () => openDetachedBlockPalette({locale, categoryIcons, decorate: decorateSurface})
+    }), [locale]);
     const code = useCodeWindows({vm, host, locale,
         enabled: !multiView && (layoutFlags.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled});
     const [states, setStates] = React.useState([]);
@@ -192,40 +211,34 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         surfaces[activeEditorTab].undock({id: `basic-editor-tab-${activeEditorTab}`, title, rememberPlacement: true});
     }
 
-    const tabAction = showUndock && title && <div className={`${styles.tabAction} ${styles.openWindowAction}`} ref={action}>
-        <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
-    </div>;
+    const tabAction = showUndock && title && (!multiView || activeEditorTab !== codeTab) && (
+        <div className={`${styles.tabAction} ${styles.openWindowAction}`} ref={action}>
+            <OpenWindowButton label={openLabel} onOpen={open} disabled={Boolean(activeState && activeState.kind !== 'docked')} />
+        </div>
+    );
     const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
         <div className={styles.tabRow}>{tabs}{tabAction}</div>;
+    // The message section opens blocks through the same navigation the project search uses.
+    const navigation = React.useRef<SearchNavigation | null>(null);
     const spriteTabs = useSpriteTabs({
         available: dockviewSpriteTabsEnabled, enabled: workspaceEnabled && dockviewSpriteTabsEnabled,
         vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
         activateSection: onActivateEditorTab,
+        ...{runTargetSwitch: targetSwitch?.select},
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, layoutStorage, stagePane: stage?.pane, viewAdapter: codePaneAdapter,
+            multiView, layoutStorage, stagePane: stage?.pane, viewAdapter: codePaneAdapter, popouts,
             renderToolbar(view, actions) {
                 const section = spriteEditorSections[view.section] ?? 'code';
                 return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}
                     activeGroup={view.groupActive} propertiesInVariables
                     onSectionChange={next => actions.setSection(spriteEditorSections.indexOf(next))}
-                    actions={view.active && section !== 'variables' ? renderEditorTabRow(null) : undefined} />;
-            },
-            mountHeaderSearch(context: Parameters<typeof mountProjectSearchHeader>[0]) {
-                return mountProjectSearchHeader(context, {
-                    locale, project: vm.runtime, getMessages: () => window.ScratchBlocks?.Msg ?? {}
-                }, {
-                    getViews: () => spriteTabs.controller.current,
-                    getTarget: id => vm.runtime.getTargetById(id),
-                    getEditingTarget: () => vm.editingTarget,
-                    centerBlock(id) {
-                        const workspace = window.ScratchBlocks?.getMainWorkspace();
-                        if (workspace?.getBlockById(id)) workspace.centerOnBlock(id);
-                    }
-                });
+                    actions={view.active && section !== 'variables' && section !== 'messages' ?
+                        renderEditorTabRow(null) : undefined} />;
             },
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
+            editVariable: (id, edit) => editSpriteVariable(vm, id, edit),
             getProperties(id) {
                 const target = vm.runtime.getTargetById(id);
                 if (!target || target.isStage) return;
@@ -242,12 +255,53 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             writeVariable(id, variableId, value) {
                 const target = vm.runtime.getTargetById(id);
-                const stage = vm.runtime.getTargetForStage();
-                const owner = target?.variables[variableId] ? target : stage?.variables[variableId] ? stage : undefined;
-                if (owner && vm.setVariableValue(owner.id, variableId, value)) vm.runtime.emitProjectChanged();
+                if (target?.variables[variableId]?.type === '' && vm.setVariableValue(id, variableId, value)) {
+                    vm.runtime.emitProjectChanged();
+                }
+            },
+            getMessages: id => scanTargetMessages(vm.runtime, id),
+            openMessage(use) {
+                const search = navigation.current;
+                if (!search || !activateTargetView(search, use.targetId, codeTab)) return;
+                requestAnimationFrame(() => search.centerBlock(use.blockId));
+            },
+            openMessageTarget(id) {
+                if (navigation.current) activateTargetView(navigation.current, id, codeTab);
+            },
+            renameMessage(message, name) {
+                const workspace = window.ScratchBlocks?.getMainWorkspace();
+                if (!workspace || !message.id) return 'unavailable';
+                const outcome = renameProjectMessage(vm.runtime, workspace, message.id, name);
+                return outcome === 'applied' ? undefined : outcome === 'conflict' ? 'duplicateName' : 'unavailable';
             }
         })
     });
+    React.useLayoutEffect(() => {
+        if (!multiView) return;
+        const current: SearchNavigation = {
+            getViews: () => spriteTabs.controller.current,
+            getTarget: id => vm.runtime.getTargetById(id),
+            getEditingTarget: () => vm.editingTarget,
+            centerBlock(id) {
+                const workspace = window.ScratchBlocks?.getMainWorkspace();
+                if (workspace?.getBlockById(id)) workspace.centerOnBlock(id);
+            },
+            centerComment(id, blockId) {
+                centerProjectComment(window.ScratchBlocks?.getMainWorkspace(), id, blockId);
+            },
+            replacementContext() {
+                const Blockly = window.ScratchBlocks;
+                const workspace = Blockly?.getMainWorkspace();
+                return workspace?.isVisible() ? {workspace, Blockly} : undefined;
+            }
+        };
+        navigation.current = current;
+        const disconnect = connectProjectSearchNavigation(vm.runtime, current);
+        return () => {
+            if (navigation.current === current) navigation.current = null;
+            disconnect();
+        };
+    }, [multiView, vm, spriteTabs.controller]);
     const connectAssetSelection = (index: number, child: React.ReactNode) => {
         const assetSelection = index === 1 ? spriteTabs.assetSelections?.costumes : index === 2 ? spriteTabs.assetSelections?.sounds : undefined;
         if (!React.isValidElement<{assetSelection?: SpriteAssetSelection}>(child)) return child;

@@ -1,34 +1,64 @@
 # TurboWarp-Plus-Editor
 
-scratch-guiの本家に存在しなかった実装・ツール・文書・テストは、本リポジトリに集約します。[移設一覧とビルド契約](docs/gui-integration/README.md)を参照してください。
-
-
-[English](README.md)
+[English](README.md) | 日本語
 
 [![TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/)
 
 **[TurboWarp-Plus-Editorを開く](https://kubohiroya.github.io/turbowarp-plus-editor/)**
 
-TurboWarp Plusの作品をつくる・開くためのエディターです。kubohiroyaがフォークした[scratch-gui](https://github.com/kubohiroya/scratch-gui)を、固定したリビジョンからビルドしてGitHub Pagesで提供します。日本語と英語に対応します。
+TurboWarp Plusの作品をつくるための、そして手元にあるScratch・TurboWarpの作品を編集するためのエディターです。パネルを好きな位置に並べ、分割し、ステージ・スプライト一覧・パレット・コードを別のウィンドウに出して、次に開いたときにその配置を復元します。作品全体を検索し、選択箇所を置換します。作品をひとつのSB3ではなく、Gitで追えるフォルダとして持てます。拡張の取得元と実行条件を確認してから動かします。できた作品は、Plus拡張を同梱したひとつのHTMLとして書き出せます。
+
+kubohiroyaがフォークした[scratch-gui](https://github.com/kubohiroya/scratch-gui)・[scratch-vm](https://github.com/kubohiroya/scratch-vm)の固定リビジョンと、独立に版を持つ約20の `@kubohiroya/turbowarp-*` パッケージからビルドし、日本語と英語でGitHub Pagesから配信します。
 
 - サイト: <https://kubohiroya.github.io/turbowarp-plus-editor/>
 - エディター: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja>
 - npm: `@kubohiroya/turbowarp-plus-editor`
+- ファミリーの一覧とダッシュボード: <https://kubohiroya.github.io/turbowarp-plus-packages/>
+
+## このエディターが引き受けること
+
+**手元にある作品が、そのまま開く。** Scratch 3や標準のTurboWarpで保存したSB3はそのまま開き、ここで作ったものはそれらのエディターが読めるSB3として保存されます。作り直しも移植もいらないので、ここは乗り換えを決めてから入る別世界ではありません。同じ作品のまま、できることが増えた場所です。どちらの向きに何が保たれるかは[互換性の一覧](docs/features/sb3-compatibility.md)に記録しています。
+
+**どこに何があるかを、学べる。** スプライト一覧からブロックパレット、ステージを動かすところまでの動線を整理しました。スプライト一覧は起動時から編集領域の横に固定表示され、名前で探せて、横幅を広げると列が増えます。パレットは画面上部の横長の帯です。カテゴリを選び、その中を検索し、下からブロックをドラッグできます。カテゴリのアイコンを長押しすれば、自分の使う順に並べ替えられます。ステージには表示専用のメニューがあり、全画面・表示・非表示を切り替えても、非表示の間も作品は動き続けます。変数・リスト・メッセージも見えないままにはなりません。作品全体の検索が名前で見つけ、それぞれがどこで使われているかを、ブロック名・引数の値・機能拡張名・コメント文・素材名と並べて一覧にします。
+
+**長い作品を、先へ進められる。** 作業領域はDockviewを全面採用しています。パネルを左右・上下に分割し、区切り線をドラッグし、編集パネルとブロックパレットを別画面で開き、次に開いたときに同じ配置が戻ります。長いコードはミニマップとズームで移動します。編集メニューには取り消し・やり直し・切り取り・コピー・貼り付け・削除が、ショートカットとアイコンとともに並びます。ブロック定義のダイアログは独自のもので、真偽値の引数、ラベル、画面を再描画せずに実行する指定を扱います。スクリプトとステージの転送は、`.blocks3` / `.stage3` のファイルやウィンドウ間のコピー・貼り付けで、作ったものを別の作品へ移します。
+
+**作品を、Gitのフォルダとして持つ。** `sb3-toolchain` はSB3を作品データ・素材・個別の拡張に展開し、そこから配布用のSB3を組み立て直します。そのあいだ、作品はGitが差分を取り、ブランチを切り、レビューし、マージできるテキストとファイルです。Editorはその作品フォルダを直接開き、**「ファイル」→「ローカル Git…」**で差分・ブランチ・直近50件のコミット・プルリクエストを表示します。これはリミックスの意味を変えます。他人の作品を分解して自分のものにしていくのはScratch文化そのものですが、これまでそれはバイナリをダウンロードして、元へ戻る糸を切ることでした。Gitのフォルダなら、リミックスは読める履歴であり、レビューできる差分であり、元へ送り返せる変更になります。
+
+**AIと組んで、Scratchの作品をつくる。** **「ファイル」→「プロジェクトフォルダを開く…」**で作品フォルダを読み、**「保存」**でその中の `project.source.json` を、ローカルの画像・音声・拡張コードの隣に書き戻します。保存前には、フォルダが外部で変更されていないかを確かめます。つまり作品の全体が、テキストと普通のファイルです。エージェントは手持ちのファイル操作でそれを読んで書けます。バイナリのSB3を先に解く必要も、画面を操作する必要もありません。交代で進められます。エージェントがフォルダを書き、こちらは作品を再読込して見る。そのうえで、コードをレビューするようにレビューします。ローカルGitが差分を見せ、プルリクエストの表示は `project.source.json` の変更を対象とスクリプトごとに展開するので、読むのはJSONではなく変わったブロックです。登録していない拡張のブロックも、名前と接続が分かる代替ブロックとして描かれるので、拡張がなくても変更は読めます。組み込みのYAML文書はスキーマ付きの原文のままで、ローカル補助プロセス経由でVS Codeから編集できます。Scratchのバイブコーディングのために特別な仕掛けは要りません。作品がファイルであることから出てきます。
+
+**拡張を使う側から、書く側へ進む。** 拡張はTurboWarp Plusの一覧から追加し、動かす前に取得元・内容・実行条件を確認します。そのうえで、作品と一緒にコードをどう保存するかを `remote-non-cacheable`・`remote-cacheable`・`embedded-file`・`embedded-data` から、一括または個別に選びます。その先では、自分で書いた拡張をファイルとしてSB3に埋め込み、作品と一緒に持ち運べます。拡張は `Scratch.gui.blockEditors.register` で自分のブロックにフォームを、`registerPreview` でプレビューを、ブロックの中に自分で描く入力欄を、そして独自の検証とスキーマを持つ文書を与えられます。あとは `sb3-toolchain` が引き受けます。コードヘッダーから名前・説明・サンドボックスの要件を読み、GitHubのコミットやnpmのバージョンを固定し、埋め込むコードのSHA-256を検証し、更新時にAPIマニフェストで互換性を比較し、複数の拡張を元のコードを残したまま1つの複合拡張にまとめます。他人の拡張を追加するところから自分の拡張を公開するところまでが、Editorの中で一段ずつ見える道筋になっています。
+
+**TypeScriptで書く。そしてnpmのエコシステムにつながる。** 機能拡張はTypeScriptで書くことをすすめています。このプロジェクト自身がそう作られています。ここにあるソースはすべてTypeScript（`.ts`、CommonJSは `.cts`）で、開発中はNode.jsの型除去がそのまま実行し、ブラウザー向けはesbuildがJavaScriptとして出力し、npm向けはtscが型定義とともにコンパイルします。ファミリーの各パッケージはサブパスexportsの裏に自分の `.d.ts` を公開しているので、拡張はホストの挙動を推測するのではなく、型の付いたAPIに対して書けます。間違いは、誰かのステージの実行中ではなく、エディターの中で分かります。そして拡張は普通のNodeのツールでビルドするnpmパッケージなので、Scratch拡張の中からnpmのエコシステムに手が届きます。パーサー、幾何計算のライブラリ、モデルの実行環境をnpmから取ってきてバンドルし、`sb3-toolchain` がそのバージョンを固定して、配るコードのSHA-256を検証します。Scratchからnode.jsの世界への出口と、そこからの戻り道が、ここにあります。
+
+**YAML文書とJSON Schemaを、作品の一部として扱う。** 作品はスクリプトだけでなく、文書を持ちます。文書はYAMLまたはJSONの原文で、それを所有する提供元がJSON Schemaを付けます。Editorは3つを同じ文書として扱います。原文のテキスト、キー・配列・値・コメントを1つずつ表す共通YAMLブロック、そして所有するAppが提供するスキーマ専用ブロックです。表現を切り替えると、現在の編集を原文へ適用してから変換し、その全体が1回の保存になります。未適用のブロック編集を上書きする再生成は拒否します。スキーマだけあれば、標準のエディターがreact-jsonschema-formでフォームを生成してスキーマに対して検証するので、誤りは実行時ではなく入力したその場に出ます。VS Codeでは、ローカル補助プロセスが所有者のスキーマと関連付けを専用の作業領域へ書き出すため、補完と診断は専門家が宣言したスキーマから出てきます。公式のRed Hat YAML拡張を使い、既存の設定には触れません。解析・参照・決定的なパス操作・永続化・提供元契約は `yaml-json`・`named-data`・`structured-data`・`document-data`・`document-source` が担います。
+
+文書が何のためにあるかというと、ドメインの専門家が——コードではなく対象を知っている人が——スキーマを宣言して文書を書き、作品がそれを運用するためです。ブロックは、プログラムの全体を打ち込む場所ではなく、ドメインモデルを動かす場所になります。これは「ブロックでプログラミングを学ぶ」とは別の話です。[`turbowarp-kamishibai-app`](https://www.npmjs.com/package/@kubohiroya/turbowarp-kamishibai-app) はこれを製品まで持っていった例で、物語がスクリプトではなく文書であるAI活用のインタラクティブな物語システムです。
+
+**インタラクティブ作品とデバイスアプリの土台になる。** Editorはメニューバーに操作欄を用意し、capability拡張がそこへ自分の操作を登録します。`@kubohiroya/turbowarp-app-shell` を通して同じ置き場所を共有するので、独立にバンドルされた拡張からも届きます。ツールバーのない単一HTMLのプレイヤーでも同じです。ファミリーはすでにこれを使っています。[`camera-source`](https://www.npmjs.com/package/@kubohiroya/turbowarp-camera-source) は1つの `MediaDevices` カメラ映像を複数の拡張で共有し、`camera-calibration` がその内部パラメーターを公開し、`ar` がカメラ基準の対象状態を持ち、`jsqr` がStructured Appendを含むQRコードを読み、`teachable-machine` が姿勢・画像・音声のモデルで認識します。`async-input` は対象ごとの非同期なキーボード・ポインター・累積姿勢入力を扱い、`bubble`・`svg-text`・`diagnostic-overlay`・`runtime-expression`・`kvs`・`asset-cache` が立ち絵つきの吹き出し、ルビ付きテキスト、ステージ上のSVG診断、安全な条件評価、キーバリュー保存、ブラウザーローカルの素材キャッシュを受け持ちます。Editor自身は個々の拡張を一切知りません。カメラやセンサーのホストアプリは、Editorのフォークではなく、拡張と作品の組み合わせとして作れます。
+
+**入口は、TurboWarp紙芝居。** ここまでのことは、10歳の子にとっては、画面の上に作りたいものが現れるまで何の意味もありません。[`turbowarp-kamishibai-app`](https://www.npmjs.com/package/@kubohiroya/turbowarp-kamishibai-app) がその入口です。物語は文書で、絵と声は作品の中の素材で、次の場面を分岐させたいと思った子どもには、ブロックを開く理由があります。その先は、同じ作品にスキーマがあり、Gitの履歴があり、型の付いた拡張があり、カメラが付きます。そして子どもは、すでに開いている同じエディターの中にいます。目指しているところははっきりしています。チュートリアルからではなく物語から入る、STEAM教育の標準的な道具です。
 
 ## 標準TurboWarpから増える機能
 
-- 対応ブロックのデータをフォームで編集し、入力検証・保存・取消・Undoを利用できます。
-- TurboWarp Plus拡張の取得元・内容・実行条件を確認し、URL参照／SB3への同梱など4つの保存形式を選べます。
-- スクリプト・ステージを `.blocks3` / `.stage3` やウィンドウ間コピー・貼り付けで別作品へ転送できます。
-- 対応文書をYAML/JSON原文やブロックで編集・検証・変換できます。
-- [Project Properties（作品のプロパティ）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-properties)でタイトル・概要・作者・連絡先を編集し、日時とともにSB3へ保存できます。作者名と連絡先は履歴各5件から選択・新規入力でき、メールやHTTPSのリンクも開けます。
-- [Project Diagnostics（作品の診断）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-diagnostics)で検証・実行許可・読み込み・再試行・失敗の記録を確認・コピーできます。
+| 作業 | 標準のTurboWarp | Plusで加わる操作 |
+| --- | --- | --- |
+| 作品を開く | SB3の読み込みと拡張の実行確認 | 読み込みの経過表示、Plusカタログ、読み込みの診断 |
+| 作品を管理する | SB3ファイル単位の保存 | 作品フォルダの読み書き、ローカルGitの差分と履歴 |
+| 作業画面を整える | コード・ステージ・スプライトの基本配置 | パネルの分割、パネルとパレットの別画面、ステージの別表示、配置復元 |
+| 編集する | ブロックの入力欄やメニュー | 作品全体の検索と置換、編集メニュー、検索付きの横型パレット、ミニマップ、対応する拡張が提供するフォームとYAMLタブ |
+| 再利用する | バックパックなどで再利用 | スクリプトやステージのファイル転送、バンドル素材の追加 |
+| 保存して渡す | SB3の保存と標準Packager | 上書き保存と名前を変えて保存、組み込みデータの格納方式、拡張コードの保存方式、Plus拡張を同梱したHTML |
 
-作品情報と診断は、通常URLの「ファイル」メニュー最下部から利用できます。追加拡張や有効化の設定は不要です。作品情報の「適用」後はSB3を保存してください。診断記録はEditorを開いている間だけ保持し、実行許可を変更する操作はありません。
+Plus固有の機能には、対応する拡張や専用データが必要なものがあります。どれが必要かは[機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)に記録しています。
 
-[実画面と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)では、標準版との比較、操作手順、利用条件、保存と互換性を説明しています。フォーム・文書・プレビューの内容は対応する拡張が提供します。
+作品全体の検索は、すべてのスプライトとステージを横断し、結果を種類ごとにまとめます。対象はブロック名、変数・リスト名、メッセージ名、引数の値、機能拡張名、コメント文、YAML本文、素材名です。[Project Properties（作品のプロパティ）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-properties)はタイトル・概要・作者・連絡先を日時とともにSB3へ保存し、作者名と連絡先の履歴を各5件保持して、メールやHTTPSのリンクを開きます。[Project Diagnostics（作品の診断）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-diagnostics)は、作品が開けないときのために検証・実行許可・読み込み・再試行・失敗の記録を集めます。診断記録はEditorを開いている間だけ保持します。どちらも通常URLから利用でき、追加拡張や有効化の設定は不要です。
 
-[![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/#forms)
+**書き出し**は作品を配布用にまとめます。通常のScratch 3やTurboWarpのSB3なら標準のTurboWarp Packagerが開き、Plus形式の拡張を記録した作品では同じ操作でPlus専用の出力画面が開きます。HTTPSで配信される拡張コードも、記録したハッシュと照合したうえでHTMLに入り、サンドボックスの指定は保持されます。カタログの信頼条件を満たす拡張は、同梱されたハッシュと照合して実行します。外部依存のない作品は、そのHTMLだけでオフラインで動きます。
+
+[実画面と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)は、ここまでの内容を分野別の11ページで、実際の画面・操作図・比較表・利用条件・保存と互換性とともに説明しています。
+
+[![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
 
 ## エディターの配置
 
@@ -46,17 +76,39 @@ TurboWarp Plus 標準配置では、起動時にスプライト一覧が編集�
 
 コード領域のブロックを削除できる位置までパレットにドラッグすると、パレットがぼけて中央にゴミ箱が表示されます。横並びパレットでは、ブロック一覧を閉じた状態でもカテゴリの帯に表示されます。表示を無効にするには `twPlusPaletteDeletePreview=0` を指定して再読み込みします。切り戻しを確認するには、パレットへのドロップでブロックを削除し、Undo で戻せることを確かめます。
 
-## 配信の責務
+**パネルとウィンドウ。** 作業領域はDockviewの配置です。区切り線のドラッグで大きさを変え、パネルを左右・上下に分割でき、次にEditorを開いたときに同じ配置が戻ります。公開版では編集パネルとブロックパレットを別画面で開けます。開発版ではさらに、複数のコード画面、ステージ、スプライト一覧、スプライト設定のフォームをそれぞれ別のウィンドウに置き、コスチューム・音・変数の表示を編集中の選択を保ったまま扱う経路を検証しています。子ウィンドウはその document で独自の ScratchBlocks を起動し、`MessagePort` で親の単一VMに接続します。子はVM・Node・preload・openerを持ちません。編集権は一度に1つの対象だけが持ち、Undo／Redoの履歴は対象ごとに保持するため、確定したコードはVMが通常どおりSB3へ保存します。同じパネルの接続はDesktopアプリの中でも動きます。
 
-`turbowarp-extension-data-editor` と `turbowarp-extension-security-dialog` は上流のライブラリです。`scratch-gui` がこれらを利用し、さらに下流にある本パッケージが統合Editorを配信・検証します。上流のライブラリから下流GUIをビルドしません。
+**編集。** ブロック定義のダイアログは本プロジェクト独自のものです。数値または文字列の引数、真偽値の引数、ラベルを追加し、「画面を再描画せずに実行する」を指定できます。日本語と英語に対応します。編集メニューには取り消し・やり直し・切り取り・コピー・貼り付け・削除を、ショートカットとアイコンとともに並べます。拡張が提供する場合は、ブロックの中に拡張自身が描く入力欄を置くことも、対応ブロックの入れ子をその場で編集することもできます。
+
+## 作品フォルダ・Git・sb3-toolchain
+
+作品はひとつのSB3ファイルである必要はありません。`sb3-toolchain` は手元で使うNode.jsのツールです。`import` がSB3を作品データ・素材・個別の埋め込み拡張に展開してGitから変更が見えるようにし、`check` が展開したデータを検証し、`build` が配布用のSB3を生成します。展開した作品フォルダは、Editorで直接開いて編集することもできます（現時点では試作）。バンドルは各拡張のコードヘッダーから名前・説明・サンドボックスの要件を読み取り、GitHubのコミットやnpmのバージョンを固定し、埋め込むコードのSHA-256を検証し、更新時にはAPIマニフェストで互換性を比較できます。複数の拡張は元のコードを残したまま1つの複合拡張として埋め込めて、実行許可は複合拡張全体に対して判断します。公開版のEditorでは、`turbowarp-plus-packages` が公開する[TurboWarp Plusファミリー公式カタログ](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json)の条件を満たす拡張を信頼済みとして扱い、記録された取得元とコードのSHA-256を照合してから個別の承認画面を省略します。
+
+**「ファイル」→「ローカル Git…」**でリポジトリのルートを開くと、ステージ済み・未ステージ・未追跡の変更を分けて表示し、ファイルのテキスト差分とバイナリ素材のサイズ、現在のブランチ、HEAD、ローカルブランチ、直近50件のコミットと、選んだコミットの第一親との差分を確認できます。ルート配下の `sb3-toolchain` v1 の作品フォルダを選ぶと一覧がそのフォルダに絞られ、「この作品を開く」でEditorに読み込めます。パネルはGitの状態を書き換えません。コマンドラインで操作したあとは「再取得」を、同じ作品を開き直すときは「作品を再読込」を使います（未保存の編集を先に確認します）。接続先が設定された環境では「GitHub 接続」の欄が、HTTPSリモート `origin` に対するfetch、fast-forwardのみのpull、明示的に許可したpushを行います。File System Accessに対応したChromium系ブラウザーが必要です。linked worktree、サブモジュール、シンボリックリンクは対象外で、作業ツリーの実行権限の変更はブラウザーから確認できません。起動URLに `twPlusLocalGit=0` を指定するとパネルを外せます。
+
+**公開PRの変更レビュー**は、同じパネル上部の**「プルリクエスト」**から開きます。GitHubを `origin` に設定した作業フォルダで、一覧またはPR番号から選べます。PR本文と変更ファイルが表示され、`project.source.json` の変更は対象とスクリプトごとに展開できます。比較にはPRのマージベースとheadを使います。GitHubへの通信は公開APIの読み取りのみで、確認済みの印は表示中だけ保持し、公開APIの利用上限が適用されます。未登録の拡張ブロックは名前と接続が分かる代替ブロックで示し、拡張コードの取得・実行は行いません。
+
+## パッケージ・差し込み口・ビルド
+
+Editorは、フォークが抱えるパッチではなく、独立に版を持つパッケージから組み立てます。実装は約20の `@kubohiroya/turbowarp-*` パッケージが持ち、それぞれが自分の版・テスト・リリースを持ちます。
 
 ```text
-turbowarp-extension-data-editor ───┐
-                                 ├→ scratch-gui → turbowarp-plus-editor → GitHub Pages
-turbowarp-extension-security-dialog┘
+yaml-json · named-data · structured-data · document-data · document-source · document-editor ┐
+extension-data-editor · extension-loader · extension-security-dialog · sb3-save-format       ├→ turbowarp-plus-editor → GitHub Pages
+editor-layout · editor-ui · editor-views · editor-surfaces · editor-transfer · editor-backpack│
+plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-transfer             ┘
+   scratch-gui フォーク · scratch-vm フォーク · @turbowarp/packager（いずれもリビジョン固定）───┘
 ```
 
-配信元GUIのSHA、data-editorのSHA、security-dialogのバージョンは [`site/source.json`](site/source.json) で固定します。公開成果物の `build-info.json` で実際に組み合わせたGUI・ライブラリ・サイトの版を確認できます。旧data-editorのPagesは廃止対象であり、移行先には本サイトを使用してください。
+上流のパッケージが下流のものを取得・ビルド・配信することはありません。`scratch-gui` フォークは、**本家TurboWarpに存在しないファイルを1つも持ちません**。追加していた32のモジュール・ツール・文書・テストは本リポジトリへ移設し、残る接続は任意の1オブジェクト `plusIntegration()` を通ります。その名前付きの口が、拡張ホスト、モーダル、テーマトークン、翻訳、ブロック形状、workspaceへの接続、キー処理、project-stateの還元、ステージとカメラの操作、拡張ライブラリ、GUIの拡張API、アドオンを運びます。素のGUIビルドではこのgetterが `null` を返し、本家とまったく同じに動きます。測った差分・残る改変・それぞれの行き先は[差し込み口の設計](docs/plus-integration-sockets.md)に、移設とビルド契約は[移設一覧](docs/gui-integration/README.md)に記録しています。
+
+[`site/source.json`](site/source.json) はGUI・VM・data-editorのcore・拡張Loader・Packager・document-editorを40桁のリビジョンで、security-dialogとcoreをnpmの完全版で固定します。checkout・導入済みパッケージ・固定値が一致しなければビルドは進みません。公開成果物の `build-info.json` は実際に組み合わせたGUI・VM・ライブラリ・サイトの版を記録し、`notices/family.json` は同梱した全ファミリーパッケージのライセンス文とソースの入手先を一覧にします。旧data-editorのPagesは廃止対象であり、移行先には本サイトを使用してください。
+
+検証は配信のあとの工程ではなく、配信の一部です。通常CIが単体テスト、統合基盤、固定GUIの接続テスト、ビルド、移設したGUI E2Eを実行します。ブラウザーE2Eは19件、固定入力profileを含めてCIでは24件です。Pagesは、同じSHAの通常CIが全件成功した `main` の成果物だけを配信し、再ビルドせず固定した識別子を照合し、公開後に7件を実行します。npmはTrusted PublisherとOIDCで公開し、workflowはtokenを持たず、既存版とバイト列が異なれば停止します。
+
+本リポジトリがファミリーのどこに位置するかは、上下関係ではなく持ち物の分担です。[`turbowarp-plus-packages`](https://github.com/kubohiroya/turbowarp-plus-packages) はファミリー全体の一覧とダッシュボードで、13カテゴリ・70余のリポジトリを、依存の相関図・デモ・未クローズのissue・リリースの鮮度とともに[1枚のページ](https://kubohiroya.github.io/turbowarp-plus-packages/)に出します。そして、本リポジトリが意図的に持たない3つを持ちます。公式の機能拡張カタログ [`extensions-v1.json`](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json)（各項目がnpmパッケージ名・バージョン・jsDelivrのURL・SHA-256・カテゴリ・unsandboxedの要否を持ちます）、`assets/extension-icons/` に置く拡張の表示名とアイコン、そして設計の正本である `docs/editor-architecture.ja.md` です。本リポジトリの文書は、この正本を書き写さず参照します。
+
+本リポジトリはEditorであり、その3つを使う側です。[`site/plus-catalog.ts`](site/plus-catalog.ts) が固定したURLからカタログを取得し、Editorは拡張の取得元とコードのSHA-256を照合してから個別の承認画面を省きます。GUIに名称変換のロジックは持たせません。導線は逆向きにも通っています。ファミリーのページのデモは、下に書いた編集ボタンでこのEditorを開くので、向こうに載っているパッケージはここで編集するまで1クリックです。
 
 案内画面には `turbowarp-plus-site-header` の共通ヘッダーを読み込みます。エディター本体は全画面GUIとして表示します。
 
@@ -141,10 +193,12 @@ const html = renderEditButton({language: 'ja', projectURL: 'https://example.com/
 
 ## 開発と配信
 
+scratch-guiの本家に存在しなかった実装・ツール・文書・テストは、本リポジトリに集約します。[移設一覧とビルド契約](docs/gui-integration/README.md)を参照してください。
+
 Node.js 26を使用します。自作コード・スクリプト・設定・テストはTypeScript（`.ts` / CommonJSの`.cts`）で管理します。開発用スクリプトはNode.jsの型除去で実行します。`npm run build` は公開用JavaScriptと型定義を `dist/` へ生成し、`npm pack` でも自動実行されます。実VSCode検証の前に `npm run build:test-driver` を実行します。
 
 ```sh
-npm ci
+TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
 npm run typecheck
 npm run build
 npm test
@@ -153,6 +207,8 @@ E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
 TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
 E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 ```
+
+レビューダイアログはGitの依存で、ビルドが自身のリビジョンを読みます。npmは履歴のないアーカイブから取得するため、素の `npm ci` はここで止まります。固定値がそのリビジョンなので、インストール時に渡します。ワークフローも同じ形で実行します。
 
 ミニマップだけを検証するには、ビルド後に `E2E_GUI_ROOT` を指定して `npm run test:e2e -- workspace-minimap.spec.cts` を実行します。既定表示、URL での非表示、クリックとドラッグでの移動を確認します。
 
@@ -266,12 +322,6 @@ npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format
 ```
 
 `remote-cacheable` は「開く人のブラウザーが検証済みのキャッシュを保持してよい」と記録するだけです。CLIはそのキャッシュ（IndexedDB）を書くことも読むことも確かめることもできないため、オフラインで動く根拠にはなりません。オフラインで動かすには `embedded-file` か `embedded-data` を選びます。
-
-## English
-
-TurboWarp-Plus-Editor is an independent editor distribution by Hiroya Kubo. This downstream package builds the pinned `kubohiroya/scratch-gui` fork, verifies its library versions and integration, and deploys it to GitHub Pages. The upstream libraries do not build the GUI.
-
-Use the landing page to create a project, open an SB3 URL, or continue to the editor and open a local file. Embed the SVG edit icon with the visible label **Edit in TurboWarp-Plus-Editor** and `assets/edit-button.css`; use `lang=en` and an encoded `project_url`. The snippet above preserves the work’s URL and provides a large keyboard-accessible action.
 
 ## ライセンス・製作者
 

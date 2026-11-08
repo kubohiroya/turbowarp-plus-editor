@@ -13,6 +13,7 @@ const save = page => modal(page).locator('[data-block-editor-save]');
 const cancel = page => modal(page).getByRole('button', {name: 'キャンセル', exact: true});
 
 const start = async page => {
+    await page.addInitScript(() => {window.showSaveFilePicker = undefined;});
     await page.goto('editor.html?lang=ja');
     await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
 };
@@ -30,9 +31,9 @@ const approveSample = async (page, source) => {
     const review = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
     await expect(review).toBeVisible();
     const row = review.locator('.twextsec-row[data-key="blockeditordemo"]');
-    // The sample states no name, so its ID is the row's heading and is not repeated beside it.
-    await expect(row.locator('.twextsec-head strong')).toHaveText('blockeditordemo');
-    await expect(row.locator('.twextsec-id')).toHaveCount(0);
+    // The review reads the name from the embedded sample before the Loader runs it.
+    await expect(row.locator('.twextsec-head strong')).toHaveText('Block editor demo');
+    await expect(row.locator('.twextsec-id')).toHaveText('blockeditordemo');
     await expect(row.locator('.twextsec-digest')).toContainText(createHash('sha256').update(source).digest('hex'));
     await row.locator('input[name="execution-blockeditordemo"][value="unsandboxed"]').check();
     await review.getByRole('button', {name: 'OK', exact: true}).click();
@@ -57,6 +58,7 @@ const loadSample = async (page, baseURL) => {
     await page.context().route(sampleURL, route => route.fulfill({body: source,
         headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}));
     await page.getByText('ファイル', {exact: true}).click();
+    await page.getByRole('button', {name: '機能拡張…', exact: true}).click();
     await page.getByRole('button', {name: '機能拡張の追加', exact: true}).click();
     await page.getByText('TurboWarp Plus', {exact: true}).click();
     const selection = page.locator('.twextsec-review');
@@ -149,11 +151,8 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
     await page.getByPlaceholder('プロジェクトのタイトルを入力', {exact: true}).fill('block-editor-e2e');
     await page.getByText('ファイル', {exact: true}).click();
     const downloadPending = page.waitForEvent('download');
-    // This menu always downloads a new file, including browsers with the native save API.
-    await page.getByRole('listitem').filter({
-        hasText: /^(別ファイルで保存する\.\.\.|コンピューターに保存する)$/
-    })
-        .click();
+    await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click();
+    await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
     const download = await downloadPending;
     expect(download.suggestedFilename()).toBe('block-editor-e2e.sb3');
     const filename = testInfo.outputPath('roundtrip.sb3');
@@ -192,7 +191,7 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
             expect(await reloaded.evaluate(() => navigator.userAgent)).toContain('Android');
             await reloaded.getByText('ファイル', {exact: true}).click();
             const chooserPending = reloaded.waitForEvent('filechooser');
-            await reloaded.getByText('コンピューターから読み込む', {exact: true}).click();
+            await reloaded.getByText('SB3ファイルを開く…', {exact: true}).click();
             await (await chooserPending).setFiles(filename);
         } else if (testInfo.project.name === 'chrome-macos-native') {
             await start(reloaded);
@@ -201,7 +200,7 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
             await reloaded.bringToFront();
             await reloaded.getByText('ファイル', {exact: true}).click();
             // Start the real picker without waiting for the browser to handle a native modal.
-            await reloaded.getByText('コンピューターから読み込む', {exact: true}).click({noWaitAfter: true});
+            await reloaded.getByText('SB3ファイルを開く…', {exact: true}).click({noWaitAfter: true});
             evidence.stage('native-os-picker');
             await selectNativeProject(browser, filename, testInfo);
             evidence.nativeSelected();

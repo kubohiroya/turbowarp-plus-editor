@@ -13,6 +13,7 @@ import {
     prepareCatalogExtensionChanges, readProjectAuthoringState
 } from '@kubohiroya/turbowarp-extension-loader/project-catalog';
 
+import {withProjectSerialization} from './serialization-context.ts';
 import {createProjectAddresser} from './project-address.ts';
 
 import type {AuthoringPorts} from '@kubohiroya/turbowarp-extension-loader/project-authoring';
@@ -206,7 +207,7 @@ export const createExtensionAuthoringController = (vm, {
         async inspect () {
             if (disposed || pending) throw failure('PROJECT_BUSY', 'Wait for the active project operation');
             const current = revision;
-            const input = await vm.saveProjectSb3('arraybuffer');
+            const input = await withProjectSerialization(vm, {preview: true}, () => vm.saveProjectSb3('arraybuffer'));
             const manifest = await readProjectAuthoringState(input, {zip, archiveOptions});
             if (current !== revision || disposed) {
                 throw failure('PROJECT_CHANGED', 'The project changed during inspection');

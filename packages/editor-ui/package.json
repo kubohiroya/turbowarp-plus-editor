@@ -7,9 +7,21 @@
   "license": "GPL-3.0-or-later",
   "exports": {
     ".": "./src/icon-menu-button.tsx",
+    "./busy-cursor": "./src/busy-cursor.ts",
+    "./detached-block-palette": "./src/detached-block-palette.ts",
+    "./edit-menu": "./src/edit-menu.tsx",
     "./palette-category-reorder": "./src/palette-category-reorder.ts",
+    "./palette-category-search": "./src/palette-category-search.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",
+    "./project-load-progress": "./src/project-load-progress.ts",
+    "./project-load-progress-view": "./src/project-load-progress-view.tsx",
     "./project-search": "./src/project-search-box.tsx",
+    "./project-search-connections": "./src/project-search-connections.ts",
+    "./project-info-menu": "./src/info-menu.tsx",
+    "./stage-controls": "./src/stage-controls.ts",
+    "./stage-controls-view": "./src/stage-controls-view.tsx",
+    "./project-file-dialogs": "./src/project-file-dialogs.ts",
+    "./project-file-menu": "./src/project-file-menu.tsx",
     "./browser-tab-title": "./src/browser-tab-title.ts"
   },
   "peerDependencies": {

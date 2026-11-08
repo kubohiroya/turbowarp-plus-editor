@@ -5,6 +5,8 @@ import {createPlusIntegration, plusIntegration} from '../site/plus-integration.t
 
 const service = () => ({
     api: {addButton() {throw new Error('Unexpected control registration');}},
+    setDebuggerButton: () => {},
+    debuggerButton: () => null,
     placePanel: () => {},
     panel: () => null,
     snapshot: () => [],

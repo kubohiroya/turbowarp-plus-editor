@@ -65,8 +65,16 @@ export const createStageControlsService = () => {
     // What a control shows while it is expanded. The element belongs to whoever registered the
     // control; this only carries it to the host, which mounts it and nothing more.
     let panel: HTMLElement | null = null;
+    // The editor add-on belongs to the VM across project loads.
+    let debuggerButton: HTMLElement | null = null;
     return {
         api,
+        setDebuggerButton (element: HTMLElement | null) {
+            if (debuggerButton === element) return;
+            debuggerButton = element;
+            notify();
+        },
+        debuggerButton: () => debuggerButton,
         placePanel (element: HTMLElement | null) {
             if (panel === element) return;
             panel = element || null;

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作品フォルダとGitで管理する — 機能ガイド — TurboWarp-Plus-Editor</title>
+<meta name="description" content="TurboWarp Plusでsb3-toolchainの作品フォルダを開いて保存し、ローカルGitで変更を確かめ、GitHubと同期し、プルリクエストをブロックでレビューする方法。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 10. 作品フォルダとGitで管理する</p>
+<p class="eyebrow">機能ガイド 10/11 · 2026年11月8日更新</p>
+<h1>作品フォルダとGitで管理する</h1>
+<p class="lead">sb3-toolchainで展開した作品フォルダを直接開いて保存し、Gitの変更・差分・履歴をEditorの中で確かめます。GitHubとの同期や、プルリクエストのスクリプト単位のレビューもできます。</p>
+<nav class="topic-nav" aria-label="機能ガイドの分野">
+<ul>
+<li><a href="../open/">作品を開く</a></li>
+<li><a href="../screen/">メニューと画面</a></li>
+<li><a href="../sprites/">スプライトと背景</a></li>
+<li><a href="../stage/">ステージ</a></li>
+<li><a href="../workspace/">作業領域</a></li>
+<li><a href="../blocks/">ブロック</a></li>
+<li><a href="../search/">検索と置換</a></li>
+<li><a href="../documents/">文書と拡張データ</a></li>
+<li><a href="../reuse/">再利用</a></li>
+<li><a href="../git/" aria-current="page">Gitと作品フォルダ</a></li>
+<li><a href="../save/">保存と配布</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="このページの目次">
+<ol>
+<li><a href="#sb3-toolchain">10.1 sb3-toolchainで作品と拡張を管理する</a></li>
+<li><a href="#project-folder">10.2 作品フォルダを開いて保存する &lt;span class=&quot;badge planned&quot;&gt;試作&lt;/span&gt;</a></li>
+<li><a href="#local-git">10.3 ローカルGitで変更と履歴を確かめる</a></li>
+<li><a href="#block-diff">10.4 作品の変更をブロックで比べる</a></li>
+<li><a href="#github-sync">10.5 GitHubと同期する（fetch・pull・push）</a></li>
+<li><a href="#pull-request-review">10.6 プルリクエストをスクリプト単位でレビューする</a></li>
+</ol>
+</nav>
+
+<section id="sb3-toolchain">
+
+<h2>10.1 sb3-toolchainで作品と拡張を管理する</h2>
+
+<p><code>sb3-toolchain</code> は手元で使うNode.jsのツールです。<code>import</code> でSB3を作品データ・素材・埋め込み拡張に展開し、Gitで変更を確認できます。<code>check</code> で展開したデータを検証し、<code>build</code> で配布用のSB3を生成します。展開した作品フォルダは、Plus Editorで直接開いて編集することもできます（<a href="#project-folder">「作品フォルダを開いて保存する 試作」</a>）。</p>
+<figure class="guide-flow"><div class="flow" role="img" aria-label="手元のSB3。作品を展開する。次に、Gitで管理する展開ソース。作品データ・素材・個別の拡張。次に、配布用SB3。必要に応じて拡張を一つにまとめる"><div>手元のSB3<br><small>作品を展開する</small></div><span aria-hidden="true">→</span><div>Gitで管理する展開ソース<br><small>作品データ・素材・個別の拡張</small></div><span aria-hidden="true">→</span><div>配布用SB3<br><small>必要に応じて拡張を一つにまとめる</small></div></div><figcaption>展開ソースで管理し、配布するSB3を生成する流れ。</figcaption></figure>
+<ul>
+<li><strong>拡張のメタデータを管理する。</strong> 拡張コードのヘッダーに書いた名前、説明、サンドボックスの要件をバンドル時に読み取ります。GitHubのコミットやnpmのバージョンを固定し、埋め込むコードのSHA-256を検証できます。更新時はAPIマニフェストを使って互換性を調べることもできます。</li>
+<li><strong>複数の拡張を一つにまとめる。</strong> 元のコードを残したまま、配布するSB3に複数の拡張を一つの複合拡張として埋め込めます。実行許可は複合拡張全体に対して判断します。</li>
+<li><strong>公式カタログの信頼条件を確認する。</strong> 公開版のPlus Editorでは、TurboWarp Plusファミリー公式カタログの条件を満たす拡張を信頼済みとして扱います。エディターはカタログに載っている取得元やコードのSHA-256を照合してから、個別の承認画面を省略します。</li>
+</ul>
+<p><a href="https://github.com/kubohiroya/sb3-toolchain/blob/main/README.ja.md">SB3の展開・再生成</a> · <a href="https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/ja/extension-bundles.md">拡張のバンドル</a> · <a href="https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json">公式カタログ</a></p>
+
+</section>
+
+<section id="project-folder">
+
+<h2>10.2 作品フォルダを開いて保存する <span class="badge planned">試作</span></h2>
+
+<p>sb3-toolchain v1で展開した作品フォルダを、SB3にまとめ直さずに開いて保存できます。フォルダの選択と書き込みには、File System Accessに対応したChromium系ブラウザー（Chrome、Edgeなど）が必要です。</p>
+<ol><li>「ファイル」→「プロジェクトフォルダを開く…」を選び、作品フォルダを選んで読み書きを許可します。作品データとローカルの画像・音声が読み込まれます。</li><li>ブロックを編集します。</li><li>「ファイル」→「保存」を選ぶと、フォルダ内の <code>project.source.json</code> が更新されます。保存前に、フォルダが外部で変更されていないかを確かめます。</li></ol>
+<p>Gitで差分を確認し、<code>sb3-toolchain build</code> で配布用SB3を作る流れと組み合わせられます。試作段階のため、既存作品の標準ブロックの編集を対象にしています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/305">作品フォルダの編集</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/319">フォルダの差分再読み込み</a></p>
+
+</section>
+
+<section id="local-git">
+
+<h2>10.3 ローカルGitで変更と履歴を確かめる</h2>
+
+<p>「ファイル」→「ローカル Git…」を開き、「リポジトリを選択…」で <code>.git</code> を持つリポジトリのルートを選びます。配下にあるsb3-toolchain v1の作品フォルダを選ぶと、変更一覧と差分がそのフォルダに絞られます。「この作品を開く」で、選んだ作品をEditorで開けます。</p>
+<ul><li><strong>変更と差分。</strong> ステージ済み・未ステージ・未追跡の変更を分けて表示します。ファイルを選ぶとテキストの差分、バイナリの素材ならサイズを確認できます。</li><li><strong>ブランチと履歴。</strong> 現在のブランチ、HEAD、ローカルブランチと直近50件のコミットを表示します。コミットを選ぶと第一親との差分を確認できます。</li><li><strong>外部での操作のあと。</strong> コマンドラインなどでGitを操作したら「再取得」を押します。「作品を再読込」は、Editorの未保存の編集を確認してから同じ作品を開き直します。</li></ul>
+<p>閲覧はGitの状態を書き換えません。File System Accessに対応したChromium系ブラウザーが必要です。linked worktree、サブモジュール、シンボリックリンクは対象外で、作業ツリーの実行権限の変更はブラウザーから確認できません。パネルを外すには起動URLに <code>twPlusLocalGit=0</code> を指定します。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/313">ローカルGitパネル</a></p>
+
+</section>
+
+<section id="block-diff">
+
+<h2>10.4 作品の変更をブロックで比べる</h2>
+
+<p>作品データ（<code>project.source.json</code>）の差分は、JSONの行ではなく、ステージ・スプライトごとのスクリプトとして表示できます。</p>
+<ul><li>変更のあったスクリプトだけを比較項目にし、変更前と変更後のブロックを並べて表示します。追加・削除・入力値の変更などには注釈が付き、変更された入力欄やフィールドはオレンジの枠で示します。</li><li>「元のスクリプト内で強調」を選ぶと、つながったスクリプトの中で変更箇所を確認できます。</li><li>分割・結合したスクリプトも、両方の版に共通するブロックを手がかりに一つの項目にまとめます。</li><li>変数、リスト、コスチューム・背景、音、モニターなど、スクリプト以外の変更は別に示します。</li></ul>
+<p>Editorに定義がない拡張ブロックは、名前と接続が分かる代替ブロックで示します。拡張コードの取得や実行は行いません。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRのスクリプト単位のレビュー</a></p>
+
+</section>
+
+<section id="github-sync">
+
+<h2>10.5 GitHubと同期する（fetch・pull・push）</h2>
+
+<p>ローカルGitパネルの「GitHub 接続」から、接続方式を選んでGitHubに接続できます。接続すると、現在のブランチとGitHubのHTTPSリモート <code>origin</code> に対して次の操作ができます。</p>
+<div class="table-scroll" role="region" aria-label="GitHubとの同期" tabindex="0">
+<table><caption>GitHubとの同期</caption><thead><tr><th scope="col">操作</th><th scope="col">内容と条件</th></tr></thead><tbody>
+<tr><th scope="row">fetch</th><td>リモートの変更を取得し、Gitのメタデータを更新する</td></tr>
+<tr><th scope="row">Pull（fast-forward のみ）</th><td>実行を止め、未保存の編集とローカルのGitの変更がない状態で取り込む。取り込んだあとは「作品を再読込」で開き直す</td></tr>
+<tr><th scope="row">push</th><td>接続時に「push を許可する」を選んだ場合だけ送信する。強制pushは行わない</td></tr>
+</tbody></table></div>
+<p>pullはローカルの状態を確認し直してから適用し、fast-forwardできない場合はローカルのブランチとファイルをそのまま残します。pushの結果が不明な場合は、送り直す前にfetchでリモートのブランチを確認します。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/327">GitHubとの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/329">fetch・pull・push</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/338">二重pushの防止</a></p>
+
+</section>
+
+<section id="pull-request-review">
+
+<h2>10.6 プルリクエストをスクリプト単位でレビューする</h2>
+
+<p>公開GitHubリポジトリのプルリクエスト（PR）を、変更全体の概要から個々のスクリプトまで確認できます。以下は、2026年11月8日の公開版（<code>840d37f</code>）で <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">turbowarp-kamishibai-app の PR #219</a> を開いた例です。</p>
+<ol>
+<li><strong>PRを選ぶ。</strong> 「ファイル」→「ローカル Git…」を開き、「リポジトリを選択…」で、対象の公開GitHubリポジトリが <code>origin</code> に設定されたローカルのリポジトリを選びます。「プルリクエスト」を押し、一覧から対象のPRを選びます。番号で開くには「プルリクエスト番号」に番号（例：<code>219</code>）を入力し、「PR を開く」を押します。</li>
+<li><strong>変更概要を確認する。</strong> 右側の「変更レビュー」でPRのタイトルと説明を読み、変更ファイル数、影響するステージ・スプライト数、比較できるスクリプト数を確認します。説明が省略されているときは「PR 本文を表示」で全文を開けます。
+<figure><a href="../images/published-editor-git-pr-overview.png"><img src="../images/published-editor-git-pr-overview.png" width="1254" height="848" alt="公開版のローカルGitパネル。左にPRの一覧と番号欄、右にPR #219のタイトル、説明、変更ファイル9件、影響するステージ・スプライト16件、スクリプトの比較26件が表示されている。" loading="lazy"></a><figcaption>公開版でPR #219を開いたところ。左でPRを選び、右で変更の規模を確認します。下の「変更ファイル」から比較を読み進めます。</figcaption></figure>
+</li>
+<li><strong>スクリプトをブロックで比較する。</strong> 「変更ファイル」を下にたどり、<code>project.source.json</code>（この例では <code>app/project.source.json</code>）の中から、対象のステージやスプライトの見出しを探します。その下に並ぶ変更のあったスクリプトから、例の「緑の旗が押されたとき」を展開します。左の「変更前」と右の「変更後」を見比べ、枠で示されたブロックがスクリプトのどこにあるかを確認します。長いスクリプトや横に広いブロックは、比較欄をスクロールして確認できます。
+<figure><a href="../images/published-editor-git-pr-script.png"><img src="../images/published-editor-git-pr-script.png" width="819" height="542" alt="緑の旗が押されたときのスクリプトを、左の変更前と右の変更後に並べた比較画面。右では緑の旗のすぐ下に追加された変数設定ブロックが緑の枠で囲まれている。" loading="lazy"></a><figcaption>PR #219のスクリプト比較。右側の緑の枠が、開始直後に追加された変数設定ブロックを示します。比較画面に登録されていない拡張ブロックは、元の位置に灰色の「未登録: …」として表示されます。</figcaption></figure>
+</li>
+</ol>
+<p>比較を読み終えたら、スクリプトの下の「確認済み」で進み具合を記録できます。この印は表示中のレビューだけに反映されます。「ローカルの変更」で手元の差分表示に戻れます。</p>
+
+<p>比較にはプルリクエストのマージベースとheadを使います。GitHubへの通信は公開APIの読み取りだけで、公開APIの利用上限が適用されます。比較の仕組みは<a href="#block-diff">作品の変更をブロックで比べる</a>で説明しています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">Editorへの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/418">PRレビューの操作手順</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRをScratchスクリプトでレビュー</a></p>
+
+</section>
+<nav class="pager" aria-label="前後のページ">
+<a class="prev" href="../reuse/"><small>前のページ</small>9. スクリプトと素材を再利用する</a>
+<a class="next" href="../save/"><small>次のページ</small>11. 保存して配布する</a>
+</nav>
+</main>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+</body></html>

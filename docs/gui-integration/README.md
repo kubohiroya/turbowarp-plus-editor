@@ -69,8 +69,9 @@ CIと同じ入れ子checkoutで、テスト補助のresolverがGUI自身の依�
 
 ## Issue #126：追加操作列の描画をホストで所有する
 
-`site/stage-controls/view.tsx` がボタン・パネルの描画、serviceの購読と破棄を担当します。
-GUIのcontrols viewは任意の `afterStop` nodeを配置し、containerは既存getterの `renderStageControls` へVMと表示サイズを渡します。
+`packages/editor-ui/src/stage-controls-view.tsx` がボタンとパネルの描画、サービスの購読と破棄を担当します。
+通常の編集画面では Editor のビルドでメニューバー末尾を `renderStageControls` に接続します（#365）。
+プレイヤーと全画面表示では、GUI の `afterStop` を使います。
 `Scratch.gui.stageControls` と同じVM単位のserviceを使い、登録APIと表示条件は維持します。
 GUI単体は任意の描画部品がなければ標準の操作列を表示します。CSSはGUIの公開テーマ変数を使います。
 切戻しはGUI/hostを移管前の互換なpinへ戻して行います。作品の形式は変更しません。

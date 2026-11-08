@@ -1,0 +1,142 @@
+.palette {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    color: var(--text-primary, #243248);
+    background: var(--ui-primary, #f5f6f8);
+    font: 14px system-ui, sans-serif;
+}
+
+.content {
+    min-height: 0;
+    display: grid;
+    grid-template: "categories blocks" minmax(0, 1fr) / auto minmax(0, 1fr);
+}
+
+.palette[data-palette-orientation="vertical"] .content {
+    grid-template: "categories" auto "blocks" minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+.categories,
+.blocks {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    overflow: auto;
+    align-items: flex-start;
+}
+
+.categories {
+    grid-area: categories;
+    flex-flow: column nowrap;
+    align-items: center;
+    background: var(--ui-secondary, #eceef4);
+}
+
+.blocks {
+    grid-area: blocks;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+
+.palette[data-palette-orientation="vertical"] .categories {
+    flex-direction: row;
+    margin-right: calc(2rem + 12px);
+}
+
+.palette[data-palette-orientation="vertical"] .blocks {
+    flex-flow: column nowrap;
+}
+
+.categories button,
+.blocks button {
+    flex: none;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    color: inherit;
+    background: transparent;
+    font: inherit;
+    padding: 5px 8px;
+    cursor: pointer;
+}
+
+.categories button {
+    display: grid;
+    place-items: center;
+    inline-size: 40px;
+    block-size: 40px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+}
+
+.categories button[aria-pressed="true"] {
+    border-color: currentColor;
+}
+
+.categories button:focus-visible {
+    outline: 2px solid var(--looks-secondary, #4c72dd);
+    outline-offset: 2px;
+}
+
+.categoryIcon {
+    display: grid;
+    place-items: center;
+    inline-size: 30px;
+    block-size: 30px;
+    border-radius: 50%;
+    color: var(--text-primary, #243248);
+    background: var(--ui-white, #fff) center / 22px 22px no-repeat;
+}
+
+.categoryIcon svg {
+    inline-size: 18px;
+    block-size: 18px;
+}
+
+.tooltip {
+    position: fixed;
+    z-index: 2;
+    transform: translateY(-50%);
+    max-inline-size: calc(100vw - 80px);
+    padding: 5px 8px;
+    border: 1px solid var(--ui-black-transparent, #d7dbe6);
+    border-radius: 5px;
+    color: var(--text-primary, #243248);
+    background: var(--ui-white, #fff);
+    overflow-wrap: anywhere;
+    pointer-events: none;
+}
+
+.palette[data-palette-orientation="vertical"] .tooltip {
+    transform: none;
+}
+
+.categories button[aria-pressed="true"],
+.categories button:hover,
+.blocks button:not(:disabled):hover {
+    background: var(--ui-black-transparent, #dce1ea);
+}
+
+.blocks button svg {
+    display: block;
+}
+
+.blocks button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.palette .layoutMenu {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    --tw-plus-icon-menu-max-width: calc(100vw - 16px);
+}
+
+.layoutMenu [role="menu"] {
+    inset-inline-end: auto;
+    right: 0;
+}

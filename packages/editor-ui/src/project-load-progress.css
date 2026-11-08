@@ -1,0 +1,57 @@
+.progress {
+    position: relative;
+    display: block;
+    max-width: min(34rem, 90vw);
+    margin-inline: auto;
+}
+
+.current {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.history {
+    display: none;
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 100%;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: min(32rem, 90vw);
+    max-height: 30vh;
+    overflow: auto;
+    padding: 0.75rem;
+    border: 1px solid var(--ui-black-transparent, #7c838d);
+    border-radius: 0.4rem;
+    background: var(--popover-background, #222831);
+    color: var(--text-primary, white);
+    text-align: start;
+    font-size: 0.875rem;
+    font-weight: normal;
+    text-shadow: none;
+}
+
+.progress:hover .history,
+.progress:focus-within .history {
+    display: block;
+}
+
+.heading {
+    font-weight: 600;
+}
+
+.history ol {
+    margin: 0.4rem 0 0;
+    padding-inline-start: 1.4rem;
+}
+
+.history li + li {
+    margin-block-start: 0.25rem;
+}
+
+.elapsed {
+    margin-inline: 0.6rem;
+    font-variant-numeric: tabular-nums;
+}

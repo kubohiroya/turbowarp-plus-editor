@@ -29,3 +29,32 @@
 .schematic-cells span { padding:4px 9px; background:var(--bg); border:1px solid var(--line); border-radius:6px; }
 @media(max-width:700px) { .schematic-panels { grid-template-columns:1fr; } }
 .guide-note { color:var(--muted); font-size:.9rem; }
+
+/* Hierarchical guide: breadcrumbs, topic navigation, topic cards and pager. */
+.breadcrumb { font-size:.9rem; color:var(--muted); margin:0 0 .5rem; }
+.breadcrumb a { color:var(--accent); }
+.topic-nav { margin:24px 0; padding:14px 18px; }
+.topic-nav ul { display:flex; flex-wrap:wrap; gap:6px 8px; list-style:none; margin:0; padding:0; columns:auto; }
+.topic-nav li { margin:0; }
+.topic-nav a { display:inline-block; padding:3px 10px; border:1px solid var(--line); border-radius:999px; text-decoration:none; font-size:.88rem; line-height:1.6; }
+.topic-nav a[aria-current="page"] { background:var(--accent); border-color:var(--accent); color:var(--panel); font-weight:650; }
+.page-toc ol { columns:2; }
+.topic-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; margin:28px 0; }
+.topic-card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 22px; }
+.topic-card h3 { margin:0 0 .3em; font-size:1.15rem; }
+.topic-card p { margin:.2em 0 .6em; color:var(--muted); font-size:.92rem; }
+.topic-card ol { margin:0; padding-inline-start:1.4em; font-size:.92rem; }
+.topic-card li { margin:.15em 0; }
+.pager { display:flex; justify-content:space-between; gap:16px; margin-top:64px; padding-top:20px; border-top:1px solid var(--line); }
+.pager a { display:block; max-width:48%; text-decoration:none; }
+.pager small { display:block; color:var(--muted); }
+.pager .next { margin-left:auto; text-align:right; }
+@media(max-width:700px) {
+    .page-toc ol { columns:1; }
+    .topic-cards { grid-template-columns:1fr; }
+    .pager { flex-direction:column; }
+    .pager a { max-width:none; }
+}
+@media(prefers-color-scheme:dark) { .topic-nav a[aria-current="page"] { color:#101c2b; } }
+.page-toc ol { list-style:none; padding-inline-start:0; }
+.topic-cards .topic-card { margin-top:0; scroll-margin-top:20px; }

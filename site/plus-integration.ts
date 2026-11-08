@@ -24,7 +24,8 @@ import {plusProjectPackager} from './packager/handoff.ts';
 
 import {installControlsDock} from './controls-dock.ts';
 import {attachProjectFolder} from './project-folder-host.ts';
-import getStageControls from './stage-controls.ts';
+import getStageControls from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
+import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 import {installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
@@ -165,7 +166,7 @@ export const createPlusIntegration = ({
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
-        attached.push(attachProjectFolder(vm, hostDocument, localGit, locale));
+        attached.push(attachProjectFolder(vm, hostDocument, localGit, locale, getBlockly));
         const workspace = getDocumentWorkspace(vm);
         const documents = mountEditor({
             vm,
@@ -176,6 +177,9 @@ export const createPlusIntegration = ({
             getScratch: () => ({vm, gui: {getBlockly}})
         });
         attached.push(documents);
+        if (vm.runtime && documents?.getSearchableYamlDocuments && documents.openYamlPreview) {
+            attached.push({dispose: connectProjectSearchDocuments(vm.runtime, documents)});
+        }
         if (documents?.getPanelRequest && documents.subscribePanelRequests) {
             attached.push({dispose: workspace.connectSource(documents)});
         }

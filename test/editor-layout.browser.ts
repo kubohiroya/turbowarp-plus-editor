@@ -5,8 +5,11 @@ import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium, expect, type Page} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
+import editorPackage from '../package.json' with {type: 'json'};
 import pinnedGui from './pinned-gui.ts';
-import {layoutMenu, readUndockButtonsChecked, toggleUndockButtons, undockButtons} from './fixtures/layout-menu.ts';
+import {
+    layoutMenu, openDisplaySettings, projectInfoMenuButton, readUndockButtonsChecked, toggleUndockButtons, undockButtons
+} from './fixtures/layout-menu.ts';
 
 const types = {
     '.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
@@ -15,14 +18,14 @@ const types = {
 const origin = 'http://layout.test';
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
-const projectSearch = (page: Page) => page.locator('.dv-groupview.dv-active-group > .dv-tabs-and-actions-container')
-    .getByRole('combobox', {name: 'Search project'});
+const projectSearch = (page: Page) => page.getByRole('combobox', {name: 'Search project'});
 
 async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui = false) {
     if (!bareGui) await verifyWebEditor(root);
     const browser = await chromium.launch({args: ['--enable-unsafe-swiftshader']});
     t.after(() => browser.close());
     const context = await browser.newContext({viewport: {width: 1360, height: 900}});
+    await context.addInitScript(() => {delete window.showSaveFilePicker;});
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin !== routeOrigin || !url.pathname.startsWith(prefix)) return route.abort();
@@ -138,9 +141,9 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     };
     const originalAccent = await themeColor('--looks-secondary');
     await checkDividerColor();
-    await page.getByText('Settings', {exact: true}).click();
-    await page.getByText('Accent', {exact: true}).click();
-    await page.getByText('Blue', {exact: true}).click();
+    const display = await openDisplaySettings(page);
+    await display.getByText('Accent', {exact: true}).click();
+    await display.getByText('Blue', {exact: true}).click();
     assert.notEqual(await themeColor('--looks-secondary'), originalAccent);
     await checkDividerColor();
     await page.evaluate(() => history.replaceState(null, '', '?lang=en&twPlusWindowLayout=0'));
@@ -233,7 +236,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
 
     await page.getByText('File', {exact: true}).click();
     const pending = page.waitForEvent('download');
-    await page.getByRole('listitem').filter({hasText: /^(Save as\.\.\.|Save to your computer)$/}).click();
+    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
+    await page.getByRole('dialog', {name: 'Save As'}).getByRole('button', {name: 'Save', exact: true}).click();
     const archive = await readFile(await (await pending).path());
     const zip = await JSZip.loadAsync(archive, {checkCRC32: true});
     const json = await zip.file('project.json').async('string');
@@ -269,9 +273,15 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.locator('[data-gui-stage] canvas').first()).toBeVisible();
     await expect(page.getByRole('button', {name: 'Show undock buttons'})).toHaveCount(0);
     await expect(page.getByRole('separator')).toHaveCount(0);
+    await expect(page.getByText('Settings', {exact: true})).toBeVisible();
+    await expect(page.getByText('Addons', {exact: true})).toBeVisible();
+    await expect(page.getByText('Advanced', {exact: true})).toBeVisible();
+    await page.getByText('Edit', {exact: true}).click();
+    await expect(page.getByText('Turn on Turbo Mode', {exact: true})).toBeVisible();
+    await expect(page.getByText('Advanced Settings', {exact: true})).toBeVisible();
 });
 
-test('the Plus File menu has action icons and opens the extension library from its last item', {timeout: 30_000}, async t => {
+test('the Plus File menu groups project settings and opens the extension library', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const start = suffix => page.goto(origin + buildPrefix + 'editor.html?lang=ja' + suffix);
     const paletteButton = page.getByRole('button', {name: '拡張機能を追加', exact: true});
@@ -291,11 +301,11 @@ test('the Plus File menu has action icons and opens the extension library from i
     const [paletteBounds, motionBounds] = await Promise.all([palette.boundingBox(), motion.boundingBox()]);
     assert.ok(motionBounds.x - paletteBounds.x < 8);
     await openFile();
-    const items = page.getByRole('list').filter({has: add}).locator(':scope > li');
-    await expect(items.last()).toHaveText('機能拡張の追加');
-    assert.ok(await items.evaluateAll(rows => rows.every(row => row.querySelector('[data-file-menu-icon]'))));
-    await expect(items.last().locator('[data-file-menu-icon="extension"]')).toBeVisible();
-    await add.press('Enter');
+    const extensions = page.getByRole('button', {name: '機能拡張…', exact: true});
+    const item = page.getByRole('listitem').filter({has: extensions});
+    await expect(item.locator('[data-file-menu-icon="extension"]')).toBeVisible();
+    await extensions.press('Enter');
+    await add.click();
     await expect(page.getByText('機能拡張を作品に追加する', {exact: true})).toBeVisible();
     await expect(add).toBeHidden();
 
@@ -305,6 +315,270 @@ test('the Plus File menu has action icons and opens the extension library from i
     await expect(add).toHaveCount(0);
 });
 
+test('the first menu row orders the Plus logo, project title, File, Edit, and search', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    const label = 'TurboWarp Plus プロジェクト情報';
+    const logo = page.getByLabel(label, {exact: true}).first();
+    const row = logo.locator('../..');
+    const title = row.getByRole('textbox');
+    const file = row.getByText('ファイル', {exact: true});
+    const edit = row.getByText('編集', {exact: true});
+    const search = row.getByRole('combobox', {name: '作品全体を検索'});
+    const controls = [logo, title, file, edit, search];
+
+    for (const control of controls) await expect(control).toBeVisible();
+    await expect(logo).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    const positions = await Promise.all(controls.map(control => control.boundingBox()));
+    for (let index = 1; index < positions.length; index++) {
+        const previous = positions[index - 1];
+        const current = positions[index];
+        assert.ok(previous.x + previous.width <= current.x);
+        assert.ok(Math.abs(previous.y + previous.height / 2 - current.y - current.height / 2) <= 2);
+    }
+    await expect(page.locator('.dv-tabs-and-actions-container').getByRole('combobox')).toHaveCount(0);
+    await expect(page.getByRole('combobox', {name: '作品全体を検索'})).toHaveCount(1);
+
+    await logo.focus();
+    await page.keyboard.press('Tab');
+    await expect(title).toBeFocused();
+    await title.fill('検索の配置');
+    await title.press('Enter');
+    await expect(title).toHaveValue('検索の配置');
+    await page.keyboard.press('Control+f');
+    await expect(search).toBeFocused();
+
+    await logo.click();
+    const menu = page.getByRole('navigation', {name: label});
+    const links = menu.getByRole('link');
+    await expect(logo).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(menu.getByRole('separator')).toBeVisible();
+    await expect(menu.locator('hr + a')).toHaveText('ソースコード');
+    await expect(links.first()).toHaveText(`TurboWarp Plus Editor ${editorPackage.version}について`);
+    for (const name of ['ソースコード', 'ライセンスとクレジット']) {
+        const link = menu.getByRole('link', {name, exact: true});
+        await expect(link.locator('svg[aria-hidden="true"][fill="currentColor"]')).toBeVisible();
+    }
+    await expect(menu.getByRole('button', {name: /ピン留め/})).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    for (const control of controls) await expect(control).toBeVisible();
+});
+
+test('extension controls sit at the end of the menu bar and the stage can still shrink', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.setViewportSize({width: 1024, height: 800});
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0');
+    const menuBar = projectInfoMenuButton(page).locator('../../..');
+    const controls = menuBar.getByRole('group', {name: 'Extension controls', exact: true});
+    const stage = page.locator('[data-plus-stage-frame]');
+    const canvas = stage.locator('canvas').first();
+    const resize = page.locator('[data-stage-resize="left"]');
+    await expect(canvas).toBeVisible();
+    await expect(controls).toHaveCount(0);
+    const originalWidth = (await canvas.boundingBox()).width;
+    await page.waitForFunction(() =>
+        Boolean(document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')]));
+    await page.evaluate(() => {
+        const dock = document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')];
+        const panel = document.createElement('button');
+        panel.textContent = 'Camera settings panel';
+        Object.assign(panel.style, {position: 'fixed', width: '320px'});
+        const camera = dock.stageControls.addButton({id: 'camera', label: 'Camera', text: 'Camera', icon: '📷',
+            onClick() {
+                const open = dock.getSnapshot().expanded;
+                camera.update({expanded: !open});
+                dock.placePanel(open ? null : panel);
+                if (open) camera.focus();
+            }});
+        panel.onclick = () => {
+            camera.update({expanded: false});
+            dock.placePanel(null);
+            camera.focus();
+        };
+        camera.update({visible: true});
+        for (const [id, label, icon] of [['model', 'Teachable Machine', '🧠'], ['debug', 'Debug', '⚙']]) {
+            dock.stageControls.addButton({id, label, text: label, icon, onClick() {}}).update({visible: true});
+        }
+    });
+    const camera = controls.getByRole('button', {name: 'Camera', exact: true});
+    await expect(controls.getByRole('button')).toHaveCount(3);
+    await expect(controls).toHaveCSS('border-top-left-radius', '8px');
+    await expect(stage.locator('[data-extension-stage-control]')).toHaveCount(0);
+    await expect(stage.getByTitle('Go', {exact: true})).toBeVisible();
+    await expect(stage.getByTitle('Stop', {exact: true})).toBeVisible();
+    const [barBounds, controlsBounds, cameraBounds] =
+        await Promise.all([menuBar.boundingBox(), controls.boundingBox(), camera.boundingBox()]);
+    // The frame is one of the menu bar's own controls: its height is the row's button height, it is
+    // centred in the row, and it keeps the row's half-rem margin at the right edge.
+    assert.equal(controlsBounds.height, 32);
+    assert.equal(barBounds.x + barBounds.width - controlsBounds.x - controlsBounds.width, 8);
+    assert.ok(Math.abs((controlsBounds.y - barBounds.y) -
+        (barBounds.height - controlsBounds.height) / 2) <= 1);
+    assert.ok(cameraBounds.height < controlsBounds.height);
+    assert.equal((await canvas.boundingBox()).width, originalWidth);
+    await resize.press('Home');
+    await expect.poll(async () => (await canvas.boundingBox()).width).toBeLessThan(originalWidth);
+
+    await camera.press('Enter');
+    const panel = page.getByRole('button', {name: 'Camera settings panel'});
+    await expect(panel).toBeInViewport({ratio: 1});
+    await expect(camera).toHaveAttribute('aria-expanded', 'true');
+    await panel.click();
+    await expect(panel).toHaveCount(0);
+    await expect(camera).toBeFocused();
+
+    await stage.getByRole('button', {name: 'Stage display', exact: true}).click();
+    await stage.getByRole('menuitem', {name: 'Enter full screen mode', exact: true}).click();
+    await expect(controls).toHaveCount(0);
+    await expect(page.getByRole('button', {name: 'Camera', exact: true})).toBeVisible();
+    await page.getByAltText('Exit full screen mode', {exact: true}).click();
+    await expect(camera).toBeVisible();
+});
+
+test('the enabled debugger opens from the extension controls even without project extensions', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const editor = origin + buildPrefix + 'editor.html?lang=en';
+    const group = page.getByRole('group', {name: 'Extension controls', exact: true});
+    const debuggerButton = page.locator('.sa-debugger-container');
+    await page.goto(editor);
+    await expect(projectInfoMenuButton(page)).toBeVisible();
+    await expect(debuggerButton).toHaveCount(0);
+    await expect(group).toHaveCount(0);
+
+    const settings = await page.context().newPage();
+    await settings.goto(origin + buildPrefix + 'addons.html?lang=en');
+    await settings.getByRole('textbox', {name: 'Search', exact: true}).fill('Debugger');
+    const toggle = settings.locator('label').filter({has: settings.getByText('Debugger', {exact: true})})
+        .getByRole('checkbox');
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await settings.close();
+    await page.reload();
+
+    await expect(group.locator('.sa-debugger-container')).toBeVisible();
+    await expect(debuggerButton).toHaveCount(1);
+    // The add-on's button is stage sized on its own; inside the frame it keeps the row's height.
+    assert.equal((await group.boundingBox()).height, 32);
+    await expect(page.locator('[data-plus-stage-frame]').locator('.sa-debugger-container')).toHaveCount(0);
+    await debuggerButton.locator('img').click();
+    const panel = page.locator('.sa-debugger-interface');
+    await expect(panel).toBeVisible();
+    await panel.locator('[class*="close-button_close-button"]').click();
+    await expect(panel).toBeHidden();
+});
+
+test('the Plus project menu relocates display settings, runtime actions, and settings dialogs', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const name = 'TurboWarp Plus project information';
+    const logo = page.getByLabel(name, {exact: true}).first();
+    const nav = page.getByRole('navigation', {name});
+    const menuBar = logo.locator('../..');
+    await expect(menuBar.getByText('Settings', {exact: true})).toHaveCount(0);
+    await expect(menuBar.getByText('Addons', {exact: true})).not.toBeVisible();
+    await expect(menuBar.getByText('Advanced', {exact: true})).toHaveCount(0);
+    await menuBar.getByText('Edit', {exact: true}).click();
+    await expect(menuBar.getByText(/restore/i).first()).toBeVisible();
+    for (const label of ['Turn on Turbo Mode', 'Turn on 60 FPS Mode', 'Change Username',
+        'Cloud Variables are not Available', 'Advanced Settings']) {
+        await expect(menuBar.getByText(label, {exact: true})).not.toBeVisible();
+    }
+
+    await logo.click();
+    const entries = nav.locator(':scope > a, :scope > button, :scope > div > button');
+    await expect(entries).toHaveText([
+        `About TurboWarp Plus Editor ${editorPackage.version}`, 'Display settings', 'Runtime settings', 'Addons',
+        'Advanced Settings', 'Source code', 'Licenses and credits'
+    ]);
+    const displayToggle = nav.getByRole('button', {name: 'Display settings'});
+    const display = nav.getByRole('list', {name: 'Display settings'});
+    await displayToggle.click();
+    await expect(display.getByText('Language', {exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(display).toHaveCount(0);
+    const runtimeToggle = nav.getByRole('button', {name: 'Runtime settings'});
+    await runtimeToggle.press('Enter');
+    const runtime = nav.getByRole('group', {name: 'Runtime settings'});
+    await expect(runtime.getByRole('button')).toHaveText([
+        'Turn on Turbo Mode', 'Turn on 60 FPS Mode', 'Change Username', 'Cloud Variables are not Available'
+    ]);
+    await runtimeToggle.press('Tab');
+    const turbo = runtime.getByRole('button', {name: 'Turn on Turbo Mode'});
+    await expect(turbo).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(runtime.getByRole('button', {name: 'Turn off Turbo Mode'})).toBeVisible();
+    await runtime.getByRole('button', {name: 'Turn on 60 FPS Mode'}).click();
+    await expect(runtime.getByRole('button', {name: 'Turn off 60 FPS Mode'})).toBeVisible();
+    let cloudAlert: string;
+    page.once('dialog', async dialog => {
+        cloudAlert = dialog.message();
+        await dialog.accept();
+    });
+    await runtime.getByRole('button', {name: 'Cloud Variables are not Available'}).click();
+    assert.match(cloudAlert, /cannot use cloud variables/i);
+    await runtime.getByRole('button', {name: 'Change Username'}).click();
+    const username = page.getByRole('dialog', {name: 'Change Username'});
+    await expect(username).toBeVisible();
+    await expect(nav).toBeHidden();
+    await page.keyboard.press('Escape');
+    await expect(username).toHaveCount(0);
+
+    await logo.click();
+    await displayToggle.press('Enter');
+    await expect(display.getByText('Block Colors', {exact: true})).toBeVisible();
+    await expect(display.getByText('Accent', {exact: true})).toBeVisible();
+    await displayToggle.press('Tab');
+    const language = display.locator(':scope > li').filter({has: page.getByText('Language', {exact: true})});
+    await expect(language).toBeFocused();
+    await page.keyboard.press('Enter');
+    const japanese = display.getByText('日本語', {exact: true});
+    await expect(japanese).toBeVisible();
+    await japanese.scrollIntoViewIfNeeded();
+    const [displayBounds, languageOptionBounds] = await Promise.all([display.boundingBox(), japanese.boundingBox()]);
+    assert.ok(languageOptionBounds.x >= displayBounds.x + displayBounds.width - 5);
+    await page.keyboard.press('Escape');
+    await expect(display).toHaveCount(0);
+    await expect(displayToggle).toBeFocused();
+    await displayToggle.click();
+    const theme = display.locator(':scope > li').filter({hasText: 'Switch To Dark Mode'});
+    await theme.press('Enter');
+    await expect(nav).toBeHidden();
+
+    await logo.click();
+    await displayToggle.click();
+    await expect(display.getByText('Switch To Light Mode', {exact: true})).toBeVisible();
+    await runtimeToggle.click();
+    await expect(display).toHaveCount(0);
+    await nav.getByRole('button', {name: 'Advanced Settings'}).click();
+    const advanced = page.getByRole('dialog', {name: 'Advanced Settings'});
+    await expect(advanced).toBeVisible();
+    await expect(nav).toBeHidden();
+    await page.keyboard.press('Escape');
+    await expect(advanced).toHaveCount(0);
+
+    await logo.click();
+    const [addons] = await Promise.all([
+        page.waitForEvent('popup'),
+        nav.getByRole('button', {name: 'Addons'}).click()
+    ]);
+    await expect(addons).toHaveURL(/addons\.html$/);
+    await addons.close();
+    await expect(nav).toBeHidden();
+
+    await logo.click();
+    await displayToggle.click();
+    await language.press('Enter');
+    await display.getByText('日本語', {exact: true}).click();
+    const japaneseName = 'TurboWarp Plus プロジェクト情報';
+    await page.getByLabel(japaneseName, {exact: true}).first().click();
+    await expect(page.getByRole('navigation', {name: japaneseName})
+        .locator(':scope > a, :scope > button, :scope > div > button')).toHaveText([
+        `TurboWarp Plus Editor ${editorPackage.version}について`, '表示設定', '動作設定', 'アドオン',
+        '高度な設定', 'ソースコード', 'ライセンスとクレジット'
+    ]);
+});
+
 test('the Plus project menu and previous stage layout remain available', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0');
@@ -312,7 +586,7 @@ test('the Plus project menu and previous stage layout remain available', {timeou
     await expect(page.getByText('TurboWarp Feedback', {exact: true})).toHaveCount(0);
     const project = page.getByLabel('TurboWarp Plus project information', {exact: true}).first();
     await project.click();
-    await expect(page.getByRole('link', {name: 'About TurboWarp Plus Editor'})).toBeVisible();
+    await expect(page.getByRole('link', {name: `About TurboWarp Plus Editor ${editorPackage.version}`})).toBeVisible();
     await expect(page.getByRole('link', {name: 'Source code'})).toBeVisible();
     await expect(page.getByRole('link', {name: 'Licenses and credits'})).toBeVisible();
     await page.keyboard.press('Escape');
@@ -634,8 +908,9 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(stage).toBeInViewport({ratio: 1});
     assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 1);
 
-    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
-    await page.getByRole('tab', {name: 'Backdrops', exact: true}).click();
+    await backdrop.click();
+    const backdropEditor = page.getByRole('tabpanel', {name: 'Backdrops', exact: true});
+    await backdropEditor.getByRole('tab', {name: 'Backdrops', exact: true}).click();
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
 
@@ -665,6 +940,105 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
     await expect(page.getByRole('menuitem', {name: 'ステージを隠す', exact: true})).toBeVisible();
     assert.deepEqual(errors, []);
+});
+
+test('the menu bar opens one stage in each presentation and focuses the existing stage', {timeout: 60_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    const editorUrl = secureOrigin + buildPrefix + 'editor.html?lang=ja';
+    const open = page.getByRole('button', {name: 'ステージを開く', exact: true});
+    const options = page.getByRole('button', {name: 'ステージの開き方'});
+    const labels = ['別ウィンドウで開く', '別ウィンドウで全画面で開く', 'ステージをタブで開く', 'ステージを引き出しで開く'];
+    const item = (index: number) => page.getByRole('menuitem', {name: labels[index], exact: true});
+    const primary = (index: number) => page.getByRole('button', {name: labels[index], exact: true});
+    const stage = (target: Page) => target.locator('[data-gui-stage] canvas').first();
+    const checkOptions = async (active?: number) => {
+        await options.press('ArrowDown');
+        for (let index = 0; index < labels.length; index++) {
+            if (active === undefined || active === index) await expect(item(index)).toBeEnabled();
+            else await expect(item(index)).toBeDisabled();
+            if (active === index) await expect(item(index)).toHaveAttribute('aria-current', 'true');
+        }
+        await page.keyboard.press('Escape');
+    };
+    await page.setViewportSize({width: 1024, height: 800});
+    await page.goto(editorUrl);
+    await page.waitForFunction(() => Boolean(window.vm?.renderer?.canvas));
+    await page.waitForFunction(() =>
+        Boolean(document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')]));
+    await page.evaluate(() => {
+        window.initialStageCanvas = vm.renderer.canvas;
+        const dock = document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')];
+        dock.stageControls.addButton({id: 'camera', label: 'Camera', icon: '📷', onClick() {}}).update({visible: true});
+    });
+    await expect(page.getByRole('button', {name: 'Camera', exact: true})).toBeInViewport({ratio: 1});
+    await expect(open).toBeInViewport({ratio: 1});
+    const checkCanvas = async (target: Page) => {
+        await expect(stage(target)).toBeVisible();
+        assert.equal(await page.evaluate(() => vm.renderer.canvas === window.initialStageCanvas), true);
+    };
+    await checkOptions();
+
+    const [popup] = await Promise.all([page.waitForEvent('popup'), open.click()]);
+    await checkCanvas(popup);
+    await checkOptions(0);
+    await popup.evaluate(() => {
+        const focus = window.focus.bind(window);
+        document.body.dataset.focusCalls = '0';
+        window.focus = () => {
+            document.body.dataset.focusCalls = String(Number(document.body.dataset.focusCalls) + 1);
+            focus();
+        };
+    });
+    await primary(0).click();
+    await expect(popup.locator('body')).toHaveAttribute('data-focus-calls', '1');
+    assert.equal(page.context().pages().length, 2);
+    await popup.close();
+    await expect(open).toBeEnabled();
+    await checkOptions();
+
+    await options.click();
+    const [fullscreen] = await Promise.all([page.waitForEvent('popup'), item(1).click()]);
+    await checkCanvas(fullscreen);
+    await checkOptions(1);
+    const enterFullscreen = fullscreen.getByRole('button', {name: '全画面にする', exact: true});
+    await expect.poll(() => fullscreen.evaluate(() => Boolean(document.fullscreenElement)).then(async entered =>
+        entered || await enterFullscreen.isVisible())).toBe(true);
+    if (await enterFullscreen.isVisible()) await enterFullscreen.click();
+    await expect.poll(() => fullscreen.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+    await primary(1).click();
+    assert.equal(await fullscreen.evaluate(() => Boolean(document.fullscreenElement)), true);
+    await fullscreen.evaluate(() => document.exitFullscreen());
+    await checkOptions(0);
+    await fullscreen.close();
+    await expect(open).toBeEnabled();
+
+    await options.click();
+    await item(2).click();
+    await checkCanvas(page);
+    const stageTab = page.locator('.dv-tab').filter({hasText: /^ステージ$/});
+    await expect(stageTab).toHaveCount(1);
+    await checkOptions(2);
+    await primary(2).click();
+    await expect(stageTab).toHaveCount(1);
+    await stageTab.locator('.dv-default-tab-action').click();
+    await expect(open).toBeEnabled();
+
+    await options.click();
+    await item(3).click();
+    await checkCanvas(page);
+    const drawer = page.locator('[data-edge="right"] > [tabindex="-1"]');
+    await expect(drawer).toBeFocused();
+    await checkOptions(3);
+    await primary(3).click();
+    await expect(drawer).toBeFocused();
+    await drawer.press('Escape');
+    await expect(open).toBeEnabled();
+    await checkOptions();
+
+    await page.goto(editorUrl + '&twPlusStageLauncher=0');
+    await expect(page.getByRole('button', {name: 'ステージを展開'})).toBeVisible();
+    await expect(options).toHaveCount(0);
 });
 
 test('the default editor pins the sprite list and supports the drawer and detached window layout', {timeout: 60_000}, async t => {
@@ -712,34 +1086,27 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await expect(page.locator('[data-sprite-search-match]')).toBeVisible();
     await search.press('Escape');
     await expect(search).toHaveCount(0);
+    await page.evaluate(() => {
+        const open = window.open;
+        window.open = () => {
+            window.open = open;
+            return null;
+        };
+    });
     await undock.click();
-    const window = page.getByRole('region', {name: 'Sprite list', exact: true});
-    const menu = window.getByRole('button', {name: 'Window layout', exact: true});
-    await expect(window.locator('[data-backdrop-placement]')).toBeVisible();
-    await menu.click();
-    await expect(window.getByRole('list', {name: 'Window layout'}).getByRole('button')).toHaveCount(6);
-    await expect(window.getByRole('button', {name: 'Restore normal window'})).toBeDisabled();
-    await expect(window.getByRole('button', {name: 'Open another view of this editor'})).toBeDisabled();
-    await window.getByRole('button', {name: 'Maximize this window'}).click();
-    await menu.click();
-    await expect(window.getByRole('button', {name: 'Maximize this window'})).toBeDisabled();
-    await window.getByRole('button', {name: 'Restore normal window'}).click();
-    await menu.click();
-    await window.getByRole('button', {name: 'Minimize this window'}).click();
-    await expect(window).toBeHidden();
-    await page.getByRole('button', {name: 'Windows', exact: true}).click();
-    await page.getByRole('button', {name: 'Sprite list', exact: true}).click();
-    await menu.click();
-    await window.getByRole('button', {name: 'Return to the editor (dock)'}).click();
-    await expect(window).toHaveCount(0);
     await expect(backdrop).toBeVisible();
+    await expect(undock).toBeEnabled();
 
-    await undock.click();
-    await menu.click();
-    const [child] = await Promise.all([
-        page.waitForEvent('popup'),
-        window.getByRole('button', {name: 'Open in a separate window (undock)'}).click()
-    ]);
+    const openSpriteList = async () => {
+        const [child] = await Promise.all([page.waitForEvent('popup', {timeout: 7_000}), undock.click()]);
+        await expect(child).toHaveTitle('Sprite list');
+        await expect(child.locator('[data-backdrop-placement]')).toBeVisible();
+        await expect(page.locator('[data-backdrop-placement]')).toHaveCount(0);
+        return child;
+    };
+    const child = await openSpriteList();
+    await child.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
     const popupMenu = child.getByRole('button', {name: 'Window layout', exact: true});
     const commands = child.getByRole('menu', {name: 'Window layout', exact: true});
     const current = commands.getByRole('menuitem', {name: 'Open in a separate window (undock)'});
@@ -762,6 +1129,10 @@ test('the default editor pins the sprite list and supports the drawer and detach
     })]);
     await expect(backdrop).toBeVisible();
 
+    const reopened = await openSpriteList();
+    await reopened.close();
+    await expect(backdrop).toBeVisible();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
 });
 
 test('a background code view retains its layout, pan and zoom', {timeout: 45_000}, async t => {
@@ -871,7 +1242,7 @@ test('the editor leaves the bottom edge free of Backpack controls', {timeout: 30
     }
 });
 
-test('utility panels and menus stay above the code workspace and its palette', {timeout: 45_000}, async t => {
+test('the project information menu stays above the block palette', {timeout: 45_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0');
@@ -883,38 +1254,167 @@ test('utility panels and menus stay above the code workspace and its palette', {
     const flyout = page.locator('.blocklyFlyout').first();
     await expect(flyout).toBeVisible();
     // Keep the flyout open while exercising the menu's click handler.
-    await page.getByText('File', {exact: true}).evaluate(node => (node as HTMLElement).click());
-    const fileMenu = page.locator('[class*="menu_menu_"]').filter({hasText: /Save/});
-    await expect(fileMenu).toBeVisible();
-    assert.ok(await fileMenu.evaluate((menu, palette) => {
+    await projectInfoMenuButton(page).evaluate(node => (node as HTMLElement).click());
+    const plusMenu = page.getByRole('navigation', {name: 'TurboWarp Plus project information'});
+    await expect(plusMenu).toBeVisible();
+    assert.ok(await plusMenu.evaluate((menu, palette) => {
         const bounds = menu.getBoundingClientRect();
-        const x = Math.max(bounds.left, palette.x) + 8;
-        const y = Math.max(bounds.top, palette.y) + 8;
-        return x < Math.min(bounds.right, palette.x + palette.width) &&
-            y < Math.min(bounds.bottom, palette.y + palette.height) &&
-            menu.contains(document.elementFromPoint(x, y));
+        const left = Math.max(bounds.left, palette.x);
+        const right = Math.min(bounds.right, palette.x + palette.width);
+        const top = Math.max(bounds.top, palette.y);
+        const bottom = Math.min(bounds.bottom, palette.y + palette.height);
+        return left < right && top < bottom &&
+            menu.contains(document.elementFromPoint((left + right) / 2, (top + bottom) / 2));
     }, await flyout.boundingBox()));
-    await page.keyboard.press('Escape');
+});
 
-    await page.getByRole('tab', {name: 'Code', exact: true}).focus();
-    await page.getByRole('button', {name: 'Open in another window', exact: true}).click();
-    const code = page.getByRole('region', {name: /^Code · /});
-    await code.getByRole('button', {name: 'Window layout'}).click();
-    await code.getByRole('button', {name: 'Maximize this window'}).click();
+test('the editor layout menu opens the live block palette and the Dockview panel in separate windows', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    const layout = page.getByRole('button', {name: 'Editor panel layout', exact: true});
+    const toolbox = page.locator('[data-horizontal-block-palette]').first();
+    const blockSelector = '.blocklySvg > .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable';
+    const blocks = page.locator(blockSelector);
+    const open = async name => {
+        await layout.click();
+        const item = page.getByRole('menuitem', {name, exact: true});
+        await expect(item.locator('svg')).toBeVisible();
+        const [popup] = await Promise.all([page.waitForEvent('popup'), item.click()]);
+        popup.setDefaultTimeout(7_000);
+        popup.on('pageerror', error => errors.push(error.stack));
+        return popup;
+    };
 
-    await sprites.hover();
-    await expect(sprites).toHaveAttribute('aria-expanded', 'true');
-    await page.getByRole('button', {name: 'Undock sprite list', exact: true}).click();
-    const spriteWindow = page.getByRole('region', {name: 'Sprite list', exact: true});
-    await expect(spriteWindow).toBeVisible();
-    await code.click({position: {x: 780, y: 430}});
-    await spriteWindow.getByRole('button', {name: 'Window layout'}).click();
-    await expect(spriteWindow.getByRole('list', {name: 'Window layout'})).toBeVisible();
-    await page.keyboard.press('Escape');
+    await expect(page.getByRole('group', {name: 'Sprite list tools'})).toBeVisible();
+    await expect(page.getByText('Sprite', {exact: true})).toHaveCount(0);
+    await expect(toolbox).toBeVisible();
+    await page.evaluate(() => window.vm.extensionManager.loadExtensionURL('pen'));
+    const popup = await open('Open block palette in another window');
+    const palette = popup.locator('[data-palette-orientation]');
+    const paletteMenu = popup.getByRole('button', {name: 'Block palette layout', exact: true});
+    await expect(toolbox).toBeHidden();
+    await expect(palette).toHaveAttribute('data-palette-orientation', 'horizontal');
+    const motion = palette.getByRole('group', {name: 'Motion', exact: true});
+    const categories = palette.getByRole('group', {name: 'Block categories', exact: true});
+    const motionButton = categories.getByRole('button', {name: 'Motion', exact: true});
+    const looksButton = categories.getByRole('button', {name: 'Looks', exact: true});
+    const penButton = categories.getByRole('button', {name: 'Pen', exact: true});
+    await expect(categories).toHaveCSS('flex-direction', 'column');
+    await expect(motionButton).toHaveText('');
+    await expect(motionButton).toHaveCSS('border-radius', '50%');
+    await expect(motionButton.locator('span')).toHaveCSS('background-image', /^url\(/);
+    await expect(penButton.locator('span')).toHaveCSS('background-image', /^url\(/);
+    await motionButton.focus();
+    await expect(popup.getByRole('tooltip')).toHaveText('Motion');
+    await looksButton.hover();
+    await expect(popup.getByRole('tooltip')).toHaveText('Looks');
+    await expect(motion).toHaveCSS('flex-direction', 'row');
+    const move = motion.getByRole('button', {name: /^move 10 steps$/i});
+    await expect(move.locator('svg')).toBeVisible();
+    await move.click();
+    await expect(blocks).toHaveCount(1);
 
-    await code.getByRole('button', {name: 'Window layout'}).click();
-    await code.getByRole('button', {name: 'Return to the editor (dock)'}).click();
-    await expect(code).toHaveCount(0);
+    await penButton.click();
+    await expect(penButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(palette.getByRole('group', {name: 'Pen', exact: true})).toBeVisible();
+    await looksButton.click();
+    await popup.setViewportSize({width: 420, height: 420});
+    const looks = palette.getByRole('group', {name: 'Looks', exact: true});
+    const expectPreset = async (orientation: 'horizontal' | 'vertical') => {
+        await expect(palette).toHaveAttribute('data-palette-orientation', orientation);
+        await expect(looksButton).toHaveAttribute('aria-pressed', 'true');
+        await expect(categories).toHaveCSS('flex-direction', orientation === 'horizontal' ? 'column' : 'row');
+        await expect(looks).toHaveCSS('flex-direction', orientation === 'horizontal' ? 'row' : 'column');
+        const [rail, list, menu, windowBounds] = await Promise.all([
+            categories.boundingBox(), looks.boundingBox(), paletteMenu.boundingBox(), palette.boundingBox()
+        ]);
+        assert.ok(rail && list && menu && windowBounds);
+        assert.ok(menu.y - windowBounds.y <= 12);
+        assert.ok(windowBounds.x + windowBounds.width - (menu.x + menu.width) <= 12);
+        assert.equal(list.x + list.width, windowBounds.x + windowBounds.width);
+        if (orientation === 'horizontal') {
+            assert.ok(rail.x + rail.width <= list.x);
+            assert.equal(list.y, windowBounds.y);
+        } else {
+            assert.ok(rail.y + rail.height <= list.y);
+            assert.ok(rail.x + rail.width <= menu.x);
+        }
+    };
+    const horizontalOption = popup.getByRole('menuitemradio', {name: 'Arrange horizontally', exact: true});
+    const verticalOption = popup.getByRole('menuitemradio', {name: 'Arrange vertically', exact: true});
+    const triggerIcon = paletteMenu.locator('svg path');
+    await expectPreset('horizontal');
+    await paletteMenu.click();
+    const horizontalIcon = await horizontalOption.locator('svg path').getAttribute('d');
+    const verticalIcon = await verticalOption.locator('svg path').getAttribute('d');
+    assert.ok(horizontalIcon && verticalIcon && horizontalIcon !== verticalIcon);
+    await expect(triggerIcon).toHaveAttribute('d', horizontalIcon);
+    await verticalOption.click();
+    await expectPreset('vertical');
+    await expect(triggerIcon).toHaveAttribute('d', verticalIcon);
+    await looksButton.focus();
+    const tooltip = popup.getByRole('tooltip');
+    await expect(tooltip).toHaveText('Looks');
+    const [label, category] = await Promise.all([tooltip.boundingBox(), looksButton.boundingBox()]);
+    assert.ok(label && category && label.y >= category.y + category.height);
+    await paletteMenu.click();
+    const [menuButton, openMenu] = await Promise.all([
+        paletteMenu.boundingBox(), popup.getByRole('menu', {name: 'Block palette layout', exact: true}).boundingBox()
+    ]);
+    assert.ok(menuButton && openMenu && openMenu.y >= menuButton.y + menuButton.height);
+    await horizontalOption.click();
+    await expectPreset('horizontal');
+    await expect(triggerIcon).toHaveAttribute('d', horizontalIcon);
+    await paletteMenu.click();
+    await Promise.all([popup.waitForEvent('close'),
+        popup.getByRole('menuitem', {name: 'Return this panel to the editor', exact: true}).click()]);
+    await expect(toolbox).toBeVisible();
+    const secondPalette = await open('Open block palette in another window');
+    await expect(secondPalette.locator('[data-palette-orientation]')).toBeVisible();
+    await secondPalette.getByRole('button', {name: /^move 10 steps$/i}).evaluate(node => {
+        const dataTransfer = new DataTransfer();
+        const surface = window.opener.document.querySelector('.blocklySvg');
+        const bounds = surface.getBoundingClientRect();
+        node.dispatchEvent(new DragEvent('dragstart', {bubbles: true, dataTransfer}));
+        surface.dispatchEvent(new window.opener.DragEvent('drop', {bubbles: true, cancelable: true, dataTransfer,
+            clientX: bounds.x + bounds.width * 0.4, clientY: bounds.y + bounds.height * 0.6}));
+        node.dispatchEvent(new DragEvent('dragend', {bubbles: true, dataTransfer}));
+    });
+    await expect(blocks).toHaveCount(2);
+    await secondPalette.close();
+    await expect(toolbox).toBeVisible();
+
+    const panel = await open('Open panel in another window');
+    await expect(panel).toHaveURL(/dockview-popout\.html$/);
+    await expect(panel.getByRole('tab', {name: 'Code', exact: true})).toBeVisible();
+    await expect(panel.locator('[data-horizontal-block-palette]')).toBeVisible();
+    await expect(toolbox).toHaveCount(0);
+    await panel.getByRole('tab', {name: 'Costumes', exact: true}).click();
+    await expect(panel.getByRole('tab', {name: 'Costumes', exact: true})).toHaveAttribute('aria-selected', 'true');
+    await panel.getByRole('tab', {name: 'Code', exact: true}).click();
+    await expect(panel.locator('[data-horizontal-block-palette]')).toBeVisible();
+    await expect(panel.locator(blockSelector)).toHaveCount(2);
+    await panel.getByRole('button', {name: 'Motion', exact: true}).click();
+    const flyoutBlock = panel.locator('.blocklyFlyout .blocklyDraggable').first();
+    const from = await flyoutBlock.boundingBox();
+    const surface = await panel.locator('.blocklySvg').first().boundingBox();
+    await panel.mouse.move(from.x + 12, from.y + 12);
+    await panel.mouse.down();
+    await panel.mouse.move(surface.x + surface.width * 0.65, surface.y + 260, {steps: 16});
+    await panel.mouse.up();
+    await expect(panel.locator(blockSelector)).toHaveCount(3);
+    await panel.locator(blockSelector).filter({hasText: 'move'}).first().getByText('10', {exact: true}).click();
+    const value = panel.locator('input.blocklyHtmlInput');
+    await expect(value).toBeVisible();
+    await value.fill('12');
+    await value.press('Enter');
+    await expect(panel.locator(blockSelector).getByText('12', {exact: true})).toBeVisible();
+    await panel.close();
+    await expect(toolbox).toBeVisible();
+    await expect(blocks).toHaveCount(3);
+    assert.deepEqual(errors, []);
 });
 
 test('the default Dockview splits one sprite editor and restores each view section', {timeout: 45_000}, async t => {
@@ -933,10 +1433,31 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await expect(groups).toHaveCount(1);
     const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
     const tabs = () => page.getByRole('tab', {name: spriteName, exact: true});
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     const menu = (group: ReturnType<typeof page.locator>) => group.getByRole('button', {name: 'Editor panel layout'});
     await expect(tabs()).toHaveCount(1);
+    await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
+    const code = section('Code');
+    const costumes = section('Costumes');
+    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables', 'Messages'];
+    await expect(toolbar.getByRole('tab')).toHaveCount(sections.length);
+    const bounds = await Promise.all(sections.map(async name => {
+        const tab = section(name);
+        await expect(tab).toHaveText('');
+        return tab.boundingBox();
+    }));
+    const contentBounds = await page.locator('.tw-plus-sprite-tab-body:visible').boundingBox();
+    assert(contentBounds && bounds.every((tab, index) => tab && tab.height >= 44 &&
+        tab.x === bounds[0].x && tab.x + tab.width <= contentBounds.x &&
+        (index === 0 || tab.y > bounds[index - 1].y)));
+    await code.hover();
+    await expect(page.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('Code');
+    await code.press('ArrowDown');
+    await expect(costumes).toBeFocused();
+    await expect(costumes).toHaveAttribute('aria-selected', 'true');
+    await costumes.press('ArrowUp');
+    await expect(code).toHaveAttribute('aria-selected', 'true');
     await page.evaluate(() => document.documentElement.style.setProperty('--ui-white', 'rgb(38, 47, 65)'));
     await expect(groups.first().getByRole('tab', {name: spriteName, exact: true}))
         .toHaveCSS('background-color', 'rgb(38, 47, 65)');
@@ -1006,7 +1527,7 @@ test('the Dockview asset connection restores the native costume and sound select
         .filter({has: page.getByText(spriteName, {exact: true})});
     await sprite.hover();
     await expect(sprite).toHaveAttribute('title', spriteName);
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     const editor = page.locator('.tw-plus-sprite-tab-editor:visible');
     const card = (name: string) => editor.locator('[class*="selector_list-item_"]:visible').filter({hasText: name});
@@ -1057,11 +1578,11 @@ test('the Dockview asset connection restores the native costume and sound select
     const bounds = async (pane: ReturnType<typeof page.locator>) => {
         const list = await pane.locator('[class*="selector_wrapper_"]').boundingBox();
         const body = await pane.locator('[class*="asset-panel_detail-area_"]').boundingBox();
-        const toolbarHeight = await pane.evaluate(node => node.closest('.tw-plus-sprite-tab-slot--split')
-            .querySelector('.tw-plus-sprite-toolbar').getBoundingClientRect().height);
+        const topInset = await pane.evaluate(node => node.closest('.tw-plus-sprite-tab-body').getBoundingClientRect().top -
+            node.closest('.tw-plus-sprite-tab-slot--split').getBoundingClientRect().top);
         assert(list && body);
-        // The active toolbar can wrap when its additional controls need another row.
-        return {list: list.width, detail: body.width, heightWithToolbar: body.height + toolbarHeight};
+        // The active pane can reserve space above the body for its extra controls.
+        return {list: list.width, detail: body.width, heightWithToolbar: body.height + topInset};
     };
     const sameBounds = (before: Awaited<ReturnType<typeof bounds>>, after: typeof before) => {
         for (const key of ['list', 'detail', 'heightWithToolbar'] as const) {
@@ -1170,6 +1691,96 @@ test('the Dockview asset connection restores the native costume and sound select
     await expect(variable(1)).toHaveValue('23');
     assert.equal(await page.evaluate(() => window.vm.editingTarget.variables['dockview-counter'].value), 23);
     assert.deepEqual(errors, []);
+});
+
+test('the Dockview variables pane lists only variables owned by the selected target', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.setDefaultTimeout(8_000);
+    await page.addInitScript(() => localStorage.setItem('tw:theme', 'dark'));
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    const spriteName = await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const stage = vm.runtime.getTargetForStage();
+        for (const id of Object.keys(stage.variables)) stage.deleteVariable(id);
+        sprite.createVariable('local-score', '得点', '', false);
+        stage.createVariable('project-score', '得点', '', false);
+        stage.createVariable('cloud-score', '☁ 記録', '', true);
+        stage.createVariable('legacy-cloud', '共有記録', '', true);
+        stage.createVariable('plain-cloud-name', '☁ メモ', '', false);
+        stage.createVariable('project-list', 'リスト', 'list', false);
+        vm.emitTargetsUpdate();
+        return sprite.getName();
+    });
+    const showVariables = () => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
+        .getByRole('tab', {name: '変数など', exact: true}).click();
+    const pane = page.getByRole('region', {name: '変数', exact: true});
+    const fields = pane.locator('[data-variable-id]');
+    const variableIds = () => fields.evaluateAll(inputs => inputs.map(input => input.getAttribute('data-variable-id')));
+    const score = pane.getByRole('textbox', {name: '得点', exact: true});
+    const cloud = pane.getByRole('img', {name: 'クラウド変数', exact: true});
+    const scope = pane.locator('.tw-sprite-variables__scope');
+    const create = pane.getByRole('form', {name: '変数を作る', exact: true});
+    const rename = pane.getByRole('form', {name: '名前を変更', exact: true});
+    const remove = pane.getByRole('form', {name: '削除', exact: true});
+    const variableRow = (name: string) => pane.getByRole('row').filter({has: page.getByRole('textbox', {name, exact: true})});
+    const startCreate = () => pane.getByRole('button', {name: '変数を作る', exact: true}).click();
+    const submitCreate = () => create.getByRole('button', {name: '変数を作る', exact: true}).click();
+
+    await showVariables();
+    await expect.poll(variableIds).toEqual(['local-score']);
+    await expect(scope).toHaveCount(0);
+    await expect(cloud).toHaveCount(0);
+    await score.fill('17');
+    await score.press('Enter');
+
+    await startCreate();
+    await create.getByRole('textbox').fill('得点');
+    await submitCreate();
+    await expect(create.getByRole('alert')).toHaveText('同じ名前の変数がすでにあります。');
+    await create.getByRole('textbox').fill('速度');
+    await submitCreate();
+    const speed = pane.getByRole('textbox', {name: '速度', exact: true});
+    await expect(speed).toHaveValue('0');
+    const speedId = await speed.getAttribute('data-variable-id');
+    await page.evaluate(id => vm.editingTarget.blocks.createBlock({
+        id: 'speed-reference', opcode: 'data_variable', inputs: {},
+        fields: {VARIABLE: {name: 'VARIABLE', id, value: '速度', variableType: ''}},
+        shadow: false, topLevel: true, parent: null, next: null, x: 10, y: 10
+    }), speedId);
+    await variableRow('速度').getByRole('button', {name: '名前を変更', exact: true}).click();
+    await rename.getByRole('textbox').fill('速さ');
+    await rename.getByRole('button', {name: '名前を変更', exact: true}).click();
+    await expect(variableRow('速さ')).toBeVisible();
+    assert.equal(await page.evaluate(() => vm.editingTarget.blocks.getBlock('speed-reference').fields.VARIABLE.value), '速さ');
+    await variableRow('速さ').getByRole('button', {name: '削除', exact: true}).click();
+    await remove.getByRole('button', {name: '削除', exact: true}).click();
+    await expect(remove.getByRole('alert')).toContainText('ブロックで使用中です');
+    await expect(variableRow('速さ')).toBeVisible();
+    await page.evaluate(() => vm.editingTarget.blocks.deleteBlock('speed-reference'));
+    await remove.getByRole('button', {name: '削除', exact: true}).click();
+    await expect(variableRow('速さ')).toHaveCount(0);
+
+    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await showVariables();
+    await expect.poll(variableIds).toEqual(['project-score', 'cloud-score', 'legacy-cloud', 'plain-cloud-name']);
+    await expect(scope).toHaveCount(0);
+    await expect(cloud).toHaveCount(2);
+    await expect(cloud.first()).toHaveCSS('color', 'rgb(35, 153, 194)');
+    await expect(pane.getByRole('rowheader')).toHaveText(['得点', '☁︎ 記録', '☁︎ 共有記録', '☁ メモ']);
+    await expect(score).toHaveValue('0');
+    await score.fill('23');
+    await score.press('Enter');
+    await startCreate();
+    await create.getByRole('textbox').fill('作品用');
+    await submitCreate();
+    await expect(variableRow('作品用')).toBeVisible();
+
+    await page.getByRole('tab', {name: spriteName, exact: true}).click();
+    await showVariables();
+    await expect(score).toHaveValue('17');
+    await expect(variableRow('作品用')).toHaveCount(0);
+    assert.equal(await page.evaluate(() => vm.runtime.getTargetForStage().variables['project-score'].value), 23);
 });
 
 test('two Dockview code panes keep independent positions and zoom for the same sprite', {timeout: 45_000}, async t => {
@@ -1284,7 +1895,7 @@ test('two Dockview code panes keep independent positions and zoom for the same s
 
     await preview(0).click();
     await expect.poll(() => readViewport(editor)).toEqual(left);
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]:visible');
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     await toolbar.getByRole('tab', {name: 'Costumes', exact: true}).click();
     await expect(page.locator('.tw-plus-sprite-tab-slot--split .blocklyToolboxDiv:visible')).toHaveCount(0);
     await toolbar.getByRole('tab', {name: 'Code', exact: true}).click();

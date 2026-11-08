@@ -6,8 +6,8 @@
     border: 1px solid var(--ui-black-transparent, #64748b);
     border-radius: 12px;
     padding: 24px;
-    color: var(--text-primary, #172033);
-    background: var(--ui-primary, white);
+    color: var(--ui-modal-foreground, #172033);
+    background: var(--ui-modal-background, white);
     font: 14px/1.5 system-ui, sans-serif;
 }
 .dialog::backdrop { background: #111827a6; }
@@ -19,20 +19,20 @@
     width: 100%;
     margin-top: 4px;
     padding: 8px;
-    border: 1px solid #64748b;
+    border: 1px solid var(--ui-black-transparent, #64748b);
     border-radius: 5px;
     color: inherit;
-    background: var(--ui-secondary, #f7f8fa);
+    background: var(--input-background, #f7f8fa);
     font: inherit;
 }
 .dialog textarea { resize: vertical; }
 .dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; }
 .dialog dd { margin: 0; }
-.dialog a { color: var(--looks-secondary, #1d4ed8); text-decoration: underline; }
-.dialog button { padding: 8px 16px; border: 1px solid #64748b; border-radius: 5px;
+.dialog a { color: var(--link-color, #1d4ed8); text-decoration: underline; }
+.dialog button { padding: 8px 16px; border: 1px solid var(--ui-black-transparent, #64748b); border-radius: 5px;
     color: inherit; background: var(--ui-secondary, #f7f8fa); font: inherit; cursor: pointer; }
 .dialog button:disabled { opacity: .5; cursor: default; }
-.dialog :focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
+.dialog :focus-visible { outline: 3px solid var(--looks-secondary, #3b82f6); outline-offset: 2px; }
 .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
 .preview { white-space: pre-wrap; overflow-wrap: anywhere; }
 .dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; }

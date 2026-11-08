@@ -13,10 +13,12 @@ import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-co
 import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
 import JSZip from '@turbowarp/jszip';
 import Packager from '@turbowarp/packager-web';
+import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {createPlusPermissionUI} from '../extension-host/permission-ui.ts';
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
+import {embedPackagedProjectData} from '../project-payloads/codec.ts';
 import {packagePlusHTML} from './html.ts';
 
 const bundledAssets = __TW_PLUS_PACKAGER_ASSETS__;
@@ -25,6 +27,7 @@ const ui = createPlusPermissionUI(document, 'ja');
 const status = document.querySelector('[data-testid="plus-package-status"]');
 const file = document.querySelector<HTMLInputElement>('[data-testid="plus-package-file"]');
 const generate = document.querySelector<HTMLButtonElement>('[data-testid="plus-package-generate"]');
+const storage = document.querySelector<HTMLSelectElement>('[data-testid="plus-package-storage"]');
 const resources = document.querySelector<HTMLInputElement>('[data-testid="plus-package-resources"]');
 const download = document.querySelector<HTMLAnchorElement>('[data-testid="plus-package-download"]');
 let input;
@@ -40,15 +43,17 @@ const setInput = (bytes, name) => {
     download.hidden = true;
 };
 file.addEventListener('change', async () => {
-    if (!file.files[0] || pending) return;
+    const selected = file.files[0];
+    if (!selected || pending) return;
+    generate.disabled = true;
+    download.hidden = true;
     try {
         // The core checks Blob.size before reading or inflating the selected file.
-        await createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions}).prepare(file.files[0]);
-        setInput(file.files[0], file.files[0].name);
+        await withWaitCursor([document], () => createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions}).prepare(selected));
+        if (file.files[0] === selected) setInput(selected, selected.name);
     } catch (error) {
+        if (file.files[0] !== selected) return;
         input = null;
-        generate.disabled = true;
-        download.hidden = true;
         status.textContent = `作品を読み込めませんでした: ${error.code || ''} ${error.message}`;
     }
 });
@@ -67,11 +72,22 @@ generate.addEventListener('click', async () => {
     }
     pending = true;
     generate.disabled = true;
+    storage.disabled = true;
     download.hidden = true;
+    try {
+        await withWaitCursor([document], generateHTML);
+    } finally {
+        pending = false;
+        storage.disabled = false;
+        generate.disabled = false;
+    }
+});
+
+async function generateHTML() {
     // What the host's catalog lists is trusted like TurboWarp's official gallery, as in the Editor.
     const trusted = plusTrustedExtensions.catalog;
     const trustProvider = createSessionTrustProvider({requestApproval: async (code, options) =>
-        await trusted.isTrustedCode(code) || ui.requestApproval(code, options)});
+        await trusted.isTrustedCode(code) || withoutWaitCursor(document, () => ui.requestApproval(code, options))});
     try {
         status.textContent = '作品と拡張のバイト列を検証しています…';
         const io = createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions});
@@ -94,12 +110,15 @@ generate.addEventListener('click', async () => {
         const compiled = await prepareOfflinePackage(input, {
             fetcher: createFetchPort(fetch, {onRetry}), trustProvider, diagnostics: ui.diagnostics
         }, {zip: JSZip, archiveOptions: extensionProjectArchiveOptions, resourceDependencies});
+        const embeddedProjectData = storage.value === 'embedded-data';
+        const projectBytes = embeddedProjectData ?
+            await embedPackagedProjectData(compiled.projectBytes, compiled.project) : compiled.projectBytes;
         const runtimeBundle = bundledRuntime;
         const trustedDigests = await plusTrustedExtensions.listDigests(compiled.manifest);
         const packager = new Packager();
         packager.options.app.windowTitle = title;
-        const result = await packagePlusHTML(packager, compiled,
-            {runtimeBundle, scaffoldingAssets: bundledAssets, trustedDigests});
+        const result = await packagePlusHTML(packager, {...compiled, projectBytes},
+            {runtimeBundle, scaffoldingAssets: bundledAssets, trustedDigests, embeddedProjectData});
         if (currentURL) URL.revokeObjectURL(currentURL);
         currentURL = URL.createObjectURL(new Blob([result.data], {type: 'text/html'}));
         download.href = currentURL;
@@ -113,7 +132,5 @@ generate.addEventListener('click', async () => {
         ui.diagnostics({type: 'error', code: error.code, message: error.message});
     } finally {
         trustProvider.revokeAll();
-        pending = false;
-        generate.disabled = false;
     }
-});
+}

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>保存して配布する — 機能ガイド — TurboWarp-Plus-Editor</title>
+<meta name="description" content="TurboWarp Plusで作品を保存し、作品情報を記録し、拡張コードと素材の格納方式を選び、単一HTMLに書き出す方法。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 11. 保存して配布する</p>
+<p class="eyebrow">機能ガイド 11/11 · 2026年11月8日更新</p>
+<h1>保存して配布する</h1>
+<p class="lead">作品を保存し、作品情報を記録し、拡張コードや素材をどこに置くかを決めて、SB3や単一HTMLとして渡します。</p>
+<nav class="topic-nav" aria-label="機能ガイドの分野">
+<ul>
+<li><a href="../open/">作品を開く</a></li>
+<li><a href="../screen/">メニューと画面</a></li>
+<li><a href="../sprites/">スプライトと背景</a></li>
+<li><a href="../stage/">ステージ</a></li>
+<li><a href="../workspace/">作業領域</a></li>
+<li><a href="../blocks/">ブロック</a></li>
+<li><a href="../search/">検索と置換</a></li>
+<li><a href="../documents/">文書と拡張データ</a></li>
+<li><a href="../reuse/">再利用</a></li>
+<li><a href="../git/">Gitと作品フォルダ</a></li>
+<li><a href="../save/" aria-current="page">保存と配布</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="このページの目次">
+<ol>
+<li><a href="#save">11.1 上書き保存と名前を変えて保存を使い分ける</a></li>
+<li><a href="#restore-points">11.2 復元ポイントから作品を戻す</a></li>
+<li><a href="#project-properties">11.3 作品情報を記入してSB3に保存する</a></li>
+<li><a href="#project-uri">11.4 作品のURIを指定してキャッシュを整理する</a></li>
+<li><a href="#storage">11.5 拡張コードの保存形式を選ぶ</a></li>
+<li><a href="#payload-formats">11.6 ソースデータと素材をどの形式で保存するか選ぶ</a></li>
+<li><a href="#packager">11.7 作品を書き出して単一HTMLで配布する</a></li>
+</ol>
+</nav>
+
+<section id="save">
+
+<h2>11.1 上書き保存と名前を変えて保存を使い分ける</h2>
+
+<p>「ファイル」→「名前を変えて保存…」で、名前・保存形式・保存先を選んでSB3を作ります。</p>
+<figure class="guide-detail"><a href="../images/save-as-dialog.png"><img src="../images/save-as-dialog.png" width="640" height="292" alt="名前を変えて保存ダイアログ。名前の入力欄、保存形式の選択欄、キャンセルと保存先を選ぶボタンがある。" loading="lazy"></a><figcaption>「名前を変えて保存」。保存先を選べるブラウザーでは「保存先を選ぶ…」、それ以外では「保存」でダウンロードします。</figcaption></figure>
+<div class="table-scroll" role="region" aria-label="名前を変えて保存の保存形式" tabindex="0">
+<table><caption>選べる保存形式</caption><thead><tr><th scope="col">保存形式</th><th scope="col">保存される内容</th></tr></thead><tbody>
+<tr><th scope="row">SB3（現在の格納方式）</th><td><a href="#payload-formats">組み込みデータ</a>と<a href="#storage">機能拡張</a>で設定した格納方式のまま保存する</td></tr>
+<tr><th scope="row">SB3（設定対象の台本・素材を同梱）</th><td>HTTPS参照などに設定した台本・素材をSB3の中に入れて保存する。手元で編集を続けるためのSB3を作るときに使う</td></tr>
+</tbody></table></div>
+<ul><li><strong>保存先を選んだ場合。</strong> 選んだファイルが次の「保存」の上書き先になります。保存先の選択をキャンセルすると、以前の上書き先が残ります。</li><li><strong>ダウンロードした場合。</strong> 上書き先は設定されず、「保存」は選べないままです。</li><li><strong>作品フォルダを開いた場合。</strong> 「保存」で<a href="../git/#project-folder">作品フォルダ</a>を更新します。名前を変えて保存すると、作品フォルダとの接続は外れます。</li></ul>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/387">保存と書き出しの整理</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3保存形式</a></p>
+
+</section>
+
+<section id="restore-points">
+
+<h2>11.2 復元ポイントから作品を戻す</h2>
+
+<p>保存に失敗したときや保存し忘れたときは、「ファイル」→「復元ポイント」で、TurboWarpが一定間隔でブラウザーに記録した復元ポイントから作品を戻せます。記録の間隔は1分〜30分ごと、または「なし」から選べます。</p>
+<p>復元ポイントは最後の手段であり、削除されることがあります。作品は<a href="#save">保存</a>で残してください。</p>
+
+</section>
+
+<section id="project-properties">
+
+<h2>11.3 作品情報を記入してSB3に保存する</h2>
+
+<p>「ファイル」→「作品のプロパティ」で、タイトルや概要、作者名を記録できます。</p>
+<ol><li>作品タイトル、作品概要、作者名、連絡先を入力します。作品概要は複数行で書けます。</li><li>「適用」を押すと現在の作品に反映され、エディター上部のタイトルも更新されます。「キャンセル」を押すと入力中の変更を取り消せます。</li><li>「ファイル」から保存すると、作品ファイルに情報が記録されます。</li></ol>
+<figure class="guide-detail"><a href="../images/properties-current.png"><img src="../images/properties-current.png" width="640" height="772" alt="作品のプロパティダイアログ。作品タイトル、作品のURI、作品概要、作者名、連絡先の入力欄、作成日時と最終更新日時、キャンセル・適用・作品の診断のボタンがある。" loading="lazy"></a><figcaption>「作品のプロパティ」。右下の「作品の診断…」から<a href="../open/#project-diagnostics">読み込みの診断</a>を開けます。</figcaption></figure>
+<h3>作者名と連絡先：直近5件から選択、または新規入力</h3>
+<p>適用した作者名と連絡先は、それぞれ直近5件までブラウザーに記録されます。同じ値を使うと履歴の先頭に移り、選んだ候補は編集できます。SB3に入るのは今回適用した値です。ブラウザーの保存機能が使えない場合、候補の履歴はエディターを開いている間だけ利用できます。</p>
+<p>連絡先のメールアドレスや<code>mailto:</code>はメール用リンクに、<code>https:</code>はWebリンクになります。メールリンクは利用環境のメールアプリ、Webリンクは別タブで開きます。作品概要はプレーンテキストとして入力し、プレビュー内のHTTPS URLをリンクとして開けます。</p>
+<h3>日時とSB3への保存</h3>
+<p>作成日時と最終更新日時は自動で記録されます。新規作品には作成日時が入り、日時の情報がない作品では「未記録」と表示されます。最終更新日時が変わるのは、作品情報やブロックなどの変更を含む作品ファイルの生成に成功したときです。</p>
+<div class="flow" role="img" aria-label="作品情報を入力して適用すると現在の作品へ反映。続けてSB3を保存すると情報と更新日時を作品ファイルに記録し、Plus Editorで開き直すと復元する。"><div>作品情報を入力<br><small>履歴選択・新規入力</small></div><span>→</span><div>適用<br><small>現在の作品へ反映</small></div><span>→</span><div>SB3を保存<br><small>情報・更新日時を記録</small></div><span>→</span><div>Plusで開き直す<br><small>タイトル・情報を復元</small></div></div>
+<p>この情報はPlus独自の作品情報としてSB3に保存します。作者名・連絡先は、SB3を共有すると受け取り手にも表示されます。標準Scratch/TurboWarpや作品情報を無効化したEditorで保存し直すと、独自情報が失われる可能性があるため、元のSB3を保持してください。保存仕様は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/project-tools.md">作品情報と診断の仕様</a>を参照してください。</p>
+
+</section>
+
+<section id="project-uri">
+
+<h2>11.4 作品のURIを指定してキャッシュを整理する</h2>
+
+<p>「ファイル」→「作品のプロパティ」の「作品の URI」に、作品を識別するHTTPSのアドレスを入力し、「適用」を押します。ユーザー名・パスワードや <code>#</code> 以降のフラグメントを含むアドレスは使えません。適用したURIは、次に作品を保存したときにSB3に記録されます。</p>
+<figure class="guide-detail"><a href="../images/project-uri-detail.png"><img src="../images/project-uri-detail.png" width="622" height="110" alt="作品のプロパティの作品のURI欄に、説明用のHTTPSのアドレスを入力した画面。次に作品を保存したときにSB3に記録される旨の案内がある。" loading="lazy"></a><figcaption>「作品の URI」欄に説明用のURLを入力した例。</figcaption></figure>
+<p>作品別にキャッシュを保存する拡張では、新しいURIが以降の書き込みに使われます。以前のキャッシュは残ります。キャッシュの実体はブラウザー内に保存されます。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/209">作品URIの指定</a></p>
+
+</section>
+
+<section id="storage">
+
+<h2>11.5 拡張コードの保存形式を選ぶ</h2>
+
+<p>拡張を追加するときは、「ファイル」→「機能拡張…」→「機能拡張の追加」で「TurboWarp Plus」の一覧から拡張を選び、「読み込み元」でコードを作品に入れるか、HTTPSの配信元から取得するかを指定します。「追加」を押してからSB3を保存すると、選んだ形式、コードを照合するSHA-256、実行条件が記録されます。</p>
+<div class="table-scroll" role="region" aria-label="拡張コードの読み込み元" tabindex="0"><table><thead><tr><th scope="col">追加画面で選ぶ読み込み元</th><th scope="col">「機能拡張…」での表示</th><th scope="col">保存するものと開くときの動作</th></tr></thead><tbody>
+<tr><th scope="row">毎回取得する<br><code>remote-non-cacheable</code></th><td>HTTPSから毎回取得</td><td>HTTPS URLを記録します。開くたびに取得して照合します。</td></tr>
+<tr><th scope="row">キャッシュを残す（既定）<br><code>remote-cacheable</code></th><td>HTTPSから取得・キャッシュ可</td><td>HTTPS URLを記録します。開く人が許可すると、照合済みのコードをブラウザーに保存して再利用できます。</td></tr>
+<tr><th scope="row">作品の中から<br><code>embedded-file</code></th><td>SB3内のファイル</td><td>コードをSB3内のファイルとして同梱します。</td></tr>
+<tr><th scope="row">作品の中の data: アドレスから<br><code>embedded-data</code></th><td>作品JSON内のデータ</td><td>コードをdata URLとして作品データに同梱します。標準TurboWarpでもコードを読み込める形式です。</td></tr>
+</tbody></table></div>
+<h3>追加済みの拡張の形式を変える</h3>
+<p>「ファイル」→「機能拡張…」を開くと、作品で使用中の拡張ごとに現在の形式が表示されます。配信元のURLが記録されている拡張では形式を選び直せます。「格納方式を適用」を押し、SB3を保存します。</p>
+<div class="flow" role="img" aria-label="RemoteはSB3にURLを記録し配信元からコードを読む。EmbeddedはSB3にコードを同梱する。"><div>Remote<br><small>SB3：URL＋ハッシュ</small></div><span>→</span><div>配信元から取得<br><small>内容を照合</small></div><span class="divider">／</span><div>Embedded<br><small>SB3：コード＋ハッシュ</small></div><span>→</span><div>作品内から読込<br><small>内容を照合</small></div></div>
+<p>配信元から取得する形式では、URLが同じでも内容が変わると照合に失敗します。通信なしで開けるかは、必要なコードやデータが手元にそろっているかで決まります。コードを同梱した場合も、拡張が外部APIや画像などを取得するなら通信が必要です。対応拡張のフォームや文書編集にはPlus Editorを使います。</p>
+<p>作品単位のキャッシュを整理するには<a href="#project-uri">作品のURI</a>を使います。細かな制約・互換性は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3保存形式</a>と<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-authoring-ui.md">機能拡張一覧の仕様</a>を参照してください。</p>
+
+</section>
+
+<section id="payload-formats">
+
+<h2>11.6 ソースデータと素材をどの形式で保存するか選ぶ</h2>
+
+<p>「ファイル」→「組み込みデータ…」を開くと「作品データの形式」が表示されます。「アセット」欄で、背景・コスチューム・音などの素材ごとに保存形式を選びます。対応する拡張のYAMLなど、対象のソースデータが作品内にある場合は「ソースデータ」欄にも表示されます。HTTPSの形式では、その項目のURLを入力します。URLから取得した内容は、現在のデータとバイト単位で一致する必要があります。</p>
+<figure class="guide-detail"><a href="../images/project-data-dialog.png"><img src="../images/project-data-dialog.png" width="640" height="628" alt="作品データの形式ダイアログ。上部にバンドル素材を作品に追加のボタン、ソースデータ欄、背景1とコスチューム1の形式選択とHTTPS URLの入力欄、キャンセルと適用のボタンがある。" loading="lazy"></a><figcaption>「組み込みデータ…」で開く「作品データの形式」。新しい作品では背景1とコスチューム1が並びます。</figcaption></figure>
+<div class="table-scroll" role="region" aria-label="ソースデータと素材の保存方法" tabindex="0">
+<table><caption>ソースデータと素材の保存方法</caption><thead><tr><th scope="col">画面で選ぶ形式</th><th scope="col">使い分け</th></tr></thead><tbody>
+<tr><th scope="row">標準の格納方式を使う</th><td>その項目への個別指定を解除し、標準の方式で保存する</td></tr>
+<tr><th scope="row">HTTPS から毎回取得</th><td>開くたびに配信元から取得する</td></tr>
+<tr><th scope="row">HTTPS から取得・キャッシュ可</th><td>開く人が許可すると、照合済みのデータをブラウザーに保存して再利用できる</td></tr>
+<tr><th scope="row">SB3 内のファイル</th><td>データを作品内の別ファイルとして一緒に渡す</td></tr>
+<tr><th scope="row">作品 JSON 内のデータ</th><td>作品のJSONにデータを直接格納する</td></tr>
+</tbody></table></div>
+<p>「適用」を押し、SB3を保存します。設定した形式は次の保存に使われます。HTTPS参照に設定した項目を一時的に同梱したSB3が必要なときは、<a href="#save">名前を変えて保存</a>で「SB3（設定対象の台本・素材を同梱）」を選びます。設定した形式からデータを復元するには、Plusの拡張ローダーが有効なエディターを使います。HTTPS参照がある作品を開くと、取得先の一覧が表示され、取得を許可するか選べます。拡張のプログラム自体をどう保存するかは、<a href="#storage">拡張コードの保存形式</a>で説明しています。 <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/215">作品データの保存形式の実装</a></p>
+
+</section>
+
+<section id="packager">
+
+<h2>11.7 作品を書き出して単一HTMLで配布する</h2>
+
+<p>「ファイル」→「書き出し…」を開き、「プロジェクトをパッケージ化する」を押します。書き出しに必要な作品データは出力に同梱されます。通常のScratch 3やTurboWarpのSB3なら<a href="https://packager.turbowarp.org/">標準のTurboWarp Packager</a>が開きます。Plus形式の拡張を記録した作品では、同じ操作でPlus専用の出力画面が開きます。</p>
+<figure class="guide-detail"><a href="../images/export-dialog.png"><img src="../images/export-dialog.png" width="640" height="178" alt="書き出しダイアログ。実行・配布用のファイルを作成しますという説明と、プロジェクトをパッケージ化するボタンがある。" loading="lazy"></a><figcaption>「書き出し…」で開くダイアログ。</figcaption></figure>
+<ol><li>Plusの出力画面で、すべてのPlus拡張が外部API・モデル・画像・音声などに依存していないことを確認します。</li><li>確認欄にチェックし、「確認してHTMLを生成」を押します。HTTPSで配信される拡張コードも、内容を照合したうえでHTMLに入り、サンドボックスの指定は保持されます。</li><li>生成したHTMLをダウンロードして開きます。カタログで信頼条件を満たす拡張は、同梱されたハッシュと照合して実行します。個別承認が必要な拡張は、HTMLを開くたびに実行許可を求められます。</li></ol>
+<div class="flow" role="img" aria-label="Plus作品から拡張コードを取得して検証し、コードと作品を単一HTMLに同梱。受取人が開く際にも実行条件を確認する。"><div>Plus作品</div><span>→</span><div>コード取得・検証</div><span>→</span><div>単一HTMLへ同梱</div><span>→</span><div>開く人が実行<br><small>必要な拡張を確認</small></div></div>
+<p>外部依存がない作品はオフラインで動作します。外部API・画像・モデル等の資産を自動的に収集する機能ではありません。詳細は<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-loader-integration.md">ローダーとHTML出力の仕様</a>を参照してください。</p>
+
+</section>
+<nav class="pager" aria-label="前後のページ">
+<a class="prev" href="../git/"><small>前のページ</small>10. 作品フォルダとGitで管理する</a>
+</nav>
+</main>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+</body></html>

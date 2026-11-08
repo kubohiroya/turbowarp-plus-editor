@@ -1,9 +1,10 @@
 import {mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderVM} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-views';
-import {mountGitPanel} from '@kubohiroya/turbowarp-plus-editor-git';
+import {createScratchBlocksDiffRenderer, mountGitPanel} from '@kubohiroya/turbowarp-plus-editor-git';
 import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
+import type {ScratchBlockDiffRendererOptions} from '@kubohiroya/turbowarp-plus-editor-git';
 import {loadedProjectTitle} from './project-tools/index.ts';
 
 type RuntimeThread = {updateMonitor?: boolean};
@@ -17,9 +18,12 @@ type GuiStore = {
 declare const __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: (handle: null) => Action;
 declare const __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: () => Action;
 declare const __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: (title: string) => Action;
+declare const __TW_PLUS_GIT_DESERIALIZE_BLOCKS__: ScratchBlockDiffRendererOptions['deserializeBlocks'];
+declare const __TW_PLUS_GIT_VM_BLOCKS__: new () => ReturnType<ScratchBlockDiffRendererOptions['createBlockContainer']>;
 declare const __TW_PLUS_GIT_CLOUDFLARE__: {bffOrigin: string; proxyOrigin: string} | null;
 
-export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean, locale: string) {
+export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean, locale: string,
+    getBlockly: ScratchBlockDiffRendererOptions['getBlockly']) {
     const view = document?.defaultView as Window & {EditorPreload?: {localGit?: DesktopGitPreload | null}; ReduxStore?: GuiStore};
     if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
     const connectionSettings = localGit ? createGitConnectionSettings({
@@ -58,6 +62,11 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
     if (!folder || !localGit) return folder;
     gitPanel = mountGitPanel({vm, document, host: {
         connectionSettings,
+        renderReviewBlock: typeof __TW_PLUS_GIT_DESERIALIZE_BLOCKS__ === 'function' && typeof __TW_PLUS_GIT_VM_BLOCKS__ === 'function' ?
+            createScratchBlocksDiffRenderer({
+                getBlockly, deserializeBlocks: __TW_PLUS_GIT_DESERIALIZE_BLOCKS__,
+                createBlockContainer: () => new __TW_PLUS_GIT_VM_BLOCKS__(), showUnregisteredBlocks: true, locale
+            }) : undefined,
         openProject: folder.openDirectory,
         isProjectDirty,
         isProjectRunning: isRunning,

@@ -32,6 +32,8 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
 
     const hats = (page: Page) => page.locator('[data-twpe-yaml-hat-icon]');
     const workspace = (page: Page) => page.locator('[data-multi-view] .dockview-theme-light');
+    const backdropTab = (page: Page) =>
+        page.locator('.dv-tab').and(page.getByRole('tab', {name: '背景', exact: true}));
     const documentTitle = (id: string) => `settings.yml (twpeyamlsettings / ${id})`;
     const docTab = (page: Page, id: string) => workspace(page).getByRole('tab', {name: documentTitle(id), exact: true});
     const docPanel = (page: Page, id: string) => workspace(page).locator(
@@ -75,10 +77,9 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const page = await context.newPage();
     await load(page);
     const initial = await committed(page);
-    const codeName = await page.evaluate(() => window.vm.editingTarget.getName());
-    const codeTab = workspace(page).getByRole('tab', {name: codeName, exact: true});
+    const codeTab = backdropTab(page);
     const groups = workspace(page).locator('.dv-groupview');
-    const codeGroup = groups.filter({has: page.getByRole('tab', {name: codeName, exact: true})});
+    const codeGroup = groups.filter({has: codeTab});
     const groupFor = (id: string) => groups.filter({has: page.getByRole('tab', {name: documentTitle(id), exact: true})});
 
     await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
@@ -157,7 +158,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
 
     await page.getByText('ファイル', {exact: true}).click();
     const pending = page.waitForEvent('download');
-    await page.getByRole('listitem').filter({hasText: /^コンピューターに保存する$/}).click();
+    await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
     archive = await readFile(await (await pending).path());
     const saved = await JSZip.loadAsync(archive);
     const project = JSON.parse(await saved.file('project.json').async('string'));
@@ -173,7 +174,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     assert.deepEqual(await committed(reloaded), {settings, labels});
     await open(reloaded, 0, 'settings');
     await expect(source(reloaded, 'settings')).toHaveValue(settings);
-    await workspace(reloaded).getByRole('tab', {name: codeName, exact: true}).click();
+    await backdropTab(reloaded).click();
     await open(reloaded, 1, 'labels');
     await expect(source(reloaded, 'labels')).toHaveValue(labels);
 

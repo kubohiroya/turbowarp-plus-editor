@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作品全体を検索・置換する — 機能ガイド — TurboWarp-Plus-Editor</title>
+<meta name="description" content="TurboWarp Plusで、すべてのスプライト・ステージ・作品内YAMLを横断して検索し、選んだ箇所を置換する方法。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 7. 作品全体を検索・置換する</p>
+<p class="eyebrow">機能ガイド 7/11 · 2026年11月8日更新</p>
+<h1>作品全体を検索・置換する</h1>
+<p class="lead">メニューバーの検索欄から、すべてのスプライトとステージ、作品に埋め込んだYAML文書までをまとめて検索し、見つけた箇所を1か所ずつ置換できます。</p>
+<nav class="topic-nav" aria-label="機能ガイドの分野">
+<ul>
+<li><a href="../open/">作品を開く</a></li>
+<li><a href="../screen/">メニューと画面</a></li>
+<li><a href="../sprites/">スプライトと背景</a></li>
+<li><a href="../stage/">ステージ</a></li>
+<li><a href="../workspace/">作業領域</a></li>
+<li><a href="../blocks/">ブロック</a></li>
+<li><a href="../search/" aria-current="page">検索と置換</a></li>
+<li><a href="../documents/">文書と拡張データ</a></li>
+<li><a href="../reuse/">再利用</a></li>
+<li><a href="../git/">Gitと作品フォルダ</a></li>
+<li><a href="../save/">保存と配布</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="このページの目次">
+<ol>
+<li><a href="#project-search">7.1 作品全体を検索する</a></li>
+<li><a href="#search-scope">7.2 検索対象を選ぶ（作品内YAMLを含む）</a></li>
+<li><a href="#replace">7.3 選択箇所を置換する</a></li>
+</ol>
+</nav>
+
+<section id="project-search">
+
+<h2>7.1 作品全体を検索する</h2>
+
+<p>メニューバーの検索欄に語句を入力すると、すべてのスプライトとステージを横断して検索し、結果を種類ごとにまとめて表示します。</p>
+<p>検索と置換は1つのパネルにまとまっています。⌘F（WindowsはCtrl+F）で検索欄にカーソルが移り、⇧⌘F（WindowsはCtrl+Shift+F）または「編集」メニューの<a href="../screen/#edit-menu">「検索と置換」</a>で同じパネルの「置換後の文字列」の欄に移ります。Escapeキーで閉じます。</p>
+<figure><a href="../images/project-search.png"><img src="../images/project-search.png" width="1100" height="560" alt="検索欄に開始と入力した結果。置換後の文字列の欄と検索対象のチェックボックスの下に、メッセージの送受信3件が、ネコとボールの送るブロック・受け取るブロックとして表示されている。" loading="lazy"></a><figcaption>「開始」で検索した例。各結果の右に、スプライト名とブロックが表示されます。</figcaption></figure>
+<p>結果を選ぶと、該当するスプライトのコードや素材、YAML文書が開き、該当箇所が表示されます。パネルは開いたままなので、続けて置換できます。Enterキーで選ぶ場合は、移動と同時にパネルを閉じます。結果が多いときは、一覧を下までスクロールすると続きを読み込みます。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/346">スプライトとステージの横断検索</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/402">作品内検索の拡張</a></p>
+
+</section>
+
+<section id="search-scope">
+
+<h2>7.2 検索対象を選ぶ（作品内YAMLを含む）</h2>
+
+<p>結果の上の「検索対象」で、検索する範囲をチェックボックスで絞り込めます。</p>
+<div class="table-scroll" role="region" aria-label="検索対象" tabindex="0">
+<table><caption>「検索対象」で選べる範囲</caption><thead><tr><th scope="col">検索対象</th><th scope="col">結果の見出し</th></tr></thead><tbody>
+<tr><th scope="row">ブロック名</th><td>ブロック</td></tr>
+<tr><th scope="row">変数・リスト名</th><td>変数の使用箇所、リストの使用箇所</td></tr>
+<tr><th scope="row">メッセージ名</th><td>メッセージの送受信</td></tr>
+<tr><th scope="row">引数の値</th><td>ブロックの引数値</td></tr>
+<tr><th scope="row">機能拡張名</th><td>機能拡張の使用箇所</td></tr>
+<tr><th scope="row">コメント文</th><td>コメント</td></tr>
+<tr><th scope="row">YAML 本文</th><td>YAML 本文</td></tr>
+<tr><th scope="row">素材名</th><td>コスチューム、背景、音</td></tr>
+</tbody></table></div>
+<p>「メッセージ名」の判定は、<a href="../sprites/#messages">メッセージ</a>の一覧と同じ基準を使います。「YAML 本文」は、紙芝居の台本など、対応する拡張が作品に埋め込んだYAML文書の本文を検索します。作品にそうした文書がある場合だけ表示されます。</p>
+
+</section>
+
+<section id="replace">
+
+<h2>7.3 選択箇所を置換する</h2>
+
+<p>「置換後の文字列」の欄は、パネルの中に常に表示されています。「編集」→「検索と置換」（⇧⌘F、WindowsはCtrl+Shift+F）を選ぶと、この欄にカーソルが移ります。結果を一つ選び、「選択箇所を置換」を押すと、その1か所だけを置き換えます。作品全体を一括で置き換える操作はありません。置き換えられない結果には「閲覧専用」と表示されます。</p>
+<p>YAML本文の結果では、ボタンが「プレビューで置換」になります。該当する位置を示したプレビューで置換後の内容を確かめ、文書の検証に通った場合に保存されます。</p>
+<p>ブロックの置換は、コード画面の「元に戻す」で戻せます。置換した内容を作品ファイルに残すには、最後にSB3を保存します。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/402">選択箇所の置換</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/405">検索と置換のショートカット</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/415">検索欄と検索ダイアログの統合</a></p>
+
+</section>
+<nav class="pager" aria-label="前後のページ">
+<a class="prev" href="../blocks/"><small>前のページ</small>6. ブロックを探して置く・整理する</a>
+<a class="next" href="../documents/"><small>次のページ</small>8. 拡張のデータと文書を編集する</a>
+</nav>
+</main>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+</body></html>

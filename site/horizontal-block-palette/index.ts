@@ -1,5 +1,9 @@
 import {attachPaletteCategoryReorder} from '@kubohiroya/turbowarp-plus-editor-ui/palette-category-reorder';
+import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} from
+    '@kubohiroya/turbowarp-plus-editor-ui/palette-category-search';
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';
+import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
+    '@kubohiroya/turbowarp-plus-editor-ui/detached-block-palette';
 import styles from './palette.css';
 
 const installed = new WeakSet();
@@ -12,6 +16,11 @@ export const setHorizontalBlockPalette = (horizontal: boolean) => {
     for (const setMode of palettes) setMode(horizontal);
 };
 
+export const openDetachedBlockPalette = options => {
+    const workspace = window.ScratchBlocks?.getMainWorkspace();
+    if (workspace) openPaletteWindow(workspace, options);
+};
+
 const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder}) => {
     const workspace = toolbox.workspace_;
     const flyout = toolbox.flyout_;
@@ -19,6 +28,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     if (workspace.isMutator || toolbox.horizontalLayout_ || flyout.svgGroup_.tagName.toLowerCase() !== 'svg') return;
 
     const panel = flyout.svgGroup_;
+    const body = flyout.workspace_.svgGroup_;
+    const bodyTransform = body.getAttribute('transform');
     const scrollbar = flyout.scrollbar_.outerSvg_;
     const surface = workspace.getParentSvg();
     const doc = menu.ownerDocument;
@@ -38,20 +49,32 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         showAll: toolbox.showAll_,
         getFlyoutWidth: flyout.getWidth,
         isDragTowardWorkspace: flyout.isDragTowardWorkspace,
+        layout: flyout.layout_,
         position: flyout.position
     };
 
     let horizontal = false;
+    let detached = false;
     let openId = null;
     let layoutWidth;
+    let scrollBeforeSearch = 0;
     const scrollPositions = new Map();
     const verticalPosition = workspace.toolboxPosition;
     const categoryById = id => toolbox.categoryMenu_.categories_.find(category => category.id_ === id);
+    const getLocale = () => ScratchBlocks.ScratchMsgs.currentLocale_ || doc.documentElement.lang;
+    const search = attachPaletteCategorySearch(panel, getLocale, (query, previous) => {
+        const category = categoryById(openId);
+        if (!category) return;
+        if (!previous) scrollBeforeSearch = flyout.getScrollPos();
+        flyout.scrollTarget = null;
+        showCategory(category, query ? 0 : scrollBeforeSearch);
+    });
 
     const close = () => {
         if (openId === null) return;
         resizer.close();
-        scrollPositions.set(openId, flyout.getScrollPos());
+        scrollPositions.set(openId, search.query ? scrollBeforeSearch : flyout.getScrollPos());
+        search.close();
         categoryById(openId)?.item_.setAttribute('aria-expanded', 'false');
         openId = null;
         flyout.hide();
@@ -73,6 +96,37 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         }
         flyout.show([label].concat(category.getContents()));
         flyout.setScrollPos(scroll);
+    };
+
+    flyout.layout_ = (contents, gaps) => {
+        const category = categoryById(openId);
+        if (!horizontal || !category || !search.query) {
+            original.layout.call(flyout, contents, gaps);
+            return;
+        }
+        const matching = matchPaletteBlocks(contents, category.name_, search.query, ScratchBlocks.utils.replaceMessageReferences,
+            (block: {inputList: {fieldRow: {getText(): string}[]}[]}) => block.inputList.flatMap(input => input.fieldRow)
+                .filter(field => field instanceof ScratchBlocks.FieldLabel)
+                .map(field => field.getText()).join(' '));
+        const kept = [];
+        const keptGaps = [];
+        for (let index = 0; index < contents.length; index++) {
+            const item = contents[index];
+            if (item.type === 'block' && !matching.has(item.block)) {
+                item.block.dispose(false, false);
+            } else {
+                kept.push(item);
+                keptGaps.push(gaps[index]);
+            }
+        }
+        flyout.permanentlyDisabled_ = flyout.permanentlyDisabled_.filter(block => matching.has(block));
+        if (!matching.size) {
+            const label = doc.createElement('label');
+            label.setAttribute('text', search.emptyLabel);
+            kept.push({type: 'button', button: new ScratchBlocks.FlyoutButton(flyout.workspace_, workspace, label, true)});
+            keptGaps.push(flyout.GAP_Y);
+        }
+        original.layout.call(flyout, kept, keptGaps);
     };
 
     const open = category => {
@@ -105,7 +159,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     };
 
     toolbox.getWidth = () => horizontal ? 0 : original.getWidth.call(toolbox);
-    toolbox.getHeight = () => horizontal ? menu.offsetHeight : original.getHeight.call(toolbox);
+    toolbox.getHeight = () => horizontal ? (detached ? 0 : menu.offsetHeight) : original.getHeight.call(toolbox);
     // The menu stays a drop-to-delete target even when the popover is closed.
     toolbox.getClientRect = () => {
         if (!horizontal) return original.getClientRect.call(toolbox);
@@ -179,13 +233,14 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const getBounds = () => {
         const surfaceRect = surface.getBoundingClientRect();
         const menuRect = menu.getBoundingClientRect();
+        const viewport = surface.ownerDocument.documentElement;
         return {
             surfaceLeft: surfaceRect.left,
             left: Math.max(0, menuRect.left - surfaceRect.left, -surfaceRect.left),
             right: Math.min(surface.clientWidth, menuRect.right - surfaceRect.left,
-                doc.documentElement.clientWidth - surfaceRect.left),
+                viewport.clientWidth - surfaceRect.left),
             top: Math.max(menu.offsetHeight, -surfaceRect.top),
-            bottom: Math.min(surface.clientHeight, doc.documentElement.clientHeight - surfaceRect.top) - 4
+            bottom: Math.min(surface.clientHeight, viewport.clientHeight - surfaceRect.top) - 4
         };
     };
     const getWidth = ({left, right}) => {
@@ -208,10 +263,12 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         const width = getWidth(bounds);
         const requestedHeight = resizer.size?.height ?? Math.min(360, surface.clientHeight * 0.65);
         const height = Math.max(0, Math.min(requestedHeight, bounds.bottom - top));
-        const visible = width > flyout.SCROLLBAR_PADDING && height > 2 * flyout.SCROLLBAR_PADDING;
+        const bodyHeight = height - paletteSearchHeight;
+        const visible = width > flyout.SCROLLBAR_PADDING && bodyHeight > 2 * flyout.SCROLLBAR_PADDING;
         panel.style.visibility = scrollbar.style.visibility = visible ? '' : 'hidden';
         if (!visible) {
             resizer.place(null);
+            search.place(null);
             return;
         }
 
@@ -220,23 +277,27 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         const left = Math.min(Math.max(bounds.left, preferredLeft), bounds.right - width);
 
         flyout.width_ = width;
-        flyout.height_ = height;
+        flyout.height_ = bodyHeight;
         // Scratch Blocks positions RTL blocks against the width used when laying them out.
         if (flyout.RTL) flyout.workspace_.scrollX = width - layoutWidth;
         flyout.setBackgroundPath_(width, height);
         panel.setAttribute('width', width);
         panel.setAttribute('height', height);
         panel.style.transform = `translate(${left}px, ${top}px)`;
-        flyout.scrollbar_.setOrigin(left, top);
+        flyout.scrollbar_.setOrigin(left, top + paletteSearchHeight);
         flyout.scrollbar_.resize();
         resizer.place({left, top, width, height});
+        search.place({left, top, width});
         panel.style.opacity = '1';
     };
 
     const reposition = () => {
         if (openId !== null) flyout.position();
     };
-    const resizeObserver = new win.ResizeObserver(reposition);
+    const resizeObserver = new win.ResizeObserver(() => {
+        syncInputDocument();
+        reposition();
+    });
     resizeObserver.observe(surface);
     resizeObserver.observe(menu);
     win.addEventListener('resize', reposition, {signal: events.signal});
@@ -266,6 +327,9 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         menu.toggleAttribute('data-horizontal-block-palette', horizontal);
         panel.classList.toggle(styles.panel, horizontal);
         scrollbar.classList.toggle(styles.scrollbar, horizontal);
+        if (horizontal) body.setAttribute('transform', `translate(0 ${paletteSearchHeight}) ${bodyTransform ?? ''}`);
+        else if (bodyTransform === null) body.removeAttribute('transform');
+        else body.setAttribute('transform', bodyTransform);
         updateCategoryButtons();
         if (horizontal) flyout.hide();
         else {
@@ -324,23 +388,64 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         event.preventDefault();
         menu.scrollLeft += event.deltaY * (event.deltaMode === 1 ? 16 : 1);
     }, {passive: false, signal: events.signal});
-    doc.addEventListener('pointerdown', event => {
+    const onPointerDown = event => {
         if (WidgetDiv.DIV?.contains(event.target)) return;
         WidgetDiv.hideIfOwner(toolbox);
-        if (openId === null || resizer.contains(event.target) || [menu, panel, scrollbar, DropDownDiv.DIV]
+        if (openId === null || resizer.contains(event.target) || search.contains(event.target) || [menu, panel, scrollbar, DropDownDiv.DIV]
             .some(element => element?.contains(event.target))) return;
         closeIfUnpinned();
-    }, capture);
-    doc.addEventListener('keydown', event => {
-        if (event.key !== 'Escape') return;
+    };
+    const onKeyDown = event => {
+        if (event.key !== 'Escape' || event.isComposing) return;
         if (WidgetDiv.owner_ === toolbox) WidgetDiv.hideIfOwner(toolbox);
         else if (!WidgetDiv.isVisible() && !DropDownDiv.isVisible()) close();
-    }, capture);
+    };
+    const onWorkspaceKeyDown = event => {
+        if (surface.contains(event.target)) ScratchBlocks.onKeyDown_(event);
+    };
+    let inputDocument: Document;
+    function syncInputDocument() {
+        const current = surface.ownerDocument;
+        if (current === inputDocument) return;
+        if (inputDocument) workspace.cancelCurrentGesture();
+        moveBlockWidgets(ScratchBlocks, current);
+        inputDocument?.removeEventListener('pointerdown', onPointerDown, true);
+        inputDocument?.removeEventListener('keydown', onKeyDown, true);
+        inputDocument?.removeEventListener('keydown', onWorkspaceKeyDown);
+        inputDocument = current;
+        inputDocument.addEventListener('pointerdown', onPointerDown, capture);
+        inputDocument.addEventListener('keydown', onKeyDown, capture);
+        if (current !== doc) inputDocument.addEventListener('keydown', onWorkspaceKeyDown, {signal: events.signal});
+    }
+    syncInputDocument();
+    const disconnectPalette = connectDetachedBlockPalette({
+        blocks: ScratchBlocks, workspace, flyout, menu,
+        categories: () => toolbox.categoryMenu_.categories_.map(({id_, name_, item_}) => ({
+            id: id_,
+            label: ScratchBlocks.utils.replaceMessageReferences(name_),
+            color: item_.querySelector('.scratchCategoryItemBubble')?.style.backgroundColor,
+            image: item_.querySelector('.scratchCategoryItemIcon')?.style.backgroundImage
+        })),
+        show(id) {
+            const category = categoryById(id);
+            if (category) showCategory(category, 0);
+        },
+        setDetached(value) {
+            close();
+            detached = value;
+            for (const element of [menu, panel, scrollbar]) element.toggleAttribute('data-detached-palette-source', value);
+            if (!value) flyout.hide();
+            workspace.resize();
+        }
+    });
     toolbox.dispose = () => {
+        disconnectPalette();
+        if (inputDocument !== doc) moveBlockWidgets(ScratchBlocks, doc);
         palettes.delete(setMode);
         closeOnDragExit.delete(flyout);
         resizeObserver.disconnect();
         resizer.dispose();
+        search.dispose();
         if (reorder) reorder.dispose();
         events.abort();
         WidgetDiv.hideIfOwner(toolbox);
@@ -355,6 +460,7 @@ export const installHorizontalBlockPalette = (ScratchBlocks,
     const toolbox = ScratchBlocks.Toolbox?.prototype;
     if (!toolbox?.init || installed.has(toolbox)) return;
     installed.add(toolbox);
+    installGestureOwnerDocument(ScratchBlocks);
 
     const gesture = ScratchBlocks.Gesture.prototype;
     const {handleMove} = gesture;

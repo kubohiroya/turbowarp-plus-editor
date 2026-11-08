@@ -1,27 +1,41 @@
 import React from 'react';
+import {connect} from 'react-redux';
 import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
-import {externalYamlPort} from '../editor-layout/index.tsx';
+import {externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
+import {stageLauncherSlot} from '../editor-layout/context.ts';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
-import {renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
+import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
-import {renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
-import StageControlsView from '../stage-controls/view.tsx';
+import ProjectFileMenu from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import {projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
 import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {attachDockedCodeExtensions} from '@kubohiroya/turbowarp-plus-editor-views';
+import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
+    renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
+import {renderMenuIcon} from '../context-menu-icons/index.ts';
 
 export * from './lib/tw-plus-integration-points.ts';
+export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
+export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
+const getProjectSearchMessages = () => window.ScratchBlocks?.Msg ?? {};
+export const renderProjectSearch = ({vm, locale}) => React.createElement(ProjectSearch, {
+    project: vm.runtime, locale, getMessages: getProjectSearchMessages
+});
 export * from './lib/tw-plus-transfer.ts';
 export * from './lib/tw-plus-extension-host.ts';
 export * from './lib/tw-plus-extension-permissions.ts';
@@ -32,16 +46,36 @@ export {default as createPreviewVm} from './lib/tw-preview-vm.ts';
 export {default as createBlocksWrapper} from './containers/tw-plus-blocks.tsx';
 export {createWorkspaceAttachment} from './containers/tw-plus-workspace-attachment.tsx';
 
-export const renderStageControls = ({vm, isSmall}) => {
+const ExtensionControls = connect(({scratchGui: {mode}}) => ({
+    stageOnly: mode.isPlayerOnly || mode.isFullScreen
+}))(({vm, isSmall, menuLocale, stageOnly}) => {
+    const mountStageLauncher = React.useCallback((element: HTMLDivElement | null) => {
+        if (element) element.appendChild(stageLauncherSlot(vm));
+    }, [vm]);
+    if (stageOnly !== (menuLocale === undefined)) return null;
     const service = hostStageControls(vm, hostIntegration());
-    return service ? React.createElement(StageControlsView, {service, isSmall}) : null;
+    return React.createElement(React.Fragment, null,
+        menuLocale !== undefined && stageLauncherEnabled && React.createElement('div', {ref: mountStageLauncher}),
+        service && React.createElement(StageControlsView, {service, isSmall, menuLocale}));
+});
+export const renderStageControls = props => React.createElement(ExtensionControls, props);
+
+export const setDebuggerMenuButton = (vm: object, element: HTMLElement | null) => {
+    const service = hostStageControls(vm, hostIntegration());
+    if (!service) return false;
+    service.setDebuggerButton(element);
+    return true;
 };
 
 export const attachHostScriptTransfer = (context, integration) => {
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);
     const code = attachDesktopCode({...context, receiveBackpackDrop});
     const extensions = attachDockedCodeExtensions(context);
+    const prewarm = startup.stageCodePrewarm ? attachStageCodePrewarm(context) : undefined;
+    const editMenu = attachEditMenuWorkspace(context);
     return {dispose() {
+        editMenu.dispose();
+        prewarm?.dispose();
         extensions.dispose();
         code?.dispose();
         transfer?.dispose();
@@ -93,3 +127,31 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
 };
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
     renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderGitMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+
+export {saveProjectForPackager as serializeProjectForExport} from '../project-payloads/host.ts';
+
+export const projectFileTypes = [
+    {description: 'Scratch 3 Project', accept: {'*/*': ['.sb3']}},
+    {description: 'Scratch 1 and 2 Projects', accept: {'*/*': ['.sb', '.sb2']}}
+];
+
+export const renderProjectFileWorkflow = ({
+    vm, locale = 'en', MenuItem, MenuSection, close, storage, create, newWindow, open, restore, exportProject, addExtension
+}) => {
+    const folder = projectFolderActions(vm, locale);
+    const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension);
+    const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
+    return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
+        ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
+        exportProject: exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject),
+        externalYaml: renderExternalYamlMenu(inline),
+        git: renderGitMenu(React.createElement, inline)
+    }});
+};
+
+export const saveProjectFromFileMenu = (vm, storage, promptForTarget) => {
+    const locale = document.documentElement.lang || 'en';
+    const folder = projectFolderActions(vm, locale);
+    projectSaveShortcut(storage, folder, promptForTarget ?
+        () => projectFileActions(vm, locale, storage, () => folder?.detach()).saveAs?.() : undefined);
+};

@@ -1,0 +1,42 @@
+ul:has(> li > .command) {
+    background-color: var(--popover-background, var(--ui-white, #fff));
+    color: var(--text-primary);
+}
+
+.command,
+.restore {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.command {
+    width: calc(100% + 20px);
+    margin-inline: -10px;
+    padding: 0 10px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: start;
+    cursor: inherit;
+}
+
+.command > svg,
+.restore > svg {
+    flex: none;
+    margin-inline-end: 0;
+}
+
+.shortcut {
+    margin-inline-start: auto;
+    padding-inline-start: 1rem;
+    font: inherit;
+    font-weight: normal;
+}
+
+.command:disabled {
+    opacity: 0.5;
+    cursor: default;
+}

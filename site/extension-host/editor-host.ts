@@ -63,13 +63,17 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
     // constant, so a copy served elsewhere names its projects under its own origin.
     const origin = globalThis.location?.origin;
     const payloadsEnabled = readWebStartupFeatureFlags(settings.search ?? globalThis.location?.search).payloadFormats;
+    const approvePayloads = (urls, cacheable, signal) => {
+        const ask = () => approveProjectPayloads(
+            settings.document || globalThis.document, settings.getLocale?.() ?? settings.locale, urls, cacheable, signal);
+        return settings.waitForUser ? settings.waitForUser(ask) : ask();
+    };
     const base = {
         createAuthoring: (target, options) => createExtensionAuthoringController(target, {...options, origin}),
         setAuthoringHost: setExtensionAuthoringHost,
         archiveOptions: extensionProjectArchiveOptions,
         createPayloads: ports => createProjectPayloadHost(vm, {...ports, canEdit: payloadsEnabled, vmModules: settings.vmModules,
-            approve: (urls, cacheable, signal) => approveProjectPayloads(
-                settings.document || globalThis.document, settings.getLocale?.() ?? settings.locale, urls, cacheable, signal)
+            approve: approvePayloads
         })
     };
     if (enabled !== true) return installPlusExtensionHost(vm, {...base, ...rest, enabled});

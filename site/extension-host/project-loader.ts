@@ -12,6 +12,14 @@
 
 import {isWorthAskingAgain, validateManifest} from '@kubohiroya/turbowarp-extension-loader';
 
+import {projectSerializationOptions} from './serialization-context.ts';
+
+const isScratch1Project = (input: unknown) => {
+    const header = input instanceof ArrayBuffer ? new Uint8Array(input, 0, Math.min(10, input.byteLength)) :
+        input instanceof Uint8Array ? input.subarray(0, 10) : null;
+    return header && /^ScratchV0[12]$/.test(String.fromCharCode(...header));
+};
+
 const installations = new WeakMap();
 
 /** Open a URI edit for the project currently in this VM. */
@@ -118,7 +126,7 @@ export function installExtensionLoader(host, loader) {
      * @returns {object|null} The context to restore with.
      */
     const contextForSave = () => {
-        if (savedContext === null || projectURI !== undefined || typeof host.addressProject !== 'function' ||
+        if (projectSerializationOptions(vm)?.preview || savedContext === null || projectURI !== undefined || typeof host.addressProject !== 'function' ||
             typeof io.assignProjectURI !== 'function') return savedContext;
         const uri = host.addressProject();
         if (typeof uri !== 'string') return savedContext;
@@ -134,6 +142,8 @@ export function installExtensionLoader(host, loader) {
     };
     const loadProject = function(input, ...args) {
         checkActive();
+        const progress = host.captureProjectProgress?.();
+        const archive = host.projectArchives?.capture(vm);
         if (host.onProjectLoadStart) host.onProjectLoadStart(input);
         payloads?.loadStarted();
         pending++;
@@ -143,8 +153,20 @@ export function installExtensionLoader(host, loader) {
             activeController = controller;
             let touchedHost = false;
             try {
-                const restoredPayloads = payloads ? await payloads.read(input, controller.signal) : null;
-                const prepared = await io.prepare(restoredPayloads?.input ?? input, {signal: controller.signal});
+                if (archive) progress?.('archive');
+                const options = {signal: controller.signal, shareArchive: Boolean(archive)};
+                // Scratch 1 is a binary project format handled by the VM's native converter.
+                let prepared = isScratch1Project(input) ?
+                    {input, manifest: null, context: null, originalArchive: undefined, vmArchive: undefined} :
+                    archive ? await io.prepare(input, options) : null;
+                if (archive) archive.original = prepared.originalArchive;
+                if (payloads) progress?.('payloads');
+                const restoredPayloads = payloads ? await payloads.read(input, controller.signal, archive?.original) : null;
+                const restoredInput = restoredPayloads?.input ?? input;
+                if (!prepared || restoredInput !== input) {
+                    progress?.('archive');
+                    prepared = await io.prepare(restoredInput, options);
+                }
                 checkActive();
                 if (!prepared || !Object.hasOwn(prepared, 'manifest') || !Object.hasOwn(prepared, 'input')) {
                     throw failure('INVALID_PROJECT_CODEC', 'The Loader project codec returned no project');
@@ -162,8 +184,11 @@ export function installExtensionLoader(host, loader) {
                 checkActive();
                 const context = prepared.context ?? null;
                 if (io.activate) io.activate(context);
-                loading = {manifest: prepared.manifest, signal: controller.signal, loaded: false, registration: null};
-                const result = await originals.loadProject.call(vm, prepared.input, ...args);
+                loading = {manifest: prepared.manifest, signal: controller.signal, loaded: false, registration: null, progress};
+                progress?.('project');
+                const runVM = input => originals.loadProject.call(vm, input, ...args);
+                const result = await (archive ? host.projectArchives.load(prepared.input, prepared.vmArchive, runVM) :
+                    runVM(prepared.input));
                 checkActive();
                 // A VM that never invokes the extension hook cannot load Plus projects.
                 if (prepared.manifest !== null && !loading.loaded) {
@@ -198,7 +223,7 @@ export function installExtensionLoader(host, loader) {
                 activeController = null;
             }
         };
-        const result = queue.then(run);
+        const result = queue.then(() => host.runProjectLoad ? host.runProjectLoad(run) : run());
         queue = result.catch(() => {});
         return result.finally(() => { pending--; });
     };
@@ -216,6 +241,7 @@ export function installExtensionLoader(host, loader) {
     };
     const loadExtensions = async function(ids, urls = new Map(), ...args) {
         checkActive();
+        if (loading?.progress && [...ids].length) loading.progress('extensions');
         if (!loading || loading.manifest === null) {
             return extensionStep(() => originals._loadExtensions.call(vm, ids, urls, ...args));
         }
@@ -229,7 +255,7 @@ export function installExtensionLoader(host, loader) {
             const others = [...ids].filter(id => !listed.has(id));
             const otherURLs = new Map([...urls].filter(([id]) => !listed.has(id)));
             const answer = await extensionStep(() => host.review(context.manifest,
-                () => originals._loadExtensions.call(vm, others, otherURLs, ...args)));
+                () => originals._loadExtensions.call(vm, others, otherURLs, ...args), context.signal));
             checkActive();
             othersLoaded = true;
             context.registration = loader.load(context.manifest,

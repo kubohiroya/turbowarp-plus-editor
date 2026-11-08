@@ -48,6 +48,7 @@ if (cloudflareGit && ![bffOrigin, proxyOrigin].every(value => {
     return url && url.protocol === 'https:' && url.origin === value;
 })) throw new Error('Cloudflare Git requires both exact HTTPS origins');
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
+    __TW_PLUS_EDITOR_VERSION__: JSON.stringify(rootRequire('./package.json').version),
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog),
     __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit)
 }));
@@ -63,13 +64,40 @@ const injections = {
     __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json'),
     __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: [path.join(gui, 'src', 'reducers', 'tw.js'), 'setFileHandle'],
     __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: [path.join(gui, 'src', 'reducers', 'project-changed.js'), 'setProjectUnchanged'],
-    __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle']
+    __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle'],
+    __TW_PLUS_GIT_DESERIALIZE_BLOCKS__: ['scratch-vm/src/serialization/sb3.js', 'deserializeBlocks'],
+    __TW_PLUS_GIT_VM_BLOCKS__: 'scratch-vm/src/engine/blocks.js'
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
     include: fs.realpathSync(path.join(gui, 'src/addons/addons/hide-flyout/userscript.js')),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-hide-flyout.cts')
+});
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/containers/sb3-downloader.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-save.cts')
+});
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/components/menu-bar/menu-bar.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-menu-bar-controls.cts')
+});
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/addons/addons/debugger/userscript.js')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-debugger-menu-button.cts')
+});
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/lib/sb-file-uploader-hoc.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-file-picker.cts')
+});
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/lib/tw-packager-integration-hoc.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-export.cts')
 });
 if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
     // Give only the GUI project URL fetcher the browser host's URL resolution.
@@ -131,14 +159,14 @@ const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.c
     'sprite-properties.css', 'windows.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-editor-toolbar',
-    'sprite-properties', 'sprite-tabs', 'stage-surface', 'dockview-styles', 'windows']) {
+    'sprite-properties', 'sprite-tabs', 'project-messages', 'stage-surface', 'dockview-styles', 'windows']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 config.module.rules.push({
     include: fs.realpathSync(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs')),
     enforce: 'pre',
-    use: path.join(__dirname, 'connect-project-search-header.cts')
+    use: path.join(__dirname, 'connect-sprite-tabs.cts')
 });
 for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
@@ -146,7 +174,10 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
 }
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
-for (const entry of ['palette-category-reorder', 'palette-dropdown-resize', 'project-search', 'browser-tab-title']) {
+for (const entry of ['busy-cursor', 'detached-block-palette', 'edit-menu', 'palette-category-reorder', 'palette-category-search',
+    'palette-dropdown-resize', 'project-load-progress', 'project-load-progress-view',
+    'project-search', 'project-search-connections', 'project-info-menu', 'project-file-dialogs', 'project-file-menu',
+    'stage-controls', 'stage-controls-view', 'browser-tab-title']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -158,6 +189,8 @@ config.resolve.alias['../../containers/backpack.jsx$'] =
 // Share the original fullscreen artwork with the stage display menu.
 config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
     path.join(gui, 'src', 'components', 'stage-header', 'icon--fullscreen.svg');
+config.resolve.alias['@tw-plus/gui-block-category-artwork$'] =
+    path.join(gui, 'src', 'addons', 'addons', 'block-palette-icons', '_runtime_entry.js');
 // Override the addon default in Plus without changing the pinned GUI sources.
 const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';
 config.resolve.alias[`${hideDeleteButtonManifest}$`] = path.join(siteSource, 'hide-delete-button-manifest.ts');
@@ -202,13 +235,34 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     title: 'Stage',
     template: path.join(siteSource, 'editor-layout', 'stage-popout.html')
 }));
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: [], filename: 'dockview-popout.html', title: 'TurboWarp Plus Editor'
+}));
 config.module.rules.push({test: /\.tsx?$/, include: [
     siteSource,
     path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), path.dirname(editorUiEntry)
 ], loader: path.join(__dirname, 'transpile-local-typescript.cts')});
+config.module.rules.push({
+    include: path.join(gui, 'src/components/loader/loader.jsx'),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-project-load-progress.cts')
+});
+const vmRequire = createRequire(hostRequire.resolve('scratch-vm/package.json'));
+config.module.rules.push({
+    include: vmRequire.resolve('scratch-parser'),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-shared-project-archive.cts')
+});
+// Webpack 4 needs an alias for the protocol export used by the pinned document-data package.
+const documentDataRequire = createRequire(rootRequire.resolve('@kubohiroya/turbowarp-document-data/package.json'));
+const documentSourcePackage = documentDataRequire.resolve('@kubohiroya/turbowarp-document-source/package.json');
+const documentSourceRoot = path.dirname(documentSourcePackage);
+config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.resolve(
+    documentSourceRoot, documentDataRequire(documentSourcePackage).exports['./protocol'].import
+);
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
+    documentSourceRoot, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,

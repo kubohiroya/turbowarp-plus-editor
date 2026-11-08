@@ -33,7 +33,8 @@ const config = withExtensionLoaderWebpack4({
     module: {rules: [
         {test: /\.tsx?$/, include: path.resolve('site'),
             loader: path.join(__dirname, 'transpile-local-typescript.cts')},
-        {test: /\.js$/, include: [path.join(gui, 'src'), vmSource, path.resolve('site')],
+        {test: /\.js$/, include: [path.join(gui, 'src'), vmSource, path.resolve('site'),
+            path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json'))],
         loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
             presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}}]}
 }, {hostRoot: gui});
