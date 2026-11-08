@@ -319,7 +319,8 @@ test('the first menu row orders the Plus logo, project title, File, Edit, and se
     await expect(menu.locator('hr + a')).toHaveText('ソースコード');
     await expect(links.first()).toHaveText(`TurboWarp Plus Editor ${editorPackage.version}について`);
     for (const name of ['ソースコード', 'ライセンスとクレジット']) {
-        await expect(links.getByText(name, {exact: true}).locator('svg[aria-hidden="true"]')).toBeVisible();
+        const link = menu.getByRole('link', {name, exact: true});
+        await expect(link.locator('svg[aria-hidden="true"][fill="currentColor"]')).toBeVisible();
     }
     await expect(menu.getByRole('button', {name: /ピン留め/})).toHaveCount(0);
     await page.keyboard.press('Escape');
