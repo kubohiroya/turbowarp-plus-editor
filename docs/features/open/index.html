@@ -79,7 +79,7 @@
 <p>「ファイル」→「機能拡張…」を開くと、作品で使用中の拡張が一覧になります。「機能拡張の追加」を押すと拡張の追加画面が開くので、「TurboWarp Plus」を選びます。Scratch配置では左下の拡張ボタンも入口になります。</p>
 <ol><li>追加する拡張をチェックします。チェックボックスのほか、拡張のアイコンを押しても選べます。その拡張が必要とする拡張も自動で選ばれます。</li><li>「読み込み元」を「すべての読み込み元」でまとめて設定するか、拡張ごとに設定します（<a href="../save/#storage">拡張コードの保存形式を選ぶ</a>）。</li><li>「追加」を押します。</li></ol>
 <figure class="guide-detail"><a href="../images/extensions-dialog.png"><img src="../images/extensions-dialog.png" width="640" height="168" alt="機能拡張ダイアログ。使用中の機能拡張はありませんと表示され、閉じる、格納方式を適用、機能拡張の追加のボタンが並ぶ。" loading="lazy"></a><figcaption>「機能拡張…」。拡張がある作品では、拡張ごとに格納方式を選ぶ欄が並びます。</figcaption></figure>
-<figure><a href="../images/catalog-current.png"><img src="../images/catalog-current.png" width="1440" height="1000" alt="TurboWarp Plus拡張の追加画面。各行に拡張のアイコン・名前・ID・版・説明・製作者と、信頼の印、読込方法の選択肢が並ぶ。" loading="lazy"></a><figcaption>拡張の追加画面。名前の横の、TurboWarp Plusのロゴに緑のチェックを重ねた印は、このEditorが信頼する拡張であることを示します。安全を保証する印ではありません。</figcaption></figure>
+<figure><a href="../images/catalog-current.png"><img src="../images/catalog-current.png" width="1440" height="1000" alt="TurboWarp Plus拡張の追加画面。TurboWarp-Markdownを選んでいる。各行に拡張のアイコン・名前・ID・版・配信元のURL・説明・製作者と、信頼の印、読み込み元の選択肢が並ぶ。" loading="lazy"></a><figcaption>拡張の追加画面で「TurboWarp-Markdown」を選んだところ。名前の横の、TurboWarp Plusのロゴに緑のチェックを重ねた印は、このEditorが信頼する拡張であることを示します。安全を保証する印ではありません。</figcaption></figure>
 <p>公式カタログの条件を満たす拡張は信頼済みとして扱い、作品を開くときの個別の承認を省略します。拡張の説明はEditorの表示言語に合わせて表示され、提供元のWebサイト、リリース、製作者の連絡先へのリンクも開けます。カタログにないURLを指定して追加する場合は、標準の「カスタム拡張機能」を使います。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/32">拡張の追加入口の統一</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/49">カタログの拡張を確認なしで動かす</a></p>
 
@@ -90,7 +90,7 @@
 <h2>1.4 作品を開く前に拡張の実行条件を確認する</h2>
 
 <p>確認が必要な拡張を含む作品を開くと、実行前に一覧が出ます。Plus形式の拡張と通常のカスタム拡張をまとめて確認し、取得元を見ながら、拡張ごとに「動かさない」「サンドボックス内」「サンドボックスなし」から実行方法を選びます。</p>
-<figure><a href="../images/review.png"><img src="../images/review.png" width="1440" height="1200" alt="作品を開く際の機能拡張の確認画面。一覧にない2つの拡張について、名前・ID・取得元・説明・製作者と、動かさない・サンドボックス内・サンドボックスなしの選択肢が並ぶ。" loading="lazy"></a><figcaption>一覧にない拡張を2つ含む作品を開いた例。「サンドボックスなしが必要」と書いている拡張には「⚠️ サンドボックスなしが必要」と表示します。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/review-dialog.png"><img src="../images/review-dialog.png" width="768" height="348" alt="作品を開く際の機能拡張の確認画面。Block editor demoについて、ID、作品の中にdata:アドレスとして書かれていること、説明、製作者、サンドボックスなしが必要という表示と、動かし方の選択肢が並ぶ。" loading="lazy"></a><figcaption>カタログにない拡張を含む作品を開いた例。この拡張は「サンドボックスなしが必要」と申告しているため、「サンドボックスなしで」が選ばれた状態で表示されます。「OK」を押すまで、拡張は実行されません。</figcaption></figure>
 <ul><li>「サンドボックスなしが必要」な拡張を使う作品は、その条件を許可した場合に開きます。すべての拡張がサンドボックスなしを必要とする場合は、その選択があらかじめ選ばれます。拡張にサンドボックス内で動かす指定があれば、その指定が優先されます。</li><li>ZIPにまとめて配布された拡張では、SHA-256が一致したZIP内のコードから、実行前に拡張名を読み取って表示します。名前を確定できない場合は拡張のIDを表示します。</li><li>確認画面は移動・リサイズ・最大化できます。</li></ul>
 <p>SHA-256で確かめるのは、コードの内容が記録されたものと一致するかどうかです。「サンドボックスなし」を許可すると拡張はエディター側の権限で動くため、内容と提供元を確認してから選びます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/391">ZIP内の拡張名の表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/96">Plus拡張も同じ確認画面で尋ねる</a></p>

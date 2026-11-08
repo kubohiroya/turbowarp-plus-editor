@@ -45,10 +45,10 @@
 <p>フォーム編集に対応する拡張を使うと、ブロックの引数を項目ごとの入力欄で編集できます。たとえば場面名と表示時間を1つのJSON文字列で保存するブロックでも、それぞれの欄に分けて入力できます。</p>
 <p><strong>拡張開発者は、保存するデータのJSON Schemaを用意し、対象ブロックと引数を指定して登録するだけで、そのブロック専用のフォームを自動生成できます。</strong> エディターはスキーマから入力欄を組み立て、必須項目や値の範囲を検証します。</p>
 <ol><li>対応ブロックをコード領域に置き、ブロック上の「ブロックを編集」アイコンを押します。</li><li>フォームで値を変更します。表示される項目は拡張ごとに異なります。</li><li>「すべて保存」を押すと、検証に通った値がブロックに反映されます。編集中の変更を取り消すには「キャンセル」で閉じます。</li><li>作品ファイルに残すには、続けて「ファイル」メニューから保存します。</li></ol>
-<figure><a href="../images/form-dialog.png"><img src="../images/form-dialog.png" width="820" height="520" alt="シーン名と表示時間の入力欄が自動生成されたブロック編集フォーム。" loading="lazy"></a><figcaption>説明用の拡張が定義したフォーム。シーン名と秒数を別々の欄に入力します。</figcaption></figure>
+<figure><a href="../images/form-dialog.png"><img src="../images/form-dialog.png" width="820" height="518" alt="scene propertiesを編集するフォーム。Scene labelにオープニング、Duration (seconds)に3が入力され、キャンセルとすべて保存のボタンがある。" loading="lazy"></a><figcaption>リポジトリのサンプル拡張（<code>examples/extensions/block-editor.ts</code>）が定義したフォーム。場面名と表示時間を別々の欄に入力します。</figcaption></figure>
 <h3>入力の誤りを、その場で見つける</h3>
 <p>図のフォームで指定できる表示時間は1〜60秒です。0を入力すると範囲外であることが表示され、値を直すまで保存できません。入力の条件は拡張が定めます。</p>
-<figure><a href="../images/validation-dialog.png"><img src="../images/validation-dialog.png" width="820" height="602" alt="表示時間に0を入れると最小値1の検証メッセージが出て、保存ボタンが無効になる。" loading="lazy"></a><figcaption>表示時間が範囲外のときは入力欄に理由が表示されます。</figcaption></figure>
+<figure><a href="../images/validation-dialog.png"><img src="../images/validation-dialog.png" width="820" height="601" alt="Duration (seconds)に0を入力すると、入力欄が赤くなり、1以上にする必要があるという検証メッセージが出て、すべて保存のボタンが無効になる。" loading="lazy"></a><figcaption>表示時間が範囲外のときは入力欄に理由が表示され、「すべて保存」は押せません。</figcaption></figure>
 <h3>入れ子のブロックを編集する</h3>
 <p>拡張が親子のブロックを編集対象に登録していれば、同じフォームでそれぞれの値を変更できます。対応する数値・文字列・選択肢の固定入力も専用欄で編集できます。フォームで保存した変更は、コード画面で1回の「元に戻す」で戻せます。</p>
 <div class="flow" role="img" aria-label="ブロックの値から下書きを開き、検証に成功したら保存。キャンセルなら元のブロックは変えない。最後にSB3を別途保存する。"><div>ブロックの値</div><span>→</span><div>フォームの下書き<br><small>変更・検証・取消</small></div><span>→</span><div>すべて保存<br><small>ブロックへ反映／元に戻す</small></div><span>→</span><div>ファイルから保存<br><small>SB3を手元へ</small></div></div>
