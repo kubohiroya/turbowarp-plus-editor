@@ -12,7 +12,21 @@ interface StageControlsProps {
 interface StageControlsState {
     controls: ReturnType<Service['snapshot']>;
     panel: HTMLElement | null;
+    debuggerButton: HTMLElement | null;
 }
+
+function DebuggerButton ({element}: {element: HTMLElement}) {
+    const mount = React.useRef<HTMLDivElement>(null);
+    React.useLayoutEffect(() => {
+        const root = mount.current;
+        root.appendChild(element);
+        return () => {
+            if (element.parentNode === root) element.remove();
+        };
+    }, [element]);
+    return <div className={styles.debuggerButton} ref={mount} />;
+}
+
 class StageControlsView extends React.PureComponent<StageControlsProps, StageControlsState> {
     declare unsubscribe?: () => void;
     declare panelRoot?: HTMLElement | null;
@@ -25,7 +39,8 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
         this.mountPanel = this.mountPanel.bind(this);
     }
     readService () {
-        return {controls: this.props.service.snapshot(), panel: this.props.service.panel?.() || null};
+        const {service} = this.props;
+        return {controls: service.snapshot(), panel: service.panel?.() || null, debuggerButton: service.debuggerButton()};
     }
     bindService () {
         this.unsubscribe?.();
@@ -57,7 +72,7 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
     }
     render () {
         const {isSmall, menuLocale} = this.props;
-        const {panel} = this.state;
+        const {panel, debuggerButton} = this.state;
         const buttons = this.state.controls.filter(control => control.visible).map(control => (
             <button
                 aria-expanded={control.expanded}
@@ -80,11 +95,13 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
             {buttons}
             {panel && <div className={styles.panel} ref={this.mountPanel} />}
         </>;
-        if (!buttons.length && !panel) return null;
+        const hasButtons = buttons.length > 0 || Boolean(debuggerButton);
+        if (!hasButtons && !panel) return null;
         const label = /^ja(?:-|$)/i.test(menuLocale) ? '機能拡張コントロールボタン領域' : 'Extension controls';
         return <div className={styles.menuDock}>
-            {buttons.length > 0 && <div className={styles.controlGroup} role="group" aria-label={label}>
+            {hasButtons && <div className={styles.controlGroup} role="group" aria-label={label}>
                 {buttons}
+                {debuggerButton && <DebuggerButton element={debuggerButton} />}
             </div>}
             {panel && <div className={styles.menuPanel} ref={this.mountPanel} />}
         </div>;

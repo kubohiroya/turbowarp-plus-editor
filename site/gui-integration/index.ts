@@ -49,6 +49,13 @@ const ExtensionControls = connect(({scratchGui: {mode}}) => ({
 });
 export const renderStageControls = props => React.createElement(ExtensionControls, props);
 
+export const setDebuggerMenuButton = (vm: object, element: HTMLElement | null) => {
+    const service = hostStageControls(vm, hostIntegration());
+    if (!service) return false;
+    service.setDebuggerButton(element);
+    return true;
+};
+
 export const attachHostScriptTransfer = (context, integration) => {
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);
     const code = attachDesktopCode({...context, receiveBackpackDrop});

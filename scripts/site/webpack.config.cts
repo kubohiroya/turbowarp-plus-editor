@@ -82,6 +82,11 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-menu-bar-controls.cts')
 });
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/addons/addons/debugger/userscript.js')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-debugger-menu-button.cts')
+});
 if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
     // Give only the GUI project URL fetcher the browser host's URL resolution.
     config.module.rules.push({

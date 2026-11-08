@@ -54,6 +54,14 @@
     margin: 0;
 }
 
+.debuggerButton {
+    flex: none;
+}
+
+.controlGroup > .debuggerButton > :global(.sa-debugger-container) {
+    margin: 0;
+}
+
 .menuPanel {
     position: absolute;
     inset-block-start: 100%;
