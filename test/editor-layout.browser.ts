@@ -1396,7 +1396,7 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
     const code = section('Code');
     const costumes = section('Costumes');
-    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables'];
+    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables', 'Messages'];
     await expect(toolbar.getByRole('tab')).toHaveCount(sections.length);
     const bounds = await Promise.all(sections.map(async name => {
         const tab = section(name);
