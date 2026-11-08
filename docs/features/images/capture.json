@@ -177,5 +177,73 @@
       "properties-variables-0fc3.png": {"x": 0, "y": 0, "width": 1440, "height": 523},
       "script-transfer-0fc3.png": {"x": 0, "y": 0, "width": 750, "height": 559}
     }
+  },
+  "publicMenuBarRefresh": {
+    "date": "2026-11-08",
+    "url": "http://localhost:8123/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "c7f25ed55e4ba8223a41ea89ea989edb7169476f",
+    "guiRevision": "eac09baf59a1303d58e257ea8b78a3253c0af035",
+    "securityVersion": "0.8.8",
+    "editorVersion": "0.2.0-rc.3",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "note": "The public Pages host was not reachable from the capture environment, so the Editor was built locally from the deployed revision (the same revision the Pages workflow published) and served under the canonical /turbowarp-plus-editor/ prefix. The micro:bit hex download was replaced by a local placeholder, which does not affect the captured screens. Captured headless with Playwright Chromium in Japanese with default features. The sample project (sprites ネコ and ボール, project variable 速さ, broadcast 開始) was built in the page through vm.loadProject; no UI state is fabricated.",
+    "images": {
+      "plus-workspace-current.png": "Fresh startup: menu bar, pinned sprite list, vertical editor section buttons, horizontal palette and minimap.",
+      "plus-menu.png": "TurboWarp Plus menu opened from the logo.",
+      "file-menu-current.png": "File menu of a new project; Save is disabled before a save target exists.",
+      "edit-menu.png": "Edit menu with icons and shortcut hints.",
+      "project-search.png": "Project search for 速さ with the search-scope checkboxes and variable-use results.",
+      "palette-search.png": "Motion category filtered by 歩 with the in-category block search.",
+      "layout-menu.png": "Editor panel layout menu with split and pop-out actions.",
+      "palette-popout.png": "Block palette opened in a separate window, viewport 520x520.",
+      "stage-menu-current.png": "Expanded right-edge stage with the stage display menu open.",
+      "sprite-list-window.png": "Sprite list opened in a separate window from the Undock button.",
+      "save-as-dialog.png": "Save As dialog (element screenshot).",
+      "export-dialog.png": "Export dialog (element screenshot).",
+      "project-data-dialog.png": "Project Data dialog opened from 組み込みデータ… (element screenshot).",
+      "extensions-dialog.png": "Extensions dialog for a project without extensions (element screenshot).",
+      "properties-current.png": "Project Properties dialog with the Project Diagnostics button (element screenshot)."
+    },
+    "crops": {
+      "plus-menu.png": {
+        "x": 0,
+        "y": 0,
+        "width": 720,
+        "height": 420
+      },
+      "file-menu-current.png": {
+        "x": 0,
+        "y": 0,
+        "width": 720,
+        "height": 460
+      },
+      "edit-menu.png": {
+        "x": 0,
+        "y": 0,
+        "width": 720,
+        "height": 420
+      },
+      "project-search.png": {
+        "x": 0,
+        "y": 0,
+        "width": 1100,
+        "height": 560
+      },
+      "palette-search.png": {
+        "x": 100,
+        "y": 40,
+        "width": 900,
+        "height": 520
+      },
+      "layout-menu.png": {
+        "x": 840,
+        "y": 40,
+        "width": 600,
+        "height": 300
+      }
+    }
   }
 }

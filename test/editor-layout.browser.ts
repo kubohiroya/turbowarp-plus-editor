@@ -864,8 +864,9 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(stage).toBeInViewport({ratio: 1});
     assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 1);
 
-    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
-    await page.getByRole('tab', {name: 'Backdrops', exact: true}).click();
+    await backdrop.click();
+    const backdropEditor = page.getByRole('tabpanel', {name: 'Backdrops', exact: true});
+    await backdropEditor.getByRole('tab', {name: 'Backdrops', exact: true}).click();
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
 
@@ -895,6 +896,105 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
     await expect(page.getByRole('menuitem', {name: 'ステージを隠す', exact: true})).toBeVisible();
     assert.deepEqual(errors, []);
+});
+
+test('the menu bar opens one stage in each presentation and focuses the existing stage', {timeout: 60_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    const editorUrl = secureOrigin + buildPrefix + 'editor.html?lang=ja';
+    const open = page.getByRole('button', {name: 'ステージを開く', exact: true});
+    const options = page.getByRole('button', {name: 'ステージの開き方'});
+    const labels = ['別ウィンドウで開く', '別ウィンドウで全画面で開く', 'ステージをタブで開く', 'ステージを引き出しで開く'];
+    const item = (index: number) => page.getByRole('menuitem', {name: labels[index], exact: true});
+    const primary = (index: number) => page.getByRole('button', {name: labels[index], exact: true});
+    const stage = (target: Page) => target.locator('[data-gui-stage] canvas').first();
+    const checkOptions = async (active?: number) => {
+        await options.press('ArrowDown');
+        for (let index = 0; index < labels.length; index++) {
+            if (active === undefined || active === index) await expect(item(index)).toBeEnabled();
+            else await expect(item(index)).toBeDisabled();
+            if (active === index) await expect(item(index)).toHaveAttribute('aria-current', 'true');
+        }
+        await page.keyboard.press('Escape');
+    };
+    await page.setViewportSize({width: 1024, height: 800});
+    await page.goto(editorUrl);
+    await page.waitForFunction(() => Boolean(window.vm?.renderer?.canvas));
+    await page.waitForFunction(() =>
+        Boolean(document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')]));
+    await page.evaluate(() => {
+        window.initialStageCanvas = vm.renderer.canvas;
+        const dock = document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')];
+        dock.stageControls.addButton({id: 'camera', label: 'Camera', icon: '📷', onClick() {}}).update({visible: true});
+    });
+    await expect(page.getByRole('button', {name: 'Camera', exact: true})).toBeInViewport({ratio: 1});
+    await expect(open).toBeInViewport({ratio: 1});
+    const checkCanvas = async (target: Page) => {
+        await expect(stage(target)).toBeVisible();
+        assert.equal(await page.evaluate(() => vm.renderer.canvas === window.initialStageCanvas), true);
+    };
+    await checkOptions();
+
+    const [popup] = await Promise.all([page.waitForEvent('popup'), open.click()]);
+    await checkCanvas(popup);
+    await checkOptions(0);
+    await popup.evaluate(() => {
+        const focus = window.focus.bind(window);
+        document.body.dataset.focusCalls = '0';
+        window.focus = () => {
+            document.body.dataset.focusCalls = String(Number(document.body.dataset.focusCalls) + 1);
+            focus();
+        };
+    });
+    await primary(0).click();
+    await expect(popup.locator('body')).toHaveAttribute('data-focus-calls', '1');
+    assert.equal(page.context().pages().length, 2);
+    await popup.close();
+    await expect(open).toBeEnabled();
+    await checkOptions();
+
+    await options.click();
+    const [fullscreen] = await Promise.all([page.waitForEvent('popup'), item(1).click()]);
+    await checkCanvas(fullscreen);
+    await checkOptions(1);
+    const enterFullscreen = fullscreen.getByRole('button', {name: '全画面にする', exact: true});
+    await expect.poll(() => fullscreen.evaluate(() => Boolean(document.fullscreenElement)).then(async entered =>
+        entered || await enterFullscreen.isVisible())).toBe(true);
+    if (await enterFullscreen.isVisible()) await enterFullscreen.click();
+    await expect.poll(() => fullscreen.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+    await primary(1).click();
+    assert.equal(await fullscreen.evaluate(() => Boolean(document.fullscreenElement)), true);
+    await fullscreen.evaluate(() => document.exitFullscreen());
+    await checkOptions(0);
+    await fullscreen.close();
+    await expect(open).toBeEnabled();
+
+    await options.click();
+    await item(2).click();
+    await checkCanvas(page);
+    const stageTab = page.locator('.dv-tab').filter({hasText: /^ステージ$/});
+    await expect(stageTab).toHaveCount(1);
+    await checkOptions(2);
+    await primary(2).click();
+    await expect(stageTab).toHaveCount(1);
+    await stageTab.locator('.dv-default-tab-action').click();
+    await expect(open).toBeEnabled();
+
+    await options.click();
+    await item(3).click();
+    await checkCanvas(page);
+    const drawer = page.locator('[data-edge="right"] > [tabindex="-1"]');
+    await expect(drawer).toBeFocused();
+    await checkOptions(3);
+    await primary(3).click();
+    await expect(drawer).toBeFocused();
+    await drawer.press('Escape');
+    await expect(open).toBeEnabled();
+    await checkOptions();
+
+    await page.goto(editorUrl + '&twPlusStageLauncher=0');
+    await expect(page.getByRole('button', {name: 'ステージを展開'})).toBeVisible();
+    await expect(options).toHaveCount(0);
 });
 
 test('the default editor pins the sprite list and supports the drawer and detached window layout', {timeout: 60_000}, async t => {

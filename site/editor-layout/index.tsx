@@ -10,7 +10,7 @@ import targetStyles from '@kubohiroya/turbowarp-plus-editor-layout/targets.css';
 import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import '@kubohiroya/turbowarp-plus-editor-layout/windows.css';
 import {EditorTabLayout} from './editor-tabs.tsx';
-import {StageDisplayMenuContext, TargetSwitchContext, WindowLayoutContext} from './context.ts';
+import {stageLauncherSlot, StageDisplayMenuContext, TargetSwitchContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
@@ -31,6 +31,7 @@ export const externalYamlPort = dockviewMultiViewEnabled && desktopHost && deskt
 export const desktopWorkspaceLayout = dockviewMultiViewEnabled && desktopHost && desktopHost.workspaceLayout;
 export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
     startupParams.get('twPlusStageDrawer') !== '0';
+export const stageLauncherEnabled = stageDrawerEnabled && startupParams.get('twPlusStageLauncher') !== '0';
 export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
 const layoutMenuIcon = (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -66,6 +67,8 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
     const targetSwitch = React.useMemo(() => createTargetSwitchFeedback(vm, document), [vm]);
     React.useLayoutEffect(() => targetSwitch.cancel, [targetSwitch]);
     const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
+    const launcher = React.useMemo(() => stageLauncherEnabled ?
+        {mount: stageLauncherSlot(vm), styles, MenuButton: IconMenuButton} : undefined, [vm]);
     const resizeStage = React.useCallback((surface: HTMLElement) => {
         const renderer = vm.renderer;
         if (!renderer?.canvas || !surface.contains(renderer.canvas)) return;
@@ -101,7 +104,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
         />
     );
     return <TargetSwitchContext.Provider value={targetSwitch}>
-        <StageDisplayMenuContext.Provider value={{dockAction, setDockAction, stage, resizeStage}}>
+        <StageDisplayMenuContext.Provider value={{dockAction, setDockAction, stage, resizeStage, launcher}}>
             {layout}
         </StageDisplayMenuContext.Provider>
     </TargetSwitchContext.Provider>;

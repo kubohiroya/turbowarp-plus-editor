@@ -16,4 +16,15 @@ export const WindowLayoutContext = React.createContext<{
 }>({showUndock: false, plusLayout: false, locale: 'en'});
 
 export const StageDisplayMenuContext = React.createContext(null);
+const stageLauncherSlots = new WeakMap<object, HTMLDivElement>();
+
+export function stageLauncherSlot(vm: object) {
+    let slot = stageLauncherSlots.get(vm);
+    if (!slot) {
+        slot = document.createElement('div');
+        stageLauncherSlots.set(vm, slot);
+    }
+    return slot;
+}
+
 export const TargetSwitchContext = React.createContext<ReturnType<typeof createTargetSwitchFeedback> | null>(null);
