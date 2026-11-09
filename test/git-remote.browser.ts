@@ -97,7 +97,7 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await page.waitForFunction(() => (window as any).gitDirectoryReady);
     await page.getByText('File', {exact: true}).click();
     await page.getByText('Local Git…', {exact: true}).click();
-    const panel = page.getByRole('dialog', {name: 'Local Git'});
+    const panel = page.locator('.twgit-panel');
     const button = (name: string) => panel.getByRole('button', {name, exact: true});
     const status = panel.locator('[data-git-connection-state]');
     const notice = panel.getByText('The GitHub operation finished.', {exact: true});
