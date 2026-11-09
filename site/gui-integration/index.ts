@@ -1,14 +1,14 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-editor';
-import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
-import {attachDebuggerPanel, type DebuggerInterface} from '@kubohiroya/turbowarp-plus-editor-layout/debugger-panel';
-import '@kubohiroya/turbowarp-plus-editor-layout/debugger-panel.css';
+import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {attachDebuggerPanel, type DebuggerInterface} from '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel';
+import '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel.css';
 import {externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
 import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/context.ts';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
-import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
+import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
@@ -113,7 +113,7 @@ export const wrapSpriteInfo = (startup.spriteProperties || startup.standardLayou
 export {spriteListClasses} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 
 export {BackpackSurface} from '../editor-backpack/index.tsx';
-export {attachStageInput} from '@kubohiroya/turbowarp-plus-editor-layout';
+export {attachStageInput} from '@kubohiroya/turbowarp-plus-editor-workbench';
 export {StagePanel, attachStageMonitorDrag} from '../editor-layout/stage-panel.tsx';
 export {StageDisplayMenu} from '../editor-layout/stage-display-menu.tsx';
 export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropListActions} from '../editor-layout/target-list.tsx';

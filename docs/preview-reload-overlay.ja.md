@@ -1,6 +1,6 @@
 # 紙芝居プレビューのリロード状態UI
 
-公開済みKamishibai rc.34は、リロード状態ボタンをviewport基準で配置する。`turbowarp-kamishibai-app` の `src/builder/dsl4-preview-reload.css` が既存オーバーレイの表示を定義する。Editor は `site/source.json` に記録したコミットと SHA-256 で CSS を固定し、ビルド時に同梱する。ステージの余白と重なり順は `turbowarp-plus-editor-layout` が既存の `data-gui-stage` を通じて渡す。
+公開済みKamishibai rc.34は、リロード状態ボタンをviewport基準で配置する。`turbowarp-kamishibai-app` の `src/builder/dsl4-preview-reload.css` が既存オーバーレイの表示を定義する。Editor は `site/source.json` に記録したコミットと SHA-256 で CSS を固定し、ビルド時に同梱する。ステージの余白と重なり順は `turbowarp-plus-editor-workbench` が既存の `data-gui-stage` を通じて渡す。
 
 - 上辺の3アンカーは、Editorメニューとステージ操作バーの高さを空ける。ステージ全画面では操作バーの高さだけ空ける。右上はボタン1個分と余白を左へ寄せ、作品側の閉じる操作も空ける。
 - Runtimeの希望アンカー、確定アンカー、保存値、リロード方針を変更しない。UIのクリック・キーボード処理はRuntimeが所有する。
