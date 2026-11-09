@@ -14,6 +14,28 @@ export interface ProjectFileStorage {
     fail(error: unknown): void;
 }
 
+/**
+ * Saving over the last file or into the project folder first collects edits held by other windows,
+ * as Save As does, so a save that does not move the focus to the editor misses nothing. A failed
+ * collection reports the failure, does not save, and leaves those edits for a retry.
+ */
+export function collectBeforeSaving(storage: ProjectFileStorage, folder: FolderActions | undefined,
+    collect: () => Promise<void>) {
+    const first = (action?: Action) => action && (async () => {
+        try {
+            await collect();
+        } catch (error) {
+            storage.fail(error);
+            return;
+        }
+        action();
+    });
+    return {
+        storage: storage.overwrite ? {...storage, overwrite: first(storage.overwrite)} : storage,
+        folder: folder?.save ? {...folder, save: first(folder.save)} : folder
+    };
+}
+
 export function projectSaveShortcut(storage: ProjectFileStorage, folder?: FolderActions, saveAs?: Action) {
     if (storage.canSave) (storage.overwrite || folder?.save || saveAs)?.();
 }
