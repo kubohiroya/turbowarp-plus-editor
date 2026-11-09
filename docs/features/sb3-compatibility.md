@@ -102,7 +102,7 @@
 | 機能紹介の章 | Scratch 3のSB3 | TurboWarpのSB3 | 利用条件と範囲 |
 | --- | --- | --- | --- |
 | [10.1 sb3-toolchainで作品と拡張を管理する](git/#sb3-toolchain) | 対象外 | 対象外 | 両形式を、Node.jsのコマンドラインツール `sb3-toolchain` で展開・検証し、再生成できる。機能ごとの条件は下の下の内訳の内訳を参照。 |
-| [10.2 作品フォルダを開いて保存する](git/#project-folder) | 使える | 使える | sb3-toolchain v1で展開した作品フォルダが対象。File System Accessに対応したChromium系ブラウザーが必要。試作段階のため、既存作品の標準ブロックの編集が対象。 |
+| [10.2 作品フォルダを開いて保存する](git/#project-folder) | 使える | 使える | sb3-toolchain v1で展開した作品フォルダが対象。File System Accessに対応したChromium系ブラウザーが必要。保存は `project.source.json` だけを書き換え、スプライトの追加・削除・名前の変更と、コスチューム・音の追加・削除は未対応。カスタム拡張機能・埋め込み拡張・フォントを含む作品は開けない。 |
 | [10.3 ローカルGitで変更と履歴を確かめる](git/#local-git) | 使える | 使える | `.git` を持つリポジトリと、その配下の作品フォルダが対象。Chromium系ブラウザーが必要。fetch・pull・pushは接続先が設定された環境でGitHubのHTTPSリモート `origin` に対して使う。 |
 | [10.4 作品の変更をブロックで比べる](git/#block-diff) | 使える | 使える | sb3-toolchain v1で展開した作品の差分。未登録の拡張ブロックは代替ブロックで示す。 |
 | [10.5 GitHubと同期する（fetch・pull・push）](git/#github-sync) | 使える | 使える | GitHubのHTTPSリモート `origin` があるリポジトリで、接続先が設定された環境。pushは接続時の明示許可が必要。 |
