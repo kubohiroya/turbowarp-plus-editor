@@ -79,8 +79,8 @@
   "devDependencies": {
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
     "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
-    "@kubohiroya/turbowarp-plus-editor-auth": "file:vendor/kubohiroya-turbowarp-plus-editor-auth-0.3.0.tgz",
-    "@kubohiroya/turbowarp-plus-editor-git": "file:vendor/kubohiroya-turbowarp-plus-editor-git-0.12.1.tgz",
+    "@kubohiroya/turbowarp-plus-editor-auth": "0.3.0",
+    "@kubohiroya/turbowarp-plus-editor-git": "0.12.1",
     "@kubohiroya/turbowarp-plus-editor-workbench": "0.3.0",
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",
     "@kubohiroya/turbowarp-editor-transfer": "file:packages/editor-transfer",
@@ -91,7 +91,7 @@
     "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",
     "@kubohiroya/turbowarp-plus-editor-project-model": "0.1.0",
     "@kubohiroya/turbowarp-plus-editor-sprite-panes": "0.1.0",
-    "@kubohiroya/turbowarp-plus-editor-project-folder": "file:vendor/kubohiroya-turbowarp-plus-editor-project-folder-0.2.0.tgz",
+    "@kubohiroya/turbowarp-plus-editor-project-folder": "0.3.0",
     "@kubohiroya/turbowarp-plus-editor-ui": "file:packages/editor-ui",
     "@kubohiroya/turbowarp-plus-editor-windows": "0.1.0",
     "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.1",
@@ -118,9 +118,9 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.6.0-rc.2",
-    "@kubohiroya/turbowarp-document-editor": "git+https://github.com/kubohiroya/turbowarp-document-editor.git#4039927663972c87a95d98759cd58cb9f25e7169",
+    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.8",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
-    "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#81219b2b8791eeb1fb781cd873a205614a9fe0a1",
+    "@kubohiroya/turbowarp-script-transfer": "0.1.3",
     "@turbowarp/jszip": "^3.12.0"
   },
   "bin": {
