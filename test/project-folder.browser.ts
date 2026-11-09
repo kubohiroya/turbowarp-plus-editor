@@ -393,9 +393,14 @@ test('the browser folder commands save localized Git diffs to the original worki
         Blob.prototype.arrayBuffer = function() {
             const name = names.get(this);
             if (name) state.reads.push(name);
+            state.lastRead = performance.now();
             return read.call(this);
         };
+        state.lastRead = performance.now();
     });
+    // The Git panel may still finish reading its review after closing; start the log once all reads have settled.
+    await page.waitForFunction(() => performance.now() - (window as any).folderTest.lastRead > 1000, null, {polling: 100});
+    await page.evaluate(() => {(window as any).folderTest.reads = [];});
     const memory = () => page.evaluate(() => {
         const state = (window as any).folderTest;
         const vm = window.vm;
