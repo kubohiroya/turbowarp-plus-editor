@@ -1,5 +1,6 @@
-// The judgement for broadcast blocks lives in the layout package, so the section and this search agree.
-import {messageReference} from '@kubohiroya/turbowarp-plus-editor-layout/project-messages';
+// The judgement for broadcast blocks lives in the project model package, which the layout's message
+// section also uses, so the section and this search agree.
+import {messageReference} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 
 type Field = {id?: string; value: unknown};
 type Block = {
