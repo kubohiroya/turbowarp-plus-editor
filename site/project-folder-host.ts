@@ -48,7 +48,8 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
             onApplied(targets) {
                 refreshExternalBlockViews(vm, targets);
                 markSaved();
-            }
+            },
+            deserializeBlocks: typeof __TW_PLUS_GIT_DESERIALIZE_BLOCKS__ === 'function' ? __TW_PLUS_GIT_DESERIALIZE_BLOCKS__ : undefined
         },
         isProjectDirty,
         beforeLoad: () => store.dispatch(__TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__(null)),
