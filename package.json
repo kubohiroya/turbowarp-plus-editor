@@ -119,7 +119,7 @@
     "@kubohiroya/turbowarp-document-data": "0.6.0-rc.2",
     "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.8",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
-    "@kubohiroya/turbowarp-script-transfer": "git+https://github.com/kubohiroya/turbowarp-script-transfer.git#81219b2b8791eeb1fb781cd873a205614a9fe0a1",
+    "@kubohiroya/turbowarp-script-transfer": "0.1.3",
     "@turbowarp/jszip": "^3.12.0"
   },
   "bin": {
