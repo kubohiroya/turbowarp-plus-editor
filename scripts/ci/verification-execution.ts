@@ -4,7 +4,7 @@ import {fullChecks, inspectCurrentEvidence, requireCompletedChecks, verification
 import {readVerificationPlan} from './verification-plan.ts';
 
 const browserChecks = ['layout-browser', 'code-windows-browser', 'yaml-browser', 'editor-browser',
-    'extension-loader-browser'];
+    'extension-loader-browser', 'git-browser'];
 const guiChecks = ['pinned-gui-unit', 'extension-host', 'gui-integration', 'script-transfer', 'project-tools',
     'site-build'];
 

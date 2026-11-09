@@ -7,6 +7,12 @@ import {test} from 'node:test';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {planForEvent, readChangedPaths, selectVerification} from '../scripts/ci/verification-plan.ts';
 
+test('full verification includes the project-folder and Git panel browser tests', () => {
+    // Git package bumps change package.json, which has no narrower rule, so they always run these tests.
+    assert.ok(selectVerification(['package.json']).checks.includes('git-browser'));
+    assert.ok(selectVerification([]).checks.includes('git-browser'));
+});
+
 test('documentation, isolated package tests and multiple areas select distinct checks', () => {
     assert.deepEqual(selectVerification(['README.ja.md', 'docs/gui-integration/README.md']).checks, ['documentation']);
     assert.deepEqual(selectVerification(['README.md'], true).checks, ['documentation', 'site-build']);

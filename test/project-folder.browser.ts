@@ -362,7 +362,10 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await page.evaluate(() => (window as any).folderTest.picks.filter(id => id === 'turbowarp-plus-git-root').length), 1);
     // Re-open the nested folder to establish a fresh baseline before observing file reads.
     await showGit();
+    // Wait for this reload itself: the button stays disabled from the load until the panel has read Git again.
+    await page.evaluate(() => window.vm.runtime.once('PROJECT_LOADED', () => {(window as any).folderTest.reloaded = true;}));
     await panel.getByRole('button', {name: 'Reload Project'}).click();
+    await page.waitForFunction(() => (window as any).folderTest.reloaded);
     await expect(panel.getByRole('button', {name: 'Reload Project'})).toBeEnabled();
     await panel.getByRole('button', {name: 'Close', exact: true}).click();
     const notice = page.locator('[data-project-folder-external]');
@@ -390,9 +393,14 @@ test('the browser folder commands save localized Git diffs to the original worki
         Blob.prototype.arrayBuffer = function() {
             const name = names.get(this);
             if (name) state.reads.push(name);
+            state.lastRead = performance.now();
             return read.call(this);
         };
+        state.lastRead = performance.now();
     });
+    // The Git panel may still finish reading its review after closing; start the log once all reads have settled.
+    await page.waitForFunction(() => performance.now() - (window as any).folderTest.lastRead > 1000, null, {polling: 100});
+    await page.evaluate(() => {(window as any).folderTest.reads = [];});
     const memory = () => page.evaluate(() => {
         const state = (window as any).folderTest;
         const vm = window.vm;

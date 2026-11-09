@@ -27,7 +27,8 @@ const checkSteps = {
     'code-windows-browser': ['code-windows-browser'],
     'yaml-browser': ['yaml-roundtrip', 'yaml-multi-document'],
     'editor-browser': ['editor-browser'],
-    'extension-loader-browser': ['extension-loader-browser']
+    'extension-loader-browser': ['extension-loader-browser'],
+    'git-browser': ['git-browser']
 };
 const checks = Object.keys(checkSteps);
 export const fullChecks = checks.filter(check => check !== 'documentation');
