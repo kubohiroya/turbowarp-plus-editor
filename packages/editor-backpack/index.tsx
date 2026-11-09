@@ -1,7 +1,7 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
-import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
-import type {SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
+import {createSurface, pendingSurfaceEdits, recordSurface} from '@kubohiroya/turbowarp-editor-surfaces';
+import type {SurfaceRecovery, SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
 import {createTransferSession, transferMime} from '@kubohiroya/turbowarp-editor-transfer';
 import {jsonDataUrl, readBackpackScript} from './script.ts';
 
@@ -24,6 +24,7 @@ const messages = {
     en: {
         undock: 'Open Backpack in a browser window',
         detach: 'Undock Backpack',
+        reopen: 'Reopen Backpack in another window',
         title: 'Backpack',
         restore: 'Return here',
         internal: 'Move into the editor',
@@ -35,6 +36,7 @@ const messages = {
     ja: {
         undock: 'バックパックをブラウザーの別ウィンドウで開く',
         detach: 'バックパックを別画面で開く',
+        reopen: 'バックパックを別画面で開き直す',
         title: 'バックパック',
         restore: 'ここに戻す',
         internal: 'アプリ内に戻す',
@@ -45,7 +47,10 @@ const messages = {
     }
 };
 
-export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript}) {
+const noRecovery = () => () => {};
+
+export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript,
+    recovery = undefined as SurfaceRecovery | undefined, pendingEdits = pendingSurfaceEdits}) {
     const sessions = new WeakMap();
 
     function BackpackSurface({vm, children, showUndock, locale, internalHost, openLabel, renderLaunchButton, launchClassName, onDetachedChange, renderPopupTools, internalLayer}) {
@@ -63,18 +68,22 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
         const surface = React.useMemo(() => createSurface<BackpackRequest | undefined, BackpackTarget>({
             open: request => request?.presentation === 'internal' ? internalHost?.open(request) : host?.open()
         }, next => {
+            if (host) recordSurface(recovery, 'backpack', next, target => target.presentation !== 'internal');
             if (next.kind === 'external') {
                 fallback.current = null;
                 const id = crypto.randomUUID();
                 const cleanup = next.target.presentation === 'internal' ? () => {} :
                     decorateSurface(next.target.mount.ownerDocument);
-                scope.current = {id, transfer: createTransferSession(id), cleanup, copyFailed};
+                const transfer = createTransferSession(id);
+                scope.current = {id, transfer, cleanup, copyFailed,
+                    unregister: pendingEdits.register(() => transfer.settled())};
                 sessions.set(vm, scope.current);
             } else if (next.kind === 'docked' && scope.current) {
                 const active = scope.current;
                 scope.current = null;
                 if (sessions.get(vm) === active) sessions.delete(vm);
-                active.transfer.close();
+                // Scripts already dropped from the closing window still reach the code area.
+                void active.transfer.retire().finally(active.unregister);
                 active.cleanup();
             }
             if (next.kind === 'docked' && fallback.current) {
@@ -87,6 +96,8 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
             }
             if (mounted.current) setDisplay({vm, state: next});
         }), [vm, internalHost]);
+        const lost = React.useSyncExternalStore(host && recovery ? recovery.subscribe : noRecovery,
+            () => Boolean(host && recovery?.isLost('backpack')));
         React.useLayoutEffect(() => {
             mounted.current = true;
             return () => {
@@ -154,10 +165,11 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
                 </>
             );
         }
+        // A backpack that was external when the editor closed reopens there on the next click.
         const launch = {
             disabled: state.kind === 'opening',
-            label: internalHost ? labels.detach : (openLabel ?? labels.undock),
-            onOpen: () => surface.undock(internalHost ? internalRequest() : undefined)
+            label: lost ? labels.reopen : internalHost ? labels.detach : (openLabel ?? labels.undock),
+            onOpen: () => surface.undock(internalHost && !lost ? internalRequest() : undefined)
         };
         return (
             <>
@@ -179,8 +191,9 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
         commit = apply => apply(), accept = (_script: Awaited<ReturnType<typeof readBackpackScript>>) => true}) {
         const active = sessions.get(vm);
         if (!active) return;
-        const canCommit = () => canUse() && sessions.get(vm) === active &&
-            vm.runtime.getTargetById(target.id) === target;
+        // The drop is claimed while its window is open. It may finish after the window closes,
+        // but not after the destination view or target is gone.
+        const canCommit = () => canUse() && vm.runtime.getTargetById(target.id) === target;
         const result = await active.transfer.receive(raw, {session: active.id, id: target.id}, async (_, script) => {
             if (!accept(script)) throw new Error('Unsupported script for this workspace');
             return commit(async () => {

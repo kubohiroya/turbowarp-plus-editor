@@ -42,6 +42,7 @@ export function createTransferSession<T>(session: string, options: {
     const {lifetimeMs = 60_000, now = Date.now} = options;
     const available = new Map<string, {kind: string; expires: number; read: Reader<T>}>();
     const reading = new Map<string, AbortController>();
+    const inFlight = new Set<Promise<TransferResult>>();
     let closed = false;
 
     function offer(kind: string, read: Reader<T>): TransferReference {
@@ -67,7 +68,27 @@ export function createTransferSession<T>(session: string, options: {
         reading.get(id)?.abort();
     }
 
-    async function receive(raw: string, destination: DropTarget, apply: Apply<T>): Promise<TransferResult> {
+    function receive(raw: string, destination: DropTarget, apply: Apply<T>): Promise<TransferResult> {
+        const result = receiveOnce(raw, destination, apply);
+        inFlight.add(result);
+        void result.finally(() => inFlight.delete(result));
+        return result;
+    }
+
+    // Resolves after every drop claimed so far has been applied, rejected or cancelled.
+    async function settled() {
+        while (inFlight.size) await Promise.allSettled([...inFlight]);
+    }
+
+    // Stops new offers and drops but lets claimed drops finish, so closing the source window
+    // does not lose a script the user already dropped.
+    function retire() {
+        closed = true;
+        available.clear();
+        return settled();
+    }
+
+    async function receiveOnce(raw: string, destination: DropTarget, apply: Apply<T>): Promise<TransferResult> {
         const ref = readReference(raw);
         if (closed || !ref || ref.session !== session || destination.session !== session || !destination.id) {
             return 'rejected';
@@ -108,5 +129,5 @@ export function createTransferSession<T>(session: string, options: {
         for (const controller of reading.values()) controller.abort();
     }
 
-    return {offer, receive, discard, cancel, close};
+    return {offer, receive, discard, cancel, close, retire, settled};
 }

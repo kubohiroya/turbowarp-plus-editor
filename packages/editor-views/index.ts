@@ -81,6 +81,9 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     let projecting = false;
     let disposed = false;
     let canDuplicate = false;
+    let flushRequest = 0;
+    const flushes = new Set<{request: number; waiting: Set<CodeView>; resolve(): void}>();
+    const drops = new Set<Promise<unknown>>();
 
     const exists = target => vm.runtime.getTargetById(target.id) === target;
     const selectable = target => Boolean(target?.isOriginal || target?.isStage);
@@ -260,8 +263,38 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         return true;
     }
 
+    function settleFlushes(view?: CodeView) {
+        for (const flush of flushes) {
+            if (view) flush.waiting.delete(view);
+            if (flush.waiting.size) continue;
+            flushes.delete(flush);
+            flush.resolve();
+        }
+    }
+
+    // Collects edits that external views have not sent yet, plus backpack drops in progress.
+    // The views keep their leases, so a save while someone types in a code window does not
+    // interrupt them. Views that close before answering have nothing left to collect.
+    async function flush() {
+        if (disposed) return;
+        const request = ++flushRequest;
+        const waiting = new Set(views);
+        await new Promise<void>(resolve => {
+            flushes.add({request, waiting, resolve});
+            for (const view of waiting) send(view, {type: 'flush', request});
+            settleFlushes();
+        });
+        while (drops.size) await Promise.allSettled([...drops]);
+        ScratchBlocks.Events.fireNow_();
+        flushParent();
+    }
+
     async function runDrop(job) {
         try {
+            if (disposed || !exists(job.target)) {
+                job.resolve(false);
+                return;
+            }
             workspace.cancelCurrentGesture();
             ScratchBlocks.hideChaff();
             ScratchBlocks.Events.fireNow_();
@@ -285,7 +318,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
 
     function queueDrop(target, apply) {
         if (disposed || dropJob) return false;
-        return new Promise((resolve, reject) => {
+        const drop = new Promise((resolve, reject) => {
             dropJob = {target, apply, resolve, reject, running: false};
             updateInput();
             if (owner) {
@@ -295,6 +328,9 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
                 grant();
             }
         });
+        drops.add(drop);
+        void drop.catch(() => {}).finally(() => drops.delete(drop));
+        return drop;
     }
 
     function handleFieldAction(view, message) {
@@ -391,6 +427,11 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
 
     function receive(view, message) {
         if (!views.has(view) || !message || typeof message !== 'object') return;
+        if (message.type === 'flushed') {
+            for (const flush of flushes) if (flush.request === message.request) flush.waiting.delete(view);
+            settleFlushes();
+            return;
+        }
         if (message.type === 'focus') {
             if (owner === view && !view.draining || !viewFocused(view)) return;
             activeView = view;
@@ -569,6 +610,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
             closeNativeEditor(view);
             views.delete(view);
             port.removeEventListener('message', listener);
+            settleFlushes(view);
             if (activeView === view) activeView = undefined;
             if (pending === view) pending = undefined;
             if (owner === view) owner = undefined;
@@ -607,7 +649,7 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
     vm.on('EXTENSION_ADDED', extensionsUpdated);
     vm.on('BLOCKSINFO_UPDATE', extensionsUpdated);
 
-    return {attach, setCanDuplicate(available) {
+    return {attach, flush, setCanDuplicate(available) {
         if (available === canDuplicate) return;
         canDuplicate = available;
         for (const view of views) if (view.duplicate) send(view, {type: 'can-duplicate', available});
@@ -619,6 +661,8 @@ export function createCodeSession({vm, workspace, ScratchBlocks, document, local
         }
         for (const view of views) view.close();
         views.clear();
+        for (const flush of flushes) flush.resolve();
+        flushes.clear();
         workspace.removeChangeListener(observeParent);
         workspace.undo = nativeUndo;
         workspace.hasUndoStack = nativeHasUndo;

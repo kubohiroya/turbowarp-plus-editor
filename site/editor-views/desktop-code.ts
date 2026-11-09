@@ -1,5 +1,5 @@
 import {createCodeSession} from '@kubohiroya/turbowarp-plus-editor-views';
-import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
+import {createSurface, pendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 import {createDesktopPanelHost} from '../editor-layout/desktop-panel-host.ts';
 
 const host = createDesktopPanelHost('code', 'twPlusCodePopout', 830, 600, false);
@@ -11,6 +11,7 @@ export const openDesktopCode = () => openCode?.();
 export function attachDesktopCode(context) {
     if (!host) return null;
     const session = createCodeSession(context);
+    const unregister = pendingSurfaceEdits.register(() => session.flush());
     const surfaces = new Set<{dock(): void}>();
     const menu = new URLSearchParams(location.search).get('twPlusStandardLayout') === '1';
     const open = (target = context.vm.editingTarget) => {
@@ -33,6 +34,7 @@ export function attachDesktopCode(context) {
     openCode = open;
     return {dispose() {
         if (openCode === open) openCode = null;
+        unregister();
         session.dispose();
         for (const surface of surfaces) surface.dock();
     }};
