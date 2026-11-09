@@ -100,7 +100,7 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const panel = page.getByRole('dialog', {name: 'Local Git'});
     const button = (name: string) => panel.getByRole('button', {name, exact: true});
     const status = panel.locator('[data-git-connection-state]');
-    const notice = panel.getByText('Git operation completed.', {exact: true});
+    const notice = panel.getByText('The GitHub operation finished.', {exact: true});
     await button('Choose Repository…').click();
     await expect(button('initial')).toBeVisible();
     await panel.getByText('GitHub connection', {exact: true}).click();
@@ -112,12 +112,15 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         await expect(status).toHaveText('Connected');
     };
     await connect();
-    await expect(button('Push')).toBeDisabled();
+    await expect(button('Send to GitHub (push)')).toBeDisabled();
     await writeFile(path.join(seed, 'project.txt'), 'browser incoming\n');
     const incoming = commit(seed, 'browser incoming');
     git(seed, 'push', bare, 'main');
-    await button('Fetch').click();
+    await expect(panel.locator('[data-git-upstream]')).toHaveAttribute('data-git-upstream', 'same');
+    await button('Check GitHub (fetch)').click();
     await expect(notice).toBeVisible();
+    // The status compares local refs only, so it changes with the fetch and not before.
+    await expect(panel.locator('[data-git-upstream]')).toHaveAttribute('data-git-upstream', 'behind');
     assert.equal(git(client, 'rev-parse', 'refs/remotes/origin/main'), incoming);
     assert.equal(git(client, 'rev-parse', 'HEAD'), initial);
     assert.equal(await readFile(source, 'utf8'), 'initial\n');
@@ -127,28 +130,28 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     }), changed);
     await editorDirty(true);
     const priorRequests = fixture.upstream.length;
-    await button('Pull (fast-forward only)').click();
-    await expect(panel.getByRole('alert')).toContainText('clear unsaved or local Git changes');
+    await button('Get from GitHub (pull)').click();
+    await expect(panel.getByRole('alert')).toContainText('before getting changes from GitHub');
     assert.equal(fixture.upstream.length, priorRequests);
     await editorDirty(false);
     await writeFile(source, 'external edit\n');
-    await button('Pull (fast-forward only)').click();
-    await expect(panel.getByRole('alert')).toContainText('clear unsaved or local Git changes');
+    await button('Get from GitHub (pull)').click();
+    await expect(panel.getByRole('alert')).toContainText('before getting changes from GitHub');
     assert.equal(await readFile(source, 'utf8'), 'external edit\n');
     await writeFile(source, 'initial\n');
-    await button('Pull (fast-forward only)').click();
+    await button('Get from GitHub (pull)').click();
     await expect(notice).toBeVisible();
     assert.equal(git(client, 'rev-parse', 'HEAD'), incoming);
     assert.equal(await readFile(source, 'utf8'), 'browser incoming\n');
 
     await button('Disconnect').click();
     await expect(status).toHaveText('Disconnected');
-    await panel.getByRole('checkbox', {name: 'Authorize push'}).check();
+    await panel.getByRole('checkbox', {name: 'Allow sending to GitHub (push)'}).check();
     await connect();
     await writeFile(source, 'browser outgoing\n');
     const outgoing = commit(client, 'browser outgoing');
     page.once('dialog', dialog => dialog.accept());
-    await button('Push').click();
+    await button('Send to GitHub (push)').click();
     await expect(notice).toBeVisible();
     assert.equal(git(bare, 'rev-parse', 'main'), outgoing);
     assert.equal(git(bare, 'show', 'main:project.txt'), 'browser outgoing');
@@ -159,16 +162,16 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         request.path.endsWith('/git-receive-pack')).length;
     const previousPushes = pushes();
     page.once('dialog', dialog => dialog.accept());
-    await button('Push').click();
-    await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
+    await button('Send to GitHub (push)').click();
+    await expect(panel.getByRole('alert')).toContainText('unknown whether GitHub received');
     assert.equal(pushes(), previousPushes + 1);
     assert.equal(git(bare, 'rev-parse', 'main'), uncertain);
     page.once('dialog', dialog => dialog.accept());
-    await button('Push').click();
-    await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
+    await button('Send to GitHub (push)').click();
+    await expect(panel.getByRole('alert')).toContainText('unknown whether GitHub received');
     assert.equal(pushes(), previousPushes + 1);
     fixture.dropPush = false;
-    await button('Fetch').click();
+    await button('Check GitHub (fetch)').click();
     await expect(notice).toBeVisible();
     assert.equal(git(client, 'rev-parse', 'refs/remotes/origin/main'), uncertain);
 
@@ -182,11 +185,11 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         response.url().startsWith(fixture.origin) && response.url().endsWith('/git-receive-pack') &&
         response.status() === 409);
     page.once('dialog', dialog => dialog.accept());
-    await button('Push').click();
+    await button('Send to GitHub (push)').click();
     // The fixture answers a replayed receive-pack with 409 only for PUSH_DUPLICATE. Its body is read by the
     // page, so Playwright cannot always fetch it again.
     await duplicateResponse;
-    await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
+    await expect(panel.getByRole('alert')).toContainText('unknown whether GitHub received');
     assert.equal(browserPushes, beforeBrowser + 1);
     assert.equal(git(bare, 'rev-parse', 'main'), dropped);
     const replays = fixture.requests.slice(beforeReceived).filter(request => request.method === 'POST' &&
@@ -246,20 +249,20 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await button('Check connection').click();
     await expect(status).toHaveText('Connected');
     assert.deepEqual(cloudAuth[0], {method: 'POST', write: true});
-    await button('Fetch').click();
+    await button('Check GitHub (fetch)').click();
     await expect(notice).toBeVisible();
     git(seed, 'pull', '--ff-only', bare, 'main');
     await writeFile(path.join(seed, 'project.txt'), 'cloud incoming\n');
     const cloudIncoming = commit(seed, 'cloud incoming');
     git(seed, 'push', bare, 'main');
-    await button('Pull (fast-forward only)').click();
+    await button('Get from GitHub (pull)').click();
     await expect(notice).toBeVisible();
     assert.equal(git(client, 'rev-parse', 'HEAD'), cloudIncoming);
     assert.equal(await readFile(source, 'utf8'), 'cloud incoming\n');
     await writeFile(source, 'cloud outgoing\n');
     const cloudOutgoing = commit(client, 'cloud outgoing');
     page.once('dialog', dialog => dialog.accept());
-    await button('Push').click();
+    await button('Send to GitHub (push)').click();
     await expect(notice).toBeVisible();
     assert.equal(git(bare, 'rev-parse', 'main'), cloudOutgoing);
     await writeFile(source, 'cloud replay\n');
@@ -267,15 +270,15 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const beforeCloudReplay = pushes();
     replayCloudPush = true;
     page.once('dialog', dialog => dialog.accept());
-    await button('Push').click();
-    await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
+    await button('Send to GitHub (push)').click();
+    await expect(panel.getByRole('alert')).toContainText('unknown whether GitHub received');
     assert.equal(pushes(), beforeCloudReplay + 1);
     assert.equal(git(bare, 'rev-parse', 'main'), cloudReplayed);
     page.once('dialog', dialog => dialog.accept());
-    await button('Push').click();
-    await expect(panel.getByRole('alert')).toContainText('The push result is unknown');
+    await button('Send to GitHub (push)').click();
+    await expect(panel.getByRole('alert')).toContainText('unknown whether GitHub received');
     assert.equal(pushes(), beforeCloudReplay + 1);
-    await button('Fetch').click();
+    await button('Check GitHub (fetch)').click();
     await expect(notice).toBeVisible();
     assert.equal(git(client, 'rev-parse', 'refs/remotes/origin/main'), cloudReplayed);
     t.diagnostic('Cloudflare: duplicate mapped to unknown, fetch reconciled the ref');
@@ -287,8 +290,8 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await writeFile(source, 'local diverged\n');
     const diverged = commit(client, 'local diverged');
     const index = await readFile(path.join(client, '.git/index'));
-    await button('Pull (fast-forward only)').click();
-    await expect(panel.getByRole('alert')).toContainText('Pull requires a fast-forward');
+    await button('Get from GitHub (pull)').click();
+    await expect(panel.getByRole('alert')).toContainText('cannot be combined here');
     assert.equal(git(client, 'rev-parse', 'HEAD'), diverged);
     assert.equal(await readFile(source, 'utf8'), 'local diverged\n');
     assert.deepEqual(await readFile(path.join(client, '.git/index')), index);
