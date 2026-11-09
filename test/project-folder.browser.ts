@@ -296,6 +296,12 @@ test('the browser folder commands save localized Git diffs to the original worki
     await panel.getByRole('button', {name: 'Open This Project'}).click();
     await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
     await panel.locator('[data-git-group="untracked"]').filter({hasText: 'projects/demo/project.source.json'}).click();
+    // Project data opens as block comparisons; the line diff stays one switch away.
+    const projectChanges = panel.getByRole('region', {name: 'Project changes'});
+    await expect(projectChanges.locator('.twgit-review-script')).toHaveCount(3);
+    await projectChanges.locator('.twgit-review-script summary').first().click();
+    await expect(projectChanges.locator('.twgit-review-script svg.blocklySvg')).toHaveCount(1);
+    await panel.getByRole('button', {name: 'Text', exact: true}).click();
     await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
     assert.deepEqual(await readFile(indexPath), indexBefore);
 
