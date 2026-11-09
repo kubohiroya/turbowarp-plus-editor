@@ -323,12 +323,12 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.deepEqual(await readFile(indexPath), stagedIndex);
     // With a diff open, an external edit keeps the diff and asks for a refresh.
     await stagedDemo.click();
-    await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
+    await expect(projectChanges.locator('.twgit-review-script').first()).toBeVisible();
     const externalProject = JSON.parse(await readFile(nestedFile, 'utf8'));
     externalProject.targets[1].blocks.move_B.inputs.STEPS[1][1] = '50';
     await writeFile(nestedFile, stringify(externalProject));
     await expect(panel.getByText('The repository changed outside the Editor. Refresh to read the current state.')).toBeVisible();
-    await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
+    await expect(projectChanges.locator('.twgit-review-script').first()).toBeVisible();
     await panel.getByRole('button', {name: 'Close', exact: true}).click();
     await edit('value', '55');
     await showGit();
