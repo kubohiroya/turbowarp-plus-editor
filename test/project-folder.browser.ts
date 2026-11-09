@@ -391,11 +391,9 @@ test('the browser folder commands save localized Git diffs to the original worki
     const workspaceValue = () => page.evaluate(() =>
         window.ScratchBlocks.getMainWorkspace().getBlockById('move_B')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM'));
     const ioBefore = await observe();
+    // A clean, stopped Editor applies a settled value and position change without a click.
     const disk = await diskEdit('71', {x: 180, y: 130});
-    await expect(notice).toContainText('External changes detected.');
-    await expect(reload).toBeEnabled();
-    assert.equal((await memory()).value, '60');
-    await reload.click();
+    await expect.poll(async () => (await memory()).value).toBe('71');
     await expect(notice).toBeHidden();
     assert.deepEqual(await memory(), {value: '71', x: 180, y: 130, same: true});
     await expect.poll(workspaceValue).toBe('71');
@@ -415,8 +413,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     mixed.targets[1].blocks.move_B.next = null;
     await writeFile(nestedFile, stringify(mixed));
     await notifyFocus();
-    await expect(notice).toContainText('cannot be applied as a partial reload');
-    await expect(reload).toBeDisabled();
+    await expect(notice).toContainText('need the whole project to be reloaded');
+    await expect(notice.getByRole('button', {name: 'Reload Whole Project'})).toBeEnabled();
     assert.deepEqual(await memory(), {value: '71', x: 180, y: 130, same: true});
     await writeFile(nestedFile, disk);
     await notifyFocus();
@@ -427,13 +425,10 @@ test('the browser folder commands save localized Git diffs to the original worki
         window.vm.runtime.getTargetForStage()));
     await page.waitForFunction(() => (window as any).ReduxStore.getState().scratchGui.vmStatus.running);
     const runningDisk = await diskEdit('72');
-    await expect(notice).toContainText('Stop the project before reloading.');
+    await expect(notice).toContainText('The changes load when the project stops.');
     await expect(reload).toBeDisabled();
     assert.equal((await memory()).value, '71');
     await page.evaluate(() => window.vm.stopAll());
-    await expect(reload).toBeEnabled();
-    assert.equal((await memory()).value, '71');
-    await reload.click();
     await expect(notice).toBeHidden();
     assert.deepEqual(await memory(), {value: '72', x: 180, y: 130, same: true});
     assert.equal(await readFile(nestedFile, 'utf8'), runningDisk);
@@ -441,10 +436,20 @@ test('the browser folder commands save localized Git diffs to the original worki
     await edit('value', '73');
     const dirtyDisk = await diskEdit('74');
     await expect(notice).toContainText('unsaved edits');
-    await expect(reload).toBeDisabled();
+    const discard = notice.getByRole('button', {name: 'Discard Edits and Reload…'});
+    await expect(discard).toBeEnabled();
+    page.once('dialog', dialog => dialog.dismiss());
+    await discard.click();
+    await expect(discard).toBeEnabled();
     assert.equal((await memory()).value, '73');
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
     assert.deepEqual(await observe(), ioBefore);
+    page.once('dialog', dialog => dialog.accept());
+    await discard.click();
+    await expect(notice).toBeHidden();
+    await expect.poll(workspaceValue).toBe('74');
+    assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
+    assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
     await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
     await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
     await page.getByText('File', {exact: true}).click();
