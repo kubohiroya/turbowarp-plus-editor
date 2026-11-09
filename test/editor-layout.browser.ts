@@ -485,9 +485,13 @@ test('the enabled debugger opens from the extension controls even without projec
     assert.deepEqual([addOn.width, addOn.height], [26, 26]);
     await expect(page.locator('[data-plus-stage-frame]').locator('.sa-debugger-container')).toHaveCount(0);
     await debuggerButton.locator('img').click();
+    // It opens as a workspace tab, and closing the tab closes the debugger.
     const panel = page.locator('.sa-debugger-interface');
+    const tab = page.locator('.dv-tab').filter({hasText: 'Debugger'});
     await expect(panel).toBeVisible();
-    await panel.locator('[class*="close-button_close-button"]').click();
+    await expect(page.locator('.tw-plus-document-slot').locator('.sa-debugger-interface')).toHaveCount(1);
+    await tab.locator('.dv-default-tab-action').click();
+    await expect(tab).toHaveCount(0);
     await expect(panel).toBeHidden();
 });
 

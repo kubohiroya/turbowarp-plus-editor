@@ -2,6 +2,8 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {attachDebuggerPanel, type DebuggerInterface} from '@kubohiroya/turbowarp-plus-editor-layout/debugger-panel';
+import '@kubohiroya/turbowarp-plus-editor-layout/debugger-panel.css';
 import {externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
 import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/context.ts';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
@@ -67,6 +69,12 @@ export const setDebuggerMenuButton = (vm: object, element: HTMLElement | null) =
     const service = hostStageControls(vm, hostIntegration());
     if (!service) return false;
     service.setDebuggerButton(element);
+    return true;
+};
+
+// The add-on builds one debugger per VM, so it is attached once and lives as long as the page.
+export const setDebuggerInterface = (vm: object, debuggerInterface: DebuggerInterface) => {
+    attachDebuggerPanel(debuggerInterface, {document, vm});
     return true;
 };
 
