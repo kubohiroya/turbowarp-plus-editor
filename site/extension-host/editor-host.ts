@@ -21,8 +21,11 @@ import {createIndexedDBContentCache} from '@kubohiroya/turbowarp-extension-loade
 
 import {readPlusFlags} from '../extension-library/flags.ts';
 import {createExtensionAuthoringController, setExtensionAuthoringHost} from './authoring.ts';
-import {extensionProjectArchiveOptions} from './config.ts';
+import {confirmLargeProject} from '@kubohiroya/turbowarp-plus-editor-ui/project-size-approval';
+import {confirmedProjectArchiveOptions, extensionProjectArchiveOptions} from './config.ts';
 import {installPlusExtensionHost} from './host.ts';
+import {gateProjectSize} from './project-size-gate.ts';
+import dialogStyles from '../project-tools/dialog.css';
 import type {ExtensionHostOptions} from './host.ts';
 import {createProjectAddresser} from './project-address.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
@@ -68,10 +71,21 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
             settings.document || globalThis.document, settings.getLocale?.() ?? settings.locale, urls, cacheable, signal);
         return settings.waitForUser ? settings.waitForUser(ask) : ask();
     };
+    // A project over the standard limits opens only after the person sees its size and agrees
+    // (issue #428). The IO reads with the ceiling limits, so a project they opened can also be
+    // saved and have its extensions changed; the gate keeps every new project to the standard
+    // ones unless they agree.
+    const confirmSize = (project, signal) => {
+        const ask = () => confirmLargeProject(settings.document || globalThis.document,
+            settings.getLocale?.() ?? settings.locale, project, {className: dialogStyles.dialog, signal});
+        return settings.waitForUser ? settings.waitForUser(ask) : ask();
+    };
     const base = {
         createAuthoring: (target, options) => createExtensionAuthoringController(target, {...options, origin}),
         setAuthoringHost: setExtensionAuthoringHost,
-        archiveOptions: extensionProjectArchiveOptions,
+        archiveOptions: confirmedProjectArchiveOptions,
+        gateProjectIO: io => gateProjectSize(io, {standard: extensionProjectArchiveOptions,
+            ceiling: confirmedProjectArchiveOptions, confirm: confirmSize}),
         createPayloads: ports => createProjectPayloadHost(vm, {...ports, canEdit: payloadsEnabled, vmModules: settings.vmModules,
             approve: approvePayloads
         })

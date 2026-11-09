@@ -73,6 +73,8 @@ export interface ExtensionHostOptions {
     fetchRetry?: FetchRetryOptions;
     markLoadFailure?: (error: unknown) => unknown;
     archiveOptions?: Parameters<typeof createProjectIO>[0];
+    /** Puts the project IO behind a question before it reads a project (the Editor's size check). */
+    gateProjectIO?: (io: ReturnType<typeof createProjectIO>) => ReturnType<typeof createProjectIO>;
     vmModules?: typeof import('./vm-modules.ts');
     createAuthoring?: typeof createExtensionAuthoringController;
     setAuthoringHost?: typeof setExtensionAuthoringHost;
@@ -92,7 +94,7 @@ export interface ExtensionHostOptions {
 export function installPlusExtensionHost (vm, {
     enabled = false, document = globalThis.document, locale = 'ja', getLocale, fetchImpl = globalThis.fetch,
     cache, requestApproval, diagnostics: report, loaderOptions, hostPolicy, trustedCatalog = null, trustedDigests,
-    fetchRetry, markLoadFailure, archiveOptions = {}, vmModules, createAuthoring, setAuthoringHost,
+    fetchRetry, markLoadFailure, archiveOptions = {}, gateProjectIO, vmModules, createAuthoring, setAuthoringHost,
     onProjectURI, addressProject, onProjectManifest, captureProjectProgress, projectArchives, runProjectLoad, waitForUser,
     createPayloads, showDiagnostics = true
 }: ExtensionHostOptions = {}) {
@@ -130,7 +132,8 @@ export function installPlusExtensionHost (vm, {
         delayMs,
         message: url
     });
-    const projectIO = createProjectIO({zip: JSZip, ...archiveOptions});
+    const readerIO = createProjectIO({zip: JSZip, ...archiveOptions});
+    const projectIO = gateProjectIO ? gateProjectIO(readerIO) : readerIO;
     const request = requestApproval || ((code, options) => permissionUI().requestApproval(code, options));
     const approve: typeof request = (code, options) =>
         waitForUser ? waitForUser(() => request(code, options)) : request(code, options);
