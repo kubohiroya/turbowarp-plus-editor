@@ -6,7 +6,7 @@ const allChecks = [
     'documentation', 'typecheck', 'package', 'unit', 'infrastructure',
     'views-unit', 'backpack-unit', 'pinned-gui-unit', 'extension-host',
     'gui-integration', 'script-transfer', 'project-tools', 'site-build',
-    'layout-browser', 'code-windows-browser', 'yaml-browser', 'editor-browser', 'extension-loader-browser'
+    'layout-browser', 'code-windows-browser', 'yaml-browser', 'editor-browser', 'extension-loader-browser', 'git-browser'
 ] as const;
 type Check = typeof allChecks[number];
 

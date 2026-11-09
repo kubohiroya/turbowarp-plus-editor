@@ -247,6 +247,47 @@ jobs:
         id: code-windows-browser
         if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|code-windows-browser|'))
         run: node test/stage6/code-windows.ts .host/scratch-gui/build
+      # The project-folder and Git panel tests need test connection origins built in, and those must never reach
+      # Pages. Set the published build aside, build the test variant, then put the published build back.
+      - name: Set the published build aside for the Git panel tests
+        id: git-browser-aside
+        if: steps.site-build.outcome == 'success' && ((steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|git-browser|'))
+        run: mv .host/scratch-gui/build "$RUNNER_TEMP/editor-site"
+      - name: Build the Editor with test Git connection origins
+        id: git-browser-build
+        if: steps.git-browser-aside.outcome == 'success'
+        env:
+          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
+          TW_PLUS_PACKAGER_ROOT: ${{ github.workspace }}/.host/packager
+          NODE_OPTIONS: --max-old-space-size=6144
+          TW_PLUS_GIT_BFF_ORIGIN: https://bff.git.test
+          TW_PLUS_GIT_PROXY_ORIGIN: https://proxy.git.test
+        run: npm run build:pages
+      - name: Verify project folders and the Git panel
+        id: git-browser
+        if: steps.git-browser-build.outcome == 'success'
+        env:
+          E2E_PROJECT_FOLDER_BUILD: ${{ github.workspace }}/.host/scratch-gui/build
+          # The fixture ships in the pinned Git package, so it always matches the panel under test.
+          E2E_GIT_HTTP_FIXTURE: ${{ github.workspace }}/node_modules/@kubohiroya/turbowarp-plus-editor-git/test/smart-http-fixture.js
+          GIT_BROWSER_RUNS: 5
+        run: |
+          export E2E_EXPECT_SITE_REVISION="$(git rev-parse HEAD)"
+          for run in $(seq "$GIT_BROWSER_RUNS"); do
+            echo "::group::Git panel browser tests, run $run of $GIT_BROWSER_RUNS"
+            node --test --test-concurrency=1 --import ./test/asset-hooks.ts test/project-folder.browser.ts \
+              test/git-connection.browser.ts test/git-pull-request.browser.ts test/git-remote.browser.ts
+            echo "::endgroup::"
+          done
+      - name: Restore the published build
+        if: always() && steps.git-browser-aside.outcome == 'success'
+        run: |
+          rm -rf .host/scratch-gui/build
+          mv "$RUNNER_TEMP/editor-site" .host/scratch-gui/build
+          if grep -rlF -e bff.git.test -e proxy.git.test .host/scratch-gui/build; then
+            echo "::error::The published build contains the test Git connection origins."
+            exit 1
+          fi
       - name: Require all selected verification to pass
         if: ${{ !cancelled() && (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') }}
         env:
@@ -262,7 +303,7 @@ jobs:
           success() && github.event_name == 'pull_request' &&
           steps.layout-browser.outcome == 'success' && steps.yaml-roundtrip.outcome == 'success' &&
           steps.yaml-multi-document.outcome == 'success' && steps.editor-browser.outcome == 'success' &&
-          steps.extension-loader-browser.outcome == 'success'
+          steps.extension-loader-browser.outcome == 'success' && steps.git-browser.outcome == 'success'
         run: echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: success() && steps.tree.outcome == 'success'
