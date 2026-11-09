@@ -1,6 +1,6 @@
 import {configurePayloads, decodePayloads, encodePayloads, inventory} from './codec.ts';
 import {nativeAssetConversion} from './native-assets.ts';
-import {withProjectSerialization} from '../extension-host/serialization-context.ts';
+import {withProjectSerialization} from '@kubohiroya/turbowarp-extension-loader/scratch-vm/runtime';
 import type {ProjectArchive} from '../extension-host/shared-project-archive.ts';
 
 const projectFiles = vm => Object.fromEntries(vm.serializeAssets().map(({fileName, fileContent}) =>

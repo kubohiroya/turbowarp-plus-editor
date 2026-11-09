@@ -20,14 +20,13 @@
 import {createIndexedDBContentCache} from '@kubohiroya/turbowarp-extension-loader/indexeddb-cache';
 
 import {readPlusFlags} from '../extension-library/flags.ts';
-import {createExtensionAuthoringController, setExtensionAuthoringHost} from './authoring.ts';
+import {createExtensionAuthoringController, createProjectAddresser, setExtensionAuthoringHost} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import {confirmLargeProject} from '@kubohiroya/turbowarp-plus-editor-ui/project-size-approval';
 import {confirmedProjectArchiveOptions, extensionProjectArchiveOptions} from './config.ts';
 import {installPlusExtensionHost} from './host.ts';
 import {gateProjectSize} from './project-size-gate.ts';
 import dialogStyles from '../project-tools/dialog.css';
 import type {ExtensionHostOptions} from './host.ts';
-import {createProjectAddresser} from './project-address.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {approveProjectPayloads} from '../project-payloads/approval.ts';
 import {createProjectPayloadHost} from '../project-payloads/host.ts';

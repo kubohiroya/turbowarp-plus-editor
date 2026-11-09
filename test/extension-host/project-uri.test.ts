@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {EventEmitter} from 'node:events';
 import Zip from '@turbowarp/jszip';
-import {createExtensionAuthoringController} from '../../site/extension-host/authoring.ts';
+import {createExtensionAuthoringController} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import {installEditorExtensionHost} from '../../site/extension-host/editor-host.ts';
 import {identifyProject} from '../../site/extension-host/review.ts';
 import {guiRequire, vmModules} from './pinned-host.ts';

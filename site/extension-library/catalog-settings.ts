@@ -10,7 +10,7 @@
 
 import type {CatalogEntry, ReviewDecision} from '@kubohiroya/turbowarp-extension-security-dialog';
 import type {Manifest} from '@kubohiroya/turbowarp-extension-loader';
-import {getExtensionAuthoringHost} from '../extension-host/authoring.ts';
+import {getExtensionAuthoringHost} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 
 const EXECUTIONS = ['sandboxed', 'unsandboxed'];
 const LOADINGS = ['remote-non-cacheable', 'remote-cacheable', 'embedded-file', 'embedded-data'];

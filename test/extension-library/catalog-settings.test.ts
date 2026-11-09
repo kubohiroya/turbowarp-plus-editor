@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import Zip from '@turbowarp/jszip';
 import {applyPlusCatalogSettings, readPlusCatalogSettings} from '../../site/extension-library/catalog-settings.ts';
-import {createExtensionAuthoringController, setExtensionAuthoringHost} from '../../site/extension-host/authoring.ts';
+import {createExtensionAuthoringController, setExtensionAuthoringHost} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 
 const entry = (id, dependencies = []) => ({id, key: id, ids: [id], url: `https://catalog.test/${id}.js`, dependencies,
     metadata: {name: id, version: '1.2.3'}});
@@ -33,11 +33,12 @@ async function plainSB3() {
         .generateAsync({type: 'uint8array', compression: 'STORE'});
 }
 
+// Each test installs a stand-in with only the authoring method the library calls.
 test('actual VM service prefixes restore execution while the manifest restores the loading form', async () => {
     const entries = [entry('outside'), entry('inside')];
     const vm = vmFixture([['outside', 'unsandboxed.1.outside'], ['inside', 'extension.2.inside']]);
     const manifest = {extensions: [spec('outside', 'embedded-file', 'sandboxed'), spec('inside', 'remote-cacheable', 'unsandboxed')]};
-    setExtensionAuthoringHost(vm, {inspect: async () => manifest});
+    setExtensionAuthoringHost(vm, {inspect: async () => manifest} as never);
     const {decisions} = await readPlusCatalogSettings(vm, entries);
     // What is running wins over what the manifest requested, and the form is read as it is spelled.
     assert.deepEqual([...decisions], [['outside', {execution: 'unsandboxed', loading: 'embedded-file'}],
@@ -49,7 +50,7 @@ test('every one of the four forms passes through unchanged, and a running entry 
     const forms = ['remote-non-cacheable', 'remote-cacheable', 'embedded-file', 'embedded-data'];
     const entries = forms.map(form => entry(form));
     const vm = vmFixture([['legacy', 'extension.2.legacy']]);
-    setExtensionAuthoringHost(vm, {inspect: async () => ({extensions: forms.map(form => spec(form, form))})});
+    setExtensionAuthoringHost(vm, {inspect: async () => ({extensions: forms.map(form => spec(form, form))})} as never);
     const {decisions} = await readPlusCatalogSettings(vm, [...entries, entry('legacy')]);
     assert.deepEqual(forms.map(form => decisions.get(form).loading), forms);
     // The screen offers its own default form for a row the project has not recorded one for.
@@ -76,7 +77,7 @@ test('apply forwards every selected and loaded row together with execution, form
     const entries = [entry('base'), entry('parent', ['base'])];
     const calls = [];
     const signal = new AbortController().signal;
-    setExtensionAuthoringHost(vm, {configure: async (...args) => calls.push(args)});
+    setExtensionAuthoringHost(vm, {configure: async (...args) => calls.push(args)} as never);
     const result = await applyPlusCatalogSettings(vm, selection(entries,
         [['base', 'sandboxed', 'embedded-data'], ['parent', 'unsandboxed', 'remote-non-cacheable']]), {signal});
     assert.deepEqual(result, ['base', 'parent']);
@@ -93,7 +94,7 @@ test('an empty selection does not call configure and forged deny choices reject 
     const vm = vmFixture();
     const entries = [entry('denied'), entry('allowed')];
     const calls = [];
-    setExtensionAuthoringHost(vm, {configure: async requests => calls.push(requests)});
+    setExtensionAuthoringHost(vm, {configure: async requests => calls.push(requests)} as never);
     assert.deepEqual(await applyPlusCatalogSettings(vm, selection([], [])), []);
     await assert.rejects(applyPlusCatalogSettings(vm,
         selection(entries, [['denied', 'deny', 'remote-cacheable'], ['allowed', 'sandboxed', 'remote-cacheable']])),
@@ -105,7 +106,7 @@ test('an empty selection does not call configure and forged deny choices reject 
 test('denial of an already-loaded extension is rejected instead of claiming it stopped running', async () => {
     const vm = vmFixture([['loaded', 'extension.1.loaded']]);
     let calls = 0;
-    setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
+    setExtensionAuthoringHost(vm, {configure: async () => { calls++; }} as never);
     await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('loaded')], [['loaded', 'deny', 'remote-cacheable']])),
         {code: 'MISSING_EXECUTION'});
     assert.equal(calls, 0);
@@ -117,7 +118,7 @@ test('missing or unknown execution prevents the entire batch from reaching confi
     for (const mode of [undefined, 'automatic']) {
         const vm = vmFixture();
         let calls = 0;
-        setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
+        setExtensionAuthoringHost(vm, {configure: async () => { calls++; }} as never);
         await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('first'), entry('second')],
             [['first', 'sandboxed', 'remote-cacheable'], ['second', mode as ReviewDecision['execution'], 'remote-cacheable']])), {code: 'MISSING_EXECUTION'});
         assert.equal(calls, 0);
@@ -129,7 +130,7 @@ test('a missing form, or a retired spelling, is refused rather than defaulted or
     for (const loading of [undefined, 'remote', 'embedded', 'cached', 'automatic']) {
         const vm = vmFixture();
         let calls = 0;
-        setExtensionAuthoringHost(vm, {configure: async () => { calls++; }});
+        setExtensionAuthoringHost(vm, {configure: async () => { calls++; }} as never);
         await assert.rejects(applyPlusCatalogSettings(vm, selection([entry('first')], [['first', 'sandboxed', loading as ReviewDecision['loading']]])),
             {code: 'MISSING_LOADING'}, String(loading));
         assert.equal(calls, 0);
