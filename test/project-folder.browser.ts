@@ -295,6 +295,11 @@ test('the browser folder commands save localized Git diffs to the original worki
     page.once('dialog', dialog => dialog.accept());
     await panel.getByRole('button', {name: 'Open This Project'}).click();
     await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
+    // A selected project lists its changes by stage, sprite and element; the list by file stays one click away.
+    const elements = panel.getByRole('region', {name: 'Changes by project element'});
+    await expect(elements.locator('[data-git-element="costumes"]')).toHaveCount(3);
+    await expect(elements).toContainText('Cat');
+    await elements.getByText('List by file', {exact: true}).click();
     await panel.locator('[data-git-group="untracked"]').filter({hasText: 'projects/demo/project.source.json'}).click();
     // Project data opens as block comparisons; the line diff stays one switch away.
     const projectChanges = panel.getByRole('region', {name: 'Project changes'});
