@@ -23,7 +23,7 @@ declare const __TW_PLUS_GIT_VM_BLOCKS__: new () => ReturnType<ScratchBlockDiffRe
 declare const __TW_PLUS_GIT_CLOUDFLARE__: {bffOrigin: string; proxyOrigin: string} | null;
 
 export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean, locale: string,
-    getBlockly: ScratchBlockDiffRendererOptions['getBlockly']) {
+    getBlockly: ScratchBlockDiffRendererOptions['getBlockly'], attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
     const view = document?.defaultView as Window & {EditorPreload?: {localGit?: DesktopGitPreload | null}; ReduxStore?: GuiStore};
     if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
     const connectionSettings = localGit ? createGitConnectionSettings({
@@ -65,7 +65,7 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
         renderReviewBlock: typeof __TW_PLUS_GIT_DESERIALIZE_BLOCKS__ === 'function' && typeof __TW_PLUS_GIT_VM_BLOCKS__ === 'function' ?
             createScratchBlocksDiffRenderer({
                 getBlockly, deserializeBlocks: __TW_PLUS_GIT_DESERIALIZE_BLOCKS__,
-                createBlockContainer: () => new __TW_PLUS_GIT_VM_BLOCKS__(), showUnregisteredBlocks: true, locale
+                createBlockContainer: () => new __TW_PLUS_GIT_VM_BLOCKS__(), showUnregisteredBlocks: true, locale, attachNavigation
             }) : undefined,
         openProject: folder.openDirectory,
         isProjectDirty,
