@@ -1,5 +1,5 @@
 import React from 'react';
-import {OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
+import {OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {layoutViews, WindowLayoutContext} from '../editor-layout/index.tsx';
 import {getBackpackOpenLabel} from '@tw-plus/backpack-window-host';
 import {feature} from './integration.ts';
