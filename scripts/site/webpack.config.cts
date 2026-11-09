@@ -156,10 +156,10 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-window
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.css', 'sprite-editor-toolbar.css',
-    'sprite-properties.css', 'windows.css'];
+    'sprite-properties.css', 'windows.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-editor-toolbar',
-    'sprite-properties', 'sprite-tabs', 'project-messages', 'stage-surface', 'dockview-styles', 'windows']) {
+    'sprite-properties', 'sprite-tabs', 'project-messages', 'stage-surface', 'dockview-styles', 'windows', 'debugger-panel']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
