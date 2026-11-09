@@ -5,7 +5,8 @@
 .field input {
     box-sizing: border-box;
     inline-size: 100%;
-    block-size: 26px;
+    /* The field sits in the menu bar, so it takes that row's button height rather than one of its own. */
+    block-size: 2rem;
     padding-inline: 9px;
     border: 1px solid var(--ui-black-transparent, #c6cfda);
     border-radius: 999px;
