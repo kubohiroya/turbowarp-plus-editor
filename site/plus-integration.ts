@@ -31,7 +31,7 @@ import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts
 import {installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.ts';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
-import {attachWorkspaceNavigation} from './workspace-minimap/index.ts';
+import {attachReviewNavigation, attachWorkspaceNavigation} from './workspace-minimap/index.ts';
 
 const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap, localGit} =
     readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
@@ -166,7 +166,10 @@ export const createPlusIntegration = ({
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
-        attached.push(attachProjectFolder(vm, hostDocument, localGit, locale, getBlockly));
+        attached.push(attachProjectFolder(vm, hostDocument, localGit, locale, getBlockly, workspaceMinimap || standardLayout ?
+            (workspace, blocks, watermark) => attachReviewNavigation(workspace, blocks, watermark, {
+                horizontalZoom: standardLayout, minimap: workspaceMinimap
+            }) : undefined));
         const workspace = getDocumentWorkspace(vm);
         const documents = mountEditor({
             vm,

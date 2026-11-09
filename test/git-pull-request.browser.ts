@@ -117,6 +117,21 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await expect(script.locator('svg.blocklySvg').last()).toContainText('25');
     await expect(script.locator('svg.blocklySvg').last()).toContainText('Unregistered: example_action');
     await expect(script.locator('svg.blocklySvg').last()).toContainText('ready');
+    // Both versions zoom together, with the Editor's minimap and zoom row, until they are unlinked.
+    const frames = script.locator('.twgit-block-diff-preview');
+    const scale = (index: number) => frames.nth(index).locator('.blocklyBlockCanvas').evaluate(canvas =>
+        Number(/scale\(([\d.]+)\)/.exec(canvas.getAttribute('transform') ?? '')?.[1]));
+    await expect(frames.nth(1).locator('[data-workspace-minimap]')).toHaveCount(1);
+    const start = await scale(0);
+    assert.equal(await scale(1), start);
+    await frames.nth(1).locator('[data-plus-zoom-action="in"]').click();
+    await expect.poll(() => scale(0)).toBeGreaterThan(start);
+    assert.equal(await scale(0), await scale(1));
+    await script.getByRole('checkbox', {name: 'Move both versions together'}).uncheck();
+    const unlinked = await scale(0);
+    await frames.nth(1).locator('[data-plus-zoom-action="in"]').click();
+    await expect.poll(() => scale(1)).toBeGreaterThan(unlinked);
+    assert.equal(await scale(0), unlinked);
     await panel.getByRole('button', {name: 'Local changes', exact: true}).click();
     await expect(panel.getByRole('button', {name: 'fixture', exact: true})).toBeVisible();
     await page.waitForFunction(() => {

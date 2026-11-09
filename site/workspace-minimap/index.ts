@@ -45,6 +45,17 @@ export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZ
     }};
 }
 
+/** Arranges a Git review preview like the code area: costume thumbnail, minimap, then the zoom buttons. */
+export function attachReviewNavigation(workspace, ScratchBlocks, watermark: HTMLElement | undefined, {horizontalZoom, minimap}) {
+    const getCorner = metrics => navigationCorner(workspace, ScratchBlocks, metrics);
+    const zoom = horizontalZoom ? attachHorizontalWorkspaceZoom(workspace, ScratchBlocks, getCorner) : null;
+    const map = minimap ? attachWorkspaceMinimap(workspace, ScratchBlocks, zoom, getCorner, watermark) : null;
+    return {dispose() {
+        map?.dispose();
+        zoom?.dispose();
+    }};
+}
+
 export function attachCodePreviewMinimap(workspace, ScratchBlocks, watermark: HTMLElement) {
     return attachWorkspaceMinimap(workspace, ScratchBlocks, null,
         metrics => navigationCorner(workspace, ScratchBlocks, metrics), watermark);
