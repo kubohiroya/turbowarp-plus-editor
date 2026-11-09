@@ -19,17 +19,21 @@ export function projectSaveShortcut(storage: ProjectFileStorage, folder?: Folder
 }
 
 export async function saveProjectAs(storage: ProjectFileStorage, name: string, {
-    current, unchanged, serialize, committed
+    current, unchanged, serialize, committed, collect
 }: {
     current(): boolean;
     unchanged(): boolean;
     serialize<T>(title: string, run: () => T): T;
     committed(): void;
+    // Collects edits still held by other windows. A failure leaves them there for a retry.
+    collect?(): Promise<void>;
 }) {
     if (!storage.canSave || !current()) return false;
     const filename = name + '.sb3';
     try {
         const handle = storage.pick ? await storage.pick(filename) : null;
+        if (!current()) return false;
+        await collect?.();
         if (!current()) return false;
         const title = handle ? handle.name.replace(/\.sb3$/i, '').slice(0, 100) : name;
         const output: Serialize = run => {

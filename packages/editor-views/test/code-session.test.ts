@@ -660,3 +660,68 @@ test('a background drop keeps its target while foreground edits drain', async ()
     assert.equal(other.blocks._blocks.block.x, 20);
     session.dispose();
 });
+
+test('collecting pending edits asks every window and keeps the typing window’s lease', async () => {
+    const {session, connect, target, other} = fixture();
+    const a = connect(target);
+    const b = connect(other);
+    a.focus();
+    const lease = a.messages.at(-1).lease;
+    let collected = false;
+    const flushing = session.flush().then(() => {collected = true;});
+    const request = a.messages.at(-1);
+    assert.equal(request.type, 'flush');
+    assert.deepEqual(b.messages.at(-1), request);
+    await Promise.resolve();
+    assert.equal(collected, false);
+
+    // The child sends its queued edits before confirming on the same ordered port.
+    a.send({type: 'edits', lease, targetId: target.id, events: [{type: 'move', blockId: 'block', newCoordinate: {x: 70, y: 0}}]});
+    a.send({type: 'flushed', request: request.request});
+    a.send({type: 'flushed', request: request.request + 1});
+    await Promise.resolve();
+    assert.equal(collected, false);
+    // A window that closes before answering has nothing left to collect.
+    b.close();
+    await flushing;
+    assert.equal(target.blocks._blocks.block.x, 70);
+    assert.equal(a.messages.some(message => message.type === 'revoke'), false);
+    session.dispose();
+});
+
+test('after a project switch the old windows close and their edits, input and drops are rejected', async () => {
+    let drop;
+    let applied = false;
+    const {session, connect, target, other, vm, node} = fixture(request => {
+        drop = request.commit(async () => {
+            applied = true;
+            return true;
+        });
+    });
+    const a = connect(target);
+    const b = connect(other);
+    b.focus();
+    const lease = b.messages.at(-1).lease;
+    a.send({type: 'backpack-drop', targetId: target.id, raw: 'reference', position: {x: 1, y: 2}});
+    assert.equal(b.messages.at(-1).type, 'revoke');
+    assert.equal(node.inert, true);
+
+    // Loading another project replaces every target object.
+    vm.runtime.targets = [];
+    vm.runtime.getTargetById = () => undefined;
+    vm.editingTarget = undefined;
+    vm.emit('targetsUpdate');
+    assert.equal(await drop, false);
+    assert.equal(applied, false);
+    assert.equal(node.inert, false);
+
+    const sent = b.messages.length;
+    b.send({type: 'edits', lease, targetId: other.id, events: [{type: 'move', blockId: 'block', newCoordinate: {x: 90, y: 0}}]});
+    b.send({type: 'release', lease});
+    b.focus();
+    a.focus();
+    assert.equal(other.blocks._blocks.block.x, 0);
+    assert.equal(b.messages.length, sent);
+    await session.flush();
+    session.dispose();
+});

@@ -1,4 +1,15 @@
+import {createSurfaceRecovery} from '@kubohiroya/turbowarp-editor-surfaces';
 import {createBrowserHost} from '../editor-backpack/browser-host.ts';
+
+const storage = () => {
+    try {
+        return typeof window === 'undefined' ? null : window.localStorage;
+    } catch {
+        return null;
+    }
+};
+// Shared by the panel and backpack windows that live outside Dockview.
+export const surfaceRecovery = createSurfaceRecovery(storage());
 
 export function createDesktopPanelHost(kind, flag, width, height, synchronousPageHide = true) {
     if (typeof EditorPreload === 'undefined' || new URLSearchParams(location.search).get(flag) !== '1') return null;

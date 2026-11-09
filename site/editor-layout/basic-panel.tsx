@@ -1,11 +1,30 @@
 import React from 'react';
 import {createPortal, flushSync} from 'react-dom';
-import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
+import {createSurface, pendingSurfaceEdits, recordSurface} from '@kubohiroya/turbowarp-editor-surfaces';
+import type {SurfaceRecovery} from '@kubohiroya/turbowarp-editor-surfaces';
 import type {SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import {WindowLayoutContext} from './index.tsx';
 import {PopupLayout} from './popup-layout.tsx';
+import {surfaceRecovery} from './desktop-panel-host.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
+
+// The GUI uses React 16, which has no useSyncExternalStore.
+function useLostWindow(recovery: SurfaceRecovery | null | undefined, id: string) {
+    const [lost, setLost] = React.useState(() => Boolean(recovery?.isLost(id)));
+    React.useEffect(() => {
+        if (!recovery) return;
+        const update = () => setLost(recovery.isLost(id));
+        update();
+        return recovery.subscribe(update);
+    }, [recovery, id]);
+    return Boolean(recovery) && lost;
+}
+// Inputs commit on blur, so blurring the external document collects an unfinished edit.
+const commitInput = (mount?: HTMLElement | null) => {
+    const active = mount?.ownerDocument.activeElement as HTMLElement | null | undefined;
+    if (active && active !== mount.ownerDocument.body) active.blur?.();
+};
 
 interface PanelMount {
     mount: HTMLElement;
@@ -50,6 +69,7 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
     const surface = React.useMemo(() => createSurface<PanelRequest | undefined, PanelMount>({
         open: request => request?.presentation === 'internal' ? host.open(request) : externalHost?.open(undefined)
     }, next => {
+        if (externalHost) recordSurface(surfaceRecovery, id, next, target => target.presentation !== 'internal');
         if (next.kind === 'external' && next.target.presentation !== 'internal') {
             undecorate.current = decorate(next.target.mount.ownerDocument);
         }
@@ -68,7 +88,8 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
             return;
         }
         if (!unmounting.current) setState(next);
-    }), [host, externalHost, decorate]);
+    }), [host, externalHost, decorate, id]);
+    const lost = useLostWindow(externalHost ? surfaceRecovery : null, id);
     React.useLayoutEffect(() => {
         unmounting.current = false;
         return () => {
@@ -84,7 +105,8 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
     }, [canUndock, state]);
 
     const undock = React.useCallback(() => {
-        if (externalOnly || (externalHost && !plusLayout)) {
+        // A window that was external when the editor closed reopens there, one panel per click.
+        if (externalOnly || (externalHost && (!plusLayout || lost))) {
             surface.undock(undefined);
             return;
         }
@@ -95,16 +117,22 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
             surface.undock(undefined);
         };
         surface.undock(request);
-    }, [surface, id, title, externalHost, externalOnly, plusLayout, layer]);
+    }, [surface, id, title, externalHost, externalOnly, plusLayout, layer, lost]);
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mount = state.kind === 'external' ? state.target.mount : undefined;
     const externalMount = state.kind === 'external' && state.target.presentation !== 'internal' ? state.target.mount : null;
+    const returnHere = React.useCallback(() => {
+        commitInput(externalMount);
+        surface.dock();
+    }, [surface, externalMount]);
+    React.useEffect(() => externalMount ? pendingSurfaceEdits.register(() => commitInput(externalMount)) : undefined,
+        [externalMount]);
     React.useLayoutEffect(() => {
         if (!onDockActionChange) return;
-        onDockActionChange({kind: state.kind, dock: surface.dock, undock,
-            external: Boolean(externalHost && (externalOnly || !plusLayout)), mount: externalMount ?? undefined});
+        onDockActionChange({kind: state.kind, dock: returnHere, undock,
+            external: Boolean(externalHost && (externalOnly || !plusLayout || lost)), mount: externalMount ?? undefined});
         return () => onDockActionChange(null);
-    }, [onDockActionChange, state.kind, surface, undock, externalHost, externalOnly, plusLayout, externalMount]);
+    }, [onDockActionChange, state.kind, returnHere, undock, externalHost, externalOnly, plusLayout, externalMount, lost]);
     React.useLayoutEffect(() => {
         if (externalMount) externalMount.ownerDocument.title = title;
     }, [externalMount, title]);
@@ -113,7 +141,7 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
     const nativeContent = externalMount && renderInExternalDocument ?
         createPortal(<div className={styles.externalPanel}>
             {plusLayout && <div className={styles.popupTools}>
-                <PopupLayout window={externalMount.ownerDocument.defaultView} locale={locale} onDock={surface.dock} />
+                <PopupLayout window={externalMount.ownerDocument.defaultView} locale={locale} onDock={returnHere} />
             </div>}
             {content}
         </div>, externalMount) : null;
@@ -121,7 +149,8 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
     const openAction = canUndock && !mount && <span className={styles.openWindowAction} ref={action}>
         <OpenWindowButton
             disabled={state.kind === 'opening'}
-            label={openLabel ?? (japanese ? '別画面で開く' : 'Open in another window')}
+            label={lost ? (japanese ? '別画面で開き直す' : 'Reopen in another window') :
+                openLabel ?? (japanese ? '別画面で開く' : 'Open in another window')}
             onOpen={undock}
         />
     </span>;
@@ -142,7 +171,7 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         <DockablePanel
             dockLabel={japanese ? 'ここに戻す' : 'Return here'}
             mount={mount}
-            onDock={() => surface.dock()}
+            onDock={returnHere}
         >{nativeContent ? null : content}</DockablePanel>
         {nativeContent}
     </div>;

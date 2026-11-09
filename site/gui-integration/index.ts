@@ -28,6 +28,8 @@ import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
 import {renderMenuIcon} from '../context-menu-icons/index.ts';
 
 export * from './lib/tw-plus-integration-points.ts';
+// Desktop and the GUI call this before saving, leaving the normal layout or quitting.
+export {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';

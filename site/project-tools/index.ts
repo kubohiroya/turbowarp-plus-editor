@@ -11,6 +11,7 @@ import {editProjectURI} from '../extension-host/project-loader.ts';
 import {createProjectDiagnostics} from './diagnostics.ts';
 import {getExtensionAuthoringHost} from '../extension-host/authoring.ts';
 import {withProjectSerialization} from '../extension-host/serialization-context.ts';
+import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import type {ExtensionSpec} from '@kubohiroya/turbowarp-extension-loader';
@@ -92,6 +93,7 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
                 let commitMetadata: (() => void) | undefined;
                 return await saveProjectAs(storage, name, {
                     current,
+                    collect: () => flushPendingSurfaceEdits(),
                     unchanged: () => !edited,
                     serialize(title, run) {
                         embed = format === 'embedded' ? payloads?.embedOnSave() : undefined;

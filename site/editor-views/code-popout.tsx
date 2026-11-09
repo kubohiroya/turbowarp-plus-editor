@@ -258,6 +258,12 @@ function receive({data: message}) {
         case 'revoke':
             release(message.lease);
             break;
+        case 'flush':
+            // Send queued edits without cancelling a drag, then confirm on the same ordered port.
+            ScratchBlocks.Events.fireNow_();
+            flush();
+            port.postMessage({type: 'flushed', request: message.request});
+            break;
         case 'field-panel':
             if (editable && document.hasFocus() && lease === message.lease && pendingField?.request === message.request) {
                 const selection = pendingField;

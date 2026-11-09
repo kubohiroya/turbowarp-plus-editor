@@ -1,4 +1,4 @@
-import type {SurfaceConnection, SurfaceHost} from '@kubohiroya/turbowarp-editor-surfaces';
+import type {DisconnectCause, SurfaceConnection, SurfaceHost} from '@kubohiroya/turbowarp-editor-surfaces';
 
 export interface MountedSurface {
     mount: HTMLElement;
@@ -40,8 +40,8 @@ export function createBrowserHost(
                 if (closed) return;
                 closed = true;
                 parent.removeEventListener('message', handshake);
-                parent.removeEventListener('pagehide', disconnect);
-                if (synchronousPageHide) connectedDocument?.defaultView?.removeEventListener('pagehide', disconnect);
+                parent.removeEventListener('pagehide', parentClosed);
+                if (synchronousPageHide) connectedDocument?.defaultView?.removeEventListener('pagehide', childClosed);
                 parent.clearInterval(watcher);
                 parent.clearTimeout(deadline);
                 channel.port1.removeEventListener('message', handlePort);
@@ -51,10 +51,13 @@ export function createBrowserHost(
                 child?.close();
             }
 
-            function disconnect() {
-                disconnected.abort();
+            function disconnect(cause: DisconnectCause) {
+                if (closed) return;
+                disconnected.abort(cause);
                 close();
             }
+            const parentClosed = () => disconnect('parent-closed');
+            const childClosed = () => disconnect('child-closed');
 
             function handshake(event: MessageEvent) {
                 if (skipHandshake || !child || event.source !== child || event.origin !== parent.location.origin ||
@@ -70,7 +73,7 @@ export function createBrowserHost(
 
             function handlePort(event: MessageEvent) {
                 if (event.data === 'stage2/disconnect') {
-                    disconnect();
+                    childClosed();
                     return;
                 }
                 if (mounted || !connectedDocument || event.data !== 'stage2/connected') return;
@@ -88,7 +91,7 @@ export function createBrowserHost(
                         return;
                     }
                 }
-                if (synchronousPageHide) connectedDocument.defaultView?.addEventListener('pagehide', disconnect, {once: true});
+                if (synchronousPageHide) connectedDocument.defaultView?.addEventListener('pagehide', childClosed, {once: true});
                 mounted = true;
                 parent.clearTimeout(deadline);
                 resolve({mount, port: channel.port1});
@@ -97,14 +100,15 @@ export function createBrowserHost(
             channel.port1.start();
             const watcher = parent.setInterval(() => {
                 try {
-                    if (child.closed || (connectedDocument && child.document !== connectedDocument)) disconnect();
+                    if (child.closed) childClosed();
+                    else if (connectedDocument && child.document !== connectedDocument) disconnect('navigated');
                 } catch {
-                    disconnect();
+                    disconnect('navigated');
                 }
             }, 100);
             const deadline = parent.setTimeout(() => reject(new Error('Surface readiness timed out')), timeoutMs);
             parent.addEventListener('message', handshake);
-            parent.addEventListener('pagehide', disconnect, {once: true});
+            parent.addEventListener('pagehide', parentClosed, {once: true});
             return {ready, disconnected: disconnected.signal, close};
         }
     };
