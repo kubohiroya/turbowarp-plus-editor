@@ -1,5 +1,5 @@
 import React from 'react';
-import {SpritePropertiesPanel as Panel, spritePropertiesTitle} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
+import {SpritePropertiesPanel as Panel, spritePropertiesTitle} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import {dockviewMultiViewEnabled, layoutFlags, layoutViews} from '../../editor-layout/index.tsx';
 import {BasicPanel} from '../../editor-layout/basic-panel.tsx';
 import {createDesktopPanelHost} from '../../editor-layout/desktop-panel-host.ts';
