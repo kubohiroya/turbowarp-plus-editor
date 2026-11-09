@@ -241,6 +241,42 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(reopened.say_C.parent, 'move_B');
     await save('No changes to save.');
     assert.equal((await observe()).writes, 3);
+    git('add', projectFile);
+
+    // Edits beyond blocks, including state a running project changes, save to the project file alone.
+    const beforeOther = JSON.parse(await read());
+    await page.evaluate(() => {
+        const vm = window.vm;
+        const cat = vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
+        cat.setXY(30, -20);
+        cat.setSize(150);
+        const stage = vm.runtime.getTargetForStage();
+        stage.createVariable('score_id', 'score', '');
+        stage.variables.score_id.value = 7;
+    });
+    await save();
+    assert.equal(git('diff', '--name-only'), projectFile);
+    const other = JSON.parse(await read());
+    assert.deepEqual({x: other.targets[1].x, y: other.targets[1].y, size: other.targets[1].size}, {x: 30, y: -20, size: 150});
+    assert.deepEqual(other.targets[0].variables.score_id, ['score', 7]);
+    for (const key of ['x', 'y', 'size']) beforeOther.targets[1][key] = other.targets[1][key];
+    beforeOther.targets[0].variables = other.targets[0].variables;
+    assert.deepEqual(other, beforeOther, 'nothing else in the project file changes');
+    git('add', projectFile);
+    // Renaming a sprite still needs the next stage of folder saving.
+    const savedOther = await read();
+    await page.evaluate(() => {
+        const vm = window.vm;
+        vm.renameSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id, 'Kitten');
+    });
+    await save('This project or edit cannot be saved to a project folder yet. (Adding, removing or renaming sprites is not saved to a project folder yet)');
+    assert.equal(await read(), savedOther);
+    await page.evaluate(() => {
+        const vm = window.vm;
+        vm.renameSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Kitten').id, 'Cat');
+    });
+    await save('No changes to save.');
+    assert.equal((await observe()).writes, 4);
 
     await edit('value', '35');
     const external = '\uFEFF' + await read();
@@ -250,7 +286,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await page.evaluate(() => JSON.parse(window.vm.toJSON(undefined, {allowOptimization: false}))
         .targets.find(entry => entry.name === 'Cat').blocks.move_B.inputs.STEPS[1][1]), '35');
     assert.deepEqual(await observe(), {
-        writes: 3, loads: ['string', 'string'], options: {id: 'turbowarp-plus-project-folder', mode: 'readwrite'}, zipSaves: 0
+        writes: 4, loads: ['string', 'string'], options: {id: 'turbowarp-plus-project-folder', mode: 'readwrite'}, zipSaves: 0
     });
 
     // Also change the actual file while the browser has a writable stream open.
@@ -267,7 +303,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     });
     await save('The project folder changed outside the editor or is no longer open. Your edits are still in the editor.');
     assert.equal(await read(), concurrent);
-    assert.equal((await observe()).writes, 4);
+    assert.equal((await observe()).writes, 5);
     await page.evaluate(() => {
         FileSystemWritableFileStream.prototype.write = (window as any).folderTest.originalWrite;
     });
