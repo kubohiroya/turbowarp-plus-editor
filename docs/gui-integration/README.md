@@ -128,3 +128,10 @@ Plus 標準配置では既定で、ファイルメニューの項目にアイコ
 `package.json` と `package-lock.json` は layout 0.1.2 の同梱アーカイブと SHA-512 を固定する。アーカイブは独立リポジトリのコミット `835ab558ca7ca2054bfd0f89b948e28f3cd12804` から `npm ci` と `npm pack` で再生成できる。配信時は `notices/family.json` にライセンスと同梱ソースを記録する。
 
 `node --test test/layout-package.test.ts test/family-notices.test.ts test/extension-artifact.test.ts` で固定と配信情報を検証する。ドックと別窓の入力は `test/editor-layout.browser.ts` が検証する。切り戻す場合はこの組み込み変更を revert する。作品の保存形式は共通。
+
+## デバッガーをワークスペースのタブで開く
+
+ビルド時に `scripts/site/connect-debugger-menu-button.cts` が、デバッガーアドオンのボタンに加えてウィンドウ要素もホストへ渡します。GUI のソースは変更しません。
+タブ化と配色はレイアウトパッケージ（0.1.38 以降）の `debugger-panel` と `debugger-panel.css` が担当し、Editor は `setDebuggerInterface` で受け取った要素をそこへ渡すだけです。
+Dockview のワークスペースがパネルを受け付けるときは「デバッガー」タブで開き、タブとデバッガーの開閉が連動します。`twPlusDockview=0` などで Dockview を使わない起動では、従来どおり浮動ウィンドウで開きます。どちらでもアドオン固有の青緑の代わりに GUI のテーマ変数を使います。
+切り戻しは、このローダーの差し替え部分とホストの `setDebuggerInterface` を外して行います。
