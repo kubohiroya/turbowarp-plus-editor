@@ -7,16 +7,16 @@ import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {editSpriteVariable} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
-import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar';
+import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
 import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, renameProjectMessage,
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
-import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane';
+import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-layout/sprite-layout-menu.css';
-import '@kubohiroya/turbowarp-plus-editor-layout/sprite-asset-pane.css';
-import '@kubohiroya/turbowarp-plus-editor-layout/sprite-editor-toolbar.css';
+import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane.css';
+import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
 import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';

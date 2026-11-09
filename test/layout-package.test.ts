@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {attachStageInput} from '@kubohiroya/turbowarp-plus-editor-layout';
-import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
+import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import {WindowDesktop} from '@kubohiroya/turbowarp-plus-editor-windows';
 import lock from '../package-lock.json' with {type: 'json'};
 import manifest from '../package.json' with {type: 'json'};
@@ -23,4 +23,11 @@ test('the Editor resolves the pinned npm windows package split out of the layout
     assert.equal(manifest.devDependencies[name], version);
     assert.equal(resolved, `https://registry.npmjs.org/${name}/-/turbowarp-plus-editor-windows-${version}.tgz`);
     assert.equal(typeof WindowDesktop, 'function');
+});
+
+test('the Editor resolves the pinned npm sprite-panes package split out of the layout', () => {
+    const name = '@kubohiroya/turbowarp-plus-editor-sprite-panes';
+    const {version, resolved} = lock.packages[`node_modules/${name}`];
+    assert.equal(manifest.devDependencies[name], version);
+    assert.equal(resolved, `https://registry.npmjs.org/${name}/-/turbowarp-plus-editor-sprite-panes-${version}.tgz`);
 });

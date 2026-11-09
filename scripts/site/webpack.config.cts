@@ -162,15 +162,23 @@ const windowsEntries = ['', '/styles.css'].map(entry => {
     const specifier = `@kubohiroya/turbowarp-plus-editor-windows${entry}`;
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 });
+// The panes inside a sprite editing tab, split out of the layout in the same way. The layout imports
+// them too, and three of them carry a global stylesheet.
+const spritePanesGlobalStyleEntries = ['sprite-asset-pane.css', 'sprite-editor-toolbar.css', 'sprite-properties.css'];
+const spritePanesSource = path.dirname([
+    'sprite-asset-pane', 'sprite-message-pane', 'sprite-properties', 'sprite-editor-toolbar', 'native-tile-title',
+    ...spritePanesGlobalStyleEntries
+].map(entry => {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}`;
+    return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+})[0]);
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
-const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.css', 'sprite-editor-toolbar.css',
-    'sprite-properties.css', 'debugger-panel.css'];
+const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
-    'sprite-editor-toolbar',
-    'sprite-properties', 'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel']) {
+    'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -224,7 +232,8 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
 const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
-globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1]);
+globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1],
+    ...spritePanesGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}$`]));
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
 const previewReloadStyles = path.join(siteSource, 'styles', 'preview-reload.css');
 cssModules.exclude = [cssModules.exclude, dockviewStyles, ...globalStyles, previewReloadStyles].filter(Boolean);
@@ -275,7 +284,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
     documentSourceRoot, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views,
-    projectModelSource, path.dirname(windowsEntries[0])
+    projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
