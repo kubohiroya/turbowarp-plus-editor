@@ -177,7 +177,9 @@ test('a panel in a separate window is restored docked and reopens only when aske
     const session = await restartableEditor(t, 'twpe-dockview-popout-');
     let page = await session.start();
     await session.load(page);
-    const sprite = await page.evaluate(() => window.vm.runtime.targets.find(target => !target.isStage).getName());
+    // The security review closes before the VM has installed the project's targets.
+    const sprite = await (await page.waitForFunction(() =>
+        window.vm.runtime.targets.find(target => !target.isStage)?.getName(), undefined, {timeout: 60000})).jsonValue();
     const openInWindow = async () => {
         await tab(page, sprite).click();
         await dockview(page).locator('.dv-groupview.dv-active-group .tw-plus-sprite-layout-menu-trigger').click();
