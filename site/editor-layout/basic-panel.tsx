@@ -1,6 +1,7 @@
 import React from 'react';
 import {createPortal, flushSync} from 'react-dom';
 import {createSurface, pendingSurfaceEdits, recordSurface} from '@kubohiroya/turbowarp-editor-surfaces';
+import type {SurfaceRecovery} from '@kubohiroya/turbowarp-editor-surfaces';
 import type {SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
 import {WindowLayoutContext} from './index.tsx';
@@ -8,7 +9,17 @@ import {PopupLayout} from './popup-layout.tsx';
 import {surfaceRecovery} from './desktop-panel-host.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
-const noRecovery = () => () => {};
+// The GUI uses React 16, which has no useSyncExternalStore.
+function useLostWindow(recovery: SurfaceRecovery | null | undefined, id: string) {
+    const [lost, setLost] = React.useState(() => Boolean(recovery?.isLost(id)));
+    React.useEffect(() => {
+        if (!recovery) return;
+        const update = () => setLost(recovery.isLost(id));
+        update();
+        return recovery.subscribe(update);
+    }, [recovery, id]);
+    return Boolean(recovery) && lost;
+}
 // Inputs commit on blur, so blurring the external document collects an unfinished edit.
 const commitInput = (mount?: HTMLElement | null) => {
     const active = mount?.ownerDocument.activeElement as HTMLElement | null | undefined;
@@ -78,8 +89,7 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         }
         if (!unmounting.current) setState(next);
     }), [host, externalHost, decorate, id]);
-    const lost = React.useSyncExternalStore(externalHost ? surfaceRecovery.subscribe : noRecovery,
-        () => Boolean(externalHost) && surfaceRecovery.isLost(id));
+    const lost = useLostWindow(externalHost ? surfaceRecovery : null, id);
     React.useLayoutEffect(() => {
         unmounting.current = false;
         return () => {

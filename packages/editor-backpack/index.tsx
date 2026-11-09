@@ -47,7 +47,17 @@ const messages = {
     }
 };
 
-const noRecovery = () => () => {};
+// The GUI uses React 16, which has no useSyncExternalStore.
+function useLostWindow(recovery: SurfaceRecovery | null | undefined, id: string) {
+    const [lost, setLost] = React.useState(() => Boolean(recovery?.isLost(id)));
+    React.useEffect(() => {
+        if (!recovery) return;
+        const update = () => setLost(recovery.isLost(id));
+        update();
+        return recovery.subscribe(update);
+    }, [recovery, id]);
+    return Boolean(recovery) && lost;
+}
 
 export function createBackpackIntegration({host, importScript, importScriptWithReceipt, decorateSurface, readScript = readBackpackScript,
     recovery = undefined as SurfaceRecovery | undefined, pendingEdits = pendingSurfaceEdits}) {
@@ -96,8 +106,7 @@ export function createBackpackIntegration({host, importScript, importScriptWithR
             }
             if (mounted.current) setDisplay({vm, state: next});
         }), [vm, internalHost]);
-        const lost = React.useSyncExternalStore(host && recovery ? recovery.subscribe : noRecovery,
-            () => Boolean(host && recovery?.isLost('backpack')));
+        const lost = useLostWindow(host ? recovery : null, 'backpack');
         React.useLayoutEffect(() => {
             mounted.current = true;
             return () => {
