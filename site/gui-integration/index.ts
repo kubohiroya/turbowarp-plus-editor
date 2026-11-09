@@ -13,7 +13,7 @@ import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../pr
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
-import {projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
@@ -28,10 +28,11 @@ import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search
 import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
     renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
 import {renderMenuIcon} from '../context-menu-icons/index.ts';
+import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 
 export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
-export {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
+export {flushPendingSurfaceEdits};
 export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
@@ -146,10 +147,13 @@ export const projectFileTypes = [
     {description: 'Scratch 1 and 2 Projects', accept: {'*/*': ['.sb', '.sb2']}}
 ];
 
+// Overwriting and saving into the project folder collect other windows' edits first, as Save As does.
+const collectingSaves = (storage, folder) => collectBeforeSaving(storage, folder, () => flushPendingSurfaceEdits());
+
 export const renderProjectFileWorkflow = ({
-    vm, locale = 'en', MenuItem, MenuSection, close, storage, create, newWindow, open, restore, exportProject, addExtension
+    vm, locale = 'en', MenuItem, MenuSection, close, storage: gui, create, newWindow, open, restore, exportProject, addExtension
 }) => {
-    const folder = projectFolderActions(vm, locale);
+    const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
     const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension);
     const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
@@ -160,9 +164,9 @@ export const renderProjectFileWorkflow = ({
     }});
 };
 
-export const saveProjectFromFileMenu = (vm, storage, promptForTarget) => {
+export const saveProjectFromFileMenu = (vm, gui, promptForTarget) => {
     const locale = document.documentElement.lang || 'en';
-    const folder = projectFolderActions(vm, locale);
+    const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
     projectSaveShortcut(storage, folder, promptForTarget ?
         () => projectFileActions(vm, locale, storage, () => folder?.detach()).saveAs?.() : undefined);
 };
