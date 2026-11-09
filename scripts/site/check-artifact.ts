@@ -31,7 +31,7 @@ for (const name of requiredFamilyPackages) {
     assert.ok(family.packages.some(entry => entry.package === name), `Bundled family package without notices: ${name}`);
 }
 const lock = JSON.parse(await fs.readFile(new URL('../../package-lock.json', import.meta.url), 'utf8'));
-const layout = '@kubohiroya/turbowarp-plus-editor-workbench';
+const layout = '@kubohiroya/turbowarp-plus-editor-layout';
 const layoutLock = lock.packages[`node_modules/${layout}`];
 const layoutNotice = family.packages.find(entry => entry.package === layout && entry.version === layoutLock?.version);
 assert.ok(layoutLock && layoutNotice, `Bundled family package without notices: ${layout}`);

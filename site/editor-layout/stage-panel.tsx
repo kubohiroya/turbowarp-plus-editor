@@ -1,12 +1,12 @@
 import React from 'react';
-import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-plus-editor-workbench';
-import {createStageSurface} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-surface';
+import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-plus-editor-layout';
+import {createStageSurface} from '@kubohiroya/turbowarp-plus-editor-layout/stage-surface';
 import {BasicPanel} from './basic-panel.tsx';
 import {StageDisplayMenuContext} from './context.ts';
 import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.ts';
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {layoutFlags, layoutViews, stageCanUndock, stageDrawerEnabled, WindowLayoutContext} from './index.tsx';
-import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 const desktopPopout = createDesktopPanelHost('stage', 'twPlusStagePopout', 680, 520);
 const externalHost = desktopPopout ?? (layoutFlags.standardLayout ? createWebPanelHost('stage', 680, 520) : null);

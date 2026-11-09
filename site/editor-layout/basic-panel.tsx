@@ -7,7 +7,7 @@ import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbow
 import {WindowLayoutContext} from './index.tsx';
 import {PopupLayout} from './popup-layout.tsx';
 import {surfaceRecovery} from './desktop-panel-host.ts';
-import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
 
 // The GUI uses React 16, which has no useSyncExternalStore.
 function useLostWindow(recovery: SurfaceRecovery | null | undefined, id: string) {

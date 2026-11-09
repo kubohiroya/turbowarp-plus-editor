@@ -6,7 +6,7 @@ import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-aut
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {ScratchBlockDiffRendererOptions} from '@kubohiroya/turbowarp-plus-editor-git';
 import {loadedProjectTitle} from './project-tools/index.ts';
-import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
 
 type RuntimeThread = {updateMonitor?: boolean};

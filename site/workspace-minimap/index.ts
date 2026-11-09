@@ -1,4 +1,4 @@
-import {attachHorizontalWorkspaceZoom, workspaceControlsCorner} from '@kubohiroya/turbowarp-plus-editor-workbench';
+import {attachHorizontalWorkspaceZoom, workspaceControlsCorner} from '@kubohiroya/turbowarp-plus-editor-layout';
 import styles from './minimap.css';
 
 const SVG = 'http://www.w3.org/2000/svg';

@@ -145,8 +145,8 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const editorEntries = Object.fromEntries(['workbench', 'surfaces', 'transfer', 'backpack', 'views'].map(feature => {
-    const name = `@kubohiroya/turbowarp-${['workbench', 'views'].includes(feature) ? 'plus-' : ''}editor-${feature}`;
+const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'backpack', 'views'].map(feature => {
+    const name = `@kubohiroya/turbowarp-${['layout', 'views'].includes(feature) ? 'plus-' : ''}editor-${feature}`;
     const entry = rootRequire.resolve(name);
     config.resolve.alias[`${name}$`] = entry;
     return [feature, path.dirname(entry)];
@@ -179,11 +179,11 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$']
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel']) {
-    const specifier = `@kubohiroya/turbowarp-plus-editor-workbench/${entry}`;
+    const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 config.module.rules.push({
-    include: fs.realpathSync(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs')),
+    include: fs.realpathSync(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs')),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-sprite-tabs.cts')
 });
@@ -218,7 +218,7 @@ config.resolve.alias['@tw-plus/upstream-hide-delete-button-manifest$'] =
     path.join(gui, 'src', 'addons', 'generated', hideDeleteButtonManifest);
 const backpackSurface = path.join(siteSource, 'editor-backpack');
 config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.ts');
-const layoutRequire = createRequire(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench'));
+const layoutRequire = createRequire(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-layout'));
 const dockviewEntry = layoutRequire.resolve('dockview');
 const dockviewRequire = createRequire(dockviewEntry);
 config.resolve.alias['dockview$'] = dockviewEntry;
@@ -231,7 +231,7 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
     {from: path.join(path.dirname(dockviewRequire.resolve('dockview-core/package.json')), 'LICENCE.md'),
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
-const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-workbench/${entry}$`]);
+const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
 globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1],
     ...spritePanesGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}$`]));
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
@@ -283,7 +283,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 );
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    documentSourceRoot, transferSource, editorEntries.workbench, editorEntries.backpack, editorEntries.views,
+    documentSourceRoot, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views,
     projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource
 ],
     loader: hostRequire.resolve('babel-loader'),

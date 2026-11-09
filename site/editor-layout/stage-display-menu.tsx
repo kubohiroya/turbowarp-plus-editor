@@ -1,7 +1,7 @@
 import React from 'react';
 import type {IconMenuItem} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
-import {stageDockActionLabel, stageFullscreenLabel} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-surface';
+import {stageDockActionLabel, stageFullscreenLabel} from '@kubohiroya/turbowarp-plus-editor-layout/stage-surface';
 import fullscreenIcon from '@tw-plus/gui-stage-fullscreen-icon';
 import {StageDisplayMenuContext, WindowLayoutContext} from './context.ts';
 import {layoutFlags} from './index.tsx';
