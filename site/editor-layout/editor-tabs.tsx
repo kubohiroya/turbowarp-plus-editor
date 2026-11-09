@@ -4,17 +4,17 @@ import {createAssetTransferPanel, type ProjectAssetTransferPort} from '@kubohiro
 import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
-import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
-import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
+import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {editSpriteVariable} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
 import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, renameProjectMessage,
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
-import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
-import '@kubohiroya/turbowarp-plus-editor-layout/dockview-styles';
-import '@kubohiroya/turbowarp-plus-editor-layout/sprite-layout-menu.css';
+import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import '@kubohiroya/turbowarp-plus-editor-workbench/dockview-styles';
+import '@kubohiroya/turbowarp-plus-editor-workbench/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar.css';
 import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
