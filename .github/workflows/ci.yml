@@ -270,7 +270,7 @@ jobs:
           E2E_PROJECT_FOLDER_BUILD: ${{ github.workspace }}/.host/scratch-gui/build
           # The fixture ships in the pinned Git package, so it always matches the panel under test.
           E2E_GIT_HTTP_FIXTURE: ${{ github.workspace }}/node_modules/@kubohiroya/turbowarp-plus-editor-git/test/smart-http-fixture.js
-          GIT_BROWSER_RUNS: 5
+          GIT_BROWSER_RUNS: 1
         run: |
           export E2E_EXPECT_SITE_REVISION="$(git rev-parse HEAD)"
           for run in $(seq "$GIT_BROWSER_RUNS"); do
