@@ -6,8 +6,8 @@ import {attachDebuggerPanel, type DebuggerInterface} from '@kubohiroya/turbowarp
 import '@kubohiroya/turbowarp-plus-editor-layout/debugger-panel.css';
 import {externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
 import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/context.ts';
-import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
-import '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties.css';
+import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
+import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu';
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
@@ -109,7 +109,7 @@ export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.s
 export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 export const wrapSpriteInfo = (startup.spriteProperties || startup.standardLayout) ?
     Fallback => createSpriteInfoAdapter(Fallback, SpritePropertiesPanel) : undefined;
-export {spriteListClasses} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-properties';
+export {spriteListClasses} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 
 export {BackpackSurface} from '../editor-backpack/index.tsx';
 export {attachStageInput} from '@kubohiroya/turbowarp-plus-editor-layout';
