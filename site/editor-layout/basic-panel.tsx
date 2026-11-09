@@ -3,7 +3,7 @@ import {createPortal, flushSync} from 'react-dom';
 import {createSurface, pendingSurfaceEdits, recordSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import type {SurfaceRecovery} from '@kubohiroya/turbowarp-editor-surfaces';
 import type {SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
-import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-layout/windows';
+import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {WindowLayoutContext} from './index.tsx';
 import {PopupLayout} from './popup-layout.tsx';
 import {surfaceRecovery} from './desktop-panel-host.ts';

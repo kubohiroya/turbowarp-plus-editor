@@ -157,15 +157,20 @@ const projectModelSource = path.dirname(['project-messages', 'sprite-variable-ed
     const specifier = `@kubohiroya/turbowarp-plus-editor-project-model/${entry}`;
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 })[0]);
+// The in-page windows, split out of the layout in the same way. Their stylesheet is global.
+const windowsEntries = ['', '/styles.css'].map(entry => {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-windows${entry}`;
+    return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+});
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.css', 'sprite-editor-toolbar.css',
-    'sprite-properties.css', 'windows.css', 'debugger-panel.css'];
+    'sprite-properties.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-editor-toolbar',
-    'sprite-properties', 'sprite-tabs', 'stage-surface', 'dockview-styles', 'windows', 'debugger-panel']) {
+    'sprite-properties', 'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -219,7 +224,7 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
 const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-layout/${entry}$`]);
-globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$']);
+globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1]);
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
 const previewReloadStyles = path.join(siteSource, 'styles', 'preview-reload.css');
 cssModules.exclude = [cssModules.exclude, dockviewStyles, ...globalStyles, previewReloadStyles].filter(Boolean);
@@ -270,7 +275,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
     documentSourceRoot, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views,
-    projectModelSource
+    projectModelSource, path.dirname(windowsEntries[0])
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
