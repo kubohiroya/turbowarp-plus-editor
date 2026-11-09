@@ -6,6 +6,8 @@ import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-aut
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {ScratchBlockDiffRendererOptions} from '@kubohiroya/turbowarp-plus-editor-git';
 import {loadedProjectTitle} from './project-tools/index.ts';
+import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
 
 type RuntimeThread = {updateMonitor?: boolean};
 type Runtime = FolderVM['runtime'] & {threads: RuntimeThread[]; isActiveThread(thread: RuntimeThread): boolean};
@@ -68,6 +70,14 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
                 createBlockContainer: () => new __TW_PLUS_GIT_VM_BLOCKS__(), showUnregisteredBlocks: true, locale, attachNavigation
             }) : undefined,
         openProject: folder.openDirectory,
+        // A transient tab beside the code, as the YAML documents open; the folder handle cannot outlive a reload.
+        openPanel: request => getDocumentWorkspace(vm).open({...request, transient: true}),
+        // The same route as project search, so the code opens where people already work.
+        openTargetCode(targetId) {
+            const navigation = connectionFor(vm.runtime as unknown as Parameters<typeof connectionFor>[0]).navigation;
+            if (!navigation || !activateTargetView(navigation, targetId, 0)) (vm as FolderVM & {setEditingTarget(id: string): void}).setEditingTarget(targetId);
+        },
+        getWorkspace: async () => (await getBlockly()).getMainWorkspace() as never,
         isProjectDirty,
         isProjectRunning: isRunning,
         subscribe(listener) {

@@ -118,7 +118,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
     const showGit = async target => {
         await target.getByText('File', {exact: true}).click();
         await target.getByText('Local Git…', {exact: true}).click();
-        const panel = target.getByRole('dialog', {name: 'Local Git'});
+        const panel = target.locator('.twgit-panel');
         await expect(panel).toBeVisible();
         await panel.getByText('GitHub connection', {exact: true}).click();
         return panel;
