@@ -455,7 +455,7 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     await expect(camera).toBeVisible();
 });
 
-test('the enabled debugger opens from the extension controls even without project extensions', {timeout: 30_000}, async t => {
+test('the enabled debugger opens from its own menu bar button, outside the extension controls', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const editor = origin + buildPrefix + 'editor.html?lang=en';
     const group = page.getByRole('group', {name: 'Extension controls', exact: true});
@@ -476,15 +476,35 @@ test('the enabled debugger opens from the extension controls even without projec
     await settings.close();
     await page.reload();
 
-    await expect(group.locator('.sa-debugger-container')).toBeVisible();
+    // The debugger is always on the bar once enabled, so it stands on its own: with no project
+    // extensions there is no tray at all, and the button is a round "…" of the row's height.
+    const open = page.getByRole('button', {name: 'Debugger', exact: true});
+    await expect(open).toBeVisible();
     await expect(debuggerButton).toHaveCount(1);
-    // The add-on's button is stage sized on its own; inside the frame it keeps the row's height and
-    // becomes the same square as a control with no text.
-    assert.equal((await group.boundingBox()).height, 32);
-    const addOn = await debuggerButton.locator('[class*="stage-header_stage-button_"]').boundingBox();
-    assert.deepEqual([addOn.width, addOn.height], [26, 26]);
+    await expect(group).toHaveCount(0);
+    const bounds = await open.boundingBox();
+    assert.deepEqual([bounds.width, bounds.height], [32, 32]);
+    assert.equal(await open.evaluate(element =>
+        getComputedStyle(element.querySelector('[class*="button_content"]'), '::before').content), '"…"');
+    await expect(open.locator('img')).toBeHidden();
+
+    // Stage launcher, debugger and extension tray follow one another in that order.
+    await page.evaluate(() => {
+        const dock = document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')];
+        dock.stageControls.addButton({id: 'camera', label: 'Camera', icon: '📷', onClick() {}}).update({visible: true});
+    });
+    await expect(group).toBeVisible();
+    await expect(group.locator('.sa-debugger-container')).toHaveCount(0);
+    const launcher = await page.getByRole('button', {name: 'Stage opening options'}).boundingBox();
+    const tray = await group.boundingBox();
+    const debuggerBounds = await open.boundingBox();
+    assert.ok(launcher.x + launcher.width <= debuggerBounds.x);
+    assert.ok(debuggerBounds.x + debuggerBounds.width <= tray.x);
+    assert.equal(tray.height, 32);
+
     await expect(page.locator('[data-plus-stage-frame]').locator('.sa-debugger-container')).toHaveCount(0);
-    await debuggerButton.locator('img').click();
+    await open.focus();
+    await page.keyboard.press('Enter');
     // It opens as a workspace tab, and closing the tab closes the debugger.
     const panel = page.locator('.sa-debugger-interface');
     const tab = page.locator('.dv-tab').filter({hasText: 'Debugger'});

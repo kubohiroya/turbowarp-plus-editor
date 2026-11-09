@@ -50,8 +50,9 @@
 <tr><th scope="row">左</th><td>作品タイトルの入力欄</td><td>作品の名前を変える</td></tr>
 <tr><th scope="row">左</th><td>「ファイル」「編集」</td><td><a href="#file-menu">作品の操作</a>と<a href="#edit-menu">編集の操作</a></td></tr>
 <tr><th scope="row">中央</th><td>検索欄</td><td><a href="../search/#project-search">作品全体を検索・置換する</a></td></tr>
-<tr><th scope="row">右</th><td>機能拡張のボタン、デバッガー</td><td><a href="#extension-controls">拡張の設定や操作</a></td></tr>
-<tr><th scope="row">右端</th><td>「ステージを開く」</td><td><a href="../stage/#stage-open">ステージを開く</a></td></tr>
+<tr><th scope="row">右</th><td>「ステージを開く」</td><td><a href="../stage/#stage-open">ステージを開く</a></td></tr>
+<tr><th scope="row">右</th><td>「デバッグ」（…）</td><td><a href="#extension-controls">デバッガーを開く</a></td></tr>
+<tr><th scope="row">右端</th><td>機能拡張のボタン領域</td><td><a href="#extension-controls">拡張の設定や操作</a></td></tr>
 </tbody></table></div>
 <figure><a href="../images/plus-workspace-current.png"><img src="../images/plus-workspace-current.png" width="1440" height="1000" alt="起動直後の画面。最上段にロゴ、作品タイトル、ファイル、編集、検索欄。左に固定表示のスプライト一覧、中央にコード領域と横型パレット、右下にミニマップとズームボタン。" loading="lazy"></a><figcaption>起動直後の画面。</figcaption></figure>
 <p>時間のかかる操作の間は、マウスポインターが待機中の表示に変わります。</p>
@@ -116,8 +117,8 @@
 
 <h2>2.5 右上の機能拡張ボタンとデバッガー</h2>
 
-<p>カメラの権限やTeachable Machineのモデルの設定など、機能拡張が用意する操作ボタンは、メニューバーの右側にまとまって表示されます。ボタンは拡張が必要なときにだけ表示され、作品を読み込み直すと消えます。押すと、その拡張の設定画面や操作が開きます。</p>
-<ul><li>ボタンの名前は、ポインターを置いたときのツールチップで確認できます。画面が狭いときは文字を省略し、アイコンだけになります。</li><li>TurboWarpのデバッガーも同じ場所に表示されます。</li><li>たとえば紙芝居拡張は、YAML台本の実行中だけ、制作用のリロード操作を表示します。</li></ul>
+<p>カメラの権限やTeachable Machineのモデルの設定など、機能拡張が用意する操作ボタンは、メニューバー右端の角丸の枠（機能拡張のボタン領域）にまとまって表示されます。ボタンは拡張が必要なときにだけ表示され、作品を読み込み直すと消えます。押すと、その拡張の設定画面や操作が開きます。</p>
+<ul><li>ボタンの名前は、ポインターを置いたときのツールチップで確認できます。画面が狭いときは文字を省略し、アイコンだけになります。</li><li>TurboWarpのデバッガーを有効にすると、「ステージを開く」と機能拡張のボタン領域の間に「…」の「デバッグ」ボタンが常に表示されます。デバッガーは機能拡張のボタン領域には入りません。</li><li>たとえば紙芝居拡張は、YAML台本の実行中だけ、制作用のリロード操作を表示します。</li></ul>
 <p>拡張の作者は、サンドボックスなしの拡張から <code>Scratch.gui.stageControls.addButton</code> でボタンを登録できます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/367">拡張操作をメニューバー右端へ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/395">デバッガーの表示位置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張作者向けの仕様</a></p>
 
