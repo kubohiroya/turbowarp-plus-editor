@@ -117,7 +117,7 @@
 <figure><a href="../images/published-editor-git-pr-script.png"><img src="../images/published-editor-git-pr-script.png" width="819" height="542" alt="緑の旗が押されたときのスクリプトを、左の変更前と右の変更後に並べた比較画面。右では緑の旗のすぐ下に追加された変数設定ブロックが緑の枠で囲まれている。" loading="lazy"></a><figcaption>PR #219のスクリプト比較。右側の緑の枠が、開始直後に追加された変数設定ブロックを示します。比較画面に登録されていない拡張ブロックは、元の位置に灰色の「未登録: …」として表示されます。</figcaption></figure>
 </li>
 </ol>
-<p>比較を読み終えたら、スクリプトの下の「確認済み」で進み具合を記録できます。この印は表示中のレビューだけに反映されます。「ローカルの変更」で手元の差分表示に戻れます。</p>
+<p>比較を読み終えたら、スクリプトの下の「確認済み」で進み具合を記録できます。この印はブラウザーに保存され、パネルを閉じても Editor を再読み込みしても残ります。PR が更新されると、内容が変わったスクリプトの印だけが外れます。印は作品ファイルとGitには書き込まれません。「ローカルの変更」で手元の差分表示に戻れます。</p>
 
 <p>比較にはプルリクエストのマージベースとheadを使います。GitHubへの通信は公開APIの読み取りだけで、公開APIの利用上限が適用されます。比較の仕組みは<a href="#block-diff">作品の変更をブロックで比べる</a>で説明しています。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">Editorへの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/418">PRレビューの操作手順</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRをScratchスクリプトでレビュー</a></p>
