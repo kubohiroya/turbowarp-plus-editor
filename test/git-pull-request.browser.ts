@@ -12,17 +12,21 @@ const prefix = '/turbowarp-plus-editor/';
 const api = 'https://api.github.com';
 const mime = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
     '.svg': 'image/svg+xml', '.png': 'image/png', '.wav': 'audio/wav', '.wasm': 'application/wasm'};
-const oldHead = 'a'.repeat(40), newHead = 'b'.repeat(40), mergeBase = 'c'.repeat(40);
+const oldHead = 'a'.repeat(40), newHead = 'b'.repeat(40), mergeBase = 'c'.repeat(40), laterHead = 'd'.repeat(40);
 const pr = {number: 42, title: 'Start together', body_text: 'Move after the start signal.', state: 'open', changed_files: 2,
     user: {login: 'tester'},
     base: {sha: oldHead, ref: 'main', repo: {full_name: 'owner/game'}},
     head: {sha: newHead, ref: 'start', repo: {full_name: 'owner/game'}}};
-const project = (steps: string) => JSON.stringify({targets: [{name: 'Sprite', isStage: false, blocks: {
+const project = (steps: string, message = 'hi') => JSON.stringify({targets: [{name: 'Sprite', isStage: false, blocks: {
     flag: {opcode: 'event_whenflagclicked', next: 'custom', parent: null, inputs: {}, fields: {}, shadow: false, topLevel: true, x: 10, y: 10},
     custom: {opcode: 'example_action', next: 'move', parent: 'flag', inputs: {}, fields: {OPTION: ['ready', null]},
         shadow: false, topLevel: false},
-    move: {opcode: 'motion_movesteps', next: null, parent: 'custom', inputs: {STEPS: [1, [4, steps]]}, fields: {}, shadow: false, topLevel: false}
+    move: {opcode: 'motion_movesteps', next: null, parent: 'custom', inputs: {STEPS: [1, [4, steps]]}, fields: {}, shadow: false, topLevel: false},
+    click: {opcode: 'event_whenthisspriteclicked', next: 'say', parent: null, inputs: {}, fields: {}, shadow: false, topLevel: true, x: 10, y: 300},
+    say: {opcode: 'looks_say', next: null, parent: 'click', inputs: {MESSAGE: [1, [10, message]]}, fields: {}, shadow: false, topLevel: false}
 }}]}, null, 2);
+// The PR's head can move on; each head's version of the project.
+const heads = new Map([[newHead, project('25', 'hello')], [laterHead, project('30', 'hello')]]);
 
 test('the Editor Git panel opens a pull request overview and renders its changed script', {timeout: 120000}, async t => {
     const buildPath = process.env.E2E_PROJECT_FOLDER_BUILD;
@@ -59,12 +63,13 @@ test('the Editor Git panel opens a pull request overview and renders its changed
                 {filename: 'game/project.source.json', status: 'modified'},
                 {filename: 'game/assets/start.svg', status: 'added'}
             ]});
-            if (url.pathname === repo + '/compare/' + oldHead + '...' + newHead) {
+            if (url.pathname === repo + '/compare/' + oldHead + '...' + pr.head.sha) {
                 return route.fulfill({headers, json: {merge_base_commit: {sha: mergeBase}}});
             }
             if (url.pathname === repo + '/contents/game/project.source.json') {
                 const ref = url.searchParams.get('ref');
-                if (ref === mergeBase || ref === newHead) return route.fulfill({headers, body: project(ref === mergeBase ? '10' : '25')});
+                if (ref === mergeBase) return route.fulfill({headers, body: project('10')});
+                if (ref && heads.has(ref)) return route.fulfill({headers, body: heads.get(ref)});
             }
             return route.fulfill({headers, status: 404});
         }
@@ -92,18 +97,21 @@ test('the Editor Git panel opens a pull request overview and renders its changed
         Object.defineProperty(window, 'showDirectoryPicker', {value: async () => directory});
         Object.defineProperty(window, 'gitReviewDirectoryReady', {get: () => directory?.kind === 'directory'});
     });
-    await page.goto(origin + prefix + 'editor.html?lang=en');
-    await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
-    const cdp = await page.context().newCDPSession(page);
-    for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
-        await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100, data: {items: [], files: [directory], dragOperationsMask: 1}});
-    }
-    await page.waitForFunction(() => Reflect.get(window, 'gitReviewDirectoryReady'));
-    await page.getByText('File', {exact: true}).click();
-    await page.getByText('Local Git…', {exact: true}).click();
     const panel = page.locator('.twgit-panel');
-    await panel.getByRole('button', {name: 'Choose Repository…'}).click();
-    await expect(panel.getByRole('button', {name: 'Pull requests', exact: true})).toBeVisible();
+    const openRepository = async () => {
+        await page.goto(origin + prefix + 'editor.html?lang=en');
+        await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
+        const cdp = await page.context().newCDPSession(page);
+        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+            await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100, data: {items: [], files: [directory], dragOperationsMask: 1}});
+        }
+        await page.waitForFunction(() => Reflect.get(window, 'gitReviewDirectoryReady'));
+        await page.getByText('File', {exact: true}).click();
+        await page.getByText('Local Git…', {exact: true}).click();
+        await panel.getByRole('button', {name: 'Choose Repository…'}).click();
+        await expect(panel.getByRole('button', {name: 'Pull requests', exact: true})).toBeVisible();
+    };
+    await openRepository();
     assert.deepEqual(requests, []);
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await panel.getByRole('button', {name: '#42 Start together'}).click();
@@ -132,6 +140,31 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await frames.nth(1).locator('[data-plus-zoom-action="in"]').click();
     await expect.poll(() => scale(1)).toBeGreaterThan(unlinked);
     assert.equal(await scale(0), unlinked);
+    // Reviewed marks stay when the review opens again and after a reload, until the script itself changes.
+    const clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
+    await expect(review.getByText('0 / 2', {exact: true})).toBeVisible();
+    await script.getByRole('checkbox', {name: 'Reviewed'}).check();
+    await clicked.locator('summary').click();
+    await clicked.getByRole('checkbox', {name: 'Reviewed'}).check();
+    await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
+    await panel.getByRole('button', {name: 'Local changes', exact: true}).click();
+    await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
+    await panel.getByRole('button', {name: '#42 Start together'}).click();
+    await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
+    await openRepository();
+    await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
+    await panel.getByRole('button', {name: '#42 Start together'}).click();
+    await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
+    // The head moves on and changes only the green flag script: only its mark is dropped.
+    pr.head.sha = laterHead;
+    await openRepository();
+    await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
+    await panel.getByRole('button', {name: '#42 Start together'}).click();
+    await expect(review.getByText('1 / 2', {exact: true})).toBeVisible();
+    await script.locator('summary').click();
+    await expect(script.getByRole('checkbox', {name: 'Reviewed'})).not.toBeChecked();
+    await clicked.locator('summary').click();
+    await expect(clicked.getByRole('checkbox', {name: 'Reviewed'})).toBeChecked();
     await panel.getByRole('button', {name: 'Local changes', exact: true}).click();
     await expect(panel.getByRole('button', {name: 'fixture', exact: true})).toBeVisible();
     await page.waitForFunction(() => {
