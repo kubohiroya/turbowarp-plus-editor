@@ -10,7 +10,7 @@ import './styles/preview-reload.css';
 import {
     mountDocumentEditor, registerDocumentSourceRootHatShape
 } from '@kubohiroya/turbowarp-document-editor';
-import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-layout/sprite-tabs';
+import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 
 import {attachScriptTransfer, createProjectJSONTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
 

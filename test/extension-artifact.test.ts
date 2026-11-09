@@ -105,7 +105,7 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         assert.match(check().stderr, /Bundled family package without notices/);
         family.packages.push(vmNotice);
         await writeFamily();
-        const layout = family.packages.find(entry => entry.package === '@kubohiroya/turbowarp-plus-editor-layout');
+        const layout = family.packages.find(entry => entry.package === '@kubohiroya/turbowarp-plus-editor-workbench');
         const sourceURL = layout.source.tarball;
         layout.source.tarball = sourceURL.replace('registry.npmjs.org', 'example.test');
         await writeFamily();

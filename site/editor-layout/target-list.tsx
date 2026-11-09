@@ -6,7 +6,7 @@ import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.t
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {layoutFlags, layoutViews, WindowLayoutContext} from './index.tsx';
 import {TargetSwitchContext} from './context.ts';
-import styles from '@kubohiroya/turbowarp-plus-editor-layout/editor.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 
 const desktopPopout = createDesktopPanelHost('sprite-list', 'twPlusSpriteListPopout', 540, 420) ??
     createDesktopPanelHost('sprite-list', 'twPlusTargetPanelsPopout', 540, 420);

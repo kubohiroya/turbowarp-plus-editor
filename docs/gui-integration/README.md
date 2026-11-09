@@ -92,7 +92,7 @@ GUIはネイティブのコンテキストメニュー部品とファイル選�
 
 ## Issue #192 の標準配置
 
-配置切り替え、ステージ表示、対象一覧のレイアウトと CSS は `@kubohiroya/turbowarp-plus-editor-layout` が所有します。Editor は起動設定、既存画面、ウィンドウ操作とパレットを接続します。
+配置切り替え、ステージ表示、対象一覧のレイアウトと CSS は `@kubohiroya/turbowarp-plus-editor-workbench` が所有します。Editor は起動設定、既存画面、ウィンドウ操作とパレットを接続します。
 
 Plus 標準配置ではスプライト編集画面を Dockview のタブで開きます。「別画面で開く」からは既存の別画面コード編集を利用できます。切り戻すときは起動 URL に `twPlusDockviewSpriteTabs=0` を追加して再読み込みします。Editor は npm で公開されたレイアウトパッケージのバージョン、取得 URL、整合性を lockfile に固定し、Scratch GUI の既存の編集タブ列・編集パネルの接続口を使います。
 
@@ -119,11 +119,11 @@ UI パッケージは Editor リポジトリ内の `file:` 依存として Web �
 
 Plus 標準配置では既定で、ファイルメニューの項目にアイコンが付き、末尾の「機能拡張の追加」から既存のライブラリを開く。切り戻す場合は URL に `twPlusExtensionFileMenu=0` を指定して再読み込みする。
 
-項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-layout/extension-file-menu` が担当する。Editor は Scratch GUI #170 で提供された接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。拡張カタログの画面操作はデスクトップ幅で検証する。
+項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu` が担当する。Editor は Scratch GUI #170 で提供された接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。拡張カタログの画面操作はデスクトップ幅で検証する。
 
 ## 別窓ステージ入力とスプライト設定の接続
 
-独立した `@kubohiroya/turbowarp-plus-editor-layout` が、別窓ステージの入力管理、スプライト設定フォーム、ウィンドウ部品とスタイルを提供する。Editor は起動設定と表示先を接続する。`site/source.json` の GUI 固定先は、Scratch GUI #172 の接続変更を含む `a8fcdd7a2`。スプライト設定は Plus 配置または起動オプション `twPlusSpriteProperties=1` から利用できる。
+独立した `@kubohiroya/turbowarp-plus-editor-workbench` が、別窓ステージの入力管理、スプライト設定フォーム、ウィンドウ部品とスタイルを提供する。Editor は起動設定と表示先を接続する。`site/source.json` の GUI 固定先は、Scratch GUI #172 の接続変更を含む `a8fcdd7a2`。スプライト設定は Plus 配置または起動オプション `twPlusSpriteProperties=1` から利用できる。
 
 `package.json` と `package-lock.json` は layout 0.1.2 の同梱アーカイブと SHA-512 を固定する。アーカイブは独立リポジトリのコミット `835ab558ca7ca2054bfd0f89b948e28f3cd12804` から `npm ci` と `npm pack` で再生成できる。配信時は `notices/family.json` にライセンスと同梱ソースを記録する。
 

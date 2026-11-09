@@ -111,7 +111,7 @@ test('this repository records every family package it supplies, dev entries incl
             }
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
-        const layout = '@kubohiroya/turbowarp-plus-editor-layout';
+        const layout = '@kubohiroya/turbowarp-plus-editor-workbench';
         const layoutVersion = lock.packages[`node_modules/${layout}`].version;
         assert.ok(built.packages.includes(`${layout}@${layoutVersion}`));
         // The Loader and the review dialog are devDependencies here and are bundled by webpack all
