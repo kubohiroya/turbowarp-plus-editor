@@ -17,7 +17,6 @@ const checkSteps = {
     infrastructure: ['infrastructure-tests'],
     'views-unit': ['views-unit'],
     'backpack-unit': ['backpack-unit'],
-    'pinned-gui-unit': ['pinned-gui-unit'],
     'extension-host': ['extension-host'],
     'gui-integration': ['gui-integration'],
     'script-transfer': ['script-transfer'],
