@@ -336,6 +336,9 @@ test('the first menu row orders the Plus logo, project title, File, Edit, and se
         assert.ok(previous.x + previous.width <= current.x);
         assert.ok(Math.abs(previous.y + previous.height / 2 - current.y - current.height / 2) <= 2);
     }
+    // The search field is one of this row's controls, so it takes the row's button height (2rem)
+    // instead of a height of its own.
+    assert.equal(positions[controls.indexOf(search)].height, 32);
     await expect(page.locator('.dv-tabs-and-actions-container').getByRole('combobox')).toHaveCount(0);
     await expect(page.getByRole('combobox', {name: '作品全体を検索'})).toHaveCount(1);
 
