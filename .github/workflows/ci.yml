@@ -148,13 +148,9 @@ jobs:
           # prepublish writes static/microbit and src/generated, which are outside node_modules,
           # so it runs whether or not the modules came from the cache.
           node scripts/prepublish.mjs
-      - name: Verify the prepared host
-        id: pinned-gui-unit
-        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|pinned-gui-unit|')
-        working-directory: .host/scratch-gui
-        run: |
+          # test:gui-integration compares the pinned GUI's files with the upstream revision it was
+          # moved from (docs/gui-integration/relocation.json), so that commit must be in the checkout.
           git fetch --no-tags --depth=1 https://github.com/TurboWarp/scratch-gui.git 3c017c528c853af3111df9641914704745c1fdf6
-          npm run test:unit
       # The extension host is supplied from here, but what it installs on is the pinned GUI's VM,
       # and the registration it drives must use that VM's own modules. So these run against the
       # checkout above rather than this repository's dependencies, and only once it is prepared.

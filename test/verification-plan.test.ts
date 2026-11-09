@@ -34,7 +34,7 @@ test('pins, shared infrastructure, unknown paths and empty diffs plan a full run
         const plan = selectVerification(['README.md', path]);
         assert.equal(plan.mode, 'full', path);
         assert.equal(plan.reason, 'unclassified-path', path);
-        assert.ok(plan.checks.includes('pinned-gui-unit'));
+        assert.ok(plan.checks.includes('extension-host'));
         assert.ok(plan.checks.includes('extension-loader-browser'));
     }
     assert.equal(selectVerification([]).reason, 'empty-diff');
