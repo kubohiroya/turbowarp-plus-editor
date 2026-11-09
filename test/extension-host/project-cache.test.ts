@@ -8,7 +8,7 @@ import path from 'node:path';
 import Zip from '@turbowarp/jszip';
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import {installEditorExtensionHost} from '../../site/extension-host/editor-host.ts';
-import {installExtensionLoader} from '../../site/extension-host/project-loader.ts';
+import {installExtensionLoader} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import {identifyProject} from '../../site/extension-host/review.ts';
 import {createPlusTrustedCatalog} from '../../site/trusted-extensions.ts';
 import {guiRequire, guiRoot, vmModules} from './pinned-host.ts';

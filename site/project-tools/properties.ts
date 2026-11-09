@@ -1,7 +1,7 @@
 import JSZip from '@turbowarp/jszip';
 import {beginProjectLoad} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
 import {beginProjectArchiveRead} from '../extension-host/shared-project-archive.ts';
-import {projectSerializationOptions} from '../extension-host/serialization-context.ts';
+import {projectSerializationOptions} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import type {ProjectArchive} from '../extension-host/shared-project-archive.ts';
 
 export const PROJECT_INFO_KEY = 'turboWarpPlusProject';
