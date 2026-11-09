@@ -15,7 +15,13 @@ interface StageControlsState {
     debuggerButton: HTMLElement | null;
 }
 
-function DebuggerButton ({element}: {element: HTMLElement}) {
+/**
+ * The debugger add-on's button, kept on the menu bar on its own rather than in the extension tray:
+ * it is always there once the add-on is on, whereas the tray holds what the project's extensions
+ * registered. Its add-on icon is a shell prompt; like a browser's own "more tools" entry point it is
+ * drawn as "…" instead (see the stylesheet), and given the name and keyboard handling of a button.
+ */
+function DebuggerButton ({element, label}: {element: HTMLElement; label: string}) {
     const mount = React.useRef<HTMLDivElement>(null);
     React.useLayoutEffect(() => {
         const root = mount.current;
@@ -24,6 +30,21 @@ function DebuggerButton ({element}: {element: HTMLElement}) {
             if (element.parentNode === root) element.remove();
         };
     }, [element]);
+    React.useLayoutEffect(() => {
+        const button = element.querySelector<HTMLElement>('[class*="stage-header_stage-button"]');
+        if (!button) return;
+        const activate = (event: KeyboardEvent) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            button.click();
+        };
+        button.setAttribute('role', 'button');
+        button.setAttribute('tabindex', '0');
+        button.setAttribute('aria-label', label);
+        button.title = label;
+        button.addEventListener('keydown', activate);
+        return () => button.removeEventListener('keydown', activate);
+    }, [element, label]);
     return <div className={styles.debuggerButton} ref={mount} />;
 }
 
@@ -95,16 +116,21 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
             {buttons}
             {panel && <div className={styles.panel} ref={this.mountPanel} />}
         </>;
-        const hasButtons = buttons.length > 0 || Boolean(debuggerButton);
-        if (!hasButtons && !panel) return null;
-        const label = /^ja(?:-|$)/i.test(menuLocale) ? '機能拡張コントロールボタン領域' : 'Extension controls';
-        return <div className={styles.menuDock}>
-            {hasButtons && <div className={styles.controlGroup} role="group" aria-label={label}>
-                {buttons}
-                {debuggerButton && <DebuggerButton element={debuggerButton} />}
+        if (!buttons.length && !debuggerButton && !panel) return null;
+        const japanese = /^ja(?:-|$)/i.test(menuLocale);
+        return <>
+            {debuggerButton && <DebuggerButton element={debuggerButton} label={japanese ? 'デバッグ' : 'Debugger'} />}
+            {(buttons.length > 0 || panel) && <div className={styles.menuDock}>
+                {buttons.length > 0 && <div
+                    className={styles.controlGroup}
+                    role="group"
+                    aria-label={japanese ? '機能拡張コントロールボタン領域' : 'Extension controls'}
+                >
+                    {buttons}
+                </div>}
+                {panel && <div className={styles.menuPanel} ref={this.mountPanel} />}
             </div>}
-            {panel && <div className={styles.menuPanel} ref={this.mountPanel} />}
-        </div>;
+        </>;
     }
 }
 

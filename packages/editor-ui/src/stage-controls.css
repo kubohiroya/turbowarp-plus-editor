@@ -62,7 +62,8 @@
     padding: 0 0.1875rem;
     overflow-x: auto;
     scrollbar-width: none;
-    border: 1px solid var(--ui-black-transparent);
+    /* Like a browser toolbar's extensions area: a tinted, rounded area of the bar's own colour. */
+    background: color-mix(in srgb, var(--menu-bar-foreground, #fff) 16%, transparent);
     border-radius: 0.5rem;
 }
 
@@ -73,7 +74,14 @@
     min-inline-size: 1.625rem;
     margin: 0;
     padding: 0;
+    border-color: transparent;
+    background: transparent;
     font-size: 1rem;
+}
+
+.controlGroup > .control:hover,
+.controlGroup > .control[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--menu-bar-foreground, #fff) 20%, transparent);
 }
 
 /*
@@ -91,22 +99,54 @@
     padding-inline-end: 0.3125rem;
 }
 
+/*
+ * The debugger sits on the menu bar on its own, between the stage launcher and the extension tray,
+ * as a round 2rem button like a browser toolbar's "…" menu. The add-on's shell-prompt image is
+ * hidden and "…" drawn in its place; `::after` stays free for the add-on's unread dot.
+ */
 .debuggerButton {
     flex: none;
+    align-self: center;
+    margin-inline-end: 0.25rem;
 }
 
-.controlGroup > .debuggerButton > :global(.sa-debugger-container) {
+.debuggerButton > :global(.sa-debugger-container) {
     display: flex;
     align-items: center;
     margin: 0;
 }
 
-/* The editor add-on's own button is stage sized; in the menu bar frame it matches the rest. */
-.controlGroup > .debuggerButton :global([class*="stage-header_stage-button"]) {
+.debuggerButton :global([class*="stage-header_stage-button"]) {
     box-sizing: border-box;
-    inline-size: 1.625rem;
-    block-size: 1.625rem;
-    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2rem;
+    block-size: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--menu-bar-foreground, #fff);
+    cursor: pointer;
+}
+
+.debuggerButton :global([class*="stage-header_stage-button"]):hover {
+    background: var(--ui-black-transparent, #0000001a);
+}
+
+.debuggerButton :global([class*="stage-header_stage-button"]):focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -3px;
+}
+
+.debuggerButton :global([class*="stage-header_stage-button-icon"]) {
+    display: none;
+}
+
+.debuggerButton :global([class*="button_content"])::before {
+    content: "…";
+    font: bold 1.25rem/1 sans-serif;
 }
 
 .menuPanel {
