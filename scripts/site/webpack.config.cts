@@ -151,6 +151,12 @@ const editorEntries = Object.fromEntries(['layout', 'surfaces', 'transfer', 'bac
     config.resolve.alias[`${name}$`] = entry;
     return [feature, path.dirname(entry)];
 }));
+// The layout and the project search read projects through this package. Webpack 4 does not read
+// package exports, so each subpath needs an alias, and its modules need the transpilation below.
+const projectModelSource = path.dirname(['project-messages', 'sprite-variable-edit'].map(entry => {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-project-model/${entry}`;
+    return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+})[0]);
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
@@ -159,7 +165,7 @@ const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'sprite-asset-pane.c
     'sprite-properties.css', 'windows.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-editor-toolbar',
-    'sprite-properties', 'sprite-tabs', 'project-messages', 'stage-surface', 'dockview-styles', 'windows', 'debugger-panel']) {
+    'sprite-properties', 'sprite-tabs', 'stage-surface', 'dockview-styles', 'windows', 'debugger-panel']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-layout/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -263,7 +269,8 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 );
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    documentSourceRoot, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views
+    documentSourceRoot, transferSource, editorEntries.layout, editorEntries.backpack, editorEntries.views,
+    projectModelSource
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
