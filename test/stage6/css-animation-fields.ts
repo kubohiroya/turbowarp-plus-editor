@@ -15,6 +15,7 @@ const attachedField = dockedField || process.argv[3] === '--attached-set-value';
 const delayedField = attachedField || process.argv[3] === '--delayed-set-value';
 const programmaticPromise = process.argv[3] === '--programmatic-promise';
 const programmatic = programmaticPromise || process.argv[3] === '--programmatic-sync';
+const collectBeforeSave = process.argv[3] === '--collect-before-save';
 const fontFile = resources ? await readFile(process.argv[4]) : undefined;
 const origin = 'http://localhost:15107';
 const assetOrigin = 'https://field-assets.test';
@@ -23,7 +24,7 @@ const [driver, extension] = await Promise.all([
     build({
         stdin: {resolveDir: import.meta.dirname, contents: `
             import {createCodeSession} from '../../packages/editor-views/index.ts';
-            import {createSurface} from '../../packages/editor-surfaces/index.ts';
+            import {createSurface, flushPendingSurfaceEdits, pendingSurfaceEdits} from '../../packages/editor-surfaces/index.ts';
             import {createBrowserHost} from '../../site/editor-backpack/browser-host.ts';
             const {vm, ScratchBlocks} = window;
             const host = createBrowserHost(window, url => window.open(url.href, '_blank', 'popup'), 'code-popout.html', true);
@@ -35,6 +36,9 @@ const [driver, extension] = await Promise.all([
                     } else throw error;
                 }, receiveBackpackDrop: undefined
             });
+            // Registered the same way as the Desktop code window, so saving collects these views first.
+            pendingSurfaceEdits.register(() => session.flush());
+            window.collectTestEdits = () => flushPendingSurfaceEdits();
             window.openTestCode = () => {
                 const target = vm.editingTarget;
                 let detach;
@@ -231,8 +235,58 @@ try {
         await Promise.all([page.waitForEvent('close'), page.locator('#dock').click()]);
     };
 
+    // Text typed into a comment stays in the window until the textarea fires `change`.
+    // Saving must collect it without taking the lease or the caret from the typing window.
+    const checkCollectBeforeSave = async (a: Page, b: Page) => {
+        const typed = 'collected before saving';
+        const comments = () => editor.evaluate(name => Object.values(
+            window.vm.runtime.targets.find(target => target.getName() === name).comments
+        ).map((comment: {text: string}) => comment.text), sprite);
+        await focus(a);
+        const {width, height} = await a.evaluate(() => ({width: innerWidth, height: innerHeight}));
+        await a.locator('.blocklyMainBackground').click({button: 'right', position: {x: width - 260, y: height - 240}});
+        await a.locator('.blocklyContextMenu').getByText('Add Comment', {exact: true}).click();
+        const textarea = a.locator('.scratchCommentTextarea').last();
+        await textarea.waitFor();
+        await editor.waitForFunction(name => Object.keys(
+            window.vm.runtime.targets.find(target => target.getName() === name).comments).length === 1, sprite);
+        await textarea.fill(typed);
+        assert.notDeepEqual(await comments(), [typed]);
+        const project = await editor.evaluate(async () => {
+            await window['collectTestEdits']();
+            const blob = await window.vm.saveProjectSb3();
+            return [...new Uint8Array(await blob.arrayBuffer())];
+        });
+        assert.deepEqual(await comments(), [typed]);
+        assert.equal(await a.locator('#mount').evaluate((node: HTMLElement) => node.inert), false);
+        assert.equal(await textarea.evaluate(node => node === node.ownerDocument.activeElement), true);
+        await b.waitForFunction(typed => [...document.querySelectorAll<HTMLTextAreaElement>('.scratchCommentTextarea')]
+            .some(node => node.value === typed), typed);
+        const reloaded = await context.newPage();
+        try {
+            await reloaded.goto(origin + prefix + 'editor.html?lang=en&twPlusStandardLayout=0');
+            await reloaded.waitForFunction(() => window.vm?.editingTarget?.isOriginal);
+            await reloaded.evaluate(project => {window['testProject'] = project;}, project);
+            const restored = reloaded.evaluate(async sprite => {
+                await window.vm.loadProject(new Uint8Array(window['testProject']).buffer);
+                const target = window.vm.runtime.targets.find(item => item.getName() === sprite);
+                return Object.values(target.comments).map((comment: {text: string}) => comment.text);
+            }, sprite);
+            // The project carries the fixture extension, so the editor asks how it may run, as it would
+            // for anyone opening the file. Allow it the way the editor page loaded it.
+            const prompt = reloaded.getByRole('dialog').filter({hasText: 'This project wants to run extensions'});
+            await prompt.locator('input[name="execution-all"][value="unsandboxed"]').check();
+            await prompt.getByRole('button', {name: 'OK', exact: true}).click();
+            assert.deepEqual(await restored, [typed]);
+        } finally {
+            await reloaded.close();
+        }
+        await textarea.blur();
+    };
+
     const a = await open();
     const b = await open();
+    if (collectBeforeSave) await checkCollectBeforeSave(a, b);
     await focus(dockedField ? editor : a);
     let widget = programmatic ? await openAction(a, 'original') : await openWidget(dockedField ? editor : a);
     assert.equal(await a.locator('#tw-test-native-field-css').count(), 0);
@@ -441,7 +495,9 @@ try {
         await dock(reopened);
     }
     assert.deepEqual(errors, []);
-    const displayCheck = dockedField ? 'docked native editor sessions, stale writes across focus and target changes, project reload and window close, native Undo' :
+    const displayCheck = collectBeforeSave ? 'collecting typed comment text before saving with the lease and caret kept, SB3 reload, ' +
+        'popup keyframes, resource filtering, reduced motion' :
+        dockedField ? 'docked native editor sessions, stale writes across focus and target changes, project reload and window close, native Undo' :
         programmaticPromise ? 'applyAction Promise, stale result filtering and rejection recovery' :
         programmatic ? 'synchronous applyAction' :
         attachedField ? 'direct delayed setValue on actual docked fields, stale writes after revocation and reacquisition' :

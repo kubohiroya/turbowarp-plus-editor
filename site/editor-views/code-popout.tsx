@@ -260,6 +260,11 @@ function receive({data: message}) {
             break;
         case 'flush':
             // Send queued edits without cancelling a drag, then confirm on the same ordered port.
+            // Comment text is committed on `change`, so commit what is being typed while keeping
+            // the focus and caret in the textarea.
+            if (document.activeElement?.matches('.scratchCommentTextarea')) {
+                document.activeElement.dispatchEvent(new Event('change'));
+            }
             ScratchBlocks.Events.fireNow_();
             flush();
             port.postMessage({type: 'flushed', request: message.request});

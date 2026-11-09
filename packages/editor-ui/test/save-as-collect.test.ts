@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {saveProjectAs, type ProjectFileStorage} from '../src/project-file-dialogs.ts';
+import {collectBeforeSaving, projectSaveShortcut, saveProjectAs, type ProjectFileStorage} from '../src/project-file-dialogs.ts';
 
 function storage(log: string[]): ProjectFileStorage {
     return {
@@ -32,4 +32,34 @@ test('save as collects edits held by other windows before serializing and can be
     log.length = 0;
     assert.equal(await saveProjectAs(storage(log), 'Project', options), true);
     assert.deepEqual(log, ['collect', 'write:data', 'committed', 'finish']);
+});
+
+test('overwriting and folder saves collect edits first and save nothing when collection fails', async () => {
+    const log: string[] = [];
+    let busy = true;
+    const collect = async () => {
+        log.push('collect');
+        if (busy) throw new Error('window busy');
+    };
+    const settle = () => new Promise(resolve => setImmediate(resolve));
+    const gui = {...storage(log), overwrite: () => log.push('overwrite')};
+    const folder = {open: () => log.push('open'), save: () => log.push('folder'), detach: () => log.push('detach')};
+    const saves = collectBeforeSaving(gui, folder, collect);
+    projectSaveShortcut(saves.storage, saves.folder);
+    await settle();
+    assert.deepEqual(log, ['collect', 'fail:window busy']);
+    busy = false;
+    log.length = 0;
+    projectSaveShortcut(saves.storage, saves.folder);
+    await settle();
+    assert.deepEqual(log, ['collect', 'overwrite']);
+    log.length = 0;
+    const toFolder = collectBeforeSaving(storage(log), folder, collect);
+    projectSaveShortcut(toFolder.storage, toFolder.folder);
+    await settle();
+    assert.deepEqual(log, ['collect', 'folder']);
+    toFolder.folder.detach();
+    assert.equal(log.at(-1), 'detach');
+    const plain = storage(log);
+    assert.equal(collectBeforeSaving(plain, undefined, collect).storage, plain);
 });

@@ -262,6 +262,20 @@ B の編集中と A が編集を再開した後に古い呼び出しを完了さ
 呼び出しを完了させる。通常と共有の Undo、対象切替・SB3 再読込・別窓閉鎖後の誤適用の拒否、
 別窓を開き直したときの編集権も確認する。
 
+### 保存前の未反映編集の回収
+
+コード別窓は Desktop の窓と同じく `pendingSurfaceEdits` に回収処理を登録する。保存時の
+`flushPendingSurfaceEdits()` は、別窓で入力中のコメント本文を確定してから送信済みの編集を待つ。
+コメント本文は scratch-blocks が `change` で確定するため、回収時は入力欄のフォーカスとキャレットを
+保ったまま `change` を発行する。
+
+上の手順でビルドした後、`node test/stage6/css-animation-fields.ts "$trial/build" --collect-before-save` を実行する。
+別窓 A でコメントを追加して入力欄から離れずに入力し、回収前は VM に未反映であることを確かめる。
+回収後に SB3 を保存し、VM への反映、A の編集権と入力欄のフォーカス維持、別窓 B への同期を確認する。
+保存した SB3 を新しいページで開き、拡張の実行方法の確認に答えた後、コメント本文が残ることを検証する。
+ヘッドレス Chromium 156.0.8078.4（GUI `eac09baf`）で通過した。Desktop の保存操作からの経路と
+実マウス操作は検証範囲外。
+
 ### Flexbox・Grid の互換性試作
 
 `implementation.parentDocument = true` の固定構造の HTML フィールドで、`WidgetDiv` 内の
