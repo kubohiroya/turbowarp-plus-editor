@@ -49,7 +49,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test --import ./test/asset-hooks.ts test/*.test.ts",
+    "test": "node --test --import ./test/asset-hooks.ts test/*.test.ts packages/*/test/*.test.ts",
     "test:extension-host": "node --test --import ./test/asset-hooks.ts test/extension-host/*.test.ts test/extension-library/*.test.ts test/extension-library/*.test.cts test/packager/*.test.ts test/packager/*.test.cts test/block-editor/*.test.ts",
     "build:pages": "node scripts/site/build.ts",
     "test:e2e": "playwright test --config test/e2e/turbowarp/playwright.config.cts",
