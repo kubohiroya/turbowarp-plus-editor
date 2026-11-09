@@ -14,6 +14,7 @@
     "./palette-category-search": "./src/palette-category-search.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",
     "./project-load-progress": "./src/project-load-progress.ts",
+    "./project-size-approval": "./src/project-size-approval.ts",
     "./project-load-progress-view": "./src/project-load-progress-view.tsx",
     "./project-search": "./src/project-search-box.tsx",
     "./project-search-connections": "./src/project-search-connections.ts",
