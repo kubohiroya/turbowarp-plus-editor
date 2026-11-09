@@ -1,5 +1,5 @@
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
-import {test} from 'node:test';
+import {test, type TestContext} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
 import path from 'node:path';
@@ -29,11 +29,11 @@ function readGroups(page: Page) {
     }).sort((a, b) => a.tabs.join().localeCompare(b.tabs.join())));
 }
 
-test('Dockview restores reordered tabs, split geometry and selected panels from a restarted browser', {timeout: 180000}, async t => {
+async function restartableEditor(t: TestContext, prefix: string) {
     const site = process.env.TWPE_YAML_SITE, fixture = process.env.TWPE_YAML_FIXTURE;
     assert(site && fixture);
     await verifyWebEditor(site);
-    const directory = await mkdtemp(path.join(tmpdir(), 'twpe-dockview-restore-'));
+    const directory = await mkdtemp(path.join(tmpdir(), prefix));
     const host = await startYamlEditorHost({siteDirectory: site, dataDirectory: path.join(directory, 'work')});
     const bytes = await readFile(fixture);
     const projectUrl = host.apiOrigin + '/turbowarp-plus-editor/static/dockview-restore.sb3';
@@ -42,29 +42,36 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     url.searchParams.set('project_url', projectUrl);
     // The edge handle appears only without the menu bar launcher, which editor-layout.browser.ts tests.
     url.searchParams.set('twPlusStageLauncher', '0');
-    let context: Awaited<ReturnType<typeof chromium.launchPersistentContext>>;
+    const session = {context: undefined as Awaited<ReturnType<typeof chromium.launchPersistentContext>> | undefined,
+        async start() {
+            session.context = await chromium.launchPersistentContext(path.join(directory, 'profile'), {
+                executablePath: process.env.TWPE_CHROME_EXECUTABLE, viewport: {width: 1440, height: 1000}, locale: 'ja-JP'
+            });
+            await session.context.route(projectUrl, route => route.fulfill({body: bytes, contentType: 'application/octet-stream'}));
+            return session.context.pages()[0];
+        },
+        async load(page: Page, rollback = false) {
+            const target = new URL(url);
+            if (rollback) target.searchParams.set('twPlusDockview', '0');
+            await page.goto(target.href);
+            const security = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
+            await security.waitFor({timeout: 60000});
+            await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
+            await security.getByRole('button', {name: 'OK', exact: true}).click();
+            await security.waitFor({state: 'hidden'});
+        }};
     t.after(async () => {
-        await context?.close();
+        await session.context?.close();
         await host.close();
         await rm(directory, {recursive: true, force: true});
     });
-    async function start() {
-        context = await chromium.launchPersistentContext(path.join(directory, 'profile'), {
-            executablePath: process.env.TWPE_CHROME_EXECUTABLE, viewport: {width: 1440, height: 1000}, locale: 'ja-JP'
-        });
-        await context.route(projectUrl, route => route.fulfill({body: bytes, contentType: 'application/octet-stream'}));
-        return context.pages()[0];
-    }
-    async function load(page: Page, rollback = false) {
-        const target = new URL(url);
-        if (rollback) target.searchParams.set('twPlusDockview', '0');
-        await page.goto(target.href);
-        const security = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
-        await security.waitFor({timeout: 60000});
-        await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
-        await security.getByRole('button', {name: 'OK', exact: true}).click();
-        await security.waitFor({state: 'hidden'});
-    }
+    return session;
+}
+
+test('Dockview restores reordered tabs, split geometry and selected panels from a restarted browser', {timeout: 180000}, async t => {
+    const session = await restartableEditor(t, 'twpe-dockview-restore-');
+    const start = () => session.start();
+    const load = (page: Page, rollback = false) => session.load(page, rollback);
     async function open(page: Page, index: number, id: string) {
         await page.locator('[data-twpe-yaml-hat-icon]').nth(index).focus();
         await page.keyboard.press('Enter');
@@ -123,7 +130,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     }).toBe(2);
     const saved = JSON.parse(await readStorage(page));
     assert.equal(saved.panels[saved.editingView].name, stageName);
-    await context.close();
+    await session.context!.close();
 
     page = await start();
     await load(page);
@@ -144,7 +151,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     assert.equal(await page.evaluate(() => window.vm.editingTarget.getName()), stageName);
     assert.equal(JSON.parse(await readStorage(page)).activeGroup, saved.activeGroup);
 
-    const rollback = await context.newPage();
+    const rollback = await session.context!.newPage();
     const prior = await readStorage(page);
     await load(rollback, true);
     await expect(dockview(rollback)).toHaveCount(0);
@@ -155,7 +162,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     assert.equal(await readStorage(rollback), prior);
 
     for (const invalid of ['{broken', JSON.stringify({...saved, activeGroup: 'missing'})]) {
-        const fresh = await context.newPage();
+        const fresh = await session.context!.newPage();
         await fresh.addInitScript(({key, value}) => localStorage.setItem(key, value), {key: storageKey, value: invalid});
         await load(fresh);
         await expect(dockview(fresh).locator('.dv-groupview')).toHaveCount(1);
@@ -164,4 +171,43 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
         await expect(tab(fresh, 'ステージ')).toHaveCount(0);
         await fresh.close();
     }
+});
+
+test('a panel in a separate window is restored docked and reopens only when asked', {timeout: 180000}, async t => {
+    const session = await restartableEditor(t, 'twpe-dockview-popout-');
+    let page = await session.start();
+    await session.load(page);
+    // The security review closes before the VM has installed the project's targets.
+    const sprite = await (await page.waitForFunction(() =>
+        window.vm.runtime.targets.find(target => !target.isStage)?.getName(), undefined, {timeout: 60000})).jsonValue();
+    const openInWindow = async () => {
+        await tab(page, sprite).click();
+        await dockview(page).locator('.dv-groupview.dv-active-group .tw-plus-sprite-layout-menu-trigger').click();
+        const [child] = await Promise.all([session.context!.waitForEvent('page'),
+            page.getByRole('menuitem', {name: 'パネルを別画面で開く', exact: true}).click()]);
+        await child.waitForLoadState();
+        await expect(tab(page, sprite)).toHaveCount(0);
+        return child;
+    };
+    const savedWindow = async () => {
+        const data = JSON.parse(await readStorage(page) ?? 'null');
+        const id = Object.keys(data?.panels ?? {}).find(key => data.panels[key].name === sprite);
+        return data?.popouts?.find((popout: {panels: string[]}) => popout.panels.includes(id));
+    };
+
+    await openInWindow();
+    await expect.poll(savedWindow).toMatchObject({position: {width: expect.any(Number), height: expect.any(Number)}});
+    await session.context!.close();
+
+    page = await session.start();
+    await session.load(page);
+    await expect(tab(page, sprite)).toBeVisible();
+    // Windows are not opened without the user, so a popup blocker cannot drop them.
+    await page.waitForTimeout(1000);
+    assert.equal(session.context!.pages().length, 1);
+    await expect.poll(savedWindow).toBeTruthy();
+
+    const child = await openInWindow();
+    await child.close();
+    await expect(tab(page, sprite)).toBeVisible();
 });
