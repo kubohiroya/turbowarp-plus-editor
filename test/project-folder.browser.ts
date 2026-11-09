@@ -442,15 +442,49 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await readFile(nestedFile, 'utf8'), disk);
     assert.deepEqual(await readFile(indexPath), stagedIndex);
 
-    const mixed = JSON.parse(disk);
-    mixed.targets[1].blocks.move_B.inputs.STEPS[1][1] = '99';
-    mixed.targets[1].blocks.move_B.next = null;
-    await writeFile(nestedFile, stringify(mixed));
+    // Adding a block replaces only its script; the other sprite, the stage and the selection stay.
+    const structural = JSON.parse(disk);
+    structural.targets[1].blocks.move_B.next = 'turn_C';
+    structural.targets[1].blocks.turn_C = {opcode: 'motion_turnright', next: null, parent: 'move_B',
+        inputs: {DEGREES: [1, [4, '15']]}, fields: {}, shadow: false, topLevel: false};
+    const structuralDisk = stringify(structural);
+    await writeFile(nestedFile, structuralDisk);
+    await notifyFocus();
+    await expect.poll(() => page.evaluate(() =>
+        Boolean(window.ScratchBlocks.getMainWorkspace().getBlockById('turn_C')))).toBe(true);
+    await expect(notice).toBeHidden();
+    assert.deepEqual(await page.evaluate(() => {
+        const state = (window as any).folderTest;
+        const vm = window.vm;
+        const cat = vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
+        const bird = vm.runtime.targets.find(entry => entry.sprite.name === 'Bird');
+        const turn = cat.blocks.getBlock('turn_C');
+        return {same: state.stage === vm.runtime.getTargetForStage() && state.bird === bird && state.cat === cat &&
+            vm.editingTarget === cat, next: cat.blocks.getBlock('move_B').next, parent: turn.parent,
+            degrees: cat.blocks.getBlock(turn.inputs.DEGREES.shadow).fields.NUM.value};
+    }), {same: true, next: 'turn_C', parent: 'move_B', degrees: '15'});
+    assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
+    assert.equal(await readFile(nestedFile, 'utf8'), structuralDisk);
+    assert.deepEqual(await readFile(indexPath), stagedIndex);
+    // The replaced script has new block objects; later checks compare against them.
+    await page.evaluate(() => {
+        const state = (window as any).folderTest;
+        state.flag = state.cat.blocks.getBlock('flag_A');
+        state.move = state.cat.blocks.getBlock('move_B');
+    });
+
+    // A block that needs a variable the project lacks waits for a whole reload and leaves the VM as it is.
+    const unknown = JSON.parse(structuralDisk);
+    unknown.targets[1].blocks.set_D = {opcode: 'data_setvariableto', next: null, parent: null,
+        inputs: {VALUE: [1, [10, '0']]}, fields: {VARIABLE: ['missing', 'missing-variable-id']},
+        shadow: false, topLevel: true, x: 400, y: 400};
+    await writeFile(nestedFile, stringify(unknown));
     await notifyFocus();
     await expect(notice).toContainText('need the whole project to be reloaded');
     await expect(notice.getByRole('button', {name: 'Reload Whole Project'})).toBeEnabled();
+    assert.equal(await page.evaluate(() => Boolean((window as any).folderTest.cat.blocks.getBlock('set_D'))), false);
     assert.deepEqual(await memory(), {value: '71', x: 180, y: 130, same: true});
-    await writeFile(nestedFile, disk);
+    await writeFile(nestedFile, structuralDisk);
     await notifyFocus();
     await expect(notice).toBeHidden();
 
