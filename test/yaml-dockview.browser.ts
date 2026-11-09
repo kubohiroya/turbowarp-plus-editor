@@ -46,6 +46,8 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
         const url = new URL('editor.html', base);
         url.searchParams.set('lang', 'ja');
         url.searchParams.set('project_url', projectUrl);
+        // The edge handle appears only without the menu bar launcher, which editor-layout.browser.ts tests.
+        url.searchParams.set('twPlusStageLauncher', '0');
         if (rollback) url.searchParams.set('twPlusDockview', '0');
         await page.goto(url.href);
         const security = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});

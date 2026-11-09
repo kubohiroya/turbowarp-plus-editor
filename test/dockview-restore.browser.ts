@@ -40,6 +40,8 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     const url = new URL('/turbowarp-plus-editor/editor.html', host.apiOrigin);
     url.searchParams.set('lang', 'ja');
     url.searchParams.set('project_url', projectUrl);
+    // The edge handle appears only without the menu bar launcher, which editor-layout.browser.ts tests.
+    url.searchParams.set('twPlusStageLauncher', '0');
     let context: Awaited<ReturnType<typeof chromium.launchPersistentContext>>;
     t.after(async () => {
         await context?.close();
