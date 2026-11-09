@@ -7,7 +7,7 @@ const VM = guiRequire('scratch-vm');
 const JSZip = guiRequire('@turbowarp/jszip');
 const {installProjectToolsHost, renderFileMenu, loadedProjectTitle} = require('../../site/project-tools/index.ts');
 const {PROJECT_INFO_KEY} = require('../../site/project-tools/properties.ts');
-const {getExtensionAuthoringHost} = require('../../site/extension-host/authoring.ts');
+const {getExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
 const vmModules = {
     ScratchCommon: guiRequire('scratch-vm/src/extension-support/tw-extension-api-common.js'),
     createTranslate: guiRequire('scratch-vm/src/extension-support/tw-l10n.js'),

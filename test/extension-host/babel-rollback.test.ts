@@ -1,6 +1,5 @@
 import {hostError} from './test-errors.ts';
 import {test} from 'node:test';
-import {transformSync as stripTypes} from 'esbuild';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
@@ -30,10 +29,11 @@ const code = transpiled.replace(/from (['"])(\.\.?\/[^'"]+)\1/g,
     (match, quote, name) => `from '${new URL(name, pathToFileURL(loaderEntry)).href}'`);
 const {createExtensionLoader: transpiledLoader} = await import(
     `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
-const registrarSource = stripTypes(
-    await readFile(new URL('../../site/extension-host/registrar.ts', import.meta.url), 'utf8'), {loader: 'ts'}
-).code
-    .replace(/from ['"]([^'"]+)['"]/g, (match, name) => `from '${pathToFileURL(localRequire.resolve(name)).href}'`);
+// The registrar as the Loader publishes it, next to the core it imports: its relative import of
+// the core is pinned to that same file, so both are the one copy loaded above.
+const registrarFile = new URL('registrar.js', pathToFileURL(localRequire.resolve('@kubohiroya/turbowarp-extension-loader/scratch-vm')));
+const registrarSource = (await readFile(registrarFile, 'utf8'))
+    .replace(/from (['"])(\.\.?\/[^'"]+)\1/g, (match, quote, name) => `from '${new URL(name, registrarFile).href}'`);
 const {code: registrarCode} = transformSync(registrarSource, {babelrc: false, configFile: false,
     presets: [[require.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]});
 const {createVMExtensionRegistrar: transpiledRegistrar} = await import(

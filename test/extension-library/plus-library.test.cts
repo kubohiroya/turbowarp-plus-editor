@@ -84,7 +84,7 @@ test('missing decisions and incorrect registered IDs fail before a dependent loa
 
 test('a disposed Plus view does not navigate or update its parent after a delayed apply finishes', async () => {
     const PlusLibrary = require('../../site/extension-library/plus-library.tsx').default;
-    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.ts');
+    const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
     const {vm} = fixture();
     let finish;
     setExtensionAuthoringHost(vm, {configure: () => new Promise(resolve => { finish = resolve; })});
@@ -124,7 +124,7 @@ test('saying no on the screen closes the library and loads nothing', async () =>
 
 test('the screen\'s answer configures exactly the chosen rows, with the form it chose, in dependency order', async () => {
     const PlusLibrary = require('../../site/extension-library/plus-library.tsx').default;
-    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.ts');
+    const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
     const {vm} = fixture();
     const requests = [];
     setExtensionAuthoringHost(vm, {configure: async received => { requests.push(...received); }});
@@ -198,7 +198,7 @@ function findReview(node) {
 const markup = view => require('react-dom/server').renderToStaticMarkup(view.render());
 
 test('a failure worth asking again offers to try again, and trying again repeats the same answer', async () => {
-    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.ts');
+    const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
     const {LoaderError} = require('@kubohiroya/turbowarp-extension-loader');
     const {vm} = fixture();
     const attempts = [];
@@ -223,7 +223,7 @@ test('a failure worth asking again offers to try again, and trying again repeats
 });
 
 test('a refusal is stated with its code and message, and nothing offers to repeat it', async () => {
-    const {setExtensionAuthoringHost} = require('../../site/extension-host/authoring.ts');
+    const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
     const {LoaderError} = require('@kubohiroya/turbowarp-extension-loader');
     for (const error of [
         new LoaderError('DIGEST_MISMATCH', 'Digest mismatch', 'base'),

@@ -26,14 +26,12 @@ import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader
 
 import type {FetchRetryOptions, LoaderOptions, LoaderPorts, ResolvedCode} from '@kubohiroya/turbowarp-extension-loader';
 import type {HostDiagnostic} from './permission-ui.ts';
-import type {createExtensionAuthoringController, setExtensionAuthoringHost} from './authoring.ts';
+import type {createExtensionAuthoringController, createProjectAddresser, setExtensionAuthoringHost} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import type {createProjectPayloadHost} from '../project-payloads/host.ts';
-import type {createProjectAddresser} from './project-address.ts';
 import type {editorProjectArchives} from './shared-project-archive.ts';
 
 import {createPlusPermissionUI} from './permission-ui.ts';
-import {installExtensionLoader} from './project-loader.ts';
-import {createVMExtensionRegistrar} from './registrar.ts';
+import {createVMExtensionRegistrar, installExtensionLoader} from '@kubohiroya/turbowarp-extension-loader/scratch-vm/runtime';
 import {closePlusReview, openPlusReview} from './review-channel.ts';
 
 const SHA256 = /^[0-9a-f]{64}$/;
@@ -184,7 +182,7 @@ export function installPlusExtensionHost (vm, {
         const decisions = channel.decisions;
         reviewed = decisions;
         // The opener can only decline a copy the author allowed; any other form stays as written.
-        const declineCaching = new Set(decisions ? manifest.extensions
+        const declineCaching = new Set<string>(decisions ? manifest.extensions
             .filter(spec => spec.source.type === 'remote-cacheable' &&
                 decisions.get(spec.id)?.loading === 'remote-non-cacheable')
             .map(spec => spec.id) : []);
@@ -204,7 +202,7 @@ export function installPlusExtensionHost (vm, {
     // supplies no controller: passing the factory in rather than importing it here is what keeps
     // the controller, and everything it pulls in, out of that bundle.
     const authoring = typeof createAuthoring === 'function' ?
-        createAuthoring(vm, {ports, diagnostics, loaderOptions, archiveOptions}) : null;
+        createAuthoring(vm, {ports, diagnostics, loaderOptions, archiveOptions, zip: JSZip}) : null;
     let uninstall;
     try {
         uninstall = installExtensionLoader({vm, projectIO, transactionalRegistration: true,
