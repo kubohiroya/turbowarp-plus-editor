@@ -211,11 +211,14 @@ config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
     path.join(gui, 'src', 'components', 'stage-header', 'icon--fullscreen.svg');
 config.resolve.alias['@tw-plus/gui-block-category-artwork$'] =
     path.join(gui, 'src', 'addons', 'addons', 'block-palette-icons', '_runtime_entry.js');
-// Override the addon default in Plus without changing the pinned GUI sources.
-const hideDeleteButtonManifest = '../addons/hide-delete-button/_manifest_entry.js';
-config.resolve.alias[`${hideDeleteButtonManifest}$`] = path.join(siteSource, 'hide-delete-button-manifest.ts');
-config.resolve.alias['@tw-plus/upstream-hide-delete-button-manifest$'] =
-    path.join(gui, 'src', 'addons', 'generated', hideDeleteButtonManifest);
+// Override addon defaults in Plus without changing the pinned GUI sources. The add-on API, the
+// settings store and the settings page each import the generated list by one of these requests.
+const addonManifests = path.join(siteSource, 'addon-manifests.ts');
+for (const request of ['./generated/addon-manifests', '../generated/addon-manifests']) {
+    config.resolve.alias[`${request}$`] = addonManifests;
+}
+config.resolve.alias['@tw-plus/upstream-addon-manifests$'] =
+    path.join(gui, 'src', 'addons', 'generated', 'addon-manifests.js');
 const backpackSurface = path.join(siteSource, 'editor-backpack');
 config.resolve.alias['@tw-plus/backpack-window-host$'] = path.join(backpackSurface, 'window-host.ts');
 const layoutRequire = createRequire(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench'));

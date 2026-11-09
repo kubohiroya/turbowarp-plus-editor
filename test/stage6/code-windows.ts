@@ -135,6 +135,8 @@ try {
     await front('CodeDog', 3, 2);
     await windows.nth(2).getByRole('button', {name: 'Close code window'}).click();
     await front('CodeCat', 2, 1);
+    // Sprite deletion confirmation is on by default and asks before deleting.
+    page.once('dialog', dialog => dialog.accept());
     await page.evaluate(id => window.vm.deleteSprite(id), a);
     await windows.first().waitFor({state: 'detached'});
     assert.deepEqual(await selected(), []);

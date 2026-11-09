@@ -302,6 +302,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     // The saved folder opens again as it was saved.
     await open();
     assert.ok(await page.evaluate(name => window.vm.runtime.targets.some(entry => entry.sprite.name === name), 'Cat2'));
+    // Sprite deletion confirmation is on by default and asks before deleting.
+    page.once('dialog', dialog => dialog.accept());
     await page.evaluate(() => {
         const vm = window.vm;
         vm.deleteSprite(vm.runtime.targets.find(entry => entry.isOriginal && entry.sprite.name === 'Cat2').id);

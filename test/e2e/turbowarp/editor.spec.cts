@@ -81,11 +81,16 @@ const loadSample = async (page, baseURL) => {
     const from = await block.boundingBox();
     const workspace = await page.locator('.blocklySvg').first()
         .boundingBox();
+    const palette = await page.locator('.blocklyFlyout').boundingBox();
     expect(from).not.toBeNull();
     expect(workspace).not.toBeNull();
+    expect(palette).not.toBeNull();
     await page.mouse.move(from.x + 100, from.y + 20);
     await page.mouse.down();
-    await page.mouse.move(workspace.x + (workspace.width * 0.65), workspace.y + 200, {steps: 20});
+    // Drop below the open palette: a drag that stays inside it keeps the palette open over the block,
+    // and where the palette opens depends on which categories come before this one.
+    await page.mouse.move(workspace.x + (workspace.width * 0.65),
+        Math.max(workspace.y + 200, palette.y + palette.height + 40), {steps: 20});
     await page.mouse.up();
     await expect(page.locator('.blocklySvg > .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable').filter({
         hasText: 'scene properties'
