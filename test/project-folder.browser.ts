@@ -280,7 +280,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     }
     const indexPath = path.join(folder, '.git', 'index');
     const indexBefore = await readFile(indexPath);
-    const panel = page.getByRole('dialog', {name: 'Local Git'});
+    const panel = page.locator('.twgit-panel');
     const showGit = async () => {
         await page.getByText('File', {exact: true}).click();
         await page.getByText('Local Git…', {exact: true}).click();
@@ -306,6 +306,14 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(projectChanges.locator('.twgit-review-script')).toHaveCount(3);
     await projectChanges.locator('.twgit-review-script summary').first().click();
     await expect(projectChanges.locator('.twgit-review-script svg.blocklySvg')).toHaveCount(1);
+    // The panel is a tab beside the code, and the working-tree version can point at its script in the Editor.
+    await expect(panel).toHaveClass(/twgit-panel-tab/);
+    await projectChanges.getByRole('button', {name: 'After · Highlight in Editor'}).click();
+    // The code now has the front of the tab group, so the panel's status is attached but hidden behind it.
+    await expect(panel.locator('[role=status]', {hasText: 'Highlighted in the Editor.'})).toBeAttached();
+    assert.ok(await page.evaluate(() => (window as any).ScratchBlocks.getMainWorkspace().getAllBlocks(false)
+        .some(block => block.getSvgRoot()?.classList.contains('twgit-changed-block'))));
+    await showGit();
     await panel.getByRole('button', {name: 'Text', exact: true}).click();
     await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
     assert.deepEqual(await readFile(indexPath), indexBefore);
