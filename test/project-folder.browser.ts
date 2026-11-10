@@ -528,7 +528,10 @@ test('the browser folder commands save localized Git diffs to the original worki
         return {x, y};
     });
     assert.deepEqual(coordinates, {x: 180, y: 130});
-    assert.deepEqual(await page.evaluate(() => (window as any).folderTest.reads), [projectFile]);
+    // The closed Git panel keeps the branch button current from HEAD and the branch refs; the project reads only its file.
+    const gitRefs = new Set(['HEAD', 'packed-refs', ...git('for-each-ref', '--format=%(refname:lstrip=-1)').split('\n')]);
+    assert.deepEqual((await page.evaluate(() => (window as any).folderTest.reads) as string[]).filter(name => !gitRefs.has(name)),
+        [projectFile]);
     assert.deepEqual(await observe(), ioBefore);
     assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
     assert.equal(await readFile(nestedFile, 'utf8'), disk);
