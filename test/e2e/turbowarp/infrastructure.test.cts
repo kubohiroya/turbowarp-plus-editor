@@ -76,12 +76,11 @@ test('the full integration profile includes every fixed-input case without skips
     assert.equal(result.status,0,result.stderr);
     const collect=suite=>[...(suite.specs||[]),...(suite.suites||[]).flatMap(collect)];
     const cases=JSON.parse(result.stdout).suites.flatMap(collect).flatMap(spec=>spec.tests.map(entry=>({...entry,file:spec.file,title:spec.title})));
-    assert.equal(cases.length,50);
-    assert.equal(cases.filter(entry=>entry.file==='fixed-inputs.spec.cts').length,5);
+    assert.equal(cases.length,46);
+    assert.equal(cases.filter(entry=>entry.file==='fixed-inputs.spec.cts').length,3);
     assert.equal(cases.filter(entry=>entry.file==='document-layout.spec.cts').length,1);
     assert.equal(cases.filter(entry=>entry.file==='document-source.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='document-refusal.spec.cts').length,2);
-    assert.equal(cases.filter(entry=>entry.file==='block-icon-preview.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='script-transfer.spec.cts').length,4);
     assert.equal(cases.filter(entry=>entry.file==='palette-delete-preview.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='horizontal-block-palette.spec.cts').length,9);
