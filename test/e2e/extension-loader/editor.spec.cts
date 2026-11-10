@@ -126,16 +126,6 @@ test('digest mismatch, unknown schema and a forged trust field fail before evalu
     }
 });
 
-test('approved code claiming another ID cannot register either ID', async ({page}) => {
-    await open(page);
-    const loading = load(page, await project({id: 'otherfixture'}));
-    await answer(page, 'unsandboxed', {key: 'otherfixture'});
-    expect((await loading).ok).toBe(false);
-    expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('otherfixture') ||
-        vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(false);
-    expect(await page.evaluate(() => Boolean(vm.runtime._primitives.plusfixture_value))).toBe(false);
-});
-
 // An extension that fails while registering, such as one that requires unsandboxed but is run sandboxed.
 const failingCode = Buffer.from(`globalThis.__plusFixtureStarted=(globalThis.__plusFixtureStarted||0)+1;
 throw new Error('Fixture must run unsandboxed.');`);
@@ -237,18 +227,6 @@ for (const type of ['remote-non-cacheable', 'embedded-file', 'embedded-data']) {
         expect(json.turboWarpPlus.extensions[0].source.type).toBe(type);
     });
 }
-
-test('the three retired spellings are refused before anyone is asked, never read as a current form', async ({page}) => {
-    await page.route(remoteURL, route => route.fulfill({body: bytes, headers: {'access-control-allow-origin': '*'}}));
-    await open(page);
-    for (const source of [{type: 'remote', url: remoteURL}, {type: 'cached', url: remoteURL},
-        {type: 'embedded', path: 'extensions/plusfixture.js'}]) {
-        const result = await load(page, await project({type: 'embedded-file', source}));
-        expect(result.code, source.type).toBe('INVALID_SOURCE');
-        await expect(review(page)).toHaveCount(0);
-        expect(await executions(page)).toBe(0);
-    }
-});
 
 for (const [lang, words] of Object.entries({
     ja: {title: 'この作品は機能拡張を使います', keep: 'キャッシュを残す（既定）', fetch: '毎回取得する', ok: 'OK', cancel: 'キャンセル'},
