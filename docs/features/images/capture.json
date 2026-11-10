@@ -314,5 +314,23 @@
       "published-editor-git-pr-overview.png": "Captured from the published Editor in #418.",
       "published-editor-git-pr-script.png": "Captured from the published Editor in #418."
     }
+  },
+  "topPage": {
+    "date": "2026-11-10",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+    "siteRevision": "f1ed159612a670ed9254f6bfaa69c0351e8e7c58",
+    "guiRevision": "eac09baf59a1303d58e257ea8b78a3253c0af035",
+    "viewport": {
+      "width": 1200,
+      "height": 660
+    },
+    "deviceScaleFactor": 2,
+    "note": "Captured headlessly with Playwright from the public Editor. The default project is turned into a small demo before capture: Sprite1 is renamed to ネコ and given three scripts using the variable 速さ and the message 開始, then duplicated as ボール.",
+    "images": {
+      "top-editor.png": "Editor with the demo scripts, after the stage was opened in its own window.",
+      "top-stage-window.png": "The stage window (stage-popout.html) at 560×380.",
+      "top-search.png": "Search panel after typing 開始 in the menu-bar search field (clipped).",
+      "top-layout-menu.png": "The 編集パネルのレイアウト menu (clipped)."
+    }
   }
 }
