@@ -354,14 +354,33 @@ test('the browser folder commands save localized Git diffs to the original worki
     const indexPath = path.join(folder, '.git', 'index');
     const indexBefore = await readFile(indexPath);
     const panel = page.locator('.twgit-panel');
+    // The panel opens from the branch button left of the stage launcher, no longer from the File menu.
+    const branchButton = page.locator('.twgit-branch-button');
+    const branchMenu = page.getByRole('menu', {name: 'Branches'});
     const showGit = async () => {
-        await page.getByText('File', {exact: true}).click();
-        await page.getByText('Local Git…', {exact: true}).click();
+        await branchButton.click();
+        await branchMenu.getByRole('menuitem', {name: 'Open Local Git'}).click();
         await expect(panel).toBeVisible();
     };
+    await page.getByText('File', {exact: true}).click();
+    await expect(page.getByText('Open Project Folder…', {exact: true})).toBeVisible();
+    await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
+    await page.getByText('File', {exact: true}).click();
+    // Before a repository is chosen the button reads "Git" and offers to choose one.
+    const noRepository = page.getByRole('button', {name: 'Local Git', exact: true});
+    await expect(noRepository).toHaveText('Git▾');
+    assert.ok(await noRepository.evaluate(button => {
+        const launcher = [...document.querySelectorAll('button')].find(item => item.textContent === 'Open stage');
+        return !launcher || Boolean(button.compareDocumentPosition(launcher) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }), 'The branch button comes before the stage launcher.');
+    await noRepository.click();
+    assert.deepEqual(await branchMenu.getByRole('menuitem').allTextContents(), ['Choose Repository…', 'Open Local Git']);
+    await page.keyboard.press('Escape');
+    await expect(noRepository).toBeFocused();
     await showGit();
     await panel.getByRole('button', {name: 'Choose Repository…'}).click();
     await expect(panel.locator('.twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
+    await expect(page.getByRole('button', {name: `Branch: ${git('branch', '--show-current')}`, exact: true})).toBeVisible();
     await panel.getByText('Choose a project inside this repository', {exact: true}).click();
     await panel.getByRole('button', {name: 'projects/', exact: true}).click();
     await panel.getByRole('button', {name: 'demo/', exact: true}).click();
@@ -664,7 +683,12 @@ test('the browser folder commands save localized Git diffs to the original worki
     // No unsaved edits, so the reload asks nothing.
     await panel.getByRole('button', {name: 'Reload Project'}).click();
     await expect.poll(async () => (await memory()).value).toBe('88');
-    await panel.getByRole('button', {name: `Switch: ${base}`}).click();
+    // The branch button follows the panel's switch, and switches back through the panel's same operation.
+    await page.getByRole('button', {name: 'Branch: variant', exact: true}).click();
+    assert.equal(await branchMenu.getByRole('menuitemradio', {name: 'variant', exact: true}).getAttribute('aria-checked'), 'true');
+    await branchMenu.getByRole('menuitemradio', {name: base, exact: true}).click();
+    await expect(page.getByRole('button', {name: `Branch: ${base}`, exact: true})).toBeVisible();
+    await expect(panel.getByRole('button', {name: 'Switch: variant'})).toBeVisible();
     await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
@@ -680,19 +704,29 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(panel.getByRole('button', {name: 'Switch: before-projects'})).toBeEnabled();
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(git('status', '--porcelain'), '');
-    // Unsaved edits in the Editor keep the branch where it is.
+    // Unsaved edits in the Editor keep the branch where it is, also from the branch button, which shows why in the panel.
     await edit('value', '90');
-    await panel.getByRole('button', {name: 'Switch: variant'}).click();
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
+    await branchMenu.getByRole('menuitemradio', {name: 'variant', exact: true}).click();
     await expect(panel.getByText('Stop the project, and save or record (or undo) every change, before switching branches.')).toBeVisible();
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
     assert.equal((await memory()).value, '90');
     git('fsck', '--no-progress');
+    // With the panel closed, the button follows branches that another tool creates and switches to.
     await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    git('branch', 'from-another-tool');
+    await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
+    await expect(branchMenu.getByRole('menuitemradio', {name: 'from-another-tool', exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    git('symbolic-ref', 'HEAD', 'refs/heads/from-another-tool');
+    await expect(page.getByRole('button', {name: 'Branch: from-another-tool', exact: true})).toBeVisible();
     await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
     await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
     await page.getByText('File', {exact: true}).click();
     await expect(page.getByText('Open Project Folder…', {exact: true})).toBeVisible();
     await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
+    await expect(page.locator('.twgit-branch-button')).toHaveCount(0);
     assert.deepEqual(errors, []);
 });

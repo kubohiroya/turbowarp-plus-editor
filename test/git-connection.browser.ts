@@ -116,8 +116,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
         view.showDirectoryPicker = async () => fixture.directory;
     });
     const showGit = async target => {
-        await target.getByText('File', {exact: true}).click();
-        await target.getByText('Local Git…', {exact: true}).click();
+        await target.locator('.twgit-branch-button').click();
+        await target.getByRole('menuitem', {name: 'Open Local Git'}).click();
         const panel = target.locator('.twgit-panel');
         await expect(panel).toBeVisible();
         await panel.getByText('GitHub connection', {exact: true}).click();
@@ -201,5 +201,6 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await unsupported.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
     await unsupported.getByText('File', {exact: true}).click();
     await expect(unsupported.getByText('Local Git…', {exact: true})).toHaveCount(0);
+    await expect(unsupported.locator('.twgit-branch-button')).toHaveCount(0);
     assert.equal(requests.length, 5);
 });

@@ -10,7 +10,7 @@ import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
-import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
+import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
@@ -60,6 +60,8 @@ const ExtensionControls = connect(({scratchGui: {mode}}) => ({
     if (stageOnly !== (menuLocale === undefined)) return null;
     const service = hostStageControls(vm, hostIntegration());
     return React.createElement(React.Fragment, null,
+        // The current branch, left of the stage launcher; it opens the local Git panel (nothing without local Git).
+        menuLocale !== undefined && renderBranchButton(React.createElement, {vm, locale: menuLocale}),
         menuLocale !== undefined && stageLauncherEnabled &&
             React.createElement('div', {className: stageLauncherSlotClass, ref: mountStageLauncher}),
         service && React.createElement(StageControlsView, {service, isSmall, menuLocale}));
@@ -138,7 +140,7 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
         }}, action.label));
 };
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
-    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderGitMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
 
 export {saveProjectForPackager as serializeProjectForExport} from '../project-payloads/host.ts';
 
@@ -159,8 +161,7 @@ export const renderProjectFileWorkflow = ({
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
         exportProject: exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject),
-        externalYaml: renderExternalYamlMenu(inline),
-        git: renderGitMenu(React.createElement, inline)
+        externalYaml: renderExternalYamlMenu(inline)
     }});
 };
 

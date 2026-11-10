@@ -95,14 +95,15 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         type, x: 100, y: 100, data: {items: [], files: [client], dragOperationsMask: 1}
     });
     await page.waitForFunction(() => (window as any).gitDirectoryReady);
-    await page.getByText('File', {exact: true}).click();
-    await page.getByText('Local Git…', {exact: true}).click();
+    // Before a repository is chosen, the branch button reads "Git" and chooses one, then opens the panel on it.
+    await page.getByRole('button', {name: 'Local Git', exact: true}).click();
+    await page.getByRole('menuitem', {name: 'Choose Repository…'}).click();
     const panel = page.locator('.twgit-panel');
     const button = (name: string) => panel.getByRole('button', {name, exact: true});
     const status = panel.locator('[data-git-connection-state]');
     const notice = panel.getByText('The GitHub operation finished.', {exact: true});
-    await button('Choose Repository…').click();
     await expect(panel.locator('.twgit-graph-commit').filter({hasText: 'initial'})).toBeVisible();
+    await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', /./u);
     await panel.getByText('GitHub connection', {exact: true}).click();
     await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const connect = async () => {
