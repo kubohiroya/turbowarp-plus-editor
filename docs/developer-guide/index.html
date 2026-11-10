@@ -1,4 +1,4 @@
-<title>Plus Editor 拡張の手引き</title>
+<title>Plus Editor 開発者ガイド</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -179,8 +179,9 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 
 <header class="masthead">
   <div class="kicker">SCRATCH ADDONS · TURBOWARP ADDONS · TURBOWARP-PLUS-EDITOR</div>
-  <h1>エディターを拡張する三つの方式</h1>
-  <p>Scratch のアドオン、TurboWarp のアドオン、TurboWarp-Plus-Editor の差し込み口を比べ、Plus の拡張の仕様と、新しい拡張の作り方をまとめた4つの文書です。</p>
+  <h1>エディターに機能を足す三つの方式</h1>
+  <p>Scratch のアドオン、TurboWarp のアドオン、TurboWarp-Plus-Editor の差し込み口を比べ、Plus が追加機能を組み込む仕組みの仕様と、新しい追加機能の作り方をまとめた4つの文書です。</p>
+  <p>この文書では、Plus がエディター本体に組み込んで標準 TurboWarp に足している機能を<strong>追加機能</strong>、作品が読み込んで使う Scratch・TurboWarp の拡張機能を<strong>拡張</strong>と呼び分けます。</p>
   <div class="legend" aria-label="色の凡例">
     <span><i class="k-sa"></i>Scratch Addons（Scratch 向け）</span>
     <span><i class="k-tw"></i>TurboWarp 同梱アドオン</span>
@@ -192,8 +193,8 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <ol>
     <li><a href="#article"><b>01</b>記事：三つの方式</a></li>
     <li><a href="#comparison"><b>02</b>比較と結論</a></li>
-    <li><a href="#spec"><b>03</b>拡張の仕様書</a></li>
-    <li><a href="#howto"><b>04</b>新しい拡張の手順書</a></li>
+    <li><a href="#spec"><b>03</b>組み込みの仕様書</a></li>
+    <li><a href="#howto"><b>04</b>追加機能の作り方</a></li>
   </ol>
 </nav>
 
@@ -263,8 +264,8 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <div class="cards">
     <section class="card sa">
       <h5>Scratch Addons</h5>
-      <p>ブラウザーに入れる拡張です。Scratch 公式サイトのエディターだけでなく、プロフィールやフォーラムのページにも作用します。</p>
-      <dl><dt>入れ方</dt><dd>利用者がブラウザーに導入</dd><dt>切り替え</dt><dd>拡張の設定画面で個別に</dd><dt>触り方</dt><dd>DOM・Redux・VM を外から</dd></dl>
+      <p>ブラウザーに入れて使うブラウザー拡張です。Scratch 公式サイトのエディターだけでなく、プロフィールやフォーラムのページにも作用します。</p>
+      <dl><dt>入れ方</dt><dd>利用者がブラウザーに導入</dd><dt>切り替え</dt><dd>ブラウザー拡張の設定画面で個別に</dd><dt>触り方</dt><dd>DOM・Redux・VM を外から</dd></dl>
     </section>
     <section class="card tw">
       <h5>TurboWarp のアドオン</h5>
@@ -289,18 +290,18 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 <article class="doc" id="comparison">
   <header>
     <div class="kind">02 · 比較と結論</div>
-    <h2>三つの拡張方式の比較と、Plus が差し込み口を選ぶ理由</h2>
+    <h2>三つの方式の比較と、Plus が差し込み口を選ぶ理由</h2>
     <p class="lede">仕組み、効き始める時期、壊れ方、切り替え方の順に比べ、最後に Plus の方式の優位性を理由とともに結論づけます。</p>
   </header>
 
   <h3>1. Scratch Addons：ページに注入されるブラウザー拡張</h3>
   <div class="prose">
-    <p>Scratch Addons は Chrome や Firefox に入れる拡張です。アドオンは1つずつマニフェストを持ち、名前・説明・タグ・設定項目・既定で有効かどうか・どのページで動くかを宣言します。条件に合うページを開くと、拡張が userscript と userstyle をそのページに注入します。</p>
+    <p>Scratch Addons は Chrome や Firefox に入れるブラウザー拡張です。アドオンは1つずつマニフェストを持ち、名前・説明・タグ・設定項目・既定で有効かどうか・どのページで動くかを宣言します。条件に合うページを開くと、ブラウザー拡張が userscript と userstyle をそのページに注入します。</p>
     <p>userscript は <code>({addon, console, msg})</code> を受け取る非同期関数です。<code>addon.tab</code> の <code>waitForElement</code> で画面要素の出現を待ち、<code>traps</code> で VM や Blockly を手に入れ、Redux の状態を見張ります。公式エディターには口がないので、すべてを外から探し当てます。</p>
   </div>
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 760 250" role="img" aria-label="Scratch Addons の仕組み。ブラウザー拡張が条件に合う scratch.mit.edu のページへ userscript を注入し、userscript が DOM、Redux、VM と Blockly を外から探す。設定画面は拡張に有効無効と設定値を渡す。">
+      <svg viewBox="0 0 760 250" role="img" aria-label="Scratch Addons の仕組み。ブラウザー拡張が条件に合う scratch.mit.edu のページへ userscript を注入し、userscript が DOM、Redux、VM と Blockly を外から探す。設定画面はブラウザー拡張に有効無効と設定値を渡す。">
         <defs>
           <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
           <marker id="c1s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah sa"/></marker>
@@ -309,7 +310,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
         <text x="115" y="57" text-anchor="middle" class="t-b">ブラウザー拡張</text>
         <text x="115" y="77" text-anchor="middle" class="t-s">マニフェスト＋スクリプト</text>
         <rect x="20" y="160" width="190" height="56" rx="8" class="box plain"/>
-        <text x="115" y="185" text-anchor="middle" class="t-b">拡張の設定画面</text>
+        <text x="115" y="185" text-anchor="middle" class="t-b">ブラウザー拡張の設定</text>
         <text x="115" y="203" text-anchor="middle" class="t-s">利用者が切り替える</text>
         <line x1="115" y1="158" x2="115" y2="98" class="ln" marker-end="url(#c1)"/>
         <text x="125" y="132" class="t-s">有効・無効、設定値</text>
@@ -555,13 +556,13 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     </table>
   </div>
 
-  <h3>7. Plus の機能をアドオンの形に寄せられるか</h3>
+  <h3>7. Plus の追加機能をアドオンの形に寄せられるか</h3>
   <div class="prose">
-    <p>Plus の機能を「付け足すか、置き換えるか」と「利用者が切ってよいか、常に効いている必要があるか」の二つの軸で並べると、アドオンの形に寄せられるのは左上の区画だけです。</p>
+    <p>Plus の追加機能を「付け足すか、置き換えるか」と「利用者が切ってよいか、常に効いている必要があるか」の二つの軸で並べると、アドオンの形に寄せられるのは左上の区画だけです。</p>
   </div>
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 760 380" role="img" aria-label="Plus の機能の分類。横軸は付け足すか置き換えるか、縦軸は利用者が切ってよいか常に効いている必要があるか。左上には右クリックのアイコン、ミニマップ、削除プレビュー、転送メニュー、作品検索、操作欄があり、アドオンの形に寄せられる。右上には横長パレット、別ウィンドウのコード、スプライト一覧の拡張があり、見た目だけ寄せられる。下半分には拡張の審査、作品状態の reducer、Dockview レイアウト、ステージパネル、保存の流れがあり、寄せない。">
+      <svg viewBox="0 0 760 380" role="img" aria-label="Plus の追加機能の分類。横軸は付け足すか置き換えるか、縦軸は利用者が切ってよいか常に効いている必要があるか。左上には右クリックのアイコン、ミニマップ、削除プレビュー、転送メニュー、作品検索、操作欄があり、アドオンの形に寄せられる。右上には横長パレット、別ウィンドウのコード、スプライト一覧の強化があり、見た目だけ寄せられる。下半分には拡張の審査、作品状態の reducer、Dockview レイアウト、ステージパネル、保存の流れがあり、寄せない。">
         <rect x="80" y="30" width="330" height="160" class="zone plus"/>
         <rect x="410" y="30" width="330" height="160" class="zone warn" opacity=".7"/>
         <rect x="80" y="190" width="660" height="150" class="zone tw" opacity=".6"/>
@@ -587,7 +588,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
         <g>
           <circle cx="434" cy="80" r="4" class="dot warn"/><text x="444" y="84">横長のブロックパレット</text>
           <circle cx="434" cy="104" r="4" class="dot warn"/><text x="444" y="108">別ウィンドウのコード表示</text>
-          <circle cx="434" cy="128" r="4" class="dot warn"/><text x="444" y="132">スプライト一覧の拡張</text>
+          <circle cx="434" cy="128" r="4" class="dot warn"/><text x="444" y="132">スプライト一覧の強化</text>
           <text x="434" y="168" class="t-s">起動時に決まる。「リロードが必要」扱いなら揃う</text>
         </g>
         <g>
@@ -606,7 +607,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 
   <h3>8. 結論：Plus の方式が優れている理由</h3>
   <div class="prose">
-    <p>TurboWarp-Plus-Editor が TurboWarp を拡張するには、アドオンの方式よりも、フォークに名前付きの口を置いてビルド時に実装を結び付ける今の方式が適しています。理由は次の6つです。</p>
+    <p>TurboWarp-Plus-Editor が TurboWarp に機能を足すには、アドオンの方式よりも、フォークに名前付きの口を置いてビルド時に実装を結び付ける今の方式が適しています。理由は次の6つです。</p>
   </div>
   <ol class="reasons">
     <li><b>作品より先に効かせられる</b><span>拡張の審査や信頼する拡張の一覧は、作品の読み込みより前に決まっていなければなりません。起動後に非同期で付くアドオンでは、この順序を保証できません。口は描画の時点で同期的に参照されます。</span></li>
@@ -630,13 +631,13 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 <article class="doc" id="spec">
   <header>
     <div class="kind">03 · 仕様書</div>
-    <h2>TurboWarp-Plus-Editor の拡張の仕様</h2>
-    <p class="lede">Plus の機能がフォークの scratch-gui に届くまでの経路、口の一覧、守るべき約束、起動時フラグ、実行時の拡張に公開する API を定めます。</p>
+    <h2>TurboWarp-Plus-Editor が追加機能を組み込む仕組み</h2>
+    <p class="lede">Plus の追加機能がフォークの scratch-gui に届くまでの経路、口の一覧、守るべき約束、起動時フラグ、実行時の拡張に公開する API を定めます。</p>
   </header>
 
   <h3>1. 3つのリポジトリと依存の向き</h3>
   <div class="prose">
-    <p>Plus の拡張は3つのリポジトリにまたがります。依存は一方向で、上流は下流を知りません。</p>
+    <p>Plus の追加機能は3つのリポジトリにまたがります。依存は一方向で、上流は下流を知りません。</p>
   </div>
   <figure>
     <div class="canvas">
@@ -829,7 +830,7 @@ export const getHostIntegration = () =&gt;
     </table>
   </div>
   <div class="prose">
-    <p>ScratchBlocks が使えるようになった時点で一度だけ行う登録（ブロックの形、右クリックメニュー、パレットの拡張）は、<code>registerBlockShapes(ScratchBlocks)</code> に置きます。アドオンの起動を待つ必要があるときは、そのアドオンの id を <code>awaitStartupAddons</code> に書きます（今は <code>editor-searchable-dropdowns</code>）。</p>
+    <p>ScratchBlocks が使えるようになった時点で一度だけ行う登録（ブロックの形、右クリックメニュー、パレットへの項目の追加）は、<code>registerBlockShapes(ScratchBlocks)</code> に置きます。アドオンの起動を待つ必要があるときは、そのアドオンの id を <code>awaitStartupAddons</code> に書きます（今は <code>editor-searchable-dropdowns</code>）。</p>
   </div>
 
   <h3>6. 実行時の拡張に公開する API</h3>
@@ -964,9 +965,9 @@ export const getHostIntegration = () =&gt;
 <!-- ============================================================ 04 HOWTO -->
 <article class="doc" id="howto">
   <header>
-    <div class="kind">04 · 手順書</div>
-    <h2>新しい拡張を作る手順</h2>
-    <p class="lede">作りたい機能をどこに置くかを決め、パッケージに実装し、Editor でつなぎ、検証して配信するまでの手順です。</p>
+    <div class="kind">04 · 作り方</div>
+    <h2>新しい追加機能を作る手順</h2>
+    <p class="lede">作りたい追加機能をどこに置くかを決め、パッケージに実装し、Editor でつなぎ、検証して配信するまでの手順です。</p>
   </header>
 
   <h3>1. 置き場所を決める</h3>
