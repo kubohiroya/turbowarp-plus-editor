@@ -377,7 +377,9 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     const canvas = stage.locator('canvas').first();
     const resize = page.locator('[data-stage-resize="left"]');
     await expect(canvas).toBeVisible();
-    await expect(controls).toHaveCount(0);
+    // The stage recorder add-on is on by default and is the only control before any extension's.
+    await expect(controls.getByRole('button')).toHaveCount(1);
+    await expect(controls.getByRole('button', {name: 'Record', exact: true})).toHaveText('🎥');
     const originalWidth = (await canvas.boundingBox()).width;
     await page.waitForFunction(() =>
         Boolean(document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')]));
@@ -409,7 +411,7 @@ test('extension controls sit at the end of the menu bar and the stage can still 
         }
     });
     const camera = controls.getByRole('button', {name: 'Camera', exact: true});
-    await expect(controls.getByRole('button')).toHaveCount(5);
+    await expect(controls.getByRole('button')).toHaveCount(6);
     await expect(controls).toHaveCSS('border-top-left-radius', '8px');
     await expect(stage.locator('[data-extension-stage-control]')).toHaveCount(0);
     await expect(stage.getByTitle('Go', {exact: true})).toBeVisible();
@@ -427,14 +429,14 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     // no text is the same square whatever its glyph measures.
     const boxes = await controls.getByRole('button').evaluateAll(nodes => nodes.map(node => {
         const {x, y, width, height} = node.getBoundingClientRect();
-        return {id: node.dataset.extensionStageControl, x, y, width, height};
+        return {id: node.dataset.extensionStageControl ?? node.dataset.addonStageControl, x, y, width, height};
     }));
     assert.deepEqual(boxes.map(box => box.height), boxes.map(() => 26));
     assert.deepEqual(boxes.map(box => box.y), boxes.map(() => cameraBounds.y));
-    assert.deepEqual(boxes.filter(box => box.id === 'wide' || box.id === 'narrow').map(box => box.width),
-        [26, 26]);
+    assert.deepEqual(boxes.filter(box => ['wide', 'narrow', 'mediarecorder'].includes(box.id)).map(box => box.width),
+        [26, 26, 26]);
     assert.deepEqual(boxes.slice(1).map((box, index) =>
-        Number((box.x - boxes[index].x - boxes[index].width).toFixed(2))), [3, 3, 3, 3]);
+        Number((box.x - boxes[index].x - boxes[index].width).toFixed(2))), [3, 3, 3, 3, 3]);
     assert.equal((await canvas.boundingBox()).width, originalWidth);
     await resize.press('Home');
     await expect.poll(async () => (await canvas.boundingBox()).width).toBeLessThan(originalWidth);
@@ -463,7 +465,10 @@ test('the enabled debugger opens from the extension controls even without projec
     await page.goto(editor);
     await expect(projectInfoMenuButton(page)).toBeVisible();
     await expect(debuggerButton).toHaveCount(0);
-    await expect(group).toHaveCount(0);
+    // Before the debugger only the stage recorder is there, and not as text after the File menu.
+    await expect(group.getByRole('button')).toHaveCount(1);
+    await expect(group.getByRole('button', {name: 'Record', exact: true})).toBeVisible();
+    await expect(page.locator('.sa-record')).toHaveCount(0);
 
     const settings = await page.context().newPage();
     await settings.goto(origin + buildPrefix + 'addons.html?lang=en');
