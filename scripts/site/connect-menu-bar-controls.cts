@@ -2,7 +2,12 @@ module.exports = (source: string) => {
     const end = '{!reorganizeMenuBar && aboutButton}';
     const edit = '</DeletionRestorer>\n                                )}';
     const restore = '{this.restoreOptionMessage(deletedItem)}';
-    if ([end, edit, restore].some(slot => source.indexOf(slot) === -1 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
+    const host = 'const host = getHostIntegration();';
+    const title = '</MenuBarItemTooltip>\n            </div>\n        );\n        const menuBar';
+    const saveStatus = '<TWSaveStatus';
+    const redux = '        projectId: state.scratchGui.projectState.projectId,';
+    if ([end, edit, restore, host, title, saveStatus, redux].some(slot =>
+        source.indexOf(slot) === -1 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
         throw new Error('The pinned GUI menu bar connection has changed');
     }
     const start = '                                    <FileMenuItem\n                                        isRtl={this.props.isRtl}\n                                        command="new"';
@@ -25,6 +30,23 @@ module.exports = (source: string) => {
 ${original}                                    </React.Fragment>}
 `;
     return (source.slice(0, from) + workflow + source.slice(to))
+        .replace(host, `${host}
+        const useTitleSaveMenu = host?.renderProjectSaveMenu && this.props.canEditTitle && this.props.canManageFiles &&
+            !(this.props.canSave || this.props.canCreateCopy || this.props.canRemix);`)
+        .replace(title, `</MenuBarItemTooltip>
+                {useTitleSaveMenu && this.props.projectChanged && (
+                    <SB3Downloader showSaveFilePicker={this.props.showSaveFilePicker}>
+                        {(_className, _download, {projectFileStorage}) => host.renderProjectSaveMenu({
+                            vm: this.props.vm, locale: this.props.locale, storage: projectFileStorage
+                        })}
+                    </SB3Downloader>
+                )}
+            </div>
+        );
+        const menuBar`)
+        .replace(saveStatus, `${saveStatus} hideShortcut={Boolean(useTitleSaveMenu)}`)
+        .replace(redux, `${redux}\n        projectChanged: state.scratchGui.projectChanged,`)
+        .replace('    canEditTitle: PropTypes.bool,', '    canEditTitle: PropTypes.bool,\n    projectChanged: PropTypes.bool,')
         .replace(end, `${end}
                 {host?.renderStageControls?.({vm: this.props.vm, menuLocale: this.props.intl.locale})}`)
         .replace(restore, '{host?.renderEditMenuRestore?.(this.restoreOptionMessage(deletedItem)) ?? this.restoreOptionMessage(deletedItem)}')

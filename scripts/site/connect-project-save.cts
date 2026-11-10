@@ -30,7 +30,25 @@ ${close}`)
         const projectFileStorage = {
             canSave: this.props.canSaveProject,
             filename: this.props.projectFilename,
-            overwrite: this.props.fileHandle && this.saveToLastFile,
+            overwrite: this.props.fileHandle && (async () => {
+                const {vm, fileHandle} = this.props;
+                const stage = vm.runtime.getTargetForStage();
+                const current = () => this.props.vm === vm && vm.runtime.getTargetForStage() === stage;
+                let edited = false;
+                const changed = () => { edited = true; };
+                vm.on('PROJECT_CHANGED', changed);
+                try {
+                    await this.saveToHandle(fileHandle, run => run(), () => {
+                        if (!current()) return;
+                        if (edited) this.props.onShowSaveSuccessAlert();
+                        else this.finishedSaving();
+                    }, current);
+                } catch (error) {
+                    this.handleSaveError(error);
+                } finally {
+                    vm.removeListener('PROJECT_CHANGED', changed);
+                }
+            }),
             pick: canPick && (filename => this.props.showSaveFilePicker({
                 suggestedName: filename,
                 types: [{description: 'Scratch 3 Project', accept: {'application/octet-stream': '.sb3'}}],

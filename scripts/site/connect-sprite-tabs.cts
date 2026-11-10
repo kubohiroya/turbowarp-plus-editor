@@ -1,3 +1,5 @@
+const path = require('node:path');
+
 module.exports = (source: string) => {
     const toolbar = 'onToolbarSlots: hasToolbar ? setToolbarSlots : undefined,';
     const refresh = '    function refreshSurfaces() {\n        if (!multiView)\n            return;';
@@ -13,10 +15,38 @@ module.exports = (source: string) => {
         }
         scheduleSave();
     });`;
-    if (!source.includes(toolbar) || !source.includes(active) || !source.includes(refresh)) {
+    const tab = 'createTabComponent: () => new SpriteTab(document),';
+    const targets = 'const originalTargets = () => vm.runtime.targets.filter(target => target.isOriginal);';
+    const mountDocument = 'item.session = item.request.mount(element, () => api.close());';
+    const dispose = '            flushLayout();';
+    if ([toolbar, active, refresh, tab, targets, mountDocument, dispose].some(slot =>
+        source.indexOf(slot) < 0 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
         throw new Error('The pinned Editor Layout sprite tab connections have changed');
     }
-    return source.replace(toolbar, `${toolbar}
+    const unsaved = path.resolve(__dirname, '../../packages/editor-views/dockview-unsaved.ts');
+    return `import {mountDockviewUnsaved} from ${JSON.stringify(unsaved)};\n` + source
+        .replace(targets, `${targets}\n    const unsaved = multiView && mountDockviewUnsaved(vm, root, locale);`)
+        .replace(tab, `createTabComponent: ({id}) => {
+            const tab = new SpriteTab(document);
+            const stop = unsaved && unsaved.tab(tab.element, () => ({
+                target: views.get(id)?.target, document: documents.get(id)?.request.reference
+            }));
+            if (stop) tab.addDisposables({dispose: stop});
+            return tab;
+        },`)
+        .replace(mountDocument, `const stop = unsaved && unsaved.document(element, item.request.reference);
+                        try {
+                            const session = item.request.mount(element, () => api.close());
+                            item.session = {...session, dispose() {
+                                if (stop) stop();
+                                session.dispose();
+                            }};
+                        } catch (error) {
+                            if (stop) stop();
+                            throw error;
+                        }`)
+        .replace(dispose, `${dispose}\n            if (unsaved) unsaved.dispose();`)
+        .replace(toolbar, `${toolbar}
             runTargetSwitch: props.runTargetSwitch,`)
         .replace(refresh, `${refresh}
         // Layout changes can arrive before the editing target has switched.
