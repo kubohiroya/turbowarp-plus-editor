@@ -1,4 +1,4 @@
-<title>Plus Editor Extension Guide</title>
+<title>Plus Editor Developer Guide</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -179,8 +179,9 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 
 <header class="masthead">
   <div class="kicker">SCRATCH ADDONS · TURBOWARP ADDONS · TURBOWARP-PLUS-EDITOR</div>
-  <h1>Three ways to extend the editor</h1>
-  <p>Four documents that compare Scratch addons, TurboWarp addons and the sockets of TurboWarp-Plus-Editor, specify how Plus extensions work, and explain how to build a new one.</p>
+  <h1>Three ways to add features to the editor</h1>
+  <p>Four documents that compare Scratch addons, TurboWarp addons and the sockets of TurboWarp-Plus-Editor, specify how Plus builds in its added features, and explain how to build a new one.</p>
+  <p>In these documents, an <strong>added feature</strong> is something Plus builds into the editor itself on top of standard TurboWarp, and an <strong>extension</strong> is a Scratch or TurboWarp extension that a project loads.</p>
   <div class="legend" aria-label="Color legend">
     <span><i class="k-sa"></i>Scratch Addons (for Scratch)</span>
     <span><i class="k-tw"></i>TurboWarp bundled addons</span>
@@ -192,8 +193,8 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <ol>
     <li><a href="#article"><b>01</b>Article: three approaches</a></li>
     <li><a href="#comparison"><b>02</b>Comparison and conclusion</a></li>
-    <li><a href="#spec"><b>03</b>Extension spec</a></li>
-    <li><a href="#howto"><b>04</b>Building a new extension</a></li>
+    <li><a href="#spec"><b>03</b>How features are built in</a></li>
+    <li><a href="#howto"><b>04</b>Building a new feature</a></li>
   </ol>
 </nav>
 
@@ -259,8 +260,8 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <div class="cards">
     <section class="card sa">
       <h5>Scratch Addons</h5>
-      <p>An extension you install in your browser. It works not only on the editor of the official Scratch site but also on profile and forum pages.</p>
-      <dl><dt>Install</dt><dd>The user adds it to the browser</dd><dt>Toggle</dt><dd>Per addon, in the extension's settings</dd><dt>Access</dt><dd>DOM, Redux and VM, from outside</dd></dl>
+      <p>A browser extension you install. It works not only on the editor of the official Scratch site but also on profile and forum pages.</p>
+      <dl><dt>Install</dt><dd>The user adds it to the browser</dd><dt>Toggle</dt><dd>Per addon, in the browser extension's settings</dd><dt>Access</dt><dd>DOM, Redux and VM, from outside</dd></dl>
     </section>
     <section class="card tw">
       <h5>TurboWarp addons</h5>
@@ -291,12 +292,12 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 
   <h3>1. Scratch Addons: a browser extension injected into the page</h3>
   <div class="prose">
-    <p>Scratch Addons is an extension for Chrome or Firefox. Each addon has its own manifest that declares its name, description, tags, settings, whether it is on by default and which pages it runs on. When you open a matching page, the extension injects the addon's userscripts and userstyles into it.</p>
+    <p>Scratch Addons is a browser extension for Chrome or Firefox. Each addon has its own manifest that declares its name, description, tags, settings, whether it is on by default and which pages it runs on. When you open a matching page, the browser extension injects the addon's userscripts and userstyles into it.</p>
     <p>A userscript is an async function that receives <code>({addon, console, msg})</code>. It waits for elements to appear with <code>addon.tab.waitForElement</code>, obtains the VM and Blockly through <code>traps</code>, and watches Redux state. The official editor has no sockets, so everything has to be found from the outside.</p>
   </div>
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 760 250" role="img" aria-label="How Scratch Addons works. The browser extension injects userscripts into matching scratch.mit.edu pages, and each userscript finds the DOM, Redux, the VM and Blockly from outside. The settings page passes on/off states and setting values to the extension.">
+      <svg viewBox="0 0 760 250" role="img" aria-label="How Scratch Addons works. The browser extension injects userscripts into matching scratch.mit.edu pages, and each userscript finds the DOM, Redux, the VM and Blockly from outside. The settings page passes on/off states and setting values to the browser extension.">
         <defs>
           <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
           <marker id="c1s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah sa"/></marker>
@@ -305,7 +306,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
         <text x="115" y="57" text-anchor="middle" class="t-b">Browser extension</text>
         <text x="115" y="77" text-anchor="middle" class="t-s">Manifests + scripts</text>
         <rect x="20" y="160" width="190" height="56" rx="8" class="box plain"/>
-        <text x="115" y="185" text-anchor="middle" class="t-b">Extension settings</text>
+        <text x="115" y="185" text-anchor="middle" class="t-b">Settings page</text>
         <text x="115" y="203" text-anchor="middle" class="t-s">The user toggles</text>
         <line x1="115" y1="158" x2="115" y2="98" class="ln" marker-end="url(#c1)"/>
         <text x="125" y="132" class="t-s">On/off, values</text>
@@ -551,13 +552,13 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     </table>
   </div>
 
-  <h3>7. Can Plus features take the addon form?</h3>
+  <h3>7. Can Plus's added features take the addon form?</h3>
   <div class="prose">
-    <p>Plot Plus's features on two axes, "adds or replaces" and "the user may turn it off, or it must always be on". Only the top-left area can take the addon form.</p>
+    <p>Plot Plus's added features on two axes, "adds or replaces" and "the user may turn it off, or it must always be on". Only the top-left area can take the addon form.</p>
   </div>
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 760 380" role="img" aria-label="Classifying Plus features. The horizontal axis is adds versus replaces; the vertical axis is whether the user may turn it off or it must always be on. Top left: context menu icons, minimap, palette delete preview, script transfer menu, project search and stage controls, which can take the addon form. Top right: horizontal palette, code in separate windows and sprite list extensions, where only look and toggling can align. Bottom half: extension review, project state reducers, Dockview layout, stage panel and save flow, which are not aligned.">
+      <svg viewBox="0 0 760 380" role="img" aria-label="Classifying Plus's added features. The horizontal axis is adds versus replaces; the vertical axis is whether the user may turn it off or it must always be on. Top left: context menu icons, minimap, palette delete preview, script transfer menu, project search and stage controls, which can take the addon form. Top right: horizontal palette, code in separate windows and sprite list enhancements, where only look and toggling can align. Bottom half: extension review, project state reducers, Dockview layout, stage panel and save flow, which are not aligned.">
         <rect x="80" y="30" width="330" height="160" class="zone plus"/>
         <rect x="410" y="30" width="330" height="160" class="zone warn" opacity=".7"/>
         <rect x="80" y="190" width="660" height="150" class="zone tw" opacity=".6"/>
@@ -583,7 +584,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
         <g>
           <circle cx="434" cy="80" r="4" class="dot warn"/><text x="444" y="84">Horizontal block palette</text>
           <circle cx="434" cy="104" r="4" class="dot warn"/><text x="444" y="108">Code in separate windows</text>
-          <circle cx="434" cy="128" r="4" class="dot warn"/><text x="444" y="132">Sprite list extensions</text>
+          <circle cx="434" cy="128" r="4" class="dot warn"/><text x="444" y="132">Sprite list enhancements</text>
           <text x="434" y="168" class="t-s">Fixed at startup; aligns if "reload required"</text>
         </g>
         <g>
@@ -602,7 +603,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 
   <h3>8. Conclusion: why the Plus approach is better</h3>
   <div class="prose">
-    <p>For TurboWarp-Plus-Editor to extend TurboWarp, the current approach of placing named sockets in the fork and binding implementations at build time suits it better than the addon approach. There are six reasons.</p>
+    <p>For TurboWarp-Plus-Editor to add features to TurboWarp, the current approach of placing named sockets in the fork and binding implementations at build time suits it better than the addon approach. There are six reasons.</p>
   </div>
   <ol class="reasons">
     <li><b>It can take effect before the project</b><span>Extension review and the list of trusted extensions must be settled before a project loads. Addons attach asynchronously after startup and can't guarantee that order. Sockets are read synchronously at render time.</span></li>
@@ -626,13 +627,13 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 <article class="doc" id="spec">
   <header>
     <div class="kind">03 · SPECIFICATION</div>
-    <h2>The TurboWarp-Plus-Editor extension spec</h2>
-    <p class="lede">This defines how Plus features reach the forked scratch-gui, the list of sockets, the rules they follow, startup flags and the API exposed to runtime extensions.</p>
+    <h2>How TurboWarp-Plus-Editor builds in added features</h2>
+    <p class="lede">This defines how Plus's added features reach the forked scratch-gui, the list of sockets, the rules they follow, startup flags and the API exposed to runtime extensions.</p>
   </header>
 
   <h3>1. Three repositories and the direction of dependency</h3>
   <div class="prose">
-    <p>Plus extensions span three repositories. Dependencies go one way; upstream knows nothing about downstream.</p>
+    <p>Plus's added features span three repositories. Dependencies go one way; upstream knows nothing about downstream.</p>
   </div>
   <figure>
     <div class="canvas">
@@ -825,7 +826,7 @@ export const getHostIntegration = () =&gt;
     </table>
   </div>
   <div class="prose">
-    <p>One-time registration once ScratchBlocks is available (block shapes, context menus, palette extensions) goes in <code>registerBlockShapes(ScratchBlocks)</code>. When you need to wait for an addon to start, list its id in <code>awaitStartupAddons</code> (currently <code>editor-searchable-dropdowns</code>).</p>
+    <p>One-time registration once ScratchBlocks is available (block shapes, context menus, palette additions) goes in <code>registerBlockShapes(ScratchBlocks)</code>. When you need to wait for an addon to start, list its id in <code>awaitStartupAddons</code> (currently <code>editor-searchable-dropdowns</code>).</p>
   </div>
 
   <h3>6. API exposed to runtime extensions</h3>
@@ -960,8 +961,8 @@ export const getHostIntegration = () =&gt;
 <!-- ============================================================ 04 HOWTO -->
 <article class="doc" id="howto">
   <header>
-    <div class="kind">04 · HOW-TO</div>
-    <h2>How to build a new extension</h2>
+    <div class="kind">04 · BUILDING A FEATURE</div>
+    <h2>How to build a new added feature</h2>
     <p class="lede">The steps from deciding where a feature belongs to implementing it in a package, wiring it in the Editor, verifying and shipping it.</p>
   </header>
 
