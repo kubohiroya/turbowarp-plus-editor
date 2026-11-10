@@ -431,8 +431,11 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     }));
     assert.deepEqual(boxes.map(box => box.height), boxes.map(() => 26));
     assert.deepEqual(boxes.map(box => box.y), boxes.map(() => cameraBounds.y));
-    assert.deepEqual(boxes.filter(box => box.id === 'wide' || box.id === 'narrow').map(box => box.width),
-        [26, 26]);
+    // On the menu bar every control is its icon alone, whatever text it carries or its glyph
+    // measures; the label is the tooltip.
+    assert.deepEqual(boxes.map(box => box.width), boxes.map(() => 26));
+    await expect(camera).toHaveText('📷');
+    await expect(camera).toHaveAttribute('title', 'Camera');
     assert.deepEqual(boxes.slice(1).map((box, index) =>
         Number((box.x - boxes[index].x - boxes[index].width).toFixed(2))), [3, 3, 3, 3]);
     assert.equal((await canvas.boundingBox()).width, originalWidth);
