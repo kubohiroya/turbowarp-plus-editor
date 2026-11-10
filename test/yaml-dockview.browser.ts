@@ -36,6 +36,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
         page.locator('.dv-tab').and(page.getByRole('tab', {name: '背景', exact: true}));
     const documentTitle = (id: string) => `settings.yml (twpeyamlsettings / ${id})`;
     const docTab = (page: Page, id: string) => workspace(page).getByRole('tab', {name: documentTitle(id), exact: true});
+    const unsaved = (tab: Locator) => tab.locator('[data-tw-plus-unsaved-tab]');
     const docPanel = (page: Page, id: string) => workspace(page).locator(
         `.tw-plus-document-slot[data-provider-id="twpeyamlsettings"][data-document-id="${id}"]`
     );
@@ -84,6 +85,17 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const codeGroup = groups.filter({has: codeTab});
     const groupFor = (id: string) => groups.filter({has: page.getByRole('tab', {name: documentTitle(id), exact: true})});
 
+    const sprite = await page.evaluate(() => {
+        const target = window.vm.runtime.targets.find(target => target.isOriginal && !target.isStage);
+        const name = target.getName();
+        window.vm.renameSprite(target.id, `${name} changed`);
+        return {id: target.id, name};
+    });
+    await expect(unsaved(workspace(page).getByRole('tab', {name: `${sprite.name} changed`, exact: true}))).toBeVisible();
+    await expect(unsaved(codeTab)).toBeHidden();
+    await page.evaluate(({id, name}) => window.vm.renameSprite(id, name), sprite);
+    await expect(unsaved(workspace(page).getByRole('tab', {name: sprite.name, exact: true}))).toBeHidden();
+
     await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
     const stageDisplay = page.getByRole('menuitem', {name: 'ステージをタブで開く', exact: true});
     const stageMenu = page.getByRole('button', {name: 'ステージの表示', exact: true});
@@ -99,8 +111,11 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const settings = 'volume: 75\nmode: production\n';
     const labels = 'title: Chapter 2\n';
     await source(page, 'settings').fill(invalid);
+    await expect(unsaved(docTab(page, 'settings'))).toBeVisible();
+    await expect(unsaved(codeTab)).toBeHidden();
     await codeTab.click();
     await open(page, 1, 'labels');
+    await expect(unsaved(docTab(page, 'labels'))).toBeHidden();
     await expect(source(page, 'labels')).toHaveValue(initial.labels);
     await source(page, 'labels').fill(labels);
     await codeTab.click();
@@ -144,6 +159,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     await docTab(page, 'settings').locator('.dv-default-tab-action').click();
     await confirm(page).getByRole('button', {name: '保存して閉じる', exact: true}).click();
     await expect(docPanel(page, 'settings').getByRole('alert')).toContainText('JSON Schema validation failed');
+    await expect(unsaved(docTab(page, 'settings'))).toBeVisible();
     await expect(source(page, 'settings')).toHaveValue(invalid);
     assert.deepEqual(await committed(page), initial);
     await source(page, 'settings').fill(settings);
@@ -158,10 +174,20 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     await docTab(page, 'labels').locator('.dv-default-tab-action').click();
     await saveAndClose(page, 'labels');
 
-    await page.getByText('ファイル', {exact: true}).click();
+    await codeTab.click();
+    await open(page, 0, 'settings');
+    await expect(unsaved(docTab(page, 'settings'))).toBeVisible();
+    const saveMarker = page.getByRole('button', {name: '未保存の変更があります。保存メニューを開く'});
+    await saveMarker.press('Enter');
+    await expect(saveMarker).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByRole('button', {name: '保存', exact: true})).toHaveCount(0);
     const pending = page.waitForEvent('download');
     await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
     archive = await readFile(await (await pending).path());
+    await expect(saveMarker).toHaveCount(0);
+    await expect(unsaved(docTab(page, 'settings'))).toBeHidden();
+    await docTab(page, 'settings').locator('.dv-default-tab-action').click();
+    await expect(docTab(page, 'settings')).toHaveCount(0);
     const saved = await JSZip.loadAsync(archive);
     const project = JSON.parse(await saved.file('project.json').async('string'));
     assert.deepEqual(project.extensionStorage.twpeyamlsettings.documents, {settings, labels});

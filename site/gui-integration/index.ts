@@ -12,7 +12,7 @@ import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} f
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
-import ProjectFileMenu from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
@@ -156,6 +156,12 @@ export const projectFileTypes = [
 
 // Overwriting and saving into the project folder collect other windows' edits first, as Save As does.
 const collectingSaves = (storage, folder) => collectBeforeSaving(storage, folder, () => flushPendingSurfaceEdits());
+
+export const renderProjectSaveMenu = ({vm, locale = 'en', storage: gui}) => {
+    const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
+    const {saveAs} = projectFileActions(vm, locale, storage, () => folder?.detach());
+    return React.createElement(ProjectSaveMenu, {locale, entries: {storage, folder, saveAs}});
+};
 
 export const renderProjectFileWorkflow = ({
     vm, locale = 'en', MenuItem, MenuSection, close, storage: gui, create, newWindow, open, restore, exportProject, addExtension
