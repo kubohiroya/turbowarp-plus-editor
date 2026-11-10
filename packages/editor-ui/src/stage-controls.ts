@@ -23,6 +23,11 @@ interface StageControl extends Required<StageControlOptions> {
     ref(element: HTMLButtonElement | null): void;
 }
 
+interface RecordButton {
+    element: HTMLElement;
+    idleText: string;
+}
+
 const services = new WeakMap<object, ReturnType<typeof createStageControlsService>>();
 
 export const createStageControlsService = () => {
@@ -65,8 +70,9 @@ export const createStageControlsService = () => {
     // What a control shows while it is expanded. The element belongs to whoever registered the
     // control; this only carries it to the host, which mounts it and nothing more.
     let panel: HTMLElement | null = null;
-    // The editor add-on belongs to the VM across project loads.
+    // The editor add-ons belong to the VM across project loads.
     let debuggerButton: HTMLElement | null = null;
+    let recordButton: RecordButton | null = null;
     return {
         api,
         setDebuggerButton (element: HTMLElement | null) {
@@ -75,6 +81,18 @@ export const createStageControlsService = () => {
             notify();
         },
         debuggerButton: () => debuggerButton,
+        /**
+         * The stage recorder add-on's control. The add-on keeps the element and writes its state
+         * into the element's text; the view shows it as an icon and forwards clicks to it.
+         * @param element The add-on's element, or null to remove the control.
+         * @param idleText What the element reads while nothing is being recorded.
+         */
+        setRecordButton (element: HTMLElement | null, idleText = '') {
+            if (recordButton?.element === element && (!element || recordButton.idleText === idleText)) return;
+            recordButton = element ? {element, idleText} : null;
+            notify();
+        },
+        recordButton: () => recordButton,
         placePanel (element: HTMLElement | null) {
             if (panel === element) return;
             panel = element || null;

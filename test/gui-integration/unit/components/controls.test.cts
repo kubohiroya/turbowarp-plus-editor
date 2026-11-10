@@ -91,6 +91,32 @@ test('the host preserves the panel node and detaches it when replaced or unmount
     assert.equal(tracked.service.panel(), next, 'the service retains ownership of its panel');
 });
 
+test('the stage recorder add-on shows as an icon on the menu bar and mirrors its state', async t => {
+    const f = fixture(t);
+    const {service} = trackedService();
+    const recorder = document.createElement('div');
+    recorder.textContent = '録画';
+    let clicks = 0;
+    recorder.addEventListener('click', () => clicks++);
+    service.setRecordButton(recorder, '録画');
+    f.renderNode(React.createElement(StageControlsView, {service, menuLocale: 'ja'}));
+    const button = () => f.container.querySelector<HTMLButtonElement>('[data-addon-stage-control="mediarecorder"]');
+    assert.equal(f.container.querySelector('[role="group"]'), null, 'not in the extension tray');
+    assert.equal(button().textContent, '🎥');
+    assert.equal(button().getAttribute('aria-label'), '録画');
+    assert.equal(button().getAttribute('aria-pressed'), 'false');
+    assert.equal(recorder.parentNode, null, 'the add-on element stays out of the document');
+    button().click();
+    assert.equal(clicks, 1);
+    recorder.textContent = '録画を停止';
+    await new Promise(resolve => setTimeout(resolve));
+    assert.equal(button().textContent, '🎥録画を停止');
+    assert.equal(button().getAttribute('aria-label'), '録画を停止');
+    assert.equal(button().getAttribute('aria-pressed'), 'true');
+    service.setRecordButton(null);
+    assert.equal(button(), null);
+});
+
 test('switching VM services releases the old subscription and unmount releases the new one', t => {
     const f = fixture(t);
     const first = trackedService();

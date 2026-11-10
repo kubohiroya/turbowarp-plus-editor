@@ -13,6 +13,7 @@ interface StageControlsState {
     controls: ReturnType<Service['snapshot']>;
     panel: HTMLElement | null;
     debuggerButton: HTMLElement | null;
+    recordButton: ReturnType<Service['recordButton']>;
 }
 
 /**
@@ -48,6 +49,42 @@ function DebuggerButton ({element, label}: {element: HTMLElement; label: string}
     return <div className={styles.debuggerButton} ref={mount} />;
 }
 
+/**
+ * The stage recorder add-on's control as an icon button, on the menu bar on its own beside the
+ * debugger for the same reason: it is always there once the add-on is on. The add-on's own element stays out of the
+ * document: it keeps its click handler and writes its state into its text, which this button reads.
+ * While idle the button is the icon alone; otherwise the state ("Stop recording", a countdown, ...)
+ * is shown beside it so it is clear that recording is in progress and how to stop it.
+ */
+function RecordButton ({element, idleText}: {element: HTMLElement; idleText: string}) {
+    const read = () => ({text: (element.textContent || '').trim(), title: element.title});
+    const [state, setState] = React.useState(read);
+    React.useEffect(() => {
+        setState(read());
+        const Observer = element.ownerDocument.defaultView?.MutationObserver ?? MutationObserver;
+        const observer = new Observer(() => setState(read()));
+        observer.observe(element, {childList: true, characterData: true, subtree: true, attributes: true,
+            attributeFilter: ['title']});
+        return () => observer.disconnect();
+    }, [element]);
+    const busy = state.text !== '' && state.text !== idleText;
+    const label = state.text || idleText;
+    return (
+        <button
+            aria-label={label}
+            aria-pressed={busy}
+            className={styles.recordButton}
+            data-addon-stage-control="mediarecorder"
+            title={state.title || label}
+            type="button"
+            onClick={() => element.click()}
+        >
+            <span aria-hidden="true" className={styles.icon}>🎥</span>
+            {busy && <span className={styles.label}>{state.text}</span>}
+        </button>
+    );
+}
+
 class StageControlsView extends React.PureComponent<StageControlsProps, StageControlsState> {
     declare unsubscribe?: () => void;
     declare panelRoot?: HTMLElement | null;
@@ -61,7 +98,8 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
     }
     readService () {
         const {service} = this.props;
-        return {controls: service.snapshot(), panel: service.panel?.() || null, debuggerButton: service.debuggerButton()};
+        return {controls: service.snapshot(), panel: service.panel?.() || null, debuggerButton: service.debuggerButton(),
+            recordButton: service.recordButton?.() || null};
     }
     bindService () {
         this.unsubscribe?.();
@@ -93,7 +131,7 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
     }
     render () {
         const {isSmall, menuLocale} = this.props;
-        const {panel, debuggerButton} = this.state;
+        const {panel, debuggerButton, recordButton} = this.state;
         const buttons = this.state.controls.filter(control => control.visible).map(control => (
             <button
                 aria-expanded={control.expanded}
@@ -116,9 +154,10 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
             {buttons}
             {panel && <div className={styles.panel} ref={this.mountPanel} />}
         </>;
-        if (!buttons.length && !debuggerButton && !panel) return null;
+        if (!buttons.length && !debuggerButton && !recordButton && !panel) return null;
         const japanese = /^ja(?:-|$)/i.test(menuLocale);
         return <>
+            {recordButton && <RecordButton element={recordButton.element} idleText={recordButton.idleText} />}
             {debuggerButton && <DebuggerButton element={debuggerButton} label={japanese ? 'デバッグ' : 'Debugger'} />}
             {(buttons.length > 0 || panel) && <div className={styles.menuDock}>
                 {buttons.length > 0 && <div
