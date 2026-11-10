@@ -75,6 +75,13 @@ export const setDebuggerMenuButton = (vm: object, element: HTMLElement | null) =
     return true;
 };
 
+export const setRecordMenuButton = (vm: object, element: HTMLElement | null, idleText?: string) => {
+    const service = hostStageControls(vm, hostIntegration());
+    if (!service) return false;
+    service.setRecordButton(element, idleText);
+    return true;
+};
+
 // The add-on builds one debugger per VM, so it is attached once and lives as long as the page.
 export const setDebuggerInterface = (vm: object, debuggerInterface: DebuggerInterface) => {
     attachDebuggerPanel(debuggerInterface, {document, vm});

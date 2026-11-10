@@ -30,15 +30,3 @@
     width: min(820px, calc(100vw - 32px));
     margin: 60px auto;
 }
-
-/* Common form wrappers must not offset labels inside a key/value row. */
-.theme.commonLayout :global([data-block-editor-pair-row]) label {
-    margin-bottom: 0;
-}
-
-/* Preserve validation colors over the common form's injected control defaults. */
-.theme.commonLayout :global(.rjsf) :global([data-block-editor-invalid="true"]) {
-    border-color: var(--block-editor-error-border, #c62828);
-    box-shadow: 0 0 0 1px var(--block-editor-error-border, #c62828);
-    background: linear-gradient(var(--block-editor-error-tint, rgba(198, 40, 40, 0.08)), var(--block-editor-error-tint, rgba(198, 40, 40, 0.08))), var(--block-editor-input, white);
-}

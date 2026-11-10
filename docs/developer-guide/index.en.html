@@ -1,0 +1,1190 @@
+<title>Plus Editor Developer Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a document reader. Sticky tab bar of four documents, one 46rem text column, figures may run wider (60rem). Colors borrow Scratch's block categories: Looks purple = Scratch Addons, TurboWarp red = TurboWarp, Extensions teal = TurboWarp-Plus. */
+:root {
+  --bg: #F5F7FA;
+  --panel: #FFFFFF;
+  --fg: #1A2230;
+  --muted: #586579;
+  --line: #D6DDE7;
+  --line-strong: #8D99AB;
+  --sa: #7C55D0;
+  --sa-soft: #F0EAFC;
+  --tw: #D8383D;
+  --tw-soft: #FCEBEB;
+  --plus: #08916C;
+  --plus-soft: #E3F6EF;
+  --warn: #B46A00;
+  --warn-soft: #FFF3DF;
+  --code-bg: #EDF1F6;
+  --f-display: "IBM Plex Sans", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F141B; --panel: #17202B; --fg: #E4EAF2; --muted: #9AA7B9; --line: #2B3645; --line-strong: #6C7A8E;
+    --sa: #B096F2; --sa-soft: #241C38; --tw: #FF7175; --tw-soft: #36191B; --plus: #3DD6A7; --plus-soft: #0F2E25;
+    --warn: #F2AE4A; --warn-soft: #33250F; --code-bg: #1C2633; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F141B; --panel: #17202B; --fg: #E4EAF2; --muted: #9AA7B9; --line: #2B3645; --line-strong: #6C7A8E;
+  --sa: #B096F2; --sa-soft: #241C38; --tw: #FF7175; --tw-soft: #36191B; --plus: #3DD6A7; --plus-soft: #0F2E25;
+  --warn: #F2AE4A; --warn-soft: #33250F; --code-bg: #1C2633; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 4rem;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.masthead { max-width: 60rem; margin: 0 auto; padding-block: 2.5rem 1.25rem; display: grid; gap: .5rem; }
+.masthead .kicker { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; color: var(--muted); }
+.masthead h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(1.7rem, 4.5vw, 2.5rem); line-height: 1.25; margin: 0; text-wrap: balance; }
+.masthead p { margin: 0; color: var(--muted); max-width: 46rem; }
+.legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-size: .85rem; margin-top: .25rem; }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend i { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; }
+.legend .k-sa { background: var(--sa); } .legend .k-tw { background: var(--tw); } .legend .k-plus { background: var(--plus); }
+
+nav.tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+nav.tabs ol { list-style: none; margin: 0 auto; padding: 0; max-width: 60rem; display: flex; gap: .25rem; overflow-x: auto; }
+nav.tabs a {
+  display: block; padding: .7rem .9rem .6rem; white-space: nowrap; text-decoration: none; color: var(--muted);
+  border-bottom: 3px solid transparent; font-size: .92rem;
+}
+nav.tabs a b { font-family: var(--f-mono); font-weight: 600; font-size: .75rem; margin-right: .35rem; }
+nav.tabs a:hover { color: var(--fg); }
+nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--plus); font-weight: 700; }
+nav.tabs a:focus-visible, a:focus-visible { outline: 2px solid var(--plus); outline-offset: 2px; }
+
+main { max-width: 60rem; margin: 0 auto; }
+.doc { padding-top: 2rem; }
+.js .doc:not(.active) { display: none; }
+.doc + .doc { border-top: 1px dashed var(--line); margin-top: 3rem; }
+.js .doc + .doc { border-top: 0; margin-top: 0; }
+.doc > header { max-width: 46rem; display: grid; gap: .4rem; margin-bottom: 1.5rem; }
+.doc > header .kind { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; color: var(--plus); }
+.doc > header h2 { font-family: var(--f-display); font-weight: 900; font-size: clamp(1.5rem, 3.6vw, 2rem); line-height: 1.3; margin: 0; text-wrap: balance; }
+.doc > header .lede { color: var(--muted); margin: 0; }
+.prose { max-width: 46rem; }
+.prose > * + * { margin-top: 1rem; }
+h3 { font-family: var(--f-display); font-weight: 700; font-size: 1.3rem; line-height: 1.4; margin: 2.75rem 0 0; text-wrap: balance; max-width: 46rem; }
+h4 { font-size: 1.02rem; margin: 1.75rem 0 0; max-width: 46rem; }
+p, ul, ol { margin: 0; }
+.prose ul, .prose ol { padding-left: 1.4rem; display: grid; gap: .35rem; }
+code { font-family: var(--f-mono); font-size: .86em; background: var(--code-bg); padding: .08em .35em; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.1rem; overflow-x: auto; font-size: .84rem; line-height: 1.65; max-width: 46rem; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+a { color: var(--plus); }
+strong { font-weight: 700; }
+.sa { color: var(--sa); } .tw { color: var(--tw); } .plus { color: var(--plus); }
+
+figure { margin: 1.75rem 0; max-width: 60rem; }
+figure .canvas { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; overflow-x: auto; }
+figure svg { display: block; width: 100%; min-width: 600px; height: auto; color: var(--fg); font-family: var(--f-body); }
+figcaption { font-size: .88rem; color: var(--muted); margin-top: .6rem; max-width: 46rem; }
+figcaption b { color: var(--fg); font-family: var(--f-mono); font-weight: 600; margin-right: .4rem; }
+
+svg .box { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.2; }
+svg .box.sa { stroke: var(--sa); fill: var(--sa-soft); }
+svg .box.tw { stroke: var(--tw); fill: var(--tw-soft); }
+svg .box.plus { stroke: var(--plus); fill: var(--plus-soft); }
+svg .box.warn { stroke: var(--warn); fill: var(--warn-soft); }
+svg .box.plain { fill: var(--bg); }
+svg .frame { fill: none; stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 6 5; }
+svg .zone { stroke: none; }
+svg .zone.sa { fill: var(--sa-soft); } svg .zone.plus { fill: var(--plus-soft); } svg .zone.warn { fill: var(--warn-soft); } svg .zone.tw { fill: var(--tw-soft); }
+svg text { fill: currentColor; font-size: 13px; }
+svg .t-b { font-weight: 700; }
+svg .t-s { font-size: 11.5px; fill: var(--muted); }
+svg .t-m { font-family: var(--f-mono); font-size: 11.5px; }
+svg .t-sa { fill: var(--sa); } svg .t-tw { fill: var(--tw); } svg .t-plus { fill: var(--plus); } svg .t-warn { fill: var(--warn); }
+svg .ln { stroke: currentColor; stroke-width: 1.4; fill: none; }
+svg .ln.sa { stroke: var(--sa); } svg .ln.tw { stroke: var(--tw); } svg .ln.plus { stroke: var(--plus); } svg .ln.warn { stroke: var(--warn); }
+svg .ln.thin { stroke: var(--line-strong); stroke-width: 1; }
+svg .dash { stroke-dasharray: 5 4; }
+svg .ah { fill: currentColor; } svg .ah.sa { fill: var(--sa); } svg .ah.tw { fill: var(--tw); } svg .ah.plus { fill: var(--plus); } svg .ah.warn { fill: var(--warn); } svg .ah.thin { fill: var(--line-strong); }
+svg .dot.sa { fill: var(--sa); } svg .dot.tw { fill: var(--tw); } svg .dot.plus { fill: var(--plus); } svg .dot.warn { fill: var(--warn); }
+svg .bar.sa { fill: var(--sa); } svg .bar.tw { fill: var(--tw); } svg .bar.plus { fill: var(--plus); }
+
+.table-wrap { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; line-height: 1.6; }
+th, td { text-align: left; vertical-align: top; padding: .65rem .8rem; border-bottom: 1px solid var(--line); }
+tr:last-child > * { border-bottom: 0; }
+thead th { font-size: .8rem; color: var(--muted); font-weight: 700; background: var(--bg); white-space: nowrap; }
+tbody th { font-weight: 700; white-space: nowrap; }
+td code, th code { white-space: nowrap; }
+table.wide { min-width: 760px; }
+th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px solid var(--tw); } th.plus { border-top: 3px solid var(--plus); }
+
+.callout { max-width: 46rem; border: 1px solid var(--line); border-left: 4px solid var(--plus); background: var(--panel); border-radius: 8px; padding: .9rem 1.1rem; }
+.callout.warn { border-left-color: var(--warn); }
+.callout > * + * { margin-top: .5rem; }
+.callout .label { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .08em; color: var(--muted); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--line-strong); border-radius: 8px; padding: 1rem 1.1rem; min-width: 0; display: grid; gap: .45rem; align-content: start; }
+.card.sa { border-top-color: var(--sa); } .card.tw { border-top-color: var(--tw); } .card.plus { border-top-color: var(--plus); }
+.card h5 { margin: 0; font-size: 1rem; font-family: var(--f-display); }
+.card p { font-size: .9rem; color: var(--muted); }
+.card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .2rem .7rem; font-size: .86rem; }
+.card dt { color: var(--muted); } .card dd { margin: 0; }
+
+.reasons { list-style: none; padding: 0; margin: 1.5rem 0; display: grid; gap: 1rem; max-width: 46rem; counter-reset: r; }
+.reasons li { counter-increment: r; display: grid; grid-template-columns: 2.4rem 1fr; gap: .2rem .8rem; }
+.reasons li::before { content: counter(r); grid-row: span 2; font-family: var(--f-display); font-weight: 900; font-size: 1.5rem; color: var(--plus); line-height: 1.2; }
+.reasons li b { font-size: 1.02rem; }
+.reasons li span { color: var(--fg); }
+
+.steps { list-style: none; padding: 0; margin: 1.25rem 0; display: grid; gap: 1.5rem; max-width: 46rem; counter-reset: s; }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: .1rem .8rem; }
+.steps > li::before { content: counter(s); grid-row: span 3; width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 2px solid var(--plus); color: var(--plus); display: grid; place-items: center; font-weight: 700; font-family: var(--f-mono); font-size: .9rem; }
+.steps > li > * { grid-column: 2; min-width: 0; }
+.steps > li > * + * { margin-top: .5rem; }
+.steps h5 { margin: 0; font-size: 1.05rem; line-height: 1.9rem; }
+
+.checklist { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .5rem; max-width: 46rem; }
+.checklist li { position: relative; padding-left: 1.9rem; }
+.checklist li::before { content: ""; position: absolute; left: 0; top: 0; width: 1rem; height: 1rem; margin-top: .4rem; border: 2px solid var(--plus); border-radius: 3px; }
+.checklist.no li::before { border-color: var(--warn); background: linear-gradient(45deg, transparent 44%, var(--warn) 44%, var(--warn) 56%, transparent 56%); }
+
+.source { font-size: .8rem; color: var(--muted); max-width: 46rem; margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: .8rem; }
+.next { margin-top: 2.5rem; max-width: 46rem; font-size: .95rem; }
+
+@media (max-width: 520px) {
+  body { font-size: 15px; }
+  .reasons li { grid-template-columns: 1.8rem 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+</style>
+
+<header class="masthead">
+  <div class="kicker">SCRATCH ADDONS · TURBOWARP ADDONS · TURBOWARP-PLUS-EDITOR</div>
+  <h1>Three ways to add features to the editor</h1>
+  <p>Four documents that compare Scratch addons, TurboWarp addons and the sockets of TurboWarp-Plus-Editor, specify how Plus builds in its added features, and explain how to build a new one.</p>
+  <p>In these documents, an <strong>added feature</strong> is something Plus builds into the editor itself on top of standard TurboWarp, and an <strong>extension</strong> is a Scratch or TurboWarp extension that a project loads.</p>
+  <div class="legend" aria-label="Color legend">
+    <span><i class="k-sa"></i>Scratch Addons (for Scratch)</span>
+    <span><i class="k-tw"></i>TurboWarp bundled addons</span>
+    <span><i class="k-plus"></i>TurboWarp-Plus-Editor</span>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Documents">
+  <ol>
+    <li><a href="#article"><b>01</b>Article: three approaches</a></li>
+    <li><a href="#comparison"><b>02</b>Comparison and conclusion</a></li>
+    <li><a href="#spec"><b>03</b>How features are built in</a></li>
+    <li><a href="#howto"><b>04</b>Building a new feature</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============================================================ 01 ARTICLE -->
+<article class="doc" id="article">
+  <header>
+    <div class="kind">01 · SHORT ARTICLE</div>
+    <h2>Addons reach in from outside; Plus gets called from inside</h2>
+    <p class="lede">There are three main ways to add features to a Scratch-family editor. The core difference is which side calls the other: the feature code or the editor.</p>
+  </header>
+
+  <div class="prose">
+    <p>The official Scratch 3 editor has no mechanism for users to add features. The community browser extension <strong class="sa">Scratch Addons</strong> fills that gap. It injects scripts into scratch.mit.edu pages, then looks for on-screen elements and internal state from the outside and adds features to them.</p>
+    <p><strong class="tw">TurboWarp</strong> took the editor-oriented addons from Scratch Addons and bundled them into its own build. The code style and API are nearly the same, but they run as part of the editor instead of as a browser extension.</p>
+    <p><strong class="plus">TurboWarp-Plus-Editor</strong> reverses the direction. Its fork of scratch-gui has named sockets that say "use this if something is supplied here", and the build binds Plus's implementation to them. When nothing is supplied, the fork behaves exactly like upstream TurboWarp.</p>
+  </div>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 330" role="img" aria-label="The direction of calls differs across the three approaches. For Scratch Addons and TurboWarp addons, the arrow points from the feature code to the editor. For Plus, it points from the editor to the feature code.">
+        <defs>
+          <marker id="a1-sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah sa"/></marker>
+          <marker id="a1-tw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah tw"/></marker>
+          <marker id="a1-plus" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <text x="130" y="18" text-anchor="middle" class="t-s">Feature code</text>
+        <text x="630" y="18" text-anchor="middle" class="t-s">Editor</text>
+        <rect x="30" y="34" width="200" height="64" rx="8" class="box sa"/>
+        <text x="130" y="61" text-anchor="middle" class="t-b">Addon</text>
+        <text x="130" y="81" text-anchor="middle" class="t-s">Lives in a browser extension</text>
+        <rect x="520" y="34" width="220" height="64" rx="8" class="box"/>
+        <text x="630" y="61" text-anchor="middle" class="t-b">Official Scratch editor</text>
+        <text x="630" y="81" text-anchor="middle" class="t-s">scratch.mit.edu</text>
+        <line x1="232" y1="66" x2="516" y2="66" class="ln sa" stroke-width="2" marker-end="url(#a1-sa)"/>
+        <text x="374" y="56" text-anchor="middle" class="t-sa t-b">Injected; searches from outside</text>
+        <text x="374" y="86" text-anchor="middle" class="t-s">Finds DOM, Redux and VM, adds to them</text>
+        <rect x="16" y="122" width="736" height="88" rx="10" class="frame"/>
+        <text x="28" y="137" class="t-s">Same build</text>
+        <rect x="30" y="146" width="200" height="54" rx="8" class="box tw"/>
+        <text x="130" y="170" text-anchor="middle" class="t-b">81 bundled addons</text>
+        <text x="130" y="188" text-anchor="middle" class="t-s">Imported from Scratch Addons</text>
+        <rect x="520" y="140" width="220" height="56" rx="8" class="box"/>
+        <text x="630" y="165" text-anchor="middle" class="t-b">TurboWarp editor</text>
+        <text x="630" y="184" text-anchor="middle" class="t-s">Upstream scratch-gui</text>
+        <line x1="232" y1="168" x2="516" y2="168" class="ln tw" stroke-width="2" marker-end="url(#a1-tw)"/>
+        <text x="374" y="160" text-anchor="middle" class="t-tw t-b">After startup, same API, from outside</text>
+        <rect x="30" y="234" width="200" height="72" rx="8" class="box plus"/>
+        <text x="130" y="262" text-anchor="middle" class="t-b">Plus implementation</text>
+        <text x="130" y="282" text-anchor="middle" class="t-s">npm packages and site/</text>
+        <rect x="520" y="234" width="220" height="72" rx="8" class="box"/>
+        <text x="630" y="262" text-anchor="middle" class="t-b">scratch-gui fork</text>
+        <text x="630" y="282" text-anchor="middle" class="t-s">Has named sockets</text>
+        <line x1="518" y1="270" x2="234" y2="270" class="ln plus" stroke-width="2" marker-end="url(#a1-plus)"/>
+        <text x="374" y="261" text-anchor="middle" class="t-plus t-b">Asks through fixed sockets</text>
+        <text x="374" y="291" text-anchor="middle" class="t-s">Bound at build time; empty = upstream</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 1</b>Addons reach from the feature side into the editor. In Plus, the editor calls Plus's implementation, one socket at a time.</figcaption>
+  </figure>
+
+  <div class="cards">
+    <section class="card sa">
+      <h5>Scratch Addons</h5>
+      <p>A browser extension you install. It works not only on the editor of the official Scratch site but also on profile and forum pages.</p>
+      <dl><dt>Install</dt><dd>The user adds it to the browser</dd><dt>Toggle</dt><dd>Per addon, in the browser extension's settings</dd><dt>Access</dt><dd>DOM, Redux and VM, from outside</dd></dl>
+    </section>
+    <section class="card tw">
+      <h5>TurboWarp addons</h5>
+      <p>The editor addons of Scratch Addons, bundled. TurboWarp reimplemented the API and adds six addons of its own, prefixed <code>tw-</code>.</p>
+      <dl><dt>Install</dt><dd>Bundled from the start</dd><dt>Toggle</dt><dd>The /addons settings page</dd><dt>Access</dt><dd>The same API, from outside</dd></dl>
+    </section>
+    <section class="card plus">
+      <h5>TurboWarp-Plus-Editor</h5>
+      <p>Implementations are passed to the fork's named sockets at build time. The implementations themselves live in versioned npm packages.</p>
+      <dl><dt>Install</dt><dd>Built into the bundle</dd><dt>Toggle</dt><dd>URL flags at startup</dd><dt>Access</dt><dd>Called by the GUI</dd></dl>
+    </section>
+  </div>
+
+  <div class="prose">
+    <p>The addon approach doesn't touch the editor itself. In exchange, when the page structure changes, addons silently stop working. The Plus approach leaves call lines in the fork, but its contracts are pinned by types and tests. It can also handle work that must take effect before a project loads, and replace the whole layout.</p>
+    <p>Plus's main features are the layout, extension review and the save flow. None of them fit the "add from outside" model, so there is little point in Plus aiming for addon compatibility. Small features that can be removed again are written, like addons, so they can be attached later and detached.</p>
+  </div>
+  <p class="next">The detailed comparison is in <a href="#comparison">02 Comparison and conclusion</a>, and the list of sockets is in <a href="#spec">03 Spec</a>.</p>
+</article>
+
+<!-- ============================================================ 02 COMPARISON -->
+<article class="doc" id="comparison">
+  <header>
+    <div class="kind">02 · COMPARISON AND CONCLUSION</div>
+    <h2>Comparing the three approaches, and why Plus chooses sockets</h2>
+    <p class="lede">This compares the mechanism, when each takes effect, how each breaks and how each is toggled. It ends with the advantages of the Plus approach and the reasons for them.</p>
+  </header>
+
+  <h3>1. Scratch Addons: a browser extension injected into the page</h3>
+  <div class="prose">
+    <p>Scratch Addons is a browser extension for Chrome or Firefox. Each addon has its own manifest that declares its name, description, tags, settings, whether it is on by default and which pages it runs on. When you open a matching page, the browser extension injects the addon's userscripts and userstyles into it.</p>
+    <p>A userscript is an async function that receives <code>({addon, console, msg})</code>. It waits for elements to appear with <code>addon.tab.waitForElement</code>, obtains the VM and Blockly through <code>traps</code>, and watches Redux state. The official editor has no sockets, so everything has to be found from the outside.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 250" role="img" aria-label="How Scratch Addons works. The browser extension injects userscripts into matching scratch.mit.edu pages, and each userscript finds the DOM, Redux, the VM and Blockly from outside. The settings page passes on/off states and setting values to the browser extension.">
+        <defs>
+          <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="c1s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah sa"/></marker>
+        </defs>
+        <rect x="20" y="30" width="190" height="64" rx="8" class="box sa"/>
+        <text x="115" y="57" text-anchor="middle" class="t-b">Browser extension</text>
+        <text x="115" y="77" text-anchor="middle" class="t-s">Manifests + scripts</text>
+        <rect x="20" y="160" width="190" height="56" rx="8" class="box plain"/>
+        <text x="115" y="185" text-anchor="middle" class="t-b">Settings page</text>
+        <text x="115" y="203" text-anchor="middle" class="t-s">The user toggles</text>
+        <line x1="115" y1="158" x2="115" y2="98" class="ln" marker-end="url(#c1)"/>
+        <text x="125" y="132" class="t-s">On/off, values</text>
+
+        <rect x="262" y="14" width="486" height="222" rx="10" class="frame"/>
+        <text x="276" y="34" class="t-s">A scratch.mit.edu page (official editor)</text>
+        <rect x="290" y="96" width="150" height="56" rx="8" class="box sa"/>
+        <text x="365" y="121" text-anchor="middle" class="t-b">userscript</text>
+        <text x="365" y="139" text-anchor="middle" class="t-s t-m">({addon, msg})</text>
+        <line x1="212" y1="62" x2="288" y2="110" class="ln sa" marker-end="url(#c1s)"/>
+        <text x="214" y="114" class="t-s">injects</text>
+
+        <rect x="560" y="48" width="170" height="40" rx="6" class="box"/>
+        <text x="645" y="73" text-anchor="middle">DOM (CSS classes)</text>
+        <rect x="560" y="104" width="170" height="40" rx="6" class="box"/>
+        <text x="645" y="129" text-anchor="middle">Redux store</text>
+        <rect x="560" y="160" width="170" height="40" rx="6" class="box"/>
+        <text x="645" y="185" text-anchor="middle">VM · Blockly</text>
+        <line x1="442" y1="112" x2="557" y2="70" class="ln sa" marker-end="url(#c1s)"/>
+        <line x1="442" y1="124" x2="557" y2="124" class="ln sa" marker-end="url(#c1s)"/>
+        <line x1="442" y1="136" x2="557" y2="178" class="ln sa" marker-end="url(#c1s)"/>
+        <text x="452" y="66" class="t-s t-m">waitForElement</text>
+        <text x="466" y="118" class="t-s">watch/dispatch</text>
+        <text x="482" y="176" class="t-s t-m">traps</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 2</b>With Scratch Addons, the official editor knows nothing. Userscripts find on-screen elements and internal state from the outside and add to them.</figcaption>
+  </figure>
+
+  <h3>2. TurboWarp addons: bundled, running on the same API</h3>
+  <div class="prose">
+    <p>TurboWarp pulls the editor addons of Scratch Addons into its own source with a script called <code>pull.js</code>. It applies TurboWarp's patches to the upstream code (the <code>tw</code> branch of <code>TurboWarp/addons</code>), rewrites it further with regular expressions, and places the result in <code>src/addons/</code>. The current fork contains 81 addons, six of which are TurboWarp's own <code>tw-</code> addons.</p>
+    <p>At run time, <code>api.js</code> recreates the <code>addon</code> object of Scratch Addons and passes it in. APIs that only exist in a browser extension, such as login information, are absent. In their place there are spots tailored to TurboWarp's screen, such as the shared spaces of <code>appendToSharedSpace</code> (eight of them, including <code>stageHeader</code>, <code>afterGreenFlag</code>, <code>afterStopButton</code> and <code>afterSoundTab</code>). <code>mediarecorder</code>, which adds a "Record" button to the menu bar, also uses this mechanism: it looks for the element next to the File menu and inserts itself there.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 300" role="img" aria-label="How TurboWarp addons work. At build time, pull.js takes upstream Scratch Addons plus TurboWarp's patches and generates the addons and their list. At run time, the settings page and the api.js runner run the userscripts, which touch the DOM and shared spaces, Redux, the VM and Blockly from outside.">
+        <defs>
+          <marker id="c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="c2t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah tw"/></marker>
+        </defs>
+        <text x="20" y="18" class="t-s t-b">Build time</text>
+        <rect x="20" y="30" width="160" height="56" rx="8" class="box sa"/>
+        <text x="100" y="55" text-anchor="middle" class="t-b">Scratch Addons</text>
+        <text x="100" y="73" text-anchor="middle" class="t-s">Upstream</text>
+        <rect x="214" y="30" width="170" height="56" rx="8" class="box tw"/>
+        <text x="299" y="55" text-anchor="middle" class="t-b">TurboWarp/addons</text>
+        <text x="299" y="73" text-anchor="middle" class="t-s t-m">tw branch</text>
+        <rect x="418" y="30" width="120" height="56" rx="8" class="box tw"/>
+        <text x="478" y="63" text-anchor="middle" class="t-b t-m">pull.js</text>
+        <rect x="572" y="30" width="168" height="56" rx="8" class="box"/>
+        <text x="656" y="55" text-anchor="middle" class="t-b t-m">addons/ generated/</text>
+        <text x="656" y="73" text-anchor="middle" class="t-s">81 addons + list</text>
+        <line x1="182" y1="58" x2="211" y2="58" class="ln" marker-end="url(#c2)"/>
+        <text x="197" y="104" text-anchor="middle" class="t-s">patches</text>
+        <line x1="386" y1="58" x2="415" y2="58" class="ln" marker-end="url(#c2)"/>
+        <text x="401" y="104" text-anchor="middle" class="t-s">clone</text>
+        <line x1="540" y1="58" x2="569" y2="58" class="ln" marker-end="url(#c2)"/>
+        <text x="555" y="104" text-anchor="middle" class="t-s">rewrite</text>
+
+        <line x1="20" y1="124" x2="740" y2="124" class="ln thin dash"/>
+        <text x="20" y="146" class="t-s t-b">Run time (after the GUI starts)</text>
+
+        <rect x="20" y="186" width="160" height="56" rx="8" class="box plain"/>
+        <text x="100" y="211" text-anchor="middle" class="t-b">Settings page</text>
+        <text x="100" y="229" text-anchor="middle" class="t-s t-m">/addons</text>
+        <rect x="214" y="186" width="170" height="56" rx="8" class="box tw"/>
+        <text x="299" y="211" text-anchor="middle" class="t-b">Runner</text>
+        <text x="299" y="229" text-anchor="middle" class="t-s t-m">entry.js · api.js</text>
+        <rect x="418" y="186" width="120" height="56" rx="8" class="box tw"/>
+        <text x="478" y="219" text-anchor="middle" class="t-b">userscript</text>
+        <line x1="182" y1="214" x2="211" y2="214" class="ln" marker-end="url(#c2)"/>
+        <text x="197" y="262" text-anchor="middle" class="t-s">toggle</text>
+        <line x1="386" y1="214" x2="415" y2="214" class="ln tw" marker-end="url(#c2t)"/>
+        <text x="401" y="262" text-anchor="middle" class="t-s">passes addon</text>
+        <path d="M656,88 L656,128 L299,128 L299,183" class="ln dash" marker-end="url(#c2)"/>
+        <text x="306" y="168" class="t-s">reads the list</text>
+
+        <rect x="580" y="150" width="160" height="36" rx="6" class="box"/>
+        <text x="660" y="173" text-anchor="middle">DOM · shared spaces</text>
+        <rect x="580" y="198" width="160" height="36" rx="6" class="box"/>
+        <text x="660" y="221" text-anchor="middle">Redux store</text>
+        <rect x="580" y="246" width="160" height="36" rx="6" class="box"/>
+        <text x="660" y="269" text-anchor="middle">VM · Blockly</text>
+        <line x1="540" y1="204" x2="577" y2="172" class="ln tw" marker-end="url(#c2t)"/>
+        <line x1="540" y1="214" x2="577" y2="216" class="ln tw" marker-end="url(#c2t)"/>
+        <line x1="540" y1="224" x2="577" y2="260" class="ln tw" marker-end="url(#c2t)"/>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 3</b>In TurboWarp, importing happens at build time and connecting at run time. The connection still works like Scratch Addons, by searching from the outside.</figcaption>
+  </figure>
+
+  <h3>3. TurboWarp-Plus-Editor: bound to sockets at build time</h3>
+  <div class="prose">
+    <p>Plus does not add a single file to its scratch-gui fork that upstream doesn't have. It puts <code>getHostIntegration()</code> in <code>src/addons/hooks.js</code>, a file upstream also has, and 28 files other than hooks.js ask for values by name, as in <code>getHostIntegration()?.EditorLayout</code>.</p>
+    <p>In the distributed build, webpack's <code>ProvidePlugin</code> binds <code>__TW_GUI_HOST__</code> to this repository's <code>site/gui-integration/index.ts</code>. From there it connects to the integration object in <code>site/plus-integration.ts</code> and to the versioned <code>@kubohiroya/turbowarp-*</code> npm packages. When the GUI is built on its own, <code>__TW_GUI_HOST__</code> doesn't exist, the getter returns <code>null</code>, and the GUI behaves like upstream.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 320" role="img" aria-label="How Plus works. site/plus-integration.ts bundles the npm packages, and gui-integration/index.ts exposes them as the host bridge. webpack's ProvidePlugin binds it to __TW_GUI_HOST__, the fork's hooks.js getHostIntegration returns it, and call sites in 28 files ask for values by name.">
+        <defs>
+          <marker id="c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="c3p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <text x="20" y="18" class="t-s t-b">turbowarp-plus-editor (this repository) and npm packages</text>
+        <rect x="20" y="32" width="200" height="60" rx="8" class="box plus"/>
+        <text x="120" y="57" text-anchor="middle" class="t-b">npm packages</text>
+        <text x="120" y="77" text-anchor="middle" class="t-s t-m">@kubohiroya/turbowarp-*</text>
+        <rect x="270" y="32" width="210" height="60" rx="8" class="box plus"/>
+        <text x="375" y="57" text-anchor="middle" class="t-b">Integration object</text>
+        <text x="375" y="77" text-anchor="middle" class="t-s t-m">site/plus-integration.ts</text>
+        <rect x="530" y="32" width="210" height="60" rx="8" class="box plus"/>
+        <text x="635" y="57" text-anchor="middle" class="t-b">Host bridge</text>
+        <text x="635" y="77" text-anchor="middle" class="t-s t-m">site/gui-integration/</text>
+        <line x1="268" y1="62" x2="223" y2="62" class="ln" marker-end="url(#c3)"/>
+        <text x="245" y="110" text-anchor="middle" class="t-s">import</text>
+        <line x1="528" y1="62" x2="483" y2="62" class="ln" marker-end="url(#c3)"/>
+        <text x="505" y="110" text-anchor="middle" class="t-s">import</text>
+
+        <rect x="530" y="128" width="210" height="56" rx="8" class="box plain"/>
+        <text x="635" y="152" text-anchor="middle" class="t-b">webpack ProvidePlugin</text>
+        <text x="635" y="170" text-anchor="middle" class="t-s t-m">__TW_GUI_HOST__</text>
+        <line x1="635" y1="94" x2="635" y2="125" class="ln plus" marker-end="url(#c3p)"/>
+        <text x="645" y="116" class="t-s">binds</text>
+
+        <rect x="12" y="206" width="736" height="104" rx="10" class="frame"/>
+        <text x="24" y="226" class="t-s">scratch-gui fork (pinned by SHA; no files that upstream lacks)</text>
+        <rect x="40" y="238" width="300" height="56" rx="8" class="box"/>
+        <text x="190" y="262" text-anchor="middle" class="t-b">Call sites in 28 files</text>
+        <text x="190" y="281" text-anchor="middle" class="t-s t-m">getHostIntegration()?.X</text>
+        <rect x="530" y="238" width="210" height="56" rx="8" class="box"/>
+        <text x="635" y="262" text-anchor="middle" class="t-b t-m">addons/hooks.js</text>
+        <text x="635" y="281" text-anchor="middle" class="t-s">null if absent</text>
+        <line x1="635" y1="186" x2="635" y2="235" class="ln plus" marker-end="url(#c3p)"/>
+        <text x="645" y="216" class="t-s">supplies the value</text>
+        <line x1="342" y1="266" x2="527" y2="266" class="ln" marker-end="url(#c3)"/>
+        <text x="434" y="258" text-anchor="middle" class="t-s">asks by name</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 4</b>In Plus, each call site in the fork names a socket and receives the value supplied at build time. When there is no value, it falls back to upstream behavior.</figcaption>
+  </figure>
+
+  <h3>4. When each takes effect</h3>
+  <div class="prose">
+    <p>The three approaches differ in when a feature starts working. Addons attach asynchronously after the page or GUI starts running, so they are a poor fit for work that must be in effect before a project loads. Plus can pass such work, like extension review, synchronously through a socket, so it is settled before loading.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 250" role="img" aria-label="When each approach takes effect. Scratch Addons attach asynchronously from page load. TurboWarp addons attach asynchronously after the GUI renders. Plus is bound at build time, and extension review is in effect before the project loads. In both addon approaches, the user can toggle features while editing.">
+        <text x="196" y="24" text-anchor="middle" class="t-s">Build</text>
+        <text x="314" y="24" text-anchor="middle" class="t-s">Page load</text>
+        <text x="432" y="24" text-anchor="middle" class="t-s">GUI render</text>
+        <text x="550" y="24" text-anchor="middle" class="t-s">Project load</text>
+        <text x="676" y="24" text-anchor="middle" class="t-s">Editing</text>
+        <line x1="137" y1="34" x2="137" y2="230" class="ln thin dash"/>
+        <line x1="255" y1="34" x2="255" y2="230" class="ln thin dash"/>
+        <line x1="373" y1="34" x2="373" y2="230" class="ln thin dash"/>
+        <line x1="491" y1="34" x2="491" y2="230" class="ln thin dash"/>
+        <line x1="609" y1="34" x2="609" y2="230" class="ln thin dash"/>
+        <text x="20" y="72" class="t-b t-sa">Scratch Addons</text>
+        <text x="20" y="138" class="t-b t-tw">TurboWarp</text>
+        <text x="20" y="154" class="t-b t-tw">addons</text>
+        <text x="20" y="204" class="t-b t-plus">Plus</text>
+
+        <rect x="259" y="58" width="481" height="18" rx="4" class="bar sa" opacity=".85"/>
+        <text x="266" y="96" class="t-s">Injected; attaches once elements appear</text>
+        <rect x="614" y="80" width="126" height="20" rx="4" class="box sa"/>
+        <text x="677" y="95" text-anchor="middle" class="t-s">User toggles</text>
+
+        <circle cx="196" cy="133" r="6" class="dot tw"/>
+        <text x="206" y="137" class="t-s">Bundled</text>
+        <rect x="377" y="124" width="363" height="18" rx="4" class="bar tw" opacity=".85"/>
+        <text x="384" y="162" class="t-s">Runs asynchronously after startup</text>
+        <rect x="614" y="146" width="126" height="20" rx="4" class="box tw"/>
+        <text x="677" y="161" text-anchor="middle" class="t-s">User toggles</text>
+
+        <rect x="141" y="190" width="599" height="18" rx="4" class="bar plus" opacity=".85"/>
+        <text x="148" y="228" class="t-s">Bound at build; read synchronously while rendering</text>
+        <path d="M491,186 l9,13 l-9,13 l-9,-13 z" class="box warn"/>
+        <text x="506" y="228" class="t-s t-warn t-b">Review applies before load</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 5</b>Addons attach later and users can toggle them. Plus is bound from the start, so it can also hold work that must take effect before a project loads.</figcaption>
+  </figure>
+
+  <h3>5. How each breaks when upstream changes</h3>
+  <div class="prose">
+    <p>Addons look for CSS module class names by prefix (<code>scratchClass</code>, <code>[class*='menu-bar_file-group']</code> and so on). When upstream changes the page structure, the search fails and nothing happens. Plus's sockets are calls written into the fork's source, so a clash with an upstream change stops at the merge conflict, the type check or the integration tests.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 220" role="img" aria-label="How each breaks. With addons, when upstream changes the menu bar structure, the selector stops matching and the button just doesn't appear, with no error. With Plus, the upstream change conflicts with the call line during the merge and is stopped by CI, type checks and integration tests.">
+        <defs>
+          <marker id="c5w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah warn"/></marker>
+          <marker id="c5p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <text x="20" y="20" class="t-b">Addons</text>
+        <rect x="20" y="34" width="210" height="52" rx="8" class="box"/>
+        <text x="125" y="57" text-anchor="middle">Upstream changes the</text>
+        <text x="125" y="75" text-anchor="middle">menu bar structure</text>
+        <rect x="270" y="34" width="210" height="52" rx="8" class="box"/>
+        <text x="375" y="57" text-anchor="middle">The selector</text>
+        <text x="375" y="75" text-anchor="middle">stops matching</text>
+        <rect x="520" y="34" width="220" height="52" rx="8" class="box warn"/>
+        <text x="630" y="57" text-anchor="middle" class="t-b">The button just vanishes</text>
+        <text x="630" y="75" text-anchor="middle" class="t-s">No error, no warning</text>
+        <line x1="232" y1="60" x2="267" y2="60" class="ln warn" marker-end="url(#c5w)"/>
+        <line x1="482" y1="60" x2="517" y2="60" class="ln warn" marker-end="url(#c5w)"/>
+
+        <text x="20" y="128" class="t-b">Plus</text>
+        <rect x="20" y="142" width="210" height="52" rx="8" class="box"/>
+        <text x="125" y="165" text-anchor="middle">Upstream changes</text>
+        <text x="125" y="183" text-anchor="middle">menu-bar.jsx</text>
+        <rect x="270" y="142" width="210" height="52" rx="8" class="box"/>
+        <text x="375" y="165" text-anchor="middle">The merge conflicts</text>
+        <text x="375" y="183" text-anchor="middle">with the call line</text>
+        <rect x="520" y="142" width="220" height="52" rx="8" class="box plus"/>
+        <text x="630" y="165" text-anchor="middle" class="t-b">Stopped before it lands</text>
+        <text x="630" y="183" text-anchor="middle" class="t-s">Type check · integration · E2E</text>
+        <line x1="232" y1="168" x2="267" y2="168" class="ln plus" marker-end="url(#c5p)"/>
+        <line x1="482" y1="168" x2="517" y2="168" class="ln plus" marker-end="url(#c5p)"/>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 6</b>Addons silently stop working. With Plus, you notice when you update the fork.</figcaption>
+  </figure>
+
+  <h3>6. Side-by-side comparison</h3>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>Aspect</th><th class="sa">Scratch Addons</th><th class="tw">TurboWarp addons</th><th class="plus">TurboWarp-Plus-Editor</th></tr></thead>
+      <tbody>
+        <tr><th>Distribution</th><td>Browser extension</td><td>Bundled in the editor build</td><td>npm packages built into the bundle</td></tr>
+        <tr><th>Unit of a feature</th><td>Manifest + userscripts/userstyles</td><td>The same (converted to <code>_manifest_entry.js</code>)</td><td>Package functions and components, plus entries in the integration object</td></tr>
+        <tr><th>Editor changes</th><td>None</td><td>Only the runner (<code>src/addons/</code>)</td><td>Call lines in 28 fork files</td></tr>
+        <tr><th>When it connects</th><td>Run time (injection)</td><td>Run time (after the GUI starts)</td><td>Bound at build time, read synchronously while rendering</td></tr>
+        <tr><th>Connection points</th><td>DOM, Redux, VM and Blockly, from outside</td><td>The same, plus 8 shared spaces</td><td>Named sockets (React components, reducer fragments, services)</td></tr>
+        <tr><th>What it can do</th><td>Additions, partial replacement</td><td>The same</td><td>Additions, plus replacing the whole layout, review before load, the save flow</td></tr>
+        <tr><th>Toggling</th><td>By the user, in the settings page</td><td>By the user, in <code>/addons</code></td><td>URL flags at startup (<code>?twPlus…=1</code>)</td></tr>
+        <tr><th>When upstream changes</th><td>Silently stops working</td><td>The same</td><td>Stopped by merge, type check and tests</td></tr>
+        <tr><th>Explicit contract</th><td>Developer docs</td><td>None (the code is the spec)</td><td>Typed sockets and unit tests</td></tr>
+        <tr><th>Sharing with players</th><td>None</td><td>None</td><td>The same packages also work in Packager's single-HTML output</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>7. Can Plus's added features take the addon form?</h3>
+  <div class="prose">
+    <p>Plot Plus's added features on two axes, "adds or replaces" and "the user may turn it off, or it must always be on". Only the top-left area can take the addon form.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 380" role="img" aria-label="Classifying Plus's added features. The horizontal axis is adds versus replaces; the vertical axis is whether the user may turn it off or it must always be on. Top left: context menu icons, minimap, palette delete preview, script transfer menu, project search and stage controls, which can take the addon form. Top right: horizontal palette, code in separate windows and sprite list enhancements, where only look and toggling can align. Bottom half: extension review, project state reducers, Dockview layout, stage panel and save flow, which are not aligned.">
+        <rect x="80" y="30" width="330" height="160" class="zone plus"/>
+        <rect x="410" y="30" width="330" height="160" class="zone warn" opacity=".7"/>
+        <rect x="80" y="190" width="660" height="150" class="zone tw" opacity=".6"/>
+        <line x1="80" y1="190" x2="740" y2="190" class="ln thin"/>
+        <line x1="410" y1="30" x2="410" y2="340" class="ln thin"/>
+        <rect x="80" y="30" width="660" height="310" class="frame"/>
+        <text x="410" y="362" text-anchor="middle" class="t-s">Adds ←　　　→ Replaces</text>
+        <text x="40" y="110" text-anchor="middle" class="t-s" transform="rotate(-90 40 110)">User may turn off</text>
+        <text x="40" y="265" text-anchor="middle" class="t-s" transform="rotate(-90 40 265)">Always on</text>
+
+        <text x="94" y="52" class="t-b t-plus">A  Can take the addon form</text>
+        <text x="424" y="52" class="t-b t-warn">B  Only look and toggling align</text>
+        <text x="94" y="212" class="t-b t-tw">C  Not aligned (stays a socket)</text>
+
+        <g>
+          <circle cx="104" cy="80" r="4" class="dot plus"/><text x="114" y="84">Context menu icons</text>
+          <circle cx="104" cy="104" r="4" class="dot plus"/><text x="114" y="108">Workspace minimap</text>
+          <circle cx="104" cy="128" r="4" class="dot plus"/><text x="114" y="132">Palette delete preview</text>
+          <circle cx="104" cy="152" r="4" class="dot plus"/><text x="114" y="156">Script transfer menu</text>
+          <circle cx="266" cy="80" r="4" class="dot plus"/><text x="276" y="84">Project-wide search</text>
+          <circle cx="266" cy="104" r="4" class="dot plus"/><text x="276" y="108">Stage controls</text>
+        </g>
+        <g>
+          <circle cx="434" cy="80" r="4" class="dot warn"/><text x="444" y="84">Horizontal block palette</text>
+          <circle cx="434" cy="104" r="4" class="dot warn"/><text x="444" y="108">Code in separate windows</text>
+          <circle cx="434" cy="128" r="4" class="dot warn"/><text x="444" y="132">Sprite list enhancements</text>
+          <text x="434" y="168" class="t-s">Fixed at startup; aligns if "reload required"</text>
+        </g>
+        <g>
+          <circle cx="104" cy="240" r="4" class="dot tw"/><text x="114" y="244">Extension review, trust list</text>
+          <circle cx="104" cy="264" r="4" class="dot tw"/><text x="114" y="268">Project state, modal reducers</text>
+          <circle cx="104" cy="288" r="4" class="dot tw"/><text x="114" y="292">Packager target</text>
+          <circle cx="434" cy="240" r="4" class="dot tw"/><text x="444" y="244">Whole layout via Dockview</text>
+          <circle cx="434" cy="264" r="4" class="dot tw"/><text x="444" y="268">Stage panel, sprite list</text>
+          <circle cx="434" cy="288" r="4" class="dot tw"/><text x="444" y="292">File menu and save flow</text>
+          <text x="94" y="326" class="t-s">Applies before load · must not be turned off · replaces structure</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 7</b>Only area A, small additive features, can take the addon form. Area C, at the center of Plus, lies outside the addon model.</figcaption>
+  </figure>
+
+  <h3>8. Conclusion: why the Plus approach is better</h3>
+  <div class="prose">
+    <p>For TurboWarp-Plus-Editor to add features to TurboWarp, the current approach of placing named sockets in the fork and binding implementations at build time suits it better than the addon approach. There are six reasons.</p>
+  </div>
+  <ol class="reasons">
+    <li><b>It can take effect before the project</b><span>Extension review and the list of trusted extensions must be settled before a project loads. Addons attach asynchronously after startup and can't guarantee that order. Sockets are read synchronously at render time.</span></li>
+    <li><b>It can replace whole structures</b><span>The Dockview layout, stage panel, sprite list and save flow are not additions to the existing screen. Doing them as addons would mean hiding upstream's DOM and rebuilding it. A socket can take a React component or a reducer fragment as is.</span></li>
+    <li><b>The contract is visible and testable</b><span>Addons connect through hashed class names and on-screen text. Plus's sockets have fixed names and arguments, which <code>test/plus-integration.test.ts</code> and <code>test:gui-integration</code> can pin down. When upstream changes, tests stop the change instead of letting it break silently.</span></li>
+    <li><b>The diff from upstream stays small</b><span>Every socket is optional; with nothing passed in, the fork behaves like upstream. Only call lines remain in the fork, and it has zero files that upstream lacks. When upstream updates are merged, conflicts are limited to those call lines.</span></li>
+    <li><b>Implementations are reusable, versioned parts</b><span>The implementations live in <code>@kubohiroya/turbowarp-*</code> npm packages, each with its own versions, tests and releases. The same packages work in the single-HTML player that Packager produces. Addons only run inside their editor.</span></li>
+    <li><b>It connects to runtime extensions</b><span>Some sockets are exposed to extensions as <code>Scratch.gui.stageControls</code> and <code>Scratch.gui.blockEditors</code>, so extensions such as the camera can register their own controls in the Editor's control bar. The addon API was not designed to be used from extensions.</span></li>
+  </ol>
+  <div class="callout warn">
+    <div class="label">COSTS WE ACCEPT</div>
+    <p>There is no screen where users toggle individual features. The fork's call lines must be maintained with every upstream update, and adding a feature requires a rebuild. Third parties cannot add features at run time either. Features that aren't part of the editor itself, however, can be added as runtime extensions through the control bar API.</p>
+  </div>
+  <div class="prose" style="margin-top:1rem">
+    <p>That said, small features in area A of Fig. 7 are written like addons: "attached later, removed with <code>dispose</code>". That makes them easy to move to the addon form if we ever want users to toggle them. We will not rebuild existing features to be addon-compatible.</p>
+  </div>
+  <p class="source">Sources: the fork's <code>src/addons/</code> (81 addons, 6 of them <code>tw-</code>), <code>appendToSharedSpace</code> in <code>api.js</code>, <code>docs/plus-integration-sockets.md</code>, <code>docs/gui-integration/README.md</code>, <code>site/plus-integration.ts</code>. Counts are from the fork pinned by this repository.</p>
+</article>
+
+<!-- ============================================================ 03 SPEC -->
+<article class="doc" id="spec">
+  <header>
+    <div class="kind">03 · SPECIFICATION</div>
+    <h2>How TurboWarp-Plus-Editor builds in added features</h2>
+    <p class="lede">This defines how Plus's added features reach the forked scratch-gui, the list of sockets, the rules they follow, startup flags and the API exposed to runtime extensions.</p>
+  </header>
+
+  <h3>1. Three repositories and the direction of dependency</h3>
+  <div class="prose">
+    <p>Plus's added features span three repositories. Dependencies go one way; upstream knows nothing about downstream.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 300" role="img" aria-label="How the three repositories relate. turbowarp-plus-editor imports npm packages at pinned versions, pins the scratch-gui fork by SHA and supplies values at build time. The fork asks through getHostIntegration. The packages know nothing about downstream. The output is deployed to GitHub Pages.">
+        <defs>
+          <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="s1p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="20" y="20" width="220" height="180" rx="10" class="box plus"/>
+        <text x="130" y="46" text-anchor="middle" class="t-b">turbowarp-plus-packages</text>
+        <text x="130" y="64" text-anchor="middle" class="t-s">npm · MPL-2.0 and others</text>
+        <text x="38" y="96" class="t-s">· The implementations</text>
+        <text x="38" y="118" class="t-s">· Unit tests</text>
+        <text x="38" y="140" class="t-s">· Versions, releases (v tags)</text>
+        <text x="38" y="162" class="t-s">· Unaware of downstream</text>
+
+        <rect x="270" y="20" width="220" height="180" rx="10" class="box"/>
+        <text x="380" y="46" text-anchor="middle" class="t-b">turbowarp-plus-editor</text>
+        <text x="380" y="64" text-anchor="middle" class="t-s">GPL · this repository</text>
+        <text x="288" y="96" class="t-s">· Wiring code in site/</text>
+        <text x="288" y="118" class="t-s">· Startup flags in config/</text>
+        <text x="288" y="140" class="t-s">· Build config, deployment</text>
+        <text x="288" y="162" class="t-s">· Integration tests, E2E</text>
+
+        <rect x="520" y="20" width="220" height="180" rx="10" class="box"/>
+        <text x="630" y="46" text-anchor="middle" class="t-b">scratch-gui fork</text>
+        <text x="630" y="64" text-anchor="middle" class="t-s">GPL · pinned by SHA</text>
+        <text x="538" y="96" class="t-s">· Only files upstream has</text>
+        <text x="538" y="118" class="t-s">· Lines that call sockets</text>
+        <text x="538" y="140" class="t-s">· Small generic fixes</text>
+        <text x="538" y="162" class="t-s">· No custom code added</text>
+
+        <line x1="268" y1="110" x2="243" y2="110" class="ln" marker-end="url(#s1)"/>
+        <text x="255" y="222" text-anchor="middle" class="t-s">imports npm releases</text>
+        <line x1="492" y1="92" x2="517" y2="92" class="ln" marker-end="url(#s1)"/>
+        <line x1="517" y1="128" x2="492" y2="128" class="ln plus dash" marker-end="url(#s1p)"/>
+        <text x="505" y="222" text-anchor="middle" class="t-s">pins, supplies values / asks via sockets</text>
+
+        <rect x="270" y="244" width="220" height="44" rx="8" class="box plain"/>
+        <text x="380" y="271" text-anchor="middle">Pages · player · Packager</text>
+        <line x1="380" y1="202" x2="380" y2="241" class="ln" marker-end="url(#s1)"/>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 8</b>Implementations live in the packages, wiring and deployment in the Editor, and only the socket call lines in the fork. The packages never import GPL code, so the direction is fixed: the GPL side calls the packages' sockets.</figcaption>
+  </figure>
+
+  <h3>2. Binding at build time</h3>
+  <div class="prose">
+    <p>The fork's <code>src/addons/hooks.js</code>, a file upstream also has, contains this getter.</p>
+  </div>
+  <pre><code>/* global __TW_GUI_HOST__ */
+// The distributing build supplies this module; standalone GUI builds have no extra host.
+export const getHostIntegration = () =&gt;
+    (typeof __TW_GUI_HOST__ === 'undefined' ? null : __TW_GUI_HOST__);</code></pre>
+  <div class="prose">
+    <p>The distribution build's <code>scripts/site/webpack.config.cts</code> uses <code>ProvidePlugin</code> to bind <code>__TW_GUI_HOST__</code> to <code>site/gui-integration/index.ts</code>. Nothing depends on assigning a global at run time or on startup order. The values the fork reads come in two layers.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 290" role="img" aria-label="The two layers of values the fork reads. Direct values, such as React components and functions, are read from the host bridge. Helper functions starting with host read entries of the integration object from plusIntegration through hostIntegration, and return an empty default when there is none.">
+        <defs>
+          <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        </defs>
+        <text x="20" y="20" class="t-s t-b">Fork call sites</text>
+        <rect x="20" y="34" width="210" height="66" rx="8" class="box"/>
+        <text x="32" y="58" class="t-m">?.EditorLayout</text>
+        <text x="32" y="80" class="t-m">?.renderFileMenu(props)</text>
+        <rect x="20" y="150" width="210" height="66" rx="8" class="box"/>
+        <text x="32" y="174" class="t-m">?.hostModalNames(</text>
+        <text x="32" y="196" class="t-m">  ?.hostIntegration())</text>
+
+        <text x="270" y="20" class="t-s t-b">site/gui-integration/index.ts</text>
+        <rect x="270" y="34" width="220" height="66" rx="8" class="box plus"/>
+        <text x="380" y="60" text-anchor="middle" class="t-b">Direct values</text>
+        <text x="380" y="80" text-anchor="middle" class="t-s">Components, functions</text>
+        <rect x="270" y="150" width="220" height="66" rx="8" class="box plus"/>
+        <text x="380" y="176" text-anchor="middle" class="t-b">host* helpers</text>
+        <text x="380" y="196" text-anchor="middle" class="t-s t-m">tw-plus-integration-points.ts</text>
+
+        <text x="530" y="20" class="t-s t-b">site/plus-integration.ts</text>
+        <rect x="530" y="34" width="210" height="182" rx="8" class="box plus"/>
+        <text x="635" y="60" text-anchor="middle" class="t-b">Integration object</text>
+        <text x="546" y="88" class="t-s t-m">modals</text>
+        <text x="546" y="108" class="t-s t-m">translations</text>
+        <text x="546" y="128" class="t-s t-m">attachToWorkspace</text>
+        <text x="546" y="148" class="t-s t-m">stageControls</text>
+        <text x="546" y="168" class="t-s t-m">securityReview …</text>
+        <text x="546" y="198" class="t-s t-m">plusIntegration()</text>
+
+        <line x1="232" y1="67" x2="267" y2="67" class="ln" marker-end="url(#s2)"/>
+        <line x1="232" y1="183" x2="267" y2="183" class="ln" marker-end="url(#s2)"/>
+        <line x1="492" y1="183" x2="527" y2="183" class="ln" marker-end="url(#s2)"/>
+        <text x="510" y="236" text-anchor="middle" class="t-s">hostIntegration()</text>
+
+        <rect x="20" y="246" width="720" height="34" rx="6" class="box plain"/>
+        <text x="380" y="268" text-anchor="middle" class="t-s">If neither exists, returns null or an empty default ([], {}, null); the fork falls back to upstream</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 9</b>UI parts are read directly from the bridge; settings and services are read from the integration object through helpers. The helpers decide the "absent" default in one place.</figcaption>
+  </figure>
+
+  <h3>3. List of sockets</h3>
+  <div class="prose">
+    <p>The sockets the fork refers to, grouped by purpose. The left column is the name the fork writes after <code>getHostIntegration()?.</code>; the right column is the entry in the integration object. You can extract the current list with this command.</p>
+  </div>
+  <pre><code>grep -rhoE "getHostIntegration\(\)\?\.[A-Za-z]+" src | sort | uniq -c</code></pre>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>Purpose</th><th>Name the fork reads</th><th>Integration object entry</th><th>Main callers</th></tr></thead>
+      <tbody>
+        <tr><th>Screen structure</th><td><code>EditorLayout</code> <code>StagePanel</code> <code>StageDisplayMenu</code> <code>TargetListLayout</code> <code>TargetListPanel</code> <code>SpriteGrid</code> <code>BackdropTile</code> <code>BackdropListActions</code> <code>BackpackSurface</code></td><td>(direct values)</td><td><code>gui.jsx</code> and others</td></tr>
+        <tr><th>Sprites and stage</th><td><code>wrapSpriteInfo</code> <code>spriteListClasses</code> <code>useSpriteCodeWindows</code> <code>attachSpriteCodeWorkspace</code> <code>attachStageInput</code> <code>attachStageMonitorDrag</code></td><td>(direct values)</td><td><code>sprite-info.jsx</code>, <code>stage.jsx</code> and others</td></tr>
+        <tr><th>Menus</th><td><code>renderFileMenu</code> <code>createFileMenuItem</code> <code>extensionInFileMenu</code> <code>renderProjectSearch</code> <code>ProjectInfoMenu</code> <code>renderStageControls</code></td><td>(direct values)</td><td><code>menu-bar.jsx</code>, <code>controls.jsx</code></td></tr>
+        <tr><th>Workspace and blocks</th><td><code>createWorkspaceAttachment</code> <code>registerHostBlockShapes</code> <code>createBlocksWrapper</code> <code>getBlockEditorService</code></td><td><code>attachToWorkspace</code> <code>registerBlockShapes</code> <code>blockEditor</code> <code>attachWorkspaceMinimap</code></td><td><code>gui.jsx</code>, <code>blocks.js</code>, <code>blocks.jsx</code></td></tr>
+        <tr><th>State</th><td><code>hostModalNames</code> <code>hostModalDefaults</code> <code>createCancelSecurityLoad</code> <code>recoverProjectLoad</code> <code>loadedProjectTitle</code> <code>restoreProjectTitle</code></td><td><code>modals</code></td><td><code>reducers/</code>, <code>vm-manager-hoc.jsx</code></td></tr>
+        <tr><th>Extension loading and review</th><td><code>installSecurityHost</code> <code>getPlusReviewedMode</code> <code>createPreviewVm</code></td><td><code>installExtensionHost</code> <code>securityReview</code> <code>trustedExtensions</code> <code>libraryTab</code> <code>extensionLoadErrors</code></td><td><code>tw-security-manager.jsx</code>, <code>extension-library.jsx</code></td></tr>
+        <tr><th>Input and translation</th><td><code>hostIgnoresKeyEvent</code> <code>hostTranslationsFor</code></td><td><code>shouldIgnoreKeyEvent</code> <code>translations</code></td><td><code>vm-listener-hoc.jsx</code>, <code>tw-translations/</code></td></tr>
+        <tr><th>Touchpoints with addons</th><td><code>hostAwaitedAddonIds</code> <code>finalizeHostTransferMenu</code> <code>hostStageTransferMenu</code></td><td><code>awaitStartupAddons</code> <code>scriptTransfer</code></td><td><code>addons/api.js</code></td></tr>
+        <tr><th>Packager</th><td><code>hostProjectPackager</code></td><td><code>projectPackager</code></td><td><code>tw-packager-integration-hoc.jsx</code></td></tr>
+        <tr><th>API for extensions</th><td><code>hostStageControls</code> <code>getBlockEditorService</code> <code>createPreviewVm</code></td><td><code>stageControls</code> <code>blockEditor</code></td><td><code>tw-extension-gui-api.js</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>4. Socket rules</h3>
+  <div class="prose">
+    <p>Every socket follows these rules, and so must any new socket.</p>
+    <ol>
+      <li><strong>Optional.</strong> With no value, the fork behaves like upstream TurboWarp. Helpers return an empty default (<code>[]</code>, <code>{}</code>, <code>null</code>).</li>
+      <li><strong>GUI internals arrive as arguments.</strong> The host never imports the fork's reducers or UI. The fork passes Modal, the lazily loaded ScratchBlocks, the logger and Redux action creators at call time (for example <code>createCancelSecurityLoad(initialState, defaultProjectId, LoadingState, integration)</code>).</li>
+      <li><strong>Anything attached can be detached.</strong> A socket that attaches something returns <code>{dispose()}</code>. Each time the VM changes, the fork calls <code>dispose()</code> on the previous return value before calling again, and never looks inside it.</li>
+      <li><strong>One service per VM.</strong> A service read from two places, like the control bar, is kept single with a <code>WeakMap</code> keyed by the VM.</li>
+      <li><strong>No CSS sockets.</strong> Upstream's CSS module class names are hashed at build time and can't be targeted from outside. New parts keep their own classes and styles in the package and use the GUI's public theme variables for color.</li>
+      <li><strong>No custom files in the fork.</strong> Only socket call lines stay in the fork. Tests aren't added to the fork either; they go in this repository's <code>test/</code> and in the packages.</li>
+    </ol>
+  </div>
+
+  <h3>5. Attaching to the workspace</h3>
+  <div class="prose">
+    <p><code>attachToWorkspace</code> is the socket that attaches features to Blockly and the VM in one go. It is the closest thing to an addon userscript.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 330" role="img" aria-label="The attachToWorkspace flow. The fork calls it with a context. The integration object calls the packages' attach functions in order and returns a combined dispose. When the VM changes, the fork calls dispose, and the integration object detaches in reverse order, continuing even if one fails. Then the fork calls again with the new context.">
+        <defs>
+          <marker id="s3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="s3p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="40" y="14" width="160" height="34" rx="6" class="box"/>
+        <text x="120" y="36" text-anchor="middle" class="t-b">Fork (gui.jsx)</text>
+        <rect x="300" y="14" width="160" height="34" rx="6" class="box plus"/>
+        <text x="380" y="36" text-anchor="middle" class="t-b">Integration object</text>
+        <rect x="560" y="14" width="160" height="34" rx="6" class="box plus"/>
+        <text x="640" y="36" text-anchor="middle" class="t-b">Packages</text>
+        <line x1="120" y1="48" x2="120" y2="320" class="ln thin dash"/>
+        <line x1="380" y1="48" x2="380" y2="320" class="ln thin dash"/>
+        <line x1="640" y1="48" x2="640" y2="320" class="ln thin dash"/>
+
+        <line x1="120" y1="78" x2="377" y2="78" class="ln" marker-end="url(#s3)"/>
+        <text x="128" y="72" class="t-s t-m">attachToWorkspace(context)</text>
+        <line x1="380" y1="108" x2="637" y2="108" class="ln plus" marker-end="url(#s3p)"/>
+        <text x="388" y="102" class="t-s">Calls attach functions in order</text>
+        <line x1="640" y1="132" x2="383" y2="132" class="ln plus dash" marker-end="url(#s3p)"/>
+        <text x="632" y="148" text-anchor="end" class="t-s t-m">each returns {dispose}</text>
+        <line x1="380" y1="170" x2="123" y2="170" class="ln dash" marker-end="url(#s3)"/>
+        <text x="372" y="164" text-anchor="end" class="t-s">Combined {dispose}</text>
+
+        <rect x="40" y="188" width="160" height="26" rx="13" class="box warn"/>
+        <text x="120" y="206" text-anchor="middle" class="t-s t-warn t-b">The VM changes</text>
+        <line x1="120" y1="236" x2="377" y2="236" class="ln" marker-end="url(#s3)"/>
+        <text x="128" y="230" class="t-s t-m">dispose()</text>
+        <line x1="380" y1="262" x2="637" y2="262" class="ln plus" marker-end="url(#s3p)"/>
+        <text x="388" y="256" class="t-s">Detaches in reverse; continues on failure</text>
+        <line x1="120" y1="300" x2="377" y2="300" class="ln" marker-end="url(#s3)"/>
+        <text x="128" y="294" class="t-s t-m">attachToWorkspace(new context)</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 10</b>The fork owns the order of attaching and detaching; the integration object decides what to attach.</figcaption>
+  </figure>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Context field</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>vm</code></td><td>The current VM. Called again each time it changes</td></tr>
+        <tr><td><code>locale</code></td><td>Display language (<code>ja</code>, <code>en</code> and so on)</td></tr>
+        <tr><td><code>document</code></td><td>The editor's document. Don't use <code>window.document</code> directly, so separate windows also work</td></tr>
+        <tr><td><code>getBlockly</code></td><td>A function returning ScratchBlocks. Waits until it is loaded</td></tr>
+        <tr><td><code>getMessages</code></td><td>A function returning translations for the current language</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>One-time registration once ScratchBlocks is available (block shapes, context menus, palette additions) goes in <code>registerBlockShapes(ScratchBlocks)</code>. When you need to wait for an addon to start, list its id in <code>awaitStartupAddons</code> (currently <code>editor-searchable-dropdowns</code>).</p>
+  </div>
+
+  <h3>6. API exposed to runtime extensions</h3>
+  <div class="prose">
+    <p>Unsandboxed extensions can read the following from <code>Scratch.gui</code>. In addition to upstream's <code>getBlockly</code> and <code>getBlocklyEagerly</code>, these fields appear only when the host supplies a value. Otherwise they stay <code>undefined</code>, so an extension can tell that "this build doesn't have it".</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>Scratch.gui.stageControls</code></td><td>An API for adding buttons to the stage control bar. <code>addButton({id, label, text?, icon?, onClick})</code> returns <code>{update, focus, dispose}</code></td></tr>
+        <tr><td><code>Scratch.gui.blockEditors</code></td><td>A service for editing blocks through forms</td></tr>
+        <tr><td><code>Scratch.gui.createPreviewVm()</code></td><td>Creates a preview VM independent of the project</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 290" role="img" aria-label="Paths into the stage control bar. An unsandboxed extension registers with the service through Scratch.gui.stageControls.addButton. An extension using app-shell finds the controls dock through a Symbol.for shared point and reaches the same service's api. There is one service per VM, and the renderer at the end of the menu bar subscribes to it. Loading a project clears the service.">
+        <defs>
+          <marker id="s4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="s4p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="20" y="30" width="200" height="56" rx="8" class="box"/>
+        <text x="120" y="55" text-anchor="middle" class="t-b">Unsandboxed extension</text>
+        <text x="120" y="73" text-anchor="middle" class="t-s">Loaded by the project</text>
+        <rect x="20" y="150" width="200" height="56" rx="8" class="box"/>
+        <text x="120" y="175" text-anchor="middle" class="t-b">Extension using app-shell</text>
+        <text x="120" y="193" text-anchor="middle" class="t-s">e.g. camera-source</text>
+
+        <rect x="290" y="150" width="190" height="56" rx="8" class="box plus"/>
+        <text x="385" y="175" text-anchor="middle" class="t-b">controls dock</text>
+        <text x="385" y="193" text-anchor="middle" class="t-s t-m">installControlsDock</text>
+        <line x1="222" y1="178" x2="287" y2="178" class="ln" marker-end="url(#s4)"/>
+        <text x="254" y="230" text-anchor="middle" class="t-s t-m">Symbol.for(…/v1)</text>
+
+        <rect x="540" y="80" width="200" height="76" rx="8" class="box plus"/>
+        <text x="640" y="106" text-anchor="middle" class="t-b">Control bar service</text>
+        <text x="640" y="126" text-anchor="middle" class="t-s">One per VM</text>
+        <text x="640" y="144" text-anchor="middle" class="t-s t-m">WeakMap</text>
+        <path d="M222,58 L520,58 L520,100 L537,100" class="ln" marker-end="url(#s4)"/>
+        <text x="370" y="50" text-anchor="middle" class="t-s t-m">Scratch.gui.stageControls.addButton()</text>
+        <path d="M482,178 L520,178 L520,138 L537,138" class="ln plus" marker-end="url(#s4p)"/>
+        <text x="500" y="196" class="t-s t-m">service.api</text>
+
+        <rect x="540" y="214" width="200" height="56" rx="8" class="box"/>
+        <text x="640" y="239" text-anchor="middle" class="t-b">End of the menu bar</text>
+        <text x="640" y="257" text-anchor="middle" class="t-s t-m">renderStageControls</text>
+        <line x1="640" y1="212" x2="640" y2="159" class="ln plus" marker-end="url(#s4p)"/>
+        <text x="650" y="190" class="t-s">subscribes</text>
+
+        <rect x="540" y="14" width="200" height="34" rx="6" class="box warn"/>
+        <text x="640" y="36" text-anchor="middle" class="t-s t-warn t-b">Cleared on PROJECT_LOADED</text>
+        <line x1="640" y1="50" x2="640" y2="77" class="ln warn" marker-end="url(#s4)"/>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 11</b>Either path registers into the same service, and the buttons line up in the Editor's menu bar. The Editor itself knows nothing about individual extensions.</figcaption>
+  </figure>
+  <div class="prose">
+    <p>Buttons added with <code>addButton</code> start with <code>visible: false</code>. Call <code>update({visible: true})</code> to show them. <code>update</code> can change four things: <code>label</code>, <code>text</code>, <code>visible</code> and <code>expanded</code>. To show an element when the button is expanded, hand it to the host with the service's <code>placePanel(element)</code>. The registering side owns the element; the host only mounts it.</p>
+  </div>
+
+  <h3>7. Startup flags</h3>
+  <div class="prose">
+    <p>Whether a feature is on is decided once at startup by the page's <code>twPlus…</code> URL query. <code>config/web-startup-feature-flags.ts</code> reads the URL, and <code>readStartupFeatureFlags</code> in <code>config/feature-flags.ts</code> returns a frozen object. <strong>These values must never come from project data.</strong></p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 120" role="img" aria-label="The startup flag flow. web-startup-feature-flags reads the URL query, feature-flags returns frozen flags, and plus-integration and gui-integration decide what to pass. Project data is never read.">
+        <defs>
+          <marker id="s5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        </defs>
+        <rect x="20" y="24" width="160" height="52" rx="8" class="box plain"/>
+        <text x="100" y="48" text-anchor="middle" class="t-m">?twPlusXxx=1</text>
+        <text x="100" y="66" text-anchor="middle" class="t-s">Page URL</text>
+        <rect x="210" y="24" width="160" height="52" rx="8" class="box"/>
+        <text x="290" y="48" text-anchor="middle" class="t-s t-m">readWebStartup</text>
+        <text x="290" y="66" text-anchor="middle" class="t-s t-m">FeatureFlags</text>
+        <rect x="400" y="24" width="160" height="52" rx="8" class="box"/>
+        <text x="480" y="48" text-anchor="middle" class="t-s t-m">readStartup</text>
+        <text x="480" y="66" text-anchor="middle" class="t-s">Returns frozen</text>
+        <rect x="590" y="24" width="150" height="52" rx="8" class="box plus"/>
+        <text x="665" y="48" text-anchor="middle" class="t-s">Decides what to pass</text>
+        <text x="665" y="66" text-anchor="middle" class="t-s t-m">site/*</text>
+        <line x1="182" y1="50" x2="207" y2="50" class="ln" marker-end="url(#s5)"/>
+        <line x1="372" y1="50" x2="397" y2="50" class="ln" marker-end="url(#s5)"/>
+        <line x1="562" y1="50" x2="587" y2="50" class="ln" marker-end="url(#s5)"/>
+        <text x="380" y="104" text-anchor="middle" class="t-s t-warn">Never read from project data (SB3)</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 12</b>Flags are read once from the URL at startup and never change afterwards.</figcaption>
+  </figure>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>Default</th><th>Flags (<code>twPlus</code> prefix omitted)</th></tr></thead>
+      <tbody>
+        <tr><th>On (<code>=0</code> turns off)</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>ManualProjectURI</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code> (web default) <code>ExtensionFileMenu</code> <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code></td></tr>
+        <tr><th>Off (<code>=1</code> turns on)</th><td><code>SpriteProperties</code> <code>WindowLayout</code> <code>HorizontalBlockPalette</code> <code>StageDisplayMenu</code> (on with <code>StandardLayout</code>)</td></tr>
+        <tr><th>Follows other flags</th><td><code>BackpackPopout</code> <code>InternalWindows</code> (need <code>WindowLayout</code>); <code>StagePanel</code> <code>TargetList</code> <code>SpriteCodeWindows</code> (need <code>WindowLayout</code> and <code>InternalWindows</code>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>8. Relationship with bundled addons</h3>
+  <div class="prose">
+    <ul>
+      <li><strong>Default enablement:</strong> <code>site/addon-manifests.ts</code> replaces the fork's <code>generated/addon-manifests</code> through a webpack alias. It enables addons tagged "recommended" plus <code>hide-delete-button</code> and <code>block-palette-icons</code> by default, and keeps <code>hide-flyout</code> off. Choices the user makes in the settings page take precedence.</li>
+      <li><strong>Startup wait:</strong> For addons listed in <code>awaitStartupAddons</code>, the runner waits for them to start before moving on.</li>
+      <li><strong>Context menus:</strong> <code>createBlockContextMenu</code> in <code>api.js</code> passes items through <code>finalizeHostTransferMenu</code> before finalizing them. This is where the script transfer menu is added.</li>
+    </ul>
+  </div>
+
+  <h3>9. Verification</h3>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>Command</th><th>What it checks</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm test</code></td><td>Unit tests for this repository and <code>packages/</code>. <code>test/plus-integration.test.ts</code> pins each entry of the integration object</td></tr>
+        <tr><td><code>E2E_GUI_ROOT=… npm run test:gui-integration</code></td><td>The pinned fork has no files upstream lacks; socket semantics; relocated tests</td></tr>
+        <tr><td><code>npm run typecheck</code></td><td>Type checking</td></tr>
+        <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>The distribution build. <code>revision</code> and <code>siteRevision</code> in <code>build-info.json</code> must match the current HEAD and <code>site/source.json</code></td></tr>
+        <tr><td><code>npm run test:e2e</code></td><td>Integration E2E with Playwright</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    <div class="label">E2E WITH THE REAL MOUSE</div>
+    <p>E2E tests that move the OS mouse cursor (<code>TW_PLUS_NATIVE_INPUT=1</code>, <code>test:e2e:native</code>) run only when someone explicitly asks for that run. A general request to run E2E or to verify a PR doesn't count (<code>AGENTS.md</code>).</p>
+  </div>
+</article>
+
+<!-- ============================================================ 04 HOWTO -->
+<article class="doc" id="howto">
+  <header>
+    <div class="kind">04 · BUILDING A FEATURE</div>
+    <h2>How to build a new added feature</h2>
+    <p class="lede">The steps from deciding where a feature belongs to implementing it in a package, wiring it in the Editor, verifying and shipping it.</p>
+  </header>
+
+  <h3>1. Decide where it goes</h3>
+  <div class="prose">
+    <p>First, decide which path the feature takes to reach the editor. Walk the chart below from the top; the first "yes" is where it goes.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 430" role="img" aria-label="Flowchart for choosing where a feature goes. If it runs inside the project, build it as a runtime extension. If an existing socket reaches it, implement it in a package and wire it with a few lines in site. If it attaches to the workspace or Blockly and can be removed, attach it inside attachToWorkspace or registerBlockShapes. Otherwise, open a new socket.">
+        <defs>
+          <marker id="h1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="h1p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="110" y="10" width="200" height="36" rx="18" class="box plain"/>
+        <text x="210" y="33" text-anchor="middle" class="t-b">Feature to build</text>
+        <line x1="210" y1="48" x2="210" y2="63" class="ln" marker-end="url(#h1)"/>
+
+        <path d="M210,66 L340,106 L210,146 L80,106 z" class="box"/>
+        <text x="210" y="102" text-anchor="middle">Runs in the project</text>
+        <text x="210" y="120" text-anchor="middle">(blocks, I/O)?</text>
+        <path d="M210,148 L210,163" class="ln" marker-end="url(#h1)"/>
+        <text x="220" y="160" class="t-s">No</text>
+
+        <path d="M210,166 L340,202 L210,238 L80,202 z" class="box"/>
+        <text x="210" y="198" text-anchor="middle">Reachable via an</text>
+        <text x="210" y="216" text-anchor="middle">existing socket?</text>
+        <path d="M210,240 L210,255" class="ln" marker-end="url(#h1)"/>
+        <text x="220" y="252" class="t-s">No</text>
+
+        <path d="M210,258 L340,298 L210,338 L80,298 z" class="box"/>
+        <text x="210" y="294" text-anchor="middle">Attaches to Blockly</text>
+        <text x="210" y="312" text-anchor="middle">/VM and detaches?</text>
+        <path d="M210,340 L210,355" class="ln" marker-end="url(#h1)"/>
+        <text x="220" y="352" class="t-s">No</text>
+
+        <rect x="80" y="358" width="260" height="60" rx="8" class="box warn"/>
+        <text x="210" y="383" text-anchor="middle" class="t-b">D  Open a new socket</text>
+        <text x="210" y="403" text-anchor="middle" class="t-s">One call line in the fork + a host helper</text>
+
+        <rect x="420" y="76" width="320" height="60" rx="8" class="box plus"/>
+        <text x="436" y="101" class="t-b">A  Build a runtime extension</text>
+        <text x="436" y="121" class="t-s">Controls: Scratch.gui.stageControls / app-shell</text>
+        <line x1="342" y1="106" x2="417" y2="106" class="ln plus" marker-end="url(#h1p)"/>
+        <text x="380" y="98" text-anchor="middle" class="t-s">Yes</text>
+
+        <rect x="420" y="172" width="320" height="60" rx="8" class="box plus"/>
+        <text x="436" y="197" class="t-b">B  Package + wiring in site/</text>
+        <text x="436" y="217" class="t-s">No change to the fork</text>
+        <line x1="342" y1="202" x2="417" y2="202" class="ln plus" marker-end="url(#h1p)"/>
+        <text x="380" y="194" text-anchor="middle" class="t-s">Yes</text>
+
+        <rect x="420" y="268" width="320" height="60" rx="8" class="box plus"/>
+        <text x="436" y="293" class="t-b">C  Attach inside attachToWorkspace</text>
+        <text x="436" y="313" class="t-s">Returns {dispose}; no change to the fork</text>
+        <line x1="342" y1="298" x2="417" y2="298" class="ln plus" marker-end="url(#h1p)"/>
+        <text x="380" y="290" text-anchor="middle" class="t-s">Yes</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 13</b>A to C need no fork changes. Only D changes the fork, so first make sure A to C can't reach it.</figcaption>
+  </figure>
+
+  <h3>2. Order of work</h3>
+  <div class="prose">
+    <p>Publish the implementation from the packages repository first; the Editor upgrades to that npm release and then wires it in. When a new socket is needed, work on the fork change in parallel and pin its SHA in the Editor.</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 270" role="img" aria-label="Order of work. Implement and unit-test in turbowarp-plus-packages, then publish to npm with a v tag. Only when a new socket is needed, open a PR in the scratch-gui fork. In turbowarp-plus-editor, upgrade to the npm release and the fork's SHA, wire it in site, verify with tests and a build, and open a PR.">
+        <defs>
+          <marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        </defs>
+        <text x="20" y="48" class="t-b t-s">packages</text>
+        <text x="20" y="128" class="t-b t-s">fork</text>
+        <text x="20" y="144" class="t-s">(D only)</text>
+        <text x="20" y="218" class="t-b t-s">plus-editor</text>
+        <line x1="96" y1="88" x2="740" y2="88" class="ln thin dash"/>
+        <line x1="96" y1="170" x2="740" y2="170" class="ln thin dash"/>
+
+        <rect x="100" y="24" width="140" height="48" rx="8" class="box plus"/>
+        <text x="170" y="45" text-anchor="middle" class="t-s t-b">① Implement and</text>
+        <text x="170" y="62" text-anchor="middle" class="t-s t-b">unit-test</text>
+        <rect x="260" y="24" width="140" height="48" rx="8" class="box plus"/>
+        <text x="330" y="45" text-anchor="middle" class="t-s t-b">② bump the version,</text>
+        <text x="330" y="62" text-anchor="middle" class="t-s t-b">publish via v tag</text>
+        <line x1="242" y1="48" x2="257" y2="48" class="ln" marker-end="url(#h2)"/>
+
+        <rect x="100" y="104" width="300" height="48" rx="8" class="box warn"/>
+        <text x="250" y="125" text-anchor="middle" class="t-s t-b">①' PR adding socket call lines</text>
+        <text x="250" y="142" text-anchor="middle" class="t-s">No custom files or tests</text>
+
+        <rect x="420" y="190" width="100" height="56" rx="8" class="box"/>
+        <text x="470" y="214" text-anchor="middle" class="t-s t-b">③ Raise</text>
+        <text x="470" y="231" text-anchor="middle" class="t-s t-b">version, SHA</text>
+        <rect x="536" y="190" width="90" height="56" rx="8" class="box"/>
+        <text x="581" y="214" text-anchor="middle" class="t-s t-b">④ Wire</text>
+        <text x="581" y="231" text-anchor="middle" class="t-s t-b">in site/</text>
+        <rect x="642" y="190" width="98" height="56" rx="8" class="box"/>
+        <text x="691" y="214" text-anchor="middle" class="t-s t-b">⑤ Verify,</text>
+        <text x="691" y="231" text-anchor="middle" class="t-s t-b">open a PR</text>
+        <line x1="522" y1="218" x2="533" y2="218" class="ln" marker-end="url(#h2)"/>
+        <line x1="628" y1="218" x2="639" y2="218" class="ln" marker-end="url(#h2)"/>
+        <path d="M402,48 L440,48 L440,187" class="ln" marker-end="url(#h2)"/>
+        <text x="448" y="112" class="t-s">npm release</text>
+        <path d="M402,128 L500,128 L500,187" class="ln dash" marker-end="url(#h2)"/>
+        <text x="508" y="160" class="t-s">SHA in source.json</text>
+      </svg>
+    </div>
+    <figcaption><b>Fig. 14</b>Work flows one way, from upstream to downstream. Editor changes start by using a published version.</figcaption>
+  </figure>
+
+  <h3>3. Steps</h3>
+  <ol class="steps">
+    <li>
+      <h5>Decide the placement and the socket</h5>
+      <p>Use Fig. 13 to decide which of A to D applies, and pick the socket from the <a href="#spec">socket list in the spec</a>. Also decide now which package the implementation goes into. Existing code in the Editor's <code>packages/</code> is mid-migration; don't use it as a home for new features.</p>
+    </li>
+    <li>
+      <h5>Implement it in a package</h5>
+      <p>Implement it in the relevant package of turbowarp-plus-packages (or a new package if none fits). Don't import GPL code; receive everything from the editor as arguments. Features that attach something return <code>{dispose}</code>.</p>
+<pre><code>// Package side: receive the document and translations, return a way to detach
+export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
+    const onTargetsUpdate = () =&gt; render(hostDocument, vm, getMessages());
+    vm.on('targetsUpdate', onTargetsUpdate);
+    return {
+        dispose () {
+            vm.removeListener('targetsUpdate', onTargetsUpdate);
+            clear(hostDocument);
+        }
+    };
+};</code></pre>
+      <p>Keep styles inside the package under your own classes, and use the GUI's public theme variables for color. Put unit tests in the package too.</p>
+    </li>
+    <li>
+      <h5>Raise the version and publish to npm</h5>
+      <p>In turbowarp-plus-packages, decide the version with <code>npm run bump</code> (from upstream) or <code>npm run bump:downstream</code> (to propagate downstream), and publish to npm with a <code>v&lt;version&gt;</code> tag. Don't bundle tgz files into the Editor.</p>
+    </li>
+    <li>
+      <h5>(D only) Open a socket in the fork</h5>
+      <p>Add a line that calls the socket inside a file upstream also has. Write it so that with no value, it behaves like upstream.</p>
+<pre><code>// scratch-gui fork: lines of this shape are the only additions to existing files
+const SpriteBadges = getHostIntegration()?.SpriteBadges || null;
+// ...
+{SpriteBadges ? &lt;SpriteBadges vm={vm} /&gt; : null}</code></pre>
+      <p>Don't add new files or tests to the fork. Cover the socket's semantics with tests on the Editor side. If the value should be read as an entry of the integration object, add a <code>host…</code> helper that returns a default to <code>site/gui-integration/lib/tw-plus-integration-points.ts</code>.</p>
+    </li>
+    <li>
+      <h5>Raise the version and SHA in the Editor</h5>
+      <p>Upgrade <code>package.json</code> and <code>package-lock.json</code> to the npm release. For D, replace the fork SHA in <code>site/source.json</code> with the full 40-character SHA of the commit that opened the socket.</p>
+    </li>
+    <li>
+      <h5>Wire it in site/</h5>
+      <p>For C, add one line to <code>attachToWorkspace</code> in <code>site/plus-integration.ts</code>.</p>
+<pre><code>attached.push(attachSpriteBadges(hostDocument, {vm, getMessages}));</code></pre>
+      <p>For B and D, when passing a UI part, export it from <code>site/gui-integration/index.ts</code>. To toggle it with a startup flag, add one <code>twPlus…</code> flag each to <code>config/feature-flags.ts</code> and <code>config/web-startup-feature-flags.ts</code>, and pass nothing when the flag is off.</p>
+<pre><code>// site/gui-integration/index.ts
+export const SpriteBadges = startup.spriteBadges ? SpriteBadgesView : undefined;</code></pre>
+    </li>
+    <li>
+      <h5>For A: register controls from the extension</h5>
+      <p>A runtime extension can use the control bar without knowing the Editor's internals. In builds without <code>Scratch.gui.stageControls</code>, it should do nothing.</p>
+<pre><code>const controls = Scratch.gui?.stageControls;
+if (controls) {
+    const button = controls.addButton({
+        id: 'my-camera.calibrate', label: 'Calibrate camera', icon: '◎',
+        onClick: () =&gt; startCalibration()
+    });
+    button.update({visible: true}); // hidden right after adding
+}</code></pre>
+      <p>Extensions distributed as packages can use the control bar of <code>@kubohiroya/turbowarp-app-shell</code>, so the same controls also appear in the single-HTML player, which has no toolbar.</p>
+    </li>
+    <li>
+      <h5>Verify</h5>
+      <p>Pass <code>npm test</code>, <code>npm run typecheck</code> and <code>npm run test:gui-integration</code>, then rebuild with <code>E2E_GUI_ROOT=… npm run build:pages</code> before checking the screen. Don't use stale output left in <code>scratch-gui/build</code>. Check that <code>revision</code> and <code>siteRevision</code> in <code>build-info.json</code> match the current state.</p>
+    </li>
+    <li>
+      <h5>Open a PR</h5>
+      <p>PRs in this repository have no required checks. With <code>--auto</code>, a PR merges at once without waiting for CI, so look at the CI results before merging.</p>
+    </li>
+  </ol>
+
+  <h3>4. Before you ship</h3>
+  <ul class="checklist">
+    <li>The implementation lives in a package, and Editor changes are limited to version bumps and a few wiring lines</li>
+    <li>Everything attached comes off with <code>dispose()</code>, and nothing is attached twice when the VM changes</li>
+    <li>With no value passed in, the fork behaves like upstream TurboWarp</li>
+    <li>GUI internals arrive as arguments; no fork modules are imported</li>
+    <li>Displayed strings have <code>ja</code> and <code>en</code> translations (plus <code>ja-hira</code> where hiragana display is needed)</li>
+    <li>Startup flags are read only from the URL, never from project data</li>
+    <li>Unit tests are in the package; socket tests are in the Editor's <code>test/</code></li>
+    <li>You checked the screen with freshly rebuilt output</li>
+  </ul>
+  <h4>Don't</h4>
+  <ul class="checklist no">
+    <li>Add new files, custom tests, or CSS that targets upstream class names to the fork</li>
+    <li>Find and rewrite upstream's DOM by class name (that is the addon approach; use a socket if one exists)</li>
+    <li>Import GPL code (the fork, or the Editor's <code>site/</code>) from a package</li>
+    <li>Bundle packages into the Editor as tgz files</li>
+    <li>Run real-mouse E2E tests without being asked</li>
+  </ul>
+  <p class="source">Related documents: <code>docs/plus-integration-sockets.md</code> (history of the socket design), <code>docs/gui-integration/README.md</code> (relocation and build-time wiring), <code>docs/architecture.md</code> (responsibilities and deployment).</p>
+</article>
+
+</main>
+
+
+<script>
+(function () {
+  var docs = Array.prototype.slice.call(document.querySelectorAll('.doc'));
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.tabs a'));
+  var ids = docs.map(function (d) { return d.id; });
+  document.documentElement.classList.add('js');
+  function show() {
+    var id = (location.hash || '').slice(1);
+    if (ids.indexOf(id) < 0) id = 'article';
+    docs.forEach(function (d) { d.classList.toggle('active', d.id === id); });
+    links.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('hashchange', function () { show(); window.scrollTo(0, 0); });
+  show();
+})();
+</script>

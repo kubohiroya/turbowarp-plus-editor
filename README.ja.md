@@ -337,7 +337,7 @@ npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format
 
 統合したデータエディターは、任意API `Scratch.gui.blockEditors.registerPreview` を提供します。仕様は `@kubohiroya/turbowarp-extension-data-editor` の `docs/block-preview.md` を参照してください。各拡張は自身のブロックにプレビューを登録します。プレビューは既存フォームと下書きを共有し、永続化はフォームの「保存」だけが行います。そのため1回の保存は1回のUndoで戻せます。`Scratch.gui.createPreviewVm()` は、拡張を読み込めない独立したVMを作成します。
 
-プレビューと、それを有効にする切り替えは各拡張が所有します。Editor自身はプレビューやプレビュー用サンプルを同梱しません。`test/e2e/turbowarp/block-icon-preview.spec.cts` は、テスト専用の拡張でこのホスト契約を検証します。
+プレビューと、それを有効にする切り替えは各拡張が所有します。Editor自身はプレビューやプレビュー用サンプルを同梱しません。プレビューの振る舞いは、`@kubohiroya/turbowarp-extension-data-editor` が、Editor の固定する VM と Scratch Blocks の上で、テスト専用の拡張を使って検証します（`test/runtime/block-preview.browser.ts`）。Editor の E2E は、通常の起動で拡張に `registerPreview` と `Scratch.gui.createPreviewVm()` が渡ることを確かめます。プレビュー用の VM が Editor の dispatch のサービスを残すことは、`test/gui-integration/unit/block-editor/preview-vm.test.ts` が確かめます。
 
 ## データソース4形式のローカル移行候補
 

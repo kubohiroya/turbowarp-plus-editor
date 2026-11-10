@@ -20,8 +20,6 @@ const section = (page, id) => dialog(page).locator(`[data-block-editor-node="the
 const form = (page, id = 'grand') => section(page, id).locator('.rjsf')
     .first();
 const field = (scope, path) => scope.locator(`input[id$="_${path}"], textarea[id$="_${path}"], select[id$="_${path}"]`);
-const save = page => dialog(page).locator('[data-block-editor-save]');
-const canvas = page => page.locator('.blocklySvg > .blocklyWorkspace > .blocklyBlockCanvas').first();
 
 const load = async (page, baseURL, theme) => {
     await page.emulateMedia({colorScheme: theme === 'dark' ? 'light' : 'dark'});
@@ -127,6 +125,10 @@ const correct = async scope => {
 };
 
 for (const [theme, colours] of Object.entries<any>(themes)) {
+    // How nested forms validate, collapse, report object and array errors and cancel is tested by
+    // @kubohiroya/turbowarp-extension-data-editor on the Editor's pinned VM and Scratch Blocks
+    // (test/runtime/hierarchy-invalid.browser.ts). Here the Editor checks what it owns: the colours its
+    // stylesheet and the GUI's theme give invalid fields, valid fields and blocks, light and dark.
     test(`invalid表示と修正後の解除・ブロック色の保持 (${theme})`, {
         annotation: {type: 'theme', description: theme}
     }, async ({page, baseURL, evidence}, testInfo) => {
@@ -134,133 +136,21 @@ for (const [theme, colours] of Object.entries<any>(themes)) {
         try {
             evidence.stage('theme-project');
             await load(page, baseURL, theme);
-            const original = await canvas(page).textContent();
             await open(page, 'root');
-            const shortcutKey = form(page).locator('input[id$="_shortcuts_ArrowRight-key"]');
-            const shortcut = form(page).locator('[data-block-editor-item]').filter({
-                has: page.locator('input[id$="_shortcuts_ArrowRight-key"]')
-            });
-            await shortcutKey.scrollIntoViewIfNeeded();
-            await expect(shortcut.locator('label')).toHaveText(['キー', '値']);
-            await expect(shortcut.locator('input')).toHaveCount(2);
-            await expect(shortcutKey).toHaveValue('ArrowRight');
-            await expect(shortcut.getByLabel('値', {exact: true})).toHaveValue('rehearsal.skipAction');
-            await expect(shortcut).toHaveCSS('border-top-style', 'solid');
-            const inline = await shortcut.locator('[data-block-editor-pair-row]').evaluateAll(rows => rows.every(row => {
-                const label = row.querySelector('label').getBoundingClientRect();
-                const input = row.querySelector('input').getBoundingClientRect();
-                return Math.abs((label.top + label.bottom) - (input.top + input.bottom)) < 2;
-            }));
-            await testInfo.attach('pair-geometry.json', {body: JSON.stringify(await shortcut.locator('[data-block-editor-pair-row]').evaluateAll(rows => rows.map(row => {
-                const label = row.querySelector('label');const input = row.querySelector('input');
-                return {label: label.getBoundingClientRect().toJSON(), input: input.getBoundingClientRect().toJSON(),
-                    labelStyle: {margin: getComputedStyle(label).margin, alignSelf: getComputedStyle(label).alignSelf},
-                    inputStyle: {margin: getComputedStyle(input).margin, alignSelf: getComputedStyle(input).alignSelf},
-                    rowStyle: {display: getComputedStyle(row).display, alignItems: getComputedStyle(row).alignItems}};
-            }))), contentType: 'application/json'});
-            expect(inline).toBe(true);
-            await shortcut.getByRole('button', {name: '項目のメニュー', exact: true}).click();
-            await expect(shortcut.getByRole('menuitem')).toBeVisible();
-            await shortcut.getByRole('menuitem').press('Escape');
-            await expect(shortcut.getByRole('menu')).toHaveCount(0);
-            await expect(dialog(page)).toBeVisible();
-            await testInfo.attach(`${theme}-key-value.png`, {body: await page.screenshot(), contentType: 'image/png'});
             evidence.stage('theme-initial-invalid');
             for (const path of paths) await expectInvalid(field(form(page), path), colours);
             for (const [id, path] of [['grand', 'nested_valid'], ['grand', 'items_0_label'],
                 ['root', 'name'], ['sibling', 'amount']]) await expectValid(field(form(page, id), path), colours);
-            await expect(save(page)).toBeDisabled();
             measurements.before = await snapshot(page);
             await capture(page, testInfo, `${theme}-invalid.png`);
-
             evidence.stage('theme-corrected');
             await correct(form(page));
             for (const path of paths) await expectValid(field(form(page), path), colours);
-            await expect(save(page)).toBeEnabled();
             measurements.after = await snapshot(page);
             expect(measurements.after.blocks).toEqual(measurements.before.blocks);
             expect(measurements.after.validSibling).toEqual(measurements.before.validSibling);
             await capture(page, testInfo, `${theme}-valid.png`);
-            expect(await canvas(page).textContent()).toBe(original);
-
-            evidence.stage('theme-live-and-collapse');
-            await field(form(page), 'name').fill('');
-            await expectInvalid(field(form(page), 'name'), colours);
-            await expect(await errorFor(field(form(page), 'name'))).toContainText('required');
-            await field(form(page), 'name').fill('Corrected name');
-            await expectValid(field(form(page), 'name'), colours);
-            const amount = field(form(page), 'amount');
-            await amount.fill('0');
-            await expectInvalid(amount, colours);
-            await expect(amount).toBeFocused();
-            await expect(amount).toHaveCSS('outline-style', /auto|solid/);
-            await dialog(page).locator('[data-block-editor-toggle="theme-grand"]')
-                .click();
-            await dialog(page).locator('[data-block-editor-toggle="theme-middle"]')
-                .click();
-            await expect(section(page, 'grand')).toHaveCount(0);
-            await expect(save(page)).toBeDisabled();
-            await dialog(page).locator('[data-block-editor-issue]')
-                .first()
-                .click();
-            await expect(field(form(page), 'amount')).toBeFocused();
-            await expectInvalid(field(form(page), 'amount'), colours);
-            await expect(field(form(page), 'name')).toHaveValue('Corrected name');
-            await field(form(page), 'amount').fill('3');
-            await expectValid(field(form(page), 'amount'), colours);
-
-            evidence.stage('theme-group-errors');
-            const optional = field(form(page), 'group_other');
-            await optional.fill('');
-            const objectGroup = form(page).locator('.field-object.has-error')
-                .filter({
-                    has: page.locator('input[id$="_group_valid"]')
-                })
-                .last();
-            await expect(objectGroup).toHaveAttribute('aria-invalid', 'true');
-            await expect(objectGroup.locator('.error-detail')).toContainText('2');
-            await expectValid(field(form(page), 'group_valid'), colours);
-            await expectValid(optional, colours);
-            await expect(save(page)).toBeDisabled();
-            await optional.fill('Restored property');
-            await expect(save(page)).toBeEnabled();
-
-            const array = form(page).locator('.field-array')
-                .first();
-            await array.getByRole('button', {name: '項目のメニュー', exact: true}).last().click();
-            await expect(array.locator('.array-item')).toHaveCount(2);
-            await array.getByRole('menuitem', {name: '🗑️この項目を削除', exact: true}).click();
-            await expect(array).toHaveAttribute('aria-invalid', 'true');
-            await expect(array.locator('.error-detail')).toContainText('2');
-            await expectValid(field(form(page), 'items_0_label'), colours);
-            await expect(save(page)).toBeDisabled();
-            await array.getByRole('button', {name: '➕項目を追加', exact: true}).click();
-            await field(form(page), 'items_1_label').fill('Restored valid item');
-            await expect(save(page)).toBeEnabled();
-            expect(await readBlocks(page)).toEqual(measurements.before.blocks);
-
-            evidence.stage('theme-cancel');
-            await dialog(page).getByRole('button', {name: 'Cancel', exact: true})
-                .click();
-            await expect(dialog(page)).toHaveCount(0);
-            expect(await canvas(page).textContent()).toBe(original);
-            await open(page, 'root');
-            for (const path of paths) await expectInvalid(field(form(page), path), colours);
-            await expect(field(form(page), 'name')).toHaveValue('');
-            await dialog(page).getByRole('button', {name: 'Cancel', exact: true})
-                .click();
-
-            evidence.stage('theme-single');
-            await load(page, baseURL, theme);
-            await open(page, 'grand');
-            await expect(dialog(page).locator('[data-block-editor-node]')).toHaveCount(1);
-            const single = form(page);
-            for (const path of paths) await expectInvalid(field(single, path), colours);
-            await expect(save(page)).toBeDisabled();
-            await correct(single);
-            for (const path of paths) await expectValid(field(single, path), colours);
-            await expect(save(page)).toBeEnabled();
-            await field(single, 'amount').press('Escape');
+            await dialog(page).getByRole('button', {name: 'Cancel', exact: true}).click();
             await expect(dialog(page)).toHaveCount(0);
             measurements.completed = true;
             evidence.stage('completed');

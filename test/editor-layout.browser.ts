@@ -464,6 +464,13 @@ test('the enabled debugger opens from its own menu bar button, outside the exten
     await expect(projectInfoMenuButton(page)).toBeVisible();
     await expect(debuggerButton).toHaveCount(0);
     await expect(group).toHaveCount(0);
+    // The stage recorder is on by default and stands on its own in the same way: a round 🎥 of the
+    // row's height, not a text item after the File menu and not in the extension tray.
+    const record = page.getByRole('button', {name: 'Record', exact: true});
+    await expect(record).toHaveText('🎥');
+    await expect(page.locator('.sa-record')).toHaveCount(0);
+    const recordSize = await record.boundingBox();
+    assert.deepEqual([recordSize.width, recordSize.height], [32, 32]);
 
     const settings = await page.context().newPage();
     await settings.goto(origin + buildPrefix + 'addons.html?lang=en');
@@ -488,7 +495,7 @@ test('the enabled debugger opens from its own menu bar button, outside the exten
         getComputedStyle(element.querySelector('[class*="button_content"]'), '::before').content), '"…"');
     await expect(open.locator('img')).toBeHidden();
 
-    // Stage launcher, debugger and extension tray follow one another in that order.
+    // Stage launcher, recorder, debugger and extension tray follow one another in that order.
     await page.evaluate(() => {
         const dock = document[Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1')];
         dock.stageControls.addButton({id: 'camera', label: 'Camera', icon: '📷', onClick() {}}).update({visible: true});
@@ -498,7 +505,9 @@ test('the enabled debugger opens from its own menu bar button, outside the exten
     const launcher = await page.getByRole('button', {name: 'Stage opening options'}).boundingBox();
     const tray = await group.boundingBox();
     const debuggerBounds = await open.boundingBox();
-    assert.ok(launcher.x + launcher.width <= debuggerBounds.x);
+    const recordBounds = await record.boundingBox();
+    assert.ok(launcher.x + launcher.width <= recordBounds.x);
+    assert.ok(recordBounds.x + recordBounds.width <= debuggerBounds.x);
     assert.ok(debuggerBounds.x + debuggerBounds.width <= tray.x);
     assert.equal(tray.height, 32);
 

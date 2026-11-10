@@ -1,0 +1,1193 @@
+<title>Plus Editor 開発者ガイド</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a document reader. Sticky tab bar of four documents, one 46rem text column, figures may run wider (60rem). Colors borrow Scratch's block categories: Looks purple = Scratch Addons, TurboWarp red = TurboWarp, Extensions teal = TurboWarp-Plus. */
+:root {
+  --bg: #F5F7FA;
+  --panel: #FFFFFF;
+  --fg: #1A2230;
+  --muted: #586579;
+  --line: #D6DDE7;
+  --line-strong: #8D99AB;
+  --sa: #7C55D0;
+  --sa-soft: #F0EAFC;
+  --tw: #D8383D;
+  --tw-soft: #FCEBEB;
+  --plus: #08916C;
+  --plus-soft: #E3F6EF;
+  --warn: #B46A00;
+  --warn-soft: #FFF3DF;
+  --code-bg: #EDF1F6;
+  --f-display: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --f-body: "BIZ UDPGothic", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F141B; --panel: #17202B; --fg: #E4EAF2; --muted: #9AA7B9; --line: #2B3645; --line-strong: #6C7A8E;
+    --sa: #B096F2; --sa-soft: #241C38; --tw: #FF7175; --tw-soft: #36191B; --plus: #3DD6A7; --plus-soft: #0F2E25;
+    --warn: #F2AE4A; --warn-soft: #33250F; --code-bg: #1C2633; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F141B; --panel: #17202B; --fg: #E4EAF2; --muted: #9AA7B9; --line: #2B3645; --line-strong: #6C7A8E;
+  --sa: #B096F2; --sa-soft: #241C38; --tw: #FF7175; --tw-soft: #36191B; --plus: #3DD6A7; --plus-soft: #0F2E25;
+  --warn: #F2AE4A; --warn-soft: #33250F; --code-bg: #1C2633; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.85;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 4rem;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.masthead { max-width: 60rem; margin: 0 auto; padding-block: 2.5rem 1.25rem; display: grid; gap: .5rem; }
+.masthead .kicker { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; color: var(--muted); }
+.masthead h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(1.7rem, 4.5vw, 2.5rem); line-height: 1.25; margin: 0; text-wrap: balance; }
+.masthead p { margin: 0; color: var(--muted); max-width: 46rem; }
+.legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-size: .85rem; margin-top: .25rem; }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend i { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; }
+.legend .k-sa { background: var(--sa); } .legend .k-tw { background: var(--tw); } .legend .k-plus { background: var(--plus); }
+
+nav.tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+nav.tabs ol { list-style: none; margin: 0 auto; padding: 0; max-width: 60rem; display: flex; gap: .25rem; overflow-x: auto; }
+nav.tabs a {
+  display: block; padding: .7rem .9rem .6rem; white-space: nowrap; text-decoration: none; color: var(--muted);
+  border-bottom: 3px solid transparent; font-size: .92rem;
+}
+nav.tabs a b { font-family: var(--f-mono); font-weight: 600; font-size: .75rem; margin-right: .35rem; }
+nav.tabs a:hover { color: var(--fg); }
+nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--plus); font-weight: 700; }
+nav.tabs a:focus-visible, a:focus-visible { outline: 2px solid var(--plus); outline-offset: 2px; }
+
+main { max-width: 60rem; margin: 0 auto; }
+.doc { padding-top: 2rem; }
+.js .doc:not(.active) { display: none; }
+.doc + .doc { border-top: 1px dashed var(--line); margin-top: 3rem; }
+.js .doc + .doc { border-top: 0; margin-top: 0; }
+.doc > header { max-width: 46rem; display: grid; gap: .4rem; margin-bottom: 1.5rem; }
+.doc > header .kind { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; color: var(--plus); }
+.doc > header h2 { font-family: var(--f-display); font-weight: 900; font-size: clamp(1.5rem, 3.6vw, 2rem); line-height: 1.3; margin: 0; text-wrap: balance; }
+.doc > header .lede { color: var(--muted); margin: 0; }
+.prose { max-width: 46rem; }
+.prose > * + * { margin-top: 1rem; }
+h3 { font-family: var(--f-display); font-weight: 700; font-size: 1.3rem; line-height: 1.4; margin: 2.75rem 0 0; text-wrap: balance; max-width: 46rem; }
+h4 { font-size: 1.02rem; margin: 1.75rem 0 0; max-width: 46rem; }
+p, ul, ol { margin: 0; }
+.prose ul, .prose ol { padding-left: 1.4rem; display: grid; gap: .35rem; }
+code { font-family: var(--f-mono); font-size: .86em; background: var(--code-bg); padding: .08em .35em; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.1rem; overflow-x: auto; font-size: .84rem; line-height: 1.65; max-width: 46rem; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+a { color: var(--plus); }
+strong { font-weight: 700; }
+.sa { color: var(--sa); } .tw { color: var(--tw); } .plus { color: var(--plus); }
+
+figure { margin: 1.75rem 0; max-width: 60rem; }
+figure .canvas { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; overflow-x: auto; }
+figure svg { display: block; width: 100%; min-width: 600px; height: auto; color: var(--fg); font-family: var(--f-body); }
+figcaption { font-size: .88rem; color: var(--muted); margin-top: .6rem; max-width: 46rem; }
+figcaption b { color: var(--fg); font-family: var(--f-mono); font-weight: 600; margin-right: .4rem; }
+
+svg .box { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.2; }
+svg .box.sa { stroke: var(--sa); fill: var(--sa-soft); }
+svg .box.tw { stroke: var(--tw); fill: var(--tw-soft); }
+svg .box.plus { stroke: var(--plus); fill: var(--plus-soft); }
+svg .box.warn { stroke: var(--warn); fill: var(--warn-soft); }
+svg .box.plain { fill: var(--bg); }
+svg .frame { fill: none; stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 6 5; }
+svg .zone { stroke: none; }
+svg .zone.sa { fill: var(--sa-soft); } svg .zone.plus { fill: var(--plus-soft); } svg .zone.warn { fill: var(--warn-soft); } svg .zone.tw { fill: var(--tw-soft); }
+svg text { fill: currentColor; font-size: 13px; }
+svg .t-b { font-weight: 700; }
+svg .t-s { font-size: 11.5px; fill: var(--muted); }
+svg .t-m { font-family: var(--f-mono); font-size: 11.5px; }
+svg .t-sa { fill: var(--sa); } svg .t-tw { fill: var(--tw); } svg .t-plus { fill: var(--plus); } svg .t-warn { fill: var(--warn); }
+svg .ln { stroke: currentColor; stroke-width: 1.4; fill: none; }
+svg .ln.sa { stroke: var(--sa); } svg .ln.tw { stroke: var(--tw); } svg .ln.plus { stroke: var(--plus); } svg .ln.warn { stroke: var(--warn); }
+svg .ln.thin { stroke: var(--line-strong); stroke-width: 1; }
+svg .dash { stroke-dasharray: 5 4; }
+svg .ah { fill: currentColor; } svg .ah.sa { fill: var(--sa); } svg .ah.tw { fill: var(--tw); } svg .ah.plus { fill: var(--plus); } svg .ah.warn { fill: var(--warn); } svg .ah.thin { fill: var(--line-strong); }
+svg .dot.sa { fill: var(--sa); } svg .dot.tw { fill: var(--tw); } svg .dot.plus { fill: var(--plus); } svg .dot.warn { fill: var(--warn); }
+svg .bar.sa { fill: var(--sa); } svg .bar.tw { fill: var(--tw); } svg .bar.plus { fill: var(--plus); }
+
+.table-wrap { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; line-height: 1.6; }
+th, td { text-align: left; vertical-align: top; padding: .65rem .8rem; border-bottom: 1px solid var(--line); }
+tr:last-child > * { border-bottom: 0; }
+thead th { font-size: .8rem; color: var(--muted); font-weight: 700; background: var(--bg); white-space: nowrap; }
+tbody th { font-weight: 700; white-space: nowrap; }
+td code, th code { white-space: nowrap; }
+table.wide { min-width: 760px; }
+th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px solid var(--tw); } th.plus { border-top: 3px solid var(--plus); }
+
+.callout { max-width: 46rem; border: 1px solid var(--line); border-left: 4px solid var(--plus); background: var(--panel); border-radius: 8px; padding: .9rem 1.1rem; }
+.callout.warn { border-left-color: var(--warn); }
+.callout > * + * { margin-top: .5rem; }
+.callout .label { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .08em; color: var(--muted); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--line-strong); border-radius: 8px; padding: 1rem 1.1rem; min-width: 0; display: grid; gap: .45rem; align-content: start; }
+.card.sa { border-top-color: var(--sa); } .card.tw { border-top-color: var(--tw); } .card.plus { border-top-color: var(--plus); }
+.card h5 { margin: 0; font-size: 1rem; font-family: var(--f-display); }
+.card p { font-size: .9rem; color: var(--muted); }
+.card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .2rem .7rem; font-size: .86rem; }
+.card dt { color: var(--muted); } .card dd { margin: 0; }
+
+.reasons { list-style: none; padding: 0; margin: 1.5rem 0; display: grid; gap: 1rem; max-width: 46rem; counter-reset: r; }
+.reasons li { counter-increment: r; display: grid; grid-template-columns: 2.4rem 1fr; gap: .2rem .8rem; }
+.reasons li::before { content: counter(r); grid-row: span 2; font-family: var(--f-display); font-weight: 900; font-size: 1.5rem; color: var(--plus); line-height: 1.2; }
+.reasons li b { font-size: 1.02rem; }
+.reasons li span { color: var(--fg); }
+
+.steps { list-style: none; padding: 0; margin: 1.25rem 0; display: grid; gap: 1.5rem; max-width: 46rem; counter-reset: s; }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: .1rem .8rem; }
+.steps > li::before { content: counter(s); grid-row: span 3; width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 2px solid var(--plus); color: var(--plus); display: grid; place-items: center; font-weight: 700; font-family: var(--f-mono); font-size: .9rem; }
+.steps > li > * { grid-column: 2; min-width: 0; }
+.steps > li > * + * { margin-top: .5rem; }
+.steps h5 { margin: 0; font-size: 1.05rem; line-height: 1.9rem; }
+
+.checklist { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .5rem; max-width: 46rem; }
+.checklist li { position: relative; padding-left: 1.9rem; }
+.checklist li::before { content: ""; position: absolute; left: 0; top: 0; width: 1rem; height: 1rem; margin-top: .4rem; border: 2px solid var(--plus); border-radius: 3px; }
+.checklist.no li::before { border-color: var(--warn); background: linear-gradient(45deg, transparent 44%, var(--warn) 44%, var(--warn) 56%, transparent 56%); }
+
+.source { font-size: .8rem; color: var(--muted); max-width: 46rem; margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: .8rem; }
+.next { margin-top: 2.5rem; max-width: 46rem; font-size: .95rem; }
+
+@media (max-width: 520px) {
+  body { font-size: 15px; }
+  .reasons li { grid-template-columns: 1.8rem 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+</style>
+
+<header class="masthead">
+  <div class="kicker">SCRATCH ADDONS · TURBOWARP ADDONS · TURBOWARP-PLUS-EDITOR</div>
+  <h1>エディターに機能を足す三つの方式</h1>
+  <p>Scratch のアドオン、TurboWarp のアドオン、TurboWarp-Plus-Editor の差し込み口を比べ、Plus が追加機能を組み込む仕組みの仕様と、新しい追加機能の作り方をまとめた4つの文書です。</p>
+  <p>この文書では、Plus がエディター本体に組み込んで標準 TurboWarp に足している機能を<strong>追加機能</strong>、作品が読み込んで使う Scratch・TurboWarp の拡張機能を<strong>拡張</strong>と呼び分けます。</p>
+  <div class="legend" aria-label="色の凡例">
+    <span><i class="k-sa"></i>Scratch Addons（Scratch 向け）</span>
+    <span><i class="k-tw"></i>TurboWarp 同梱アドオン</span>
+    <span><i class="k-plus"></i>TurboWarp-Plus-Editor</span>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="文書">
+  <ol>
+    <li><a href="#article"><b>01</b>記事：三つの方式</a></li>
+    <li><a href="#comparison"><b>02</b>比較と結論</a></li>
+    <li><a href="#spec"><b>03</b>組み込みの仕様書</a></li>
+    <li><a href="#howto"><b>04</b>追加機能の作り方</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============================================================ 01 ARTICLE -->
+<article class="doc" id="article">
+  <header>
+    <div class="kind">01 · 短い記事</div>
+    <h2>アドオンは外から触り、Plus は内から呼ばれる</h2>
+    <p class="lede">Scratch 系のエディターに機能を足す方法は大きく三つあります。違いの核心は、機能のコードとエディターのどちらが相手を呼ぶかです。</p>
+  </header>
+
+  <div class="prose">
+    <p>Scratch 3 の公式エディターには、利用者が機能を足すための仕組みがありません。そこを埋めたのが、有志のブラウザー拡張 <strong class="sa">Scratch Addons</strong> です。scratch.mit.edu のページにスクリプトを注入し、画面の要素や内部の状態を外から探して機能を付け足します。</p>
+    <p><strong class="tw">TurboWarp</strong> は、この Scratch Addons のうちエディター向けのものを取り込み、自分のビルドに同梱しました。書き方も API もほぼ同じですが、ブラウザー拡張ではなくエディターの一部として動きます。</p>
+    <p><strong class="plus">TurboWarp-Plus-Editor</strong> はこの向きを逆にしました。フォークした scratch-gui に「ここで何か渡されていれば使う」という名前付きの口を置き、ビルド時に Plus 側の実装をそこへ結び付けます。何も渡されなければ、フォークは本家の TurboWarp と同じに動きます。</p>
+  </div>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 330" role="img" aria-label="三つの方式で呼び出しの向きが違うことを示す図。Scratch Addons と TurboWarp のアドオンは機能側からエディターへ矢印が向き、Plus はエディター側から機能側へ矢印が向く。">
+        <defs>
+          <marker id="a1-sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah sa"/></marker>
+          <marker id="a1-tw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah tw"/></marker>
+          <marker id="a1-plus" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <!-- column heads -->
+        <text x="130" y="18" text-anchor="middle" class="t-s">機能のコード</text>
+        <text x="630" y="18" text-anchor="middle" class="t-s">エディター</text>
+        <!-- row 1 -->
+        <rect x="30" y="34" width="200" height="64" rx="8" class="box sa"/>
+        <text x="130" y="61" text-anchor="middle" class="t-b">アドオン</text>
+        <text x="130" y="81" text-anchor="middle" class="t-s">ブラウザー拡張に入っている</text>
+        <rect x="520" y="34" width="220" height="64" rx="8" class="box"/>
+        <text x="630" y="61" text-anchor="middle" class="t-b">Scratch 公式エディター</text>
+        <text x="630" y="81" text-anchor="middle" class="t-s">scratch.mit.edu</text>
+        <line x1="232" y1="66" x2="516" y2="66" class="ln sa" stroke-width="2" marker-end="url(#a1-sa)"/>
+        <text x="374" y="56" text-anchor="middle" class="t-sa t-b">ページに注入して、外から探す</text>
+        <text x="374" y="86" text-anchor="middle" class="t-s">要素・Redux・VM を見つけて付け足す</text>
+        <!-- row 2 -->
+        <rect x="16" y="122" width="736" height="88" rx="10" class="frame"/>
+        <text x="28" y="137" class="t-s">同じビルドの中</text>
+        <rect x="30" y="146" width="200" height="54" rx="8" class="box tw"/>
+        <text x="130" y="170" text-anchor="middle" class="t-b">同梱アドオン 81件</text>
+        <text x="130" y="188" text-anchor="middle" class="t-s">Scratch Addons から取り込み</text>
+        <rect x="520" y="140" width="220" height="56" rx="8" class="box"/>
+        <text x="630" y="165" text-anchor="middle" class="t-b">TurboWarp エディター</text>
+        <text x="630" y="184" text-anchor="middle" class="t-s">本家 scratch-gui</text>
+        <line x1="232" y1="168" x2="516" y2="168" class="ln tw" stroke-width="2" marker-end="url(#a1-tw)"/>
+        <text x="374" y="160" text-anchor="middle" class="t-tw t-b">起動後に、同じ API で外から探す</text>
+        <!-- row 3 -->
+        <rect x="30" y="234" width="200" height="72" rx="8" class="box plus"/>
+        <text x="130" y="262" text-anchor="middle" class="t-b">Plus の実装</text>
+        <text x="130" y="282" text-anchor="middle" class="t-s">npm パッケージと site/</text>
+        <rect x="520" y="234" width="220" height="72" rx="8" class="box"/>
+        <text x="630" y="262" text-anchor="middle" class="t-b">scratch-gui フォーク</text>
+        <text x="630" y="282" text-anchor="middle" class="t-s">名前付きの口を持つ</text>
+        <line x1="518" y1="270" x2="234" y2="270" class="ln plus" stroke-width="2" marker-end="url(#a1-plus)"/>
+        <text x="374" y="261" text-anchor="middle" class="t-plus t-b">決まった口で問い合わせる</text>
+        <text x="374" y="291" text-anchor="middle" class="t-s">ビルド時に結合。空なら本家どおり</text>
+      </svg>
+    </div>
+    <figcaption><b>図1</b>アドオンは機能の側からエディターへ手を伸ばします。Plus ではエディターの側が、口ごとに Plus の実装を呼びます。</figcaption>
+  </figure>
+
+  <div class="cards">
+    <section class="card sa">
+      <h5>Scratch Addons</h5>
+      <p>ブラウザーに入れて使うブラウザー拡張です。Scratch 公式サイトのエディターだけでなく、プロフィールやフォーラムのページにも作用します。</p>
+      <dl><dt>入れ方</dt><dd>利用者がブラウザーに導入</dd><dt>切り替え</dt><dd>ブラウザー拡張の設定画面で個別に</dd><dt>触り方</dt><dd>DOM・Redux・VM を外から</dd></dl>
+    </section>
+    <section class="card tw">
+      <h5>TurboWarp のアドオン</h5>
+      <p>Scratch Addons のエディター向けを同梱したものです。API は TurboWarp が作り直していて、独自の <code>tw-</code> アドオンも 6 件あります。</p>
+      <dl><dt>入れ方</dt><dd>最初から同梱</dd><dt>切り替え</dt><dd>/addons の設定画面</dd><dt>触り方</dt><dd>上と同じ API で外から</dd></dl>
+    </section>
+    <section class="card plus">
+      <h5>TurboWarp-Plus-Editor</h5>
+      <p>フォークの名前付きの口に、ビルド時に実装を渡します。実装の本体はバージョン付きの npm パッケージにあります。</p>
+      <dl><dt>入れ方</dt><dd>ビルドに組み込む</dd><dt>切り替え</dt><dd>起動時の URL フラグ</dd><dt>触り方</dt><dd>GUI から呼ばれる</dd></dl>
+    </section>
+  </div>
+
+  <div class="prose">
+    <p>アドオンの方式は、エディター本体に手を入れずに済みます。そのかわり、画面の構造が変わると黙って効かなくなります。Plus の方式はフォークに呼び出しの行が残りますが、契約が型とテストで固定され、作品の読み込みより前に効かせる処理やレイアウト全体の置き換えまで扱えます。</p>
+    <p>Plus の主な機能はレイアウト、拡張の審査、保存の流れです。これらは「外から付け足す」モデルに収まらないので、Plus がアドオン互換を目指す意味は大きくありません。外して戻せる小さな機能については、アドオンと同じく後から付けて外せる形で書くことにしています。</p>
+  </div>
+  <p class="next">詳しい比較は <a href="#comparison">02 比較と結論</a>、口の一覧は <a href="#spec">03 仕様書</a> にあります。</p>
+</article>
+
+<!-- ============================================================ 02 COMPARISON -->
+<article class="doc" id="comparison">
+  <header>
+    <div class="kind">02 · 比較と結論</div>
+    <h2>三つの方式の比較と、Plus が差し込み口を選ぶ理由</h2>
+    <p class="lede">仕組み、効き始める時期、壊れ方、切り替え方の順に比べ、最後に Plus の方式の優位性を理由とともに結論づけます。</p>
+  </header>
+
+  <h3>1. Scratch Addons：ページに注入されるブラウザー拡張</h3>
+  <div class="prose">
+    <p>Scratch Addons は Chrome や Firefox に入れるブラウザー拡張です。アドオンは1つずつマニフェストを持ち、名前・説明・タグ・設定項目・既定で有効かどうか・どのページで動くかを宣言します。条件に合うページを開くと、ブラウザー拡張が userscript と userstyle をそのページに注入します。</p>
+    <p>userscript は <code>({addon, console, msg})</code> を受け取る非同期関数です。<code>addon.tab</code> の <code>waitForElement</code> で画面要素の出現を待ち、<code>traps</code> で VM や Blockly を手に入れ、Redux の状態を見張ります。公式エディターには口がないので、すべてを外から探し当てます。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 250" role="img" aria-label="Scratch Addons の仕組み。ブラウザー拡張が条件に合う scratch.mit.edu のページへ userscript を注入し、userscript が DOM、Redux、VM と Blockly を外から探す。設定画面はブラウザー拡張に有効無効と設定値を渡す。">
+        <defs>
+          <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="c1s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah sa"/></marker>
+        </defs>
+        <rect x="20" y="30" width="190" height="64" rx="8" class="box sa"/>
+        <text x="115" y="57" text-anchor="middle" class="t-b">ブラウザー拡張</text>
+        <text x="115" y="77" text-anchor="middle" class="t-s">マニフェスト＋スクリプト</text>
+        <rect x="20" y="160" width="190" height="56" rx="8" class="box plain"/>
+        <text x="115" y="185" text-anchor="middle" class="t-b">ブラウザー拡張の設定</text>
+        <text x="115" y="203" text-anchor="middle" class="t-s">利用者が切り替える</text>
+        <line x1="115" y1="158" x2="115" y2="98" class="ln" marker-end="url(#c1)"/>
+        <text x="125" y="132" class="t-s">有効・無効、設定値</text>
+
+        <rect x="262" y="14" width="486" height="222" rx="10" class="frame"/>
+        <text x="276" y="34" class="t-s">scratch.mit.edu のページ（公式エディター）</text>
+        <rect x="290" y="96" width="150" height="56" rx="8" class="box sa"/>
+        <text x="365" y="121" text-anchor="middle" class="t-b">userscript</text>
+        <text x="365" y="139" text-anchor="middle" class="t-s t-m">({addon, msg})</text>
+        <line x1="212" y1="62" x2="288" y2="110" class="ln sa" marker-end="url(#c1s)"/>
+        <text x="214" y="114" class="t-s">条件に合えば注入</text>
+
+        <rect x="560" y="48" width="170" height="40" rx="6" class="box"/>
+        <text x="645" y="73" text-anchor="middle">DOM（CSS クラス）</text>
+        <rect x="560" y="104" width="170" height="40" rx="6" class="box"/>
+        <text x="645" y="129" text-anchor="middle">Redux ストア</text>
+        <rect x="560" y="160" width="170" height="40" rx="6" class="box"/>
+        <text x="645" y="185" text-anchor="middle">VM・Blockly</text>
+        <line x1="442" y1="112" x2="557" y2="70" class="ln sa" marker-end="url(#c1s)"/>
+        <line x1="442" y1="124" x2="557" y2="124" class="ln sa" marker-end="url(#c1s)"/>
+        <line x1="442" y1="136" x2="557" y2="178" class="ln sa" marker-end="url(#c1s)"/>
+        <text x="452" y="66" class="t-s t-m">waitForElement</text>
+        <text x="470" y="118" class="t-s">監視・dispatch</text>
+        <text x="482" y="176" class="t-s t-m">traps</text>
+      </svg>
+    </div>
+    <figcaption><b>図2</b>Scratch Addons では、公式エディターは何も知りません。userscript が画面の要素と内部状態を外から見つけて付け足します。</figcaption>
+  </figure>
+
+  <h3>2. TurboWarp のアドオン：同梱され、同じ API で動く</h3>
+  <div class="prose">
+    <p>TurboWarp は Scratch Addons のエディター向けアドオンを、<code>pull.js</code> というスクリプトで自分のソースに取り込みます。上流のコードに TurboWarp 用のパッチ（<code>TurboWarp/addons</code> の <code>tw</code> ブランチ）を当て、さらに正規表現で書き換えてから <code>src/addons/</code> に置きます。今のフォークには 81 件が入っていて、そのうち 6 件は TurboWarp 独自の <code>tw-</code> アドオンです。</p>
+    <p>実行時は、<code>api.js</code> が Scratch Addons の <code>addon</code> オブジェクトを作り直して渡します。ログイン情報のようにブラウザー拡張にしかない API はありません。そのかわり、<code>appendToSharedSpace</code> の共有スペース（<code>stageHeader</code>、<code>afterGreenFlag</code>、<code>afterStopButton</code>、<code>afterSoundTab</code> など 8 か所）のように、TurboWarp の画面に合わせた置き場所が用意されています。メニューバーに「録画」ボタンを足す <code>mediarecorder</code> も、この仕組みでファイルメニューの横の要素を探して差し込みます。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 300" role="img" aria-label="TurboWarp のアドオンの仕組み。ビルド時に上流の Scratch Addons と TurboWarp のパッチを pull.js が取り込み generated を作る。実行時は設定画面と api.js の実行器が userscript を動かし、userscript が DOM と共有スペース、Redux、VM と Blockly に外から触る。">
+        <defs>
+          <marker id="c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="c2t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah tw"/></marker>
+        </defs>
+        <text x="20" y="18" class="t-s t-b">ビルド時</text>
+        <rect x="20" y="30" width="160" height="56" rx="8" class="box sa"/>
+        <text x="100" y="55" text-anchor="middle" class="t-b">Scratch Addons</text>
+        <text x="100" y="73" text-anchor="middle" class="t-s">上流</text>
+        <rect x="214" y="30" width="170" height="56" rx="8" class="box tw"/>
+        <text x="299" y="55" text-anchor="middle" class="t-b">TurboWarp/addons</text>
+        <text x="299" y="73" text-anchor="middle" class="t-s t-m">tw ブランチ</text>
+        <rect x="418" y="30" width="120" height="56" rx="8" class="box tw"/>
+        <text x="478" y="63" text-anchor="middle" class="t-b t-m">pull.js</text>
+        <rect x="572" y="30" width="168" height="56" rx="8" class="box"/>
+        <text x="656" y="55" text-anchor="middle" class="t-b t-m">addons/ generated/</text>
+        <text x="656" y="73" text-anchor="middle" class="t-s">81 件と一覧</text>
+        <line x1="182" y1="58" x2="211" y2="58" class="ln" marker-end="url(#c2)"/>
+        <text x="197" y="104" text-anchor="middle" class="t-s">パッチ</text>
+        <line x1="386" y1="58" x2="415" y2="58" class="ln" marker-end="url(#c2)"/>
+        <text x="401" y="104" text-anchor="middle" class="t-s">clone</text>
+        <line x1="540" y1="58" x2="569" y2="58" class="ln" marker-end="url(#c2)"/>
+        <text x="555" y="104" text-anchor="middle" class="t-s">書き換え</text>
+
+        <line x1="20" y1="124" x2="740" y2="124" class="ln thin dash"/>
+        <text x="20" y="146" class="t-s t-b">実行時（GUI の起動後）</text>
+
+        <rect x="20" y="186" width="160" height="56" rx="8" class="box plain"/>
+        <text x="100" y="211" text-anchor="middle" class="t-b">設定画面</text>
+        <text x="100" y="229" text-anchor="middle" class="t-s t-m">/addons</text>
+        <rect x="214" y="186" width="170" height="56" rx="8" class="box tw"/>
+        <text x="299" y="211" text-anchor="middle" class="t-b">実行器</text>
+        <text x="299" y="229" text-anchor="middle" class="t-s t-m">entry.js・api.js</text>
+        <rect x="418" y="186" width="120" height="56" rx="8" class="box tw"/>
+        <text x="478" y="219" text-anchor="middle" class="t-b">userscript</text>
+        <line x1="182" y1="214" x2="211" y2="214" class="ln" marker-end="url(#c2)"/>
+        <text x="197" y="262" text-anchor="middle" class="t-s">切替</text>
+        <line x1="386" y1="214" x2="415" y2="214" class="ln tw" marker-end="url(#c2t)"/>
+        <text x="401" y="262" text-anchor="middle" class="t-s">addon を渡す</text>
+        <path d="M656,88 L656,128 L299,128 L299,183" class="ln dash" marker-end="url(#c2)"/>
+        <text x="306" y="168" class="t-s">一覧を読む</text>
+
+        <rect x="580" y="150" width="160" height="36" rx="6" class="box"/>
+        <text x="660" y="173" text-anchor="middle">DOM・共有スペース</text>
+        <rect x="580" y="198" width="160" height="36" rx="6" class="box"/>
+        <text x="660" y="221" text-anchor="middle">Redux ストア</text>
+        <rect x="580" y="246" width="160" height="36" rx="6" class="box"/>
+        <text x="660" y="269" text-anchor="middle">VM・Blockly</text>
+        <line x1="540" y1="204" x2="577" y2="172" class="ln tw" marker-end="url(#c2t)"/>
+        <line x1="540" y1="214" x2="577" y2="216" class="ln tw" marker-end="url(#c2t)"/>
+        <line x1="540" y1="224" x2="577" y2="260" class="ln tw" marker-end="url(#c2t)"/>
+      </svg>
+    </div>
+    <figcaption><b>図3</b>TurboWarp では、取り込みはビルド時、接続は実行時です。接続のしかたは Scratch Addons と同じく外から探す形です。</figcaption>
+  </figure>
+
+  <h3>3. TurboWarp-Plus-Editor：ビルド時に口へ結び付ける</h3>
+  <div class="prose">
+    <p>Plus はフォークした scratch-gui に、本家に無いファイルを1つも置きません。本家にもある <code>src/addons/hooks.js</code> に <code>getHostIntegration()</code> を置き、hooks.js 以外の 28 のファイルが <code>getHostIntegration()?.EditorLayout</code> のように名前を指定して問い合わせます。</p>
+    <p>配信用のビルドでは、webpack の <code>ProvidePlugin</code> が <code>__TW_GUI_HOST__</code> を本リポジトリの <code>site/gui-integration/index.ts</code> に結び付けます。そこから <code>site/plus-integration.ts</code> の統合オブジェクトと、npm で版を持つ <code>@kubohiroya/turbowarp-*</code> パッケージへつながります。GUI を単体でビルドすると <code>__TW_GUI_HOST__</code> は存在せず、getter は <code>null</code> を返し、本家どおりに動きます。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 320" role="img" aria-label="Plus の仕組み。npm パッケージを site の plus-integration.ts が束ね、gui-integration の index.ts がホスト橋渡しとして公開する。webpack の ProvidePlugin がそれを __TW_GUI_HOST__ に結び付け、フォークの hooks.js の getHostIntegration が返し、28 の呼び出し箇所が名前で問い合わせる。">
+        <defs>
+          <marker id="c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="c3p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <text x="20" y="18" class="t-s t-b">turbowarp-plus-editor（このリポジトリ）と npm パッケージ</text>
+        <rect x="20" y="32" width="200" height="60" rx="8" class="box plus"/>
+        <text x="120" y="57" text-anchor="middle" class="t-b">npm パッケージ</text>
+        <text x="120" y="77" text-anchor="middle" class="t-s t-m">@kubohiroya/turbowarp-*</text>
+        <rect x="270" y="32" width="210" height="60" rx="8" class="box plus"/>
+        <text x="375" y="57" text-anchor="middle" class="t-b">統合オブジェクト</text>
+        <text x="375" y="77" text-anchor="middle" class="t-s t-m">site/plus-integration.ts</text>
+        <rect x="530" y="32" width="210" height="60" rx="8" class="box plus"/>
+        <text x="635" y="57" text-anchor="middle" class="t-b">ホスト橋渡し</text>
+        <text x="635" y="77" text-anchor="middle" class="t-s t-m">site/gui-integration/</text>
+        <line x1="268" y1="62" x2="223" y2="62" class="ln" marker-end="url(#c3)"/>
+        <text x="245" y="110" text-anchor="middle" class="t-s">import</text>
+        <line x1="528" y1="62" x2="483" y2="62" class="ln" marker-end="url(#c3)"/>
+        <text x="505" y="110" text-anchor="middle" class="t-s">import</text>
+
+        <rect x="530" y="128" width="210" height="56" rx="8" class="box plain"/>
+        <text x="635" y="152" text-anchor="middle" class="t-b">webpack ProvidePlugin</text>
+        <text x="635" y="170" text-anchor="middle" class="t-s t-m">__TW_GUI_HOST__</text>
+        <line x1="635" y1="94" x2="635" y2="125" class="ln plus" marker-end="url(#c3p)"/>
+        <text x="645" y="116" class="t-s">結び付ける</text>
+
+        <rect x="12" y="206" width="736" height="104" rx="10" class="frame"/>
+        <text x="24" y="226" class="t-s">scratch-gui フォーク（SHA で固定。本家に無いファイルは 0）</text>
+        <rect x="40" y="238" width="300" height="56" rx="8" class="box"/>
+        <text x="190" y="262" text-anchor="middle" class="t-b">28 ファイルの呼び出し箇所</text>
+        <text x="190" y="281" text-anchor="middle" class="t-s t-m">getHostIntegration()?.X</text>
+        <rect x="530" y="238" width="210" height="56" rx="8" class="box"/>
+        <text x="635" y="262" text-anchor="middle" class="t-b t-m">addons/hooks.js</text>
+        <text x="635" y="281" text-anchor="middle" class="t-s">無ければ null</text>
+        <line x1="635" y1="186" x2="635" y2="235" class="ln plus" marker-end="url(#c3p)"/>
+        <text x="645" y="216" class="t-s">値を供給</text>
+        <line x1="342" y1="266" x2="527" y2="266" class="ln" marker-end="url(#c3)"/>
+        <text x="434" y="258" text-anchor="middle" class="t-s">名前で問い合わせる</text>
+      </svg>
+    </div>
+    <figcaption><b>図4</b>Plus ではフォークの呼び出し箇所が口の名前を指定し、ビルド時に供給された値を受け取ります。値が無いときは本家と同じ動きに落ちます。</figcaption>
+  </figure>
+
+  <h3>4. 効き始める時期</h3>
+  <div class="prose">
+    <p>三つの方式は、機能がいつ効き始めるかが違います。アドオンはページや GUI が動き出してから非同期に付くので、作品の読み込みより前に必ず効いていなければならない処理には向きません。Plus は、拡張の審査のように読み込みの前に決まっていなければならない処理を、口として同期的に渡せます。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 250" role="img" aria-label="効き始める時期の比較。Scratch Addons はページの読み込みから非同期に付く。TurboWarp のアドオンは GUI の描画後に非同期に付く。Plus はビルド時に結合し、作品を読み込む前に拡張の審査が効いている。アドオンの二つは編集中に利用者が切り替えられる。">
+        <text x="196" y="24" text-anchor="middle" class="t-s">ビルド</text>
+        <text x="314" y="24" text-anchor="middle" class="t-s">ページ読み込み</text>
+        <text x="432" y="24" text-anchor="middle" class="t-s">GUI 描画</text>
+        <text x="550" y="24" text-anchor="middle" class="t-s">作品の読み込み</text>
+        <text x="676" y="24" text-anchor="middle" class="t-s">編集中</text>
+        <line x1="137" y1="34" x2="137" y2="230" class="ln thin dash"/>
+        <line x1="255" y1="34" x2="255" y2="230" class="ln thin dash"/>
+        <line x1="373" y1="34" x2="373" y2="230" class="ln thin dash"/>
+        <line x1="491" y1="34" x2="491" y2="230" class="ln thin dash"/>
+        <line x1="609" y1="34" x2="609" y2="230" class="ln thin dash"/>
+        <text x="20" y="72" class="t-b t-sa">Scratch Addons</text>
+        <text x="20" y="138" class="t-b t-tw">TurboWarp</text>
+        <text x="20" y="154" class="t-b t-tw">アドオン</text>
+        <text x="20" y="204" class="t-b t-plus">Plus</text>
+
+        <rect x="259" y="58" width="481" height="18" rx="4" class="bar sa" opacity=".85"/>
+        <text x="266" y="96" class="t-s">注入され、要素が現れるのを待って付く</text>
+        <rect x="614" y="80" width="126" height="20" rx="4" class="box sa"/>
+        <text x="677" y="95" text-anchor="middle" class="t-s">利用者が切替</text>
+
+        <circle cx="196" cy="133" r="6" class="dot tw"/>
+        <text x="206" y="137" class="t-s">同梱</text>
+        <rect x="377" y="124" width="363" height="18" rx="4" class="bar tw" opacity=".85"/>
+        <text x="384" y="162" class="t-s">起動後に非同期で実行</text>
+        <rect x="614" y="146" width="126" height="20" rx="4" class="box tw"/>
+        <text x="677" y="161" text-anchor="middle" class="t-s">利用者が切替</text>
+
+        <rect x="141" y="190" width="599" height="18" rx="4" class="bar plus" opacity=".85"/>
+        <text x="148" y="228" class="t-s">ビルド時に結合し、描画中に同期的に参照</text>
+        <path d="M491,186 l9,13 l-9,13 l-9,-13 z" class="box warn"/>
+        <text x="506" y="228" class="t-s t-warn t-b">審査は読み込みの前に効く</text>
+      </svg>
+    </div>
+    <figcaption><b>図5</b>アドオンは後から付き、利用者が切り替えられます。Plus は最初から結び付いていて、作品の読み込みより前に効かせる処理も持てます。</figcaption>
+  </figure>
+
+  <h3>5. 本家が変わったときの壊れ方</h3>
+  <div class="prose">
+    <p>アドオンは CSS モジュールのクラス名を前方一致で探します（<code>scratchClass</code>、<code>[class*='menu-bar_file-group']</code> など）。本家が画面の構造を変えると、探し当てられずに何も起きません。Plus の口はフォークのソースに書かれた呼び出しなので、本家の変更とぶつかればマージの衝突や型検査、統合テストで止まります。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 220" role="img" aria-label="壊れ方の比較。アドオンでは本家がメニューバーの構造を変えるとセレクターが一致せず、ボタンが出ないだけでエラーにならない。Plus では本家の変更がマージで呼び出し行と衝突し、CI と型検査と統合テストで止まる。">
+        <defs>
+          <marker id="c5w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah warn"/></marker>
+          <marker id="c5p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <text x="20" y="20" class="t-b">アドオン</text>
+        <rect x="20" y="34" width="210" height="52" rx="8" class="box"/>
+        <text x="125" y="57" text-anchor="middle">本家がメニューバーの</text>
+        <text x="125" y="75" text-anchor="middle">構造を変える</text>
+        <rect x="270" y="34" width="210" height="52" rx="8" class="box"/>
+        <text x="375" y="57" text-anchor="middle">セレクターが</text>
+        <text x="375" y="75" text-anchor="middle">一致しなくなる</text>
+        <rect x="520" y="34" width="220" height="52" rx="8" class="box warn"/>
+        <text x="630" y="57" text-anchor="middle" class="t-b">ボタンが出ないだけ</text>
+        <text x="630" y="75" text-anchor="middle" class="t-s">エラーも警告も出ない</text>
+        <line x1="232" y1="60" x2="267" y2="60" class="ln warn" marker-end="url(#c5w)"/>
+        <line x1="482" y1="60" x2="517" y2="60" class="ln warn" marker-end="url(#c5w)"/>
+
+        <text x="20" y="128" class="t-b">Plus</text>
+        <rect x="20" y="142" width="210" height="52" rx="8" class="box"/>
+        <text x="125" y="165" text-anchor="middle">本家が menu-bar.jsx</text>
+        <text x="125" y="183" text-anchor="middle">を変える</text>
+        <rect x="270" y="142" width="210" height="52" rx="8" class="box"/>
+        <text x="375" y="165" text-anchor="middle">マージで呼び出し行と</text>
+        <text x="375" y="183" text-anchor="middle">衝突する</text>
+        <rect x="520" y="142" width="220" height="52" rx="8" class="box plus"/>
+        <text x="630" y="165" text-anchor="middle" class="t-b">取り込む前に止まる</text>
+        <text x="630" y="183" text-anchor="middle" class="t-s">型検査・統合テスト・E2E</text>
+        <line x1="232" y1="168" x2="267" y2="168" class="ln plus" marker-end="url(#c5p)"/>
+        <line x1="482" y1="168" x2="517" y2="168" class="ln plus" marker-end="url(#c5p)"/>
+      </svg>
+    </div>
+    <figcaption><b>図6</b>アドオンは黙って効かなくなります。Plus はフォークを更新する時点で気付けます。</figcaption>
+  </figure>
+
+  <h3>6. 観点ごとの比較</h3>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>観点</th><th class="sa">Scratch Addons</th><th class="tw">TurboWarp のアドオン</th><th class="plus">TurboWarp-Plus-Editor</th></tr></thead>
+      <tbody>
+        <tr><th>配布の形</th><td>ブラウザー拡張</td><td>エディターのビルドに同梱</td><td>npm パッケージをビルドに組み込む</td></tr>
+        <tr><th>機能の単位</th><td>マニフェスト＋userscript／userstyle</td><td>同じ（<code>_manifest_entry.js</code> に変換）</td><td>パッケージの関数・コンポーネントと、統合オブジェクトの項目</td></tr>
+        <tr><th>エディターの改変</th><td>不要</td><td>実行器だけ（<code>src/addons/</code>）</td><td>フォーク 28 ファイルに呼び出し行</td></tr>
+        <tr><th>接続の時期</th><td>実行時（注入）</td><td>実行時（GUI の起動後）</td><td>ビルド時に結合、描画時に同期参照</td></tr>
+        <tr><th>接続点</th><td>DOM・Redux・VM・Blockly を外から</td><td>同じ＋共有スペース 8 か所</td><td>名前付きの口（React コンポーネント、reducer の断片、サービス）</td></tr>
+        <tr><th>できること</th><td>付け足し、部分的な差し替え</td><td>同じ</td><td>付け足しに加え、レイアウト全体の置き換え、読み込み前の審査、保存の流れ</td></tr>
+        <tr><th>切り替え</th><td>利用者が設定画面で</td><td>利用者が <code>/addons</code> で</td><td>起動時の URL フラグ（<code>?twPlus…=1</code>）</td></tr>
+        <tr><th>本家が変わったとき</th><td>黙って効かなくなる</td><td>同じ</td><td>マージ・型検査・テストで止まる</td></tr>
+        <tr><th>契約の明示</th><td>開発者ドキュメント</td><td>文書なし（実装が仕様）</td><td>型付きの口と単体テスト</td></tr>
+        <tr><th>他の作品・プレイヤーとの共有</th><td>なし</td><td>なし</td><td>同じパッケージを Packager の単一 HTML でも使う</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>7. Plus の追加機能をアドオンの形に寄せられるか</h3>
+  <div class="prose">
+    <p>Plus の追加機能を「付け足すか、置き換えるか」と「利用者が切ってよいか、常に効いている必要があるか」の二つの軸で並べると、アドオンの形に寄せられるのは左上の区画だけです。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 380" role="img" aria-label="Plus の追加機能の分類。横軸は付け足すか置き換えるか、縦軸は利用者が切ってよいか常に効いている必要があるか。左上には右クリックのアイコン、ミニマップ、削除プレビュー、転送メニュー、作品検索、操作欄があり、アドオンの形に寄せられる。右上には横長パレット、別ウィンドウのコード、スプライト一覧の強化があり、見た目だけ寄せられる。下半分には拡張の審査、作品状態の reducer、Dockview レイアウト、ステージパネル、保存の流れがあり、寄せない。">
+        <rect x="80" y="30" width="330" height="160" class="zone plus"/>
+        <rect x="410" y="30" width="330" height="160" class="zone warn" opacity=".7"/>
+        <rect x="80" y="190" width="660" height="150" class="zone tw" opacity=".6"/>
+        <line x1="80" y1="190" x2="740" y2="190" class="ln thin"/>
+        <line x1="410" y1="30" x2="410" y2="340" class="ln thin"/>
+        <rect x="80" y="30" width="660" height="310" class="frame"/>
+        <text x="410" y="362" text-anchor="middle" class="t-s">付け足す ←　　　→ 置き換える</text>
+        <text x="40" y="110" text-anchor="middle" class="t-s" transform="rotate(-90 40 110)">利用者が切ってよい</text>
+        <text x="40" y="265" text-anchor="middle" class="t-s" transform="rotate(-90 40 265)">常に効いている</text>
+
+        <text x="94" y="52" class="t-b t-plus">A　アドオンの形に寄せられる</text>
+        <text x="424" y="52" class="t-b t-warn">B　見た目と切替だけ寄せられる</text>
+        <text x="94" y="212" class="t-b t-tw">C　寄せない（口のまま）</text>
+
+        <g>
+          <circle cx="104" cy="80" r="4" class="dot plus"/><text x="114" y="84">右クリックメニューのアイコン</text>
+          <circle cx="104" cy="104" r="4" class="dot plus"/><text x="114" y="108">ワークスペースのミニマップ</text>
+          <circle cx="104" cy="128" r="4" class="dot plus"/><text x="114" y="132">パレットの削除プレビュー</text>
+          <circle cx="104" cy="152" r="4" class="dot plus"/><text x="114" y="156">スクリプト転送のメニュー</text>
+          <circle cx="266" cy="80" r="4" class="dot plus"/><text x="276" y="84">作品全体の検索</text>
+          <circle cx="266" cy="104" r="4" class="dot plus"/><text x="276" y="108">ステージの操作欄</text>
+        </g>
+        <g>
+          <circle cx="434" cy="80" r="4" class="dot warn"/><text x="444" y="84">横長のブロックパレット</text>
+          <circle cx="434" cy="104" r="4" class="dot warn"/><text x="444" y="108">別ウィンドウのコード表示</text>
+          <circle cx="434" cy="128" r="4" class="dot warn"/><text x="444" y="132">スプライト一覧の強化</text>
+          <text x="434" y="168" class="t-s">起動時に決まる。「リロードが必要」扱いなら揃う</text>
+        </g>
+        <g>
+          <circle cx="104" cy="240" r="4" class="dot tw"/><text x="114" y="244">拡張の審査と信頼の一覧</text>
+          <circle cx="104" cy="264" r="4" class="dot tw"/><text x="114" y="268">作品状態・モーダルの reducer</text>
+          <circle cx="104" cy="288" r="4" class="dot tw"/><text x="114" y="292">Packager の行き先</text>
+          <circle cx="434" cy="240" r="4" class="dot tw"/><text x="444" y="244">Dockview によるレイアウト全体</text>
+          <circle cx="434" cy="264" r="4" class="dot tw"/><text x="444" y="268">ステージパネル・スプライト一覧</text>
+          <circle cx="434" cy="288" r="4" class="dot tw"/><text x="444" y="292">ファイルメニューと保存の流れ</text>
+          <text x="94" y="326" class="t-s">読み込み前に効く・切られると困る・構造を置き換える</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>図7</b>アドオンの形に寄せられる A は付け足しの小さな機能だけです。Plus の中心にある C は、アドオンのモデルの外側にあります。</figcaption>
+  </figure>
+
+  <h3>8. 結論：Plus の方式が優れている理由</h3>
+  <div class="prose">
+    <p>TurboWarp-Plus-Editor が TurboWarp に機能を足すには、アドオンの方式よりも、フォークに名前付きの口を置いてビルド時に実装を結び付ける今の方式が適しています。理由は次の6つです。</p>
+  </div>
+  <ol class="reasons">
+    <li><b>作品より先に効かせられる</b><span>拡張の審査や信頼する拡張の一覧は、作品の読み込みより前に決まっていなければなりません。起動後に非同期で付くアドオンでは、この順序を保証できません。口は描画の時点で同期的に参照されます。</span></li>
+    <li><b>構造ごと置き換えられる</b><span>Dockview のレイアウト、ステージパネル、スプライト一覧、保存の流れは、既存の画面に付け足すものではありません。アドオンで実現すると、本家の DOM を隠して作り直すことになります。口なら React コンポーネントや reducer の断片をそのまま渡せます。</span></li>
+    <li><b>契約が見え、テストできる</b><span>アドオンの接続点はハッシュ付きのクラス名や画面の文言です。Plus の口は名前と引数が決まっていて、<code>test/plus-integration.test.ts</code> や <code>test:gui-integration</code> で固定できます。本家が変わったときも、黙って壊れずにテストで止まります。</span></li>
+    <li><b>本家との差分を小さく保てる</b><span>口はすべて任意で、何も渡さなければ本家と同じに動きます。フォークに残るのは呼び出しの行だけで、本家に無いファイルは 0 件です。本家の更新を取り込むときの衝突が、呼び出しの行に限られます。</span></li>
+    <li><b>実装を版付きの部品として再利用できる</b><span>実装の本体は <code>@kubohiroya/turbowarp-*</code> の npm パッケージにあり、それぞれが版・テスト・リリースを持ちます。同じパッケージを Packager が作る単一 HTML のプレイヤーでも使えます。アドオンはそのエディターの中でしか動きません。</span></li>
+    <li><b>実行時の拡張ともつながる</b><span>口の一部は <code>Scratch.gui.stageControls</code> や <code>Scratch.gui.blockEditors</code> として拡張に公開され、カメラなどの拡張が Editor の操作欄に自分の操作を登録できます。アドオンの API は拡張から使う前提になっていません。</span></li>
+  </ol>
+  <div class="callout warn">
+    <div class="label">引き受けているコスト</div>
+    <p>利用者が機能を個別に切り替える画面はありません。フォークの呼び出し行を本家の更新のたびに保守する必要があり、機能を足すにはビルドし直す必要があります。第三者が実行時に機能を足すこともできません。ただし、エディター本体ではない機能は、実行時の拡張として操作欄の API から足せます。</p>
+  </div>
+  <div class="prose" style="margin-top:1rem">
+    <p>そのうえで、図7の A に当たる小さな機能は、アドオンと同じく「後から付けて、<code>dispose</code> で外せる」形で書きます。こうしておけば、利用者が切り替えられるようにしたくなったとき、アドオンの形へ移しやすくなります。既存の機能をアドオン互換に作り直す作業は行いません。</p>
+  </div>
+  <p class="source">根拠：フォーク <code>src/addons/</code>（81 件、うち <code>tw-</code> 6 件）、<code>api.js</code> の <code>appendToSharedSpace</code>、<code>docs/plus-integration-sockets.md</code>、<code>docs/gui-integration/README.md</code>、<code>site/plus-integration.ts</code>。件数はこのリポジトリが固定しているフォークで数えたものです。</p>
+</article>
+
+<!-- ============================================================ 03 SPEC -->
+<article class="doc" id="spec">
+  <header>
+    <div class="kind">03 · 仕様書</div>
+    <h2>TurboWarp-Plus-Editor が追加機能を組み込む仕組み</h2>
+    <p class="lede">Plus の追加機能がフォークの scratch-gui に届くまでの経路、口の一覧、守るべき約束、起動時フラグ、実行時の拡張に公開する API を定めます。</p>
+  </header>
+
+  <h3>1. 3つのリポジトリと依存の向き</h3>
+  <div class="prose">
+    <p>Plus の追加機能は3つのリポジトリにまたがります。依存は一方向で、上流は下流を知りません。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 300" role="img" aria-label="三つのリポジトリの関係。turbowarp-plus-editor が npm パッケージを固定版で import し、scratch-gui フォークを SHA で固定してビルド時に値を渡す。フォークは getHostIntegration で問い合わせる。パッケージは下流を知らない。成果物は GitHub Pages に配信される。">
+        <defs>
+          <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="s1p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="20" y="20" width="220" height="180" rx="10" class="box plus"/>
+        <text x="130" y="46" text-anchor="middle" class="t-b">turbowarp-plus-packages</text>
+        <text x="130" y="64" text-anchor="middle" class="t-s">npm・MPL-2.0 など</text>
+        <text x="38" y="96" class="t-s">・実装の本体</text>
+        <text x="38" y="118" class="t-s">・単体テスト</text>
+        <text x="38" y="140" class="t-s">・版とリリース（v タグ）</text>
+        <text x="38" y="162" class="t-s">・下流を知らない</text>
+
+        <rect x="270" y="20" width="220" height="180" rx="10" class="box"/>
+        <text x="380" y="46" text-anchor="middle" class="t-b">turbowarp-plus-editor</text>
+        <text x="380" y="64" text-anchor="middle" class="t-s">GPL・このリポジトリ</text>
+        <text x="288" y="96" class="t-s">・site/ の接続コード</text>
+        <text x="288" y="118" class="t-s">・config/ の起動時フラグ</text>
+        <text x="288" y="140" class="t-s">・ビルド設定と配信</text>
+        <text x="288" y="162" class="t-s">・統合テストと E2E</text>
+
+        <rect x="520" y="20" width="220" height="180" rx="10" class="box"/>
+        <text x="630" y="46" text-anchor="middle" class="t-b">scratch-gui フォーク</text>
+        <text x="630" y="64" text-anchor="middle" class="t-s">GPL・SHA で固定</text>
+        <text x="538" y="96" class="t-s">・本家にあるファイルだけ</text>
+        <text x="538" y="118" class="t-s">・口を呼ぶ行</text>
+        <text x="538" y="140" class="t-s">・汎用の小さな修正</text>
+        <text x="538" y="162" class="t-s">・独自コードを足さない</text>
+
+        <line x1="268" y1="110" x2="243" y2="110" class="ln" marker-end="url(#s1)"/>
+        <text x="255" y="222" text-anchor="middle" class="t-s">npm 公開版を import</text>
+        <line x1="492" y1="92" x2="517" y2="92" class="ln" marker-end="url(#s1)"/>
+        <line x1="517" y1="128" x2="492" y2="128" class="ln plus dash" marker-end="url(#s1p)"/>
+        <text x="505" y="222" text-anchor="middle" class="t-s">固定して値を渡す ／ 口で問い合わせる</text>
+
+        <rect x="270" y="244" width="220" height="44" rx="8" class="box plain"/>
+        <text x="380" y="271" text-anchor="middle">GitHub Pages・player・Packager</text>
+        <line x1="380" y1="202" x2="380" y2="241" class="ln" marker-end="url(#s1)"/>
+      </svg>
+    </div>
+    <figcaption><b>図8</b>実装はパッケージに、接続と配信は Editor に、口を呼ぶ行だけがフォークにあります。パッケージ側は GPL のコードを import しないので、向きは「GPL 側がパッケージの口を呼ぶ」に固定します。</figcaption>
+  </figure>
+
+  <h3>2. ビルド時の結合</h3>
+  <div class="prose">
+    <p>フォークの <code>src/addons/hooks.js</code> は次の getter を持ちます。本家にも存在するファイルです。</p>
+  </div>
+  <pre><code>/* global __TW_GUI_HOST__ */
+// The distributing build supplies this module; standalone GUI builds have no extra host.
+export const getHostIntegration = () =&gt;
+    (typeof __TW_GUI_HOST__ === 'undefined' ? null : __TW_GUI_HOST__);</code></pre>
+  <div class="prose">
+    <p>配信ビルドの <code>scripts/site/webpack.config.cts</code> が <code>ProvidePlugin</code> で <code>__TW_GUI_HOST__</code> を <code>site/gui-integration/index.ts</code> に結び付けます。実行時の global への代入や起動順には依存しません。フォークが読む値は2層になっています。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 290" role="img" aria-label="フォークが読む値の二つの層。直接の値は React コンポーネントや関数としてホスト橋渡しから読む。host で始まる補助関数は hostIntegration を通して plusIntegration の統合オブジェクトの項目を読み、無ければ空の既定値を返す。">
+        <defs>
+          <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        </defs>
+        <text x="20" y="20" class="t-s t-b">フォークの呼び出し箇所</text>
+        <rect x="20" y="34" width="210" height="66" rx="8" class="box"/>
+        <text x="32" y="58" class="t-m">?.EditorLayout</text>
+        <text x="32" y="80" class="t-m">?.renderFileMenu(props)</text>
+        <rect x="20" y="150" width="210" height="66" rx="8" class="box"/>
+        <text x="32" y="174" class="t-m">?.hostModalNames(</text>
+        <text x="32" y="196" class="t-m">  ?.hostIntegration())</text>
+
+        <text x="270" y="20" class="t-s t-b">site/gui-integration/index.ts</text>
+        <rect x="270" y="34" width="220" height="66" rx="8" class="box plus"/>
+        <text x="380" y="60" text-anchor="middle" class="t-b">直接の値</text>
+        <text x="380" y="80" text-anchor="middle" class="t-s">コンポーネント・関数</text>
+        <rect x="270" y="150" width="220" height="66" rx="8" class="box plus"/>
+        <text x="380" y="176" text-anchor="middle" class="t-b">host* 補助関数</text>
+        <text x="380" y="196" text-anchor="middle" class="t-s t-m">tw-plus-integration-points.ts</text>
+
+        <text x="530" y="20" class="t-s t-b">site/plus-integration.ts</text>
+        <rect x="530" y="34" width="210" height="182" rx="8" class="box plus"/>
+        <text x="635" y="60" text-anchor="middle" class="t-b">統合オブジェクト</text>
+        <text x="546" y="88" class="t-s t-m">modals</text>
+        <text x="546" y="108" class="t-s t-m">translations</text>
+        <text x="546" y="128" class="t-s t-m">attachToWorkspace</text>
+        <text x="546" y="148" class="t-s t-m">stageControls</text>
+        <text x="546" y="168" class="t-s t-m">securityReview …</text>
+        <text x="546" y="198" class="t-s t-m">plusIntegration()</text>
+
+        <line x1="232" y1="67" x2="267" y2="67" class="ln" marker-end="url(#s2)"/>
+        <line x1="232" y1="183" x2="267" y2="183" class="ln" marker-end="url(#s2)"/>
+        <line x1="492" y1="183" x2="527" y2="183" class="ln" marker-end="url(#s2)"/>
+        <text x="510" y="236" text-anchor="middle" class="t-s">hostIntegration()</text>
+
+        <rect x="20" y="246" width="720" height="34" rx="6" class="box plain"/>
+        <text x="380" y="268" text-anchor="middle" class="t-s">どちらも無ければ null か空の既定値（[]、{}、null）を返し、フォークは本家の動きに落ちる</text>
+      </svg>
+    </div>
+    <figcaption><b>図9</b>画面の部品は橋渡しから直接読み、設定値やサービスは補助関数を通して統合オブジェクトから読みます。補助関数が「無いときの既定値」を一か所で決めます。</figcaption>
+  </figure>
+
+  <h3>3. 口の一覧</h3>
+  <div class="prose">
+    <p>フォークが参照している口を用途ごとに並べます。左の名前はフォークが <code>getHostIntegration()?.</code> の後に書く名前、右の項目は統合オブジェクトの項目です。最新の一覧は次のコマンドで取り出せます。</p>
+  </div>
+  <pre><code>grep -rhoE "getHostIntegration\(\)\?\.[A-Za-z]+" src | sort | uniq -c</code></pre>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>用途</th><th>フォークが読む名前</th><th>統合オブジェクトの項目</th><th>主な呼び出し元</th></tr></thead>
+      <tbody>
+        <tr><th>画面の構造</th><td><code>EditorLayout</code> <code>StagePanel</code> <code>StageDisplayMenu</code> <code>TargetListLayout</code> <code>TargetListPanel</code> <code>SpriteGrid</code> <code>BackdropTile</code> <code>BackdropListActions</code> <code>BackpackSurface</code></td><td>（直接の値）</td><td><code>gui.jsx</code> ほか</td></tr>
+        <tr><th>スプライトとステージ</th><td><code>wrapSpriteInfo</code> <code>spriteListClasses</code> <code>useSpriteCodeWindows</code> <code>attachSpriteCodeWorkspace</code> <code>attachStageInput</code> <code>attachStageMonitorDrag</code></td><td>（直接の値）</td><td><code>sprite-info.jsx</code>、<code>stage.jsx</code> ほか</td></tr>
+        <tr><th>メニュー</th><td><code>renderFileMenu</code> <code>createFileMenuItem</code> <code>extensionInFileMenu</code> <code>renderProjectSearch</code> <code>ProjectInfoMenu</code> <code>renderStageControls</code></td><td>（直接の値）</td><td><code>menu-bar.jsx</code>、<code>controls.jsx</code></td></tr>
+        <tr><th>ワークスペースとブロック</th><td><code>createWorkspaceAttachment</code> <code>registerHostBlockShapes</code> <code>createBlocksWrapper</code> <code>getBlockEditorService</code></td><td><code>attachToWorkspace</code> <code>registerBlockShapes</code> <code>blockEditor</code> <code>attachWorkspaceMinimap</code></td><td><code>gui.jsx</code>、<code>blocks.js</code>、<code>blocks.jsx</code></td></tr>
+        <tr><th>状態</th><td><code>hostModalNames</code> <code>hostModalDefaults</code> <code>createCancelSecurityLoad</code> <code>recoverProjectLoad</code> <code>loadedProjectTitle</code> <code>restoreProjectTitle</code></td><td><code>modals</code></td><td><code>reducers/</code>、<code>vm-manager-hoc.jsx</code></td></tr>
+        <tr><th>拡張の読み込みと審査</th><td><code>installSecurityHost</code> <code>getPlusReviewedMode</code> <code>createPreviewVm</code></td><td><code>installExtensionHost</code> <code>securityReview</code> <code>trustedExtensions</code> <code>libraryTab</code> <code>extensionLoadErrors</code></td><td><code>tw-security-manager.jsx</code>、<code>extension-library.jsx</code></td></tr>
+        <tr><th>入力と翻訳</th><td><code>hostIgnoresKeyEvent</code> <code>hostTranslationsFor</code></td><td><code>shouldIgnoreKeyEvent</code> <code>translations</code></td><td><code>vm-listener-hoc.jsx</code>、<code>tw-translations/</code></td></tr>
+        <tr><th>アドオンとの接点</th><td><code>hostAwaitedAddonIds</code> <code>finalizeHostTransferMenu</code> <code>hostStageTransferMenu</code></td><td><code>awaitStartupAddons</code> <code>scriptTransfer</code></td><td><code>addons/api.js</code></td></tr>
+        <tr><th>Packager</th><td><code>hostProjectPackager</code></td><td><code>projectPackager</code></td><td><code>tw-packager-integration-hoc.jsx</code></td></tr>
+        <tr><th>拡張に公開する API</th><td><code>hostStageControls</code> <code>getBlockEditorService</code> <code>createPreviewVm</code></td><td><code>stageControls</code> <code>blockEditor</code></td><td><code>tw-extension-gui-api.js</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>4. 口の約束</h3>
+  <div class="prose">
+    <p>すべての口は次の約束を守ります。新しい口を開けるときも同じです。</p>
+    <ol>
+      <li><strong>任意であること。</strong>値が無ければ、フォークは本家の TurboWarp と同じに動きます。補助関数は空の既定値（<code>[]</code>、<code>{}</code>、<code>null</code>）を返します。</li>
+      <li><strong>GUI 内部の値は引数で受け取ること。</strong>ホストはフォークの reducer や UI を import しません。Modal、遅延読み込みの ScratchBlocks、logger、Redux の action creator は、フォークが呼び出し時に渡します（例：<code>createCancelSecurityLoad(initialState, defaultProjectId, LoadingState, integration)</code>）。</li>
+      <li><strong>付けたものは外せること。</strong>何かを付ける口は <code>{dispose()}</code> を返します。フォークは VM が替わるたびに前の戻り値を <code>dispose()</code> してから呼び直し、戻り値の中は見ません。</li>
+      <li><strong>VM ごとに同じサービスを返すこと。</strong>操作欄のように二か所から読まれるサービスは、VM をキーにした <code>WeakMap</code> で1つに保ちます。</li>
+      <li><strong>CSS の口は作らないこと。</strong>本家の CSS モジュールのクラス名はビルド時にハッシュされ、外から狙えません。新しい部品は自分のクラスとスタイルをパッケージ側に持ち、色は GUI の公開テーマ変数を使います。</li>
+      <li><strong>独自のファイルをフォークに足さないこと。</strong>フォークに残すのは口を呼ぶ行だけです。テストもフォークには足さず、このリポジトリの <code>test/</code> とパッケージ側に置きます。</li>
+    </ol>
+  </div>
+
+  <h3>5. ワークスペースへの取り付け</h3>
+  <div class="prose">
+    <p><code>attachToWorkspace</code> は、Blockly や VM に付く機能をまとめて取り付ける口です。アドオンの userscript に最も近い形をしています。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 330" role="img" aria-label="attachToWorkspace の流れ。フォークが context を渡して呼ぶ。統合オブジェクトがパッケージの取り付け関数を順に呼び、まとめた dispose を返す。VM が替わるとフォークは dispose を呼び、統合オブジェクトは逆順に外し、一つが失敗しても残りを外す。そのあと新しい context で呼び直す。">
+        <defs>
+          <marker id="s3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="s3p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="40" y="14" width="160" height="34" rx="6" class="box"/>
+        <text x="120" y="36" text-anchor="middle" class="t-b">フォーク（gui.jsx）</text>
+        <rect x="300" y="14" width="160" height="34" rx="6" class="box plus"/>
+        <text x="380" y="36" text-anchor="middle" class="t-b">統合オブジェクト</text>
+        <rect x="560" y="14" width="160" height="34" rx="6" class="box plus"/>
+        <text x="640" y="36" text-anchor="middle" class="t-b">パッケージ</text>
+        <line x1="120" y1="48" x2="120" y2="320" class="ln thin dash"/>
+        <line x1="380" y1="48" x2="380" y2="320" class="ln thin dash"/>
+        <line x1="640" y1="48" x2="640" y2="320" class="ln thin dash"/>
+
+        <line x1="120" y1="78" x2="377" y2="78" class="ln" marker-end="url(#s3)"/>
+        <text x="128" y="72" class="t-s t-m">attachToWorkspace(context)</text>
+        <line x1="380" y1="108" x2="637" y2="108" class="ln plus" marker-end="url(#s3p)"/>
+        <text x="388" y="102" class="t-s">取り付け関数を順に呼ぶ</text>
+        <line x1="640" y1="132" x2="383" y2="132" class="ln plus dash" marker-end="url(#s3p)"/>
+        <text x="632" y="148" text-anchor="end" class="t-s t-m">{dispose} をそれぞれ返す</text>
+        <line x1="380" y1="170" x2="123" y2="170" class="ln dash" marker-end="url(#s3)"/>
+        <text x="372" y="164" text-anchor="end" class="t-s">まとめた {dispose}</text>
+
+        <rect x="40" y="188" width="160" height="26" rx="13" class="box warn"/>
+        <text x="120" y="206" text-anchor="middle" class="t-s t-warn t-b">VM が替わる</text>
+        <line x1="120" y1="236" x2="377" y2="236" class="ln" marker-end="url(#s3)"/>
+        <text x="128" y="230" class="t-s t-m">dispose()</text>
+        <line x1="380" y1="262" x2="637" y2="262" class="ln plus" marker-end="url(#s3p)"/>
+        <text x="388" y="256" class="t-s">逆順に外す。失敗しても残りを外す</text>
+        <line x1="120" y1="300" x2="377" y2="300" class="ln" marker-end="url(#s3)"/>
+        <text x="128" y="294" class="t-s t-m">attachToWorkspace(新しい context)</text>
+      </svg>
+    </div>
+    <figcaption><b>図10</b>取り付けと取り外しの順序はフォークが持ち、何を付けるかは統合オブジェクトが決めます。</figcaption>
+  </figure>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>context の項目</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td><code>vm</code></td><td>今の VM。替わるたびに呼び直される</td></tr>
+        <tr><td><code>locale</code></td><td>表示言語（<code>ja</code>、<code>en</code> など）</td></tr>
+        <tr><td><code>document</code></td><td>エディターの document。別ウィンドウにも対応するため <code>window.document</code> を直接使わない</td></tr>
+        <tr><td><code>getBlockly</code></td><td>ScratchBlocks を返す関数。読み込まれるまで待つ</td></tr>
+        <tr><td><code>getMessages</code></td><td>今の言語の翻訳を返す関数</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>ScratchBlocks が使えるようになった時点で一度だけ行う登録（ブロックの形、右クリックメニュー、パレットへの項目の追加）は、<code>registerBlockShapes(ScratchBlocks)</code> に置きます。アドオンの起動を待つ必要があるときは、そのアドオンの id を <code>awaitStartupAddons</code> に書きます（今は <code>editor-searchable-dropdowns</code>）。</p>
+  </div>
+
+  <h3>6. 実行時の拡張に公開する API</h3>
+  <div class="prose">
+    <p>非サンドボックスの拡張は <code>Scratch.gui</code> から次の値を読めます。本家にある <code>getBlockly</code> と <code>getBlocklyEagerly</code> に加え、ホストが値を渡したときだけ次の項目が生えます。値が無いときは <code>undefined</code> のままなので、拡張は「このビルドには無い」と判断できます。</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>項目</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td><code>Scratch.gui.stageControls</code></td><td>ステージの操作欄にボタンを足す API。<code>addButton({id, label, text?, icon?, onClick})</code> が <code>{update, focus, dispose}</code> を返す</td></tr>
+        <tr><td><code>Scratch.gui.blockEditors</code></td><td>フォーム形式のブロック編集サービス</td></tr>
+        <tr><td><code>Scratch.gui.createPreviewVm()</code></td><td>作品とは独立したプレビュー用の VM を作る</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 290" role="img" aria-label="ステージ操作欄の経路。非サンドボックス拡張は Scratch.gui.stageControls.addButton でサービスに登録する。app-shell を使う拡張は Symbol.for の共有点から controls dock を見つけ、同じサービスの api に届く。サービスは VM ごとに一つで、メニューバー末尾の描画が購読する。作品を読み込むとサービスは空になる。">
+        <defs>
+          <marker id="s4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="s4p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="20" y="30" width="200" height="56" rx="8" class="box"/>
+        <text x="120" y="55" text-anchor="middle" class="t-b">非サンドボックス拡張</text>
+        <text x="120" y="73" text-anchor="middle" class="t-s">作品が読み込む</text>
+        <rect x="20" y="150" width="200" height="56" rx="8" class="box"/>
+        <text x="120" y="175" text-anchor="middle" class="t-b">app-shell を使う拡張</text>
+        <text x="120" y="193" text-anchor="middle" class="t-s">camera-source など</text>
+
+        <rect x="290" y="150" width="190" height="56" rx="8" class="box plus"/>
+        <text x="385" y="175" text-anchor="middle" class="t-b">controls dock</text>
+        <text x="385" y="193" text-anchor="middle" class="t-s t-m">installControlsDock</text>
+        <line x1="222" y1="178" x2="287" y2="178" class="ln" marker-end="url(#s4)"/>
+        <text x="254" y="230" text-anchor="middle" class="t-s t-m">Symbol.for(…/v1)</text>
+
+        <rect x="540" y="80" width="200" height="76" rx="8" class="box plus"/>
+        <text x="640" y="106" text-anchor="middle" class="t-b">操作欄サービス</text>
+        <text x="640" y="126" text-anchor="middle" class="t-s">VM ごとに1つ</text>
+        <text x="640" y="144" text-anchor="middle" class="t-s t-m">WeakMap</text>
+        <path d="M222,58 L520,58 L520,100 L537,100" class="ln" marker-end="url(#s4)"/>
+        <text x="370" y="50" text-anchor="middle" class="t-s t-m">Scratch.gui.stageControls.addButton()</text>
+        <path d="M482,178 L520,178 L520,138 L537,138" class="ln plus" marker-end="url(#s4p)"/>
+        <text x="500" y="196" class="t-s t-m">service.api</text>
+
+        <rect x="540" y="214" width="200" height="56" rx="8" class="box"/>
+        <text x="640" y="239" text-anchor="middle" class="t-b">メニューバー末尾</text>
+        <text x="640" y="257" text-anchor="middle" class="t-s t-m">renderStageControls</text>
+        <line x1="640" y1="212" x2="640" y2="159" class="ln plus" marker-end="url(#s4p)"/>
+        <text x="650" y="190" class="t-s">購読</text>
+
+        <rect x="540" y="14" width="200" height="34" rx="6" class="box warn"/>
+        <text x="640" y="36" text-anchor="middle" class="t-s t-warn t-b">PROJECT_LOADED で空にする</text>
+        <line x1="640" y1="50" x2="640" y2="77" class="ln warn" marker-end="url(#s4)"/>
+      </svg>
+    </div>
+    <figcaption><b>図11</b>どちらの経路から登録しても同じサービスに入り、Editor のメニューバーに並びます。Editor 自身は個々の拡張を知りません。</figcaption>
+  </figure>
+  <div class="prose">
+    <p><code>addButton</code> で足したボタンは <code>visible: false</code> で始まります。表示するには <code>update({visible: true})</code> を呼びます。<code>update</code> で変えられるのは <code>label</code>、<code>text</code>、<code>visible</code>、<code>expanded</code> の4つです。展開したときに見せる要素は、サービスの <code>placePanel(element)</code> でホストに渡します。要素の持ち主は登録した側で、ホストは取り付けるだけです。</p>
+  </div>
+
+  <h3>7. 起動時フラグ</h3>
+  <div class="prose">
+    <p>機能の有効・無効は、ページの URL クエリ <code>twPlus…</code> で起動時に一度だけ決まります。<code>config/web-startup-feature-flags.ts</code> が URL を読み、<code>config/feature-flags.ts</code> の <code>readStartupFeatureFlags</code> が凍結したオブジェクトを返します。<strong>作品のデータからこの値を受け取ってはいけません。</strong></p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 120" role="img" aria-label="起動時フラグの流れ。URL のクエリを web-startup-feature-flags が読み、feature-flags が凍結したフラグを返し、plus-integration と gui-integration が何を渡すかを決める。作品データからは読まない。">
+        <defs>
+          <marker id="s5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        </defs>
+        <rect x="20" y="24" width="160" height="52" rx="8" class="box plain"/>
+        <text x="100" y="48" text-anchor="middle" class="t-m">?twPlusXxx=1</text>
+        <text x="100" y="66" text-anchor="middle" class="t-s">ページの URL</text>
+        <rect x="210" y="24" width="160" height="52" rx="8" class="box"/>
+        <text x="290" y="48" text-anchor="middle" class="t-s t-m">readWebStartup</text>
+        <text x="290" y="66" text-anchor="middle" class="t-s t-m">FeatureFlags</text>
+        <rect x="400" y="24" width="160" height="52" rx="8" class="box"/>
+        <text x="480" y="48" text-anchor="middle" class="t-s t-m">readStartup</text>
+        <text x="480" y="66" text-anchor="middle" class="t-s">凍結して返す</text>
+        <rect x="590" y="24" width="150" height="52" rx="8" class="box plus"/>
+        <text x="665" y="48" text-anchor="middle" class="t-s">何を渡すか決める</text>
+        <text x="665" y="66" text-anchor="middle" class="t-s t-m">site/*</text>
+        <line x1="182" y1="50" x2="207" y2="50" class="ln" marker-end="url(#s5)"/>
+        <line x1="372" y1="50" x2="397" y2="50" class="ln" marker-end="url(#s5)"/>
+        <line x1="562" y1="50" x2="587" y2="50" class="ln" marker-end="url(#s5)"/>
+        <text x="380" y="104" text-anchor="middle" class="t-s t-warn">作品データ（SB3）からは読まない</text>
+      </svg>
+    </div>
+    <figcaption><b>図12</b>フラグは起動時に URL から一度だけ読み、以後は変わりません。</figcaption>
+  </figure>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>既定</th><th>フラグ（<code>twPlus</code> を省略）</th></tr></thead>
+      <tbody>
+        <tr><th>有効（<code>=0</code> で無効）</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>ManualProjectURI</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code>（Web の既定） <code>ExtensionFileMenu</code> <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code></td></tr>
+        <tr><th>無効（<code>=1</code> で有効）</th><td><code>SpriteProperties</code> <code>WindowLayout</code> <code>HorizontalBlockPalette</code> <code>StageDisplayMenu</code>（<code>StandardLayout</code> のときは有効）</td></tr>
+        <tr><th>他のフラグに従う</th><td><code>BackpackPopout</code> <code>InternalWindows</code>（<code>WindowLayout</code> が必要）、<code>StagePanel</code> <code>TargetList</code> <code>SpriteCodeWindows</code>（<code>WindowLayout</code> と <code>InternalWindows</code> が必要）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>8. 同梱アドオンとの関係</h3>
+  <div class="prose">
+    <ul>
+      <li><strong>既定の有効化：</strong><code>site/addon-manifests.ts</code> が、webpack の alias でフォークの <code>generated/addon-manifests</code> を置き換えます。「おすすめ」タグの付いたアドオンと <code>hide-delete-button</code>、<code>block-palette-icons</code> を既定で有効にし、<code>hide-flyout</code> は無効のままにします。利用者が設定画面で選んだ値が優先されます。</li>
+      <li><strong>起動待ち：</strong><code>awaitStartupAddons</code> に書いたアドオンは、実行器がその起動を待ってから次へ進みます。</li>
+      <li><strong>右クリックメニュー：</strong><code>api.js</code> の <code>createBlockContextMenu</code> は、項目を確定する前に <code>finalizeHostTransferMenu</code> を通します。スクリプト転送のメニューはここで足されます。</li>
+    </ul>
+  </div>
+
+  <h3>9. 検証</h3>
+  <div class="table-wrap">
+    <table class="wide">
+      <thead><tr><th>コマンド</th><th>確かめること</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm test</code></td><td>このリポジトリと <code>packages/</code> の単体テスト。<code>test/plus-integration.test.ts</code> が統合オブジェクトの各項目を固定する</td></tr>
+        <tr><td><code>E2E_GUI_ROOT=… npm run test:gui-integration</code></td><td>固定したフォークに本家に無いファイルが無いこと、口の意味、移設したテスト</td></tr>
+        <tr><td><code>npm run typecheck</code></td><td>型検査</td></tr>
+        <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>配信ビルド。<code>build-info.json</code> の <code>revision</code> と <code>siteRevision</code> が今の HEAD と <code>site/source.json</code> に一致すること</td></tr>
+        <tr><td><code>npm run test:e2e</code></td><td>Playwright による統合 E2E</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    <div class="label">実マウスを使う E2E</div>
+    <p>OS のマウスカーソルを動かす E2E（<code>TW_PLUS_NATIVE_INPUT=1</code>、<code>test:e2e:native</code>）は、その実行を明示的に依頼されたときだけ行います。一般的な E2E の実行や PR の検証の依頼には含まれません（<code>AGENTS.md</code>）。</p>
+  </div>
+</article>
+
+<!-- ============================================================ 04 HOWTO -->
+<article class="doc" id="howto">
+  <header>
+    <div class="kind">04 · 作り方</div>
+    <h2>新しい追加機能を作る手順</h2>
+    <p class="lede">作りたい追加機能をどこに置くかを決め、パッケージに実装し、Editor でつなぎ、検証して配信するまでの手順です。</p>
+  </header>
+
+  <h3>1. 置き場所を決める</h3>
+  <div class="prose">
+    <p>最初に、機能がどの経路でエディターに届くかを決めます。下の図の上から順に当てはめ、最初に「はい」になったところが置き場所です。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 430" role="img" aria-label="置き場所を決める流れ図。作品の中で動く機能なら実行時の拡張として作る。既存の口で届くならパッケージに実装して site で数行つなぐ。ワークスペースや Blockly に付けて外せるなら attachToWorkspace か registerBlockShapes の中で付ける。どれでもなければ新しい口を開ける。">
+        <defs>
+          <marker id="h1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="h1p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
+        </defs>
+        <rect x="110" y="10" width="200" height="36" rx="18" class="box plain"/>
+        <text x="210" y="33" text-anchor="middle" class="t-b">作りたい機能</text>
+        <line x1="210" y1="48" x2="210" y2="63" class="ln" marker-end="url(#h1)"/>
+
+        <path d="M210,66 L340,106 L210,146 L80,106 z" class="box"/>
+        <text x="210" y="102" text-anchor="middle">作品の中で動く</text>
+        <text x="210" y="120" text-anchor="middle">ブロック・入出力？</text>
+        <path d="M210,148 L210,163" class="ln" marker-end="url(#h1)"/>
+        <text x="220" y="160" class="t-s">いいえ</text>
+
+        <path d="M210,166 L340,202 L210,238 L80,202 z" class="box"/>
+        <text x="210" y="198" text-anchor="middle">既存の口で</text>
+        <text x="210" y="216" text-anchor="middle">届く？</text>
+        <path d="M210,240 L210,255" class="ln" marker-end="url(#h1)"/>
+        <text x="220" y="252" class="t-s">いいえ</text>
+
+        <path d="M210,258 L340,298 L210,338 L80,298 z" class="box"/>
+        <text x="210" y="294" text-anchor="middle">Blockly・VM に付けて</text>
+        <text x="210" y="312" text-anchor="middle">外せる？</text>
+        <path d="M210,340 L210,355" class="ln" marker-end="url(#h1)"/>
+        <text x="220" y="352" class="t-s">いいえ</text>
+
+        <rect x="80" y="358" width="260" height="60" rx="8" class="box warn"/>
+        <text x="210" y="383" text-anchor="middle" class="t-b">D　新しい口を開ける</text>
+        <text x="210" y="403" text-anchor="middle" class="t-s">フォークに呼び出し1行＋受け側の補助関数</text>
+
+        <rect x="420" y="76" width="320" height="60" rx="8" class="box plus"/>
+        <text x="436" y="101" class="t-b">A　実行時の拡張として作る</text>
+        <text x="436" y="121" class="t-s">操作欄は Scratch.gui.stageControls か app-shell</text>
+        <line x1="342" y1="106" x2="417" y2="106" class="ln plus" marker-end="url(#h1p)"/>
+        <text x="380" y="98" text-anchor="middle" class="t-s">はい</text>
+
+        <rect x="420" y="172" width="320" height="60" rx="8" class="box plus"/>
+        <text x="436" y="197" class="t-b">B　パッケージに実装し、site/ でつなぐ</text>
+        <text x="436" y="217" class="t-s">フォークは変えない</text>
+        <line x1="342" y1="202" x2="417" y2="202" class="ln plus" marker-end="url(#h1p)"/>
+        <text x="380" y="194" text-anchor="middle" class="t-s">はい</text>
+
+        <rect x="420" y="268" width="320" height="60" rx="8" class="box plus"/>
+        <text x="436" y="293" class="t-b">C　attachToWorkspace などの中で付ける</text>
+        <text x="436" y="313" class="t-s">{dispose} を返す。フォークは変えない</text>
+        <line x1="342" y1="298" x2="417" y2="298" class="ln plus" marker-end="url(#h1p)"/>
+        <text x="380" y="290" text-anchor="middle" class="t-s">はい</text>
+      </svg>
+    </div>
+    <figcaption><b>図13</b>A〜C はフォークを変えずに済みます。D だけがフォークへの変更を伴うので、先に A〜C で届かないことを確かめます。</figcaption>
+  </figure>
+
+  <h3>2. 作業の順序</h3>
+  <div class="prose">
+    <p>実装はパッケージのリポジトリで先に公開し、Editor はその npm 公開版に上げてからつなぎます。新しい口が要るときは、フォークの変更を並行して進め、Editor で SHA を固定します。</p>
+  </div>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 760 270" role="img" aria-label="作業の順序。turbowarp-plus-packages で実装と単体テストを行い、v タグで npm に公開する。新しい口が要るときだけ scratch-gui フォークで口を開ける PR を出す。turbowarp-plus-editor で npm 公開版とフォークの SHA に上げ、site でつなぎ、テストとビルドで確かめて PR を出す。">
+        <defs>
+          <marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+        </defs>
+        <text x="20" y="48" class="t-b t-s">packages</text>
+        <text x="20" y="128" class="t-b t-s">フォーク</text>
+        <text x="20" y="144" class="t-s">（D のみ）</text>
+        <text x="20" y="218" class="t-b t-s">plus-editor</text>
+        <line x1="96" y1="88" x2="740" y2="88" class="ln thin dash"/>
+        <line x1="96" y1="170" x2="740" y2="170" class="ln thin dash"/>
+
+        <rect x="100" y="24" width="140" height="48" rx="8" class="box plus"/>
+        <text x="170" y="45" text-anchor="middle" class="t-s t-b">① 実装と</text>
+        <text x="170" y="62" text-anchor="middle" class="t-s t-b">単体テスト</text>
+        <rect x="260" y="24" width="140" height="48" rx="8" class="box plus"/>
+        <text x="330" y="45" text-anchor="middle" class="t-s t-b">② bump で版を決め</text>
+        <text x="330" y="62" text-anchor="middle" class="t-s t-b">v タグで npm 公開</text>
+        <line x1="242" y1="48" x2="257" y2="48" class="ln" marker-end="url(#h2)"/>
+
+        <rect x="100" y="104" width="300" height="48" rx="8" class="box warn"/>
+        <text x="250" y="125" text-anchor="middle" class="t-s t-b">①' 既存ファイルに口を呼ぶ行を足す PR</text>
+        <text x="250" y="142" text-anchor="middle" class="t-s">独自ファイル・テストは足さない</text>
+
+        <rect x="420" y="190" width="100" height="56" rx="8" class="box"/>
+        <text x="470" y="214" text-anchor="middle" class="t-s t-b">③ 版と SHA</text>
+        <text x="470" y="231" text-anchor="middle" class="t-s t-b">を上げる</text>
+        <rect x="536" y="190" width="90" height="56" rx="8" class="box"/>
+        <text x="581" y="214" text-anchor="middle" class="t-s t-b">④ site/ で</text>
+        <text x="581" y="231" text-anchor="middle" class="t-s t-b">つなぐ</text>
+        <rect x="642" y="190" width="98" height="56" rx="8" class="box"/>
+        <text x="691" y="214" text-anchor="middle" class="t-s t-b">⑤ 検証</text>
+        <text x="691" y="231" text-anchor="middle" class="t-s t-b">して PR</text>
+        <line x1="522" y1="218" x2="533" y2="218" class="ln" marker-end="url(#h2)"/>
+        <line x1="628" y1="218" x2="639" y2="218" class="ln" marker-end="url(#h2)"/>
+        <path d="M402,48 L440,48 L440,187" class="ln" marker-end="url(#h2)"/>
+        <text x="448" y="112" class="t-s">npm 公開版</text>
+        <path d="M402,128 L500,128 L500,187" class="ln dash" marker-end="url(#h2)"/>
+        <text x="508" y="160" class="t-s">source.json の SHA</text>
+      </svg>
+    </div>
+    <figcaption><b>図14</b>上流から下流へ一方向に進みます。Editor の変更は、公開された版を使うところから始まります。</figcaption>
+  </figure>
+
+  <h3>3. 手順</h3>
+  <ol class="steps">
+    <li>
+      <h5>置き場所と口を決める</h5>
+      <p>図13で A〜D のどれに当たるかを決め、使う口を<a href="#spec">仕様書の口の一覧</a>から選びます。実装がどのパッケージに入るかもこの時点で決めます。Editor の <code>packages/</code> にある既存の実装は移行途中のもので、新しい機能の置き場所にはしません。</p>
+    </li>
+    <li>
+      <h5>パッケージに実装する</h5>
+      <p>turbowarp-plus-packages の該当パッケージ（無ければ新しいパッケージ）に実装します。GPL のコードは import せず、エディターから受け取るものはすべて引数でもらいます。付ける機能は <code>{dispose}</code> を返します。</p>
+<pre><code>// パッケージ側：document と翻訳を受け取り、外す手段を返す
+export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
+    const onTargetsUpdate = () =&gt; render(hostDocument, vm, getMessages());
+    vm.on('targetsUpdate', onTargetsUpdate);
+    return {
+        dispose () {
+            vm.removeListener('targetsUpdate', onTargetsUpdate);
+            clear(hostDocument);
+        }
+    };
+};</code></pre>
+      <p>スタイルはパッケージの中に自分のクラスで持ち、色は GUI の公開テーマ変数を使います。単体テストもパッケージに置きます。</p>
+    </li>
+    <li>
+      <h5>版を上げて npm に公開する</h5>
+      <p>turbowarp-plus-packages の <code>npm run bump</code>（上流から）または <code>npm run bump:downstream</code>（下流へ伝える）で版を決め、<code>v&lt;版&gt;</code> のタグで npm に公開します。tgz を Editor に同梱する方法は使いません。</p>
+    </li>
+    <li>
+      <h5>（D のときだけ）フォークに口を開ける</h5>
+      <p>本家にもあるファイルの中に、口を呼ぶ行を足します。値が無いときは本家どおりに動くように書きます。</p>
+<pre><code>// scratch-gui フォーク：既存ファイルに足すのはこの形の行だけ
+const SpriteBadges = getHostIntegration()?.SpriteBadges || null;
+// ...
+{SpriteBadges ? &lt;SpriteBadges vm={vm} /&gt; : null}</code></pre>
+      <p>新しいファイルやテストはフォークに足しません。口の意味は Editor 側のテストで押さえます。統合オブジェクトの項目として読ませる場合は、<code>site/gui-integration/lib/tw-plus-integration-points.ts</code> に既定値を返す <code>host…</code> 補助関数を足します。</p>
+    </li>
+    <li>
+      <h5>Editor で版と SHA を上げる</h5>
+      <p><code>package.json</code> と <code>package-lock.json</code> を npm 公開版に上げます。D のときは <code>site/source.json</code> のフォークの SHA を、口を開けたコミットの40桁 SHA に替えます。</p>
+    </li>
+    <li>
+      <h5>site/ でつなぐ</h5>
+      <p>C の場合は <code>site/plus-integration.ts</code> の <code>attachToWorkspace</code> に1行足します。</p>
+<pre><code>attached.push(attachSpriteBadges(hostDocument, {vm, getMessages}));</code></pre>
+      <p>B と D で画面の部品を渡す場合は、<code>site/gui-integration/index.ts</code> から export します。起動時フラグで切り替えたい場合は、<code>config/feature-flags.ts</code> と <code>config/web-startup-feature-flags.ts</code> に <code>twPlus…</code> を1つずつ足し、フラグが無効のときは何も渡さないようにします。</p>
+<pre><code>// site/gui-integration/index.ts
+export const SpriteBadges = startup.spriteBadges ? SpriteBadgesView : undefined;</code></pre>
+    </li>
+    <li>
+      <h5>A の場合：拡張から操作欄に登録する</h5>
+      <p>実行時の拡張は、Editor の内部を知らずに操作欄を使えます。<code>Scratch.gui.stageControls</code> が無いビルドでは何もしないようにします。</p>
+<pre><code>const controls = Scratch.gui?.stageControls;
+if (controls) {
+    const button = controls.addButton({
+        id: 'my-camera.calibrate', label: 'カメラを較正する', icon: '◎',
+        onClick: () =&gt; startCalibration()
+    });
+    button.update({visible: true}); // 追加直後は非表示
+}</code></pre>
+      <p>パッケージとして配る拡張は、<code>@kubohiroya/turbowarp-app-shell</code> の操作欄を使うと、ツールバーの無い単一 HTML のプレイヤーでも同じ操作が出ます。</p>
+    </li>
+    <li>
+      <h5>検証する</h5>
+      <p><code>npm test</code>、<code>npm run typecheck</code>、<code>npm run test:gui-integration</code> を通し、<code>E2E_GUI_ROOT=… npm run build:pages</code> でビルドし直してから画面を確認します。<code>scratch-gui/build</code> に残っている古い成果物は使いません。<code>build-info.json</code> の <code>revision</code> と <code>siteRevision</code> が今の状態に一致しているか確かめます。</p>
+    </li>
+    <li>
+      <h5>PR を出す</h5>
+      <p>このリポジトリの PR には必須のチェックがありません。<code>--auto</code> を付けると CI を待たずにすぐマージされるので、CI の結果を見てからマージします。</p>
+    </li>
+  </ol>
+
+  <h3>4. 出す前の確認</h3>
+  <ul class="checklist">
+    <li>実装の本体はパッケージにあり、Editor の変更は版の更新と数行の接続に収まっている</li>
+    <li>付けたものはすべて <code>dispose()</code> で外れる。VM が替わっても二重に付かない</li>
+    <li>値を渡さないとき、フォークは本家の TurboWarp と同じに動く</li>
+    <li>GUI 内部の値は引数で受け取り、フォークのモジュールを import していない</li>
+    <li>表示する文字列は <code>ja</code> と <code>en</code> の翻訳を持つ（ひらがな表示が要るものは <code>ja-hira</code> も）</li>
+    <li>起動時フラグは URL からだけ読み、作品のデータから読んでいない</li>
+    <li>単体テストはパッケージに、口のテストは Editor の <code>test/</code> にある</li>
+    <li>ビルドし直した成果物で画面を確かめた</li>
+  </ul>
+  <h4>してはいけないこと</h4>
+  <ul class="checklist no">
+    <li>フォークに新しいファイル、独自のテスト、本家のクラス名を狙う CSS を足す</li>
+    <li>本家の DOM をクラス名で探して書き換える（それはアドオンの方式で、口があるなら口を使う）</li>
+    <li>パッケージから GPL のコード（フォークや Editor の <code>site/</code>）を import する</li>
+    <li>パッケージを tgz で Editor に同梱する</li>
+    <li>依頼されていないのに実マウスを使う E2E を走らせる</li>
+  </ul>
+  <p class="source">関連文書：<code>docs/plus-integration-sockets.md</code>（口の設計の経緯）、<code>docs/gui-integration/README.md</code>（移設とビルド時の接続）、<code>docs/architecture.md</code>（責務と配信）。</p>
+</article>
+
+</main>
+
+<script>
+(function () {
+  var docs = Array.prototype.slice.call(document.querySelectorAll('.doc'));
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.tabs a'));
+  var ids = docs.map(function (d) { return d.id; });
+  document.documentElement.classList.add('js');
+  function show() {
+    var id = (location.hash || '').slice(1);
+    if (ids.indexOf(id) < 0) id = 'article';
+    docs.forEach(function (d) { d.classList.toggle('active', d.id === id); });
+    links.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('hashchange', function () { show(); window.scrollTo(0, 0); });
+  show();
+})();
+</script>

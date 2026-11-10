@@ -38,6 +38,15 @@ test('distribution identifies the new site owner and all pinned integrated compo
         const html=await readFile(path.join(dir,'index.html'),'utf8');
         assert.ok(html.includes('class="twpe-edit-button"'));
         assert.ok(!html.includes('turbowarp-extension-data-editor/editor.html'));
+        for (const link of ['href="features/"','href="developer-guide/"','href="developer-guide/index.en.html"']) assert.ok(html.includes(link),link);
+        // The terms are defined before the sections that use them.
+        assert.ok(html.indexOf('data-text="termFeature"')<html.indexOf('data-text="features"'));
+        for (const [file,lang,other] of [['index.html','ja','index.en.html'],['index.en.html','en','index.html']]) {
+            const guide=await readFile(path.join(dir,'developer-guide',file),'utf8');
+            assert.ok(guide.startsWith(`<!doctype html>\n<html lang="${lang}">`),file);
+            assert.ok(guide.includes(`<a href="../?lang=${lang}">`),file);
+            assert.ok(guide.includes(`<a href="${other}" hreflang=`),file);
+        }
         assert.ok((await readFile(path.join(dir,'assets/icon.svg'),'utf8')).includes('<title>TurboWarp-Plus-Editor</title>'));
         assert.match(await readFile(path.join(dir,'LICENSE.MPL-2.0'),'utf8'),/^Mozilla Public License Version 2\.0/);
     }finally{await rm(dir,{recursive:true,force:true});}
