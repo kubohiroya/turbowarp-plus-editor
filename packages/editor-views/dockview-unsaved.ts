@@ -88,7 +88,7 @@ export function mountDockviewUnsaved(vm: Project, root: HTMLElement, locale: str
             const marker = document.createElement('span');
             marker.dataset.twPlusUnsavedMarker = '';
             marker.dataset.twPlusUnsavedTab = '';
-            marker.textContent = '*';
+            marker.setAttribute('aria-hidden', 'true');
             marker.title = label;
             marker.hidden = true;
             title?.after(marker);
