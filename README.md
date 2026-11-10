@@ -339,7 +339,7 @@ Author: [Hiroya Kubo](https://github.com/kubohiroya)
 
 The integrated data editor provides the optional `Scratch.gui.blockEditors.registerPreview` API, documented in `docs/block-preview.md` of `@kubohiroya/turbowarp-extension-data-editor`. An extension registers previews for its own blocks. A preview shares the existing form’s draft, and the form’s Save remains the only persistence path, so one save is one undo step. `Scratch.gui.createPreviewVm()` creates an isolated VM that cannot load extensions.
 
-Extensions own their previews and any switch that enables them. The Editor ships no previews or preview samples of its own. `test/e2e/turbowarp/block-icon-preview.spec.cts` verifies this host contract with a test-only extension.
+Extensions own their previews and any switch that enables them. The Editor ships no previews or preview samples of its own. `@kubohiroya/turbowarp-extension-data-editor` verifies previews with a test-only extension on the Editor's pinned VM and Scratch Blocks (`test/runtime/block-preview.browser.ts`). The Editor's E2E checks that an ordinary startup gives extensions `registerPreview` and `Scratch.gui.createPreviewVm()`, and `test/gui-integration/unit/block-editor/preview-vm.test.ts` checks that a preview VM leaves the Editor's dispatch services in place.
 
 ## Local data-source migration candidate
 

@@ -15,7 +15,9 @@ const register = Scratch => {
         control: {kind: 'number'}, read: Number, encode: value => String(value), validateCandidate: () => []});
     const api = Scratch.gui && Scratch.gui.blockEditors;
     globalThis.__fixedFixtureCapabilities = {dialogs: Boolean(api), sourceForms: Boolean(api && typeof api.registerSourceEditor === 'function'),
-        fixedInputs: Boolean(api && typeof api.registerFixedInputEditor === 'function')};
+        fixedInputs: Boolean(api && typeof api.registerFixedInputEditor === 'function'),
+        previews: Boolean(api && typeof api.registerPreview === 'function'),
+        isolatedVm: Boolean(Scratch.gui && typeof Scratch.gui.createPreviewVm === 'function')};
     globalThis.__fixedFixtureAvailable = Boolean(api && typeof api.registerFixedInputEditor === 'function');
     globalThis.__fixedFixtureExecutions = 0;
     if (globalThis.__fixedFixtureAvailable) api.registerFixedInputEditor({
