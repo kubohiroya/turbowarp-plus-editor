@@ -72,6 +72,8 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
     if (!folder || !localGit) return folder;
     gitPanel = mountGitPanel({vm, document, host: {
         connectionSettings,
+        // Stage and commit with the repository's own Git identity (#318).
+        localWrite: {},
         renderReviewBlock,
         openProject: folder.openDirectory,
         // A transient tab beside the code, as the YAML documents open; the folder handle cannot outlive a reload.

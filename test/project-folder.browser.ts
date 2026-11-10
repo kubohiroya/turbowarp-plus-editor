@@ -597,6 +597,25 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect.poll(workspaceValue).toBe('74');
     assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
+    // The Git panel adds the saved project file to the next record and records it, as Git CLI sees it.
+    git('config', 'user.name', 'Editor folder fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    await showGit();
+    await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
+    // Added earlier with Git CLI and changed since, the file is listed both as staged and as unstaged.
+    const stageDemo = panel.getByRole('button', {name: 'Add to Next Record: projects/demo/project.source.json'});
+    await stageDemo.click();
+    await expect(stageDemo).toHaveCount(0);
+    await expect(panel.getByRole('button', {name: 'Remove from Next Record: projects/demo/project.source.json'})).toBeVisible();
+    assert.match(git('status', '--porcelain', '--', 'projects/demo/project.source.json'), /^A {2}/u);
+    await panel.getByLabel('Message for this record').fill('Update the demo from the Editor');
+    await panel.getByRole('button', {name: 'Record (Commit)'}).click();
+    await expect(panel.getByText('Recorded the changes (commit).')).toBeVisible();
+    assert.equal(git('log', '-1', '--format=%s|%an'), 'Update the demo from the Editor|Editor folder fixture');
+    assert.equal(git('show', 'HEAD:projects/demo/project.source.json'), dirtyDisk.trim());
+    assert.equal(git('status', '--porcelain', '--', 'projects/demo/project.source.json'), '');
+    git('fsck', '--no-progress');
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
     await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
     await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
     await page.getByText('File', {exact: true}).click();
