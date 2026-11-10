@@ -692,9 +692,14 @@ test('the browser folder commands save localized Git diffs to the original worki
     await branchMenu.getByRole('menuitemradio', {name: base, exact: true}).click();
     await expect(page.getByRole('button', {name: `Branch: ${base}`, exact: true})).toBeVisible();
     await expect(panel.getByRole('button', {name: 'Switch: variant'})).toBeVisible();
-    await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
+    // The result shows in a snackbar, whose Reload Project opens the branch's files as the panel's does.
+    const snackbar = page.locator('[data-git-snackbar]');
+    await expect(snackbar.getByRole('status')).toHaveText('Switched branches.');
+    await snackbar.getByRole('button', {name: 'Reload Project'}).click();
+    await expect(snackbar).toHaveCount(0);
+    await expect.poll(async () => (await memory()).value).toBe('74');
     // A branch without the open project folder is confirmed first; declining changes nothing.
     git('branch', 'before-projects', git('rev-list', '--max-parents=0', 'HEAD'));
     await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
@@ -707,12 +712,22 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(panel.getByRole('button', {name: 'Switch: before-projects'})).toBeEnabled();
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(git('status', '--porcelain'), '');
-    // Unsaved edits in the Editor keep the branch where it is, also from the branch button, which shows why in the panel.
+    // Unsaved edits in the Editor keep the branch where it is, also from the branch button, which tells why in a snackbar.
     await edit('value', '90');
     await panel.getByRole('button', {name: 'Close', exact: true}).click();
     await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
     await branchMenu.getByRole('menuitemradio', {name: 'variant', exact: true}).click();
-    await expect(panel.getByText('Stop the project, and save or record (or undo) every change, before switching branches.')).toBeVisible();
+    const refusal = 'Stop the project, and save or record (or undo) every change, before switching branches.';
+    await expect(snackbar.getByRole('alert')).toHaveText(refusal);
+    await expect(panel).toHaveCount(0);
+    // Escape on the snackbar closes it; the panel opens from its action on the next refusal and shows the same reason.
+    await snackbar.getByRole('button', {name: 'Open Local Git'}).focus();
+    await page.keyboard.press('Escape');
+    await expect(snackbar).toHaveCount(0);
+    await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
+    await branchMenu.getByRole('menuitemradio', {name: 'variant', exact: true}).click();
+    await snackbar.getByRole('button', {name: 'Open Local Git'}).click();
+    await expect(panel.getByText(refusal)).toBeVisible();
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
     assert.equal((await memory()).value, '90');
