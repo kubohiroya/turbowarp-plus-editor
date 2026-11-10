@@ -615,6 +615,60 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(git('show', 'HEAD:projects/demo/project.source.json'), dirtyDisk.trim());
     assert.equal(git('status', '--porcelain', '--', 'projects/demo/project.source.json'), '');
     git('fsck', '--no-progress');
+
+    // Branches: switching needs a clean work tree, then rewrites it as git switch does, and Reload Project opens the branch's files.
+    const base = git('branch', '--show-current');
+    await panel.getByLabel('New branch name').fill('variant');
+    await panel.getByRole('button', {name: 'Create Branch'}).click();
+    await expect(panel.getByText('Stop the project, and save or record (or undo) every change, before switching branches.')).toBeVisible();
+    assert.equal(git('branch', '--list', 'variant'), '');
+    // The project folder was recorded above; the panel lists only that folder, so record the rest with Git CLI.
+    git('add', '-A');
+    git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Record the rest');
+    assert.equal(git('status', '--porcelain'), '');
+    await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
+    await panel.getByLabel('Switch to it').uncheck();
+    await panel.getByLabel('New branch name').fill('variant');
+    await panel.getByRole('button', {name: 'Create Branch'}).click();
+    await expect(panel.getByText('Created the branch.')).toBeVisible();
+    assert.equal(git('rev-parse', 'variant'), git('rev-parse', 'HEAD'));
+    assert.equal(git('branch', '--show-current'), base);
+    // Another tool records a change on the branch without touching this work tree.
+    const variantText = dirtyDisk.replace('"74"', '"88"');
+    assert.notEqual(variantText, dirtyDisk);
+    const plumbing = (args: string[], input?: string) => execFileSync('git', args, {cwd: folder, encoding: 'utf8', input,
+        env: {...process.env, GIT_INDEX_FILE: path.join(folder, '.git', 'variant-index')}}).trim();
+    plumbing(['read-tree', 'variant']);
+    const blob = plumbing(['hash-object', '-w', '--stdin'], variantText);
+    plumbing(['update-index', '--cacheinfo', `100644,${blob},projects/demo/project.source.json`]);
+    const tree = plumbing(['write-tree']);
+    const variantCommit = plumbing(['-c', 'user.name=Other tool', '-c', 'user.email=other@example.invalid',
+        'commit-tree', tree, '-p', 'variant', '-m', 'Move further on the variant']);
+    git('update-ref', 'refs/heads/variant', variantCommit);
+    await rm(path.join(folder, '.git', 'variant-index'));
+    // Loading from the folder above cleared the panel's project; choose it again so Reload Project is offered.
+    const openProjectButton = panel.getByRole('button', {name: 'Open This Project'});
+    if (!await openProjectButton.isVisible()) await panel.getByText('Choose a project inside this repository', {exact: true}).click();
+    if (await openProjectButton.isDisabled()) {
+        await panel.getByRole('button', {name: 'projects/', exact: true}).click();
+        await panel.getByRole('button', {name: 'demo/', exact: true}).click();
+    }
+    page.once('dialog', dialog => dialog.accept());
+    await openProjectButton.click();
+    await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
+    await panel.getByRole('button', {name: 'Switch: variant'}).click();
+    await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
+    assert.equal(git('branch', '--show-current'), 'variant');
+    assert.equal(git('status', '--porcelain'), '');
+    assert.equal(await readFile(nestedFile, 'utf8'), variantText);
+    page.once('dialog', dialog => dialog.accept());
+    await panel.getByRole('button', {name: 'Reload Project'}).click();
+    await expect.poll(async () => (await memory()).value).toBe('88');
+    await panel.getByRole('button', {name: `Switch: ${base}`}).click();
+    await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
+    assert.equal(git('branch', '--show-current'), base);
+    assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
+    git('fsck', '--no-progress');
     await panel.getByRole('button', {name: 'Close', exact: true}).click();
     await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
     await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
