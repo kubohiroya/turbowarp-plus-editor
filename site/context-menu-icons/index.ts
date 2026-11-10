@@ -162,6 +162,7 @@ export function attachAssetContextMenuIcons (document, getMessages) {
         const messages = getMessages() || {};
         for (const item of menu.children) {
             if (!item.classList.contains('react-contextmenu-item')) continue;
+            if (item.hasAttribute('data-tw-plus-menu-icon')) continue;
             const text = item.textContent;
             const folderClass = Object.keys(folderActions).find(name => item.classList.contains(name));
             const action = item.classList.contains('sa-ctx-menu') ?

@@ -1572,13 +1572,13 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await menu(groups.first()).click();
     await page.getByRole('menuitem', {name: 'Split right'}).click();
     await expect(groups).toHaveCount(2);
-    await expect(tabs()).toHaveCount(2);
+    await expect(page.getByRole('tab', {name: spriteName + '(2)', exact: true})).toBeVisible();
     await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
     await section('Code').click();
     await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
     await groups.first().getByRole('tab', {name: spriteName, exact: true}).click();
     await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
-    await groups.last().getByRole('tab', {name: spriteName, exact: true}).click();
+    await groups.last().getByRole('tab', {name: spriteName + '(2)', exact: true}).click();
     await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
     await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
 
@@ -1593,9 +1593,99 @@ test('the default Dockview splits one sprite editor and restores each view secti
     const upper = await groups.first().boundingBox();
     const lower = await groups.last().boundingBox();
     assert(upper && lower && lower.y > upper.y);
-    await groups.last().getByRole('button', {name: 'Close ' + spriteName, exact: true}).click();
+    await groups.last().getByRole('button', {name: 'Close ' + spriteName + '(2)', exact: true}).click();
     await expect(groups).toHaveCount(1);
     assert.deepEqual(errors, []);
+});
+
+test('sprite and backdrop menus open and select numbered Dockview tabs', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    page.setDefaultTimeout(8_000);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    await page.evaluate(async () => {
+        const sprite = vm.editingTarget;
+        vm.renameSprite(sprite.id, 'Pane sprite');
+        await vm.duplicateSprite(sprite.id);
+        vm.renameSprite(vm.editingTarget.id, 'Pane sprite(2)');
+        vm.setEditingTarget(sprite.id);
+    });
+    const groups = page.locator('.dv-groupview');
+    const tab = (name: string) => groups.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
+    const tile = page.locator('[class*="sprite-selector-item_sprite-name_"]').getByText('Pane sprite', {exact: true});
+    const pin = page.getByRole('button', {name: 'スプライト一覧を固定表示', exact: true});
+    if (!await pin.isVisible()) await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
+    if (await pin.getAttribute('aria-pressed') === 'false') await pin.click();
+    const listMenu = page.locator('.react-contextmenu--visible').first();
+    const dockMenu = page.locator('.dv-context-menu');
+    const rename = 'スプライト名の変更';
+    const open = '開く';
+    const backdrop = page.getByRole('button', {name: '背景', exact: true});
+    const section = (name: string) => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
+        .getByRole('tab', {name, exact: true});
+    async function clone(name: string) {
+        await tab(name).click({button: 'right'});
+        await dockMenu.getByRole('menuitem', {name: '新しいタブで開く'}).click();
+    }
+    async function chooseView(from: ReturnType<typeof page.locator>, name: string) {
+        await from.click({button: 'right'});
+        await listMenu.locator('[aria-haspopup="true"]').filter({hasText: open}).hover();
+        await listMenu.getByRole('menuitem', {name, exact: true}).click();
+        await expect(tab(name)).toHaveAttribute('aria-selected', 'true');
+    }
+
+    await tile.click({button: 'right'});
+    const listRename = listMenu.getByRole('menuitem', {name: rename});
+    const pencil = await listRename.locator('svg path').getAttribute('d');
+    await listRename.click();
+    await expect(page.getByRole('dialog', {name: rename})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await tab('Pane sprite').click({button: 'right'});
+    const dockRename = dockMenu.getByRole('menuitem', {name: rename});
+    await expect(dockRename.locator('svg path')).toHaveAttribute('d', pencil);
+    await dockRename.click();
+    await expect(page.getByRole('dialog', {name: rename})).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await section('コスチューム').click();
+    await clone('Pane sprite');
+    await expect(tab('Pane sprite(3)')).toHaveAttribute('aria-selected', 'true');
+    await expect(section('コスチューム')).toHaveAttribute('aria-selected', 'true');
+    await clone('Pane sprite(3)');
+    await expect(tab('Pane sprite(4)')).toHaveAttribute('aria-selected', 'true');
+    await expect(groups).toHaveCount(1);
+    await section('コード').click();
+    await chooseView(tile, 'Pane sprite(3)');
+    await expect(section('コスチューム')).toHaveAttribute('aria-selected', 'true');
+    await tile.click();
+    await expect(tab('Pane sprite')).toHaveAttribute('aria-selected', 'true');
+
+    const original = await tab('Pane sprite').boundingBox();
+    assert(original);
+    await tab('Pane sprite(4)').dragTo(tab('Pane sprite'), {targetPosition: {x: 2, y: original.height / 2}});
+    await expect.poll(async () => (await tab('Pane sprite(4)').boundingBox()).x)
+        .toBeLessThan((await tab('Pane sprite').boundingBox()).x);
+    await tab('Pane sprite(3)').click();
+    await tile.click();
+    await expect(tab('Pane sprite(4)')).toHaveAttribute('aria-selected', 'true');
+
+    await backdrop.click({button: 'right'});
+    await listMenu.getByRole('menuitem', {name: open, exact: true}).click();
+    await expect(tab('背景')).toHaveAttribute('aria-selected', 'true');
+    await clone('背景');
+    await expect(tab('背景(2)')).toHaveAttribute('aria-selected', 'true');
+    await chooseView(backdrop, '背景');
+    await expect.poll(() => page.evaluate(() => {
+        const saved = JSON.parse(localStorage.getItem('twPlusDockviewLayout') ?? 'null');
+        return Object.values<{number?: number}>(saved?.panels ?? {}).filter(panel => panel.number !== undefined).length;
+    })).toBe(3);
+    // An SB3 reload supplies fresh VM target IDs while the layout still refers to the same sprites.
+    const project = await page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
+    const projectUrl = origin + buildPrefix + 'numbered-tabs.sb3';
+    await page.route(projectUrl, route => route.fulfill({body: Buffer.from(project), contentType: 'application/octet-stream'}));
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&project_url=' + encodeURIComponent(projectUrl));
+    await expect(tab('Pane sprite(4)')).toBeVisible();
+    await expect(tab('背景(2)')).toBeVisible();
 });
 
 test('the Dockview asset connection restores the native costume and sound selection per pane', {timeout: 45_000}, async t => {
@@ -1673,7 +1763,9 @@ test('the Dockview asset connection restores the native costume and sound select
             assert(Math.abs(before[key] - after[key]) <= 2, key + ': ' + before[key] + ' vs ' + after[key]);
         }
     };
-    const activate = (index: number) => groups.nth(index).getByRole('tab', {name: spriteName, exact: true}).click();
+    const viewTab = (index: number) => groups.nth(index)
+        .getByRole('tab', {name: index === 0 ? spriteName : spriteName + '(2)', exact: true});
+    const activate = (index: number) => viewTab(index).click();
 
     await section('Costumes').click();
     await choose('Pane costume A');
@@ -1747,8 +1839,7 @@ test('the Dockview asset connection restores the native costume and sound select
     await expect(selected).toContainText('Pane sound B');
 
     await section('Properties & Variables').click();
-    const viewIds = await Promise.all([0, 1].map(index => groups.nth(index)
-        .getByRole('tab', {name: spriteName, exact: true}).getAttribute('data-tab-panel-id')));
+    const viewIds = await Promise.all([0, 1].map(index => viewTab(index).getAttribute('data-tab-panel-id')));
     const pane = (group: number) => page.locator('[id="' + viewIds[group] + '-content"]');
     const variable = (group: number) => pane(group).getByRole('textbox', {name: 'Pane counter'});
     const properties = (group: number) => pane(group).getByRole('textbox', {name: 'Sprite name'});

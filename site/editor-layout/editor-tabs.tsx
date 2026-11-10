@@ -5,7 +5,7 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
-import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {SpriteTargetTabsContext, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {editSpriteVariable} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
 import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, renameProjectMessage,
@@ -335,11 +335,11 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     });
     const selection = spriteTabs.context;
     const editorCommands = selection && code ? {...selection, open: code.context.open} : selection ?? code?.context ?? null;
-    return <SpriteCodeProvider value={editorCommands}>
+    return <SpriteTargetTabsContext.Provider value={spriteTabs.listTabs}><SpriteCodeProvider value={editorCommands}>
         {content}
         {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front}
             attachBackpackDrop={attachBackpackDrop} />}
-    </SpriteCodeProvider>;
+    </SpriteCodeProvider></SpriteTargetTabsContext.Provider>;
 }
 
 export const EditorTabLayout = connect(state => ({
