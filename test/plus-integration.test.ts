@@ -7,6 +7,8 @@ const service = () => ({
     api: {addButton() {throw new Error('Unexpected control registration');}},
     setDebuggerButton: () => {},
     debuggerButton: () => null,
+    setRecordButton: () => {},
+    recordButton: () => null,
     placePanel: () => {},
     panel: () => null,
     snapshot: () => [],

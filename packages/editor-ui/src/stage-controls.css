@@ -149,6 +149,45 @@
     font: bold 1.25rem/1 sans-serif;
 }
 
+/*
+ * The stage recorder sits beside the debugger in the same way: a round 2rem button showing 🎥. While
+ * a recording is pending or running the add-on's state text follows the icon, and the button widens
+ * into a pill so that state stays visible.
+ */
+.recordButton {
+    flex: none;
+    align-self: center;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-inline-size: 2rem;
+    block-size: 2rem;
+    margin-inline-end: 0.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 1rem;
+    background: transparent;
+    color: var(--menu-bar-foreground, #fff);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.recordButton[aria-pressed="true"] {
+    padding-inline: 0.5rem;
+    background: var(--ui-black-transparent, #0000001a);
+}
+
+.recordButton:hover {
+    background: var(--ui-black-transparent, #0000001a);
+}
+
+.recordButton:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -3px;
+}
+
 .menuPanel {
     position: absolute;
     inset-block-start: 100%;
