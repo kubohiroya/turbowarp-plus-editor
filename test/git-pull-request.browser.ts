@@ -166,7 +166,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await clicked.locator('summary').click();
     await expect(clicked.getByRole('checkbox', {name: 'Reviewed'})).toBeChecked();
     await panel.getByRole('button', {name: 'Local changes', exact: true}).click();
-    await expect(panel.getByRole('button', {name: 'fixture', exact: true})).toBeVisible();
+    await expect(panel.locator('.twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
     await page.waitForFunction(() => {
         const blockly = Reflect.get(window, 'ScratchBlocks');
         return blockly && !Object.keys(blockly.Blocks).some(type => type.startsWith('twgit_review_placeholder_'));

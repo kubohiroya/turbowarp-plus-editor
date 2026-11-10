@@ -361,7 +361,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     };
     await showGit();
     await panel.getByRole('button', {name: 'Choose Repository…'}).click();
-    await expect(panel.getByRole('button', {name: 'fixture', exact: true})).toBeVisible();
+    await expect(panel.locator('.twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
     await panel.getByText('Choose a project inside this repository', {exact: true}).click();
     await panel.getByRole('button', {name: 'projects/', exact: true}).click();
     await panel.getByRole('button', {name: 'demo/', exact: true}).click();
