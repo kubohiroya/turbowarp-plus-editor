@@ -653,7 +653,7 @@ test('the browser folder commands save localized Git diffs to the original worki
         await panel.getByRole('button', {name: 'projects/', exact: true}).click();
         await panel.getByRole('button', {name: 'demo/', exact: true}).click();
     }
-    page.once('dialog', dialog => dialog.accept());
+    // The Editor has no unsaved edits, so opening asks nothing.
     await openProjectButton.click();
     await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
     await panel.getByRole('button', {name: 'Switch: variant'}).click();
@@ -661,13 +661,32 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(git('branch', '--show-current'), 'variant');
     assert.equal(git('status', '--porcelain'), '');
     assert.equal(await readFile(nestedFile, 'utf8'), variantText);
-    page.once('dialog', dialog => dialog.accept());
+    // No unsaved edits, so the reload asks nothing.
     await panel.getByRole('button', {name: 'Reload Project'}).click();
     await expect.poll(async () => (await memory()).value).toBe('88');
     await panel.getByRole('button', {name: `Switch: ${base}`}).click();
     await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
+    // A branch without the open project folder is confirmed first; declining changes nothing.
+    git('branch', 'before-projects', git('rev-list', '--max-parents=0', 'HEAD'));
+    await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
+    const missingFolder = new Promise<string>(resolve => page.once('dialog', dialog => {
+        resolve(dialog.message());
+        void dialog.dismiss();
+    }));
+    await panel.getByRole('button', {name: 'Switch: before-projects'}).click();
+    assert.equal(await missingFolder, 'The open project folder is not on this branch. Switch anyway?');
+    await expect(panel.getByRole('button', {name: 'Switch: before-projects'})).toBeEnabled();
+    assert.equal(git('branch', '--show-current'), base);
+    assert.equal(git('status', '--porcelain'), '');
+    // Unsaved edits in the Editor keep the branch where it is.
+    await edit('value', '90');
+    await panel.getByRole('button', {name: 'Switch: variant'}).click();
+    await expect(panel.getByText('Stop the project, and save or record (or undo) every change, before switching branches.')).toBeVisible();
+    assert.equal(git('branch', '--show-current'), base);
+    assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
+    assert.equal((await memory()).value, '90');
     git('fsck', '--no-progress');
     await panel.getByRole('button', {name: 'Close', exact: true}).click();
     await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
