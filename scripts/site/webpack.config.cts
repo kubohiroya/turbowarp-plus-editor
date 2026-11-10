@@ -85,9 +85,10 @@ config.module.rules.push({
     use: path.join(__dirname, 'connect-menu-bar-controls.cts')
 });
 config.module.rules.push({
-    include: fs.realpathSync(path.join(gui, 'src/addons/addons/debugger/userscript.js')),
+    include: ['debugger', 'mediarecorder'].map(addon =>
+        fs.realpathSync(path.join(gui, 'src/addons/addons', addon, 'userscript.js'))),
     enforce: 'pre',
-    use: path.join(__dirname, 'connect-debugger-menu-button.cts')
+    use: path.join(__dirname, 'connect-addon-menu-buttons.cts')
 });
 config.module.rules.push({
     include: fs.realpathSync(path.join(gui, 'src/lib/sb-file-uploader-hoc.jsx')),
