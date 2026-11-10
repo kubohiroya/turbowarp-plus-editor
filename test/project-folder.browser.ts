@@ -409,6 +409,13 @@ test('the browser folder commands save localized Git diffs to the original worki
     await panel.getByRole('button', {name: 'Text', exact: true}).click();
     await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
     assert.deepEqual(await readFile(indexPath), indexBefore);
+    // The left drawer shows the open project folder, with what each file is for and its Git status, and the history.
+    const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    await expect(page.locator(`[data-path="${projectFile}"]`)).toHaveAttribute('aria-label', `${projectFile}, Untracked, Project data`);
+    await drawerBar.getByRole('button', {name: 'Git history', exact: true}).click();
+    await expect(page.locator('.twgit-history-view .twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
+    await drawerBar.getByRole('button', {name: 'Sprites', exact: true}).click();
 
     const nestedFile = path.join(nested, projectFile);
     const nestedSteps = async () => JSON.parse(await readFile(nestedFile, 'utf8')).targets[1].blocks.move_B.inputs.STEPS[1][1];

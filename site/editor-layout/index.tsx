@@ -12,6 +12,8 @@ import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import {EditorTabLayout} from './editor-tabs.tsx';
 import {stageLauncherSlot, StageDisplayMenuContext, TargetSwitchContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
+import {renderProjectFolderExplorer} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
+import {followChangeMarks, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
 
 export {WindowLayoutContext} from './context.ts';
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
@@ -69,6 +71,15 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
     const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
     const launcher = React.useMemo(() => stageLauncherEnabled ?
         {mount: stageLauncherSlot(vm), styles, MenuButton: IconMenuButton} : undefined, [vm]);
+    // The project folder and the local Git panel need a folder picker; both views show what those already hold.
+    const drawerViews = React.useMemo(() => {
+        if (typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker !== 'function') return undefined;
+        const marks = (directory: FileSystemDirectoryHandle, update) => followChangeMarks(vm, directory, update);
+        return {views: [
+            {id: 'project' as const, render: ({locale}) => renderProjectFolderExplorer(React.createElement, {vm, locale, marks})},
+            {id: 'git-history' as const, render: ({locale}) => renderHistoryView(React.createElement, {vm, locale})}
+        ]};
+    }, [vm]);
     const resizeStage = React.useCallback((surface: HTMLElement) => {
         const renderer = vm.renderer;
         if (!renderer?.canvas || !surface.contains(renderer.canvas)) return;
@@ -85,6 +96,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
             stageActionEnabled={layoutFlags.stagePanel && !layoutFlags.stageDisplayMenu}
             storage={getStorage()}
             storageKey="twPlusEditorLayout"
+            drawerViews={drawerViews}
             onPaletteModeChange={setHorizontalBlockPalette}
             Container={layoutFlags.internalWindows || layoutFlags.standardLayout || stageCanUndock ? LayoutDesktop : undefined}
             windowTools={<>

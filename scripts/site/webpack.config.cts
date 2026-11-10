@@ -187,7 +187,8 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-sprite-tabs.cts')
 });
-for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-auth',
+for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-project-folder/explorer',
+    '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }

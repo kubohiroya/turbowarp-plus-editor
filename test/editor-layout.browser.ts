@@ -1151,9 +1151,19 @@ test('the default editor pins the sprite list and supports the drawer and detach
     const buttons = await Promise.all(controls.map(name => tools.getByRole('button', {name, exact: true}).boundingBox()));
     assert.ok(buttons.every(button => button.y === buttons[0].y));
     assert.ok(buttons[0].x < buttons[1].x && buttons[1].x < buttons[2].x);
-    // Until the site layer supplies other drawer views, the drawer keeps the sprite list alone, without the view bar.
-    await expect(page.getByRole('toolbar', {name: 'Drawer views', exact: true})).toHaveCount(0);
-    await expect(page.getByRole('button', {name: 'AI agents', exact: true})).toHaveCount(0);
+    // The drawer's view bar offers the project folder and the Git history beside the sprite list, without AI agents yet.
+    // Before a folder or a repository is chosen, each view offers to choose one.
+    const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    const drawerView = (name: string) => drawerBar.getByRole('button', {name, exact: true});
+    await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
+    await expect(drawerBar.getByRole('button')).toHaveCount(3);
+    await drawerView('Project folder').click();
+    await expect(page.getByText('Open a project folder to show its files here.', {exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Open Project Folder…', exact: true})).toBeVisible();
+    await drawerView('Git history').click();
+    await expect(page.getByText('Choose a Git repository to show its history here.', {exact: true})).toBeVisible();
+    await drawerView('Sprites').click();
+    await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
     await tools.getByRole('button', {name: 'Search sprites'}).click();
     const search = page.getByRole('searchbox', {name: 'Search sprites'});
     await search.fill(await page.evaluate(() => vm.editingTarget.getName()));
