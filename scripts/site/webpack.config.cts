@@ -178,7 +178,7 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$']
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
-    'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel']) {
+    'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel', 'ai-agents']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-workbench/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }

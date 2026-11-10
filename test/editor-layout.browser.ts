@@ -536,7 +536,7 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     const entries = nav.locator(':scope > a, :scope > button, :scope > div > button');
     await expect(entries).toHaveText([
         `About TurboWarp Plus Editor ${editorPackage.version}`, 'Display settings', 'Runtime settings', 'Addons',
-        'Advanced Settings', 'Source code', 'Licenses and credits'
+        'Advanced Settings', 'AI agent settings…', 'Source code', 'Licenses and credits'
     ]);
     const displayToggle = nav.getByRole('button', {name: 'Display settings'});
     const display = nav.getByRole('list', {name: 'Display settings'});
@@ -604,6 +604,18 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     await page.keyboard.press('Escape');
     await expect(advanced).toHaveCount(0);
 
+    // Right after it, the AI agent settings open the workbench's dialog and return focus to the Plus icon.
+    await logo.click();
+    await nav.getByRole('button', {name: 'AI agent settings…'}).click();
+    const agentSettings = page.getByRole('dialog', {name: 'AI agent settings'});
+    await expect(agentSettings).toBeVisible();
+    await expect(nav).toBeHidden();
+    await expect(agentSettings.getByLabel('ChatGPT: Show in the menu')).toBeFocused();
+    await expect(agentSettings.getByLabel('Claude URL')).toHaveAttribute('placeholder', 'https://claude.ai/new');
+    await page.keyboard.press('Escape');
+    await expect(agentSettings).toHaveCount(0);
+    await expect(logo).toBeFocused();
+
     await logo.click();
     const [addons] = await Promise.all([
         page.waitForEvent('popup'),
@@ -622,7 +634,7 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     await expect(page.getByRole('navigation', {name: japaneseName})
         .locator(':scope > a, :scope > button, :scope > div > button')).toHaveText([
         `TurboWarp Plus Editor ${editorPackage.version}について`, '表示設定', '動作設定', 'アドオン',
-        '高度な設定', 'ソースコード', 'ライセンスとクレジット'
+        '高度な設定', 'AI エージェント設定…', 'ソースコード', 'ライセンスとクレジット'
     ]);
 });
 
@@ -1151,12 +1163,40 @@ test('the default editor pins the sprite list and supports the drawer and detach
     const buttons = await Promise.all(controls.map(name => tools.getByRole('button', {name, exact: true}).boundingBox()));
     assert.ok(buttons.every(button => button.y === buttons[0].y));
     assert.ok(buttons[0].x < buttons[1].x && buttons[1].x < buttons[2].x);
-    // The drawer's view bar offers the project folder and the Git history beside the sprite list, without AI agents yet.
+    // The drawer's view bar offers the project folder, the Git history and the AI agent menu beside the sprite list.
     // Before a folder or a repository is chosen, each view offers to choose one.
     const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
     const drawerView = (name: string) => drawerBar.getByRole('button', {name, exact: true});
     await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
-    await expect(drawerBar.getByRole('button')).toHaveCount(3);
+    assert.deepEqual(await drawerBar.getByRole('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
+        ['Sprites', 'Project folder', 'Git history', 'AI agents']);
+    const agents = drawerView('AI agents');
+    await expect(agents).toHaveAttribute('aria-haspopup', 'menu');
+    await agents.click();
+    const agentMenu = page.getByRole('menu', {name: 'AI agents', exact: true});
+    await expect(agentMenu.getByRole('menuitem')).toHaveText(['ChatGPT', 'Claude', 'AI agent settings…']);
+    await expect(agentMenu.getByRole('menuitem', {name: 'ChatGPT'})).toBeFocused();
+    // Record the new tab instead of leaving the test origin.
+    await page.evaluate(() => {
+        const open = window.open;
+        window.open = (...args) => {
+            window.open = open;
+            (window as Window & {openedAgent?: unknown[]}).openedAgent = args;
+            return null;
+        };
+    });
+    await page.keyboard.press('Enter');
+    assert.deepEqual(await page.evaluate(() => (window as Window & {openedAgent?: unknown[]}).openedAgent),
+        ['https://chatgpt.com/', '_blank', 'noopener,noreferrer']);
+    await expect(agentMenu).toHaveCount(0);
+    await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
+    await agents.click();
+    await agentMenu.getByRole('menuitem', {name: 'AI agent settings…'}).click();
+    const agentSettings = page.getByRole('dialog', {name: 'AI agent settings'});
+    await expect(agentSettings).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(agentSettings).toHaveCount(0);
+    await expect(agents).toBeFocused();
     await drawerView('Project folder').click();
     await expect(page.getByText('Open a project folder to show its files here.', {exact: true})).toBeVisible();
     await expect(page.getByRole('button', {name: 'Open Project Folder…', exact: true})).toBeVisible();
