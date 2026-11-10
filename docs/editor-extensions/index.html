@@ -161,8 +161,8 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 .steps h5 { margin: 0; font-size: 1.05rem; line-height: 1.9rem; }
 
 .checklist { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .5rem; max-width: 46rem; }
-.checklist li { display: grid; grid-template-columns: 1.4rem 1fr; gap: .5rem; }
-.checklist li::before { content: ""; width: 1rem; height: 1rem; margin-top: .4rem; border: 2px solid var(--plus); border-radius: 3px; }
+.checklist li { position: relative; padding-left: 1.9rem; }
+.checklist li::before { content: ""; position: absolute; left: 0; top: 0; width: 1rem; height: 1rem; margin-top: .4rem; border: 2px solid var(--plus); border-radius: 3px; }
 .checklist.no li::before { border-color: var(--warn); background: linear-gradient(45deg, transparent 44%, var(--warn) 44%, var(--warn) 56%, transparent 56%); }
 
 .source { font-size: .8rem; color: var(--muted); max-width: 46rem; margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: .8rem; }
