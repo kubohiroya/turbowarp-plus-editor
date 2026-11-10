@@ -361,7 +361,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     };
     await showGit();
     await panel.getByRole('button', {name: 'Choose Repository…'}).click();
-    await expect(panel.getByRole('button', {name: 'fixture', exact: true})).toBeVisible();
+    // A commit row of the history graph is named by its subject, then its author, date and branches.
+    await expect(panel.getByRole('button', {name: /^fixture, /})).toBeVisible();
     await panel.getByText('Choose a project inside this repository', {exact: true}).click();
     await panel.getByRole('button', {name: 'projects/', exact: true}).click();
     await panel.getByRole('button', {name: 'demo/', exact: true}).click();
