@@ -15,6 +15,10 @@
 
 /* global __TW_PLUS_FILE_UPLOADER__ */
 import {withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {duringProjectLoadApproval} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
+import {installWebFonts} from '@kubohiroya/turbowarp-plus-editor-ui/web-fonts';
+import webFontDialogs from '@kubohiroya/turbowarp-plus-editor-ui/web-font-dialogs';
+import React from 'react';
 import {loadCostume} from 'scratch-vm/src/import/load-costume.js';
 import {loadSound} from 'scratch-vm/src/import/load-sound.js';
 import ScratchCommon from 'scratch-vm/src/extension-support/tw-extension-api-common.js';
@@ -104,9 +108,21 @@ function attachSecurityHost (vm, {
 
     let active = true;
     let restoreBatchLoader;
+    let disposeFonts;
     let host;
     setPlusHostPolicy(security, canLoadExtensionFromProject);
     try {
+        if (vm.runtime?.fontManager) {
+            disposeFonts = installWebFonts(vm, families => {
+                const mount = getMount();
+                if (!active || !mount) return Promise.resolve(false);
+                const ask = () => mount.requestModal((onComplete, currentLocale) => React.createElement(webFontDialogs.WebFontApproval, {
+                    families, locale: currentLocale, DialogFrame: mount.DialogFrame, onComplete
+                }), false);
+                return duringProjectLoadApproval(vm, () =>
+                    globalThis.document ? withoutWaitCursor(globalThis.document, ask) : ask());
+            });
+        }
         // Custom policies keep their native loading path.
         if (review && !canLoadExtensionFromProject && !getSandboxMode) {
             restoreBatchLoader = review.installBatchLoader({
@@ -131,6 +147,7 @@ function attachSecurityHost (vm, {
         active = false;
         setPlusHostPolicy(security, null);
         restoreBatchLoader?.();
+        disposeFonts?.();
         throw error;
     }
 
@@ -145,6 +162,7 @@ function attachSecurityHost (vm, {
                 await host.dispose();
             } finally {
                 restoreBatchLoader?.();
+                disposeFonts?.();
             }
         })();
         return disposal;

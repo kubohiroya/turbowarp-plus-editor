@@ -70,6 +70,12 @@ const injections = {
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
+    include: ['fonts-modal.jsx', 'manage-font.jsx'].map(file =>
+        fs.realpathSync(path.join(gui, 'src/components/tw-fonts-modal', file))),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-fonts-modal.cts')
+});
+config.module.rules.push({
     include: fs.realpathSync(path.join(gui, 'src/addons/addons/hide-flyout/userscript.js')),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-hide-flyout.cts')
