@@ -58,3 +58,4 @@
 @media(prefers-color-scheme:dark) { .topic-nav a[aria-current="page"] { color:#101c2b; } }
 .page-toc ol { list-style:none; padding-inline-start:0; }
 .topic-cards .topic-card { margin-top:0; scroll-margin-top:20px; }
+pre { overflow-x:auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:24px 0; } pre code { border:0; padding:0; background:none; overflow-wrap:normal; }
