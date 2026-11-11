@@ -13,6 +13,7 @@
     "./palette-category-reorder": "./src/palette-category-reorder.ts",
     "./palette-category-search": "./src/palette-category-search.ts",
     "./palette-dropdown-resize": "./src/palette-dropdown-resize.ts",
+    "./paint-fonts-button": "./src/paint-fonts-button.tsx",
     "./project-load-progress": "./src/project-load-progress.ts",
     "./project-size-approval": "./src/project-size-approval.ts",
     "./project-load-progress-view": "./src/project-load-progress-view.tsx",
