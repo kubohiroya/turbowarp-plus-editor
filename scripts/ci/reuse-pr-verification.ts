@@ -1,14 +1,10 @@
-import {appendFileSync} from 'node:fs';
-import {fileURLToPath} from 'node:url';
-
 /**
- * Whether a pull request's CI already ran the browser checks on exactly this source tree.
+ * Finds the pull request CI run of this repository that left an artifact for exactly this source tree.
  *
- * A squash merge onto an unchanged base produces the tree the pull request's CI tested, so main
- * can skip running the same browser checks again. Each successful pull request run leaves an
- * artifact named after the tree it tested; this looks for one from this repository's own CI.
- * Anything it cannot confirm — a missing or expired marker, a fork, a run that did not succeed,
- * an API error — answers "not verified", and main runs every check as before.
+ * A squash merge onto an unchanged base produces the tree the pull request's CI tested, so main can
+ * reuse the checks that run already passed (see verification-evidence.ts). Anything it cannot
+ * confirm — a missing or expired artifact, a fork, a run that did not succeed, an API error —
+ * answers "not verified", and main runs every check.
  */
 
 const sha = value => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
@@ -50,19 +46,4 @@ export function actionsAPI(repository, token) {
         if (!response.ok) throw new Error(`GitHub Actions API returned HTTP ${response.status}`);
         return response.json();
     };
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    const {GITHUB_REPOSITORY: repository, GH_TOKEN: token, TREE: tree, GITHUB_OUTPUT: output} = process.env;
-    const get = actionsAPI(repository, token);
-    let found = null;
-    try {
-        found = await findVerifiedRun({repository, tree, get});
-    } catch (error) {
-        // Failing to confirm is never a reason to skip a check; it only means running it.
-        console.log(`Could not confirm an earlier verification (${error.message}); running every check.`);
-    }
-    if (found) console.log(`Tree ${tree} passed the browser checks in pull request CI run ${found.url}.`);
-    else console.log(`No pull request CI run verified tree ${tree}; running every check.`);
-    if (output) appendFileSync(output, `verified=${found ? 'true' : 'false'}\n`);
 }
