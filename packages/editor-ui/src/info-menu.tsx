@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './info-menu.css';
 
 export const projectTitleFieldClassName = styles.projectTitleField;
+export const projectTitleGroupClassName = styles.projectTitleGroup;
 
 type MenuAction = {
     /** An image URL, or an inline icon such as an SVG drawn with `currentColor`. */

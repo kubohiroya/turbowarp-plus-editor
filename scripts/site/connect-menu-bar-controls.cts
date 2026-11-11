@@ -4,10 +4,11 @@ module.exports = (source: string) => {
     const restore = '{this.restoreOptionMessage(deletedItem)}';
     const host = 'const host = getHostIntegration();';
     const title = '</MenuBarItemTooltip>\n            </div>\n        );\n        const menuBar';
+    const titleGroup = 'className={classNames(styles.menuBarItem, styles.growable)}';
     const titleField = 'className={classNames(styles.titleFieldGrowable)}';
     const saveStatus = '<TWSaveStatus';
     const redux = '        projectId: state.scratchGui.projectState.projectId,';
-    if ([end, edit, restore, host, title, titleField, saveStatus, redux].some(slot =>
+    if ([end, edit, restore, host, title, titleGroup, titleField, saveStatus, redux].some(slot =>
         source.indexOf(slot) === -1 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
         throw new Error('The pinned GUI menu bar connection has changed');
     }
@@ -31,7 +32,8 @@ module.exports = (source: string) => {
 ${original}                                    </React.Fragment>}
 `;
     return (source.slice(0, from) + workflow + source.slice(to))
-        .replace(titleField, 'className={classNames(styles.titleFieldGrowable, reorganizeMenuBar && ProjectInfoMenu.titleFieldClassName)}')
+        .replace(titleGroup, 'className={classNames(styles.menuBarItem, (reorganizeMenuBar && ProjectInfoMenu.titleGroupClassName) || styles.growable)}')
+        .replace(titleField, 'className={(reorganizeMenuBar && ProjectInfoMenu.titleFieldClassName) || styles.titleFieldGrowable}')
         .replace(host, `${host}
         const useTitleSaveMenu = host?.renderProjectSaveMenu && this.props.canEditTitle && this.props.canManageFiles &&
             !(this.props.canSave || this.props.canCreateCopy || this.props.canRemix);`)

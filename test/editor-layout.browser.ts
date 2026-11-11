@@ -98,6 +98,45 @@ test('the browser tab follows the current project title', {timeout: 30_000}, asy
     await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
 });
 
+test('the unsaved marker stays by the project name and its hint fits in the viewport', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await expect.poll(() => page.evaluate(() => Boolean(window.vm?.editingTarget))).toBe(true);
+    await page.evaluate(() => {
+        const target = window.vm.runtime.targets.find(entry => entry.isOriginal && !entry.isStage);
+        window.vm.renameSprite(target.id, 'Edited sprite');
+    });
+
+    const title = page.locator('input[maxlength="100"]');
+    const label = '未保存の変更があります。保存メニューを開く';
+    const marker = page.getByRole('button', {name: label});
+    const hint = page.getByText(label, {exact: true});
+    await title.fill('プロジェクト');
+    await title.press('Enter');
+    await marker.hover();
+    await expect(hint).toBeVisible();
+    const shortTitle = await title.boundingBox();
+    const mark = await marker.boundingBox();
+    assert(shortTitle && mark);
+    assert.ok(shortTitle.width < 120, `Short project title takes ${shortTitle.width}px`);
+    assert.ok(mark.x - (shortTitle.x + shortTitle.width) <= 8, 'The marker should follow the title field');
+
+    await page.setViewportSize({width: 300, height: 900});
+    await page.mouse.move(0, 0);
+    await title.press('Tab');
+    await expect(marker).toBeFocused();
+    await expect(hint).toBeVisible();
+    const message = await hint.boundingBox();
+    assert(message && message.x >= 0 && message.x + message.width <= page.viewportSize().width);
+
+    await title.fill('とても長いプロジェクト名'.repeat(5));
+    await title.press('Enter');
+    const longTitle = await title.boundingBox();
+    assert(longTitle && longTitle.width > shortTitle.width && longTitle.width < 192);
+    await marker.press('Enter');
+    await expect(page.getByRole('button', {name: '名前を変えて保存…', exact: true})).toBeVisible();
+});
+
 test('the real editor resizes both dividers and preserves editing and stage input', {timeout: 90_000}, async t => {
     const build = path.join(pinnedGui(), 'build');
     const page = await openBrowser(t, build, buildPrefix);

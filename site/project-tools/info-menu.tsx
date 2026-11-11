@@ -1,7 +1,7 @@
 import React from 'react';
 import {createAiAgents} from '@kubohiroya/turbowarp-plus-editor-workbench/ai-agents';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
-import {ProjectInfoMenu as InfoMenu, projectTitleFieldClassName,
+import {ProjectInfoMenu as InfoMenu, projectTitleFieldClassName, projectTitleGroupClassName,
     type ProjectSettingsMenuProps} from '@kubohiroya/turbowarp-plus-editor-ui/project-info-menu';
 import logo from '../extension-library/icon.svg';
 
@@ -20,3 +20,4 @@ export function ProjectInfoMenu(props: ProjectSettingsMenuProps & {locale: strin
 
 ProjectInfoMenu.reorganizeMenuBar = true;
 ProjectInfoMenu.titleFieldClassName = projectTitleFieldClassName;
+ProjectInfoMenu.titleGroupClassName = projectTitleGroupClassName;

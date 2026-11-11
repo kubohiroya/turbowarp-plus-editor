@@ -19,7 +19,6 @@ ul:has(> li .item) {
 }
 
 .saveMenu {
-    position: relative;
     margin-inline-start: 0.25rem;
     flex: none;
 }
@@ -44,8 +43,12 @@ ul:has(> li .item) {
     position: absolute;
     z-index: 120;
     inset-block-start: calc(100% + 0.25rem);
-    inset-inline-end: 0;
-    min-inline-size: max-content;
+    inset-inline-start: 0;
+    box-sizing: border-box;
+    inline-size: max-content;
+    max-inline-size: calc(100vw - 5rem);
+    white-space: normal;
+    overflow-wrap: anywhere;
     padding: 0.25rem;
     border: 1px solid var(--ui-black-transparent);
     border-radius: 0.25rem;

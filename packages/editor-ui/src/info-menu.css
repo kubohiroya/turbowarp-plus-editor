@@ -11,6 +11,16 @@
     margin-inline: 0.5rem 0;
 }
 
+.projectTitleGroup {
+    min-inline-size: 0;
+    max-inline-size: 12rem;
+}
+
+input.projectTitleField {
+    field-sizing: content;
+    min-inline-size: 2rem;
+}
+
 input.projectTitleField:not(:focus),
 input.projectTitleField:focus {
     background-color: transparent;
