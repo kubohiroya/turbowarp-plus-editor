@@ -31,17 +31,25 @@ export type SearchProject = {
     getLabelForOpcode?(opcode: string): {category?: string; label?: string} | undefined;
     resetAllCaches?(): void;
     emitProjectChanged?(): void;
+    on?(event: 'PROJECT_CHANGED', listener: () => void): void;
+    removeListener?(event: 'PROJECT_CHANGED', listener: () => void): void;
 };
 type BlockKind = 'block' | 'variable' | 'list' | 'message' | 'argument' | 'extension';
 type AssetKind = 'costume' | 'backdrop' | 'sound';
 export type SearchKind = BlockKind | AssetKind | 'comment' | 'yaml';
+export type VariableAccess = 'read' | 'write';
+export type VariableSearch = {ownerId: string; variableId: string; access: VariableAccess};
+export const variableAccessLabels = {
+    read: ['読み取り', 'Read'],
+    write: ['変更', 'Write']
+} as const;
 export type SearchEdit =
     | {type: 'field'; id: string; field: string; value: string}
     | {type: 'name'; id: string; owner: Target; name: string; variableType: string}
     | {type: 'procedure'; name: string}
     | {type: 'comment'; text: string};
 export type ProjectSearchResult = {label: string; target: Target; detail?: string; edit?: SearchEdit} & (
-    {kind: BlockKind; block: Block} | {kind: AssetKind; asset: Asset} |
+    {kind: BlockKind; block: Block; variableAccess?: VariableAccess} | {kind: AssetKind; asset: Asset} |
     {kind: 'comment'; comment: Comment; commentId: string}
 );
 export type YamlSearchDocument = {reference: {providerId: string; documentId: string}; filename: string; source: string};
@@ -66,16 +74,88 @@ const headings: Record<Exclude<SearchKind, 'yaml'>, [string, string]> = {
     sound: ['音', 'Sounds']
 };
 
+function* walkBlocks(target: Target) {
+    const pending = target.blocks.getScripts().slice().reverse();
+    const seen = new Set<string>();
+    while (pending.length) {
+        const id = pending.pop();
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const block = target.blocks.getBlock(id);
+        if (!block || block.shadow) continue;
+        const inputs: [string, Block][] = [];
+        for (const [key, input] of Object.entries(block.inputs ?? {})) {
+            const child = input.block && target.blocks.getBlock(input.block);
+            if (child) inputs.push([key, child]);
+        }
+        if (block.next) pending.push(block.next);
+        for (let i = inputs.length - 1; i >= 0; i--) {
+            if (!inputs[i][1].shadow) pending.push(inputs[i][1].id);
+        }
+        yield {block, inputs};
+    }
+}
+
+const stageProperties = new Set(['background #', 'backdrop #', 'backdrop name', 'volume']);
+const spriteProperties = new Set(['x position', 'y position', 'direction', 'costume #', 'costume name', 'size', 'volume']);
+
+function variableAccess(target: Target, block: Block, inputs: [string, Block][],
+    stage: Target | undefined, sprites: ReadonlyMap<string, Target>):
+    {owner: Target; variableId: string; access: VariableAccess} | undefined {
+    if (block.opcode === 'sensing_of') {
+        const menu = inputs.find(([key]) => key === 'OBJECT')?.[1];
+        if (!menu?.shadow || menu.opcode !== 'sensing_of_object_menu') return;
+        const object = menu.fields?.OBJECT?.value;
+        const name = block.fields?.PROPERTY?.value;
+        if (typeof object !== 'string' || typeof name !== 'string') return;
+        const owner = object === '_stage_' ? stage : sprites.get(object);
+        if (!owner || (owner.isStage ? stageProperties : spriteProperties).has(name)) return;
+        const variableId = Object.keys(owner.variables).find(id => {
+            const variable = owner.variables[id];
+            return variable.type === '' && variable.name === name;
+        });
+        if (variableId) return {owner, variableId, access: 'read'};
+        return;
+    }
+    const access = block.opcode === 'data_variable' ? 'read' :
+        block.opcode === 'data_setvariableto' || block.opcode === 'data_changevariableby' ? 'write' : undefined;
+    const variableId = block.fields?.VARIABLE?.id;
+    if (!access || !variableId) return;
+    const owner = Object.hasOwn(target.variables, variableId) ? target : stage;
+    if (owner?.variables[variableId]?.type === '') return {owner, variableId, access};
+}
+
+const originalSprites = (project: SearchProject) =>
+    new Map(project.targets.filter(target => target.isOriginal && !target.isStage).map(target => [target.getName(), target]));
+
+export function countVariableAccesses(project: SearchProject, ownerId: string) {
+    const stage = project.targets.find(target => target.isStage);
+    const sprites = originalSprites(project);
+    const counts = new Map<string, Record<VariableAccess, number>>();
+    for (const target of project.targets) {
+        if (!target.isOriginal) continue;
+        for (const {block, inputs} of walkBlocks(target)) {
+            const use = variableAccess(target, block, inputs, stage, sprites);
+            if (use?.owner.id !== ownerId) continue;
+            const count = counts.get(use.variableId) ?? {read: 0, write: 0};
+            count[use.access]++;
+            counts.set(use.variableId, count);
+        }
+    }
+    return counts;
+}
+
 export function searchProject(project: SearchProject, messages: Record<string, string>, query: string, japanese: boolean,
-    kinds: ReadonlySet<SearchKind> = new Set(Object.keys(headings) as SearchKind[])) {
+    kinds: ReadonlySet<SearchKind> = new Set(Object.keys(headings) as SearchKind[]), variableSearch?: VariableSearch) {
     const groups = new Map(Object.entries(headings).map(([kind, titles]) => [
         kind as SearchKind, {kind: kind as SearchKind, title: titles[japanese ? 0 : 1], results: [] as ProjectSearchResult[]}
     ]));
     const search = query.trim().toLocaleLowerCase();
-    if (!search) return [];
+    if (!search && !variableSearch) return [];
 
     const stage = project.targets.find(target => target.isStage);
-    const searchBlocks = (['block', 'variable', 'list', 'message', 'argument', 'extension'] as const)
+    const sprites = variableSearch || kinds.has('variable') ? originalSprites(project) : undefined;
+    const searchBlocks = variableSearch || (['block', 'variable', 'list', 'message', 'argument', 'extension'] as const)
         .some(kind => kinds.has(kind));
     const templates = new Map<string, {text: string; extension?: string}>();
     const matches = (value: string) => value.toLocaleLowerCase().includes(search);
@@ -113,23 +193,10 @@ export function searchProject(project: SearchProject, messages: Record<string, s
 
     for (const target of project.targets) {
         if (!target.isOriginal) continue;
-        const pending = searchBlocks ? target.blocks.getScripts().slice().reverse() : [];
-        const seen = new Set<string>();
-        while (pending.length) {
-            const id = pending.pop();
-            if (seen.has(id)) continue;
-            seen.add(id);
-            const block = target.blocks.getBlock(id);
-            if (!block || block.shadow) continue;
-            const inputs: [string, Block][] = [];
-            for (const [key, input] of Object.entries(block.inputs ?? {})) {
-                const child = input.block && target.blocks.getBlock(input.block);
-                if (child) inputs.push([key, child]);
-            }
-            if (block.next) pending.push(block.next);
-            for (let i = inputs.length - 1; i >= 0; i--) {
-                if (!inputs[i][1].shadow) pending.push(inputs[i][1].id);
-            }
+        for (const {block, inputs} of searchBlocks ? walkBlocks(target) : []) {
+            const use = sprites && variableAccess(target, block, inputs, stage, sprites);
+            if (variableSearch && (!use || use.owner.id !== variableSearch.ownerId ||
+                use.variableId !== variableSearch.variableId || use.access !== variableSearch.access)) continue;
 
             const variable = block.fields?.VARIABLE;
             const list = block.fields?.LIST;
@@ -144,8 +211,12 @@ export function searchProject(project: SearchProject, messages: Record<string, s
             const template = procedure ? procedure.replace(/%[sbn]/g, '…') :
                 typeof customLabel === 'string' ? customLabel : opcode.text;
             const label = procedure ? template : describe(target, block, inputs, template);
-            const add = (kind: BlockKind, label: string, detail?: string, edit?: SearchEdit) =>
-                groups.get(kind).results.push({kind, target, block, label, detail, edit});
+            const add = (kind: BlockKind, label: string, detail?: string, edit?: SearchEdit, access?: VariableAccess) =>
+                groups.get(kind).results.push({kind, target, block, label, detail, edit, variableAccess: access});
+            if (variableSearch && use) {
+                add('variable', label, use.owner.variables[use.variableId].name, undefined, use.access);
+                continue;
+            }
             if (kinds.has('block') && (matches(template) || matches(block.opcode) ||
                 (block.opcode === 'event_whenflagclicked' && matches(japanese ? '緑の旗' : 'green flag')))) {
                 add('block', label, undefined, procedure ? {type: 'procedure', name: procedure} : undefined);
@@ -160,7 +231,9 @@ export function searchProject(project: SearchProject, messages: Record<string, s
                     type: 'name' as const, id: reference.id, owner, name: model.name,
                     variableType: model.type ?? (list ? 'list' : message ? 'broadcast_msg' : '')
                 } : undefined;
-                add(kind, name, scope || label, edit);
+                add(kind, name, scope || label, edit, use?.access);
+            } else if (use && !variable && kinds.has('variable') && matches(use.owner.variables[use.variableId].name)) {
+                add('variable', use.owner.variables[use.variableId].name, label, undefined, use.access);
             }
             if (kinds.has('extension') && opcode.extension && matches(opcode.extension)) add('extension', opcode.extension, label);
             if (kinds.has('argument')) {
@@ -178,6 +251,7 @@ export function searchProject(project: SearchProject, messages: Record<string, s
                 }
             }
         }
+        if (variableSearch) continue;
 
         if (kinds.has('comment')) {
             for (const [commentId, comment] of Object.entries(target.comments ?? {})) {

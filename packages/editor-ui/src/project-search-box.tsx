@@ -1,12 +1,15 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
-import {searchProject, searchYamlDocuments, type ProjectSearchResult, type SearchKind, type SearchProject, type SearchResult} from './project-search.ts';
-import {activateTargetView, connectProjectReplaceOpener, connectionFor, projectReplaceShortcut,
+import {searchProject, searchYamlDocuments, variableAccessLabels, type ProjectSearchResult, type SearchKind,
+    type SearchProject, type SearchResult, type VariableSearch} from './project-search.ts';
+import {activateTargetView, connectProjectReplaceOpener, connectVariableSearchOpener, connectionFor, projectReplaceShortcut,
     type SearchDocuments} from './project-search-connections.ts';
 import {applyProjectSearchReplacement, replacementText, type ReplaceOutcome} from './project-search-replace.ts';
 export {connectProjectSearchNavigation} from './project-search-connections.ts';
 export {activateTargetView, type SearchNavigation} from './project-search-connections.ts';
 export {renameProjectMessage} from './project-search-replace.ts';
+export {countVariableAccesses} from './project-search.ts';
+export {openVariableSearch} from './project-search-connections.ts';
 import styles from './project-search.css';
 
 const pageSize = 60;
@@ -49,6 +52,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
     const [revision, setRevision] = React.useState(0);
     const [limit, setLimit] = React.useState(pageSize);
     const [active, setActive] = React.useState<SearchResult>();
+    const [variableSearch, setVariableSearch] = React.useState<VariableSearch>();
     const [kinds, setKinds] = React.useState(() => new Set(filters.flatMap(filter => filter.kinds)));
     const input = React.useRef<HTMLInputElement>();
     const box = React.useRef<HTMLDivElement>();
@@ -56,17 +60,17 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
     const replaceField = React.useRef<HTMLInputElement>();
     const replacingMatch = React.useRef(false);
     const revealing = React.useRef(0);
-    const searchYaml = open && kinds.has('yaml') && Boolean(query.trim());
+    const searchYaml = open && !variableSearch && kinds.has('yaml') && Boolean(query.trim());
     const yamlDocuments = React.useMemo(() => searchYaml ? documents?.getSearchableYamlDocuments() ?? [] : [],
         [searchYaml, documents, revision]);
     const groups = React.useMemo(() => {
         if (!open) return [];
         const groups: {kind: SearchKind; title: string; results: SearchResult[]}[] =
-            searchProject(project, getMessages(), query, japanese, kinds);
+            searchProject(project, getMessages(), query, japanese, kinds, variableSearch);
         const yaml = searchYamlDocuments(yamlDocuments, query, japanese);
         if (yaml.length) groups.push({kind: 'yaml', title: japanese ? 'YAML 本文' : 'YAML text', results: yaml});
         return groups;
-    }, [open, project, getMessages, query, japanese, kinds, yamlDocuments, revision]);
+    }, [open, project, getMessages, query, japanese, kinds, yamlDocuments, revision, variableSearch]);
     const visible = groups.flatMap(group => group.results.slice(0, limit));
     const activeIndex = visible.indexOf(active);
     const show = open;
@@ -84,6 +88,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
             field.select();
         };
         const openReplace = () => {
+            setVariableSearch(undefined);
             setOpen(true);
             if (!field.value.trim()) {
                 focusSearch();
@@ -103,6 +108,18 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
             win.requestAnimationFrame(() => focusReplacement(2));
         };
         const disconnectReplace = connectProjectReplaceOpener(project, openReplace);
+        const disconnectVariable = connectVariableSearchOpener(project, filter => {
+            const owner = project.targets.find(target => target.id === filter.ownerId && target.isOriginal);
+            const variable = owner?.variables[filter.variableId];
+            if (!variable) return;
+            setQuery(variable.name);
+            setVariableSearch(filter);
+            setLimit(pageSize);
+            setActive(undefined);
+            setOutcome(undefined);
+            setOpen(true);
+            focusSearch();
+        });
         const shortcut = (event: KeyboardEvent) => {
             const replace = projectReplaceShortcut.matches(event);
             const find = (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey &&
@@ -117,8 +134,16 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
         return () => {
             win.removeEventListener('keydown', shortcut, true);
             disconnectReplace();
+            disconnectVariable();
         };
     }, [project]);
+
+    React.useEffect(() => {
+        if (!open || !variableSearch) return;
+        const refresh = () => setRevision(value => value + 1);
+        project.on?.('PROJECT_CHANGED', refresh);
+        return () => project.removeListener?.('PROJECT_CHANGED', refresh);
+    }, [open, project, variableSearch]);
 
     React.useLayoutEffect(() => {
         if (!show) return;
@@ -227,6 +252,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
             }}
             onChange={event => {
                 setQuery(event.currentTarget.value);
+                setVariableSearch(undefined);
                 setOutcome(undefined);
                 setLimit(pageSize);
                 setActive(undefined);
@@ -277,7 +303,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                         setLimit(limit + pageSize);
                     }
                 }}>
-                <div className={styles.replaceTools}>
+                {!variableSearch && <div className={styles.replaceTools}>
                     <input ref={replaceField} type="text" autoComplete="off" value={replacement}
                         placeholder={japanese ? '置換後の文字列' : 'Replace with'}
                         aria-label={japanese ? '置換後の文字列' : 'Replace with'}
@@ -287,11 +313,24 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                         {active?.kind === 'yaml' ? (japanese ? 'プレビューで置換' : 'Replace in preview') :
                             (japanese ? '選択箇所を置換' : 'Replace selected match')}
                     </button>
-                </div>
-                {outcome ? <div className={styles.empty} role="status">{replaceMessages[outcome][japanese ? 0 : 1]}</div> :
+                </div>}
+                {!variableSearch && (outcome ? <div className={styles.empty} role="status">{replaceMessages[outcome][japanese ? 0 : 1]}</div> :
                     replacement && !active ?
-                        <div className={styles.empty} role="status">{pickMatch[japanese ? 0 : 1]}</div> : null}
-                <fieldset className={styles.filters}>
+                        <div className={styles.empty} role="status">{pickMatch[japanese ? 0 : 1]}</div> : null)}
+                {variableSearch ? <fieldset className={styles.filters}>
+                    <legend>{japanese ? '変数へのアクセス' : 'Variable access'}</legend>
+                    {(['read', 'write'] as const).map(access => <button key={access} type="button"
+                        aria-pressed={variableSearch.access === access} onClick={() => {
+                            setVariableSearch({...variableSearch, access});
+                            setLimit(pageSize);
+                            setActive(undefined);
+                        }}>{variableAccessLabels[access][japanese ? 0 : 1]}</button>)}
+                    <button type="button" onClick={() => {
+                        setVariableSearch(undefined);
+                        setLimit(pageSize);
+                        setActive(undefined);
+                    }}>{japanese ? 'すべての検索に戻る' : 'Return to all search results'}</button>
+                </fieldset> : <fieldset className={styles.filters}>
                     <legend>{japanese ? '検索対象' : 'Search in'}</legend>
                     {filters.filter(filter => documents || !filter.kinds.includes('yaml')).map(filter =>
                         <label key={filter.kinds[0]}>
@@ -306,7 +345,7 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                             {filter.label[japanese ? 0 : 1]}
                         </label>
                     )}
-                </fieldset>
+                </fieldset>}
                 <div role="listbox" id={listId} aria-label={japanese ? '検索結果' : 'Search results'}>
                     {groups.map(group => <div key={group.kind} role="group" aria-labelledby={`${listId}-${group.kind}`}>
                         <div id={`${listId}-${group.kind}`} className={styles.heading}>{group.title} <span>{group.results.length}</span></div>
@@ -314,11 +353,12 @@ function ProjectSearchBox({locale, project, getMessages, documents, select, repl
                             const index = visible.indexOf(result);
                             const name = result.kind === 'yaml' ? result.document.filename :
                                 result.target.isStage ? (japanese ? 'ステージ' : 'Stage') : result.target.getName();
+                            const access = 'variableAccess' in result && result.variableAccess;
                             return <div key={index} id={optionId(index)} role="option" className={styles.option}
                                 aria-selected={result === active} onPointerDown={event => event.preventDefault()}
                                 onClick={() => choose(result)}>
                                 <span>{result.label}</span>
-                                <small>{[name, result.detail, !canEdit(result) &&
+                                <small>{[name, result.detail, access && variableAccessLabels[access][japanese ? 0 : 1], !canEdit(result) &&
                                     (japanese ? '閲覧専用' : 'Read only')].filter(Boolean).join(' · ')}</small>
                             </div>;
                         })}

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {searchProject, searchYamlDocuments, type SearchKind, type SearchProject} from '../packages/editor-ui/src/project-search.ts';
+import {countVariableAccesses, searchProject, searchYamlDocuments, type SearchKind,
+    type SearchProject, type VariableAccess} from '../packages/editor-ui/src/project-search.ts';
 import {applyProjectSearchReplacement, renameProjectMessage, replacementText, type ReplaceBlockly, type ReplaceWorkspace} from '../packages/editor-ui/src/project-search-replace.ts';
 
 type Target = SearchProject['targets'][number];
@@ -65,6 +66,34 @@ test('filters separate block names, arguments, extension names and comments', ()
     assert.deepEqual(search('comment').flatMap(group => group.results.map(result => result.label)), ['合図を確認']);
     assert.deepEqual(searchProject(project, {}, '出す', true, new Set(['block'])), []);
     assert.deepEqual(searchProject(project, {}, 'ツール', true, new Set(['block'])), []);
+});
+
+test('variable access counts and exact search agree across targets and nested blocks', () => {
+    const stage = target('stage', [], [], {isStage: true, variables: {global: {name: '点', type: ''}}});
+    const reference = (id: string, opcode: string, variableId: string): Block => ({
+        id, opcode, fields: {VARIABLE: {id: variableId, value: '点'}}
+    });
+    const sprite = target('sprite', ['set', 'show', 'attribute', 'dynamic'], [
+        {...reference('set', 'data_setvariableto', 'global'), next: 'change', inputs: {VALUE: {block: 'read-local'}}},
+        {...reference('change', 'data_changevariableby', 'global'), inputs: {VALUE: {block: 'read-global'}}},
+        reference('read-local', 'data_variable', 'local'),
+        reference('read-global', 'data_variable', 'global'),
+        reference('show', 'data_showvariable', 'global'),
+        {id: 'attribute', opcode: 'sensing_of', fields: {PROPERTY: {value: '点'}}, inputs: {OBJECT: {block: 'stage-menu'}}},
+        {id: 'stage-menu', opcode: 'sensing_of_object_menu', shadow: true, fields: {OBJECT: {value: '_stage_'}}},
+        {id: 'dynamic', opcode: 'sensing_of', fields: {PROPERTY: {value: '点'}}, inputs: {OBJECT: {block: 'read-local'}}}
+    ], {variables: {local: {name: '点', type: ''}}});
+    const project = {targets: [stage, sprite, {...sprite, id: 'clone', isOriginal: false}]};
+    const search = (ownerId: string, variableId: string, access: VariableAccess) =>
+        searchProject(project, {}, '', true, new Set(), {ownerId, variableId, access})
+            .flatMap(group => group.results.map(result => 'block' in result && [result.block.id, result.variableAccess]));
+
+    assert.deepEqual([...countVariableAccesses(project, 'stage')], [['global', {read: 2, write: 2}]]);
+    assert.deepEqual([...countVariableAccesses(project, 'sprite')], [['local', {read: 1, write: 0}]]);
+    assert.deepEqual(search('stage', 'global', 'read'), [['read-global', 'read'], ['attribute', 'read']]);
+    assert.deepEqual(search('stage', 'global', 'write'), [['set', 'write'], ['change', 'write']]);
+    assert.deepEqual(search('sprite', 'local', 'read'), [['read-local', 'read']]);
+    assert.deepEqual(search('sprite', 'global', 'read'), []);
 });
 
 test('YAML results preserve document identity and UTF-16 offsets for each literal match', () => {
