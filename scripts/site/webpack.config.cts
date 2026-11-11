@@ -70,6 +70,12 @@ const injections = {
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
+    include: ['fonts-modal.jsx', 'manage-font.jsx'].map(file =>
+        fs.realpathSync(path.join(gui, 'src/components/tw-fonts-modal', file))),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-fonts-modal.cts')
+});
+config.module.rules.push({
     include: fs.realpathSync(path.join(gui, 'src/addons/addons/hide-flyout/userscript.js')),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-hide-flyout.cts')
@@ -83,6 +89,11 @@ config.module.rules.push({
     include: fs.realpathSync(path.join(gui, 'src/components/menu-bar/menu-bar.jsx')),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-menu-bar-controls.cts')
+});
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/components/menu-bar/tw-save-status.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-save-status.cts')
 });
 config.module.rules.push({
     include: ['debugger', 'mediarecorder'].map(addon =>
@@ -299,6 +310,11 @@ config.module.rules.push({test: /\.jsx?$/, include: [
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 const paintSource = path.join(path.dirname(hostRequire.resolve('scratch-paint/package.json')), 'src');
 config.module.rules.push({
+    include: fs.realpathSync(path.join(paintSource, 'components/paint-editor/paint-editor.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-paint-fonts-button.cts')
+});
+config.module.rules.push({
     include: [
         path.join(gui, 'src/containers/sound-editor.jsx'),
         path.join(gui, 'src/containers/record-modal.jsx'),
@@ -321,6 +337,11 @@ if (!vmSource.includes(`${path.sep}node_modules${path.sep}`)) {
 // no longer does, so the side that imports the package is the side that configures it. The helper
 // resolves against the copy that provides it, which is this repository's install.
 const {withDocumentEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-document-editor/webpack4');
+config.module.rules.push({
+    include: fs.realpathSync(path.join(path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-document-editor/webpack4')), 'src/client.js')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-document-edit-state.cts')
+});
 // The Loader's own helper, for the same reason: this repository imports the package, so it is the
 // side that transpiles it for webpack 4's parser. `hostRoot` is still the GUI, because that is
 // where babel-loader and preset-env are installed.

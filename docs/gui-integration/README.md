@@ -28,6 +28,16 @@ GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` 
 
 機能の有効化条件・既存の起動時フラグ・保存形式は変更しない。独立プレビューVMのdispatch退避、VM単位のサービス同一性、workspaceの差替え・破棄、権限拒否時の初期状態への復帰と失敗表示も受け側の接続実装が保持する。
 
+## Web フォント
+
+コスチュームエディターのフォント一覧から「フォントを追加」を開き、システムフォントまたは Google Fonts の欧文フォントを追加できます。作品を開くときは、Google Fonts への通信を許可するか、代替フォントで開くかを選べます。既存の SB3 に同梱されたフォントは開いて保存できます。
+
+UI と読み込みは `@kubohiroya/turbowarp-plus-editor-ui` が担当します。`customFonts` のシステムフォント項目に `webFont: {provider: "google-fonts", id: "..."}` を加え、フォント本体は表示時だけ使います。配信ビルドが既存の GUI ホスト接続にフォント画面を渡します。
+
+作品フォルダの処理は `turbowarp-plus-editor-project-folder` が担当します。Editor では変更を含むソース付きアーカイブをロックファイルで固定します。埋め込みフォント付きの作品フォルダを SB3 に戻すには、同対応を含む `sb3-toolchain build` を使います。
+
+切り戻す場合は Editor の #495 の変更を一式戻し、`package.json` とロックファイルも同じ時点に戻して再ビルドします。保存済みの Web フォント付き SB3 は通常の TurboWarp でシステムフォントとして読み込めます。
+
 ## 検証
 
 - `test:gui-integration` は固定 GUI に本家への追加ファイルがなく、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。GUI 側にあった `test/sprite-properties-host.test.mjs` は Scratch GUI #172 で削除した。

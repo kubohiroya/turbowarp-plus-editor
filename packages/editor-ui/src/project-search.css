@@ -77,7 +77,7 @@
     padding: 2px;
 }
 
-.replaceTools button, .replaceTools input {
+.replaceTools button, .replaceTools input, .filters button {
     min-block-size: 26px;
     min-inline-size: 0;
     box-sizing: border-box;
@@ -91,6 +91,11 @@
 
 .replaceTools input { flex: 1 1 100px; }
 .replaceTools button:disabled { opacity: .55; }
+
+.filters button[aria-pressed="true"] {
+    border-color: var(--looks-secondary, #486cbd);
+    font-weight: 600;
+}
 
 .option {
     display: flex;

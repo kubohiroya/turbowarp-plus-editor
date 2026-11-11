@@ -208,7 +208,16 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(git('status', '--short'), '');
 
     await edit('value');
-    await save();
+    const marker = page.getByRole('button', {name: 'Unsaved changes. Open the save menu'});
+    const tabMarker = (name: string) => page.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}))
+        .locator('[data-tw-plus-unsaved-tab]');
+    await expect(tabMarker('Cat')).toBeVisible();
+    await expect(tabMarker('Bird')).toBeHidden();
+    await marker.click();
+    await page.getByRole('button', {name: 'Save', exact: true}).click();
+    await expect(status).toHaveText('Project folder saved.');
+    await expect(marker).toHaveCount(0);
+    await expect(tabMarker('Cat')).toBeHidden();
     assert.deepEqual(changes(), ['-"10"', '+"20"']);
     git('add', projectFile);
 

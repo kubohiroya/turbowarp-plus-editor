@@ -4,7 +4,7 @@ import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-edito
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {attachDebuggerPanel, type DebuggerInterface} from '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel';
 import '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel.css';
-import {externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
+import {dockviewMultiViewEnabled, externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
 import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/context.ts';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
@@ -12,7 +12,7 @@ import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} f
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
-import ProjectFileMenu from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
@@ -20,7 +20,7 @@ import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
-import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.ts';
+import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu as createStageMenu} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
@@ -33,6 +33,7 @@ import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
 export {flushPendingSurfaceEdits};
+export {default as webFontDialogs} from '@kubohiroya/turbowarp-plus-editor-ui/web-font-dialogs';
 export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
@@ -41,7 +42,8 @@ const getProjectSearchMessages = () => window.ScratchBlocks?.Msg ?? {};
 export const renderProjectSearch = ({vm, locale}) => React.createElement(ProjectSearch, {
     project: vm.runtime, locale, getMessages: getProjectSearchMessages
 });
-export * from './lib/tw-plus-transfer.ts';
+export {finalizeHostTransferMenu} from './lib/tw-plus-transfer.ts';
+export const hostStageTransferMenu = (context, integration) => createStageMenu(context, integration, dockviewMultiViewEnabled);
 export * from './lib/tw-plus-extension-host.ts';
 export * from './lib/tw-plus-extension-permissions.ts';
 export * from './lib/tw-plus-extension-load-failure.ts';
@@ -60,7 +62,7 @@ const ExtensionControls = connect(({scratchGui: {mode}}) => ({
     if (stageOnly !== (menuLocale === undefined)) return null;
     const service = hostStageControls(vm, hostIntegration());
     return React.createElement(React.Fragment, null,
-        // The current branch, left of the stage launcher; it opens the local Git panel (nothing without local Git).
+        // The current branch, left of the stage launcher; it renders nothing while no Git panel is mounted (#478).
         menuLocale !== undefined && renderBranchButton(React.createElement, {vm, locale: menuLocale}),
         menuLocale !== undefined && stageLauncherEnabled &&
             React.createElement('div', {className: stageLauncherSlotClass, ref: mountStageLauncher}),
@@ -149,7 +151,7 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
     renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
 
-export {saveProjectForPackager as serializeProjectForExport} from '../project-payloads/host.ts';
+export {serializeProjectForExport} from '../packager/handoff.ts';
 
 export const projectFileTypes = [
     {description: 'Scratch 3 Project', accept: {'*/*': ['.sb3']}},
@@ -158,6 +160,12 @@ export const projectFileTypes = [
 
 // Overwriting and saving into the project folder collect other windows' edits first, as Save As does.
 const collectingSaves = (storage, folder) => collectBeforeSaving(storage, folder, () => flushPendingSurfaceEdits());
+
+export const renderProjectSaveMenu = ({vm, locale = 'en', storage: gui}) => {
+    const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
+    const {saveAs} = projectFileActions(vm, locale, storage, () => folder?.detach());
+    return React.createElement(ProjectSaveMenu, {locale, entries: {storage, folder, saveAs}});
+};
 
 export const renderProjectFileWorkflow = ({
     vm, locale = 'en', MenuItem, MenuSection, close, storage: gui, create, newWindow, open, restore, exportProject, addExtension

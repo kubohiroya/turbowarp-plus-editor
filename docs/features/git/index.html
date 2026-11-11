@@ -10,7 +10,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../">機能ガイド</a> › 10. 作品フォルダとGitで管理する</p>
-<p class="eyebrow">機能ガイド 10/11 · 2026年11月8日更新</p>
+<p class="eyebrow">機能ガイド 10/12 · 2026年11月8日更新</p>
 <h1>作品フォルダとGitで管理する</h1>
 <p class="lead">sb3-toolchainで展開した作品フォルダを直接開いて保存し、Gitの変更・差分・履歴をEditorの中で確かめます。GitHubとの同期や、プルリクエストのスクリプト単位のレビューもできます。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
@@ -26,6 +26,7 @@
 <li><a href="../reuse/">再利用</a></li>
 <li><a href="../git/" aria-current="page">Gitと作品フォルダ</a></li>
 <li><a href="../save/">保存と配布</a></li>
+<li><a href="../github/">GitHubで開発</a></li>
 </ul>
 </nav>
 <nav class="page-toc" aria-label="このページの目次">
@@ -59,8 +60,14 @@
 <h2>10.2 作品フォルダを開いて保存する <span class="badge planned">試作</span></h2>
 
 <p>sb3-toolchain v1で展開した作品フォルダを、SB3にまとめ直さずに開いて保存できます。フォルダの選択と書き込みには、File System Accessに対応したChromium系ブラウザー（Chrome、Edgeなど）が必要です。</p>
-<ol><li>「ファイル」→「プロジェクトフォルダを開く…」を選び、作品フォルダを選んで読み書きを許可します。作品データとローカルの画像・音声が読み込まれます。</li><li>ブロック、変数・リスト、スプライトやコスチューム、スプライトの位置や大きさなどを編集します。作品を実行して変わった位置や変数の値も保存の対象です。</li><li>「ファイル」→「保存」を選ぶと、フォルダ内の <code>project.source.json</code> が更新されます。保存前に、フォルダが外部で変更されていないかを確かめます。</li></ol>
-<p>Gitで差分を確認し、<code>sb3-toolchain build</code> で配布用SB3を作る流れと組み合わせられます。スプライトの追加・削除・名前の変更と、コスチューム・音の追加・削除も保存します。このとき、フォルダ内の <code>assets/</code> と <code>sb3-source.json</code> も更新し、使われなくなった画像・音声のファイルを消します。カスタム拡張機能・埋め込み拡張・フォントを含む作品は開けません。</p>
+<h3>作品フォルダを開く</h3>
+<p>「ファイル」→「プロジェクトフォルダを開く…」を選び、作品フォルダを選んで読み書きを許可します。作品データとローカルの画像・音声が読み込まれます。</p>
+<p>システムフォントと Web フォントの参照は作品データに、ファイルのフォントは <code>assets/</code> に保存します。</p>
+<h3>作品フォルダに保存する</h3>
+<ol><li>ブロック、変数・リスト、スプライトやコスチューム、スプライトの位置や大きさなどを編集します。作品を実行して変わった位置や変数の値も保存の対象です。</li><li>「ファイル」→「保存」を選ぶと、フォルダ内の <code>project.source.json</code> が更新されます。保存前に、フォルダが外部で変更されていないかを確かめます。</li></ol>
+<p>スプライトの追加・削除・名前の変更と、コスチューム・音の追加・削除も保存します。このとき、フォルダ内の <code>assets/</code> と <code>sb3-source.json</code> も更新し、使われなくなった画像・音声のファイルを消します。</p>
+<p>埋め込み拡張とURLで読み込むカスタム拡張機能を含む作品も開いて保存でき、拡張機能のコードは <code>extensions/</code> と <code>embedded-extensions.json</code> に書き戻します。拡張機能を差し替えて出どころの記録（<code>source</code>）を外したときは、保存のときに知らせます。</p>
+<p>Gitで差分を確認し、<code>sb3-toolchain build</code> で配布用SB3を作る流れと組み合わせられます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/305">作品フォルダの編集</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/319">フォルダの差分再読み込み</a></p>
 
 </section>
@@ -122,9 +129,9 @@
 
 <h2>10.6 プルリクエストをスクリプト単位でレビューする</h2>
 
-<p>公開GitHubリポジトリのプルリクエスト（PR）を、変更全体の概要から個々のスクリプトまで確認できます。以下は、2026年11月8日の公開版（<code>840d37f</code>）で <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">turbowarp-kamishibai-app の PR #219</a> を開いた例です。</p>
+<p>GitHub のプルリクエスト（PR）を、変更全体の概要から個々のスクリプトまで確認できます。以下は、2026年11月8日の公開版（<code>840d37f</code>）で公開リポジトリの <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">turbowarp-kamishibai-app の PR #219</a> を開いた例です。</p>
 <ol>
-<li><strong>PRを選ぶ。</strong> メニューバーのブランチのボタンから「ローカル Git を開く」を選び、「リポジトリを選択…」で、対象の公開GitHubリポジトリが <code>origin</code> に設定されたローカルのリポジトリを選びます。「プルリクエスト」を押し、一覧から対象のPRを選びます。番号で開くには「プルリクエスト番号」に番号（例：<code>219</code>）を入力し、「PR を開く」を押します。</li>
+<li><strong>PRを選ぶ。</strong> メニューバーの「ステージを開く」の左にあるブランチのボタン（リポジトリを選ぶ前は「Git」と表示されます）を押し、「ローカル Git を開く」を選び、「リポジトリを選択…」で、対象の GitHub リポジトリが <code>origin</code> に設定されたローカルのリポジトリを選びます。「プルリクエスト」を押し、公開リポジトリでは一覧から対象の PR を選びます。番号で開くには「プルリクエスト番号」に番号（例：<code>219</code>）を入力し、「PR を開く」を押します。</li>
 <li><strong>変更概要を確認する。</strong> 右側の「変更レビュー」でPRのタイトルと説明を読み、変更ファイル数、影響するステージ・スプライト数、比較できるスクリプト数を確認します。説明が省略されているときは「PR 本文を表示」で全文を開けます。
 <figure><a href="../images/published-editor-git-pr-overview.png"><img src="../images/published-editor-git-pr-overview.png" width="1254" height="848" alt="公開版のローカルGitパネル。左にPRの一覧と番号欄、右にPR #219のタイトル、説明、変更ファイル9件、影響するステージ・スプライト16件、スクリプトの比較26件が表示されている。" loading="lazy"></a><figcaption>公開版でPR #219を開いたところ。左でPRを選び、右で変更の規模を確認します。下の「変更ファイル」から比較を読み進めます。</figcaption></figure>
 </li>
@@ -134,7 +141,8 @@
 </ol>
 <p>比較を読み終えたら、スクリプトの下の「確認済み」で進み具合を記録できます。この印はブラウザーに保存され、パネルを閉じても Editor を再読み込みしても残ります。PR が更新されると、内容が変わったスクリプトの印だけが外れます。印は作品ファイルとGitには書き込まれません。「ローカルの変更」で手元の差分表示に戻れます。</p>
 
-<p>比較にはプルリクエストのマージベースとheadを使います。GitHubへの通信は公開APIの読み取りだけで、公開APIの利用上限が適用されます。比較の仕組みは<a href="#block-diff">作品の変更をブロックで比べる</a>で説明しています。</p>
+<p>比較には PR のマージベースと head を使います。PR の一覧・題名・本文には公開 API の利用上限が適用されます。「GitHub 接続」中は PR の head とベースのブランチを Git Smart HTTP で取得し、手元の Git オブジェクトで比較します。接続で許可された非公開リポジトリでは、PR 番号を入力して比較するベースのブランチを選びます。未接続時は公開 API で公開 PR を比較できます。比較の仕組みは<a href="#block-diff">作品の変更をブロックで比べる</a>で説明しています。</p>
+<p>PR の版を実行するには、Git パネルから作品フォルダを開いておき、接続中に開いた PR の「pr/… として手元で開く」を選びます。比較したコミットにローカルブランチを作って切り替え、その版の作品を開き直します。実行中、未保存の編集や作業ツリーの変更がある場合、同名ブランチが別のコミットを指している場合は切り替えが止まります。確認を終えたら、「ローカルの変更」で元のブランチに切り替え、「作品を再読込」を選びます。確認用のブランチは手元に置いておきます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">Editorへの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/418">PRレビューの操作手順</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRをScratchスクリプトでレビュー</a></p>
 
 </section>

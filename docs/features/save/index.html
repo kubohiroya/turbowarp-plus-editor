@@ -10,7 +10,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../">機能ガイド</a> › 11. 保存して配布する</p>
-<p class="eyebrow">機能ガイド 11/11 · 2026年11月8日更新</p>
+<p class="eyebrow">機能ガイド 11/12 · 2026年11月8日更新</p>
 <h1>保存して配布する</h1>
 <p class="lead">作品を保存し、作品情報を記録し、拡張コードや素材をどこに置くかを決めて、SB3や単一HTMLとして渡します。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
@@ -26,6 +26,7 @@
 <li><a href="../reuse/">再利用</a></li>
 <li><a href="../git/">Gitと作品フォルダ</a></li>
 <li><a href="../save/" aria-current="page">保存と配布</a></li>
+<li><a href="../github/">GitHubで開発</a></li>
 </ul>
 </nav>
 <nav class="page-toc" aria-label="このページの目次">
@@ -134,6 +135,7 @@
 <h2>11.7 作品を書き出して単一HTMLで配布する</h2>
 
 <p>「ファイル」→「書き出し…」を開き、「プロジェクトをパッケージ化する」を押します。書き出しに必要な作品データは出力に同梱されます。通常のScratch 3やTurboWarpのSB3なら<a href="https://packager.turbowarp.org/">標準のTurboWarp Packager</a>が開きます。Plus形式の拡張を記録した作品では、同じ操作でPlus専用の出力画面が開きます。</p>
+<p>Web フォントを使ったテキストは、Packager の出力では指定した代替フォントで表示されます。</p>
 <figure class="guide-detail"><a href="../images/export-dialog.png"><img src="../images/export-dialog.png" width="640" height="178" alt="書き出しダイアログ。実行・配布用のファイルを作成しますという説明と、プロジェクトをパッケージ化するボタンがある。" loading="lazy"></a><figcaption>「書き出し…」で開くダイアログ。</figcaption></figure>
 <ol><li>Plusの出力画面で、すべてのPlus拡張が外部API・モデル・画像・音声などに依存していないことを確認します。</li><li>確認欄にチェックし、「確認してHTMLを生成」を押します。HTTPSで配信される拡張コードも、内容を照合したうえでHTMLに入り、サンドボックスの指定は保持されます。</li><li>生成したHTMLをダウンロードして開きます。カタログで信頼条件を満たす拡張は、同梱されたハッシュと照合して実行します。個別承認が必要な拡張は、HTMLを開くたびに実行許可を求められます。</li></ol>
 <div class="flow" role="img" aria-label="Plus作品から拡張コードを取得して検証し、コードと作品を単一HTMLに同梱。受取人が開く際にも実行条件を確認する。"><div>Plus作品</div><span>→</span><div>コード取得・検証</div><span>→</span><div>単一HTMLへ同梱</div><span>→</span><div>開く人が実行<br><small>必要な拡張を確認</small></div></div>
@@ -142,6 +144,7 @@
 </section>
 <nav class="pager" aria-label="前後のページ">
 <a class="prev" href="../git/"><small>前のページ</small>10. 作品フォルダとGitで管理する</a>
+<a class="next" href="../github/"><small>次のページ</small>12. GitHubで作品を開発する</a>
 </nav>
 </main>
 <footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>

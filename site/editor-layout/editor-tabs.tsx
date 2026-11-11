@@ -5,10 +5,11 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
-import {useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {SpriteTargetTabsContext, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {editSpriteVariable} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
-import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, renameProjectMessage,
+import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, countVariableAccesses,
+    openVariableSearch, renameProjectMessage,
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
@@ -77,10 +78,19 @@ function readSpriteAssets(vm, targetId: string, kind: SpriteAssetKind): SpriteAs
 
 function readSpriteVariables(vm, id: string): SpriteVariable[] {
     const target = vm.runtime.getTargetById(id);
-    return Object.values(target?.variables ?? {}).flatMap((variable: {
+    const variables = Object.values(target?.variables ?? {}).flatMap((variable: {
         id: string; name: string; type: string; value: unknown; isCloud?: boolean;
     }) => variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
         [{id: variable.id, name: variable.name, value: variable.value, isCloud: variable.isCloud}] : []);
+    if (!variables.length) return variables;
+    const counts = countVariableAccesses(vm.runtime, id);
+    return variables.map(variable => ({
+        ...variable,
+        accesses: {
+            ...counts.get(variable.id) ?? {read: 0, write: 0},
+            open: access => openVariableSearch(vm.runtime, {ownerId: id, variableId: variable.id, access})
+        }
+    }));
 }
 const resizeCode = () => {
     const blocks = window.ScratchBlocks;
@@ -298,7 +308,19 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         };
         navigation.current = current;
         const disconnect = connectProjectSearchNavigation(vm.runtime, current);
+        let refreshFrame: number | undefined;
+        const refreshVariables = () => {
+            const views = spriteTabs.controller.current;
+            if (refreshFrame !== undefined || !views?.views().some(view => view.section === spriteEditorSections.indexOf('variables'))) return;
+            refreshFrame = requestAnimationFrame(() => {
+                refreshFrame = undefined;
+                spriteTabs.controller.current?.refreshSurfaces();
+            });
+        };
+        vm.on('PROJECT_CHANGED', refreshVariables);
         return () => {
+            vm.removeListener('PROJECT_CHANGED', refreshVariables);
+            if (refreshFrame !== undefined) cancelAnimationFrame(refreshFrame);
             if (navigation.current === current) navigation.current = null;
             disconnect();
         };
@@ -335,11 +357,11 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     });
     const selection = spriteTabs.context;
     const editorCommands = selection && code ? {...selection, open: code.context.open} : selection ?? code?.context ?? null;
-    return <SpriteCodeProvider value={editorCommands}>
+    return <SpriteTargetTabsContext.Provider value={spriteTabs.listTabs}><SpriteCodeProvider value={editorCommands}>
         {content}
         {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front}
             attachBackpackDrop={attachBackpackDrop} />}
-    </SpriteCodeProvider>;
+    </SpriteCodeProvider></SpriteTargetTabsContext.Provider>;
 }
 
 export const EditorTabLayout = connect(state => ({

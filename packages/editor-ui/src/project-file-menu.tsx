@@ -4,6 +4,58 @@ import type {Action, FolderActions, ProjectFileStorage} from './project-file-dia
 
 type Entry = [command: string, label: string, action: Action | undefined];
 
+type SaveEntries = {storage: ProjectFileStorage; folder?: FolderActions; saveAs?: Action};
+
+function saveEntries(locale: string, {storage, folder, saveAs}: SaveEntries): Entry[] {
+    const ja = locale.startsWith('ja');
+    return [
+        ['save', ja ? '保存' : 'Save', storage.canSave ? storage.overwrite || folder?.save : undefined],
+        ['save-as', ja ? '名前を変えて保存…' : 'Save As…', storage.canSave ? saveAs : undefined]
+    ];
+}
+
+export function ProjectSaveMenu({locale, entries}: {locale: string; entries: SaveEntries}) {
+    const label = locale.startsWith('ja') ? '未保存の変更があります。保存メニューを開く' :
+        'Unsaved changes. Open the save menu';
+    const [open, setOpen] = React.useState(false);
+    const trigger = React.useRef<HTMLButtonElement>(null);
+    const root = React.useRef<HTMLDivElement>(null);
+    const close = () => {
+        setOpen(false);
+        trigger.current?.focus();
+    };
+    React.useEffect(() => {
+        if (!open || !root.current) return;
+        const node = root.current;
+        const dismiss = (event: PointerEvent) => {
+            if (!node.contains(event.target as Node)) setOpen(false);
+        };
+        node.ownerDocument.addEventListener('pointerdown', dismiss, true);
+        return () => node.ownerDocument.removeEventListener('pointerdown', dismiss, true);
+    }, [open]);
+    const actions = saveEntries(locale, entries).filter(([, , action]) => action);
+    return <div className={styles.saveMenu} ref={root}
+        onBlur={event => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
+        }} onKeyDown={event => {
+            if (open && event.key === 'Escape') {
+                event.stopPropagation();
+                close();
+            }
+        }}>
+        <button type="button" ref={trigger} className={styles.saveMarker} data-tw-plus-unsaved-marker aria-label={label}
+            aria-expanded={actions.length ? open : undefined} disabled={!actions.length}
+            onClick={() => setOpen(previous => !previous)}>*</button>
+        {!open && <span className={styles.saveHint} aria-hidden="true">{label}</span>}
+        {open && actions.length > 0 && <div className={styles.saveActions}>
+            {actions.map(([command, name, action]) => <button type="button" key={command} onClick={() => {
+                close();
+                action();
+            }}>{name}</button>)}
+        </div>}
+    </div>;
+}
+
 export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, entries}: {
     locale: string;
     MenuItem: React.ElementType;
@@ -40,7 +92,6 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
         </MenuItem>;
     };
     const e = entries;
-    const action = e.storage.canSave && (e.storage.overwrite || e.folder?.save) || undefined;
     return <>
         {item(['new', ja ? '新しいプロジェクトを作成' : 'Create New Project', e.create])}
         {e.newWindow && item(['window', ja ? '新しいウィンドウ' : 'New Window', e.newWindow])}
@@ -50,8 +101,7 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
             {e.externalYaml}
         </MenuSection>
         <MenuSection>
-            {item(['save', ja ? '保存' : 'Save', action])}
-            {item(['save-as', ja ? '名前を変えて保存…' : 'Save As…', e.storage.canSave ? e.saveAs : undefined])}
+            {saveEntries(locale, e).map(item)}
             {e.exportProject && item(['package', ja ? '書き出し…' : 'Export…', e.exportProject])}
         </MenuSection>
         {(e.properties || e.payloads || e.extensions || e.diagnostics) && <MenuSection>

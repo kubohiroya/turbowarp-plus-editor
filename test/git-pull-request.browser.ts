@@ -1,10 +1,15 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {once} from 'node:events';
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {createServer} from 'node:http';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {chromium, expect} from '@playwright/test';
+import type {Page, Route} from '@playwright/test';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 
 const origin = 'http://localhost:41015';
@@ -28,6 +33,65 @@ const project = (steps: string, message = 'hi') => JSON.stringify({targets: [{na
 // The PR's head can move on; each head's version of the project.
 const heads = new Map([[newHead, project('25', 'hello')], [laterHead, project('30', 'hello')]]);
 
+function launchBrowser() {
+    const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
+    if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
+    return chromium.launch({headless: true, args});
+}
+
+async function readEditorFile(pathname: string, build: string) {
+    if (!pathname.startsWith(prefix)) return null;
+    const file = path.resolve(build, decodeURIComponent(pathname.slice(prefix.length)));
+    if (!file.startsWith(build + path.sep)) return null;
+    const body = await readFile(file).catch(() => null);
+    return body && {body, contentType: mime[path.extname(file)] ?? 'application/octet-stream'};
+}
+
+async function serveEditor(route: Route, url: URL, build: string) {
+    if (url.origin !== origin) return route.abort();
+    return route.fulfill(await readEditorFile(url.pathname, build) ?? {status: 404});
+}
+
+async function prepareDirectoryPicker(page: Page) {
+    await page.addInitScript(() => {
+        let directory: FileSystemHandle;
+        for (const type of ['dragenter', 'dragover', 'drop']) {
+            window.addEventListener(type, async event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (type === 'drop') {
+                    const item = (event as DragEvent).dataTransfer!.items[0] as DataTransferItem & {
+                        getAsFileSystemHandle(): Promise<FileSystemHandle>;
+                    };
+                    directory = await item.getAsFileSystemHandle();
+                }
+            }, {capture: true});
+        }
+        Object.defineProperty(window, 'showDirectoryPicker', {value: async () => directory});
+        Object.defineProperty(window, 'gitReviewDirectoryReady', {get: () => directory?.kind === 'directory'});
+    });
+}
+
+async function openRepository(page: Page, directory: string, editorOrigin = origin) {
+    await page.goto(editorOrigin + prefix + 'editor.html?lang=en');
+    await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
+    const cdp = await page.context().newCDPSession(page);
+    try {
+        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+            await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100, data: {items: [], files: [directory], dragOperationsMask: 1}});
+        }
+    } finally {
+        await cdp.detach();
+    }
+    await page.waitForFunction(() => Reflect.get(window, 'gitReviewDirectoryReady'));
+    await page.locator('.twgit-branch-button').click();
+    await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
+    const panel = page.locator('.twgit-panel');
+    await panel.getByRole('button', {name: 'Choose Repository…'}).click();
+    await expect(panel.getByRole('button', {name: 'Pull requests', exact: true})).toBeVisible();
+    return panel;
+}
+
 test('the Editor Git panel opens a pull request overview and renders its changed script', {timeout: 120000}, async t => {
     const buildPath = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(buildPath && path.isAbsolute(buildPath));
@@ -44,9 +108,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     const status = git('status', '--porcelain');
     const config = await readFile(path.join(directory, '.git/config'));
 
-    const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
-    if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
-    const browser = await chromium.launch({headless: true, args});
+    const browser = await launchBrowser();
     t.after(() => browser.close());
     const page = await browser.newPage({viewport: {width: 1330, height: 940}});
     const requests: string[] = [], errors: string[] = [];
@@ -73,49 +135,15 @@ test('the Editor Git panel opens a pull request overview and renders its changed
             }
             return route.fulfill({headers, status: 404});
         }
-        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
-        const file = path.resolve(build, decodeURIComponent(url.pathname.slice(prefix.length)));
-        if (!file.startsWith(build + path.sep)) return route.abort();
-        const data = await readFile(file).catch(() => null);
-        return data ? route.fulfill({body: data, contentType: mime[path.extname(file)] ?? 'application/octet-stream'}) :
-            route.fulfill({status: 404});
+        return serveEditor(route, url, build);
     });
-    await page.addInitScript(() => {
-        let directory: FileSystemHandle;
-        for (const type of ['dragenter', 'dragover', 'drop']) {
-            window.addEventListener(type, async event => {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                if (type === 'drop') {
-                    const item = (event as DragEvent).dataTransfer!.items[0] as DataTransferItem & {
-                        getAsFileSystemHandle(): Promise<FileSystemHandle>;
-                    };
-                    directory = await item.getAsFileSystemHandle();
-                }
-            }, {capture: true});
-        }
-        Object.defineProperty(window, 'showDirectoryPicker', {value: async () => directory});
-        Object.defineProperty(window, 'gitReviewDirectoryReady', {get: () => directory?.kind === 'directory'});
-    });
-    const panel = page.locator('.twgit-panel');
-    const openRepository = async () => {
-        await page.goto(origin + prefix + 'editor.html?lang=en');
-        await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
-        const cdp = await page.context().newCDPSession(page);
-        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
-            await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100, data: {items: [], files: [directory], dragOperationsMask: 1}});
-        }
-        await page.waitForFunction(() => Reflect.get(window, 'gitReviewDirectoryReady'));
-        await page.locator('.twgit-branch-button').click();
-        await page.getByRole('menuitem', {name: 'Open Local Git'}).click();
-        await panel.getByRole('button', {name: 'Choose Repository…'}).click();
-        await expect(panel.getByRole('button', {name: 'Pull requests', exact: true})).toBeVisible();
-    };
-    await openRepository();
+    await prepareDirectoryPicker(page);
+    const panel = await openRepository(page, directory);
     assert.deepEqual(requests, []);
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await panel.getByRole('button', {name: '#42 Start together'}).click();
     const review = panel.getByRole('region', {name: 'Change review'});
+    await expect(panel.getByRole('button', {name: 'Open here as pr/42'})).toHaveCount(0);
     await expect(review.getByRole('heading', {name: 'Start together'})).toBeVisible();
     await expect(review.getByText('Move after the start signal.')).toBeVisible();
     await expect(review.getByText('game/assets/start.svg')).toBeVisible();
@@ -151,13 +179,13 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await panel.getByRole('button', {name: '#42 Start together'}).click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
-    await openRepository();
+    await openRepository(page, directory);
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await panel.getByRole('button', {name: '#42 Start together'}).click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     // The head moves on and changes only the green flag script: only its mark is dropped.
     pr.head.sha = laterHead;
-    await openRepository();
+    await openRepository(page, directory);
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await panel.getByRole('button', {name: '#42 Start together'}).click();
     await expect(review.getByText('1 / 2', {exact: true})).toBeVisible();
@@ -173,5 +201,176 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     });
     assert.equal(git('status', '--porcelain'), status);
     assert.deepEqual(await readFile(path.join(directory, '.git/config')), config);
+    assert.deepEqual(errors, []);
+});
+
+test('the Editor compares a connected PR and runs its project on a local branch', {timeout: 120000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    const fixtureFile = process.env.E2E_GIT_HTTP_FIXTURE;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    assert.ok(fixtureFile && path.isAbsolute(fixtureFile), 'Set E2E_GIT_HTTP_FIXTURE to the Git Smart HTTP test fixture module');
+    await verifyWebEditor(build);
+    const {startFixture, git} = await import(pathToFileURL(fixtureFile).href);
+    const fixture = await startFixture(t);
+    const {client, seed, bare} = fixture;
+    const folder = path.join(seed, 'game');
+    const source = 'game/project.source.json';
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32"/></svg>';
+    const assetId = createHash('md5').update(svg).digest('hex');
+    const costume = {name: 'Square', assetId, dataFormat: 'svg', md5ext: assetId + '.svg',
+        rotationCenterX: 16, rotationCenterY: 16, bitmapResolution: 1};
+    const playableProject = (steps: string) => {
+        const sprite = JSON.parse(project(steps)).targets[0];
+        sprite.blocks.flag.next = 'move';
+        sprite.blocks.move.parent = 'flag';
+        delete sprite.blocks.custom;
+        const target = {variables: {}, lists: {}, broadcasts: {}, comments: {}, costumes: [costume],
+            sounds: [], currentCostume: 0, volume: 100};
+        return JSON.stringify({
+            targets: [{...target, name: 'Stage', isStage: true, blocks: {}}, {...target, ...sprite, x: 0, y: 0, visible: true,
+                size: 100, direction: 90, draggable: false, rotationStyle: 'all around'}],
+            monitors: [], extensions: [], meta: {semver: '3.0.0'}
+        }, null, 2) + '\n';
+    };
+    await mkdir(path.join(folder, 'assets'), {recursive: true});
+    await mkdir(path.join(folder, 'extensions'));
+    await Promise.all([
+        writeFile(path.join(folder, 'assets', costume.md5ext), svg),
+        writeFile(path.join(folder, 'embedded-extensions.json'), JSON.stringify({formatVersion: 1, extensions: []})),
+        writeFile(path.join(folder, 'sb3-source.json'), JSON.stringify({formatVersion: 1, project: 'project.source.json',
+            embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets', archiveEntries: ['project.json', costume.md5ext]})),
+        writeFile(path.join(seed, source), playableProject('10'))
+    ]);
+    const record = (message: string) => {
+        git(seed, 'add', 'game');
+        git(seed, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', message);
+        return git(seed, 'rev-parse', 'HEAD');
+    };
+    const base = record('Base project');
+    git(seed, 'push', bare, 'main');
+    git(client, 'pull', '--ff-only', bare, 'main');
+    // Git does not record an empty extensions directory, but the folder format requires it.
+    await mkdir(path.join(client, 'game', 'extensions'));
+    const config = await readFile(path.join(client, '.git/config'));
+    await writeFile(path.join(seed, source), playableProject('25'));
+    const head = record('PR project');
+    git(seed, 'push', bare, 'HEAD:refs/pull/42/head');
+
+    const server = createServer(async (request, response) => {
+        try {
+            const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+            const file = await readEditorFile(url.pathname, build);
+            if (file) response.writeHead(200, {'Content-Type': file.contentType}).end(file.body);
+            else response.writeHead(404).end();
+        } catch {
+            response.writeHead(404).end();
+        }
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    t.after(() => new Promise<void>((resolve, reject) => {
+        server.close(error => error ? reject(error) : resolve());
+        server.closeAllConnections();
+    }));
+    const address = server.address();
+    assert.ok(address && typeof address === 'object');
+    const editorOrigin = 'http://127.0.0.1:' + address.port;
+    const bearer = 'r'.repeat(43);
+    fixture.origins.add(editorOrigin);
+    fixture.sessions.set(bearer, {mode: 'desktop', write: false});
+    const browser = await launchBrowser();
+    t.after(() => browser.close());
+    const page = await browser.newPage({viewport: {width: 1330, height: 940}});
+    const publicRequests: string[] = [], errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('**/*', async route => {
+        const url = new URL(route.request().url());
+        if (url.origin === fixture.origin || url.origin === editorOrigin) return route.continue();
+        if (url.origin === api) {
+            assert.equal((await route.request().allHeaders()).authorization, undefined);
+            publicRequests.push(url.pathname);
+            return route.fulfill({status: 404, headers: {'Access-Control-Allow-Origin': editorOrigin}});
+        }
+        return route.abort();
+    });
+    await page.addInitScript(({proxyOrigin, bearer}) => {
+        const session = () => ({connection: {mode: 'desktop', proxyOrigin},
+            account: {login: 'fixture'}, bearer, expiresAt: Date.now() + 60_000});
+        Object.defineProperty(window, 'EditorPreload', {value: {localGit: {
+            async begin() {
+                return {userCode: 'TEST-CODE', verificationUri: 'https://github.com/login/device', expiresAt: Date.now() + 60_000};
+            },
+            async finish() {},
+            async authorizeRepository() {return session();},
+            async getSession() {return session();},
+            async disconnect() {}
+        }}});
+    }, {proxyOrigin: fixture.origin, bearer});
+    await prepareDirectoryPicker(page);
+    const panel = await openRepository(page, client, editorOrigin);
+    const button = (name: string) => panel.getByRole('button', {name, exact: true});
+    await panel.getByText('Choose a project inside this repository', {exact: true}).click();
+    await button('game/').click();
+    page.once('dialog', dialog => dialog.accept());
+    await button('Open This Project').click();
+    await expect(panel.getByText('Project folder · game', {exact: true})).toBeVisible();
+    const spriteX = () => page.evaluate(() => Reflect.get(window, 'vm').runtime.getSpriteTargetByName('Sprite')?.x);
+    await expect.poll(spriteX).toBe(0);
+
+    await panel.getByText('GitHub connection', {exact: true}).click();
+    await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
+    await button('Connect to GitHub').click();
+    await expect(panel.getByText('TEST-CODE')).toBeVisible();
+    await button('Check connection').click();
+    await expect(panel.locator('[data-git-connection-state]')).toHaveText('Connected');
+    await button('Pull requests').click();
+    await panel.getByRole('spinbutton', {name: 'Pull request number'}).fill('42');
+    await button('Open pull request').click();
+    const review = panel.getByRole('region', {name: 'Change review'});
+    await expect(review.getByRole('heading', {name: 'Pull request #42'})).toBeVisible();
+    await expect(panel.getByRole('combobox', {name: 'Base branch'})).toHaveValue('main');
+    const script = review.locator('details').filter({hasText: 'When green flag clicked'});
+    await script.locator('summary').click();
+    await expect(script.locator('svg.blocklySvg').first()).toContainText('10');
+    await expect(script.locator('svg.blocklySvg').last()).toContainText('25');
+    assert.deepEqual(publicRequests.toSorted(), ['/repos/fixture/work/pulls', '/repos/fixture/work/pulls/42']);
+    assert.equal(fixture.upstream.filter(request => request.path.endsWith('/git-upload-pack')).length, 1);
+    assert.equal(git(client, 'rev-parse', 'refs/pull/origin/42/head'), head);
+    assert.equal(git(client, 'rev-parse', 'HEAD'), base);
+
+    const setEditorDirty = (changed: boolean) => page.evaluate(changed => Reflect.get(window, 'ReduxStore').dispatch({
+        type: 'scratch-gui/project-changed/SET_PROJECT_CHANGED', changed
+    }), changed);
+    await setEditorDirty(true);
+    await button('Open here as pr/42').click();
+    await expect(panel.getByRole('alert')).toContainText('before switching branches');
+    assert.equal(git(client, 'rev-parse', 'HEAD'), base);
+    assert.equal(git(client, 'branch', '--list', 'pr/42'), '');
+    assert.equal(await readFile(path.join(client, source), 'utf8'), playableProject('10'));
+    await setEditorDirty(false);
+    page.once('dialog', dialog => dialog.accept());
+    await button('Open here as pr/42').click();
+    await expect(panel.getByText(/Opened pull request #42 on the local branch pr\/42.*switch to main/)).toBeVisible();
+    assert.equal(git(client, 'branch', '--show-current'), 'pr/42');
+    assert.equal(git(client, 'rev-parse', 'HEAD'), head);
+    assert.equal(await readFile(path.join(client, source), 'utf8'), playableProject('25'));
+    // Run the reopened project in the Editor VM while the Git dialog is in front.
+    const greenFlag = () => page.evaluate(() => Reflect.get(window, 'vm').greenFlag());
+    await greenFlag();
+    await expect.poll(spriteX).toBe(25);
+
+    await button('Local changes').click();
+    await button('Switch: main').click();
+    await expect(button('Switch: pr/42')).toBeVisible();
+    assert.equal(git(client, 'branch', '--show-current'), 'main');
+    assert.equal(git(client, 'rev-parse', 'HEAD'), base);
+    assert.equal(git(client, 'rev-parse', 'refs/pull/origin/42/head'), head);
+    assert.equal(git(client, 'status', '--porcelain'), '');
+    assert.deepEqual(await readFile(path.join(client, '.git/config')), config);
+    page.once('dialog', dialog => dialog.accept());
+    await button('Reload Project').click();
+    await expect.poll(spriteX).toBe(0);
+    await greenFlag();
+    await expect.poll(spriteX).toBe(10);
     assert.deepEqual(errors, []);
 });
