@@ -281,6 +281,78 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.getByText('Advanced Settings', {exact: true})).toBeVisible();
 });
 
+test('the paint toolbar opens the project font list from costumes and backdrops', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const toolbarButton = page.getByRole('button', {name: 'Fonts…', exact: true});
+    const dialog = page.getByRole('dialog', {name: 'Fonts', exact: true});
+    const fontDropdown = page.locator('[class*="dropdown_dropdown_"][class*="font-dropdown_font-dropdown_"]:visible');
+    const sections = page.getByRole('tablist', {name: 'Sprite editor sections'});
+    const selectSection = name => sections.getByRole('tab', {name, exact: true}).click();
+    const selectedAsset = page.locator('[class*="selector_list-item_"][class*="sprite-selector-item_is-selected_"]:visible');
+    const editorState = () => page.evaluate(() => ({
+        changed: window.ReduxStore.getState().scratchGui.projectChanged,
+        target: window.vm.editingTarget.id,
+        costumes: window.vm.editingTarget.getCostumes().map(costume => costume.assetId)
+    }));
+    const closeFonts = async () => {
+        await dialog.getByRole('button', {name: 'Close', exact: true}).click();
+        await expect(dialog).toBeHidden();
+    };
+    const checkOpenAndClose = async () => {
+        await expect(fontDropdown).toHaveCount(0);
+        await expect(selectedAsset).toBeVisible();
+        const name = await selectedAsset.getAttribute('title');
+        const state = await editorState();
+        await toolbarButton.press('Enter');
+        await expect(dialog).toBeVisible();
+        await closeFonts();
+        await expect(selectedAsset).toHaveAttribute('title', name);
+        expect(await editorState()).toEqual(state);
+    };
+    const addFont = async name => {
+        await toolbarButton.click();
+        await dialog.getByRole('button', {name: /Add a system font/}).click();
+        await dialog.getByPlaceholder('Wingdings').fill(name);
+        await dialog.getByRole('button', {name: 'Add', exact: true}).click();
+        await expect(dialog.getByText(name, {exact: true})).toBeVisible();
+        await closeFonts();
+    };
+    const chooseFont = async name => {
+        await page.getByRole('button', {name: 'Text', exact: true}).click();
+        await fontDropdown.click();
+        await page.getByText(name, {exact: true}).click();
+        await expect(fontDropdown).toContainText(name);
+    };
+
+    await selectSection('Costumes');
+    const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
+    await checkOpenAndClose();
+    await addFont('Tahoma');
+
+    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await selectSection('Backdrops');
+    await checkOpenAndClose();
+    await addFont('Verdana');
+    await chooseFont('Tahoma');
+
+    await page.locator('[class*="sprite-selector_sprite_"]:visible')
+        .filter({has: page.getByText(spriteName, {exact: true})}).click();
+    await selectSection('Costumes');
+    await chooseFont('Verdana');
+    await fontDropdown.click();
+    await page.getByText('Add more fonts...', {exact: true}).click();
+    await expect(dialog.getByText('Tahoma', {exact: true})).toBeVisible();
+    await expect(dialog.getByText('Verdana', {exact: true})).toBeVisible();
+    await closeFonts();
+
+    await page.setViewportSize({width: 1050, height: 660});
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusStandardLayout=0&twPlusDockview=0');
+    await page.getByRole('tab', {name: 'コスチューム', exact: true}).click();
+    await page.getByRole('button', {name: 'フォント…', exact: true}).click();
+    await expect(page.getByRole('dialog', {name: 'フォント', exact: true})).toBeVisible();
+});
+
 test('the Plus File menu groups project settings and opens the extension library', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const start = suffix => page.goto(origin + buildPrefix + 'editor.html?lang=ja' + suffix);

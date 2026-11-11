@@ -303,6 +303,11 @@ config.module.rules.push({test: /\.jsx?$/, include: [
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 const paintSource = path.join(path.dirname(hostRequire.resolve('scratch-paint/package.json')), 'src');
 config.module.rules.push({
+    include: fs.realpathSync(path.join(paintSource, 'components/paint-editor/paint-editor.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-paint-fonts-button.cts')
+});
+config.module.rules.push({
     include: [
         path.join(gui, 'src/containers/sound-editor.jsx'),
         path.join(gui, 'src/containers/record-modal.jsx'),

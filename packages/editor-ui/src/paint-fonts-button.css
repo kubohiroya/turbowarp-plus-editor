@@ -1,0 +1,23 @@
+.button {
+    flex: none;
+    margin-inline-end: .5rem;
+    padding: .375rem .625rem;
+    border: 1px solid var(--paint-ui-pane-border, #d9d9d9);
+    border-radius: .25rem;
+    background: var(--paint-input-background, #fff);
+    color: var(--paint-text-primary, #575e75);
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.button:hover {
+    background: var(--paint-looks-transparent, #855cd626);
+}
+
+.button:focus-visible {
+    outline: 2px solid var(--paint-looks-secondary, #855cd6);
+    outline-offset: 2px;
+}
