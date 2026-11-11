@@ -1,5 +1,6 @@
 import React from 'react';
 import {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {useTargetTabMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {createPortal} from 'react-dom';
 import {BasicPanel} from './basic-panel.tsx';
 import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.ts';
@@ -40,17 +41,30 @@ export const TargetListLayout = targetListEnabled ?
 export const TargetListPanel = targetListEnabled ? DockableTargetList : undefined;
 export const SpriteGrid = targetListEnabled ? function HostedSpriteGrid(props) {
     const commands = useSpriteCodeWindows();
+    const tabMenu = useTargetTabMenu();
     const targetSwitch = React.useContext(TargetSwitchContext);
     const document = React.useContext(TargetListDocument);
-    const children = targetSwitch ? React.Children.map(props.children, child => {
+    const children = targetSwitch || tabMenu ? React.Children.map(props.children, child => {
         // The GUI passes sortable wrappers with one sprite tile apiece.
         if (!React.isValidElement<{children: React.ReactNode}>(child)) return child;
         const tile = child.props.children;
-        if (!React.isValidElement<{id?: string; onClick?: (id: string) => void}>(tile)) return child;
+        if (!React.isValidElement<{id?: string; onClick?: (id: string) => void;
+            renderEditorMenu?: (primitives, rename) => object}>(tile)) return child;
         const {id, onClick} = tile.props;
         if (!id || !onClick) return child;
         return React.cloneElement(child, {}, React.cloneElement(tile, {
-            onClick: targetId => targetSwitch.select(targetId, () => onClick(targetId), document)
+            onClick(targetId) {
+                const select = () => {
+                    tabMenu?.select(targetId);
+                    onClick(targetId);
+                };
+                if (targetSwitch) targetSwitch.select(targetId, select, document);
+                else select();
+            },
+            ...(tabMenu && {renderEditorMenu: (primitives, rename) => ({
+                ...tabMenu.render(primitives, id, rename),
+                onShow: () => tabMenu.onShow(id)
+            })})
         }));
     }) : props.children;
     return <layoutViews.SpriteGrid {...props} onRename={commands?.rename}>{children}</layoutViews.SpriteGrid>;

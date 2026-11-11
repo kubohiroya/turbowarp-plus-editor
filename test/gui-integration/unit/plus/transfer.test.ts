@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
+import {SpriteTargetTabsContext} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {WindowLayoutContext} from '../../../../site/editor-layout/context.ts';
 import {attachHostScriptTransfer, hostStageTransferMenu, finalizeHostTransferMenu} from '../../../../site/gui-integration/lib/tw-plus-transfer.ts';
 
@@ -70,6 +71,23 @@ test('the host chooses the compact backdrop menu items from its layout context',
     assert.equal(render(false), '<button>Backdrops</button>');
     assert.match(render(true), /Backdrops.*Export Stage/);
     assert.doesNotMatch(render(true), /Import Stage/);
+});
+
+test('Dockview opens the backdrop from its menu without a script transfer host', () => {
+    const {createElement: element} = React;
+    const group = ({children}) => element('div', null, children);
+    const primitives = {ContextMenuTrigger: group, ContextMenu: group, MenuItem: group, contextMenuPrimitives: {
+        MenuItem: group, SubMenu: group, itemClassName: 'item', menuClassName: 'menu'
+    }};
+    const bridge = hostStageTransferMenu({}, null, true);
+    const tile = element('button', null, 'Backdrops');
+    const tabs = {locale: 'en', list: () => [], select() {}, activate() {}};
+    const render = plusLayout => ReactDOMServer.renderToStaticMarkup(
+        element(WindowLayoutContext.Provider, {value: {plusLayout, showUndock: false, locale: 'en'}},
+            element(SpriteTargetTabsContext.Provider, {value: tabs}, bridge.wrapBackdropTile(tile, primitives))));
+    assert.equal(bridge.wrap(tile, primitives), tile);
+    assert.equal(render(false), '<button>Backdrops</button>');
+    assert.match(render(true), /Backdrops.*Open/);
 });
 
 
