@@ -111,6 +111,17 @@
 <p>GitHubへの接続には、接続先を運用する人が用意したGitHub Appを使います。公開版のEditorを使う人がGitHub Appを作る必要はありません。接続先を運用する人や自分で接続先を立てる人は、<a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/github-app-setup.md">GitHub Appの作り方（英語）</a>を参照してください。</p>
 <ol><li>運用する人から知らされたAppのページ（<code>https://github.com/apps/&lt;Appの名前&gt;</code>）で「Install」を押します。</li><li>インストール先のアカウントを選びます。組織のリポジトリでは、組織のOwnerの承認が必要です。</li><li>「Only select repositories」を選び、Editorで使うリポジトリだけを選びます。</li><li>ローカルGitパネルの「GitHub 接続」を開き、接続方式を選んで接続します。GitHubの認可の画面が出たら、Appの名前を確かめて認可します。pushやレビューの送信が必要なときは、接続の画面でその許可を選びます。</li><li>使わなくなったら、Editorで接続を切ります。AppはGitHubの「Settings」→「Applications」→「Installed GitHub Apps」からアンインストールでき、認可は「Authorized GitHub Apps」から取り消せます。</li></ol>
 <p>Appに権限が追加されたときは、「Installed GitHub Apps」のそのAppに承認を求める表示が出ます。承認するまで、追加された権限を使う機能（例：PRのレビューの送信）は使えません。</p>
+<h3>接続のしくみと安全のための注意</h3>
+<p>EditorはGitHubのトークンを受け取りません。どちらの接続方式でも、Editorが持つのは短い期限の接続用の鍵だけです。Gitの通信は中継役（プロキシ）を通ります。中継役が通すのはGitの読み書きの通信だけで、通信のたびに次のことを確かめます。</p>
+<ul><li>要求したページ</li><li>接続用の鍵</li><li>接続したときのリポジトリ</li><li>pushを許可しているか</li></ul>
+<div class="table-scroll" role="region" aria-label="接続方式" tabindex="0">
+<table><caption>接続方式</caption><thead><tr><th scope="col">方式</th><th scope="col">しくみ</th></tr></thead><tbody>
+<tr><th scope="row">ブラウザー版（Cloudflare）</th><td>GitHubの認可の画面で認可すると、トークンは運用する人のサーバーに暗号化して保管されます。ログインは最長8時間で、そのあとは接続し直します</td></tr>
+<tr><th scope="row">Desktop版</th><td>Desktopの画面に出るコードを <code>https://github.com/login/device</code> に入力して認可します。トークンはDesktopアプリの中だけに置き、保存を選んだときはOSの保護機能で暗号化します</td></tr>
+</tbody></table></div>
+<p><strong>GitHubに入力するコードは、自分のEditorの画面に出たものだけにしてください。</strong>他人からメールやチャットで送られたコードを入力すると、その人にリポジトリの読み書きを許すことになります。認可の画面ではAppの名前と権限を確かめます。心当たりのない認可は、GitHubの「Settings」→「Applications」→「Authorized GitHub Apps」から取り消します。</p>
+<p>現在のDesktop版では、起動時の設定でAppを指定する必要があります。設定なしでの接続と、自分で作るアクセストークン（fine-grained personal access token）での接続を準備しています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/315">接続の契約</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/issues/40">Desktop版の接続の改善</a></p>
 
 </section>
 
