@@ -19,27 +19,31 @@ const stageTransferMenuId = 'tw-plus-stage-transfer';
 
 function BackdropTileMenu({children, primitives, renderMenu}: {
     children?: React.ReactNode;
-    primitives: Parameters<NonNullable<ReturnType<typeof useTargetTabMenu>>['render']>[0];
-    renderMenu(open?: React.ReactNode, onShow?: () => void): React.ReactNode;
+    primitives?: Parameters<NonNullable<ReturnType<typeof useTargetTabMenu>>['render']>[0];
+    renderMenu(open?: React.ReactElement, onShow?: () => void): React.ReactNode;
 }) {
     const {plusLayout} = React.useContext(WindowLayoutContext);
     const tabs = useTargetTabMenu();
-    return plusLayout ? renderMenu(primitives && tabs?.render(primitives).open, () => tabs?.onShow()) : children;
+    if (!plusLayout) return children;
+    const open = primitives && tabs?.render(primitives).open;
+    return renderMenu(open, open ? () => tabs.onShow() : undefined);
 }
 
-export const hostStageTransferMenu = (context, integration) => {
+export const hostStageTransferMenu = (context, integration, backdropOpen = false) => {
     const menu = integration?.scriptTransfer?.stageMenu?.(context);
+    if (!menu && !backdropOpen) return null;
     const {contextItems = [], backdropItems = []} = menu ?? {};
     const renderMenu = (content, {ContextMenuTrigger, ContextMenu, MenuItem},
-        open?: React.ReactNode, onShow?: () => void) => {
+        open?: React.ReactElement, onShow?: () => void) => {
         const createItem = ({label, onClick}, action) => {
             const icon = renderContextMenuIcon(action);
             return React.createElement(MenuItem,
                 {key: label, onClick}, icon ? React.createElement(React.Fragment, null, icon, label) : label);
         };
         const items = contextItems.map(item => createItem(item, 'export'));
-        if (!open && !items.length) return content;
-        const contextMenu = React.createElement(ContextMenu, {id: stageTransferMenuId, onShow}, open, items);
+        if (open) items.unshift(React.cloneElement(open, {key: 'open'}));
+        if (!items.length) return content;
+        const contextMenu = React.createElement(ContextMenu, {id: stageTransferMenuId, onShow}, items);
         return React.createElement(ContextMenuTrigger,
             {id: stageTransferMenuId, attributes: {className: styles.contextMenuWrapper}}, content, contextMenu);
     };
@@ -47,7 +51,7 @@ export const hostStageTransferMenu = (context, integration) => {
         backdropButtons: icon => backdropItems.map(({label, onClick}) => ({title: label, img: icon, onClick})),
         wrap: (content, primitives) => renderMenu(content, primitives),
         wrapBackdropTile: (content, primitives) => React.createElement(BackdropTileMenu, {
-            primitives: primitives.contextMenuPrimitives,
+            primitives: backdropOpen ? primitives.contextMenuPrimitives : undefined,
             renderMenu: (open, onShow) => renderMenu(content, primitives, open, onShow)
         }, content)
     };

@@ -4,7 +4,7 @@ import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-edito
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {attachDebuggerPanel, type DebuggerInterface} from '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel';
 import '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel.css';
-import {externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
+import {dockviewMultiViewEnabled, externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
 import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/context.ts';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
@@ -20,7 +20,7 @@ import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
-import {attachHostScriptTransfer as attachScriptTransfer} from './lib/tw-plus-transfer.ts';
+import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu as createStageMenu} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
@@ -41,7 +41,8 @@ const getProjectSearchMessages = () => window.ScratchBlocks?.Msg ?? {};
 export const renderProjectSearch = ({vm, locale}) => React.createElement(ProjectSearch, {
     project: vm.runtime, locale, getMessages: getProjectSearchMessages
 });
-export * from './lib/tw-plus-transfer.ts';
+export {finalizeHostTransferMenu} from './lib/tw-plus-transfer.ts';
+export const hostStageTransferMenu = (context, integration) => createStageMenu(context, integration, dockviewMultiViewEnabled);
 export * from './lib/tw-plus-extension-host.ts';
 export * from './lib/tw-plus-extension-permissions.ts';
 export * from './lib/tw-plus-extension-load-failure.ts';
