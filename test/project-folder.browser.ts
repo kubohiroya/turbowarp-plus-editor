@@ -364,8 +364,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     const indexBefore = await readFile(indexPath);
     const panel = page.locator('.twgit-panel');
     const showGit = async () => {
-        await page.getByText('File', {exact: true}).click();
-        await page.getByText('Local Git…', {exact: true}).click();
+        await page.locator('.twgit-branch-button').click();
+        await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
         await expect(panel).toBeVisible();
     };
     await showGit();
@@ -519,7 +519,9 @@ test('the browser folder commands save localized Git diffs to the original worki
         return {x, y};
     });
     assert.deepEqual(coordinates, {x: 180, y: 130});
-    assert.deepEqual(await page.evaluate(() => (window as any).folderTest.reads), [projectFile]);
+    // The menu bar's branch button keeps the closed Git panel following the branch, so HEAD and the branch ref are read too.
+    const folderReads = () => page.evaluate(() => (window as any).folderTest.reads.filter(name => name !== 'HEAD' && name !== 'master'));
+    assert.deepEqual(await folderReads(), [projectFile]);
     assert.deepEqual(await observe(), ioBefore);
     assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
     assert.equal(await readFile(nestedFile, 'utf8'), disk);
@@ -630,6 +632,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
     await page.getByText('File', {exact: true}).click();
     await expect(page.getByText('Open Project Folder…', {exact: true})).toBeVisible();
-    await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
+    await expect(page.locator('.twgit-branch-button')).toHaveCount(0);
     assert.deepEqual(errors, []);
 });

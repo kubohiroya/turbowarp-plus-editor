@@ -106,8 +106,8 @@ test('the Editor Git panel opens a pull request overview and renders its changed
             await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100, data: {items: [], files: [directory], dragOperationsMask: 1}});
         }
         await page.waitForFunction(() => Reflect.get(window, 'gitReviewDirectoryReady'));
-        await page.getByText('File', {exact: true}).click();
-        await page.getByText('Local Git…', {exact: true}).click();
+        await page.locator('.twgit-branch-button').click();
+        await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
         await panel.getByRole('button', {name: 'Choose Repository…'}).click();
         await expect(panel.getByRole('button', {name: 'Pull requests', exact: true})).toBeVisible();
     };
