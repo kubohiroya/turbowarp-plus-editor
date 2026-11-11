@@ -18,8 +18,10 @@ import '@kubohiroya/turbowarp-plus-editor-workbench/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-workbench/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar.css';
-import {dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, desktopWorkspaceLayout, externalYamlPort, layoutFlags, WindowLayoutContext} from './index.tsx';
-import {isProjectLoading, subscribeProjectLoad} from '../project-tools/index.ts';
+import type {WorkspaceProjectIdentity} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {desktopProjectKey, dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, layoutFlags, WindowLayoutContext} from './index.tsx';
+import {isProjectLoading, loadedProjectTitle, subscribeProjectLoad} from '../project-tools/index.ts';
+import {projectFolderDirectory} from '../project-folder-host.ts';
 import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';
 import {openDetachedBlockPalette} from '../horizontal-block-palette/index.ts';
 import {resources as categoryArtwork} from '@tw-plus/gui-block-category-artwork';
@@ -129,6 +131,24 @@ function DesktopAssetPanel({vm, kind, locale, port, selection, child}: {
     </div>;
 }
 
+type OpenedFile = {id?: string; name?: string; isSameEntry?: unknown};
+
+/** Tell the loaded project apart by the folder or file it came from, so each one keeps its own Dockview layout. */
+function identifyProject(vm): WorkspaceProjectIdentity {
+    const name = loadedProjectTitle(vm) ?? '';
+    const directory = projectFolderDirectory(vm);
+    if (directory) return {kind: 'directory', name: directory.name, handle: directory};
+    const file = (window as Window & {ReduxStore?: {getState(): {scratchGui: {tw: {fileHandle: OpenedFile | null}}}}})
+        .ReduxStore?.getState().scratchGui.tw.fileHandle;
+    if (file && typeof file.isSameEntry === 'function') {
+        return {kind: 'file', name: file.name ?? name, handle: file as unknown as FileSystemFileHandle};
+    }
+    // The desktop app gives its own handles; it keys each SB3 by its path.
+    const key = file?.id && desktopProjectKey ? desktopProjectKey(file.id) : null;
+    if (key) return {kind: 'desktop', name: file.name ?? name, key};
+    return {kind: 'anonymous', name};
+}
+
 function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsStage, showUndock, locale, layout, render,
     soundRecorderVisible}) {
     const host = useWindowHost();
@@ -138,17 +158,10 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     // The stage uses the native fullscreen surface while Dockview keeps its panel and layout.
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
-    const layoutStorage = React.useMemo(() => {
-        if (!multiView || (externalYamlPort && !desktopWorkspaceLayout)) return;
-        try {
-            const storage = desktopWorkspaceLayout ? {
-                getItem: () => desktopWorkspaceLayout.read(),
-                setItem: (_key: string, raw: string) => desktopWorkspaceLayout.write(raw)
-            } : window.localStorage;
-            return {storage, key: 'twPlusDockviewLayout',
-                isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)};
-        } catch { /* Storage is optional. */ }
-    }, [multiView, vm]);
+    const workspaceLayout = React.useMemo(() => multiView ? {
+        identify: () => identifyProject(vm),
+        isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)
+    } : undefined, [multiView, vm]);
     const codePaneAdapter = React.useMemo(() =>
         createCodePaneAdapter(vm, locale, layoutFlags.workspaceMinimap ? attachCodePreviewMinimap : undefined), [vm, locale]);
     const popouts = React.useMemo(() => ({
@@ -238,7 +251,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         ...{runTargetSwitch: targetSwitch?.select},
         resize: () => requestAnimationFrame(resizeCode),
         ...(multiView && {
-            multiView, layoutStorage, stagePane: stage?.pane, viewAdapter: codePaneAdapter, popouts,
+            multiView, workspaceLayout, stagePane: stage?.pane, viewAdapter: codePaneAdapter, popouts,
             renderToolbar(view, actions) {
                 const section = spriteEditorSections[view.section] ?? 'code';
                 return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}

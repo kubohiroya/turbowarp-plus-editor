@@ -24,6 +24,11 @@ declare const __TW_PLUS_GIT_DESERIALIZE_BLOCKS__: ScratchBlockDiffRendererOption
 declare const __TW_PLUS_GIT_VM_BLOCKS__: new () => ReturnType<ScratchBlockDiffRendererOptions['createBlockContainer']>;
 declare const __TW_PLUS_GIT_CLOUDFLARE__: {bffOrigin: string; proxyOrigin: string} | null;
 
+const folders = new WeakMap<FolderVM, {readonly directory: FileSystemDirectoryHandle | null}>();
+
+/** The folder the loaded project came from, so its Dockview layout is kept apart from other projects. */
+export const projectFolderDirectory = (vm: FolderVM) => folders.get(vm)?.directory ?? null;
+
 export function attachProjectFolder(vm: FolderVM, document: Document, localGit: boolean, locale: string,
     getBlockly: ScratchBlockDiffRendererOptions['getBlockly'], attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
     const view = document?.defaultView as Window & {EditorPreload?: {localGit?: DesktopGitPreload | null}; ReduxStore?: GuiStore};
@@ -69,6 +74,7 @@ export function attachProjectFolder(vm: FolderVM, document: Document, localGit: 
             void gitPanel?.refresh();
         }
     }});
+    if (folder) folders.set(vm, folder);
     if (!folder || !localGit) return folder;
     gitPanel = mountGitPanel({vm, document, host: {
         connectionSettings,

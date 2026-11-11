@@ -16,6 +16,26 @@ const types = {
     '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.wasm': 'application/wasm'
 };
 const origin = 'http://layout.test';
+
+/** The layout the editor saved last, read from IndexedDB without creating the database. */
+const readSavedLayout = (page: Page) => page.evaluate(async () => {
+    if (!(await indexedDB.databases()).some(database => database.name === 'twPlusWorkspaceLayout')) return null;
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('twPlusWorkspaceLayout');
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+    try {
+        const records = await new Promise<{layout: string; lastUsedAt: number}[]>((resolve, reject) => {
+            const request = database.transaction('layouts').objectStore('layouts').getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        return records.sort((a, b) => b.lastUsedAt - a.lastUsedAt)[0]?.layout ?? null;
+    } finally {
+        database.close();
+    }
+});
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
 const projectSearch = (page: Page) => page.getByRole('combobox', {name: 'Search project'});
@@ -1733,6 +1753,14 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     page.setDefaultTimeout(8_000);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    // A project without a file keeps its layout under its name, so it is opened from the same URL both times.
+    const saveProject = () => page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
+    let project = await saveProject();
+    const projectUrl = origin + buildPrefix + 'numbered-tabs.sb3';
+    await page.route(projectUrl, route => route.fulfill({body: Buffer.from(project), contentType: 'application/octet-stream'}));
+    const openProject = () => page.goto(origin + buildPrefix + 'editor.html?lang=ja&project_url=' + encodeURIComponent(projectUrl));
+    await openProject();
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
     await page.evaluate(async () => {
         const sprite = vm.editingTarget;
         vm.renameSprite(sprite.id, 'Pane sprite');
@@ -1805,15 +1833,13 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     await clone('背景');
     await expect(tab('背景(2)')).toHaveAttribute('aria-selected', 'true');
     await chooseView(backdrop, '背景');
-    await expect.poll(() => page.evaluate(() => {
-        const saved = JSON.parse(localStorage.getItem('twPlusDockviewLayout') ?? 'null');
+    await expect.poll(async () => {
+        const saved = JSON.parse(await readSavedLayout(page) ?? 'null');
         return Object.values<{number?: number}>(saved?.panels ?? {}).filter(panel => panel.number !== undefined).length;
-    })).toBe(3);
+    }).toBe(3);
     // An SB3 reload supplies fresh VM target IDs while the layout still refers to the same sprites.
-    const project = await page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
-    const projectUrl = origin + buildPrefix + 'numbered-tabs.sb3';
-    await page.route(projectUrl, route => route.fulfill({body: Buffer.from(project), contentType: 'application/octet-stream'}));
-    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&project_url=' + encodeURIComponent(projectUrl));
+    project = await saveProject();
+    await openProject();
     await expect(tab('Pane sprite(4)')).toBeVisible();
     await expect(tab('背景(2)')).toBeVisible();
 });
