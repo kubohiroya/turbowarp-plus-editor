@@ -1,6 +1,8 @@
 import React from 'react';
 import styles from './info-menu.css';
 
+export const projectTitleFieldClassName = styles.projectTitleField;
+
 type MenuAction = {
     icon: string;
     onClick: React.MouseEventHandler<HTMLButtonElement>;
