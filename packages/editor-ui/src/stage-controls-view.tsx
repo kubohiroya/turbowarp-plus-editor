@@ -132,6 +132,9 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
     render () {
         const {isSmall, menuLocale} = this.props;
         const {panel, debuggerButton, recordButton} = this.state;
+        // On the menu bar a control is its icon alone, to keep the tray narrow; its label is the
+        // tooltip and the accessible name. Beside the stage, where there is room, the text shows too.
+        const showText = !isSmall && menuLocale === undefined;
         const buttons = this.state.controls.filter(control => control.visible).map(control => (
             <button
                 aria-expanded={control.expanded}
@@ -147,7 +150,7 @@ class StageControlsView extends React.PureComponent<StageControlsProps, StageCon
                 onClick={control.onClick}
             >
                 <span aria-hidden="true" className={styles.icon}>{control.icon}</span>
-                {!isSmall && control.text !== '' && <span className={styles.label}>{control.text}</span>}
+                {showText && control.text !== '' && <span className={styles.label}>{control.text}</span>}
             </button>
         ));
         if (menuLocale === undefined) return <>

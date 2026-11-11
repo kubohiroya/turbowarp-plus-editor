@@ -85,18 +85,13 @@
 }
 
 /*
- * The icon sits in a box of its own inside the button's border, so a control without text is the
- * same 1.625rem square as the add-on's button whatever its glyph measures: 📷 is twice the width of
- * ⚙ at the same font size. Text, where a control carries any, is then the only thing that makes a
- * button wider than that square.
+ * The icon sits in a box of its own inside the button's border, so every control on the menu bar is
+ * the same 1.625rem square as the add-on's button whatever its glyph measures: 📷 is twice the width
+ * of ⚙ at the same font size. The view leaves out a control's text here; its label is the tooltip.
  */
 .controlGroup > .control > .icon {
     inline-size: 1.5rem;
     block-size: 1.5rem;
-}
-
-.controlGroup > .control > .label {
-    padding-inline-end: 0.3125rem;
 }
 
 /*

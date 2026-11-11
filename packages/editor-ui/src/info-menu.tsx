@@ -4,7 +4,8 @@ import styles from './info-menu.css';
 export const projectTitleFieldClassName = styles.projectTitleField;
 
 type MenuAction = {
-    icon: string;
+    /** An image URL, or an inline icon such as an SVG drawn with `currentColor`. */
+    icon: string | React.ReactNode;
     onClick: React.MouseEventHandler<HTMLButtonElement>;
 };
 
@@ -26,6 +27,8 @@ export interface ProjectSettingsMenuProps {
     renderRuntimeSettings?: (Item: React.ComponentType<RuntimeItemProps>) => React.ReactNode;
     addons?: MenuAction;
     advanced?: MenuAction;
+    /** Opens the AI agent settings; listed right after the advanced settings. */
+    aiAgents?: MenuAction;
 }
 
 interface ProjectInfoMenuProps extends ProjectSettingsMenuProps {
@@ -48,7 +51,7 @@ const newTabIcon = (
 );
 
 export function ProjectInfoMenu({
-    locale, version, logo, leading, displaySettings, renderRuntimeSettings, addons, advanced
+    locale, version, logo, leading, displaySettings, renderRuntimeSettings, addons, advanced, aiAgents
 }: ProjectInfoMenuProps) {
     const menu = React.useRef<HTMLDetailsElement>(null);
     const trigger = React.useRef<HTMLElement>(null);
@@ -120,7 +123,7 @@ export function ProjectInfoMenu({
             close();
             item.onClick(event);
         }}>
-            <img src={item.icon} alt="" draggable={false} />
+            {typeof item.icon === 'string' ? <img src={item.icon} alt="" draggable={false} /> : item.icon}
             {label}
             {opensInNewTab && newTabIcon}
         </button>
@@ -184,6 +187,7 @@ export function ProjectInfoMenu({
             </div>}
             {action(japanese ? 'アドオン' : 'Addons', addons, true)}
             {action(japanese ? '高度な設定' : 'Advanced Settings', advanced)}
+            {action(japanese ? 'AI エージェント設定…' : 'AI agent settings…', aiAgents)}
             <hr className={styles.divider} />
             <a className={styles.entry} href="https://github.com/kubohiroya/turbowarp-plus-editor"
                 target="_blank" rel="noreferrer" title={newTabLabel} onClick={close}>

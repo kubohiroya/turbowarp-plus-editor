@@ -95,8 +95,9 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         type, x: 100, y: 100, data: {items: [], files: [client], dragOperationsMask: 1}
     });
     await page.waitForFunction(() => (window as any).gitDirectoryReady);
-    await page.locator('.twgit-branch-button').click();
-    await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
+    // Before a repository is chosen, the branch button reads "Git" and chooses one, then opens the panel on it.
+    await page.getByRole('button', {name: 'Local Git', exact: true}).click();
+    await page.getByRole('menuitem', {name: 'Choose Repository…'}).click();
     const panel = page.locator('.twgit-panel');
     const button = (name: string) => panel.getByRole('button', {name, exact: true});
     const runRemote = async (name: string) => {
@@ -107,9 +108,9 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     };
     const status = panel.locator('[data-git-connection-state]');
     const notice = panel.getByText('The GitHub operation finished.', {exact: true});
-    await button('Choose Repository…').click();
     // A commit row of the history graph is named by its subject, then its author, date and branches.
     await expect(panel.getByRole('button', {name: /^initial, /})).toBeVisible();
+    await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', /./u);
     await panel.getByText('GitHub connection', {exact: true}).click();
     await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const connect = async () => {

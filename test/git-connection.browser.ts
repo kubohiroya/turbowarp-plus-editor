@@ -199,6 +199,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await unsupported.addInitScript(() => Object.defineProperty(window, 'showDirectoryPicker', {value: undefined}));
     await unsupported.goto(editor);
     await unsupported.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
+    await unsupported.getByText('File', {exact: true}).click();
+    await expect(unsupported.getByText('Local Git…', {exact: true})).toHaveCount(0);
     await expect(unsupported.locator('.twgit-branch-button')).toHaveCount(0);
     assert.equal(requests.length, 5);
 });
