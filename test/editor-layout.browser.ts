@@ -36,6 +36,9 @@ const readSavedLayout = (page: Page) => page.evaluate(async () => {
         database.close();
     }
 });
+/** Wait until the restored layout and every change are written to IndexedDB. */
+const layoutSettled = (page: Page) =>
+    expect(page.locator('[data-workspace-layout]')).toHaveAttribute('data-workspace-layout', 'settled');
 const buildPrefix = process.env.E2E_PATH_PREFIX || '/';
 const bareBuild = process.env.E2E_LAYOUT_BARE_BUILD;
 const projectSearch = (page: Page) => page.getByRole('combobox', {name: 'Search project'});
@@ -1872,10 +1875,9 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     await clone('背景');
     await expect(tab('背景(2)')).toHaveAttribute('aria-selected', 'true');
     await chooseView(backdrop, '背景');
-    await expect.poll(async () => {
-        const saved = JSON.parse(await readSavedLayout(page) ?? 'null');
-        return Object.values<{number?: number}>(saved?.panels ?? {}).filter(panel => panel.number !== undefined).length;
-    }).toBe(3);
+    await layoutSettled(page);
+    const saved = JSON.parse(await readSavedLayout(page) ?? 'null');
+    assert.equal(Object.values<{number?: number}>(saved?.panels ?? {}).filter(panel => panel.number !== undefined).length, 3);
     // An SB3 reload supplies fresh VM target IDs while the layout still refers to the same sprites.
     project = await saveProject();
     await openProject();

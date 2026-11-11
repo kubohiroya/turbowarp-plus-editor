@@ -35,6 +35,9 @@ const readRecord = (page: Page) => page.evaluate(async () => {
     }
 });
 const readStorage = async (page: Page) => (await readRecord(page))?.layout ?? null;
+/** Wait until the restored layout and every change are written to IndexedDB. */
+const layoutSettled = (page: Page) =>
+    expect(page.locator('[data-workspace-layout]')).toHaveAttribute('data-workspace-layout', 'settled');
 /** Replace the saved layout of a project, keeping the record that finds it. */
 const writeRecord = (page: Page, record: object) => page.evaluate(async value => {
     const database = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -161,18 +164,17 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await expect(panel(page, 'settings').locator('textarea')).toHaveValue('volume: 50\nmode: rehearsal\n');
     const savedGroups = await readGroups(page);
     assert.deepEqual(savedGroups.map(group => group.selected).sort(), ['ステージ', title('labels'), title('settings')].sort());
-    await expect.poll(async () => {
-        const data = JSON.parse(await readStorage(page) ?? 'null');
-        return data?.panels && Object.values(data.panels).filter((panel: any) => panel.kind === 'document').length;
-    }).toBe(2);
+    await layoutSettled(page);
     const saved = JSON.parse(await readStorage(page));
+    assert.equal(Object.values(saved.panels).filter((panel: any) => panel.kind === 'document').length, 2);
     assert.equal(saved.panels[saved.editingView].name, stageName);
     await session.context!.close();
 
     page = await start();
     await load(page);
-    await expect.poll(async () => (await readGroups(page)).map(group => ({tabs: group.tabs, selected: group.selected})))
-        .toEqual(savedGroups.map(group => ({tabs: group.tabs, selected: group.selected})));
+    await layoutSettled(page);
+    assert.deepEqual((await readGroups(page)).map(group => ({tabs: group.tabs, selected: group.selected})),
+        savedGroups.map(group => ({tabs: group.tabs, selected: group.selected})));
     const pin = page.getByRole('button', {name: 'スプライト一覧を固定表示', exact: true});
     if (!await pin.isVisible()) await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
     if (await pin.getAttribute('aria-pressed') === 'false') await pin.click();
@@ -186,6 +188,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
         name: title('settings'), selected: true, exact: true
     })).toBeVisible();
     assert.equal(await page.evaluate(() => window.vm.editingTarget.getName()), stageName);
+    await layoutSettled(page);
     assert.equal(JSON.parse(await readStorage(page)).activeGroup, saved.activeGroup);
 
     const rollback = await session.context!.newPage();
@@ -234,16 +237,17 @@ test('a panel in a separate window is restored docked and reopens only when aske
     };
 
     await openInWindow();
-    await expect.poll(savedWindow).toMatchObject({position: {width: expect.any(Number), height: expect.any(Number)}});
+    await layoutSettled(page);
+    expect(await savedWindow()).toMatchObject({position: {width: expect.any(Number), height: expect.any(Number)}});
     await session.context!.close();
 
     page = await session.start();
     await session.load(page);
     await expect(tab(page, sprite)).toBeVisible();
     // Windows are not opened without the user, so a popup blocker cannot drop them.
-    await page.waitForTimeout(1000);
+    await layoutSettled(page);
     assert.equal(session.context!.pages().length, 1);
-    await expect.poll(savedWindow).toBeTruthy();
+    assert.ok(await savedWindow());
 
     const child = await openInWindow();
     await child.close();
