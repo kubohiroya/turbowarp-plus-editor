@@ -15,10 +15,13 @@
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import JSZip from '@turbowarp/jszip';
 import {withWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {withPackagerFontFallbacks} from '@kubohiroya/turbowarp-plus-editor-ui/web-fonts';
 
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {PLUS_EXTENSION_LOADER_ENABLED} from '../extension-library/flags.ts';
 import {saveProjectForPackager} from '../project-payloads/host.ts';
+
+export const serializeProjectForExport = vm => withPackagerFontFallbacks(vm, () => saveProjectForPackager(vm));
 
 /** This build's own builder page, under whatever prefix the site was built for. */
 const pageURL = () => new URL(`${process.env.ROOT || './'}plus-packager.html`, location.href).href;
@@ -62,7 +65,7 @@ export const createProjectPackager = ({
             try {
                 await withWaitCursor([globalThis.document], async () => {
                     if (popup.closed) return;
-                    const buffer = await saveProjectForPackager(vm);
+                    const buffer = await serializeProjectForExport(vm);
                     if (popup.closed) return;
                     if (!await readProject(buffer)) {
                         popup.location.href = fallbackURL;

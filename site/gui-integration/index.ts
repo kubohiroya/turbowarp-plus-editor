@@ -33,6 +33,7 @@ import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
 export {flushPendingSurfaceEdits};
+export {default as webFontDialogs} from '@kubohiroya/turbowarp-plus-editor-ui/web-font-dialogs';
 export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
@@ -150,7 +151,7 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
     renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
 
-export {saveProjectForPackager as serializeProjectForExport} from '../project-payloads/host.ts';
+export {serializeProjectForExport} from '../packager/handoff.ts';
 
 export const projectFileTypes = [
     {description: 'Scratch 3 Project', accept: {'*/*': ['.sb3']}},
