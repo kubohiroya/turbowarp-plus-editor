@@ -100,6 +100,10 @@
 </tbody></table></div>
 <p>pullはローカルの状態を確認し直してから適用し、fast-forwardできない場合はローカルのブランチとファイルをそのまま残します。pushの結果が不明な場合は、送り直す前にfetchでリモートのブランチを確認します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/327">GitHubとの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/329">fetch・pull・push</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/338">二重pushの防止</a></p>
+<h3>接続の前にGitHub Appをインストールして認可する</h3>
+<p>GitHubへの接続には、接続先を運用する人が用意したGitHub Appを使います。公開版のEditorを使う人がGitHub Appを作る必要はありません。接続先を運用する人や自分で接続先を立てる人は、<a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/github-app-setup.md">GitHub Appの作り方（英語）</a>を参照してください。</p>
+<ol><li>運用する人から知らされたAppのページ（<code>https://github.com/apps/&lt;Appの名前&gt;</code>）で「Install」を押します。</li><li>インストール先のアカウントを選びます。組織のリポジトリでは、組織のOwnerの承認が必要です。</li><li>「Only select repositories」を選び、Editorで使うリポジトリだけを選びます。</li><li>ローカルGitパネルの「GitHub 接続」を開き、接続方式を選んで接続します。GitHubの認可の画面が出たら、Appの名前を確かめて認可します。pushやレビューの送信が必要なときは、接続の画面でその許可を選びます。</li><li>使わなくなったら、Editorで接続を切ります。AppはGitHubの「Settings」→「Applications」→「Installed GitHub Apps」からアンインストールでき、認可は「Authorized GitHub Apps」から取り消せます。</li></ol>
+<p>Appに権限が追加されたときは、「Installed GitHub Apps」のそのAppに承認を求める表示が出ます。承認するまで、追加された権限を使う機能（例：PRのレビューの送信）は使えません。</p>
 
 </section>
 
