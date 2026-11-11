@@ -10,7 +10,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../">機能ガイド</a> › 10. 作品フォルダとGitで管理する</p>
-<p class="eyebrow">機能ガイド 10/11 · 2026年11月8日更新</p>
+<p class="eyebrow">機能ガイド 10/12 · 2026年11月8日更新</p>
 <h1>作品フォルダとGitで管理する</h1>
 <p class="lead">sb3-toolchainで展開した作品フォルダを直接開いて保存し、Gitの変更・差分・履歴をEditorの中で確かめます。GitHubとの同期や、プルリクエストのスクリプト単位のレビューもできます。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
@@ -26,6 +26,7 @@
 <li><a href="../reuse/">再利用</a></li>
 <li><a href="../git/" aria-current="page">Gitと作品フォルダ</a></li>
 <li><a href="../save/">保存と配布</a></li>
+<li><a href="../github/">GitHubで開発</a></li>
 </ul>
 </nav>
 <nav class="page-toc" aria-label="このページの目次">
@@ -61,10 +62,11 @@
 <p>sb3-toolchain v1で展開した作品フォルダを、SB3にまとめ直さずに開いて保存できます。フォルダの選択と書き込みには、File System Accessに対応したChromium系ブラウザー（Chrome、Edgeなど）が必要です。</p>
 <h3>作品フォルダを開く</h3>
 <p>「ファイル」→「プロジェクトフォルダを開く…」を選び、作品フォルダを選んで読み書きを許可します。作品データとローカルの画像・音声が読み込まれます。</p>
-<p>カスタム拡張機能・埋め込み拡張・フォントを含む作品は開けません。保存のときに、拡張機能のコードとフォントをフォルダに書き戻せず、作品から失われてしまうためです。</p>
+<p>カスタムフォントを含む作品は、まだ開けません。保存のときにフォントをフォルダに書き戻せず、作品から失われてしまうためです。</p>
 <h3>作品フォルダに保存する</h3>
 <ol><li>ブロック、変数・リスト、スプライトやコスチューム、スプライトの位置や大きさなどを編集します。作品を実行して変わった位置や変数の値も保存の対象です。</li><li>「ファイル」→「保存」を選ぶと、フォルダ内の <code>project.source.json</code> が更新されます。保存前に、フォルダが外部で変更されていないかを確かめます。</li></ol>
-<p>スプライトの追加・削除・名前の変更と、コスチューム・音の追加・削除も保存します。このとき、フォルダ内の <code>assets/</code> と <code>sb3-source.json</code> も更新し、使われなくなった画像・音声のファイルを消します。編集中にカスタム拡張機能・埋め込み拡張・フォントを追加した場合は、保存しません。</p>
+<p>スプライトの追加・削除・名前の変更と、コスチューム・音の追加・削除も保存します。このとき、フォルダ内の <code>assets/</code> と <code>sb3-source.json</code> も更新し、使われなくなった画像・音声のファイルを消します。</p>
+<p>埋め込み拡張とURLで読み込むカスタム拡張機能を含む作品も開いて保存でき、拡張機能のコードは <code>extensions/</code> と <code>embedded-extensions.json</code> に書き戻します。拡張機能を差し替えて出どころの記録（<code>source</code>）を外したときは、保存のときに知らせます。</p>
 <p>Gitで差分を確認し、<code>sb3-toolchain build</code> で配布用SB3を作る流れと組み合わせられます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/305">作品フォルダの編集</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/319">フォルダの差分再読み込み</a></p>
 
