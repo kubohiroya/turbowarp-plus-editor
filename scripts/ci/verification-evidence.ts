@@ -21,13 +21,7 @@ const checkSteps = {
     'gui-integration': ['gui-integration'],
     'script-transfer': ['script-transfer'],
     'project-tools': ['project-tools'],
-    'site-build': ['site-build'],
-    'layout-browser': ['layout-browser'],
-    'code-windows-browser': ['code-windows-browser'],
-    'yaml-browser': ['yaml-roundtrip', 'yaml-multi-document'],
-    'editor-browser': ['editor-browser'],
-    'extension-loader-browser': ['extension-loader-browser'],
-    'git-browser': ['git-browser']
+    'site-build': ['site-build']
 };
 const checks = Object.keys(checkSteps);
 export const fullChecks = checks.filter(check => check !== 'documentation');

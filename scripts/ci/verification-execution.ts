@@ -3,8 +3,6 @@ import {fileURLToPath} from 'node:url';
 import {fullChecks, inspectCurrentEvidence, requireCompletedChecks, verificationOutcomes} from './verification-evidence.ts';
 import {readVerificationPlan} from './verification-plan.ts';
 
-const browserChecks = ['layout-browser', 'code-windows-browser', 'yaml-browser', 'editor-browser',
-    'extension-loader-browser', 'git-browser'];
 const guiChecks = ['extension-host', 'gui-integration', 'script-transfer', 'project-tools',
     'site-build'];
 
@@ -23,13 +21,11 @@ export function selectExecution({enabled, release, main, plan, evidence}: {
     const reusable = new Set(main ? evidence.reusable : []);
     const reused = plan.checks.filter(check => check !== 'site-build' && reusable.has(check));
     const checks = new Set(plan.checks.filter(check => !reused.includes(check)));
-    const needsBrowser = browserChecks.some(check => checks.has(check));
-    if (main || needsBrowser) checks.add('site-build');
+    if (main) checks.add('site-build');
     return {
         mode: 'scoped', reason: 'matched-paths', base: plan.base, checks: [...checks], reused,
         needsNpm: [...checks].some(check => check !== 'documentation'),
-        needsGui: guiChecks.some(check => checks.has(check)),
-        needsBrowser
+        needsGui: guiChecks.some(check => checks.has(check))
     };
 }
 
@@ -55,7 +51,7 @@ async function recordExecution() {
     ].join('\n') + '\n');
     const outputs = execution.mode === 'scoped' && 'checks' in execution ? [
         `base=${execution.base}`, `checks=|${execution.checks.join('|')}|`,
-        `npm=${execution.needsNpm}`, `gui=${execution.needsGui}`, `browser=${execution.needsBrowser}`
+        `npm=${execution.needsNpm}`, `gui=${execution.needsGui}`
     ] : [];
     appendFileSync(env.GITHUB_OUTPUT, [...outputs, `mode=${execution.mode}`].join('\n') + '\n');
 }

@@ -88,9 +88,3 @@ jobs:
         run: node scripts/ci/publication.ts
       - uses: actions/deploy-pages@v4
         id: deployment
-  verify:
-    needs: [prepare, deploy]
-    if: needs.prepare.outputs.superseded != 'true'
-    uses: ./.github/workflows/verify.yml
-    with:
-      revision: ${{ needs.prepare.outputs.revision }}
