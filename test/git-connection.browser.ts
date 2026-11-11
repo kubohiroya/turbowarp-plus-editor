@@ -4,7 +4,7 @@ import {execFileSync} from 'node:child_process';
 import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {chromium, expect} from '@playwright/test';
+import {chromium, expect, type Page} from '@playwright/test';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 
 const origin = 'http://localhost:41015';
@@ -78,16 +78,41 @@ test('GitHub connection settings isolate the selected provider and keep the work
         if (body === null) return route.fulfill({status: 404});
         return route.fulfill({body, contentType: mime[path.extname(filename) as keyof typeof mime] || 'application/octet-stream'});
     });
-    await page.addInitScript(() => {
+    const installDesktopFixture = (target: Page) => target.addInitScript(() => {
         const view = window as any;
         const fixture = {calls: [] as unknown[][], failBegin: true, failDisconnect: false,
-            directory: undefined as FileSystemHandle | undefined};
+            helperAvailable: true, failPat: true, directory: undefined as FileSystemHandle | undefined};
         view.gitConnectionFixture = fixture;
         const session = () => ({
             connection: {mode: 'desktop', proxyOrigin: 'http://127.0.0.1:49152'},
             account: {login: 'desktop-account'}, bearer: 'd'.repeat(43), expiresAt: Date.now() + 60_000
         });
-        view.EditorPreload = {localGit: {
+        if (new URLSearchParams(location.search).has('desktopAuthFixture')) {
+            view.EditorPreload = {localGit: null, localGitAuth: {
+                async getAuthMethods(target?: string) {
+                    return target && fixture.helperAvailable ?
+                        ['fine-grained-pat', 'git-credential-helper'] : ['fine-grained-pat'];
+                },
+                async connectPersonalAccessToken(url: string, remember: boolean) {
+                    fixture.calls.push(['pat', url, remember]);
+                    if (fixture.failPat) {
+                        fixture.failPat = false;
+                        throw new Error('REAUTH_REQUIRED');
+                    }
+                    return {status: 'connected'};
+                },
+                async connectGitCredential(url: string, login: string) {
+                    fixture.calls.push(['helper', url, login]);
+                    return null;
+                },
+                async authorizeRepository(url: string, write: boolean, review?: boolean) {
+                    fixture.calls.push(['authorize', url, write, review]);
+                    return session();
+                },
+                async getSession() {return session();},
+                async disconnect() {fixture.calls.push(['disconnect']);}
+            }};
+        } else view.EditorPreload = {localGit: {
             async begin(remember: boolean) {
                 fixture.calls.push(['begin', remember]);
                 if (fixture.failBegin) {fixture.failBegin = false; throw new Error('GIT_UNAVAILABLE');}
@@ -115,7 +140,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
         }
         view.showDirectoryPicker = async () => fixture.directory;
     });
-    const showGit = async target => {
+    await installDesktopFixture(page);
+    const showGit = async (target: Page) => {
         await target.locator('.twgit-branch-button').click();
         await target.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
         const panel = target.locator('.twgit-panel');
@@ -188,6 +214,52 @@ test('GitHub connection settings isolate the selected provider and keep the work
     ]);
     assert.deepEqual(await Promise.all(files.map(file => readFile(file))), before);
     assert.deepEqual(failures, []);
+
+    const desktop = await context.newPage();
+    await installDesktopFixture(desktop);
+    await desktop.goto(editor + '&desktopAuthFixture=1');
+    await desktop.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
+    const desktopCDP = await context.newCDPSession(desktop);
+    for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+        await desktopCDP.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
+            data: {items: [], files: [folder], dragOperationsMask: 1}});
+    }
+    await desktop.waitForFunction(() => (window as any).gitConnectionFixture.directory?.kind === 'directory');
+    const desktopPanel = await showGit(desktop);
+    const choose = desktopPanel.getByRole('button', {name: 'Choose Repository…'});
+    await choose.click();
+    await expect(desktopPanel.locator('[data-git-group="unstaged"]')).toContainText('project.source.json');
+    await desktopPanel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
+    const auth = desktopPanel.getByRole('combobox', {name: 'Authentication method'});
+    const desktopStatus = desktopPanel.locator('[data-git-connection-state]');
+    const desktopConnect = desktopPanel.getByRole('button', {name: 'Connect to GitHub'});
+    await expect(auth.locator('option')).toHaveCount(2);
+    await expect(auth.locator('option[value="github-app"]')).toHaveCount(0);
+    await auth.selectOption('git-credential-helper');
+    await expect(desktopConnect).toBeDisabled();
+    await desktopPanel.getByRole('textbox', {name: 'GitHub account name'}).fill('desktop-account');
+    await desktopConnect.click();
+    await expect(desktopStatus).toHaveText('Disconnected');
+    await expect(desktopConnect).toBeEnabled();
+    await auth.selectOption('fine-grained-pat');
+    await expect(desktopPanel.locator('input[type="password"]')).toHaveCount(0);
+    await desktopPanel.getByRole('checkbox', {name: 'Save the token on this device'}).check();
+    await desktopPanel.locator('[data-git-allow-review]').check();
+    await desktopConnect.click();
+    await expect(desktopPanel.getByRole('alert')).toContainText('Retry using the selected connection');
+    await expect(desktopStatus).toHaveText('Disconnected');
+    await expect(desktopPanel.getByRole('button', {name: 'Check GitHub (fetch)'})).toHaveCount(0);
+    await desktopConnect.click();
+    await expect(desktopStatus).toHaveText('Connected');
+    await desktop.evaluate(() => {(window as any).gitConnectionFixture.helperAvailable = false;});
+    await choose.click();
+    await expect(desktopStatus).toHaveText('Disconnected');
+    await expect(auth.locator('option')).toHaveCount(1);
+    assert.deepEqual(await desktop.evaluate(() => (window as any).gitConnectionFixture.calls), [
+        ['helper', remote, 'desktop-account'], ['pat', remote, true], ['disconnect'], ['pat', remote, true],
+        ['authorize', remote, false, true], ['disconnect']
+    ]);
+    assert.deepEqual(await Promise.all(files.map(file => readFile(file))), before);
 
     const web = await page.context().newPage();
     await web.goto(editor);
