@@ -2,7 +2,6 @@ node_modules/
 test-results/
 playwright-report/
 *.tgz
-!vendor/kubohiroya-turbowarp-plus-editor-project-folder-0.7.0-fonts.0.tgz
 scratch-gui/
 .host/
 build/
