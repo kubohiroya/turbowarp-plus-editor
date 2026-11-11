@@ -1,4 +1,4 @@
-import type {ProjectSearchResult, SearchProject, YamlSearchDocument, YamlSearchResult} from './project-search.ts';
+import type {ProjectSearchResult, SearchProject, VariableSearch, YamlSearchDocument, YamlSearchResult} from './project-search.ts';
 import type {ReplaceBlockly, ReplaceWorkspace} from './project-search-replace.ts';
 
 export type SearchDocuments = {
@@ -31,6 +31,7 @@ type SearchConnection = {
     navigation?: SearchNavigation;
     documents?: SearchDocuments;
     openReplace?: () => void;
+    openVariable?: (filter: VariableSearch) => void;
     listeners: Set<() => void>;
 };
 
@@ -91,6 +92,18 @@ export function connectProjectReplaceOpener(project: SearchProject, open: () => 
 
 export function projectReplaceOpener(project?: SearchProject) {
     return project && connections.get(project)?.openReplace;
+}
+
+export function connectVariableSearchOpener(project: SearchProject, open: (filter: VariableSearch) => void) {
+    const connection = connectionFor(project);
+    connection.openVariable = open;
+    return () => {
+        if (connection.openVariable === open) connection.openVariable = undefined;
+    };
+}
+
+export function openVariableSearch(project: SearchProject, filter: VariableSearch) {
+    connections.get(project)?.openVariable?.(filter);
 }
 
 const replaceKey = 'F';

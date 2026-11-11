@@ -1871,6 +1871,53 @@ test('the Dockview variables pane lists only variables owned by the selected tar
     assert.equal(await page.evaluate(() => vm.runtime.getTargetForStage().variables['project-score'].value), 23);
 });
 
+test('variable counts open the project search at the selected kind of access', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const stage = vm.runtime.getTargetForStage();
+        stage.createVariable('access-global', 'アクセス数', '', false);
+        sprite.createVariable('access-local', 'アクセス数', '', false);
+        const add = (id, opcode, variableId) => sprite.blocks.createBlock({
+            id, opcode, inputs: {}, fields: {VARIABLE: {name: 'VARIABLE', id: variableId, value: 'アクセス数', variableType: ''}},
+            shadow: false, topLevel: true, parent: null, next: null, x: 30, y: 30
+        });
+        add('access-read', 'data_variable', 'access-global');
+        add('access-write', 'data_changevariableby', 'access-global');
+        add('access-local-read', 'data_variable', 'access-local');
+        vm.refreshWorkspace();
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        const center = workspace.centerOnBlock.bind(workspace);
+        workspace.centerOnBlock = id => {
+            document.documentElement.dataset.testCenteredBlock = id;
+            center(id);
+        };
+    });
+    await page.getByRole('button', {name: '背景', exact: true}).click();
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    await toolbar.getByRole('tab', {name: '変数など', exact: true}).click();
+    const pane = page.getByRole('region', {name: '変数', exact: true});
+    const results = page.getByRole('listbox', {name: '検索結果'}).getByRole('option');
+    await expect(pane.getByRole('button', {name: 'アクセス数: 読み取り 1'})).toBeVisible();
+    await pane.getByRole('button', {name: 'アクセス数: 変更 1'}).click();
+    await expect(results).toHaveCount(1);
+    await expect(results.first()).toContainText('変更');
+    await page.getByRole('button', {name: '読み取り', exact: true}).click();
+    await expect(results).toHaveCount(1);
+    await expect(results.first()).toContainText('読み取り');
+    await page.evaluate(() => {
+        const sprite = vm.runtime.targets.find(target => target.isOriginal && !target.isStage);
+        const original = sprite.blocks.getBlock('access-read');
+        sprite.blocks.createBlock({...original, id: 'access-read-added', x: 90});
+    });
+    await expect(results).toHaveCount(2);
+    await expect(pane.getByRole('button', {name: 'アクセス数: 読み取り 2'})).toHaveCount(1);
+    await results.first().click();
+    await expect(page.locator('html')).toHaveAttribute('data-test-centered-block', 'access-read');
+});
+
 test('two Dockview code panes keep independent positions and zoom for the same sprite', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];
