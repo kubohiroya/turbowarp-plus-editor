@@ -8,14 +8,51 @@ import {chromium, expect, type Page} from '@playwright/test';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {startYamlEditorHost} from '../scripts/yaml-editor/host.ts';
 
-const storageKey = 'twPlusDockviewLayout';
 const provider = 'twpeyamlsettings';
 const title = (id: string) => `settings.yml (${provider} / ${id})`;
 const dockview = (page: Page) => page.locator('[data-multi-view] .dockview-theme-light');
 const tab = (page: Page, name: string) =>
     dockview(page).locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
 const panel = (page: Page, id: string) => dockview(page).locator(`.tw-plus-document-slot[data-document-id="${id}"]`);
-const readStorage = (page: Page) => page.evaluate(key => localStorage.getItem(key), storageKey);
+
+/** The record of the project opened last, from the IndexedDB the editor keeps layouts in. */
+const readRecord = (page: Page) => page.evaluate(async () => {
+    if (!(await indexedDB.databases()).some(database => database.name === 'twPlusWorkspaceLayout')) return null;
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('twPlusWorkspaceLayout');
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+    try {
+        const records = await new Promise<{layout: string; lastUsedAt: number}[]>((resolve, reject) => {
+            const request = database.transaction('layouts').objectStore('layouts').getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        return records.sort((a, b) => b.lastUsedAt - a.lastUsedAt)[0] ?? null;
+    } finally {
+        database.close();
+    }
+});
+const readStorage = async (page: Page) => (await readRecord(page))?.layout ?? null;
+/** Replace the saved layout of a project, keeping the record that finds it. */
+const writeRecord = (page: Page, record: object) => page.evaluate(async value => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('twPlusWorkspaceLayout');
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+    try {
+        await new Promise<void>((resolve, reject) => {
+            const transaction = database.transaction('layouts', 'readwrite');
+            transaction.objectStore('layouts').put(value);
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        });
+    } finally {
+        database.close();
+    }
+}, record);
 
 function readGroups(page: Page) {
     return dockview(page).locator('.dv-groupview').evaluateAll(groups => groups.map(group => {
@@ -161,9 +198,10 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await expect(rollback.locator('dialog.twpe-yaml-window:modal #twpe-yaml-preview')).toHaveValue('volume: 50\nmode: rehearsal\n');
     assert.equal(await readStorage(rollback), prior);
 
+    const record = await readRecord(page);
     for (const invalid of ['{broken', JSON.stringify({...saved, activeGroup: 'missing'})]) {
+        await writeRecord(page, {...record, layout: invalid});
         const fresh = await session.context!.newPage();
-        await fresh.addInitScript(({key, value}) => localStorage.setItem(key, value), {key: storageKey, value: invalid});
         await load(fresh);
         await expect(dockview(fresh).locator('.dv-groupview')).toHaveCount(1);
         await expect(tab(fresh, sprite)).toHaveAttribute('aria-selected', 'true');

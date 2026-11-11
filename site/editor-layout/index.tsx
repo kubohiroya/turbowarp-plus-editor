@@ -22,13 +22,14 @@ export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
 const desktopHost = typeof window !== 'undefined' && (window as Window & {
     EditorPreload?: {
         externalYaml?: ExternalYamlFilePort;
-        workspaceLayout?: {read(): string | null; write(raw: string): void};
+        /** The key the Dockview layout of an opened SB3 is kept under. */
+        workspaceProjectKey?(fileId: string): string | null;
     };
 }).EditorPreload;
 export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled && startupParams.get('twPlusDockview') !== '0' &&
-    (typeof EditorPreload === 'undefined' || Boolean(desktopHost && (desktopHost.externalYaml || desktopHost.workspaceLayout)));
+    (typeof EditorPreload === 'undefined' || Boolean(desktopHost && desktopHost.externalYaml));
 export const externalYamlPort = dockviewMultiViewEnabled && desktopHost && desktopHost.externalYaml;
-export const desktopWorkspaceLayout = dockviewMultiViewEnabled && desktopHost && desktopHost.workspaceLayout;
+export const desktopProjectKey = desktopHost && desktopHost.workspaceProjectKey;
 export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
     startupParams.get('twPlusStageDrawer') !== '0';
 export const stageLauncherEnabled = stageDrawerEnabled && startupParams.get('twPlusStageLauncher') !== '0';
