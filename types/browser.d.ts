@@ -31,6 +31,13 @@ declare module '@tw-plus/gui-stage-fullscreen-icon' {
     const url: string;
     export default url;
 }
+declare module '@tw-plus/gui-stage-exit-fullscreen-icon' {
+    const url: string;
+    export default url;
+}
+declare module '@tw-plus/gui-mode' {
+    export function setFullScreen(isFullScreen: boolean): {type: string; isFullScreen: boolean};
+}
 declare module '@tw-plus/gui-block-category-artwork' {
     export const resources: Readonly<Record<string, string>>;
 }

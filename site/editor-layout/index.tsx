@@ -70,6 +70,8 @@ const getStorage = () => {
 const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, vm, ...props}) => {
     const {StandardLayout} = layoutViews;
     const [dockAction, setDockAction] = React.useState(null);
+    const openDrawer = React.useRef<() => void>(null);
+    const closeDrawer = React.useRef<() => void>(null);
     const targetSwitch = React.useMemo(() => createTargetSwitchFeedback(vm, document), [vm]);
     React.useLayoutEffect(() => targetSwitch.cancel, [targetSwitch]);
     const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
@@ -122,7 +124,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
         />
     );
     return <TargetSwitchContext.Provider value={targetSwitch}>
-        <StageDisplayMenuContext.Provider value={{dockAction, setDockAction, stage, resizeStage, launcher}}>
+        <StageDisplayMenuContext.Provider value={{dockAction, setDockAction, stage, resizeStage, launcher, openDrawer, closeDrawer}}>
             {layout}
         </StageDisplayMenuContext.Provider>
     </TargetSwitchContext.Provider>;

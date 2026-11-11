@@ -1,6 +1,21 @@
+:global([data-movable-stage]) .stage-display-menu {
+    background: transparent;
+}
+
+:global([data-movable-stage]) .stage-display-menu > button {
+    border: 0;
+    padding: calc(0.25rem + 1px);
+    background: transparent;
+}
+
 .visible-when-stage-hidden {
     visibility: visible;
     pointer-events: auto;
+}
+
+:global([class*="stage-header_fullscreen-buttons-row_"]):has(> .fullscreen-layout-menu)
+    > :global([class*="stage-header_unselect-wrapper_"]:not([class*="stage-header_settings-button_"])) {
+    display: none;
 }
 
 img.directional {

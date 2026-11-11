@@ -222,6 +222,9 @@ config.resolve.alias['../../containers/backpack.jsx$'] =
 // Share the original fullscreen artwork with the stage display menu.
 config.resolve.alias['@tw-plus/gui-stage-fullscreen-icon$'] =
     path.join(gui, 'src', 'components', 'stage-header', 'icon--fullscreen.svg');
+config.resolve.alias['@tw-plus/gui-stage-exit-fullscreen-icon$'] =
+    path.join(gui, 'src', 'components', 'stage-header', 'icon--unfullscreen.svg');
+config.resolve.alias['@tw-plus/gui-mode$'] = path.join(gui, 'src', 'reducers', 'mode.js');
 config.resolve.alias['@tw-plus/gui-block-category-artwork$'] =
     path.join(gui, 'src', 'addons', 'addons', 'block-palette-icons', '_runtime_entry.js');
 // Override addon defaults in Plus without changing the pinned GUI sources. The add-on API, the

@@ -1,8 +1,9 @@
 import React from 'react';
 import {attachExternalMonitorDrag} from '@kubohiroya/turbowarp-plus-editor-workbench';
-import {createStageSurface} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-surface';
+import {createStageSurface, StageResizeHandle} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-surface';
 import {BasicPanel} from './basic-panel.tsx';
 import {StageDisplayMenuContext} from './context.ts';
+import {EditorStageFullscreenMenu} from './stage-display-menu.tsx';
 import {createDesktopPanelHost, createWebPanelHost} from './desktop-panel-host.ts';
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {layoutFlags, layoutViews, stageCanUndock, stageDrawerEnabled, WindowLayoutContext} from './index.tsx';
@@ -15,60 +16,20 @@ const StageSurface = createStageSurface(React, {
     context: WindowLayoutContext, EdgeDrawer: layoutViews.EdgeDrawer, Panel: BasicPanel
 });
 
-function StageResizeHandle({edge, aspect, width, limits, label}) {
-    const drag = React.useRef(null);
-    const corner = edge === 'corner';
-    const resize = next => limits.resize(Math.round(Math.max(limits.minimum, Math.min(limits.maximum, next))));
-    return <div
-        className={styles.stageResizeHandle}
-        data-stage-resize={edge}
-        role={corner ? undefined : 'separator'}
-        aria-orientation={corner ? undefined : (edge === 'left' ? 'vertical' : 'horizontal')}
-        aria-label={corner ? undefined : label}
-        aria-valuemin={corner ? undefined : limits.minimum}
-        aria-valuemax={corner ? undefined : limits.maximum}
-        aria-valuenow={corner ? undefined : width}
-        tabIndex={corner ? undefined : 0}
-        title={label}
-        onPointerDown={event => {
-            if (event.button !== 0 || drag.current) return;
-            drag.current = {id: event.pointerId, x: event.clientX, y: event.clientY, width};
-            event.currentTarget.setPointerCapture(event.pointerId);
-            event.preventDefault();
-        }}
-        onPointerMove={event => {
-            const start = drag.current;
-            if (start?.id !== event.pointerId) return;
-            const dx = start.x - event.clientX;
-            const dy = (event.clientY - start.y) * aspect;
-            const delta = corner ? (Math.abs(dx) >= Math.abs(dy) ? dx : dy) : (edge === 'left' ? dx : dy);
-            resize(start.width + delta);
-        }}
-        onLostPointerCapture={() => { drag.current = null; }}
-        onKeyDown={event => {
-            const grow = edge === 'left' ? 'ArrowLeft' : 'ArrowDown';
-            const shrink = edge === 'left' ? 'ArrowRight' : 'ArrowUp';
-            if (event.key === grow) resize(width + 16);
-            else if (event.key === shrink) resize(width - 16);
-            else if (event.key === 'Home') resize(limits.minimum);
-            else if (event.key === 'End') resize(limits.maximum);
-            else return;
-            event.preventDefault();
-            event.stopPropagation();
-        }}
-    />;
-}
-
 function StageViewport({aspect, width, defaultWidth, floating, workspace, useNativeKeyboard, render, renderHeader,
     isFullScreen, inputDocument}) {
     const {stageDrawer, stageHidden, stageResize, locale} = React.useContext(WindowLayoutContext);
     const fit = floating || workspace;
-    const resizable = !fit && stageResize;
+    const resizable = !fit && !isFullScreen && stageResize;
     const resizeLabel = /^ja(?:-|$)/i.test(locale) ? 'ステージのサイズを変更' : 'Resize stage';
     const viewport = React.useRef(null);
     const header = React.useRef(null);
+    const [fullscreenHeader, setFullscreenHeader] = React.useState<HTMLElement>();
     const [floatingWidth, setFloatingWidth] = React.useState(null);
     const [externalBounds, setExternalBounds] = React.useState(Boolean(inputDocument));
+    React.useLayoutEffect(() => {
+        setFullscreenHeader(isFullScreen && layoutFlags.stageDisplayMenu ? header.current ?? undefined : undefined);
+    }, [isFullScreen]);
     React.useLayoutEffect(() => {
         if (inputDocument) {
             setExternalBounds(true);
@@ -96,17 +57,18 @@ function StageViewport({aspect, width, defaultWidth, floating, workspace, useNat
     }, [aspect, fit, inputDocument]);
 
     const displayWidth = fit ? floatingWidth ?? Math.min(240, width ?? defaultWidth) : width;
-    const canvas = <>
-        {render(displayWidth, Boolean(stageDrawer || fit || externalBounds || resizable), inputDocument)}
-        {resizable && ['left', 'bottom', 'corner'].map(edge => <StageResizeHandle key={edge}
-            {...{edge, aspect, width}} limits={stageResize} label={resizeLabel} />)}
-    </>;
+    const canvas = render(displayWidth, Boolean(stageDrawer || fit || externalBounds || resizable), inputDocument);
+    const resizeHandles = resizable && (stageDrawer ? ['left', 'right', 'top', 'bottom'] : ['left', 'bottom', 'corner'])
+        .map(edge => <StageResizeHandle key={edge} {...{edge, aspect, width}} limits={stageResize} label={resizeLabel}
+            className={styles.stageResizeHandle} drawer={Boolean(stageDrawer)} />);
     return <div className={styles.stageViewport} data-floating={fit} data-stage-hidden={stageHidden || undefined}
         data-resizable={resizable ? true : undefined} data-focusable={stageCanUndock || undefined} ref={viewport}
         tabIndex={stageCanUndock ? -1 : undefined}
         onClick={event => {
             const node = event.currentTarget;
-            if (useNativeKeyboard && !inputDocument && (event.target as HTMLElement).matches('canvas')) {
+            const target = event.target as HTMLElement;
+            if (target.closest('[role="menu"]')) return;
+            if (useNativeKeyboard && !inputDocument && target.matches('canvas')) {
                 // The GUI routes project key presses from the document body.
                 (node.ownerDocument.activeElement as HTMLElement)?.blur();
                 return;
@@ -114,9 +76,13 @@ function StageViewport({aspect, width, defaultWidth, floating, workspace, useNat
             if (stageCanUndock && !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
         }}>
         {renderHeader ? <div className={styles.stageFrame} data-fullscreen={isFullScreen || undefined} data-plus-stage-frame="">
-            <div className={styles.stageHeader} ref={header}>{renderHeader(displayWidth)}</div>
-            <div className={styles.stageCanvas}>{canvas}</div>
-        </div> : <div className={styles.stageCanvas}>{canvas}</div>}
+            <div className={styles.stageHeader} data-stage-drawer-handle="" ref={header}>
+                {renderHeader(displayWidth)}
+                {isFullScreen && fullscreenHeader && <EditorStageFullscreenMenu header={fullscreenHeader} locale={locale} />}
+            </div>
+            <div className={styles.stageCanvas}>{canvas}{!stageDrawer && resizeHandles}</div>
+            {stageDrawer && resizeHandles}
+        </div> : <div className={styles.stageCanvas}>{canvas}{resizeHandles}</div>}
     </div>;
 }
 
@@ -143,7 +109,8 @@ function AppStagePanel({aspect, width, defaultWidth, render, renderHeader, isFul
         };
     }, [surface, resizeStage, stage?.docked, isFullScreen]);
     return <StageSurface placement={stage} externalHost={externalHost} decorate={decorateSurface}
-        launcher={menu?.launcher} dockAction={menu?.dockAction}
+        launcher={menu?.launcher} dockAction={menu?.dockAction} editorFullscreen={isFullScreen}
+        openDrawerRef={menu?.openDrawer} closeDrawerRef={menu?.closeDrawer}
         actionMount={stageActionMount ?? null} onDockActionChange={layoutFlags.stageDisplayMenu ? menu?.setDockAction : undefined}
         dockHeight={Math.round((width ?? defaultWidth) / aspect) + (renderHeader ? 44 : 0)}
         render={(floating, mount) => <StageViewport {...{aspect, width, defaultWidth, floating, render, renderHeader, isFullScreen}}
