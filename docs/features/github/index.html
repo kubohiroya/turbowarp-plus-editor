@@ -79,7 +79,7 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 <tr><th scope="row">編集・保存</th><td>「ファイル」→「保存」で作品フォルダに書く</td><td>—</td></tr>
 <tr><th scope="row">コミット</th><td>ローカルGitパネルで変更を確かめて記録する</td><td>GitHub Desktop、<code>git commit</code></td></tr>
 <tr><th scope="row">push・pull</th><td>GitHub接続が設定されたEditorでは「GitHub 接続」から</td><td>GitHub Desktop、<code>git push</code>・<code>git pull</code></td></tr>
-<tr><th scope="row">プルリクエスト</th><td>公開リポジトリのプルリクエストをブロック単位でレビューする</td><td>作成・コメント・マージはGitHubの「Pull requests」、<code>gh pr</code></td></tr>
+<tr><th scope="row">プルリクエスト</th><td>プルリクエストをブロック単位でレビューする。GitHub 接続中はその版を手元で動かせる</td><td>作成・コメント・マージはGitHubの「Pull requests」、<code>gh pr</code></td></tr>
 <tr><th scope="row">リリース</th><td>—</td><td>GitHubの「Releases」、<code>gh release create</code></td></tr>
 </tbody></table></div>
 <p>Editorでの操作には、File System Accessに対応したChromium系ブラウザー（Chrome、Edgeなど）が必要です。Editorはリポジトリのフォルダを読み書きしますが、Gitの設定やGitHubのissue・プルリクエスト・リリースは変更しません。</p>
@@ -152,7 +152,9 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 <h2>12.9 確かめてマージする</h2>
 
 <p>確かめる人は、変更をスクリプト単位で読みます。</p>
-<ul><li><strong>公開リポジトリ。</strong> ローカルGitパネルの「プルリクエスト」から対象を選ぶと、ステージ・スプライトごとに、変更前と変更後のスクリプトをブロックで比べられます。読み終えたスクリプトには「確認済み」を付けられます。この表示はGitHubの公開APIを読むだけで、GitHubにはコメントを送りません。</li><li><strong>非公開リポジトリ。</strong> プルリクエストのブランチを手元で取り込み、ローカルGitパネルの履歴でコミットを選ぶと、同じブロックの比較で読めます。</li></ul>
+<p>ローカル Git パネルの「プルリクエスト」から対象を開くと、ステージ・スプライトごとに、変更前と変更後のスクリプトをブロックで比べられます。読み終えたスクリプトには「確認済み」を付けられます。</p>
+<ul><li><strong>公開リポジトリ。</strong> 一覧から選ぶか、PR 番号を入力します。</li><li><strong>非公開リポジトリ。</strong> リポジトリへのアクセスを許可した「GitHub 接続」で、PR 番号を入力して比較するベースのブランチを確認します。</li></ul>
+<p>接続中に開いた PR は、「pr/… として手元で開く」で比較した版に切り替えて実行できます。</p>
 <p>気づいたことは、GitHubのプルリクエストの「Files changed」か「Conversation」にコメントで書きます。直す人は同じブランチで編集・コミット・pushすると、プルリクエストが更新されます。Editorでは、内容が変わったスクリプトの「確認済み」だけが外れます。</p>
 <p>「Check project」が成功し、確かめ終えたら、GitHubで「Merge pull request」（変更を一つのコミットにまとめるなら「Squash and merge」）を押し、「Delete branch」でブランチを消します。手元では、ローカルGitパネルで <code>main</code> に「切り替える」、pullで最新を取り込み、「作品を再読込」で開き直します。</p>
 <p><a href="../git/#pull-request-review">プルリクエストをスクリプト単位でレビューする</a></p>
