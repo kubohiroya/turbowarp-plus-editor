@@ -95,8 +95,9 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         type, x: 100, y: 100, data: {items: [], files: [client], dragOperationsMask: 1}
     });
     await page.waitForFunction(() => (window as any).gitDirectoryReady);
-    await page.locator('.twgit-branch-button').click();
-    await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
+    // Before a repository is chosen, the branch button reads "Git" and chooses one, then opens the panel on it.
+    await page.getByRole('button', {name: 'Local Git', exact: true}).click();
+    await page.getByRole('menuitem', {name: 'Choose Repository…'}).click();
     const panel = page.locator('.twgit-panel');
     const button = (name: string) => panel.getByRole('button', {name, exact: true});
     const runRemote = async (name: string) => {
