@@ -11,6 +11,19 @@
     margin-inline: 0.5rem 0;
 }
 
+input.projectTitleField:not(:focus),
+input.projectTitleField:focus {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--menu-bar-foreground);
+    transition: none;
+}
+
+input.projectTitleField:focus {
+    border-color: currentColor;
+}
+
 .root > summary {
     display: grid;
     place-items: center;
