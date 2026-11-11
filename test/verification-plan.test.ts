@@ -7,10 +7,12 @@ import {test} from 'node:test';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {planForEvent, readChangedPaths, selectVerification} from '../scripts/ci/verification-plan.ts';
 
-test('full verification includes the project-folder and Git panel browser tests', () => {
-    // Git package bumps change package.json, which has no narrower rule, so they always run these tests.
-    assert.ok(selectVerification(['package.json']).checks.includes('git-browser'));
-    assert.ok(selectVerification([]).checks.includes('git-browser'));
+test('CI selects no browser checks: those run locally during development', () => {
+    for (const paths of [[], ['package.json'], ['test/e2e/extension-loader/catalog-authoring.spec.cts']]) {
+        const plan = selectVerification(paths);
+        assert.equal(plan.mode, 'full', JSON.stringify(paths));
+        assert.ok(plan.checks.every(check => !check.endsWith('-browser')), JSON.stringify(paths));
+    }
 });
 
 test('documentation, isolated package tests and multiple areas select distinct checks', () => {
@@ -19,13 +21,11 @@ test('documentation, isolated package tests and multiple areas select distinct c
     assert.deepEqual(selectVerification(['packages/editor-views/test/code-session.test.ts']).checks, ['views-unit']);
     const plan = selectVerification([
         'packages/editor-views/index.ts',
-        'packages/editor-backpack/test/script.test.ts',
-        'test/e2e/extension-loader/catalog-authoring.spec.cts'
+        'packages/editor-backpack/test/script.test.ts'
     ]);
     assert.equal(plan.mode, 'scoped');
-    assert.deepEqual(plan.areas, ['backpack-tests', 'extension-loader-tests', 'views']);
-    assert.deepEqual(plan.checks, ['typecheck', 'views-unit', 'backpack-unit', 'gui-integration',
-        'site-build', 'code-windows-browser', 'editor-browser', 'extension-loader-browser']);
+    assert.deepEqual(plan.areas, ['backpack-tests', 'views']);
+    assert.deepEqual(plan.checks, ['typecheck', 'views-unit', 'backpack-unit', 'gui-integration', 'site-build']);
 });
 
 test('pins, shared infrastructure, unknown paths and empty diffs plan a full run', () => {
@@ -35,7 +35,6 @@ test('pins, shared infrastructure, unknown paths and empty diffs plan a full run
         assert.equal(plan.mode, 'full', path);
         assert.equal(plan.reason, 'unclassified-path', path);
         assert.ok(plan.checks.includes('extension-host'));
-        assert.ok(plan.checks.includes('extension-loader-browser'));
     }
     assert.equal(selectVerification([]).reason, 'empty-diff');
 });

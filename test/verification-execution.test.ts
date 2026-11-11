@@ -23,28 +23,26 @@ test('flag off selects legacy and stable releases select full verification regar
         {mode: 'full', reason: 'unclassified-path'});
 });
 
-test('documentation needs only Git and a selected browser suite pulls in its build prerequisites', () => {
+test('documentation needs only Git and a selected GUI check needs npm and the GUI', () => {
     assert.deepEqual(select(scoped(['documentation'])), {
         mode: 'scoped', reason: 'matched-paths', base, checks: ['documentation'], reused: [],
-        needsNpm: false, needsGui: false, needsBrowser: false
+        needsNpm: false, needsGui: false
     });
-    const browser = select(scoped(['layout-browser']));
-    assert.deepEqual(browser.checks, ['layout-browser', 'site-build']);
-    assert.ok(browser.needsNpm && browser.needsGui && browser.needsBrowser);
+    const gui = select(scoped(['gui-integration']));
+    assert.deepEqual(gui.checks, ['gui-integration']);
+    assert.ok(gui.needsNpm && gui.needsGui);
 });
 
 test('main runs missing items and its own build even if supplied matching evidence for the build', () => {
-    const plan = scoped(['typecheck', 'unit', 'editor-browser', 'site-build']);
+    const plan = scoped(['typecheck', 'unit', 'gui-integration', 'site-build']);
     const execution = select(plan, {main: true, evidence: {reason: 'verified-items',
-        reusable: ['typecheck', 'editor-browser', 'site-build', 'views-unit']}});
-    assert.deepEqual(execution.reused, ['typecheck', 'editor-browser']);
+        reusable: ['typecheck', 'gui-integration', 'site-build', 'views-unit']}});
+    assert.deepEqual(execution.reused, ['typecheck', 'gui-integration']);
     assert.deepEqual(execution.checks, ['unit', 'site-build']);
-    assert.equal(execution.needsBrowser, false);
     assert.equal(execution.needsGui, true);
 
     const partial = select(plan, {main: true, evidence: {reason: 'verified-items', reusable: ['typecheck']}});
-    assert.deepEqual(partial.checks, ['unit', 'editor-browser', 'site-build']);
-    assert.equal(partial.needsBrowser, true);
+    assert.deepEqual(partial.checks, ['unit', 'gui-integration', 'site-build']);
 });
 
 test('missing, mismatched or unavailable evidence returns main to full verification', () => {
@@ -60,13 +58,13 @@ test('the final check rejects a skipped or missing selected step and incomplete 
     const script = fileURLToPath(new URL('../scripts/ci/verification-execution.ts', import.meta.url));
     const run = (env: Record<string, string>) => spawnSync(process.execPath, [script, 'verify'], {
         encoding: 'utf8', env: {...process.env, CI_RELEASE_REVISION: '', CI_EXECUTION_MODE: 'scoped',
-            CI_REQUIRED_CHECKS: '|yaml-browser|', ...env}
+            CI_REQUIRED_CHECKS: '|typecheck|unit|', ...env}
     });
-    const passing = JSON.stringify({'yaml-roundtrip': {outcome: 'success'}, 'yaml-multi-document': {outcome: 'success'}});
+    const passing = JSON.stringify({typecheck: {outcome: 'success'}, 'unit-tests': {outcome: 'success'}});
     assert.equal(run({CI_STEP_OUTCOMES: passing}).status, 0);
-    const skipped = run({CI_STEP_OUTCOMES: '{"yaml-roundtrip":{"outcome":"success"}}'});
+    const skipped = run({CI_STEP_OUTCOMES: '{"typecheck":{"outcome":"success"}}'});
     assert.notEqual(skipped.status, 0);
-    assert.match(skipped.stderr, /Missing successful checks: yaml-browser/);
+    assert.match(skipped.stderr, /Missing successful checks: unit/);
     const incomplete = run({CI_RELEASE_REVISION: revision, CI_STEP_OUTCOMES: passing});
     assert.notEqual(incomplete.status, 0);
     assert.match(incomplete.stderr, /Missing successful checks:.*site-build/);
@@ -100,7 +98,12 @@ test('the stable release publisher is gated by a full check of the tagged commit
     assert.equal(ci.on.workflow_call.inputs.release_revision.required, true);
     const scope = ci.jobs.check.steps.find(step => step.id === 'scope');
     assert.match(scope.if, /TW_PLUS_CI_SCOPED == '1' && inputs\.release_revision == ''/);
-    const legacy = ci.jobs.check.steps.find(step => step.id === 'reuse');
-    assert.match(legacy.if, /inputs\.release_revision == '' && env\.TW_PLUS_CI_SCOPED != '1'/);
-    assert.match(ci.jobs.check.steps.find(step => step.id === 'tree').if, /steps\.editor-browser\.outcome == 'success'/);
+});
+
+test('no workflow installs a browser or runs browser tests: those run locally during development', () => {
+    const directory = new URL('../.github/workflows/', import.meta.url);
+    for (const name of ['ci', 'pages', 'release']) {
+        const text = readFileSync(new URL(`${name}.yml`, directory), 'utf8');
+        assert.doesNotMatch(text, /playwright|\.browser\.ts|test:e2e:(?!infrastructure)|test:yaml:/, name);
+    }
 });

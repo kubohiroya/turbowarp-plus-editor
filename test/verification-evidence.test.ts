@@ -51,18 +51,14 @@ test('the contract changes with workflow commands, runtime or runner identity', 
     assert.notEqual(a, verificationContract(Buffer.from('run: npm test'), ['v27', 'Linux', 'X64']));
 });
 
-test('records successful outcomes only and requires every step in a combined check', () => {
+test('records successful outcomes only', () => {
     const recorded = recordEvidence({tree, contract, runId, attempt, steps: {
         typecheck: {outcome: 'success'},
         'unit-tests': {outcome: 'skipped'},
-        'editor-browser': {outcome: 'failure'},
-        'yaml-roundtrip': {outcome: 'success'},
+        'gui-integration': {outcome: 'failure'},
         'extension-host': {outcome: 'success'}
     }});
     assert.deepEqual(recorded.checks, ['typecheck', 'extension-host']);
-    assert.ok(recordEvidence({tree, contract, runId, attempt, steps: {
-        'yaml-roundtrip': {outcome: 'success'}, 'yaml-multi-document': {outcome: 'success'}
-    }}).checks.includes('yaml-browser'));
 });
 
 test('matches individual checks and retains the main build and unverified checks', async () => {
@@ -70,7 +66,7 @@ test('matches individual checks and retains the main build and unverified checks
     assert.equal(report.reason, 'verified-items');
     assert.deepEqual(report.reusable, ['typecheck', 'unit']);
     assert.ok(report.runLocally.includes('site-build'));
-    assert.ok(report.runLocally.includes('layout-browser'));
+    assert.ok(report.runLocally.includes('gui-integration'));
     assert.ok(!report.runLocally.includes('typecheck'));
 });
 

@@ -108,7 +108,7 @@ plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-tran
 
 [`site/source.json`](site/source.json) はGUI・VM・data-editorのcore・拡張Loader・Packager・document-editorを40桁のリビジョンで、security-dialogとcoreをnpmの完全版で固定します。checkout・導入済みパッケージ・固定値が一致しなければビルドは進みません。公開成果物の `build-info.json` は実際に組み合わせたGUI・VM・ライブラリ・サイトの版を記録し、`notices/family.json` は同梱した全ファミリーパッケージのライセンス文とソースの入手先を一覧にします。旧data-editorのPagesは廃止対象であり、移行先には本サイトを使用してください。
 
-検証は配信のあとの工程ではなく、配信の一部です。通常CIが単体テスト、統合基盤、固定GUIの接続テスト、ビルド、移設したGUI E2Eを実行します。ブラウザーE2Eは19件、固定入力profileを含めてCIでは24件です。Pagesは、同じSHAの通常CIが全件成功した `main` の成果物だけを配信し、再ビルドせず固定した識別子を照合し、公開後に7件を実行します。npmはTrusted PublisherとOIDCで公開し、workflowはtokenを持たず、既存版とバイト列が異なれば停止します。
+検証は配信のあとの工程ではなく、配信の一部です。通常CIが単体テスト、統合基盤、固定GUIの接続テスト、ビルドを実行します。ブラウザーE2E（19件、固定入力profileを含めて24件）はCIでは実行せず、開発時にローカルで実行します。Pagesは、同じSHAの通常CIが全件成功した `main` の成果物だけを配信し、再ビルドせず固定した識別子を照合します。npmはTrusted PublisherとOIDCで公開し、workflowはtokenを持たず、既存版とバイト列が異なれば停止します。
 
 本リポジトリがファミリーのどこに位置するかは、上下関係ではなく持ち物の分担です。[`turbowarp-plus-packages`](https://github.com/kubohiroya/turbowarp-plus-packages) はファミリー全体の一覧とダッシュボードで、13カテゴリ・70余のリポジトリを、依存の相関図・デモ・未クローズのissue・リリースの鮮度とともに[1枚のページ](https://kubohiroya.github.io/turbowarp-plus-packages/)に出します。そして、本リポジトリが意図的に持たない3つを持ちます。公式の機能拡張カタログ [`extensions-v1.json`](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json)（各項目がnpmパッケージ名・バージョン・jsDelivrのURL・SHA-256・カテゴリ・unsandboxedの要否を持ちます）、`assets/extension-icons/` に置く拡張の表示名とアイコン、そして設計の正本である `docs/editor-architecture.ja.md` です。本リポジトリの文書は、この正本を書き写さず参照します。
 
@@ -317,7 +317,7 @@ node --test test/representation-preview.browser.ts
 
 参照元のプレビュー・取消・保存・再取得・埋め込みファイルへの変換は、`@kubohiroya/turbowarp-document-editor` が自身の試験用提供元で検証します。本リポジトリは、それがビルドしたEditorまで届くことを確かめます。`test/e2e/turbowarp/document-source.spec.cts` は `twpeyamlsettings` のfixtureをURLの切替なしで開き、参照元の切替が現れること、明示的にプレビューするまで何も取得しないこと、保存できることを見ます。廃止したURLの切替を `0` にしても何も変わらないことも確かめます。`document-refusal.spec.cts` は提供元が登録されていないハットと、所有者が開くのを拒む文書を開いて、「この文書は現在利用できません。」が出て作品が変わらないことを見ます。どちらも `npm run test:e2e` でビルドしたEditorに対して実行します。
 
-SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。CIはビルドしたEditorで `test:yaml:roundtrip` と `test:yaml:multi-document` を実行し、画面と `result.json` を `integration-evidence-*` の `test-results/yaml-roundtrip/`・`test-results/yaml-multi-document/` に残します。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
+SB3往復の自動ブラウザ回帰ではネイティブ起動だけを注入し、実GUI・実VM・実SB3で検証します。`test:yaml:roundtrip` と `test:yaml:multi-document` は、ビルドしたEditorを対象に開発時にローカルで実行し、画面と `result.json` を `test-results/yaml-roundtrip/`・`test-results/yaml-multi-document/` に残します。CIでは実行しません。実VSCode確認には `test/vscode-edit-driver/` のテスト専用Extension Development Hostを用い、VSCode自身の文書編集・保存APIで作業YAMLを保存します。このdriverを通常の補助プロセスへインストールする必要はありません。
 
 ### 原文・共通YAMLブロック・スキーマ専用ブロック
 

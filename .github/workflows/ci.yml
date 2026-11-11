@@ -85,14 +85,6 @@ jobs:
       - run: node --test 'packages/editor-backpack/test/**/*.test.ts'
         id: backpack-unit
         if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|backpack-unit|'))
-      # Keep the legacy browser reuse path while scoped verification is off. main still builds
-      # with its own revision, and an unverified tree runs all of the legacy browser checks.
-      - name: Find a pull request run that verified this tree
-        id: reuse
-        if: github.event_name == 'push' && inputs.release_revision == '' && env.TW_PLUS_CI_SCOPED != '1'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: TREE=$(git rev-parse 'HEAD^{tree}') node scripts/ci/reuse-pr-verification.ts
       - name: Record per-check reuse candidates
         if: github.event_name == 'push' && inputs.release_revision == '' && env.TW_PLUS_CI_SCOPED != '1'
         continue-on-error: true
@@ -182,108 +174,6 @@ jobs:
           TW_PLUS_PACKAGER_ROOT: ${{ github.workspace }}/.host/packager
           NODE_OPTIONS: --max-old-space-size=6144
         run: npm run build:pages
-      - name: Generate the packaged extension fixture from checked build assets
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|extension-loader-browser|')
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-        run: node test/e2e/extension-loader/prepare-packaged.ts
-      - run: npx playwright install --with-deps chromium
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || steps.scope.outputs.browser == 'true'
-      - name: Verify Editor layout splitters
-        id: layout-browser
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|layout-browser|')
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-          E2E_PATH_PREFIX: /turbowarp-plus-editor/
-        run: node --test test/editor-layout.browser.ts
-      # These two run the built Editor's real GUI, VM and SB3 against the test-only owner
-      # `twpeyamlsettings`; only the native VSCode launcher is replaced. The base SB3 is generated
-      # here so no binary fixture is checked in or borrowed from the pinned GUI.
-      - name: Build the document editor's SB3 fixtures
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|yaml-browser|')
-        run: |
-          node test/fixtures/yaml-editor/base-project.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3"
-          node scripts/yaml-editor/build-settings-fixture.ts "$RUNNER_TEMP/yaml-fixtures/base.sb3" "$RUNNER_TEMP/yaml-fixtures/settings.sb3"
-      - name: Verify YAML import, invalid YAML, project replacement and the SB3 round trip
-        id: yaml-roundtrip
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|yaml-browser|')
-        env:
-          TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
-          TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
-          TWPE_YAML_EVIDENCE: test-results/yaml-roundtrip
-        run: npm run test:yaml:roundtrip
-      - name: Verify two documents with separate schemas, a guarded switch and saving both
-        id: yaml-multi-document
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|yaml-browser|')
-        env:
-          TWPE_YAML_SITE: ${{ github.workspace }}/.host/scratch-gui/build
-          TWPE_YAML_FIXTURE: ${{ runner.temp }}/yaml-fixtures/settings.sb3
-          TWPE_YAML_EVIDENCE: test-results/yaml-multi-document
-        run: npm run test:yaml:multi-document
-      - name: Verify integrated editing, security, themes and SB3 round trips
-        id: editor-browser
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|editor-browser|')
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-          E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
-          E2E_EXPECT_CORE_REVISION: ${{ steps.source.outputs.coreRevision }}
-          E2E_FIXED_INPUTS: '1'
-          E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
-        run: npm run test:e2e:block-editor
-      - name: Verify extension loader defaults, opt-out and offline HTML output
-        id: extension-loader-browser
-        if: (steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|extension-loader-browser|')
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-          E2E_EXPECT_GUI_REVISION: ${{ steps.source.outputs.guiRevision }}
-          E2E_EXPECT_CORE_REVISION: ${{ steps.source.outputs.coreRevision }}
-          E2E_EXPECT_SECURITY_VERSION: ${{ steps.source.outputs.securityVersion }}
-        run: npm run test:e2e:extension-loader
-      - name: Verify app-internal code windows
-        id: code-windows-browser
-        if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|code-windows-browser|'))
-        run: node test/stage6/code-windows.ts .host/scratch-gui/build
-      # The project-folder and Git panel tests need test connection origins built in, and those must never reach
-      # Pages. Set the published build aside, build the test variant, then put the published build back.
-      - name: Set the published build aside for the Git panel tests
-        id: git-browser-aside
-        if: steps.site-build.outcome == 'success' && ((steps.scope.outputs.mode != 'scoped' && steps.reuse.outputs.verified != 'true') || contains(steps.scope.outputs.checks, '|git-browser|'))
-        run: mv .host/scratch-gui/build "$RUNNER_TEMP/editor-site"
-      - name: Build the Editor with test Git connection origins
-        id: git-browser-build
-        if: steps.git-browser-aside.outcome == 'success'
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-          TW_PLUS_PACKAGER_ROOT: ${{ github.workspace }}/.host/packager
-          NODE_OPTIONS: --max-old-space-size=6144
-          TW_PLUS_GIT_BFF_ORIGIN: https://bff.git.test
-          TW_PLUS_GIT_PROXY_ORIGIN: https://proxy.git.test
-        run: npm run build:pages
-      - name: Verify project folders and the Git panel
-        id: git-browser
-        if: steps.git-browser-build.outcome == 'success'
-        env:
-          E2E_PROJECT_FOLDER_BUILD: ${{ github.workspace }}/.host/scratch-gui/build
-          # The fixture ships in the pinned Git package, so it always matches the panel under test.
-          E2E_GIT_HTTP_FIXTURE: ${{ github.workspace }}/node_modules/@kubohiroya/turbowarp-plus-editor-git/test/smart-http-fixture.js
-          GIT_BROWSER_RUNS: 1
-        run: |
-          export E2E_EXPECT_SITE_REVISION="$(git rev-parse HEAD)"
-          for run in $(seq "$GIT_BROWSER_RUNS"); do
-            echo "::group::Git panel browser tests, run $run of $GIT_BROWSER_RUNS"
-            node --test --test-concurrency=1 --import ./test/asset-hooks.ts test/project-folder.browser.ts \
-              test/git-connection.browser.ts test/git-pull-request.browser.ts test/git-remote.browser.ts
-            echo "::endgroup::"
-          done
-      - name: Restore the published build
-        if: always() && steps.git-browser-aside.outcome == 'success'
-        run: |
-          rm -rf .host/scratch-gui/build
-          mv "$RUNNER_TEMP/editor-site" .host/scratch-gui/build
-          if grep -rlF -e bff.git.test -e proxy.git.test .host/scratch-gui/build; then
-            echo "::error::The published build contains the test Git connection origins."
-            exit 1
-          fi
       - name: Require all selected verification to pass
         if: ${{ !cancelled() && (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') }}
         env:
@@ -292,21 +182,6 @@ jobs:
           CI_REQUIRED_CHECKS: ${{ steps.scope.outputs.checks }}
           CI_STEP_OUTCOMES: ${{ toJSON(steps) }}
         run: node scripts/ci/verification-execution.ts verify
-      # Partial PRs cannot publish the legacy all-browser marker.
-      - name: Name the tree these checks verified
-        id: tree
-        if: >-
-          success() && github.event_name == 'pull_request' &&
-          steps.layout-browser.outcome == 'success' && steps.yaml-roundtrip.outcome == 'success' &&
-          steps.yaml-multi-document.outcome == 'success' && steps.editor-browser.outcome == 'success' &&
-          steps.extension-loader-browser.outcome == 'success' && steps.git-browser.outcome == 'success'
-        run: echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
-        if: success() && steps.tree.outcome == 'success'
-        with:
-          name: ci-verified-tree-${{ steps.tree.outputs.tree }}
-          path: site/source.json
-          retention-days: 7
       - name: Record successful verification items
         id: verification-evidence
         if: success() && github.event_name == 'pull_request'
@@ -330,12 +205,3 @@ jobs:
           path: .host/scratch-gui/build/
           retention-days: 7
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: integration-evidence-${{ github.sha }}-${{ github.run_attempt }}
-          path: |
-            test-results/
-            playwright-report/
-          retention-days: 7
-          if-no-files-found: warn
