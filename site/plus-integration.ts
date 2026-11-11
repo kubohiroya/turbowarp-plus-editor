@@ -24,6 +24,7 @@ import {plusProjectPackager} from './packager/handoff.ts';
 
 import {installControlsDock} from './controls-dock.ts';
 import {attachProjectFolder} from './project-folder-host.ts';
+import {webFontOwnsKeyEvent} from '@kubohiroya/turbowarp-plus-editor-ui/web-fonts';
 import getStageControls from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
 import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
@@ -105,7 +106,8 @@ export const createPlusIntegration = ({
      * @param {object} event The key event the GUI received.
      * @returns {boolean} True when the editor should not act on it.
      */
-    shouldIgnoreKeyEvent: event => projectToolsOwnKeyEvent(event) || securityReview.ownsKeyEvent(event),
+    shouldIgnoreKeyEvent: event => projectToolsOwnKeyEvent(event) ||
+        securityReview.ownsKeyEvent(event) || webFontOwnsKeyEvent(event),
     /**
      * The form-based block editor: the service that edits one VM's blocks, the editors attached to
      * a workspace, and the dialog. The GUI supplies its translations, its workspace, its modal

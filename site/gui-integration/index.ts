@@ -10,7 +10,7 @@ import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
-import {renderGitMenu} from '@kubohiroya/turbowarp-plus-editor-git';
+import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
@@ -33,6 +33,7 @@ import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
 export {flushPendingSurfaceEdits};
+export {default as webFontDialogs} from '@kubohiroya/turbowarp-plus-editor-ui/web-font-dialogs';
 export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
@@ -61,6 +62,8 @@ const ExtensionControls = connect(({scratchGui: {mode}}) => ({
     if (stageOnly !== (menuLocale === undefined)) return null;
     const service = hostStageControls(vm, hostIntegration());
     return React.createElement(React.Fragment, null,
+        // The current branch, left of the stage launcher; it renders nothing while no Git panel is mounted (#478).
+        menuLocale !== undefined && renderBranchButton(React.createElement, {vm, locale: menuLocale}),
         menuLocale !== undefined && stageLauncherEnabled &&
             React.createElement('div', {className: stageLauncherSlotClass, ref: mountStageLauncher}),
         service && React.createElement(StageControlsView, {service, isSmall, menuLocale}));
@@ -146,9 +149,9 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
         }}, action.label));
 };
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
-    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderGitMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
 
-export {saveProjectForPackager as serializeProjectForExport} from '../project-payloads/host.ts';
+export {serializeProjectForExport} from '../packager/handoff.ts';
 
 export const projectFileTypes = [
     {description: 'Scratch 3 Project', accept: {'*/*': ['.sb3']}},
@@ -173,8 +176,7 @@ export const renderProjectFileWorkflow = ({
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
         exportProject: exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject),
-        externalYaml: renderExternalYamlMenu(inline),
-        git: renderGitMenu(React.createElement, inline)
+        externalYaml: renderExternalYamlMenu(inline)
     }});
 };
 

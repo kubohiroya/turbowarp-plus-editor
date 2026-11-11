@@ -70,6 +70,12 @@ const injections = {
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
+    include: ['fonts-modal.jsx', 'manage-font.jsx'].map(file =>
+        fs.realpathSync(path.join(gui, 'src/components/tw-fonts-modal', file))),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-fonts-modal.cts')
+});
+config.module.rules.push({
     include: fs.realpathSync(path.join(gui, 'src/addons/addons/hide-flyout/userscript.js')),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-hide-flyout.cts')
@@ -184,7 +190,7 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$']
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
-    'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel']) {
+    'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel', 'ai-agents']) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-workbench/${entry}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -193,7 +199,8 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-sprite-tabs.cts')
 });
-for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-auth',
+for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-project-folder/explorer',
+    '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
@@ -302,6 +309,11 @@ config.module.rules.push({test: /\.jsx?$/, include: [
 // Also transpile a local VM source checkout used by integration previews.
 const vmSource = fs.realpathSync(path.join(path.dirname(hostRequire.resolve('scratch-vm/package.json')), 'src'));
 const paintSource = path.join(path.dirname(hostRequire.resolve('scratch-paint/package.json')), 'src');
+config.module.rules.push({
+    include: fs.realpathSync(path.join(paintSource, 'components/paint-editor/paint-editor.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-paint-fonts-button.cts')
+});
 config.module.rules.push({
     include: [
         path.join(gui, 'src/containers/sound-editor.jsx'),

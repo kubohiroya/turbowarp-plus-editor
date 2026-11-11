@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>作品づくりの機能ガイド — TurboWarp-Plus-Editor</title>
-<meta name="description" content="TurboWarp Plusで作品を開き、画面を整え、ブロックや文書を検索・編集し、Gitで管理して保存・配布するまでの機能ガイド。分野別の11ページで構成。">
+<meta name="description" content="TurboWarp Plusで作品を開き、画面を整え、ブロックや文書を検索・編集し、Gitで管理して保存・配布するまでの機能ガイド。分野別の12ページで構成。">
 <link rel="stylesheet" href="guide.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 <main>
 <p class="eyebrow">機能ガイド · 2026年11月8日更新</p>
 <h1>TurboWarp Plusで作品をつくる</h1>
-<p class="lead">TurboWarp Plusで作品を開き、画面を整え、作品全体を検索しながら編集し、Gitで管理して、SB3や単一HTMLで渡すまでの機能を、分野別の11ページで紹介します。</p>
+<p class="lead">TurboWarp Plusで作品を開き、画面を整え、作品全体を検索しながら編集し、Gitで管理して、SB3や単一HTMLで渡し、GitHubで開発を進めるまでの機能を、分野別の12ページで紹介します。</p>
 <p><a href="../editor.html?lang=ja">日本語でエディターを開く</a> · <a href="sb3-compatibility.md">Scratch・TurboWarpのSB3互換性と機能一覧（Markdown）</a> · <a href="images/capture.json">掲載画面の撮影条件</a></p>
 <p>Scratch 3と標準TurboWarpで保存したSB3は、どちらもPlus Editorで開けます。Plusがエディターに組み込んだ機能（追加機能）の一部は、作品が読み込む拡張（Scratch・TurboWarpの拡張機能）や専用データが必要です。</p>
 <p class="guide-note">確認した版を個別に記した箇所を除き、操作名と配置は2026年11月8日時点の公開版（<code>d1d8523</code>、TurboWarp Plus Editor 0.2.0-rc.3）で確認しています。「開発中」は試作や開発版で確認した機能、「試作」は公開版で使えるものの対象を限定している機能、「一部の機能拡張で利用可能」は対応する拡張が必要な機能です。図版は撮影時点の画面です。</p>
@@ -142,6 +142,19 @@
 <li><a href="save/#packager">作品を書き出して単一HTMLで配布する</a></li>
 </ol>
 </section>
+<section class="topic-card" id="topic-github">
+<h3><a href="github/">12. GitHubで作品を開発する</a></h3>
+<p>Scratchの作品をGitHubに移し、issue・ブランチ・コミット・push・プルリクエスト・マージ・リリースの順で開発します。</p>
+<ol>
+<li><a href="github/#migrate">Scratchの作品をGitHubに移す</a></li>
+<li><a href="github/#flow">開発の流れと、どこで何をするか</a></li>
+<li><a href="github/#branch">作業用のブランチを作る</a></li>
+<li><a href="github/#commit">変更を確かめて記録する（コミット）</a></li>
+<li><a href="github/#pull-request">プルリクエストを作る</a></li>
+<li><a href="github/#merge">確かめてマージする</a></li>
+<li><a href="github/#release">リリースして配る</a></li>
+</ol>
+</section>
 </div>
 <h2 id="comparison">標準のTurboWarpに加わる機能</h2>
 <div class="table-scroll" role="region" aria-label="標準TurboWarpとPlusの機能比較" tabindex="0">
@@ -159,7 +172,7 @@
 </tbody></table></div>
 <script>
 // 以前の1ページ版のアンカー（#project-properties など）を、分野別ページへ転送する。
-(function () { var map = {"asset-preview": "documents/#asset-preview", "backdrop": "sprites/#backdrop", "backpack": "reuse/#transfer", "block-diff": "git/#block-diff", "bundle-assets": "reuse/#bundle-assets", "context-menu": "blocks/#context-menu", "delete-preview": "blocks/#delete-preview", "detached-panels": "workspace/#detached-panels", "dock": "stage/#dock", "documents": "documents/#documents", "edit-menu": "screen/#edit-menu", "extension-controls": "screen/#extension-controls", "extensions": "open/#extensions", "file-menu": "screen/#file-menu", "forms": "documents/#forms", "github-sync": "git/#github-sync", "layout": "screen/#layout", "loading": "open/#loading", "local-git": "git/#local-git", "media-panes": "sprites/#media-panes", "menu-bar": "screen/#menu-bar", "messages": "sprites/#messages", "minimap": "blocks/#minimap", "multi-edit-view": "workspace/#multi-edit-view", "packager": "save/#packager", "palette": "blocks/#palette", "palette-order": "blocks/#palette-order", "palette-popout": "blocks/#palette-popout", "palette-search": "blocks/#palette-search", "palette-size": "blocks/#palette-size", "panel-popout": "workspace/#panel-popout", "payload-formats": "save/#payload-formats", "plus-menu": "screen/#plus-menu", "project-diagnostics": "open/#project-diagnostics", "project-folder": "git/#project-folder", "project-properties": "save/#project-properties", "project-search": "search/#project-search", "project-uri": "save/#project-uri", "pull-request-review": "git/#pull-request-review", "replace": "search/#replace", "restore-points": "save/#restore-points", "retry": "open/#retry", "review": "open/#review", "runtime": "documents/#runtime", "save": "save/#save", "sb3-toolchain": "git/#sb3-toolchain", "search-scope": "search/#search-scope", "split-panes": "workspace/#split-panes", "splitter": "workspace/#splitter", "sprite-drawer": "sprites/#sprite-drawer", "sprite-tabs": "sprites/#sprite-tabs", "stage-controls": "stage/#stage-controls", "stage-menu": "stage/#stage-menu", "stage-open": "stage/#stage-open", "start": "open/#start", "storage": "save/#storage", "transfer": "reuse/#transfer", "variable-pane": "sprites/#variable-pane", "workspace-restore": "workspace/#workspace-restore", "yaml-tabs": "documents/#yaml-tabs"};
+(function () { var map = {"asset-preview": "documents/#asset-preview", "backdrop": "sprites/#backdrop", "backpack": "reuse/#transfer", "block-diff": "git/#block-diff", "bundle-assets": "reuse/#bundle-assets", "context-menu": "blocks/#context-menu", "delete-preview": "blocks/#delete-preview", "detached-panels": "workspace/#detached-panels", "dock": "stage/#dock", "documents": "documents/#documents", "edit-menu": "screen/#edit-menu", "extension-controls": "screen/#extension-controls", "extensions": "open/#extensions", "file-menu": "screen/#file-menu", "forms": "documents/#forms", "github-sync": "git/#github-sync", "github-workflow": "github/#flow", "migrate": "github/#migrate", "layout": "screen/#layout", "loading": "open/#loading", "local-git": "git/#local-git", "media-panes": "sprites/#media-panes", "menu-bar": "screen/#menu-bar", "messages": "sprites/#messages", "minimap": "blocks/#minimap", "multi-edit-view": "workspace/#multi-edit-view", "packager": "save/#packager", "palette": "blocks/#palette", "palette-order": "blocks/#palette-order", "palette-popout": "blocks/#palette-popout", "palette-search": "blocks/#palette-search", "palette-size": "blocks/#palette-size", "panel-popout": "workspace/#panel-popout", "payload-formats": "save/#payload-formats", "plus-menu": "screen/#plus-menu", "project-diagnostics": "open/#project-diagnostics", "project-folder": "git/#project-folder", "project-properties": "save/#project-properties", "project-search": "search/#project-search", "project-uri": "save/#project-uri", "pull-request-review": "git/#pull-request-review", "replace": "search/#replace", "restore-points": "save/#restore-points", "retry": "open/#retry", "review": "open/#review", "runtime": "documents/#runtime", "save": "save/#save", "sb3-toolchain": "git/#sb3-toolchain", "search-scope": "search/#search-scope", "split-panes": "workspace/#split-panes", "splitter": "workspace/#splitter", "sprite-drawer": "sprites/#sprite-drawer", "sprite-tabs": "sprites/#sprite-tabs", "stage-controls": "stage/#stage-controls", "stage-menu": "stage/#stage-menu", "stage-open": "stage/#stage-open", "start": "open/#start", "storage": "save/#storage", "transfer": "reuse/#transfer", "variable-pane": "sprites/#variable-pane", "workspace-restore": "workspace/#workspace-restore", "yaml-tabs": "documents/#yaml-tabs"};
   var id = decodeURIComponent(location.hash.slice(1));
   if (id && map[id] && !document.getElementById(id)) location.replace(map[id]); }());
 </script>

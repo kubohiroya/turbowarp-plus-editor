@@ -301,6 +301,78 @@ test('the GUI keeps its original editor without a host connection', {skip: !bare
     await expect(page.getByText('Advanced Settings', {exact: true})).toBeVisible();
 });
 
+test('the paint toolbar opens the project font list from costumes and backdrops', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    const toolbarButton = page.getByRole('button', {name: 'Fonts…', exact: true});
+    const dialog = page.getByRole('dialog', {name: 'Fonts', exact: true});
+    const fontDropdown = page.locator('[class*="dropdown_dropdown_"][class*="font-dropdown_font-dropdown_"]:visible');
+    const sections = page.getByRole('tablist', {name: 'Sprite editor sections'});
+    const selectSection = name => sections.getByRole('tab', {name, exact: true}).click();
+    const selectedAsset = page.locator('[class*="selector_list-item_"][class*="sprite-selector-item_is-selected_"]:visible');
+    const editorState = () => page.evaluate(() => ({
+        changed: window.ReduxStore.getState().scratchGui.projectChanged,
+        target: window.vm.editingTarget.id,
+        costumes: window.vm.editingTarget.getCostumes().map(costume => costume.assetId)
+    }));
+    const closeFonts = async () => {
+        await dialog.getByRole('button', {name: 'Close', exact: true}).click();
+        await expect(dialog).toBeHidden();
+    };
+    const checkOpenAndClose = async () => {
+        await expect(fontDropdown).toHaveCount(0);
+        await expect(selectedAsset).toBeVisible();
+        const name = await selectedAsset.getAttribute('title');
+        const state = await editorState();
+        await toolbarButton.press('Enter');
+        await expect(dialog).toBeVisible();
+        await closeFonts();
+        await expect(selectedAsset).toHaveAttribute('title', name);
+        expect(await editorState()).toEqual(state);
+    };
+    const addFont = async name => {
+        await toolbarButton.click();
+        await dialog.getByRole('button', {name: /Add a system font/}).click();
+        await dialog.getByPlaceholder('Wingdings').fill(name);
+        await dialog.getByRole('button', {name: 'Add', exact: true}).click();
+        await expect(dialog.getByText(name, {exact: true})).toBeVisible();
+        await closeFonts();
+    };
+    const chooseFont = async name => {
+        await page.getByRole('button', {name: 'Text', exact: true}).click();
+        await fontDropdown.click();
+        await page.getByText(name, {exact: true}).click();
+        await expect(fontDropdown).toContainText(name);
+    };
+
+    await selectSection('Costumes');
+    const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
+    await checkOpenAndClose();
+    await addFont('Tahoma');
+
+    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await selectSection('Backdrops');
+    await checkOpenAndClose();
+    await addFont('Verdana');
+    await chooseFont('Tahoma');
+
+    await page.locator('[class*="sprite-selector_sprite_"]:visible')
+        .filter({has: page.getByText(spriteName, {exact: true})}).click();
+    await selectSection('Costumes');
+    await chooseFont('Verdana');
+    await fontDropdown.click();
+    await page.getByText('Add more fonts...', {exact: true}).click();
+    await expect(dialog.getByText('Tahoma', {exact: true})).toBeVisible();
+    await expect(dialog.getByText('Verdana', {exact: true})).toBeVisible();
+    await closeFonts();
+
+    await page.setViewportSize({width: 1050, height: 660});
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja&twPlusStandardLayout=0&twPlusDockview=0');
+    await page.getByRole('tab', {name: 'コスチューム', exact: true}).click();
+    await page.getByRole('button', {name: 'フォント…', exact: true}).click();
+    await expect(page.getByRole('dialog', {name: 'フォント', exact: true})).toBeVisible();
+});
+
 test('the Plus File menu groups project settings and opens the extension library', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const start = suffix => page.goto(origin + buildPrefix + 'editor.html?lang=ja' + suffix);
@@ -451,8 +523,11 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     }));
     assert.deepEqual(boxes.map(box => box.height), boxes.map(() => 26));
     assert.deepEqual(boxes.map(box => box.y), boxes.map(() => cameraBounds.y));
-    assert.deepEqual(boxes.filter(box => box.id === 'wide' || box.id === 'narrow').map(box => box.width),
-        [26, 26]);
+    // On the menu bar every control is its icon alone, whatever text it carries or its glyph
+    // measures; the label is the tooltip.
+    assert.deepEqual(boxes.map(box => box.width), boxes.map(() => 26));
+    await expect(camera).toHaveText('📷');
+    await expect(camera).toHaveAttribute('title', 'Camera');
     assert.deepEqual(boxes.slice(1).map((box, index) =>
         Number((box.x - boxes[index].x - boxes[index].width).toFixed(2))), [3, 3, 3, 3]);
     assert.equal((await canvas.boundingBox()).width, originalWidth);
@@ -565,7 +640,7 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     const entries = nav.locator(':scope > a, :scope > button, :scope > div > button');
     await expect(entries).toHaveText([
         `About TurboWarp Plus Editor ${editorPackage.version}`, 'Display settings', 'Runtime settings', 'Addons',
-        'Advanced Settings', 'Source code', 'Licenses and credits'
+        'Advanced Settings', 'AI agent settings…', 'Source code', 'Licenses and credits'
     ]);
     const displayToggle = nav.getByRole('button', {name: 'Display settings'});
     const display = nav.getByRole('list', {name: 'Display settings'});
@@ -633,6 +708,18 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     await page.keyboard.press('Escape');
     await expect(advanced).toHaveCount(0);
 
+    // Right after it, the AI agent settings open the workbench's dialog and return focus to the Plus icon.
+    await logo.click();
+    await nav.getByRole('button', {name: 'AI agent settings…'}).click();
+    const agentSettings = page.getByRole('dialog', {name: 'AI agent settings'});
+    await expect(agentSettings).toBeVisible();
+    await expect(nav).toBeHidden();
+    await expect(agentSettings.getByLabel('ChatGPT: Show in the menu')).toBeFocused();
+    await expect(agentSettings.getByLabel('Claude URL')).toHaveAttribute('placeholder', 'https://claude.ai/new');
+    await page.keyboard.press('Escape');
+    await expect(agentSettings).toHaveCount(0);
+    await expect(logo).toBeFocused();
+
     await logo.click();
     const [addons] = await Promise.all([
         page.waitForEvent('popup'),
@@ -651,7 +738,7 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     await expect(page.getByRole('navigation', {name: japaneseName})
         .locator(':scope > a, :scope > button, :scope > div > button')).toHaveText([
         `TurboWarp Plus Editor ${editorPackage.version}について`, '表示設定', '動作設定', 'アドオン',
-        '高度な設定', 'ソースコード', 'ライセンスとクレジット'
+        '高度な設定', 'AI エージェント設定…', 'ソースコード', 'ライセンスとクレジット'
     ]);
 });
 
@@ -1180,6 +1267,47 @@ test('the default editor pins the sprite list and supports the drawer and detach
     const buttons = await Promise.all(controls.map(name => tools.getByRole('button', {name, exact: true}).boundingBox()));
     assert.ok(buttons.every(button => button.y === buttons[0].y));
     assert.ok(buttons[0].x < buttons[1].x && buttons[1].x < buttons[2].x);
+    // The drawer's view bar offers the project folder, the Git history and the AI agent menu beside the sprite list.
+    // Before a folder or a repository is chosen, each view offers to choose one.
+    const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    const drawerView = (name: string) => drawerBar.getByRole('button', {name, exact: true});
+    await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
+    assert.deepEqual(await drawerBar.getByRole('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
+        ['Sprites', 'Project folder', 'Git history', 'AI agents']);
+    const agents = drawerView('AI agents');
+    await expect(agents).toHaveAttribute('aria-haspopup', 'menu');
+    await agents.click();
+    const agentMenu = page.getByRole('menu', {name: 'AI agents', exact: true});
+    await expect(agentMenu.getByRole('menuitem')).toHaveText(['ChatGPT', 'Claude', 'AI agent settings…']);
+    await expect(agentMenu.getByRole('menuitem', {name: 'ChatGPT'})).toBeFocused();
+    // Record the new tab instead of leaving the test origin.
+    await page.evaluate(() => {
+        const open = window.open;
+        window.open = (...args) => {
+            window.open = open;
+            (window as Window & {openedAgent?: unknown[]}).openedAgent = args;
+            return null;
+        };
+    });
+    await page.keyboard.press('Enter');
+    assert.deepEqual(await page.evaluate(() => (window as Window & {openedAgent?: unknown[]}).openedAgent),
+        ['https://chatgpt.com/', '_blank', 'noopener,noreferrer']);
+    await expect(agentMenu).toHaveCount(0);
+    await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
+    await agents.click();
+    await agentMenu.getByRole('menuitem', {name: 'AI agent settings…'}).click();
+    const agentSettings = page.getByRole('dialog', {name: 'AI agent settings'});
+    await expect(agentSettings).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(agentSettings).toHaveCount(0);
+    await expect(agents).toBeFocused();
+    await drawerView('Project folder').click();
+    await expect(page.getByText('Open a project folder to show its files here.', {exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Open Project Folder…', exact: true})).toBeVisible();
+    await drawerView('Git history').click();
+    await expect(page.getByText('Choose a Git repository to show its history here.', {exact: true})).toBeVisible();
+    await drawerView('Sprites').click();
+    await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
     await tools.getByRole('button', {name: 'Search sprites'}).click();
     const search = page.getByRole('searchbox', {name: 'Search sprites'});
     await search.fill(await page.evaluate(() => vm.editingTarget.getName()));
