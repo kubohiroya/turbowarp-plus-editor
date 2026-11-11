@@ -216,6 +216,31 @@ GUIとPackagerは `site/source.json` に記録したSHAをチェックアウト�
 
 ローカル Git パネルの Cloudflare 方式を有効にするには、ビルド時に `TW_PLUS_GIT_BFF_ORIGIN` と `TW_PLUS_GIT_PROXY_ORIGIN` の両方に正確な HTTPS オリジンを指定します。Desktop ローカル方式は、ホストが `EditorPreload.localGit` を公開すると選べます。起動 URL の `twPlusLocalGit=0` で Git パネルを非表示にできます。
 
+ローカル Git パネルは、GitHub のトークンを受け取りません。どちらの方式でも、パネルが受け取るのは短い期限の Bearer だけです。プロキシは `/v1/git/<owner>/<repo>.git/` の Git Smart HTTP の4つの経路だけを中継し、要求のたびに次のことを確かめます。
+
+- 要求元のオリジン
+- Bearer
+- 接続時に記録したリポジトリ ID
+- 操作
+
+push では、上流へ送る前に `Git-Push-Id` を予約します。
+
+- **Cloudflare 方式（ブラウザー）**
+  - Editor は BFF の `/v1/git-auth/start` に `{remote, write}` を送り、返された GitHub App の認可 URL を開きます。
+  - その後、ログインのチケットで `/v1/git-auth/session` を問い合わせます。チケットはメモリにだけ持ちます。
+  - GitHub のトークンは、BFF の Durable Object に暗号化して置きます。CORS Worker の Git の経路は、要求ごとにこの Durable Object に許可を問い合わせます。
+  - ログインは最長8時間です。プロキシの Bearer は5分ごとに更新します。（[BFF の契約](https://github.com/kubohiroya/turbowarp-plus-editor/issues/315)）
+- **Desktop 方式**
+  - メインプロセスが GitHub の Device Flow で認証します。Git は `127.0.0.1` のループバックのプロキシで中継し、このプロキシは `tw-editor://.` のオリジンだけを受け付けます。
+  - トークンはメインプロセスの外に出ません。保存を選んだときは、OS の保護機能で暗号化します。
+  - 今は、起動時に GitHub App の client ID を渡す必要があります。製品版に client ID を入れること、fine-grained personal access token での接続、その後の手元の Git の認証情報の利用は、[turbowarp-plus-desktop#40](https://github.com/kubohiroya/turbowarp-plus-desktop/issues/40) で予定しています。
+
+GitHub App の client ID は秘密の値ではありません。Device Flow は client secret を使いません。残るリスクはフィッシングです。第三者が同じ client ID で Device Flow を始め、利用者にそのコードを入れさせることができます。
+
+- コードは、Editor の画面に出たものだけを入れてください。
+- 許可は、GitHub の **Settings → Applications → Authorized GitHub Apps** から取り消せます。
+- App が求める権限は Metadata の read と Contents の read/write だけです。App が触れるのは、インストールしたリポジトリだけです。
+
 統合Editorの動作確認はこのリポジトリが担当します。既存の上流ライブラリの単体テストとGUIの機能フラグは維持します。新配信先の確認後、各参照先を移行し、旧data-editorのPagesを停止します。旧サイトへのリダイレクト配信は残しません。切戻しは直前のGUI固定SHA・サイト差分へのrevertと直前成果物の再配信で行います。
 
 ### CI の検証範囲
