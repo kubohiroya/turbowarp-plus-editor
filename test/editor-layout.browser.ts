@@ -1512,11 +1512,12 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await page.goto(url);
     await expect(groups).toHaveCount(1);
     const spriteName = await page.evaluate(() => window.vm.editingTarget.getName());
-    const tabs = () => page.getByRole('tab', {name: spriteName, exact: true});
+    const originalTab = groups.first().getByRole('tab', {name: spriteName, exact: true});
+    const splitTab = groups.last().getByRole('tab', {name: `${spriteName}(2)`, exact: true});
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     const menu = (group: ReturnType<typeof page.locator>) => group.getByRole('button', {name: 'Editor panel layout'});
-    await expect(tabs()).toHaveCount(1);
+    await expect(originalTab).toBeVisible();
     await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
     const code = section('Code');
     const costumes = section('Costumes');
@@ -1572,13 +1573,14 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await menu(groups.first()).click();
     await page.getByRole('menuitem', {name: 'Split right'}).click();
     await expect(groups).toHaveCount(2);
-    await expect(tabs()).toHaveCount(2);
+    await expect(originalTab).toBeVisible();
+    await expect(splitTab).toBeVisible();
     await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
     await section('Code').click();
     await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
-    await groups.first().getByRole('tab', {name: spriteName, exact: true}).click();
+    await originalTab.click();
     await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
-    await groups.last().getByRole('tab', {name: spriteName, exact: true}).click();
+    await splitTab.click();
     await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
     await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
 
@@ -1593,7 +1595,7 @@ test('the default Dockview splits one sprite editor and restores each view secti
     const upper = await groups.first().boundingBox();
     const lower = await groups.last().boundingBox();
     assert(upper && lower && lower.y > upper.y);
-    await groups.last().getByRole('button', {name: 'Close ' + spriteName, exact: true}).click();
+    await groups.last().getByRole('button', {name: `Close ${spriteName}(2)`, exact: true}).click();
     await expect(groups).toHaveCount(1);
     assert.deepEqual(errors, []);
 });
@@ -1673,7 +1675,9 @@ test('the Dockview asset connection restores the native costume and sound select
             assert(Math.abs(before[key] - after[key]) <= 2, key + ': ' + before[key] + ' vs ' + after[key]);
         }
     };
-    const activate = (index: number) => groups.nth(index).getByRole('tab', {name: spriteName, exact: true}).click();
+    const viewTab = (index: number) => groups.nth(index)
+        .getByRole('tab', {name: index === 0 ? spriteName : `${spriteName}(2)`, exact: true});
+    const activate = (index: number) => viewTab(index).click();
 
     await section('Costumes').click();
     await choose('Pane costume A');
@@ -1747,8 +1751,7 @@ test('the Dockview asset connection restores the native costume and sound select
     await expect(selected).toContainText('Pane sound B');
 
     await section('Properties & Variables').click();
-    const viewIds = await Promise.all([0, 1].map(index => groups.nth(index)
-        .getByRole('tab', {name: spriteName, exact: true}).getAttribute('data-tab-panel-id')));
+    const viewIds = await Promise.all([0, 1].map(index => viewTab(index).getAttribute('data-tab-panel-id')));
     const pane = (group: number) => page.locator('[id="' + viewIds[group] + '-content"]');
     const variable = (group: number) => pane(group).getByRole('textbox', {name: 'Pane counter'});
     const properties = (group: number) => pane(group).getByRole('textbox', {name: 'Sprite name'});
@@ -1869,6 +1872,53 @@ test('the Dockview variables pane lists only variables owned by the selected tar
     await expect(score).toHaveValue('17');
     await expect(variableRow('作品用')).toHaveCount(0);
     assert.equal(await page.evaluate(() => vm.runtime.getTargetForStage().variables['project-score'].value), 23);
+});
+
+test('variable counts open the project search at the selected kind of access', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const stage = vm.runtime.getTargetForStage();
+        stage.createVariable('access-global', 'アクセス数', '', false);
+        sprite.createVariable('access-local', 'アクセス数', '', false);
+        const add = (id, opcode, variableId) => sprite.blocks.createBlock({
+            id, opcode, inputs: {}, fields: {VARIABLE: {name: 'VARIABLE', id: variableId, value: 'アクセス数', variableType: ''}},
+            shadow: false, topLevel: true, parent: null, next: null, x: 30, y: 30
+        });
+        add('access-read', 'data_variable', 'access-global');
+        add('access-write', 'data_changevariableby', 'access-global');
+        add('access-local-read', 'data_variable', 'access-local');
+        vm.refreshWorkspace();
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        const center = workspace.centerOnBlock.bind(workspace);
+        workspace.centerOnBlock = id => {
+            document.documentElement.dataset.testCenteredBlock = id;
+            center(id);
+        };
+    });
+    await page.getByRole('button', {name: '背景', exact: true}).click();
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    await toolbar.getByRole('tab', {name: '変数など', exact: true}).click();
+    const pane = page.getByRole('region', {name: '変数', exact: true});
+    const results = page.getByRole('listbox', {name: '検索結果'}).getByRole('option');
+    await expect(pane.getByRole('button', {name: 'アクセス数: 読み取り 1'})).toBeVisible();
+    await pane.getByRole('button', {name: 'アクセス数: 変更 1'}).click();
+    await expect(results).toHaveCount(1);
+    await expect(results.first()).toContainText('変更');
+    await page.getByRole('button', {name: '読み取り', exact: true}).click();
+    await expect(results).toHaveCount(1);
+    await expect(results.first()).toContainText('読み取り');
+    await page.evaluate(() => {
+        const sprite = vm.runtime.targets.find(target => target.isOriginal && !target.isStage);
+        const original = sprite.blocks.getBlock('access-read');
+        sprite.blocks.createBlock({...original, id: 'access-read-added', x: 90});
+    });
+    await expect(results).toHaveCount(2);
+    await expect(pane.getByRole('button', {name: 'アクセス数: 読み取り 2'})).toHaveCount(1);
+    await results.first().click();
+    await expect(page.locator('html')).toHaveAttribute('data-test-centered-block', 'access-read');
 });
 
 test('two Dockview code panes keep independent positions and zoom for the same sprite', {timeout: 45_000}, async t => {
