@@ -13,7 +13,8 @@ import {EditorTabLayout} from './editor-tabs.tsx';
 import {stageLauncherSlot, StageDisplayMenuContext, TargetSwitchContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
 import {renderProjectFolderExplorer} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
-import {followChangeMarks, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
+import type {FollowFileStatuses} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
+import {followFileStatuses, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
 import {createAiAgents} from '@kubohiroya/turbowarp-plus-editor-workbench/ai-agents';
 
 export {WindowLayoutContext} from './context.ts';
@@ -82,9 +83,9 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
     const drawerViews = React.useMemo(() => {
         const agents = aiAgents.drawerMenu;
         if (typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker !== 'function') return {agents};
-        const marks = (directory: FileSystemDirectoryHandle, update) => followChangeMarks(vm, directory, update);
+        const fileStatuses: FollowFileStatuses = (directory, update) => followFileStatuses(vm, directory, update);
         return {views: [
-            {id: 'project' as const, render: ({locale}) => renderProjectFolderExplorer(React.createElement, {vm, locale, marks})},
+            {id: 'project' as const, render: ({locale}) => renderProjectFolderExplorer(React.createElement, {vm, locale, fileStatuses})},
             {id: 'git-history' as const, render: ({locale}) => renderHistoryView(React.createElement, {vm, locale})}
         ], agents};
     }, [vm]);
