@@ -4,13 +4,14 @@ import type {Action, FolderActions, ProjectFileStorage} from './project-file-dia
 
 type Entry = [command: string, label: string, action: Action | undefined];
 
-type SaveEntries = {storage: ProjectFileStorage; folder?: FolderActions; saveAs?: Action};
+type SaveEntries = {storage: ProjectFileStorage; folder?: FolderActions; saveAs?: Action; saveCommit?: Action};
 
-function saveEntries(locale: string, {storage, folder, saveAs}: SaveEntries): Entry[] {
+function saveEntries(locale: string, {storage, folder, saveAs, saveCommit}: SaveEntries): Entry[] {
     const ja = locale.startsWith('ja');
     return [
         ['save', ja ? '保存' : 'Save', storage.canSave ? storage.overwrite || folder?.save : undefined],
-        ['save-as', ja ? '名前を変えて保存…' : 'Save As…', storage.canSave ? saveAs : undefined]
+        ['save-as', ja ? '名前を変えて保存…' : 'Save As…', storage.canSave ? saveAs : undefined],
+        ...(saveCommit ? [['save-commit', ja ? '保存してコミット…' : 'Save and Commit…', saveCommit] as Entry] : [])
     ];
 }
 
@@ -69,6 +70,7 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
         folder?: FolderActions;
         storage: ProjectFileStorage;
         saveAs?: Action;
+        saveCommit?: Action;
         exportProject?: Action;
         properties?: Action;
         diagnostics?: Action;

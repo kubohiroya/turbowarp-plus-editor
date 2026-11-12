@@ -12,6 +12,10 @@ import {createProjectDiagnostics} from './diagnostics.ts';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import {renderProjectCommitDialog} from '@kubohiroya/turbowarp-plus-editor-ui/project-commit-dialog';
+import {renderProjectPublicationDialog} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication-dialog';
+import type {PublicationCommit} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
+import type {ProjectFolderWorkflows} from '../project-folder-host.ts';
 import type {ExtensionSpec} from '@kubohiroya/turbowarp-extension-loader';
 import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
 
@@ -71,14 +75,24 @@ export const restoreProjectTitle = vm => projects.get(vm)?.properties.restoreTit
 export const isProjectLoading = vm => Boolean(projects.get(vm)?.properties.snapshot().loading);
 export const subscribeProjectLoad = (vm, listener: () => void) => projects.get(vm)?.properties.subscribe(listener);
 
-export function projectFileActions(vm, locale: string, storage: ProjectFileStorage, detachFolder: () => void, add?: () => void) {
+export function projectFileActions(vm, locale: string, storage: ProjectFileStorage, detachFolder: () => void, add?: () => void,
+    folderWorkflows?: ProjectFolderWorkflows) {
     const tools = projects.get(vm);
     if (!tools?.dialogs) return {};
     const {dialogs, properties, payloads} = tools;
     const ja = locale.startsWith('ja');
     const label = (jp: string, en: string) => ja ? jp : en;
+    const publication = folderWorkflows?.publication;
+    const showPublication = publication ? (commit: PublicationCommit) =>
+        dialogs.showView(label('PR の作成・進捗', 'Pull Request'), locale,
+            (document, close) => renderProjectPublicationDialog(document, locale, publication, commit, close, () => showCommit?.())) :
+        undefined;
+    const showCommit: (() => void) | undefined = storage.canSave && folderWorkflows?.commit ? () =>
+        dialogs.showView(label('保存してコミット', 'Save and Commit'), locale,
+            (document, close) => renderProjectCommitDialog(document, locale, folderWorkflows.commit, close, showPublication)) : undefined;
     const showSaveAs = () => dialogs.showView(label('名前を変えて保存', 'Save As'), locale, (document, close) =>
-        renderSaveAsForm(document, locale, storage, async (name, format, open) => {
+        renderSaveAsForm(document, locale, storage, async (request, open, signal) => {
+            const {name, format} = request;
             if (tools.saving) return false;
             tools.saving = true;
             const sequence = properties.loadState().sequence;
@@ -87,6 +101,14 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
             const changed = () => {edited = true;};
             vm.on?.('PROJECT_CHANGED', changed);
             try {
+                if (format === 'folder') {
+                    const serialize = () => withProjectSerialization(vm, {title: name, preview: true}, () => {
+                        const save = () => vm.saveProjectSb3('uint8array');
+                        return payloads?.withEmbedded(save) ?? save();
+                    });
+                    return request.git ? await folderWorkflows?.repositoryCreation?.start(request.git, serialize, current, signal) :
+                        await folderWorkflows?.createFolder?.(serialize, current);
+                }
                 let embed: (() => void) | undefined;
                 let commitMetadata: (() => void) | undefined;
                 return await saveProjectAs(storage, name, {
@@ -108,7 +130,14 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
                 vm.off?.('PROJECT_CHANGED', changed);
                 tools.saving = false;
             }
-        }, close));
+        }, close, {
+            folder: folderWorkflows?.createFolder ? {github: folderWorkflows.repositoryCreation && {
+                connectForCreation: folderWorkflows.repositoryCreation.connect,
+                licenses: folderWorkflows.repositoryCreation.licenses,
+                publication: folderWorkflows.repositoryCreation
+            }} : undefined,
+            openCommit: showCommit
+        }));
     const openPayloads = () => dialogs.showPayloadFormats(payloads.edit(), locale, payloads.canConvert ? () => {
         const conversion = payloads.convert();
         if (conversion) dialogs.showBundleAssetConversion(conversion, locale);
@@ -138,6 +167,7 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
     const hasProperties = tools.propertiesEnabled || tools.projectURIEnabled;
     return {
         saveAs: showSaveAs,
+        saveCommit: showCommit,
         properties: hasProperties ?
             () => dialogs.showProperties(locale, tools.projectURIEnabled ? editProjectURI(vm) : undefined) : undefined,
         diagnostics: hasProperties ? undefined : () => dialogs.showDiagnostics(locale),

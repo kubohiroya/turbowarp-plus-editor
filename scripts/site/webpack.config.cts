@@ -10,15 +10,60 @@ const hostRequire = createRequire(path.join(gui, 'package.json'));
 // Resolved from this file, not the working directory: the site build runs with the GUI checkout as
 // its cwd, so `path.resolve` here would have reached the GUI's install instead of this one.
 const rootRequire = createRequire(path.join(__dirname, '..', '..', 'package.json'));
+const projectSavePreviewRoot = process.env.TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT;
+if (projectSavePreviewRoot && !path.isAbsolute(projectSavePreviewRoot)) {
+    throw new Error('The project save preview requires an absolute package root');
+}
+const projectSaveRequire = projectSavePreviewRoot ?
+    createRequire(path.join(projectSavePreviewRoot, 'package.json')) : rootRequire;
+if (projectSavePreviewRoot) {
+    for (const name of ['sb3-toolchain', 'turbowarp-plus-editor-project-folder', 'turbowarp-plus-editor-git']) {
+        const manifest = path.join(projectSavePreviewRoot, 'node_modules', '@kubohiroya', name, 'package.json');
+        if (!fs.existsSync(manifest)) throw new Error(`Install @kubohiroya/${name} in the project save preview root`);
+    }
+}
+const optionalProjectSaveEntry = (specifier, requiredForPreview = false) => {
+    try {
+        return projectSaveRequire.resolve(specifier);
+    } catch (error) {
+        if ((projectSavePreviewRoot && requiredForPreview) ||
+            !['ERR_PACKAGE_PATH_NOT_EXPORTED', 'MODULE_NOT_FOUND'].includes(error.code)) throw error;
+        return undefined;
+    }
+};
+const toolchainManifest = optionalProjectSaveEntry('@kubohiroya/sb3-toolchain/package.json', true);
+const toolchainPackage = toolchainManifest && JSON.parse(fs.readFileSync(toolchainManifest, 'utf8'));
+const toolchainBrowser = toolchainPackage?.exports?.['./browser']?.import;
+const projectUnpackEntry = toolchainBrowser && path.resolve(path.dirname(toolchainManifest), toolchainBrowser);
+if (projectSavePreviewRoot && !projectUnpackEntry) throw new Error('The preview toolchain must export ./browser');
+const projectUnpackHashSource = projectUnpackEntry && path.dirname(
+    createRequire(projectUnpackEntry).resolve('@noble/hashes/legacy.js'));
+const saveCommitEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/task-queue', true);
+const initialCommitEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/initial-commit');
+const publicationEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/pull-request-queue');
+const repositorySeedEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-project-starter/seed');
+const authPackage = '@kubohiroya/turbowarp-plus-editor-auth';
+const authEntry = optionalProjectSaveEntry(authPackage) ?? rootRequire.resolve(authPackage);
+const creationAuth = initialCommitEntry && repositorySeedEntry && projectUnpackEntry && rootRequire(authEntry);
+const repositoryCreation = typeof creationAuth?.createRepositoryCreationClient === 'function' &&
+    typeof creationAuth.createCloudflareRepositoryCreationAuthorization === 'function';
+const repositoryLicenses = repositoryCreation ? [
+    {id: 'MPL-2.0', text: fs.readFileSync(path.resolve(__dirname, '../../LICENSE.MPL-2.0'), 'utf8')},
+    {id: 'GPL-3.0-only', text: fs.readFileSync(path.resolve(__dirname, '../../LICENSE'), 'utf8')}
+] : [];
 // Standalone webpack builds also carry the revision of the Editor checkout that produced them.
 const editorRevision = execFileSync('git', ['rev-parse', 'HEAD'], {
     cwd: path.join(__dirname, '..', '..'), encoding: 'utf8'
 }).trim();
 const revisionField = process.env.TW_PLUS_DESKTOP_SOURCE ? 'editorRevision' : 'siteRevision';
+const preview = projectSavePreviewRoot ? {
+    projectSavePreview: true,
+    revision: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: gui, encoding: 'utf8'}).trim()
+} : {};
 config.plugins.push({
     apply(compiler) {
         compiler.hooks.emit.tap('EditorRevision', compilation => {
-            const json = JSON.stringify({[revisionField]: editorRevision}) + '\n';
+            const json = JSON.stringify({[revisionField]: editorRevision, ...preview}) + '\n';
             compilation.assets['build-info.json'] = {source: () => json, size: () => Buffer.byteLength(json)};
         });
     }
@@ -51,6 +96,8 @@ config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
     __TW_PLUS_EDITOR_VERSION__: JSON.stringify(rootRequire('./package.json').version),
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog),
     __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit),
+    __TW_PLUS_REPOSITORY_LICENSES__: JSON.stringify(repositoryLicenses),
+    __TW_PLUS_SB3_TOOLCHAIN_VERSION__: JSON.stringify(toolchainPackage?.version ?? null),
     __TW_PLUS_CAPTURE_EDITOR_HOST__: process.env.TW_PLUS_TEST_EDITOR_HOST === '1' ?
         'window.__twPlusCaptureEditorHost' : 'undefined'
 }));
@@ -60,7 +107,7 @@ const hookSource = fs.readFileSync(path.join(gui, 'src', 'addons', 'hooks.js'), 
 if (!hookSource.includes('getHostIntegration') || !hookSource.includes('__TW_GUI_HOST__')) {
     throw new Error('The pinned GUI does not expose the optional host bridge');
 }
-const injections = {
+const injections: Record<string, string | string[]> = {
     __TW_GUI_HOST__: bridge,
     __TW_PLUS_FILE_UPLOADER__: path.join(gui, 'src', 'lib', 'file-uploader.js'),
     __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json'),
@@ -68,6 +115,24 @@ const injections = {
     __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: [path.join(gui, 'src', 'reducers', 'project-changed.js'), 'setProjectUnchanged'],
     __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle']
 };
+if (projectUnpackEntry) injections.__TW_PLUS_UNPACK_PROJECT_FOLDER__ = [projectUnpackEntry, 'unpackSb3'];
+if (saveCommitEntry) {
+    injections.__TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__ = [saveCommitEntry, 'createSaveCommitQueue'];
+    injections.__TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ = [saveCommitEntry, 'createIndexedDbSaveCommitJournal'];
+    injections.__TW_PLUS_PROJECT_SAVE_LOCK__ = [saveCommitEntry, 'withGitMutationLock'];
+}
+if (repositoryCreation) {
+    injections.__TW_PLUS_COMPOSE_REPOSITORY_SEED__ = [repositorySeedEntry, 'composeRepositorySeed'];
+    injections.__TW_PLUS_CREATE_REPOSITORY_CLIENT__ = [authEntry, 'createRepositoryCreationClient'];
+    injections.__TW_PLUS_CREATE_CLOUDFLARE_REPOSITORY_AUTH__ = [authEntry, 'createCloudflareRepositoryCreationAuthorization'];
+    injections.__TW_PLUS_CREATE_CLOUDFLARE_GIT_AUTH__ = [authEntry, 'createCloudflareGitAuth'];
+    injections.__TW_PLUS_PREPARE_INITIAL_REPOSITORY__ = [initialCommitEntry, 'prepareInitialRepository'];
+    injections.__TW_PLUS_PUSH_INITIAL_REPOSITORY__ = [initialCommitEntry, 'pushInitialRepository'];
+}
+if (publicationEntry) {
+    injections.__TW_PLUS_INSPECT_PUBLICATION_REPOSITORY__ = [publicationEntry, 'inspectPublicationRepository'];
+    injections.__TW_PLUS_PUSH_PUBLICATION_COMMIT__ = [publicationEntry, 'pushPublicationCommit'];
+}
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
     include: ['fonts-modal.jsx', 'manage-font.jsx'].map(file =>
@@ -205,10 +270,10 @@ config.module.rules.push({
     use: path.join(__dirname, 'connect-sprite-tabs.cts')
 });
 for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@kubohiroya/turbowarp-plus-editor-project-folder/explorer',
-    '@kubohiroya/turbowarp-plus-editor-auth',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css']) {
-    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+    config.resolve.alias[`${specifier}$`] = projectSaveRequire.resolve(specifier);
 }
+config.resolve.alias[`${authPackage}$`] = authEntry;
 const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
 // Every subpath the package exports, read from its manifest so a new one cannot be left out.
@@ -308,7 +373,9 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
     documentSourceRoot, transferSource, editorEntries.workbench, editorEntries.backpack, editorEntries.views,
-    projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource
+    projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource,
+    ...(projectUnpackEntry ? [path.dirname(projectUnpackEntry), projectUnpackHashSource] : []),
+    ...(repositoryCreation ? [path.dirname(repositorySeedEntry)] : [])
 ],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,

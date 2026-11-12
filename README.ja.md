@@ -220,6 +220,19 @@ GUIとPackagerは `site/source.json` に記録したSHAをチェックアウト�
 
 ローカル Git パネルの Cloudflare 方式を有効にするには、ビルド時に `TW_PLUS_GIT_BFF_ORIGIN` と `TW_PLUS_GIT_PROXY_ORIGIN` の両方に正確な HTTPS オリジンを指定します。Desktop ローカル方式は、ホストが `EditorPreload.localGit` を公開すると選べます。起動 URL の `twPlusLocalGit=0` で Git パネルを非表示にできます。
 
+#### GitHub リポジトリ作成と PR 登録のローカル検証
+
+未公開の依存で確認する場合は、ローカル webpack の `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` に、ビルド済みの `sb3-toolchain`、`turbowarp-plus-editor-project-folder`、`turbowarp-plus-editor-project-starter`、`turbowarp-plus-editor-git`、`turbowarp-plus-editor-auth` を `node_modules/@kubohiroya/` に配置したディレクトリの絶対パスを指定します。GUI は `site/source.json` の固定版を使います。
+
+- **ファイル → 名前を変えて保存 → プロジェクトフォルダ**で「Git でバージョン管理する」を選びます。URL を貼り付けるか、認証済みの作成先と名前を選び、公開範囲と作品の情報を確認します。初回 push の完了後に作品を開くと、以後の「保存」が選んだリポジトリ内の `project/` に書き戻します。
+- **Desktop のファイル → 保存してコミット → PR を作成・確認**から、完了済みコミットの PR を登録できます。対象リポジトリをローカル Git の GitHub App に書き込み権限付きで接続し、Desktop の画面で対象コミットと操作を承認します。同じコミットの行から、PR のリンク、CI・マージの状態、再開操作を確認できます。
+
+ヘッドレス検証では `E2E_PROJECT_SAVE_BUILD` にプレビューの出力先、`E2E_GIT_HTTP_FIXTURE` に Git パッケージの `test/smart-http-fixture.js` の絶対パスを指定します。作成と PR の試験は GitHub を模擬し、実際の Git 通信をローカルの Git CGI で検証します。
+
+```sh
+node --test --test-concurrency=1 test/project-folder-save.browser.ts test/project-repository-creation.browser.ts test/project-publication.browser.ts
+```
+
 ローカル Git パネルは、GitHub のトークンを受け取りません。どちらの方式でも、パネルが受け取るのは短い期限の Bearer だけです。プロキシは `/v1/git/<owner>/<repo>.git/` の Git Smart HTTP の4つの経路だけを中継し、要求のたびに次のことを確かめます。
 
 - 要求元のオリジン
