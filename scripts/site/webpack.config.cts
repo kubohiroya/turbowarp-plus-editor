@@ -50,7 +50,9 @@ if (cloudflareGit && ![bffOrigin, proxyOrigin].every(value => {
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
     __TW_PLUS_EDITOR_VERSION__: JSON.stringify(rootRequire('./package.json').version),
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog),
-    __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit)
+    __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit),
+    __TW_PLUS_CAPTURE_EDITOR_HOST__: process.env.TW_PLUS_TEST_EDITOR_HOST === '1' ?
+        'window.__twPlusCaptureEditorHost' : 'undefined'
 }));
 // The host owns every additional module; the fork only consults this optional build-time value.
 const bridge = path.join(__dirname, '..', '..', 'site', 'gui-integration', 'index.ts');
@@ -64,9 +66,7 @@ const injections = {
     __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json'),
     __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: [path.join(gui, 'src', 'reducers', 'tw.js'), 'setFileHandle'],
     __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: [path.join(gui, 'src', 'reducers', 'project-changed.js'), 'setProjectUnchanged'],
-    __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle'],
-    __TW_PLUS_GIT_DESERIALIZE_BLOCKS__: ['scratch-vm/src/serialization/sb3.js', 'deserializeBlocks'],
-    __TW_PLUS_GIT_VM_BLOCKS__: 'scratch-vm/src/engine/blocks.js'
+    __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle']
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
