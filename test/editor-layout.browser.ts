@@ -1483,6 +1483,125 @@ test('the stage drawer moves, resizes and folds into its attached editor edge', 
     await expect.poll(() => handle.evaluate(node => getComputedStyle(node, '::before').rotate)).toBe('45deg');
 });
 
+test('the stage drawer restores its geometry and visibility with the project layout', {timeout: 60_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.addInitScript(() => {delete window.showOpenFilePicker;});
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+    const options = page.getByRole('button', {name: 'Stage opening options', exact: true});
+    const open = page.getByRole('button', {name: 'Open stage', exact: true});
+    const handle = page.getByRole('button', {name: 'Reveal stage', exact: true});
+    const drawer = page.locator('[data-movable-stage]');
+    const stage = drawer.locator('..');
+    const canvas = drawer.locator('[data-gui-stage] canvas');
+    const selectDisplay = async (label: string) => {
+        await drawer.getByRole('button', {name: 'Stage display', exact: true}).click();
+        await page.getByRole('menuitem', {name: label, exact: true}).click();
+    };
+    const openDrawer = async () => {
+        await options.click();
+        await page.getByRole('menuitem', {name: 'Show in the drawer', exact: true}).click();
+        await expect(canvas).toBeVisible();
+        const panel = drawer.locator(':scope > [tabindex="-1"]');
+        await expect(panel).toBeFocused();
+        await expect(panel).toHaveCSS('translate', 'none');
+    };
+    const reload = async () => {
+        await layoutSettled(page);
+        await page.reload();
+        await layoutSettled(page);
+    };
+
+    await layoutSettled(page);
+    await openDrawer();
+    const initial = await stage.boundingBox();
+    const header = await drawer.locator('[data-stage-drawer-handle]').boundingBox();
+    assert(initial && header);
+    const area = await stage.evaluate(node => {
+        const {left, bottom} = (node as HTMLElement).offsetParent.getBoundingClientRect();
+        return {left, bottom: Math.min(bottom, innerHeight)};
+    });
+    const x = header.x + header.width * 0.75;
+    const y = header.y + header.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + area.left - initial.x, y + area.bottom - initial.y - initial.height, {steps: 8});
+    await page.mouse.up();
+    await expect(stage).toHaveAttribute('data-stage-drawer-contacts', 'left bottom');
+    const resize = await drawer.locator('[data-stage-resize="right"]').boundingBox();
+    assert(resize);
+    await page.mouse.move(resize.x + resize.width / 2, resize.y + resize.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(resize.x + resize.width / 2 + 40, resize.y + resize.height / 2, {steps: 8});
+    await page.mouse.up();
+    await expect.poll(async () => (await stage.boundingBox())?.width).toBe(initial.width + 40);
+    const savedGeometry = await stage.boundingBox();
+    const checkGeometry = async () => {
+        await expect(canvas).toBeVisible();
+        await expect(stage).toHaveAttribute('data-stage-drawer-contacts', 'left bottom');
+        await expect.poll(() => stage.boundingBox()).toEqual(savedGeometry);
+    };
+
+    await reload();
+    await checkGeometry();
+    await expect(open).toBeDisabled();
+    await expect(options).toBeDisabled();
+    await selectDisplay('Close the drawer');
+    await reload();
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeVisible();
+    await open.click();
+    await checkGeometry();
+
+    await selectDisplay('Enter full screen mode');
+    await expect(page.locator('[data-plus-stage-frame][data-fullscreen]')).toBeVisible();
+    await page.reload();
+    await layoutSettled(page);
+    await expect(page.locator('[data-plus-stage-frame][data-fullscreen]')).toHaveCount(0);
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeHidden();
+    await expect(open).toBeEnabled();
+    await openDrawer();
+    await checkGeometry();
+
+    const popupReady = page.waitForEvent('popup');
+    await selectDisplay('Show in a separate window');
+    const popup = await popupReady;
+    await expect(popup.locator('[data-gui-stage] canvas')).toBeVisible();
+    await reload();
+    await expect.poll(() => page.context().pages().length).toBe(1);
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeHidden();
+    await expect(open).toBeEnabled();
+
+    const bytes = await page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
+    const project = await JSZip.loadAsync(Uint8Array.from(bytes));
+    const data = JSON.parse(await project.file('project.json').async('string'));
+    data.targets.find(target => !target.isStage).name = 'Another sprite';
+    project.file('project.json', JSON.stringify(data));
+    const buffer = await project.generateAsync({type: 'nodebuffer'});
+    await openDrawer();
+    await checkGeometry();
+    await selectDisplay('Close the drawer');
+    await layoutSettled(page);
+    page.on('dialog', dialog => dialog.accept());
+    await page.getByText('File', {exact: true}).click();
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByText('Open SB3 File…', {exact: true}).click();
+    await (await chooser).setFiles({
+        name: 'Another project.sb3', mimeType: 'application/octet-stream', buffer
+    });
+    await expect.poll(() => page.evaluate(() => vm.runtime.targets.some(target => target.getName() === 'Another sprite')))
+        .toBe(true);
+    await layoutSettled(page);
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeHidden();
+    await reload();
+    await expect(handle).toBeVisible();
+    await open.click();
+    await checkGeometry();
+});
+
 test('the default editor pins the sprite list and supports the drawer and detached window layout', {timeout: 60_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);

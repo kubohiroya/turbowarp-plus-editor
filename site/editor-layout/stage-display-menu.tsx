@@ -97,7 +97,11 @@ function DisplayMenu({locale, presets, fullscreen}) {
         icon: <PresetIcon icon={icon} />,
         onSelect: () => selectDisplay(handleClick)
     }));
-    const enterFullscreen = fullscreenItem(locale, false, () => selectDisplay(fullscreen.handleClick));
+    const enterFullscreen = fullscreenItem(locale, false, () => {
+        // Dockview flushes the drawer state when the fullscreen view unmounts it.
+        stage?.resetDrawerPresentation();
+        selectDisplay(fullscreen.handleClick);
+    });
     const openWindow = () => {
         if (stageHidden) setStageVisible(true);
         if (stage?.docked) stage.commands.close();

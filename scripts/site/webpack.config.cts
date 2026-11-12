@@ -111,6 +111,11 @@ config.module.rules.push({
     enforce: 'pre',
     use: path.join(__dirname, 'connect-project-export.cts')
 });
+config.module.rules.push({
+    include: fs.realpathSync(path.join(gui, 'src/lib/tw-state-manager-hoc.jsx')),
+    enforce: 'pre',
+    use: path.join(__dirname, 'connect-stage-fullscreen-routing.cts')
+});
 if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
     // Give only the GUI project URL fetcher the browser host's URL resolution.
     config.module.rules.push({
