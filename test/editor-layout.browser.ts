@@ -588,7 +588,9 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     await stage.getByRole('menuitem', {name: 'Enter full screen mode', exact: true}).click();
     await expect(controls).toHaveCount(0);
     await expect(page.getByRole('button', {name: 'Camera', exact: true})).toBeVisible();
-    await page.getByAltText('Exit full screen mode', {exact: true}).click();
+    await expect(page.getByAltText('Exit full screen mode', {exact: true})).toBeHidden();
+    await page.getByRole('button', {name: 'Stage display', exact: true}).click();
+    await page.getByRole('menuitem', {name: 'Exit full screen mode', exact: true}).click();
     await expect(camera).toBeVisible();
 });
 
@@ -1147,24 +1149,31 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     assert.deepEqual(errors, []);
 });
 
-test('the menu bar opens one stage in each presentation and focuses the existing stage', {timeout: 60_000}, async t => {
+test('the menu bar disables both stage buttons while a stage is open', {timeout: 60_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     const editorUrl = secureOrigin + buildPrefix + 'editor.html?lang=ja';
     const open = page.getByRole('button', {name: 'ステージを開く', exact: true});
     const options = page.getByRole('button', {name: 'ステージの開き方'});
-    const labels = ['別ウィンドウで開く', '別ウィンドウで全画面で開く', 'ステージをタブで開く', 'ステージを引き出しで開く'];
+    const labels = ['別ウィンドウで表示', 'タブで表示', '引出しで表示'];
     const item = (index: number) => page.getByRole('menuitem', {name: labels[index], exact: true});
-    const primary = (index: number) => page.getByRole('button', {name: labels[index], exact: true});
     const stage = (target: Page) => target.locator('[data-gui-stage] canvas').first();
-    const checkOptions = async (active?: number) => {
+    const openingMenu = page.getByRole('menu', {name: 'ステージの開き方', exact: true});
+    const checkOptions = async () => {
+        await expect(open).toBeEnabled();
+        await expect(options).toBeEnabled();
         await options.press('ArrowDown');
+        await expect(openingMenu.getByRole('menuitem')).toHaveText(labels);
         for (let index = 0; index < labels.length; index++) {
-            if (active === undefined || active === index) await expect(item(index)).toBeEnabled();
-            else await expect(item(index)).toBeDisabled();
-            if (active === index) await expect(item(index)).toHaveAttribute('aria-current', 'true');
+            await expect(item(index)).toBeEnabled();
         }
         await page.keyboard.press('Escape');
+    };
+    const checkDisabled = async () => {
+        await expect(open).toBeDisabled();
+        await expect(options).toBeDisabled();
+        await expect(options).toHaveAttribute('aria-expanded', 'false');
+        await expect(openingMenu).toBeHidden();
     };
     await page.setViewportSize({width: 1024, height: 800});
     await page.goto(editorUrl);
@@ -1206,68 +1215,391 @@ test('the menu bar opens one stage in each presentation and focuses the existing
         await expect(stage(target)).toBeVisible();
         assert.equal(await page.evaluate(() => vm.renderer.canvas === window.initialStageCanvas), true);
     };
+    const display = (target: Page) => target.getByRole('button', {name: 'ステージの表示', exact: true});
+    const displayIcon = (target: Page) => display(target).locator('svg');
+    const popupMenuItem = (target: Page, label: string) => target.getByRole('menuitem', {name: label, exact: true});
+    const popupFull = (target: Page) => target.evaluate(() => Boolean(document.fullscreenElement));
+    const popupMenu = async (target: Page, fullscreen: boolean) => {
+        await display(target).click();
+        const menu = target.getByRole('menu', {name: 'ステージの表示', exact: true});
+        await expect(menu.getByRole('menuitem')).toHaveText([
+            fullscreen ? '全画面表示を終了' : '全画面表示にする', 'エディターに戻る'
+        ]);
+    };
     await checkOptions();
+    await options.click();
+    const placementIcons = await page.getByRole('menu', {name: 'ステージの開き方', exact: true}).locator('svg path')
+        .evaluateAll(paths => paths.map(path => path.getAttribute('d')));
+    assert.equal(placementIcons.length, labels.length);
+    await page.keyboard.press('Escape');
+    const checkStagePlacementMenu = async (active: number) => {
+        await display(page).click();
+        const menu = page.getByRole('menu', {name: 'ステージの表示', exact: true});
+        const entries = labels.map((_, index) => menu.getByRole('menuitem').nth(index));
+        for (const [index, entry] of entries.entries()) {
+            await expect(entry).toHaveText(labels[index]);
+            await expect(entry.locator('svg path')).toHaveAttribute('d', placementIcons[index]);
+            if (index === active) await expect(entry).toHaveAttribute('aria-current', 'true');
+            else await expect(entry).toBeEnabled();
+        }
+    };
 
     const [popup] = await Promise.all([page.waitForEvent('popup'), open.click()]);
     await checkCanvas(popup);
-    await checkOptions(0);
-    await popup.evaluate(() => {
-        const focus = window.focus.bind(window);
-        document.body.dataset.focusCalls = '0';
-        window.focus = () => {
-            document.body.dataset.focusCalls = String(Number(document.body.dataset.focusCalls) + 1);
-            focus();
-        };
-    });
-    await primary(0).click();
-    await expect(popup.locator('body')).toHaveAttribute('data-focus-calls', '1');
+    await expect(display(popup)).toHaveCSS('border-top-width', '1px');
+    const icon = await displayIcon(popup).evaluate(node => node.outerHTML);
+    await expect(popup.locator('.dv-tabs-and-actions-container')).toBeHidden();
+    await checkDisabled();
     assert.equal(page.context().pages().length, 2);
-    await popup.close();
+    await popupMenu(popup, false);
+    await popupMenuItem(popup, '全画面表示にする').click();
+    await expect.poll(() => popupFull(popup)).toBe(true);
+    await checkDisabled();
+    await popupMenu(popup, true);
+    await popupMenuItem(popup, '全画面表示を終了').click();
+    await expect.poll(() => popupFull(popup)).toBe(false);
+    await checkDisabled();
+    await popupMenu(popup, false);
+    await Promise.all([popup.waitForEvent('close'), popupMenuItem(popup, 'エディターに戻る').click()]);
     await expect(open).toBeEnabled();
     await checkOptions();
 
     await options.click();
-    const [fullscreen] = await Promise.all([page.waitForEvent('popup'), item(1).click()]);
+    const [fullscreen] = await Promise.all([page.waitForEvent('popup'), item(0).click()]);
     await checkCanvas(fullscreen);
-    await checkOptions(1);
-    const enterFullscreen = fullscreen.getByRole('button', {name: '全画面にする', exact: true});
-    await expect.poll(() => fullscreen.evaluate(() => Boolean(document.fullscreenElement)).then(async entered =>
-        entered || await enterFullscreen.isVisible())).toBe(true);
-    if (await enterFullscreen.isVisible()) await enterFullscreen.click();
+    assert.equal(await displayIcon(fullscreen).evaluate(node => node.outerHTML), icon);
+    await expect(fullscreen.locator('.dv-tabs-and-actions-container')).toBeHidden();
+    await checkDisabled();
+    await popupMenu(fullscreen, false);
+    await popupMenuItem(fullscreen, '全画面表示にする').click();
     await expect.poll(() => fullscreen.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
-    await primary(1).click();
-    assert.equal(await fullscreen.evaluate(() => Boolean(document.fullscreenElement)), true);
-    await fullscreen.evaluate(() => document.exitFullscreen());
-    await checkOptions(0);
-    await fullscreen.close();
+    await popupMenu(fullscreen, true);
+    await Promise.all([fullscreen.waitForEvent('close'), popupMenuItem(fullscreen, 'エディターに戻る').click()]);
     await expect(open).toBeEnabled();
 
     await options.click();
-    await item(2).click();
+    await item(1).click();
     await checkCanvas(page);
+    assert.equal(await displayIcon(page).evaluate(node => node.outerHTML), icon);
     const stageTab = page.locator('.dv-tab').filter({hasText: /^ステージ$/});
     await expect(stageTab).toHaveCount(1);
-    await checkOptions(2);
-    await primary(2).click();
-    await expect(stageTab).toHaveCount(1);
-    await stageTab.locator('.dv-default-tab-action').click();
-    await expect(open).toBeEnabled();
-
-    await options.click();
-    await item(3).click();
+    await checkDisabled();
+    await checkStagePlacementMenu(1);
+    await item(2).click();
+    await expect(stageTab).toHaveCount(0);
     await checkCanvas(page);
+    await expect(display(page)).toHaveCSS('border-top-width', '0px');
+    await expect(display(page)).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(display(page).locator('..')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    assert.equal(await displayIcon(page).evaluate(node => node.outerHTML), icon);
+    const panelLayout = page.getByRole('button', {name: '編集パネルのレイアウト', exact: true}).locator('svg');
+    assert.equal(await displayIcon(page).locator('path').getAttribute('d'), await panelLayout.locator('path').getAttribute('d'));
+    assert.equal(await displayIcon(page).getAttribute('stroke-width'), await panelLayout.getAttribute('stroke-width'));
+    await expect(displayIcon(page)).toHaveAttribute('fill', 'none');
+    await expect(displayIcon(page)).toHaveAttribute('stroke', 'currentColor');
+    await expect(displayIcon(page).locator('[fill]')).toHaveCount(0);
     const drawer = page.locator('[data-edge="right"] > [tabindex="-1"]');
     await expect(drawer).toBeFocused();
-    await checkOptions(3);
-    await primary(3).click();
+    await checkDisabled();
+    await checkStagePlacementMenu(2);
+    await item(1).click();
+    await expect(stageTab).toHaveCount(1);
+    await checkCanvas(page);
+    await checkStagePlacementMenu(1);
+    await item(2).click();
     await expect(drawer).toBeFocused();
+    await checkStagePlacementMenu(2);
+    await page.getByRole('menuitem', {name: '引出しを閉じる', exact: true}).click();
+    await expect(open).toBeEnabled();
+    await expect(options).toBeEnabled();
+    await expect(item(2)).toBeHidden();
+    await open.click();
+    await expect(drawer).toBeFocused();
+    await checkDisabled();
+    await drawer.press('Escape');
+    await expect(open).toBeFocused();
+    await checkOptions();
+    await open.click();
+    await expect(drawer).toBeFocused();
+    await checkCanvas(page);
+    await checkDisabled();
+    assert.equal(page.context().pages().length, 1);
     await drawer.press('Escape');
     await expect(open).toBeEnabled();
-    await checkOptions();
+    await expect(options).toBeEnabled();
 
     await page.goto(editorUrl + '&twPlusStageLauncher=0');
     await expect(page.getByRole('button', {name: 'ステージを展開'})).toBeVisible();
     await expect(options).toHaveCount(0);
+});
+
+test('the stage drawer moves, resizes and folds into its attached editor edge', {timeout: 30_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+    const options = page.getByRole('button', {name: 'Stage opening options', exact: true});
+    const openDrawer = async () => {
+        await options.click();
+        await page.getByRole('menuitem', {name: 'Show in the drawer', exact: true}).click();
+    };
+    const handle = page.getByRole('button', {name: 'Reveal stage', exact: true});
+    const palette = page.locator('[data-horizontal-block-palette]:visible').first();
+    await expect(handle).toBeHidden();
+    await expect(palette).toBeVisible();
+    const paletteWidth = (await palette.boundingBox()).width;
+    await openDrawer();
+
+    const drawer = page.locator('[data-edge="right"]');
+    const panel = drawer.locator(':scope > [tabindex="-1"]');
+    const stage = drawer.locator('..');
+    const header = drawer.locator('[data-stage-drawer-handle]');
+    const canvas = drawer.locator('[data-gui-stage] canvas');
+    const display = header.getByRole('button', {name: 'Stage display', exact: true});
+    const resize = (edge: string) => drawer.locator(`[data-stage-drawer-resize][data-stage-resize="${edge}"]`);
+    await expect(canvas).toBeVisible();
+    await expect(panel).toHaveCSS('translate', 'none');
+    await expect(palette).toHaveCSS('right', '0px');
+    assert.equal((await palette.boundingBox()).width, paletteWidth);
+    await display.click();
+    await expect(header.getByRole('menu', {name: 'Stage display', exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    const initial = await stage.boundingBox();
+    const control = await display.boundingBox();
+    assert.ok(initial && control);
+    await page.mouse.move(control.x + control.width / 2, control.y + control.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(control.x - 60, control.y + 90);
+    await page.mouse.up();
+    await expect(canvas).toBeVisible();
+    assert.deepEqual(await stage.boundingBox(), initial);
+
+    const grip = await header.boundingBox();
+    const area = await stage.evaluate(node => {
+        const {left, top, right, bottom} = (node as HTMLElement).offsetParent.getBoundingClientRect();
+        return {left, top, right: Math.min(right, innerWidth), bottom: Math.min(bottom, innerHeight)};
+    });
+    assert.ok(grip);
+    const x = grip.x + grip.width * 0.75;
+    const y = grip.y + grip.height / 2;
+    const offsetX = x - initial.x;
+    const offsetY = y - initial.y;
+    const left = area.left;
+    const right = area.right - initial.width;
+    const top = area.top;
+    const bottom = area.bottom - initial.height;
+    const middleX = (left + right) / 2;
+    const middleY = (top + bottom) / 2;
+    const at = async (x, y) => {
+        await expect.poll(async () => {
+            const position = await stage.boundingBox();
+            return position && Math.hypot(position.x - x, position.y - y) < 2;
+        }).toBe(true);
+    };
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (const [x, y] of [[right, middleY], [right, bottom], [middleX, bottom], [left, bottom], [left, middleY],
+        [left, top], [middleX, top], [right, top], [right, bottom]]) {
+        await page.mouse.move(x + offsetX, y + offsetY, {steps: 6});
+        await at(x, y);
+    }
+    await page.mouse.up();
+    await expect(canvas).toBeVisible();
+
+    await expect(resize('left')).toBeVisible();
+    await expect(resize('top')).toBeVisible();
+    await expect(resize('right')).toBeHidden();
+    await expect(resize('bottom')).toBeHidden();
+    const gripLeft = await resize('left').boundingBox();
+    const beforeResize = await stage.boundingBox();
+    assert.ok(gripLeft && beforeResize);
+    await page.mouse.move(gripLeft.x + gripLeft.width / 2, gripLeft.y + gripLeft.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(gripLeft.x + gripLeft.width / 2 - 40, gripLeft.y + gripLeft.height / 2, {steps: 8});
+    await page.mouse.up();
+    await expect.poll(async () => (await stage.boundingBox()).width).toBe(beforeResize.width + 40);
+    const afterResize = await stage.boundingBox();
+    assert.ok(Math.abs(afterResize.x + afterResize.width - area.right) < 2);
+    assert.ok(Math.abs(afterResize.y + afterResize.height - area.bottom) < 2);
+
+    await page.setViewportSize({width: 640, height: 700});
+    await expect.poll(async () => {
+        const position = await stage.boundingBox();
+        return position && Math.abs(position.x + position.width - 640) < 2 &&
+            Math.abs(position.y + position.height - 700) < 2;
+    }).toBe(true);
+    const moved = await stage.boundingBox();
+    await display.click();
+    await header.getByRole('menuitem', {name: 'Close the drawer', exact: true}).click();
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeVisible();
+    const closedRight = await handle.boundingBox();
+    assert.equal(closedRight.width, 8);
+    assert.ok(Math.abs(closedRight.height - moved.height) < 2);
+    assert.ok(Math.abs(closedRight.x + closedRight.width - 640) < 2);
+    await expect.poll(() => handle.evaluate(node => getComputedStyle(node, '::before').rotate)).toBe('135deg');
+    await handle.click();
+    await expect(canvas).toBeVisible();
+    await at(moved.x, moved.y);
+    await expect(handle).toBeHidden();
+    await expect(panel).toHaveCSS('translate', 'none');
+
+    const resizedHeader = await header.boundingBox();
+    const grab = {x: resizedHeader.x + resizedHeader.width * 0.75, y: resizedHeader.y + resizedHeader.height / 2};
+    const targetX = (640 - moved.width) / 2;
+    await page.mouse.move(grab.x, grab.y);
+    await page.mouse.down();
+    await page.mouse.move(grab.x + targetX - moved.x, grab.y, {steps: 8});
+    await page.mouse.up();
+    await at(targetX, moved.y);
+    await expect(resize('bottom')).toBeHidden();
+    await expect(resize('right')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(canvas).toBeHidden();
+    const closedBottom = await handle.boundingBox();
+    assert.equal(closedBottom.height, 8);
+    assert.ok(Math.abs(closedBottom.width - moved.width) < 2);
+    assert.ok(Math.abs(closedBottom.y + closedBottom.height - 700) < 2);
+    await expect.poll(() => handle.evaluate(node => getComputedStyle(node, '::before').rotate)).toBe('-135deg');
+    await handle.press('Enter');
+    await expect(canvas).toBeVisible();
+    await at(targetX, moved.y);
+    await expect(panel).toHaveCSS('translate', 'none');
+
+    const bottomHeader = await header.boundingBox();
+    const from = {x: bottomHeader.x + bottomHeader.width * 0.75, y: bottomHeader.y + bottomHeader.height / 2};
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x, from.y + top - moved.y, {steps: 12});
+    await page.mouse.up();
+    await at(targetX, top);
+    await expect(resize('top')).toBeHidden();
+    await expect(resize('bottom')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(canvas).toBeHidden();
+    const closedTop = await handle.boundingBox();
+    assert.equal(closedTop.height, 8);
+    assert.ok(Math.abs(closedTop.width - moved.width) < 2);
+    assert.ok(Math.abs(closedTop.y - top) < 2);
+    await expect.poll(() => handle.evaluate(node => getComputedStyle(node, '::before').rotate)).toBe('45deg');
+});
+
+test('the stage drawer restores its geometry and visibility with the project layout', {timeout: 60_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.addInitScript(() => {delete window.showOpenFilePicker;});
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+    const options = page.getByRole('button', {name: 'Stage opening options', exact: true});
+    const open = page.getByRole('button', {name: 'Open stage', exact: true});
+    const handle = page.getByRole('button', {name: 'Reveal stage', exact: true});
+    const drawer = page.locator('[data-movable-stage]');
+    const stage = drawer.locator('..');
+    const canvas = drawer.locator('[data-gui-stage] canvas');
+    const selectDisplay = async (label: string) => {
+        await drawer.getByRole('button', {name: 'Stage display', exact: true}).click();
+        await page.getByRole('menuitem', {name: label, exact: true}).click();
+    };
+    const openDrawer = async () => {
+        await options.click();
+        await page.getByRole('menuitem', {name: 'Show in the drawer', exact: true}).click();
+        await expect(canvas).toBeVisible();
+        const panel = drawer.locator(':scope > [tabindex="-1"]');
+        await expect(panel).toBeFocused();
+        await expect(panel).toHaveCSS('translate', 'none');
+    };
+    const reload = async () => {
+        await layoutSettled(page);
+        await page.reload();
+        await layoutSettled(page);
+    };
+
+    await layoutSettled(page);
+    await openDrawer();
+    const initial = await stage.boundingBox();
+    const header = await drawer.locator('[data-stage-drawer-handle]').boundingBox();
+    assert(initial && header);
+    const area = await stage.evaluate(node => {
+        const {left, bottom} = (node as HTMLElement).offsetParent.getBoundingClientRect();
+        return {left, bottom: Math.min(bottom, innerHeight)};
+    });
+    const x = header.x + header.width * 0.75;
+    const y = header.y + header.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + area.left - initial.x, y + area.bottom - initial.y - initial.height, {steps: 8});
+    await page.mouse.up();
+    await expect(stage).toHaveAttribute('data-stage-drawer-contacts', 'left bottom');
+    const resize = await drawer.locator('[data-stage-resize="right"]').boundingBox();
+    assert(resize);
+    await page.mouse.move(resize.x + resize.width / 2, resize.y + resize.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(resize.x + resize.width / 2 + 40, resize.y + resize.height / 2, {steps: 8});
+    await page.mouse.up();
+    await expect.poll(async () => (await stage.boundingBox())?.width).toBe(initial.width + 40);
+    const savedGeometry = await stage.boundingBox();
+    const checkGeometry = async () => {
+        await expect(canvas).toBeVisible();
+        await expect(stage).toHaveAttribute('data-stage-drawer-contacts', 'left bottom');
+        await expect.poll(() => stage.boundingBox()).toEqual(savedGeometry);
+    };
+
+    await reload();
+    await checkGeometry();
+    await expect(open).toBeDisabled();
+    await expect(options).toBeDisabled();
+    await selectDisplay('Close the drawer');
+    await reload();
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeVisible();
+    await open.click();
+    await checkGeometry();
+
+    await selectDisplay('Enter full screen mode');
+    await expect(page.locator('[data-plus-stage-frame][data-fullscreen]')).toBeVisible();
+    await page.reload();
+    await layoutSettled(page);
+    await expect(page.locator('[data-plus-stage-frame][data-fullscreen]')).toHaveCount(0);
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeHidden();
+    await expect(open).toBeEnabled();
+    await openDrawer();
+    await checkGeometry();
+
+    const popupReady = page.waitForEvent('popup');
+    await selectDisplay('Show in a separate window');
+    const popup = await popupReady;
+    await expect(popup.locator('[data-gui-stage] canvas')).toBeVisible();
+    await reload();
+    await expect.poll(() => page.context().pages().length).toBe(1);
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeHidden();
+    await expect(open).toBeEnabled();
+
+    const bytes = await page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
+    const project = await JSZip.loadAsync(Uint8Array.from(bytes));
+    const data = JSON.parse(await project.file('project.json').async('string'));
+    data.targets.find(target => !target.isStage).name = 'Another sprite';
+    project.file('project.json', JSON.stringify(data));
+    const buffer = await project.generateAsync({type: 'nodebuffer'});
+    await openDrawer();
+    await checkGeometry();
+    await selectDisplay('Close the drawer');
+    await layoutSettled(page);
+    page.on('dialog', dialog => dialog.accept());
+    await page.getByText('File', {exact: true}).click();
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByText('Open SB3 File…', {exact: true}).click();
+    await (await chooser).setFiles({
+        name: 'Another project.sb3', mimeType: 'application/octet-stream', buffer
+    });
+    await expect.poll(() => page.evaluate(() => vm.runtime.targets.some(target => target.getName() === 'Another sprite')))
+        .toBe(true);
+    await layoutSettled(page);
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeHidden();
+    await reload();
+    await expect(handle).toBeVisible();
+    await open.click();
+    await checkGeometry();
 });
 
 test('the default editor pins the sprite list and supports the drawer and detached window layout', {timeout: 60_000}, async t => {
@@ -2343,7 +2675,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     page.setDefaultTimeout(8000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    // The edge handle appears only without the menu bar launcher, which has its own test above.
+    // Exercise the edge handle that is visible before the drawer has been opened.
     await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1&twPlusStageLauncher=0');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.vm.renderer);
     const canvas = page.locator('[data-gui-stage] canvas').first();
@@ -2467,7 +2799,8 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await selectDisplay('Enter full screen mode');
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toHaveCount(0);
     await assertStage();
-    await page.getByRole('img', {name: 'Exit full screen mode', exact: true}).click();
+    await expect(page.getByRole('img', {name: 'Exit full screen mode', exact: true})).toBeHidden();
+    await selectDisplay('Exit full screen mode');
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
     await expect.poll(async () => (await canvas.boundingBox()).width).toBe(stageWidth);
     await assertStage();
