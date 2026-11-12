@@ -74,6 +74,7 @@
     "test:script-transfer": "node --test test/script-transfer/*.test.ts",
     "test:project-tools": "node --test test/project-tools/*.test.ts && node --test test/project-tools/*.test.cts",
     "test:gui-integration": "node --test --import ./test/asset-hooks.ts \"test/gui-integration/**/*.test.ts\" \"test/gui-integration/**/*.test.cts\"",
+    "test:editor-host": "node --test test/editor-host.browser.ts",
     "preview:security": "node scripts/local-security-preview.cts"
   },
   "devDependencies": {

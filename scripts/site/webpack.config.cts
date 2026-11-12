@@ -50,7 +50,9 @@ if (cloudflareGit && ![bffOrigin, proxyOrigin].every(value => {
 config.plugins.push(new (hostRequire('webpack').DefinePlugin)({
     __TW_PLUS_EDITOR_VERSION__: JSON.stringify(rootRequire('./package.json').version),
     __TW_PLUS_LOCAL_CATALOG__: JSON.stringify(localCatalog),
-    __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit)
+    __TW_PLUS_GIT_CLOUDFLARE__: JSON.stringify(cloudflareGit),
+    __TW_PLUS_CAPTURE_EDITOR_HOST__: process.env.TW_PLUS_TEST_EDITOR_HOST === '1' ?
+        'window.__twPlusCaptureEditorHost' : 'undefined'
 }));
 // The host owns every additional module; the fork only consults this optional build-time value.
 const bridge = path.join(__dirname, '..', '..', 'site', 'gui-integration', 'index.ts');

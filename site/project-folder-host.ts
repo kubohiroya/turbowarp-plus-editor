@@ -25,6 +25,7 @@ declare const __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: (handle: null) => Acti
 declare const __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: () => Action;
 declare const __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: (title: string) => Action;
 declare const __TW_PLUS_GIT_CLOUDFLARE__: {bffOrigin: string; proxyOrigin: string} | null;
+declare const __TW_PLUS_CAPTURE_EDITOR_HOST__: ((host: EditorHost) => void) | undefined;
 
 const folders = new WeakMap<FolderVM, {readonly directory: FileSystemDirectoryHandle | null}>();
 
@@ -57,6 +58,8 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         subscribe: listener => store.subscribe(listener),
         refreshBlockViews: (targets: readonly (EditorTarget | ReloadTarget)[]) => refreshExternalBlockViews(vm, targets)
     } satisfies EditorHost;
+    // A local browser test observes the same host object this attachment uses.
+    if (typeof __TW_PLUS_CAPTURE_EDITOR_HOST__ === 'function') __TW_PLUS_CAPTURE_EDITOR_HOST__(host);
     let gitPanel: ReturnType<typeof mountGitPanel> = null;
     const renderReviewBlock = createScratchBlocksDiffRenderer({
         getBlockly: host.getBlockly,
