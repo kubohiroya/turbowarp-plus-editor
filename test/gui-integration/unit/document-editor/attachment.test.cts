@@ -17,11 +17,17 @@ const {code} = babel.transformSync(source, {
 function fixture (integration) {
     const contexts = [], disposals = [], errors = [];
     const blockly = {};
+    const deserializeBlocks = blocks => blocks;
+    function Blocks(runtime, noGlow) {
+        Object.assign(this, {runtime, noGlow});
+    }
     const module: {exports: {default?: typeof import('../../../../site/gui-integration/containers/tw-plus-workspace-attachment.tsx').default}} = {exports: {}};
     const mocks = {
         react: require('react'),
         'prop-types': require('prop-types'),
         'react-redux': {connect: () => value => value},
+        'scratch-vm/src/engine/blocks.js': Blocks,
+        'scratch-vm/src/serialization/sb3.js': {deserializeBlocks},
         '../lib/tw-lazy-scratch-blocks': {load: async () => {}, get: () => blockly},
         '../lib/log': {error: (...args) => errors.push(args)},
         '../lib/tw-plus-integration-points.ts': {
@@ -36,7 +42,8 @@ function fixture (integration) {
         assert(name in mocks, name);
         return mocks[name];
     }, module, module.exports, {});
-    return {Attachment: module.exports.default({LazyScratchBlocks: mocks['../lib/tw-lazy-scratch-blocks'], log: mocks['../lib/log']}), contexts, disposals, errors, blockly};
+    return {Attachment: module.exports.default({LazyScratchBlocks: mocks['../lib/tw-lazy-scratch-blocks'], log: mocks['../lib/log']}),
+        contexts, disposals, errors, blockly, Blocks, deserializeBlocks};
 }
 
 const attaching = disposals => ({attachToWorkspace: () => ({dispose: () => disposals.push('dispose')})});
@@ -69,6 +76,20 @@ test('the host receives the VM, locale, document, Blockly and current translatio
     assert.equal(f.contexts.length, 1);
     assert.equal(f.contexts[0].getMessages(), nextMessages);
     assert.deepEqual(f.errors, []);
+});
+
+test('the host receives the block deserializer and a detached container for its own VM', () => {
+    const f = fixture(null);
+    const vm = {runtime: {}};
+    const component = new f.Attachment({vm, locale: 'en'});
+    component.componentDidMount();
+    const {projectFolderBlocks} = f.contexts[0];
+    assert.equal(projectFolderBlocks.deserializeBlocks, f.deserializeBlocks);
+    const container = projectFolderBlocks.createBlockContainer();
+    assert.ok(container instanceof f.Blocks);
+    assert.equal(container.runtime, vm.runtime);
+    assert.equal(container.noGlow, true);
+    assert.notEqual(projectFolderBlocks.createBlockContainer(), container);
 });
 
 // Replacing the VM must dispose before attaching again, or two attachments would run at once.

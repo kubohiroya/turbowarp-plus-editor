@@ -1,6 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
+import Blocks from 'scratch-vm/src/engine/blocks.js';
+import {deserializeBlocks} from 'scratch-vm/src/serialization/sb3.js';
+
+import type {EditorHost} from '@kubohiroya/turbowarp-plus-editor-host';
 
 import {attachHostToWorkspace, hostIntegration} from '../lib/tw-plus-integration-points.ts';
 
@@ -14,7 +18,7 @@ import {attachHostToWorkspace, hostIntegration} from '../lib/tw-plus-integration
  */
 export const createWorkspaceAttachment = ({LazyScratchBlocks, log}) => {
     interface AttachmentProps {
-        vm: object;
+        vm: {runtime?: object};
         locale: string;
         messages: Record<string, string>;
     }
@@ -38,12 +42,17 @@ export const createWorkspaceAttachment = ({LazyScratchBlocks, log}) => {
         }
         attach () {
             try {
+                const {vm, locale} = this.props;
                 this.attachment = attachHostToWorkspace({
-                    vm: this.props.vm,
-                    locale: this.props.locale,
+                    vm,
+                    locale,
                     document,
                     getMessages: () => this.props.messages,
-                    getBlockly: () => LazyScratchBlocks.load().then(() => LazyScratchBlocks.get())
+                    getBlockly: () => LazyScratchBlocks.load().then(() => LazyScratchBlocks.get()),
+                    projectFolderBlocks: {
+                        deserializeBlocks,
+                        createBlockContainer: () => new Blocks(vm.runtime, true)
+                    } satisfies Pick<EditorHost, 'deserializeBlocks' | 'createBlockContainer'>
                 }, hostIntegration());
             } catch (error) {
                 // A host that throws must not keep the editor from opening.
@@ -64,7 +73,9 @@ export const createWorkspaceAttachment = ({LazyScratchBlocks, log}) => {
         }
     }
     PlusWorkspaceAttachment.propTypes = {
-        vm: PropTypes.shape({}).isRequired, locale: PropTypes.string, messages: PropTypes.objectOf(PropTypes.string)
+        vm: PropTypes.shape({runtime: PropTypes.object.isRequired}).isRequired,
+        locale: PropTypes.string,
+        messages: PropTypes.objectOf(PropTypes.string)
     };
     const mapStateToProps = state => ({
         vm: state.scratchGui.vm, locale: state.locales.locale, messages: state.locales.messages

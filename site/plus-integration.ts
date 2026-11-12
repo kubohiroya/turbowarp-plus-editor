@@ -158,20 +158,23 @@ export const createPlusIntegration = ({
      * There is no startup switch: the editor is always mounted, and a hat gets its file icon only
      * when a registered provider owns its document, so a project without one looks like upstream.
      * Rollback reverts this integration.
-     * @param {object} context The VM, document, locale and accessors for Blockly and current messages.
+     * @param {object} context The VM, document, locale, Blockly, current messages and block operations.
      * @returns {object} Something to dispose.
      */
-    attachToWorkspace: ({vm, locale, document: hostDocument, getBlockly, getMessages}) => {
+    attachToWorkspace: ({vm, locale, document: hostDocument, getBlockly, getMessages, projectFolderBlocks = undefined}) => {
         const attached = [];
         // Say "use the Editor's bar" before any extension asks app-shell for a dock. Without this
         // app-shell builds a floating one and a control registered through it would hover over the
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
-        attached.push(attachProjectFolder(vm, hostDocument, localGit, locale, getBlockly, workspaceMinimap || standardLayout ?
-            (workspace, blocks, watermark) => attachReviewNavigation(workspace, blocks, watermark, {
-                horizontalZoom: standardLayout, minimap: workspaceMinimap
-            }) : undefined));
+        if (projectFolderBlocks) {
+            attached.push(attachProjectFolder(vm, hostDocument, localGit, locale, getBlockly, projectFolderBlocks,
+                workspaceMinimap || standardLayout ? (workspace, blocks, watermark) =>
+                    attachReviewNavigation(workspace, blocks, watermark, {
+                        horizontalZoom: standardLayout, minimap: workspaceMinimap
+                    }) : undefined));
+        }
         const workspace = getDocumentWorkspace(vm);
         const documents = mountEditor({
             vm,

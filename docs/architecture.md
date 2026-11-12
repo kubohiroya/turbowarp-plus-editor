@@ -40,6 +40,16 @@ Web の実験ランナーは、実際に配信する `build-info.json` の `site
 
 Desktop の公式アプリに Plus を組み込む試験用コピーでは、`test/stage3/check-desktop.ts` が `.app` の ASAR にある `gui/build-info.json` の `editorRevision` を照合します。Plus Desktop の製品パッケージは、同じ期待値で `node scripts/desktop/check-editor-revision.ts /absolute/path/to/TurboWarp-Plus.app` を実行すると、`plus-gui` に同梱された版を起動前に検証できます。公式 Desktop を使う D3 作品プロセス CI の結果は別に扱います。
 
+### Editor ホストのローカル検証
+
+固定 GUI と Packager を準備し、通常の `build:pages` の設定に `TW_PLUS_TEST_EDITOR_HOST=1` を追加して検証用の Editor をビルドします。ヘッドレス Chromium の初期作品で、作品フォルダと Git が使うホストを、最小ランタイムと共通の `verifyEditorHost` で照合します。
+
+```sh
+TW_PLUS_TEST_EDITOR_HOST=1 npm run build:pages
+E2E_PROJECT_FOLDER_BUILD="$E2E_GUI_ROOT/build" \
+  E2E_EXPECT_SITE_REVISION="$(git rev-parse HEAD)" npm run test:editor-host
+```
+
 ## CIとPages
 
 1. 通常CIがnpmの単体テスト、統合基盤、固定GUIの接続テスト、ビルドを実行します。ブラウザーE2E（Playwright、`*.browser.ts`、YAMLの往復テストなど）はCIでは実行せず、開発時にローカルで実行します。CIはブラウザーをインストールしません。
