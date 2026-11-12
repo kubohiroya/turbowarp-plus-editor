@@ -15,10 +15,23 @@ const block = (opcode, next, parent, inputs = {}, position = {}) =>
 const target = (name, isStage, blocks, costumes, sounds = []) =>
     ({isStage, name, variables: {}, lists: {}, broadcasts: {}, blocks, comments: {}, costumes, sounds, currentCostume: 0, volume: 100});
 const projectFile = 'project.source.json';
+const noteFile = 'notes.js';
+const note = (value: string) => ['// Header', `export const note = "${value}";`, '// Footer', ''].join('\n');
 const origin = 'http://localhost:41015';
 const prefix = '/turbowarp-plus-editor/';
 const mime = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
     '.svg': 'image/svg+xml', '.png': 'image/png', '.wav': 'audio/wav', '.wasm': 'application/wasm'};
+// Two 16×16 VP8 frames in a WebM container.
+const videoFixture = Buffer.from([
+    'GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAIkEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZU',
+    'rmtTrIHWTbuMU6uEElTDZ1OsggEyTbuMU6uEHFO7a1OsggIO7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsCrXsYMPQkBNgIxM',
+    'YXZmNjMuMS4xMDFXQYxMYXZmNjMuMS4xMDFEiYhAeQAAAAAAABZUrmvXrgEAAAAAAABO14EBc8WI1Yz2U1VsKD6cgQAitZyDdW5k',
+    'iIEAhoVWX1ZQOIOBASPjg4QL68IA4JCwgRC6gRCagQJVsIRVuYEBVe6BAOwBAAAAAAAAAgAAElTDZ/pzc59jwIBnyJlFo4dFTkNP',
+    'REVSRIeMTGF2ZjYzLjEuMTAxc3PVY8CLY8WI1Yz2U1VsKD5nyKBFo4dFTkNPREVSRIeTTGF2YzYzLjEuMTAxIGxpYnZweGfIoUWj',
+    'iERVUkFUSU9ORIeTMDA6MDA6MDAuNDAwMDAwMDAwAB9DtnXY54EAo7yBAACAsAIAnQEqEAAQAABHCIWFiIWEiAICAnWqA/gCDP0o',
+    'AP7/TRL//FhX8WFfxYV/8WFf/PzO7cX85gCjlYEAyACxAQAFEKwAGAAYWC/0AAgAABxTu2uRu4+zgQC3iveBAfGCAbHwgQM=',
+].join(''), 'base64');
 
 function fixture() {
     const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#c62458"/></svg>');
@@ -73,6 +86,8 @@ test('the browser folder commands save localized Git diffs to the original worki
         writeFile(path.join(folder, projectFile), stringify(project)),
         writeFile(path.join(folder, 'assets', costume.md5ext), svg),
         writeFile(path.join(folder, 'assets', sound.md5ext), wav),
+        writeFile(path.join(folder, 'clip.webm'), videoFixture),
+        writeFile(path.join(folder, noteFile), '\uFEFF' + note('committed').replaceAll('\n', '\r\n')),
         writeFile(path.join(folder, 'embedded-extensions.json'), stringify({formatVersion: 1, extensions: []})),
         writeFile(path.join(folder, 'sb3-source.json'), stringify({formatVersion: 1, project: projectFile,
             embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets',
@@ -80,8 +95,10 @@ test('the browser folder commands save localized Git diffs to the original worki
     ]);
     const git = (...args: string[]) => execFileSync('git', args, {cwd: folder, encoding: 'utf8'}).trim();
     git('init', '-q');
+    git('config', 'core.autocrlf', 'false');
     git('add', '.');
     git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture');
+    await writeFile(path.join(folder, 'new.txt'), 'A new file\n');
 
     const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
     if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
@@ -108,6 +125,7 @@ test('the browser folder commands save localized Git diffs to the original worki
         // CDP supplies the actual local directory handle. Only the picker interaction is substituted.
         for (const type of ['dragenter', 'dragover', 'drop']) {
             window.addEventListener(type, async event => {
+                if (testState.handle) return;
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (type === 'drop') {
@@ -199,6 +217,95 @@ test('the browser folder commands save localized Git diffs to the original worki
     }, {kind, value});
 
     await open();
+    const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    const fileTab = (name: string) => page.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
+    const preview = page.locator('.twpf-preview:visible');
+    const openFile = (name: string) => page.locator(`[data-path="${name}"]`).click();
+    const closeFile = (name: string) => fileTab(name).locator('.dv-default-tab-action').click();
+    await openFile(projectFile);
+    await expect(preview.locator('.twpf-syntax-name').first()).toHaveText('"targets"');
+    await openFile(projectFile);
+    await expect(fileTab(projectFile)).toHaveCount(1);
+    await closeFile(projectFile);
+
+    await page.locator(`[data-path="${noteFile}"]`).press('Enter');
+    const editor = preview.getByRole('textbox', {name: noteFile, exact: true});
+    const previewButton = (name: string) => preview.getByRole('button', {name, exact: true});
+    const leftCode = preview.locator('.cm-merge-a .cm-content');
+    const rightCode = preview.locator('.cm-merge-b .cm-content');
+    await expect(editor.locator('.twpf-syntax-keyword').first()).toHaveText('export');
+    await previewButton('Diff').click();
+    await expect(preview.getByText('No differences.', {exact: true})).toBeVisible();
+    await previewButton('Edit').click();
+    const editNote = async (value: string) => {
+        await editor.focus();
+        await page.keyboard.press('ControlOrMeta+a');
+        await page.keyboard.insertText(note(value));
+        await expect(previewButton('Save file')).toBeEnabled();
+    };
+    await editNote('working draft');
+    await previewButton('Diff').click();
+    await expect(preview.locator('.twpf-diff-headings')).toContainText(git('rev-parse', 'HEAD').slice(0, 8));
+    await expect(leftCode.locator('.twpf-syntax-string', {hasText: 'committed'})).toBeVisible();
+    await expect(rightCode.locator('.twpf-syntax-string', {hasText: 'working draft'})).toBeVisible();
+    await expect(leftCode.getByText('// Header', {exact: true})).toHaveCount(0);
+    await previewButton('Full file').click();
+    await expect(leftCode.getByText('// Header', {exact: true})).toBeVisible();
+    await expect(rightCode.getByText('// Footer', {exact: true})).toBeVisible();
+    await previewButton('Changes only').click();
+    await expect(leftCode.getByText('// Header', {exact: true})).toHaveCount(0);
+    await previewButton('Edit').click();
+    await expect(editor).toContainText('working draft');
+    await editor.press('ControlOrMeta+s');
+    await expect(preview.getByText('File saved.', {exact: true})).toBeVisible();
+    assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), '\uFEFF' + note('working draft').replaceAll('\n', '\r\n'));
+    assert.equal(git('diff', '--cached', '--name-only'), '');
+
+    await editNote('conflicting draft');
+    await writeFile(path.join(folder, noteFile), note('external'));
+    await previewButton('Save file').click();
+    await expect(preview.getByRole('status')).toContainText('The file changed outside this tab.');
+    assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), note('external'));
+    await expect(editor).toContainText('conflicting draft');
+    page.once('dialog', dialog => dialog.dismiss());
+    await closeFile(noteFile);
+    await expect(fileTab(noteFile)).toBeVisible();
+    page.once('dialog', dialog => dialog.accept());
+    await closeFile(noteFile);
+    await expect(fileTab(noteFile)).toHaveCount(0);
+    git('restore', '--', noteFile);
+
+    await openFile('new.txt');
+    await previewButton('Diff').click();
+    await expect(preview.getByText('This file is not in the latest commit.', {exact: true})).toBeVisible();
+    await expect(rightCode).toContainText('A new file');
+    await closeFile('new.txt');
+    await rm(path.join(folder, 'new.txt'));
+
+    await openFile('assets');
+    await openFile(`assets/${costume.md5ext}`);
+    await expect.poll(() => preview.getByRole('img', {name: costume.md5ext}).evaluate((image: HTMLImageElement) =>
+        image.naturalWidth)).toBe(32);
+    await closeFile(costume.md5ext);
+    const expectPlayback = async (selector: string) => {
+        const media = preview.locator(selector);
+        await media.evaluate(async (element: HTMLMediaElement) => {
+            element.muted = true;
+            await element.play();
+        });
+        await expect.poll(() => media.evaluate((element: HTMLMediaElement) => element.currentTime)).toBeGreaterThan(0);
+    };
+    await openFile(`assets/${sound.md5ext}`);
+    await expect.poll(() => preview.locator('audio[controls]').evaluate((audio: HTMLAudioElement) => audio.duration))
+        .toBeCloseTo(0.1);
+    await expectPlayback('audio[controls]');
+    await closeFile(sound.md5ext);
+    await openFile('clip.webm');
+    await expect.poll(() => preview.locator('video[controls]').evaluate((video: HTMLVideoElement) => video.videoWidth)).toBe(16);
+    await expectPlayback('video[controls]');
+    await closeFile('clip.webm');
+    await drawerBar.getByRole('button', {name: 'Sprites', exact: true}).click();
     assert.deepEqual(await page.evaluate(() => {
         const cat = window.vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
         return [cat.sprite.costumes[0].asset.assetId, cat.sprite.sounds[0].asset.assetId];
@@ -360,6 +467,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     for (const name of [projectFile, 'sb3-source.json', 'embedded-extensions.json', 'assets', 'extensions']) {
         await cp(path.join(folder, name), path.join(nested, name), {recursive: true});
     }
+    await mkdir(path.join(nested, 'imports'));
     const indexPath = path.join(folder, '.git', 'index');
     const indexBefore = await readFile(indexPath);
     const panel = page.locator('.twgit-panel');
@@ -420,9 +528,97 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
     assert.deepEqual(await readFile(indexPath), indexBefore);
     // The left drawer shows the open project folder, with what each file is for and its Git status, and the history.
-    const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(page.locator(`[data-path="${projectFile}"]`)).toHaveAttribute('aria-label', `${projectFile}, Untracked, Project data`);
+
+    // The drawer operates on the open project within the repository and accepts real local files from a Chromium drop.
+    const incoming = await mkdtemp(path.join(path.dirname(folder), 'tw-folder-drop-'));
+    t.after(() => rm(incoming, {recursive: true, force: true}));
+    for (const [name, content] of [['root-note.txt', 'root'], ['reference.txt', 'reference'], ['資料.txt', 'binary\0data']]) {
+        await writeFile(path.join(incoming, name), content);
+    }
+    const explorer = page.locator('.twpf-explorer');
+    const explorerRow = (file: string) => explorer.locator(`[data-path="${file}"]`);
+    const idle = () => expect(explorer.getByText('Working…', {exact: true})).toHaveCount(0);
+    const dropFiles = async (target, names: string[]) => {
+        const box = await target.boundingBox();
+        assert.ok(box);
+        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+            await cdp.send('Input.dispatchDragEvent', {type, x: box.x + box.width / 2, y: box.y + box.height / 2,
+                data: {items: [], files: names.map(name => path.join(incoming, name)), dragOperationsMask: 1}});
+        }
+    };
+    const contextAction = async (file: string, action: string, keyboard = false) => {
+        if (keyboard) {
+            await explorerRow(file).focus();
+            await page.keyboard.press('Shift+F10');
+        } else {
+            await explorerRow(file).click({button: 'right'});
+        }
+        await page.getByRole('menu', {name: 'File and folder actions'}).getByRole('menuitem', {name: action, exact: true}).click();
+    };
+    await dropFiles(explorerRow(projectFile), ['root-note.txt']);
+    await expect(explorerRow('root-note.txt')).toBeVisible();
+    await idle();
+    await dropFiles(explorerRow('imports'), ['reference.txt', '資料.txt']);
+    await expect(explorerRow('imports/reference.txt')).toBeVisible();
+    await expect(explorerRow('imports/資料.txt')).toBeVisible();
+    await idle();
+    assert.equal(await readFile(path.join(nested, 'imports/資料.txt'), 'utf8'), 'binary\0data');
+    assert.equal(await readFile(path.join(incoming, 'reference.txt'), 'utf8'), 'reference');
+    await writeFile(path.join(incoming, 'reference.txt'), 'different');
+    await dropFiles(explorerRow('imports'), ['reference.txt']);
+    await expect(explorer.getByRole('alert')).toContainText('A file or folder with this name already exists.');
+    assert.equal(await readFile(path.join(nested, 'imports/reference.txt'), 'utf8'), 'reference');
+    assert.equal(await readFile(path.join(nested, 'root-note.txt'), 'utf8'), 'root');
+
+    // The Git drawer can be closed while the explorer stages and unstages files in the selected repository.
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    const stagedPaths = () => git('diff', '--cached', '--name-only', '-z').split('\0').filter(Boolean).sort();
+    const previouslyStaged = stagedPaths();
+    const rootNote = 'projects/demo/root-note.txt';
+    await contextAction('imports', 'Stage in Git');
+    await expect.poll(stagedPaths)
+        .toEqual([...previouslyStaged, 'projects/demo/imports/reference.txt', 'projects/demo/imports/資料.txt'].sort());
+    await idle();
+    await contextAction('root-note.txt', 'Stage in Git', true);
+    await expect.poll(stagedPaths).toContain(rootNote);
+    await expect(explorerRow('root-note.txt')).toHaveAttribute('data-staged', '');
+    await idle();
+    await contextAction('imports', 'Unstage in Git');
+    await expect.poll(stagedPaths).toEqual([...previouslyStaged, rootNote].sort());
+    await idle();
+    await contextAction('root-note.txt', 'Unstage in Git');
+    await expect.poll(stagedPaths).toEqual(previouslyStaged);
+    await expect(explorerRow('root-note.txt')).not.toHaveAttribute('data-staged');
+    await idle();
+
+    const rename = async (file: string, name: string) => {
+        await contextAction(file, 'Rename…');
+        const dialog = page.getByRole('dialog', {name: 'Rename'});
+        await dialog.getByRole('textbox', {name: 'New name'}).fill(name);
+        await dialog.getByRole('button', {name: 'Rename', exact: true}).click();
+        await idle();
+        await expect(explorerRow(file)).toHaveCount(0);
+    };
+    await rename('root-note.txt', 'root-note-renamed.txt');
+    assert.equal(await readFile(path.join(nested, 'root-note-renamed.txt'), 'utf8'), 'root');
+    await rename('imports', 'references');
+    await explorerRow('references').click();
+    await expect(explorerRow('references/資料.txt')).toBeVisible();
+    assert.equal(await readFile(path.join(nested, 'references/reference.txt'), 'utf8'), 'reference');
+    await contextAction('references', 'Delete…');
+    const remove = page.getByRole('dialog', {name: 'Delete'});
+    await remove.getByRole('button', {name: 'Cancel'}).click();
+    await expect(explorerRow('references')).toBeVisible();
+    for (const file of ['references', 'root-note-renamed.txt']) {
+        await contextAction(file, 'Delete…');
+        await remove.getByRole('button', {name: 'Delete', exact: true}).click();
+        await expect(explorerRow(file)).toHaveCount(0);
+        await idle();
+        await assert.rejects(readFile(path.join(nested, file)), {code: 'ENOENT'});
+    }
+    await showGit();
     await drawerBar.getByRole('button', {name: 'Git history', exact: true}).click();
     await expect(page.locator('.twgit-history-view .twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
     await drawerBar.getByRole('button', {name: 'Sprites', exact: true}).click();
