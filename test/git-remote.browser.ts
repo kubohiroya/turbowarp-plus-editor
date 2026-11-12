@@ -66,14 +66,28 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         let write = false;
         const session = () => ({connection: {mode: 'desktop', proxyOrigin},
             account: {login: 'fixture'}, bearer: write ? writeBearer : readBearer, expiresAt: Date.now() + 60_000});
-        view.EditorPreload = {localGit: {
-            async begin() {
-                return {userCode: 'TEST-CODE', verificationUri: 'https://github.com/login/device', expiresAt: Date.now() + 60_000};
+        let connected = false;
+        view.EditorPreload = {localGit: null, localGitAuth: {
+            async getAuthMethods(remote?: string) {
+                return remote ? ['fine-grained-pat', 'git-credential-helper'] : ['fine-grained-pat'];
             },
-            async finish() {},
-            async authorizeRepository(_url: string, granted: boolean) {write = granted; return session();},
-            async getSession() {return session();},
-            async disconnect() {write = false;}
+            async connectPersonalAccessToken(_url: string, remember: boolean) {
+                if (remember) throw new Error('Unexpected request to save the token');
+                connected = true;
+                return {status: 'connected'};
+            },
+            async connectGitCredential(_url: string, login: string) {
+                if (login !== 'fixture') throw new Error('Unexpected GitHub account');
+                connected = true;
+                return {status: 'connected'};
+            },
+            async authorizeRepository(_url: string, granted: boolean) {
+                if (!connected) return null;
+                write = granted;
+                return session();
+            },
+            async getSession() {return connected ? session() : null;},
+            async disconnect() {write = connected = false;}
         }};
         for (const type of ['dragenter', 'dragover', 'drop']) window.addEventListener(type, async event => {
             event.preventDefault();
@@ -113,13 +127,14 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', /./u);
     await panel.getByText('GitHub connection', {exact: true}).click();
     await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
-    const connect = async () => {
+    const authMethod = panel.getByRole('combobox', {name: 'Authentication method'});
+    const connect = async (method: 'fine-grained-pat' | 'git-credential-helper') => {
+        await authMethod.selectOption(method);
+        if (method === 'git-credential-helper') await panel.getByRole('textbox', {name: 'GitHub account name'}).fill('fixture');
         await button('Connect to GitHub').click();
-        await expect(panel.getByText('TEST-CODE')).toBeVisible();
-        await button('Check connection').click();
         await expect(status).toHaveText('Connected');
     };
-    await connect();
+    await connect('fine-grained-pat');
     await expect(button('Send to GitHub (push)')).toBeDisabled();
     await writeFile(path.join(seed, 'project.txt'), 'browser incoming\n');
     const incoming = commit(seed, 'browser incoming');
@@ -155,7 +170,7 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await button('Disconnect').click();
     await expect(status).toHaveText('Disconnected');
     await panel.getByRole('checkbox', {name: 'Allow sending to GitHub (push)'}).check();
-    await connect();
+    await connect('git-credential-helper');
     await writeFile(source, 'browser outgoing\n');
     const outgoing = commit(client, 'browser outgoing');
     page.once('dialog', dialog => dialog.accept());

@@ -36,10 +36,12 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     getBlockly: ScratchBlockDiffRendererOptions['getBlockly'],
     blocks: Pick<EditorHost, 'deserializeBlocks' | 'createBlockContainer'>,
     attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
-    const view = document?.defaultView as Window & {EditorPreload?: {localGit?: DesktopGitPreload | null}; ReduxStore?: GuiStore};
+    const view = document?.defaultView as Window & {
+        EditorPreload?: {localGitAuth?: DesktopGitPreload | null; localGit?: DesktopGitPreload | null}; ReduxStore?: GuiStore;
+    };
     if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
     const connectionSettings = localGit ? createGitConnectionSettings({
-        desktop: view.EditorPreload?.localGit,
+        desktop: view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit,
         cloudflare: typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__
     }) : undefined;
     if (view.EditorPreload && !connectionSettings?.modes.length) return null;
