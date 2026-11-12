@@ -64,9 +64,7 @@ const injections = {
     __TW_GUI_ADDON_MESSAGES__: path.join(gui, 'src', 'addons', 'addons-l10n', 'en.json'),
     __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: [path.join(gui, 'src', 'reducers', 'tw.js'), 'setFileHandle'],
     __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: [path.join(gui, 'src', 'reducers', 'project-changed.js'), 'setProjectUnchanged'],
-    __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle'],
-    __TW_PLUS_GIT_DESERIALIZE_BLOCKS__: ['scratch-vm/src/serialization/sb3.js', 'deserializeBlocks'],
-    __TW_PLUS_GIT_VM_BLOCKS__: 'scratch-vm/src/engine/blocks.js'
+    __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle']
 };
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
