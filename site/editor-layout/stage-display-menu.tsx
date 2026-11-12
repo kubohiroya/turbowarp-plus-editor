@@ -4,7 +4,8 @@ import {connect} from 'react-redux';
 import type {IconMenuItem} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {panelLayoutIconPath} from '@kubohiroya/turbowarp-plus-editor-workbench';
-import {stageDockActionLabel, stagePresentationItems, useStageDocumentFullscreen} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-surface';
+import {stageDockActionLabel, stageDrawerPinItem, stagePresentationItems,
+    useStageDocumentFullscreen} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-surface';
 import workbenchStyles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import fullscreenIcon from '@tw-plus/gui-stage-fullscreen-icon';
 import exitFullscreenIcon from '@tw-plus/gui-stage-exit-fullscreen-icon';
@@ -62,7 +63,8 @@ export const EditorStageFullscreenMenu = connect(null, dispatch => ({
 
 function DisplayMenu({locale, presets, fullscreen}) {
     const {dockAction, stage, launcher, openDrawer, closeDrawer} = React.useContext(StageDisplayMenuContext) ?? {};
-    const {plusLayout, stageDrawer, stageHidden, setStageVisible} = React.useContext(WindowLayoutContext);
+    const {plusLayout, stageDrawer, stageDrawerPinned, setStageDrawerPinned, stageHidden, setStageVisible} =
+        React.useContext(WindowLayoutContext);
     const japanese = isJapanese(locale);
     const canToggleVisibility = plusLayout && (!dockAction || dockAction.kind === 'docked');
     const visibilityLabel = stageHidden ? (japanese ? 'ステージを表示' : 'Show stage') :
@@ -107,9 +109,11 @@ function DisplayMenu({locale, presets, fullscreen}) {
         if (stage?.docked) stage.commands.close();
         dockAction.undock();
     };
+    const drawerPin = stageDrawer && !detached && !stage?.docked ?
+        stageDrawerPinItem(locale, stageDrawerPinned, setStageDrawerPinned) : undefined;
     if (launcher && stageDrawer && !detached) {
         const inTab = Boolean(stage?.docked);
-        const placement = stagePresentationItems(locale, inTab ? 'tab' : 'drawer', {
+        const placement = stagePresentationItems(locale, inTab ? 'tab' : null, {
             window: dockAction?.external && dockAction.kind === 'docked' ? openWindow : undefined,
             tab: !inTab && stage?.commands ? stage.commands.open : undefined,
             drawer: inTab ? () => {
@@ -117,7 +121,7 @@ function DisplayMenu({locale, presets, fullscreen}) {
                 // The drawer becomes available after the stage tab has been removed.
                 requestAnimationFrame(() => openDrawer?.current?.());
             } : undefined
-        });
+        }).map(item => drawerPin && item.id === 'drawer' ? drawerPin : item);
         const close: IconMenuItem = {
             id: 'close-placement',
             label: inTab ? (japanese ? 'タブを閉じる' : 'Close the tab') :
@@ -130,6 +134,7 @@ function DisplayMenu({locale, presets, fullscreen}) {
             ...placement, {...enterFullscreen, separatorBefore: true}, ...items, close
         ]} />;
     }
+    if (drawerPin) items.push(drawerPin);
     items.push(japanese ? enterFullscreen : {...enterFullscreen, label: fullscreen.title});
     if (canToggleVisibility) items.push({
         id: 'visibility',

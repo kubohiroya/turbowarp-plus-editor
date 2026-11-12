@@ -1237,6 +1237,11 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
         const menu = page.getByRole('menu', {name: 'ステージの表示', exact: true});
         const entries = labels.map((_, index) => menu.getByRole('menuitem').nth(index));
         for (const [index, entry] of entries.entries()) {
+            if (active === 2 && index === active) {
+                await expect(entry).toHaveText('引出しを自動的に隠す');
+                await expect(entry).toBeEnabled();
+                continue;
+            }
             await expect(entry).toHaveText(labels[index]);
             await expect(entry.locator('svg path')).toHaveAttribute('d', placementIcons[index]);
             if (index === active) await expect(entry).toHaveAttribute('aria-current', 'true');
@@ -1331,6 +1336,56 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
     await page.goto(editorUrl + '&twPlusStageLauncher=0');
     await expect(page.getByRole('button', {name: 'ステージを展開'})).toBeVisible();
     await expect(options).toHaveCount(0);
+});
+
+test('the stage drawer starts pinned and remembers the pin menu choice', {timeout: 30_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=ja');
+    const drawer = page.locator('[data-movable-stage]');
+    const canvas = drawer.locator('[data-gui-stage] canvas');
+    const handle = page.getByRole('button', {name: 'ステージを展開', exact: true});
+    const title = page.locator('input[maxlength="100"]');
+    const menuButton = drawer.getByRole('button', {name: 'ステージの表示', exact: true});
+    const autoHide = drawer.getByRole('menuitem', {name: '引出しを自動的に隠す', exact: true});
+    const pin = drawer.getByRole('menuitem', {name: '引出しを常時表示する', exact: true});
+    const slash = (item: typeof pin) => item.locator('svg path[d="M2 2l12 12"]');
+
+    await layoutSettled(page);
+    await page.getByRole('button', {name: 'ステージの開き方', exact: true}).click();
+    await page.getByRole('menuitem', {name: '引出しで表示', exact: true}).click();
+    await expect(canvas).toBeVisible();
+    await title.click();
+    await expect(canvas).toBeVisible();
+    await menuButton.click();
+    await expect(autoHide).toBeEnabled();
+    await expect(slash(autoHide)).toHaveCount(1);
+    await expect(autoHide).not.toHaveAttribute('aria-current');
+    await autoHide.click();
+    await menuButton.click();
+    await expect(pin).toBeEnabled();
+    await expect(slash(pin)).toHaveCount(0);
+    await title.click();
+    await expect(canvas).toBeHidden();
+    await expect(handle).toBeVisible();
+
+    await layoutSettled(page);
+    await page.reload();
+    await layoutSettled(page);
+    await handle.click();
+    await menuButton.click();
+    await expect(pin).toBeEnabled();
+    await pin.click();
+    await title.click();
+    await expect(canvas).toBeVisible();
+    await layoutSettled(page);
+    await page.reload();
+    await layoutSettled(page);
+    await expect(canvas).toBeVisible();
+    await title.click();
+    await expect(canvas).toBeVisible();
+    await menuButton.click();
+    await expect(autoHide).toBeEnabled();
 });
 
 test('the stage drawer moves, resizes and folds into its attached editor edge', {timeout: 30_000}, async t => {

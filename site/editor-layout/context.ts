@@ -8,6 +8,8 @@ export const WindowLayoutContext = React.createContext<{
     locale: string;
     stageHidden?: boolean;
     stageDrawer?: boolean;
+    stageDrawerPinned?: boolean;
+    setStageDrawerPinned?: (pinned: boolean) => void;
     setStageDrawerOpen?: (open: boolean) => void;
     setStageVisible?: (visible: boolean) => void;
     stageResize?: () => void;
