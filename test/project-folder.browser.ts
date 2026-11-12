@@ -15,10 +15,23 @@ const block = (opcode, next, parent, inputs = {}, position = {}) =>
 const target = (name, isStage, blocks, costumes, sounds = []) =>
     ({isStage, name, variables: {}, lists: {}, broadcasts: {}, blocks, comments: {}, costumes, sounds, currentCostume: 0, volume: 100});
 const projectFile = 'project.source.json';
+const noteFile = 'notes.js';
+const note = (value: string) => ['// Header', `export const note = "${value}";`, '// Footer', ''].join('\n');
 const origin = 'http://localhost:41015';
 const prefix = '/turbowarp-plus-editor/';
 const mime = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
     '.svg': 'image/svg+xml', '.png': 'image/png', '.wav': 'audio/wav', '.wasm': 'application/wasm'};
+// Two 16×16 VP8 frames in a WebM container.
+const videoFixture = Buffer.from([
+    'GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAIkEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZU',
+    'rmtTrIHWTbuMU6uEElTDZ1OsggEyTbuMU6uEHFO7a1OsggIO7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsCrXsYMPQkBNgIxM',
+    'YXZmNjMuMS4xMDFXQYxMYXZmNjMuMS4xMDFEiYhAeQAAAAAAABZUrmvXrgEAAAAAAABO14EBc8WI1Yz2U1VsKD6cgQAitZyDdW5k',
+    'iIEAhoVWX1ZQOIOBASPjg4QL68IA4JCwgRC6gRCagQJVsIRVuYEBVe6BAOwBAAAAAAAAAgAAElTDZ/pzc59jwIBnyJlFo4dFTkNP',
+    'REVSRIeMTGF2ZjYzLjEuMTAxc3PVY8CLY8WI1Yz2U1VsKD5nyKBFo4dFTkNPREVSRIeTTGF2YzYzLjEuMTAxIGxpYnZweGfIoUWj',
+    'iERVUkFUSU9ORIeTMDA6MDA6MDAuNDAwMDAwMDAwAB9DtnXY54EAo7yBAACAsAIAnQEqEAAQAABHCIWFiIWEiAICAnWqA/gCDP0o',
+    'AP7/TRL//FhX8WFfxYV/8WFf/PzO7cX85gCjlYEAyACxAQAFEKwAGAAYWC/0AAgAABxTu2uRu4+zgQC3iveBAfGCAbHwgQM=',
+].join(''), 'base64');
 
 function fixture() {
     const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#c62458"/></svg>');
@@ -73,6 +86,8 @@ test('the browser folder commands save localized Git diffs to the original worki
         writeFile(path.join(folder, projectFile), stringify(project)),
         writeFile(path.join(folder, 'assets', costume.md5ext), svg),
         writeFile(path.join(folder, 'assets', sound.md5ext), wav),
+        writeFile(path.join(folder, 'clip.webm'), videoFixture),
+        writeFile(path.join(folder, noteFile), '\uFEFF' + note('committed').replaceAll('\n', '\r\n')),
         writeFile(path.join(folder, 'embedded-extensions.json'), stringify({formatVersion: 1, extensions: []})),
         writeFile(path.join(folder, 'sb3-source.json'), stringify({formatVersion: 1, project: projectFile,
             embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets',
@@ -80,8 +95,10 @@ test('the browser folder commands save localized Git diffs to the original worki
     ]);
     const git = (...args: string[]) => execFileSync('git', args, {cwd: folder, encoding: 'utf8'}).trim();
     git('init', '-q');
+    git('config', 'core.autocrlf', 'false');
     git('add', '.');
     git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture');
+    await writeFile(path.join(folder, 'new.txt'), 'A new file\n');
 
     const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
     if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
@@ -200,6 +217,95 @@ test('the browser folder commands save localized Git diffs to the original worki
     }, {kind, value});
 
     await open();
+    const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    const fileTab = (name: string) => page.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
+    const preview = page.locator('.twpf-preview:visible');
+    const openFile = (name: string) => page.locator(`[data-path="${name}"]`).click();
+    const closeFile = (name: string) => fileTab(name).locator('.dv-default-tab-action').click();
+    await openFile(projectFile);
+    await expect(preview.locator('.twpf-syntax-name').first()).toHaveText('"targets"');
+    await openFile(projectFile);
+    await expect(fileTab(projectFile)).toHaveCount(1);
+    await closeFile(projectFile);
+
+    await page.locator(`[data-path="${noteFile}"]`).press('Enter');
+    const editor = preview.getByRole('textbox', {name: noteFile, exact: true});
+    const previewButton = (name: string) => preview.getByRole('button', {name, exact: true});
+    const leftCode = preview.locator('.cm-merge-a .cm-content');
+    const rightCode = preview.locator('.cm-merge-b .cm-content');
+    await expect(editor.locator('.twpf-syntax-keyword').first()).toHaveText('export');
+    await previewButton('Diff').click();
+    await expect(preview.getByText('No differences.', {exact: true})).toBeVisible();
+    await previewButton('Edit').click();
+    const editNote = async (value: string) => {
+        await editor.focus();
+        await page.keyboard.press('ControlOrMeta+a');
+        await page.keyboard.insertText(note(value));
+        await expect(previewButton('Save file')).toBeEnabled();
+    };
+    await editNote('working draft');
+    await previewButton('Diff').click();
+    await expect(preview.locator('.twpf-diff-headings')).toContainText(git('rev-parse', 'HEAD').slice(0, 8));
+    await expect(leftCode.locator('.twpf-syntax-string', {hasText: 'committed'})).toBeVisible();
+    await expect(rightCode.locator('.twpf-syntax-string', {hasText: 'working draft'})).toBeVisible();
+    await expect(leftCode.getByText('// Header', {exact: true})).toHaveCount(0);
+    await previewButton('Full file').click();
+    await expect(leftCode.getByText('// Header', {exact: true})).toBeVisible();
+    await expect(rightCode.getByText('// Footer', {exact: true})).toBeVisible();
+    await previewButton('Changes only').click();
+    await expect(leftCode.getByText('// Header', {exact: true})).toHaveCount(0);
+    await previewButton('Edit').click();
+    await expect(editor).toContainText('working draft');
+    await editor.press('ControlOrMeta+s');
+    await expect(preview.getByText('File saved.', {exact: true})).toBeVisible();
+    assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), '\uFEFF' + note('working draft').replaceAll('\n', '\r\n'));
+    assert.equal(git('diff', '--cached', '--name-only'), '');
+
+    await editNote('conflicting draft');
+    await writeFile(path.join(folder, noteFile), note('external'));
+    await previewButton('Save file').click();
+    await expect(preview.getByRole('status')).toContainText('The file changed outside this tab.');
+    assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), note('external'));
+    await expect(editor).toContainText('conflicting draft');
+    page.once('dialog', dialog => dialog.dismiss());
+    await closeFile(noteFile);
+    await expect(fileTab(noteFile)).toBeVisible();
+    page.once('dialog', dialog => dialog.accept());
+    await closeFile(noteFile);
+    await expect(fileTab(noteFile)).toHaveCount(0);
+    git('restore', '--', noteFile);
+
+    await openFile('new.txt');
+    await previewButton('Diff').click();
+    await expect(preview.getByText('This file is not in the latest commit.', {exact: true})).toBeVisible();
+    await expect(rightCode).toContainText('A new file');
+    await closeFile('new.txt');
+    await rm(path.join(folder, 'new.txt'));
+
+    await openFile('assets');
+    await openFile(`assets/${costume.md5ext}`);
+    await expect.poll(() => preview.getByRole('img', {name: costume.md5ext}).evaluate((image: HTMLImageElement) =>
+        image.naturalWidth)).toBe(32);
+    await closeFile(costume.md5ext);
+    const expectPlayback = async (selector: string) => {
+        const media = preview.locator(selector);
+        await media.evaluate(async (element: HTMLMediaElement) => {
+            element.muted = true;
+            await element.play();
+        });
+        await expect.poll(() => media.evaluate((element: HTMLMediaElement) => element.currentTime)).toBeGreaterThan(0);
+    };
+    await openFile(`assets/${sound.md5ext}`);
+    await expect.poll(() => preview.locator('audio[controls]').evaluate((audio: HTMLAudioElement) => audio.duration))
+        .toBeCloseTo(0.1);
+    await expectPlayback('audio[controls]');
+    await closeFile(sound.md5ext);
+    await openFile('clip.webm');
+    await expect.poll(() => preview.locator('video[controls]').evaluate((video: HTMLVideoElement) => video.videoWidth)).toBe(16);
+    await expectPlayback('video[controls]');
+    await closeFile('clip.webm');
+    await drawerBar.getByRole('button', {name: 'Sprites', exact: true}).click();
     assert.deepEqual(await page.evaluate(() => {
         const cat = window.vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
         return [cat.sprite.costumes[0].asset.assetId, cat.sprite.sounds[0].asset.assetId];
@@ -422,7 +528,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(panel.locator('.twgit-diff .diff')).toContainText('move_B');
     assert.deepEqual(await readFile(indexPath), indexBefore);
     // The left drawer shows the open project folder, with what each file is for and its Git status, and the history.
-    const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(page.locator(`[data-path="${projectFile}"]`)).toHaveAttribute('aria-label', `${projectFile}, Untracked, Project data`);
 

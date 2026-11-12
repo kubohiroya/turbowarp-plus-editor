@@ -3,7 +3,7 @@ import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {getDocumentWorkspace, useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import targetStyles from '@kubohiroya/turbowarp-plus-editor-workbench/targets.css';
@@ -14,7 +14,7 @@ import {stageLauncherSlot, StageDisplayMenuContext, TargetSwitchContext, WindowL
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
 import {renderProjectFolderExplorer} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
 import type {FollowExplorerGit, FollowFileStatuses} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
-import {followExplorerGit, followFileStatuses, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
+import {followExplorerGit, followFileStatuses, readProjectHeadFile, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
 import {createAiAgents} from '@kubohiroya/turbowarp-plus-editor-workbench/ai-agents';
 
 export {WindowLayoutContext} from './context.ts';
@@ -85,8 +85,12 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
         if (typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker !== 'function') return {agents};
         const fileStatuses: FollowFileStatuses = (directory, update) => followFileStatuses(vm, directory, update);
         const git: FollowExplorerGit = (directory, update) => followExplorerGit(vm, directory, update);
+        const readBaseline = (directory: FileSystemDirectoryHandle, path: string, limit: number) =>
+            readProjectHeadFile(vm, directory, path, limit);
+        const {open: openFile} = getDocumentWorkspace(vm);
         return {views: [
-            {id: 'project' as const, render: ({locale}) => renderProjectFolderExplorer(React.createElement, {vm, locale, fileStatuses, git})},
+            {id: 'project' as const, render: ({locale}) =>
+                renderProjectFolderExplorer(React.createElement, {vm, locale, fileStatuses, git, openFile, readBaseline})},
             {id: 'git-history' as const, render: ({locale}) => renderHistoryView(React.createElement, {vm, locale})}
         ], agents};
     }, [vm]);
