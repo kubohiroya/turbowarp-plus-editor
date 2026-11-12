@@ -593,6 +593,23 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(explorerRow('root-note.txt')).not.toHaveAttribute('data-staged');
     await idle();
 
+    await contextAction('imports', 'Create New Folder');
+    const create = page.getByRole('dialog', {name: 'Create New Folder'});
+    await create.getByRole('textbox', {name: 'Folder name'}).fill('整理');
+    await create.getByRole('button', {name: 'Create New Folder'}).click();
+    await expect(explorerRow('imports/整理')).toBeVisible();
+    await idle();
+    await explorerRow('imports/reference.txt').dragTo(explorerRow('imports/整理'));
+    await expect(explorerRow('imports/整理/reference.txt')).toBeVisible();
+    await expect(explorerRow('imports/reference.txt')).toHaveCount(0);
+    assert.equal(await readFile(path.join(nested, 'imports/整理/reference.txt'), 'utf8'), 'reference');
+    await assert.rejects(readFile(path.join(nested, 'imports/reference.txt')), {code: 'ENOENT'});
+    await idle();
+    await explorerRow('imports/整理/reference.txt').dragTo(explorerRow('imports'));
+    await expect(explorerRow('imports/reference.txt')).toBeVisible();
+    await expect(explorerRow('imports/整理/reference.txt')).toHaveCount(0);
+    await idle();
+
     const rename = async (file: string, name: string) => {
         await contextAction(file, 'Rename…');
         const dialog = page.getByRole('dialog', {name: 'Rename'});
