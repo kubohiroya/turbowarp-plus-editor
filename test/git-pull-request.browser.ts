@@ -119,8 +119,15 @@ test('the Editor Git panel opens a pull request overview and renders its changed
             requests.push(url.pathname + url.search);
             const headers = {'Access-Control-Allow-Origin': origin};
             const repo = '/repos/owner/game';
-            if (url.pathname === repo + '/pulls') return route.fulfill({headers, json: [pr]});
-            if (url.pathname === repo + '/pulls/42') return route.fulfill({headers, json: pr});
+            if (url.pathname === repo + '/pulls') return route.fulfill({headers, json: [
+                pr, {...pr, number: 43, title: 'Work in progress', draft: true},
+                {...pr, number: 44, title: 'Already integrated', state: 'closed', merged_at: '2026-11-13T00:00:00Z'},
+                {...pr, number: 45, title: 'Conflicting changes'}
+            ]});
+            if (url.pathname === repo + '/pulls/42') return route.fulfill({headers,
+                json: {...pr, mergeable: true, mergeable_state: 'clean'}});
+            if (url.pathname === repo + '/pulls/45') return route.fulfill({headers,
+                json: {...pr, number: 45, mergeable: false, mergeable_state: 'dirty'}});
             if (url.pathname === repo + '/pulls/42/files') return route.fulfill({headers, json: [
                 {filename: 'game/project.source.json', status: 'modified'},
                 {filename: 'game/assets/start.svg', status: 'added'}
@@ -141,7 +148,22 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     const panel = await openRepository(page, directory);
     assert.deepEqual(requests, []);
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
-    await panel.getByRole('button', {name: '#42 Start together'}).click();
+    const picker = panel.getByRole('complementary', {name: 'Choose a pull request'});
+    const selected = picker.getByRole('button', {name: /^#42 Start together/});
+    await expect(picker.getByRole('spinbutton')).toHaveCount(0);
+    await expect(picker.getByRole('button', {name: 'Open pull request', exact: true})).toHaveCount(0);
+    await expect(selected).toHaveAttribute('data-status', 'mergeable');
+    await expect(selected).toContainText('Ready to merge');
+    await expect(picker.getByRole('button', {name: /#43.*Draft/})).toHaveAttribute('data-status', 'draft');
+    await expect(picker.getByRole('button', {name: /#44.*Merged/})).toHaveAttribute('data-status', 'merged');
+    await expect(picker.getByRole('button', {name: /#45.*Merge conflicts/})).toHaveAttribute('data-status', 'conflicting');
+    await expect(picker.locator('svg[aria-hidden="true"]')).toHaveCount(4);
+    const numberColor = (number: number) => picker.getByText('#' + number, {exact: true})
+        .evaluate(element => getComputedStyle(element).color);
+    assert.notEqual(await numberColor(42), await numberColor(45));
+    await selected.focus();
+    await selected.press('Enter');
+    await expect(selected).toHaveAttribute('aria-pressed', 'true');
     const review = panel.getByRole('region', {name: 'Change review'});
     await expect(panel.getByRole('button', {name: 'Open here as pr/42'})).toHaveCount(0);
     await expect(review.getByRole('heading', {name: 'Start together'})).toBeVisible();
@@ -177,17 +199,17 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     await panel.getByRole('button', {name: 'Local changes', exact: true}).click();
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
-    await panel.getByRole('button', {name: '#42 Start together'}).click();
+    await selected.click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     await openRepository(page, directory);
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
-    await panel.getByRole('button', {name: '#42 Start together'}).click();
+    await selected.click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     // The head moves on and changes only the green flag script: only its mark is dropped.
     pr.head.sha = laterHead;
     await openRepository(page, directory);
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
-    await panel.getByRole('button', {name: '#42 Start together'}).click();
+    await selected.click();
     await expect(review.getByText('1 / 2', {exact: true})).toBeVisible();
     await script.locator('summary').click();
     await expect(script.getByRole('checkbox', {name: 'Reviewed'})).not.toBeChecked();
@@ -324,8 +346,10 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     await button('Check connection').click();
     await expect(panel.locator('[data-git-connection-state]')).toHaveText('Connected');
     await button('Pull requests').click();
-    await panel.getByRole('spinbutton', {name: 'Pull request number'}).fill('42');
-    await button('Open pull request').click();
+    const picker = panel.getByRole('complementary', {name: 'Choose a pull request'});
+    const row = picker.getByRole('button', {name: /^#42 Pull request/});
+    await expect(row).toContainText('Status unavailable');
+    await row.click();
     const review = panel.getByRole('region', {name: 'Change review'});
     await expect(review.getByRole('heading', {name: 'Pull request #42'})).toBeVisible();
     await expect(panel.getByRole('combobox', {name: 'Base branch'})).toHaveValue('main');
@@ -333,7 +357,7 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     await script.locator('summary').click();
     await expect(script.locator('svg.blocklySvg').first()).toContainText('10');
     await expect(script.locator('svg.blocklySvg').last()).toContainText('25');
-    assert.deepEqual(publicRequests.toSorted(), ['/repos/fixture/work/pulls', '/repos/fixture/work/pulls/42']);
+    assert.deepEqual(publicRequests, ['/repos/fixture/work/pulls']);
     assert.equal(fixture.upstream.filter(request => request.path.endsWith('/git-upload-pack')).length, 1);
     assert.equal(git(client, 'rev-parse', 'refs/pull/origin/42/head'), head);
     assert.equal(git(client, 'rev-parse', 'HEAD'), base);
