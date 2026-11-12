@@ -2,6 +2,7 @@ import React from 'react';
 import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
 import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {connectDesktopWorkspaceLayouts, type DesktopWorkspaceLayouts} from './desktop-workspace-layout.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {getDocumentWorkspace, useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
@@ -28,12 +29,15 @@ const desktopHost = typeof window !== 'undefined' && (window as Window & {
         externalYaml?: ExternalYamlFilePort;
         /** The key the Dockview layout of an opened SB3 is kept under. */
         workspaceProjectKey?(fileId: string): string | null;
+        workspaceLayouts?: DesktopWorkspaceLayouts | null;
     };
 }).EditorPreload;
 export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled && startupParams.get('twPlusDockview') !== '0' &&
     (typeof EditorPreload === 'undefined' || Boolean(desktopHost && desktopHost.externalYaml));
 export const externalYamlPort = dockviewMultiViewEnabled && desktopHost && desktopHost.externalYaml;
 export const desktopProjectKey = desktopHost && desktopHost.workspaceProjectKey;
+export const desktopWorkspaceLayoutStore = desktopHost?.workspaceLayouts ?
+    connectDesktopWorkspaceLayouts(desktopHost.workspaceLayouts) : undefined;
 export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
     startupParams.get('twPlusStageDrawer') !== '0';
 export const stageLauncherEnabled = stageDrawerEnabled && startupParams.get('twPlusStageLauncher') !== '0';

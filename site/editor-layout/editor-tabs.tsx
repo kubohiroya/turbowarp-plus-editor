@@ -19,7 +19,8 @@ import '@kubohiroya/turbowarp-plus-editor-workbench/sprite-layout-menu.css';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane.css';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar.css';
 import type {WorkspaceProjectIdentity} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
-import {desktopProjectKey, dockviewMultiViewEnabled, dockviewSpriteTabsEnabled, layoutFlags, WindowLayoutContext} from './index.tsx';
+import {desktopProjectKey, desktopWorkspaceLayoutStore, dockviewMultiViewEnabled, dockviewSpriteTabsEnabled,
+    layoutFlags, WindowLayoutContext} from './index.tsx';
 import {isProjectLoading, loadedProjectTitle, subscribeProjectLoad} from '../project-tools/index.ts';
 import {projectFolderDirectory} from '../project-folder-host.ts';
 import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';
@@ -159,6 +160,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     const workspaceEnabled = plusLayout || Boolean(stage);
     const multiView = workspaceEnabled && dockviewMultiViewEnabled && typeof onActivateEditorTab === 'function';
     const workspaceLayout = React.useMemo(() => multiView ? {
+        store: desktopWorkspaceLayoutStore,
         identify: () => identifyProject(vm),
         isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)
     } : undefined, [multiView, vm]);
