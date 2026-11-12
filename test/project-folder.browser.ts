@@ -108,6 +108,7 @@ test('the browser folder commands save localized Git diffs to the original worki
         // CDP supplies the actual local directory handle. Only the picker interaction is substituted.
         for (const type of ['dragenter', 'dragover', 'drop']) {
             window.addEventListener(type, async event => {
+                if (testState.handle) return;
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (type === 'drop') {
@@ -360,6 +361,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     for (const name of [projectFile, 'sb3-source.json', 'embedded-extensions.json', 'assets', 'extensions']) {
         await cp(path.join(folder, name), path.join(nested, name), {recursive: true});
     }
+    await mkdir(path.join(nested, 'imports'));
     const indexPath = path.join(folder, '.git', 'index');
     const indexBefore = await readFile(indexPath);
     const panel = page.locator('.twgit-panel');
@@ -423,6 +425,95 @@ test('the browser folder commands save localized Git diffs to the original worki
     const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(page.locator(`[data-path="${projectFile}"]`)).toHaveAttribute('aria-label', `${projectFile}, Untracked, Project data`);
+
+    // The drawer operates on the open project within the repository and accepts real local files from a Chromium drop.
+    const incoming = await mkdtemp(path.join(path.dirname(folder), 'tw-folder-drop-'));
+    t.after(() => rm(incoming, {recursive: true, force: true}));
+    for (const [name, content] of [['root-note.txt', 'root'], ['reference.txt', 'reference'], ['資料.txt', 'binary\0data']]) {
+        await writeFile(path.join(incoming, name), content);
+    }
+    const explorer = page.locator('.twpf-explorer');
+    const explorerRow = (file: string) => explorer.locator(`[data-path="${file}"]`);
+    const idle = () => expect(explorer.getByText('Working…', {exact: true})).toHaveCount(0);
+    const dropFiles = async (target, names: string[]) => {
+        const box = await target.boundingBox();
+        assert.ok(box);
+        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+            await cdp.send('Input.dispatchDragEvent', {type, x: box.x + box.width / 2, y: box.y + box.height / 2,
+                data: {items: [], files: names.map(name => path.join(incoming, name)), dragOperationsMask: 1}});
+        }
+    };
+    const contextAction = async (file: string, action: string, keyboard = false) => {
+        if (keyboard) {
+            await explorerRow(file).focus();
+            await page.keyboard.press('Shift+F10');
+        } else {
+            await explorerRow(file).click({button: 'right'});
+        }
+        await page.getByRole('menu', {name: 'File and folder actions'}).getByRole('menuitem', {name: action, exact: true}).click();
+    };
+    await dropFiles(explorerRow(projectFile), ['root-note.txt']);
+    await expect(explorerRow('root-note.txt')).toBeVisible();
+    await idle();
+    await dropFiles(explorerRow('imports'), ['reference.txt', '資料.txt']);
+    await expect(explorerRow('imports/reference.txt')).toBeVisible();
+    await expect(explorerRow('imports/資料.txt')).toBeVisible();
+    await idle();
+    assert.equal(await readFile(path.join(nested, 'imports/資料.txt'), 'utf8'), 'binary\0data');
+    assert.equal(await readFile(path.join(incoming, 'reference.txt'), 'utf8'), 'reference');
+    await writeFile(path.join(incoming, 'reference.txt'), 'different');
+    await dropFiles(explorerRow('imports'), ['reference.txt']);
+    await expect(explorer.getByRole('alert')).toContainText('A file or folder with this name already exists.');
+    assert.equal(await readFile(path.join(nested, 'imports/reference.txt'), 'utf8'), 'reference');
+    assert.equal(await readFile(path.join(nested, 'root-note.txt'), 'utf8'), 'root');
+
+    // The Git drawer can be closed while the explorer stages and unstages files in the selected repository.
+    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    const stagedPaths = () => git('diff', '--cached', '--name-only', '-z').split('\0').filter(Boolean).sort();
+    const previouslyStaged = stagedPaths();
+    const rootNote = 'projects/demo/root-note.txt';
+    await contextAction('imports', 'Stage in Git');
+    await expect.poll(stagedPaths)
+        .toEqual([...previouslyStaged, 'projects/demo/imports/reference.txt', 'projects/demo/imports/資料.txt'].sort());
+    await idle();
+    await contextAction('root-note.txt', 'Stage in Git', true);
+    await expect.poll(stagedPaths).toContain(rootNote);
+    await expect(explorerRow('root-note.txt')).toHaveAttribute('data-staged', '');
+    await idle();
+    await contextAction('imports', 'Unstage in Git');
+    await expect.poll(stagedPaths).toEqual([...previouslyStaged, rootNote].sort());
+    await idle();
+    await contextAction('root-note.txt', 'Unstage in Git');
+    await expect.poll(stagedPaths).toEqual(previouslyStaged);
+    await expect(explorerRow('root-note.txt')).not.toHaveAttribute('data-staged');
+    await idle();
+
+    const rename = async (file: string, name: string) => {
+        await contextAction(file, 'Rename…');
+        const dialog = page.getByRole('dialog', {name: 'Rename'});
+        await dialog.getByRole('textbox', {name: 'New name'}).fill(name);
+        await dialog.getByRole('button', {name: 'Rename', exact: true}).click();
+        await idle();
+        await expect(explorerRow(file)).toHaveCount(0);
+    };
+    await rename('root-note.txt', 'root-note-renamed.txt');
+    assert.equal(await readFile(path.join(nested, 'root-note-renamed.txt'), 'utf8'), 'root');
+    await rename('imports', 'references');
+    await explorerRow('references').click();
+    await expect(explorerRow('references/資料.txt')).toBeVisible();
+    assert.equal(await readFile(path.join(nested, 'references/reference.txt'), 'utf8'), 'reference');
+    await contextAction('references', 'Delete…');
+    const remove = page.getByRole('dialog', {name: 'Delete'});
+    await remove.getByRole('button', {name: 'Cancel'}).click();
+    await expect(explorerRow('references')).toBeVisible();
+    for (const file of ['references', 'root-note-renamed.txt']) {
+        await contextAction(file, 'Delete…');
+        await remove.getByRole('button', {name: 'Delete', exact: true}).click();
+        await expect(explorerRow(file)).toHaveCount(0);
+        await idle();
+        await assert.rejects(readFile(path.join(nested, file)), {code: 'ENOENT'});
+    }
+    await showGit();
     await drawerBar.getByRole('button', {name: 'Git history', exact: true}).click();
     await expect(page.locator('.twgit-history-view .twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
     await drawerBar.getByRole('button', {name: 'Sprites', exact: true}).click();
