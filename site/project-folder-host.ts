@@ -7,9 +7,10 @@ import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-aut
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {GitAuthor, ScratchBlockDiffRendererOptions} from '@kubohiroya/turbowarp-plus-editor-git';
 import type {ProjectCommitJob, ProjectCommitPort} from '@kubohiroya/turbowarp-plus-editor-ui/project-commit-dialog';
-import {createProjectPublication} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
+import {bindDesktopPublicationPushSession, createProjectPublication} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
 import type {DesktopPublicationBridge, ProjectPublicationPort, PublicationRepository}
     from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
+import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-editor-ui/cloudflare-publication';
 import {loadedProjectTitle} from './project-tools/index.ts';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
@@ -98,9 +99,10 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
     const view = document?.defaultView as PickerWindow;
     if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
+    const cloudflare = typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
     const connectionSettings = localGit ? createGitConnectionSettings({
         desktop: view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit,
-        cloudflare: typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__
+        cloudflare
     }) : undefined;
     const store = view.ReduxStore;
     if (!store || store.getState().scratchGui.vm !== vm) return null;
@@ -191,7 +193,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         } : undefined;
     const repositoryCreation = localGit && createFolder ? bindProjectRepositoryCreation({
         view, locale, desktop: view.EditorPreload?.localGitCreation,
-        cloudflare: typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? undefined : __TW_PLUS_GIT_CLOUDFLARE__,
+        cloudflare,
         author: readAuthor,
         async prepareSource(serialize, current, title) {
             await flushPendingSurfaceEdits();
@@ -217,7 +219,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     }) : undefined;
     let journal: CommitJournal;
     let publication: {directory: FileSystemDirectoryHandle; root: FileSystemDirectoryHandle; current(): boolean;
-        port: ProjectPublicationPort} | undefined;
+        mode: 'desktop' | 'cloudflare'; port: ProjectPublicationPort} | undefined;
     const workflows = (): ProjectFolderWorkflows => {
         const directory = folder.directory;
         const repository = gitPanel?.getCommitRepository?.();
@@ -230,19 +232,35 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
         };
         const publicationBridge = view.EditorPreload?.localGitPublication;
-        const canPublish = typeof publicationBridge?.repository === 'function' && connectionSettings &&
+        const desktopPublication = typeof publicationBridge?.repository === 'function';
+        const mode = connectionSettings?.getView().mode ?? (desktopPublication ? 'desktop' : 'cloudflare');
+        const canPublish = connectionSettings && (mode === 'desktop' ? desktopPublication : cloudflare) &&
             typeof __TW_PLUS_INSPECT_PUBLICATION_REPOSITORY__ === 'function' &&
             typeof __TW_PLUS_PUSH_PUBLICATION_COMMIT__ === 'function';
         if (canPublish && (!publication || publication.directory !== directory || publication.root !== repository.root ||
-            !publication.current())) {
+            publication.mode !== mode || !publication.current())) {
             const access: PublicationGitAccess = {root: repository.root, guard, async getSession(remote, write) {
+                guard();
                 const session = await connectionSettings.getSession(remote, write);
-                return session?.connection.mode === 'desktop' ? session : null;
+                guard();
+                return session?.connection.mode === mode ? session : null;
             }};
-            publication = {directory, root: repository.root, current: repository.current, port: createProjectPublication({
-                bridge: publicationBridge,
+            const cloudflareBridge = mode === 'cloudflare' ? createCloudflarePublicationBridge({
+                ...cloudflare, view, getSession: access.getSession
+            }) : undefined;
+            publication = {directory, root: repository.root, mode, current: repository.current, port: createProjectPublication({
+                bridge: cloudflareBridge ?? publicationBridge,
                 inspect: () => __TW_PLUS_INSPECT_PUBLICATION_REPOSITORY__(access),
-                push: options => __TW_PLUS_PUSH_PUBLICATION_COMMIT__({...access, ...options}),
+                async push(options, job) {
+                    const getSession = cloudflareBridge ? cloudflareBridge.bindPushSession(job) :
+                        await bindDesktopPublicationPushSession(access.getSession, options.remote, job);
+                    try {
+                        await __TW_PLUS_PUSH_PUBLICATION_COMMIT__({...access, ...options, getSession});
+                    } catch (error) {
+                        if (!await getSession(options.remote, true).catch(() => null)) throw new Error('SESSION_REQUIRED');
+                        throw error;
+                    }
+                },
                 guard
             })};
         }

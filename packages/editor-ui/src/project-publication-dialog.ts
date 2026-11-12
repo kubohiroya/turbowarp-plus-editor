@@ -1,5 +1,5 @@
 import type {PreparedPublication, ProjectPublicationPort, PublicationCommit, PublicationIssue,
-    PublicationJob} from './project-publication.ts';
+    PublicationJob, PublicationStackParent} from './project-publication.ts';
 
 type Localize = (ja: string, en: string) => string;
 
@@ -11,6 +11,8 @@ function progressText(job: PublicationJob, l: Localize) {
         creatingIssue: l('Issue を作成中', 'Creating issue'),
         issueReady: l('PR を準備中', 'Preparing pull request'),
         creatingPull: l('PR を作成中', 'Creating pull request'),
+        stacking: l('PR をスタックに追加中', 'Adding the pull request to the stack'),
+        waitingForParent: l('親 PR のマージを待機中', 'Waiting for the parent pull request to merge'),
         waiting: job.intent.goal === 'merge' ? l('CI・レビューを待機中', 'Waiting for CI and review') :
             l('PR のマージを待機中', 'Waiting for the pull request to merge'),
         ready: l('マージ条件を確認済み', 'Merge conditions met'),
@@ -36,6 +38,12 @@ function pauseText(reason: string | undefined, l: Localize) {
     case 'pullClosed': return l('PR はクローズされています。', 'The pull request is closed.');
     case 'issueUnavailable': return l('指定の Issue を利用できません。', 'The selected issue is unavailable.');
     case 'downstack': return l('GitHub でスタックされた PR の状態を確認してください。', 'Check the stacked pull requests on GitHub.');
+    case 'stackUnknown': return l('スタックへの追加結果を確認できません。GitHub で状態を確認してください。',
+        'Could not verify that the pull request was added to the stack. Check the stack on GitHub.');
+    case 'stackParentChanged': return l('親 PR のブランチまたは状態が変わりました。GitHub で確認してください。',
+        'The parent pull request changed. Check it on GitHub.');
+    case 'stackDiffChanged': return l('親 PR のマージ後に子 PR の差分が変わりました。GitHub で再確認してください。',
+        'The child pull request diff changed after the parent merged. Review it on GitHub.');
     case 'closingIssues': return l('この PR による Issue の自動クローズを GitHub で確認してください。',
         'Review automatic issue closure for this pull request on GitHub.');
     case 'issueUnknown': case 'pullUnknown':
@@ -53,6 +61,12 @@ function errorText(error: unknown, l: Localize) {
     }
     if (code.includes('PUBLICATION_BASE')) return l('コミットが異なるベースブランチを選んでください。',
         'Choose a base branch at a different commit.');
+    if (code.includes('PUBLICATION_STACK_PARENT')) return l('同じリポジトリの開いている親 PR を確認してください。',
+        'Verify an open parent pull request in this repository.');
+    if (code.includes('PUBLICATION_POPUP')) return l('PR 承認のポップアップを許可して再試行してください。',
+        'Allow the publication approval popup and try again.');
+    if (code.includes('RATE_LIMITED')) return l('GitHub の利用上限に達しました。しばらくして再試行してください。',
+        'GitHub rate limited this request. Try again later.');
     if (code.includes('BAD_REQUEST')) return l('タイトル・本文と Issue の指定を確認してください。Issue のクローズはチェックボックスで指定します。',
         'Check the title, body and issue choice. Use the checkbox to select issue closure.');
     if (code.includes('PUSH_UNCONFIRMED')) return l('送信したブランチを GitHub で確認できませんでした。',
@@ -94,6 +108,39 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
     const base = document.createElement('select');
     base.name = 'pr-base';
     base.required = true;
+    const baseField = field(l('ベースブランチ', 'Base branch'), base);
+    const useStack = input('pr-stack', 'checkbox');
+    const stackField = field(l('既存 PR にスタックする', 'Stack on an existing pull request'), useStack);
+    stackField.hidden = true;
+    const parentNumber = input('pr-stack-parent', 'number');
+    parentNumber.min = '1';
+    parentNumber.step = '1';
+    const parentStatus = document.createElement('p');
+    parentStatus.setAttribute('role', 'status');
+    const verifyParent = button(l('親 PR を確認', 'Verify parent pull request'), () => {
+        if (!prepared?.stackParent || checkingParent || !useStack.checked) return;
+        const number = parentNumber.valueAsNumber;
+        if (!Number.isSafeInteger(number) || number < 1) return;
+        checkingParent = true;
+        parent = undefined;
+        parentStatus.textContent = l('親 PR を確認中…', 'Checking the parent pull request…');
+        render();
+        void prepared.stackParent(number).then(value => {
+            if (!open || !useStack.checked || parentNumber.valueAsNumber !== number) return;
+            parent = value ?? undefined;
+            parentStatus.textContent = parent ?
+                l(`親 PR #${parent.number} · 最終ベース ${parent.targetBase}`,
+                    `Parent PR #${parent.number} · final base ${parent.targetBase}`) :
+                l('この PR を親にできません。GitHub で PR が開いていてスタックの先頭にあることを確認してください。',
+                    'This PR cannot be used as the parent. Check that it is open and at the top of its stack on GitHub.');
+        }, error => {if (open) parentStatus.textContent = errorText(error, l);}).finally(() => {
+            checkingParent = false;
+            render();
+        });
+    });
+    const stackFields = document.createElement('div');
+    stackFields.hidden = true;
+    stackFields.append(field(l('親 PR の番号', 'Parent pull request number'), parentNumber), verifyParent, parentStatus);
     const issueMode = document.createElement('select');
     issueMode.name = 'pr-issue-mode';
     const option = (value: string, label: string) => {
@@ -120,7 +167,7 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
     const issueCloseField = field(l('PR のマージ後に Issue をクローズする', 'Close the issue after the PR merges'), issueClose);
     const fields = document.createElement('div');
     fields.hidden = true;
-    fields.append(field(l('ベースブランチ', 'Base branch'), base), field(l('PR タイトル', 'PR title'), title),
+    fields.append(baseField, stackField, stackFields, field(l('PR タイトル', 'PR title'), title),
         field(l('PR 本文', 'PR body'), body), issueModeField, issueNumberField, issueTitleField, issueBodyField,
         issueCloseField, mergeField);
     const references = document.createElement('div');
@@ -160,6 +207,8 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
     let stopListening: (() => void) | undefined;
     let open = true;
     let busy = false;
+    let checkingParent = false;
+    let parent: PublicationStackParent | undefined;
     const showIssueFields = () => {
         const newIssue = issueMode.value === 'new';
         const existingIssue = issueMode.value === 'existing';
@@ -173,16 +222,39 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
     };
     issueMode.onchange = showIssueFields;
     const displayBase = (name: string, oid: string) => {baseText.textContent = name ? name + ' · ' + oid : '—';};
-    const displaySelectedBase = () => displayBase(base.value,
-        prepared?.branches.find(branch => branch.name === base.value)?.oid ?? '');
+    const displaySelectedBase = () => {
+        if (useStack.checked) displayBase(parent?.head ?? '', parent?.headOid ?? '');
+        else displayBase(base.value, prepared?.branches.find(branch => branch.name === base.value)?.oid ?? '');
+    };
     base.onchange = displaySelectedBase;
+    useStack.onchange = parentNumber.oninput = () => {
+        parent = undefined;
+        parentStatus.textContent = '';
+        render();
+    };
     function render() {
         if (!open || !prepared) return;
-        const {job, running, error} = prepared.progress();
-        fields.hidden = Boolean(job);
+        const {job, running, error, approvalIntent} = prepared.progress();
+        const stacking = useStack.checked;
+        baseField.hidden = stacking;
+        base.disabled = stacking;
+        stackFields.hidden = !stacking;
+        verifyParent.disabled = checkingParent || busy || !(parentNumber.valueAsNumber >= 1);
+        parentNumber.disabled = !stacking || busy;
+        fields.hidden = Boolean(job || approvalIntent);
         submit.hidden = Boolean(job);
-        submit.disabled = busy || !base.value;
-        if (!job) return;
+        submit.disabled = busy || (!approvalIntent && (stacking ? !parent : !base.value));
+        submit.textContent = approvalIntent ? l('ブラウザーで承認を再開…', 'Resume approval in browser…') :
+            prepared.approval === 'browser' ? l('ブラウザーで確認して承認…', 'Review and approve in browser…') :
+                l('PR をキューに登録', 'Queue pull request');
+        if (!job) {
+            links.replaceChildren();
+            resume.hidden = true;
+            if (approvalIntent) displayBase(approvalIntent.base, approvalIntent.baseOid);
+            else displaySelectedBase();
+            if (approvalIntent && !busy) status.textContent = l(`承認待ち · ${approvalIntent.title}`, `Awaiting approval · ${approvalIntent.title}`);
+            return;
+        }
         displayBase(job.intent.base, job.intent.baseOid);
         status.textContent = progressText(job, l);
         alert.textContent = error ? errorText(error, l) : pauseText(job.awaitingPush ? undefined : job.pause, l);
@@ -202,24 +274,32 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
         links.replaceChildren();
         if (web && job.pullNumber) links.append(link('pull', job.pullNumber, 'PR'));
         if (web && job.issueNumber) links.append(' ', link('issues', job.issueNumber, 'Issue'));
+        if (web && job.intent.stackParent) links.append(' ', link('pull', job.intent.stackParent.number, l('親 PR', 'Parent PR')));
     }
     element.onsubmit = event => {
         event.preventDefault();
-        if (!prepared || busy || prepared.progress().job || !title.value.trim()) return;
+        if (!prepared || busy || prepared.progress().job) return;
+        const {approvalIntent} = prepared.progress();
+        if (!approvalIntent && (!title.value.trim() || useStack.checked && !parent)) return;
         let issue: PublicationIssue | undefined;
-        if (issueMode.value === 'existing') {
+        if (!approvalIntent && issueMode.value === 'existing') {
             const number = issueNumber.valueAsNumber;
             if (!Number.isSafeInteger(number) || number < 1) return;
             issue = {number, closeAfterMerge: issueClose.checked};
-        } else if (issueMode.value === 'new') {
+        } else if (!approvalIntent && issueMode.value === 'new') {
             if (!issueTitle.value.trim()) return;
             issue = {title: issueTitle.value.trim(), body: issueBody.value, closeAfterMerge: issueClose.checked};
         }
         busy = true;
         alert.textContent = '';
+        if (prepared.approval === 'browser') status.textContent = l('ブラウザーの承認画面で内容を確認してください。',
+            'Review and approve the publication in the browser window.');
         render();
-        void prepared.submit({base: base.value, title: title.value.trim(), body: body.value,
-            goal: merge.checked ? 'merge' : 'pr', issue}, () => open && element.isConnected).then(
+        const current = () => open && element.isConnected;
+        const submitted = approvalIntent ? prepared.approvePending(current) :
+            prepared.submit({base: useStack.checked ? parent.head : base.value, title: title.value.trim(), body: body.value,
+                goal: merge.checked ? 'merge' : 'pr', issue, ...(useStack.checked && {stackParent: parent})}, current);
+        void submitted.then(
             approved => {if (open && !approved) status.textContent = l('PR の登録をキャンセルしました。', 'PR registration was cancelled.');},
             error => {if (open) alert.textContent = errorText(error, l);}
         ).finally(() => {busy = false; render();});
@@ -227,6 +307,7 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
     void port.prepare(commit).then(publication => {
         if (!open) return;
         prepared = publication;
+        stackField.hidden = !publication.stackParent;
         remoteText.textContent = publication.remote;
         headText.textContent = publication.head + ' · ' + commit.commitOid;
         references.hidden = false;
@@ -249,7 +330,7 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
         issueModeField.hidden = issueMode.options.length < 2;
         showIssueFields();
         mergeField.hidden = !publication.capabilities.includes('merge') || !publication.capabilities.includes('checks-read');
-        status.textContent = candidates.length || publication.progress().job ? '' :
+        status.textContent = candidates.length || publication.stackParent || publication.progress().job ? '' :
             l('選べるベースブランチがありません。', 'There are no eligible base branches.');
         stopListening = publication.subscribe(render);
         render();
