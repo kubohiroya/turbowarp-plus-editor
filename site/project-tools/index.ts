@@ -75,6 +75,25 @@ export const restoreProjectTitle = vm => projects.get(vm)?.properties.restoreTit
 export const isProjectLoading = vm => Boolean(projects.get(vm)?.properties.snapshot().loading);
 export const subscribeProjectLoad = (vm, listener: () => void) => projects.get(vm)?.properties.subscribe(listener);
 
+const serializeProjectFolder = (vm, payloads, title?: string) =>
+    withProjectSerialization(vm, {title, preview: true}, () => {
+        const save = () => vm.saveProjectSb3('uint8array');
+        return payloads?.withEmbedded(save) ?? save();
+    });
+
+export async function createFolderFromCurrentProject(vm, createFolder: ProjectFolderWorkflows['createFolder']) {
+    const tools = projects.get(vm);
+    if (!tools || !createFolder || tools.saving || !vm.runtime.getTargetForStage() || isProjectLoading(vm)) return false;
+    const sequence = tools.properties.loadState().sequence;
+    const current = () => projects.get(vm) === tools && tools.properties.loadState().sequence === sequence;
+    tools.saving = true;
+    try {
+        return await createFolder(() => serializeProjectFolder(vm, tools.payloads), current);
+    } finally {
+        tools.saving = false;
+    }
+}
+
 export function projectFileActions(vm, locale: string, storage: ProjectFileStorage, detachFolder: () => void, add?: () => void,
     folderWorkflows?: ProjectFolderWorkflows) {
     const tools = projects.get(vm);
@@ -102,10 +121,7 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
             vm.on?.('PROJECT_CHANGED', changed);
             try {
                 if (format === 'folder') {
-                    const serialize = () => withProjectSerialization(vm, {title: name, preview: true}, () => {
-                        const save = () => vm.saveProjectSb3('uint8array');
-                        return payloads?.withEmbedded(save) ?? save();
-                    });
+                    const serialize = () => serializeProjectFolder(vm, payloads, name);
                     return request.git ? await folderWorkflows?.repositoryCreation?.start(request.git, serialize, current, signal) :
                         await folderWorkflows?.createFolder?.(serialize, current);
                 }

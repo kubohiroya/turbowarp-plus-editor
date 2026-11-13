@@ -1754,8 +1754,7 @@ test('the default editor pins the sprite list and supports the drawer and detach
         await popup.close();
     }
     await drawerView('Project folder').click();
-    await expect(page.getByText('Open a project folder to show its files here.', {exact: true})).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Open Project Folder…', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Create Project Folder', exact: true})).toBeVisible();
     const folderPin = page.getByRole('group', {name: 'Project folder tools'}).getByRole('button', {name: 'Pin this panel'});
     await folderPin.press('Enter');
     await expect(folderPin.locator('svg path[d="M2 2l12 12"]')).toBeVisible();
