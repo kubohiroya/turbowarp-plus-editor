@@ -19,7 +19,7 @@ import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
 import {renderProjectFolderExplorer} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
 import type {FollowExplorerGit, FollowFileStatuses} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
 import {followExplorerGit, followFileStatuses, readProjectHeadFile, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
-import {createAiAgents} from '@kubohiroya/turbowarp-plus-editor-workbench/ai-agents';
+import {aiAgents} from '../project-tools/info-menu.tsx';
 import {projectFolderWorkflows} from '../project-folder-host.ts';
 import {createFolderFromCurrentProject} from '../project-tools/index.ts';
 
@@ -80,8 +80,6 @@ function LayoutDesktop(props) {
     return <WindowDesktop {...props} layoutMenu={layoutFlags.standardLayout} />;
 }
 
-const aiAgents = createAiAgents(React, {styles});
-
 const getStorage = () => {
     try {
         return window.localStorage;
@@ -122,8 +120,10 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
                 render: ({locale, query}) =>
                     renderProjectFolderExplorer(React.createElement, {vm, locale, query, createFolder, fileStatuses, git,
                         openFile: workspace.open, readBaseline, followFileEdits})},
-            {id: 'git-history' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? 'コミットを検索' : 'Search commits',
-                render: ({locale, query}) => renderHistoryView(React.createElement, {vm, locale, query})},
+            ...(layoutFlags.localGit ? [
+                {id: 'git-history' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? 'コミットを検索' : 'Search commits',
+                    render: ({locale, query}) => renderHistoryView(React.createElement, {vm, locale, query})}
+            ] : []),
             agents
         ]};
     }, [vm]);

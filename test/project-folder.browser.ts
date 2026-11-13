@@ -1276,5 +1276,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(page.getByRole('list').getByRole('button', {name: 'Open Project Folder…', exact: true})).toBeVisible();
     await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
     await expect(page.locator('.twgit-branch-button')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(drawerBar.getByRole('button', {name: 'Project folder', exact: true})).toBeAttached();
+    await expect(drawerBar.getByRole('button', {name: 'Git history', exact: true})).toHaveCount(0);
     assert.deepEqual(errors, []);
 });
