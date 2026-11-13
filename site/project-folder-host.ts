@@ -39,8 +39,6 @@ declare const __TW_PLUS_CAPTURE_EDITOR_HOST__: ((host: EditorHost) => void) | un
 
 type LocalFolderMount = NonNullable<ReturnType<typeof mountProjectFolder>> & {
     save?(): Promise<unknown>;
-    createFromSnapshot?(options: {directory: FileSystemDirectoryHandle; current(): boolean;
-        prepareFiles(): Promise<ReadonlyMap<string, Uint8Array>>}): Promise<'opened' | 'cancelled'>;
 };
 type GitCommitMount = NonNullable<ReturnType<typeof mountGitPanel>> & {
     getCommitRepository?(): {root: FileSystemDirectoryHandle; current(): boolean} | null;
@@ -72,7 +70,6 @@ export interface ProjectFolderWorkflows {
     publication?: ProjectPublicationPort;
 }
 type PickerWindow = Window & {
-    showDirectoryPicker?(options: {id: string; mode: 'readwrite'}): Promise<FileSystemDirectoryHandle>;
     EditorPreload?: {
         localGitAuth?: DesktopGitPreload | null;
         localGit?: DesktopGitPreload | null;
@@ -200,12 +197,8 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     const createFolder = folder.createFromSnapshot && unpackProject ?
         async (serialize: () => Promise<Uint8Array>, current: () => boolean) => {
             try {
-                // Request the picker before awaiting work so it retains the Save click's activation.
-                const directory = await view.showDirectoryPicker({id: 'turbowarp-plus-project-folder', mode: 'readwrite'});
-                if (!current()) return false;
-                await flushPendingSurfaceEdits();
-                if (!current()) return false;
-                return await folder.createFromSnapshot({directory, current, prepareFiles: () => unpackProject(serialize, current)}) === 'opened';
+                return await folder.createFromSnapshot({current, collectEdits: flushPendingSurfaceEdits,
+                    prepareFiles: () => unpackProject(serialize, current)}) === 'opened';
             } catch (error) {
                 if ((error as DOMException).name === 'AbortError') return false;
                 throw error;

@@ -13,7 +13,7 @@ const prefix = '/turbowarp-plus-editor/';
 const mime = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
     '.svg': 'image/svg+xml', '.png': 'image/png', '.wav': 'audio/wav', '.wasm': 'application/wasm'};
 
-test('Editor saves an SB3 to an open project folder and commits only its files', {timeout: 120000}, async t => {
+test('Editor confirms project folder overwrite and commits only project files', {timeout: 120000}, async t => {
     const build = process.env.E2E_PROJECT_SAVE_BUILD;
     assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_SAVE_BUILD to the local webpack preview');
     const info = JSON.parse(await readFile(path.join(build, 'build-info.json'), 'utf8'));
@@ -26,6 +26,9 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
     const projectFolder = path.join(root, 'project');
     await Promise.all(['blank', 'occupied', 'project'].map(name => mkdir(path.join(root, name))));
     await writeFile(path.join(root, 'occupied', 'keep.txt'), 'Keep this file');
+    await writeFile(path.join(root, 'occupied', 'project.source.json'), 'Old project');
+    await mkdir(path.join(root, 'occupied', 'assets'));
+    await writeFile(path.join(root, 'occupied', 'assets', 'old.svg'), 'Old asset');
     const git = (...args: string[]) => execFileSync('git', args, {cwd: root, encoding: 'utf8'}).trim();
     await writeFile(path.join(root, 'notes.txt'), 'Existing repository file\n');
     git('init', '-q', '-b', 'main');
@@ -96,15 +99,28 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
     const drawer = page.getByRole('toolbar', {name: 'Drawer views'});
     await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
     const create = page.getByRole('button', {name: 'Create Project Folder', exact: true});
+    const warning = 'Contents in the selected folder will be overwritten.';
+    const confirmOverwrite = 'The selected folder is not empty. Contents in the folder may be overwritten. Continue?';
+    await expect(page.getByText(warning, {exact: true})).toBeVisible();
     await create.click();
     await expect(create).toBeEnabled();
     const choose = (name: string) => page.evaluate(name => {
         (window as unknown as {folderDestination: string}).folderDestination = name;
     }, name);
     await choose('occupied');
-    await create.click();
-    await expect(page.getByText('Choose an empty folder.', {exact: true})).toBeVisible();
+    const clickWithConfirmation = async (button: typeof create, accept: boolean) => {
+        const decision = page.waitForEvent('dialog').then(async dialog => {
+            const actual = {type: dialog.type(), message: dialog.message()};
+            if (accept && actual.message === confirmOverwrite) await dialog.accept();
+            else await dialog.dismiss();
+            assert.deepEqual(actual, {type: 'confirm', message: confirmOverwrite});
+        });
+        await Promise.all([button.click(), decision]);
+    };
+    await clickWithConfirmation(create, false);
+    await expect(create).toBeEnabled();
     assert.equal(await readFile(path.join(root, 'occupied', 'keep.txt'), 'utf8'), 'Keep this file');
+    assert.equal(await readFile(path.join(root, 'occupied', 'project.source.json'), 'utf8'), 'Old project');
     await choose('blank');
     await create.click();
     await expect(page.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
@@ -116,6 +132,18 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
         await menu('File').click();
         await page.getByRole('button', {name, exact: true}).click();
     };
+    await choose('occupied');
+    await command('Save As…');
+    const saveAs = page.getByRole('dialog', {name: 'Save As', exact: true});
+    await saveAs.getByLabel('Save format').selectOption('folder');
+    await expect(saveAs.getByText(warning, {exact: true})).toBeVisible();
+    await clickWithConfirmation(saveAs.getByRole('button', {name: 'Choose Where to Save…'}), true);
+    await expect(saveAs).toBeHidden();
+    await expect(page.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
+    assert.equal(await readFile(path.join(root, 'occupied', 'assets', md5ext), 'utf8'), svg);
+    await assert.rejects(readFile(path.join(root, 'occupied', 'assets', 'old.svg')), {code: 'ENOENT'});
+    assert.equal(await readFile(path.join(root, 'occupied', 'keep.txt'), 'utf8'), 'Keep this file');
+    await page.evaluate(bytes => window.vm.loadProject(Uint8Array.from(bytes).buffer), Array.from(sb3));
     if (await drawer.getByRole('button', {name: 'Project folder', exact: true}).getAttribute('aria-pressed') !== 'true') {
         await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
     }
