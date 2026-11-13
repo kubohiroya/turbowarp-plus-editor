@@ -43,13 +43,16 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
     const buttons = choices.map(choice => {
         const button = document.createElement('button');
         button.type = 'button';
+        const glyph = document.createElement('span');
+        if (choice.view === 'n') glyph.className = 'tw-script-view-mirror';
+        button.append(glyph);
         if (passive) button.addEventListener('pointerdown', event => {
             event.preventDefault();
             event.stopPropagation();
         });
         button.addEventListener('click', () => chooseView(choice.view));
         bar.append(button);
-        return button;
+        return {button, glyph};
     });
 
     let japanese: boolean | undefined;
@@ -59,8 +62,8 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
         japanese = ja;
         bar.setAttribute('aria-label', ja ? 'コードの表示方式' : 'Code view');
         choices.forEach((choice, index) => {
-            const button = buttons[index];
-            button.textContent = ja ? choice.jaShort : choice.short;
+            const {button, glyph} = buttons[index];
+            glyph.textContent = ja ? choice.jaShort : choice.short;
             const label = ja ? choice.jaLabel : choice.label;
             button.title = label;
             button.setAttribute('aria-label', label);
@@ -71,7 +74,7 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
         frame = undefined;
         labels();
         if (view === 'free') return;
-        surface.setAttribute('aria-label', buttons[view === 'z' ? 1 : 2].title);
+        surface.setAttribute('aria-label', buttons[view === 'z' ? 1 : 2].button.title);
         const {left, right, top} = svg.getBoundingClientRect();
         const toolbox = injection.querySelector(':scope > .blocklyToolboxDiv');
         if (toolbox) {
@@ -94,7 +97,7 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
         view = next;
         surface.hidden = view === 'free';
         svg.toggleAttribute('data-script-serial', view !== 'free');
-        buttons.forEach((button, index) => button.setAttribute('aria-pressed', String(choices[index].view === view)));
+        buttons.forEach(({button}, index) => button.setAttribute('aria-pressed', String(choices[index].view === view)));
         labels();
         if (view === 'free') contents.replaceChildren();
         else {
@@ -129,10 +132,10 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
         event.stopPropagation();
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
-        const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+        const index = buttons.findIndex(({button}) => button === document.activeElement);
         const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 :
             (index + (event.key === 'ArrowRight' ? 1 : 2)) % buttons.length;
-        buttons[next].focus();
+        buttons[next].button.focus();
         chooseView(choices[next].view);
     });
     host.append(surface, bar);

@@ -48,7 +48,9 @@ test('code view order and rearrangement preview preserve script connections and 
     const beforeZoom = await scale();
     await workspace.locator('[data-plus-zoom-action="in"]').click();
     await expect.poll(scale).toBeGreaterThan(beforeZoom);
-    await viewBar.getByRole('button', {name: 'N直列ビュー'}).click();
+    const nView = viewBar.getByRole('button', {name: 'N直列ビュー'});
+    await expect(nView.locator('span')).toHaveCSS('transform', 'matrix(1, 0, 0, -1, 0, 0)');
+    await nView.click();
     await expect.poll(() => readOrder(surface)).toEqual(nOrder);
     await free.click();
     await expect(surface).toBeHidden();

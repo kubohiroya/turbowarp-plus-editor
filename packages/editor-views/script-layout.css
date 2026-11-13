@@ -41,6 +41,11 @@
     color: white;
 }
 
+:global(.tw-script-view-mirror) {
+    display: inline-block;
+    transform: scaleY(-1);
+}
+
 :global(.injectionDiv:has(> [data-horizontal-block-palette]) > .tw-script-views) {
     top: 3.5rem;
 }
