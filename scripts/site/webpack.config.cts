@@ -193,6 +193,8 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-window
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
+config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/script-layout$'] =
+    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/script-layout');
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel', 'ai-agents']) {

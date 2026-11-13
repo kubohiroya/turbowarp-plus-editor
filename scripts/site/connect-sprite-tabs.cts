@@ -19,7 +19,9 @@ module.exports = (source: string) => {
     const targets = 'const originalTargets = () => vm.runtime.targets.filter(target => target.isOriginal);';
     const mountDocument = 'item.session = item.request.mount(element, () => api.close());';
     const dispose = '            flushLayout();';
-    if ([toolbar, active, refresh, tab, targets, mountDocument, dispose].some(slot =>
+    const activateOnClick = `body.addEventListener('click', event => {
+                    if (active?.id === id)`;
+    if ([toolbar, active, refresh, tab, targets, mountDocument, dispose, activateOnClick].some(slot =>
         source.indexOf(slot) < 0 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
         throw new Error('The pinned Editor Layout sprite tab connections have changed');
     }
@@ -46,6 +48,8 @@ module.exports = (source: string) => {
                             throw error;
                         }`)
         .replace(dispose, `${dispose}\n            if (unsaved) unsaved.dispose();`)
+        .replace(activateOnClick, activateOnClick.replace('active?.id === id',
+            'active?.id === id || viewAdapter?.ownsClick?.(event.target)'))
         .replace(toolbar, `${toolbar}
             runTargetSwitch: props.runTargetSwitch,`)
         .replace(refresh, `${refresh}

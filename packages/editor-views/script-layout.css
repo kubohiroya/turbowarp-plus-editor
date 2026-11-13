@@ -1,0 +1,167 @@
+:global([data-code-hover-surface]:not(:hover) :is(
+    .tw-script-views, .blocklyZoom, [data-workspace-minimap], [data-dockview-costume-thumbnail],
+    [data-code-hover-thumbnail], [class*="gui_watermark_"]
+)) {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+:global(.tw-script-views) {
+    position: absolute;
+    z-index: 32;
+    top: 0.5rem;
+    right: calc(var(--plus-stage-overlap, 0px) + 0.75rem);
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--ui-black-transparent, #80808050);
+    border-radius: 0.55rem;
+    background: color-mix(in srgb, var(--ui-primary, Canvas) 82%, transparent);
+    color: var(--text-primary, CanvasText);
+    backdrop-filter: blur(6px);
+}
+
+:global(.tw-script-views > button) {
+    min-inline-size: 2rem;
+    padding: 0.28rem 0.45rem;
+    border: 0;
+    border-radius: 0.35rem;
+    background: transparent;
+    color: inherit;
+    font: 600 0.8rem/1.25 system-ui, sans-serif;
+    cursor: pointer;
+}
+
+:global(.tw-script-views > button:hover) {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+:global(.tw-script-views > button[aria-pressed="true"]) {
+    background: var(--looks-secondary, #7951d1);
+    color: white;
+}
+
+:global(.injectionDiv:has(> [data-horizontal-block-palette]) > .tw-script-views) {
+    top: 3.5rem;
+}
+
+:global(.tw-script-view-surface) {
+    position: absolute;
+    z-index: 1;
+    inset: var(--tw-script-view-top, 0px)
+        max(var(--tw-script-view-right, 0px), var(--plus-stage-overlap, 0px)) 0
+        var(--tw-script-view-left, 0px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    background: var(--ui-primary, Canvas);
+}
+
+:global(.tw-script-view-surface > div) {
+    min-height: 100%;
+}
+
+:global(.tw-script-view-surface[hidden]) {
+    display: none;
+}
+
+:global(.blocklySvg[data-script-serial]) {
+    z-index: 2;
+    background: transparent;
+    pointer-events: none;
+}
+
+:global(.blocklySvg[data-script-serial] :is(.blocklyMainBackground, .blocklyBlockCanvas, .blocklyBubbleCanvas)) {
+    visibility: hidden;
+}
+
+:global(.blocklySvg[data-script-serial] .blocklyZoom) {
+    pointer-events: visiblePainted;
+}
+
+:global([data-code-hover-surface]:not(:hover) .blocklySvg[data-script-serial] .blocklyZoom) {
+    pointer-events: none;
+}
+
+:global(.injectionDiv:has(> [data-script-serial]) > [data-workspace-minimap]) {
+    z-index: 3;
+}
+
+:global(.tw-script-layout-svg) {
+    display: block;
+    overflow: visible;
+}
+
+:global(.tw-script-view-surface[data-can-show-block] [data-script-view-block]) {
+    cursor: pointer;
+}
+
+:global(.tw-script-layout-dialog) {
+    box-sizing: border-box;
+    width: min(44rem, calc(100% - 2rem));
+    max-height: calc(100% - 2rem);
+    padding: 1.25rem;
+    border: 1px solid var(--ui-black-transparent, #80808070);
+    border-radius: 0.75rem;
+    background: var(--ui-primary, Canvas);
+    color: var(--text-primary, CanvasText);
+    font: 0.9rem/1.4 system-ui, sans-serif;
+}
+
+:global(.tw-script-layout-dialog::backdrop) {
+    background: #17212a80;
+}
+
+:global(.tw-script-layout-dialog > h2) {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+}
+
+:global(.tw-script-layout-options) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+:global(.tw-script-layout-options label) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+:global(.tw-script-layout-options select),
+:global(.tw-script-layout-dialog button) {
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--ui-black-transparent, #80808070);
+    border-radius: 0.35rem;
+    background: var(--ui-primary, Canvas);
+    color: inherit;
+    font: inherit;
+}
+
+:global(.tw-script-layout-preview) {
+    height: min(45vh, 22rem);
+    overflow: auto;
+    border: 1px solid var(--ui-black-transparent, #80808070);
+    border-radius: 0.45rem;
+    background: color-mix(in srgb, var(--ui-primary, Canvas) 94%, currentColor);
+}
+
+:global(.tw-script-layout-dialog > footer) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+:global(.tw-script-layout-dialog [role="status"]) {
+    flex: 1;
+    margin: 0;
+}
+
+:global(.tw-script-layout-dialog button:last-child:not(:disabled)) {
+    background: var(--looks-secondary, #7951d1);
+    color: white;
+}

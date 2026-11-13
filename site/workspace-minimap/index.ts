@@ -48,6 +48,9 @@ export function attachWorkspaceNavigation(workspace, ScratchBlocks, {horizontalZ
 /** Arranges a Git review preview like the code area: costume thumbnail, minimap, then the zoom buttons. */
 export function attachReviewNavigation(workspace, ScratchBlocks, watermark: HTMLElement | undefined, {horizontalZoom, minimap}) {
     const container = workspace.getInjectionDiv();
+    const frame = container.parentElement?.parentElement ?? container;
+    frame.toggleAttribute('data-code-hover-surface', true);
+    watermark?.toggleAttribute('data-code-hover-thumbnail', true);
     const getCorner = () => {
         // The scrollable comparison frame owns these controls, even when its bottom is off-screen.
         const scrollbar = workspace.scrollbar ? ScratchBlocks.Scrollbar.scrollbarThickness : 0;
@@ -59,6 +62,8 @@ export function attachReviewNavigation(workspace, ScratchBlocks, watermark: HTML
     const zoom = horizontalZoom ? attachHorizontalWorkspaceZoom(workspace, ScratchBlocks, getCorner) : null;
     const map = minimap ? attachWorkspaceMinimap(workspace, ScratchBlocks, zoom, getCorner, watermark) : null;
     return {dispose() {
+        frame.removeAttribute('data-code-hover-surface');
+        watermark?.removeAttribute('data-code-hover-thumbnail');
         map?.dispose();
         zoom?.dispose();
     }};

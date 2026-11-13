@@ -24,6 +24,7 @@ import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu 
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {attachDockedScriptLayout, getDockedScriptLayout} from '@kubohiroya/turbowarp-plus-editor-views/script-layout';
 import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
     renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
@@ -34,7 +35,8 @@ export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
 export {flushPendingSurfaceEdits};
 export {default as webFontDialogs} from '@kubohiroya/turbowarp-plus-editor-ui/web-font-dialogs';
-export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
+export const renderEditMenu = props => renderEditCommands({...props,
+    getRearrangement: () => getDockedScriptLayout(props.vm), renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
@@ -96,7 +98,9 @@ export const attachHostScriptTransfer = (context, integration) => {
     const extensions = attachDockedCodeExtensions(context);
     const prewarm = startup.stageCodePrewarm ? attachStageCodePrewarm(context) : undefined;
     const editMenu = attachEditMenuWorkspace(context);
+    const scriptLayout = attachDockedScriptLayout(context);
     return {dispose() {
+        scriptLayout.dispose();
         editMenu.dispose();
         prewarm?.dispose();
         extensions.dispose();

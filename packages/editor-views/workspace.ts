@@ -1,6 +1,7 @@
 import type {CodeTarget} from './history.ts';
 import {captureCodePreviewChrome} from './preview-chrome.ts';
 import type {PresentationElements} from './preview-chrome.ts';
+import {attachScriptView, getDockedScriptLayout, type ScriptView} from './script-layout-view.ts';
 
 export type AttachPreviewMinimap = (workspace, ScratchBlocks, watermark: HTMLElement) => {dispose(): void};
 
@@ -10,6 +11,7 @@ interface Presentation {
     x: number;
     y: number;
     visible: boolean;
+    scriptView?: ScriptView;
     chrome: ReturnType<typeof captureCodePreviewChrome>;
 }
 
@@ -98,6 +100,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             x: workspace.scrollX + metrics.absoluteLeft,
             y: workspace.scrollY + metrics.absoluteTop,
             visible,
+            scriptView: getDockedScriptLayout(vm)?.view.view,
             chrome: captureCodePreviewChrome(workspace, loadedTarget, presentationElements, includeNavigation)
         };
     }
@@ -192,10 +195,11 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 rememberView();
                 flush();
             }
+            if (session.frontView !== view) getDockedScriptLayout(vm)?.view.setView(view.presentation?.scriptView ?? 'free');
             return true;
         },
         preview(element, chrome, view) {
-            const {target, presentation, attachMinimap, watermark} = view;
+            const {target, presentation, attachMinimap, watermark, locale, onScriptViewChange} = view;
             const preview = withoutEvents(blocks, () => blocks.inject(element, {
                 readOnly: true, scrollbars: false, sounds: false, media: options.media, rtl: options.rtl,
                 colours: options.colours, grid: options.grid,
@@ -204,6 +208,13 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             workspace.markFocused();
             presentation?.chrome?.mount(chrome);
             const minimap = attachMinimap?.(preview, blocks, watermark);
+            const scriptView = attachScriptView({workspace: preview, mount: chrome.parentElement,
+                getLocale: () => locale ?? workspace.getInjectionDiv().ownerDocument.documentElement.lang,
+                initialView: view.scriptView ?? presentation?.scriptView,
+                onChange: next => {
+                    if (presentation) presentation.scriptView = next;
+                    onScriptViewChange?.(next);
+                }, passive: true});
             let renderedXml;
             const resize = () => {
                 blocks.svgResize(preview);
@@ -249,6 +260,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 },
                 dispose() {
                     observer.disconnect();
+                    scriptView.dispose();
                     minimap?.dispose();
                     presentation?.chrome?.dispose();
                     withoutEvents(blocks, () => preview.dispose());

@@ -36,7 +36,7 @@ test('the migrated suite includes both SB3 routes, both themes and every securit
     assert.equal(result.status,0,result.stderr);
     const collect=suite=>[...(suite.specs||[]),...(suite.suites||[]).flatMap(collect)];
     const cases=JSON.parse(result.stdout).suites.flatMap(collect).flatMap(spec=>spec.tests.map(entry=>({...entry,file:spec.file,title:spec.title})));
-    assert.equal(cases.length,43);
+    assert.equal(cases.length,45);
     assert.equal(cases.filter(entry=>entry.file==='editor.spec.cts').length,4);
     assert.equal(cases.filter(entry=>entry.file==='document-layout.spec.cts').length,1);
     assert.equal(cases.filter(entry=>entry.file==='document-source.spec.cts').length,2);
@@ -45,6 +45,7 @@ test('the migrated suite includes both SB3 routes, both themes and every securit
     assert.equal(cases.filter(entry=>entry.file==='extension-security.spec.cts').length,11);
     assert.equal(cases.filter(entry=>entry.file==='landing.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='script-transfer.spec.cts').length,4);
+    assert.equal(cases.filter(entry=>entry.file==='script-layout.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='palette-delete-preview.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='horizontal-block-palette.spec.cts').length,9);
     assert.equal(cases.filter(entry=>entry.file==='workspace-minimap.spec.cts').length,2);
@@ -76,12 +77,13 @@ test('the full integration profile includes every fixed-input case without skips
     assert.equal(result.status,0,result.stderr);
     const collect=suite=>[...(suite.specs||[]),...(suite.suites||[]).flatMap(collect)];
     const cases=JSON.parse(result.stdout).suites.flatMap(collect).flatMap(spec=>spec.tests.map(entry=>({...entry,file:spec.file,title:spec.title})));
-    assert.equal(cases.length,46);
+    assert.equal(cases.length,48);
     assert.equal(cases.filter(entry=>entry.file==='fixed-inputs.spec.cts').length,3);
     assert.equal(cases.filter(entry=>entry.file==='document-layout.spec.cts').length,1);
     assert.equal(cases.filter(entry=>entry.file==='document-source.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='document-refusal.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='script-transfer.spec.cts').length,4);
+    assert.equal(cases.filter(entry=>entry.file==='script-layout.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='palette-delete-preview.spec.cts').length,2);
     assert.equal(cases.filter(entry=>entry.file==='horizontal-block-palette.spec.cts').length,9);
     assert.equal(cases.filter(entry=>entry.file==='workspace-minimap.spec.cts').length,2);
