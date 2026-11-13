@@ -484,6 +484,8 @@ test('the browser folder commands save localized Git diffs to the original worki
         await branchMenu.getByRole('menuitem', {name: 'Open Local Git'}).click();
         await expect(panel).toBeVisible();
     };
+    const closeGit = () => page.getByRole('tab', {name: 'Local Git', exact: true})
+        .getByRole('button', {name: 'Close Local Git', exact: true}).click();
     await page.getByText('File', {exact: true}).click();
     await expect(page.getByText('Open Project Folder…', {exact: true})).toBeVisible();
     await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
@@ -500,21 +502,29 @@ test('the browser folder commands save localized Git diffs to the original worki
     await page.keyboard.press('Escape');
     await expect(noRepository).toBeFocused();
     await showGit();
+    await expect(panel.getByRole('button', {name: 'Close', exact: true})).toHaveCount(0);
+    for (const name of ['Choose Repository…', 'Refresh']) {
+        await expect(panel.getByRole('button', {name, exact: true}).locator('svg')).toBeVisible();
+    }
     await panel.getByRole('button', {name: 'Choose Repository…'}).click();
-    const changesTab = panel.getByRole('tab', {name: 'Changes', exact: true});
-    const historyTab = panel.getByRole('tab', {name: 'History', exact: true});
-    await expect(changesTab).toHaveAttribute('aria-selected', 'true');
-    await historyTab.click();
+    const reviewStep = panel.getByRole('button', {name: 'Review changes', exact: true});
+    const recordStep = panel.getByRole('button', {name: 'Record locally', exact: true});
+    await expect(reviewStep).toHaveAttribute('aria-expanded', 'true');
+    await recordStep.click();
     // A commit row of the history graph is named by its subject, then its author, date and branches.
     await expect(panel.getByRole('button', {name: /^fixture, /})).toBeVisible();
     await expect(page.getByRole('button', {name: `Branch: ${git('branch', '--show-current')}`, exact: true})).toBeVisible();
-    await changesTab.click();
+    await reviewStep.click();
     await panel.getByText('Choose a project inside this repository', {exact: true}).click();
     await panel.getByRole('button', {name: 'projects/', exact: true}).click();
     await panel.getByRole('button', {name: 'demo/', exact: true}).click();
     page.once('dialog', dialog => dialog.accept());
     await panel.getByRole('button', {name: 'Open This Project'}).click();
-    await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
+    await expect(panel.locator('[data-git-project-path] code')).toHaveText('/projects/demo');
+    await expect(panel.getByRole('button', {name: 'Reload Project', exact: true}).locator('svg')).toBeVisible();
+    const savedFileCount = panel.locator('.twgit-section-heading .twgit-count');
+    await expect(savedFileCount).toHaveText('5');
+    await expect(reviewStep.locator('.twgit-count')).toHaveText('5');
     // A selected project lists its changes by stage, sprite and element; the list by file stays one click away.
     const elements = panel.getByRole('region', {name: 'Changes by project element'});
     await expect(elements.locator('[data-git-element="costumes"]')).toHaveCount(3);
@@ -526,6 +536,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(projectChanges.locator('.twgit-review-script')).toHaveCount(3);
     await projectChanges.locator('.twgit-review-script summary').first().click();
     await expect(projectChanges.locator('.twgit-review-script svg.blocklySvg')).toHaveCount(1);
+    await expect(projectChanges.locator('.twgit-review-target h5 img, .twgit-block-diff-preview img')).toHaveCount(0);
     // The panel is a tab beside the code, and the working-tree version can point at its script in the Editor.
     await expect(panel).toHaveClass(/twgit-panel-tab/);
     await projectChanges.getByRole('button', {name: 'After · Highlight in Editor'}).click();
@@ -583,7 +594,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await readFile(path.join(nested, 'root-note.txt'), 'utf8'), 'root');
 
     // The Git drawer can be closed while the explorer stages and unstages files in the selected repository.
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     const stagedPaths = () => git('diff', '--cached', '--name-only', '-z').split('\0').filter(Boolean).sort();
     const previouslyStaged = stagedPaths();
     const rootNote = 'projects/demo/root-note.txt';
@@ -652,7 +663,7 @@ test('the browser folder commands save localized Git diffs to the original worki
 
     const nestedFile = path.join(nested, projectFile);
     const nestedSteps = async () => JSON.parse(await readFile(nestedFile, 'utf8')).targets[1].blocks.move_B.inputs.STEPS[1][1];
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     await edit('value', '45');
     await save();
     assert.equal(await nestedSteps(), '45');
@@ -674,19 +685,19 @@ test('the browser folder commands save localized Git diffs to the original worki
     await writeFile(nestedFile, stringify(externalProject));
     await expect(panel.getByText('The repository changed outside the Editor. Refresh to read the current state.')).toBeVisible();
     await expect(projectChanges.locator('.twgit-review-script').first()).toBeVisible();
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     await edit('value', '55');
     await showGit();
-    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has unsaved changes.');
+    await expect(panel.locator('[data-git-dirty]')).toHaveText('Unsaved edits');
     page.once('dialog', dialog => dialog.dismiss());
     await panel.getByRole('button', {name: 'Reload Project'}).click();
     await expect(panel.getByRole('button', {name: 'Reload Project'})).toBeEnabled();
-    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has unsaved changes.');
+    await expect(panel.locator('[data-git-dirty]')).toHaveText('Unsaved edits');
     page.once('dialog', dialog => dialog.accept());
     await panel.getByRole('button', {name: 'Reload Project'}).click();
-    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has no unsaved changes.');
+    await expect(panel.locator('[data-git-dirty]')).toHaveText('No unsaved edits');
     await expect(panel.locator('[data-git-group="unstaged"]').filter({hasText: 'projects/demo/project.source.json'})).toBeVisible();
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     await edit('value', '60');
     await save();
     assert.equal(await nestedSteps(), '60');
@@ -699,7 +710,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await panel.getByRole('button', {name: 'Reload Project'}).click();
     await page.waitForFunction(() => (window as any).folderTest.reloaded);
     await expect(panel.getByRole('button', {name: 'Reload Project'})).toBeEnabled();
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     const notice = page.locator('[data-project-folder-external]');
     const reload = notice.getByRole('button', {name: 'Reload from Disk'});
     await expect(notice).toBeHidden();
@@ -863,10 +874,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('config', 'user.name', 'Editor folder fixture');
     git('config', 'user.email', 'fixture@example.invalid');
     await showGit();
-    const workflow = panel.getByRole('list', {name: 'Work steps'});
-    const currentStep = workflow.locator('[aria-current="step"]');
     await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
-    await expect(currentStep).toHaveText('Review changes');
+    await expect(reviewStep.locator('[data-review-pending]')).toBeVisible();
     // Added earlier with Git CLI and changed since, the file is listed both as staged and as unstaged.
     const stageDemo = panel.getByRole('button', {name: 'Add to Next Record: projects/demo/project.source.json'});
     await panel.locator('[data-git-group="unstaged"]').filter({hasText: 'projects/demo/project.source.json'}).click();
@@ -889,6 +898,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
     await addFromDiff.click();
     await expect(removeFromDiff).toBeEnabled();
+    await recordStep.click();
     await panel.getByLabel('Message for this record').fill('Update the demo from the Editor');
     await panel.getByRole('button', {name: 'Record (Commit)'}).click();
     await expect(panel.getByText('Recorded the changes (commit).')).toBeVisible();
@@ -899,7 +909,6 @@ test('the browser folder commands save localized Git diffs to the original worki
 
     // Branches: switching needs a clean work tree, then rewrites it as git switch does, and Reload Project opens the branch's files.
     const base = git('branch', '--show-current');
-    await historyTab.click();
     await panel.getByLabel('New branch name').fill('variant');
     await panel.getByRole('button', {name: 'Create Branch'}).click();
     await expect(panel.getByText('Stop the project, and save or record (or undo) every change, before switching branches.')).toBeVisible();
@@ -929,7 +938,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('update-ref', 'refs/heads/variant', variantCommit);
     await rm(path.join(folder, '.git', 'variant-index'));
     // Loading from the folder above cleared the panel's project; choose it again so Reload Project is offered.
-    await changesTab.click();
+    await reviewStep.click();
     const openProjectButton = panel.getByRole('button', {name: 'Open This Project'});
     if (!await openProjectButton.isVisible()) await panel.getByText('Choose a project inside this repository', {exact: true}).click();
     if (await openProjectButton.isDisabled()) {
@@ -938,8 +947,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     }
     // The Editor has no unsaved edits, so opening asks nothing.
     await openProjectButton.click();
-    await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
-    await historyTab.click();
+    await expect(panel.locator('[data-git-project-path] code')).toHaveText('/projects/demo');
+    await recordStep.click();
     await panel.getByRole('button', {name: 'Switch: variant'}).click();
     await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
     assert.equal(git('branch', '--show-current'), 'variant');
@@ -976,7 +985,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(git('status', '--porcelain'), '');
     // Unsaved edits in the Editor keep the branch where it is, also from the branch button, which tells why in a snackbar.
     await edit('value', '90');
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
     await branchMenu.getByRole('menuitemradio', {name: 'variant', exact: true}).click();
     const refusal = 'Stop the project, and save or record (or undo) every change, before switching branches.';
@@ -995,7 +1004,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal((await memory()).value, '90');
     git('fsck', '--no-progress');
     // With the panel closed, the button follows branches that another tool creates and switches to.
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     git('branch', 'from-another-tool');
     await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
     await expect(branchMenu.getByRole('menuitemradio', {name: 'from-another-tool', exact: true})).toBeVisible();

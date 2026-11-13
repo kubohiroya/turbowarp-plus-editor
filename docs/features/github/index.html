@@ -130,7 +130,7 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 <h2>12.7 GitHubに送る（push）</h2>
 
 <p>GitHub接続が設定されたEditorでは、ローカルGitパネルの「GitHub 接続」から送れます。</p>
-<ol><li>「接続方式」を選び、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>「GitHub に送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「GitHub と確かめる（fetch）」と「GitHub から取り込む（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
+<ol><li>「接続方式」を選び、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>「GitHub に送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「GitHub の変更を取得（fetch）」と「GitHub から取り込む（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
 <p>「GitHub 接続先が設定されていません。」と表示されるEditorでは、push・pullを外で行います。</p>
 <ul><li><strong>GitHub Desktop。</strong> 「File」→「Add local repository」でリポジトリのフォルダを追加し、「Push origin」（新しいブランチでは「Publish branch」）で送ります。取り込むときは「Fetch origin」→「Pull origin」を使います。</li><li><strong>コマンド。</strong> 新しいブランチを初めて送るときは <code>git push -u origin 12-jump-sound</code>、取り込むときは <code>git pull --ff-only</code> を実行します。</li></ul>
 <p>外で操作したあとは、パネルの「再取得」を押し、取り込んだ場合は「作品を再読込」で開き直します。Editorは開き直す前に保存していない編集を確かめます。</p>

@@ -147,7 +147,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await prepareDirectoryPicker(page);
     const panel = await openRepository(page, directory);
     assert.deepEqual(requests, []);
-    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await panel.getByRole('button', {name: 'Send to GitHub', exact: true}).click();
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     const picker = panel.getByRole('complementary', {name: 'Choose a pull request'});
     const selected = picker.getByRole('button', {name: /^#42 Start together/});
@@ -229,20 +229,20 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await clicked.locator('summary').click();
     await clicked.getByRole('checkbox', {name: 'Reviewed'}).check();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
-    await panel.getByRole('tab', {name: 'Changes', exact: true}).click();
-    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await panel.getByRole('button', {name: 'Review changes', exact: true}).click();
+    await panel.getByRole('button', {name: 'Send to GitHub', exact: true}).click();
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await selected.click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     await openRepository(page, directory);
-    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await panel.getByRole('button', {name: 'Send to GitHub', exact: true}).click();
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await selected.click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     // The head moves on and changes only the green flag script: only its mark is dropped.
     pr.head.sha = laterHead;
     await openRepository(page, directory);
-    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await panel.getByRole('button', {name: 'Send to GitHub', exact: true}).click();
     await panel.getByRole('button', {name: 'Pull requests', exact: true}).click();
     await selected.click();
     await expect(review.getByText('1 / 2', {exact: true})).toBeVisible();
@@ -250,7 +250,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await expect(script.getByRole('checkbox', {name: 'Reviewed'})).not.toBeChecked();
     await clicked.locator('summary').click();
     await expect(clicked.getByRole('checkbox', {name: 'Reviewed'})).toBeChecked();
-    await panel.getByRole('tab', {name: 'History', exact: true}).click();
+    await panel.getByRole('button', {name: 'Record locally', exact: true}).click();
     await expect(panel.getByRole('button', {name: /^fixture, /})).toBeVisible();
     await page.waitForFunction(() => {
         const blockly = Reflect.get(window, 'ScratchBlocks');
@@ -370,11 +370,11 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     await button('game/').click();
     page.once('dialog', dialog => dialog.accept());
     await button('Open This Project').click();
-    await expect(panel.getByText('Project folder · game', {exact: true})).toBeVisible();
+    await expect(panel.locator('[data-git-project-path] code')).toHaveText('/game');
     const spriteX = () => page.evaluate(() => Reflect.get(window, 'vm').runtime.getSpriteTargetByName('Sprite')?.x);
     await expect.poll(spriteX).toBe(0);
 
-    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await panel.getByRole('button', {name: 'Send to GitHub', exact: true}).click();
     await panel.getByText('GitHub connection', {exact: true}).click();
     await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     await button('Connect to GitHub').click();
@@ -419,7 +419,7 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     await greenFlag();
     await expect.poll(spriteX).toBe(25);
 
-    await panel.getByRole('tab', {name: 'History', exact: true}).click();
+    await panel.getByRole('button', {name: 'Record locally', exact: true}).click();
     await button('Switch: main').click();
     await expect(button('Switch: pr/42')).toBeVisible();
     assert.equal(git(client, 'branch', '--show-current'), 'main');
