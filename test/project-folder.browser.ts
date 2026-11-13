@@ -1285,3 +1285,135 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(drawerBar.getByRole('button', {name: 'Git history', exact: true})).toHaveCount(0);
     assert.deepEqual(errors, []);
 });
+
+test('opens a past version in its own player and restores it from the history', {timeout: 90000}, async t => {
+    const root = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(root && path.isAbsolute(root), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(root);
+    const folder = await mkdtemp(path.join(process.platform === 'darwin' ? '/private/tmp' : tmpdir(), 'tw-project-version-'));
+    t.after(() => rm(folder, {recursive: true, force: true}));
+    const {project, costume, sound, svg, wav} = fixture();
+    await mkdir(path.join(folder, 'assets'));
+    await Promise.all([
+        writeFile(path.join(folder, projectFile), stringify(project)),
+        writeFile(path.join(folder, 'assets', costume.md5ext), svg),
+        writeFile(path.join(folder, 'assets', sound.md5ext), wav),
+        writeFile(path.join(folder, 'embedded-extensions.json'), stringify({formatVersion: 1, extensions: []})),
+        writeFile(path.join(folder, 'sb3-source.json'), stringify({formatVersion: 1, project: projectFile,
+            embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets',
+            archiveEntries: ['project.json', costume.md5ext, sound.md5ext]}))
+    ]);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'user.name', 'Editor history fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    git('add', '.'); git('commit', '-qm', 'Past project');
+    const past = git('rev-parse', 'HEAD');
+    project.targets[1].name = 'Current Cat';
+    await writeFile(path.join(folder, projectFile), stringify(project));
+    git('add', '.'); git('commit', '-qm', 'Current project');
+    const current = git('rev-parse', 'HEAD');
+
+    const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
+    if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
+    const browser = await chromium.launch({headless: true, args});
+    t.after(() => browser.close());
+    const page = await browser.newPage({viewport: {width: 1280, height: 920}});
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.context().route('**/*', async route => {
+        const url = new URL(route.request().url());
+        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+        const filename = path.resolve(root, decodeURIComponent(url.pathname.slice(prefix.length)));
+        if (!filename.startsWith(root + path.sep)) return route.abort();
+        const body = await readFile(filename).catch(() => null);
+        if (body === null) return route.fulfill({status: 404});
+        return route.fulfill({body, contentType: mime[path.extname(filename)] || 'application/octet-stream'});
+    });
+    await page.addInitScript(() => {
+        if (window.parent !== window) return;
+        const testWindow = window as Window & {historyFolder?: FileSystemDirectoryHandle};
+        const picker = async () => testWindow.historyFolder;
+        Object.assign(testWindow, {showDirectoryPicker: picker});
+        for (const type of ['dragenter', 'dragover', 'drop']) {
+            window.addEventListener(type, async event => {
+                if (testWindow.historyFolder) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (type === 'drop') {
+                    const item = (event as DragEvent).dataTransfer.items[0] as DataTransferItem & {
+                        getAsFileSystemHandle(): Promise<FileSystemHandle>;
+                    };
+                    testWindow.historyFolder = await item.getAsFileSystemHandle() as FileSystemDirectoryHandle;
+                }
+            }, {capture: true});
+        }
+    });
+    await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusGitRestoreVersion=1`);
+    await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
+    const cdp = await page.context().newCDPSession(page);
+    for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+        await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
+            data: {items: [], files: [folder], dragOperationsMask: 1}});
+    }
+    await page.waitForFunction(() => (window as Window & {historyFolder?: FileSystemDirectoryHandle}).historyFolder?.kind === 'directory');
+    await page.getByText('File', {exact: true}).click();
+    await page.getByRole('button', {name: 'Open Project Folder…', exact: true}).click();
+    await page.waitForFunction(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Current Cat'));
+    await page.getByText('File', {exact: true}).click();
+    await page.getByRole('button', {name: 'Choose Repository…', exact: true}).click();
+    const views = page.getByRole('toolbar', {name: 'Drawer views'});
+    await views.getByRole('button', {name: 'Git history', exact: true}).click();
+    const history = page.locator('.twgit-history-view');
+    const pastActions = history.getByRole('button', {name: 'Actions: Past project'});
+    await page.evaluate(() => {
+        const vm = window.vm;
+        vm.runtime.targets.find(target => target.sprite?.name === 'Current Cat').setXY(51, 0);
+        vm.runtime.emitProjectChanged();
+    });
+    await pastActions.click();
+    await history.getByRole('menuitem', {name: 'Open This Version'}).click();
+    const preview = page.getByRole('dialog', {name: `Project version · ${past.slice(0, 12)}`});
+    const frame = await preview.locator('iframe').elementHandle();
+    const player = await frame.contentFrame();
+    assert.ok(player);
+    await player.waitForFunction(() => window.vm?.runtime.targets.some(target => target.sprite?.name === 'Cat'),
+        null, {timeout: 20000}).catch(error => {
+        throw new Error(`Historical project did not load: ${errors.join(', ')}`, {cause: error});
+    });
+    await player.getByTitle('Go', {exact: true}).first().click();
+    await player.waitForFunction(() => window.vm.runtime.targets.find(target => target.sprite?.name === 'Cat')?.x === 10);
+    assert.equal(await page.evaluate(() =>
+        window.vm.runtime.targets.find(target => target.sprite?.name === 'Current Cat')?.x), 51);
+    assert.equal(git('rev-parse', 'HEAD'), current);
+    assert.equal(git('status', '--porcelain'), '');
+    await preview.getByRole('button', {name: 'Close', exact: true}).click();
+
+    await pastActions.click();
+    await history.getByRole('menuitem', {name: 'Restore This Version…'}).click();
+    await expect(history.getByRole('status')).toContainText('Stop the project');
+    assert.equal(git('rev-parse', 'HEAD'), current);
+    await page.evaluate(() => {
+        const vm = window.vm;
+        vm.runtime.targets.find(target => target.sprite?.name === 'Current Cat').setXY(0, 0);
+    });
+    await page.getByText('File', {exact: true}).click();
+    await page.getByRole('button', {name: 'Save Project', exact: true}).click();
+    await expect(page.locator('[data-project-folder-status]')).toContainText(/saved|No changes to save/);
+    if (git('status', '--porcelain')) git('restore', '--', projectFile);
+    await pastActions.click();
+    await history.getByRole('menuitem', {name: 'Restore This Version…'}).click();
+    const confirmation = page.getByRole('dialog', {name: 'Restore This Version…'});
+    await expect(confirmation.getByText(projectFile, {exact: true})).toBeVisible();
+    await confirmation.getByRole('button', {name: 'Cancel', exact: true}).click();
+    assert.equal(git('rev-parse', 'HEAD'), current);
+    await pastActions.click();
+    await history.getByRole('menuitem', {name: 'Restore This Version…'}).click();
+    await confirmation.getByRole('button', {name: 'Restore and Record', exact: true}).click();
+    await expect.poll(() => git('rev-parse', 'HEAD^')).toBe(current);
+    assert.equal(git('diff', past, 'HEAD'), '');
+    await expect(page.getByText('Restored the project in a local commit.', {exact: false})).toBeVisible();
+    await page.getByRole('button', {name: 'Reload Project', exact: true}).first().click();
+    await page.waitForFunction(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Cat'));
+});

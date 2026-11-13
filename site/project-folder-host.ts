@@ -1,3 +1,4 @@
+import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
 import {followProjectFolder, mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
@@ -89,7 +90,7 @@ export const projectFolderWorkflows = (vm: FolderVM) => folders.get(vm)?.workflo
 /** The folder the loaded project came from, so its Dockview layout is kept apart from other projects. */
 export const projectFolderDirectory = (vm: FolderVM) => folders.get(vm)?.folder.directory ?? null;
 
-export function attachProjectFolder(vm: ProjectFolderVM, document: Document, localGit: boolean, locale: string,
+export function attachProjectFolder(vm: ProjectFolderVM, document: Document, localGit: boolean, gitRestoreVersion: boolean, locale: string,
     getBlockly: ScratchBlockDiffRendererOptions['getBlockly'],
     blocks: Pick<EditorHost, 'deserializeBlocks' | 'createBlockContainer'>,
     attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
@@ -334,6 +335,13 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         renderReviewBlock,
         openProject: folder.openDirectory,
         projectDirectory: () => folder.directory,
+        ...hasProjectVersionValidator() && {
+            restoreProjectVersions: gitRestoreVersion,
+            validateProjectVersion,
+            async previewProjectVersion({oid, files}) {
+                openProjectVersionPreview(document, oid, await packProjectVersion(files), locale);
+            }
+        },
         unsavedProjectPaths() {
             const paths = host.isProjectDirty() ? folder.unsavedPaths() : new Set<string>();
             return paths && new Set([...paths, ...dirtyFiles().map(file => file.path)]);

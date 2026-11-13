@@ -114,7 +114,13 @@ const injections: Record<string, string | string[]> = {
     __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: [path.join(gui, 'src', 'reducers', 'project-changed.js'), 'setProjectUnchanged'],
     __TW_PLUS_PROJECT_FOLDER_SET_TITLE__: [path.join(gui, 'src', 'reducers', 'project-title.js'), 'setProjectTitle']
 };
-if (projectUnpackEntry) injections.__TW_PLUS_UNPACK_PROJECT_FOLDER__ = [projectUnpackEntry, 'unpackSb3'];
+if (projectUnpackEntry) {
+    injections.__TW_PLUS_UNPACK_PROJECT_FOLDER__ = [projectUnpackEntry, 'unpackSb3'];
+    injections.__TW_PLUS_VALIDATE_PROJECT_FOLDER__ = [projectUnpackEntry, 'validateSourceFiles'];
+}
+injections.__TW_PLUS_REVISION_GUI__ = [path.join(gui, 'src/containers/gui.jsx'), 'default'];
+injections.__TW_PLUS_REVISION_APP_STATE__ = [path.join(gui, 'src/lib/app-state-hoc.jsx'), 'default'];
+injections.__TW_PLUS_REVISION_PROJECT_STATE__ = path.join(gui, 'src/reducers/project-state.js');
 if (saveCommitEntry) {
     injections.__TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__ = [saveCommitEntry, 'createSaveCommitQueue'];
     injections.__TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ = [saveCommitEntry, 'createIndexedDbSaveCommitJournal'];
@@ -331,6 +337,12 @@ config.module.rules.push({
     use: ['style-loader', {loader: 'css-loader', options: {modules: false}},
         path.join(__dirname, 'load-preview-reload-css.cts')]
 });
+config.entry['git-project-preview'] = path.join(siteSource, 'git-project-preview-player.tsx');
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: ['git-project-preview'],
+    filename: 'git-project-preview.html',
+    title: 'Project Version'
+}));
 config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     chunks: ['backpack-popout'], filename: 'backpack-popout.html',

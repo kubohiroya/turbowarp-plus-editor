@@ -20,6 +20,7 @@ export function readStartupFeatureFlags({
     twPlusHorizontalBlockPalette: horizontalBlockPalette = null,
     twPlusContextMenuIcons: contextMenuIcons = null,
     twPlusLocalGit: localGit = null,
+    twPlusGitRestoreVersion: gitRestoreVersion = null,
     twPlusWorkspaceMinimap: workspaceMinimap = null,
     twPlusStageCodePrewarm: stageCodePrewarm = null
 } = {}) {
@@ -44,6 +45,7 @@ export function readStartupFeatureFlags({
         horizontalBlockPalette: horizontalBlockPalette === '1',
         contextMenuIcons: contextMenuIcons === null || contextMenuIcons === '1',
         localGit: localGit === null || localGit === '1',
+        gitRestoreVersion: (localGit === null || localGit === '1') && gitRestoreVersion === '1',
         workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1',
         stageCodePrewarm: stageCodePrewarm === null || stageCodePrewarm === '1'
     });
