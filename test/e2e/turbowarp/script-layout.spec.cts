@@ -1,5 +1,20 @@
 const {test, expect} = require('./fixtures.cts');
 
+async function openLayoutMenu(page, background, label, position) {
+    await background.click({button: 'right', position});
+    const trigger = page.getByRole('menuitem', {name: label, exact: true});
+    await expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+    const submenu = page.getByRole('menu', {name: label, exact: true});
+    return {trigger, submenu};
+}
+
+async function expectLayoutSelection(submenu, label) {
+    await expect(submenu.getByRole('menuitemradio')).toHaveCount(3);
+    const checked = submenu.getByRole('menuitemradio', {checked: true});
+    await expect(checked).toHaveCount(1);
+    await expect(checked).toHaveText(label);
+}
+
 test('code view order and rearrangement preview preserve script connections and support undo', async ({page}) => {
     await page.goto('editor.html?lang=ja');
     await page.waitForFunction(() => window.vm?.editingTarget && window.ScratchBlocks?.getMainWorkspace());
@@ -30,29 +45,49 @@ test('code view order and rearrangement preview preserve script connections and 
     const zOrder = ['upper-left', 'upper-right', 'lower-left', 'lower-right'];
     const nOrder = ['upper-left', 'lower-left', 'upper-right', 'lower-right'];
     const edit = page.getByText('編集', {exact: true});
-    const viewBar = page.locator('.tw-script-views');
-    const workspace = page.locator('.injectionDiv').filter({has: viewBar});
+    const surface = page.locator('.tw-script-view-surface');
+    const workspace = page.locator('.injectionDiv').filter({has: surface});
+    const background = workspace.locator('.blocklyMainBackground');
+    const backgroundPosition = {x: 255, y: 185};
+    const serialPosition = {x: 175, y: 145};
+    const layoutLabel = 'コードの並びの見え方を変更する';
     await edit.hover();
-    await expect(viewBar).toBeHidden();
     await expect(workspace.locator('[data-workspace-minimap]')).toBeHidden();
     await expect(workspace.locator('.blocklyZoom')).toBeHidden();
     await workspace.hover({position: {x: 220, y: 150}});
     await expect(workspace.locator('[data-workspace-minimap]')).toBeVisible();
     await expect(workspace.locator('.blocklyZoom')).toBeVisible();
-    const free = viewBar.getByRole('button', {name: '自由配置ビュー'});
-    await expect(free).toHaveAttribute('aria-pressed', 'true');
-    const surface = workspace.locator('.tw-script-view-surface');
-    await viewBar.getByRole('button', {name: 'Z直列ビュー'}).click();
+    await expect(page.locator('.tw-script-views')).toHaveCount(0);
+
+    const block = workspace.locator('.blocklyBlockCanvas [data-id="upper-left"]');
+    await block.click({button: 'right', position: {x: 25, y: 18}});
+    await expect(page.locator('.blocklyWidgetDiv .blocklyContextMenu')).toBeVisible();
+    await expect(page.getByRole('menuitem', {name: layoutLabel})).toHaveCount(0);
+    await workspace.click({position: {x: 425, y: 360}});
+    await expect(page.locator('.blocklyWidgetDiv .blocklyContextMenu')).toBeHidden();
+
+    const normal = await openLayoutMenu(page, background, layoutLabel, backgroundPosition);
+    await expect(page.getByRole('menuitem', {name: '取り消し', exact: true})).toBeVisible();
+    await normal.trigger.hover();
+    await expectLayoutSelection(normal.submenu, '通常配置の見え方');
+    await normal.submenu.getByRole('menuitemradio', {name: 'Z配置の見え方', exact: true}).click();
     await expect.poll(() => readOrder(surface)).toEqual(zOrder);
     const scale = () => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().scale);
     const beforeZoom = await scale();
     await workspace.locator('[data-plus-zoom-action="in"]').click();
     await expect.poll(scale).toBeGreaterThan(beforeZoom);
-    const nView = viewBar.getByRole('button', {name: 'N直列ビュー'});
-    await expect(nView.locator('span')).toHaveCSS('transform', 'matrix(1, 0, 0, -1, 0, 0)');
-    await nView.click();
+
+    const z = await openLayoutMenu(page, surface, layoutLabel, serialPosition);
+    await z.trigger.click();
+    await expectLayoutSelection(z.submenu, 'Z配置の見え方');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await expect.poll(() => readOrder(surface)).toEqual(nOrder);
-    await free.click();
+
+    const n = await openLayoutMenu(page, surface, layoutLabel, serialPosition);
+    await n.trigger.hover();
+    await expectLayoutSelection(n.submenu, 'N配置の見え方');
+    await n.submenu.getByRole('menuitemradio', {name: '通常配置の見え方', exact: true}).click();
     await expect(surface).toBeHidden();
     expect(await positions()).toEqual(original);
 
@@ -109,20 +144,25 @@ test('the hovered code panel owns its controls in a split editor', async ({page}
     await layout.click();
     await page.getByRole('menuitem', {name: 'Split right', exact: true}).click();
     const inactive = page.locator('[data-code-preview]');
-    const editing = page.locator('.injectionDiv').filter({has: page.locator(':scope > .tw-script-views')});
-    await expect(inactive).toHaveCount(1);
-    const inactiveBar = inactive.locator('.tw-script-views');
-    const editingBar = editing.locator('.tw-script-views');
+    const surface = page.locator('.tw-script-view-surface');
+    const editing = page.locator('.injectionDiv').filter({has: surface});
+    const label = 'Change code layout view';
+    await expect(inactive.locator('.tw-script-view-surface')).toHaveCount(1);
     await inactive.hover({position: {x: 90, y: 180}});
-    await expect(inactiveBar.getByRole('button', {name: 'Free layout view'})).toHaveAttribute('aria-pressed', 'true');
     await expect(inactive.locator('[data-dockview-costume-thumbnail] img[src]')).toBeVisible();
-    await expect(editingBar).toBeHidden();
-    await inactiveBar.getByRole('button', {name: 'N serial view'}).click();
-    await expect(inactiveBar.getByRole('button', {name: 'N serial view'})).toHaveAttribute('aria-pressed', 'true');
-    await editing.hover({position: {x: 90, y: 180}});
-    await expect(editingBar).toBeVisible();
-    await expect(inactiveBar).toBeHidden();
+    const preview = await openLayoutMenu(page, inactive, label, {x: 90, y: 180});
+    await preview.trigger.hover();
+    await expectLayoutSelection(preview.submenu, 'Normal layout view');
+    await preview.submenu.getByRole('menuitemradio', {name: 'N layout view', exact: true}).click();
+    await expect(inactive.locator('.tw-script-view-surface')).toBeVisible();
+    await expect(editing.locator('.tw-script-view-surface')).toBeHidden();
+
+    await editing.hover({position: {x: 200, y: 180}});
     await expect(inactive.locator('[data-dockview-costume-thumbnail] img[src]')).toBeHidden();
+    const active = await openLayoutMenu(page, editing.locator('.blocklyMainBackground'), label, {x: 210, y: 160});
+    await active.trigger.hover();
+    await expectLayoutSelection(active.submenu, 'Normal layout view');
+    await page.keyboard.press('Escape');
 
     await page.getByRole('button', {name: 'Stage opening options', exact: true}).click();
     await page.getByRole('menuitem', {name: 'Show in a tab', exact: true}).click();

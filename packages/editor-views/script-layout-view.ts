@@ -2,28 +2,34 @@ import './script-layout.css';
 import {arrangeScripts} from './script-layout.ts';
 import {paintScripts, readScripts, type LayoutWorkspace} from './script-layout-workspace.ts';
 import {openRearrangement, type RearrangementContext} from './script-layout-dialog.ts';
+import {attachScriptViewMenu, type ScriptViewMenuBlocks, type ScriptViewMenuWorkspace} from './script-view-menu.ts';
 
 export type ScriptView = 'free' | 'z' | 'n';
 
 interface ViewOptions {
-    workspace: LayoutWorkspace;
+    workspace: LayoutWorkspace & ScriptViewMenuWorkspace;
+    ScratchBlocks: ScriptViewMenuBlocks;
     getLocale(): string;
     mount?: HTMLElement;
     initialView?: ScriptView;
     canShowBlock?(): boolean;
     onChange?(view: ScriptView): void;
-    passive?: boolean;
+    hasWorkspaceMenu?(): boolean;
 }
 
-export function attachScriptView({workspace, getLocale, mount, initialView = 'free', canShowBlock, onChange, passive = false}: ViewOptions) {
+const choices = [
+    {view: 'free', label: 'Normal layout view', jaLabel: '通常配置の見え方'},
+    {view: 'z', label: 'Z layout view', jaLabel: 'Z配置の見え方'},
+    {view: 'n', label: 'N layout view', jaLabel: 'N配置の見え方'}
+] as const;
+
+export function attachScriptView({
+    workspace, ScratchBlocks, getLocale, mount, initialView = 'free', canShowBlock, onChange, hasWorkspaceMenu = () => true
+}: ViewOptions) {
     const injection = workspace.getInjectionDiv();
     const host = mount ?? injection;
     const document = host.ownerDocument;
     const window = document.defaultView;
-    const bar = document.createElement('div');
-    bar.className = 'tw-script-views';
-    bar.dataset.codeViewControl = '';
-    bar.setAttribute('role', 'group');
     const surface = document.createElement('div');
     surface.className = 'tw-script-view-surface';
     surface.dataset.codeViewControl = '';
@@ -35,46 +41,33 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
     let frame: number | undefined;
     const svg = workspace.getParentSvg();
     const observer = new window.MutationObserver(update);
-    const choices = [
-        {view: 'free', short: 'Free', jaShort: '通常', label: 'Free layout view', jaLabel: '自由配置ビュー'},
-        {view: 'z', short: 'Z', jaShort: 'Z', label: 'Z serial view', jaLabel: 'Z直列ビュー'},
-        {view: 'n', short: 'N', jaShort: 'N', label: 'N serial view', jaLabel: 'N直列ビュー'}
-    ] as const;
-    const buttons = choices.map(choice => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        const glyph = document.createElement('span');
-        if (choice.view === 'n') glyph.className = 'tw-script-view-mirror';
-        button.append(glyph);
-        if (passive) button.addEventListener('pointerdown', event => {
-            event.preventDefault();
-            event.stopPropagation();
-        });
-        button.addEventListener('click', () => chooseView(choice.view));
-        bar.append(button);
-        return {button, glyph};
-    });
+    const japanese = () => /^ja(?:-|$)/i.test(getLocale());
 
-    let japanese: boolean | undefined;
     function labels() {
-        const ja = /^ja(?:-|$)/i.test(getLocale());
-        if (japanese === ja) return;
-        japanese = ja;
-        bar.setAttribute('aria-label', ja ? 'コードの表示方式' : 'Code view');
-        choices.forEach((choice, index) => {
-            const {button, glyph} = buttons[index];
-            glyph.textContent = ja ? choice.jaShort : choice.short;
-            const label = ja ? choice.jaLabel : choice.label;
-            button.title = label;
-            button.setAttribute('aria-label', label);
-        });
+        const choice = choices.find(choice => choice.view === view);
+        surface.setAttribute('aria-label', japanese() ? choice.jaLabel : choice.label);
     }
+
+    const menu = attachScriptViewMenu(ScratchBlocks, workspace, host, surface, target =>
+        view === 'free' ? !hasWorkspaceMenu() && (target === host || target.closest('.blocklyMainBackground') !== null) :
+            surface.contains(target) && !target.closest('[data-script-view-block]'),
+    () => {
+        const ja = japanese();
+        return {
+            label: ja ? 'コードの並びの見え方を変更する' : 'Change code layout view',
+            choices: choices.map(choice => ({
+                text: ja ? choice.jaLabel : choice.label,
+                enabled: true,
+                checked: choice.view === view,
+                callback: () => chooseView(choice.view)
+            }))
+        };
+    });
 
     function render() {
         frame = undefined;
         labels();
         if (view === 'free') return;
-        surface.setAttribute('aria-label', buttons[view === 'z' ? 1 : 2].button.title);
         const {left, right, top} = svg.getBoundingClientRect();
         const toolbox = injection.querySelector(':scope > .blocklyToolboxDiv');
         if (toolbox) {
@@ -93,11 +86,11 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
     }
 
     function setView(next: ScriptView) {
+        menu.close();
         observer.disconnect();
         view = next;
         surface.hidden = view === 'free';
         svg.toggleAttribute('data-script-serial', view !== 'free');
-        buttons.forEach(({button}, index) => button.setAttribute('aria-pressed', String(choices[index].view === view)));
         labels();
         if (view === 'free') contents.replaceChildren();
         else {
@@ -112,7 +105,6 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
         onChange?.(next);
     }
 
-    bar.addEventListener('click', event => event.stopPropagation());
     surface.addEventListener('click', event => {
         event.stopPropagation();
         const id = (event.target as Element).closest('[data-script-view-block]')?.getAttribute('data-script-view-block');
@@ -128,17 +120,7 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
     surface.addEventListener('keydown', event => {
         if (event.key !== 'Tab') event.stopPropagation();
     });
-    bar.addEventListener('keydown', event => {
-        event.stopPropagation();
-        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        const index = buttons.findIndex(({button}) => button === document.activeElement);
-        const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 :
-            (index + (event.key === 'ArrowRight' ? 1 : 2)) % buttons.length;
-        buttons[next].button.focus();
-        chooseView(choices[next].view);
-    });
-    host.append(surface, bar);
+    host.append(surface);
     setView(initialView);
     return {
         update,
@@ -150,7 +132,7 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
             observer.disconnect();
             language.disconnect();
             if (frame !== undefined) window.cancelAnimationFrame(frame);
-            bar.remove();
+            menu.dispose();
             surface.remove();
             svg.removeAttribute('data-script-serial');
         }
@@ -159,10 +141,10 @@ export function attachScriptView({workspace, getLocale, mount, initialView = 'fr
 
 interface DockedScriptLayoutOptions {
     vm: {editingTarget?: object; runtime?: {getEditingTarget(): unknown}};
-    workspace: LayoutWorkspace & {
+    workspace: LayoutWorkspace & ScriptViewMenuWorkspace & {
         options: {readOnly: boolean};
     };
-    ScratchBlocks: {Events: RearrangementContext['events']; getMainWorkspace(): unknown};
+    ScratchBlocks: ScriptViewMenuBlocks & {Events: RearrangementContext['events']; getMainWorkspace(): unknown};
     canUse(): boolean;
     locale: string;
 }
@@ -185,7 +167,7 @@ export function attachDockedScriptLayout({vm, workspace, ScratchBlocks, canUse, 
             ScratchBlocks.getMainWorkspace() === workspace && !host.closest('[hidden], [inert]') &&
             (!group || group.classList.contains('dv-active-group')));
     };
-    const view = attachScriptView({workspace, getLocale: () => injection.ownerDocument.documentElement.lang || locale,
+    const view = attachScriptView({workspace, ScratchBlocks, getLocale: () => injection.ownerDocument.documentElement.lang || locale,
         canShowBlock: canArrange});
     host.setAttribute('data-code-hover-surface', '');
     let dialog: ReturnType<typeof openRearrangement> | undefined;

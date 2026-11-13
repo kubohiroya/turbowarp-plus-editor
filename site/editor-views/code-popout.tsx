@@ -69,8 +69,9 @@ let editable = false;
 let history = {canUndo: false, canRedo: false};
 let group;
 let edits = [];
-const scriptView = attachScriptView({workspace, getLocale: () => locale,
-    mount: workspaceArea, canShowBlock: () => editable && !blockedSnapshot});
+const scriptView = attachScriptView({workspace, ScratchBlocks, getLocale: () => locale,
+    mount: workspaceArea, canShowBlock: () => editable && !blockedSnapshot,
+    hasWorkspaceMenu: () => !mount.inert});
 installScopedVariableReferences(ScratchBlocks, workspace, () => locale);
 const procedureEditor = installProcedureEditor({
     blocks: ScratchBlocks, workspace, getLocale: () => locale, canEdit: () => editable && !blockedSnapshot && document.hasFocus(),

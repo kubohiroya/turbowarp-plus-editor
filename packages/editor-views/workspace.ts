@@ -208,13 +208,13 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             workspace.markFocused();
             presentation?.chrome?.mount(chrome);
             const minimap = attachMinimap?.(preview, blocks, watermark);
-            const scriptView = attachScriptView({workspace: preview, mount: chrome.parentElement,
+            const scriptView = attachScriptView({workspace: preview, ScratchBlocks: blocks, mount: chrome.parentElement,
                 getLocale: () => locale ?? workspace.getInjectionDiv().ownerDocument.documentElement.lang,
                 initialView: view.scriptView ?? presentation?.scriptView,
                 onChange: next => {
                     if (presentation) presentation.scriptView = next;
                     onScriptViewChange?.(next);
-                }, passive: true});
+                }, hasWorkspaceMenu: () => false});
             let renderedXml;
             const resize = () => {
                 blocks.svgResize(preview);

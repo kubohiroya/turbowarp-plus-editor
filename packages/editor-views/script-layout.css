@@ -1,53 +1,30 @@
 :global([data-code-hover-surface]:not(:hover) :is(
-    .tw-script-views, .blocklyZoom, [data-workspace-minimap], [data-dockview-costume-thumbnail],
+    .blocklyZoom, [data-workspace-minimap], [data-dockview-costume-thumbnail],
     [data-code-hover-thumbnail], [class*="gui_watermark_"]
 )) {
     visibility: hidden;
     pointer-events: none;
 }
 
-:global(.tw-script-views) {
-    position: absolute;
-    z-index: 32;
-    top: 0.5rem;
-    right: calc(var(--plus-stage-overlap, 0px) + 0.75rem);
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border: 1px solid var(--ui-black-transparent, #80808050);
-    border-radius: 0.55rem;
-    background: color-mix(in srgb, var(--ui-primary, Canvas) 82%, transparent);
-    color: var(--text-primary, CanvasText);
-    backdrop-filter: blur(6px);
-}
-
-:global(.tw-script-views > button) {
-    min-inline-size: 2rem;
-    padding: 0.28rem 0.45rem;
-    border: 0;
-    border-radius: 0.35rem;
-    background: transparent;
-    color: inherit;
-    font: 600 0.8rem/1.25 system-ui, sans-serif;
-    cursor: pointer;
-}
-
-:global(.tw-script-views > button:hover) {
-    background: color-mix(in srgb, currentColor 12%, transparent);
-}
-
-:global(.tw-script-views > button[aria-pressed="true"]) {
-    background: var(--looks-secondary, #7951d1);
-    color: white;
-}
-
-:global(.tw-script-view-mirror) {
+:global(.tw-script-view-menu-arrow) {
     display: inline-block;
-    transform: scaleY(-1);
+    inline-size: 0.4em;
+    block-size: 0.4em;
+    margin-inline-start: 1em;
+    border-top: 1px solid;
+    border-right: 1px solid;
+    transform: rotate(45deg);
+    vertical-align: 0.12em;
 }
 
-:global(.injectionDiv:has(> [data-horizontal-block-palette]) > .tw-script-views) {
-    top: 3.5rem;
+:global(.tw-script-view-menu-arrow:dir(rtl)) {
+    transform: rotate(-135deg);
+}
+
+:global(.blocklyWidgetDiv .tw-script-view-submenu) {
+    position: fixed;
+    max-inline-size: 100vw;
+    max-block-size: 100vh;
 }
 
 :global(.tw-script-view-surface) {
