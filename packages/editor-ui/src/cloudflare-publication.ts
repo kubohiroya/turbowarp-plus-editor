@@ -1,11 +1,11 @@
 import type {PublicationIntent, PullRequestObservation} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
 import {pinPublicationPushSession} from './project-publication.ts';
-import type {PublicationBridge, PublicationProgressJob, PublicationPushSession, PublicationStackParent, PublicationTarget,
+import type {PublicationBridge, PublicationJob, PublicationPushSession, PublicationStackParent, PublicationTarget,
     ReadPublicationPushSession}
     from './project-publication.ts';
 
 type PublicationResult = {approval: 'pending' | 'approved' | 'expired' | 'missing';
-    job: PublicationProgressJob | null; intent?: PublicationIntent};
+    job: PublicationJob | null; intent?: PublicationIntent};
 type PublicationRepository = Awaited<ReturnType<PublicationBridge['repository']>>;
 
 const prefix = '/v1/github-publication';
@@ -34,9 +34,9 @@ export function createCloudflarePublicationBridge<Session extends PublicationPus
     getSession: ReadPublicationPushSession<Session>;
     send?: typeof fetch;
     delay?(ms: number): Promise<void>;
-}): PublicationBridge & {bindPushSession(job: PublicationProgressJob): ReadPublicationPushSession<Session>} {
+}): PublicationBridge & {bindPushSession(job: PublicationJob): ReadPublicationPushSession<Session>} {
     if (!isOrigin(bffOrigin) || !isOrigin(proxyOrigin)) throw new Error('GIT_UNAVAILABLE');
-    const pushSessions = new WeakMap<PublicationProgressJob, {remote: string; session: Session}>();
+    const pushSessions = new WeakMap<PublicationJob, {remote: string; session: Session}>();
     async function sessionFor(remote: string) {
         const session = await getSession(remote, true);
         if (!session || session.connection.mode !== 'cloudflare' || session.connection.proxyOrigin !== proxyOrigin ||
@@ -105,7 +105,7 @@ export function createCloudflarePublicationBridge<Session extends PublicationPus
             if (!popup) throw new Error('PUBLICATION_POPUP');
             popup.opener = null;
             try {
-                const {approvalUrl, job} = await post<{approvalUrl: string | null; job: PublicationProgressJob | null}>(
+                const {approvalUrl, job} = await post<{approvalUrl: string | null; job: PublicationJob | null}>(
                     '/jobs', intent.remote, {intent});
                 if (job && approvalUrl === null) return job;
                 if (!current() || popup.closed) return null;
@@ -130,7 +130,7 @@ export function createCloudflarePublicationBridge<Session extends PublicationPus
         },
         async advance(target) {
             const session = await sessionFor(target.remote);
-            const job = await post<PublicationProgressJob>('/jobs/advance', target.remote, target, session);
+            const job = await post<PublicationJob>('/jobs/advance', target.remote, target, session);
             if (job.awaitingPush) pushSessions.set(job, {remote: target.remote, session});
             return job;
         },

@@ -75,9 +75,14 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
         notice.append(show, dismiss); document.body.appendChild(notice);
     });
     const api = {
-        showView(title: string, locale: string, render: (document: Document, close: () => void) => HTMLElement) {
+        showView(title: string, locale: string, render: (document: Document, close: () => void) =>
+            HTMLElement | {element: HTMLElement; dispose(): void}) {
             const {dialog} = open(title, locale);
-            dialog.append(render(document, () => {if (active === dialog) close();}));
+            const view = render(document, () => {if (active === dialog) close();});
+            if ('element' in view) {
+                dialog.append(view.element);
+                disposeView = view.dispose;
+            } else dialog.append(view);
             dialog.showModal();
         },
         showProperties(locale = 'en', editURI) {

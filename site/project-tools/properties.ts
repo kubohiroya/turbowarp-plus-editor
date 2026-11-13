@@ -21,6 +21,17 @@ const normalize = value => ({...empty(), ...value,
     ...Object.fromEntries(fields.map(key => [key, typeof value?.[key] === 'string' ? value[key] : ''])),
     createdAt: validDate(value?.createdAt), updatedAt: validDate(value?.updatedAt)});
 
+/** Keep a new repository's chosen title in the saved project, including projects from ordinary SB3s. */
+export function withProjectFolderTitle(files: ReadonlyMap<string, Uint8Array>, title: string) {
+    const path = 'project.source.json';
+    const project = JSON.parse(new TextDecoder().decode(files.get(path)));
+    const existing = projectInfo(project);
+    if (existing && existing.schemaVersion !== 1) return files;
+    if (existing?.title === title) return files;
+    project[PROJECT_INFO_KEY] = {...normalize(existing), title};
+    return new Map(files).set(path, new TextEncoder().encode(JSON.stringify(project, null, 2) + '\n'));
+}
+
 /** Read only this host's metadata. Project validation and extension manifests remain with the VM/Loader. */
 async function readInfo(input) {
     try {

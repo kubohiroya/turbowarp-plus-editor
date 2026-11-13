@@ -14,6 +14,7 @@ import {buildExtensionAssets} from './extension-assets.ts';
 import {buildFamilyNotices} from './family-notices.ts';
 
 export async function buildPages(pins = undefined) {
+    assert.ok(!process.env.TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT, 'Use the local webpack preview for unpublished project save dependencies');
     pins = pins || await readPins();
     const gui = process.env.E2E_GUI_ROOT;
     const {revision} = await verifyHost(gui, pins);

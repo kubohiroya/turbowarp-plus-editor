@@ -11,13 +11,14 @@ interface SaveWorkspace {
     subscribeSave(listener: () => void): () => void;
 }
 
-type SaveEntries = {storage: ProjectFileStorage; folder?: FolderActions; saveAs?: Action};
+type SaveEntries = {storage: ProjectFileStorage; folder?: FolderActions; saveAs?: Action; saveCommit?: Action};
 
-function saveEntries(locale: string, {storage, folder, saveAs}: SaveEntries): Entry[] {
+function saveEntries(locale: string, {storage, folder, saveAs, saveCommit}: SaveEntries): Entry[] {
     const ja = locale.startsWith('ja');
     return [
         ['save', ja ? 'プロジェクトを保存' : 'Save Project', storage.canSave ? storage.overwrite || folder?.save : undefined],
-        ['save-as', ja ? '名前を変えて保存…' : 'Save As…', storage.canSave ? saveAs : undefined]
+        ['save-as', ja ? '名前を変えて保存…' : 'Save As…', storage.canSave ? saveAs : undefined],
+        ...(saveCommit ? [['save-commit', ja ? '保存してコミット…' : 'Save and Commit…', saveCommit] as Entry] : [])
     ];
 }
 
@@ -77,6 +78,7 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
         folder?: FolderActions;
         storage: ProjectFileStorage;
         saveAs?: Action;
+        saveCommit?: Action;
         exportProject?: Action;
         properties?: Action;
         diagnostics?: Action;

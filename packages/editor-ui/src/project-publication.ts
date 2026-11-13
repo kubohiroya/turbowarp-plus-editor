@@ -1,11 +1,11 @@
-import type {MergeCondition, PublicationIntent, PublicationJob, PublicationStackParent, PullRequestObservation} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
+import type {MergeCondition, PublicationIntent, PublicationJob as QueuePublicationJob, PublicationStackParent, PullRequestObservation} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
 import type {PublicationRepository} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
 
 export type PublicationTarget = Pick<PublicationIntent, 'id' | 'remote' | 'repositoryId'>;
 export type PublicationDraft = Pick<PublicationIntent, 'base' | 'title' | 'body' | 'goal' | 'issue' | 'stackParent'>;
-type PublicationIssue = PublicationIntent['issue'];
-export type PublicationProgressJob = PublicationJob & {awaitingPush?: boolean; pushAccount?: string; pushSessionId?: string};
-export type {PublicationStackParent} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
+export type PublicationIssue = NonNullable<PublicationIntent['issue']>;
+export type PublicationJob = QueuePublicationJob & {awaitingPush?: boolean; pushAccount?: string; pushSessionId?: string};
+export type {PublicationIntent, PublicationRepository, PublicationStackParent} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
 
 export interface PublicationPushSession {
     connection: {mode: string; proxyOrigin: string};
@@ -34,7 +34,7 @@ export function pinPublicationPushSession<Session extends PublicationPushSession
 }
 
 export async function bindDesktopPublicationPushSession<Session extends PublicationPushSession>(
-    getSession: ReadPublicationPushSession<Session>, remote: string, job: PublicationProgressJob
+    getSession: ReadPublicationPushSession<Session>, remote: string, job: PublicationJob
 ) {
     if (!job.pushAccount || !/^[a-f0-9]{64}$/u.test(job.pushSessionId ?? '')) throw new Error('SESSION_REQUIRED');
     const expected = await getSession(remote, true);
@@ -50,11 +50,11 @@ export interface PublicationBridge {
     capabilities?(): Promise<readonly string[]>;
     repository(remote: string): Promise<{repositoryId: number; capabilities?: readonly string[]}>;
     stackParent?(remote: string, number: number, repositoryId: number): Promise<PublicationStackParent | null>;
-    enqueue(intent: PublicationIntent, current?: () => boolean): Promise<PublicationProgressJob | null>;
-    get(target: PublicationTarget): Promise<PublicationProgressJob | {
-        job: PublicationProgressJob | null; approvalIntent?: PublicationIntent;
+    enqueue(intent: PublicationIntent, current?: () => boolean): Promise<PublicationJob | null>;
+    get(target: PublicationTarget): Promise<PublicationJob | {
+        job: PublicationJob | null; approvalIntent?: PublicationIntent;
     } | null>;
-    advance(target: PublicationTarget & {retryRejectedMerge?: boolean}): Promise<PublicationProgressJob>;
+    advance(target: PublicationTarget & {retryRejectedMerge?: boolean}): Promise<PublicationJob>;
     pullRequestChecks?(remote: string, number: number, signal?: AbortSignal):
         Promise<{head: string; base: string; checks: PullRequestObservation['checks']}>;
     mergeStatus?(remote: string, number: number, signal?: AbortSignal): Promise<PullRequestObservation>;
@@ -71,7 +71,7 @@ export interface PublicationCommit {
 }
 
 export interface PublicationProgress {
-    job: PublicationProgressJob | null;
+    job: PublicationJob | null;
     running: boolean;
     approvalIntent?: PublicationIntent;
     error?: unknown;
@@ -106,7 +106,7 @@ const sameIssue = (left: PublicationIssue | undefined, right: PublicationIssue |
 export function createProjectPublication({bridge, inspect, push, guard, delay = wait}: {
     bridge: PublicationBridge;
     inspect(): Promise<PublicationRepository>;
-    push(options: {remote: string; oid: string; ref: string}, job: PublicationProgressJob): Promise<void>;
+    push(options: {remote: string; oid: string; ref: string}, job: PublicationJob): Promise<void>;
     guard(): void;
     delay?(milliseconds: number): Promise<void>;
 }): ProjectPublicationPort {
@@ -137,7 +137,7 @@ export function createProjectPublication({bridge, inspect, push, guard, delay = 
                 }
                 return intent;
             };
-            const check = (job: PublicationProgressJob) => {
+            const check = (job: PublicationJob) => {
                 checkIntent(job.intent);
                 return job;
             };
