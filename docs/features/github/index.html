@@ -10,9 +10,9 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../">機能ガイド</a> › 12. GitHubで作品を開発する</p>
-<p class="eyebrow">機能ガイド 12/12 · 2026年11月11日更新</p>
+<p class="eyebrow">機能ガイド 12/12 · 2026年11月13日更新</p>
 <h1>GitHubで作品を開発する</h1>
-<p class="lead">Scratchから移した作品を、issueに書く・ブランチを作る・編集して記録する・GitHubに送る・プルリクエストで確かめる・マージする・リリースする、の順で開発します。Editorの中でできる操作と、GitHubの画面などで行う操作を分けて示します。</p>
+<p class="lead">作品フォルダを GitHub で管理し、Issue と作業ブランチを使って編集・コミット・レビューを進めます。Editor で作品の差分を確認してコミットし、GitHub の画面でプルリクエストを作ります。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
 <ul>
 <li><a href="../open/">作品を開く</a></li>
@@ -31,12 +31,12 @@
 </nav>
 <nav class="page-toc" aria-label="このページの目次">
 <ol>
-<li><a href="#migrate">12.1 Scratchの作品をGitHubに移す</a></li>
+<li><a href="#migrate">12.1 作品を GitHub に置く</a></li>
 <li><a href="#flow">12.2 開発の流れと、どこで何をするか</a></li>
 <li><a href="#issue">12.3 やることをissueに書く</a></li>
 <li><a href="#branch">12.4 作業用のブランチを作る</a></li>
 <li><a href="#edit">12.5 作品を編集して保存する</a></li>
-<li><a href="#commit">12.6 変更を確かめて記録する（コミット）</a></li>
+<li><a href="#commit">12.6 変更を確認してローカルにコミットする</a></li>
 <li><a href="#push">12.7 GitHubに送る（push）</a></li>
 <li><a href="#pull-request">12.8 プルリクエストを作る</a></li>
 <li><a href="#merge">12.9 確かめてマージする</a></li>
@@ -45,20 +45,32 @@
 </ol>
 </nav>
 
+<p class="guide-note">図版は公開 Editor（<code>67389c2</code>）と GitHub の画面全体です。画像を選ぶと原寸で開けます。</p>
 <section id="migrate">
 
-<h2>12.1 Scratchの作品をGitHubに移す</h2>
+<h2>12.1 作品を GitHub に置く</h2>
+
+<p>このガイドでは <strong>1 リポジトリに 1 作品</strong>を基本にします。Project Starter では、作品を <code>project/</code> に置き、README や検査・リリースの設定をその外に置きます。同じ作品の改良は作業ブランチで進め、配布する版はリリースで管理します。</p>
+<pre><code>neko-adventure/         リポジトリのルート
+├── .git/
+├── project/            Editor で開く作品フォルダ
+├── README.md
+└── .github/workflows/  この作品の検査とリリース</code></pre>
+
+<h3 id="starter">Project Starter で Scratch 作品を移す</h3>
 
 <p>scratch.mit.eduで作ってきた作品は、<code>turbowarp-plus-editor-project-starter</code> でGitHubのリポジトリに移せます。作品をsb3-toolchainの作品フォルダに展開し、検査とリリースを行うGitHub Actions、issueとプルリクエストの書式を加えたリポジトリを作ります。Node.js 24以降、Git、GitHub CLI（<code>gh</code>）が必要です。</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 init https://scratch.mit.edu/projects/123456789/ --dir neko-adventure
-npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventure</code></pre>
-<p><code>init</code> は手元にリポジトリを作って最初のコミットまで行い、<code>publish</code> はGitHubに非公開のリポジトリを作って送ります。共有していない作品は、Scratchのエディターの「ファイル」→「コンピューターに保存」で保存した <code>.sb3</code> を、URLの代わりに渡します。</p>
+<p>次の例は、作業フォルダに <code>neko.sb3</code> がある場合です。</p>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 init ./neko.sb3 --dir neko-adventure</code></pre>
+<p><code>init</code> は手元にリポジトリを作り、Git の作者情報があれば最初のコミットまで行います。作者情報が未設定の場合は、<a href="#commit-author">リポジトリで作者を設定</a>し、<code>git -C neko-adventure commit -m "Import neko"</code> を実行します。共有している Scratch 作品は、SB3 のパスの代わりに作品ページの URL を渡せます。</p>
+<p>生成した <code>neko-adventure/project</code> は、Editor の「ファイル」→「プロジェクトフォルダを開く…」で開けます。GitHub に置く準備ができたら、<code>gh auth login</code> で認証してから <code>publish</code> を実行します。既定では非公開のリポジトリを作り、<code>main</code> を送ります。</p>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="作られるリポジトリ" tabindex="0">
 <table><caption>作られるリポジトリ</caption><thead><tr><th scope="col">場所</th><th scope="col">中身</th></tr></thead><tbody>
 <tr><th scope="row"><code>project/</code></th><td>作品フォルダ。Editorで開いて編集し、保存する</td></tr>
-<tr><th scope="row"><code>.github/workflows/check.yml</code></th><td>pushとプルリクエストのたびに作品を検査し、試せるSB3を作る（「Check project」）</td></tr>
+<tr><th scope="row"><code>.github/workflows/check.yml</code></th><td><code>main</code>へのpush、プルリクエスト、手動実行で作品を検査し、試せるSB3を作る（「Check project」）</td></tr>
 <tr><th scope="row"><code>.github/workflows/release.yml</code></th><td>リリースを公開すると、SB3とSHA-256をそのリリースに添付する</td></tr>
-<tr><th scope="row"><code>.github/workflows/scratch-import.yml</code></th><td>Scratchで共有し直した最新版を、プルリクエストとして取り込む（「Import from Scratch」）</td></tr>
+<tr><th scope="row"><code>.github/workflows/scratch-import.yml</code></th><td>Scratchで共有し直した最新版を、プルリクエストとして取り込む（「Import from Scratch」）。Scratch の共有 URL から取り込んだ作品では、元の Scratch 作品 ID を使える</td></tr>
 <tr><th scope="row"><code>.github/ISSUE_TEMPLATE/</code> など</th><td>「不具合」「アイデア・改善」のissueの書式と、プルリクエストの確認項目</td></tr>
 </tbody></table></div>
 <p>移行期間にScratchでも編集を続ける場合や、Scratch側の作品ページの扱いは、<a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.ja.md">移行の手順</a>で説明しています。</p>
@@ -77,12 +89,12 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 <tr><th scope="row">issue</th><td>—</td><td>GitHubの「Issues」</td></tr>
 <tr><th scope="row">ブランチ</th><td>ローカルGitパネルで作って切り替える</td><td>issueの「Create a branch」、GitHub Desktop、<code>git switch -c</code></td></tr>
 <tr><th scope="row">編集・保存</th><td>「ファイル」→「保存」で作品フォルダに書く</td><td>—</td></tr>
-<tr><th scope="row">コミット</th><td>ローカルGitパネルで変更を確かめて記録する</td><td>GitHub Desktop、<code>git commit</code></td></tr>
+<tr><th scope="row">コミット</th><td>「変更を確認」で対象を選び、「手元に記録（コミット）」でコミット</td><td>GitHub Desktop、<code>git commit</code></td></tr>
 <tr><th scope="row">push・pull</th><td>GitHub接続が設定されたEditorでは「GitHub 接続」から</td><td>GitHub Desktop、<code>git push</code>・<code>git pull</code></td></tr>
-<tr><th scope="row">プルリクエスト</th><td>プルリクエストをブロック単位でレビューする。GitHub 接続中はその版を手元で動かせる</td><td>作成・コメント・マージはGitHubの「Pull requests」、<code>gh pr</code></td></tr>
+<tr><th scope="row">プルリクエスト</th><td>ブロック単位で比較。接続と権限に応じて、比較した版を実行したりレビューを送信したりできる</td><td>GitHub の「Pull requests」、<code>gh pr</code></td></tr>
 <tr><th scope="row">リリース</th><td>—</td><td>GitHubの「Releases」、<code>gh release create</code></td></tr>
 </tbody></table></div>
-<p>Editorでの操作には、File System Accessに対応したChromium系ブラウザー（Chrome、Edgeなど）が必要です。Editorはリポジトリのフォルダを読み書きしますが、Gitの設定やGitHubのissue・プルリクエスト・リリースは変更しません。</p>
+<p>ブラウザーで作品フォルダを読み書きするには、File System Access 対応の Chrome や Edge が必要です。接続と権限は操作ごとに確認できます。 <a href="../git/#github-sync">操作と接続の対応表</a></p>
 
 </section>
 
@@ -100,8 +112,12 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 <h2>12.4 作業用のブランチを作る</h2>
 
 <p>ブランチを作る前に、手元の <code>main</code> をGitHubの最新に合わせます（<a href="#push">12.7</a> のpull）。そのあと、ローカルGitパネルでブランチを作ります。</p>
-<ol><li>メニューバーの「ステージを開く」の左にあるブランチのボタン（リポジトリを選ぶ前は「Git」と表示されます）を押し、「ローカル Git を開く」を選び、「リポジトリを選択…」でリポジトリのフォルダを選びます。作品フォルダ <code>project</code> を選び、「この作品を開く」で開きます。</li><li>作品の実行を止め、編集をすべて保存して記録しておきます。保存していない編集や記録していない変更があると、ブランチを切り替えられません。</li><li>ブランチの一覧の「新しいブランチの名前」に、issueの番号と内容が分かる名前（例：<code>12-jump-sound</code>）を入れます。「作ったら切り替える」にチェックし、「ブランチを作る」を押します。</li></ol>
-<p>GitHubのissueの「Development」→「Create a branch」で作った場合は、手元でfetchしてから、一覧の「GitHub（origin）のブランチ」で「作って切り替える」を押します。GitHub Desktopの「New branch」や <code>git switch -c 12-jump-sound</code> で作った場合は、パネルの「再取得」を押してから「作品を再読込」で開き直します。</p>
+<ol><li>メニューバーの「ステージを開く」の左にあるブランチのボタン（リポジトリを選ぶ前は「Git」と表示されます）を押し、「ローカル Git を開く」を選び、「リポジトリを選択…」でリポジトリのフォルダを選びます。「変更を確認」にある「リポジトリ内の作品を選択」を開き、<code>project/</code> を選んで「この作品を開く」を押します。</li><li>作品の実行を止め、編集をすべて保存し、必要な変更をコミットしておきます。未保存の編集や未コミットの変更があると、ブランチを切り替えられません。</li><li>「手元に記録（コミット）」の「ローカルブランチ」にある「新しいブランチの名前」に、issueの番号と内容が分かる名前（例 <code>12-neko-walk</code>）を入れます。「作ったら切り替える」にチェックし、「ブランチを作る」を押します。</li></ol>
+<figure>
+<a href="../images/git-branch-workspace.png"><img src="../images/git-branch-workspace.png" width="1440" height="960" alt="Editor 右上のブランチメニュー。現在のブランチ名、切り替え先、新しいブランチの作成が見える。" loading="lazy"></a>
+<figcaption>メニューバーのブランチ名を押すと、現在のブランチや切り替え先を確認できます。</figcaption>
+</figure>
+<p>GitHubのissueの「Development」→「Create a branch」で作った場合は、手元でfetchしてから、一覧の「GitHub（origin）のブランチ」で「作って切り替える」を押します。GitHub Desktopの「New branch」や <code>git switch -c 12-neko-walk</code> で作った場合は、パネルの「再取得」を押してから「作品を再読込」で開き直します。</p>
 
 </section>
 
@@ -110,17 +126,31 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 <h2>12.5 作品を編集して保存する</h2>
 
 <p>ブロック、変数・リスト、スプライト、コスチューム、音などを編集し、「ファイル」→「保存」を選びます。作品フォルダの <code>project.source.json</code> と、必要に応じて <code>assets/</code> と <code>sb3-source.json</code> が更新されます。保存の前に、フォルダが外部で変更されていないかを確かめます。</p>
-<p>「名前を変えて保存…」を選ぶと、作品フォルダとの接続が外れ、SB3ファイルとして保存されます。リポジトリで開発している間は「保存」を使います。</p>
+<p>同じリポジトリの作品を更新する間は「保存」を使います。「名前を変えて保存…」で SB3 を作ると、作品フォルダとの接続が外れます。保存済みのファイルの Git 状態は <a href="../git/#folder-files">「作品フォルダ」パネル</a>で確認できます。</p>
 <p><a href="../git/#project-folder">作品フォルダを開いて保存する</a></p>
 
 </section>
 
 <section id="commit">
 
-<h2>12.6 変更を確かめて記録する（コミット）</h2>
+<h2>12.6 変更を確認してローカルにコミットする</h2>
 
-<ol><li>ローカルGitパネルの「保存したが、まだ記録していない変更」で、変わったステージ・スプライトとスクリプトを確かめます。スクリプトの変更は、変更前と変更後のブロックを並べて表示します。</li><li>記録したい変更の横の「次の記録に入れる」を押すか、「すべての変更を次の記録に入れる」を押します。</li><li>「この記録の説明」に、何をなぜ変えたかを書きます（例：<code>ジャンプしたときに音を鳴らす (#12)</code>）。issueの番号を入れておくと、GitHubでissueとつながります。</li><li>「記録する（コミット）」を押します。</li></ol>
-<p>記録する人の名前とメールアドレスは、リポジトリのGitの設定（<code>user.name</code>・<code>user.email</code>）を使います。動く状態ごとに小さく記録しておくと、あとで戻したり比べたりしやすくなります。</p>
+<p>「保存」は作品フォルダに書き込みます。ステージすると、その時点のファイルの変更が次のコミットの対象になります。コミットは手元の Git 履歴に追加されます。GitHub に送るときは push を使います。</p>
+
+<ol>
+<li>「変更を確認」の左側でスクリプトやファイルを選び、右側で差分を確認します。作品のコードは変更前と変更後のブロックを並べて表示します。</li>
+<li>差分欄の下にある「次のコミットに追加（ステージ）」を押します。一覧の変更をまとめて含めるときは、左の「すべての変更をステージ」を使います。</li>
+<li>左の「次のコミット」でファイル数を確かめます。上段の「手元に記録（コミット）」を開き、「コミットメッセージ」を入力して「記録する（コミット）」を押します。例は <code>ネコが進む歩数を変更 (#12)</code> です。</li>
+</ol>
+<figure>
+<a href="../images/current-git-staged.png"><img src="../images/current-git-staged.png" width="1440" height="960" alt="ローカル Git の「手元に記録（コミット）」。左の次のコミット欄にステージ済みのファイルが1件あり、メッセージ欄が見える。" loading="lazy"></a>
+<figcaption>作品データのファイルをステージしたところ。「次のコミット」に対象が 1 件と表示され、コミットメッセージを入力できます。</figcaption>
+</figure>
+<h3 id="commit-author">コミットの作者を設定する</h3>
+<p>作品リポジトリの <code>user.name</code> と <code>user.email</code> が優先されます。Desktop が Git のグローバル作者設定を Editor に渡すビルドでは、リポジトリに作者情報がないときにその設定を使えます。</p>
+<p>作者が未設定と表示されたら、作品のリポジトリをターミナルで開き、そのリポジトリに名前とメールアドレスを設定します。公開リポジトリには、GitHub のアカウント設定で確認した <code>noreply</code> アドレスも使えます。設定後に「再取得」を押して、もう一度コミットします。</p>
+<pre><code>git config --local user.name "あなたの名前"
+git config --local user.email "you@example.com"</code></pre>
 <p><a href="../git/#local-git">ローカルGitで変更と履歴を確かめる</a> · <a href="../git/#block-diff">作品の変更をブロックで比べる</a></p>
 
 </section>
@@ -129,10 +159,11 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 
 <h2>12.7 GitHubに送る（push）</h2>
 
-<p>GitHub接続が設定されたEditorでは、ローカルGitパネルの「GitHub 接続」から送れます。</p>
+<p>GitHub接続が設定されたEditorでは、ローカル Git の「GitHub に送る」から「GitHub 接続」を開きます。</p>
 <ol><li>「接続方式」を選び、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>「GitHub に送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「GitHub の変更を取得（fetch）」と「GitHub から取り込む（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
-<p>「GitHub 接続先が設定されていません。」と表示されるEditorでは、push・pullを外で行います。</p>
-<ul><li><strong>GitHub Desktop。</strong> 「File」→「Add local repository」でリポジトリのフォルダを追加し、「Push origin」（新しいブランチでは「Publish branch」）で送ります。取り込むときは「Fetch origin」→「Pull origin」を使います。</li><li><strong>コマンド。</strong> 新しいブランチを初めて送るときは <code>git push -u origin 12-jump-sound</code>、取り込むときは <code>git pull --ff-only</code> を実行します。</li></ul>
+<h3 id="push-without-connection">接続がない場合</h3>
+<p>「GitHub 接続先が設定されていません。」と表示されるEditorでは、次のいずれかでpush・pullを行います。</p>
+<ul><li><strong>GitHub Desktop。</strong> 「File」→「Add local repository」でリポジトリのフォルダを追加し、「Push origin」（新しいブランチでは「Publish branch」）で送ります。取り込むときは「Fetch origin」→「Pull origin」を使います。</li><li><strong>コマンド。</strong> 新しいブランチを初めて送るときは <code>git push -u origin 12-neko-walk</code>、取り込むときは <code>git pull --ff-only</code> を実行します。</li></ul>
 <p>外で操作したあとは、パネルの「再取得」を押し、取り込んだ場合は「作品を再読込」で開き直します。Editorは開き直す前に保存していない編集を確かめます。</p>
 <p><a href="../git/#github-sync">GitHubと同期する</a></p>
 
@@ -142,8 +173,11 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 
 <h2>12.8 プルリクエストを作る</h2>
 
-<ol><li>GitHubでリポジトリを開くと、送ったブランチの「Compare &amp; pull request」が表示されます。押して、「base: main ← compare: 12-jump-sound」になっていることを確かめます。</li><li>書式に沿って、何を変えたか、変えたスプライト・ステージ、確かめ方を書きます。本文に <code>Closes #12</code> と書くと、マージしたときにissueが閉じます。</li><li>「Create pull request」を押します。コマンドでは <code>gh pr create --fill</code> で作れます。</li></ol>
-<p>プルリクエストを作ると、Actionsの「Check project」が作品フォルダを検査し、SB3を作ります。プルリクエストの「Checks」→「Check project」→「Summary」の「Artifacts」からSB3をダウンロードし、TurboWarpかEditorで開いて、書いた確かめ方の通りに動くかを試せます。</p>
+<p>作業ブランチを GitHub に送ってから、GitHub の画面で PR を作ります。 <a href="#push">GitHub に送る手順</a></p>
+
+<ol><li>GitHubでリポジトリを開くと、送ったブランチの「Compare &amp; pull request」が表示されます。押して、「base: main ← compare: 12-neko-walk」になっていることを確かめます。</li><li>書式に沿って、何を変えたか、変えたスプライト・ステージ、確かめ方を書きます。既定ブランチにマージしたときに Issue も閉じるには、本文に <code>Closes #12</code> と書きます。関連付けだけなら <code>#12</code> と書きます。</li><li>「Create pull request」を押します。コマンドでは <code>gh pr create --fill</code> で作れます。</li></ol>
+<h3 id="check-project">検査結果と SB3 を確認する</h3>
+<p>Project Starter のワークフローを含むリポジトリでプルリクエストを作ると、Actionsの「Check project」が作品フォルダを検査し、SB3を作ります。プルリクエストの「Checks」→「Check project」→「Summary」の「Artifacts」からSB3をダウンロードし、TurboWarpかEditorで開いて、書いた確かめ方の通りに動くかを試せます。</p>
 
 </section>
 
@@ -152,11 +186,19 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 <h2>12.9 確かめてマージする</h2>
 
 <p>確かめる人は、変更をスクリプト単位で読みます。</p>
-<p>ローカル Git パネルの「プルリクエスト」から対象を開くと、ステージ・スプライトごとに、変更前と変更後のスクリプトをブロックで比べられます。読み終えたスクリプトには「確認済み」を付けられます。</p>
-<ul><li><strong>公開リポジトリ。</strong> 一覧から選ぶか、PR 番号を入力します。</li><li><strong>非公開リポジトリ。</strong> リポジトリへのアクセスを許可した「GitHub 接続」で、PR 番号を入力して比較するベースのブランチを確認します。</li></ul>
+<p>ローカル Git の「GitHub に送る」から「プルリクエスト」を開くと、ステージ・スプライトごとに、変更前と変更後のスクリプトをブロックで比べられます。読み終えたスクリプトには「確認済み」を付けられます。</p>
+<ul><li><strong>公開リポジトリ。</strong> 一覧から選びます。</li><li><strong>非公開リポジトリ。</strong> リポジトリへのアクセスを許可した「GitHub 接続」で一覧から選びます。ベースを取得できなければ、比較するブランチを指定します。</li></ul>
 <p>接続中に開いた PR は、「pr/… として手元で開く」で比較した版に切り替えて実行できます。</p>
-<p>気づいたことは、GitHubのプルリクエストの「Files changed」か「Conversation」にコメントで書きます。直す人は同じブランチで編集・コミット・pushすると、プルリクエストが更新されます。Editorでは、内容が変わったスクリプトの「確認済み」だけが外れます。</p>
-<p>「Check project」が成功し、確かめ終えたら、GitHubで「Merge pull request」（変更を一つのコミットにまとめるなら「Squash and merge」）を押し、「Delete branch」でブランチを消します。手元では、ローカルGitパネルで <code>main</code> に「切り替える」、pullで最新を取り込み、「作品を再読込」で開き直します。</p>
+<h3>接続がない場合</h3>
+<p>公開 PR は Editor の「変更ファイル」で確認できます。非公開 PR は、GitHub にログインして PR の「Files changed」で差分を確認します。動作を確かめるには、「Checks」から <a href="#check-project">「Check project」の SB3</a> を取得し、Editor の「ファイル」から開きます。</p>
+<p>レビューを送るには、<a href="../git/#send-review">Editor のレビュー送信の条件</a>を確認します。接続でレビュー送信を許可できるときは、比較画面の「レビューを送信」から操作できます。GitHub で送るときは、PR の「Files changed」か「Conversation」にコメントを書きます。修正を同じ作業ブランチに push すると PR が更新されます。PR が更新されると、Editor では内容が変わったスクリプトの「確認済み」が外れます。</p>
+<figure>
+<a href="../images/github-files-changed.png"><img src="../images/github-files-changed.png" width="1440" height="960" alt="GitHub の公開 PR #219。上部に Checks と Files changed、左に変更ファイル一覧、右に行単位の差分がある。" loading="lazy"></a>
+<figcaption>同じ公開 PR #219 を GitHub の「Files changed」で開いたところ。左のファイル一覧から差分へ移動でき、上部の「Checks」から検査結果へ進めます。</figcaption>
+</figure>
+<h3>GitHub の画面でマージする</h3>
+<p>「Check project」など必要な検査とレビューが済んだら、対象ブランチと最新の差分を確認し、GitHub で利用可能な方式を選んでマージします。「Squash and merge」は変更を一つのコミットにまとめます。作業ブランチを参照する別の PR がなくなったら、GitHub で「Delete branch」を選べます。</p>
+<p>手元では、ローカル Git の「手元に記録（コミット）」で <code>main</code> に切り替え、<a href="#push">pull</a> で最新を取り込み、「作品を再読込」で開き直します。</p>
 <p><a href="../git/#pull-request-review">プルリクエストをスクリプト単位でレビューする</a></p>
 
 </section>
@@ -165,7 +207,7 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 
 <h2>12.10 リリースして配る</h2>
 
-<ol><li>GitHubの「Releases」→「Draft a new release」を開きます。</li><li>「Choose a tag」に版の名前（例：<code>v1.0.0</code>）を入れ、「Create new tag on publish」を選びます。「Target」は <code>main</code> にします。</li><li>「Generate release notes」を押すと、マージしたプルリクエストの一覧が入ります。遊ぶ人向けの説明を書き足します。</li><li>「Publish release」を押します。コマンドでは <code>gh release create v1.0.0 --generate-notes</code> で作れます。</li></ol>
+<ol><li>GitHubの「Releases」→「Draft a new release」を開きます。</li><li>「Choose a tag」に版の名前（例 <code>v1.0.0</code>）を入れ、「Create new tag on publish」を選びます。「Target」は <code>main</code> にします。</li><li>「Generate release notes」を押すと、マージしたプルリクエストの一覧が入ります。遊ぶ人向けの説明を書き足します。</li><li>「Publish release」を押します。コマンドでは <code>gh release create v1.0.0 --generate-notes</code> で作れます。</li></ol>
 <p>リリースを公開すると、Actionsの「Release」がそのタグの作品フォルダからSB3を作り、<code>&lt;名前&gt;-v1.0.0.sb3</code>（名前は <code>scratch-project.json</code> の <code>sb3Name</code>）と <code>SHA256SUMS.txt</code> をリリースに添付します。添付されたSB3は、TurboWarpやScratchで開けます。Scratchの作品ページも新しくするには、ScratchのエディターでSB3を読み込み、「今すぐ保存」で上書きします。</p>
 <p>版の名前は、不具合の修正だけなら最後の数字（<code>v1.0.1</code>）、遊べることが増えたら真ん中の数字（<code>v1.1.0</code>）を上げると、遊ぶ人に変更の大きさが伝わります。</p>
 <p><a href="../save/">保存して配布する</a></p>
@@ -176,15 +218,15 @@ npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish neko-adventu
 
 <h2>12.11 ぶつかったとき・困ったとき</h2>
 
-<p>作品のブロックやスプライトの設定は、一つの <code>project.source.json</code> に入っています。二つのブランチが同じスプライトの近い場所を変えると、プルリクエストに「This branch has conflicts」と表示されることがあります。Editorはマージの途中のリポジトリでは記録やブランチの切り替えを行いません。</p>
+<p>作品のブロックやスプライトの設定は、一つの <code>project.source.json</code> に入っています。二つのブランチが同じスプライトの近い場所を変えると、プルリクエストに「This branch has conflicts」と表示されることがあります。Editor ではマージの途中にコミットやブランチの切り替えを行いません。</p>
 <ul><li><strong>ぶつからないようにする。</strong> プルリクエストを小さく保ち、早めにマージします。同じ時期に作業するときは、担当するスプライトを分けます。</li><li><strong>ぶつかったら作り直す。</strong> 最新の <code>main</code> から新しいブランチを作り、Editorで同じ変更をやり直します。スクリプトはバックパックで新しいブランチの作品に持ち込めます。新しいプルリクエストを作り、古いほうは閉じます。</li><li><strong>JSONを直接直す。</strong> Gitに慣れている場合は、コマンドで <code>main</code> を取り込み、<code>project.source.json</code> の衝突を直してから <code>sb3-toolchain check project</code> で検査します。</li></ul>
 <div class="table-scroll" role="region" aria-label="よくある表示と対処" tabindex="0">
 <table><caption>よくある表示と対処</caption><thead><tr><th scope="col">表示・状況</th><th scope="col">対処</th></tr></thead><tbody>
-<tr><th scope="row">ブランチを切り替えられない</th><td>実行を止め、編集を保存して記録（または取り消し）してから切り替える</td></tr>
+<tr><th scope="row">ブランチを切り替えられない</th><td>実行を止め、編集を保存してコミット（または取り消し）してから切り替える</td></tr>
 <tr><th scope="row">「Editor の外でリポジトリが変更されました」</th><td>「再取得」を押す。作品が変わっていれば「作品を再読込」で開き直す</td></tr>
-<tr><th scope="row">pullできない（fast-forwardできない）</th><td>手元とGitHubの両方で記録が進んでいる。GitHub Desktopかコマンドで取り込むか、上の「作り直す」方法を使う</td></tr>
+<tr><th scope="row">pullできない（fast-forwardできない）</th><td>手元と GitHub の両方に新しいコミットがある。GitHub Desktopかコマンドで取り込むか、上の「作り直す」方法を使う</td></tr>
 <tr><th scope="row">「Check project」が失敗する</th><td>失敗したステップのログを開く。作品フォルダの外で <code>assets/</code> のファイルを消したり名前を変えたりした場合は、Editorで開いて保存し直す</td></tr>
-<tr><th scope="row">記録する人が設定されていない</th><td><code>git config user.name</code> と <code>git config user.email</code> を設定する。EditorはGitの設定を変えない</td></tr>
+<tr><th scope="row">コミットの作者が設定されていない</th><td><a href="#commit-author">リポジトリに作者を設定する</a></td></tr>
 </tbody></table></div>
 
 </section>
