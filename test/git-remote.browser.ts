@@ -122,11 +122,11 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     };
     const status = panel.locator('[data-git-connection-state]');
     const notice = panel.getByText('The GitHub operation finished.', {exact: true});
-    await panel.getByRole('tab', {name: 'History', exact: true}).click();
+    await panel.getByRole('button', {name: 'Record locally', exact: true}).click();
     // A commit row of the history graph is named by its subject, then its author, date and branches.
     await expect(panel.getByRole('button', {name: /^initial, /})).toBeVisible();
     await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', /./u);
-    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await panel.getByRole('button', {name: 'Send to GitHub', exact: true}).click();
     await panel.getByText('GitHub connection', {exact: true}).click();
     await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const authMethod = panel.getByRole('combobox', {name: 'Authentication method'});
