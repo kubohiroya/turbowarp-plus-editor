@@ -45,7 +45,9 @@ const projectSearch = (page: Page) => page.getByRole('combobox', {name: 'Search 
 
 async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui = false) {
     if (!bareGui) await verifyWebEditor(root);
-    const browser = await chromium.launch({args: ['--enable-unsafe-swiftshader']});
+    const args = ['--enable-unsafe-swiftshader'];
+    if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
+    const browser = await chromium.launch({headless: true, args});
     t.after(() => browser.close());
     const context = await browser.newContext({viewport: {width: 1360, height: 900}});
     await context.addInitScript(() => {delete window.showSaveFilePicker;});
@@ -1704,12 +1706,13 @@ test('the default editor pins the sprite list and supports the drawer and detach
     assert.deepEqual(await drawerBar.getByRole('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
         ['Sprites', 'Project folder', 'Git history', 'AI agents']);
     const agents = drawerView('AI agents');
-    await expect(agents).toHaveAttribute('aria-haspopup', 'menu');
     await agents.click();
-    const agentMenu = page.getByRole('menu', {name: 'AI agents', exact: true});
-    await expect(agentMenu.getByRole('menuitem')).toHaveText(['ChatGPT', 'Claude', 'AI agent settings…']);
-    await expect(agentMenu.getByRole('menuitem', {name: 'ChatGPT'})).toBeFocused();
-    // Record the new tab instead of leaving the test origin.
+    await expect(agents).toHaveAttribute('aria-pressed', 'true');
+    const agentTools = page.getByRole('group', {name: 'AI agents tools', exact: true});
+    await expect(agentTools.getByRole('button')).toHaveCount(2);
+    await expect(agentTools.getByRole('button', {name: /Search/})).toHaveCount(0);
+    const agentList = page.getByRole('group', {name: 'AI agents', exact: true});
+    await expect(agentList.getByRole('button')).toHaveText(['ChatGPT', 'Claude', 'AI agent settings…']);
     await page.evaluate(() => {
         const open = window.open;
         window.open = (...args) => {
@@ -1718,21 +1721,45 @@ test('the default editor pins the sprite list and supports the drawer and detach
             return null;
         };
     });
-    await page.keyboard.press('Enter');
+    await agentList.getByRole('button', {name: 'ChatGPT'}).press('Enter');
     assert.deepEqual(await page.evaluate(() => (window as Window & {openedAgent?: unknown[]}).openedAgent),
         ['https://chatgpt.com/', '_blank', 'noopener,noreferrer']);
-    await expect(agentMenu).toHaveCount(0);
-    await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
-    await agents.click();
-    await agentMenu.getByRole('menuitem', {name: 'AI agent settings…'}).click();
+    const settings = agentList.getByRole('button', {name: 'AI agent settings…'});
+    await settings.click();
     const agentSettings = page.getByRole('dialog', {name: 'AI agent settings'});
     await expect(agentSettings).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(agentSettings).toHaveCount(0);
-    await expect(agents).toBeFocused();
+    await expect(settings).toBeFocused();
+
+    for (const [title, searchName] of [['AI agents', null], ['Project folder', 'Search project files'], ['Git history', 'Search commits']]) {
+        await drawerView(title).click();
+        const toolbar = page.getByRole('group', {name: `${title} tools`, exact: true});
+        const controlNames = await toolbar.getByRole('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label')));
+        assert.deepEqual(controlNames, [...(searchName ? [searchName] : []), 'Pin this panel', 'Open in another window']);
+        const viewPin = toolbar.getByRole('button', {name: 'Pin this panel'});
+        await expect(viewPin).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+        await expect(viewPin).toHaveCSS('border-top-width', '0px');
+        const toolBox = await toolbar.boundingBox();
+        const pinBox = await viewPin.boundingBox();
+        assert.ok(toolBox && pinBox && toolBox.x + toolBox.width - pinBox.x < 65, 'pin is at the right end');
+        const undockView = toolbar.getByRole('button', {name: 'Open in another window'});
+        const [popup] = await Promise.all([page.waitForEvent('popup', {timeout: 7000}), undockView.click()]);
+        await expect(popup).toHaveTitle(title);
+        await expect(popup.locator('[data-drawer-content]')).toBeVisible();
+        if (searchName) await expect(popup.getByRole('button', {name: searchName})).toBeVisible();
+        if (title === 'AI agents') await expect(popup.getByRole('button', {name: 'ChatGPT'})).toBeVisible();
+        await drawerView('Sprites').click();
+        await expect(popup.locator('[data-drawer-content]')).toBeVisible();
+        await popup.close();
+    }
     await drawerView('Project folder').click();
     await expect(page.getByText('Open a project folder to show its files here.', {exact: true})).toBeVisible();
     await expect(page.getByRole('button', {name: 'Open Project Folder…', exact: true})).toBeVisible();
+    const folderPin = page.getByRole('group', {name: 'Project folder tools'}).getByRole('button', {name: 'Pin this panel'});
+    await folderPin.press('Enter');
+    await expect(folderPin.locator('svg path[d="M2 2l12 12"]')).toBeVisible();
+    await folderPin.press('Enter');
     await drawerView('Git history').click();
     await expect(page.getByText('Choose a Git repository to show its history here.', {exact: true})).toBeVisible();
     await drawerView('Sprites').click();
@@ -1810,6 +1837,7 @@ test('a background code view retains its layout, pan and zoom', {timeout: 45_000
         ScratchBlocks.Events.fireNow_();
     });
     await expect(canvas.locator('[data-id="preview-block"]')).toBeVisible();
+    await first.locator('.injectionDiv').hover({position: {x: 110, y: 145}});
     await first.locator('[data-plus-zoom-action="in"]').click();
     await page.evaluate(() => {
         const workspace = window.ScratchBlocks.getMainWorkspace();
@@ -1827,12 +1855,19 @@ test('a background code view retains its layout, pan and zoom', {timeout: 45_000
     await expect(preview.locator('.blocklySvg .blocklyBlockCanvas')).toHaveAttribute('transform', transform);
     await expect(preview.locator('.blocklySvg .blocklyMainBackground')).toHaveCSS('fill', /url\(/);
     await expect(chrome.locator('[data-horizontal-block-palette]')).toBeVisible();
+    const front = page.getByRole('region', {name: /^Code · /}).nth(1);
+    const titlebar = await front.locator('.tw-window-titlebar__heading').boundingBox();
+    assert.ok(titlebar);
+    await page.mouse.move(titlebar.x + 60, titlebar.y + titlebar.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(titlebar.x + 330, titlebar.y + titlebar.height / 2, {steps: 8});
+    await page.mouse.up();
+    await preview.hover({position: {x: 180, y: 145}});
     await expect(chrome.locator('[data-workspace-minimap]')).toBeVisible();
     await expect(chrome.locator('[data-plus-horizontal-zoom]')).toBeVisible();
     await expect(chrome.locator('[data-plus-workspace-watermark] img')).toBeVisible();
     await expect(chrome).toHaveAttribute('inert', '');
-    await expect(page.getByRole('region', {name: /^Code · /}).nth(1)
-        .locator('.tw-dockable-panel--floating [data-horizontal-block-palette]')).toBeVisible();
+    await expect(front.locator('.tw-dockable-panel--floating [data-horizontal-block-palette]')).toBeVisible();
 });
 
 test('a background sprite code window fits scripts when the foreground shows none', {timeout: 30_000}, async t => {
@@ -2616,6 +2651,7 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     const assertNavigation = async (scope: ReturnType<typeof page.locator>, editable: boolean) => {
         const map = scope.locator('[data-workspace-minimap]');
         const zoom = scope.locator('[data-plus-horizontal-zoom]');
+        await scope.hover({position: {x: 120, y: 145}});
         await expect(thumbnail(scope)).toBeVisible();
         await expect(thumbnail(scope)).toHaveCSS('opacity', '0.6');
         await expect(map).toBeVisible();
@@ -2817,6 +2853,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await expect(zoom).toBeHidden();
     await codeTab.click();
     await expect(palette).toBeVisible();
+    await codeGroup.locator('.injectionDiv').first().hover({position: {x: 120, y: 145}});
     await expect(zoom).toBeVisible();
     await assertStage();
 

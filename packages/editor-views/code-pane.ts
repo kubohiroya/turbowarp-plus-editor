@@ -1,5 +1,6 @@
 import {getCodeSession} from './workspace.ts';
 import type {AttachPreviewMinimap} from './workspace.ts';
+import {getDockedScriptLayout, type ScriptView} from './script-layout-view.ts';
 
 type Pane = {id: string; targetId: string; section: number};
 type Bridge = NonNullable<ReturnType<typeof getCodeSession>['bridge']>;
@@ -8,6 +9,7 @@ type Presentation = NonNullable<ReturnType<Bridge['capturePane']>>;
 export function createCodePaneAdapter(vm, locale: string, attachMinimap?: AttachPreviewMinimap) {
     const session = getCodeSession(vm);
     const label = /^ja(?:-|$)/i.test(locale) ? 'このペインでコードを編集' : 'Edit code in this pane';
+    const views = new Map<string, ScriptView>();
     let pending: {frame: number; pane: Pane; presentation: Presentation} | undefined;
     const costumeUpdates = new Set<() => void>();
     const updateCostumes = () => costumeUpdates.forEach(update => update());
@@ -33,6 +35,7 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
     }
 
     return {
+        ownsClick: (element: EventTarget) => Boolean((element as Element)?.closest?.('[data-code-view-control]')),
         watchEditingCostume: (image: HTMLImageElement) => watchCostume(image, () => vm.editingTarget),
         capture(pane: Pane) {
             if (pane.section !== 0) return;
@@ -42,12 +45,15 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
                 pending = undefined;
                 return presentation;
             }
+            views.set(pane.id, getDockedScriptLayout(vm)?.view.view ?? 'free');
             return session.bridge?.capturePane(pane.targetId);
         },
         restore(pane: Pane, presentation?: Presentation) {
             if (pending) cancelAnimationFrame(pending.frame);
             pending = undefined;
-            if (pane.section !== 0 || !presentation) return;
+            if (pane.section !== 0) return;
+            getDockedScriptLayout(vm)?.view.setView(views.get(pane.id) ?? 'free');
+            if (!presentation) return;
             const frame = requestAnimationFrame(() => {
                 pending = undefined;
                 session.bridge?.restorePane(pane.targetId, presentation);
@@ -61,11 +67,12 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
             const document = container.ownerDocument;
             const surface = document.createElement('div');
             surface.dataset.codePreview = '';
+            surface.dataset.codeHoverSurface = '';
             surface.tabIndex = 0;
             surface.setAttribute('role', 'button');
             surface.setAttribute('aria-label', label);
             surface.addEventListener('keydown', event => {
-                if (event.key !== 'Enter' && event.key !== ' ') return;
+                if (event.target !== surface || (event.key !== 'Enter' && event.key !== ' ')) return;
                 event.preventDefault();
                 event.stopPropagation();
                 surface.click();
@@ -91,7 +98,8 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
                 if (bridge !== session.bridge) {
                     preview?.dispose();
                     bridge = session.bridge;
-                    preview = bridge?.preview(blocks, chrome, {target, presentation, attachMinimap, watermark});
+                    preview = bridge?.preview(blocks, chrome, {target, presentation, attachMinimap, watermark, locale,
+                        scriptView: views.get(pane.id), onScriptViewChange: view => views.set(pane.id, view)});
                 }
                 preview?.update();
             }

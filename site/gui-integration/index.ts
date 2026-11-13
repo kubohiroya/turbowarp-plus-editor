@@ -15,6 +15,7 @@ import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import {GitFileMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
@@ -25,6 +26,7 @@ import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu 
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {attachDockedScriptLayout, getDockedScriptLayout} from '@kubohiroya/turbowarp-plus-editor-views/script-layout';
 import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
     renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
@@ -35,7 +37,8 @@ export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
 export {flushPendingSurfaceEdits};
 export {default as webFontDialogs} from '@kubohiroya/turbowarp-plus-editor-ui/web-font-dialogs';
-export const renderEditMenu = props => renderEditCommands({...props, renderIcon: renderMenuIcon});
+export const renderEditMenu = props => renderEditCommands({...props,
+    getRearrangement: () => getDockedScriptLayout(props.vm), renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);
 export {loadedProjectTitle, restoreProjectTitle} from '../project-tools/index.ts';
 export {ProjectInfoMenu} from '../project-tools/info-menu.tsx';
@@ -97,7 +100,9 @@ export const attachHostScriptTransfer = (context, integration) => {
     const extensions = attachDockedCodeExtensions(context);
     const prewarm = startup.stageCodePrewarm ? attachStageCodePrewarm(context) : undefined;
     const editMenu = attachEditMenuWorkspace(context);
+    const scriptLayout = attachDockedScriptLayout(context);
     return {dispose() {
+        scriptLayout.dispose();
         editMenu.dispose();
         prewarm?.dispose();
         extensions.dispose();
@@ -150,7 +155,8 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
         }}, action.label));
 };
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
-    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), React.createElement(GitFileMenu, props),
+    renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
 
 export {serializeProjectForExport} from '../packager/handoff.ts';
 
@@ -174,14 +180,20 @@ export const renderProjectFileWorkflow = ({
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
     const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension, projectFolderWorkflows(vm));
     const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
+    const openExport = exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject);
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
-        exportProject: exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject),
-        externalYaml: renderExternalYamlMenu(inline)
-    }});
+        exportProject: openExport,
+        git: React.createElement(GitFileMenu, {...inline, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
+    }, workspace: getDocumentWorkspace(vm)});
 };
 
 export const saveProjectFromFileMenu = (vm, gui, promptForTarget) => {
+    const workspace = getDocumentWorkspace(vm);
+    if (!promptForTarget && workspace.saveScope === 'tab') {
+        void workspace.saveActive();
+        return;
+    }
     const locale = document.documentElement.lang || 'en';
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
     projectSaveShortcut(storage, folder, promptForTarget ?

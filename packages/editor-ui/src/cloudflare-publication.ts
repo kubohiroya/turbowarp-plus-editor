@@ -1,5 +1,6 @@
+import type {PublicationIntent, PullRequestObservation} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
 import {pinPublicationPushSession} from './project-publication.ts';
-import type {PublicationBridge, PublicationIntent, PublicationJob, PublicationPushSession, PublicationStackParent, PublicationTarget,
+import type {PublicationBridge, PublicationJob, PublicationPushSession, PublicationStackParent, PublicationTarget,
     ReadPublicationPushSession}
     from './project-publication.ts';
 
@@ -44,11 +45,12 @@ export function createCloudflarePublicationBridge<Session extends PublicationPus
         }
         return session;
     }
-    async function post<T>(route: '/repository' | '/stack-parent' | '/jobs' | '/jobs/status' | '/jobs/advance',
-        remote: string, body: object, session?: Session) {
+    async function post<T>(route: '/repository' | '/stack-parent' | '/jobs' | '/jobs/status' | '/jobs/advance' |
+        '/merge/checks' | '/merge/status' | '/merge', remote: string, body: object, session?: Session, signal?: AbortSignal) {
         session ??= await sessionFor(remote);
+        const timeout = AbortSignal.timeout(30_000);
         const response = await send(bffOrigin + prefix + route, {
-            method: 'POST', credentials: 'omit', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30_000),
+            method: 'POST', credentials: 'omit', redirect: 'error', cache: 'no-store', signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
             headers: {Authorization: 'Bearer ' + session.bearer, 'Content-Type': 'application/json'},
             body: JSON.stringify(body)
         });
@@ -69,6 +71,16 @@ export function createCloudflarePublicationBridge<Session extends PublicationPus
     }
     return {
         approval: 'browser',
+        async pullRequestChecks(remote, number, signal) {
+            return post<{head: string; base: string; checks: PullRequestObservation['checks']}>('/merge/checks', remote,
+                {remote, number}, undefined, signal);
+        },
+        async mergeStatus(remote, number, signal) {
+            return post<PullRequestObservation>('/merge/status', remote, {remote, number}, undefined, signal);
+        },
+        async mergePullRequest(remote, expected) {
+            return post<{state: 'accepted' | 'merged' | 'rejected'}>('/merge', remote, {remote, expected});
+        },
         async repository(remote) {
             const result = await post<PublicationRepository>('/repository', remote, {remote});
             if (!Number.isSafeInteger(result.repositoryId) || result.repositoryId < 1 || !Array.isArray(result.capabilities) ||

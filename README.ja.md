@@ -84,13 +84,13 @@ TurboWarp Plus 標準配置では、起動時にスプライト一覧が編集�
 
 作品はひとつのSB3ファイルである必要はありません。`sb3-toolchain` は手元で使うNode.jsのツールです。`import` がSB3を作品データ・素材・個別の埋め込み拡張に展開してGitから変更が見えるようにし、`check` が展開したデータを検証し、`build` が配布用のSB3を生成します。展開した作品フォルダは、Editorで直接開いて編集することもできます。カスタムフォントを含む作品にも対応します。バンドルは各拡張のコードヘッダーから名前・説明・サンドボックスの要件を読み取り、GitHubのコミットやnpmのバージョンを固定し、埋め込むコードのSHA-256を検証し、更新時にはAPIマニフェストで互換性を比較できます。複数の拡張は元のコードを残したまま1つの複合拡張として埋め込めて、実行許可は複合拡張全体に対して判断します。公開版のEditorでは、`turbowarp-plus-packages` が公開する[TurboWarp Plusファミリー公式カタログ](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json)の条件を満たす拡張を信頼済みとして扱い、記録された取得元とコードのSHA-256を照合してから個別の承認画面を省略します。
 
-メニューバーの「ステージを開く」の左にあるブランチのボタンは、現在のブランチ（リポジトリを選ぶ前は「Git」）を表示し、ブランチの切り替えと作成、リポジトリの選択、「ローカル Git を開く」のメニューを開きます。**「ローカル Git」**パネルでリポジトリのルートを開くと、ステージ済み・未ステージ・未追跡の変更を分けて表示し、作品データ（`project.source.json`）の変更をステージ・スプライト別、スクリプト別のブロックで（枠はコードエリアと同じく拡大縮小・スクロールでき、変更前と変更後が連動します。「テキスト」に切り替えると行単位で）、ほかのファイルのテキスト差分とバイナリ素材のサイズ、現在のブランチ、HEAD、ローカルブランチ、直近50件のコミットと、選んだコミットの第一親との差分を確認できます。ルート配下の `sb3-toolchain` v1 の作品フォルダを選ぶと一覧がそのフォルダに絞られ、変更をステージ・スプライトごとにコード・コスチューム・音・変数など・そのほかの設定として並べます（素材は名前と縮小画像で示し、ファイル単位の一覧も開けます）。「この作品を開く」でEditorに読み込めます。上部には GitHub との関係（同じ・進んでいる・遅れている・分かれている・まだ確かめていない）を、最後に確かめた時点の記録から示します。ブランチ・HEAD・Git の区分・ファイルモードなどは「Git の詳細」にまとめています。パネルは Dockview のタブとしてコードの隣に開き（`twPlusDockview=0` ではダイアログ）、パネルから開いた作品の作業ツリーの版では「編集画面で強調」で該当するスクリプトを編集画面に表示します。コマンドラインで操作したあとは「再取得」を、同じ作品を開き直すときは「作品を再読込」を使います（未保存の編集を先に確認します）。接続先が設定された環境では「GitHub 接続」の欄が、HTTPSリモート `origin` に対するfetch、fast-forwardのみのpull、明示的に許可したpushを行います。File System Accessに対応したChromium系ブラウザーが必要です。linked worktree、サブモジュール、シンボリックリンクは対象外で、作業ツリーの実行権限の変更はブラウザーから確認できません。起動URLに `twPlusLocalGit=0` を指定するとパネルとブランチのボタンを外せます。
+メニューバーのブランチボタンから「ローカル Git」を開き、リポジトリのルートを選びます。「ファイルの保存とコミット」では、ファイルを保存し、差分を確認して、選んだファイルをコミットできます。作品のコードは変更前と変更後のブロックを並べ、各比較枠の右下にミニマップとズームを表示します。「履歴」では過去のコミットを確認し、ブランチを切り替えられます。「GitHub の同期とレビュー」から接続設定とプルリクエストを開けます。 [作品フォルダと Git のガイド](docs/features/git/) · [GitHub での作業手順](docs/features/github/)
 
-**PR の変更レビュー**は、GitHub を `origin` に設定したリポジトリの Git パネルで**「プルリクエスト」**から開きます。PR の一覧・題名・本文には公開 API の利用上限が適用されます。**「GitHub 接続」**が有効なときは Git Smart HTTP で PR の head とベースのブランチを取得し、手元の Git オブジェクトで比較します。接続で許可された非公開リポジトリでは PR 番号を入力し、比較するベースのブランチを確認します。未接続時は公開 API で公開 PR を比較できます。
+**PR の変更レビュー**は、GitHub を `origin` に設定したリポジトリの Git パネルの**「GitHub の同期とレビュー」→「プルリクエスト」**から開きます。PR の一覧・題名・本文には公開 API の利用上限が適用されます。**「GitHub 接続」**が有効なときは Git Smart HTTP で PR の head とベースのブランチを取得し、手元の Git オブジェクトで比較します。接続で許可された非公開リポジトリでも、一覧から PR を選べます。未接続時は公開 API で公開 PR を比較できます。
 
 比較にはマージベースと PR の head を使います。`project.source.json` の変更は対象とスクリプトごとに展開できます。確認済みの印はブラウザーに保存され、スクリプトの内容が変わるとその印だけが外れます。未登録の拡張ブロックは名前と接続が分かる代替ブロックで表示します。
 
-**PR の版を手元で動かす**には、Git パネルから作品フォルダを開いておき、接続中に PR を開いて **「pr/… として手元で開く」**を選びます。比較したコミットのローカルブランチに切り替わり、作品が開き直されます。実行中、未保存の編集や作業ツリーの変更がある場合、同名ブランチが別のコミットを指している場合は切り替えが止まります。戻るには**「ローカルの変更」**で元のブランチに切り替え、**「作品を再読込」**を選びます。確認に使ったブランチは手元に置いておきます。
+**PR の版を手元で動かす**には、Git パネルから作品フォルダを開いておき、接続中に PR を開いて **「pr/… として手元で開く」**を選びます。比較したコミットのローカルブランチに切り替わり、作品が開き直されます。実行中、未保存の編集や作業ツリーの変更がある場合、同名ブランチが別のコミットを指している場合は切り替えが止まります。戻るには**「履歴」**で元のブランチに切り替え、**「作品を再読込」**を選びます。確認に使ったブランチは手元に置いておきます。
 
 ## パッケージ・差し込み口・ビルド
 
@@ -218,7 +218,7 @@ E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 
 GUIとPackagerは `site/source.json` に記録したSHAをチェックアウトします。GUIの依存をインストールし、`node scripts/prepublish.mjs` で準備します。ビルドはGUIのSHA、実際にインストールされたdata-editorのSHA、security-dialogのバージョンが固定値と一致することを確認します。Pagesは統合検証に成功したmainから配信します。リリースのタグはnpmのバージョンと一致させます。
 
-ローカル Git パネルの Cloudflare 方式を有効にするには、ビルド時に `TW_PLUS_GIT_BFF_ORIGIN` と `TW_PLUS_GIT_PROXY_ORIGIN` の両方に正確な HTTPS オリジンを指定します。Desktop ローカル方式は、ホストが `EditorPreload.localGit` を公開すると選べます。起動 URL の `twPlusLocalGit=0` で Git パネルを非表示にできます。
+ローカル Git パネルの Cloudflare 方式を有効にするには、ビルド時に `TW_PLUS_GIT_BFF_ORIGIN` と `TW_PLUS_GIT_PROXY_ORIGIN` の両方に正確な HTTPS オリジンを指定します。Desktop ローカル方式は、ホストが `EditorPreload.localGitAuth` または `EditorPreload.localGit` を公開すると選べます。起動 URL の `twPlusLocalGit=0` で Git パネルを非表示にできます。
 
 #### GitHub リポジトリ作成と PR 登録のローカル検証
 
@@ -228,7 +228,7 @@ GUIとPackagerは `site/source.json` に記録したSHAをチェックアウト�
 - **ファイル → 保存してコミット → PR を作成・確認**から、完了済みコミットの PR を登録できます。対象リポジトリをローカル Git の GitHub App に書き込み権限付きで接続します。Desktop は確認ダイアログで承認します。Cloudflare は設定済み BFF のページで GitHub アカウントを確認し、対象コミットと操作を見て承認します。同じコミットの行から、PR のリンク、CI・マージの状態、再開操作を確認できます。
 - 接続先でスタックが有効な場合は「既存 PR にスタックする」を選び、親 PR の番号、ブランチ、コミットを確認します。マージを選んだジョブは、下位 PR がすべてマージされ、子 PR の差分が一致し、更新後の CI とレビュー条件を満たすまで待ちます。
 
-ヘッドレス検証では `E2E_PROJECT_SAVE_BUILD` にプレビューの出力先、`E2E_GIT_HTTP_FIXTURE` に Git パッケージの `test/smart-http-fixture.js` の絶対パスを指定します。作成と PR の試験は GitHub を模擬し、実際の Git 通信をローカルの Git CGI で検証します。
+ヘッドレス検証では `E2E_PROJECT_SAVE_BUILD` にビルドの出力先、`E2E_GIT_HTTP_FIXTURE` に Git パッケージの `test/smart-http-fixture.js` の絶対パスを指定します。ビルド時の接続先には `TW_PLUS_GIT_BFF_ORIGIN=https://github-create.example.invalid` と `TW_PLUS_GIT_PROXY_ORIGIN=https://github-git.example.invalid` を使います。作成と PR の試験は GitHub を模擬し、実際の Git 通信をローカルの Git CGI で検証します。
 
 ```sh
 node --test --test-concurrency=1 test/project-folder-save.browser.ts test/project-repository-creation.browser.ts test/project-publication.browser.ts
@@ -249,9 +249,9 @@ push では、上流へ送る前に `Git-Push-Id` を予約します。
   - GitHub のトークンは、BFF の Durable Object に暗号化して置きます。CORS Worker の Git の経路は、要求ごとにこの Durable Object に許可を問い合わせます。
   - ログインは最長8時間です。プロキシの Bearer は5分ごとに更新します。（[BFF の契約](https://github.com/kubohiroya/turbowarp-plus-editor/issues/315)）
 - **Desktop 方式**
-  - メインプロセスが GitHub の Device Flow で認証します。Git は `127.0.0.1` のループバックのプロキシで中継し、このプロキシは `tw-editor://.` のオリジンだけを受け付けます。
+  - メインプロセスが GitHub と認証します。Git は `127.0.0.1` のループバックのプロキシで中継し、このプロキシは `tw-editor://.` のオリジンだけを受け付けます。
   - トークンはメインプロセスの外に出ません。保存を選んだときは、OS の保護機能で暗号化します。
-  - 今は、起動時に GitHub App の client ID を渡す必要があります。製品版に client ID を入れること、fine-grained personal access token での接続、その後の手元の Git の認証情報の利用は、[turbowarp-plus-desktop#40](https://github.com/kubohiroya/turbowarp-plus-desktop/issues/40) で予定しています。
+  - 対応する Desktop と同梱 Editor では、GitHub App のデバイスフロー、fine-grained PAT、Git credential helper のうち設定済みの方式を選べます。GitHub App の方式には client ID が必要です。 [方式ごとの条件](docs/features/git/#connection-methods)
 
 GitHub App の client ID は秘密の値ではありません。Device Flow は client secret を使いません。残るリスクはフィッシングです。第三者が同じ client ID で Device Flow を始め、利用者にそのコードを入れさせることができます。
 

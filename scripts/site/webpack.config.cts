@@ -40,7 +40,6 @@ const projectUnpackHashSource = projectUnpackEntry && path.dirname(
     createRequire(projectUnpackEntry).resolve('@noble/hashes/legacy.js'));
 const saveCommitEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/task-queue', true);
 const initialCommitEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/initial-commit');
-const publicationEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/pull-request-queue');
 const repositorySeedEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-project-starter/seed');
 const authPackage = '@kubohiroya/turbowarp-plus-editor-auth';
 const authEntry = optionalProjectSaveEntry(authPackage) ?? rootRequire.resolve(authPackage);
@@ -128,10 +127,6 @@ if (repositoryCreation) {
     injections.__TW_PLUS_CREATE_CLOUDFLARE_GIT_AUTH__ = [authEntry, 'createCloudflareGitAuth'];
     injections.__TW_PLUS_PREPARE_INITIAL_REPOSITORY__ = [initialCommitEntry, 'prepareInitialRepository'];
     injections.__TW_PLUS_PUSH_INITIAL_REPOSITORY__ = [initialCommitEntry, 'pushInitialRepository'];
-}
-if (publicationEntry) {
-    injections.__TW_PLUS_INSPECT_PUBLICATION_REPOSITORY__ = [publicationEntry, 'inspectPublicationRepository'];
-    injections.__TW_PLUS_PUSH_PUBLICATION_COMMIT__ = [publicationEntry, 'pushPublicationCommit'];
 }
 config.plugins.push(new (hostRequire('webpack').ProvidePlugin)(injections));
 config.module.rules.push({
@@ -258,6 +253,8 @@ config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-window
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
     rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
+config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/script-layout$'] =
+    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/script-layout');
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel', 'ai-agents']) {

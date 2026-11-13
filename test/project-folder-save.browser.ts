@@ -18,7 +18,6 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
     assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_SAVE_BUILD to the local webpack preview');
     const info = JSON.parse(await readFile(path.join(build, 'build-info.json'), 'utf8'));
     const pins = JSON.parse(await readFile(new URL('../site/source.json', import.meta.url), 'utf8'));
-    assert.equal(info.projectSavePreview, true);
     assert.equal(info.revision, pins.guiRevision);
     assert.equal(info.siteRevision, execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim());
 
@@ -95,7 +94,7 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
     const menu = (name: string) => page.getByText(name, {exact: true});
     const command = async (name: string) => {
         await menu('File').click();
-        await menu(name).click();
+        await page.getByRole('button', {name, exact: true}).click();
     };
     await command('Save As…');
     const saveAs = page.getByRole('dialog', {name: 'Save As', exact: true});
@@ -111,15 +110,13 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
     }, volume);
 
     await edit(42);
-    await command('Save');
+    await command('Save Project');
     await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder saved.');
     assert.equal(await volume(), 42);
 
-    await page.getByRole('button', {name: 'Local Git', exact: true}).click();
-    await page.getByRole('menuitem', {name: 'Open Local Git'}).click();
+    await command('Choose Repository…');
     const gitPanel = page.locator('.twgit-panel');
-    await gitPanel.getByRole('button', {name: 'Choose Repository…'}).click();
-    await expect(gitPanel.getByRole('button', {name: /^Initial repository, /u})).toBeVisible();
+    await expect(gitPanel.locator('.twgit-repository-heading strong')).toHaveText(path.basename(root));
     await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
     await writeFile(path.join(root, 'notes.txt'), 'Unrelated private notes\n');
     await edit(31);

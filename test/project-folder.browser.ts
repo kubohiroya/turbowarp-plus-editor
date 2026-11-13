@@ -109,7 +109,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     page.on('pageerror', error => errors.push(error.stack || error.message));
     const diagnostics: string[] = [];
     page.on('console', message => {if (message.type() === 'error') diagnostics.push(message.text());});
-    await page.route('**/*', async route => {
+    await page.context().route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
         const filename = path.resolve(root, decodeURIComponent(url.pathname.slice(prefix.length)));
@@ -139,7 +139,8 @@ test('the browser folder commands save localized Git diffs to the original worki
         state.showDirectoryPicker = async options => {
             testState.options = options;
             testState.picks.push(options.id);
-            return testState.handle;
+            return options.id === 'turbowarp-plus-project-folder' && testState.projectHandle ?
+                testState.projectHandle : testState.handle;
         };
         const createWritable = FileSystemFileHandle.prototype.createWritable;
         FileSystemFileHandle.prototype.createWritable = function(...options) {
@@ -187,12 +188,12 @@ test('the browser folder commands save localized Git diffs to the original worki
     const command = async (name: string, message: string) => {
         const previous = await page.evaluate(() => (window as any).folderTest.notifications);
         await page.getByText('File', {exact: true}).click();
-        await page.getByText(name, {exact: true}).click();
+        await page.getByRole('button', {name, exact: true}).click();
         await page.waitForFunction(value => (window as any).folderTest.notifications > value, previous);
         await expect(status).toHaveText(message);
     };
     const open = () => command('Open Project Folder…', 'Project folder opened.');
-    const save = (message = 'Project folder saved.') => command('Save', message);
+    const save = (message = 'Project folder saved.') => command('Save Project', message);
     const read = () => readFile(path.join(folder, projectFile), 'utf8');
     const changes = () => git('diff', '--no-color', '--unified=0', '--', projectFile)
         .split('\n').filter(line => /^[+-](?![+-])/u.test(line)).map(line => line[0] + line.slice(1).trim());
@@ -219,12 +220,23 @@ test('the browser folder commands save localized Git diffs to the original worki
     await open();
     const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    const sourceRow = page.locator(`.twpf-explorer-item[data-path="${projectFile}"]`);
+    await expect(sourceRow.locator('.twpf-explorer-description')).toHaveText('Project data');
+    assert.ok(await sourceRow.evaluate(row =>
+        row.querySelector('.twpf-explorer-description')!.getBoundingClientRect().top >=
+        row.querySelector('.twpf-explorer-name')!.getBoundingClientRect().bottom));
     const fileTab = (name: string) => page.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
     const preview = page.locator('.twpf-preview:visible');
     const openFile = (name: string) => page.locator(`[data-path="${name}"]`).click();
     const closeFile = (name: string) => fileTab(name).locator('.dv-default-tab-action').click();
-    await openFile(projectFile);
+    await page.getByRole('button', {name: 'Search project files'}).click();
+    const fileSearch = page.getByRole('searchbox', {name: 'Search project files'});
+    await fileSearch.fill(projectFile.toUpperCase());
+    const fileResult = page.getByRole('group', {name: 'Matching files'}).getByRole('button', {name: projectFile});
+    await fileResult.click();
     await expect(preview.locator('.twpf-syntax-name').first()).toHaveText('"targets"');
+    await fileSearch.press('Escape');
+    await expect(sourceRow).toBeVisible();
     await openFile(projectFile);
     await expect(fileTab(projectFile)).toHaveCount(1);
     await closeFile(projectFile);
@@ -245,6 +257,36 @@ test('the browser folder commands save localized Git diffs to the original worki
         await expect(previewButton('Save file')).toBeEnabled();
     };
     await editNote('working draft');
+    const noteRow = page.locator(`.twpf-explorer-item[data-path="${noteFile}"]`);
+    const noteStar = noteRow.locator('.twpf-explorer-name + [data-tw-plus-unsaved-marker]');
+    await expect(noteStar).toHaveText('*');
+    assert.equal(await noteStar.textContent(), ' *');
+    await expect(noteStar).toHaveCSS('white-space', 'pre');
+    await expect(noteStar).toHaveCSS('font-weight', '700');
+    await expect(noteRow).toHaveAccessibleName(/Unsaved changes/);
+    const drawerView = (name: string) => drawerBar.getByRole('button', {name, exact: true});
+    const projectSave = page.getByRole('button', {name: 'Save Project', exact: true});
+    const tabSave = page.getByRole('button', {name: 'Save Active Tab', exact: true});
+    const fileMenu = page.getByText('File', {exact: true});
+    await fileMenu.click();
+    await expect(tabSave).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+S$/);
+    await expect(tabSave).toBeEnabled();
+    await expect(projectSave).not.toHaveAttribute('aria-keyshortcuts');
+    await fileMenu.click();
+    await drawerView('Sprites').click();
+    await fileMenu.click();
+    await expect(projectSave).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+S$/);
+    await expect(tabSave).toHaveCount(0);
+    await fileMenu.click();
+    const previous = await page.evaluate(() => (window as any).folderTest.notifications);
+    await editor.press('ControlOrMeta+s');
+    await page.waitForFunction(value => (window as any).folderTest.notifications > value, previous);
+    await expect(status).toHaveText('No changes to save.');
+    await drawerView('Project folder').click();
+    await save('No changes to save.');
+    await expect(editor).toContainText('working draft');
+    assert.equal(await readFile(path.join(folder, noteFile), 'utf8'),
+        '\uFEFF' + note('committed').replaceAll('\n', '\r\n'));
     await previewButton('Diff').click();
     await expect(preview.locator('.twpf-diff-headings')).toContainText(git('rev-parse', 'HEAD').slice(0, 8));
     await expect(leftCode.locator('.twpf-syntax-string', {hasText: 'committed'})).toBeVisible();
@@ -257,10 +299,17 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(leftCode.getByText('// Header', {exact: true})).toHaveCount(0);
     await previewButton('Edit').click();
     await expect(editor).toContainText('working draft');
-    await editor.press('ControlOrMeta+s');
+    await drawerView('Project folder').focus();
+    await page.keyboard.press('ControlOrMeta+s');
     await expect(preview.getByText('File saved.', {exact: true})).toBeVisible();
+    await expect(noteStar).toHaveCount(0);
     assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), '\uFEFF' + note('working draft').replaceAll('\n', '\r\n'));
     assert.equal(git('diff', '--cached', '--name-only'), '');
+    await editNote('menu save');
+    await fileMenu.click();
+    await tabSave.click();
+    await expect(preview.getByText('File saved.', {exact: true})).toBeVisible();
+    assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), '\uFEFF' + note('menu save').replaceAll('\n', '\r\n'));
 
     await editNote('conflicting draft');
     await writeFile(path.join(folder, noteFile), note('external'));
@@ -285,6 +334,10 @@ test('the browser folder commands save localized Git diffs to the original worki
 
     await openFile('assets');
     await openFile(`assets/${costume.md5ext}`);
+    await fileMenu.click();
+    await expect(tabSave).toBeDisabled();
+    await expect(tabSave).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+S$/);
+    await fileMenu.click();
     await expect.poll(() => preview.getByRole('img', {name: costume.md5ext}).evaluate((image: HTMLImageElement) =>
         image.naturalWidth)).toBe(32);
     await closeFile(costume.md5ext);
@@ -321,7 +374,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(tabMarker('Cat')).toBeVisible();
     await expect(tabMarker('Bird')).toBeHidden();
     await marker.click();
-    await page.getByRole('button', {name: 'Save', exact: true}).click();
+    await page.getByRole('button', {name: 'Save Project', exact: true}).click();
     await expect(status).toHaveText('Project folder saved.');
     await expect(marker).toHaveCount(0);
     await expect(tabMarker('Cat')).toBeHidden();
@@ -479,6 +532,27 @@ test('the browser folder commands save localized Git diffs to the original worki
         await branchMenu.getByRole('menuitem', {name: 'Open Local Git'}).click();
         await expect(panel).toBeVisible();
     };
+    const gitTab = page.getByRole('tab', {name: 'Local Git', exact: true});
+    const closeGit = async () => {
+        const close = gitTab.getByRole('button', {name: 'Close Local Git', exact: true});
+        const sprites = drawerBar.getByRole('button', {name: 'Sprites', exact: true});
+        if (await gitTab.locator('[data-fixed-project-tab]').count()) await sprites.click();
+        await gitTab.click();
+        await close.click();
+    };
+    await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    await expect(gitTab.locator('[data-fixed-project-tab]')).toBeVisible();
+    await expect(gitTab.locator('.tw-plus-folder-tab-icon')).toBeVisible();
+    await expect(gitTab.getByRole('button', {name: 'Close Local Git', exact: true})).toHaveCount(0);
+    await expect(page.locator('.dv-tab').first()).toHaveAttribute('aria-label', 'Local Git');
+    await gitTab.focus();
+    await page.keyboard.press('Delete');
+    await expect(gitTab).toBeVisible();
+    await drawerBar.getByRole('button', {name: 'Sprites', exact: true}).click();
+    await gitTab.click();
+    await expect(gitTab.getByRole('button', {name: 'Close Local Git', exact: true})).toBeVisible();
+    await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    await expect(gitTab.locator('.tw-plus-folder-tab-icon')).toBeVisible();
     await page.getByText('File', {exact: true}).click();
     await expect(page.getByText('Open Project Folder…', {exact: true})).toBeVisible();
     await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
@@ -495,27 +569,80 @@ test('the browser folder commands save localized Git diffs to the original worki
     await page.keyboard.press('Escape');
     await expect(noRepository).toBeFocused();
     await showGit();
-    await panel.getByRole('button', {name: 'Choose Repository…'}).click();
+    await expect(panel.getByRole('button', {name: 'Close', exact: true})).toHaveCount(0);
+    await expect(panel.getByRole('button', {name: 'Refresh local status', exact: true}).locator('svg')).toBeVisible();
+    await expect(panel.getByRole('button', {name: 'Choose Repository…'})).toHaveCount(0);
+    await fileMenu.click();
+    await page.getByRole('button', {name: 'Choose Repository…', exact: true}).click();
+    const reviewStep = panel.getByRole('button', {name: 'Commit saved changes', exact: true});
+    const saveTask = panel.getByRole('button', {name: 'Save files', exact: true});
+    const saveTaskPanel = panel.getByRole('region', {name: 'Save files', includeHidden: true});
+    const commitTaskPanel = panel.getByRole('region', {name: 'Commit saved changes', includeHidden: true});
+    const recordStep = panel.getByRole('button', {name: 'Create PR', exact: true});
+    await expect(reviewStep).toHaveAttribute('aria-expanded', 'true');
+    await recordStep.click();
     // A commit row of the history graph is named by its subject, then its author, date and branches.
     await expect(panel.getByRole('button', {name: /^fixture, /})).toBeVisible();
     await expect(page.getByRole('button', {name: `Branch: ${git('branch', '--show-current')}`, exact: true})).toBeVisible();
-    await panel.getByText('Choose a project inside this repository', {exact: true}).click();
-    await panel.getByRole('button', {name: 'projects/', exact: true}).click();
-    await panel.getByRole('button', {name: 'demo/', exact: true}).click();
+    await reviewStep.click();
+    await expect(panel.getByRole('button', {name: 'Open Project', exact: true})).toHaveCount(0);
+    await expect(panel.getByRole('button', {name: 'Show File List', exact: true})).toHaveCount(0);
+    const openNestedProject = async () => {
+        await page.evaluate(async () => {
+            const testState = (window as any).folderTest;
+            testState.projectHandle = await (await testState.handle.getDirectoryHandle('projects')).getDirectoryHandle('demo');
+        });
+        await open();
+        await showGit();
+    };
     page.once('dialog', dialog => dialog.accept());
-    await panel.getByRole('button', {name: 'Open This Project'}).click();
-    await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
+    await openNestedProject();
+    await expect(panel.getByRole('button', {name: 'Open Project', exact: true})).toHaveCount(0);
+    await expect(panel.getByRole('heading', {name: 'Local Git', exact: true})).toHaveCount(0);
+    await expect(panel.locator('header [data-git-project-path]')).toHaveCount(0);
+    await expect(panel.locator('header strong')).toHaveText(path.basename(folder));
+    await expect(panel.getByText('Branch and Git status', {exact: true})).toHaveCount(0);
+    await expect(panel.getByText('No unsaved edits', {exact: true})).toHaveCount(0);
+    await expect(panel.locator('[data-git-upstream]')).toHaveCount(0);
+    const sideBar = page.getByRole('toolbar', {name: 'Drawer views'});
+    await sideBar.getByRole('button', {name: 'Git history', exact: true}).click();
+    await page.getByRole('button', {name: 'Search commits'}).click();
+    const commitSearch = page.getByRole('searchbox', {name: 'Search commits'});
+    await commitSearch.fill('no such commit');
+    await expect(page.getByText('No matching commits.')).toBeVisible();
+    await commitSearch.fill('FIXTURE');
+    await expect(page.locator('[data-drawer-content="git-history"]').getByRole('button', {name: /^fixture, /})).toBeVisible();
+    await commitSearch.press('Escape');
+    await sideBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    await expect(panel.getByRole('button', {name: 'Show File List', exact: true})).toHaveCount(0);
+    const folderTools = page.getByRole('group', {name: 'Project folder tools'});
+    const [folderPopup] = await Promise.all([page.waitForEvent('popup', {timeout: 7000}),
+        folderTools.getByRole('button', {name: 'Open in another window'}).click()]);
+    await expect(folderPopup.getByRole('tree', {name: 'Project folder'})).toBeVisible();
+    await folderPopup.close();
+    await expect(sideBar.getByRole('button', {name: 'Project folder', exact: true})).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-drawer-content="project"]').getByRole('tree', {name: 'Project folder'})).toBeVisible();
+
+    await expect(panel.locator('header').getByRole('button', {name: 'Reload Project', exact: true})).toHaveCount(0);
+    await expect(reviewStep.locator('.twgit-count')).toHaveText('5');
     // A selected project lists its changes by stage, sprite and element; the list by file stays one click away.
     const elements = panel.getByRole('region', {name: 'Changes by project element'});
     await expect(elements.locator('[data-git-element="costumes"]')).toHaveCount(3);
     await expect(elements).toContainText('Cat');
     await elements.getByText('List by file', {exact: true}).click();
+    const commitFooter = commitTaskPanel.getByRole('form', {name: 'Commit selected files'});
+    const changesList = commitTaskPanel.locator('.twgit-commit-changes');
+    const footerPosition = await commitFooter.boundingBox();
+    await changesList.evaluate(list => {list.scrollTop = list.scrollHeight;});
+    await expect.poll(async () => (await commitFooter.boundingBox())?.y).toBe(footerPosition?.y);
+    await expect(commitFooter).toBeInViewport();
     await panel.locator('[data-git-group="untracked"]').filter({hasText: 'projects/demo/project.source.json'}).click();
     // Project data opens as block comparisons; the line diff stays one switch away.
     const projectChanges = panel.getByRole('region', {name: 'Project changes'});
     await expect(projectChanges.locator('.twgit-review-script')).toHaveCount(3);
     await projectChanges.locator('.twgit-review-script summary').first().click();
     await expect(projectChanges.locator('.twgit-review-script svg.blocklySvg')).toHaveCount(1);
+    await expect(projectChanges.locator('.twgit-review-target h5 img, .twgit-block-diff-preview img')).toHaveCount(0);
     // The panel is a tab beside the code, and the working-tree version can point at its script in the Editor.
     await expect(panel).toHaveClass(/twgit-panel-tab/);
     await projectChanges.getByRole('button', {name: 'After · Highlight in Editor'}).click();
@@ -572,8 +699,9 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(await readFile(path.join(nested, 'imports/reference.txt'), 'utf8'), 'reference');
     assert.equal(await readFile(path.join(nested, 'root-note.txt'), 'utf8'), 'root');
 
-    // The Git drawer can be closed while the explorer stages and unstages files in the selected repository.
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    // Work in the folder drawer with another tab in front of the fixed Git tab.
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    await expect(panel).not.toBeVisible();
     const stagedPaths = () => git('diff', '--cached', '--name-only', '-z').split('\0').filter(Boolean).sort();
     const previouslyStaged = stagedPaths();
     const rootNote = 'projects/demo/root-note.txt';
@@ -642,7 +770,7 @@ test('the browser folder commands save localized Git diffs to the original worki
 
     const nestedFile = path.join(nested, projectFile);
     const nestedSteps = async () => JSON.parse(await readFile(nestedFile, 'utf8')).targets[1].blocks.move_B.inputs.STEPS[1][1];
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     await edit('value', '45');
     await save();
     assert.equal(await nestedSteps(), '45');
@@ -664,32 +792,17 @@ test('the browser folder commands save localized Git diffs to the original worki
     await writeFile(nestedFile, stringify(externalProject));
     await expect(panel.getByText('The repository changed outside the Editor. Refresh to read the current state.')).toBeVisible();
     await expect(projectChanges.locator('.twgit-review-script').first()).toBeVisible();
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
-    await edit('value', '55');
-    await showGit();
-    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has unsaved changes.');
-    page.once('dialog', dialog => dialog.dismiss());
-    await panel.getByRole('button', {name: 'Reload Project'}).click();
-    await expect(panel.getByRole('button', {name: 'Reload Project'})).toBeEnabled();
-    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has unsaved changes.');
-    page.once('dialog', dialog => dialog.accept());
-    await panel.getByRole('button', {name: 'Reload Project'}).click();
-    await expect(panel.locator('[data-git-dirty]')).toHaveText('The Editor has no unsaved changes.');
-    await expect(panel.locator('[data-git-group="unstaged"]').filter({hasText: 'projects/demo/project.source.json'})).toBeVisible();
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
+    await openNestedProject();
+    await closeGit();
     await edit('value', '60');
     await save();
     assert.equal(await nestedSteps(), '60');
     assert.deepEqual(await readFile(indexPath), stagedIndex);
     assert.equal(await page.evaluate(() => (window as any).folderTest.picks.filter(id => id === 'turbowarp-plus-git-root').length), 1);
     // Re-open the nested folder to establish a fresh baseline before observing file reads.
-    await showGit();
-    // Wait for this reload itself: the button stays disabled from the load until the panel has read Git again.
-    await page.evaluate(() => window.vm.runtime.once('PROJECT_LOADED', () => {(window as any).folderTest.reloaded = true;}));
-    await panel.getByRole('button', {name: 'Reload Project'}).click();
-    await page.waitForFunction(() => (window as any).folderTest.reloaded);
-    await expect(panel.getByRole('button', {name: 'Reload Project'})).toBeEnabled();
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await openNestedProject();
+    await closeGit();
     const notice = page.locator('[data-project-folder-external]');
     const reload = notice.getByRole('button', {name: 'Reload from Disk'});
     await expect(notice).toBeHidden();
@@ -849,26 +962,99 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect.poll(workspaceValue).toBe('74');
     assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
-    // The Git panel adds the saved project file to the next record and records it, as Git CLI sees it.
     git('config', 'user.name', 'Editor folder fixture');
     git('config', 'user.email', 'fixture@example.invalid');
     await showGit();
-    await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
-    // Added earlier with Git CLI and changed since, the file is listed both as staged and as unstaged.
-    const stageDemo = panel.getByRole('button', {name: 'Add to Next Record: projects/demo/project.source.json'});
-    await stageDemo.click();
-    await expect(stageDemo).toHaveCount(0);
-    await expect(panel.getByRole('button', {name: 'Remove from Next Record: projects/demo/project.source.json'})).toBeVisible();
-    assert.match(git('status', '--porcelain', '--', 'projects/demo/project.source.json'), /^A {2}/u);
-    await panel.getByLabel('Message for this record').fill('Update the demo from the Editor');
-    await panel.getByRole('button', {name: 'Record (Commit)'}).click();
+    await reviewStep.click();
+    await panel.getByRole('button', {name: 'Refresh local status', exact: true}).click();
+    await expect(reviewStep.locator('[data-review-pending]')).toBeVisible();
+    const commitPath = 'projects/demo/project.source.json';
+    const untouchedPath = 'new.txt';
+    await writeFile(path.join(folder, untouchedPath), 'Unrelated change\n');
+    git('add', untouchedPath);
+    const otherIndex = git('show', ':' + untouchedPath);
+    const indexBeforeSelection = await readFile(indexPath);
+    await reviewStep.click();
+    const commitForm = commitTaskPanel.getByRole('form');
+    await expect(commitForm).toBeVisible();
+    await saveTask.press('Enter');
+    await expect(saveTask).toBeFocused();
+    await expect(saveTaskPanel).toBeVisible();
+    await expect(commitForm).toBeHidden();
+    await reviewStep.press('Enter');
+    await expect(reviewStep).toBeFocused();
+    await expect(commitForm).toBeVisible();
+    const listByFile = commitTaskPanel.locator('.twgit-file-list');
+    if (await listByFile.isVisible() && !await listByFile.evaluate(node => (node as HTMLDetailsElement).open))
+        await listByFile.locator('summary').click();
+    const selectedFile = panel.getByRole('checkbox', {name: 'Include in commit: ' + commitPath, exact: true});
+    await selectedFile.check();
+    assert.deepEqual(await readFile(indexPath), indexBeforeSelection);
+    await selectedFile.uncheck();
+    await expect(panel.getByRole('button', {name: 'Commit', exact: true})).toBeDisabled();
+    await selectedFile.check();
+    await panel.getByLabel('Commit message').fill('Update the demo from the Editor');
+    await panel.getByRole('button', {name: 'Commit', exact: true}).click();
     await expect(panel.getByText('Recorded the changes (commit).')).toBeVisible();
     assert.equal(git('log', '-1', '--format=%s|%an'), 'Update the demo from the Editor|Editor folder fixture');
-    assert.equal(git('show', 'HEAD:projects/demo/project.source.json'), dirtyDisk.trim());
-    assert.equal(git('status', '--porcelain', '--', 'projects/demo/project.source.json'), '');
+    assert.equal(git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), commitPath);
+    assert.equal(git('show', 'HEAD:' + commitPath), dirtyDisk.trim());
+    assert.equal(git('status', '--porcelain', '--', commitPath), '');
+    assert.equal(git('show', ':' + untouchedPath), otherIndex);
+    await recordStep.click();
     git('fsck', '--no-progress');
+    await panel.getByRole('button', {name: 'Refresh local status', exact: true}).click();
+    await panel.getByRole('button', {name: /^Update the demo from the Editor,/}).click();
+    const committedFiles = panel.locator('[data-git-group="commit"]').filter({hasText: commitPath});
+    if (!await committedFiles.isVisible()) {
+        const fileList = panel.getByText('List by file', {exact: true});
+        if (await fileList.isVisible() && !await fileList.evaluate(summary => summary.parentElement?.hasAttribute('open')))
+            await fileList.click();
+    }
+    await expect(committedFiles).toBeVisible();
 
-    // Branches: switching needs a clean work tree, then rewrites it as git switch does, and Reload Project opens the branch's files.
+    // Unsaved text edits in an open file tab can be saved from the same Git view.
+    const draftPath = 'draft.txt';
+    await writeFile(path.join(incoming, draftPath), 'On disk\n');
+    await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    await dropFiles(explorerRow(projectFile), [draftPath]);
+    await idle();
+    await openFile(draftPath);
+    const draftEditor = preview.getByRole('textbox', {name: draftPath, exact: true});
+    await draftEditor.focus();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.insertText('From the Git panel');
+    await showGit();
+    await reviewStep.click();
+    await saveTask.click();
+    const draftInRepo = 'projects/demo/' + draftPath;
+    const draftCheckbox = panel.getByRole('checkbox', {name: 'Include in commit: ' + draftInRepo, exact: true});
+    await expect(saveTask.locator('.twgit-count')).toHaveText('1');
+    await saveTaskPanel.getByRole('button', {name: draftInRepo, exact: true}).click();
+    const draftDiff = saveTaskPanel.locator('.twgit-save-diff');
+    await expect(draftDiff).toContainText('HEAD → Unsaved edits');
+    await expect(draftDiff.locator('.diff')).toContainText('From the Git panel');
+    await expect(draftDiff.locator('.diff')).not.toContainText('On disk');
+    assert.equal(await readFile(path.join(nested, draftPath), 'utf8'), 'On disk\n');
+    await expect(draftCheckbox).toHaveCount(0);
+    await saveTaskPanel.getByRole('button', {name: 'Save unsaved files', exact: true}).click();
+    await expect(saveTask.locator('.twgit-count')).toHaveText('0');
+    await expect(saveTask).toHaveAttribute('aria-expanded', 'true');
+    await expect(reviewStep.locator('.twgit-count')).toHaveText(/^[1-9]/);
+    await reviewStep.click();
+    await expect(commitTaskPanel.getByRole('heading', {name: 'Other files'})).toBeVisible();
+    await expect(draftCheckbox).toBeEnabled();
+    assert.equal(await readFile(path.join(nested, draftPath), 'utf8'), 'From the Git panel');
+    await fileTab(draftPath).click();
+    await closeFile(draftPath);
+    await contextAction(draftPath, 'Delete…');
+    await remove.getByRole('button', {name: 'Delete', exact: true}).click();
+    await expect(explorerRow(draftPath)).toHaveCount(0);
+    await showGit();
+    await panel.getByRole('button', {name: 'Refresh local status', exact: true}).click();
+
+    // Branch switching still requires a clean work tree.
+    await recordStep.click();
     const base = git('branch', '--show-current');
     await panel.getByLabel('New branch name').fill('variant');
     await panel.getByRole('button', {name: 'Create Branch'}).click();
@@ -878,11 +1064,13 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('add', '-A');
     git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Record the rest');
     assert.equal(git('status', '--porcelain'), '');
-    await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
+    await panel.getByRole('button', {name: 'Refresh local status', exact: true}).click();
     await panel.getByLabel('Switch to it').uncheck();
     await panel.getByLabel('New branch name').fill('variant');
-    await panel.getByRole('button', {name: 'Create Branch'}).click();
-    await expect(panel.getByText('Created the branch.')).toBeVisible();
+    const createBranch = panel.getByRole('button', {name: 'Create Branch'});
+    await expect(createBranch).toBeEnabled();
+    await createBranch.click();
+    await expect.poll(() => git('branch', '--list', 'variant')).toContain('variant');
     assert.equal(git('rev-parse', 'variant'), git('rev-parse', 'HEAD'));
     assert.equal(git('branch', '--show-current'), base);
     // Another tool records a change on the branch without touching this work tree.
@@ -898,16 +1086,10 @@ test('the browser folder commands save localized Git diffs to the original worki
         'commit-tree', tree, '-p', 'variant', '-m', 'Move further on the variant']);
     git('update-ref', 'refs/heads/variant', variantCommit);
     await rm(path.join(folder, '.git', 'variant-index'));
-    // Loading from the folder above cleared the panel's project; choose it again so Reload Project is offered.
-    const openProjectButton = panel.getByRole('button', {name: 'Open This Project'});
-    if (!await openProjectButton.isVisible()) await panel.getByText('Choose a project inside this repository', {exact: true}).click();
-    if (await openProjectButton.isDisabled()) {
-        await panel.getByRole('button', {name: 'projects/', exact: true}).click();
-        await panel.getByRole('button', {name: 'demo/', exact: true}).click();
-    }
-    // The Editor has no unsaved edits, so opening asks nothing.
-    await openProjectButton.click();
-    await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
+    // Opening the custom folder from the File menu associates it with the selected repository again.
+    await openNestedProject();
+    await expect(panel.getByRole('button', {name: 'Open Project', exact: true})).toHaveCount(0);
+    await recordStep.click();
     await panel.getByRole('button', {name: 'Switch: variant'}).click();
     await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
     assert.equal(git('branch', '--show-current'), 'variant');
@@ -932,7 +1114,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect.poll(async () => (await memory()).value).toBe('74');
     // A branch without the open project folder is confirmed first; declining changes nothing.
     git('branch', 'before-projects', git('rev-list', '--max-parents=0', 'HEAD'));
-    await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
+    await panel.getByRole('button', {name: 'Refresh local status', exact: true}).click();
     const missingFolder = new Promise<string>(resolve => page.once('dialog', dialog => {
         resolve(dialog.message());
         void dialog.dismiss();
@@ -944,7 +1126,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(git('status', '--porcelain'), '');
     // Unsaved edits in the Editor keep the branch where it is, also from the branch button, which tells why in a snackbar.
     await edit('value', '90');
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
     await branchMenu.getByRole('menuitemradio', {name: 'variant', exact: true}).click();
     const refusal = 'Stop the project, and save or record (or undo) every change, before switching branches.';
@@ -961,9 +1143,8 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(git('branch', '--show-current'), base);
     assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
     assert.equal((await memory()).value, '90');
-    git('fsck', '--no-progress');
     // With the panel closed, the button follows branches that another tool creates and switches to.
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+    await closeGit();
     git('branch', 'from-another-tool');
     await page.getByRole('button', {name: `Branch: ${base}`, exact: true}).click();
     await expect(branchMenu.getByRole('menuitemradio', {name: 'from-another-tool', exact: true})).toBeVisible();
@@ -974,13 +1155,37 @@ test('the browser folder commands save localized Git diffs to the original worki
     // The explorer follows file changes and the index even with the Git panel closed.
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
     const row = page.locator(`.twpf-explorer-item[data-path="${projectFile}"]`);
-    const star = row.locator('.twpf-explorer-unsaved');
+    const star = row.locator('.twpf-explorer-name + [data-tw-plus-unsaved-marker]');
+    const gitMarker = row.locator('[data-git-change]');
     await expect(star).toHaveText('*');
+    await expect(row).toHaveAccessibleName(/Unsaved changes/);
+    await expect(star).toHaveCSS('font-weight', '700');
+    await showGit();
+    await reviewStep.click();
+    await saveTask.click();
+    await expect(saveTask.locator('.twgit-count')).toHaveText(/^[1-9]/);
+    await saveTaskPanel.getByRole('button', {name: 'projects/demo/' + projectFile, exact: true}).click();
+    const unsavedProjectDiff = saveTaskPanel.locator('.twgit-save-diff');
+    await expect(unsavedProjectDiff).toContainText('HEAD → Unsaved edits');
+    await unsavedProjectDiff.locator('.twgit-review-script summary').first().click();
+    await expect(unsavedProjectDiff.locator('svg.blocklySvg').last()).toBeVisible();
+    await saveTaskPanel.getByRole('button', {name: 'Save unsaved files', exact: true}).click();
+    await expect(saveTask.locator('.twgit-count')).toHaveText('0');
+    await expect(reviewStep.locator('.twgit-count')).toHaveText(/^[1-9]/);
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    await edit('value', '92');
+    await expect(star).toHaveText('*');
+    assert.notEqual(await star.evaluate(node => getComputedStyle(node).color),
+        await row.locator('.twpf-explorer-name').evaluate(node => getComputedStyle(node).color));
     await save();
     await expect(star).toHaveCount(0);
+    await expect(gitMarker).toHaveCSS('font-weight', '700');
+    await expect(row).toHaveAccessibleName(/Saved, not committed/);
+    await expect(row).not.toHaveAccessibleName(/Unsaved changes/);
     const pathInRepo = 'projects/demo/' + projectFile;
     git('add', pathInRepo);
     await expect(row).toHaveAttribute('data-staged', '');
+    await expect(gitMarker).toHaveCSS('font-weight', '700');
     await edit('value', '91');
     await expect(star).toHaveText('*');
     await expect(row).toHaveAttribute('data-staged', '');
@@ -991,39 +1196,19 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(star).toHaveCount(0);
     git('add', pathInRepo);
     git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'decoration');
-    await expect(row).toHaveAttribute('data-revision', 'committed');
-
-    const pushed = git('rev-parse', 'HEAD');
-    const pushedBlob = git('rev-parse', 'HEAD:' + pathInRepo);
-    const merge = 'a'.repeat(40), mergeTree = 'b'.repeat(40);
-    let showMerge = () => {};
-    const confirmed = new Promise<void>(resolve => {showMerge = resolve;});
-    const github = 'https://api.github.com/repos/fixture-owner/project';
-    await page.route(github + '/**', async route => {
-        const pathname = new URL(route.request().url()).pathname;
-        if (pathname.endsWith('/commits/' + pushed + '/pulls')) {
-            await confirmed;
-            await route.fulfill({json: [{number: 1, title: 'Update project', merged_at: '2026-11-13T00:00:00Z',
-                merge_commit_sha: merge, base: {sha: pushed, ref: 'main', repo: {full_name: 'fixture-owner/project'}}}]});
-        } else if (pathname.endsWith('/git/commits/' + merge)) {
-            await route.fulfill({json: {tree: {sha: mergeTree}}});
-        } else if (pathname.endsWith('/git/trees/' + mergeTree)) {
-            await route.fulfill({json: {truncated: false, tree: [{path: pathInRepo, sha: pushedBlob, type: 'blob', mode: '100644'}]}});
-        } else if (pathname.endsWith('/pulls/1/files')) {
-            await route.fulfill({json: [{filename: pathInRepo, status: 'modified', sha: pushedBlob}]});
-        } else {
-            await route.abort();
-        }
-    });
-    git('remote', 'add', 'origin', 'https://github.com/fixture-owner/project.git');
-    git('update-ref', 'refs/remotes/origin/from-another-tool', pushed);
-    try {
-        await expect(row).toHaveAttribute('data-revision', 'pushed');
-    } finally {
-        showMerge();
-    }
-    await expect(row).toHaveAttribute('data-revision', 'merged');
-    await expect(page.locator('.twpf-explorer-item[data-path="sb3-source.json"]')).toHaveAttribute('data-revision', 'pushed');
+    await expect(gitMarker).toHaveCount(0);
+    const removedFile = 'removed.txt';
+    await writeFile(path.join(nested, removedFile), 'Temporary file');
+    git('add', 'projects/demo/' + removedFile);
+    git('commit', '-qm', 'Add a file for the deletion check');
+    await rm(path.join(nested, removedFile));
+    const removed = explorerRow(removedFile);
+    const removedName = removed.locator('.twpf-explorer-name');
+    await expect(removedName).toHaveCSS('text-decoration-line', 'line-through');
+    await expect(removed).toHaveAttribute('aria-disabled', 'true');
+    git('restore', '--', 'projects/demo/' + removedFile);
+    await expect(removedName).toHaveCSS('text-decoration-line', 'none');
+    await expect(removed).not.toHaveAttribute('aria-disabled');
 
     await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
     await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);

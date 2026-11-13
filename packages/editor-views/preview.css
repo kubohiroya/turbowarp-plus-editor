@@ -5,7 +5,8 @@
     overflow: hidden;
 }
 
-:global([data-code-preview]) > div {
+:global([data-code-preview]) > div:first-child,
+:global([data-code-preview]) > :global(.tw-code-preview-chrome) {
     inline-size: 100%;
     block-size: 100%;
     pointer-events: none;

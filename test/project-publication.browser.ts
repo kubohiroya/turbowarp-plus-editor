@@ -30,7 +30,6 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
     assert.ok(fixtureFile && path.isAbsolute(fixtureFile), 'Set E2E_GIT_HTTP_FIXTURE to the Git Smart HTTP test fixture');
     const info = JSON.parse(await readFile(path.join(build, 'build-info.json'), 'utf8'));
     const pins = JSON.parse(await readFile(new URL('../site/source.json', import.meta.url), 'utf8'));
-    assert.equal(info.projectSavePreview, true);
     assert.equal(info.revision, pins.guiRevision);
     const {startFixture, git, commit} = await import(pathToFileURL(fixtureFile).href);
     const fixture = await startFixture(t);
@@ -246,7 +245,7 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
         Array.from(await zip.generateAsync({type: 'uint8array'})));
     const command = async (name: string) => {
         await page.getByText('File', {exact: true}).click();
-        await page.getByText(name, {exact: true}).click();
+        await page.getByRole('button', {name, exact: true}).click();
     };
     await command('Save As…');
     const save = page.getByRole('dialog', {name: 'Save As', exact: true});
@@ -254,21 +253,20 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
     await save.getByRole('button', {name: 'Choose Where to Save…'}).click();
     await expect(save).toBeHidden();
 
-    await page.getByRole('button', {name: 'Local Git', exact: true}).click();
-    await page.getByRole('menuitem', {name: 'Open Local Git'}).click();
-    const panel = page.locator('.twgit-panel');
-    await panel.getByRole('button', {name: 'Choose Repository…'}).click();
-    await expect(panel.getByRole('button', {name: /^initial, /u})).toBeVisible();
-    await panel.getByText('GitHub connection', {exact: true}).click();
-    await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption(cloud ? 'cloudflare' : 'desktop');
-    await panel.getByLabel('Allow sending to GitHub (push)').check();
+    await command('Choose Repository…');
+    await expect(page.locator('.twgit-repository-heading strong')).toHaveText(path.basename(client));
+    if (!cloud) await page.locator('.twgit-backdrop').getByRole('button', {name: 'Close', exact: true}).click();
+    await command('GitHub Connection Settings…');
+    const settings = page.getByRole('dialog', {name: 'GitHub connection settings'});
+    await settings.getByRole('combobox', {name: 'Connection mode'}).selectOption(cloud ? 'cloudflare' : 'desktop');
+    await settings.getByLabel('Allow sending to GitHub (push)').check();
     if (cloud) {
-        await panel.getByRole('button', {name: 'Connect to GitHub', exact: true}).click();
-        await expect(panel.getByRole('link', {name: 'Open GitHub authorization'})).toBeVisible();
-        await panel.getByRole('button', {name: 'Check connection'}).click();
-    } else await panel.getByRole('button', {name: 'Restore saved Desktop connection'}).click();
-    await expect(panel.locator('[data-git-connection-state]')).toHaveText('Connected');
-    await panel.getByRole('button', {name: 'Close', exact: true}).click();
+        await settings.getByRole('button', {name: 'Connect to GitHub', exact: true}).click();
+        await expect(settings.getByRole('link', {name: 'Open GitHub authorization'})).toBeVisible();
+        await settings.getByRole('button', {name: 'Check connection'}).click();
+    } else await settings.getByRole('button', {name: 'Restore saved Desktop connection'}).click();
+    await expect(settings.locator('[data-git-connection-state]')).toHaveText('Connected');
+    await settings.getByRole('button', {name: 'Close', exact: true}).click();
     await command('Save and Commit…');
     const local = page.getByRole('dialog', {name: 'Save and Commit', exact: true});
     await local.getByRole('button', {name: 'Save and review changes'}).click();

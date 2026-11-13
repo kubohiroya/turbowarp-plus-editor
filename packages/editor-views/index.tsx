@@ -171,7 +171,7 @@ function Preview({vm, view, attachBackpackDrop}) {
             preview?.dispose();
         };
     }, [vm, view, target, attachBackpackDrop]);
-    return <div ref={drop} data-code-preview="" aria-hidden="true">
+    return <div ref={drop} data-code-preview="" data-code-hover-surface="">
         <div ref={ref} {...{inert: ''}} />
         <div ref={chrome} className="tw-code-preview-chrome" {...{inert: ''}} />
     </div>;

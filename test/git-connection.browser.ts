@@ -88,7 +88,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
             account: {login: 'desktop-account'}, bearer: 'd'.repeat(43), expiresAt: Date.now() + 60_000
         });
         if (new URLSearchParams(location.search).has('desktopAuthFixture')) {
-            view.EditorPreload = {localGit: null, localGitAuth: {
+            view.EditorPreload = {externalYaml: {async open() {return null;}}, localGit: null, localGitAuth: {
                 async getAuthMethods(target?: string) {
                     return target && fixture.helperAvailable ?
                         ['fine-grained-pat', 'git-credential-helper'] : ['fine-grained-pat'];
@@ -112,7 +112,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
                 async getSession() {return session();},
                 async disconnect() {fixture.calls.push(['disconnect']);}
             }};
-        } else view.EditorPreload = {localGit: {
+        } else view.EditorPreload = {externalYaml: {async open() {return null;}}, localGit: {
             async begin(remember: boolean) {
                 fixture.calls.push(['begin', remember]);
                 if (fixture.failBegin) {fixture.failBegin = false; throw new Error('GIT_UNAVAILABLE');}
@@ -141,13 +141,16 @@ test('GitHub connection settings isolate the selected provider and keep the work
         view.showDirectoryPicker = async () => fixture.directory;
     });
     await installDesktopFixture(page);
-    const showGit = async (target: Page) => {
-        await target.locator('.twgit-branch-button').click();
-        await target.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
-        const panel = target.locator('.twgit-panel');
-        await expect(panel).toBeVisible();
-        await panel.getByText('GitHub connection', {exact: true}).click();
-        return panel;
+    const fileCommand = async (target: Page, name: string) => {
+        await target.getByText('File', {exact: true}).click();
+        await target.getByRole('button', {name, exact: true}).click();
+    };
+    const choose = (target: Page) => fileCommand(target, 'Choose Repository…');
+    const showSettings = async (target: Page) => {
+        await fileCommand(target, 'GitHub Connection Settings…');
+        const dialog = target.getByRole('dialog', {name: 'GitHub connection settings'});
+        await expect(dialog).toBeVisible();
+        return dialog;
     };
     await page.goto(editor);
     await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
@@ -157,13 +160,12 @@ test('GitHub connection settings isolate the selected provider and keep the work
             data: {items: [], files: [folder], dragOperationsMask: 1}});
     }
     await page.waitForFunction(() => (window as any).gitConnectionFixture.directory?.kind === 'directory');
-    const panel = await showGit(page);
+    await choose(page);
+    const panel = await showSettings(page);
     const mode = panel.getByRole('combobox', {name: 'Connection mode'});
     const status = panel.locator('[data-git-connection-state]');
     const connect = panel.getByRole('button', {name: 'Connect to GitHub'});
     const check = panel.getByRole('button', {name: 'Check connection'});
-    await panel.getByRole('button', {name: 'Choose Repository…'}).click();
-    await expect(panel.locator('[data-git-group="unstaged"]')).toContainText('project.source.json');
     await mode.selectOption('desktop');
     await expect(connect).toBeEnabled();
     assert.equal(requests.length, 0);
@@ -225,10 +227,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
             data: {items: [], files: [folder], dragOperationsMask: 1}});
     }
     await desktop.waitForFunction(() => (window as any).gitConnectionFixture.directory?.kind === 'directory');
-    const desktopPanel = await showGit(desktop);
-    const choose = desktopPanel.getByRole('button', {name: 'Choose Repository…'});
-    await choose.click();
-    await expect(desktopPanel.locator('[data-git-group="unstaged"]')).toContainText('project.source.json');
+    await choose(desktop);
+    const desktopPanel = await showSettings(desktop);
     await desktopPanel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const auth = desktopPanel.getByRole('combobox', {name: 'Authentication method'});
     const desktopStatus = desktopPanel.locator('[data-git-connection-state]');
@@ -248,11 +248,13 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await desktopConnect.click();
     await expect(desktopPanel.getByRole('alert')).toContainText('Retry using the selected connection');
     await expect(desktopStatus).toHaveText('Disconnected');
-    await expect(desktopPanel.getByRole('button', {name: 'Check GitHub (fetch)'})).toHaveCount(0);
+    await expect(desktopPanel.getByRole('button', {name: 'Update remote refs (fetch)'})).toHaveCount(0);
     await desktopConnect.click();
     await expect(desktopStatus).toHaveText('Connected');
     await desktop.evaluate(() => {(window as any).gitConnectionFixture.helperAvailable = false;});
-    await choose.click();
+    await desktopPanel.getByRole('button', {name: 'Close', exact: true}).click();
+    await choose(desktop);
+    await showSettings(desktop);
     await expect(desktopStatus).toHaveText('Disconnected');
     await expect(auth.locator('option')).toHaveCount(1);
     assert.deepEqual(await desktop.evaluate(() => (window as any).gitConnectionFixture.calls), [
@@ -264,7 +266,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
     const web = await page.context().newPage();
     await web.goto(editor);
     await web.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
-    const webPanel = await showGit(web);
+    const webPanel = await showSettings(web);
     await expect(webPanel.getByRole('combobox').locator('option[value="cloudflare"]')).toHaveCount(1);
     await expect(webPanel.getByRole('combobox').locator('option[value="desktop"]')).toHaveCount(0);
     const unsupported = await context.newPage();

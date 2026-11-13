@@ -43,7 +43,8 @@ for (const entry of family.packages) {
     if (installed?.resolved?.startsWith('file:vendor/') && installed.version === entry.version) {
         const tarball = `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`;
         const bytes = await fs.readFile(path.join(directory, tarball));
-        assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity});
+        assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity},
+            `Source metadata differs from the pin: ${entry.package}`);
         assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, installed.integrity,
             `Source archive differs from the pin: ${entry.package}`);
     } else {

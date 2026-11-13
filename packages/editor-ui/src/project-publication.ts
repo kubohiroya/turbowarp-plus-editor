@@ -1,51 +1,11 @@
-export type PublicationStatus = 'queued' | 'pushed' | 'creatingIssue' | 'issueReady' | 'creatingPull' |
-    'stacking' | 'waitingForParent' | 'waiting' | 'ready' | 'merging' | 'merged' | 'done';
+import type {MergeCondition, PublicationIntent, PublicationJob as QueuePublicationJob, PublicationStackParent, PullRequestObservation} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
+import type {PublicationRepository} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
 
-export type PublicationIssue = {number: number; closeAfterMerge: boolean} |
-    {title: string; body: string; closeAfterMerge: boolean};
-
-export interface PublicationTarget {
-    id: string;
-    remote: string;
-    repositoryId: number;
-}
-
-export interface PublicationStackParent {
-    number: number;
-    head: string;
-    headOid: string;
-    targetBase: string;
-    stackNumber?: number;
-}
-
-export interface PublicationDraft {
-    base: string;
-    title: string;
-    body: string;
-    goal: 'pr' | 'merge';
-    issue?: PublicationIssue;
-    stackParent?: PublicationStackParent;
-}
-
-export interface PublicationIntent extends PublicationTarget, PublicationDraft {
-    head: string;
-    baseOid: string;
-    commitOid: string;
-    allowNoChecks?: boolean;
-}
-
-export interface PublicationJob {
-    intent: PublicationIntent;
-    status: PublicationStatus;
-    issueNumber?: number;
-    pullNumber?: number;
-    stackNumber?: number;
-    mergeOid?: string;
-    pause?: string;
-    awaitingPush?: boolean;
-    pushAccount?: string;
-    pushSessionId?: string;
-}
+export type PublicationTarget = Pick<PublicationIntent, 'id' | 'remote' | 'repositoryId'>;
+export type PublicationDraft = Pick<PublicationIntent, 'base' | 'title' | 'body' | 'goal' | 'issue' | 'stackParent'>;
+export type PublicationIssue = NonNullable<PublicationIntent['issue']>;
+export type PublicationJob = QueuePublicationJob & {awaitingPush?: boolean; pushAccount?: string; pushSessionId?: string};
+export type {PublicationIntent, PublicationRepository, PublicationStackParent} from '@kubohiroya/turbowarp-plus-editor-git/pull-request-queue';
 
 export interface PublicationPushSession {
     connection: {mode: string; proxyOrigin: string};
@@ -95,16 +55,14 @@ export interface PublicationBridge {
         job: PublicationJob | null; approvalIntent?: PublicationIntent;
     } | null>;
     advance(target: PublicationTarget & {retryRejectedMerge?: boolean}): Promise<PublicationJob>;
+    pullRequestChecks?(remote: string, number: number, signal?: AbortSignal):
+        Promise<{head: string; base: string; checks: PullRequestObservation['checks']}>;
+    mergeStatus?(remote: string, number: number, signal?: AbortSignal): Promise<PullRequestObservation>;
+    mergePullRequest?(remote: string, expected: MergeCondition): Promise<{state: 'accepted' | 'merged' | 'rejected'}>;
     approval?: 'browser';
 }
 
 export type DesktopPublicationBridge = PublicationBridge;
-
-export interface PublicationRepository {
-    remote: string;
-    defaultBranch: string | null;
-    branches: readonly {name: string; oid: string}[];
-}
 
 export interface PublicationCommit {
     id: string;
@@ -245,16 +203,17 @@ export function createProjectPublication({bridge, inspect, push, guard, delay = 
             }
 
             const parents = new Map<number, PublicationStackParent>();
-            const stackParent = bridge.stackParent && capabilities.includes('stacks') ? async (number: number) => {
+            const findStackParent = bridge.stackParent;
+            const stackParent = findStackParent && capabilities.includes('stacks') ? async (number: number) => {
                 guard();
                 if (!Number.isSafeInteger(number) || number < 1) return null;
-                const parent = await bridge.stackParent(repository.remote, number, repositoryId);
+                const parent = await findStackParent(repository.remote, number, repositoryId);
                 guard();
                 const advertised = parent && repository.branches.find(branch => branch.name === parent.head);
                 if (!parent || parent.number !== number || !advertised || advertised.oid !== parent.headOid ||
                     parent.head === head || parent.headOid === commit.commitOid) return null;
                 parents.set(number, Object.freeze({...parent}));
-                return parents.get(number);
+                return parents.get(number) ?? null;
             } : undefined;
 
             async function submitIntent(intent: PublicationIntent, current: () => boolean) {

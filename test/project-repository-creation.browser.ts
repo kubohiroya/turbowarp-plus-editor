@@ -23,7 +23,8 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
         assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_SAVE_BUILD to the creation preview');
         assert.ok(fixtureFile && path.isAbsolute(fixtureFile), 'Set E2E_GIT_HTTP_FIXTURE to the Git Smart HTTP test fixture');
         const info = JSON.parse(await readFile(path.join(build, 'build-info.json'), 'utf8'));
-        assert.equal(info.projectSavePreview, true);
+        const pins = JSON.parse(await readFile(new URL('../site/source.json', import.meta.url), 'utf8'));
+        assert.equal(info.revision, pins.guiRevision);
         const {startFixture, git, remote} = await import(pathToFileURL(fixtureFile).href);
         const fixture = await startFixture(t);
         const destination = path.join(fixture.root, 'new-work');
