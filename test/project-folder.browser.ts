@@ -1213,6 +1213,50 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('add', pathInRepo);
     git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'decoration');
     await expect(gitMarker).toHaveCount(0);
+    await expect(row).toHaveAttribute('data-revision', 'committed');
+    await expect(row).toHaveAccessibleName(/Committed/);
+
+    const pushed = git('rev-parse', 'HEAD');
+    const pushedBlob = git('rev-parse', 'HEAD:' + pathInRepo);
+    const merge = 'a'.repeat(40), mergeTree = 'b'.repeat(40);
+    let showMerge = () => {};
+    const confirmed = new Promise<void>(resolve => {showMerge = resolve;});
+    const github = 'https://api.github.com/repos/fixture-owner/project';
+    await page.route(github + '/**', async route => {
+        const pathname = new URL(route.request().url()).pathname;
+        if (pathname.endsWith('/commits/' + pushed + '/pulls')) {
+            await confirmed;
+            await route.fulfill({json: [{number: 1, title: 'Update project', merged_at: '2026-11-13T00:00:00Z',
+                merge_commit_sha: merge, base: {sha: pushed, ref: 'main', repo: {full_name: 'fixture-owner/project'}},
+                head: {sha: pushed, ref: 'from-another-tool', repo: {full_name: 'fixture-owner/project'}}}]});
+        } else if (pathname.endsWith('/git/commits/' + merge)) {
+            await route.fulfill({json: {tree: {sha: mergeTree}}});
+        } else if (pathname.endsWith('/git/trees/' + mergeTree)) {
+            await route.fulfill({json: {truncated: false, tree: [{path: pathInRepo, sha: pushedBlob, type: 'blob', mode: '100644'}]}});
+        } else if (pathname.endsWith('/pulls/1/files')) {
+            await route.fulfill({json: [{filename: pathInRepo, status: 'modified', sha: pushedBlob}]});
+        } else {
+            await route.fulfill({status: 503, json: {}});
+        }
+    });
+    git('remote', 'add', 'origin', 'https://github.com/fixture-owner/project.git');
+    git('update-ref', 'refs/remotes/origin/from-another-tool', pushed);
+    try {
+        await expect(row).toHaveAttribute('data-revision', 'pushed');
+        await expect(row).toHaveAccessibleName(/Pushed/);
+    } finally {
+        showMerge();
+    }
+    await expect(row).toHaveAttribute('data-revision', 'merged');
+    await expect(row).toHaveAccessibleName(/Pull request merged/);
+    await expect(explorerRow('sb3-source.json')).toHaveAttribute('data-revision', 'pushed');
+    git('branch', 'unconfirmed', pushed);
+    git('update-ref', 'refs/remotes/origin/unconfirmed', pushed);
+    git('symbolic-ref', 'HEAD', 'refs/heads/unconfirmed');
+    await expect(row).toHaveAttribute('data-revision', 'pushed');
+    git('remote', 'remove', 'origin');
+    await expect(row).toHaveAttribute('data-revision', 'committed');
+
     const removedFile = 'removed.txt';
     await writeFile(path.join(nested, removedFile), 'Temporary file');
     git('add', 'projects/demo/' + removedFile);
