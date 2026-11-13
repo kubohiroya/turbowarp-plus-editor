@@ -34,6 +34,7 @@ export type SaveAsRequest =
 export interface SaveAsFormOptions {
     openCommit?: Action;
     folder?: {
+        overwriteWarning?: string;
         github?: {
             // The host can reuse a current session or open sign-in. The form retains its draft either way.
             connectForCreation(interaction: CreationInteraction): Promise<GitHubCreationAccount | null>;
@@ -303,6 +304,11 @@ export function renderSaveAsForm(document: Document, locale: string, storage: Pr
     appendField(gitChoice, label('Git でバージョン管理する', 'Use Git version control'), git);
     const github = folderAvailable && folder.github ? createGitHubFields(document, label, folder.github, report) : null;
     if (github) fields.append(gitChoice, github.panel);
+    const overwriteWarning = document.createElement('p');
+    if (folder?.overwriteWarning) {
+        overwriteWarning.textContent = folder.overwriteWarning;
+        fields.append(overwriteWarning);
+    }
     const publication = github ? folder.github.publication : undefined;
     const pending = document.createElement('ul');
     pending.setAttribute('aria-label', label('未完了のリポジトリ作成', 'Pending repository setup'));
@@ -399,6 +405,7 @@ export function renderSaveAsForm(document: Document, locale: string, storage: Pr
         const reviewing = confirmedDraft !== null || task !== null;
         const creation = selectedGitHub();
         const localFolder = savingFolder() && !creation;
+        overwriteWarning.hidden = !localFolder;
         fields.hidden = reviewing;
         review.hidden = !reviewing;
         back.hidden = !confirmedDraft || task !== null;

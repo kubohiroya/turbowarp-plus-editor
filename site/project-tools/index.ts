@@ -16,6 +16,7 @@ import {renderProjectCommitDialog} from '@kubohiroya/turbowarp-plus-editor-ui/pr
 import {renderProjectPublicationDialog} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication-dialog';
 import type {PublicationCommit} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
 import type {ProjectFolderWorkflows} from '../project-folder-host.ts';
+import {projectFolderOverwriteWarning} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {ExtensionSpec} from '@kubohiroya/turbowarp-extension-loader';
 import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
 
@@ -147,11 +148,14 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
                 tools.saving = false;
             }
         }, close, {
-            folder: folderWorkflows?.createFolder ? {github: folderWorkflows.repositoryCreation && {
-                connectForCreation: folderWorkflows.repositoryCreation.connect,
-                licenses: folderWorkflows.repositoryCreation.licenses,
-                publication: folderWorkflows.repositoryCreation
-            }} : undefined,
+            folder: folderWorkflows?.createFolder ? {
+                overwriteWarning: projectFolderOverwriteWarning(locale),
+                github: folderWorkflows.repositoryCreation && {
+                    connectForCreation: folderWorkflows.repositoryCreation.connect,
+                    licenses: folderWorkflows.repositoryCreation.licenses,
+                    publication: folderWorkflows.repositoryCreation
+                }
+            } : undefined,
             openCommit: showCommit
         }));
     const openPayloads = () => dialogs.showPayloadFormats(payloads.edit(), locale, payloads.canConvert ? () => {
