@@ -22,7 +22,7 @@ assert.equal(info.securityPackage, pins.securityPackage);
 assert.equal(info.securityVersion, pins.securityVersion);
 assert.equal(info.securityRevision, pins.securityRevision);
 assert.deepEqual(info.previewReloadStyles, pins.previewReloadStyles, 'Kamishibai preview CSS differs from the pin');
-for (const file of ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg', 'assets/edit-button.css']) {
+for (const file of ['index.html', 'editor.html', 'player.html', 'git-project-preview.html', 'LICENSE', 'NOTICE', 'assets/icon.svg', 'assets/edit-button.css']) {
     assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing site file: ${file}`);
 }
 assert.equal(info.familyNotices?.index, 'notices/family.json', 'Missing family package notices');

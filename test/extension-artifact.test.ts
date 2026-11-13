@@ -28,7 +28,7 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
             loaderSource?: string; loaderIntegrity?: string} = {featureDefault: true, assets: {}};
         for (const key of ['loaderRepository', 'loaderRevision', 'loaderVersion', 'loaderIntegrity', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) integration[key] = pins[key];
         integration.loaderSource = pins.loaderSource || 'git';
-        const files = ['index.html', 'editor.html', 'player.html', 'LICENSE', 'NOTICE', 'assets/icon.svg',
+        const files = ['index.html', 'editor.html', 'player.html', 'git-project-preview.html', 'LICENSE', 'NOTICE', 'assets/icon.svg',
             'assets/edit-button.css', 'plus-packager.html', 'plus-packager.js'];
         for (const name of files) {
             await fs.mkdir(path.dirname(path.join(directory, name)), {recursive: true});

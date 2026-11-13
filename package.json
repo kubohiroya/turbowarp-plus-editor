@@ -88,7 +88,7 @@
     "@kubohiroya/turbowarp-extension-security-dialog": "0.8.9",
     "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",
     "@kubohiroya/turbowarp-plus-editor-auth": "0.5.0",
-    "@kubohiroya/turbowarp-plus-editor-git": "file:vendor/kubohiroya-turbowarp-plus-editor-git-0.20.0-file-commit.34.tgz",
+    "@kubohiroya/turbowarp-plus-editor-git": "file:vendor/kubohiroya-turbowarp-plus-editor-git-0.20.0-project-version.49.tgz",
     "@kubohiroya/turbowarp-plus-editor-host": "0.1.0",
     "@kubohiroya/turbowarp-plus-editor-project-folder": "file:vendor/kubohiroya-turbowarp-plus-editor-project-folder-0.9.1-folder-overwrite.0.tgz",
     "@kubohiroya/turbowarp-plus-editor-project-model": "0.1.0",

@@ -34,7 +34,7 @@ import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './conte
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
 import {attachReviewNavigation, attachWorkspaceNavigation} from './workspace-minimap/index.ts';
 
-const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap, localGit} =
+const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap, localGit, gitRestoreVersion} =
     readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
@@ -169,7 +169,7 @@ export const createPlusIntegration = ({
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
         if (projectFolderBlocks) {
-            attached.push(attachProjectFolder(vm, hostDocument, localGit, locale, getBlockly, projectFolderBlocks,
+            attached.push(attachProjectFolder(vm, hostDocument, localGit, gitRestoreVersion, locale, getBlockly, projectFolderBlocks,
                 workspaceMinimap || standardLayout ? (workspace, blocks, watermark) =>
                     attachReviewNavigation(workspace, blocks, watermark, {
                         horizontalZoom: standardLayout, minimap: workspaceMinimap
