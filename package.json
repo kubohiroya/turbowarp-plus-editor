@@ -81,7 +81,7 @@
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
     "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
     "@kubohiroya/turbowarp-plus-editor-auth": "file:vendor/kubohiroya-turbowarp-plus-editor-auth-0.4.0.tgz",
-    "@kubohiroya/turbowarp-plus-editor-git": "file:vendor/kubohiroya-turbowarp-plus-editor-git-0.20.0-file-commit.32.tgz",
+    "@kubohiroya/turbowarp-plus-editor-git": "file:vendor/kubohiroya-turbowarp-plus-editor-git-0.20.0-file-commit.33.tgz",
     "@kubohiroya/turbowarp-plus-editor-host": "0.1.0",
     "@kubohiroya/turbowarp-plus-editor-workbench": "file:vendor/kubohiroya-turbowarp-plus-editor-workbench-0.9.0-file-commit.4.tgz",
     "@kubohiroya/turbowarp-editor-surfaces": "file:packages/editor-surfaces",

@@ -585,6 +585,22 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(panel.getByRole('button', {name: /^fixture, /})).toBeVisible();
     await expect(page.getByRole('button', {name: `Branch: ${git('branch', '--show-current')}`, exact: true})).toBeVisible();
     await reviewStep.click();
+    await closeGit();
+    await drawerBar.getByRole('button', {name: 'Git history', exact: true}).click();
+    const drawerCommit = page.locator('.twgit-history-view').getByRole('button', {name: /^fixture, /});
+    const committedProject = panel.getByRole('region', {name: 'Changes by project element'})
+        .getByRole('button', {name: 'Code: 1 change Added Committed'}).first();
+    await drawerCommit.click();
+    await expect(gitTab).toHaveAttribute('aria-selected', 'true');
+    await expect(recordStep).toHaveAttribute('aria-expanded', 'true');
+    await expect(panel.getByRole('button', {name: /^fixture, /})).toHaveAttribute('aria-pressed', 'true');
+    await expect(committedProject).toBeInViewport();
+    await reviewStep.click();
+    await drawerCommit.press('Enter');
+    await expect(recordStep).toHaveAttribute('aria-expanded', 'true');
+    await expect(committedProject).toBeInViewport();
+    await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    await reviewStep.click();
     await expect(panel.getByRole('button', {name: 'Open Project', exact: true})).toHaveCount(0);
     await expect(panel.getByRole('button', {name: 'Show File List', exact: true})).toHaveCount(0);
     const openNestedProject = async () => {
