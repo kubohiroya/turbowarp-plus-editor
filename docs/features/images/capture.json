@@ -604,17 +604,21 @@
         "connectedFixture": "The four PR detail tabs, File menu, settings, PR creation, and comparison window use local Git data and simulated GitHub responses."
       },
       "releaseWorkflowRecapture": {
-        "integrationRevision": "ad667497ec9162ada9482199db5f8bd3969028fc",
+        "integrationRevision": "b9ed6d8b9c9f8ca103ec712d354f79a8a880f4ac",
         "gitPackage": "0.20.0-file-commit.32",
         "images": [
           "current-git-file-menu.png",
-          "current-git-release-workflow.png"
+          "current-git-release-workflow.png",
+          "current-git-merge-ready.png",
+          "current-pr-commits.png",
+          "current-pr-checks.png",
+          "current-pr-files-tab.png"
         ],
         "editorViewport": [
           1440,
           1220
         ],
-        "connectedFixture": "The Release dialog uses a local Git HTTP fixture to show an authorized connection and a selected Pages branch."
+        "connectedFixture": "The Japanese File menu, Release dialog and four PR detail tabs use a local Git HTTP fixture and simulated GitHub responses."
       }
     }
   }

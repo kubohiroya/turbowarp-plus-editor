@@ -208,14 +208,17 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     const scale = (index: number) => frames.nth(index).locator('.blocklyBlockCanvas').evaluate(canvas =>
         Number(/scale\(([\d.]+)\)/.exec(canvas.getAttribute('transform') ?? '')?.[1]));
     await expect(frames.nth(1).locator('[data-workspace-minimap]')).toHaveCount(1);
+    const zoomIn = frames.nth(1).locator('[data-plus-zoom-action="in"]');
     const start = await scale(0);
     assert.equal(await scale(1), start);
-    await frames.nth(1).locator('[data-plus-zoom-action="in"]').click();
+    await frames.nth(1).hover();
+    await zoomIn.click();
     await expect.poll(() => scale(0)).toBeGreaterThan(start);
     assert.equal(await scale(0), await scale(1));
     await script.getByRole('checkbox', {name: 'Move both versions together'}).uncheck();
     const unlinked = await scale(0);
-    await frames.nth(1).locator('[data-plus-zoom-action="in"]').click();
+    await frames.nth(1).hover();
+    await zoomIn.click();
     await expect.poll(() => scale(1)).toBeGreaterThan(unlinked);
     assert.equal(await scale(0), unlinked);
     // Resize the comparison so its bottom is below the browser viewport. Its controls still belong to the frame.
