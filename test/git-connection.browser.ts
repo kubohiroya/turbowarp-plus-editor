@@ -146,7 +146,6 @@ test('GitHub connection settings isolate the selected provider and keep the work
         await target.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
         const panel = target.locator('.twgit-panel');
         await expect(panel).toBeVisible();
-        await panel.getByText('GitHub connection', {exact: true}).click();
         return panel;
     };
     await page.goto(editor);
@@ -164,6 +163,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
     const check = panel.getByRole('button', {name: 'Check connection'});
     await panel.getByRole('button', {name: 'Choose Repository…'}).click();
     await expect(panel.locator('[data-git-group="unstaged"]')).toContainText('project.source.json');
+    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await panel.getByText('GitHub connection', {exact: true}).click();
     await mode.selectOption('desktop');
     await expect(connect).toBeEnabled();
     assert.equal(requests.length, 0);
@@ -229,6 +230,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
     const choose = desktopPanel.getByRole('button', {name: 'Choose Repository…'});
     await choose.click();
     await expect(desktopPanel.locator('[data-git-group="unstaged"]')).toContainText('project.source.json');
+    await desktopPanel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await desktopPanel.getByText('GitHub connection', {exact: true}).click();
     await desktopPanel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const auth = desktopPanel.getByRole('combobox', {name: 'Authentication method'});
     const desktopStatus = desktopPanel.locator('[data-git-connection-state]');
@@ -265,6 +268,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await web.goto(editor);
     await web.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
     const webPanel = await showGit(web);
+    await webPanel.getByRole('tab', {name: 'GitHub', exact: true}).click();
+    await webPanel.getByText('GitHub connection', {exact: true}).click();
     await expect(webPanel.getByRole('combobox').locator('option[value="cloudflare"]')).toHaveCount(1);
     await expect(webPanel.getByRole('combobox').locator('option[value="desktop"]')).toHaveCount(0);
     const unsupported = await context.newPage();

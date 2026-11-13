@@ -501,9 +501,14 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(noRepository).toBeFocused();
     await showGit();
     await panel.getByRole('button', {name: 'Choose Repository…'}).click();
+    const changesTab = panel.getByRole('tab', {name: 'Changes', exact: true});
+    const historyTab = panel.getByRole('tab', {name: 'History', exact: true});
+    await expect(changesTab).toHaveAttribute('aria-selected', 'true');
+    await historyTab.click();
     // A commit row of the history graph is named by its subject, then its author, date and branches.
     await expect(panel.getByRole('button', {name: /^fixture, /})).toBeVisible();
     await expect(page.getByRole('button', {name: `Branch: ${git('branch', '--show-current')}`, exact: true})).toBeVisible();
+    await changesTab.click();
     await panel.getByText('Choose a project inside this repository', {exact: true}).click();
     await panel.getByRole('button', {name: 'projects/', exact: true}).click();
     await panel.getByRole('button', {name: 'demo/', exact: true}).click();
@@ -858,13 +863,32 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('config', 'user.name', 'Editor folder fixture');
     git('config', 'user.email', 'fixture@example.invalid');
     await showGit();
+    const workflow = panel.getByRole('list', {name: 'Work steps'});
+    const currentStep = workflow.locator('[aria-current="step"]');
     await panel.getByRole('button', {name: 'Refresh', exact: true}).click();
+    await expect(currentStep).toHaveText('Review changes');
     // Added earlier with Git CLI and changed since, the file is listed both as staged and as unstaged.
     const stageDemo = panel.getByRole('button', {name: 'Add to Next Record: projects/demo/project.source.json'});
-    await stageDemo.click();
+    await panel.locator('[data-git-group="unstaged"]').filter({hasText: 'projects/demo/project.source.json'}).click();
+    const diffActions = panel.getByRole('group', {name: 'Choose files for the next record'});
+    const addFromDiff = diffActions.getByRole('button', {name: 'Add to Next Record'});
+    await expect(addFromDiff).toHaveAccessibleDescription('projects/demo/project.source.json');
+    await expect(diffActions.locator('[data-git-file-kind="project"]')).toBeVisible();
+    await expect(diffActions.locator('[data-git-status="unstaged"]')).toContainText('Unstaged');
+    await addFromDiff.click();
     await expect(stageDemo).toHaveCount(0);
     await expect(panel.getByRole('button', {name: 'Remove from Next Record: projects/demo/project.source.json'})).toBeVisible();
     assert.match(git('status', '--porcelain', '--', 'projects/demo/project.source.json'), /^A {2}/u);
+    const removeFromDiff = diffActions.getByRole('button', {name: 'Remove from Next Record'});
+    await expect(removeFromDiff).toHaveAccessibleDescription('projects/demo/project.source.json');
+    await expect(diffActions.locator('[data-git-status="staged"]')).toContainText('Staged');
+    await expect(projectChanges).toBeVisible();
+    await removeFromDiff.click();
+    await expect(addFromDiff).toBeEnabled();
+    assert.match(git('status', '--porcelain', '--', 'projects/demo/project.source.json'), /^\?\? /u);
+    assert.equal(await readFile(nestedFile, 'utf8'), dirtyDisk);
+    await addFromDiff.click();
+    await expect(removeFromDiff).toBeEnabled();
     await panel.getByLabel('Message for this record').fill('Update the demo from the Editor');
     await panel.getByRole('button', {name: 'Record (Commit)'}).click();
     await expect(panel.getByText('Recorded the changes (commit).')).toBeVisible();
@@ -875,6 +899,7 @@ test('the browser folder commands save localized Git diffs to the original worki
 
     // Branches: switching needs a clean work tree, then rewrites it as git switch does, and Reload Project opens the branch's files.
     const base = git('branch', '--show-current');
+    await historyTab.click();
     await panel.getByLabel('New branch name').fill('variant');
     await panel.getByRole('button', {name: 'Create Branch'}).click();
     await expect(panel.getByText('Stop the project, and save or record (or undo) every change, before switching branches.')).toBeVisible();
@@ -904,6 +929,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('update-ref', 'refs/heads/variant', variantCommit);
     await rm(path.join(folder, '.git', 'variant-index'));
     // Loading from the folder above cleared the panel's project; choose it again so Reload Project is offered.
+    await changesTab.click();
     const openProjectButton = panel.getByRole('button', {name: 'Open This Project'});
     if (!await openProjectButton.isVisible()) await panel.getByText('Choose a project inside this repository', {exact: true}).click();
     if (await openProjectButton.isDisabled()) {
@@ -913,6 +939,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     // The Editor has no unsaved edits, so opening asks nothing.
     await openProjectButton.click();
     await expect(panel.getByText('Project folder · projects/demo', {exact: true})).toBeVisible();
+    await historyTab.click();
     await panel.getByRole('button', {name: 'Switch: variant'}).click();
     await expect(panel.getByText('Switched branches. Use Reload Project to open the files of this branch.')).toBeVisible();
     assert.equal(git('branch', '--show-current'), 'variant');
