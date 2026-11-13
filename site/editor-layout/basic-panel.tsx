@@ -54,11 +54,12 @@ interface PanelProps {
         undock(): void; external: boolean; mount?: HTMLElement} | null) => void;
     alwaysShowUndock?: boolean;
     openLabel?: string;
+    dockRequest?: number;
     renderDockHeading?: (action: React.ReactNode) => React.ReactNode;
     layer?: 'utility';
 }
 function DockableBasicPanel({host, id, title, children, render, actionMount, dockHeight, className,
-    externalHost, externalOnly, decorate, renderInExternalDocument, onDockActionChange, alwaysShowUndock, openLabel, renderDockHeading, layer}: PanelProps & {host: NonNullable<ReturnType<typeof useWindowHost>>}) {
+    externalHost, externalOnly, decorate, renderInExternalDocument, onDockActionChange, alwaysShowUndock, openLabel, renderDockHeading, layer, dockRequest}: PanelProps & {host: NonNullable<ReturnType<typeof useWindowHost>>}) {
     const {showUndock, locale, plusLayout} = React.useContext(WindowLayoutContext);
     const canUndock = alwaysShowUndock || showUndock;
     const [state, setState] = React.useState<SurfaceState<PanelMount>>({kind: 'docked'});
@@ -125,6 +126,16 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         commitInput(externalMount);
         surface.dock();
     }, [surface, externalMount]);
+    const lastDockRequest = React.useRef(dockRequest);
+    React.useEffect(() => {
+        if (dockRequest === lastDockRequest.current) return;
+        lastDockRequest.current = dockRequest;
+        if (!dockRequest || state.kind === 'docked') return;
+        // Returning an external panel flushes React before its document is closed.
+        queueMicrotask(() => {
+            if (!unmounting.current) returnHere();
+        });
+    }, [dockRequest, state.kind, returnHere]);
     React.useEffect(() => externalMount ? pendingSurfaceEdits.register(() => commitInput(externalMount)) : undefined,
         [externalMount]);
     React.useLayoutEffect(() => {
@@ -160,7 +171,9 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
         tabIndex={focusable ? -1 : undefined}
         onClick={focusable ? event => {
             const node = event.currentTarget;
-            if (node.contains(event.target as Node) && !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
+            const target = event.target as HTMLElement;
+            if (node.contains(target) && !target.closest('button, input, a, select, textarea, [tabindex]') &&
+                !node.contains(node.ownerDocument.activeElement)) node.focus({preventScroll: true});
         } : undefined}>
         {actionMount === undefined ? (
             renderDockHeading ? !mount && renderDockHeading(openAction) : <div className={styles.basicPanelHeading}>
@@ -180,5 +193,5 @@ function DockableBasicPanel({host, id, title, children, render, actionMount, doc
 export function BasicPanel({children, ...options}: PanelProps) {
     const host = useWindowHost();
     return host ? <DockableBasicPanel {...options} host={host}>{children}</DockableBasicPanel> :
-        (options.render ? options.render(false) : children);
+        <>{options.renderDockHeading?.(null)}{options.render ? options.render(false) : children}</>;
 }

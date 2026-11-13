@@ -1,15 +1,22 @@
 import React from 'react';
+import {isMacPlatform} from './project-search-connections.ts';
 import styles from './project-file-menu.css';
 import type {Action, FolderActions, ProjectFileStorage} from './project-file-dialogs.ts';
 
-type Entry = [command: string, label: string, action: Action | undefined];
+type Entry = [command: string, label: string, action: Action | undefined, showShortcut?: boolean];
+interface SaveWorkspace {
+    saveScope: 'project' | 'tab';
+    canSaveActive: boolean;
+    saveActive(): void | Promise<void>;
+    subscribeSave(listener: () => void): () => void;
+}
 
 type SaveEntries = {storage: ProjectFileStorage; folder?: FolderActions; saveAs?: Action};
 
 function saveEntries(locale: string, {storage, folder, saveAs}: SaveEntries): Entry[] {
     const ja = locale.startsWith('ja');
     return [
-        ['save', ja ? '保存' : 'Save', storage.canSave ? storage.overwrite || folder?.save : undefined],
+        ['save', ja ? 'プロジェクトを保存' : 'Save Project', storage.canSave ? storage.overwrite || folder?.save : undefined],
         ['save-as', ja ? '名前を変えて保存…' : 'Save As…', storage.canSave ? saveAs : undefined]
     ];
 }
@@ -56,11 +63,12 @@ export function ProjectSaveMenu({locale, entries}: {locale: string; entries: Sav
     </div>;
 }
 
-export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, entries}: {
+export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, entries, workspace}: {
     locale: string;
     MenuItem: React.ElementType;
     MenuSection: React.ElementType;
     close: Action;
+    workspace?: SaveWorkspace;
     entries: {
         create: Action;
         newWindow?: Action;
@@ -79,16 +87,21 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
     };
 }) {
     const ja = locale.startsWith('ja');
-    const item = ([command, label, action]: Entry) => {
+    const [, redraw] = React.useReducer((version: number) => version + 1, 0);
+    React.useLayoutEffect(() => workspace?.subscribeSave(redraw), [workspace]);
+    const tabShortcut = workspace?.saveScope === 'tab';
+    const mac = isMacPlatform();
+    const item = ([command, label, action, showShortcut]: Entry) => {
         const run = action && (() => {close(); action();});
         return <MenuItem key={command} command={command} onClick={run}>
             <span className={styles.item} role="button" aria-disabled={!run || undefined} tabIndex={run ? 0 : -1}
+                aria-keyshortcuts={showShortcut ? (mac ? 'Meta+S' : 'Control+S') : undefined}
                 style={!run ? {opacity: 0.5, cursor: 'default'} : undefined} onKeyDown={event => {
                     if (!run || (event.key !== 'Enter' && event.key !== ' ')) return;
                     event.preventDefault();
                     event.stopPropagation();
                     run();
-                }}>{label}</span>
+                }}>{label}{showShortcut && <kbd className={styles.shortcut} aria-hidden="true">{mac ? '⌘S' : 'Ctrl+S'}</kbd>}</span>
         </MenuItem>;
     };
     const e = entries;
@@ -98,10 +111,14 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
         <MenuSection>
             {item(['open', ja ? 'SB3ファイルを開く…' : 'Open SB3 File…', e.open])}
             {e.folder && item(['project-folder-open', ja ? 'プロジェクトフォルダを開く…' : 'Open Project Folder…', e.folder.open])}
+            {e.git}
             {e.externalYaml}
         </MenuSection>
         <MenuSection>
-            {saveEntries(locale, e).map(item)}
+            {saveEntries(locale, e).map(([command, label, action]) => item([command, label, action,
+                command === 'save' && !tabShortcut]))}
+            {tabShortcut && item(['save-tab', ja ? 'アクティブなタブを保存' : 'Save Active Tab',
+                workspace.canSaveActive ? () => {void workspace.saveActive();} : undefined, true])}
             {e.exportProject && item(['package', ja ? '書き出し…' : 'Export…', e.exportProject])}
         </MenuSection>
         {(e.properties || e.payloads || e.extensions || e.diagnostics) && <MenuSection>
@@ -114,7 +131,6 @@ export default function ProjectFileMenu({locale, MenuItem, MenuSection, close, e
         </MenuSection>}
         <MenuSection>
             {item(['restore', ja ? '復元ポイント' : 'Restore Points', e.restore])}
-            {e.git}
         </MenuSection>
     </>;
 }

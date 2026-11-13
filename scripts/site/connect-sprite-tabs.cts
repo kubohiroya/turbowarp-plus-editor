@@ -4,6 +4,7 @@ module.exports = (source: string) => {
     const toolbar = 'onToolbarSlots: hasToolbar ? setToolbarSlots : undefined,';
     const refresh = '    function refreshSurfaces() {\n        if (!multiView)\n            return;';
     const active = `const selection = dockview.onDidActivePanelChange(({ panel }) => {
+        documentWorkspace?.notifySave();
         if (syncing)
             return;
         syncing = true;
@@ -17,7 +18,7 @@ module.exports = (source: string) => {
     });`;
     const tab = 'createTabComponent: () => new SpriteTab(document),';
     const targets = 'const originalTargets = () => vm.runtime.targets.filter(target => target.isOriginal);';
-    const mountDocument = 'item.session = item.request.mount(element, () => api.close());';
+    const mountDocument = 'item.session = item.request.mount(element, () => api.close(), documentWorkspace?.notifySave);';
     const dispose = '            flushLayout();';
     const activateOnClick = `body.addEventListener('click', event => {
                     if (active?.id === id)`;
@@ -38,8 +39,9 @@ module.exports = (source: string) => {
         },`)
         .replace(mountDocument, `const stop = unsaved && unsaved.document(element, item.request.reference);
                         try {
-                            const session = item.request.mount(element, () => api.close());
-                            item.session = {...session, dispose() {
+                            const session = item.request.mount(element, () => api.close(), documentWorkspace?.notifySave);
+                            item.session = {...session, get save() { return session.save; },
+                                get fileEdit() { return session.fileEdit; }, dispose() {
                                 if (stop) stop();
                                 session.dispose();
                             }};
@@ -57,6 +59,7 @@ module.exports = (source: string) => {
         const selected = views.get(dockview.activePanel?.id);
         if (options.runTargetSwitch && selected && selected !== active) return;`)
         .replace(active, `const selection = dockview.onDidActivePanelChange(({ panel }) => {
+        documentWorkspace?.notifySave();
         if (syncing) return;
         const activate = () => {
             if (!root.isConnected || dockview.activePanel !== panel) return;

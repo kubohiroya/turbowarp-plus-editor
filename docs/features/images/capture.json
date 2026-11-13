@@ -339,28 +339,282 @@
       "width": 1440,
       "height": 960
     },
-    "publicEditor": {
-      "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-      "siteRevision": "67389c21c189d1bc5c2963275436d91a270855e8",
-      "note": "Uncropped screenshots from the published Japanese Editor in headless Chromium. A sample project and local Git repository supply the folder and changes. The OS directory picker is replaced with a handle to the sample folder. PR images use the public GitHub API.",
-      "images": {
-        "current-open-folder.png": "File menu with the Open Project Folder command.",
-        "current-project-folder.png": "Project folder drawer, file descriptions, and Git change status.",
-        "current-project-file.png": "Project data opened beside the project folder drawer.",
-        "git-branch-workspace.png": "Branch menu for the example repository.",
-        "current-git-file.png": "Local Git file diff and staging controls.",
-        "current-git-blocks.png": "Local Git block comparison with navigation at the bottom right of each frame.",
-        "current-git-staged.png": "Commit form after staging the project data.",
-        "current-git-history.png": "Local Git history and branch controls.",
-        "current-git-remote.png": "GitHub workflow step on Pages without a configured GitHub connection.",
-        "current-pr-overview.png": "Public PR #219 selected in the Editor.",
-        "current-pr-blocks.png": "PR #219 script comparison and navigation controls."
-      }
-    },
     "gitHub": {
       "url": "https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219/files",
       "images": {
         "github-files-changed.png": "Public pull request #219 on GitHub Files changed, viewed while signed out."
+      }
+    },
+    "localEditor": {
+      "url": "http://localhost:41019/turbowarp-plus-editor/editor.html?lang=ja",
+      "note": "Uncropped Japanese screenshots from the local Editor build with the shared drawer toolbar and updated Local Git labels. A sample project and local repository supply the files and changes. The directory picker is replaced with the sample handle. Pull request images use the public GitHub API.",
+      "images": {
+        "current-open-folder.png": "File menu showing the shortcut next to Save Project with the sprite list selected.",
+        "current-save-active-tab.png": "File menu showing the shortcut next to Save Active Tab with the project folder selected.",
+        "current-project-folder.png": "Project folder with bold saved changes and an accent-colored unsaved asterisk.",
+        "current-project-file.png": "Project data opened beside the project folder drawer.",
+        "git-branch-workspace.png": "Branch menu for the example repository.",
+        "current-git-file.png": "The saved README diff, with the project changes above Other files and the commit form fixed at the bottom left.",
+        "current-git-blocks.png": "Local Git block comparison with navigation at the bottom right of each frame.",
+        "current-git-history.png": "The selected commit in Create PR, with its block comparison open.",
+        "current-git-remote.png": "The Merge step with the list of public PRs and the connection settings closed.",
+        "current-pr-overview.png": "Public PR #219 selected in the Editor.",
+        "current-pr-blocks.png": "PR #219 script comparison and navigation controls.",
+        "current-git-unsaved.png": "The Save Files step comparing the unsaved README with HEAD, with its asterisk in the drawer.",
+        "current-git-commit.png": "The fixed commit form with a message filled in after selecting the project data only.",
+        "current-project-file-states.png": "Unsaved, saved, untracked and deleted files shown together in their original locations.",
+        "current-git-create-pr.png": "Japanese Editor with two of three local commits selected, using a test GitHub connection.",
+        "current-git-connection-settings.png": "Japanese Editor with the GitHub connection settings opened from the File menu.",
+        "current-git-file-menu.png": "Japanese File menu with the repository, GitHub connection, and release commands below Open Project Folder.",
+        "current-git-file-window.png": "Japanese PR block comparison in a separate window with the larger Reviewed checkbox.",
+        "current-git-merge-ready.png": "Japanese Editor with the Overview tab selected and the enabled squash-merge button.",
+        "current-pr-commits.png": "Japanese Editor displaying the selected PR commit from the fetched local Git objects.",
+        "current-pr-checks.png": "Japanese Editor displaying the selected PR CI summary and check runs.",
+        "current-pr-files-tab.png": "Japanese Editor displaying the block comparison in the Files changed tab.",
+        "current-git-release-workflow.png": "Japanese Release dialog with the npm commands, a target commit and tag name, and a selected publishing branch and exported HTML file."
+      },
+      "baseSiteRevision": "67389c21c189d1bc5c2963275436d91a270855e8",
+      "integrationBranch": "feat/editor/drawer-toolbar",
+      "integrationRevision": "26c5ce00793d286efd673df9d0302b1e4382a03e",
+      "gitPackage": "0.20.0-drawer-toolbar.0",
+      "folderRecapture": {
+        "integrationRevision": "0a5bb32e0d13151cb23fb5749ad235a35ca3ada8",
+        "projectFolderPackage": "0.9.1-file-commit.5",
+        "images": [
+          "current-project-folder.png",
+          "current-project-file.png",
+          "current-save-active-tab.png",
+          "git-branch-workspace.png"
+        ],
+        "workbenchPackage": "0.9.0-file-commit.3"
+      },
+      "saveShortcutRecapture": {
+        "integrationRevision": "e34a2b838bfa0fa8fe78abdec69eae4f3f0b2fd8",
+        "images": [
+          "current-open-folder.png"
+        ]
+      },
+      "saveAndCommitRecapture": {
+        "integrationRevision": "0a5bb32e0d13151cb23fb5749ad235a35ca3ada8",
+        "gitPackage": "0.20.0-file-commit.8",
+        "projectFolderPackage": "0.9.1-file-commit.5",
+        "workbenchPackage": "0.9.0-file-commit.3",
+        "images": [
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-create-pr.png"
+        ],
+        "connectedFixture": "The English PR creation image uses the headless Editor integration test with a local Git repository and simulated GitHub responses."
+      },
+      "unsavedDiffRecapture": {
+        "integrationRevision": "4ea2d588b818fcfb8d11a6eeb1f8e32ffee907c9",
+        "gitPackage": "0.20.0-file-commit.9",
+        "projectFolderPackage": "0.9.1-file-commit.6",
+        "workbenchPackage": "0.9.0-file-commit.4",
+        "images": [
+          "current-git-unsaved.png",
+          "current-project-file-states.png"
+        ]
+      },
+      "commitLayoutRecapture": {
+        "integrationRevision": "74bf1bfcd8b0f4b5daa567ca282c85a7c4d34f91",
+        "gitPackage": "0.20.0-file-commit.10",
+        "images": [
+          "current-git-blocks.png",
+          "current-git-file.png",
+          "current-git-commit.png"
+        ]
+      },
+      "localGitHeaderRecapture": {
+        "integrationRevision": "b1a62598da50c2dc57c31beff9d9b471a9ed8f86",
+        "gitPackage": "0.20.0-file-commit.11",
+        "projectFolderPackage": "0.9.1-file-commit.6",
+        "workbenchPackage": "0.9.0-file-commit.4",
+        "images": [
+          "git-branch-workspace.png",
+          "current-git-file.png",
+          "current-git-blocks.png",
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-unsaved.png",
+          "current-git-commit.png",
+          "current-project-file-states.png",
+          "current-git-create-pr.png"
+        ],
+        "connectedFixture": "The English PR creation image uses the headless Editor integration test with a local Git repository and simulated GitHub responses."
+      },
+      "commitButtonRecapture": {
+        "integrationRevision": "899a3e8016109ae46c8ecdb155748957dd267ccb",
+        "gitPackage": "0.20.0-file-commit.12",
+        "images": [
+          "git-branch-workspace.png",
+          "current-git-file.png",
+          "current-git-blocks.png",
+          "current-git-commit.png"
+        ]
+      },
+      "connectionSettingsRecapture": {
+        "integrationRevision": "4ea763763af1ab03812635212c4bcce6c4bbf7b1",
+        "gitPackage": "0.20.0-file-commit.13",
+        "images": [
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-create-pr.png"
+        ]
+      },
+      "connectionIconRecapture": {
+        "integrationRevision": "c6258fefdca1373aebbe8a11ab958393521882fe",
+        "gitPackage": "0.20.0-file-commit.14",
+        "images": [
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-create-pr.png"
+        ]
+      },
+      "mergeTabRecapture": {
+        "integrationRevision": "c6258fefdca1373aebbe8a11ab958393521882fe",
+        "gitPackage": "0.20.0-file-commit.14",
+        "images": [
+          "current-git-merge-ready.png"
+        ],
+        "viewport": [
+          1440,
+          1080
+        ]
+      },
+      "repositoryHeaderRecapture": {
+        "integrationRevision": "860ae02cb4c84a903f6bdae3acd96326863dfd23",
+        "gitPackage": "0.20.0-file-commit.15",
+        "images": [
+          "git-branch-workspace.png",
+          "current-project-file-states.png",
+          "current-git-unsaved.png",
+          "current-git-file.png",
+          "current-git-blocks.png",
+          "current-git-commit.png",
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-create-pr.png",
+          "current-git-merge-ready.png",
+          "current-git-connection-settings.png"
+        ],
+        "viewport1080": [
+          "current-git-create-pr.png",
+          "current-git-merge-ready.png",
+          "current-git-connection-settings.png"
+        ],
+        "connectedFixture": "The settings, PR creation, and merge images use the headless Editor with a local repository and simulated GitHub responses."
+      },
+      "pullRequestHeaderRecapture": {
+        "integrationRevision": "4c418ea07b9f8d6e7f337a40b5e2e90b401005f6",
+        "gitPackage": "0.20.0-file-commit.16",
+        "images": [
+          "git-branch-workspace.png",
+          "current-project-file-states.png",
+          "current-git-unsaved.png",
+          "current-git-file.png",
+          "current-git-blocks.png",
+          "current-git-commit.png",
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-create-pr.png",
+          "current-git-merge-ready.png",
+          "current-git-connection-settings.png"
+        ],
+        "viewport1080": [
+          "current-git-create-pr.png",
+          "current-git-merge-ready.png",
+          "current-git-connection-settings.png"
+        ],
+        "connectedFixture": "The settings, PR creation, and merge images use the headless Editor with a local repository and simulated GitHub responses."
+      },
+      "fileMenuAndPullRequestRecapture": {
+        "integrationRevision": "36819883bd8c782cc07bb5ee7181a0299d5f2734",
+        "gitPackage": "0.20.0-file-commit.21",
+        "images": [
+          "git-branch-workspace.png",
+          "current-project-file-states.png",
+          "current-git-unsaved.png",
+          "current-git-file.png",
+          "current-git-blocks.png",
+          "current-git-commit.png",
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-create-pr.png",
+          "current-git-merge-ready.png",
+          "current-git-connection-settings.png",
+          "current-git-file-menu.png",
+          "current-git-file-window.png"
+        ],
+        "editorViewport": [
+          1440,
+          1220
+        ],
+        "windowViewport": [
+          1200,
+          860
+        ],
+        "connectedFixture": "The File menu, settings, PR creation, merge, and separate-window figures use the headless Editor with a local repository and simulated GitHub responses."
+      },
+      "pullRequestTabsRecapture": {
+        "integrationRevision": "0db6c83c7b97901b88a08c4411cffbfb0577215a",
+        "gitPackage": "0.20.0-file-commit.27",
+        "images": [
+          "git-branch-workspace.png",
+          "current-project-file-states.png",
+          "current-git-unsaved.png",
+          "current-git-file.png",
+          "current-git-blocks.png",
+          "current-git-commit.png",
+          "current-git-history.png",
+          "current-git-remote.png",
+          "current-pr-overview.png",
+          "current-pr-blocks.png",
+          "current-git-create-pr.png",
+          "current-git-merge-ready.png",
+          "current-git-connection-settings.png",
+          "current-git-file-menu.png",
+          "current-pr-commits.png",
+          "current-pr-checks.png",
+          "current-pr-files-tab.png",
+          "current-git-file-window.png"
+        ],
+        "editorViewport": [
+          1440,
+          1220
+        ],
+        "windowViewport": [
+          1200,
+          860
+        ],
+        "connectedFixture": "The four PR detail tabs, File menu, settings, PR creation, and comparison window use local Git data and simulated GitHub responses."
+      },
+      "releaseWorkflowRecapture": {
+        "integrationRevision": "ad667497ec9162ada9482199db5f8bd3969028fc",
+        "gitPackage": "0.20.0-file-commit.32",
+        "images": [
+          "current-git-file-menu.png",
+          "current-git-release-workflow.png"
+        ],
+        "editorViewport": [
+          1440,
+          1220
+        ],
+        "connectedFixture": "The Release dialog uses a local Git HTTP fixture to show an authorized connection and a selected Pages branch."
       }
     }
   }

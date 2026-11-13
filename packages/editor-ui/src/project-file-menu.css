@@ -83,3 +83,12 @@ ul:has(> li .item) {
 .saveActions button:hover {
     background: var(--ui-black-transparent);
 }
+
+.shortcut {
+    margin-inline-start: 0.75rem;
+    color: var(--text-primary);
+    opacity: 0.8;
+    font: inherit;
+    font-size: 0.85em;
+    white-space: nowrap;
+}

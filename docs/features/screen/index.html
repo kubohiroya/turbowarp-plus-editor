@@ -84,7 +84,7 @@
 <tr><th scope="row">新しいプロジェクトを作成</th><td>編集中の作品を閉じ、新しい作品を始める</td><td>この章</td></tr>
 <tr><th scope="row">SB3ファイルを開く…</th><td>手元の .sb3 を開く。旧形式の .sb、.sb2 も選べる</td><td>この章、<a href="../open/#loading">「読み込みの経過を確かめる」</a></td></tr>
 <tr><th scope="row">プロジェクトフォルダを開く…</th><td>sb3-toolchainで展開した作品フォルダを開く</td><td><a href="../git/#project-folder">「作品フォルダを開いて保存する」</a></td></tr>
-<tr><th scope="row">保存／名前を変えて保存…</th><td>開いたファイルやフォルダを更新する／名前・保存先・格納方式を選んでSB3を作る</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
+<tr><th scope="row">プロジェクトを保存／名前を変えて保存…</th><td>現在のプロジェクト全体を SB3 や作品フォルダに保存する／名前・保存先・格納方式を選んでSB3を作る</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
 <tr><th scope="row">書き出し…</th><td>実行・配布用のファイルを作る</td><td><a href="../save/#packager">「作品を書き出して単一HTMLで配布する」</a></td></tr>
 <tr><th scope="row">作品のプロパティ</th><td>タイトル・URI・作者などを記入し、作品の診断を開く</td><td><a href="../save/#project-properties">「作品情報を記入してSB3に保存する」</a>、<a href="../save/#project-uri">「作品のURIを指定してキャッシュを整理する」</a>、<a href="../open/#project-diagnostics">「作品が開けないときに診断を読む」</a></td></tr>
 <tr><th scope="row">組み込みデータ…</th><td>ソースデータと素材の格納方式を選び、バンドル素材を作品に追加する</td><td><a href="../save/#payload-formats">「ソースデータと素材をどの形式で保存するか選ぶ」</a>、<a href="../reuse/#bundle-assets">「バンドル素材を背景・コスチューム・音に追加する」</a></td></tr>
@@ -107,9 +107,14 @@
 <tr><th scope="row">切り取り・コピー・貼り付け</th><td>Ctrl+X・C・V</td><td>⌘X・C・V</td></tr>
 <tr><th scope="row">作品全体を検索</th><td>Ctrl+F</td><td>⌘F</td></tr>
 <tr><th scope="row">検索と置換</th><td>Ctrl+Shift+F</td><td>⇧⌘F</td></tr>
-<tr><th scope="row">保存</th><td>Ctrl+S</td><td>⌘S</td></tr>
+<tr><th scope="row">保存（左ドロワーの表示に応じて）</th><td>Ctrl+S</td><td>⌘S</td></tr>
 </tbody></table></div>
 <ul><li>「元に戻す」「繰り返し」は、操作中のコード画面の履歴に対して働きます。</li><li>「切り取り」「コピー」は、コード画面で選んだブロックに対して働きます。「貼り付け」は、コピーしたブロックがあるときに選べます。</li><li>「検索と置換」は、<a href="../search/#project-search">作品全体の検索</a>のパネルを開き、「置換後の文字列」の欄にカーソルを移します。最上段の検索欄と同じパネルです。</li></ul>
+<p>左ドロワーがスプライト一覧のときは Ctrl+S／⌘S でプロジェクト全体を保存します。プロジェクトフォルダを表示しているときは、保存できるアクティブなタブが対象です。どちらの操作に割り当てられているかは「ファイル」メニューで確認できます。 <a href="../save/#save">保存の操作</a></p>
+<figure>
+<a href="../images/current-save-active-tab.png"><img src="../images/current-save-active-tab.png" width="1440" height="960" alt="左ドロワーにプロジェクトフォルダ、中央にファイルのタブ、ファイルメニューの「アクティブなタブを保存」に ⌘S が表示されている。" loading="lazy"></a>
+<figcaption>左ドロワーでプロジェクトフォルダを表示しているときのファイルメニュー。</figcaption>
+</figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/385">編集メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/399">アイコンとショートカット表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/405">検索と置換のショートカット</a></p>
 
 </section>

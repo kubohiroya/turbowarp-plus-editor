@@ -34,11 +34,16 @@ test('Save As assigns the next overwrite destination and cancelling keeps the pr
     });
     await openEditor(page);
     await fileMenu(page).click();
-    const ordered = ['新しいプロジェクトを作成', 'SB3ファイルを開く…', '保存', '名前を変えて保存…',
+    const ordered = ['新しいプロジェクトを作成', 'SB3ファイルを開く…', 'プロジェクトを保存', '名前を変えて保存…',
         '書き出し…', '作品のプロパティ', '組み込みデータ…', '機能拡張…', '復元ポイント'];
     const menu = page.getByRole('list').filter({has: menuItem(page, ordered[0])});
-    expect((await menu.getByRole('button').allTextContents()).filter(label => ordered.includes(label))).toEqual(ordered);
-    await expect(menuItem(page, '保存')).toBeDisabled();
+    const labels = await menu.getByRole('button').evaluateAll(buttons => buttons.map(button => {
+        const label = button.cloneNode(true);
+        label.querySelector('kbd')?.remove();
+        return label.textContent;
+    }));
+    expect(labels.filter(label => ordered.includes(label))).toEqual(ordered);
+    await expect(menuItem(page, 'プロジェクトを保存')).toBeDisabled();
     await menuItem(page, '名前を変えて保存…').click();
     await saveDialog(page).getByRole('textbox', {name: '名前'}).fill('次の作品');
     await saveDialog(page).getByRole('combobox', {name: '保存形式'}).selectOption('embedded');
@@ -53,7 +58,7 @@ test('Save As assigns the next overwrite destination and cancelling keeps the pr
     await saveDialog(page).getByRole('button', {name: 'キャンセル'}).click();
 
     await fileMenu(page).click();
-    await menuItem(page, '保存').click();
+    await menuItem(page, 'プロジェクトを保存').click();
     await expect.poll(() => page.evaluate(() => globalThis.fileWorkflow.writes.map(write => write.name)))
         .toEqual(['次の作品.sb3', '次の作品.sb3']);
     const data = await page.evaluate(async () =>
@@ -66,7 +71,7 @@ test('downloads produce an editable SB3 and keep Save disabled without a writabl
     await page.addInitScript(() => {window.showSaveFilePicker = undefined;});
     await openEditor(page);
     await fileMenu(page).click();
-    await expect(menuItem(page, '保存')).toBeDisabled();
+    await expect(menuItem(page, 'プロジェクトを保存')).toBeDisabled();
     await menuItem(page, '名前を変えて保存…').click();
     await saveDialog(page).getByRole('textbox', {name: '名前'}).fill('downloaded');
     const pending = page.waitForEvent('download');
@@ -76,7 +81,7 @@ test('downloads produce an editable SB3 and keep Save disabled without a writabl
     const zip = await Zip.loadAsync(await readFile(await download.path()));
     expect(JSON.parse(await zip.file('project.json').async('string')).targets.length).toBeGreaterThan(0);
     await fileMenu(page).click();
-    await expect(menuItem(page, '保存')).toBeDisabled();
+    await expect(menuItem(page, 'プロジェクトを保存')).toBeDisabled();
 });
 
 for (const filename of ['single_sound.sb', 'unknown-opcode.sb2']) {
@@ -98,7 +103,7 @@ for (const filename of ['single_sound.sb', 'unknown-opcode.sb2']) {
         expect(await page.evaluate(() => globalThis.projectPickerOptions.types.map(type => type.accept['*/*'])))
             .toEqual([['.sb3'], ['.sb', '.sb2']]);
         await fileMenu(page).click();
-        await expect(menuItem(page, '保存')).toBeDisabled();
+        await expect(menuItem(page, 'プロジェクトを保存')).toBeDisabled();
         await menuItem(page, '名前を変えて保存…').click();
         const pending = page.waitForEvent('download');
         await saveDialog(page).getByRole('button', {name: '保存', exact: true}).click();

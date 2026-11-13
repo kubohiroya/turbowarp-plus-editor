@@ -14,6 +14,7 @@ import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import {GitFileMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
@@ -153,7 +154,8 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
         }}, action.label));
 };
 export const renderFileMenu = props => React.createElement(React.Fragment, null,
-    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+    renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), React.createElement(GitFileMenu, props),
+    renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
 
 export {serializeProjectForExport} from '../packager/handoff.ts';
 
@@ -177,14 +179,20 @@ export const renderProjectFileWorkflow = ({
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
     const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension);
     const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
+    const openExport = exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject);
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
-        exportProject: exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject),
-        externalYaml: renderExternalYamlMenu(inline)
-    }});
+        exportProject: openExport,
+        git: React.createElement(GitFileMenu, {...inline, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
+    }, workspace: getDocumentWorkspace(vm)});
 };
 
 export const saveProjectFromFileMenu = (vm, gui, promptForTarget) => {
+    const workspace = getDocumentWorkspace(vm);
+    if (!promptForTarget && workspace.saveScope === 'tab') {
+        void workspace.saveActive();
+        return;
+    }
     const locale = document.documentElement.lang || 'en';
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
     projectSaveShortcut(storage, folder, promptForTarget ?
