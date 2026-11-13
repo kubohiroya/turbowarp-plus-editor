@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-plus-editor",
-  "version": "0.2.0-rc.3",
+  "version": "0.2.0-rc.4",
   "description": "Distribution, brand assets and the project edit button for TurboWarp-Plus-Editor",
   "type": "module",
   "license": "(GPL-3.0-or-later AND MPL-2.0)",
@@ -124,7 +124,7 @@
     "@kubohiroya/turbowarp-document-data": "0.6.0-rc.2",
     "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.8",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
-    "@kubohiroya/turbowarp-script-transfer": "0.1.3",
+    "@kubohiroya/turbowarp-script-transfer": "0.1.4",
     "@turbowarp/jszip": "^3.12.0"
   },
   "bin": {
