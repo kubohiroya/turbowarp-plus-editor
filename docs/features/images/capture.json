@@ -332,5 +332,36 @@
       "top-search.png": "Search panel after typing 開始 in the menu-bar search field (clipped).",
       "top-layout-menu.png": "The 編集パネルのレイアウト menu (clipped)."
     }
+  },
+  "gitAndGitHubGuide": {
+    "date": "2026-11-13",
+    "viewport": {
+      "width": 1440,
+      "height": 960
+    },
+    "publicEditor": {
+      "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+      "siteRevision": "67389c21c189d1bc5c2963275436d91a270855e8",
+      "note": "Uncropped screenshots from the published Japanese Editor in headless Chromium. A sample project and local Git repository supply the folder and changes. The OS directory picker is replaced with a handle to the sample folder. PR images use the public GitHub API.",
+      "images": {
+        "current-open-folder.png": "File menu with the Open Project Folder command.",
+        "current-project-folder.png": "Project folder drawer, file descriptions, and Git change status.",
+        "current-project-file.png": "Project data opened beside the project folder drawer.",
+        "git-branch-workspace.png": "Branch menu for the example repository.",
+        "current-git-file.png": "Local Git file diff and staging controls.",
+        "current-git-blocks.png": "Local Git block comparison with navigation at the bottom right of each frame.",
+        "current-git-staged.png": "Commit form after staging the project data.",
+        "current-git-history.png": "Local Git history and branch controls.",
+        "current-git-remote.png": "GitHub workflow step on Pages without a configured GitHub connection.",
+        "current-pr-overview.png": "Public PR #219 selected in the Editor.",
+        "current-pr-blocks.png": "PR #219 script comparison and navigation controls."
+      }
+    },
+    "gitHub": {
+      "url": "https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219/files",
+      "images": {
+        "github-files-changed.png": "Public pull request #219 on GitHub Files changed, viewed while signed out."
+      }
+    }
   }
 }
