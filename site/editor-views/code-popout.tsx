@@ -11,6 +11,7 @@ import {createCodeExtensionPalette, createFieldActionDialog} from '@kubohiroya/t
 import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-views';
 import {installScopedVariableReferences} from '@kubohiroya/turbowarp-plus-editor-views/variable-references';
 import {TargetCombobox} from '@kubohiroya/turbowarp-plus-editor-views/target-combobox';
+import {attachScriptView} from '@kubohiroya/turbowarp-plus-editor-views/script-layout';
 
 const ticket = location.hash.slice(1);
 const mount = document.getElementById('mount');
@@ -68,6 +69,8 @@ let editable = false;
 let history = {canUndo: false, canRedo: false};
 let group;
 let edits = [];
+const scriptView = attachScriptView({workspace, getLocale: () => locale,
+    mount: workspaceArea, canShowBlock: () => editable && !blockedSnapshot});
 installScopedVariableReferences(ScratchBlocks, workspace, () => locale);
 const procedureEditor = installProcedureEditor({
     blocks: ScratchBlocks, workspace, getLocale: () => locale, canEdit: () => editable && !blockedSnapshot && document.hasFocus(),
@@ -207,6 +210,7 @@ function receive({data: message}) {
             targetId = message.targetId;
             targets = message.targets;
             locale = message.locale;
+            scriptView.labels();
             backpackDrop = message.backpackDrop;
             snapshot(message);
             dock.disabled = false;
@@ -347,6 +351,7 @@ window.addEventListener('blur', () => release());
 window.addEventListener('resize', () => ScratchBlocks.svgResize(workspace));
 window.addEventListener('pagehide', () => {
     release();
+    scriptView.dispose();
     navigation?.dispose();
     port?.postMessage('stage2/disconnect');
     workspace.dispose();

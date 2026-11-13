@@ -33,6 +33,7 @@ interface MenuProps {
     MenuItem: React.ComponentType<{className?: string; children: React.ReactNode}>;
     MenuSection: React.ComponentType<{children: React.ReactNode}>;
     renderIcon(command: Command | 'restoreDeletion'): React.ReactNode;
+    getRearrangement?(): {canArrange(): boolean; open(locale: string): void} | undefined;
     onRequestClose(): void;
 }
 
@@ -48,13 +49,15 @@ export function attachEditMenuWorkspace(context: WorkspaceContext) {
 const groups = [
     [['undo', 'Undo', '元に戻す'], ['redo', 'Redo', '繰り返し']],
     [['cut', 'Cut', '切り取り'], ['copy', 'Copy', 'コピー'], ['paste', 'Paste', '貼り付け']],
-    [['findAndReplace', 'Find and Replace', '検索と置換']]
+    [['findAndReplace', 'Find and Replace', '検索と置換'],
+        ['cleanup', 'Rearrange Code Blocks', 'コードブロックの再配置']]
 ] as const;
 
 type Command = (typeof groups)[number][number][0];
 const shortcutKeys = {undo: 'Z', redo: 'Y', cut: 'X', copy: 'C', paste: 'V'};
 
 function shortcutFor(command: Command, mac: boolean) {
+    if (command === 'cleanup') return;
     if (command === 'findAndReplace') {
         const {label, macLabel, keys, macKeys} = projectReplaceShortcut;
         return {label: mac ? macLabel : label, keys: mac ? macKeys : keys};
@@ -64,7 +67,7 @@ function shortcutFor(command: Command, mac: boolean) {
     return mac ? {label: `⌘${key}`, keys: `Meta+${key}`} : {label: `Ctrl+${key}`, keys: `Control+${key}`};
 }
 
-function canRun(context: WorkspaceContext | undefined, command: Exclude<Command, 'findAndReplace'>): boolean {
+function canRun(context: WorkspaceContext | undefined, command: Exclude<Command, 'findAndReplace' | 'cleanup'>): boolean {
     if (!context?.canUse()) return false;
     const {workspace, ScratchBlocks} = context;
     if (ScratchBlocks.getMainWorkspace() !== workspace || workspace.options.readOnly ||
@@ -90,18 +93,29 @@ export function renderEditMenuRestore(label: React.ReactNode, renderIcon: MenuPr
     return <span className={styles.restore}>{renderIcon('restoreDeletion')}{label}</span>;
 }
 
-function EditMenu({vm, locale, MenuItem, MenuSection, renderIcon, onRequestClose}: MenuProps) {
+function EditMenu({vm, locale, MenuItem, MenuSection, renderIcon, onRequestClose, getRearrangement}: MenuProps) {
     const japanese = /^ja(?:-|$)/i.test(locale);
     const mac = isMacPlatform();
     const context = workspaces.get(vm);
     const openReplace = projectReplaceOpener(vm.runtime);
+    const rearrangement = getRearrangement?.();
     return <>{groups.map(group => <MenuSection key={group[0][0]}>
         {group.map(([command, english, translated]) => {
+            if (command === 'cleanup' && !getRearrangement) return null;
             const shortcut = shortcutFor(command, mac);
+            const enabled = command === 'cleanup' ? rearrangement?.canArrange() :
+                command === 'findAndReplace' ? Boolean(openReplace) : canRun(context, command);
             return <MenuItem key={command}>
                 <button className={styles.command} type="button"
-                    disabled={command === 'findAndReplace' ? !openReplace : !canRun(context, command)}
+                    disabled={!enabled}
                     aria-keyshortcuts={shortcut?.keys} onClick={event => {
+                        if (command === 'cleanup') {
+                            const current = getRearrangement?.();
+                            if (!current?.canArrange()) return;
+                            onRequestClose();
+                            current.open(locale);
+                            return;
+                        }
                         if (command === 'findAndReplace') {
                             if (!openReplace) return;
                             onRequestClose();

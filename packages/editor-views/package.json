@@ -9,6 +9,7 @@
     "./code-extensions": "./code-extensions.ts",
     "./procedure-editor": "./procedure-editor.ts",
     "./variable-references": "./variable-references.ts",
+    "./script-layout": "./script-layout-view.ts",
     "./sprite-code-windows": "./index.tsx"
   },
   "peerDependencies": {

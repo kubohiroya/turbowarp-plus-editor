@@ -1810,6 +1810,7 @@ test('a background code view retains its layout, pan and zoom', {timeout: 45_000
         ScratchBlocks.Events.fireNow_();
     });
     await expect(canvas.locator('[data-id="preview-block"]')).toBeVisible();
+    await first.locator('.injectionDiv').hover({position: {x: 110, y: 145}});
     await first.locator('[data-plus-zoom-action="in"]').click();
     await page.evaluate(() => {
         const workspace = window.ScratchBlocks.getMainWorkspace();
@@ -1827,12 +1828,19 @@ test('a background code view retains its layout, pan and zoom', {timeout: 45_000
     await expect(preview.locator('.blocklySvg .blocklyBlockCanvas')).toHaveAttribute('transform', transform);
     await expect(preview.locator('.blocklySvg .blocklyMainBackground')).toHaveCSS('fill', /url\(/);
     await expect(chrome.locator('[data-horizontal-block-palette]')).toBeVisible();
+    const front = page.getByRole('region', {name: /^Code · /}).nth(1);
+    const titlebar = await front.locator('.tw-window-titlebar__heading').boundingBox();
+    assert.ok(titlebar);
+    await page.mouse.move(titlebar.x + 60, titlebar.y + titlebar.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(titlebar.x + 330, titlebar.y + titlebar.height / 2, {steps: 8});
+    await page.mouse.up();
+    await preview.hover({position: {x: 180, y: 145}});
     await expect(chrome.locator('[data-workspace-minimap]')).toBeVisible();
     await expect(chrome.locator('[data-plus-horizontal-zoom]')).toBeVisible();
     await expect(chrome.locator('[data-plus-workspace-watermark] img')).toBeVisible();
     await expect(chrome).toHaveAttribute('inert', '');
-    await expect(page.getByRole('region', {name: /^Code · /}).nth(1)
-        .locator('.tw-dockable-panel--floating [data-horizontal-block-palette]')).toBeVisible();
+    await expect(front.locator('.tw-dockable-panel--floating [data-horizontal-block-palette]')).toBeVisible();
 });
 
 test('a background sprite code window fits scripts when the foreground shows none', {timeout: 30_000}, async t => {
@@ -2616,6 +2624,7 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     const assertNavigation = async (scope: ReturnType<typeof page.locator>, editable: boolean) => {
         const map = scope.locator('[data-workspace-minimap]');
         const zoom = scope.locator('[data-plus-horizontal-zoom]');
+        await scope.hover({position: {x: 120, y: 145}});
         await expect(thumbnail(scope)).toBeVisible();
         await expect(thumbnail(scope)).toHaveCSS('opacity', '0.6');
         await expect(map).toBeVisible();
@@ -2817,6 +2826,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await expect(zoom).toBeHidden();
     await codeTab.click();
     await expect(palette).toBeVisible();
+    await codeGroup.locator('.injectionDiv').first().hover({position: {x: 120, y: 145}});
     await expect(zoom).toBeVisible();
     await assertStage();
 

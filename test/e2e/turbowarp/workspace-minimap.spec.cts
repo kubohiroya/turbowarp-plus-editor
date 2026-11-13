@@ -20,6 +20,7 @@ test('the sprite costume stays aligned above the minimap when its code is undock
     });
     const minimap = page.locator('[data-workspace-minimap]');
     const checkWatermark = async () => {
+        await minimap.locator('..').hover({position: {x: 220, y: 150}});
         await expect(watermark).toBeVisible();
         await expect.poll(async () => {
             const image = await watermark.boundingBox();
@@ -46,8 +47,8 @@ test('the sprite costume stays aligned above the minimap when its code is undock
     await page.getByRole('tab', {name: 'Code', exact: true}).focus();
     await page.getByRole('button', {name: 'Open in another window', exact: true}).click();
     const code = page.getByRole('region', {name: /^Code · /});
-    await expect(code.locator('[data-plus-workspace-watermark] img[src]')).toBeVisible();
     await checkWatermark();
+    await expect(code.locator('[data-plus-workspace-watermark] img[src]')).toBeVisible();
     await code.getByRole('button', {name: 'Window layout'}).click();
     await code.getByRole('button', {name: 'Maximize this window'}).click();
     await checkWatermark();
@@ -75,6 +76,7 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     evidence.stage('default-plus-layout');
     await page.goto('editor.html?lang=en');
     await expect(page.locator('.blocklyToolboxDiv[data-horizontal-block-palette]')).toBeVisible();
+    await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
     const zoom = (action: string) => page.locator(`[data-plus-zoom-action="${action}"]`);
     const [minus, plus, reset] = await Promise.all(['out', 'in', 'reset'].map(action => zoom(action).boundingBox()));
@@ -96,6 +98,7 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
 
     evidence.stage('classic-layout');
     await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
+    await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
     await expect(minimap).toHaveCSS('cursor', 'pointer');
     await expect(minimap).toHaveCSS('background-color', /\/ 0\.5\)$/);
@@ -206,10 +209,12 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     await page.getByRole('tab', {name: 'Costumes'}).click();
     await expect(minimap).toBeHidden();
     await page.getByRole('tab', {name: 'Code'}).click();
+    await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
     await expect(paths).toHaveCount(2);
     await page.locator('[class*="stage-selector_stage-selector"]').click();
     await expect(paths).toHaveCount(0);
+    await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
     const emptyMap = await minimap.getAttribute('viewBox');
     const emptyViewportX = await viewport.getAttribute('x');
