@@ -231,7 +231,8 @@ export function getCodeExtensions(runtime, target): CodeExtensions {
     }
     let categories: Category[] = [];
     try {
-        categories = runtime.getBlocksXML?.(target) ?? [];
+        // Add-ons can attach methods to the palette array. Send only data across the message port.
+        categories = Array.from(runtime.getBlocksXML?.(target) ?? [], ({id, xml}: Category) => ({id, xml}));
     } catch {
         // Invalid palette metadata must not prevent existing blocks from loading.
     }
