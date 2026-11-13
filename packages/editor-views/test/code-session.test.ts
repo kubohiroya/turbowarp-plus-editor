@@ -238,7 +238,9 @@ test('code extension projections send definitions and resolve menus only for the
     let menuReads = 0;
     const runtime = {
         getEditingTarget: () => active,
-        getBlocksXML: target => [{id: 'fixture', xml: target === active ? 'active palette' : 'back palette'}],
+        getBlocksXML: target => Object.assign([{id: 'fixture', xml: target === active ? 'active palette' : 'back palette'}], {
+            map() {throw new Error('Add-on palette methods must not be used or sent');}
+        }),
         _blockInfo: [{id: 'fixture', menus: [{json: {
             type: 'fixture_menu_mode', args0: [{type: 'field_dropdown', options: () => {
                 menuReads++;
