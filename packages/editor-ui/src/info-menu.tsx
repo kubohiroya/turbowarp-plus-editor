@@ -36,6 +36,9 @@ interface ProjectInfoMenuProps extends ProjectSettingsMenuProps {
     locale: string;
     version: string;
     logo: string;
+    openAbout?(): void;
+    openPrivacy?(): void;
+    sourceUrl?: string;
 }
 
 type Submenu = 'display' | 'runtime';
@@ -52,7 +55,8 @@ const newTabIcon = (
 );
 
 export function ProjectInfoMenu({
-    locale, version, logo, leading, displaySettings, renderRuntimeSettings, addons, advanced, aiAgents
+    locale, version, logo, leading, displaySettings, renderRuntimeSettings, addons, advanced, aiAgents,
+    openAbout, openPrivacy, sourceUrl = 'https://github.com/kubohiroya/turbowarp-plus-editor'
 }: ProjectInfoMenuProps) {
     const menu = React.useRef<HTMLDetailsElement>(null);
     const trigger = React.useRef<HTMLElement>(null);
@@ -67,6 +71,7 @@ export function ProjectInfoMenu({
     const displayLabel = japanese ? '表示設定' : 'Display settings';
     const runtimeLabel = japanese ? '動作設定' : 'Runtime settings';
     const newTabLabel = japanese ? '別のタブで開きます' : 'Opens in a new tab';
+    const aboutLabel = japanese ? `${product}について` : `About ${product}`;
 
     const closeDisplay = displaySettings?.onClose;
     const close = React.useCallback(() => {
@@ -162,11 +167,19 @@ export function ProjectInfoMenu({
             else setOpen(true);
         }}><img src={logo} alt="" draggable={false} /></summary>
         <nav aria-label={label}>
-            <a className={`${styles.entry} ${styles.indented}`} href="./" target="_blank" rel="noreferrer"
-                title={newTabLabel} onClick={close}>
-                {japanese ? `${product}について` : `About ${product}`}
-                {newTabIcon}
-            </a>
+            {openAbout ? <button className={`${styles.entry} ${styles.indented}`} type="button" onClick={() => {
+                close();
+                openAbout();
+            }}>{aboutLabel}</button> :
+                <a className={`${styles.entry} ${styles.indented}`} href="./" target="_blank" rel="noreferrer"
+                    title={newTabLabel} onClick={close}>
+                    {aboutLabel}
+                    {newTabIcon}
+                </a>}
+            {openPrivacy && <button className={`${styles.entry} ${styles.indented}`} type="button" onClick={() => {
+                close();
+                openPrivacy();
+            }}>{japanese ? 'プライバシー' : 'Privacy'}</button>}
             {displaySettings && <div className={styles.branch}>
                 <button className={`${styles.entry} ${styles.indented}`} type="button" ref={displayTrigger}
                     aria-expanded={submenu === 'display'} onClick={() => toggleSubmenu('display')}>
@@ -190,7 +203,7 @@ export function ProjectInfoMenu({
             {action(japanese ? '高度な設定' : 'Advanced Settings', advanced)}
             {action(japanese ? 'AI エージェント設定…' : 'AI agent settings…', aiAgents)}
             <hr className={styles.divider} />
-            <a className={styles.entry} href="https://github.com/kubohiroya/turbowarp-plus-editor"
+            <a className={styles.entry} href={sourceUrl}
                 target="_blank" rel="noreferrer" title={newTabLabel} onClick={close}>
                 <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d={githubPath} /></svg>
                 {japanese ? 'ソースコード' : 'Source code'}
