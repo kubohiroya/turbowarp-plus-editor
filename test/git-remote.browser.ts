@@ -122,9 +122,11 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     };
     const status = panel.locator('[data-git-connection-state]');
     const notice = panel.getByText('The GitHub operation finished.', {exact: true});
+    await panel.getByRole('tab', {name: 'History', exact: true}).click();
     // A commit row of the history graph is named by its subject, then its author, date and branches.
     await expect(panel.getByRole('button', {name: /^initial, /})).toBeVisible();
     await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', /./u);
+    await panel.getByRole('tab', {name: 'GitHub', exact: true}).click();
     await panel.getByText('GitHub connection', {exact: true}).click();
     await panel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const authMethod = panel.getByRole('combobox', {name: 'Authentication method'});
@@ -173,6 +175,8 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await connect('git-credential-helper');
     await writeFile(source, 'browser outgoing\n');
     const outgoing = commit(client, 'browser outgoing');
+    await button('Refresh').click();
+    await expect(panel.locator('.twgit-workflow [aria-current="step"]')).toContainText('Send to GitHub');
     page.once('dialog', dialog => dialog.accept());
     await runRemote('Send to GitHub (push)');
     await expect(notice).toBeVisible();
