@@ -191,6 +191,37 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await frames.nth(1).locator('[data-plus-zoom-action="in"]').click();
     await expect.poll(() => scale(1)).toBeGreaterThan(unlinked);
     assert.equal(await scale(0), unlinked);
+    // Resize the comparison so its bottom is below the browser viewport. Its controls still belong to the frame.
+    const resized = frames.nth(1);
+    await resized.evaluate(frame => {
+        frame.style.height = '70vh';
+        frame.scrollIntoView({block: 'start'});
+        const pane = frame.closest('.twgit-diff')!;
+        pane.scrollTop -= 200;
+    });
+    const navigation = () => resized.evaluate(frame => {
+        const bounds = frame.getBoundingClientRect();
+        const zoom = frame.querySelector('[data-plus-horizontal-zoom]')!.getBoundingClientRect();
+        const map = frame.querySelector('[data-workspace-minimap]')!.getBoundingClientRect();
+        return {
+            belowViewport: bounds.bottom > document.documentElement.clientHeight + 80,
+            zoomBelowViewport: zoom.bottom > document.documentElement.clientHeight,
+            bottomInset: Math.round(bounds.bottom - zoom.bottom),
+            rightInset: Math.round(bounds.right - zoom.right),
+            mapGap: Math.round(zoom.top - map.bottom),
+            mapAlignment: Math.round(Math.abs(map.right - zoom.right))
+        };
+    });
+    await expect.poll(navigation).toMatchObject({
+        belowViewport: true, zoomBelowViewport: true, mapGap: 8, mapAlignment: 0
+    });
+    const {bottomInset, rightInset} = await navigation();
+    assert.ok(bottomInset >= 0 && bottomInset <= 32, `Zoom bottom inset: ${bottomInset}px`);
+    assert.ok(rightInset >= 0 && rightInset <= 32, `Zoom right inset: ${rightInset}px`);
+    await resized.evaluate(frame => {
+        frame.style.height = '';
+        frame.scrollIntoView({block: 'center'});
+    });
     // Reviewed marks stay when the review opens again and after a reload, until the script itself changes.
     const clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
     await expect(review.getByText('0 / 2', {exact: true})).toBeVisible();
