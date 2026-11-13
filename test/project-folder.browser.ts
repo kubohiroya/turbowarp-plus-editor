@@ -93,7 +93,9 @@ test('the browser folder commands save localized Git diffs to the original worki
             embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets',
             archiveEntries: ['project.json', costume.md5ext, sound.md5ext]}))
     ]);
-    const git = (...args: string[]) => execFileSync('git', args, {cwd: folder, encoding: 'utf8'}).trim();
+    // Keep inspection commands such as status from refreshing the index behind the open Git panel.
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
     git('init', '-q');
     git('config', 'core.autocrlf', 'false');
     git('add', '.');
@@ -1017,17 +1019,19 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal(git('show', 'HEAD:' + commitPath), dirtyDisk.trim());
     assert.equal(git('status', '--porcelain', '--', commitPath), '');
     assert.equal(git('show', ':' + untouchedPath), otherIndex);
-    await recordStep.click();
     git('fsck', '--no-progress');
-    await panel.getByRole('button', {name: 'Refresh local status', exact: true}).click();
-    await panel.getByRole('button', {name: /^Update the demo from the Editor,/}).click();
-    const committedFiles = panel.locator('[data-git-group="commit"]').filter({hasText: commitPath});
-    if (!await committedFiles.isVisible()) {
-        const fileList = panel.getByText('List by file', {exact: true});
-        if (await fileList.isVisible() && !await fileList.evaluate(summary => summary.parentElement?.hasAttribute('open')))
-            await fileList.click();
+    await recordStep.click();
+    // The commit already refreshes local status. Another refresh clears the selected record.
+    const record = panel.locator(`button.twgit-graph-commit[data-oid="${git('rev-parse', 'HEAD')}"]`);
+    await record.click();
+    await expect(record).toHaveAttribute('aria-pressed', 'true');
+    // The file list can move into the collapsed project-element view when its asynchronous read completes.
+    await expect(panel.getByText('Reading the project changes…', {exact: true})).toHaveCount(0);
+    const fileList = panel.locator('details.twgit-file-list');
+    if (await fileList.isVisible() && !await fileList.evaluate(details => (details as HTMLDetailsElement).open)) {
+        await fileList.locator('summary').click();
     }
-    await expect(committedFiles).toBeVisible();
+    await expect(panel.locator('[data-git-group="commit"]').filter({hasText: commitPath})).toBeVisible();
 
     // Unsaved text edits in an open file tab can be saved from the same Git view.
     const draftPath = 'draft.txt';
