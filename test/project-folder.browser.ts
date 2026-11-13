@@ -219,6 +219,11 @@ test('the browser folder commands save localized Git diffs to the original worki
     await open();
     const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
+    const sourceRow = page.locator(`.twpf-explorer-item[data-path="${projectFile}"]`);
+    await expect(sourceRow.locator('.twpf-explorer-description')).toHaveText('Project data');
+    assert.ok(await sourceRow.evaluate(row =>
+        row.querySelector('.twpf-explorer-description')!.getBoundingClientRect().top >=
+        row.querySelector('.twpf-explorer-name')!.getBoundingClientRect().bottom));
     const fileTab = (name: string) => page.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
     const preview = page.locator('.twpf-preview:visible');
     const openFile = (name: string) => page.locator(`[data-path="${name}"]`).click();
