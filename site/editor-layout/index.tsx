@@ -20,6 +20,8 @@ import {renderProjectFolderExplorer} from '@kubohiroya/turbowarp-plus-editor-pro
 import type {FollowExplorerGit, FollowFileStatuses} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
 import {followExplorerGit, followFileStatuses, readProjectHeadFile, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
 import {createAiAgents} from '@kubohiroya/turbowarp-plus-editor-workbench/ai-agents';
+import {projectFolderWorkflows} from '../project-folder-host.ts';
+import {createFolderFromCurrentProject} from '../project-tools/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
@@ -114,10 +116,12 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
             return workspace.subscribeSave(publish);
         };
         const onSelectionChange = view => workspace.setSaveScope(view === 'project' ? 'tab' : 'project');
+        const createFolder = () => createFolderFromCurrentProject(vm, projectFolderWorkflows(vm)?.createFolder);
         return {onSelectionChange, views: [
             {id: 'project' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? '作品のファイルを検索' : 'Search project files',
                 render: ({locale, query}) =>
-                    renderProjectFolderExplorer(React.createElement, {vm, locale, query, fileStatuses, git, openFile: workspace.open, readBaseline, followFileEdits})},
+                    renderProjectFolderExplorer(React.createElement, {vm, locale, query, createFolder, fileStatuses, git,
+                        openFile: workspace.open, readBaseline, followFileEdits})},
             {id: 'git-history' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? 'コミットを検索' : 'Search commits',
                 render: ({locale, query}) => renderHistoryView(React.createElement, {vm, locale, query})},
             agents

@@ -24,10 +24,12 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
     const root = await mkdtemp(path.join(process.platform === 'darwin' ? '/private/tmp' : tmpdir(), 'tw-save-commit-'));
     t.after(() => rm(root, {recursive: true, force: true}));
     const projectFolder = path.join(root, 'project');
-    await mkdir(projectFolder);
+    await Promise.all(['blank', 'occupied', 'project'].map(name => mkdir(path.join(root, name))));
+    await writeFile(path.join(root, 'occupied', 'keep.txt'), 'Keep this file');
     const git = (...args: string[]) => execFileSync('git', args, {cwd: root, encoding: 'utf8'}).trim();
     await writeFile(path.join(root, 'notes.txt'), 'Existing repository file\n');
     git('init', '-q', '-b', 'main');
+    await writeFile(path.join(root, '.git', 'info', 'exclude'), '/blank/\n/occupied/\n');
     git('config', 'user.name', 'Save fixture');
     git('config', 'user.email', 'save@example.invalid');
     git('add', 'notes.txt');
@@ -62,7 +64,7 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
         return route.fulfill({body, contentType: mime[path.extname(filename)] || 'application/octet-stream'});
     });
     await page.addInitScript(() => {
-        const state = window as unknown as {rootHandle?: FileSystemDirectoryHandle;
+        const state = window as unknown as {rootHandle?: FileSystemDirectoryHandle; folderDestination?: string;
             showDirectoryPicker(options: {id: string}): Promise<FileSystemDirectoryHandle>};
         // CDP supplies a real directory handle. The test does not display an OS picker.
         for (const type of ['dragenter', 'dragover', 'drop']) {
@@ -79,7 +81,8 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
         }
         state.showDirectoryPicker = async options => {
             if (options.id === 'turbowarp-plus-git-root') return state.rootHandle;
-            return state.rootHandle.getDirectoryHandle('project');
+            if (!state.folderDestination) throw new DOMException('Cancelled', 'AbortError');
+            return state.rootHandle.getDirectoryHandle(state.folderDestination);
         };
     });
     await page.goto(origin + prefix + 'editor.html?lang=en');
@@ -90,18 +93,35 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
             data: {items: [], files: [root], dragOperationsMask: 1}});
     }
     await page.waitForFunction(() => Boolean((window as unknown as {rootHandle?: object}).rootHandle));
+    const drawer = page.getByRole('toolbar', {name: 'Drawer views'});
+    await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
+    const create = page.getByRole('button', {name: 'Create Project Folder', exact: true});
+    await create.click();
+    await expect(create).toBeEnabled();
+    const choose = (name: string) => page.evaluate(name => {
+        (window as unknown as {folderDestination: string}).folderDestination = name;
+    }, name);
+    await choose('occupied');
+    await create.click();
+    await expect(page.getByText('Choose an empty folder.', {exact: true})).toBeVisible();
+    assert.equal(await readFile(path.join(root, 'occupied', 'keep.txt'), 'utf8'), 'Keep this file');
+    await choose('blank');
+    await create.click();
+    await expect(page.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
+    const blank = JSON.parse(await readFile(path.join(root, 'blank', 'project.source.json'), 'utf8'));
+    assert.equal(blank.targets.filter(target => target.isStage).length, 1);
     await page.evaluate(bytes => window.vm.loadProject(Uint8Array.from(bytes).buffer), Array.from(sb3));
     const menu = (name: string) => page.getByText(name, {exact: true});
     const command = async (name: string) => {
         await menu('File').click();
         await page.getByRole('button', {name, exact: true}).click();
     };
-    await command('Save As…');
-    const saveAs = page.getByRole('dialog', {name: 'Save As', exact: true});
-    await saveAs.getByLabel('Save format').selectOption('folder');
-    await expect(saveAs.getByLabel('Name', {exact: true})).toBeHidden();
-    await saveAs.getByRole('button', {name: 'Choose Where to Save…'}).click();
-    await expect(saveAs).toBeHidden();
+    if (await drawer.getByRole('button', {name: 'Project folder', exact: true}).getAttribute('aria-pressed') !== 'true') {
+        await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
+    }
+    await choose('project');
+    await create.click();
+    await expect(page.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
     assert.equal(await readFile(path.join(projectFolder, 'assets', md5ext), 'utf8'), svg);
     const volume = async () => JSON.parse(await readFile(path.join(projectFolder, 'project.source.json'), 'utf8')).targets[0].volume;
     const edit = (volume: number) => page.evaluate(value => {
@@ -109,6 +129,7 @@ test('Editor saves an SB3 to an open project folder and commits only its files',
         window.vm.runtime.emitProjectChanged();
     }, volume);
 
+    await drawer.getByRole('button', {name: 'Sprites', exact: true}).click();
     await edit(42);
     await command('Save Project');
     await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder saved.');
