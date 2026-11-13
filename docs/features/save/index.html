@@ -45,6 +45,7 @@
 
 <h2>11.1 上書き保存と名前を変えて保存を使い分ける</h2>
 
+<p>「ファイル」→「プロジェクトを保存」は、現在のプロジェクト全体を開いている SB3 または作品フォルダに保存します。フォルダ内のテキストファイルを個別に編集した場合は、そのタブの「ファイルを保存」を使います。ファイルメニューのショートカット表示は左ドロワーに連動します。スプライト一覧では Ctrl+S／⌘S が「プロジェクトを保存」に、プロジェクトフォルダでは「アクティブなタブを保存」に付きます。プロジェクトフォルダで保存できるタブを選んでいない場合、そのショートカットは何も保存しません。</p>
 <p>「ファイル」→「名前を変えて保存…」で、名前・保存形式・保存先を選んでSB3を作ります。</p>
 <figure class="guide-detail"><a href="../images/save-as-dialog.png"><img src="../images/save-as-dialog.png" width="640" height="292" alt="名前を変えて保存ダイアログ。名前の入力欄、保存形式の選択欄、キャンセルと保存先を選ぶボタンがある。" loading="lazy"></a><figcaption>「名前を変えて保存」。保存先を選べるブラウザーでは「保存先を選ぶ…」、それ以外では「保存」でダウンロードします。</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="名前を変えて保存の保存形式" tabindex="0">
@@ -52,7 +53,7 @@
 <tr><th scope="row">SB3（現在の格納方式）</th><td><a href="#payload-formats">組み込みデータ</a>と<a href="#storage">機能拡張</a>で設定した格納方式のまま保存する</td></tr>
 <tr><th scope="row">SB3（設定対象の台本・素材を同梱）</th><td>HTTPS参照などに設定した台本・素材をSB3の中に入れて保存する。手元で編集を続けるためのSB3を作るときに使う</td></tr>
 </tbody></table></div>
-<ul><li><strong>保存先を選んだ場合。</strong> 選んだファイルが次の「保存」の上書き先になります。保存先の選択をキャンセルすると、以前の上書き先が残ります。</li><li><strong>ダウンロードした場合。</strong> 上書き先は設定されず、「保存」は選べないままです。</li><li><strong>作品フォルダを開いた場合。</strong> 「保存」で<a href="../git/#project-folder">作品フォルダ</a>を更新します。名前を変えて保存すると、作品フォルダとの接続は外れます。</li></ul>
+<ul><li><strong>保存先を選んだ場合。</strong> 選んだファイルが次の「プロジェクトを保存」の上書き先になります。保存先の選択をキャンセルすると、以前の上書き先が残ります。</li><li><strong>ダウンロードした場合。</strong> 上書き先は設定されず、「プロジェクトを保存」は選べないままです。</li><li><strong>作品フォルダを開いた場合。</strong> 「プロジェクトを保存」で<a href="../git/#project-folder">作品フォルダ</a>を更新します。名前を変えて保存すると、作品フォルダとの接続は外れます。</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/387">保存と書き出しの整理</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3保存形式</a></p>
 
 </section>

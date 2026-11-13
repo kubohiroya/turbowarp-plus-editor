@@ -107,11 +107,18 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         await writeFamily();
         const layout = family.packages.find(entry => entry.package === '@kubohiroya/turbowarp-plus-editor-workbench');
         const sourceURL = layout.source.tarball;
-        layout.source.tarball = sourceURL.replace('registry.npmjs.org', 'example.test');
+        layout.source.tarball = 'https://example.test/unreviewed.tgz';
         await writeFamily();
-        assert.match(check().stderr, /Source URL differs from the pin/);
+        assert.match(check().stderr, /Source (URL|metadata) differs from the pin/);
         layout.source.tarball = sourceURL;
         await writeFamily();
+        if (sourceURL.startsWith('notices/')) {
+            const archive = path.join(directory, sourceURL);
+            const bytes = await fs.readFile(archive);
+            await fs.writeFile(archive, 'unreviewed replacement');
+            assert.match(check().stderr, /Source archive differs from the pin/);
+            await fs.writeFile(archive, bytes);
+        }
         await fs.rm(vmLicense);
         assert.match(check().stderr, /Missing notice|ENOENT/);
     } finally { await fs.rm(directory, {recursive: true, force: true}); }

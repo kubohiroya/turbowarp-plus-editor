@@ -10,6 +10,9 @@ import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import targetStyles from '@kubohiroya/turbowarp-plus-editor-workbench/targets.css';
 import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-windows';
 import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
+import {BasicPanel} from './basic-panel.tsx';
+import {createWebPanelHost} from './desktop-panel-host.ts';
+import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {EditorTabLayout} from './editor-tabs.tsx';
 import {stageLauncherSlot, StageDisplayMenuContext, TargetSwitchContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
@@ -56,7 +59,20 @@ function LayoutMenu({label, undockLabel, showUndock, onToggle}) {
     }]} />;
 }
 
-export const layoutViews = createStandardLayout(React, {styles, targetStyles, context: WindowLayoutContext, LayoutMenu});
+const drawerPanelHosts = {
+    project: createWebPanelHost('project-folder', 540, 500),
+    'git-history': createWebPanelHost('git-history', 540, 500),
+    agents: createWebPanelHost('ai-agents', 400, 380)
+};
+
+function DrawerPanel({id, title, dockRequest, renderHeading, renderContent}) {
+    const externalHost = drawerPanelHosts[id];
+    return <BasicPanel id={id} title={title} externalHost={externalHost} externalOnly={Boolean(externalHost)}
+        alwaysShowUndock dockRequest={dockRequest} renderDockHeading={renderHeading} render={renderContent}
+        decorate={decorateSurface} renderInExternalDocument />;
+}
+
+export const layoutViews = createStandardLayout(React, {styles, targetStyles, context: WindowLayoutContext, LayoutMenu, DrawerPanel});
 
 function LayoutDesktop(props) {
     return <WindowDesktop {...props} layoutMenu={layoutFlags.standardLayout} />;
@@ -85,18 +101,27 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
     // The project folder and the local Git panel need a folder picker; both views show what those already hold.
     // The AI agent menu needs nothing of the kind.
     const drawerViews = React.useMemo(() => {
-        const agents = aiAgents.drawerMenu;
-        if (typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker !== 'function') return {agents};
+        const agents = {id: 'agents' as const, render: aiAgents.renderPanel};
+        if (typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker !== 'function') return {views: [agents]};
         const fileStatuses: FollowFileStatuses = (directory, update) => followFileStatuses(vm, directory, update);
         const git: FollowExplorerGit = (directory, update) => followExplorerGit(vm, directory, update);
         const readBaseline = (directory: FileSystemDirectoryHandle, path: string, limit: number) =>
             readProjectHeadFile(vm, directory, path, limit);
-        const {open: openFile} = getDocumentWorkspace(vm);
-        return {views: [
-            {id: 'project' as const, render: ({locale}) =>
-                renderProjectFolderExplorer(React.createElement, {vm, locale, fileStatuses, git, openFile, readBaseline})},
-            {id: 'git-history' as const, render: ({locale}) => renderHistoryView(React.createElement, {vm, locale})}
-        ], agents};
+        const workspace = getDocumentWorkspace(vm);
+        const followFileEdits = (directory: FileSystemDirectoryHandle, update: (paths: readonly string[]) => void) => {
+            const publish = () => update(workspace.fileEdits().filter(file => file.directory === directory).map(file => file.path));
+            publish();
+            return workspace.subscribeSave(publish);
+        };
+        const onSelectionChange = view => workspace.setSaveScope(view === 'project' ? 'tab' : 'project');
+        return {onSelectionChange, views: [
+            {id: 'project' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? '作品のファイルを検索' : 'Search project files',
+                render: ({locale, query}) =>
+                    renderProjectFolderExplorer(React.createElement, {vm, locale, query, fileStatuses, git, openFile: workspace.open, readBaseline, followFileEdits})},
+            {id: 'git-history' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? 'コミットを検索' : 'Search commits',
+                render: ({locale, query}) => renderHistoryView(React.createElement, {vm, locale, query})},
+            agents
+        ]};
     }, [vm]);
     const resizeStage = React.useCallback((surface: HTMLElement) => {
         const renderer = vm.renderer;

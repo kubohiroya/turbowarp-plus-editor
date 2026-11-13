@@ -45,7 +45,7 @@
 </ol>
 </nav>
 
-<p class="guide-note">図版は公開 Editor（<code>67389c2</code>）と GitHub の画面全体です。画像を選ぶと原寸で開けます。</p>
+<p class="guide-note">図版はドロワーとローカル Git を更新した Editor の開発版 と GitHub の画面全体です。画像を選ぶと原寸で開けます。</p>
 <section id="migrate">
 
 <h2>12.1 作品を GitHub に置く</h2>
@@ -88,11 +88,11 @@
 <table><caption>手順ごとの操作場所</caption><thead><tr><th scope="col">手順</th><th scope="col">Plus Editor</th><th scope="col">GitHubの画面・ほかの道具</th></tr></thead><tbody>
 <tr><th scope="row">issue</th><td>—</td><td>GitHubの「Issues」</td></tr>
 <tr><th scope="row">ブランチ</th><td>ローカルGitパネルで作って切り替える</td><td>issueの「Create a branch」、GitHub Desktop、<code>git switch -c</code></td></tr>
-<tr><th scope="row">編集・保存</th><td>「ファイル」→「保存」で作品フォルダに書く</td><td>—</td></tr>
-<tr><th scope="row">コミット</th><td>「変更を確認」で対象を選び、「手元に記録（コミット）」でコミット</td><td>GitHub Desktop、<code>git commit</code></td></tr>
-<tr><th scope="row">push・pull</th><td>GitHub接続が設定されたEditorでは「GitHub 接続」から</td><td>GitHub Desktop、<code>git push</code>・<code>git pull</code></td></tr>
+<tr><th scope="row">編集・保存</th><td>「ファイル」→「プロジェクトを保存」で作品フォルダに書く</td><td>—</td></tr>
+<tr><th scope="row">コミット</th><td>「保存のコミット」で対象を選び、メッセージを入力してコミット</td><td>GitHub Desktop、<code>git commit</code></td></tr>
+<tr><th scope="row">push・pull</th><td>GitHub接続が設定されたEditorでは「GitHub 接続設定…」から</td><td>GitHub Desktop、<code>git push</code>・<code>git pull</code></td></tr>
 <tr><th scope="row">プルリクエスト</th><td>ブロック単位で比較。接続と権限に応じて、比較した版を実行したりレビューを送信したりできる</td><td>GitHub の「Pull requests」、<code>gh pr</code></td></tr>
-<tr><th scope="row">リリース</th><td>—</td><td>GitHubの「Releases」、<code>gh release create</code></td></tr>
+<tr><th scope="row">リリース</th><td>「ファイル」→「リリース…」で npm コマンドのコピー、タグの作成、Pages 向け HTML の送信</td><td>GitHubの「Releases」、<code>gh release create</code></td></tr>
 </tbody></table></div>
 <p>ブラウザーで作品フォルダを読み書きするには、File System Access 対応の Chrome や Edge が必要です。接続と権限は操作ごとに確認できます。 <a href="../git/#github-sync">操作と接続の対応表</a></p>
 
@@ -112,12 +112,12 @@
 <h2>12.4 作業用のブランチを作る</h2>
 
 <p>ブランチを作る前に、手元の <code>main</code> をGitHubの最新に合わせます（<a href="#push">12.7</a> のpull）。そのあと、ローカルGitパネルでブランチを作ります。</p>
-<ol><li>メニューバーの「ステージを開く」の左にあるブランチのボタン（リポジトリを選ぶ前は「Git」と表示されます）を押し、「ローカル Git を開く」を選び、「リポジトリを選択…」でリポジトリのフォルダを選びます。「変更を確認」にある「リポジトリ内の作品を選択」を開き、<code>project/</code> を選んで「この作品を開く」を押します。</li><li>作品の実行を止め、編集をすべて保存し、必要な変更をコミットしておきます。未保存の編集や未コミットの変更があると、ブランチを切り替えられません。</li><li>「手元に記録（コミット）」の「ローカルブランチ」にある「新しいブランチの名前」に、issueの番号と内容が分かる名前（例 <code>12-neko-walk</code>）を入れます。「作ったら切り替える」にチェックし、「ブランチを作る」を押します。</li></ol>
+<ol><li>「ファイル」→「リポジトリを選択…」でリポジトリのフォルダを選びます。上部の「作品を開く」で <code>project/</code> を開きます。</li><li>作品の実行を止め、編集をすべて保存し、必要な変更をコミットしておきます。未保存の編集や未コミットの変更があると、ブランチを切り替えられません。</li><li>「PRを作成」の「ローカルブランチ」にある「新しいブランチの名前」に、issueの番号と内容が分かる名前（例 <code>12-neko-walk</code>）を入れます。「作ったら切り替える」にチェックし、「ブランチを作る」を押します。</li></ol>
 <figure>
 <a href="../images/git-branch-workspace.png"><img src="../images/git-branch-workspace.png" width="1440" height="960" alt="Editor 右上のブランチメニュー。現在のブランチ名、切り替え先、新しいブランチの作成が見える。" loading="lazy"></a>
 <figcaption>メニューバーのブランチ名を押すと、現在のブランチや切り替え先を確認できます。</figcaption>
 </figure>
-<p>GitHubのissueの「Development」→「Create a branch」で作った場合は、手元でfetchしてから、一覧の「GitHub（origin）のブランチ」で「作って切り替える」を押します。GitHub Desktopの「New branch」や <code>git switch -c 12-neko-walk</code> で作った場合は、パネルの「再取得」を押してから「作品を再読込」で開き直します。</p>
+<p>GitHubのissueの「Development」→「Create a branch」で作った場合は、手元でfetchしてから、一覧の「GitHub（origin）のブランチ」で「作って切り替える」を押します。GitHub Desktopの「New branch」や <code>git switch -c 12-neko-walk</code> で作った場合は、パネルの「ローカル状態を更新」を押します。必要に応じて「ファイル」→「プロジェクトフォルダを開く…」で同じフォルダを開き直します。</p>
 
 </section>
 
@@ -125,8 +125,8 @@
 
 <h2>12.5 作品を編集して保存する</h2>
 
-<p>ブロック、変数・リスト、スプライト、コスチューム、音などを編集し、「ファイル」→「保存」を選びます。作品フォルダの <code>project.source.json</code> と、必要に応じて <code>assets/</code> と <code>sb3-source.json</code> が更新されます。保存の前に、フォルダが外部で変更されていないかを確かめます。</p>
-<p>同じリポジトリの作品を更新する間は「保存」を使います。「名前を変えて保存…」で SB3 を作ると、作品フォルダとの接続が外れます。保存済みのファイルの Git 状態は <a href="../git/#folder-files">「作品フォルダ」パネル</a>で確認できます。</p>
+<p>ブロック、変数・リスト、スプライト、コスチューム、音などを編集し、「ファイル」→「プロジェクトを保存」を選びます。作品フォルダの <code>project.source.json</code> と、必要に応じて <code>assets/</code> と <code>sb3-source.json</code> が更新されます。保存の前に、フォルダが外部で変更されていないかを確かめます。</p>
+<p>同じリポジトリの作品を更新する間は「プロジェクトを保存」を使います。「名前を変えて保存…」で SB3 を作ると、作品フォルダとの接続が外れます。保存済みのファイルの Git 状態は <a href="../git/#folder-files">「作品フォルダ」パネル</a>で確認できます。</p>
 <p><a href="../git/#project-folder">作品フォルダを開いて保存する</a></p>
 
 </section>
@@ -135,20 +135,20 @@
 
 <h2>12.6 変更を確認してローカルにコミットする</h2>
 
-<p>「保存」は作品フォルダに書き込みます。ステージすると、その時点のファイルの変更が次のコミットの対象になります。コミットは手元の Git 履歴に追加されます。GitHub に送るときは push を使います。</p>
-
+<p>保存すると編集内容が作品フォルダに書き込まれ、コミットすると選択したファイルの変更が手元の Git 履歴に追加されます。GitHub に送るときは push を使います。</p>
 <ol>
-<li>「変更を確認」の左側でスクリプトやファイルを選び、右側で差分を確認します。作品のコードは変更前と変更後のブロックを並べて表示します。</li>
-<li>差分欄の下にある「次のコミットに追加（ステージ）」を押します。一覧の変更をまとめて含めるときは、左の「すべての変更をステージ」を使います。</li>
-<li>左の「次のコミット」でファイル数を確かめます。上段の「手元に記録（コミット）」を開き、「コミットメッセージ」を入力して「記録する（コミット）」を押します。例は <code>ネコが進む歩数を変更 (#12)</code> です。</li>
+<li>「ファイルの保存」を開きます。未保存のファイル名を選ぶと、右側で最新コミット（HEAD）との差分を確認できます。「未保存のファイルを保存」を押すと編集内容が作品フォルダに書き込まれます。</li>
+<li>横の「保存のコミット」に切り替えます。ファイル名を押すと、右側で差分を確認できます。作品のコードはスプライトやステージの「コード」を選ぶと、変更前と変更後のブロックで比較できます。</li>
+<li>「その他のファイル」や「ファイル単位の一覧」で、コミットするファイルにチェックを付けます。スプライトや背景の差分を開いて「コミットに含める」で選ぶこともできます。左下のコミット欄で選択件数を確かめ、「コミットメッセージ」に変更内容（例 <code>ネコが進む歩数を変更 (#12)</code>）を入力して「コミット」を押します。</li>
+<li>「PRを作成」のコミット一覧を開き、作成したコミットを選ぶと、含まれた変更を確認できます。</li>
 </ol>
 <figure>
-<a href="../images/current-git-staged.png"><img src="../images/current-git-staged.png" width="1440" height="960" alt="ローカル Git の「手元に記録（コミット）」。左の次のコミット欄にステージ済みのファイルが1件あり、メッセージ欄が見える。" loading="lazy"></a>
-<figcaption>作品データのファイルをステージしたところ。「次のコミット」に対象が 1 件と表示され、コミットメッセージを入力できます。</figcaption>
+<a href="../images/current-git-commit.png"><img src="../images/current-git-commit.png" width="1440" height="960" alt="ローカル Git の「保存のコミット」。project.source.json だけが選択され、コミットメッセージを入力した状態。" loading="lazy"></a>
+<figcaption>ネコのコードの差分から作品データを選び、左下の固定欄でコミットメッセージを入力した例。README.md の変更は手元に残ります。</figcaption>
 </figure>
 <h3 id="commit-author">コミットの作者を設定する</h3>
 <p>作品リポジトリの <code>user.name</code> と <code>user.email</code> が優先されます。Desktop が Git のグローバル作者設定を Editor に渡すビルドでは、リポジトリに作者情報がないときにその設定を使えます。</p>
-<p>作者が未設定と表示されたら、作品のリポジトリをターミナルで開き、そのリポジトリに名前とメールアドレスを設定します。公開リポジトリには、GitHub のアカウント設定で確認した <code>noreply</code> アドレスも使えます。設定後に「再取得」を押して、もう一度コミットします。</p>
+<p>作者が未設定と表示されたら、作品のリポジトリをターミナルで開き、そのリポジトリに名前とメールアドレスを設定します。公開リポジトリには、GitHub のアカウント設定で確認した <code>noreply</code> アドレスも使えます。設定後に「ローカル状態を更新」を押して、もう一度コミットします。</p>
 <pre><code>git config --local user.name "あなたの名前"
 git config --local user.email "you@example.com"</code></pre>
 <p><a href="../git/#local-git">ローカルGitで変更と履歴を確かめる</a> · <a href="../git/#block-diff">作品の変更をブロックで比べる</a></p>
@@ -159,12 +159,12 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.7 GitHubに送る（push）</h2>
 
-<p>GitHub接続が設定されたEditorでは、ローカル Git の「GitHub に送る」から「GitHub 接続」を開きます。</p>
-<ol><li>「接続方式」を選び、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>「GitHub に送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「GitHub の変更を取得（fetch）」と「GitHub から取り込む（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
+<p>「ファイル」→「GitHub 接続設定…」を開きます。</p>
+<ol><li>「接続方式」を選び、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>接続後に「マージ」を開き、「現在のブランチを送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「リモートの情報を更新（fetch）」と「手元のブランチとファイルを更新（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
 <h3 id="push-without-connection">接続がない場合</h3>
-<p>「GitHub 接続先が設定されていません。」と表示されるEditorでは、次のいずれかでpush・pullを行います。</p>
+<p>「GitHub 接続設定…」を開いて「GitHub 接続先が設定されていません。」と表示された場合は、次のいずれかでpush・pullを行います。</p>
 <ul><li><strong>GitHub Desktop。</strong> 「File」→「Add local repository」でリポジトリのフォルダを追加し、「Push origin」（新しいブランチでは「Publish branch」）で送ります。取り込むときは「Fetch origin」→「Pull origin」を使います。</li><li><strong>コマンド。</strong> 新しいブランチを初めて送るときは <code>git push -u origin 12-neko-walk</code>、取り込むときは <code>git pull --ff-only</code> を実行します。</li></ul>
-<p>外で操作したあとは、パネルの「再取得」を押し、取り込んだ場合は「作品を再読込」で開き直します。Editorは開き直す前に保存していない編集を確かめます。</p>
+<p>外で操作したあとは、リポジトリ名の横の「ローカル状態を更新」を押し、作品を開き直す場合は「ファイル」→「プロジェクトフォルダを開く…」で同じフォルダを選びます。Editorは開き直す前に保存していない編集を確かめます。</p>
 <p><a href="../git/#github-sync">GitHubと同期する</a></p>
 
 </section>
@@ -173,6 +173,12 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.8 プルリクエストを作る</h2>
 
+<p>GitHub 接続で書き込みが許可されている場合は、ローカル Git の「PRを作成」で反映先を選び、含めるコミットにチェックを付けます。「PRのタイトル」と「PRの説明」を記入し、「PRの内容を確認」から「PRを作成」に進みます。Editor は選んだコミットを反映先に適用し、PR 用のブランチを GitHub に送ります。選んだコミットが別のコミットに依存して適用できない場合は、必要なコミットを追加します。</p>
+<figure>
+<a href="../images/current-git-create-pr.png"><img src="../images/current-git-create-pr.png" width="1440" height="1220" alt="ローカル Git の PR 作成画面。3 件のコミットから 2 件を選び、タイトルと説明を記入している。" loading="lazy"></a>
+<figcaption>検証用リポジトリで、3 件のコミットから 2 件を選んで PR を作る直前の Editor 実画面。</figcaption>
+</figure>
+<h3>GitHub の画面で PR を作る</h3>
 <p>作業ブランチを GitHub に送ってから、GitHub の画面で PR を作ります。 <a href="#push">GitHub に送る手順</a></p>
 
 <ol><li>GitHubでリポジトリを開くと、送ったブランチの「Compare &amp; pull request」が表示されます。押して、「base: main ← compare: 12-neko-walk」になっていることを確かめます。</li><li>書式に沿って、何を変えたか、変えたスプライト・ステージ、確かめ方を書きます。既定ブランチにマージしたときに Issue も閉じるには、本文に <code>Closes #12</code> と書きます。関連付けだけなら <code>#12</code> と書きます。</li><li>「Create pull request」を押します。コマンドでは <code>gh pr create --fill</code> で作れます。</li></ol>
@@ -186,9 +192,10 @@ git config --local user.email "you@example.com"</code></pre>
 <h2>12.9 確かめてマージする</h2>
 
 <p>確かめる人は、変更をスクリプト単位で読みます。</p>
-<p>ローカル Git の「GitHub に送る」から「プルリクエスト」を開くと、ステージ・スプライトごとに、変更前と変更後のスクリプトをブロックで比べられます。読み終えたスクリプトには「確認済み」を付けられます。</p>
-<ul><li><strong>公開リポジトリ。</strong> 一覧から選びます。</li><li><strong>非公開リポジトリ。</strong> リポジトリへのアクセスを許可した「GitHub 接続」で一覧から選びます。ベースを取得できなければ、比較するブランチを指定します。</li></ul>
-<p>接続中に開いた PR は、「pr/… として手元で開く」で比較した版に切り替えて実行できます。</p>
+<p>ローカル Git の「マージ」を開くと、ステージ・スプライトごとに、変更前と変更後のスクリプトをブロックで比べられます。読み終えたスクリプトには、比較枠の右下で「確認済み」を付けられます。</p>
+<ul><li><strong>公開リポジトリ。</strong> 一覧から選びます。</li><li><strong>非公開リポジトリ。</strong> 「GitHub 接続設定…」でリポジトリへのアクセスを許可すると、一覧から選べます。反映先を取得できず、候補が複数ある場合は、比較先のブランチを選べます。</li></ul>
+<p>同期欄の <code>main</code> は現在のローカルブランチです。「PRの作品を開いて動作確認」を押すと、PR #42 を指すローカルブランチ <code>pr/42</code> に切り替えます。</p>
+<p>右ペインの PR 番号とタイトルは GitHub へのリンクです。PR 見出しの右上にあるアイコンから作品の差分をエディタの別タブで開けます。変更ファイルのカード右上にある「別ウィンドウで開く」では、そのファイルの差分を別ウィンドウで確認できます。接続中に開いた PR は、「PRの作品を開いて動作確認」で比較した版に切り替えて実行できます。</p>
 <h3>接続がない場合</h3>
 <p>公開 PR は Editor の「変更ファイル」で確認できます。非公開 PR は、GitHub にログインして PR の「Files changed」で差分を確認します。動作を確かめるには、「Checks」から <a href="#check-project">「Check project」の SB3</a> を取得し、Editor の「ファイル」から開きます。</p>
 <p>レビューを送るには、<a href="../git/#send-review">Editor のレビュー送信の条件</a>を確認します。接続でレビュー送信を許可できるときは、比較画面の「レビューを送信」から操作できます。GitHub で送るときは、PR の「Files changed」か「Conversation」にコメントを書きます。修正を同じ作業ブランチに push すると PR が更新されます。PR が更新されると、Editor では内容が変わったスクリプトの「確認済み」が外れます。</p>
@@ -196,9 +203,19 @@ git config --local user.email "you@example.com"</code></pre>
 <a href="../images/github-files-changed.png"><img src="../images/github-files-changed.png" width="1440" height="960" alt="GitHub の公開 PR #219。上部に Checks と Files changed、左に変更ファイル一覧、右に行単位の差分がある。" loading="lazy"></a>
 <figcaption>同じ公開 PR #219 を GitHub の「Files changed」で開いたところ。左のファイル一覧から差分へ移動でき、上部の「Checks」から検査結果へ進めます。</figcaption>
 </figure>
+<h3>Editor でマージする</h3>
+<p>「マージ」の一覧で CI の結果を確かめ、対象の PR を選びます。マージを許可した GitHub 接続で、必要なチェックとレビューを通過すると、PR 上部のマージ状況カードの右側に緑色の「スカッシュしてマージ」が表示されます。「スカッシュしてマージ」を押すと、反映先と対象のコミットを確認するダイアログが開きます。Editor でのマージ方式はスカッシュマージです。PR の差分・CI・マージ可否を読み直すには、PR タイトルの横の「GitHubからPR情報を読み直す」を押します。</p>
+<figure>
+<a href="../images/current-git-merge-ready.png"><img src="../images/current-git-merge-ready.png" width="1440" height="1220" alt="日本語のローカル Git タブ。左にプロジェクトフォルダと CI を通過した PR、右に「概要」タブとマージ状況が表示され、カードの右上に緑色のマージボタンがある。" loading="lazy"></a>
+<figcaption>検証用 PR の CI が成功した状態。「概要」のマージ状況カードで CI とレビューの状態を確認でき、右上のボタンからマージできます。</figcaption>
+</figure>
+<figure>
+<a href="../images/current-pr-files-tab.png"><img src="../images/current-pr-files-tab.png" width="1440" height="1220" alt="日本語の変更ファイルタブでブロック差分と確認済みが表示されている。" loading="lazy"></a>
+<figcaption>「変更ファイル」に切り替えると、ブロック差分と「確認済み」の操作が表示されます。</figcaption>
+</figure>
 <h3>GitHub の画面でマージする</h3>
 <p>「Check project」など必要な検査とレビューが済んだら、対象ブランチと最新の差分を確認し、GitHub で利用可能な方式を選んでマージします。「Squash and merge」は変更を一つのコミットにまとめます。作業ブランチを参照する別の PR がなくなったら、GitHub で「Delete branch」を選べます。</p>
-<p>手元では、ローカル Git の「手元に記録（コミット）」で <code>main</code> に切り替え、<a href="#push">pull</a> で最新を取り込み、「作品を再読込」で開き直します。</p>
+<p>手元では、メニューバーのブランチ名から <code>main</code> に切り替え、<a href="#push">pull</a> で最新を取り込み、「作品を再読込」で開き直します。</p>
 <p><a href="../git/#pull-request-review">プルリクエストをスクリプト単位でレビューする</a></p>
 
 </section>
@@ -207,7 +224,18 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.10 リリースして配る</h2>
 
-<ol><li>GitHubの「Releases」→「Draft a new release」を開きます。</li><li>「Choose a tag」に版の名前（例 <code>v1.0.0</code>）を入れ、「Create new tag on publish」を選びます。「Target」は <code>main</code> にします。</li><li>「Generate release notes」を押すと、マージしたプルリクエストの一覧が入ります。遊ぶ人向けの説明を書き足します。</li><li>「Publish release」を押します。コマンドでは <code>gh release create v1.0.0 --generate-notes</code> で作れます。</li></ol>
+<p>「ファイル」→「リリース…」から、公開するものに応じて次の操作に進みます。</p>
+<ul>
+<li><strong>npm パッケージ。</strong> 「確認コマンドをコピー」を押し、パッケージのディレクトリで <code>npm publish --dry-run</code> を実行します。公開するファイルを確かめてから「公開コマンドをコピー」を押し、認証済みの端末で <code>npm publish</code> を実行します。</li>
+<li><strong>GitHub のリビジョンタグ。</strong> push を許可して GitHub に接続し、対象コミットとタグ名を確かめて「タグを GitHub に送る」を押します。Editor からの push を許可していない場合は、表示されたコマンドをリポジトリの端末で実行できます。</li>
+<li><strong>GitHub Pages。</strong> 「Packager で HTML を書き出す」で、単一の HTML ファイルを生成します。「Pages の公開設定を開く」で、ブランチから公開する設定のブランチとフォルダを確かめます。Editor に戻って「公開先のブランチを取得」を押し、ブランチ、フォルダ（<code>/</code> または <code>/docs</code>）、HTML を選びます。「HTML を GitHub に送る」を押すと、選んだ場所の <code>index.html</code> だけを更新するコミットが送られます。デプロイの状況は GitHub の Pages 設定で確認できます。 <a href="https://docs.github.com/ja/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">GitHub の公開元設定ガイド</a></li>
+</ul>
+<figure>
+<a href="../images/current-git-release-workflow.png"><img src="../images/current-git-release-workflow.png" width="1440" height="1220" alt="日本語のリリース画面に npm パッケージ、GitHub のリビジョンタグ、GitHub Pages の操作が表示されている。" loading="lazy"></a>
+<figcaption>「リリース…」でタグ名と Pages 向け HTML を指定したところ。</figcaption>
+</figure>
+<h3>作品を GitHub Releases で配布する</h3>
+<ol><li>Editor の「ファイル」→「リリース…」で「GitHub Releases を開く」を選びます。GitHub で「Draft a new release」を選びます。</li><li>「Choose a tag」で、公開するコミットに付けたタグ（例 <code>v1.0.0</code>）を選びます。ここでタグを作る場合は、名前を入れて「Create new tag on publish」を選び、対象のブランチを指定します。</li><li>「Generate release notes」を押すと、マージしたプルリクエストの一覧が入ります。遊ぶ人向けの説明を書き足します。</li><li>「Publish release」を押します。コマンドでは <code>gh release create v1.0.0 --generate-notes</code> で作れます。</li></ol>
 <p>リリースを公開すると、Actionsの「Release」がそのタグの作品フォルダからSB3を作り、<code>&lt;名前&gt;-v1.0.0.sb3</code>（名前は <code>scratch-project.json</code> の <code>sb3Name</code>）と <code>SHA256SUMS.txt</code> をリリースに添付します。添付されたSB3は、TurboWarpやScratchで開けます。Scratchの作品ページも新しくするには、ScratchのエディターでSB3を読み込み、「今すぐ保存」で上書きします。</p>
 <p>版の名前は、不具合の修正だけなら最後の数字（<code>v1.0.1</code>）、遊べることが増えたら真ん中の数字（<code>v1.1.0</code>）を上げると、遊ぶ人に変更の大きさが伝わります。</p>
 <p><a href="../save/">保存して配布する</a></p>
@@ -223,7 +251,7 @@ git config --local user.email "you@example.com"</code></pre>
 <div class="table-scroll" role="region" aria-label="よくある表示と対処" tabindex="0">
 <table><caption>よくある表示と対処</caption><thead><tr><th scope="col">表示・状況</th><th scope="col">対処</th></tr></thead><tbody>
 <tr><th scope="row">ブランチを切り替えられない</th><td>実行を止め、編集を保存してコミット（または取り消し）してから切り替える</td></tr>
-<tr><th scope="row">「Editor の外でリポジトリが変更されました」</th><td>「再取得」を押す。作品が変わっていれば「作品を再読込」で開き直す</td></tr>
+<tr><th scope="row">「Editor の外でリポジトリが変更されました」</th><td>「ローカル状態を更新」を押す。作品が変わっていればファイルメニューから同じフォルダを開き直す</td></tr>
 <tr><th scope="row">pullできない（fast-forwardできない）</th><td>手元と GitHub の両方に新しいコミットがある。GitHub Desktopかコマンドで取り込むか、上の「作り直す」方法を使う</td></tr>
 <tr><th scope="row">「Check project」が失敗する</th><td>失敗したステップのログを開く。作品フォルダの外で <code>assets/</code> のファイルを消したり名前を変えたりした場合は、Editorで開いて保存し直す</td></tr>
 <tr><th scope="row">コミットの作者が設定されていない</th><td><a href="#commit-author">リポジトリに作者を設定する</a></td></tr>

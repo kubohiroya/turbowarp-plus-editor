@@ -1,11 +1,16 @@
-import {mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
+import {followProjectFolder, mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-views';
-import {createScratchBlocksDiffRenderer, mountGitPanel, openProjectComparison} from '@kubohiroya/turbowarp-plus-editor-git';
+import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, pushPublicationCommit}
+    from '@kubohiroya/turbowarp-plus-editor-git';
 import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
-import type {ScratchBlockDiffRendererOptions} from '@kubohiroya/turbowarp-plus-editor-git';
+import type {PullRequestPublication, ScratchBlockDiffRendererOptions} from '@kubohiroya/turbowarp-plus-editor-git';
+import {bindDesktopPublicationPushSession, createProjectPublication} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
+import type {PublicationBridge} from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
+import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-editor-ui/cloudflare-publication';
 import {loadedProjectTitle} from './project-tools/index.ts';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
@@ -37,13 +42,39 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     blocks: Pick<EditorHost, 'deserializeBlocks' | 'createBlockContainer'>,
     attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
     const view = document?.defaultView as Window & {
-        EditorPreload?: {localGitAuth?: DesktopGitPreload | null; localGit?: DesktopGitPreload | null}; ReduxStore?: GuiStore;
+        EditorPreload?: {localGitAuth?: DesktopGitPreload | null; localGit?: DesktopGitPreload | null;
+            localGitPublication?: PublicationBridge | null}; ReduxStore?: GuiStore;
     };
     if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
+    const cloudflare = typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
     const connectionSettings = localGit ? createGitConnectionSettings({
         desktop: view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit,
-        cloudflare: typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__
+        cloudflare
     }) : undefined;
+    const desktopBridge = view.EditorPreload?.localGitPublication;
+    const cloudflareBridge = cloudflare && connectionSettings && createCloudflarePublicationBridge({
+        ...cloudflare, view, getSession: connectionSettings.getSession
+    });
+    function publicationPort(bridge: PublicationBridge | undefined,
+        bindPushSession?: NonNullable<typeof cloudflareBridge>['bindPushSession']): PullRequestPublication | undefined {
+        if (!bridge || !connectionSettings) return undefined;
+        const {getSession} = connectionSettings;
+        return {
+            pullRequestChecks: bridge.pullRequestChecks,
+            mergeStatus: bridge.mergeStatus,
+            mergePullRequest: bridge.mergePullRequest,
+            prepare: ({root, guard, commit}) => createProjectPublication({bridge, guard,
+                inspect: () => inspectPublicationRepository({root, getSession, guard, write: false}),
+                async push(options, job) {
+                    const session = bindPushSession?.(job) ??
+                        await bindDesktopPublicationPushSession(getSession, options.remote, job);
+                    await pushPublicationCommit({root, ...options, getSession: session, guard});
+                }
+            }).prepare(commit)
+        };
+    }
+    const desktopPublication = publicationPort(desktopBridge ?? undefined);
+    const cloudflarePublication = publicationPort(cloudflareBridge || undefined, cloudflareBridge ? cloudflareBridge.bindPushSession : undefined);
     if (view.EditorPreload && !connectionSettings?.modes.length) return null;
     const store = view.ReduxStore;
     if (!store || store.getState().scratchGui.vm !== vm) return null;
@@ -95,28 +126,82 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     }});
     if (folder) folders.set(vm, folder);
     if (!folder || !localGit) return folder;
+    const workspace = getDocumentWorkspace(vm);
+    const dirtyFiles = () => workspace.fileEdits().filter(file => file.directory === folder.directory);
     gitPanel = mountGitPanel({vm: host.vm, document, host: {
         connectionSettings,
+        pullRequestPublication: () => connectionSettings?.getView().mode === 'desktop' ?
+            desktopPublication : cloudflarePublication,
         // Stage and commit with the repository's own Git identity (#318).
         localWrite: {},
         renderReviewBlock,
         openProject: folder.openDirectory,
+        projectDirectory: () => folder.directory,
+        unsavedProjectPaths() {
+            const paths = host.isProjectDirty() ? folder.unsavedPaths() : new Set<string>();
+            return paths && new Set([...paths, ...dirtyFiles().map(file => file.path)]);
+        },
+        readUnsavedProjectFile(path) {
+            const edit = dirtyFiles().find(file => file.path === path);
+            return edit ? edit.readUnsaved?.() : host.isProjectDirty() ? folder.readUnsavedFile(path) : undefined;
+        },
+        subscribeProjectEdits(listener) {
+            const stopProject = folder.subscribeEdits(listener);
+            const stopFiles = workspace.subscribeSave(listener);
+            return () => {stopProject(); stopFiles();};
+        },
+        async saveProjectFiles() {
+            const directory = folder.directory;
+            await flushPendingSurfaceEdits();
+            if (directory !== folder.directory) throw new Error('Project folder changed');
+            if (host.isProjectDirty()) await folder.save();
+            for (const file of dirtyFiles()) {
+                if (directory !== folder.directory) throw new Error('Project folder changed');
+                await file.save();
+                if (file.isDirty()) throw new Error('A file still has unsaved changes');
+            }
+        },
         // A transient tab beside the code, as the YAML documents open; the folder handle cannot outlive a reload.
-        openPanel: request => getDocumentWorkspace(vm).open({...request, transient: true}),
+        openPanel: request => workspace.open({...request, transient: true,
+            pinWithProjectFolder: request.reference.documentId === 'local-git'}),
         // The same route as project search, so the code opens where people already work.
         openTargetCode(targetId) {
             const navigation = connectionFor(vm.runtime as unknown as Parameters<typeof connectionFor>[0]).navigation;
             if (!navigation || !activateTargetView(navigation, targetId, 0)) vm.setEditingTarget(targetId);
         },
         getWorkspace: async () => (await host.getBlockly()).getMainWorkspace() as never,
-        isProjectDirty: host.isProjectDirty,
+        isProjectDirty: () => host.isProjectDirty() || dirtyFiles().length > 0,
         isProjectRunning: host.isRunning,
         subscribe(listener) {
             const loaded = () => listener('loaded');
             const unsubscribe = host.subscribe(() => listener('changed'));
+            const stopFiles = workspace.subscribeSave(() => listener('changed'));
+            let directory = folder.directory;
+            const unfollow = followProjectFolder(vm, (_folder, next) => {
+                if (next === directory) return;
+                directory = next;
+                listener('folder');
+            });
             vm.runtime.on('PROJECT_LOADED', loaded);
-            return () => {unsubscribe(); vm.runtime.off('PROJECT_LOADED', loaded);};
+            return () => {unfollow(); unsubscribe(); stopFiles(); vm.runtime.off('PROJECT_LOADED', loaded);};
         }
     }});
-    return {...folder, dispose() {gitPanel?.dispose(); folder.dispose();}};
+    let disposed = false;
+    let scheduled = false;
+    const ensureProjectTab = () => {
+        if (scheduled || workspace.saveScope !== 'tab') return;
+        scheduled = true;
+        queueMicrotask(() => {
+            scheduled = false;
+            if (!disposed && workspace.saveScope === 'tab') gitPanel?.open(document.documentElement.lang || locale, true);
+        });
+    };
+    const stopProjectTab = workspace.subscribeSave(ensureProjectTab);
+    ensureProjectTab();
+    return {...folder, dispose() {
+        disposed = true;
+        stopProjectTab();
+        gitPanel?.dispose();
+        folder.dispose();
+    }};
 }
