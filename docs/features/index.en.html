@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="A guide to TurboWarp Plus features, from opening a project and arranging the screen to searching and editing blocks and documents, managing work with Git, and saving and distributing it. Organized into 12 topic pages.">
+<link rel="stylesheet" href="guide.css">
+<link rel="alternate" hreflang="ja" href="index.html">
+</head>
+<body>
+<header><a href="../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="eyebrow">Feature guide · Updated November 14, 2026 · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<h1>Making projects with TurboWarp Plus</h1>
+<p class="lead">This guide covers TurboWarp Plus from start to finish across 12 topic pages: opening a project, arranging the screen, editing while searching the whole project, managing it with Git, handing it over as an SB3 or a single HTML file, and developing it on GitHub.</p>
+<p><a href="../editor.html?lang=en">Open the editor in English</a> · <a href="sb3-compatibility.en.md">SB3 compatibility with Scratch and TurboWarp, and feature list (Markdown)</a> · <a href="images/capture.json">How the screenshots were taken</a></p>
+<p>Plus Editor opens SB3 files saved by both Scratch 3 and standard TurboWarp. Some of the features Plus builds into the editor (added features) also need an extension loaded by the project (a Scratch or TurboWarp extension) or data made for it.</p>
+<p class="guide-note">Unless a section names the version it was checked on, command names and layouts were checked on the public editor as of November 14, 2026 (<code>f322178</code>, TurboWarp Plus Editor 0.2.0-rc.4). “In development” marks features checked on a prototype or development build, “Prototype” marks features that are available on the public editor but limited in scope, and “Requires a supported extension” marks features that need a matching extension. Screenshots show the screen at the time they were taken, with the editor running in English.</p>
+<h2 id="tutorial">Try it with the Ball Demo</h2>
+<p>For readers who have used Scratch a little: switching views, editing lists and copying code, shown with real screens and a sample SB3. <a href="ball-demo/index.en.html">English</a> · <a href="ball-demo/" hreflang="ja" lang="ja">日本語</a></p>
+<h2 id="contents">Topics</h2>
+<div class="topic-cards">
+<section class="topic-card" id="topic-open">
+<h3><a href="open/index.en.html">1. Open projects and prepare extensions</a></h3>
+<p>Creating projects and opening SB3 files, loading progress, adding extensions and reviewing them before they run, diagnostics.</p>
+<ol>
+<li><a href="open/index.en.html#start">Start a new project or open an SB3</a></li>
+<li><a href="open/index.en.html#loading">Follow the loading progress</a></li>
+<li><a href="open/index.en.html#extensions">Add extensions from the catalog</a></li>
+<li><a href="open/index.en.html#review">Review how extensions will run before opening a project</a></li>
+<li><a href="open/index.en.html#retry">When an extension fails to load</a></li>
+<li><a href="open/index.en.html#project-diagnostics">Read the diagnostics when a project will not open</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-screen">
+<h3><a href="screen/index.en.html">2. Screen layout and menus</a></h3>
+<p>The menu bar and the switcher on the left edge, the TurboWarp Plus menu, the File and Edit menus, extension buttons on the right, layouts.</p>
+<ol>
+<li><a href="screen/index.en.html#menu-bar">The menu bar</a></li>
+<li><a href="screen/index.en.html#plus-menu">The TurboWarp Plus menu</a></li>
+<li><a href="screen/index.en.html#file-menu">The File menu</a></li>
+<li><a href="screen/index.en.html#edit-menu">The Edit menu and shortcuts</a></li>
+<li><a href="screen/index.en.html#extension-controls">Extension buttons and the debugger at the top right</a></li>
+<li><a href="screen/index.en.html#layout">Choose between the Plus layout and the Scratch layout</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-sprites">
+<h3><a href="sprites/index.en.html">3. Edit sprites and the backdrop</a></h3>
+<p>The sprite list, tabs and the icons on the left edge, costumes and sounds, properties, variables and lists, messages, the backdrop.</p>
+<ol>
+<li><a href="sprites/index.en.html#sprite-drawer">Find and pin sprites in the sprite list</a></li>
+<li><a href="sprites/index.en.html#sprite-tabs">Sprite tabs and the icons on the left edge</a></li>
+<li><a href="sprites/index.en.html#media-panes">Edit costumes and sounds</a></li>
+<li><a href="sprites/index.en.html#variable-pane">Edit properties, variables and lists</a></li>
+<li><a href="sprites/index.en.html#messages">Check who sends and receives messages</a></li>
+<li><a href="sprites/index.en.html#backdrop">Edit the backdrop</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-stage">
+<h3><a href="stage/index.en.html">4. Open the stage and run your project</a></h3>
+<p>Ways to open the stage, the drawer on the right edge and run controls, the display menu, tabs and separate windows.</p>
+<ol>
+<li><a href="stage/index.en.html#stage-open">Open the stage from the menu bar</a></li>
+<li><a href="stage/index.en.html#stage-controls">Run your project from the drawer on the right edge</a></li>
+<li><a href="stage/index.en.html#stage-menu">The stage display menu</a></li>
+<li><a href="stage/index.en.html#dock">Move the stage into the workspace or a separate window</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-workspace">
+<h3><a href="workspace/index.en.html">5. Split the workspace and open panels separately</a></h3>
+<p>Resizing, splitting panels, several code views, separate windows, restoring the layout.</p>
+<ol>
+<li><a href="workspace/index.en.html#splitter">Resize the work areas by dragging the dividers</a></li>
+<li><a href="workspace/index.en.html#split-panes">Split panels side by side or top and bottom</a></li>
+<li><a href="workspace/index.en.html#multi-edit-view">Compare several code views side by side</a></li>
+<li><a href="workspace/index.en.html#panel-popout">Open an editing panel in a separate window</a></li>
+<li><a href="workspace/index.en.html#detached-panels">Move the sprite list to a separate window</a></li>
+<li><a href="workspace/index.en.html#workspace-restore">Restore the layout the next time you open a project</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-blocks">
+<h3><a href="blocks/index.en.html">6. Find, place and organize blocks</a></h3>
+<p>The horizontal palette and its search, category flyouts, reordering, a separate palette window, delete preview, the minimap, context menus.</p>
+<ol>
+<li><a href="blocks/index.en.html#palette">Place blocks from the horizontal palette</a></li>
+<li><a href="blocks/index.en.html#palette-search">Search for blocks within a palette category</a></li>
+<li><a href="blocks/index.en.html#palette-size">Resize a category flyout</a></li>
+<li><a href="blocks/index.en.html#palette-order">Reorder the categories</a></li>
+<li><a href="blocks/index.en.html#palette-popout">Open the block palette in a separate window</a></li>
+<li><a href="blocks/index.en.html#delete-preview">Delete blocks by dropping them on the palette</a></li>
+<li><a href="blocks/index.en.html#minimap">Move around long code with the minimap and zoom</a></li>
+<li><a href="blocks/index.en.html#context-menu">Work with context menus</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-search">
+<h3><a href="search/index.en.html">7. Search and replace across the project</a></h3>
+<p>Project-wide search, search targets (including YAML in the project), replacing a selected match.</p>
+<ol>
+<li><a href="search/index.en.html#project-search">Search the whole project</a></li>
+<li><a href="search/index.en.html#search-scope">Choose what to search (including YAML in the project)</a></li>
+<li><a href="search/index.en.html#replace">Replace the selected match</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-documents">
+<h3><a href="documents/index.en.html">8. Edit extension data and documents</a></h3>
+<p>Form editing, external YAML and documents in the project, YAML tabs, previewing assets and scenes.</p>
+<ol>
+<li><a href="documents/index.en.html#forms">Edit block values in a form</a> <span class="badge">Requires a supported extension</span></li>
+<li><a href="documents/index.en.html#documents">Choose between external YAML and documents and blocks in the project</a> <span class="badge">Requires a supported extension</span></li>
+<li><a href="documents/index.en.html#yaml-tabs">Open YAML from the project in a tab next to the code</a> <span class="badge">Requires a supported extension</span></li>
+<li><a href="documents/index.en.html#asset-preview">View or play assets before choosing them</a> <span class="badge">Requires a supported extension</span></li>
+<li><a href="documents/index.en.html#runtime">Preview scenes and behavior before applying them</a> <span class="badge">Requires a supported extension</span></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-reuse">
+<h3><a href="reuse/index.en.html">9. Reuse scripts and assets</a></h3>
+<p>Transferring scripts and the stage, adding bundled assets.</p>
+<ol>
+<li><a href="reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a></li>
+<li><a href="reuse/index.en.html#bundle-assets">Add bundled assets as backdrops, costumes and sounds</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-git">
+<h3><a href="git/index.en.html">10. Manage projects with project folders and Git</a></h3>
+<p>Project folder files and their Git status, commits and branches, block diffs, syncing with GitHub and reviewing PRs.</p>
+<ol>
+<li><a href="git/index.en.html#sb3-toolchain">Manage projects and extensions with sb3-toolchain</a></li>
+<li><a href="git/index.en.html#project-folder">Open and save a project folder</a></li>
+<li><a href="git/index.en.html#folder-files">See project folder files and their Git status</a></li>
+<li><a href="git/index.en.html#local-git">Check changes and history with local Git</a></li>
+<li><a href="git/index.en.html#block-diff">Compare project changes as blocks</a></li>
+<li><a href="git/index.en.html#github-sync">Sync with GitHub (fetch, pull, push)</a></li>
+<li><a href="git/index.en.html#pull-request-review">Review pull requests script by script</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-save">
+<h3><a href="save/index.en.html">11. Save and distribute</a></h3>
+<p>Save and Save as, restore points, project information, URIs, how extensions and assets are stored, exporting.</p>
+<ol>
+<li><a href="save/index.en.html#save">Choose between Save and Save as</a></li>
+<li><a href="save/index.en.html#restore-points">Restore a project from a restore point</a></li>
+<li><a href="save/index.en.html#project-properties">Record project information in the SB3</a></li>
+<li><a href="save/index.en.html#project-uri">Set the project URI and manage the cache</a></li>
+<li><a href="save/index.en.html#storage">Choose how extension code is saved</a></li>
+<li><a href="save/index.en.html#payload-formats">Choose how source data and assets are stored</a></li>
+<li><a href="save/index.en.html#packager">Export a project as a single HTML file</a></li>
+</ol>
+</section>
+<section class="topic-card" id="topic-github">
+<h3><a href="github/index.en.html">12. Develop projects on GitHub</a></h3>
+<p>Move a Scratch project to GitHub and work through issues, branches, commits, pushes, pull requests, merges and releases.</p>
+<ol>
+<li><a href="github/index.en.html#migrate">Put your project on GitHub</a></li>
+<li><a href="github/index.en.html#flow">The development flow and where each step happens</a></li>
+<li><a href="github/index.en.html#issue">Write tasks as issues</a></li>
+<li><a href="github/index.en.html#branch">Create a working branch</a></li>
+<li><a href="github/index.en.html#edit">Edit and save the project</a></li>
+<li><a href="github/index.en.html#commit">Review changes and commit locally</a></li>
+<li><a href="github/index.en.html#push">Send to GitHub (push)</a></li>
+<li><a href="github/index.en.html#pull-request">Create a pull request</a></li>
+<li><a href="github/index.en.html#merge">Check and merge</a></li>
+<li><a href="github/index.en.html#release">Release and distribute</a></li>
+<li><a href="github/index.en.html#trouble">When you hit a conflict or get stuck</a></li>
+</ol>
+</section>
+</div>
+<h2 id="comparison">What Plus adds to standard TurboWarp</h2>
+<div class="table-scroll" role="region" aria-label="Standard TurboWarp compared with Plus" tabindex="0">
+<table><thead><tr><th scope="col">Task</th><th scope="col">Standard TurboWarp</th><th scope="col">Added in Plus</th></tr></thead><tbody>
+<tr><th scope="row">Opening projects</th><td>Loading SB3 files and confirming extensions</td><td><a href="open/index.en.html#loading">Loading progress</a>, <a href="open/index.en.html#extensions">Official catalog</a>, <a href="open/index.en.html#review">Reviewing how extensions run</a>, <a href="open/index.en.html#project-diagnostics">Loading diagnostics</a></td></tr>
+<tr><th scope="row">Screen and menus</th><td>Menu bar and controls beside the stage</td><td><a href="screen/index.en.html#menu-bar">Menu bar with Git, recording and debugging</a>, <a href="screen/index.en.html#edit-menu">Edit menu and shortcuts</a>, <a href="screen/index.en.html#extension-controls">Extension buttons at the top right</a></td></tr>
+<tr><th scope="row">Sprites and stage</th><td>Sprite list under the stage and a fixed stage</td><td><a href="sprites/index.en.html#sprite-drawer">Pinnable sprite list</a>, <a href="sprites/index.en.html#variable-pane">Managing properties, variables and lists</a>, <a href="sprites/index.en.html#messages">Message senders, receivers and relation diagram</a>, <a href="stage/index.en.html#stage-open">Opening the stage in a window, a tab or a drawer</a></td></tr>
+<tr><th scope="row">Arranging the workspace</th><td>Fixed layout of code, stage and sprites</td><td><a href="workspace/index.en.html#split-panes">Split panels</a>, <a href="workspace/index.en.html#panel-popout">Panels in separate windows</a>, <a href="workspace/index.en.html#workspace-restore">Per-project layout restore</a></td></tr>
+<tr><th scope="row">Editing</th><td>Vertical block palette</td><td><a href="blocks/index.en.html#palette-search">Horizontal palette with search</a>, <a href="blocks/index.en.html#minimap">Minimap</a>, <a href="blocks/index.en.html#context-menu">Context menus with icons</a></td></tr>
+<tr><th scope="row">Search and replace</th><td>None</td><td><a href="search/index.en.html#project-search">Project-wide search</a>, <a href="search/index.en.html#search-scope">Searching YAML in the project</a>, <a href="search/index.en.html#replace">Replacing a selected match</a></td></tr>
+<tr><th scope="row">Extension data</th><td>Block input fields</td><td><a href="documents/index.en.html#forms">Forms</a>, <a href="documents/index.en.html#yaml-tabs">YAML tabs</a>, <a href="documents/index.en.html#runtime">Previews</a></td></tr>
+<tr><th scope="row">Reuse</th><td>Backpack</td><td><a href="reuse/index.en.html#transfer">File transfer of scripts and the stage</a>, <a href="reuse/index.en.html#bundle-assets">Adding bundled assets</a></td></tr>
+<tr><th scope="row">Managing</th><td>Saving one SB3 file at a time</td><td><a href="git/index.en.html#project-folder">Reading and writing project folders</a>, <a href="git/index.en.html#local-git">Local Git</a>, <a href="git/index.en.html#github-sync">Syncing with GitHub</a>, <a href="git/index.en.html#pull-request-review">Block-level PR review</a></td></tr>
+<tr><th scope="row">Saving and sharing</th><td>Saving SB3 and the standard Packager</td><td><a href="save/index.en.html#save">Save and Save as</a>, <a href="save/index.en.html#payload-formats">Storage formats for embedded data</a>, <a href="save/index.en.html#storage">Save formats for extension code</a>, <a href="save/index.en.html#packager">HTML with Plus extensions bundled</a></td></tr>
+</tbody></table></div>
+<script>
+// Redirect anchors from the former single-page guide (#project-properties etc.) to the topic pages.
+(function () { var map = {"asset-preview": "documents/index.en.html#asset-preview", "backdrop": "sprites/index.en.html#backdrop", "backpack": "reuse/index.en.html#transfer", "block-diff": "git/index.en.html#block-diff", "bundle-assets": "reuse/index.en.html#bundle-assets", "context-menu": "blocks/index.en.html#context-menu", "delete-preview": "blocks/index.en.html#delete-preview", "detached-panels": "workspace/index.en.html#detached-panels", "dock": "stage/index.en.html#dock", "documents": "documents/index.en.html#documents", "edit-menu": "screen/index.en.html#edit-menu", "extension-controls": "screen/index.en.html#extension-controls", "extensions": "open/index.en.html#extensions", "file-menu": "screen/index.en.html#file-menu", "forms": "documents/index.en.html#forms", "github-sync": "git/index.en.html#github-sync", "github-workflow": "github/index.en.html#flow", "migrate": "github/index.en.html#migrate", "layout": "screen/index.en.html#layout", "loading": "open/index.en.html#loading", "local-git": "git/index.en.html#local-git", "media-panes": "sprites/index.en.html#media-panes", "menu-bar": "screen/index.en.html#menu-bar", "messages": "sprites/index.en.html#messages", "minimap": "blocks/index.en.html#minimap", "multi-edit-view": "workspace/index.en.html#multi-edit-view", "packager": "save/index.en.html#packager", "palette": "blocks/index.en.html#palette", "palette-order": "blocks/index.en.html#palette-order", "palette-popout": "blocks/index.en.html#palette-popout", "palette-search": "blocks/index.en.html#palette-search", "palette-size": "blocks/index.en.html#palette-size", "panel-popout": "workspace/index.en.html#panel-popout", "payload-formats": "save/index.en.html#payload-formats", "plus-menu": "screen/index.en.html#plus-menu", "project-diagnostics": "open/index.en.html#project-diagnostics", "project-folder": "git/index.en.html#project-folder", "project-properties": "save/index.en.html#project-properties", "project-search": "search/index.en.html#project-search", "project-uri": "save/index.en.html#project-uri", "pull-request-review": "git/index.en.html#pull-request-review", "replace": "search/index.en.html#replace", "restore-points": "save/index.en.html#restore-points", "retry": "open/index.en.html#retry", "review": "open/index.en.html#review", "runtime": "documents/index.en.html#runtime", "save": "save/index.en.html#save", "sb3-toolchain": "git/index.en.html#sb3-toolchain", "search-scope": "search/index.en.html#search-scope", "split-panes": "workspace/index.en.html#split-panes", "splitter": "workspace/index.en.html#splitter", "sprite-drawer": "sprites/index.en.html#sprite-drawer", "sprite-tabs": "sprites/index.en.html#sprite-tabs", "stage-controls": "stage/index.en.html#stage-controls", "stage-menu": "stage/index.en.html#stage-menu", "stage-open": "stage/index.en.html#stage-open", "start": "open/index.en.html#start", "storage": "save/index.en.html#storage", "transfer": "reuse/index.en.html#transfer", "variable-pane": "sprites/index.en.html#variable-pane", "workspace-restore": "workspace/index.en.html#workspace-restore", "yaml-tabs": "documents/index.en.html#yaml-tabs"};
+  var id = decodeURIComponent(location.hash.slice(1));
+  if (id && map[id] && !document.getElementById(id)) location.replace(map[id]); }());
+</script>
+</main>
+<footer><a href="../">Home</a> · <a href="../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../build-info.json">build-info.json</a>.</p></footer>
+</body></html>

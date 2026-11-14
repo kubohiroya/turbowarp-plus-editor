@@ -1,5 +1,7 @@
 # TurboWarp-Plus-EditorのSB3互換性と機能一覧
 
+[English](sb3-compatibility.en.md)
+
 **Scratch 3で保存した `.sb3` も、標準TurboWarpで保存した `.sb3` も、TurboWarp-Plus-Editorで開けます。** どちらも「ファイル」→「SB3ファイルを開く…」を使います。旧形式の `.sb`、`.sb2` も同じ項目で開けます。Scratchの標準ブロックも、Editorに入っているTurboWarp固有のブロックも編集・実行できます。カスタム拡張を含む作品は、その拡張を取得でき、必要な実行許可が得られれば開けます。 [TurboWarpの読み込み手順](https://docs.turbowarp.org/scratch-accounts) · [TurboWarp固有ブロック](https://docs.turbowarp.org/blocks) · [カスタム拡張](https://docs.turbowarp.org/development/extensions/introduction)
 
 判定の基準は、**通常のScratch 3または標準TurboWarpのSB3を、Plus EditorのWeb版で普通に開いた直後**の状態です。作品にはPlus対応の拡張や専用のデータが含まれず、エディターは既定の設定で起動したものとします。「使える」は通常の作品データで使える機能、「使えない」はその状態では使えない機能、「対象外」はエディターの外で行う操作です。追加の拡張・データ・起動設定が必要な場合や、開発版でだけ使える範囲は、右端の列に書いています。

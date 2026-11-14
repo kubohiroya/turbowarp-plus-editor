@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Screen layout and menus — Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="The menu bar of TurboWarp Plus: the TurboWarp Plus menu, the File and Edit menus, keyboard shortcuts, the extension buttons and debugger at the top right, and the Plus and Scratch layouts.">
+<link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="ja" href="index.html">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 2. Screen layout and menus · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 2/12 · Updated November 14, 2026</p>
+<h1>Screen layout and menus</h1>
+<p class="lead">In the menu bar at the very top, project operations are grouped in the "File" and "Edit" menus, and the stage, Git, recording, debugging and extension controls are gathered on the right.</p>
+<nav class="topic-nav" aria-label="Feature guide topics">
+<ul>
+<li><a href="../open/index.en.html">Open projects</a></li>
+<li><a href="../screen/index.en.html" aria-current="page">Menus and screen</a></li>
+<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
+<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../workspace/index.en.html">Workspace</a></li>
+<li><a href="../blocks/index.en.html">Blocks</a></li>
+<li><a href="../search/index.en.html">Search and replace</a></li>
+<li><a href="../documents/index.en.html">Documents and extension data</a></li>
+<li><a href="../reuse/index.en.html">Reuse</a></li>
+<li><a href="../git/index.en.html">Git and project folders</a></li>
+<li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../github/index.en.html">Develop on GitHub</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="On this page">
+<ol>
+<li><a href="#menu-bar">2.1 The menu bar</a></li>
+<li><a href="#plus-menu">2.2 The TurboWarp Plus menu</a></li>
+<li><a href="#file-menu">2.3 The File menu</a></li>
+<li><a href="#edit-menu">2.4 The Edit menu and shortcuts</a></li>
+<li><a href="#extension-controls">2.5 Extension buttons and the debugger at the top right</a></li>
+<li><a href="#layout">2.6 Choose between the Plus layout and the Scratch layout</a></li>
+</ol>
+</nav>
+
+<section id="menu-bar">
+
+<h2>2.1 The menu bar</h2>
+
+<p>The top row of the screen has these elements, from left to right.</p>
+<div class="table-scroll" role="region" aria-label="Parts of the menu bar" tabindex="0">
+<table><caption>Parts of the menu bar</caption><thead><tr><th scope="col">Position</th><th scope="col">Element</th><th scope="col">What it does</th></tr></thead><tbody>
+<tr><th scope="row">Far left</th><td>TurboWarp Plus logo</td><td>Opens the <a href="#plus-menu">TurboWarp Plus menu</a></td></tr>
+<tr><th scope="row">Left</th><td>Project title field (initially "Project")</td><td>Renames the project</td></tr>
+<tr><th scope="row">Left</th><td>"File ▾" and "Edit ▾"</td><td><a href="#file-menu">Project operations</a> and <a href="#edit-menu">editing operations</a></td></tr>
+<tr><th scope="row">Center</th><td>"Search" field</td><td><a href="../search/index.en.html#project-search">Search and replace across the whole project</a></td></tr>
+<tr><th scope="row">Right</th><td>"Git ▾" (shows the branch name once a repository is chosen, for example "main ▾")</td><td>"Choose Repository…", "Open Local Git", and <a href="../git/index.en.html#local-git">switching branches</a></td></tr>
+<tr><th scope="row">Right</th><td>"Open stage" and "▾"</td><td><a href="../stage/index.en.html#stage-open">Open the stage and choose where it opens</a></td></tr>
+<tr><th scope="row">Right</th><td>🎥 (Record)</td><td>Records the stage. While recording, the state, such as a countdown or "Stop recording", appears beside it</td></tr>
+<tr><th scope="row">Right</th><td>"…" (Debugger)</td><td><a href="#extension-controls">Opens the debugger</a></td></tr>
+<tr><th scope="row">Far right</th><td>Extension button area</td><td><a href="#extension-controls">Extension settings and controls</a></td></tr>
+</tbody></table></div>
+<p>Below the menu bar, at the left edge of the screen, are four switches stacked in a column (the activity bar). They choose what the left drawer shows: "Sprites", "Project folder", "Git history" or "AI agents". Above the sprite list are the "Search sprites", "Pin sprite list" and "Undock sprite list" buttons, and below it are "Backdrops" and the button for adding a sprite (<a href="../sprites/index.en.html">Edit sprites and the backdrop</a>, <a href="../git/index.en.html">Manage projects with project folders and Git</a>).</p>
+<figure><a href="../images/en/plus-workspace-current.png"><img src="../images/en/plus-workspace-current.png" width="1440" height="1000" alt="The screen right after startup. The top row has the logo, the project title Project, File, Edit and the search field, and on the right the Git, Open stage and Record buttons. The activity bar and sprite list are at the left edge; in the middle are the Sprite1 tab, the code area and the horizontal palette, with the minimap and zoom buttons at the bottom right." loading="lazy"></a><figcaption>The screen right after startup. The minimap appears at the bottom right when the pointer is over the code area.</figcaption></figure>
+<p>During long operations, the mouse pointer changes to a busy cursor.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">Reorganized menu bar</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">Open the stage from the menu bar</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/476">Record button</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/511">Git button and left drawer</a></p>
+
+</section>
+
+<section id="plus-menu">
+
+<h2>2.2 The TurboWarp Plus menu</h2>
+
+<p>Pressing the logo opens the "TurboWarp Plus project information" menu. It collects TurboWarp's settings, the connection settings for GitHub and AI agents, and information about this editor.</p>
+<figure class="guide-detail"><a href="../images/en/plus-menu.png"><img src="../images/en/plus-menu.png" width="720" height="420" alt="The TurboWarp Plus menu opened from the logo, listing About TurboWarp Plus Editor 0.2.0-rc.4, Display settings, Runtime settings, Addons, Advanced Settings, GitHub Connection Settings…, AI agent settings…, Source code, and Licenses and credits." loading="lazy"></a><figcaption>The menu opened from the logo.</figcaption></figure>
+<ul><li><strong>About TurboWarp Plus Editor …</strong>: Opens the editor's version and build information.</li><li><strong>Display settings</strong>: Switches the theme, language and so on. Switching the language keeps the project you are editing and the extensions you have loaded.</li><li><strong>Runtime settings</strong>: Settings for how TurboWarp runs projects.</li><li><strong>Addons</strong> and <strong>Advanced Settings</strong>: Open TurboWarp's addons and advanced settings.</li><li><strong>GitHub Connection Settings…</strong>: Chooses the default way to connect to GitHub. On the public editor it shows "No GitHub connection is configured." (<a href="../github/index.en.html#push-without-connection">When there is no connection</a>).</li><li><strong>AI agent settings…</strong>: Chooses which services (ChatGPT, Claude and others) appear in the "AI agents" menu at the left edge, and their URLs.</li><li><strong>Source code</strong> and <strong>Licenses and credits</strong>: Open the repository and the licenses of the bundled packages.</li></ul>
+<p>Items with a box-and-arrow icon at the right end open in a new tab.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">TurboWarp Plus menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/392">Icon for items that open in a new tab</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/284">Keep the project when switching languages</a></p>
+
+</section>
+
+<section id="file-menu">
+
+<h2>2.3 The File menu</h2>
+
+<p>Creating, opening, saving and exporting projects, as well as project settings, are in the "File" menu. Items have icons and are grouped by purpose with separators. The local Git panel opens not from the File menu but from "Git ▾" in the menu bar (<a href="../git/index.en.html#local-git">"Check changes and history with local Git"</a>).</p>
+<div class="table-scroll" role="region" aria-label="File menu items" tabindex="0">
+<table><caption>File menu items (top to bottom)</caption><thead><tr><th scope="col">Item</th><th scope="col">What it does</th><th scope="col">Covered in</th></tr></thead><tbody>
+<tr><th scope="row">Create New Project</th><td>Closes the project you are editing and starts a new one</td><td><a href="../open/index.en.html#start">"Start a new project or open an SB3"</a></td></tr>
+<tr><th scope="row">Open SB3 File…</th><td>Opens an .sb3 from your computer. The older .sb and .sb2 formats can also be chosen</td><td><a href="../open/index.en.html#start">"Start a new project or open an SB3"</a>, <a href="../open/index.en.html#loading">"Follow the loading progress"</a></td></tr>
+<tr><th scope="row">Open Project Folder…</th><td>Opens a project folder unpacked by sb3-toolchain</td><td><a href="../git/index.en.html#project-folder">"Open and save a project folder"</a></td></tr>
+<tr><th scope="row">Choose Repository…</th><td>Chooses the repository folder for local Git</td><td><a href="../git/index.en.html#local-git">"Check changes and history with local Git"</a></td></tr>
+<tr><th scope="row">Releases…</th><td>Opens a dialog that combines publishing an npm package, creating a GitHub revision tag and publishing HTML to GitHub Pages</td><td><a href="../github/index.en.html#release">"Develop projects on GitHub"</a>, <a href="../save/index.en.html#packager">"Export a project as a single HTML file"</a></td></tr>
+<tr><th scope="row">Save Project</th><td>Saves the whole current project over the SB3 or project folder you opened</td><td><a href="../save/index.en.html#save">"Choose between Save and Save as"</a></td></tr>
+<tr><th scope="row">Save As…</th><td>Makes an SB3 with the name, location and storage format you choose</td><td><a href="../save/index.en.html#save">"Choose between Save and Save as"</a></td></tr>
+<tr><th scope="row">Export…</th><td>Makes files for running and distributing the project</td><td><a href="../save/index.en.html#packager">"Export a project as a single HTML file"</a></td></tr>
+<tr><th scope="row">Project Properties</th><td>Fills in the title, URI, author and so on, and opens the project diagnostics</td><td><a href="../save/index.en.html#project-properties">"Record project information in the SB3"</a>, <a href="../save/index.en.html#project-uri">"Set the project URI and manage the cache"</a>, <a href="../open/index.en.html#project-diagnostics">"Read the diagnostics when a project will not open"</a></td></tr>
+<tr><th scope="row">Project Data…</th><td>Chooses how source data and assets are stored, and adds bundled assets to the project</td><td><a href="../save/index.en.html#payload-formats">"Choose how source data and assets are stored"</a>, <a href="../reuse/index.en.html#bundle-assets">"Add bundled assets as backdrops, costumes and sounds"</a></td></tr>
+<tr><th scope="row">Extensions…</th><td>Changes how the extensions in use are stored, and adds extensions</td><td><a href="../open/index.en.html#extensions">"Add extensions from the catalog"</a>, <a href="../save/index.en.html#storage">"Choose how extension code is saved"</a></td></tr>
+<tr><th scope="row">Restore Points</th><td>Restores the project from a restore point that TurboWarp records periodically</td><td><a href="../save/index.en.html#save">"Choose between Save and Save as"</a></td></tr>
+</tbody></table></div>
+<p>When the left drawer shows the project folder and a file is open in a tab, "Save Active Tab" is added after "Save As…" (<a href="#edit-menu">the save shortcut</a>).</p>
+
+</section>
+
+<section id="edit-menu">
+
+<h2>2.4 The Edit menu and shortcuts</h2>
+
+<p>The "Edit" menu lists "Restore", "Undo", "Redo", "Cut", "Copy", "Paste", "Find and Replace" and "Rearrange Code Blocks". Each item shows an icon and its keyboard shortcut.</p>
+<figure class="guide-detail"><a href="../images/en/edit-menu.png"><img src="../images/en/edit-menu.png" width="720" height="420" alt="The Edit menu, listing Restore, Undo ⌘Z, Redo ⇧⌘Z, Cut ⌘X, Copy ⌘C, Paste ⌘V, Find and Replace ⇧⌘F and Rearrange Code Blocks." loading="lazy"></a><figcaption>The Edit menu opened on macOS. Items that cannot be used right now are dimmed.</figcaption></figure>
+<div class="table-scroll" role="region" aria-label="Editing shortcuts" tabindex="0">
+<table><caption>Keyboard shortcuts</caption><thead><tr><th scope="col">Action</th><th scope="col">Windows and Linux</th><th scope="col">macOS</th></tr></thead><tbody>
+<tr><th scope="row">Undo</th><td>Ctrl+Z</td><td>⌘Z</td></tr>
+<tr><th scope="row">Redo</th><td>Ctrl+Y</td><td>⇧⌘Z</td></tr>
+<tr><th scope="row">Cut, copy and paste</th><td>Ctrl+X, C, V</td><td>⌘X, C, V</td></tr>
+<tr><th scope="row">Search the whole project</th><td>Ctrl+F</td><td>⌘F</td></tr>
+<tr><th scope="row">Find and replace</th><td>Ctrl+Shift+F</td><td>⇧⌘F</td></tr>
+<tr><th scope="row">Save (depending on what the left drawer shows)</th><td>Ctrl+S</td><td>⌘S</td></tr>
+</tbody></table></div>
+<ul><li>"Undo" and "Redo" work on the history of the code view you are working in.</li><li>"Cut" and "Copy" work on blocks selected in the code view. "Paste" can be chosen when there are copied blocks.</li><li>"Find and Replace" opens the <a href="../search/index.en.html#project-search">project-wide search</a> panel. It is the same panel as the search field in the top row: if the search field contains text, the cursor moves to the "Replace with" field; if it is empty, the cursor moves to the search field.</li><li>"Rearrange Code Blocks" opens a dialog that rearranges the scripts in the code view (<a href="../workspace/index.en.html#multi-edit-view">Change how code is arranged</a>).</li></ul>
+<p>When the left drawer shows the sprite list, Ctrl+S or ⌘S saves the whole project. When it shows the project folder, it saves the file in the active tab. You can see which one it is assigned to by checking which "File" menu item shows the shortcut. <a href="../save/index.en.html#save">Saving</a></p>
+<figure>
+<a href="../images/en/current-save-active-tab.png"><img src="../images/en/current-save-active-tab.png" width="1440" height="960" alt="The project folder in the left drawer and a project.source.json tab in the middle. In the File menu, Save Active Tab shows ⌘S." loading="lazy"></a>
+<figcaption>The File menu while the left drawer shows the project folder.</figcaption>
+</figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/385">Edit menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/399">Icons and shortcut labels</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/405">Shortcut for find and replace</a></p>
+
+</section>
+
+<section id="extension-controls">
+
+<h2>2.5 Extension buttons and the debugger at the top right</h2>
+
+<p>Control buttons provided by extensions, such as camera permission or Teachable Machine model settings, are gathered in the rounded box at the right end of the menu bar (the extension button area). A button appears only while its extension needs it, and disappears when the project is reloaded. Pressing it opens that extension's settings or controls.</p>
+<ul><li>Buttons in the menu bar show only an icon. Check a button's name in the tooltip that appears when you hover over it.</li><li>When TurboWarp's debugger is enabled, a "…" "Debugger" button appears between 🎥 (Record) and the extension button area. The debugger and record buttons are not part of the extension button area.</li><li>For example, the kamishibai extension shows its production reload controls only while a YAML script is running.</li></ul>
+<p>Extension authors can register a button from an unsandboxed extension with <code>Scratch.gui.stageControls.addButton</code>.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/367">Extension controls moved to the right end of the menu bar</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/395">Debugger position</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/511">Icon-only buttons</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">Specification for extension authors</a></p>
+
+</section>
+
+<section id="layout">
+
+<h2>2.6 Choose between the Plus layout and the Scratch layout</h2>
+
+<p>The Plus layout opens with the activity bar at the left edge and the sprite list pinned. You edit code and assets in the tabs in the middle, and open the stage from "Open stage" in the menu bar in a separate window, a tab or the drawer (<a href="../stage/index.en.html">Open the stage and run your project</a>).</p>
+<p>To work in the classic Scratch layout, reopen the editor with <code>twPlusStandardLayout=0</code> added to its URL. The stage and sprite list sit to the right of the code area, and the button for adding extensions appears at the bottom left.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/221">Plus layout</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/292">Sprite list at startup</a></p>
+
+</section>
+<nav class="pager" aria-label="Previous and next pages">
+<a class="prev" href="../open/index.en.html"><small>Previous</small>1. Open projects and prepare extensions</a>
+<a class="next" href="../sprites/index.en.html"><small>Next</small>3. Edit sprites and the backdrop</a>
+</nav>
+</main>
+<footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
+</body></html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Split the workspace and open panels separately — Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="How to split editing panels in TurboWarp Plus, show several code views side by side, switch the code layout view, move panels and the sprite list to separate windows, and restore the layout per project.">
+<link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="ja" href="index.html">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 5. Split the workspace and open panels separately · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 5/12 · Updated November 14, 2026</p>
+<h1>Split the workspace and open panels separately</h1>
+<p class="lead">Split editing panels side by side or top and bottom, or move them to separate windows, to arrange the screen the way you like to work. The layout is recorded for each project and restored the next time you open it.</p>
+<nav class="topic-nav" aria-label="Feature guide topics">
+<ul>
+<li><a href="../open/index.en.html">Open projects</a></li>
+<li><a href="../screen/index.en.html">Menus and screen</a></li>
+<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
+<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../workspace/index.en.html" aria-current="page">Workspace</a></li>
+<li><a href="../blocks/index.en.html">Blocks</a></li>
+<li><a href="../search/index.en.html">Search and replace</a></li>
+<li><a href="../documents/index.en.html">Documents and extension data</a></li>
+<li><a href="../reuse/index.en.html">Reuse</a></li>
+<li><a href="../git/index.en.html">Git and project folders</a></li>
+<li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../github/index.en.html">Develop on GitHub</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="On this page">
+<ol>
+<li><a href="#splitter">5.1 Resize the work areas by dragging the dividers</a></li>
+<li><a href="#split-panes">5.2 Split panels side by side or top and bottom</a></li>
+<li><a href="#multi-edit-view">5.3 Compare several code views side by side</a></li>
+<li><a href="#panel-popout">5.4 Open an editing panel in a separate window</a></li>
+<li><a href="#detached-panels">5.5 Move the sprite list to a separate window</a></li>
+<li><a href="#workspace-restore">5.6 Restore the layout the next time you open a project</a></li>
+</ol>
+</nav>
+
+<section id="splitter">
+
+<h2>5.1 Resize the work areas by dragging the dividers</h2>
+
+<p>Drag the three-dot grip on a divider to change the size of the areas on either side. In the Plus layout, you can adjust the width of the left drawer (the sprite list and so on). In the Scratch layout, you can adjust the width of the code area against the stage side, and the height of the stage against the sprite list.</p>
+<figure class="guide-detail"><a href="../images/en/sprite-divider.png"><img src="../images/en/sprite-divider.png" width="700" height="560" alt="The divider between the sprite list in the left drawer and the code area. The focused divider is highlighted in red, and the list has been widened." loading="lazy"></a><figcaption>Focus moved to the divider between the sprite list and the code area, and the list widened with the Right Arrow key.</figcaption></figure>
+<p>When a divider has focus, you can also adjust it with the arrow keys. Enter returns it to its initial position. Ratios adjusted in the Scratch layout are saved in the browser. If you reopen the editor with <code>twPlusSplitter=0</code> added to the URL, the dividers covered in this section are removed. Even then, you can still resize the stage itself and <a href="#split-panes">split editing panels</a>. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/227">Divider grips</a></p>
+
+</section>
+
+<section id="split-panes">
+
+<h2>5.2 Split panels side by side or top and bottom</h2>
+
+<p>From "Editor panel layout" at the top right of an editing panel, choose "Split right" or "Split below". Splitting right opens an editor for the same sprite on the right; splitting below opens it underneath.</p>
+<figure class="guide-detail"><a href="../images/en/layout-menu.png"><img src="../images/en/layout-menu.png" width="600" height="256" alt="The Editor panel layout menu, listing Split right, Split below, Close this split, Open panel in another window, Open block palette in another window and Show tabs vertically." loading="lazy"></a><figcaption>The "Editor panel layout" menu. Choose the split direction, close a split, <a href="#panel-popout">open a panel in another window</a>, or change how tabs are arranged.</figcaption></figure>
+<p>To move an open tab, drag it to the area where you want it and release it when the drop target changes color. A preview of the tab is shown while you drag. Dropping it on another tab row adds it to that row. Drag a divider to adjust sizes; "Close this split" closes a split panel and merges its tabs back.</p>
+<p>Choose "Show tabs vertically" to stack the tab row down the left side of the panel. This helps when there are many tabs or when you want long sprite names to be easier to read. To return to normal, choose "Show tabs horizontally" in the same menu.</p>
+<p>For example, you can put code on the left and the stage on the right (<a href="../stage/index.en.html#dock">Show the stage in a tab</a>). YAML documents opened by a supporting extension can also be placed as tabs. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/261">Split workspace as the default</a></p>
+
+</section>
+
+<section id="multi-edit-view">
+
+<h2>5.3 Compare several code views side by side</h2>
+
+<p>Showing the same sprite's code in two panes keeps a separate scroll position and zoom level for each. You can read the setup code in one while editing the event code in the other. Block edits appear in both. To switch which pane you are editing, click that pane, or focus it and press Enter.</p>
+<div class="flow" role="img" aria-label="Two panes share the same sprite's code, each showing a different area at a different zoom level."><div>Code view A<br><small>Shows the setup blocks</small></div><span>↔</span><div>Same sprite<br><small>Block edits are shared</small></div><span>↔</span><div>Code view B<br><small>Shows the event blocks</small></div></div>
+<h3>Switch the code layout view</h3>
+<p>Right-click an empty part of the code area and, under "Change code layout view", choose "Normal layout view", "Z layout view" or "N layout view". The Z view follows the original arrangement row by row from the top, left to right; the N view follows it column by column from the left, top to bottom; both show the scripts in a single vertical column. Use them when you want to read scripts that are far apart in order. The view you are using is checked. Block coordinates do not change, and switching back to "Normal layout view" lets you edit in the original positions.</p>
+<p>To tidy up the block coordinates themselves, choose "Edit" → "Rearrange Code Blocks". Choose an "Order" (for example "Z · by row") and a "Direction" (for example "Vertical"), and a preview of the new arrangement appears in the dialog; press "Rearrange" to apply it. The steps are also illustrated in the <a href="../ball-demo/index.en.html#section-4-3">Ball Demo tutorial</a>. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/549">Code layout views and rearranging</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/563">Switching from the background menu</a></p>
+<p><span class="badge planned">In development</span> In the Desktop development build for macOS, opening the same sprite in a separate OS window that shares code edits, "Undo" and "Redo" is being tested. A prototype that lets an extension's own input fields work in a separate window is being tested for supported formats only. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/255">Code panes</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/test/stage6/README.md">Separate code windows in Desktop and what is tested</a></p>
+
+</section>
+
+<section id="panel-popout">
+
+<h2>5.4 Open an editing panel in a separate window</h2>
+
+<p>Choose "Open panel in another window" from "Editor panel layout" to open that panel in a separate browser window. With two displays, you can put code editing and asset editing on different screens. A panel in a separate window returns to its original place with "Return this panel to the editor".</p>
+<p>How to put only the block palette in a separate window is covered in <a href="../blocks/index.en.html#palette-popout">Open the block palette in a separate window</a>.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/361">Separate windows for editing panels and the palette</a></p>
+
+</section>
+
+<section id="detached-panels">
+
+<h2>5.5 Move the sprite list to a separate window</h2>
+
+<p>In the Plus layout, the sprite list is pinned in the left drawer from startup. Press "Undock sprite list" at the top of the list to move it to a separate browser window; a "Return here" button remains in the original place. You can select, add and delete sprites in the separate window too. Choose "Return to the editor (dock)" from "Window layout" at the top right of the separate window, or press "Return here" in the original place, to put it back in the left drawer. The maximize and minimize items cannot be chosen in a browser.</p>
+<figure class="guide-detail"><a href="../images/en/sprite-list-window.png"><img src="../images/en/sprite-list-window.png" width="540" height="420" alt="The sprite list moved to a separate window, with Cat and Ball tiles, a Backdrops tile and the button for adding a sprite. In the menu opened from Window layout at the top right, only Return to the editor (dock) can be chosen." loading="lazy"></a><figcaption>The sprite list moved to a separate window, with "Window layout" at the top right opened.</figcaption></figure>
+<p><span class="badge planned">In development</span> In the Desktop development build for macOS, moving the stage, sprite settings and the list to separate app windows and back has also been checked. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/388">Open the list directly in a separate window</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/224">Window layout menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/issues/11">Status in Desktop</a></p>
+
+</section>
+
+<section id="workspace-restore">
+
+<h2>5.6 Restore the layout the next time you open a project</h2>
+
+<p>In the Plus layout, the order of tabs, how panes are split and sized, and which tabs were selected are recorded in the browser for each project. A project is identified by the project folder you opened, the SB3 file you opened, or, in the Desktop version, the file's location; if none of these is available, by the project name. When you reopen the project in the same browser, the layout is restored after it is matched against the loaded sprites and the documents in the project. If the record cannot be read or does not match the project's contents, the project opens in the default layout.</p>
+<div class="table-scroll" role="region" aria-label="Where things are saved for next time" tabindex="0">
+<table><caption>Where things are saved for next time</caption><thead><tr><th scope="col">What is saved</th><th scope="col">Where</th><th scope="col">What to do</th></tr></thead><tbody>
+<tr><th scope="row">Tab order, splits and selection</th><td>The editor's storage in the same browser profile (per project)</td><td>Open the same project in the same editor</td></tr>
+<tr><th scope="row">Blocks, assets and confirmed documents in the project</th><td>The project's SB3 or project folder</td><td>Apply your edits and save from the File menu</td></tr>
+</tbody></table></div>
+<p>The browser keeps only the most recent layout for each project. Save the project's content in the SB3. To use the classic editing layout or document dialogs, save the project and reopen it with <code>twPlusDockview=0</code>. Tabs for external YAML files opened directly in the Desktop development build are not restored. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/264">Restoring the layout after a restart</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/505">Restoring the layout per project</a></p>
+
+</section>
+<nav class="pager" aria-label="Previous and next pages">
+<a class="prev" href="../stage/index.en.html"><small>Previous</small>4. Open the stage and run your project</a>
+<a class="next" href="../blocks/index.en.html"><small>Next</small>6. Find, place and organize blocks</a>
+</nav>
+</main>
+<footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
+</body></html>

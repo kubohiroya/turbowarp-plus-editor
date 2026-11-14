@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edit extension data and documents — Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="How to edit block values from supported extensions in a form, open YAML from the project in a tab, and preview assets and scenes in TurboWarp Plus.">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 8. Edit extension data and documents · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 8/12 · Updated November 14, 2026</p>
+<h1>Edit extension data and documents</h1>
+<p class="lead">With a supported extension, you can edit block values in a form, or open YAML documents such as scripts in a tab next to your code.</p>
+<nav class="topic-nav" aria-label="Feature guide topics">
+<ul>
+<li><a href="../open/index.en.html">Open projects</a></li>
+<li><a href="../screen/index.en.html">Menus and screen</a></li>
+<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
+<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../workspace/index.en.html">Workspace</a></li>
+<li><a href="../blocks/index.en.html">Blocks</a></li>
+<li><a href="../search/index.en.html">Search and replace</a></li>
+<li><a href="../documents/index.en.html" aria-current="page">Documents and extension data</a></li>
+<li><a href="../reuse/index.en.html">Reuse</a></li>
+<li><a href="../git/index.en.html">Git and project folders</a></li>
+<li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../github/index.en.html">Develop on GitHub</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="On this page">
+<ol>
+<li><a href="#forms">8.1 Edit block values in a form</a></li>
+<li><a href="#documents">8.2 Choose between external YAML and documents and blocks in the project</a></li>
+<li><a href="#yaml-tabs">8.3 Open YAML from the project in a tab next to the code</a></li>
+<li><a href="#asset-preview">8.4 View or play assets before choosing them</a></li>
+<li><a href="#runtime">8.5 Preview scenes and behavior before applying them</a></li>
+</ol>
+</nav>
+
+<section id="forms">
+
+<h2>8.1 Edit block values in a form <span class="badge">Requires a supported extension</span></h2>
+
+<p>With an extension that supports form editing, you can edit a block's arguments in a separate field for each item. For example, even when a block keeps a scene name and a display time together in one JSON string, you can enter each of them in its own field.</p>
+<p><strong>An extension developer only needs to provide a JSON Schema for the stored data and register it with the target block and argument to get a form dedicated to that block.</strong> The editor builds the input fields from the schema and validates required items and value ranges.</p>
+<ol><li>Place a supported block in the code area and click the "Edit block" icon at the left end of the block.</li><li>Change the values in the form. The fields shown depend on the extension.</li><li>Click "Save all" to apply the values that pass validation to the block. To discard your changes, close the form with "Cancel".</li><li>To keep the changes in the project file, save the project from the "File" menu.</li></ol>
+<figure><a href="../images/en/form-dialog.png"><img src="../images/en/form-dialog.png" width="820" height="514" alt="The Edit scene properties form. Scene label contains Opening and Duration (seconds) contains 3, with Cancel and Save all buttons." loading="lazy"></a><figcaption>A form registered by the sample extension in the repository (<code>examples/extensions/block-editor.ts</code>). The scene name and the display time are entered in separate fields.</figcaption></figure>
+<h3>Catch input errors as you type</h3>
+<p>The form in the figure accepts a display time from 1 to 60 seconds. If you enter 0, the form shows that the value is out of range, and you cannot save until you correct it. Which values are accepted is up to the extension.</p>
+<figure><a href="../images/en/validation-dialog.png"><img src="../images/en/validation-dialog.png" width="820" height="595" alt="After entering 0 in Duration (seconds), the field turns red, a validation message says the value must be at least 1, and the Save all button is disabled." loading="lazy"></a><figcaption>When the display time is out of range, the reason appears under the field and "Save all" cannot be clicked.</figcaption></figure>
+<h3>Edit nested blocks</h3>
+<p>If the extension registers parent and child blocks for editing, you can change the values of each in the same form. Fixed inputs such as numbers, strings and dropdowns can also be edited in dedicated fields when supported. A change saved from the form can be reverted with a single "Undo" in the code view.</p>
+<div class="flow" role="img" aria-label="A draft is opened from the block's values and saved when validation succeeds. Cancel leaves the original block unchanged. Finally, save the SB3 separately."><div>Block values</div><span>→</span><div>Draft in the form<br><small>change, validate, cancel</small></div><span>→</span><div>Save all<br><small>apply to the block / undo</small></div><span>→</span><div>Save from File<br><small>keep the SB3</small></div></div>
+<p>The starting point and samples for extension authors are in the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/block-editor.md">form-based block editor specification</a>.</p>
+
+</section>
+
+<section id="documents">
+
+<h2>8.2 Choose between external YAML and documents and blocks in the project <span class="badge">Requires a supported extension</span></h2>
+
+<p>Documents registered by a supported extension open from the file icon on a data source block. In the Plus layout they appear as <a href="#yaml-tabs">tabs in the workspace</a>. The block's display name and the available formats depend on the document.</p>
+<p>A document has a "Source location" setting that decides where it is loaded from, and a "Format" setting that decides whether you work with it as text or as blocks. For documents whose source can be changed, you can choose "File inside SB3" or "External URL". Whether a document can be converted to blocks is decided by the extension that provides it.</p>
+<div class="flow" role="img" aria-label="Documents registered by a supported extension are edited as source text or as blocks, and the owning extension converts and validates them. After saving to the document, save the SB3."><div>Supported document<br><small>file icon</small></div><span>→</span><div>Source / blocks<br><small>forms the provider supports</small></div><span>→</span><div>Convert, validate, save<br><small>apply to the project's document</small></div><span>→</span><div>Save the SB3</div></div>
+<p>For an external URL, enter an HTTPS URL that allows fetching from the browser. Check the content with "Load preview", then apply it with "Validate and save source location". To edit an external script, change the source location to "File inside SB3", save, and edit the copy imported into the project.</p>
+<div class="table-scroll" role="region" aria-label="Four ways to handle DSL documents" tabindex="0">
+<table><thead><tr><th scope="col">Form</th><th scope="col">Where the document lives</th><th scope="col">Suited for</th></tr></thead><tbody>
+<tr><th scope="row">External YAML text</th><td>An HTTPS server. The project records where to find it</td><td>Loading a script managed separately from the project</td></tr>
+<tr><th scope="row">YAML file in the SB3</th><td>The source text is bundled as a file in the project</td><td>Handing it over with the project. Editing the source text</td></tr>
+<tr><th scope="row">Generic YAML blocks in the SB3</th><td>Keys, values and lists represented as generic blocks</td><td>Changing items and their order while seeing the hierarchy</td></tr>
+<tr><th scope="row">Dedicated blocks in the SB3</th><td>Represented as dedicated blocks that follow the document's schema</td><td>Editing in the project's own terms, such as scenes and lines</td></tr>
+</tbody></table></div>
+<p>When you choose a "Format", a preview of the converted result appears. A preview in block form is for viewing only and cannot be edited. Click "Convert, validate and save the displayed format" and confirm to validate the content and apply it to the document. To switch blocks you are editing to another format, apply your changes to the source text first, then convert. To keep the result in the project file, save the SB3 at the end. YAML text is also covered by <a href="../search/index.en.html#project-search">project-wide search</a>.</p>
+<h3>Edit the source text in VS Code on your computer</h3>
+<p>Viewing, converting and validating documents also work in the public browser editor. To edit in VS Code, install Node.js and VS Code, and open the editor served by a helper process running on your computer. Open a working copy of the source text with "Edit in external editor" and save it in VS Code. Back in the editor, click "Convert, validate and save the displayed format" to apply the working copy to the document, then save the SB3.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/README.md">How to start local integration</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/document-window.md">Document window specification</a></p>
+
+</section>
+
+<section id="yaml-tabs">
+
+<h2>8.3 Open YAML from the project in a tab next to the code <span class="badge">Requires a supported extension</span></h2>
+
+<p>In the Plus layout, clicking the file icon on a supported data source block opens the document as a tab in the same workspace as the code and the stage. Different documents open in separate tabs even if they have the same file name. Drag a tab to another pane to work on it next to the code; your draft is kept when you move it.</p>
+<figure class="guide-schematic"><div class="schematic-panels"><div class="schematic-panel"><strong>Code pane</strong><div class="schematic-cells"><span>Data source block</span><span>Open the document from the file icon</span></div></div><div class="schematic-panel"><strong>YAML pane</strong><div class="schematic-cells"><span>YAML tab for the settings</span><span>Source, validation, saving</span></div></div></div><figcaption>Schematic. Place the code and the YAML side by side to compare the values set in the document with the code.</figcaption></figure>
+<p>When you close a tab with unsaved changes, you can choose "Save and close", "Discard changes" or "Cancel". To keep the changes in the project file, save the document and then save the SB3 from the "File" menu.</p>
+<p>To use the classic document dialog in the web version, save the document and the SB3, then reopen the editor with <code>twPlusDockview=0</code> added to the URL. With this setting, you can no longer split the workspace.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/261">YAML tabs and draft handling</a></p>
+
+</section>
+
+<section id="asset-preview">
+
+<h2>8.4 View or play assets before choosing them <span class="badge">Requires a supported extension</span></h2>
+
+<p>With the published Kamishibai extension rc.87, clicking the icon of an asset block (Asset) in a project for editing opens a preview of the asset along with the form. When you change which asset is specified, you can see the new image or play audio and video before saving. You can also check the dimensions of images and videos, the file size, and how the asset is stored. For a supported Teachable Machine recognition model, you can start the camera or microphone and try the recognition results.</p>
+<figure class="guide-detail"><a href="../images/asset-preview-development.png"><img src="../images/asset-preview-development.png" width="374" height="319" alt="An image asset preview captured on an unreleased Kamishibai development build, showing the image, its pixel dimensions, byte size and storage form. The labels are in Japanese." loading="lazy"></a><figcaption>An example captured on an unreleased development build (Japanese UI). You can check how an external image looks and how it is stored.</figcaption></figure>
+<p>In rc.87, asset previews are enabled from the start. To open only the form, add <code>twPlusBlockPreview=0</code> to the editor URL. <a href="#runtime">Scene and behavior previews</a> need a separate setting to enable them.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/tag/v4.0.0-rc.87">Kamishibai extension rc.87 release</a> · <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">What can be previewed and how to set it up</a></p>
+
+</section>
+
+<section id="runtime">
+
+<h2>8.5 Preview scenes and behavior before applying them <span class="badge">Requires a supported extension</span></h2>
+
+<p>For blocks for which an extension registers a preview, you can check how they look and behave while the values are still a draft in the form. For example, with a Kamishibai speech bubble block, you can change the line or the display time and see how it looks.</p>
+<p>To try scenes and behavior with the Kamishibai extension rc.87, add <code>twPlusBlockPreview=1</code> to the editor URL and open a project for editing that contains supported scene or behavior blocks.</p>
+<figure class="guide-flow"><div class="flow" role="img" aria-label="Draft in the form: adjust the text and display time. Next, play the scene: check that it is long enough to read. Next, Save all: apply the final values to the block"><div>Draft in the form<br><small>adjust the text and display time</small></div><span aria-hidden="true">→</span><div>Play the scene<br><small>check that it is long enough to read</small></div><span aria-hidden="true">→</span><div>Save all<br><small>apply the final values to the block</small></div></div><figcaption>Example. Check how the speech bubble looks, then apply it to the block.</figcaption></figure>
+<p>When you are happy with the settings, apply them to the block with "Save all" in the form. Buttons added by extensions appear in the <a href="../screen/index.en.html#extension-controls">extension button area</a> at the right end of the menu bar. When they appear and what they do depends on the extension. For example, the reload button shown while making a Kamishibai project is provided by the Kamishibai extension.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">Scene and behavior previews in the Kamishibai extension</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">Buttons added by extensions</a></p>
+
+</section>
+<nav class="pager" aria-label="Previous and next pages">
+<a class="prev" href="../search/index.en.html"><small>Previous</small>7. Search and replace across the project</a>
+<a class="next" href="../reuse/index.en.html"><small>Next</small>9. Reuse scripts and assets</a>
+</nav>
+</main>
+<footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
+</body></html>

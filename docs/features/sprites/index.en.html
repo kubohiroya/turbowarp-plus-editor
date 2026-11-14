@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edit sprites and the backdrop — Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="The TurboWarp Plus sprite list, sprite tabs and the icons along the left edge, costumes and sounds, properties, variables and lists, message senders and receivers, and editing the backdrop.">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 3. Edit sprites and the backdrop · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 3/12 · Updated November 14, 2026</p>
+<h1>Edit sprites and the backdrop</h1>
+<p class="lead">Choose what to edit in the sprite list on the left, then use the icons stacked along the left edge of the editor panel to switch between code, costumes, sounds, properties and variables, and messages.</p>
+<nav class="topic-nav" aria-label="Feature guide topics">
+<ul>
+<li><a href="../open/index.en.html">Open projects</a></li>
+<li><a href="../screen/index.en.html">Menus and screen</a></li>
+<li><a href="../sprites/index.en.html" aria-current="page">Sprites and backdrop</a></li>
+<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../workspace/index.en.html">Workspace</a></li>
+<li><a href="../blocks/index.en.html">Blocks</a></li>
+<li><a href="../search/index.en.html">Search and replace</a></li>
+<li><a href="../documents/index.en.html">Documents and extension data</a></li>
+<li><a href="../reuse/index.en.html">Reuse</a></li>
+<li><a href="../git/index.en.html">Git and project folders</a></li>
+<li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../github/index.en.html">Develop on GitHub</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="On this page">
+<ol>
+<li><a href="#sprite-drawer">3.1 Find and pin sprites in the sprite list</a></li>
+<li><a href="#sprite-tabs">3.2 Sprite tabs and the icons on the left edge</a></li>
+<li><a href="#media-panes">3.3 Edit costumes and sounds</a></li>
+<li><a href="#variable-pane">3.4 Edit properties, variables and lists</a></li>
+<li><a href="#messages">3.5 Check who sends and receives messages</a></li>
+<li><a href="#backdrop">3.6 Edit the backdrop</a></li>
+</ol>
+</nav>
+
+<section id="sprite-drawer">
+
+<h2>3.1 Find and pin sprites in the sprite list</h2>
+
+<p>Choose "Sprites" in the vertical icon strip on the far left to open the sprite list, which shows a tile for each sprite. This is where you choose what to edit. At the top of the list are the "Search sprites", "Pin sprite list", and "Undock sprite list" buttons. Type part of a name into "Search sprites" to scroll to the first matching tile and highlight it with a frame. The "Backdrops" tile below the list opens the stage backdrop.</p>
+<figure class="guide-detail"><a href="../images/en/sprite-search.png"><img src="../images/en/sprite-search.png" width="560" height="360" alt="The sprite list search box contains “B”, and the Ball tile is highlighted with a red frame. The Cat’s code is open on the right." loading="lazy"></a><figcaption>Searching for “B” puts a frame around the matching “Ball” tile.</figcaption></figure>
+<p>When you unpin the list with the pin button, the pin is shown with a slash and the list tucks into the left edge. Rest the pointer on the left edge or press "Reveal sprite list" to open it. While the list is pinned, widening it arranges the tiles in multiple columns. To search the whole project for blocks or assets, use the <a href="../search/index.en.html#project-search">search box</a> in the menu bar.</p>
+<p>Right-click a sprite tile to open a menu with "Open", "duplicate", "export", "Rename sprite", "delete", and "create folder" (<a href="../blocks/index.en.html#context-menu">context menus</a>). When the same sprite is open in more than one tab, numbered tabs such as "Cat" and "Cat(2)" appear to the right of "Open", so you can choose which tab to bring to the front (<a href="#sprite-tabs">sprite tabs</a>).</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/225">Expanding, searching, and pinning the list</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/350">Unpinned pin icon</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/490">Choosing a numbered tab from the list</a></p>
+
+</section>
+
+<section id="sprite-tabs">
+
+<h2>3.2 Sprite tabs and the icons on the left edge</h2>
+
+<p>When you choose a sprite in the list, a tab for that sprite opens in the top row of the editor panel. Switch between open sprites with these tabs. Right-click a tab to choose "Open in new tab" or "Rename sprite". "Open in new tab" opens the same sprite again in a numbered tab such as "Cat(2)", so each tab can show something different (for example, code in one and costumes in the other).</p>
+<p>Five icons are stacked along the left edge of the editor panel. From the top, they are "Code", "Costumes" ("Backdrops" for the stage), "Sounds", "Properties &amp; Variables" ("Global Variables" for the stage), and "Messages". The selected icon is shown with color and a line on its left. Hover over an icon to see its name.</p>
+<figure><a href="../images/en/plus-workspace-current.png"><img src="../images/en/plus-workspace-current.png" width="1440" height="1000" alt="The Code, Costumes, Sounds, Properties &amp; Variables, and Messages icons are stacked along the left edge of the editor panel." loading="lazy"></a><figcaption>The editor right after it starts. The five icons for Code, Costumes, Sounds, Properties &amp; Variables, and Messages line the left edge of the editor panel.</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/248">Sprite editor tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/32">Left-edge icon strip</a></p>
+
+</section>
+
+<section id="media-panes">
+
+<h2>3.3 Edit costumes and sounds</h2>
+
+<p>Choose "Split right" from "Editor panel layout" at the top right of the tabs to open the same sprite on the right in a numbered tab (for example, "Cat(2)"). Choose "Costumes" on the left and "Sounds" on the right to work with costumes and sounds side by side. Selecting a sound in "Sounds" shows its waveform, and the play button below it lets you listen. If the sprite has no sounds, add one with the button at the bottom left.</p>
+<p>Only the pane you are working in shows the full editor. The other pane shows a preview of its selected costume or sound. Interact with that pane and it switches to the editor.</p>
+<p>In the costume and backdrop editors, "Fonts…" at the top lets you manage the project’s fonts. Fonts you add can be chosen from the Text tool’s font list in either editor.</p>
+<p>Each pane remembers what it was showing and which asset was selected. Switching to another view while recording does not close the recording dialog, and the recorded sound is saved to the sprite where the recording started.</p>
+<figure><a href="../images/en/media-panes.png"><img src="../images/en/media-panes.png" width="1440" height="1000" alt="The left pane, Cat, shows a costume preview. The right pane, Cat(2), shows the waveform of the sound Pop, a play button, and effect buttons." loading="lazy"></a><figcaption>The panel split with "Costumes" on the left and "Sounds" on the right. The right pane, which is in use, shows the sound editor.</figcaption></figure>
+<p><span class="badge planned">In development</span> In the local integration build, the costume preview in the inactive pane has a maximum height.</p>
+<figure><a href="../images/local-media-panes.png"><img src="../images/local-media-panes.png" width="1440" height="575" alt="In the local integration build, the left pane shows a shorter costume preview and the right pane shows a sound waveform and play button." loading="lazy"></a><figcaption>Comparison image from the local integration build (Japanese UI). The costume preview is kept small.</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">Asset selection and editor state</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/326">Recording target sprite</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/499">Font management</a></p>
+
+</section>
+
+<section id="variable-pane">
+
+<h2>3.4 Edit properties, variables and lists</h2>
+
+<p>Open "Properties &amp; Variables" to see the sprite’s properties and its "Sprite Variables" under the heading "Sprite Properties and Variables".</p>
+<ul><li><strong>Properties</strong>: Edit the sprite name, x, y, visibility (eye icon to show, slashed eye to hide), size, direction, and rotation style (all around, left-right, or don’t rotate).</li><li><strong>Variable list</strong>: Shows the variables and lists that belong to what is open. A sprite’s "Properties &amp; Variables" lists the sprite variables that only that sprite uses; the stage’s "Global Variables" lists the global variables shared by the whole project. Cloud variables have a cloud icon to the right of the name.</li><li><strong>Changing values</strong>: Type a value and press Enter, or move focus out of the field, to apply it. Press Esc before applying to cancel the edit.</li></ul>
+<p>You can type the direction as a number or drag the arrow on the edge of the dial. Switch the rotation style with the three icons under the direction field. "All around" lets the sprite face any direction, and "Left-right" lets it face left or right. With "Don't rotate", the dial is locked and you change the movement direction by typing a number.</p>
+<h3>Reviewing variables and lists in the table</h3>
+<p>The table’s columns are "Stage", "Type", "Variable name", "Value", "Read", "Write", and "Actions". The "Stage" checkbox turns the value’s display on the stage on or off. "Type" shows a box icon for variables and a table icon for lists. Click a column heading to sort by it.</p>
+<p>The "Read" and "Write" columns show how many blocks read and change the variable. Click a count to open the menu-bar search filtered by "Variable access", where you can jump to the matching blocks (<a href="../search/index.en.html#project-search">Search the whole project</a>).</p>
+<p>A list’s "Value" shows its first five items, and the number of remaining items appears as, for example, "+1". Press "Edit" to open the "Edit list" dialog, where you can change items, move them up or down, delete them, and use "Add item". Press "Save" to apply the changes.</p>
+<figure><a href="../images/en/properties-variables.png"><img src="../images/en/properties-variables.png" width="1440" height="1000" alt="Under “Sprite Properties and Variables” in the left pane are the sprite name, x, y, visibility, size, direction, rotation style, and a row for the sprite variable speed, with 1 read and 1 write. The right pane, Cat(2), contains code that uses speed." loading="lazy"></a><figcaption>"Properties &amp; Variables" on the left and "Code" on the right. The code next to it uses the sprite variable "speed".</figcaption></figure>
+<p>Split the panel and open "Properties &amp; Variables" in one pane and "Code" in the other to edit code while watching the values (<a href="../workspace/index.en.html#split-panes">splitting panels</a>).</p>
+<p><a href="../ball-demo/index.en.html#section-2-3">Editing and saving a list from the table in the Ball Demo</a></p>
+<h3>Creating, renaming, and deleting variables and lists</h3>
+<p>Press "Add a new sprite variable" ("Add a new global variable" for the stage) at the bottom left of the panel to open the creation dialog. Choose what to create with the "Variable" and "List" tabs at the top, enter a name, and press "Create". When creating a global variable, you can also choose "Cloud variable".</p>
+<p>Hover over a variable’s row, or focus it with the keyboard, to show the "Rename variable" and "Delete variable" buttons in the "Actions" column.</p>
+<ul><li>If the name is empty, or a variable with the same name already exists in the same scope, the reason is shown and you cannot confirm.</li><li>A confirmation appears before deleting. A variable used by blocks cannot be deleted. Remove its uses first so that both the "Read" and "Write" counts are 0.</li></ul>
+<h3>Checking values for each clone</h3>
+<p>When clones are created while the project runs, you can choose which one to show to the right of the "Sprite Properties and Variables" heading. Up to five clones can be picked directly by number; with six or more, move with the left and right arrows or pick a number from the list in the middle. You can edit the selected clone’s position, direction, size, visibility, and rotation style, and the values of its sprite variables. The sprite name is read-only. Changes to properties and values last only for that run, and if the selected clone disappears, the pane returns to the original sprite.</p>
+<p>While a clone is selected, the "Read" and "Write" counts still come from the original sprite’s code, and you can search for uses from the counts. Adding, renaming, or deleting a variable applies to the original sprite and all of its clones. Turning on display on the stage shows the original sprite’s value.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/15">Merging the properties and variables tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/410">Creating, renaming, and deleting variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/493">Searching from the counts</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/565">Editing lists and clone variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/569">Creating lists from the dialog</a></p>
+
+</section>
+
+<section id="messages">
+
+<h2>3.5 Check who sends and receives messages</h2>
+
+<p>Open "Messages", below "Properties &amp; Variables", to see which messages the open sprite or backdrop sends and with which blocks, and which messages it receives and with which hat blocks, split into "Sent" and "Received".</p>
+<p>The "Block" column shows the block used to send or receive. When that block is in the middle of a script, a line such as "Script starts with when green flag clicked" below it shows where the script begins.</p>
+<figure><a href="../images/en/messages-sprite.png"><img src="../images/en/messages-sprite.png" width="1440" height="1000" alt="The Ball’s Messages panel lists game over under Sent and start under Received. In the diagram, an arrow for game over runs from the Ball, framed in red, to the Stage, and arrows for start run from the Cat to the Cat and the Ball." loading="lazy"></a><figcaption>"Messages" for the sprite "Ball". It receives "start" and sends "game over" to the stage.</figcaption></figure>
+<figure><a href="../images/en/messages-stage.png"><img src="../images/en/messages-stage.png" width="1440" height="1000" alt="The stage’s Messages panel lists game over under Received, and in the diagram the receiving Stage is framed in red. The sending and receiving of start is also shown below." loading="lazy"></a><figcaption>"Messages" for the stage. It shows the received messages and a diagram of sending and receiving across the whole project.</figcaption></figure>
+<ul><li>A message that is only sent shows "No receivers", and a message that is only received shows "Never sent".</li><li>"Used elsewhere in this project" lists messages that exist in the project but are not used by this sprite or backdrop. Messages that are not used anywhere show "Unused".</li><li>Click a message name in the table ("Open this block") to jump to the code containing that block.</li></ul>
+<h3>Seeing senders and receivers in the diagram</h3>
+<p>In the "Messages between sprites and the stage" diagram, arrows run from "Sends" on the left to "Receives" on the right, with sprite and stage thumbnails at each end. The message name appears next to the speech-bubble icon above each arrow. The open sprite or backdrop has a thick frame in the accent color. For a sprite, the diagram shows only the messages that sprite sends or receives; for the stage, it shows all sending and receiving in the project. Click a box with a thumbnail to jump to that sprite’s or the stage’s code.</p>
+<h3>Renaming a message</h3>
+<p>Use "Rename message", with the pencil icon in the table’s "Actions" column, to change a message’s name. Messages are shared across the whole project, so renaming one changes how it appears in every block that sends or receives it. You cannot rename a message to a name that is already in use.</p>
+<p>When you search the whole project for a message name, sending and receiving are classified the same way as in this table (<a href="../search/index.en.html#search-scope">Choose what to search</a>).</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/414">Message connections</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/564">Improved diagram and send/receive tables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/408">Message design</a></p>
+
+</section>
+
+<section id="backdrop">
+
+<h2>3.6 Edit the backdrop</h2>
+
+<p>Choose the "Backdrops" tile below the sprite list to open the editor panel for the stage. Like the tile, its tab is labeled "Backdrops".</p>
+<p>The icons along the left edge are in the same order as for sprites, except that "Backdrops" replaces "Costumes" and "Global Variables" replaces "Properties &amp; Variables". Edit the stage’s backdrop images in "Backdrops", its scripts in "Code", and its sounds in "Sounds". "Global Variables" lists the variables and lists used by the whole project, and the diagram in "Messages" shows all sending and receiving in the project (<a href="#messages">Check who sends and receives messages</a>).</p>
+<p>Right-click the backdrop tile to choose "Open" or "Export Stage". "Export Stage" exports the stage as a .stage3 file (<a href="../reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a>).</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/403">Backdrop tab fix</a></p>
+
+</section>
+<nav class="pager" aria-label="Previous and next pages">
+<a class="prev" href="../screen/index.en.html"><small>Previous</small>2. Screen layout and menus</a>
+<a class="next" href="../stage/index.en.html"><small>Next</small>4. Open the stage and run your project</a>
+</nav>
+</main>
+<footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
+</body></html>

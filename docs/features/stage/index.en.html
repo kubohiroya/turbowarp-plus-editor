@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Open the stage and run your project — Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="How to open the TurboWarp Plus stage from the menu bar in a separate window, a tab or the drawer, run your project, use full screen mode and move the stage.">
+<link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="ja" href="index.html">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 4. Open the stage and run your project · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 4/12 · Updated November 14, 2026</p>
+<h1>Open the stage and run your project</h1>
+<p class="lead">Open the stage with "Open stage" on the right of the menu bar, in whichever place suits your work: a separate window, a tab or the drawer. Full screen mode and moving the stage are in the stage's "Stage display" menu.</p>
+<nav class="topic-nav" aria-label="Feature guide topics">
+<ul>
+<li><a href="../open/index.en.html">Open projects</a></li>
+<li><a href="../screen/index.en.html">Menus and screen</a></li>
+<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
+<li><a href="../stage/index.en.html" aria-current="page">Stage</a></li>
+<li><a href="../workspace/index.en.html">Workspace</a></li>
+<li><a href="../blocks/index.en.html">Blocks</a></li>
+<li><a href="../search/index.en.html">Search and replace</a></li>
+<li><a href="../documents/index.en.html">Documents and extension data</a></li>
+<li><a href="../reuse/index.en.html">Reuse</a></li>
+<li><a href="../git/index.en.html">Git and project folders</a></li>
+<li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../github/index.en.html">Develop on GitHub</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="On this page">
+<ol>
+<li><a href="#stage-open">4.1 Open the stage from the menu bar</a></li>
+<li><a href="#stage-controls">4.2 Run your project from the drawer on the right edge</a></li>
+<li><a href="#stage-menu">4.3 The stage display menu</a></li>
+<li><a href="#dock">4.4 Move the stage into the workspace or a separate window</a></li>
+</ol>
+</nav>
+
+<section id="stage-open">
+
+<h2>4.1 Open the stage from the menu bar</h2>
+
+<p>Press "Open stage" on the right of the menu bar to open the stage in a separate browser window. Press the "▾" to its right ("Stage opening options") to choose where it opens.</p>
+<div class="table-scroll" role="region" aria-label="Stage opening options" tabindex="0">
+<table><caption>Stage opening options</caption><thead><tr><th scope="col">Item</th><th scope="col">Where it opens</th><th scope="col">Good for</th></tr></thead><tbody>
+<tr><th scope="row">Show in a separate window</th><td>A separate browser window</td><td>Placing it on a second display next to your code</td></tr>
+<tr><th scope="row">Show in a tab</th><td>A "Stage" tab in the workspace</td><td>Keeping the stage fixed next to your code</td></tr>
+<tr><th scope="row">Show in the drawer</th><td>A drawer at the right edge of the screen</td><td>Showing it over the code area and closing it when you no longer need it</td></tr>
+</tbody></table></div>
+<p>While the stage is open, "Open stage" and "▾" cannot be pressed. To change where it is shown or switch to full screen, use "Stage display" on the open stage (<a href="#stage-menu">The stage display menu</a>).</p>
+<figure class="guide-detail"><a href="../images/en/stage-menu-current.png"><img src="../images/en/stage-menu-current.png" width="720" height="220" alt="The Git button, the Open stage button with its ▾, and the Record button on the right of the menu bar. The menu opened from ▾ lists Show in a separate window, Show in a tab and Show in the drawer." loading="lazy"></a><figcaption>"Stage opening options", opened from the "▾" next to "Open stage".</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">Open the stage from the menu bar</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/384">Design of the stage opening options</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/518">Unified stage display menu</a></p>
+
+</section>
+
+<section id="stage-controls">
+
+<h2>4.2 Run your project from the drawer on the right edge</h2>
+
+<p>Choose "Show in the drawer" and the stage opens in a drawer at the right edge of the screen, over the code area. Start the project with the green flag, and check how it behaves with pause and stop. Drag the left or bottom edge of the drawer to resize the stage.</p>
+<p>At first the drawer stays open. Choose "Automatically hide the drawer" from the drawer's "Stage display" and the drawer closes when you click outside it, leaving a "Reveal stage" handle at the right edge of the screen. Press the handle to open the drawer again. To keep it open again, choose "Keep the drawer open" in the same menu.</p>
+<p>After you close it with "Close the drawer", you can reopen the drawer from "Reveal stage" at the right edge. The project keeps running while the drawer is closed or hidden. The drawer's state is recorded for each project and restored the next time you open that project.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">Stage on the right edge and in a separate window</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/518">Restore the drawer per project</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/520">Toggle keeping the drawer open</a></p>
+
+</section>
+
+<section id="stage-menu">
+
+<h2>4.3 The stage display menu</h2>
+
+<p>From "Stage display" at the top right of the open stage, you can change where the stage is and switch to full screen. The items depend on where the stage is open.</p>
+<div class="table-scroll" role="region" aria-label="Stage display menu items" tabindex="0">
+<table><caption>Stage display menu items</caption><thead><tr><th scope="col">Open in</th><th scope="col">Items</th></tr></thead><tbody>
+<tr><th scope="row">Drawer</th><td>"Show in a separate window", "Show in a tab", "Automatically hide the drawer" ("Keep the drawer open" when it is set to hide automatically), "Enter full screen mode", "Close the drawer"</td></tr>
+<tr><th scope="row">Tab</th><td>"Show in a separate window", "Show in a tab" (checked and unavailable), "Show in the drawer", "Enter full screen mode", "Close the tab"</td></tr>
+<tr><th scope="row">Separate window</th><td>"Enter full screen mode", "Return to the editor"</td></tr>
+</tbody></table></div>
+<ul><li>"Enter full screen mode": Shows only the stage, filling the screen. While in full screen, "Exit full screen mode" in the same menu returns to normal.</li><li>"Show in a separate window", "Show in a tab", "Show in the drawer": Move the stage to another place (<a href="#dock">Move the stage into the workspace or a separate window</a>).</li></ul>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">Stage display menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/518">Unified stage display menu</a></p>
+
+</section>
+
+<section id="dock">
+
+<h2>4.4 Move the stage into the workspace or a separate window</h2>
+
+<p>A stage opened in the drawer or a tab can be moved with "Stage display". To place it next to your code, choose "Show in a tab". A "Stage" tab opens in the workspace, and you can drag the divider to adjust its size. A stage in a tab is scaled up or down to fit the width of its pane. To move it back to the drawer, choose "Show in the drawer"; to close the stage, choose "Close the tab" or close the "Stage" tab.</p>
+<p>To use it in a separate browser window, choose "Show in a separate window". Choose "Return to the editor" from "Stage display" in the separate window to close that window and return to the editor.</p>
+<div class="flow" role="img" aria-label="Move the stage among the drawer on the right edge, a tab in the workspace and a separate browser window."><div>Drawer on the right edge</div><span>↔</span><div>Tab in the workspace</div><span>↔</span><div>Separate browser window</div></div>
+<figure><a href="../images/en/stage-tab.png"><img src="../images/en/stage-tab.png" width="1440" height="1000" alt="The Ball code on the left and the stage tab on the right. The Stage display menu lists Show in a separate window, Show in a tab (checked), Show in the drawer, Enter full screen mode and Close the tab." loading="lazy"></a><figcaption>The stage opened in a tab, with "Stage display" open. You can move it to the drawer or a separate window, or close the tab.</figcaption></figure>
+<figure><a href="../images/en/local-stage-workspace.png"><img src="../images/en/local-stage-workspace.png" width="1440" height="1000" alt="The Ball code on the left and, on the right, the stage tab scaled up to fit the pane width." loading="lazy"></a><figcaption>The stage opened in a tab. In a pane 662px wide, the stage is shown 650px wide.</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">Stage display menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/290">Returning from the separate window to the editor</a></p>
+
+</section>
+<nav class="pager" aria-label="Previous and next pages">
+<a class="prev" href="../sprites/index.en.html"><small>Previous</small>3. Edit sprites and the backdrop</a>
+<a class="next" href="../workspace/index.en.html"><small>Next</small>5. Split the workspace and open panels separately</a>
+</nav>
+</main>
+<footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
+</body></html>
