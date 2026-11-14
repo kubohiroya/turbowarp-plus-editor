@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {readPins, sha} from './source.ts';
@@ -40,16 +39,8 @@ if (layoutLock.resolved.startsWith('https://registry.npmjs.org/')) {
 }
 for (const entry of family.packages) {
     const installed = lock.packages[`node_modules/${entry.package}`];
-    if (installed?.resolved?.startsWith('file:vendor/') && installed.version === entry.version) {
-        const tarball = `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`;
-        const bytes = await fs.readFile(path.join(directory, tarball));
-        assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity},
-            `Source metadata differs from the pin: ${entry.package}`);
-        assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, installed.integrity,
-            `Source archive differs from the pin: ${entry.package}`);
-    } else {
-        assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
-    }
+    assert.ok(!installed?.resolved?.startsWith('file:'), `Bundled from a local archive: ${entry.package}`);
+    assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
     for (const file of entry.files) assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing notice: ${file}`);
 }
 if (pins.loaderRepository) {

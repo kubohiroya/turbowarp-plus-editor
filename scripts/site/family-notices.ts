@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -82,17 +81,9 @@ async function sourceOf(name: string, manifest, {lock, local}, directory: string
         const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: directory, encoding: 'utf8'}).trim();
         return {npm: null, repository, revision, directory: manifest.repository.directory};
     }
-    if (typeof lock.resolved === 'string' && lock.resolved.startsWith('file:')) {
-        const archive = /^file:(vendor\/[\w.-]+\.tgz)$/u.exec(lock.resolved)?.[1];
-        assert.ok(archive, `${name} must use an archive in vendor/`);
-        assert.equal(lock.version, manifest.version, `${name} differs from its lockfile version`);
-        const bytes = await fs.readFile(path.join(directory, archive));
-        const integrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
-        assert.equal(integrity, lock.integrity, `${name} archive differs from its lockfile integrity`);
-        const tarball = `notices/${label}/source.tgz`;
-        await fs.writeFile(path.join(output, tarball), bytes);
-        return {npm: null, tarball, integrity};
-    }
+    // Family packages come from npm only; a local archive has no published source to point to.
+    assert.ok(!(typeof lock.resolved === 'string' && lock.resolved.startsWith('file:')),
+        `${name} must be installed from npm, not ${lock.resolved}`);
     // A git dependency records its commit, but the lock only says what the install declared:
     // trust its source only while it still matches the version the installed package reports.
     const git = lock.version === manifest.version && typeof lock.resolved === 'string' &&

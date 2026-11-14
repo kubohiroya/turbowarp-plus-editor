@@ -100,15 +100,8 @@ test('this repository records every family package it supplies, dev entries incl
         const lock = JSON.parse(await fs.readFile(path.join(root, 'package-lock.json'), 'utf8'));
         for (const entry of index.packages) {
             const installed = lock.packages[`node_modules/${entry.package}`];
-            if (installed?.resolved?.startsWith('file:vendor/')) {
-                const tarball = `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`;
-                assert.equal(entry.license, installed.license);
-                assert.deepEqual(entry.source, {npm: null, tarball, integrity: installed.integrity});
-                assert.deepEqual(await fs.readFile(path.join(output, tarball)),
-                    await fs.readFile(path.join(root, installed.resolved.slice('file:'.length))));
-            } else {
-                assert.ok((entry.source.npm || entry.source.revision) && entry.source.repository, `Missing source: ${entry.package}`);
-            }
+            assert.ok(!installed?.resolved?.startsWith('file:'), `Installed from a local archive: ${entry.package}`);
+            assert.ok((entry.source.npm || entry.source.revision) && entry.source.repository, `Missing source: ${entry.package}`);
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
         const layout = '@kubohiroya/turbowarp-plus-editor-workbench';
