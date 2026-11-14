@@ -62,10 +62,10 @@
 
 <p>You can move a project you have been making on scratch.mit.edu into a GitHub repository with <code>turbowarp-plus-editor-project-starter</code>. It unpacks the project into an sb3-toolchain project folder and creates a repository with GitHub Actions for checks and releases, plus forms for issues and pull requests. You need Node.js 24 or later, Git, and the GitHub CLI (<code>gh</code>).</p>
 <p>The following example assumes <code>cat.sb3</code> is in your working folder. <code>--lang en</code> makes the README and the forms English; without it, they are in Japanese.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.2.0 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
 <p><code>init</code> creates the repository locally and, if Git author information is set, makes the first commit. If author information is not set, <a href="#commit-author">set the author in the repository</a> and run <code>git -C cat-adventure commit -m "Import cat"</code>. For a Scratch project you have shared, you can pass the project page URL instead of the SB3 path.</p>
 <p>You can open the generated <code>cat-adventure/project</code> with "File" → "Open Project Folder…" in the editor. When you are ready to put it on GitHub, authenticate with <code>gh auth login</code> and then run <code>publish</code>. By default it creates a private repository and pushes <code>main</code>.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish cat-adventure</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.2.0 publish cat-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="The repository that is created" tabindex="0">
 <table><caption>The repository that is created</caption><thead><tr><th scope="col">Location</th><th scope="col">Contents</th></tr></thead><tbody>
 <tr><th scope="row"><code>project/</code></th><td>The project folder. Open, edit, and save it in the editor</td></tr>
@@ -73,6 +73,7 @@
 <tr><th scope="row"><code>.github/workflows/release.yml</code></th><td>When you publish a release, attaches the SB3 and its SHA-256 to that release</td></tr>
 <tr><th scope="row"><code>.github/workflows/scratch-import.yml</code></th><td>Brings the latest version you shared again on Scratch in as a pull request ("Import from Scratch"). For a project imported from a Scratch share URL, the original Scratch project ID can be used</td></tr>
 <tr><th scope="row"><code>.github/ISSUE_TEMPLATE/</code> and others</th><td>Issue forms for "Bug" and "Idea or improvement", and a checklist for pull requests</td></tr>
+<tr><th scope="row"><code>AGENTS.md</code>, <code>CLAUDE.md</code></th><td>Working rules for coding agents. <code>CLAUDE.md</code> has Claude Code read <code>AGENTS.md</code> (<a href="#agent">Leave it to an agent</a>)</td></tr>
 </tbody></table></div>
 <p>If you keep editing on Scratch during the move, and for what to do with the project page on Scratch, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.md">migration steps</a>.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter">turbowarp-plus-editor-project-starter</a> · <a href="../git/index.en.html#sb3-toolchain">sb3-toolchain project folders</a></p>
@@ -104,7 +105,7 @@
 <li>When the agent switches branches or pulls and the project folder changes, "External changes detected." appears at the bottom right of the editor and the changes are loaded (<a href="../git/index.en.html#external-changes">When the folder changes outside the editor</a>).</li>
 <li>When the pull request is ready, compare it block by block in the editor's "Merge" as in <a href="#merge">12.9</a>, or check it on GitHub, and a person merges it.</li>
 </ol>
-<p>Tell the agent in the repository's <code>AGENTS.md</code> not to rewrite the working tree before you save, to run <code>sb3-toolchain check</code> after changing <code>project.source.json</code>, and to merge or release only when asked. Project Starter versions after 0.1.0 create <code>AGENTS.md</code> and a <code>CLAUDE.md</code> that has Claude Code read it. For a repository made earlier, copy the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/en/AGENTS.md">AGENTS.md template</a> and replace <code>__PROJECT_DIR__</code> and the other placeholders with your project folder name and sb3-toolchain version.</p>
+<p>Tell the agent in the repository's <code>AGENTS.md</code> not to rewrite the working tree before you save, to run <code>sb3-toolchain check</code> after changing <code>project.source.json</code>, and to merge or release only when asked. Project Starter 0.2.0 and later create <code>AGENTS.md</code> and a <code>CLAUDE.md</code> that has Claude Code read it. For a repository made earlier, copy the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/en/AGENTS.md">AGENTS.md template</a> and replace <code>__PROJECT_DIR__</code> and the other placeholders with your project folder name and sb3-toolchain version.</p>
 
 </section>
 
