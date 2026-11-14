@@ -145,7 +145,7 @@ function Preview({vm, view, attachBackpackDrop}) {
                 dropBinding?.dispose();
                 preview?.dispose();
                 bridge = session.bridge;
-                preview = bridge?.preview(ref.current, chrome.current, view);
+                preview = bridge?.preview(ref.current, chrome.current, {...view, dropElement: drop.current});
                 if (preview) {
                     const boundBridge = bridge;
                     const canCommit = () => session.bridge === boundBridge && !view.connection.disconnected.aborted;

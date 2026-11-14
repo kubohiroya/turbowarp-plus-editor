@@ -1,3 +1,4 @@
+import {attachBlockDrag} from './block-drag.ts';
 import type {CodeTarget} from './history.ts';
 import {captureCodePreviewChrome} from './preview-chrome.ts';
 import type {PresentationElements} from './preview-chrome.ts';
@@ -65,6 +66,7 @@ function targetXml(vm: {runtime: {getTargetForStage(): CodeTarget}}, target: Cod
 
 export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, options, onError, presentationElements = null as PresentationElements | null}) {
     const session = getCodeSession(vm);
+    const homeDocument: Document = workspace.getInjectionDiv().ownerDocument;
     const histories = new WeakMap();
     const signature = target => target.blocks.toXML(target.comments);
     let loadedTarget = vm.editingTarget;
@@ -199,12 +201,22 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             return true;
         },
         preview(element, chrome, view) {
-            const {target, presentation, attachMinimap, watermark, locale, onScriptViewChange} = view;
-            const preview = withoutEvents(blocks, () => blocks.inject(element, {
-                readOnly: true, scrollbars: false, sounds: false, media: options.media, rtl: options.rtl,
-                colours: options.colours, grid: options.grid,
-                zoom: {startScale: presentation?.scale ?? options.zoom?.startScale}
-            }));
+            const {target, presentation, attachMinimap, watermark, locale, onScriptViewChange, dropElement} = view;
+            // ScratchBlocks injects into the document where its bundle was evaluated.
+            // Initialize the read-only preview there, then move it into the popout.
+            const staging = element.ownerDocument === homeDocument ? null : homeDocument.createElement('div');
+            if (staging) homeDocument.body.appendChild(staging);
+            let preview;
+            try {
+                preview = withoutEvents(blocks, () => blocks.inject(staging ?? element, {
+                    readOnly: true, scrollbars: false, sounds: false, media: options.media, rtl: options.rtl,
+                    colours: options.colours, grid: options.grid,
+                    zoom: {startScale: presentation?.scale ?? options.zoom?.startScale}
+                }));
+                if (staging) element.appendChild(preview.getInjectionDiv());
+            } finally {
+                staging?.remove();
+            }
             workspace.markFocused();
             presentation?.chrome?.mount(chrome);
             const minimap = attachMinimap?.(preview, blocks, watermark);
@@ -241,6 +253,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 const y = fits ? 0 : (height - bounds.height * scale) / 2 - bounds.y * scale;
                 preview.translate(x, y);
             };
+            const unregister = blockDrag.register({element: dropElement, workspace: preview, target});
             const observer = new ResizeObserver(resize);
             observer.observe(element);
             return {
@@ -259,6 +272,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                     }
                 },
                 dispose() {
+                    unregister();
                     observer.disconnect();
                     scriptView.dispose();
                     minimap?.dispose();
@@ -268,6 +282,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             };
         },
         dispose() {
+            blockDrag.dispose();
             if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
             if (session.bridge === bridge) {
                 session.bridge = null;
@@ -277,6 +292,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
         }
     };
 
+    const blockDrag = attachBlockDrag({vm, workspace, ScratchBlocks: blocks, onError, prepareImport: bridge.prepareImport});
     session.bridge = bridge;
     vm.runtime.on('PROJECT_CHANGED', changed);
     changed();
