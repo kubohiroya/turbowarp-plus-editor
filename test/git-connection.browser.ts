@@ -310,6 +310,8 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await unsupported.getByText('File', {exact: true}).click();
     await expect(unsupported.getByText('Choose Repository…', {exact: true})).toHaveCount(0);
     await expect(unsupported.locator('.twgit-branch-button')).toHaveCount(0);
+    await expect(await showPreferences(unsupported)).toBeVisible();
+    await unsupported.goto(editor + '&twPlusLocalGit=0');
     await unsupported.getByLabel('TurboWarp Plus project information', {exact: true}).first().click();
     await expect(unsupported.getByRole('button', {name: 'GitHub Connection Settings…'})).toHaveCount(0);
     assert.equal(requests.length, 5);

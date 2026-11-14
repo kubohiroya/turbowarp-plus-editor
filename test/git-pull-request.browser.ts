@@ -439,7 +439,9 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
     const picker = panel.getByRole('complementary', {name: 'Pull requests'});
     await expect(panel.locator('header').getByRole('button', {name: 'Choose Repository…', exact: true})).toHaveCount(0);
-    await button('Connect to GitHub…').press('Enter');
+    const connectToGitHub = button('Connect to GitHub…');
+    await expect(connectToGitHub).toBeEnabled();
+    await connectToGitHub.press('Enter');
     const settings = page.getByRole('dialog', {name: 'Repository GitHub connection'});
     await expect(settings).toBeVisible();
     await settings.getByRole('checkbox', {name: 'Allow sending to GitHub (push)'}).check();

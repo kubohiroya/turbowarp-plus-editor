@@ -17,9 +17,7 @@ const preload = (globalThis as {EditorPreload?: {
 }}).EditorPreload;
 const desktop = preload?.aiAgents;
 export const aiAgents = createAiAgents(React, {styles, desktop});
-const gitEnabled = typeof window !== 'undefined' &&
-    typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker === 'function' &&
-    readWebStartupFeatureFlags(window.location.search).localGit;
+const gitEnabled = typeof window !== 'undefined' && readWebStartupFeatureFlags(window.location.search).localGit;
 
 export function ProjectInfoMenu(props: ProjectSettingsMenuProps & {locale: string}) {
     const [githubSettings, setGitHubSettings] = React.useState<HTMLElement | null>(null);
