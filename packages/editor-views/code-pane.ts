@@ -98,7 +98,7 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
                 if (bridge !== session.bridge) {
                     preview?.dispose();
                     bridge = session.bridge;
-                    preview = bridge?.preview(blocks, chrome, {target, presentation, attachMinimap, watermark, locale,
+                    preview = bridge?.preview(blocks, chrome, {target, presentation, attachMinimap, watermark, locale, dropElement: surface,
                         scriptView: views.get(pane.id), onScriptViewChange: view => views.set(pane.id, view)});
                 }
                 preview?.update();

@@ -12,6 +12,9 @@
     "./script-layout": "./script-layout-view.ts",
     "./sprite-code-windows": "./index.tsx"
   },
+  "dependencies": {
+    "@kubohiroya/turbowarp-script-transfer": "^0.1.4"
+  },
   "peerDependencies": {
     "react": ">=16.8",
     "react-dom": ">=16.8"

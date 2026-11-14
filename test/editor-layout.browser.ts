@@ -3119,6 +3119,136 @@ test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30
     await expect(dialog).toHaveCount(0);
 });
 
+test('a block stack can be copied to a split code tab and back from its popout', {timeout: 60_000}, async t => {
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.ScratchBlocks?.getMainWorkspace());
+    const [source, destination] = await page.evaluate(async () => {
+        const source = vm.editingTarget;
+        vm.renameSprite(source.id, 'Drag source');
+        await vm.duplicateSprite(source.id);
+        const destination = vm.editingTarget;
+        vm.renameSprite(destination.id, 'Drag destination');
+        vm.setEditingTarget(source.id);
+        return [source.id, destination.id];
+    });
+    const groups = page.locator('.dv-groupview');
+    const menu = (group: number) => groups.nth(group).getByRole('button', {name: 'Editor panel layout'});
+    await menu(0).click();
+    await page.getByRole('menuitem', {name: 'Split right'}).click();
+    await expect(groups).toHaveCount(2);
+    await page.evaluate(id => vm.setEditingTarget(id), destination);
+    const destinationTab = groups.first().getByRole('tab', {name: 'Drag destination', exact: true});
+    await expect(destinationTab).toBeVisible();
+    await groups.last().getByRole('tab', {name: 'Drag source(2)', exact: true}).click();
+
+    await page.evaluate(() => {
+        const blocks = window.ScratchBlocks;
+        const workspace = blocks.getMainWorkspace();
+        const xml = blocks.Xml.textToDom(
+            '<xml><block id="drag-root" type="looks_show" x="130" y="150">' +
+            '<next><block id="drag-child" type="looks_hide"/></next></block></xml>');
+        blocks.Xml.domToWorkspace(xml, workspace);
+        blocks.Events.fireNow_();
+        workspace.centerOnBlock('drag-root');
+    });
+    const scripts = (id: string) => page.evaluate(id => {
+        const target = vm.runtime.getTargetById(id);
+        return target.blocks.getScripts().map(rootId => {
+            const root = target.blocks.getBlock(rootId);
+            return {id: rootId, x: root.x, y: root.y, opcode: root.opcode, next: target.blocks.getBlock(root.next)?.opcode};
+        });
+    }, id);
+    const original = await scripts(source);
+    assert.equal(original.length, 1);
+    assert.equal(original[0].next, 'looks_hide');
+
+    const preview = (name: string) => page.getByRole('tabpanel', {name, exact: true})
+        .locator('[data-code-preview]:visible');
+    async function pickUp(host: Page, id: string) {
+        const block = host.locator(
+            `.tw-plus-sprite-tab-editor .blocklyBlockCanvas > [data-id=${JSON.stringify(id)}] > .blocklyPath:visible`
+        );
+        const bounds = await block.boundingBox();
+        assert(bounds);
+        await host.mouse.move(bounds.x + Math.min(20, bounds.width / 2), bounds.y + bounds.height / 2);
+        await host.mouse.down();
+        await host.mouse.move(bounds.x + 28, bounds.y + bounds.height / 2 + 10, {steps: 4});
+    }
+
+    // A connected child also transfers its complete script, retaining the original connections.
+    const child = page.locator('[data-id="drag-child"] > .blocklyPath').first();
+    const childBounds = await child.boundingBox();
+    assert(childBounds);
+    await page.mouse.move(childBounds.x + 20, childBounds.y + childBounds.height / 2);
+    await page.mouse.down();
+    const split = await preview('Drag destination').boundingBox();
+    assert(split);
+    await page.mouse.move(split.x + 95, split.y + 180, {steps: 16});
+    await page.mouse.up();
+    await expect.poll(async () => (await scripts(destination)).length).toBe(1);
+    const [copied] = await scripts(destination);
+    assert.equal(copied.opcode, 'looks_show');
+    assert.equal(copied.next, 'looks_hide');
+    assert.deepEqual(await scripts(source), original);
+
+    await destinationTab.click();
+    await page.waitForFunction(id => window.ScratchBlocks.getMainWorkspace().getBlockById(id), copied.id);
+    await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(false));
+    await expect.poll(() => scripts(destination)).toEqual([]);
+    await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().undo(true));
+    await expect.poll(() => scripts(destination)).toEqual([copied]);
+
+    await menu(0).click();
+    const opened = page.waitForEvent('popup');
+    await page.getByRole('menuitem', {name: 'Open panel in another window'}).click();
+    const popup = await opened;
+    await expect(popup.locator(`.blocklyBlockCanvas > [data-id=${JSON.stringify(copied.id)}]`)).toBeVisible();
+    await expect(preview('Drag source(2)')).toBeVisible();
+    await pickUp(popup, copied.id);
+    // Each CDP mouse is scoped to one viewport. Deliver the cross-window release
+    // to the actual destination document while the popup's Blockly drag is live.
+    await preview('Drag source(2)').evaluate(surface => {
+        const {left, top} = surface.getBoundingClientRect();
+        surface.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, cancelable: true,
+            clientX: left + 110, clientY: top + 205, button: 0}));
+    });
+    await popup.mouse.up();
+    await expect.poll(async () => (await scripts(source)).length).toBe(2);
+    assert.deepEqual((await scripts(source))[0], original[0]);
+    assert.deepEqual(await scripts(destination), [copied]);
+
+    await pickUp(popup, copied.id);
+    await popup.keyboard.press('Escape');
+    await popup.mouse.up();
+    assert.deepEqual(await scripts(destination), [copied]);
+    assert.equal((await scripts(source)).length, 2);
+
+    await preview('Drag source(2)').click();
+    const popupPreview = popup.locator('[data-code-preview]:visible');
+    await expect(popupPreview.locator(`.blocklyBlockCanvas > [data-id=${JSON.stringify(copied.id)}]`)).toBeVisible();
+    // Cover the browser path that keeps mouse capture in the source window.
+    // Position the synthetic release beyond the source viewport but inside the popup.
+    await pickUp(page, 'drag-root');
+    await popupPreview.evaluate(surface => {
+        const {left, top} = surface.getBoundingClientRect();
+        const parent = window.opener;
+        const clientX = parent.innerWidth + 40;
+        const clientY = parent.innerHeight + 40;
+        const x = left + 120;
+        const y = top + 210;
+        const border = (window.outerWidth - window.innerWidth) / 2;
+        const screenX = window.screenX + border + x;
+        const screenY = window.screenY + window.outerHeight - window.innerHeight - border + y;
+        parent.document.dispatchEvent(new parent.MouseEvent('mouseup', {bubbles: true, cancelable: true,
+            clientX, clientY, screenX, screenY, button: 0}));
+    });
+    await page.mouse.up();
+    await expect.poll(async () => (await scripts(destination)).length).toBe(2);
+    assert.deepEqual((await scripts(source))[0], original[0]);
+});
+
 test('two Dockview code panes keep independent positions and zoom for the same sprite', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];
