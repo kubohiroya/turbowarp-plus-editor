@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: a document reader. Sticky tab bar of four documents, one 46rem text column, figures may run wider (60rem). Colors borrow Scratch's block categories: Looks purple = Scratch Addons, TurboWarp red = TurboWarp, Extensions teal = TurboWarp-Plus. */
+/* Layout: a document reader. On wide screens a sticky left contents panel lists the four documents and their sections; narrower screens use a sticky tab bar instead. Each document ends with previous/next buttons. one 46rem text column, figures may run wider (60rem). Colors borrow Scratch's block categories: Looks purple = Scratch Addons, TurboWarp red = TurboWarp, Extensions teal = TurboWarp-Plus. */
 :root {
   --bg: #F5F7FA;
   --panel: #FFFFFF;
@@ -51,6 +51,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .masthead .kicker { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; color: var(--muted); }
 .masthead h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(1.7rem, 4.5vw, 2.5rem); line-height: 1.25; margin: 0; text-wrap: balance; }
 .masthead p { margin: 0; color: var(--muted); max-width: 46rem; }
+.masthead .subtitle { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.1rem, 2.6vw, 1.35rem); line-height: 1.4; color: var(--fg); }
 .legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-size: .85rem; margin-top: .25rem; }
 .legend span { display: inline-flex; align-items: center; gap: .4rem; }
 .legend i { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; }
@@ -74,7 +75,39 @@ nav.tabs a:hover { color: var(--fg); }
 nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--plus); font-weight: 700; }
 nav.tabs a:focus-visible, a:focus-visible { outline: 2px solid var(--plus); outline-offset: 2px; }
 
-main { max-width: 60rem; margin: 0 auto; }
+main { max-width: 60rem; margin: 0 auto; min-width: 0; }
+nav.toc { display: none; }
+@media (min-width: 70rem) {
+  nav.tabs { display: none; }
+  .masthead { max-width: 78rem; padding-left: 18rem; }
+  .reader { max-width: 78rem; margin: 0 auto; display: grid; grid-template-columns: 16rem minmax(0, 60rem); gap: 2rem; }
+  .reader > main { margin: 0; }
+  nav.toc {
+    display: block; position: sticky; top: env(safe-area-inset-top, 0px); align-self: start;
+    max-height: 100vh; overflow-y: auto; padding: 2rem .25rem 2rem 0; font-size: .86rem; line-height: 1.5;
+    border-right: 1px solid var(--line);
+  }
+}
+.toc-title { margin: 0 0 .6rem; font-family: var(--f-mono); font-size: .75rem; letter-spacing: .08em; color: var(--muted); }
+nav.toc ol { list-style: none; margin: 0; padding: 0; }
+nav.toc > ol { display: grid; gap: .35rem; }
+nav.toc a { display: block; text-decoration: none; color: var(--muted); border-left: 3px solid transparent; padding: .3rem .6rem; border-radius: 0 6px 6px 0; }
+nav.toc a:hover { color: var(--fg); background: var(--panel); }
+nav.toc > ol > li > a { font-weight: 700; }
+nav.toc > ol > li > a b { font-family: var(--f-mono); font-weight: 600; font-size: .72rem; margin-right: .4rem; }
+nav.toc li li a { padding-left: 1.6rem; font-size: .82rem; }
+nav.toc > ol > li.current > a { color: var(--fg); }
+nav.toc a[aria-current="page"] { color: var(--fg); background: var(--plus-soft); border-left-color: var(--plus); }
+nav.toc a[aria-current="location"] { color: var(--plus); border-left-color: var(--plus); font-weight: 700; }
+h3[id] { scroll-margin-top: 4rem; }
+@media (min-width: 70rem) { h3[id] { scroll-margin-top: 1.5rem; } }
+
+.pager { max-width: 46rem; margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.pager a { display: grid; gap: .15rem; padding: .85rem 1.1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); text-decoration: none; line-height: 1.5; }
+.pager a:hover { border-color: var(--plus); }
+.pager a span { font-size: .8rem; color: var(--plus); font-weight: 700; }
+.pager .next-doc { grid-column: 2; text-align: right; }
+@media (max-width: 520px) { .pager { grid-template-columns: 1fr; } .pager .next-doc { grid-column: 1; } }
 .doc { padding-top: 2rem; }
 .js .doc:not(.active) { display: none; }
 .doc + .doc { border-top: 1px dashed var(--line); margin-top: 3rem; }
@@ -179,7 +212,8 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 
 <header class="masthead">
   <div class="kicker">SCRATCH ADDONS · TURBOWARP ADDONS · TURBOWARP-PLUS-EDITOR</div>
-  <h1>Three ways to add features to the editor</h1>
+  <h1>TurboWarp-Plus-Editor Developer Guide</h1>
+  <p class="subtitle">Three ways to add features to the editor</p>
   <p>Four documents that compare Scratch addons, TurboWarp addons and the sockets of TurboWarp-Plus-Editor, specify how Plus builds in its added features, and explain how to build a new one.</p>
   <p>In these documents, an <strong>added feature</strong> is something Plus builds into the editor itself on top of standard TurboWarp, and an <strong>extension</strong> is a Scratch or TurboWarp extension that a project loads.</p>
   <div class="legend" aria-label="Color legend">
@@ -195,6 +229,47 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <li><a href="#comparison"><b>02</b>Comparison and conclusion</a></li>
     <li><a href="#spec"><b>03</b>How features are built in</a></li>
     <li><a href="#howto"><b>04</b>Building a new feature</a></li>
+  </ol>
+</nav>
+
+<div class="reader">
+<nav class="toc" aria-label="Contents">
+  <p class="toc-title">Developer guide · 4 documents</p>
+  <ol>
+    <li data-doc="article"><a href="#article"><b>01</b>Article: three approaches</a></li>
+    <li data-doc="comparison"><a href="#comparison"><b>02</b>Comparison and conclusion</a>
+      <ol>
+        <li><a href="#comparison-1">1. Scratch Addons: a browser extension injected into the page</a></li>
+        <li><a href="#comparison-2">2. TurboWarp addons: bundled, running on the same API</a></li>
+        <li><a href="#comparison-3">3. TurboWarp-Plus-Editor: bound to sockets at build time</a></li>
+        <li><a href="#comparison-4">4. When each takes effect</a></li>
+        <li><a href="#comparison-5">5. How each breaks when upstream changes</a></li>
+        <li><a href="#comparison-6">6. Side-by-side comparison</a></li>
+        <li><a href="#comparison-7">7. Can Plus's added features take the addon form?</a></li>
+        <li><a href="#comparison-8">8. Conclusion: why the Plus approach is better</a></li>
+      </ol>
+    </li>
+    <li data-doc="spec"><a href="#spec"><b>03</b>How features are built in</a>
+      <ol>
+        <li><a href="#spec-1">1. Three repositories and the direction of dependency</a></li>
+        <li><a href="#spec-2">2. Binding at build time</a></li>
+        <li><a href="#spec-3">3. List of sockets</a></li>
+        <li><a href="#spec-4">4. Socket rules</a></li>
+        <li><a href="#spec-5">5. Attaching to the workspace</a></li>
+        <li><a href="#spec-6">6. API exposed to runtime extensions</a></li>
+        <li><a href="#spec-7">7. Startup flags</a></li>
+        <li><a href="#spec-8">8. Relationship with bundled addons</a></li>
+        <li><a href="#spec-9">9. Verification</a></li>
+      </ol>
+    </li>
+    <li data-doc="howto"><a href="#howto"><b>04</b>Building a new feature</a>
+      <ol>
+        <li><a href="#howto-1">1. Decide where it goes</a></li>
+        <li><a href="#howto-2">2. Order of work</a></li>
+        <li><a href="#howto-3">3. Steps</a></li>
+        <li><a href="#howto-4">4. Before you ship</a></li>
+      </ol>
+    </li>
   </ol>
 </nav>
 
@@ -280,6 +355,9 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p>Plus's main features are the layout, extension review and the save flow. None of them fit the "add from outside" model, so there is little point in Plus aiming for addon compatibility. Small features that can be removed again are written, like addons, so they can be attached later and detached.</p>
   </div>
   <p class="next">The detailed comparison is in <a href="#comparison">02 Comparison and conclusion</a>, and the list of sockets is in <a href="#spec">03 Spec</a>.</p>
+  <nav class="pager" aria-label="Previous and next documents">
+    <a class="next-doc" href="#comparison" rel="next"><span>Next →</span><b>02 Comparison and conclusion</b></a>
+  </nav>
 </article>
 
 <!-- ============================================================ 02 COMPARISON -->
@@ -290,7 +368,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p class="lede">This compares the mechanism, when each takes effect, how each breaks and how each is toggled. It ends with the advantages of the Plus approach and the reasons for them.</p>
   </header>
 
-  <h3>1. Scratch Addons: a browser extension injected into the page</h3>
+  <h3 id="comparison-1">1. Scratch Addons: a browser extension injected into the page</h3>
   <div class="prose">
     <p>Scratch Addons is a browser extension for Chrome or Firefox. Each addon has its own manifest that declares its name, description, tags, settings, whether it is on by default and which pages it runs on. When you open a matching page, the browser extension injects the addon's userscripts and userstyles into it.</p>
     <p>A userscript is an async function that receives <code>({addon, console, msg})</code>. It waits for elements to appear with <code>addon.tab.waitForElement</code>, obtains the VM and Blockly through <code>traps</code>, and watches Redux state. The official editor has no sockets, so everything has to be found from the outside.</p>
@@ -336,7 +414,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 2</b>With Scratch Addons, the official editor knows nothing. Userscripts find on-screen elements and internal state from the outside and add to them.</figcaption>
   </figure>
 
-  <h3>2. TurboWarp addons: bundled, running on the same API</h3>
+  <h3 id="comparison-2">2. TurboWarp addons: bundled, running on the same API</h3>
   <div class="prose">
     <p>TurboWarp pulls the editor addons of Scratch Addons into its own source with a script called <code>pull.js</code>. It applies TurboWarp's patches to the upstream code (the <code>tw</code> branch of <code>TurboWarp/addons</code>), rewrites it further with regular expressions, and places the result in <code>src/addons/</code>. The current fork contains 81 addons, six of which are TurboWarp's own <code>tw-</code> addons.</p>
     <p>At run time, <code>api.js</code> recreates the <code>addon</code> object of Scratch Addons and passes it in. APIs that only exist in a browser extension, such as login information, are absent. In their place there are spots tailored to TurboWarp's screen, such as the shared spaces of <code>appendToSharedSpace</code> (eight of them, including <code>stageHeader</code>, <code>afterGreenFlag</code>, <code>afterStopButton</code> and <code>afterSoundTab</code>). <code>mediarecorder</code>, which adds a "Record" button to the menu bar, also uses this mechanism: it looks for the element next to the File menu and inserts itself there.</p>
@@ -399,7 +477,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 3</b>In TurboWarp, importing happens at build time and connecting at run time. The connection still works like Scratch Addons, by searching from the outside.</figcaption>
   </figure>
 
-  <h3>3. TurboWarp-Plus-Editor: bound to sockets at build time</h3>
+  <h3 id="comparison-3">3. TurboWarp-Plus-Editor: bound to sockets at build time</h3>
   <div class="prose">
     <p>Plus does not add a single file to its scratch-gui fork that upstream doesn't have. It puts <code>getHostIntegration()</code> in <code>src/addons/hooks.js</code>, a file upstream also has, and 28 files other than hooks.js ask for values by name, as in <code>getHostIntegration()?.EditorLayout</code>.</p>
     <p>In the distributed build, webpack's <code>ProvidePlugin</code> binds <code>__TW_GUI_HOST__</code> to this repository's <code>site/gui-integration/index.ts</code>. From there it connects to the integration object in <code>site/plus-integration.ts</code> and to the versioned <code>@kubohiroya/turbowarp-*</code> npm packages. When the GUI is built on its own, <code>__TW_GUI_HOST__</code> doesn't exist, the getter returns <code>null</code>, and the GUI behaves like upstream.</p>
@@ -449,7 +527,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 4</b>In Plus, each call site in the fork names a socket and receives the value supplied at build time. When there is no value, it falls back to upstream behavior.</figcaption>
   </figure>
 
-  <h3>4. When each takes effect</h3>
+  <h3 id="comparison-4">4. When each takes effect</h3>
   <div class="prose">
     <p>The three approaches differ in when a feature starts working. Addons attach asynchronously after the page or GUI starts running, so they are a poor fit for work that must be in effect before a project loads. Plus can pass such work, like extension review, synchronously through a socket, so it is settled before loading.</p>
   </div>
@@ -492,7 +570,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 5</b>Addons attach later and users can toggle them. Plus is bound from the start, so it can also hold work that must take effect before a project loads.</figcaption>
   </figure>
 
-  <h3>5. How each breaks when upstream changes</h3>
+  <h3 id="comparison-5">5. How each breaks when upstream changes</h3>
   <div class="prose">
     <p>Addons look for CSS module class names by prefix (<code>scratchClass</code>, <code>[class*='menu-bar_file-group']</code> and so on). When upstream changes the page structure, the search fails and nothing happens. Plus's sockets are calls written into the fork's source, so a clash with an upstream change stops at the merge conflict, the type check or the integration tests.</p>
   </div>
@@ -533,7 +611,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 6</b>Addons silently stop working. With Plus, you notice when you update the fork.</figcaption>
   </figure>
 
-  <h3>6. Side-by-side comparison</h3>
+  <h3 id="comparison-6">6. Side-by-side comparison</h3>
   <div class="table-wrap">
     <table class="wide">
       <thead><tr><th>Aspect</th><th class="sa">Scratch Addons</th><th class="tw">TurboWarp addons</th><th class="plus">TurboWarp-Plus-Editor</th></tr></thead>
@@ -552,7 +630,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     </table>
   </div>
 
-  <h3>7. Can Plus's added features take the addon form?</h3>
+  <h3 id="comparison-7">7. Can Plus's added features take the addon form?</h3>
   <div class="prose">
     <p>Plot Plus's added features on two axes, "adds or replaces" and "the user may turn it off, or it must always be on". Only the top-left area can take the addon form.</p>
   </div>
@@ -601,7 +679,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 7</b>Only area A, small additive features, can take the addon form. Area C, at the center of Plus, lies outside the addon model.</figcaption>
   </figure>
 
-  <h3>8. Conclusion: why the Plus approach is better</h3>
+  <h3 id="comparison-8">8. Conclusion: why the Plus approach is better</h3>
   <div class="prose">
     <p>For TurboWarp-Plus-Editor to add features to TurboWarp, the current approach of placing named sockets in the fork and binding implementations at build time suits it better than the addon approach. There are six reasons.</p>
   </div>
@@ -621,6 +699,10 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p>That said, small features in area A of Fig. 7 are written like addons: "attached later, removed with <code>dispose</code>". That makes them easy to move to the addon form if we ever want users to toggle them. We will not rebuild existing features to be addon-compatible.</p>
   </div>
   <p class="source">Sources: the fork's <code>src/addons/</code> (81 addons, 6 of them <code>tw-</code>), <code>appendToSharedSpace</code> in <code>api.js</code>, <code>docs/plus-integration-sockets.md</code>, <code>docs/gui-integration/README.md</code>, <code>site/plus-integration.ts</code>. Counts are from the fork pinned by this repository.</p>
+  <nav class="pager" aria-label="Previous and next documents">
+    <a class="prev" href="#article" rel="prev"><span>← Previous</span><b>01 Article: three approaches</b></a>
+    <a class="next-doc" href="#spec" rel="next"><span>Next →</span><b>03 How features are built in</b></a>
+  </nav>
 </article>
 
 <!-- ============================================================ 03 SPEC -->
@@ -631,7 +713,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p class="lede">This defines how Plus's added features reach the forked scratch-gui, the list of sockets, the rules they follow, startup flags and the API exposed to runtime extensions.</p>
   </header>
 
-  <h3>1. Three repositories and the direction of dependency</h3>
+  <h3 id="spec-1">1. Three repositories and the direction of dependency</h3>
   <div class="prose">
     <p>Plus's added features span three repositories. Dependencies go one way; upstream knows nothing about downstream.</p>
   </div>
@@ -680,7 +762,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 8</b>Implementations live in the packages, wiring and deployment in the Editor, and only the socket call lines in the fork. The packages never import GPL code, so the direction is fixed: the GPL side calls the packages' sockets.</figcaption>
   </figure>
 
-  <h3>2. Binding at build time</h3>
+  <h3 id="spec-2">2. Binding at build time</h3>
   <div class="prose">
     <p>The fork's <code>src/addons/hooks.js</code>, a file upstream also has, contains this getter.</p>
   </div>
@@ -735,7 +817,7 @@ export const getHostIntegration = () =&gt;
     <figcaption><b>Fig. 9</b>UI parts are read directly from the bridge; settings and services are read from the integration object through helpers. The helpers decide the "absent" default in one place.</figcaption>
   </figure>
 
-  <h3>3. List of sockets</h3>
+  <h3 id="spec-3">3. List of sockets</h3>
   <div class="prose">
     <p>The sockets the fork refers to, grouped by purpose. The left column is the name the fork writes after <code>getHostIntegration()?.</code>; the right column is the entry in the integration object. You can extract the current list with this command.</p>
   </div>
@@ -758,7 +840,7 @@ export const getHostIntegration = () =&gt;
     </table>
   </div>
 
-  <h3>4. Socket rules</h3>
+  <h3 id="spec-4">4. Socket rules</h3>
   <div class="prose">
     <p>Every socket follows these rules, and so must any new socket.</p>
     <ol>
@@ -771,7 +853,7 @@ export const getHostIntegration = () =&gt;
     </ol>
   </div>
 
-  <h3>5. Attaching to the workspace</h3>
+  <h3 id="spec-5">5. Attaching to the workspace</h3>
   <div class="prose">
     <p><code>attachToWorkspace</code> is the socket that attaches features to Blockly and the VM in one go. It is the closest thing to an addon userscript.</p>
   </div>
@@ -829,7 +911,7 @@ export const getHostIntegration = () =&gt;
     <p>One-time registration once ScratchBlocks is available (block shapes, context menus, palette additions) goes in <code>registerBlockShapes(ScratchBlocks)</code>. When you need to wait for an addon to start, list its id in <code>awaitStartupAddons</code> (currently <code>editor-searchable-dropdowns</code>).</p>
   </div>
 
-  <h3>6. API exposed to runtime extensions</h3>
+  <h3 id="spec-6">6. API exposed to runtime extensions</h3>
   <div class="prose">
     <p>Unsandboxed extensions can read the following from <code>Scratch.gui</code>. In addition to upstream's <code>getBlockly</code> and <code>getBlocklyEagerly</code>, these fields appear only when the host supplies a value. Otherwise they stay <code>undefined</code>, so an extension can tell that "this build doesn't have it".</p>
   </div>
@@ -889,7 +971,7 @@ export const getHostIntegration = () =&gt;
     <p>Buttons added with <code>addButton</code> start with <code>visible: false</code>. Call <code>update({visible: true})</code> to show them. <code>update</code> can change four things: <code>label</code>, <code>text</code>, <code>visible</code> and <code>expanded</code>. To show an element when the button is expanded, hand it to the host with the service's <code>placePanel(element)</code>. The registering side owns the element; the host only mounts it.</p>
   </div>
 
-  <h3>7. Startup flags</h3>
+  <h3 id="spec-7">7. Startup flags</h3>
   <div class="prose">
     <p>Whether a feature is on is decided once at startup by the page's <code>twPlus…</code> URL query. <code>config/web-startup-feature-flags.ts</code> reads the URL, and <code>readStartupFeatureFlags</code> in <code>config/feature-flags.ts</code> returns a frozen object. <strong>These values must never come from project data.</strong></p>
   </div>
@@ -930,7 +1012,7 @@ export const getHostIntegration = () =&gt;
     </table>
   </div>
 
-  <h3>8. Relationship with bundled addons</h3>
+  <h3 id="spec-8">8. Relationship with bundled addons</h3>
   <div class="prose">
     <ul>
       <li><strong>Default enablement:</strong> <code>site/addon-manifests.ts</code> replaces the fork's <code>generated/addon-manifests</code> through a webpack alias. It enables addons tagged "recommended" plus <code>hide-delete-button</code> and <code>block-palette-icons</code> by default, and keeps <code>hide-flyout</code> off. Choices the user makes in the settings page take precedence.</li>
@@ -939,7 +1021,7 @@ export const getHostIntegration = () =&gt;
     </ul>
   </div>
 
-  <h3>9. Verification</h3>
+  <h3 id="spec-9">9. Verification</h3>
   <div class="table-wrap">
     <table class="wide">
       <thead><tr><th>Command</th><th>What it checks</th></tr></thead>
@@ -956,6 +1038,10 @@ export const getHostIntegration = () =&gt;
     <div class="label">E2E WITH THE REAL MOUSE</div>
     <p>E2E tests that move the OS mouse cursor (<code>TW_PLUS_NATIVE_INPUT=1</code>, <code>test:e2e:native</code>) run only when someone explicitly asks for that run. A general request to run E2E or to verify a PR doesn't count (<code>AGENTS.md</code>).</p>
   </div>
+  <nav class="pager" aria-label="Previous and next documents">
+    <a class="prev" href="#comparison" rel="prev"><span>← Previous</span><b>02 Comparison and conclusion</b></a>
+    <a class="next-doc" href="#howto" rel="next"><span>Next →</span><b>04 Building a new feature</b></a>
+  </nav>
 </article>
 
 <!-- ============================================================ 04 HOWTO -->
@@ -966,7 +1052,7 @@ export const getHostIntegration = () =&gt;
     <p class="lede">The steps from deciding where a feature belongs to implementing it in a package, wiring it in the Editor, verifying and shipping it.</p>
   </header>
 
-  <h3>1. Decide where it goes</h3>
+  <h3 id="howto-1">1. Decide where it goes</h3>
   <div class="prose">
     <p>First, decide which path the feature takes to reach the editor. Walk the chart below from the top; the first "yes" is where it goes.</p>
   </div>
@@ -1025,7 +1111,7 @@ export const getHostIntegration = () =&gt;
     <figcaption><b>Fig. 13</b>A to C need no fork changes. Only D changes the fork, so first make sure A to C can't reach it.</figcaption>
   </figure>
 
-  <h3>2. Order of work</h3>
+  <h3 id="howto-2">2. Order of work</h3>
   <div class="prose">
     <p>Publish the implementation from the packages repository first; the Editor upgrades to that npm release and then wires it in. When a new socket is needed, work on the fork change in parallel and pin its SHA in the Editor.</p>
   </div>
@@ -1074,7 +1160,7 @@ export const getHostIntegration = () =&gt;
     <figcaption><b>Fig. 14</b>Work flows one way, from upstream to downstream. Editor changes start by using a published version.</figcaption>
   </figure>
 
-  <h3>3. Steps</h3>
+  <h3 id="howto-3">3. Steps</h3>
   <ol class="steps">
     <li>
       <h5>Decide the placement and the socket</h5>
@@ -1144,7 +1230,7 @@ if (controls) {
     </li>
   </ol>
 
-  <h3>4. Before you ship</h3>
+  <h3 id="howto-4">4. Before you ship</h3>
   <ul class="checklist">
     <li>The implementation lives in a package, and Editor changes are limited to version bumps and a few wiring lines</li>
     <li>Everything attached comes off with <code>dispose()</code>, and nothing is attached twice when the VM changes</li>
@@ -1166,27 +1252,78 @@ if (controls) {
   <p class="source">Related documents: <code>docs/plus-integration-sockets.md</code> (history of the socket design), <code>docs/gui-integration/README.md</code> (relocation and build-time wiring), <code>docs/architecture.md</code> (responsibilities and deployment).</p>
   <h4>Dialog action buttons</h4>
   <p>Group action buttons at the bottom right. Place Cancel to the left of the primary action, such as Save or Apply. Use <code>tw-plus-dialog-actions</code> on the group and set <code>data-dialog-action</code> to <code>cancel</code>, <code>close</code>, <code>confirm</code>, or <code>delete</code>. Keep the text labels and pair them with an X for Cancel and Close, a check for Save and confirmation, or a trash can for Delete.</p>
+  <nav class="pager" aria-label="Previous and next documents">
+    <a class="prev" href="#spec" rel="prev"><span>← Previous</span><b>03 How features are built in</b></a>
+  </nav>
 </article>
 
 </main>
+</div>
 
 
 <script>
 (function () {
   var docs = Array.prototype.slice.call(document.querySelectorAll('.doc'));
-  var links = Array.prototype.slice.call(document.querySelectorAll('nav.tabs a'));
-  var ids = docs.map(function (d) { return d.id; });
+  var docLinks = Array.prototype.slice.call(document.querySelectorAll('nav.tabs a, nav.toc > ol > li > a'));
+  var tocItems = Array.prototype.slice.call(document.querySelectorAll('nav.toc > ol > li'));
+  var sectionLinks = Array.prototype.slice.call(document.querySelectorAll('nav.toc li li a'));
+  var active = docs[0];
   document.documentElement.classList.add('js');
-  function show() {
-    var id = (location.hash || '').slice(1);
-    if (ids.indexOf(id) < 0) id = 'article';
-    docs.forEach(function (d) { d.classList.toggle('active', d.id === id); });
-    links.forEach(function (a) {
-      if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page');
+  // The hash names either a document or a section inside one; show the document that holds it.
+  function target() {
+    var el = document.getElementById((location.hash || '').slice(1));
+    var doc = el && el.closest('.doc');
+    return {doc: doc || docs[0], section: doc && el !== doc ? el : null};
+  }
+  function show(doc) {
+    active = doc;
+    docs.forEach(function (d) { d.classList.toggle('active', d === doc); });
+    docLinks.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + doc.id) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
+    tocItems.forEach(function (li) { li.classList.toggle('current', li.getAttribute('data-doc') === doc.id); });
+    spy();
   }
-  window.addEventListener('hashchange', function () { show(); window.scrollTo(0, 0); });
-  show();
+  // Mark the section being read: the last heading of the shown document that has scrolled past the top.
+  // At the bottom of the page the last heading may never reach the top, so it counts as read.
+  var toc = document.querySelector('nav.toc');
+  function spy() {
+    var current = null;
+    var headings = active.querySelectorAll('h3[id]');
+    var atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    Array.prototype.forEach.call(headings, function (h) {
+      if (h.getBoundingClientRect().top <= 120) current = h.id;
+    });
+    if (atEnd && current && headings.length) current = headings[headings.length - 1].id;
+    sectionLinks.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + current) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
+    });
+    // Keep the highlighted entry inside the contents panel when the panel itself scrolls.
+    var mark = toc && (toc.querySelector('a[aria-current="location"]') || toc.querySelector('a[aria-current="page"]'));
+    if (mark && toc.scrollHeight > toc.clientHeight) {
+      var top = mark.offsetTop, bottom = top + mark.offsetHeight;
+      if (top < toc.scrollTop + 40) toc.scrollTop = Math.max(0, top - 40);
+      else if (bottom > toc.scrollTop + toc.clientHeight - 40) toc.scrollTop = bottom - toc.clientHeight + 40;
+    }
+  }
+  function go() {
+    var t = target();
+    show(t.doc);
+    if (t.section) t.section.scrollIntoView();
+    else window.scrollTo(0, 0);
+    spy();
+  }
+  var pending = false;
+  window.addEventListener('scroll', function () {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(function () { pending = false; spy(); });
+  }, {passive: true});
+  window.addEventListener('hashchange', go);
+  var first = target();
+  show(first.doc);
+  if (first.section) first.section.scrollIntoView();
 })();
 </script>
