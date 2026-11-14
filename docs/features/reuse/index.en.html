@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reuse scripts and assets — Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="How to transfer scripts and the stage to another project in TurboWarp Plus, and how to add bundle materials as backdrops, costumes, and sounds.">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 9. Reuse scripts and assets · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 9/12 · Updated November 14, 2026</p>
+<h1>Reuse scripts and assets</h1>
+<p class="lead">Move scripts and the stage to another project with files or copy and paste, and use an extension’s bundle materials as ordinary assets.</p>
+<nav class="topic-nav" aria-label="Feature guide topics">
+<ul>
+<li><a href="../open/index.en.html">Open projects</a></li>
+<li><a href="../screen/index.en.html">Menus and screen</a></li>
+<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
+<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../workspace/index.en.html">Workspace</a></li>
+<li><a href="../blocks/index.en.html">Blocks</a></li>
+<li><a href="../search/index.en.html">Search and replace</a></li>
+<li><a href="../documents/index.en.html">Documents and extension data</a></li>
+<li><a href="../reuse/index.en.html" aria-current="page">Reuse</a></li>
+<li><a href="../git/index.en.html">Git and project folders</a></li>
+<li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../github/index.en.html">Develop on GitHub</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="On this page">
+<ol>
+<li><a href="#transfer">9.1 Transfer scripts and the stage to another project</a></li>
+<li><a href="#bundle-assets">9.2 Add bundled assets as backdrops, costumes and sounds</a></li>
+</ol>
+</nav>
+<span id="backpack" hidden data-alias-of="transfer"></span>
+
+<section id="transfer">
+
+<h2>9.1 Transfer scripts and the stage to another project</h2>
+
+<p>TurboWarp Plus Editor does not have the Backpack found at the bottom of the Scratch editor. To reuse scripts, copy and paste them or export and import them as .blocks3 files. You can move the stage to another project as .stage3, and a whole sprite as .sprite3.</p>
+<p>Right-click a block in the script you want to move and choose "Export Script" or "Copy". Both act on the whole connected group of blocks that contains the block you right-clicked. In the destination, right-click empty space in the code area and choose "Import Script" for a file or "Paste" for copied content. You can also copy and paste with the <a href="../screen/index.en.html#edit-menu">"Edit" menu</a> or Ctrl/Cmd+C and V.</p>
+<p>If you only need to move a script to another sprite in the same project, you can also put two code tabs side by side and drag the blocks into the other code area to copy them (<a href="../blocks/index.en.html#context-menu">Copying blocks into another sprite’s code</a>).</p>
+<figure class="guide-detail"><a href="../images/en/block-context-menu.png"><img src="../images/en/block-context-menu.png" width="640" height="480" alt="The context menu for a block: Duplicate, Add Comment, Delete Block, Export Script, Copy, Make Space, Copy All, Copy Block, and Cut Block, each with an icon." loading="lazy"></a><figcaption>The context menu for a block. Export has a downward arrow and delete has a trash can icon.</figcaption></figure>
+<ul><li><strong>.blocks3</strong> contains the script along with the custom blocks, variables, lists, messages, and extensions it uses. Between windows opened from the same origin, you can copy and paste without granting access to the OS clipboard. Between different origins, you need a supported browser and permission to read the clipboard.</li><li><strong>.stage3</strong>: In the Plus layout, right-click the backdrop tile and choose "Export Stage"; in the Scratch layout, right-click the stage to export it. To bring it in with the Scratch layout, choose "Import Stage (add)" from the backdrop’s "Choose a Backdrop" menu. The backdrops, sounds, and scripts are added to the current stage.</li><li>If the destination has a variable or list with the same name, scope, and type, the destination’s item and its value are used. Custom blocks and assets whose names collide are renamed as needed. Backdrop and sound names or numbers that are computed at run time are not converted automatically.</li><li>Whether an extension can run depends on the destination’s settings and approvals.</li></ul>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">Transfer specification</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/351">Removing the Backpack</a></p>
+
+</section>
+
+<section id="bundle-assets">
+
+<h2>9.2 Add bundled assets as backdrops, costumes and sounds</h2>
+
+<p>Use this when you want to use images or sounds from a bundle, such as those used by Kamishibai, in sprites or the stage. The original materials in the bundle stay as they are, and the ones you choose are added to the project as backdrops, costumes, or sounds.</p>
+<p>Open "File" → "Project Data…" and press "Add Bundle Material to Project…" at the top. In the dialog that opens, choose the "Bundle material", "Add as", and "Target", then press "Add to project". Save the project to keep what you added. In projects with no materials that can be added, "There are no supported images or sounds." is shown.</p>
+<div class="table-scroll" role="region" aria-label="Where materials are added, by kind" tabindex="0">
+<table><caption>Where materials are added, by kind</caption><thead><tr><th scope="col">Material</th><th scope="col">Add as</th><th scope="col">Target</th></tr></thead><tbody>
+<tr><th scope="row">Image (SVG, PNG, JPEG)</th><td>Costume</td><td>The chosen sprite</td></tr>
+<tr><th scope="row">Image (SVG, PNG, JPEG)</th><td>Backdrop</td><td>The stage</td></tr>
+<tr><th scope="row">Audio (WAV, MP3, Ogg)</th><td>Sound</td><td>The chosen sprite or the stage</td></tr>
+</tbody></table></div>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/215">Adding bundle materials</a></p>
+
+</section>
+<nav class="pager" aria-label="Previous and next pages">
+<a class="prev" href="../documents/index.en.html"><small>Previous</small>8. Edit extension data and documents</a>
+<a class="next" href="../git/index.en.html"><small>Next</small>10. Manage projects with project folders and Git</a>
+</nav>
+</main>
+<footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
+</body></html>

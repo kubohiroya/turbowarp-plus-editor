@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ステージを開いて作品を動かす — 機能ガイド — TurboWarp-Plus-Editor</title>
-<meta name="description" content="TurboWarp Plusでステージを別ウィンドウ・全画面・タブ・引き出しで開き、作品を実行する方法。">
+<meta name="description" content="TurboWarp Plusでステージを別ウィンドウ・タブ・引出しで開き、全画面表示や引出しの常時表示を切り替えて作品を実行する方法。">
 <link rel="stylesheet" href="../guide.css">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
-<p class="breadcrumb"><a href="../">機能ガイド</a> › 4. ステージを開いて作品を動かす</p>
-<p class="eyebrow">機能ガイド 4/12 · 2026年11月8日更新</p>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 4. ステージを開いて作品を動かす · <a href="index.en.html" hreflang="en" lang="en">English</a></p>
+<p class="eyebrow">機能ガイド 4/12 · 2026年11月14日更新</p>
 <h1>ステージを開いて作品を動かす</h1>
-<p class="lead">ステージはメニューバー右端の「ステージを開く」から、別ウィンドウ・全画面・タブ・引き出しのうち、作業に合った開き方を選べます。</p>
+<p class="lead">ステージは、メニューバー右側の「ステージを開く」から、別ウィンドウ・タブ・引出しのうち作業に合った場所に開きます。全画面表示や置き場所の変更は、ステージの「ステージの表示」メニューから行います。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
 <ul>
 <li><a href="../open/">作品を開く</a></li>
@@ -32,7 +32,7 @@
 <nav class="page-toc" aria-label="このページの目次">
 <ol>
 <li><a href="#stage-open">4.1 メニューバーからステージを開く</a></li>
-<li><a href="#stage-controls">4.2 右端の引き出しで作品を動かす</a></li>
+<li><a href="#stage-controls">4.2 右端の引出しで作品を動かす</a></li>
 <li><a href="#stage-menu">4.3 ステージの表示メニュー</a></li>
 <li><a href="#dock">4.4 ステージを作業領域や別ウィンドウに移す</a></li>
 </ol>
@@ -42,27 +42,27 @@
 
 <h2>4.1 メニューバーからステージを開く</h2>
 
-<p>メニューバー右端の「ステージを開く」を押すと、ステージがブラウザーの別ウィンドウで開きます。右の ▾ を押すと「ステージの開き方」から開き方を選べます。</p>
+<p>メニューバー右側の「ステージを開く」を押すと、ステージがブラウザーの別ウィンドウで開きます。右の「▾」（ステージの開き方）を押すと、開く場所を選べます。</p>
 <div class="table-scroll" role="region" aria-label="ステージの開き方" tabindex="0">
 <table><caption>ステージの開き方</caption><thead><tr><th scope="col">項目</th><th scope="col">開く場所</th><th scope="col">向いている使い方</th></tr></thead><tbody>
-<tr><th scope="row">別ウィンドウで開く</th><td>ブラウザーの別ウィンドウ</td><td>2台目のディスプレイに置いて、コードと並べる</td></tr>
-<tr><th scope="row">別ウィンドウで全画面で開く</th><td>別ウィンドウを全画面にする</td><td>発表や動作確認で、作品を大きく見せる</td></tr>
-<tr><th scope="row">ステージをタブで開く</th><td>作業領域のタブ</td><td>コードの隣にステージを固定して置く</td></tr>
-<tr><th scope="row">ステージを引き出しで開く</th><td>画面右端の引き出し</td><td>必要なときだけ開き、すぐに閉じる</td></tr>
+<tr><th scope="row">別ウィンドウで表示</th><td>ブラウザーの別ウィンドウ</td><td>2台目のディスプレイに置いて、コードと並べる</td></tr>
+<tr><th scope="row">タブで表示</th><td>作業領域の「ステージ」タブ</td><td>コードの隣にステージを固定して置く</td></tr>
+<tr><th scope="row">引出しで表示</th><td>画面右端の引出し</td><td>コード領域の上に重ねて表示し、必要がなくなったら閉じる</td></tr>
 </tbody></table></div>
-<p>ステージが開いている間、ボタンには現在の開き方が表示され、押すとそのステージに移動します。ブラウザーが全画面表示を許可しなかった場合は、別ウィンドウ内の「全画面にする」を押します。</p>
-<figure class="guide-detail"><a href="../images/stage-menu-current.png"><img src="../images/stage-menu-current.png" width="720" height="220" alt="メニューバー右端のステージを開くボタンと、別ウィンドウで開く・別ウィンドウで全画面で開く・ステージをタブで開く・ステージを引き出しで開くのメニュー。" loading="lazy"></a><figcaption>「ステージを開く」の ▾ から開く「ステージの開き方」。</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">メニューバーからステージを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/384">ステージの開き方の設計</a></p>
+<p>ステージが開いている間、「ステージを開く」と「▾」は押せなくなります。開き方を変えたり全画面表示にしたりするときは、開いたステージの「ステージの表示」を使います（<a href="#stage-menu">ステージの表示メニュー</a>）。</p>
+<figure class="guide-detail"><a href="../images/stage-menu-current.png"><img src="../images/stage-menu-current.png" width="720" height="220" alt="メニューバー右側のGitボタン、ステージを開くボタンと▾、録画ボタン。▾から開いたメニューに、別ウィンドウで表示・タブで表示・引出しで表示が並ぶ。" loading="lazy"></a><figcaption>「ステージを開く」の「▾」から開く「ステージの開き方」。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">メニューバーからステージを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/384">ステージの開き方の設計</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/518">ステージの表示メニューの統一</a></p>
 
 </section>
 
 <section id="stage-controls">
 
-<h2>4.2 右端の引き出しで作品を動かす</h2>
+<h2>4.2 右端の引出しで作品を動かす</h2>
 
-<p>画面右端の「ステージを展開」を押しても、ステージを引き出しで開けます。緑旗で実行を始め、一時停止や停止で動きを確認できます。引き出しのステージは、左辺や下辺の境界をドラッグしてサイズを変えられます。</p>
-<p>引き出しを閉じても、作品の実行は続きます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">右端のステージと別窓</a></p>
+<p>「引出しで表示」を選ぶと、ステージが画面右端の引出しに開き、コード領域の上に重なります。緑の旗で実行を始め、一時停止や停止で動きを確かめます。引出しの左辺や下辺の境界をドラッグすると、ステージの大きさを変えられます。</p>
+<p>引出しは、はじめは常時表示です。引出しの「ステージの表示」から「引出しを自動的に隠す」を選ぶと、引出しの外をクリックしたときに引出しが閉じ、画面右端に「ステージを展開」のつまみが残ります。つまみを押すと引出しがまた開きます。常時表示に戻すには、同じメニューの「引出しを常時表示する」を選びます。</p>
+<p>「引出しを閉じる」で閉じた後も、右端の「ステージを展開」から引出しを開き直せます。引出しを閉じたり隠したりしても、作品の実行は続きます。引出しの状態は作品ごとに記録され、次にその作品を開いたときに再現されます。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/257">右端のステージと別窓</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/518">引出しを作品ごとに復元</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/520">引出しの常時表示の切り替え</a></p>
 
 </section>
 
@@ -70,9 +70,15 @@
 
 <h2>4.3 ステージの表示メニュー</h2>
 
-<p>開いたステージの上部にある「ステージの表示」から、次の操作を選べます。</p>
-<ul><li>「ステージを全画面表示にする」：ステージだけを画面いっぱいに表示します。</li><li>「ステージを隠す」：ステージを隠します。隠している間も作品の実行は続きます。</li><li>「ステージをタブで開く」「ステージを別ウィンドウで開く」：ステージの置き場所を移します（<a href="#dock">ステージを作業領域や別ウィンドウに移す</a>）。</li></ul>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">ステージの表示メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/296">全画面表示の文言</a></p>
+<p>開いたステージの右上にある「ステージの表示」から、置き場所の変更と全画面表示を選べます。項目は、ステージを開いた場所によって変わります。</p>
+<div class="table-scroll" role="region" aria-label="ステージの表示メニューの項目" tabindex="0">
+<table><caption>ステージの表示メニューの項目</caption><thead><tr><th scope="col">開いた場所</th><th scope="col">並ぶ項目</th></tr></thead><tbody>
+<tr><th scope="row">引出し</th><td>「別ウィンドウで表示」「タブで表示」「引出しを自動的に隠す」（自動的に隠す設定のときは「引出しを常時表示する」）、「全画面表示にする」「引出しを閉じる」</td></tr>
+<tr><th scope="row">タブ</th><td>「別ウィンドウで表示」「タブで表示」（選択中の印が付き、選べない）、「引出しで表示」、「全画面表示にする」「タブを閉じる」</td></tr>
+<tr><th scope="row">別ウィンドウ</th><td>「全画面表示にする」「エディターに戻る」</td></tr>
+</tbody></table></div>
+<ul><li>「全画面表示にする」：ステージだけを画面いっぱいに表示します。全画面表示の間は、同じメニューの「全画面表示を終了」で元に戻ります。</li><li>「別ウィンドウで表示」「タブで表示」「引出しで表示」：ステージの置き場所を移します（<a href="#dock">ステージを作業領域や別ウィンドウに移す</a>）。</li></ul>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">ステージの表示メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/518">ステージの表示メニューの統一</a></p>
 
 </section>
 
@@ -80,13 +86,12 @@
 
 <h2>4.4 ステージを作業領域や別ウィンドウに移す</h2>
 
-<p>右端からステージを展開し、「ステージの表示」を開きます。コードの隣に置くには「ステージをタブで開く」を選びます。右端へ戻すときは、同じメニューから「ステージを元の位置に戻す」を選ぶか、「ステージ」タブを閉じます。</p>
-<p>ブラウザーの別ウィンドウで使うには「ステージを別ウィンドウで開く」を選びます。別ウィンドウの「ステージの表示」から「ステージをエディターに戻す」を選ぶと復帰します。</p>
-<div class="flow" role="img" aria-label="右端のステージを作業領域のタブまたはブラウザー別窓に移し、右端に戻す。"><div>右端のステージ</div><span>↔</span><div>作業領域のタブ<br><small>またはブラウザーの別窓</small></div></div>
-<figure><a href="../images/stage-tab.png"><img src="../images/stage-tab.png" width="1440" height="1000" alt="左にコード、右にステージのタブ。ステージの表示メニューに、全画面表示、隠す、元の位置に戻す、別ウィンドウで開くが並ぶ。" loading="lazy"></a><figcaption>ステージをタブで開き、「ステージの表示」を開いたところ。元の位置へ戻すか、別ウィンドウに移せます。</figcaption></figure>
-<p><span class="badge planned">開発中</span> ペインの広さに合わせてステージを拡大・縮小する動作は、ローカル統合版で確認しています。公開版の通常表示ではステージの幅は480pxです。</p>
-<figure><a href="../images/local-stage-workspace.png"><img src="../images/local-stage-workspace.png" width="1440" height="1000" alt="ローカル統合版で左にコード、右にペインの幅に合わせたステージを表示。" loading="lazy"></a><figcaption>ローカル統合版の比較画像。幅715pxのペインにステージを幅703pxで表示。メニューは撮影時点の開発版です。</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">ステージの表示メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/290">別ウィンドウからエディターへ戻す操作</a></p>
+<p>引出しやタブで開いたステージは、「ステージの表示」から置き場所を移せます。コードの隣に置くには「タブで表示」を選びます。作業領域に「ステージ」タブが開き、境界をドラッグして広さを調整できます。タブのステージは、ペインの幅に合わせて拡大・縮小されます。引出しに戻すには「引出しで表示」を、ステージを閉じるには「タブを閉じる」を選ぶか、「ステージ」タブを閉じます。</p>
+<p>ブラウザーの別ウィンドウで使うには「別ウィンドウで表示」を選びます。別ウィンドウの「ステージの表示」から「エディターに戻る」を選ぶと、別ウィンドウが閉じてエディターに戻ります。</p>
+<div class="flow" role="img" aria-label="右端の引出し、作業領域のタブ、ブラウザーの別ウィンドウの間でステージを移す。"><div>右端の引出し</div><span>↔</span><div>作業領域のタブ</div><span>↔</span><div>ブラウザーの別ウィンドウ</div></div>
+<figure><a href="../images/stage-tab.png"><img src="../images/stage-tab.png" width="1440" height="1000" alt="左にボールのコード、右にステージのタブ。ステージの表示メニューに、別ウィンドウで表示、タブで表示（選択中）、引出しで表示、全画面表示にする、タブを閉じるが並ぶ。" loading="lazy"></a><figcaption>ステージをタブで開き、「ステージの表示」を開いたところ。引出しや別ウィンドウに移すか、タブを閉じられます。</figcaption></figure>
+<figure><a href="../images/local-stage-workspace.png"><img src="../images/local-stage-workspace.png" width="1440" height="1000" alt="左にボールのコード、右にペインの幅に合わせて拡大したステージのタブ。" loading="lazy"></a><figcaption>タブで開いたステージ。幅661pxのペインに、ステージを幅650pxで表示しています。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/277">ステージの表示メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/290">別ウィンドウからエディターへ戻る操作</a></p>
 
 </section>
 <nav class="pager" aria-label="前後のページ">

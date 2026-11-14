@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manage projects with project folders and Git — Feature guide — TurboWarp-Plus-Editor</title>
+<meta name="description" content="How to open and save sb3-toolchain project folders in TurboWarp Plus, check changes with local Git, sync with GitHub, and review pull requests block by block.">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 10. Manage projects with project folders and Git · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 10/12 · Updated November 14, 2026</p>
+<h1>Manage projects with project folders and Git</h1>
+<p class="lead">Open and save a project folder unpacked with sb3-toolchain directly, and check Git changes, diffs, and history inside the Editor. You can compare public PRs without a connection. In an Editor that has a GitHub connection set up, you can also sync and review private PRs.</p>
+<nav class="topic-nav" aria-label="Feature guide topics">
+<ul>
+<li><a href="../open/index.en.html">Open projects</a></li>
+<li><a href="../screen/index.en.html">Menus and screen</a></li>
+<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
+<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../workspace/index.en.html">Workspace</a></li>
+<li><a href="../blocks/index.en.html">Blocks</a></li>
+<li><a href="../search/index.en.html">Search and replace</a></li>
+<li><a href="../documents/index.en.html">Documents and extension data</a></li>
+<li><a href="../reuse/index.en.html">Reuse</a></li>
+<li><a href="../git/index.en.html" aria-current="page">Git and project folders</a></li>
+<li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../github/index.en.html">Develop on GitHub</a></li>
+</ul>
+</nav>
+<nav class="page-toc" aria-label="On this page">
+<ol>
+<li><a href="#sb3-toolchain">10.1 Manage projects and extensions with sb3-toolchain</a></li>
+<li><a href="#project-folder">10.2 Open and save a project folder</a></li>
+<li><a href="#folder-files">See project folder files and their Git status</a></li>
+<li><a href="#local-git">10.3 Check changes and history with local Git</a></li>
+<li><a href="#block-diff">10.4 Compare project changes as blocks</a></li>
+<li><a href="#github-sync">10.5 Sync with GitHub (fetch, pull, push)</a></li>
+<li><a href="#pull-request-review">10.6 Review pull requests script by script</a></li>
+</ol>
+</nav>
+
+<p class="guide-note">The figures show the full screen of the public Editor as of November 14, 2026, in English mode. The projects and repositories are made up for illustration. Select an image to open it at full size.</p>
+<section id="sb3-toolchain">
+
+<h2>10.1 Manage projects and extensions with sb3-toolchain</h2>
+
+<p><code>sb3-toolchain</code> is a Node.js tool you run locally. <code>import</code> unpacks an SB3 into project data, assets, and embedded extensions so you can review changes with Git. <code>check</code> validates the unpacked data, and <code>build</code> generates an SB3 for distribution. You can also open and edit an unpacked project folder directly in Plus Editor (see <a href="#project-folder">Open and save a project folder</a>).</p>
+<figure class="guide-flow"><div class="flow" role="img" aria-label="Local SB3: unpack the project. Next, unpacked source managed in Git: project data, assets, and individual extensions. Next, SB3 for distribution: bundle extensions into one when needed."><div>Local SB3<br><small>Unpack the project</small></div><span aria-hidden="true">→</span><div>Unpacked source in Git<br><small>Project data, assets, individual extensions</small></div><span aria-hidden="true">→</span><div>SB3 for distribution<br><small>Bundle extensions into one when needed</small></div></div><figcaption>Manage the unpacked source and generate the SB3 you distribute.</figcaption></figure>
+<ul>
+<li><strong>Manage extension metadata.</strong> When bundling, the tool reads the name, description, and sandbox requirements written in the extension code header. You can pin a GitHub commit or an npm version and verify the SHA-256 of the code to embed. When updating, you can also check compatibility with an API manifest.</li>
+<li><strong>Combine several extensions into one.</strong> While keeping the original code, you can embed several extensions in the distributed SB3 as a single composite extension. Permission to run is decided for the composite extension as a whole.</li>
+<li><strong>Check the trust conditions of the official catalog.</strong> The public Plus Editor treats extensions that meet the conditions of the official TurboWarp Plus family catalog as trusted. The Editor matches the source and the SHA-256 of the code listed in the catalog before skipping the individual approval screen.</li>
+</ul>
+<p><a href="https://github.com/kubohiroya/sb3-toolchain/blob/main/README.md">Unpacking and rebuilding SB3 files</a> · <a href="https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/extension-bundles.md">Extension bundles</a> · <a href="https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json">Official catalog</a></p>
+
+</section>
+
+<section id="project-folder">
+
+<h2>10.2 Open and save a project folder</h2>
+
+<p>You can open and save a project folder unpacked with sb3-toolchain v1 without packing it back into an SB3. To choose and write a folder in the browser, you need Chrome or Edge with File System Access support.</p>
+<p>While a new project or an SB3 is open, click the "Project folder" button at the top left to open the panel, then click "Create Project Folder" and choose the folder to save to. If the folder is not empty, a screen asks you to confirm that its contents may be overwritten. When creation finishes, the panel shows the files in that folder, and later saves write to that folder.</p>
+<h3>Open a project folder</h3>
+<p>Choose "File" → "Open Project Folder…", select the project folder, and allow reading and writing. The project data and the local images and sounds are loaded.</p>
+<p>References to system fonts and web fonts are saved in the project data; font files are saved in <code>assets/</code>.</p>
+<figure>
+<a href="../images/en/current-open-folder.png"><img src="../images/en/current-open-folder.png" width="1440" height="960" alt="The Editor's File menu shows Open Project Folder…." loading="lazy"></a>
+<figcaption>Open a project folder from "File" at the top left. You can also choose a repository from "Git ▾" at the top right.</figcaption>
+</figure>
+<h3>Save to the project folder</h3>
+<ol><li>Edit blocks, variables and lists, sprites and costumes, sprite positions and sizes, and so on. Positions and variable values that changed while running the project are saved too.</li><li>Choose "File" → "Save Project" to update <code>project.source.json</code> in the folder. Before saving, the Editor checks that the folder has not been changed outside the Editor.</li></ol>
+<p>Adding, deleting, and renaming sprites, and adding and deleting costumes and sounds, are saved as well. In that case the Editor also updates <code>assets/</code> and <code>sb3-source.json</code> in the folder and deletes image and sound files that are no longer used.</p>
+<p>You can also open and save projects that contain embedded extensions or custom extensions loaded from a URL. Extension code is written back to <code>extensions/</code> and <code>embedded-extensions.json</code>. If you replace an extension and its origin record (<code>source</code>) is dropped, the Editor tells you when you save.</p>
+<h3 id="folder-files">See project folder files and their Git status</h3>
+<p>Click the "Project folder" button at the top left to open the "Project folder" panel. Under each file name, the panel shows what the file is for, such as project data, costume and sound files, or extension files.</p>
+<ul>
+<li><code>*</code> means the content you are editing in the Editor is not saved yet. It appears after the file name, separated by a space, and disappears when you save.</li>
+<li><strong>Bold</strong> marks files whose saved content differs from the latest commit (HEAD), and new files added to Git but not committed yet.</li>
+<li>✨ marks saved files that Git does not track yet.</li>
+<li><s>Strikethrough</s> means a file that was in the latest commit has been deleted. A deleted file is shown in the folder it used to be in.</li>
+<li>Files whose saved content matches the latest commit have blue names. The name turns purple if the tracking branch has the same version, and green if the Editor can confirm that the same version is in the merge result of a GitHub PR.</li>
+</ul>
+<p>While a file has saved changes and you keep editing it, the bold file name also gets <code>*</code>. After you commit, files that match the committed content return to normal weight.</p>
+<p>Hover over a file name to see its status as text. To see what changed, open the file and switch to "Diff", or select the file in Local Git. Images, sounds, and videos open in a preview.</p>
+<p>With the buttons at the top right of the panel you can search files, pin the drawer, and move the panel to another window. A pin with a slash means the drawer is unpinned. You can also right-click files and folders to work with them, or drag them into another folder. Assets the project refers to and the management files of the project folder are updated through the Editor's editing screens and save commands.</p>
+<figure>
+<a href="../images/en/current-project-folder.png"><img src="../images/en/current-project-folder.png" width="1440" height="960" alt="In the project folder on the left, project.source.json is bold and followed by an accent-colored asterisk. Committed file names are blue. The Cat's code is shown on the right." loading="lazy"></a>
+<figcaption>The "Project folder" panel, opened with the folder button at the top left. The <code>*</code> after <code>project.source.json</code> means unsaved edits, and bold means the content saved on disk differs from the latest commit. Files with blue names match the commit.</figcaption>
+</figure>
+<figure>
+<a href="../images/en/current-project-file-states.png"><img src="../images/en/current-project-file-states.png" width="1440" height="960" alt="The project folder on the left shows the unsaved asterisk, bold, the sparkle mark, strikethrough, and blue names in one file list. README.md is being edited in the tab on the right." loading="lazy"></a>
+<figcaption>README.md is being edited and not saved, the project data has saved changes, and todo.txt is untracked. The deleted old-notes.txt is struck through where it used to be.</figcaption>
+</figure>
+<figure>
+<a href="../images/en/current-project-file.png"><img src="../images/en/current-project-file.png" width="1440" height="960" alt="With the project folder still on the left, the project data JSON is open in a tab in the center. Edit, Diff, and Save file are at the top right of the tab." loading="lazy"></a>
+<figcaption>Selecting a file opens a tab in the same area as the code. Switch the view with "Edit" and "Diff" at the top right, and after editing text, click "Save file" to write it.</figcaption>
+</figure>
+<p>You can also use Project Starter to unpack an SB3 into a project folder. <a href="../github/index.en.html#migrate">Put your project on GitHub</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/305">Editing project folders</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/319">Reloading folder diffs</a></p>
+
+</section>
+
+<section id="local-git">
+
+<h2>10.3 Check changes and history with local Git</h2>
+
+<p>Choose "File" → "Choose Repository…" and select the root of a repository that has <code>.git</code>. You can also use the button to the left of "Open stage" on the right of the menu bar. Before you choose a repository, it reads "Git ▾" and offers "Choose Repository…" and "Open Local Git". After you choose a repository, the button shows the current branch name and lets you switch branches, choose "New Branch…", or choose "Open Local Git".</p>
+<p>"File" → "Releases…" lets you copy commands for publishing to npm, tag the current commit on GitHub, and send HTML exported with Packager to the Pages publishing source. <a href="../github/index.en.html#release">Release steps</a></p>
+<p>The basic rule is <strong>one project per repository</strong>. If a project is at the root of the repository or in the <code>project/</code> folder that Project Starter creates, and it is not open yet, "Open Project" appears at the top of Local Git. If you open a project in another location with "File" → "Open Project Folder…", it is associated with the selected repository. Once the project is open, you can check changes for the stage and each sprite. <a href="../github/index.en.html#migrate">Repository layout</a></p>
+<p>The first line of Local Git shows "Repository: <var>name</var>". "Refresh local status" next to it reads the Git status again. In an Editor that has a GitHub connection set up, "Connect to GitHub…" also appears here. When you switch branches or pull in the Editor, "Reload Project" appears in the result. While "Project folder" is shown on the left, the "Local Git" tab with a folder icon is pinned to the left end of the tab row.</p>
+<p>Below it, switch views with "Save files", "Commit saved changes", "Create PR", and "Merge". "Save files" and "Commit saved changes" show how many files they cover.</p>
+<ul>
+<li>In <strong>Save files</strong>, select a file name in the list on the left to see, on the right, the diff between the latest commit on the current branch (HEAD) and your unsaved edits. Project code can be compared as blocks. Click "Save unsaved files" to write your edits to the project folder.</li>
+<li>In <strong>Commit saved changes</strong>, the saved content is compared with HEAD. Added and deleted files are shown too.</li>
+</ul>
+<p>In "Commit saved changes", the stage and sprites that changed are listed at the top of the list on the left, and README and similar files appear under "Other files". Changes other than code are split into items such as "Other settings". Click an item or file name to see its diff on the right. To select project data and assets file by file, open "List by file". The commit box at the lower left stays visible while you scroll the list, so you can check how many files are selected and enter a commit message. <a href="../github/index.en.html#commit">From saving to committing</a></p>
+<p>In "Create PR", you can check "Records (commits)" and "Local branches", and select a commit to see its changes. You also switch and create branches here. If your GitHub connection allows creating PRs, you can choose a base branch and create a PR. In "Merge", select a PR from "Pull requests" and check its diff and merge status.</p>
+<p>The "Git history" button at the top left lists the commits in the selected repository. Selecting a commit opens "Create PR" in "Local Git" and lists that commit's changes. Select the stage, a sprite, or a file to see the diff.</p>
+<p>From a commit's "⋯" menu, you can choose "Open This Version", "Create branch here…", or "Copy commit ID". If a project folder is open, "Open This Version" runs the selected version in a separate player. The project you are editing stays as it is, and closing the player takes you back.</p>
+<p>If you add <code>twPlusGitRestoreVersion=1</code> to the launch URL, "Restore This Version…" is added to the "⋯" menu. After checking the project files involved and the additions, changes, and deletions, click "Restore and Record" to make a local commit on the current branch. Click "Reload Project" to open the restored version. To turn restoring off, specify <code>twPlusGitRestoreVersion=0</code> (off by default).</p>
+<figure>
+<a href="../images/en/current-git-unsaved.png"><img src="../images/en/current-git-unsaved.png" width="1440" height="960" alt="In the project folder on the left, README.md is followed by an asterisk. README.md is selected in Save files in Local Git, and the diff between HEAD and the unsaved edits is shown on the right." loading="lazy"></a>
+<figcaption>The unsaved README.md is selected to check its diff against HEAD. Clicking "Save unsaved files" removes the <code>*</code> and moves README.md to the "Commit saved changes" list.</figcaption>
+</figure>
+<figure>
+<a href="../images/en/current-git-file.png"><img src="../images/en/current-git-file.png" width="1440" height="960" alt="Commit saved changes in Local Git. The Cat's code and other settings are at the upper left, Other files below them, the fixed commit box at the lower left, and the diff of README.md on the right." loading="lazy"></a>
+<figcaption>README.md selected in "Commit saved changes", with its diff open on the right.</figcaption>
+</figure>
+<figure>
+<a href="../images/en/current-git-history.png"><img src="../images/en/current-git-history.png" width="1440" height="960" alt="Git history in the drawer on the left. Create PR in Local Git shows Records (commits) and Local branches, and the block diff of the selected commit is on the right." loading="lazy"></a>
+<figcaption>Selecting "Change how far the cat walks (#12)" in "Git history" on the left opens "Create PR". Here the Cat's code is selected to show that commit's changes.</figcaption>
+</figure>
+<p>After using Git outside the Editor, click "Refresh local status". After switching branches or pulling, click "Reload Project" to open that version of the project.</p>
+<p>The browser version needs a Chromium-based browser with File System Access support. Linked worktrees, submodules, and symbolic links are not supported, and changes to execute permissions in the working tree cannot be detected from the browser. If you do not use local Git, add <code>twPlusLocalGit=0</code> to the launch URL. The "Git ▾" button in the menu bar and the "Git history" button are then hidden too.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/313">Local Git panel</a></p>
+
+</section>
+
+<section id="block-diff">
+
+<h2>10.4 Compare project changes as blocks</h2>
+
+<p>In "Commit saved changes", select "Code" for a stage or sprite to show the diff of the project data (<code>project.source.json</code>) script by script. Switch to "Text" to see the line-by-line diff of the JSON.</p>
+<ul><li>Only scripts that changed become comparison items, and the before and after blocks are shown side by side. Additions, deletions, changed input values, and so on are annotated, and changed inputs and fields are outlined in orange.</li><li>Click "Highlight in Editor" to see where the change is in the script in the Editor.</li><li>Scripts that were split or joined are grouped into one item, using the blocks the two versions have in common.</li><li>Changes outside scripts, such as variables, lists, costumes and backdrops, sounds, and monitors, are shown separately.</li></ul>
+<p>Yellow horizontal and vertical bands and markers on the scroll bars show where the changes are. Hovering at a band's horizontal position or height darkens the matching band.</p>
+<figure>
+<a href="../images/en/current-git-blocks.png"><img src="../images/en/current-git-blocks.png" width="1440" height="960" alt="On the right of Commit saved changes, the before and after blocks are side by side, and the changed input is outlined." loading="lazy"></a>
+<figcaption>The Cat's steps changed from 10 to 25. Hovering over a comparison frame shows a minimap and zoom buttons at its lower right. The checkbox below moves both views together.</figcaption>
+</figure>
+<p>Extension blocks that the Editor has no definition for are shown as placeholder blocks that keep their names and connections. The Editor does not fetch or run the extension code.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">Script-by-script PR review</a></p>
+
+</section>
+
+<section id="github-sync">
+
+<h2>10.5 Sync with GitHub (fetch, pull, push)</h2>
+
+<p>Open "GitHub Connection Settings…" from the Plus logo at the left end of the menu bar and choose the default connection method. The setting is stored in the browser, and you can change it even before opening a project or repository. A change applies from the next connection; the current session continues.</p>
+<p>Authentication for each repository is done with "Connect to GitHub…" on the first line of Local Git. Confirm the target (the GitHub HTTPS remote <code>origin</code> of the selected repository), authenticate, and allow push or sending PR reviews if needed. You also check and end the connection here. Once connected, "Create PR" and "Merge" show a "Sync with GitHub" section that lists the current local branch used for pull and push, and the sync status the Editor could confirm.</p>
+<div class="table-scroll" role="region" aria-label="GitHub connection needed for each task" tabindex="0">
+<table><caption>GitHub connection needed for each task</caption><thead><tr><th scope="col">Task</th><th scope="col">Public Pages version</th><th scope="col">Web version with a connection set up, or a supported Desktop</th></tr></thead><tbody>
+<tr><th scope="row">Local diffs and commits</th><td>Works without a connection</td><td>Works without a connection</td></tr>
+<tr><th scope="row">Fetch, pull, push</th><td>Use GitHub Desktop or Git</td><td>Connect to the selected repository. Allow push when connecting</td></tr>
+<tr><th scope="row">Compare and run PRs</th><td>Shows diffs of public PRs. Open private PRs on GitHub. To test, use the SB3 built by the checks</td><td>Shows diffs of public and private PRs in the connected repository, and runs the compared version locally</td></tr>
+<tr><th scope="row">Create and merge PRs</th><td>Use GitHub</td><td>Use a connection that allows publishing and merging</td></tr>
+<tr><th scope="row">Send reviews</th><td>Send from the PR page on GitHub</td><td>Use a connection that allows sending reviews and has the matching GitHub API enabled</td></tr>
+</tbody></table></div>
+<p>In the public Pages version, "GitHub Connection Settings…" shows "No GitHub connection is configured.", and "Connect to GitHub…" does not appear in Local Git. Even where you cannot connect, you can keep syncing and reviewing with Git and the GitHub website. <a href="../github/index.en.html#push-without-connection">Steps without a connection</a></p>
+
+<figure>
+<a href="../images/en/current-git-remote.png"><img src="../images/en/current-git-remote.png" width="1440" height="960" alt="Merge in Local Git. The left pane lists public pull requests." loading="lazy"></a>
+<figcaption>"Merge" just after opening it in the public version without a GitHub connection. Select a public PR from "Pull requests" on the left.</figcaption>
+</figure>
+<div class="table-scroll" role="region" aria-label="Which update command to use" tabindex="0">
+<table><caption>Which update command to use</caption><thead><tr><th scope="col">Command</th><th scope="col">Where</th><th scope="col">What it updates</th></tr></thead><tbody>
+<tr><th scope="row">Refresh local status</th><td>Next to the repository name</td><td>Reads the state of local files, commits, and branches again.</td></tr>
+<tr><th scope="row">Update remote refs (fetch)</th><td>The "Sync with GitHub" section</td><td>Gets branch information and commits from GitHub. Your local branches and files stay as they are.</td></tr>
+<tr><th scope="row">Update local branch and files (pull)</th><td>The "Sync with GitHub" section</td><td>Applies changes from GitHub to your local branch and files. If needed, reopen the project with "Reload Project".</td></tr>
+<tr><th scope="row">Reload PR information from GitHub</th><td>Next to the title of the selected PR</td><td>Gets the PR list and the diff of the selected PR again. If the connection supports it, CI and mergeability are updated too.</td></tr>
+</tbody></table></div>
+<h3 id="connection-methods">Choose a connection method</h3>
+<div class="table-scroll" role="region" aria-label="GitHub connection methods" tabindex="0">
+<table><caption>GitHub connection methods</caption><thead><tr><th scope="col">Method</th><th scope="col">Setup and authentication</th></tr></thead><tbody>
+<tr><th scope="row">Browser version (Cloudflare)</th><td>In a web version built with a connection target, authorize the operator's GitHub App. The token is encrypted and stored on the operator's server, and a sign-in lasts up to 8 hours</td></tr>
+<tr><th scope="row">GitHub App on Desktop</th><td>In a Desktop with the App's client ID set, enter the device code shown in the Editor on GitHub</td></tr>
+<tr><th scope="row">Fine-grained PAT on Desktop</th><td>Available with a supported bundled version. On GitHub, select the target repositories and create a token with read access to Contents (read and write for push), then enter it in Desktop's input screen. Where saving is offered, the token is encrypted with the OS protection feature</td></tr>
+<tr><th scope="row">Git credential helper on Desktop</th><td>With a supported bundled version, uses the credentials of the helper that applies to the target repository. Enter your GitHub account name and agree on Desktop's confirmation screen</td></tr>
+</tbody></table></div>
+<p>PAT and credential helper are methods for use without a client ID. You can choose them when both Desktop and its bundled Editor support them. The PAT and credential helper options were added in Editor <code>a8dac95</code>. You can check the bundled version in the build information of the Desktop release. <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/blob/main/config/plus-renderer.json">Desktop's pinned revision</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/521">Editor-side support</a></p>
+
+<h3>Install and authorize the GitHub App</h3>
+<ol>
+<li>On the GitHub App page your operator points you to, click "Install". Choose the account to install it on, and if your organization requires it, ask an administrator to approve.</li>
+<li>Under "Only select repositories", choose the repositories to use from the Editor. Check the Contents permission for syncing, and also the Pull requests write permission for sending reviews.</li>
+<li>With "Connect to GitHub…" in Local Git, confirm the target repository and the permissions you need. On GitHub's authorization screen, check the App name and permissions, and enter only the device code shown in your own Editor.</li>
+<li>When you are done, disconnect in the Editor. In GitHub's "Settings" → "Applications", you can revoke the installation under "Installed GitHub Apps" and the authorization under "Authorized GitHub Apps".</li>
+</ol>
+<p>When the App gets new permissions, approve them for the installation under "Installed GitHub Apps". The GitHub App token is held by the Cloudflare server or Desktop's main process. The Editor's Git panel communicates with a short-lived proxy key limited to the target repository and operations. <a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/github-app-setup.md">GitHub App setup for connection operators</a></p>
+
+<h3>Sync a connected repository</h3>
+<ul>
+<li><strong>Fetch.</strong> "Update remote refs (fetch)" gets the remote branches and commits.</li>
+<li><strong>Pull.</strong> Stop the project, deal with unsaved edits and working tree changes, then click "Update local branch and files (pull)". Changes are brought in when a fast-forward is possible, and you can reopen the project with "Reload Project".</li>
+<li><strong>Push.</strong> Allow push when connecting, then click "Send current branch (push)". If the result is unclear, fetch to check the remote branch before sending again.</li>
+</ul>
+
+<p><a href="../github/index.en.html#push">Steps to send to GitHub</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/316">Connection integration testing</a></p>
+
+</section>
+
+<section id="pull-request-review">
+
+<h2>10.6 Review pull requests script by script</h2>
+
+<p>You can check a GitHub pull request (PR) from an overview of all changes down to individual scripts. The figures show a public PR opened in "Merge" in the public version without a GitHub connection. <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">PR #219 in turbowarp-kamishibai-app</a></p>
+<ol>
+<li><strong>Select a PR.</strong> Choose the target repository, open "Merge", and select the PR from "Pull requests" on the left. If the list is long, move with "Previous page" and "Next page". The status label on each row shows whether the PR is mergeable, has conflicts, is a draft, is merged, is closed, and so on. If the GitHub connection can get the CI status, that result is shown as well.</li>
+<li><strong>Check the overview of the changes.</strong> In "Overview" on the right, check the PR description and merge status. "Commits" lists the commits in the PR, and "Checks" shows the CI status and, when available, the result of each check.
+<figure>
+<a href="../images/en/current-pr-overview.png"><img src="../images/en/current-pr-overview.png" width="1440" height="960" alt="In Merge, the list of public PRs is on the left and the overview of the selected PR #219 is on the right." loading="lazy"></a>
+<figcaption>Selecting a PR opens "Overview" on the right. Switch to "Commits", "Checks", or "Files changed" with the tabs at the top.</figcaption>
+</figure>
+</li>
+<li><strong>Look at commits and checks.</strong> "Commits" shows each message, author, and commit ID. "Checks" shows the results of the checks run on the PR's head commit.
+<figure>
+<a href="../images/en/current-pr-commits.png"><img src="../images/en/current-pr-commits.png" width="1440" height="1220" alt="The Commits tab of PR #219 lists five commits with their messages, authors, dates, and commit IDs." loading="lazy"></a>
+<figcaption>"Commits" shows the commits in this PR. You can also check them on GitHub with the link below.</figcaption>
+</figure>
+<figure>
+<a href="../images/en/current-pr-checks.png"><img src="../images/en/current-pr-checks.png" width="1440" height="1220" alt="The Checks tab of PR #219 shows the test check as successful." loading="lazy"></a>
+<figcaption>The check results of PR #219 in "Checks". Open the details with "View checks on GitHub".</figcaption>
+</figure>
+</li>
+<li><strong>Compare scripts as blocks.</strong> Open the "Files changed" tab, which shows a count. "Change review" at the top shows how many stages and sprites are affected, how many code changes there are, and how many are reviewed. In the <code>project.source.json</code> card (<code>app/project.source.json</code> in this example), find the heading of the stage or sprite, and expand a script listed under it, such as "When green flag clicked" in the example. Compare "Before" on the left with "After" on the right, and check where the outlined blocks are in the script. Scroll inside the comparison frames to see long scripts or wide blocks. Hovering over a comparison frame shows a minimap and zoom in and out buttons at its lower right.
+<figure>
+<a href="../images/en/current-pr-blocks.png"><img src="../images/en/current-pr-blocks.png" width="1440" height="960" alt="Merge in Local Git. The PR list is on the left, and on the right the before and after versions of a stage script in app/project.source.json are side by side, with a minimap and zoom buttons at the lower right of the after frame." loading="lazy"></a>
+<figcaption>Opening a script in a PR shows the before and after versions side by side. Use the lower right of the frame to zoom or move the view, and mark it "Reviewed" when you have read it.</figcaption>
+</figure>
+</li>
+</ol>
+<figure>
+<a href="../images/en/current-git-file-window.png"><img src="../images/en/current-git-file-window.png" width="1200" height="860" alt="The block diff of app/project.source.json opened in another window. Before and After are side by side, and Reviewed is at the lower right." loading="lazy"></a>
+<figcaption>"Open in another window" at the top right of a changed-file card shows that file's comparison on a larger screen.</figcaption>
+</figure>
+<p>When you finish reading a comparison, record your progress with the green "Reviewed" at the lower right of the script's comparison frame. The mark is stored in the browser and stays after you close the panel or reload the Editor. When the PR is updated, only the marks on scripts whose content changed are removed. The marks are not written to project files or to Git. To go back to your local diff, select "Commit saved changes".</p>
+
+<p>The comparison uses the PR's merge base and head. Without a connection, public PRs are compared through the public API. While connected, you can also select PRs in private repositories you are allowed to access. The PR's head and base branches are fetched over Git Smart HTTP and compared. If the PR's base cannot be determined, GitHub's default branch is used. If there are several candidates, you can choose the "Comparison branch". The branch button in the menu bar switches the branch you edit locally. The PR number and title in the right pane open the PR on GitHub. Click the "Open diff in editor tabs" icon at the top right of the PR heading to open the project diff in separate Editor tabs. Click "Open in another window" at the top right of a changed-file card to check that file's block diff in another window. "Reviewed" marks are reflected in the original PR screen too. How the comparison works is explained in <a href="#block-diff">Compare project changes as blocks</a>.</p>
+<p>To run the PR version, open the project folder first, then choose "Open PR project to run" on a PR opened while connected to GitHub. The Editor creates a local branch (for example <code>pr/42</code>) at the compared commit, switches to it, and reopens that version of the project. It stops without switching if the project is running, if there are unsaved edits or working tree changes, or if a branch with the same name points to a different commit. When you are done, switch back to the original branch from the branch name in the menu bar and choose "Reload Project". The branch used for testing stays in your local repository.</p>
+<h3 id="send-review">Send a review</h3>
+<p>"Reviewed" is a mark for your own progress. To send a review to GitHub, select "Allow sending reviews" when connecting, then open the PR. The connection target must have the review GitHub API enabled, and you need permission to send reviews in the repository.</p>
+<p>In "Send a review", check the overall comment and the comments on code, choose "Comment", "Approve", or "Request changes" as the result, and click "Send Review". Before sending, the screen shows whether code comments can become threads or go into the review body. If you cannot use the review form, open the PR on GitHub and review it from "Files changed". <a href="../github/index.en.html#merge">Steps for checks, review, and merge</a></p>
+<p>Connection operators enable API groups with <code>GIT_GITHUB_API</code> on Cloudflare and <code>TW_PLUS_DESKTOP_GIT_GITHUB_API</code> on Desktop. <code>review-threads</code> handles comments attached to positions in the diff, and <code>reviews-body</code> can be used to send reviews with a body only. The Desktop API is off by default. <a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/git-smart-http.md#github-api-routes">API settings</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/444">Review sending test status</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">Connecting to the Editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/418">PR review procedure</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">Review PRs as Scratch scripts</a></p>
+
+</section>
+<nav class="pager" aria-label="Previous and next pages">
+<a class="prev" href="../reuse/index.en.html"><small>Previous</small>9. Reuse scripts and assets</a>
+<a class="next" href="../save/index.en.html"><small>Next</small>11. Save and distribute</a>
+</nav>
+</main>
+<footer><a href="../../">Back to top</a> · <a href="../../editor.html?lang=en">Open the Editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and specifications are as of the time of capture. Check the current deployment in <a href="../../build-info.json">deployed version</a>.</p></footer>
+</body></html>

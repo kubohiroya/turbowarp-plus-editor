@@ -1,318 +1,269 @@
 {
-  "date": "2026-11-03",
+  "date": "2026-11-14",
+  "site": "https://kubohiroya.github.io/turbowarp-plus-editor/",
+  "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
+  "siteRevision": "f3221780909b2cc9ef443c621d8321171c0e0b91",
+  "editorVersion": "0.2.0-rc.4",
+  "guiRevision": "f1e8f96c3252cbeed1b2a76f3fab006d142857f4",
+  "securityVersion": "0.8.9",
+  "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
+  "browser": "Playwright 1.64.1 Chromium, headless, ja-JP, deviceScaleFactor 1",
   "viewport": {
     "width": 1440,
     "height": 1000
   },
-  "reviewViewport": {
-    "width": 1440,
-    "height": 1200
-  },
-  "site": "https://kubohiroya.github.io/turbowarp-plus-editor/",
-  "siteRevision": "80933d53f294dedfec3e1ce380bc3874ebc5c264",
-  "gui": "0def6f3b044fe04b173e2d442804d15360b69547",
-  "security": "0.8.4",
-  "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
-  "note": "Captured from the public Editor. catalog.png chooses TurboWarp-Markdown from the public catalog. review.png opens a project that adds two extensions outside the catalog as data: URLs, one declaring 'Unsandboxed: required'; the catalog extension in the same project needs no review and is not listed.",
-  "pullRequestReview": {
-    "date": "2026-11-08",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "840d37fd0fdf5d631f8db97cd41bf66e78b393b6",
-    "guiRevision": "eac09baf59a1303d58e257ea8b78a3253c0af035",
-    "pullRequest": "https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219",
-    "viewport": {
-      "width": 1330,
-      "height": 940
+  "note": "Captured from the public Japanese Editor without feature-flag queries. SB3 files and project folders were handed to the real file and directory pickers (OPFS handles, or a real folder dropped through CDP for Git); no UI text was altered. Sample projects (ネコ/ボール, Ball Demo.sb3, ネコのさんぽ) and personal data are fictional. Headless Chromium does not show the 「…」 debug button or the アドオン palette category, so those are absent from the shots. Git images use a local repository with origin set to kubohiroya/turbowarp-kamishibai-app; PR images read public PR #219 without signing in.",
+  "images": {
+    "plus-workspace-current.png": {
+      "size": "1440x1000",
+      "description": "New project at startup; pointer over the code area so the minimap and zoom buttons show."
     },
-    "images": {
-      "published-editor-git-pr-overview.png": "Local Git panel after opening PR #219 by number (element screenshot).",
-      "published-editor-git-pr-script.png": "Expanded comparison of the green-flag script in app/project.source.json (element screenshot)."
+    "plus-menu.png": {
+      "size": "720x420",
+      "description": "TurboWarp Plus menu opened from the logo (clip 0,0)."
+    },
+    "edit-menu.png": {
+      "size": "720x420",
+      "description": "Edit menu on a new project, including コードブロックの再配置 (clip 0,0)."
+    },
+    "current-open-folder.png": {
+      "size": "1440x960",
+      "description": "File menu of a new project with all items, pointer on プロジェクトフォルダを開く…."
+    },
+    "current-save-active-tab.png": {
+      "size": "1440x960",
+      "description": "Ball Demo.sb3 saved to a project folder created from the drawer (OPFS directory handed to the real picker); project.source.json in a tab; File menu shows アクティブなタブを保存 ⌘S."
+    },
+    "layout-menu.png": {
+      "size": "600x256",
+      "description": "編集パネルのレイアウト menu (clip x840 y44)."
+    },
+    "stage-menu-current.png": {
+      "size": "720x220",
+      "description": "Ball Demo; ステージの開き方 (▾) menu open (clip x720 y0)."
+    },
+    "stage-tab.png": {
+      "size": "1440x1000",
+      "description": "Ball Demo; stage opened with タブで表示, ステージの表示 menu open."
+    },
+    "local-stage-workspace.png": {
+      "size": "1440x1000",
+      "description": "Same tab state without the menu; the 661px pane shows a 650x488 canvas."
+    },
+    "sprite-divider.png": {
+      "size": "700x560",
+      "description": "Ball Demo; sprite list divider focused and widened with ArrowRight x8 (clip 0,40)."
+    },
+    "extensions-dialog.png": {
+      "size": "640x184",
+      "description": "File → 機能拡張… on a new project (element screenshot)."
+    },
+    "catalog-current.png": {
+      "size": "1440x1000",
+      "description": "機能拡張の追加 → TurboWarp Plus with TurboWarp-Markdown checked; the sandbox warning snackbar was closed."
+    },
+    "review-dialog.png": {
+      "size": "768x359",
+      "description": "Fictional SB3 embedding \"Block editor demo\" (Unsandboxed: required) as a data: URL; review dialog element screenshot."
+    },
+    "project-diagnostics.png": {
+      "size": "1440x1000",
+      "description": "Fixture SB3 from test/e2e/extension-loader/project.cts (embedded plusfixture), run without sandbox, then 作品のプロパティ → 作品の診断… with plusfixture expanded."
+    },
+    "project-diagnostics-failure.png": {
+      "size": "1440x1000",
+      "description": "Same fixture with an all-zero sha256; 詳細ログを表示 from the failure notice, 読み込みを拒否 event expanded. TurboWarp's own error modal is visible behind it."
+    },
+    "sprite-search.png": {
+      "size": "560x360",
+      "description": "スプライトを検索 with ボ typed (clip x0 y40)."
+    },
+    "properties-variables.png": {
+      "size": "1440x1000",
+      "description": "Panel split horizontally; code on the right, 変数など on the left."
+    },
+    "media-panes.png": {
+      "size": "1440x1000",
+      "description": "Panel split; コスチューム on the left (preview), 音 on the right (active editor). The sound is a generated 440 Hz tone."
+    },
+    "messages-sprite.png": {
+      "size": "1440x1000",
+      "description": "メッセージ of the ボール sprite."
+    },
+    "messages-stage.png": {
+      "size": "1440x1000",
+      "description": "メッセージ of the backdrop (whole-project relation diagram)."
+    },
+    "sprite-context-menu.png": {
+      "size": "420x360",
+      "description": "Context menu of the ネコ tile (clip x0 y80)."
+    },
+    "block-context-menu.png": {
+      "size": "640x480",
+      "description": "Context menu of the green-flag hat block (clip x100 y84)."
+    },
+    "workspace-context-menu.png": {
+      "size": "600x340",
+      "description": "Workspace context menu with コードの並びの見え方を変更する expanded (clip x680 y540)."
+    },
+    "palette-search.png": {
+      "size": "900x520",
+      "description": "Search 歩 in the 動き category (clip x100 y40)."
+    },
+    "palette-resize-detail.png": {
+      "size": "330x230",
+      "description": "Resize grip of the 見た目 flyout (clip x120 y280)."
+    },
+    "palette-order-detail.png": {
+      "size": "540x64",
+      "description": "動き held (900 ms) and dragged over 音 (clip x154 y80)."
+    },
+    "palette-popout.png": {
+      "size": "520x520",
+      "description": "Block palette opened in a separate window (popup viewport 520x520)."
+    },
+    "minimap-current.png": {
+      "size": "1440x1000",
+      "description": "A script placed at (1150,1050), pointer over the code area."
+    },
+    "project-search.png": {
+      "size": "1100x560",
+      "description": "Menu-bar search for 開始 (clip x0 y0)."
+    },
+    "save-as-dialog.png": {
+      "size": "640x296",
+      "description": "File → 名前を変えて保存… (dialog element; focus moved off the input)."
+    },
+    "export-dialog.png": {
+      "size": "640x194",
+      "description": "File → 書き出し… (dialog element)."
+    },
+    "project-data-dialog.png": {
+      "size": "640x568",
+      "description": "File → 組み込みデータ…, HTTPS から毎回取得 chosen for コスチューム1 so the HTTPS URL field shows; not applied."
+    },
+    "properties-current.png": {
+      "size": "640x856",
+      "description": "File → 作品のプロパティ with fictional values (URI https://example.com/projects/neko-game, author 山田 花子); cancelled afterwards."
+    },
+    "project-uri-detail.png": {
+      "size": "622x116",
+      "description": "Same dialog, URI field focused; clipped around the 作品の URI field."
+    },
+    "current-project-folder.png": {
+      "size": "1440x960",
+      "description": "Project folder view; ネコ tab open and moved via the VM so project.source.json is unsaved (bold + *); other files blue."
+    },
+    "current-project-file-states.png": {
+      "size": "1440x960",
+      "description": "After saving, README.md edited in a tab: unsaved *, bold saved change, ✨ untracked file, strikethrough deleted file."
+    },
+    "current-git-unsaved.png": {
+      "size": "1440x960",
+      "description": "Local Git, ファイルの保存 with README.md selected."
+    },
+    "current-git-file.png": {
+      "size": "1440x960",
+      "description": "Local Git, 保存のコミット with README.md selected after saving."
+    },
+    "current-git-blocks.png": {
+      "size": "1440x960",
+      "description": "Local Git, 保存のコミット with the ネコ コード: 1 か所 entry selected."
+    },
+    "current-git-commit.png": {
+      "size": "1440x960",
+      "description": "コミットに含める pressed and message ネコが進む歩数を変更 (#12) typed."
+    },
+    "current-project-file.png": {
+      "size": "1440x960",
+      "description": "project.source.json opened in a tab after the commit."
+    },
+    "current-git-history.png": {
+      "size": "1440x960",
+      "description": "Git 履歴 drawer: the commit selected, PRを作成 opened, ネコ code selected."
+    },
+    "current-git-remote.png": {
+      "size": "1440x960",
+      "description": "PR list right after opening マージ (no GitHub connection)."
+    },
+    "current-pr-overview.png": {
+      "size": "1440x960",
+      "description": "Public PR kubohiroya/turbowarp-kamishibai-app#219, 概要 (read through the public API, signed out)."
+    },
+    "current-pr-blocks.png": {
+      "size": "1440x960",
+      "description": "#219 変更ファイル, green-flag script in app/project.source.json expanded, pointer over the new version."
+    },
+    "current-pr-commits.png": {
+      "size": "1440x1220",
+      "description": "#219 コミット."
+    },
+    "current-pr-checks.png": {
+      "size": "1440x1220",
+      "description": "#219 チェック."
+    },
+    "current-pr-files-tab.png": {
+      "size": "1440x1220",
+      "description": "#219 変更ファイル, top of the list."
+    },
+    "current-git-file-window.png": {
+      "size": "1200x860",
+      "description": "Pop-up opened from 別ウィンドウで開く on the app/project.source.json card, first script expanded."
+    },
+    "current-git-release-workflow.png": {
+      "size": "1440x960",
+      "description": "File → リリース… with tag v1.0.0; without a connection the tag push command is shown."
     }
   },
-  "projectTools": {
-    "date": "2026-11-04",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
+  "retained": {
+    "current-git-create-pr.png": {
+      "size": "1440x1220",
+      "captured": "2026-11-13",
+      "description": "PR creation with a simulated GitHub connection (headless Editor integration test). Taken before the GitHub に接続… button was added to the Local Git header (#571); cannot be retaken on the public site."
     },
-    "siteRevision": "0f2a6d41ac9aa064dfbdcfdb62426ca71ce47245",
-    "guiRevision": "ca6cada95e853eef1ab6ef779f83aafc83c3a8bf",
-    "securityVersion": "0.8.4",
-    "images": [
-      "project-menu.png",
-      "project-properties.png",
-      "project-diagnostics.png",
-      "project-diagnostics-failure.png"
-    ],
-    "note": "Captured from the public Japanese Editor without a feature-flag query. Properties use fictional author/contact examples and real Apply/save/history operations. Diagnostics use the test-only embedded plusfixture extension: successful validation and execution approval, then a real SHA-256 mismatch. No UI state or log content is fabricated.",
-    "failure": {
-      "ok": false,
-      "code": "DIGEST_MISMATCH",
-      "message": "Extension bytes do not match the digest"
+    "current-git-merge-ready.png": {
+      "size": "1440x1220",
+      "captured": "2026-11-13",
+      "description": "Overview tab with the squash-merge button, simulated GitHub connection. Same limitation as current-git-create-pr.png."
     },
-    "pageErrors": []
-  },
-  "workspace": {
-    "date": "2026-11-06",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "babcc6d45e6ed0491e9641704596c2b0b5e35f07",
-    "guiRevision": "62ecfefe155ebf634d8739ab44b7784d41a7f7bb",
-    "securityVersion": "0.8.7",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
+    "git-branch-workspace.png": {
+      "size": "1440x960",
+      "captured": "2026-11-13",
+      "description": "Branch menu for the example repository; matches the current menu."
     },
-    "images": {
-      "current-file-menu.png": "File menu with extension addition and project data commands.",
-      "plus-workspace.png": "Default workspace, before expanding drawers.",
-      "sprite-drawer.png": "Sprite drawer expanded from the left edge.",
-      "palette-current.png": "Motion category selected in the horizontal palette.",
-      "dockview-workspace.png": "Stage moved to the same Dockview workspace as sprite code.",
-      "catalog-current.png": "Current File menu path, TurboWarp Plus filter with TurboWarp-Markdown selected.",
-      "minimap-current.png": "Default workspace with five test blocks added to illustrate the minimap."
-    }
-  },
-  "operationDetails": {
-    "date": "2026-11-06",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "b506c8bc32f08f6bbe45531afb7e850277e06ccb",
-    "guiRevision": "1712614699ca5bef772dc3a020b1b7b63d6bccea",
-    "securityVersion": "0.8.7",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
+    "github-files-changed.png": {
+      "size": "1440x960",
+      "description": "GitHub Files changed for public PR #219, signed out (GitHub screen, not the Editor)."
     },
-    "images": {
-      "splitter-detail.png": "Scratch layout (twPlusStandardLayout=0), column separator focused after a keyboard adjustment.",
-      "sprite-tabs-detail.png": "Two sprite tabs after duplicating the starter sprite.",
-      "split-menu.png": "Editor layout menu showing the split and close actions.",
-      "media-panes-detail.png": "Costumes and Sounds tabs in two horizontal panels of the same sprite.",
-      "variable-pane-detail.png": "A test score variable created with the editor UI and displayed beside the code pane.",
-      "palette-resize-detail.png": "Resize grip at the lower-right corner of the Motion flyout.",
-      "palette-order-detail.png": "The Motion category held over the Sound category while reordering.",
-      "project-uri-detail.png": "Project URI field with an illustrative example.org URL typed in, before applying.",
-      "plus-sprite-splitter.png": "Default Plus layout with the sprite drawer pinned, cropped around the divider.",
-      "plus-script-transfer.png": "Default Plus layout with twPlusContextMenuIcons=1, block menu opened on a test block. Cropped to include the tab, category bar, and menu. Site revision d08309885647425b480a6b0889f1f014ce2a3d8b.",
-      "plus-media-panes.png": "Full viewport with both media panes visible. The sound is a generated test tone added to the starter sprite.",
-      "plus-project-properties.png": "Default Plus layout, project properties opened with fictional sample inputs."
-    }
-  },
-  "assetPreviewDevelopment": {
-    "date": "2026-11-04",
-    "baseRevision": "b1677c5c693f4270994b6d70d6d102c18815572c",
-    "image": "asset-preview-development.png",
-    "note": "Local Kamishibai development build with additional working changes. Remote-cacheable test image served by a test response. Crop of the real preview."
-  },
-  "formDetails": {
-    "source": "Existing form.png and validation.png",
-    "images": [
-      "form-dialog.png",
-      "validation-dialog.png"
-    ],
-    "note": "Dialog-only crops of the existing Editor screenshots, independent of the workspace layout."
-  },
-  "variablePaneDevelopment": {
-    "layoutRevision": "1a0ee61",
-    "image": "variable-pane-grouped.png",
-    "note": "The local layout package's real variable pane rendered in its browser fixture with Japanese labels and sample variables from both scopes."
-  },
-  "integratedPanelReview": {
-    "date": "2026-11-06",
-    "url": "http://127.0.0.1:8767/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "f27a349ce697cfc36c0f953149235995f3f710b6",
-    "guiRevision": "1712614699ca5bef772dc3a020b1b7b63d6bccea",
-    "layoutRevision": "6848f671fe08deb2e2f37b88ca6cca068574eedd",
-    "publicComparisonRevision": "23127c277c26d0395981d8616aa72a10c932f377",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
+    "sprite-list-window.png": {
+      "size": "540x420",
+      "captured": "2026-11-08",
+      "description": "Sprite list undocked into a separate window; UI unchanged as of 2026-11-14."
     },
-    "images": {
-      "local-media-panes.png": "Split costume preview and sound editor. The sample audio uses the bundled delete.wav. The crop retains the preview, waveform, and playback controls.",
-      "local-variable-pane.png": "Split variable and code panes. The local speed variable was set to 8 using Enter. Cropped around the table and the sample script.",
-      "local-stage-workspace.png": "Stage opened in the workspace with its display menu open. The canvas is 703 CSS pixels wide in the 715-pixel pane. The small preset was checked at 240 pixels.",
-      "local-script-transfer.png": "Default block context menu with icons. Captured with no icon feature-flag query and cropped around the workspace toolbar and menu."
-    }
-  },
-  "publicStageMenu": {
-    "date": "2026-11-06",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "3a769baee6a1849b3bbe5db496607bf9d233e037",
-    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
+    "form-dialog.png": {
+      "size": "820x518",
+      "captured": "2026-11-08",
+      "description": "Form editor of the sample block-editor extension; rechecked on 2026-11-14 and unchanged apart from the block id."
     },
-    "images": {
-      "stage-menu.png": "Public stage drawer with the display menu open.",
-      "stage-workspace-current.png": "Stage opened in a workspace tab using the public display menu. Its canvas is 480 CSS pixels wide."
-    }
-  },
-  "publicUiRefresh": {
-    "date": "2026-11-07",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "0fc3cb7398c9933416ccd4ca41af317514b3b959",
-    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
-    "layoutVersion": "0.1.14",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
+    "validation-dialog.png": {
+      "size": "820x601",
+      "captured": "2026-11-08",
+      "description": "Validation error in the same form; rechecked on 2026-11-14."
     },
-    "images": {
-      "project-properties-current.png": "Project properties in the default pinned layout with fictional sample inputs."
-    }
-  },
-  "publicVariablesTabRefresh": {
-    "date": "2026-11-07",
-    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "66adbad645afe2ec82b0a5cb9658ef14b03d77c0",
-    "guiRevision": "15edb79304d042976f87be11050a31de31f9d454",
-    "layoutVersion": "0.1.16",
-    "viewport": {"width": 1440, "height": 1000},
-    "note": "Captured from the public Japanese Editor with default features. The toolbar label is 変数など and its search field is at the right edge of each pane.",
-    "images": {
-      "file-menu-public-014.png": "File menu in the default pinned layout, cropped around the menu.",
-      "plus-workspace-pinned.png": "Fresh startup with the sprite list pinned by default.",
-      "sprite-search-public-014.png": "Pinned sprite list with a matching tile highlighted after searching for 2.",
-      "stage-menu-public-014.png": "Right-edge stage with the current display menu open.",
-      "sprite-divider-public-014.png": "Focused divider after increasing the pinned sprite list width with ArrowRight.",
-      "sprite-tabs-public.png": "Two tabs after duplicating the starter sprite, cropped to show the tab strip and editing sections.",
-      "media-panes-0fc3.png": "Split costume preview and sound editor with a generated sample tone.",
-      "properties-variables-0fc3.png": "The 変数など tab shows the local speed variable set to 8 and a project-wide score variable. The adjacent script uses the local speed variable.",
-      "stage-tab-0fc3.png": "Stage opened in a workspace tab, with the current display menu and tab return action visible.",
-      "sprite-undocked-0fc3.png": "Sprite list detached into an in-editor window with its layout menu open.",
-      "script-transfer-0fc3.png": "Block context menu in the pinned layout with its default action icons."
+    "form.png": {
+      "size": "1440x1000",
+      "description": "Used by README.md / README.ja.md."
     },
-    "crops": {
-      "file-menu-public-014.png": {"x": 0, "y": 0, "width": 760, "height": 525},
-      "sprite-search-public-014.png": {"x": 0, "y": 47, "width": 550, "height": 390},
-      "sprite-divider-public-014.png": {"x": 0, "y": 47, "width": 680, "height": 560},
-      "sprite-tabs-public.png": {"x": 112, "y": 47, "width": 750, "height": 130},
-      "properties-variables-0fc3.png": {"x": 0, "y": 0, "width": 1440, "height": 523},
-      "script-transfer-0fc3.png": {"x": 0, "y": 0, "width": 750, "height": 559}
-    }
-  },
-  "publicMenuBarRefresh": {
-    "date": "2026-11-08",
-    "url": "http://localhost:8123/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "c7f25ed55e4ba8223a41ea89ea989edb7169476f",
-    "guiRevision": "eac09baf59a1303d58e257ea8b78a3253c0af035",
-    "securityVersion": "0.8.8",
-    "editorVersion": "0.2.0-rc.3",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
+    "asset-preview-development.png": {
+      "date": "2026-11-04",
+      "baseRevision": "b1677c5c693f4270994b6d70d6d102c18815572c",
+      "image": "asset-preview-development.png",
+      "note": "Local Kamishibai development build with additional working changes. Remote-cacheable test image served by a test response. Crop of the real preview."
     },
-    "note": "The public Pages host was not reachable from the capture environment, so the Editor was built locally from the deployed revision (the same revision the Pages workflow published) and served under the canonical /turbowarp-plus-editor/ prefix. The micro:bit hex download was replaced by a local placeholder, which does not affect the captured screens. Captured headless with Playwright Chromium in Japanese with default features. The sample project (sprites ネコ and ボール, project variable 速さ, broadcast 開始) was built in the page through vm.loadProject; no UI state is fabricated.",
-    "images": {
-      "plus-workspace-current.png": "Fresh startup: menu bar, pinned sprite list, vertical editor section buttons, horizontal palette and minimap.",
-      "plus-menu.png": "TurboWarp Plus menu opened from the logo.",
-      "file-menu-current.png": "File menu of a new project; Save is disabled before a save target exists.",
-      "edit-menu.png": "Edit menu with icons and shortcut hints.",
-      "project-search.png": "Project search for 速さ with the search-scope checkboxes and variable-use results.",
-      "palette-search.png": "Motion category filtered by 歩 with the in-category block search.",
-      "layout-menu.png": "Editor panel layout menu with split and pop-out actions.",
-      "palette-popout.png": "Block palette opened in a separate window, viewport 520x520.",
-      "stage-menu-current.png": "Expanded right-edge stage with the stage display menu open.",
-      "sprite-list-window.png": "Sprite list opened in a separate window from the Undock button.",
-      "save-as-dialog.png": "Save As dialog (element screenshot).",
-      "export-dialog.png": "Export dialog (element screenshot).",
-      "project-data-dialog.png": "Project Data dialog opened from 組み込みデータ… (element screenshot).",
-      "extensions-dialog.png": "Extensions dialog for a project without extensions (element screenshot).",
-      "properties-current.png": "Project Properties dialog with the Project Diagnostics button (element screenshot)."
-    },
-    "crops": {
-      "plus-menu.png": {
-        "x": 0,
-        "y": 0,
-        "width": 720,
-        "height": 420
-      },
-      "file-menu-current.png": {
-        "x": 0,
-        "y": 0,
-        "width": 720,
-        "height": 460
-      },
-      "edit-menu.png": {
-        "x": 0,
-        "y": 0,
-        "width": 720,
-        "height": 420
-      },
-      "project-search.png": {
-        "x": 0,
-        "y": 0,
-        "width": 1100,
-        "height": 560
-      },
-      "palette-search.png": {
-        "x": 100,
-        "y": 40,
-        "width": 900,
-        "height": 520
-      },
-      "layout-menu.png": {
-        "x": 840,
-        "y": 40,
-        "width": 600,
-        "height": 300
-      }
-    }
-  },
-  "guideRecapture": {
-    "date": "2026-11-08",
-    "url": "http://localhost:8123/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "c9453633f026a3eebbe6f6a831d3a2115d65cb6d",
-    "note": "Built locally from the PR #417 head (main d1d8523 plus the guide restructure; the Editor sources are identical to the published fb5436f) because the public Pages host was not reachable from the capture environment. Served under /turbowarp-plus-editor/ and captured headless with Playwright Chromium in Japanese with default features. The sample project (sprites ネコ and ボール, variables 速さ and スコア, messages 開始 and ゲームオーバー, a generated 440 Hz tone) was built in the page through vm.loadProject and vm.addSound. catalog-current.png answers the catalog URL with entries rebuilt from the npm-published extension packages in the same way as turbowarp-plus-packages scripts/lib/extension-catalog.ts, and answers their jsDelivr URLs with the same npm bytes. review-dialog.png, form-dialog.png and validation-dialog.png open an SB3 that embeds examples/extensions/block-editor.ts (with a header declaring Unsandboxed: required) as a data: URL. The micro:bit hex download was replaced by a local placeholder, which does not affect the captured screens.",
-    "viewport": {
-      "width": 1440,
-      "height": 1000
-    },
-    "images": [
-      "plus-workspace-current.png",
-      "plus-menu.png",
-      "file-menu-current.png",
-      "edit-menu.png",
-      "project-search.png",
-      "palette-search.png",
-      "layout-menu.png",
-      "stage-menu-current.png",
-      "save-as-dialog.png",
-      "export-dialog.png",
-      "project-data-dialog.png",
-      "extensions-dialog.png",
-      "properties-current.png",
-      "project-uri-detail.png",
-      "palette-popout.png",
-      "sprite-list-window.png",
-      "sprite-search.png",
-      "sprite-divider.png",
-      "properties-variables.png",
-      "messages-sprite.png",
-      "messages-stage.png",
-      "media-panes.png",
-      "stage-tab.png",
-      "block-context-menu.png",
-      "workspace-context-menu.png",
-      "sprite-context-menu.png",
-      "palette-resize-detail.png",
-      "minimap-current.png",
-      "catalog-current.png",
-      "review-dialog.png",
-      "form-dialog.png",
-      "validation-dialog.png"
-    ],
-    "notRecaptured": {
-      "palette-order-detail.png": "The long-press drag state could not be reproduced headless; the category bar looks the same.",
-      "project-diagnostics.png": "Diagnostics record Plus-format extension events only; the custom-extension sample records none.",
-      "project-diagnostics-failure.png": "Same as project-diagnostics.png.",
-      "asset-preview-development.png": "Kamishibai development build.",
-      "local-media-panes.png": "Local integrated build comparison.",
-      "local-stage-workspace.png": "Local integrated build comparison.",
-      "published-editor-git-pr-overview.png": "Captured from the published Editor in #418.",
-      "published-editor-git-pr-script.png": "Captured from the published Editor in #418."
+    "local-media-panes.png": {
+      "size": "1440x575",
+      "captured": "2026-11-06",
+      "description": "Local integrated build comparison (development badge): the inactive pane caps the costume preview height. Not yet in the public Editor."
     }
   },
   "topPage": {
@@ -333,292 +284,229 @@
       "top-layout-menu.png": "The 編集パネルのレイアウト menu (clipped)."
     }
   },
-  "gitAndGitHubGuide": {
-    "date": "2026-11-13",
-    "viewport": {
-      "width": 1440,
-      "height": 960
-    },
-    "gitHub": {
-      "url": "https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219/files",
-      "images": {
-        "github-files-changed.png": "Public pull request #219 on GitHub Files changed, viewed while signed out."
-      }
-    },
-    "localEditor": {
-      "url": "http://localhost:41019/turbowarp-plus-editor/editor.html?lang=ja",
-      "note": "Uncropped Japanese screenshots from the local Editor build with the shared drawer toolbar and updated Local Git labels. A sample project and local repository supply the files and changes. The directory picker is replaced with the sample handle. Pull request images use the public GitHub API.",
-      "images": {
-        "current-open-folder.png": "File menu showing the shortcut next to Save Project with the sprite list selected.",
-        "current-save-active-tab.png": "File menu showing the shortcut next to Save Active Tab with the project folder selected.",
-        "current-project-folder.png": "Project folder with bold saved changes and an accent-colored unsaved asterisk.",
-        "current-project-file.png": "Project data opened beside the project folder drawer.",
-        "git-branch-workspace.png": "Branch menu for the example repository.",
-        "current-git-file.png": "The saved README diff, with the project changes above Other files and the commit form fixed at the bottom left.",
-        "current-git-blocks.png": "Local Git block comparison with navigation at the bottom right of each frame.",
-        "current-git-history.png": "The selected commit in Create PR, with its block comparison open.",
-        "current-git-remote.png": "The Merge step with the list of public PRs and the connection settings closed.",
-        "current-pr-overview.png": "Public PR #219 selected in the Editor.",
-        "current-pr-blocks.png": "PR #219 script comparison and navigation controls.",
-        "current-git-unsaved.png": "The Save Files step comparing the unsaved README with HEAD, with its asterisk in the drawer.",
-        "current-git-commit.png": "The fixed commit form with a message filled in after selecting the project data only.",
-        "current-project-file-states.png": "Unsaved, saved, untracked and deleted files shown together in their original locations.",
-        "current-git-create-pr.png": "Japanese Editor with two of three local commits selected, using a test GitHub connection.",
-        "current-git-connection-settings.png": "Japanese Editor with the GitHub connection settings opened from the File menu.",
-        "current-git-file-menu.png": "Japanese File menu with the repository, GitHub connection, and release commands below Open Project Folder.",
-        "current-git-file-window.png": "Japanese PR block comparison in a separate window with the larger Reviewed checkbox.",
-        "current-git-merge-ready.png": "Japanese Editor with the Overview tab selected and the enabled squash-merge button.",
-        "current-pr-commits.png": "Japanese Editor displaying the selected PR commit from the fetched local Git objects.",
-        "current-pr-checks.png": "Japanese Editor displaying the selected PR CI summary and check runs.",
-        "current-pr-files-tab.png": "Japanese Editor displaying the block comparison in the Files changed tab.",
-        "current-git-release-workflow.png": "Japanese Release dialog with the npm commands, a target commit and tag name, and a selected publishing branch and exported HTML file."
+  "english": {
+    "date": "2026-11-14",
+    "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en",
+    "siteRevision": "f3221780909b2cc9ef443c621d8321171c0e0b91",
+    "browser": "Playwright 1.64.1 Chromium, headless, en-US, deviceScaleFactor 1",
+    "directory": "images/en/",
+    "note": "Images for the English guide pages (index.en.html), taken in the same states as the Japanese images with English sample names (Cat/Ball, speed, score, scores, start, game over; Git fixture \"Cat Walk\" with branch 12-cat-walk). The English pages reuse the Japanese current-git-create-pr.png, current-git-merge-ready.png (need a GitHub connection), asset-preview-development.png (Kamishibai development build), local-media-panes.png (local integration build) and github-files-changed.png (GitHub screen), with captions saying so. In English mode the block form still shows the Japanese heading 設定, and the messages panel shows Japanese corner brackets around message names; these are rendered as the editor shows them.",
+    "images": {
+      "block-context-menu.png": {
+        "size": "640x480",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Context menu of the green-flag hat block (clip x100 y84)."
       },
-      "baseSiteRevision": "67389c21c189d1bc5c2963275436d91a270855e8",
-      "integrationBranch": "feat/editor/drawer-toolbar",
-      "integrationRevision": "26c5ce00793d286efd673df9d0302b1e4382a03e",
-      "gitPackage": "0.20.0-drawer-toolbar.0",
-      "folderRecapture": {
-        "integrationRevision": "0a5bb32e0d13151cb23fb5749ad235a35ca3ada8",
-        "projectFolderPackage": "0.9.1-file-commit.5",
-        "images": [
-          "current-project-folder.png",
-          "current-project-file.png",
-          "current-save-active-tab.png",
-          "git-branch-workspace.png"
-        ],
-        "workbenchPackage": "0.9.0-file-commit.3"
+      "catalog-current.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: 機能拡張の追加 → TurboWarp Plus with TurboWarp-Markdown checked; the sandbox warning snackbar was closed."
       },
-      "saveShortcutRecapture": {
-        "integrationRevision": "e34a2b838bfa0fa8fe78abdec69eae4f3f0b2fd8",
-        "images": [
-          "current-open-folder.png"
-        ]
+      "current-git-blocks.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Local Git, 保存のコミット with the ネコ コード: 1 か所 entry selected."
       },
-      "saveAndCommitRecapture": {
-        "integrationRevision": "0a5bb32e0d13151cb23fb5749ad235a35ca3ada8",
-        "gitPackage": "0.20.0-file-commit.8",
-        "projectFolderPackage": "0.9.1-file-commit.5",
-        "workbenchPackage": "0.9.0-file-commit.3",
-        "images": [
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-create-pr.png"
-        ],
-        "connectedFixture": "The English PR creation image uses the headless Editor integration test with a local Git repository and simulated GitHub responses."
+      "current-git-commit.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: コミットに含める pressed and message ネコが進む歩数を変更 (#12) typed."
       },
-      "unsavedDiffRecapture": {
-        "integrationRevision": "4ea2d588b818fcfb8d11a6eeb1f8e32ffee907c9",
-        "gitPackage": "0.20.0-file-commit.9",
-        "projectFolderPackage": "0.9.1-file-commit.6",
-        "workbenchPackage": "0.9.0-file-commit.4",
-        "images": [
-          "current-git-unsaved.png",
-          "current-project-file-states.png"
-        ]
+      "current-git-file-window.png": {
+        "size": "1200x860",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Pop-up opened from 別ウィンドウで開く on the app/project.source.json card, first script expanded."
       },
-      "commitLayoutRecapture": {
-        "integrationRevision": "74bf1bfcd8b0f4b5daa567ca282c85a7c4d34f91",
-        "gitPackage": "0.20.0-file-commit.10",
-        "images": [
-          "current-git-blocks.png",
-          "current-git-file.png",
-          "current-git-commit.png"
-        ]
+      "current-git-file.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Local Git, 保存のコミット with README.md selected after saving."
       },
-      "localGitHeaderRecapture": {
-        "integrationRevision": "b1a62598da50c2dc57c31beff9d9b471a9ed8f86",
-        "gitPackage": "0.20.0-file-commit.11",
-        "projectFolderPackage": "0.9.1-file-commit.6",
-        "workbenchPackage": "0.9.0-file-commit.4",
-        "images": [
-          "git-branch-workspace.png",
-          "current-git-file.png",
-          "current-git-blocks.png",
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-unsaved.png",
-          "current-git-commit.png",
-          "current-project-file-states.png",
-          "current-git-create-pr.png"
-        ],
-        "connectedFixture": "The English PR creation image uses the headless Editor integration test with a local Git repository and simulated GitHub responses."
+      "current-git-history.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Git 履歴 drawer: the commit selected, PRを作成 opened, ネコ code selected."
       },
-      "commitButtonRecapture": {
-        "integrationRevision": "899a3e8016109ae46c8ecdb155748957dd267ccb",
-        "gitPackage": "0.20.0-file-commit.12",
-        "images": [
-          "git-branch-workspace.png",
-          "current-git-file.png",
-          "current-git-blocks.png",
-          "current-git-commit.png"
-        ]
+      "current-git-release-workflow.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: File → リリース… with tag v1.0.0; without a connection the tag push command is shown."
       },
-      "connectionSettingsRecapture": {
-        "integrationRevision": "4ea763763af1ab03812635212c4bcce6c4bbf7b1",
-        "gitPackage": "0.20.0-file-commit.13",
-        "images": [
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-create-pr.png"
-        ]
+      "current-git-remote.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: PR list right after opening マージ (no GitHub connection)."
       },
-      "connectionIconRecapture": {
-        "integrationRevision": "c6258fefdca1373aebbe8a11ab958393521882fe",
-        "gitPackage": "0.20.0-file-commit.14",
-        "images": [
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-create-pr.png"
-        ]
+      "current-git-unsaved.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Local Git, ファイルの保存 with README.md selected."
       },
-      "mergeTabRecapture": {
-        "integrationRevision": "c6258fefdca1373aebbe8a11ab958393521882fe",
-        "gitPackage": "0.20.0-file-commit.14",
-        "images": [
-          "current-git-merge-ready.png"
-        ],
-        "viewport": [
-          1440,
-          1080
-        ]
+      "current-open-folder.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: File menu of a new project with all items, pointer on プロジェクトフォルダを開く…."
       },
-      "repositoryHeaderRecapture": {
-        "integrationRevision": "860ae02cb4c84a903f6bdae3acd96326863dfd23",
-        "gitPackage": "0.20.0-file-commit.15",
-        "images": [
-          "git-branch-workspace.png",
-          "current-project-file-states.png",
-          "current-git-unsaved.png",
-          "current-git-file.png",
-          "current-git-blocks.png",
-          "current-git-commit.png",
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-create-pr.png",
-          "current-git-merge-ready.png",
-          "current-git-connection-settings.png"
-        ],
-        "viewport1080": [
-          "current-git-create-pr.png",
-          "current-git-merge-ready.png",
-          "current-git-connection-settings.png"
-        ],
-        "connectedFixture": "The settings, PR creation, and merge images use the headless Editor with a local repository and simulated GitHub responses."
+      "current-pr-blocks.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: #219 変更ファイル, green-flag script in app/project.source.json expanded, pointer over the new version."
       },
-      "pullRequestHeaderRecapture": {
-        "integrationRevision": "4c418ea07b9f8d6e7f337a40b5e2e90b401005f6",
-        "gitPackage": "0.20.0-file-commit.16",
-        "images": [
-          "git-branch-workspace.png",
-          "current-project-file-states.png",
-          "current-git-unsaved.png",
-          "current-git-file.png",
-          "current-git-blocks.png",
-          "current-git-commit.png",
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-create-pr.png",
-          "current-git-merge-ready.png",
-          "current-git-connection-settings.png"
-        ],
-        "viewport1080": [
-          "current-git-create-pr.png",
-          "current-git-merge-ready.png",
-          "current-git-connection-settings.png"
-        ],
-        "connectedFixture": "The settings, PR creation, and merge images use the headless Editor with a local repository and simulated GitHub responses."
+      "current-pr-checks.png": {
+        "size": "1440x1220",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: #219 チェック."
       },
-      "fileMenuAndPullRequestRecapture": {
-        "integrationRevision": "36819883bd8c782cc07bb5ee7181a0299d5f2734",
-        "gitPackage": "0.20.0-file-commit.21",
-        "images": [
-          "git-branch-workspace.png",
-          "current-project-file-states.png",
-          "current-git-unsaved.png",
-          "current-git-file.png",
-          "current-git-blocks.png",
-          "current-git-commit.png",
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-create-pr.png",
-          "current-git-merge-ready.png",
-          "current-git-connection-settings.png",
-          "current-git-file-menu.png",
-          "current-git-file-window.png"
-        ],
-        "editorViewport": [
-          1440,
-          1220
-        ],
-        "windowViewport": [
-          1200,
-          860
-        ],
-        "connectedFixture": "The File menu, settings, PR creation, merge, and separate-window figures use the headless Editor with a local repository and simulated GitHub responses."
+      "current-pr-commits.png": {
+        "size": "1440x1220",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: #219 コミット."
       },
-      "pullRequestTabsRecapture": {
-        "integrationRevision": "0db6c83c7b97901b88a08c4411cffbfb0577215a",
-        "gitPackage": "0.20.0-file-commit.27",
-        "images": [
-          "git-branch-workspace.png",
-          "current-project-file-states.png",
-          "current-git-unsaved.png",
-          "current-git-file.png",
-          "current-git-blocks.png",
-          "current-git-commit.png",
-          "current-git-history.png",
-          "current-git-remote.png",
-          "current-pr-overview.png",
-          "current-pr-blocks.png",
-          "current-git-create-pr.png",
-          "current-git-merge-ready.png",
-          "current-git-connection-settings.png",
-          "current-git-file-menu.png",
-          "current-pr-commits.png",
-          "current-pr-checks.png",
-          "current-pr-files-tab.png",
-          "current-git-file-window.png"
-        ],
-        "editorViewport": [
-          1440,
-          1220
-        ],
-        "windowViewport": [
-          1200,
-          860
-        ],
-        "connectedFixture": "The four PR detail tabs, File menu, settings, PR creation, and comparison window use local Git data and simulated GitHub responses."
+      "current-pr-files-tab.png": {
+        "size": "1440x1220",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: #219 変更ファイル, top of the list."
       },
-      "releaseWorkflowRecapture": {
-        "integrationRevision": "b9ed6d8b9c9f8ca103ec712d354f79a8a880f4ac",
-        "gitPackage": "0.20.0-file-commit.32",
-        "images": [
-          "current-git-file-menu.png",
-          "current-git-release-workflow.png",
-          "current-git-merge-ready.png",
-          "current-pr-commits.png",
-          "current-pr-checks.png",
-          "current-pr-files-tab.png"
-        ],
-        "editorViewport": [
-          1440,
-          1220
-        ],
-        "connectedFixture": "The Japanese File menu, Release dialog and four PR detail tabs use a local Git HTTP fixture and simulated GitHub responses."
+      "current-pr-overview.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Public PR kubohiroya/turbowarp-kamishibai-app#219, 概要 (read through the public API, signed out)."
+      },
+      "current-project-file-states.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: After saving, README.md edited in a tab: unsaved *, bold saved change, ✨ untracked file, strikethrough deleted file."
+      },
+      "current-project-file.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: project.source.json opened in a tab after the commit."
+      },
+      "current-project-folder.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Project folder view; ネコ tab open and moved via the VM so project.source.json is unsaved (bold + *); other files blue."
+      },
+      "current-save-active-tab.png": {
+        "size": "1440x960",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Ball Demo.sb3 saved to a project folder created from the drawer (OPFS directory handed to the real picker); project.source.json in a tab; File menu shows アクティブなタブを保存 ⌘S."
+      },
+      "edit-menu.png": {
+        "size": "720x420",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Edit menu on a new project, including コードブロックの再配置 (clip 0,0)."
+      },
+      "export-dialog.png": {
+        "size": "640x194",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: File → 書き出し… (dialog element)."
+      },
+      "extensions-dialog.png": {
+        "size": "640x184",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: File → 機能拡張… on a new project (element screenshot)."
+      },
+      "form-dialog.png": {
+        "size": "820x514",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Form editor of the sample block-editor extension; rechecked on 2026-11-14 and unchanged apart from the block id."
+      },
+      "git-branch-workspace.png": {
+        "size": "1440x960",
+        "description": "Separate fixture cat-walk with only project.source.json modified; Local Git tab with the branch menu open (12-cat-walk / main / New Branch… / Open Local Git)."
+      },
+      "layout-menu.png": {
+        "size": "600x256",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: 編集パネルのレイアウト menu (clip x840 y44)."
+      },
+      "local-stage-workspace.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Same tab state without the menu; the 661px pane shows a 650x488 canvas."
+      },
+      "media-panes.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Panel split; コスチューム on the left (preview), 音 on the right (active editor). The sound is a generated 440 Hz tone."
+      },
+      "messages-sprite.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: メッセージ of the ボール sprite."
+      },
+      "messages-stage.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: メッセージ of the backdrop (whole-project relation diagram)."
+      },
+      "minimap-current.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: A script placed at (1150,1050), pointer over the code area."
+      },
+      "palette-order-detail.png": {
+        "size": "540x64",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: 動き held (900 ms) and dragged over 音 (clip x154 y80)."
+      },
+      "palette-popout.png": {
+        "size": "520x520",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Block palette opened in a separate window (popup viewport 520x520)."
+      },
+      "palette-resize-detail.png": {
+        "size": "330x230",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Resize grip of the 見た目 flyout (clip x120 y280)."
+      },
+      "palette-search.png": {
+        "size": "900x520",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Search 歩 in the 動き category (clip x100 y40)."
+      },
+      "plus-menu.png": {
+        "size": "720x420",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: TurboWarp Plus menu opened from the logo (clip 0,0)."
+      },
+      "plus-workspace-current.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: New project at startup; pointer over the code area so the minimap and zoom buttons show."
+      },
+      "project-data-dialog.png": {
+        "size": "640x568",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: File → 組み込みデータ…, HTTPS から毎回取得 chosen for コスチューム1 so the HTTPS URL field shows; not applied."
+      },
+      "project-diagnostics-failure.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Same fixture with an all-zero sha256; 詳細ログを表示 from the failure notice, 読み込みを拒否 event expanded. TurboWarp's own error modal is visible behind it."
+      },
+      "project-diagnostics.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Fixture SB3 from test/e2e/extension-loader/project.cts (embedded plusfixture), run without sandbox, then 作品のプロパティ → 作品の診断… with plusfixture expanded."
+      },
+      "project-search.png": {
+        "size": "1100x560",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Menu-bar search for 開始 (clip x0 y0)."
+      },
+      "project-uri-detail.png": {
+        "size": "622x116",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Same dialog, URI field focused; clipped around the 作品の URI field."
+      },
+      "properties-current.png": {
+        "size": "640x856",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: File → 作品のプロパティ with fictional values (URI https://example.com/projects/neko-game, author 山田 花子); cancelled afterwards."
+      },
+      "properties-variables.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Panel split horizontally; code on the right, 変数など on the left."
+      },
+      "review-dialog.png": {
+        "size": "768x353",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Fictional SB3 embedding \"Block editor demo\" (Unsandboxed: required) as a data: URL; review dialog element screenshot."
+      },
+      "save-as-dialog.png": {
+        "size": "640x296",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: File → 名前を変えて保存… (dialog element; focus moved off the input)."
+      },
+      "sprite-context-menu.png": {
+        "size": "420x360",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Context menu of the ネコ tile (clip x0 y80)."
+      },
+      "sprite-divider.png": {
+        "size": "700x560",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Ball Demo; sprite list divider focused and widened with ArrowRight x8 (clip 0,40)."
+      },
+      "sprite-list-window.png": {
+        "size": "540x420",
+        "description": "Sprite list undocked into a real popup window (540x420) with its layout menu open; Sprite1 renamed to Cat and duplicated as Ball through the editor VM."
+      },
+      "sprite-search.png": {
+        "size": "560x360",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: スプライトを検索 with ボ typed (clip x0 y40)."
+      },
+      "stage-menu-current.png": {
+        "size": "720x220",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Ball Demo; ステージの開き方 (▾) menu open (clip x720 y0)."
+      },
+      "stage-tab.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Ball Demo; stage opened with タブで表示, ステージの表示 menu open."
+      },
+      "validation-dialog.png": {
+        "size": "820x595",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Validation error in the same form; rechecked on 2026-11-14."
+      },
+      "workspace-context-menu.png": {
+        "size": "600x340",
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: Workspace context menu with コードの並びの見え方を変更する expanded (clip x680 y540)."
       }
     }
   }
