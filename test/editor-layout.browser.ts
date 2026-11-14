@@ -2666,6 +2666,13 @@ test('editor pane headings and message diagrams follow the active target', {time
         await expect(heading).toHaveText(title);
     }
     const pane = page.getByRole('region', {name: 'メッセージ', exact: true});
+    const sent = pane.getByRole('region', {name: '送信', exact: true});
+    await expect(sent.getByRole('columnheader')).toHaveText(['メッセージ', 'ブロック', '操作']);
+    const rename = sent.getByRole('button', {name: 'メッセージ名を変更', exact: true});
+    await expect(rename.locator('svg')).toBeVisible();
+    await rename.click();
+    await expect(sent.getByRole('textbox', {name: 'メッセージ名'})).toHaveValue('準備できた');
+    await sent.getByRole('button', {name: 'キャンセル', exact: true}).click();
     const diagram = pane.locator('figure');
     const edge = diagram.locator('.tw-sprite-messages__edge');
     const nodes = diagram.getByRole('button');
