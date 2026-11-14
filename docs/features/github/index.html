@@ -96,6 +96,15 @@
 <tr><th scope="row">リリース</th><td>「ファイル」→「リリース…」でnpmコマンドのコピー、タグの作成、Pages向けHTMLの送信（タグとHTMLの送信には「GitHub に送ることを許可する（push）」を付けた接続が必要）</td><td>GitHubの「Releases」、<code>gh release create</code></td></tr>
 </tbody></table></div>
 <p>ブラウザーで作品フォルダを読み書きするには、File System Access対応のChromeやEdgeが必要です。操作ごとに必要な接続と権限は、対応表で確認できます。<a href="../git/#github-sync">操作と接続の対応表</a></p>
+<h3 id="agent">GitとGitHubの操作をコーディングエージェントに任せる</h3>
+<p>作品フォルダはテキストとファイルなので、ブランチ・コミット・push・プルリクエストの作成を、Claude CodeやCodexなどのコーディングエージェントに任せられます。この進め方では、エディターでの作業を作品の編集と保存までにし、人は変更を確かめてマージとリリースを決めます。push・pull・プルリクエストの作成のために、エディターをGitHubに接続する必要はありません。</p>
+<ol>
+<li>エディターで編集して「ファイル」→「プロジェクトを保存」を選び、作品を止めます。</li>
+<li>エージェントに、issueの番号と頼みたいこと（ブランチを作ってコミットし、pushしてプルリクエストを作るなど）を伝えます。</li>
+<li>エージェントがブランチを切り替えたりpullしたりして作品フォルダが変わると、エディターの右下に「外部変更あり」が出て、変更を読み込みます（<a href="../git/#external-changes">フォルダが外で変わったとき</a>）。</li>
+<li>プルリクエストができたら、<a href="#merge">12.9</a>のとおりエディターの「マージ」でブロック単位に比べるか、GitHubの画面で確かめて、人がマージします。</li>
+</ol>
+<p>エージェントには、保存前の作業ツリーを書き換えないこと、<code>project.source.json</code>を変えたら<code>sb3-toolchain check</code>を通すこと、マージやリリースは頼まれたときだけ行うことを、リポジトリの<code>AGENTS.md</code>で伝えます。Project Starterの0.1.0より後の版は、<code>AGENTS.md</code>と、Claude Codeにそれを読ませる<code>CLAUDE.md</code>を作ります。それより前に作ったリポジトリには、<a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/ja/AGENTS.md">AGENTS.mdのテンプレート</a>を写し、<code>__PROJECT_DIR__</code>などを自分の作品フォルダ名とsb3-toolchainの版に置き換えて置きます。</p>
 
 </section>
 
@@ -129,7 +138,7 @@
 
 <p>ブロック、変数・リスト、スプライト、コスチューム、音などを編集し、「ファイル」→「プロジェクトを保存」を選びます。作品フォルダの<code>project.source.json</code>と、必要に応じて<code>assets/</code>と<code>sb3-source.json</code>が更新されます。保存の前に、フォルダが外部で変更されていないかを確かめます。</p>
 <p>同じリポジトリの作品を更新する間は「プロジェクトを保存」を使います。「名前を変えて保存…」でSB3を作ると、作品フォルダとのつながりが外れます。保存済みのファイルのGit状態は<a href="../git/#folder-files">「作品フォルダ」パネル</a>で確認できます。</p>
-<p><a href="../git/#project-folder">作品フォルダを開いて保存する</a></p>
+<p><a href="../git/#project-folder">作品フォルダを開いて保存する</a> · <a href="../git/#external-changes">フォルダが外で変わったとき</a></p>
 
 </section>
 

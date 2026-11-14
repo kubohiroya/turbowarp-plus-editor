@@ -96,6 +96,15 @@
 <tr><th scope="row">Release</th><td>"File" → "Releases…" copies npm commands, creates tags, and sends HTML for Pages (sending tags and HTML needs a connection with "Allow sending to GitHub (push)" checked)</td><td>"Releases" on GitHub, <code>gh release create</code></td></tr>
 </tbody></table></div>
 <p>To read and write project folders in the browser, you need Chrome or Edge with File System Access support. You can check the connection and permissions each task needs in the table. <a href="../git/index.en.html#github-sync">Tasks and connections</a></p>
+<h3 id="agent">Leave Git and GitHub to a coding agent</h3>
+<p>A project folder is text and plain files, so you can leave branches, commits, pushes and creating pull requests to a coding agent such as Claude Code or Codex. In this way of working, the editor is for editing and saving the project, and a person checks the changes and decides when to merge and release. You do not need to connect the editor to GitHub to push, pull or create pull requests.</p>
+<ol>
+<li>Edit in the editor, choose "File" → "Save Project", and stop the project.</li>
+<li>Tell the agent the issue number and what you want, for example to create a branch, commit, push and open a pull request.</li>
+<li>When the agent switches branches or pulls and the project folder changes, "External changes detected." appears at the bottom right of the editor and the changes are loaded (<a href="../git/index.en.html#external-changes">When the folder changes outside the editor</a>).</li>
+<li>When the pull request is ready, compare it block by block in the editor's "Merge" as in <a href="#merge">12.9</a>, or check it on GitHub, and a person merges it.</li>
+</ol>
+<p>Tell the agent in the repository's <code>AGENTS.md</code> not to rewrite the working tree before you save, to run <code>sb3-toolchain check</code> after changing <code>project.source.json</code>, and to merge or release only when asked. Project Starter versions after 0.1.0 create <code>AGENTS.md</code> and a <code>CLAUDE.md</code> that has Claude Code read it. For a repository made earlier, copy the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/en/AGENTS.md">AGENTS.md template</a> and replace <code>__PROJECT_DIR__</code> and the other placeholders with your project folder name and sb3-toolchain version.</p>
 
 </section>
 
@@ -129,7 +138,7 @@
 
 <p>Edit blocks, variables and lists, sprites, costumes, sounds, and so on, then choose "File" → "Save Project". <code>project.source.json</code> in the project folder is updated, and <code>assets/</code> and <code>sb3-source.json</code> are updated as needed. Before saving, the editor checks that the folder has not been changed outside the editor.</p>
 <p>While you are updating the project in the same repository, use "Save Project". If you make an SB3 with "Save As…", the link to the project folder is lost. You can check the Git status of saved files in the <a href="../git/index.en.html#folder-files">"Project folder" panel</a>.</p>
-<p><a href="../git/index.en.html#project-folder">Open and save a project folder</a></p>
+<p><a href="../git/index.en.html#project-folder">Open and save a project folder</a> · <a href="../git/index.en.html#external-changes">When the folder changes outside the editor</a></p>
 
 </section>
 

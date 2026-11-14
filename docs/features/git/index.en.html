@@ -74,6 +74,17 @@
 <ol><li>Edit blocks, variables and lists, sprites and costumes, sprite positions and sizes, and so on. Positions and variable values that changed while running the project are saved too.</li><li>Choose "File" → "Save Project" to update <code>project.source.json</code> in the folder. Before saving, the editor checks that the folder has not been changed outside the editor.</li></ol>
 <p>Adding, deleting, and renaming sprites, and adding and deleting costumes and sounds, are saved as well. In that case the editor also updates <code>assets/</code> and <code>sb3-source.json</code> in the folder and deletes image and sound files that are no longer used. References to system fonts and web fonts are saved in the project data; font files are saved in <code>assets/</code>.</p>
 <p>You can also open and save projects that contain embedded extensions or custom extensions loaded from a URL. Extension code is written back to <code>extensions/</code> and <code>embedded-extensions.json</code>. If you replace an extension and its origin record (<code>source</code>) is dropped, the editor tells you when you save.</p>
+<h3 id="external-changes">When the folder changes outside the editor</h3>
+<p>While a project folder is open, the editor keeps checking whether it has changed outside the editor. When a coding agent or a text editor rewrites files, or Git switches branches or pulls, "External changes detected." appears at the bottom right of the screen.</p>
+<div class="table-scroll" role="region" aria-label="How external changes are loaded" tabindex="0">
+<table><caption>How external changes are loaded</caption><thead><tr><th scope="col">State of the editor</th><th scope="col">What happens</th></tr></thead><tbody>
+<tr><th scope="row">No unsaved edits and the project is stopped</th><td>Once the writes settle, script changes load automatically. Only the changed scripts are replaced, whether block values and positions changed or blocks were added, removed or reconnected.</td></tr>
+<tr><th scope="row">The project is running</th><td>The changes wait and load when you stop the project.</td></tr>
+<tr><th scope="row">There are unsaved edits</th><td>Your edits stay. "Compare and Choose…" shows your unsaved edits next to the changes in the folder, and you choose "Keep My Edits" or "Discard Edits and Load from Folder".</td></tr>
+<tr><th scope="row">Sprites, variables, assets or extensions changed</th><td>These cannot be replaced in place, so they are not loaded automatically. "Reload Whole Project" reads the folder again with the same checks as opening it.</td></tr>
+<tr><th scope="row">A write is still in progress</th><td>"Waiting for the external write to finish." is shown, and the folder is checked again shortly.</td></tr>
+</tbody></table></div>
+<p>If the folder changes while you have unsaved edits, one of the two has to be discarded. Before switching branches or pulling with another tool, save in the editor and stop the project. If you try to save to a folder that changed outside the editor, the save stops and your edits stay in the editor.</p>
 <h3 id="folder-files">See project folder files and their Git status</h3>
 <p>Click the "Project folder" button at the top left to open the "Project folder" panel. Under each file name, the panel shows what the file is for, such as project data, costume and sound files, or extension files.</p>
 <ul>
