@@ -6,8 +6,10 @@ import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbow
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import {SpriteTargetTabsContext, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
-import {editSpriteVariable} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
+import {editSpriteVariable, readSpriteVariable, showSpriteVariableOnStage, writeSpriteVariableValue} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
+import {editClonedSpriteVariable, SpriteCloneInspector, SpriteClonePagination, SpriteCloneVariables}
+    from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-clone-inspector';
 import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, countVariableAccesses,
     openVariableSearch, renameProjectMessage,
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
@@ -82,14 +84,17 @@ function readSpriteAssets(vm, targetId: string, kind: SpriteAssetKind): SpriteAs
 
 function readSpriteVariables(vm, id: string): SpriteVariable[] {
     const target = vm.runtime.getTargetById(id);
-    const variables = Object.values(target?.variables ?? {}).flatMap((variable: {
-        id: string; name: string; type: string; value: unknown; isCloud?: boolean;
-    }) => variable.type === '' && (typeof variable.value === 'string' || typeof variable.value === 'number') ?
-        [{id: variable.id, name: variable.name, value: variable.value, isCloud: variable.isCloud}] : []);
+    const variables = Object.values<Parameters<typeof readSpriteVariable>[0]>(target?.variables ?? {})
+        .flatMap(variable => readSpriteVariable(variable) ?? []);
     if (!variables.length) return variables;
     const counts = countVariableAccesses(vm.runtime, id);
+    const monitors = vm.runtime.getMonitorState();
     return variables.map(variable => ({
         ...variable,
+        monitor: {
+            visible: Boolean(monitors.get(variable.id)?.visible),
+            setVisible: visible => showSpriteVariableOnStage(vm.runtime, id, variable.id, visible)
+        },
         accesses: {
             ...counts.get(variable.id) ?? {read: 0, write: 0},
             open: access => openVariableSearch(vm.runtime, {ownerId: id, variableId: variable.id, access})
@@ -260,12 +265,17 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}
                     activeGroup={view.groupActive} propertiesInVariables
                     onSectionChange={next => actions.setSection(spriteEditorSections.indexOf(next))}
-                    actions={view.active && section !== 'variables' && section !== 'messages' ?
+                    actions={section === 'variables' && !view.isStage ?
+                        <SpriteClonePagination viewId={view.id} targetId={view.targetId} locale={locale} /> :
+                        view.active && section !== 'variables' && section !== 'messages' ?
                         renderEditorTabRow(null) : undefined} />;
             },
+            wrapVariablePane: (viewId, targetId, editable, pane) => vm.runtime.getTargetById(targetId)?.isStage ?
+                React.cloneElement(pane, {global: {canAddCloudVariable: vm.runtime.canAddCloudVariable()}}) :
+                <SpriteCloneVariables {...{viewId, targetId, locale, editable}}>{pane}</SpriteCloneVariables>,
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
-            editVariable: (id, edit) => editSpriteVariable(vm, id, edit),
+            editVariable: (id, edit) => editClonedSpriteVariable(vm, id, edit, () => editSpriteVariable(vm, id, edit)),
             getProperties(id) {
                 const target = vm.runtime.getTargetById(id);
                 if (!target || target.isStage) return;
@@ -281,8 +291,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 } else vm.postSpriteInfo(patch);
             },
             writeVariable(id, variableId, value) {
-                const target = vm.runtime.getTargetById(id);
-                if (target?.variables[variableId]?.type === '' && vm.setVariableValue(id, variableId, value)) {
+                if (writeSpriteVariableValue(vm, id, variableId, value)) {
                     vm.runtime.emitProjectChanged();
                 }
             },
@@ -336,9 +345,22 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 spriteTabs.controller.current?.refreshSurfaces();
             });
         };
+        let visibleMonitors = new Set<string>();
+        const refreshMonitorVisibility = monitors => {
+            const next = new Set<string>();
+            for (const monitor of monitors.values()) {
+                if (monitor.visible && (monitor.opcode === 'data_variable' || monitor.opcode === 'data_listcontents')) next.add(monitor.id);
+            }
+            if (next.size === visibleMonitors.size && [...next].every(id => visibleMonitors.has(id))) return;
+            visibleMonitors = next;
+            refreshVariables();
+        };
         vm.on('PROJECT_CHANGED', refreshVariables);
+        vm.on('MONITORS_UPDATE', refreshMonitorVisibility);
+        refreshMonitorVisibility(vm.runtime.getMonitorState());
         return () => {
             vm.removeListener('PROJECT_CHANGED', refreshVariables);
+            vm.removeListener('MONITORS_UPDATE', refreshMonitorVisibility);
             if (refreshFrame !== undefined) cancelAnimationFrame(refreshFrame);
             if (navigation.current === current) navigation.current = null;
             disconnect();
@@ -377,7 +399,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     const selection = spriteTabs.context;
     const editorCommands = selection && code ? {...selection, open: code.context.open} : selection ?? code?.context ?? null;
     return <SpriteTargetTabsContext.Provider value={spriteTabs.listTabs}><SpriteCodeProvider value={editorCommands}>
-        {content}
+        <SpriteCloneInspector vm={vm}>{content}</SpriteCloneInspector>
         {code && <BackCodeWindows vm={vm} windows={code.windows} front={code.front}
             attachBackpackDrop={attachBackpackDrop} />}
     </SpriteCodeProvider></SpriteTargetTabsContext.Provider>;

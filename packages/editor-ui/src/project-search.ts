@@ -99,6 +99,13 @@ function* walkBlocks(target: Target) {
 const stageProperties = new Set(['background #', 'backdrop #', 'backdrop name', 'volume']);
 const spriteProperties = new Set(['x position', 'y position', 'direction', 'costume #', 'costume name', 'size', 'volume']);
 
+const listAccesses = new Map<string, VariableAccess>([
+    ['data_listcontents', 'read'], ['data_itemoflist', 'read'], ['data_itemnumoflist', 'read'],
+    ['data_lengthoflist', 'read'], ['data_listcontainsitem', 'read'],
+    ['data_addtolist', 'write'], ['data_deleteoflist', 'write'], ['data_deletealloflist', 'write'],
+    ['data_insertatlist', 'write'], ['data_replaceitemoflist', 'write']
+]);
+
 function variableAccess(target: Target, block: Block, inputs: [string, Block][],
     stage: Target | undefined, sprites: ReadonlyMap<string, Target>):
     {owner: Target; variableId: string; access: VariableAccess} | undefined {
@@ -117,12 +124,13 @@ function variableAccess(target: Target, block: Block, inputs: [string, Block][],
         if (variableId) return {owner, variableId, access: 'read'};
         return;
     }
-    const access = block.opcode === 'data_variable' ? 'read' :
-        block.opcode === 'data_setvariableto' || block.opcode === 'data_changevariableby' ? 'write' : undefined;
-    const variableId = block.fields?.VARIABLE?.id;
+    const listAccess = listAccesses.get(block.opcode);
+    const access = listAccess ?? (block.opcode === 'data_variable' ? 'read' :
+        block.opcode === 'data_setvariableto' || block.opcode === 'data_changevariableby' ? 'write' : undefined);
+    const variableId = block.fields?.[listAccess ? 'LIST' : 'VARIABLE']?.id;
     if (!access || !variableId) return;
     const owner = Object.hasOwn(target.variables, variableId) ? target : stage;
-    if (owner?.variables[variableId]?.type === '') return {owner, variableId, access};
+    if (owner?.variables[variableId]?.type === (listAccess ? 'list' : '')) return {owner, variableId, access};
 }
 
 const originalSprites = (project: SearchProject) =>
@@ -214,7 +222,7 @@ export function searchProject(project: SearchProject, messages: Record<string, s
             const add = (kind: BlockKind, label: string, detail?: string, edit?: SearchEdit, access?: VariableAccess) =>
                 groups.get(kind).results.push({kind, target, block, label, detail, edit, variableAccess: access});
             if (variableSearch && use) {
-                add('variable', label, use.owner.variables[use.variableId].name, undefined, use.access);
+                add(list ? 'list' : 'variable', label, use.owner.variables[use.variableId].name, undefined, use.access);
                 continue;
             }
             if (kinds.has('block') && (matches(template) || matches(block.opcode) ||
@@ -232,7 +240,7 @@ export function searchProject(project: SearchProject, messages: Record<string, s
                     variableType: model.type ?? (list ? 'list' : message ? 'broadcast_msg' : '')
                 } : undefined;
                 add(kind, name, scope || label, edit, use?.access);
-            } else if (use && !variable && kinds.has('variable') && matches(use.owner.variables[use.variableId].name)) {
+            } else if (use && !variable && !list && kinds.has('variable') && matches(use.owner.variables[use.variableId].name)) {
                 add('variable', use.owner.variables[use.variableId].name, label, undefined, use.access);
             }
             if (kinds.has('extension') && opcode.extension && matches(opcode.extension)) add('extension', opcode.extension, label);

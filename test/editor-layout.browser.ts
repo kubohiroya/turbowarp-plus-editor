@@ -1001,9 +1001,9 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     const settings = spriteSettings.locator('..');
     await expect(spriteSettings).toHaveAttribute('aria-expanded', 'true');
     await expect(settings.getByRole('heading', {name: 'Sprite', exact: true})).toHaveCount(0);
-    const fields = settings.locator('.tw-sprite-properties__fields > .tw-sprite-properties__field');
-    await expect(fields).toHaveCount(6);
-    assert.ok(await fields.evaluateAll(nodes => {
+    const groups = settings.locator('.tw-sprite-properties__fields > div');
+    await expect(groups).toHaveCount(2);
+    assert.ok(await groups.evaluateAll(nodes => {
         const bounds = nodes[0].parentElement.getBoundingClientRect();
         const left = nodes[0].getBoundingClientRect().left;
         return nodes.every(node => {
@@ -2486,7 +2486,7 @@ test('the Dockview asset connection restores the native costume and sound select
     assert.deepEqual(errors, []);
 });
 
-test('the Dockview variables pane lists only variables owned by the selected target', {timeout: 45_000}, async t => {
+test('the Dockview variables pane lists only data owned by the selected target', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     page.setDefaultTimeout(8_000);
     await page.addInitScript(() => localStorage.setItem('tw:theme', 'dark'));
@@ -2505,30 +2505,52 @@ test('the Dockview variables pane lists only variables owned by the selected tar
         vm.emitTargetsUpdate();
         return sprite.getName();
     });
-    const showVariables = () => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
-        .getByRole('tab', {name: '変数など', exact: true}).click();
-    const pane = page.getByRole('region', {name: '変数', exact: true});
-    const fields = pane.locator('[data-variable-id]');
+    const showVariables = (stage = false) => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
+        .getByRole('tab', {name: stage ? 'グローバル変数' : '変数など', exact: true}).click();
+    const pane = page.getByRole('region', {name: /^(スプライト変数|グローバル変数)$/});
+    const fields = pane.locator('input[data-variable-id]');
     const variableIds = () => fields.evaluateAll(inputs => inputs.map(input => input.getAttribute('data-variable-id')));
     const score = pane.getByRole('textbox', {name: '得点', exact: true});
     const cloud = pane.getByRole('img', {name: 'クラウド変数', exact: true});
     const scope = pane.locator('.tw-sprite-variables__scope');
     // Creating, renaming and deleting open Scratch-style modal dialogs.
-    const create = page.getByRole('dialog', {name: '新しい変数', exact: true});
+    const create = page.getByRole('dialog', {name: /^新しい(スプライト|グローバル)変数$/});
     const rename = page.getByRole('dialog', {name: '変数名を変更', exact: true});
     const remove = page.getByRole('dialog', {name: '変数を削除', exact: true});
     const variableRow = (name: string) => pane.getByRole('row').filter({has: page.getByRole('textbox', {name, exact: true})});
-    const startCreate = () => pane.getByRole('button', {name: '変数を作る', exact: true}).click();
+    const startCreate = () => pane.getByRole('button', {name: /^新しい(スプライト|グローバル)変数を追加$/}).click();
     const submitCreate = () => create.getByRole('button', {name: 'OK', exact: true}).click();
 
     await showVariables();
+    await expect(pane.getByRole('heading', {name: 'スプライト変数', exact: true})).toBeVisible();
+    await expect(pane.getByText('このスプライト専用の変数です。')).toBeVisible();
     await expect.poll(variableIds).toEqual(['local-score']);
+    await page.getByRole('button', {name: 'ステージの開き方'}).click();
+    await page.getByRole('menuitem', {name: '引出しで表示', exact: true}).click();
+    const monitor = pane.getByRole('checkbox', {name: '「得点」をステージに表示'});
+    const stageMonitor = page.locator('.monitor-overlay [data-id="local-score"]');
+    await expect(monitor).not.toBeChecked();
+    await monitor.click();
+    await expect(monitor).toBeChecked();
+    await expect(stageMonitor).toBeVisible();
+    assert.deepEqual(await page.evaluate(() => {
+        const state = vm.runtime.getMonitorState().get('local-score');
+        return [state.visible, state.targetId === vm.editingTarget.id];
+    }), [true, true]);
+    await page.evaluate(() => {
+        vm.runtime.monitorBlocks.changeBlock({id: 'local-score', element: 'checkbox', value: false});
+    });
+    await expect(monitor).not.toBeChecked();
+    await expect(stageMonitor).toBeHidden();
+    await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
+    await page.getByRole('menuitem', {name: '引出しを閉じる', exact: true}).click();
     await expect(scope).toHaveCount(0);
     await expect(cloud).toHaveCount(0);
     await score.fill('17');
     await score.press('Enter');
 
     await startCreate();
+    await expect(create.getByRole('checkbox')).toHaveCount(0);
     await create.getByRole('textbox').fill('得点');
     await submitCreate();
     await expect(create.getByRole('alert')).toHaveText('同じ名前の変数がすでにあります。');
@@ -2542,42 +2564,181 @@ test('the Dockview variables pane lists only variables owned by the selected tar
         fields: {VARIABLE: {name: 'VARIABLE', id, value: '速度', variableType: ''}},
         shadow: false, topLevel: true, parent: null, next: null, x: 10, y: 10
     }), speedId);
+    await variableRow('速度').hover();
     await variableRow('速度').getByRole('button', {name: '変数名を変更', exact: true}).click();
     await rename.getByRole('textbox').fill('速さ');
     await rename.getByRole('button', {name: 'OK', exact: true}).click();
     await expect(rename).toHaveCount(0);
     await expect(variableRow('速さ')).toBeVisible();
     assert.equal(await page.evaluate(() => vm.editingTarget.blocks.getBlock('speed-reference').fields.VARIABLE.value), '速さ');
-    await variableRow('速さ').getByRole('button', {name: '変数を削除', exact: true}).click();
-    await expect(remove).toContainText('変数「速さ」を削除しますか？');
-    await remove.getByRole('button', {name: '削除', exact: true}).click();
-    await expect(remove.getByRole('alert')).toContainText('ブロックで使用中です');
-    await expect(variableRow('速さ')).toBeVisible();
+    const deleteSpeed = variableRow('速さ').getByRole('button', {name: '変数を削除', exact: true});
+    await expect(deleteSpeed).toBeDisabled();
     await page.evaluate(() => vm.editingTarget.blocks.deleteBlock('speed-reference'));
+    await expect(deleteSpeed).toBeEnabled();
+    await variableRow('速さ').hover();
+    await deleteSpeed.click();
+    await expect(remove).toContainText('変数「速さ」を削除しますか？');
     await remove.getByRole('button', {name: '削除', exact: true}).click();
     await expect(remove).toHaveCount(0);
     await expect(variableRow('速さ')).toHaveCount(0);
 
     await page.getByRole('button', {name: '背景', exact: true}).click();
-    await showVariables();
+    await showVariables(true);
+    await expect(pane.getByText('この背景とすべてのスプライトで参照・利用できる変数です。')).toBeVisible();
     await expect.poll(variableIds).toEqual(['project-score', 'cloud-score', 'legacy-cloud', 'plain-cloud-name']);
     await expect(scope).toHaveCount(0);
     await expect(cloud).toHaveCount(2);
     await expect(cloud.first()).toHaveCSS('color', 'rgb(35, 153, 194)');
-    await expect(pane.getByRole('rowheader')).toHaveText(['得点', '☁︎ 記録', '☁︎ 共有記録', '☁ メモ']);
+    await expect(pane.getByRole('rowheader')).toHaveText(['得点', '記録 ☁︎', '共有記録 ☁︎', '☁ メモ', 'リスト']);
     await expect(score).toHaveValue('0');
     await score.fill('23');
     await score.press('Enter');
     await startCreate();
+    const cloudOption = create.getByRole('checkbox', {name: 'クラウド変数'});
+    await expect(cloudOption).not.toBeChecked();
     await create.getByRole('textbox').fill('作品用');
     await submitCreate();
     await expect(variableRow('作品用')).toBeVisible();
+    await startCreate();
+    await create.getByRole('textbox').fill('ランキング');
+    await cloudOption.check();
+    await submitCreate();
+    const cloudRow = pane.getByRole('row').filter({has: page.getByRole('rowheader', {name: /^ランキング/})});
+    await expect(cloudRow.getByRole('img', {name: 'クラウド変数'})).toBeVisible();
+    const created = await page.evaluate(() => {
+        const stage = vm.runtime.getTargetForStage();
+        const variables = Object.values(stage.variables) as {id: string; name: string; isCloud: boolean}[];
+        return variables.find(variable => variable.name === '☁ ランキング');
+    });
+    assert.ok(created);
+    assert.equal(created.isCloud, true);
+    const cloudMonitor = cloudRow.getByRole('checkbox');
+    await expect(cloudMonitor).not.toBeChecked();
+    await cloudMonitor.click();
+    await expect(cloudMonitor).toBeChecked();
+    assert.deepEqual(await page.evaluate(id => {
+        const state = vm.runtime.getMonitorState().get(id);
+        return [state.visible, state.targetId];
+    }, created.id), [true, null]);
+    await cloudMonitor.click();
+    await expect(cloudMonitor).not.toBeChecked();
 
     await page.getByRole('tab', {name: spriteName, exact: true}).click();
     await showVariables();
     await expect(score).toHaveValue('17');
     await expect(variableRow('作品用')).toHaveCount(0);
     assert.equal(await page.evaluate(() => vm.runtime.getTargetForStage().variables['project-score'].value), 23);
+});
+
+test('the variables table sorts mixed rows and saves list items for the selected target', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    const spriteId = await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const stage = vm.runtime.getTargetForStage();
+        sprite.createVariable('list-colors', 'Colors', 'list', false);
+        sprite.variables['list-colors'].value = ['赤', 20, '青', '緑', '黒', '白'];
+        sprite.createVariable('list-count', 'Count', '', false);
+        stage.createVariable('list-global', 'Global', 'list', false);
+        const add = (id, opcode) => sprite.blocks.createBlock({
+            id, opcode, inputs: {}, fields: {
+                LIST: {name: 'LIST', id: 'list-colors', value: 'Colors', variableType: 'list'}
+            },
+            shadow: false, topLevel: true, parent: null, next: null, x: 30, y: 30
+        });
+        add('list-read', 'data_itemoflist');
+        add('list-write', 'data_addtolist');
+        const clone = sprite.makeClone();
+        vm.runtime.addTarget(clone);
+        clone.variables['list-colors'].value = ['クローン'];
+        vm.emitTargetsUpdate();
+        return sprite.id;
+    });
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    await toolbar.getByRole('tab', {name: '変数など', exact: true}).click();
+    const pane = page.getByRole('region', {name: 'スプライト変数', exact: true});
+    const row = (label: string) => pane.getByRole('row').filter({has: page.getByRole('rowheader', {name: label, exact: true})});
+    const colors = row('Colors');
+    await expect(colors.getByRole('img', {name: 'リスト', exact: true})).toHaveAttribute('title', 'リスト');
+    await expect(row('Count').getByRole('img', {name: '変数', exact: true})).toHaveAttribute('title', '変数');
+    await expect(colors.getByRole('listitem')).toHaveText(['赤', '20', '青', '緑', '黒', '+1']);
+    await expect(colors.getByRole('link', {name: 'Colors: 読み取り 1'})).toBeVisible();
+    await expect(colors.getByRole('link', {name: 'Colors: 変更 1'})).toBeVisible();
+
+    await expect(pane.getByRole('columnheader', {name: '操作', exact: true}).getByRole('button')).toHaveCount(0);
+    const reads = pane.getByRole('columnheader', {name: '読み取り', exact: true});
+    const writes = pane.getByRole('columnheader', {name: '変更', exact: true});
+    await expect(colors.getByRole('link', {name: 'Colors: 読み取り 1'})).toHaveText('1');
+    await expect(colors.getByRole('link', {name: 'Colors: 変更 1'})).toHaveText('1');
+    await reads.getByRole('button').click();
+    await expect(pane.getByRole('rowheader')).toHaveText(['Count', 'Colors']);
+    await writes.getByRole('button').click();
+    await expect(writes).toHaveAttribute('aria-sort', 'ascending');
+    await writes.getByRole('button').click();
+    await expect(pane.getByRole('rowheader')).toHaveText(['Colors', 'Count']);
+
+    const kind = pane.getByRole('columnheader', {name: '種類', exact: true});
+    await kind.getByRole('button').click();
+    await expect(kind).toHaveAttribute('aria-sort', 'ascending');
+    await expect(pane.getByRole('rowheader')).toHaveText(['Count', 'Colors']);
+    await kind.getByRole('button').click();
+    await expect(kind).toHaveAttribute('aria-sort', 'descending');
+    await expect(pane.getByRole('rowheader')).toHaveText(['Colors', 'Count']);
+
+    const edit = colors.getByRole('button', {name: '編集', exact: true});
+    await expect(edit).toHaveCSS('opacity', '0');
+    await colors.hover();
+    await expect(edit).toHaveCSS('opacity', '1');
+    await edit.click();
+    const dialog = page.getByRole('dialog', {name: 'リストを編集：Colors', exact: true});
+    const item = (position: number) => dialog.getByRole('textbox', {name: `項目 ${position}`, exact: true});
+    const save = dialog.getByRole('button', {name: '保存', exact: true});
+    await expect(item(6)).toHaveValue('白');
+    await item(1).fill('取り消す');
+    await dialog.getByRole('button', {name: 'キャンセル', exact: true}).click();
+    await expect(colors.getByRole('listitem').first()).toHaveText('赤');
+    await colors.hover();
+    await edit.click();
+    await item(2).fill('25');
+    await dialog.getByRole('button', {name: '項目 2 を上に移動'}).click();
+    await dialog.getByRole('button', {name: '項目 3 を削除'}).click();
+    await dialog.getByRole('button', {name: '項目を追加'}).click();
+    await expect(item(6)).toBeFocused();
+    await item(6).fill('紫');
+    await save.click();
+    assert.deepEqual(await page.evaluate(id => vm.runtime.getTargetById(id).variables['list-colors'].value, spriteId),
+        [25, '赤', '緑', '黒', '白', '紫']);
+
+    await page.getByRole('button', {name: 'クローン 1', exact: true}).click();
+    await colors.hover();
+    await edit.click();
+    await expect(item(1)).toHaveValue('クローン');
+    await item(1).fill('クローンだけ');
+    await save.click();
+    await expect(colors.getByRole('listitem')).toHaveText(['クローンだけ']);
+    assert.deepEqual(await page.evaluate(id => vm.runtime.getTargetById(id).variables['list-colors'].value, spriteId),
+        [25, '赤', '緑', '黒', '白', '紫']);
+
+    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await toolbar.getByRole('tab', {name: 'グローバル変数', exact: true}).click();
+    const global = page.getByRole('region', {name: 'グローバル変数', exact: true});
+    await expect(global.getByRole('rowheader', {name: 'Colors', exact: true})).toHaveCount(0);
+    const globalRow = global.getByRole('row').filter({has: page.getByRole('rowheader', {name: 'Global', exact: true})});
+    await expect(globalRow.getByText('空のリスト')).toBeVisible();
+    const monitor = globalRow.getByRole('checkbox');
+    await monitor.click();
+    await expect(monitor).toBeChecked();
+    assert.equal(await page.evaluate(() => vm.runtime.getMonitorState().get('list-global').mode), 'list');
+    await monitor.click();
+    await expect(monitor).not.toBeChecked();
+    await globalRow.hover();
+    await globalRow.getByRole('button', {name: '編集', exact: true}).click();
+    const empty = page.getByRole('dialog', {name: 'リストを編集：Global', exact: true});
+    await empty.getByRole('button', {name: '項目を追加'}).click();
+    await empty.getByRole('textbox', {name: '項目 1', exact: true}).fill('共通');
+    await empty.getByRole('button', {name: '保存', exact: true}).click();
+    await expect(globalRow.getByRole('listitem')).toHaveText(['共通']);
 });
 
 test('variable counts open the project search at the selected kind of access', {timeout: 45_000}, async t => {
@@ -2606,14 +2767,14 @@ test('variable counts open the project search at the selected kind of access', {
     });
     await page.getByRole('button', {name: '背景', exact: true}).click();
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
-    await toolbar.getByRole('tab', {name: '変数など', exact: true}).click();
-    const pane = page.getByRole('region', {name: '変数', exact: true});
+    await toolbar.getByRole('tab', {name: 'グローバル変数', exact: true}).click();
+    const pane = page.getByRole('region', {name: 'グローバル変数', exact: true});
     const results = page.getByRole('listbox', {name: '検索結果'}).getByRole('option');
-    await expect(pane.getByRole('button', {name: 'アクセス数: 読み取り 1'})).toBeVisible();
-    await pane.getByRole('button', {name: 'アクセス数: 変更 1'}).click();
+    await expect(pane.getByRole('link', {name: 'アクセス数: 読み取り 1'})).toBeVisible();
+    await pane.getByRole('link', {name: 'アクセス数: 変更 1'}).click();
     await expect(results).toHaveCount(1);
     await expect(results.first()).toContainText('変更');
-    await page.getByRole('button', {name: '読み取り', exact: true}).click();
+    await page.getByRole('group', {name: '変数へのアクセス'}).getByRole('button', {name: '読み取り', exact: true}).click();
     await expect(results).toHaveCount(1);
     await expect(results.first()).toContainText('読み取り');
     await page.evaluate(() => {
@@ -2622,9 +2783,206 @@ test('variable counts open the project search at the selected kind of access', {
         sprite.blocks.createBlock({...original, id: 'access-read-added', x: 90});
     });
     await expect(results).toHaveCount(2);
-    await expect(pane.getByRole('button', {name: 'アクセス数: 読み取り 2'})).toHaveCount(1);
+    await expect(pane.getByRole('link', {name: 'アクセス数: 読み取り 2'})).toHaveCount(1);
     await results.first().click();
     await expect(page.locator('html')).toHaveAttribute('data-test-centered-block', 'access-read');
+});
+
+test('clone pages edit the selected runtime instance and fall back when it disappears', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    await page.evaluate(() => {
+        vm.editingTarget.createVariable('clone-health', '体力', '', false);
+        vm.editingTarget.variables['clone-health'].value = 20;
+        vm.emitTargetsUpdate(false);
+    });
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    await toolbar.getByRole('tab', {name: '変数など', exact: true}).click();
+    const pages = toolbar.getByRole('navigation', {name: 'クローンを切り替える'});
+    await expect(pages).toHaveCount(0);
+    const createClones = (start: number, count: number) => page.evaluate(([start, count]) => {
+        const original = vm.editingTarget;
+        return Array.from({length: count}, (_, offset) => {
+            const number = start + offset;
+            const clone = original.makeClone();
+            vm.runtime.addTarget(clone);
+            clone.postSpriteInfo({x: number * 10, y: 20, visible: true});
+            clone.variables['clone-health'].value = number;
+            return clone.id;
+        });
+    }, [start, count]);
+    const ids = await createClones(1, 5);
+    const original = pages.getByRole('button', {name: '元のスプライト'});
+    const name = page.getByRole('textbox', {name: 'スプライト名', exact: true});
+    const health = page.getByRole('textbox', {name: '体力', exact: true});
+    const x = page.getByRole('spinbutton', {name: 'x', exact: true});
+    const hidden = page.getByRole('radio', {name: '表示しない', exact: true});
+    const choose = (number: number) => pages.getByRole('button', {name: 'クローン ' + number, exact: true}).click();
+    await expect(original).toHaveAttribute('aria-current', 'true');
+    await expect(pages.getByText('クローン 5 体')).toBeVisible();
+    await choose(3);
+    await expect(name).not.toBeEditable();
+    await expect(page.getByText('クローン 3 を編集中')).toBeVisible();
+    await expect(page.getByText('クローンのスプライト変数はそれぞれのクローンごとに別々の値を持ちます。')).toBeVisible();
+    const addCloneVariable = page.getByRole('button', {name: '新しいスプライト変数を追加'});
+    await addCloneVariable.click();
+    const newVariable = page.getByRole('dialog', {name: '新しいスプライト変数'});
+    await newVariable.getByRole('textbox').fill('体力の上限');
+    await newVariable.getByRole('button', {name: 'OK', exact: true}).click();
+    await expect(page.getByRole('textbox', {name: '体力の上限', exact: true})).toHaveValue('0');
+    const monitor = page.getByRole('checkbox', {name: '元のスプライトの「体力」をステージに表示'});
+    await expect(monitor).not.toBeChecked();
+    await monitor.click();
+    await expect(monitor).toBeChecked();
+    assert.ok(await page.evaluate(() => vm.runtime.getMonitorState().get('clone-health').targetId === vm.editingTarget.id));
+    await monitor.click();
+    await expect(monitor).not.toBeChecked();
+    await expect(health).toHaveValue('3');
+    await expect(x).toHaveValue('30');
+    await page.evaluate(() => {
+        let changes = 0;
+        document.documentElement.dataset.cloneInspectorChanges = '0';
+        vm.runtime.on('PROJECT_CHANGED', () => {document.documentElement.dataset.cloneInspectorChanges = String(++changes);});
+    });
+    await x.fill('73');
+    await x.press('Enter');
+    const dial = page.getByRole('slider', {name: '向きのダイヤル'});
+    const dialBox = await dial.boundingBox();
+    assert.ok(dialBox);
+    const centerX = dialBox.x + dialBox.width / 2;
+    const centerY = dialBox.y + dialBox.height / 2;
+    await page.mouse.move(centerX + 35, centerY);
+    await page.mouse.down();
+    await page.mouse.move(centerX, centerY - 35, {steps: 5});
+    await page.mouse.up();
+    await expect(page.getByRole('spinbutton', {name: '向き', exact: true})).toHaveValue('0');
+    await hidden.click();
+    await health.fill('12');
+    await health.press('Enter');
+    const values = await page.evaluate(([first, third]) => {
+        const read = t => [t.x, t.visible, t.variables['clone-health'].value, t.direction];
+        return {
+            original: read(vm.editingTarget), first: read(vm.runtime.getTargetById(first)),
+            third: read(vm.runtime.getTargetById(third)), changes: Number(document.documentElement.dataset.cloneInspectorChanges)
+        };
+    }, [ids[0], ids[2]]);
+    assert.equal(values.original[2], 20);
+    assert.deepEqual(values.first, [10, true, 1, 90]);
+    assert.deepEqual(values.third, [73, false, 12, 0]);
+    assert.equal(values.changes, 0);
+
+    const extra = await createClones(6, 3);
+    const instance = pages.getByRole('combobox', {name: 'クローン番号を選ぶ'});
+    const next = pages.getByRole('button', {name: '次のクローン'});
+    const previous = pages.getByRole('button', {name: '前のクローン'});
+    await expect(instance).toHaveValue(ids[2]);
+    await expect(instance.locator('option:checked')).toHaveText('3 / 8');
+    for (const arrow of [previous, next]) {
+        await expect(arrow).toHaveCSS('border-radius', '50%');
+        await expect(arrow).toHaveCSS('border-top-width', '1px');
+        await expect(arrow.locator('svg')).toHaveCSS('width', '20px');
+    }
+    const [left, middle, right] = await Promise.all([previous.boundingBox(), instance.boundingBox(), next.boundingBox()]);
+    assert.ok(left?.width >= 40 && right?.width >= 40 && middle);
+    assert.ok(middle.x - left.x - left.width >= 8 && right.x - middle.x - middle.width >= 8);
+    await next.click();
+    await expect(health).toHaveValue('4');
+    await previous.click();
+    await expect(health).toHaveValue('12');
+    await page.evaluate(id => vm.runtime.disposeTarget(vm.runtime.getTargetById(id)), ids[0]);
+    await expect(instance.locator('option:checked')).toHaveText('2 / 7');
+    await expect(health).toHaveValue('12');
+    await instance.selectOption(extra[2]);
+    await expect(next).toBeDisabled();
+    await expect(health).toHaveValue('8');
+    await page.evaluate(id => {
+        vm.runtime.getTargetById(id).variables['clone-health'].value = 42;
+        vm.runtime.emit('AFTER_EXECUTE');
+    }, extra[2]);
+    await expect(health).toHaveValue('42');
+    await health.fill('99');
+    await page.evaluate(id => vm.runtime.disposeTarget(vm.runtime.getTargetById(id)), extra[2]);
+    await expect(original).toHaveAttribute('aria-current', 'true');
+    await expect(page.getByText('クローンが消えたため、元のスプライトに戻りました。')).toBeVisible();
+    await expect(health).toHaveValue('20');
+    await expect(name).toBeEditable();
+    await instance.selectOption(ids[2]);
+    await expect(health).toHaveValue('12');
+    await page.evaluate(() => vm.stopAll());
+    await expect(pages).toHaveCount(0);
+    await expect(health).toHaveValue('20');
+});
+
+test('clone variables keep the original sprite reference counts and definition actions', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const id = 'clone-score';
+        sprite.createVariable(id, '得点', '', false);
+        for (const [blockId, opcode] of [['score-read', 'data_variable'], ['score-write', 'data_setvariableto']]) {
+            sprite.blocks.createBlock({id: blockId, opcode, inputs: {}, shadow: false, topLevel: true,
+                parent: null, next: null, x: 30, y: 30,
+                fields: {VARIABLE: {name: 'VARIABLE', id, value: '得点', variableType: ''}}});
+        }
+        sprite.variables[id].value = 20;
+        for (const value of [1, 2]) {
+            const clone = sprite.makeClone();
+            vm.runtime.addTarget(clone);
+            clone.variables[id].value = value;
+        }
+        vm.refreshWorkspace();
+    });
+    await page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
+        .getByRole('tab', {name: '変数など', exact: true}).click();
+    const pane = page.getByRole('region', {name: 'スプライト変数', exact: true});
+    const row = (name: string) => pane.getByRole('row').filter({has: page.getByRole('textbox', {name, exact: true})});
+    const pages = page.getByRole('navigation', {name: 'クローンを切り替える'});
+    await pages.getByRole('button', {name: 'クローン 2', exact: true}).click();
+    const reads = row('得点').getByRole('link', {name: '得点: 読み取り 1', exact: true});
+    await expect(reads).toBeVisible();
+    const writes = row('得点').getByRole('link', {name: '得点: 変更 1', exact: true});
+    await writes.click();
+    const results = page.getByRole('listbox', {name: '検索結果'}).getByRole('option');
+    await expect(results).toHaveCount(1);
+    await expect(results.first()).toContainText('変更');
+    await reads.click();
+    await expect(results).toHaveCount(1);
+    await expect(results.first()).toContainText('読み取り');
+
+    const rename = page.getByRole('dialog', {name: '変数名を変更', exact: true});
+    await row('得点').hover();
+    await row('得点').getByRole('button', {name: '変数名を変更', exact: true}).click();
+    await expect(rename).toContainText('元のスプライトとすべてのクローン');
+    await rename.getByRole('textbox').fill('スコア');
+    await rename.getByRole('button', {name: 'OK', exact: true}).click();
+    await expect(pane.getByRole('textbox', {name: 'スコア', exact: true})).toHaveValue('2');
+    await expect(row('スコア').getByRole('link', {name: 'スコア: 読み取り 1', exact: true})).toBeVisible();
+    const definitions = () => page.evaluate(() => vm.editingTarget.sprite.clones.map(target => {
+        const variable = target.variables['clone-score'];
+        return variable ? [variable.name, variable.value] : null;
+    }));
+    assert.deepEqual(await definitions(), [['スコア', 20], ['スコア', 1], ['スコア', 2]]);
+    assert.equal(await page.evaluate(() => vm.editingTarget.blocks.getBlock('score-write').fields.VARIABLE.value), 'スコア');
+
+    const remove = page.getByRole('dialog', {name: '変数を削除', exact: true});
+    const deleteScore = row('スコア').getByRole('button', {name: '変数を削除', exact: true});
+    await expect(deleteScore).toBeDisabled();
+    await page.evaluate(() => vm.editingTarget.blocks.deleteBlock('score-read'));
+    await expect(row('スコア').getByRole('link', {name: 'スコア: 読み取り 0', exact: true})).toBeVisible();
+    await expect(deleteScore).toBeDisabled();
+    await page.evaluate(() => vm.editingTarget.blocks.deleteBlock('score-write'));
+    await expect(deleteScore).toBeEnabled();
+    await row('スコア').hover();
+    await deleteScore.click();
+    const confirm = remove.getByRole('button', {name: '削除', exact: true});
+    await confirm.click();
+    await expect(remove).toHaveCount(0);
+    await expect(row('スコア')).toHaveCount(0);
+    assert.deepEqual(await definitions(), [null, null, null]);
+    await expect(pages.getByRole('button', {name: 'クローン 2', exact: true})).toHaveAttribute('aria-current', 'true');
 });
 
 test('editor pane headings and message diagrams follow the active target', {timeout: 45_000}, async t => {
@@ -2697,7 +3055,7 @@ test('editor pane headings and message diagrams follow the active target', {time
     await stage.click();
     await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
     await expect(heading).toHaveCount(0);
-    await section('変数など').click();
+    await section('グローバル変数').click();
     await expect(heading).toHaveText('グローバル変数');
     await section('背景').click();
     await expect(heading).toHaveText('背景');
