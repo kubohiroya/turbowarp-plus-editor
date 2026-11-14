@@ -2626,6 +2626,7 @@ test('the Dockview variables pane lists only data owned by the selected target',
     const localList = pane.getByRole('row').filter({has: page.getByRole('rowheader', {name: '持ち物', exact: true})});
     await expect(localList.getByRole('img', {name: 'リスト'})).toBeVisible();
     await expect(localList.getByText('空のリスト', {exact: true})).toBeVisible();
+    await localList.hover();
     await localList.getByRole('button', {name: '編集', exact: true}).click();
     const listEditor = page.getByRole('dialog', {name: 'リストを編集：持ち物', exact: true});
     assert.deepEqual(await actionIcons(listEditor), creationIcons);
