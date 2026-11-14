@@ -118,6 +118,7 @@ test('the unsaved marker stays by the project name and its hint fits in the view
     const hint = page.getByText(label, {exact: true});
     await title.fill('プロジェクト');
     await title.press('Enter');
+    await expect(marker).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await marker.hover();
     await expect(hint).toBeVisible();
     const shortTitle = await title.boundingBox();
@@ -690,6 +691,23 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     ]);
     const displayToggle = nav.getByRole('button', {name: 'Display settings'});
     const display = nav.getByRole('list', {name: 'Display settings'});
+    const checkDisplaySubmenus = async () => {
+        if (!await display.isVisible()) await displayToggle.click();
+        const palette = await display.evaluate(element => {
+            const {backgroundColor, color} = getComputedStyle(element);
+            return {backgroundColor, color};
+        });
+        for (const label of ['Language', 'Block Colors', 'Accent']) {
+            const entry = display.locator(':scope > li').filter({has: page.getByText(label, {exact: true})});
+            await entry.getByText(label, {exact: true}).click();
+            const submenu = entry.locator(':scope > div > ul');
+            await expect(submenu).toBeVisible();
+            await expect(submenu).toHaveCSS('background-color', palette.backgroundColor);
+            await expect(submenu).toHaveCSS('color', palette.color);
+            const check = submenu.locator('img[class*="settings-menu_check_"]').filter({visible: true});
+            await expect(check).not.toHaveCSS('filter', 'none');
+        }
+    };
     await displayToggle.click();
     await expect(display.getByText('Language', {exact: true})).toBeVisible();
     await page.keyboard.press('Escape');
@@ -737,6 +755,8 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     await page.keyboard.press('Escape');
     await expect(display).toHaveCount(0);
     await expect(displayToggle).toBeFocused();
+    await checkDisplaySubmenus();
+    await page.keyboard.press('Escape');
     await displayToggle.click();
     const theme = display.locator(':scope > li').filter({hasText: 'Switch To Dark Mode'});
     await theme.press('Enter');
@@ -745,6 +765,7 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     await logo.click();
     await displayToggle.click();
     await expect(display.getByText('Switch To Light Mode', {exact: true})).toBeVisible();
+    await checkDisplaySubmenus();
     await runtimeToggle.click();
     await expect(display).toHaveCount(0);
     await nav.getByRole('button', {name: 'Advanced Settings'}).click();
@@ -2692,6 +2713,8 @@ test('the variables table sorts mixed rows and saves list items for the selected
     await expect(edit).toHaveCSS('opacity', '1');
     await edit.click();
     const dialog = page.getByRole('dialog', {name: 'リストを編集：Colors', exact: true});
+    assert.equal(await dialog.evaluate(element => getComputedStyle(element, '::backdrop').backgroundColor),
+        'rgba(23, 33, 42, 0.5)');
     const item = (position: number) => dialog.getByRole('textbox', {name: `項目 ${position}`, exact: true});
     const save = dialog.getByRole('button', {name: '保存', exact: true});
     await expect(item(6)).toHaveValue('白');
