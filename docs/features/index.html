@@ -9,12 +9,12 @@
 <body>
 <header><a href="../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
-<p class="eyebrow">機能ガイド · 2026年11月8日更新</p>
+<p class="eyebrow">機能ガイド · 2026年11月14日更新</p>
 <h1>TurboWarp Plusで作品をつくる</h1>
 <p class="lead">TurboWarp Plusで作品を開き、画面を整え、作品全体を検索しながら編集し、Gitで管理して、SB3や単一HTMLで渡し、GitHubで開発を進めるまでの機能を、分野別の12ページで紹介します。</p>
 <p><a href="../editor.html?lang=ja">日本語でエディターを開く</a> · <a href="sb3-compatibility.md">Scratch・TurboWarpのSB3互換性と機能一覧（Markdown）</a> · <a href="images/capture.json">掲載画面の撮影条件</a></p>
 <p>Scratch 3と標準TurboWarpで保存したSB3は、どちらもPlus Editorで開けます。Plusがエディターに組み込んだ機能（追加機能）の一部は、作品が読み込む拡張（Scratch・TurboWarpの拡張機能）や専用データが必要です。</p>
-<p class="guide-note">確認した版を個別に記した箇所を除き、操作名と配置は2026年11月8日時点の公開版（<code>d1d8523</code>、TurboWarp Plus Editor 0.2.0-rc.3）で確認しています。「開発中」は試作や開発版で確認した機能、「試作」は公開版で使えるものの対象を限定している機能、「一部の機能拡張で利用可能」は対応する拡張が必要な機能です。図版は撮影時点の画面です。</p>
+<p class="guide-note">確認した版を個別に記した箇所を除き、操作名と配置は2026年11月14日時点の公開版（<code>f322178</code>、TurboWarp Plus Editor 0.2.0-rc.4）で確認しています。「開発中」は試作や開発版で確認した機能、「試作」は公開版で使えるものの対象を限定している機能、「一部の機能拡張で利用可能」は対応する拡張が必要な機能です。図版は撮影時点の画面です。</p>
 <h2 id="tutorial">ボールのデモで試す</h2>
 <p>Scratch を少し触ったことがある方向けに、画面の切り替えやリストの編集、コードのコピーを実際の画面とサンプル SB3 で紹介します。 <a href="ball-demo/">日本語</a> · <a href="ball-demo/index.en.html" hreflang="en" lang="en">English</a></p>
 <h2 id="contents">分野別の目次</h2>
@@ -33,7 +33,7 @@
 </section>
 <section class="topic-card" id="topic-screen">
 <h3><a href="screen/">2. 画面の構成とメニュー</a></h3>
-<p>最上段の構成、TurboWarp Plusメニュー、ファイル・編集メニュー、右端の機能拡張ボタン、配置。</p>
+<p>メニューバーと左端の切り替え、TurboWarp Plusメニュー、ファイル・編集メニュー、右端の機能拡張ボタン、配置。</p>
 <ol>
 <li><a href="screen/#menu-bar">最上段のメニューバー</a></li>
 <li><a href="screen/#plus-menu">TurboWarp Plusメニュー</a></li>
@@ -45,22 +45,22 @@
 </section>
 <section class="topic-card" id="topic-sprites">
 <h3><a href="sprites/">3. スプライトと背景を編集する</a></h3>
-<p>スプライト一覧、編集ボタン、コスチュームと音、プロパティと変数、メッセージ、背景。</p>
+<p>スプライト一覧、タブと左端のアイコン、コスチュームと音、プロパティ・変数・リスト、メッセージ、背景。</p>
 <ol>
 <li><a href="sprites/#sprite-drawer">スプライト一覧で探す・固定する</a></li>
-<li><a href="sprites/#sprite-tabs">スプライトのタブと編集ボタン</a></li>
+<li><a href="sprites/#sprite-tabs">スプライトのタブと左端のアイコン</a></li>
 <li><a href="sprites/#media-panes">コスチュームと音を編集する</a></li>
-<li><a href="sprites/#variable-pane">プロパティと変数を編集する</a></li>
+<li><a href="sprites/#variable-pane">プロパティ・変数・リストを編集する</a></li>
 <li><a href="sprites/#messages">メッセージの送受信を確かめる</a></li>
 <li><a href="sprites/#backdrop">背景を編集する</a></li>
 </ol>
 </section>
 <section class="topic-card" id="topic-stage">
 <h3><a href="stage/">4. ステージを開いて作品を動かす</a></h3>
-<p>ステージの開き方、右端の引き出しと実行操作、表示メニュー、タブと別ウィンドウ。</p>
+<p>ステージの開き方、右端の引出しと実行操作、表示メニュー、タブと別ウィンドウ。</p>
 <ol>
 <li><a href="stage/#stage-open">メニューバーからステージを開く</a></li>
-<li><a href="stage/#stage-controls">右端の引き出しで作品を動かす</a></li>
+<li><a href="stage/#stage-controls">右端の引出しで作品を動かす</a></li>
 <li><a href="stage/#stage-menu">ステージの表示メニュー</a></li>
 <li><a href="stage/#dock">ステージを作業領域や別ウィンドウに移す</a></li>
 </ol>
@@ -104,11 +104,11 @@
 <h3><a href="documents/">8. 拡張のデータと文書を編集する</a></h3>
 <p>フォーム編集、外部YAMLと作品内文書、YAMLタブ、素材と場面のプレビュー。</p>
 <ol>
-<li><a href="documents/#forms">ブロックの値をフォームで編集する &lt;span class=&quot;badge&quot;&gt;一部の機能拡張で利用可能&lt;/span&gt;</a></li>
-<li><a href="documents/#documents">外部YAMLと作品内の文書・ブロックを使い分ける &lt;span class=&quot;badge&quot;&gt;一部の機能拡張で利用可能&lt;/span&gt;</a></li>
-<li><a href="documents/#yaml-tabs">作品内YAMLをタブに開いてコードと並べる &lt;span class=&quot;badge&quot;&gt;一部の機能拡張で利用可能&lt;/span&gt;</a></li>
-<li><a href="documents/#asset-preview">素材を見たり再生したりして選ぶ &lt;span class=&quot;badge&quot;&gt;一部の機能拡張で利用可能&lt;/span&gt;</a></li>
-<li><a href="documents/#runtime">場面や動作をプレビューしてから反映する &lt;span class=&quot;badge&quot;&gt;一部の機能拡張で利用可能&lt;/span&gt;</a></li>
+<li><a href="documents/#forms">ブロックの値をフォームで編集する</a> <span class="badge">一部の機能拡張で利用可能</span></li>
+<li><a href="documents/#documents">外部YAMLと作品内の文書・ブロックを使い分ける</a> <span class="badge">一部の機能拡張で利用可能</span></li>
+<li><a href="documents/#yaml-tabs">作品内YAMLをタブに開いてコードと並べる</a> <span class="badge">一部の機能拡張で利用可能</span></li>
+<li><a href="documents/#asset-preview">素材を見たり再生したりして選ぶ</a> <span class="badge">一部の機能拡張で利用可能</span></li>
+<li><a href="documents/#runtime">場面や動作をプレビューしてから反映する</a> <span class="badge">一部の機能拡張で利用可能</span></li>
 </ol>
 </section>
 <section class="topic-card" id="topic-reuse">
@@ -121,11 +121,11 @@
 </section>
 <section class="topic-card" id="topic-git">
 <h3><a href="git/">10. 作品フォルダとGitで管理する</a></h3>
-<p>作品フォルダのファイルと Git 状態、コミットとブランチ、ブロックの差分、GitHub 接続と PR レビュー。</p>
+<p>作品フォルダのファイルとGitの状態、コミットとブランチ、ブロックの差分、GitHubとの同期とPRのレビュー。</p>
 <ol>
 <li><a href="git/#sb3-toolchain">sb3-toolchainで作品と拡張を管理する</a></li>
 <li><a href="git/#project-folder">作品フォルダを開いて保存する</a></li>
-<li><a href="git/#folder-files">作品フォルダのファイルと Git 状態を見る</a></li>
+<li><a href="git/#folder-files">作品フォルダのファイルとGitの状態を見る</a></li>
 <li><a href="git/#local-git">ローカルGitで変更と履歴を確かめる</a></li>
 <li><a href="git/#block-diff">作品の変更をブロックで比べる</a></li>
 <li><a href="git/#github-sync">GitHubと同期する（fetch・pull・push）</a></li>
@@ -149,14 +149,17 @@
 <h3><a href="github/">12. GitHubで作品を開発する</a></h3>
 <p>Scratchの作品をGitHubに移し、issue・ブランチ・コミット・push・プルリクエスト・マージ・リリースの順で開発します。</p>
 <ol>
-<li><a href="github/#migrate">作品を GitHub に置く</a></li>
+<li><a href="github/#migrate">作品をGitHubに置く</a></li>
 <li><a href="github/#flow">開発の流れと、どこで何をするか</a></li>
+<li><a href="github/#issue">やることをissueに書く</a></li>
 <li><a href="github/#branch">作業用のブランチを作る</a></li>
+<li><a href="github/#edit">作品を編集して保存する</a></li>
 <li><a href="github/#commit">変更を確認してローカルにコミットする</a></li>
-<li><a href="github/#push">GitHub に送る</a></li>
+<li><a href="github/#push">GitHubに送る（push）</a></li>
 <li><a href="github/#pull-request">プルリクエストを作る</a></li>
 <li><a href="github/#merge">確かめてマージする</a></li>
 <li><a href="github/#release">リリースして配る</a></li>
+<li><a href="github/#trouble">ぶつかったとき・困ったとき</a></li>
 </ol>
 </section>
 </div>
@@ -164,15 +167,15 @@
 <div class="table-scroll" role="region" aria-label="標準TurboWarpとPlusの機能比較" tabindex="0">
 <table><thead><tr><th scope="col">作業</th><th scope="col">標準のTurboWarp</th><th scope="col">Plusで加わる操作</th></tr></thead><tbody>
 <tr><th scope="row">作品を開く</th><td>SB3の読み込みと拡張の実行確認</td><td><a href="open/#loading">読み込みの経過表示</a>、<a href="open/#extensions">公式カタログ</a>、<a href="open/#review">実行条件の確認</a>、<a href="open/#project-diagnostics">読み込みの診断</a></td></tr>
-<tr><th scope="row">画面とメニュー</th><td>メニューバーとステージ横の操作</td><td><a href="screen/#menu-bar">刷新したメニューバー</a>、<a href="screen/#edit-menu">編集メニューとショートカット</a>、<a href="screen/#extension-controls">右上の機能拡張ボタン</a></td></tr>
-<tr><th scope="row">スプライトとステージ</th><td>ステージ下の一覧と固定のステージ</td><td><a href="sprites/#sprite-drawer">固定できるスプライト一覧</a>、<a href="sprites/#variable-pane">プロパティと変数の管理</a>、<a href="sprites/#messages">メッセージの送受信と関係図</a>、<a href="stage/#stage-open">ステージの4つの開き方</a></td></tr>
-<tr><th scope="row">作業画面を整える</th><td>コード・ステージ・スプライトの基本配置</td><td><a href="workspace/#split-panes">パネルの分割</a>、<a href="workspace/#panel-popout">パネルの別画面</a>、<a href="workspace/#workspace-restore">配置復元</a></td></tr>
+<tr><th scope="row">画面とメニュー</th><td>メニューバーとステージ横の操作</td><td><a href="screen/#menu-bar">Git・録画・デバッグを並べたメニューバー</a>、<a href="screen/#edit-menu">編集メニューとショートカット</a>、<a href="screen/#extension-controls">右上の機能拡張ボタン</a></td></tr>
+<tr><th scope="row">スプライトとステージ</th><td>ステージ下の一覧と固定のステージ</td><td><a href="sprites/#sprite-drawer">固定できるスプライト一覧</a>、<a href="sprites/#variable-pane">プロパティ・変数・リストの管理</a>、<a href="sprites/#messages">メッセージの送受信と関係図</a>、<a href="stage/#stage-open">別ウィンドウ・タブ・引出しから選ぶステージの開き方</a></td></tr>
+<tr><th scope="row">作業画面を整える</th><td>コード・ステージ・スプライトの基本配置</td><td><a href="workspace/#split-panes">パネルの分割</a>、<a href="workspace/#panel-popout">パネルの別画面</a>、<a href="workspace/#workspace-restore">作品ごとの配置の復元</a></td></tr>
 <tr><th scope="row">編集する</th><td>縦のブロックパレット</td><td><a href="blocks/#palette-search">検索付きの横型パレット</a>、<a href="blocks/#minimap">ミニマップ</a>、<a href="blocks/#context-menu">アイコン付きの右クリックメニュー</a></td></tr>
 <tr><th scope="row">検索と置換</th><td>なし</td><td><a href="search/#project-search">作品全体の検索</a>、<a href="search/#search-scope">作品内YAMLの検索</a>、<a href="search/#replace">選択箇所の置換</a></td></tr>
 <tr><th scope="row">拡張のデータ</th><td>ブロックの入力欄</td><td>対応する<a href="documents/#forms">フォーム</a>、<a href="documents/#yaml-tabs">YAMLタブ</a>、<a href="documents/#runtime">プレビュー</a></td></tr>
 <tr><th scope="row">再利用する</th><td>バックパック</td><td><a href="reuse/#transfer">スクリプトやステージのファイル転送</a>、<a href="reuse/#bundle-assets">バンドル素材の追加</a></td></tr>
 <tr><th scope="row">管理する</th><td>SB3ファイル単位の保存</td><td><a href="git/#project-folder">作品フォルダの読み書き</a>、<a href="git/#local-git">ローカルGit</a>、<a href="git/#github-sync">GitHubとの同期</a>、<a href="git/#pull-request-review">PRのブロック単位のレビュー</a></td></tr>
-<tr><th scope="row">保存して渡す</th><td>SB3の保存と標準Packager</td><td><a href="save/#save">上書き保存と名前を変えて保存</a>、<a href="save/#payload-formats">組み込みデータの格納方式</a>、<a href="save/#storage">拡張コードの保存方式</a>、<a href="save/#packager">Plus拡張を同梱したHTML</a></td></tr>
+<tr><th scope="row">保存して渡す</th><td>SB3の保存と標準Packager</td><td><a href="save/#save">上書き保存と名前を変えて保存</a>、<a href="save/#payload-formats">組み込みデータの格納方式</a>、<a href="save/#storage">拡張コードの保存形式</a>、<a href="save/#packager">Plus拡張を同梱したHTML</a></td></tr>
 </tbody></table></div>
 <script>
 // 以前の1ページ版のアンカー（#project-properties など）を、分野別ページへ転送する。

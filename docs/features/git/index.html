@@ -10,9 +10,9 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../">機能ガイド</a> › 10. 作品フォルダとGitで管理する</p>
-<p class="eyebrow">機能ガイド 10/12 · 2026年11月13日更新</p>
+<p class="eyebrow">機能ガイド 10/12 · 2026年11月14日更新</p>
 <h1>作品フォルダとGitで管理する</h1>
-<p class="lead">sb3-toolchainで展開した作品フォルダを直接開いて保存し、Gitの変更・差分・履歴をEditorの中で確かめます。公開 PR は接続なしで比較でき、対応する GitHub 接続を使うと同期や非公開 PR の確認もできます。</p>
+<p class="lead">sb3-toolchainで展開した作品フォルダを直接開いて保存し、Gitの変更・差分・履歴をEditorの中で確かめます。公開 PR は接続なしで比較できます。GitHub 接続を用意した Editor では、同期や非公開 PR の確認もできます。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
 <ul>
 <li><a href="../open/">作品を開く</a></li>
@@ -41,7 +41,7 @@
 </ol>
 </nav>
 
-<p class="guide-note">図版はドロワーとローカル Git を更新した Editor 開発版の画面全体です。画像を選ぶと原寸で開けます。</p>
+<p class="guide-note">図版は 2026年11月14日時点の公開版 Editor の画面全体です。作品とリポジトリは説明用の架空のものです。画像を選ぶと原寸で開けます。</p>
 <section id="sb3-toolchain">
 
 <h2>10.1 sb3-toolchainで作品と拡張を管理する</h2>
@@ -62,43 +62,43 @@
 <h2>10.2 作品フォルダを開いて保存する</h2>
 
 <p>sb3-toolchain v1で展開した作品フォルダを、SB3にまとめ直さずに開いて保存できます。ブラウザーでフォルダを選んで書き込むには、File System Access に対応した Chrome や Edge が必要です。</p>
-<p>新規作品や SB3 を開いているときは、左の「プロジェクトフォルダ」パネルで「プロジェクトフォルダを作成」を押し、保存先の空のフォルダを選びます。作成が終わると、そのフォルダのファイルがパネルに表示されます。</p>
+<p>新規作品や SB3 を開いているときは、画面左上の「プロジェクトフォルダ」ボタンでパネルを開き、「プロジェクトフォルダを作成」を押して保存先のフォルダを選びます。空でないフォルダを選ぶと、中身を上書きしてよいかを確かめる画面が出ます。作成が終わると、そのフォルダのファイルがパネルに表示され、以後の保存はそのフォルダに書き込みます。</p>
 <h3>作品フォルダを開く</h3>
 <p>「ファイル」→「プロジェクトフォルダを開く…」を選び、作品フォルダを選んで読み書きを許可します。作品データとローカルの画像・音声が読み込まれます。</p>
 <p>システムフォントと Web フォントの参照は作品データに、ファイルのフォントは <code>assets/</code> に保存します。</p>
 <figure>
 <a href="../images/current-open-folder.png"><img src="../images/current-open-folder.png" width="1440" height="960" alt="エディターのファイルメニューに「プロジェクトフォルダを開く…」が表示される。" loading="lazy"></a>
-<figcaption>左上の「ファイル」から作品フォルダを開きます。右上の「Git」はリポジトリを選ぶ入口です。</figcaption>
+<figcaption>左上の「ファイル」から作品フォルダを開きます。右上の「Git ▾」からもリポジトリを選べます。</figcaption>
 </figure>
 <h3>作品フォルダに保存する</h3>
 <ol><li>ブロック、変数・リスト、スプライトやコスチューム、スプライトの位置や大きさなどを編集します。作品を実行して変わった位置や変数の値も保存の対象です。</li><li>「ファイル」→「プロジェクトを保存」を選ぶと、フォルダ内の <code>project.source.json</code> が更新されます。保存前に、フォルダが外部で変更されていないかを確かめます。</li></ol>
 <p>スプライトの追加・削除・名前の変更と、コスチューム・音の追加・削除も保存します。このとき、フォルダ内の <code>assets/</code> と <code>sb3-source.json</code> も更新し、使われなくなった画像・音声のファイルを消します。</p>
-<p>埋め込み拡張とURLで読み込むカスタム拡張機能を含む作品も開いて保存でき、拡張機能のコードは <code>extensions/</code> と <code>embedded-extensions.json</code> に書き戻します。拡張機能を差し替えて出どころの記録（<code>source</code>）を外したときは、保存のときに知らせます。</p>
+<p>埋め込み拡張や、URL で読み込むカスタム拡張を含む作品も開いて保存できます。拡張のコードは <code>extensions/</code> と <code>embedded-extensions.json</code> に書き戻します。拡張を差し替えて出どころの記録（<code>source</code>）が外れたときは、保存時に知らせます。</p>
 <h3 id="folder-files">作品フォルダのファイルと Git 状態を見る</h3>
-<p>左端の「プロジェクトフォルダ」ボタンで「作品フォルダ」パネルを開きます。ファイル名の下には、作品データ、コスチューム、音、拡張など、ファイルの用途が表示されます。</p>
+<p>画面左上の「プロジェクトフォルダ」ボタンで「作品フォルダ」パネルを開きます。ファイル名の下には、作品データ、コスチュームと音、拡張など、ファイルの用途が表示されます。</p>
 <ul>
 <li><code>*</code> はエディターで編集中の内容が未保存であることを示します。ファイル名の後ろに半角スペースを空けて表示し、保存すると消えます。</li>
 <li><strong>太字</strong>は、最新コミット（HEAD）と比べて保存済みの内容が変わったファイルや、Git に追加してまだコミットしていない新しいファイルを示します。</li>
 <li>✨ は、保存済みで Git がまだ追跡していないファイルです。</li>
 <li><s>打ち消し線</s>は、最新コミットにあったファイルが削除されたことを示します。削除したファイルは元のフォルダ内に表示されます。</li>
-<li>保存したファイルがコミットと一致すると、名前は青になります。追跡先ブランチに同じ版があれば紫、GitHub の PR のマージ結果に同じ版が入ったことを確認できれば緑になります。</li>
+<li>保存した内容が最新コミットと一致するファイルは、名前が青になります。追跡先ブランチにも同じ版があれば紫、GitHub の PR のマージ結果に同じ版が入ったことを確認できれば緑になります。</li>
 </ul>
 <p>保存済みの内容に変更があり、その上で編集を続けている間は、太字のファイル名に <code>*</code> が付きます。コミットすると、その内容と一致するファイルは通常の太さに戻ります。</p>
-<p>ポインターをファイル名に合わせると、状態が文字で表示されます。変更箇所を確認するにはファイルを開いて「差分」に切り替えるか、ローカル Git で対象ファイルを選びます。画像・音声・動画はプレビューで開きます。</p>
-<p>パネル右上では、ファイルの検索、ドロワーの固定、別ウィンドウへの移動ができます。斜線付きのピンは固定が解除されている状態です。対応するファイルやフォルダを右クリックして操作したり、項目をドラッグして別のフォルダへ移したりできます。作品が参照する素材や作品フォルダの管理ファイルは、作品の編集画面や保存操作から更新してください。</p>
+<p>ポインターをファイル名に合わせると、状態が文字で表示されます。変更箇所を見るには、ファイルを開いて「差分」に切り替えるか、ローカル Git で対象のファイルを選びます。画像・音声・動画はプレビューで開きます。</p>
+<p>パネル右上のボタンで、ファイルの検索、ドロワーの固定、別ウィンドウへの切り離しができます。斜線付きのピンは固定を解除した状態です。ファイルやフォルダを右クリックして操作したり、ドラッグして別のフォルダへ移したりもできます。作品が参照する素材や作品フォルダの管理ファイルは、作品の編集画面と保存操作で更新します。</p>
 <figure>
-<a href="../images/current-project-folder.png"><img src="../images/current-project-folder.png" width="1440" height="960" alt="画面左の作品フォルダで、project.source.json が太字で、その後ろにアクセント色のアスタリスクが付いている。右側に編集画面がある。" loading="lazy"></a>
-<figcaption>左端のフォルダボタンで開いた「作品フォルダ」。<code>project.source.json</code> に付いた <code>*</code> は未保存の編集を示します。太字は、ディスクに保存した内容が最新コミットと異なることを示します。</figcaption>
+<a href="../images/current-project-folder.png"><img src="../images/current-project-folder.png" width="1440" height="960" alt="画面左の作品フォルダで、project.source.json が太字で、その後ろにアクセント色のアスタリスクが付いている。コミット済みのファイル名は青い。右側にネコのコードが表示されている。" loading="lazy"></a>
+<figcaption>左上のフォルダボタンで開いた「作品フォルダ」。<code>project.source.json</code> に付いた <code>*</code> は未保存の編集、太字はディスクに保存した内容が最新コミットと異なることを示します。青い名前のファイルはコミットと一致しています。</figcaption>
 </figure>
 <figure>
-<a href="../images/current-project-file-states.png"><img src="../images/current-project-file-states.png" width="1440" height="960" alt="左の作品フォルダに、未保存のアスタリスク、太字、きらめきの記号、打ち消し線が同じファイル一覧に表示されている。" loading="lazy"></a>
-<figcaption>README.md は未保存、作品データは保存済みの変更あり、作業メモは未追跡です。削除した古いメモには、元の場所で打ち消し線が付いています。</figcaption>
+<a href="../images/current-project-file-states.png"><img src="../images/current-project-file-states.png" width="1440" height="960" alt="左の作品フォルダに、未保存のアスタリスク、太字、きらめきの記号、打ち消し線、青い名前が同じファイル一覧に表示されている。右のタブで README.md を編集している。" loading="lazy"></a>
+<figcaption>README.md は編集中で未保存、作品データは保存済みの変更あり、作業メモは未追跡です。削除した古いメモには、元の場所で打ち消し線が付きます。</figcaption>
 </figure>
 <figure>
-<a href="../images/current-project-file.png"><img src="../images/current-project-file.png" width="1440" height="960" alt="作品フォルダを左側に表示したまま、中央のタブで作品データの JSON を開いている。" loading="lazy"></a>
-<figcaption>ファイルを選ぶと、コードと同じ領域にタブが開きます。左に作品フォルダを表示したまま確認できます。</figcaption>
+<a href="../images/current-project-file.png"><img src="../images/current-project-file.png" width="1440" height="960" alt="作品フォルダを左側に表示したまま、中央のタブで作品データの JSON を開いている。タブの右上に「編集」「差分」「ファイルを保存」がある。" loading="lazy"></a>
+<figcaption>ファイルを選ぶと、コードと同じ領域にタブが開きます。右上の「編集」「差分」で表示を切り替え、テキストを編集したら「ファイルを保存」で書き込みます。</figcaption>
 </figure>
-<p>SB3 を作品フォルダに展開するときは Project Starter を使えます。 <a href="../github/#migrate">作品を GitHub に置く</a></p>
+<p>SB3 を作品フォルダに展開するには、Project Starter も使えます。 <a href="../github/#migrate">作品を GitHub に置く</a></p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/305">作品フォルダの編集</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/319">フォルダの差分再読み込み</a></p>
 
 </section>
@@ -107,34 +107,34 @@
 
 <h2>10.3 ローカルGitで変更と履歴を確かめる</h2>
 
-<p>「ファイル」→「リポジトリを選択…」で <code>.git</code> を持つリポジトリのルートを選びます。ローカル Git は、メニューバーで「ステージを開く」の左にあるブランチのボタンからも開けます。</p>
-<p>「リリース…」では、npm 公開用のコマンドをコピーし、現在のコミットに GitHub のタグを付け、Packager で書き出した HTML を Pages の公開先に送れます。 <a href="../github/#release">リリースの手順</a></p>
-<p><strong>1 リポジトリに 1 作品</strong>を基本にします。リポジトリの直下、または Project Starter が作る <code>project/</code> に作品があれば、上部の「作品を開く」で読み込めます。ほかの場所にある作品は「ファイル」→「プロジェクトフォルダを開く…」で指定すると、選択中のリポジトリに関連付けられます。作品を開くと、ステージやスプライト別に変更を確認できます。 <a href="../github/#migrate">リポジトリの構成</a></p>
-<p>先頭行にはリポジトリ名が表示されます。リポジトリ名の横にある「ローカル状態を更新」は Git の状態を読み直します。Editor でブランチを切り替えたり pull したりすると、操作の結果に「作品を再読込」が表示されます。作品のファイルは、画面左上の「プロジェクトフォルダ」アイコンから確認できます。左側にプロジェクトフォルダを表示している間は、フォルダのアイコンが付いた「ローカル Git」タブがタブ列の左端に固定されます。</p>
-<p>ローカル Git の上段で「ファイルの保存」「保存のコミット」「PRを作成」「マージ」を切り替えます。「ファイルの保存」と「保存のコミット」には対象のファイル数が表示されます。</p>
+<p>「ファイル」→「リポジトリを選択…」で、<code>.git</code> を持つリポジトリのルートを選びます。メニューバー右側の「ステージを開く」の左にあるボタンからも操作できます。リポジトリを選ぶ前は「Git ▾」と表示され、「リポジトリを選択…」と「ローカル Git を開く」を選べます。リポジトリを選ぶと、ボタンには現在のブランチ名が表示され、ブランチの切り替え、「新しいブランチ…」、「ローカル Git を開く」を選べます。</p>
+<p>「ファイル」→「リリース…」では、npm 公開用のコマンドのコピー、現在のコミットへの GitHub のタグ付け、Packager で書き出した HTML の Pages 公開元への送信ができます。 <a href="../github/#release">リリースの手順</a></p>
+<p><strong>1 リポジトリに 1 作品</strong>を基本にします。リポジトリの直下、または Project Starter が作る <code>project/</code> に作品があり、まだ開いていなければ、ローカル Git の上部に「作品を開く」が表示されます。ほかの場所にある作品は「ファイル」→「プロジェクトフォルダを開く…」で開くと、選択中のリポジトリに関連付けられます。作品を開くと、ステージやスプライトごとに変更を確認できます。 <a href="../github/#migrate">リポジトリの構成</a></p>
+<p>ローカル Git の先頭行には「リポジトリ: 名前」が表示されます。その横の「ローカル状態を更新」は Git の状態を読み直します。GitHub 接続を用意した Editor では、ここに「GitHub に接続…」も表示されます。Editor でブランチを切り替えたり pull したりすると、結果の表示に「作品を再読込」が出ます。左に「プロジェクトフォルダ」を表示している間は、フォルダのアイコンが付いた「ローカル Git」タブがタブ列の左端に固定されます。</p>
+<p>その下の「ファイルの保存」「保存のコミット」「PRを作成」「マージ」で表示を切り替えます。「ファイルの保存」と「保存のコミット」には対象のファイル数が表示されます。</p>
 <ul>
-<li><strong>ファイルの保存</strong>では、左の一覧でファイル名を選ぶと、現在のブランチの最新コミット（HEAD）と未保存の編集内容の差分が右に表示されます。作品のコードはブロックで比較できます。「未保存のファイルを保存」を押すと、編集内容が作品フォルダに書き込まれます。</li>
-<li><strong>保存のコミット</strong>では、保存した内容を現在のブランチの最新コミット（HEAD）と比べられます。追加したファイルや削除したファイルも表示されます。</li>
+<li><strong>ファイルの保存</strong>では、左の一覧でファイル名を選ぶと、現在のブランチの最新コミット（HEAD）と未保存の編集内容の差分が右に表示されます。作品のコードはブロックで比べられます。「未保存のファイルを保存」を押すと、編集内容を作品フォルダに書き込みます。</li>
+<li><strong>保存のコミット</strong>では、保存した内容を HEAD と比べます。追加したファイルや削除したファイルも表示されます。</li>
 </ul>
-<p>「保存のコミット」では、変更のあったステージやスプライトが左の一覧の上部に並び、README などは「その他のファイル」に表示されます。変更項目やファイル名を押すと、右に差分が出ます。作品データや素材をファイル単位で選ぶには「ファイル単位の一覧」を開きます。左下のコミット欄は一覧をスクロールしても表示され、選択件数を確かめてコミットメッセージを入力できます。 <a href="../github/#commit">保存からコミットまで</a></p>
-<p>「PRを作成」ではコミットの一覧と差分を確認し、GitHub 接続が有効なら反映先を選んで PR を作れます。「マージ」では PR 一覧から対象を選んで、差分やマージの状態を確かめます。</p>
-<p>左ドロワーの「Git 履歴」でコミットを選ぶと、「ローカル Git」の「PRを作成」が開き、そのコミットの変更が一覧に出ます。ファイルや作品の要素を選ぶと差分を確認できます。</p>
-<p>作品フォルダを開いていると、コミットの <strong>⋯ → この版を開く</strong> から、選んだ版を別のプレイヤーで実行できます。編集中の作品に戻るにはプレイヤーを閉じます。</p>
-<p>起動 URL に <code>twPlusGitRestoreVersion=1</code> を指定すると、<strong>この版に戻す…</strong> を使えます。対象の作品ファイルと追加・変更・削除を確認してから復元すると、現在のブランチにローカルコミットができます。「作品を再読込」で復元した版を開けます。復元を無効にするには <code>twPlusGitRestoreVersion=0</code> を指定します。</p>
+<p>「保存のコミット」では、変更のあったステージやスプライトが左の一覧の上部に並び、README などは「その他のファイル」に表示されます。コード以外の変更は「そのほかの設定」などの項目に分かれます。項目やファイル名を押すと、右に差分が出ます。作品データや素材をファイル単位で選ぶには「ファイル単位の一覧」を開きます。左下のコミット欄は一覧をスクロールしても表示されたままで、選択件数を確かめてコミットメッセージを入力できます。 <a href="../github/#commit">保存からコミットまで</a></p>
+<p>「PRを作成」では、「コミットの履歴」と「ローカルブランチ」を確認し、コミットを選んで変更を見られます。ブランチの切り替えと作成もここで行います。GitHub 接続で PR の作成が許可されていれば、反映先を選んで PR を作れます。「マージ」では「PR一覧」から対象を選び、差分やマージの状態を確かめます。</p>
+<p>画面左上の「Git 履歴」ボタンでは、選択中のリポジトリのコミットを一覧できます。コミットを選ぶと「ローカル Git」の「PRを作成」が開き、そのコミットの変更が一覧に出ます。ステージ・スプライトやファイルを選ぶと差分を確認できます。</p>
+<p>コミットの「⋯」からは、「この版を開く」「ここからブランチを作る…」「コミットの ID をコピー」を選べます。作品フォルダを開いていれば、「この版を開く」で選んだ版を別のプレイヤーで実行できます。編集中の作品はそのまま残り、プレイヤーを閉じると戻れます。</p>
+<p>起動 URL に <code>twPlusGitRestoreVersion=1</code> を指定すると、「⋯」に「この版に戻す…」が加わります。対象の作品ファイルと追加・変更・削除を確かめて「復元してコミット」を押すと、現在のブランチにローカルコミットができます。「作品を再読込」で復元した版を開けます。復元を無効にするには <code>twPlusGitRestoreVersion=0</code> を指定します（既定は無効）。</p>
 <figure>
-<a href="../images/current-git-unsaved.png"><img src="../images/current-git-unsaved.png" width="1440" height="960" alt="左の作品フォルダでは README.md の後ろにアスタリスクがある。ローカル Git の「ファイルの保存」で README.md を選ぶと、右に HEAD と未保存の編集の差分が表示されている。" loading="lazy"></a>
+<a href="../images/current-git-unsaved.png"><img src="../images/current-git-unsaved.png" width="1440" height="960" alt="左の作品フォルダでは README.md の後ろにアスタリスクがある。ローカル Git の「ファイルの保存」で README.md を選び、右に HEAD と未保存の編集の差分が表示されている。" loading="lazy"></a>
 <figcaption>未保存の README.md を選んで、HEAD との差分を確認しているところです。「未保存のファイルを保存」を押すと <code>*</code> が消え、README.md が「保存のコミット」の一覧に移ります。</figcaption>
 </figure>
 <figure>
-<a href="../images/current-git-file.png"><img src="../images/current-git-file.png" width="1440" height="960" alt="ローカル Git の「保存のコミット」。左上にネコのコードとその他のファイル、左下に固定のコミット欄、右に README.md の差分が表示されている。" loading="lazy"></a>
+<a href="../images/current-git-file.png"><img src="../images/current-git-file.png" width="1440" height="960" alt="ローカル Git の「保存のコミット」。左上にネコのコードとそのほかの設定、その下にその他のファイル、左下に固定のコミット欄、右に README.md の差分が表示されている。" loading="lazy"></a>
 <figcaption>「保存のコミット」で README.md を選び、右に差分を開いた例。</figcaption>
 </figure>
 <figure>
-<a href="../images/current-git-history.png"><img src="../images/current-git-history.png" width="1440" height="960" alt="ローカル Git の「PRを作成」。左にコミットの一覧とブランチ操作、右に選んだコミットのブロック差分がある。" loading="lazy"></a>
-<figcaption>「PRを作成」で「ネコが進む歩数を変更」を選び、そのコミットで変更した作品のコードを開いた例。</figcaption>
+<a href="../images/current-git-history.png"><img src="../images/current-git-history.png" width="1440" height="960" alt="左のドロワーに Git 履歴。ローカル Git の「PRを作成」に、コミットの履歴とローカルブランチ、右に選んだコミットのブロック差分がある。" loading="lazy"></a>
+<figcaption>左の「Git 履歴」で「ネコが進む歩数を変更 (#12)」を選ぶと「PRを作成」が開きます。ネコのコードを選び、そのコミットの変更を表示した例。</figcaption>
 </figure>
-<p>外部 Git で操作したら「ローカル状態を更新」を押します。ブランチ切り替えや pull の後は「作品を再読込」で、その版の作品を開きます。</p>
-<p>ブラウザー版には File System Access 対応の Chromium 系ブラウザーが必要です。linked worktree、サブモジュール、シンボリックリンクは対象外で、作業ツリーの実行権限の変更はブラウザーから確認できません。パネルを外すには起動URLに <code>twPlusLocalGit=0</code> を指定します。このときブランチのボタンも出ません。</p>
+<p>Editor の外で Git を操作したら「ローカル状態を更新」を押します。ブランチの切り替えや pull の後は「作品を再読込」で、その版の作品を開きます。</p>
+<p>ブラウザー版には File System Access 対応の Chromium 系ブラウザーが必要です。linked worktree、サブモジュール、シンボリックリンクは対象外で、作業ツリーの実行権限の変更はブラウザーからは確認できません。ローカル Git を使わない場合は起動 URL に <code>twPlusLocalGit=0</code> を指定します。このときメニューバーの「Git ▾」ボタンと「Git 履歴」ボタンも表示されません。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/313">ローカルGitパネル</a></p>
 
 </section>
@@ -147,10 +147,10 @@
 <ul><li>変更のあったスクリプトだけを比較項目にし、変更前と変更後のブロックを並べて表示します。追加・削除・入力値の変更などには注釈が付き、変更された入力欄やフィールドはオレンジの枠で示します。</li><li>「元のスクリプト内で強調」を選ぶと、つながったスクリプトの中で変更箇所を確認できます。</li><li>分割・結合したスクリプトも、両方の版に共通するブロックを手がかりに一つの項目にまとめます。</li><li>変数、リスト、コスチューム・背景、音、モニターなど、スクリプト以外の変更は別に示します。</li></ul>
 <p>黄色い縦横の帯とスクロールバーの目印で、変更箇所の位置が分かります。ポインターを帯の横位置や高さに合わせると、対応する帯が濃くなります。</p>
 <figure>
-<a href="../images/current-git-blocks.png"><img src="../images/current-git-blocks.png" width="1440" height="960" alt="「保存のコミット」の右側に、変更前と変更後のブロックと、各枠の右下のミニマップとズームボタンが見える。" loading="lazy"></a>
-<figcaption>ネコの進む歩数を 10 から 25 に変更した例。各比較枠の右下にミニマップとズームボタンがあり、下のチェックで両方の表示を連動できます。</figcaption>
+<a href="../images/current-git-blocks.png"><img src="../images/current-git-blocks.png" width="1440" height="960" alt="「保存のコミット」の右側に、変更前と変更後のブロックが並び、変更した入力欄が枠で示されている。" loading="lazy"></a>
+<figcaption>ネコの進む歩数を 10 から 25 に変更した例。比較枠にポインターを重ねると右下にミニマップとズームボタンが出ます。下のチェックで両方の表示を連動できます。</figcaption>
 </figure>
-<p>Editorに定義がない拡張ブロックは、名前と接続が分かる代替ブロックで示します。拡張コードの取得や実行は行いません。</p>
+<p>Editor に定義がない拡張ブロックは、名前とつながりが分かる代替ブロックで示します。拡張のコードを取得したり実行したりはしません。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRのスクリプト単位のレビュー</a></p>
 
 </section>
@@ -159,8 +159,8 @@
 
 <h2>10.5 GitHubと同期する（fetch・pull・push）</h2>
 
-<p>左端の「TurboWarp Plus」→「GitHub 接続設定…」で、次回の接続に使う方式を選びます。設定はブラウザーに保存され、作品を開く前にも変更できます。</p>
-<p>リポジトリを選び、ローカル Git の上部にある「GitHub に接続…」を開きます。表示された接続先を確認して認証し、必要に応じて push や PR レビュー送信を許可します。接続先は、選んだリポジトリの GitHub HTTPS リモート <code>origin</code> です。接続すると「PRを作成」と「マージ」に同期ボタンが表示されます。同期ボタンの横に、pull と push の対象となる現在のローカルブランチと、確認できた同期状況が表示されます。</p>
+<p>メニューバー左端の Plus ロゴから「GitHub 接続設定…」を開き、接続に使う既定の方式を選びます。設定はブラウザーに保存され、作品やリポジトリを開く前にも変更できます。変更は次の接続から使われ、接続中のセッションはそのまま続きます。</p>
+<p>リポジトリごとの認証は、ローカル Git の先頭行にある「GitHub に接続…」で行います。接続先（選んだリポジトリの GitHub HTTPS リモート <code>origin</code>）を確認して認証し、必要に応じて push や PR レビューの送信を許可します。接続の確認と切断もここで行います。接続すると「PRを作成」と「マージ」に「GitHub と同期」の欄が表示され、pull と push の対象となる現在のローカルブランチと、確認できた同期状況が並びます。</p>
 <div class="table-scroll" role="region" aria-label="操作に必要な GitHub 接続" tabindex="0">
 <table><caption>操作に必要な GitHub 接続</caption><thead><tr><th scope="col">操作</th><th scope="col">公開 Pages 版</th><th scope="col">接続を設定した Web 版・対応 Desktop</th></tr></thead><tbody>
 <tr><th scope="row">ローカルの差分・コミット</th><td>接続なしで操作</td><td>接続なしで操作</td></tr>
@@ -169,17 +169,17 @@
 <tr><th scope="row">PR の作成・マージ</th><td>GitHub で操作</td><td>公開操作とマージを許可した接続を使う</td></tr>
 <tr><th scope="row">レビューの送信</th><td>GitHub の PR 画面から送信</td><td>レビュー送信を許可し、対応する GitHub API を有効にした接続を使う</td></tr>
 </tbody></table></div>
-<p>公開 Pages 版では、「GitHub 接続設定…」を開くと「GitHub 接続先が設定されていません。」と表示されます。接続できない環境でも、外部 Git と GitHub の画面で同期とレビューを続けられます。 <a href="../github/#push-without-connection">接続がない場合の手順</a></p>
+<p>公開 Pages 版では、「GitHub 接続設定…」を開くと「GitHub 接続先が設定されていません。」と表示され、ローカル Git に「GitHub に接続…」は出ません。接続できない環境でも、外部の Git と GitHub の画面で同期とレビューを続けられます。 <a href="../github/#push-without-connection">接続がない場合の手順</a></p>
 
 <figure>
 <a href="../images/current-git-remote.png"><img src="../images/current-git-remote.png" width="1440" height="960" alt="ローカル Git の「マージ」。左のペインに公開プルリクエストの一覧がある。" loading="lazy"></a>
-<figcaption>「マージ」を開いた直後。公開 PR は左の一覧から選べます。</figcaption>
+<figcaption>GitHub 接続のない公開版で「マージ」を開いた直後。公開 PR は左の「PR一覧」から選べます。</figcaption>
 </figure>
 <div class="table-scroll" role="region" aria-label="更新操作の使い分け" tabindex="0">
 <table><caption>更新操作の使い分け</caption><thead><tr><th scope="col">操作</th><th scope="col">場所</th><th scope="col">更新するもの</th></tr></thead><tbody>
 <tr><th scope="row">ローカル状態を更新</th><td>リポジトリ名の横</td><td>手元のファイル、コミット、ブランチの状態を読み直します。</td></tr>
-<tr><th scope="row">リモートの情報を更新（fetch）</th><td>GitHub と同期</td><td>GitHub 上のブランチ情報とコミットを取得します。手元のブランチやファイルの内容はそのままです。</td></tr>
-<tr><th scope="row">手元のブランチとファイルを更新（pull）</th><td>GitHub と同期</td><td>GitHub の変更を手元のブランチとファイルに反映します。必要なら「作品を再読込」で作品を開き直します。</td></tr>
+<tr><th scope="row">リモートの情報を更新（fetch）</th><td>「GitHub と同期」の欄</td><td>GitHub 上のブランチ情報とコミットを取得します。手元のブランチやファイルの内容はそのままです。</td></tr>
+<tr><th scope="row">手元のブランチとファイルを更新（pull）</th><td>「GitHub と同期」の欄</td><td>GitHub の変更を手元のブランチとファイルに反映します。必要なら「作品を再読込」で作品を開き直します。</td></tr>
 <tr><th scope="row">GitHubからPR情報を読み直す</th><td>選択した PR のタイトルの横</td><td>PR 一覧と選択中の PR の差分を取得し直します。接続先が対応していれば CI とマージ可否も更新します。</td></tr>
 </tbody></table></div>
 <h3 id="connection-methods">接続方式を選ぶ</h3>
@@ -187,7 +187,7 @@
 <table><caption>GitHub の接続方式</caption><thead><tr><th scope="col">方式</th><th scope="col">設定と認証</th></tr></thead><tbody>
 <tr><th scope="row">ブラウザー版（Cloudflare）</th><td>接続先を設定してビルドした Web 版で、運用者の GitHub App を認可します。トークンは運用者のサーバーで暗号化して保管され、ログインは最長 8 時間です</td></tr>
 <tr><th scope="row">Desktop の GitHub App</th><td>App の client ID を設定した Desktop で、Editor に表示されたデバイスコードを GitHub に入力します</td></tr>
-<tr><th scope="row">Desktop の fine-grained PAT</th><td>対応する同梱版で選べます。GitHub で対象リポジトリを選び、Contents の読み取り、push には読み書きを許可したトークンを Desktop の入力画面に入れます。保存を選べる環境では OS の保護機能で暗号化します</td></tr>
+<tr><th scope="row">Desktop の fine-grained PAT</th><td>対応する同梱版で選べます。GitHub で対象リポジトリを選び、Contents の読み取り（push には読み書き）を許可したトークンを Desktop の入力画面に入れます。保存を選べる環境では OS の保護機能で暗号化します</td></tr>
 <tr><th scope="row">Desktop の Git credential helper</th><td>対応する同梱版で、対象リポジトリに適用される helper の認証情報を使います。GitHub アカウント名を入力し、Desktop の確認画面で同意します</td></tr>
 </tbody></table></div>
 <p>PAT と credential helper は client ID なしで使うための方式です。Desktop 本体と同梱 Editor の両方が対応しているときに選べます。PAT と credential helper の選択肢は Editor の <code>a8dac95</code> で追加されました。Desktop の同梱版は配布物のビルド情報で確認できます。 <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/blob/main/config/plus-renderer.json">Desktop の固定リビジョン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/521">Editor 側の対応</a></p>
@@ -196,7 +196,7 @@
 <ol>
 <li>運用者から案内された GitHub App のページで「Install」を押します。インストール先のアカウントを選び、組織で必要な場合は管理者に承認を依頼します。</li>
 <li>「Only select repositories」で Editor から使うリポジトリを選びます。同期には Contents の権限、レビュー送信には Pull requests の書き込み権限も確認します。</li>
-<li>ローカル Git の「GitHub に接続…」で対象リポジトリと必要な許可を確認します。GitHub の認可画面では App 名と権限を確かめ、自分の Editor に表示されたデバイスコードだけを入力します。</li>
+<li>ローカル Git の「GitHub に接続…」で、対象リポジトリと必要な許可を確認します。GitHub の認可画面では App 名と権限を確かめ、自分の Editor に表示されたデバイスコードだけを入力します。</li>
 <li>利用を終えたら Editor で接続を切ります。GitHub の「Settings」→「Applications」で、インストールは「Installed GitHub Apps」、認可は「Authorized GitHub Apps」から取り消せます。</li>
 </ol>
 <p>App に権限が追加されたときは、「Installed GitHub Apps」でインストール先の承認を済ませます。GitHub App のトークンは Cloudflare のサーバーまたは Desktop のメインプロセスが保持します。Editor の Git パネルは、対象リポジトリと操作を限定した短時間のプロキシ用の鍵で通信します。 <a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/github-app-setup.md">接続先運用者向けの GitHub App 設定</a></p>
@@ -216,40 +216,40 @@
 
 <h2>10.6 プルリクエストをスクリプト単位でレビューする</h2>
 
-<p>GitHub のプルリクエスト（PR）を、変更全体の概要から個々のスクリプトまで確認できます。図版は「マージ」から公開 PR を開いた例です。 <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">turbowarp-kamishibai-app の PR #219</a></p>
+<p>GitHub のプルリクエスト（PR）を、変更全体の概要から個々のスクリプトまで確認できます。図版は、GitHub 接続のない公開版の「マージ」で公開 PR を開いた例です。 <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">turbowarp-kamishibai-app の PR #219</a></p>
 <ol>
-<li><strong>PR を選ぶ。</strong> 対象リポジトリを選んで「マージ」を開きます。左の「PR一覧」から対象を選びます。各行の状態ラベルで、マージ可能、競合あり、ドラフト、マージ済みなどを確認できます。対応する GitHub 接続で CI が設定されている場合は、実行状態も表示されます。</li>
-<li><strong>変更概要を確認する。</strong> 右側の「概要」で PR の説明とマージ状況を確認します。「コミット」には対象のコミットが並びます。「チェック」では CI の状態と、取得できる場合はチェックごとの結果を確認できます。
+<li><strong>PR を選ぶ。</strong> 対象リポジトリを選んで「マージ」を開き、左の「PR一覧」から対象を選びます。一覧が長いときは「前のページ」「次のページ」で移動します。各行の状態ラベルで、マージ可能、競合あり、ドラフト、マージ済み、クローズ済みなどを確認できます。GitHub 接続で CI の状態を取得できる場合は、その結果も表示されます。</li>
+<li><strong>変更概要を確認する。</strong> 右側の「概要」で PR の説明とマージ状況を確認します。「コミット」には対象のコミットが並び、「チェック」では CI の状態と、取得できる場合はチェックごとの結果を確認できます。
 <figure>
 <a href="../images/current-pr-overview.png"><img src="../images/current-pr-overview.png" width="1440" height="960" alt="「マージ」で公開 PR の一覧が左、選んだ PR #219 の概要が右に表示される。" loading="lazy"></a>
-<figcaption>PR を選ぶと、右側に「概要」が開きます。上部のタブでコミット、チェック、変更ファイルに切り替えられます。</figcaption>
+<figcaption>PR を選ぶと、右側に「概要」が開きます。上部のタブで「コミット」「チェック」「変更ファイル」に切り替えられます。</figcaption>
 </figure>
 </li>
 <li><strong>コミットとチェックを見る。</strong> 「コミット」にはメッセージ、作者、コミット ID が表示されます。「チェック」では PR の先端コミットで実行されたチェックの結果を確認できます。
 <figure>
-<a href="../images/current-pr-commits.png"><img src="../images/current-pr-commits.png" width="1440" height="1220" alt="日本語のコミットタブに対象コミットが表示されている。" loading="lazy"></a>
-<figcaption>「コミット」では、この PR のコミットを確認できます。</figcaption>
+<a href="../images/current-pr-commits.png"><img src="../images/current-pr-commits.png" width="1440" height="1220" alt="PR #219 の「コミット」タブに、5 件のコミットのメッセージ、作者、日時、コミット ID が並んでいる。" loading="lazy"></a>
+<figcaption>「コミット」では、この PR のコミットを確認できます。下のリンクから GitHub でも確認できます。</figcaption>
 </figure>
 <figure>
-<a href="../images/current-pr-checks.png"><img src="../images/current-pr-checks.png" width="1440" height="1220" alt="日本語のチェックタブに CI の概要と二つのチェックの成功結果が表示されている。" loading="lazy"></a>
-<figcaption>「チェック」で検証用 PR の CI と個別の結果を確認したところ。</figcaption>
+<a href="../images/current-pr-checks.png"><img src="../images/current-pr-checks.png" width="1440" height="1220" alt="PR #219 の「チェック」タブに、test のチェックが成功と表示されている。" loading="lazy"></a>
+<figcaption>「チェック」で PR #219 のチェック結果を確認したところ。詳細は「GitHub でチェックを確認」から開けます。</figcaption>
 </figure>
 </li>
-<li><strong>スクリプトをブロックで比較する。</strong> 件数が付いた「変更ファイル」タブを開き、<code>project.source.json</code>（この例では <code>app/project.source.json</code>）の中から、対象のステージやスプライトの見出しを探します。その下に並ぶ変更のあったスクリプトから、例の「緑の旗が押されたとき」を展開します。左の「変更前」と右の「変更後」を見比べ、枠で示されたブロックがスクリプトのどこにあるかを確認します。長いスクリプトや横に広いブロックは、比較枠をスクロールして確認できます。比較枠にポインターを重ねると、右下にミニマップと拡大・縮小ボタンが表示されます。
+<li><strong>スクリプトをブロックで比較する。</strong> 件数が付いた「変更ファイル」タブを開きます。上部の「変更レビュー」で、影響するステージ・スプライトの数、コードの変更の数、確認済みの数が分かります。<code>project.source.json</code>（この例では <code>app/project.source.json</code>）のカードで対象のステージやスプライトの見出しを探し、その下に並ぶスクリプトから、例の「緑の旗が押されたとき」を展開します。左の「変更前」と右の「変更後」を見比べ、枠で示されたブロックがスクリプトのどこにあるかを確かめます。長いスクリプトや横に広いブロックは、比較枠をスクロールして確認できます。比較枠にポインターを重ねると、右下にミニマップと拡大・縮小ボタンが表示されます。
 <figure>
-<a href="../images/current-pr-blocks.png"><img src="../images/current-pr-blocks.png" width="1440" height="960" alt="ローカル Git の「マージ」。PR の一覧が左、右の比較枠の下端にズームとミニマップがある。" loading="lazy"></a>
-<figcaption>PR のスクリプトを開くと、右に変更前と変更後が並びます。各枠の右下からズームや表示位置の変更ができます。</figcaption>
+<a href="../images/current-pr-blocks.png"><img src="../images/current-pr-blocks.png" width="1440" height="960" alt="ローカル Git の「マージ」。PR の一覧が左、右に app/project.source.json のステージのスクリプトの変更前と変更後が並び、変更後の枠の右下にミニマップとズームボタンがある。" loading="lazy"></a>
+<figcaption>PR のスクリプトを開くと、変更前と変更後が並びます。枠の右下からズームや表示位置の変更ができ、読み終えたら「確認済み」を付けられます。</figcaption>
 </figure>
 </li>
 </ol>
 <figure>
-<a href="../images/current-git-file-window.png"><img src="../images/current-git-file-window.png" width="1200" height="860" alt="別ウィンドウに開いた project.source.json のブロック差分。変更前と変更後が横に並び、右下に確認済みがある。" loading="lazy"></a>
+<a href="../images/current-git-file-window.png"><img src="../images/current-git-file-window.png" width="1200" height="860" alt="別ウィンドウに開いた app/project.source.json のブロック差分。変更前と変更後が横に並び、右下に確認済みがある。" loading="lazy"></a>
 <figcaption>変更ファイルのカード右上にある「別ウィンドウで開く」で、そのファイルの比較を広い画面に表示できます。</figcaption>
 </figure>
-<p>比較を読み終えたら、スクリプトの比較枠の右下にある緑色の「確認済み」で進み具合を記録できます。この印はブラウザーに保存され、パネルを閉じても Editor を再読み込みしても残ります。PR が更新されると、内容が変わったスクリプトの印だけが外れます。印は作品ファイルとGitには書き込まれません。「保存のコミット」で手元の差分に戻れます。</p>
+<p>比較を読み終えたら、スクリプトの比較枠の右下にある緑色の「確認済み」で進み具合を記録できます。この印はブラウザーに保存され、パネルを閉じても Editor を再読み込みしても残ります。PR が更新されると、内容が変わったスクリプトの印だけが外れます。印は作品ファイルにも Git にも書き込まれません。手元の差分に戻るには「保存のコミット」を選びます。</p>
 
-<p>比較には PR のマージベースと head を使います。未接続時は公開 API で公開 PR を比較できます。接続中は許可された非公開リポジトリの PR も一覧から選べます。PR の head とベースのブランチを Git Smart HTTP で取得して比較します。PR の反映先を取得できない場合は、GitHub 側の既定ブランチを使います。候補が複数あるときは、比較先のブランチを選べます。メニューバーのブランチ選択は、手元で編集するブランチを切り替える操作です。右ペインの PR 番号とタイトルから GitHub の PR を開けます。PR 見出しの右上にあるアイコンを押すと、作品の差分がエディタの別タブで開きます。変更ファイルのカード右上にある「別ウィンドウで開く」を押すと、そのファイルのブロック差分を別ウィンドウで確認できます。「確認済み」は元の PR 画面にも反映されます。比較の仕組みは<a href="#block-diff">作品の変更をブロックで比べる</a>で説明しています。</p>
-<p>PR の版を実行するには、Git パネルから作品フォルダを開いておき、接続中に開いた PR の「PRの作品を開いて動作確認」を選びます。比較したコミットにローカルブランチを作って切り替え、その版の作品を開き直します。実行中、未保存の編集や作業ツリーの変更がある場合、同名ブランチが別のコミットを指している場合は切り替えが止まります。確認を終えたら、メニューバーのブランチ名から元のブランチに切り替え、「作品を再読込」を選びます。確認用のブランチは手元に置いておきます。</p>
+<p>比較には PR のマージベースと head を使います。未接続時は公開 API で公開 PR を比較できます。接続中は許可された非公開リポジトリの PR も一覧から選べます。PR の head とベースのブランチを Git Smart HTTP で取得して比較します。PR の反映先を取得できない場合は、GitHub 側の既定ブランチを使います。候補が複数あるときは、比較先のブランチを選べます。メニューバーのブランチのボタンは、手元で編集するブランチを切り替える操作です。右ペインの PR 番号とタイトルから GitHub の PR を開けます。PR 見出しの右上にある「差分をエディタのタブで開く」アイコンを押すと、作品の差分が Editor の別タブで開きます。変更ファイルのカード右上にある「別ウィンドウで開く」を押すと、そのファイルのブロック差分を別ウィンドウで確認できます。「確認済み」は元の PR 画面にも反映されます。比較の仕組みは<a href="#block-diff">作品の変更をブロックで比べる</a>で説明しています。</p>
+<p>PR の版を実行するには、作品フォルダを開いておき、GitHub に接続した状態で開いた PR の「PRの作品を開いて動作確認」を選びます。比較したコミットにローカルブランチ（例 <code>pr/42</code>）を作って切り替え、その版の作品を開き直します。作品の実行中、未保存の編集や作業ツリーの変更があるとき、同名のブランチが別のコミットを指しているときは、切り替えずに止まります。確認を終えたら、メニューバーのブランチ名から元のブランチに切り替え、「作品を再読込」を選びます。確認用のブランチは手元に残ります。</p>
 <h3 id="send-review">レビューを送信する</h3>
 <p>「確認済み」は自分の確認状況を示す印です。GitHub にレビューを送信するには、接続時に「レビューの送信を許可する」を選んでから、PR を開きます。接続先でレビュー用 GitHub API が有効で、リポジトリでレビューを送れる権限が必要です。</p>
 <p>「レビューを送る」で全体とコードへのコメントを確認し、結果に「コメント」「承認」「修正を依頼」のいずれかを選び、「レビューを送信」を押します。コードへのコメントをスレッドにできるか、本文に入るかは送信前の表示で確認できます。送信欄を使えない場合は GitHub の PR を開き、「Files changed」からレビューします。 <a href="../github/#merge">検査・レビュー・マージの手順</a></p>
