@@ -249,7 +249,7 @@ const windowsEntries = ['', '/styles.css'].map(entry => {
 // them too, and three of them carry a global stylesheet.
 const spritePanesGlobalStyleEntries = ['sprite-asset-pane.css', 'sprite-editor-toolbar.css', 'sprite-properties.css'];
 const spritePanesSource = path.dirname([
-    'sprite-asset-pane', 'sprite-message-pane', 'sprite-properties', 'sprite-editor-toolbar', 'native-tile-title',
+    'sprite-asset-pane', 'sprite-message-pane', 'sprite-properties', 'sprite-editor-toolbar', 'sprite-clone-inspector', 'native-tile-title',
     ...spritePanesGlobalStyleEntries
 ].map(entry => {
     const specifier = `@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}`;

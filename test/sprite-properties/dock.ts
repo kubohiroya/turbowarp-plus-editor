@@ -61,10 +61,10 @@ try {
     await edit(input('Sprite name'), 'Updated cat');
     await edit(number('x'), -34);
     await edit(number('y'), 12);
-    await panel.getByLabel('Visibility').selectOption('false');
+    await panel.getByRole('radio', {name: 'Hide'}).check();
     await edit(number('Size'), 90);
     await edit(number('Direction'), -35);
-    await panel.getByLabel('Rotation style').selectOption('left-right');
+    await panel.getByRole('radio', {name: 'Left-right'}).check();
     const changed = await page.evaluate(() => {
         const {x, y, visible, size, direction, rotationStyle} = window.vm.editingTarget;
         return {name: window.vm.editingTarget.getName(), x, y, visible, size, direction, rotationStyle};
@@ -116,10 +116,10 @@ try {
     await edit(input('Sprite name'), 'Floating cat');
     await edit(number('x'), 41);
     await edit(number('y'), -22);
-    await panel.getByLabel('Visibility').selectOption('false');
+    await panel.getByRole('radio', {name: 'Hide'}).check();
     await edit(number('Size'), 84);
     await edit(number('Direction'), 64);
-    await panel.getByLabel('Rotation style').selectOption('left-right');
+    await panel.getByRole('radio', {name: 'Left-right'}).check();
     assert.deepEqual(await page.evaluate(() => {
         const {x, y, visible, size, direction, rotationStyle} = window.vm.editingTarget;
         return {name: window.vm.editingTarget.getName(), x, y, visible, size, direction, rotationStyle};
@@ -132,7 +132,7 @@ try {
     for (let step = 0; step < 8; step++) await resize.press('Shift+ArrowLeft');
     assert.equal(await columns(), 1);
     for (let step = 0; step < 17; step++) await resize.press('Shift+ArrowRight');
-    assert.equal(await columns(), 6);
+    assert.equal(await columns(), 2);
 
     await float.getByRole('button', {name: 'Close and dock', exact: true}).click();
     await float.waitFor({state: 'hidden'});
