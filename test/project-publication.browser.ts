@@ -255,10 +255,8 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
 
     await command('Choose Repository…');
     await expect(page.locator('.twgit-repository-heading strong')).toHaveText(path.basename(client));
-    if (!cloud) await page.locator('.twgit-backdrop').getByRole('button', {name: 'Close', exact: true}).click();
-    await command('GitHub Connection Settings…');
-    const settings = page.getByRole('dialog', {name: 'GitHub connection settings'});
-    await settings.getByRole('combobox', {name: 'Connection mode'}).selectOption(cloud ? 'cloudflare' : 'desktop');
+    await page.getByRole('button', {name: 'Connect to GitHub…', exact: true}).click();
+    const settings = page.getByRole('dialog', {name: 'Repository GitHub connection'});
     await settings.getByLabel('Allow sending to GitHub (push)').check();
     if (cloud) {
         await settings.getByRole('button', {name: 'Connect to GitHub', exact: true}).click();
@@ -267,6 +265,7 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
     } else await settings.getByRole('button', {name: 'Restore saved Desktop connection'}).click();
     await expect(settings.locator('[data-git-connection-state]')).toHaveText('Connected');
     await settings.getByRole('button', {name: 'Close', exact: true}).click();
+    if (!cloud) await page.locator('.twgit-backdrop').getByRole('button', {name: 'Close', exact: true}).click();
     await command('Save and Commit…');
     const local = page.getByRole('dialog', {name: 'Save and Commit', exact: true});
     await local.getByRole('button', {name: 'Save and review changes'}).click();

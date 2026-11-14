@@ -438,13 +438,12 @@ test('the Editor compares a connected PR and runs its project on a local branch'
 
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
     const picker = panel.getByRole('complementary', {name: 'Pull requests'});
-    await expect(panel.locator('header').getByRole('button', {name: /GitHub connection settings|Choose Repository/i})).toHaveCount(0);
-    const file = page.getByText('File', {exact: true});
-    await file.click();
-    await page.getByRole('button', {name: 'GitHub Connection Settings…', exact: true}).press('Enter');
-    const settings = page.getByRole('dialog', {name: 'GitHub connection settings'});
+    await expect(panel.locator('header').getByRole('button', {name: 'Choose Repository…', exact: true})).toHaveCount(0);
+    const connectToGitHub = button('Connect to GitHub…');
+    await expect(connectToGitHub).toBeEnabled();
+    await connectToGitHub.press('Enter');
+    const settings = page.getByRole('dialog', {name: 'Repository GitHub connection'});
     await expect(settings).toBeVisible();
-    await settings.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     await settings.getByRole('checkbox', {name: 'Allow sending to GitHub (push)'}).check();
     await settings.getByRole('button', {name: 'Connect to GitHub'}).click();
     await expect(settings.getByText('TEST-CODE')).toBeVisible();
@@ -486,7 +485,7 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     assert.equal(fixture.upstream.filter(request => request.path.endsWith('/git-upload-pack')).length, 2);
     assert.equal(git(client, 'rev-parse', 'refs/pull/origin/42/head'), head);
     assert.equal(git(client, 'rev-parse', 'HEAD'), base);
-    await file.click();
+    await page.getByText('File', {exact: true}).click();
     const releaseCommand = page.getByRole('button', {name: 'Releases…', exact: true});
     await expect(releaseCommand).toHaveAttribute('tabindex', '0');
     await releaseCommand.click();

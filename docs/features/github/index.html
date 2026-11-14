@@ -90,7 +90,7 @@
 <tr><th scope="row">ブランチ</th><td>ローカルGitパネルで作って切り替える</td><td>issueの「Create a branch」、GitHub Desktop、<code>git switch -c</code></td></tr>
 <tr><th scope="row">編集・保存</th><td>「ファイル」→「プロジェクトを保存」で作品フォルダに書く</td><td>—</td></tr>
 <tr><th scope="row">コミット</th><td>「保存のコミット」で対象を選び、メッセージを入力してコミット</td><td>GitHub Desktop、<code>git commit</code></td></tr>
-<tr><th scope="row">push・pull</th><td>GitHub接続が設定されたEditorでは「GitHub 接続設定…」から</td><td>GitHub Desktop、<code>git push</code>・<code>git pull</code></td></tr>
+<tr><th scope="row">push・pull</th><td>ローカル Git の「GitHub に接続…」から認証し、「マージ」の同期ボタンで操作</td><td>GitHub Desktop、<code>git push</code>・<code>git pull</code></td></tr>
 <tr><th scope="row">プルリクエスト</th><td>ブロック単位で比較。接続と権限に応じて、比較した版を実行したりレビューを送信したりできる</td><td>GitHub の「Pull requests」、<code>gh pr</code></td></tr>
 <tr><th scope="row">リリース</th><td>「ファイル」→「リリース…」で npm コマンドのコピー、タグの作成、Pages 向け HTML の送信</td><td>GitHubの「Releases」、<code>gh release create</code></td></tr>
 </tbody></table></div>
@@ -159,8 +159,8 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.7 GitHubに送る（push）</h2>
 
-<p>「ファイル」→「GitHub 接続設定…」を開きます。</p>
-<ol><li>「接続方式」を選び、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>接続後に「マージ」を開き、「現在のブランチを送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「リモートの情報を更新（fetch）」と「手元のブランチとファイルを更新（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
+<p>接続方式を選ぶには、左端の「TurboWarp Plus」→「GitHub 接続設定…」を開きます。</p>
+<ol><li>ローカル Git の「GitHub に接続…」を開きます。接続先を確認し、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>接続後に「マージ」を開き、「現在のブランチを送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「リモートの情報を更新（fetch）」と「手元のブランチとファイルを更新（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
 <h3 id="push-without-connection">接続がない場合</h3>
 <p>「GitHub 接続設定…」を開いて「GitHub 接続先が設定されていません。」と表示された場合は、次のいずれかでpush・pullを行います。</p>
 <ul><li><strong>GitHub Desktop。</strong> 「File」→「Add local repository」でリポジトリのフォルダを追加し、「Push origin」（新しいブランチでは「Publish branch」）で送ります。取り込むときは「Fetch origin」→「Pull origin」を使います。</li><li><strong>コマンド。</strong> 新しいブランチを初めて送るときは <code>git push -u origin 12-neko-walk</code>、取り込むときは <code>git pull --ff-only</code> を実行します。</li></ul>
@@ -193,7 +193,7 @@ git config --local user.email "you@example.com"</code></pre>
 
 <p>確かめる人は、変更をスクリプト単位で読みます。</p>
 <p>ローカル Git の「マージ」を開くと、ステージ・スプライトごとに、変更前と変更後のスクリプトをブロックで比べられます。読み終えたスクリプトには、比較枠の右下で「確認済み」を付けられます。</p>
-<ul><li><strong>公開リポジトリ。</strong> 一覧から選びます。</li><li><strong>非公開リポジトリ。</strong> 「GitHub 接続設定…」でリポジトリへのアクセスを許可すると、一覧から選べます。反映先を取得できず、候補が複数ある場合は、比較先のブランチを選べます。</li></ul>
+<ul><li><strong>公開リポジトリ。</strong> 一覧から選びます。</li><li><strong>非公開リポジトリ。</strong> ローカル Git の「GitHub に接続…」で認証すると、アクセスできるリポジトリの PR を一覧から選べます。反映先を取得できず、候補が複数ある場合は、比較先のブランチを選べます。</li></ul>
 <p>同期欄の <code>main</code> は現在のローカルブランチです。「PRの作品を開いて動作確認」を押すと、PR #42 を指すローカルブランチ <code>pr/42</code> に切り替えます。</p>
 <p>右ペインの PR 番号とタイトルは GitHub へのリンクです。PR 見出しの右上にあるアイコンから作品の差分をエディタの別タブで開けます。変更ファイルのカード右上にある「別ウィンドウで開く」では、そのファイルの差分を別ウィンドウで確認できます。接続中に開いた PR は、「PRの作品を開いて動作確認」で比較した版に切り替えて実行できます。</p>
 <h3>接続がない場合</h3>
