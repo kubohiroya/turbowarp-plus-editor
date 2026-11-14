@@ -26,5 +26,15 @@ h2 { font-size:1.35rem; line-height:1.45; margin:0 0 12px; } input { width:100%;
 .shot-stage { position:absolute; right:-24px; bottom:-60px; width:50%; height:auto; }
 .doc-shot { display:block; margin:-8px -8px 18px; padding:16px; border-radius:14px; border:1px solid var(--line); background:#e5eef8; aspect-ratio:16/9; }
 .doc-shot img { display:block; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 8px 18px rgba(25,43,67,.18)); }
-@media(prefers-color-scheme:dark) { .shot { box-shadow:0 18px 44px rgba(0,0,0,.5); } .doc-shot { background:#22364f; } }
+/* Crop a screenshot to its top-left corner; --crop is the image width relative to the visible frame */
+.crop-shot { display:block; overflow:hidden; } .crop-shot img { display:block; width:var(--crop,100%); height:auto; }
+.open-flow { display:grid; justify-items:center; gap:6px; margin:24px 0 20px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#e5eef8; text-align:center; font-size:.9rem; }
+.open-ways { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; list-style:none; margin:0; padding:0; } .open-ways li { padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:var(--surface); font-weight:650; }
+.open-arrow { width:2px; height:16px; background:#849cb5; position:relative; } .open-arrow::after { content:''; position:absolute; left:-5px; bottom:-2px; border:6px solid transparent; border-top-color:#849cb5; border-bottom:0; }
+.open-editor { margin:2px 0 0; padding:8px 18px; border-radius:10px; background:#205a9d; color:#fff; font-weight:750; } .open-out { margin:2px 0 0; color:var(--muted); }
+.open-shot { aspect-ratio:760/432; --crop:189.5%; box-shadow:none; }
+.guide-chapters { display:grid; grid-template-columns:1fr 1fr; gap:18px 16px; list-style:none; margin:20px 0 0; padding:0; }
+.guide-chapters a { display:grid; gap:8px; font-size:.9rem; font-weight:650; line-height:1.45; text-decoration:none; } .guide-chapters a:hover span:last-child { text-decoration:underline; }
+.guide-chapters .shot { aspect-ratio:16/10; box-shadow:none; } .guide-chapters img { width:100%; height:100%; object-fit:cover; object-position:left top; }
+@media(prefers-color-scheme:dark) { .shot { box-shadow:0 18px 44px rgba(0,0,0,.5); } .doc-shot, .open-flow { background:#22364f; } .open-editor { background:#a8d6ff; color:#101c2b; } .open-shot, .guide-chapters .shot { box-shadow:none; } }
 @media(max-width:650px) { .shot-stage { right:-6px; bottom:-44px; width:56%; } }
