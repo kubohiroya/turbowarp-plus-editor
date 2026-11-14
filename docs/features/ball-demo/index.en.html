@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Getting started with TurboWarp Plus Editor for Scratch users</title>
+<style>
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+  color: #28243b;
+  background: #fbfaff;
+  line-height: 1.65;
+}
+body { margin: 0; }
+main { max-width: 67rem; margin: 0 auto; padding: 3rem clamp(1rem, 4vw, 3rem) 5rem; }
+h1, h2, h3 { line-height: 1.35; text-wrap: balance; scroll-margin-top: 1rem; }
+h1 { font-size: clamp(1.9rem, 5vw, 3rem); margin: 0 0 1rem; max-width: 33ch; }
+h2 { font-size: clamp(1.45rem, 4vw, 2rem); margin: 3.15rem 0 1.3rem; padding-top: 1rem; border-top: 2px solid #dbd3ef; }
+h3 { font-size: clamp(1.15rem, 3.5vw, 1.45rem); margin: 2rem 0 .65rem; }
+p, li { max-width: 77ch; }
+[lang="ja"] p, [lang="ja"] li { max-width: 48em; }
+li + li { margin-top: .27rem; }
+a { color: #513398; text-underline-offset: .2em; }
+:focus-visible { outline: 2px solid #4d2da0; outline-offset: 4px; }
+nav { border: 1px solid #dfd5f3; border-radius: .7rem; background: #f3eefb; padding: 1rem 1.35rem; margin-top: 1.7rem; }
+nav ul { margin: .35rem 0 0; padding-left: 1.2rem; }
+nav > ul { padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: .8rem 1.5rem; }
+nav > ul > li:last-child { grid-column: 1 / -1; }
+nav li { margin: 0; }
+nav > ul > li > a { font-weight: 650; }
+figure { margin: 1.2rem 0 1.55rem; break-inside: avoid; }
+figure a { display: block; width: fit-content; max-width: 100%; }
+img { display: block; max-width: 100%; height: auto; border-radius: .5rem; box-shadow: 0 0 0 1px #dcd6ed; }
+figcaption { color: #514869; margin: .55rem 0 0; font-size: .91rem; }
+code { color: #40316b; overflow-wrap: anywhere; }
+@media print { main { padding: 0; } nav { break-inside: avoid; } }
+</style>
+</head>
+<body><main>
+<p><a href="../">Feature guide · Japanese</a></p>
+<h1>Getting started with TurboWarp Plus Editor for Scratch users</h1>
+<p>Open a familiar SB3 and run it beside your code. Ball Demo shows you where the familiar controls are, how to trace a project with several sprites, and how to arrange the editor around the work you’re doing.</p>
+<p><a href="../../editor.html?lang=en">Open Editor in English</a> · <a href="index.html" lang="ja" hreflang="ja">日本語ガイド</a></p>
+<ul>
+<li><a href="Ball%20Demo.sb3">Ball Demo.sb3</a> is for sections 1.1–1.2. The ball moves 20 steps when you click the green flag.</li>
+<li><a href="Ball%20Demo%20Plus.sb3">Ball Demo Plus.sb3</a> is for section 1.3 onward. It adds variables, a list, a broadcast, and a clone to the same demo.</li>
+</ul>
+<nav aria-label="Contents"><strong>Contents</strong><ul><li><a href="#section-1">1. Find the controls you know from Scratch</a><ul><li><a href="#section-1-1">1.1 Open an SB3 file</a></li><li><a href="#section-1-2">1.2 Open the stage</a></li><li><a href="#section-1-3">1.3 Use the sprite list on the left edge</a></li><li><a href="#section-1-4">1.4 Open sprites and backdrops in tabs</a></li><li><a href="#section-1-5">1.5 Switch editing views with the buttons</a></li></ul></li><li><a href="#section-2">2. Work with sprite properties and variables</a><ul><li><a href="#section-2-1">2.1 Set position, visibility, and direction</a></li><li><a href="#section-2-2">2.2 Change a variable and show the blocks that use it</a></li><li><a href="#section-2-3">2.3 Edit a list in one place</a></li><li><a href="#section-2-4">2.4 Inspect and edit individual clones</a></li></ul></li><li><a href="#section-3">3. Follow broadcasts through the project</a><ul><li><a href="#section-3-1">3.1 Open the block that receives a sprite’s broadcast</a></li><li><a href="#section-3-2">3.2 Follow an arrow to the receiver and see the whole project</a></li><li><a href="#section-3-3">3.3 Rename a message throughout the project</a></li></ul></li><li><a href="#section-4">4. Find, arrange, and reuse code</a><ul><li><a href="#section-4-1">4.1 Edit blocks efficiently with the palette and search</a></li><li><a href="#section-4-2">4.2 Navigate with the code minimap</a></li><li><a href="#section-4-3">4.3 Read scripts in Z or N order</a></li><li><a href="#section-4-4">4.4 Split the editor to work side by side</a></li><li><a href="#section-4-5">4.5 Copy a script from one tab to another</a></li><li><a href="#section-4-6">4.6 Drag a script to another sprite's tab via the sprite list</a></li><li><a href="#section-4-7">4.7 Save the edited project as an SB3 file</a></li></ul></li><li><a href="#next">Where to go next</a></li></ul></nav>
+<h2 id="section-1">1. Find the controls you know from Scratch</h2>
+<h3 id="section-1-1">1.1 Open an SB3 file</h3>
+<p>First, have the Scratch project file you’d like to edit ready. For this exercise, download <a href="Ball%20Demo.sb3">Ball Demo.sb3</a> and open it in the editor.</p>
+<p>Choose <strong>File → Open SB3 File…</strong> and open the downloaded file. Select <strong>ボール</strong> (Ball) in the sprite list at the left edge of the screen. Its code opens in a tab in the middle.</p>
+<figure><a href="images/en-open.png"><img loading="lazy" src="images/en-open.png" alt="The File menu with Open SB3 File selected"></a><figcaption>Figure 1 · The File menu with Open SB3 File selected</figcaption></figure>
+<h3 id="section-1-2">1.2 Open the stage</h3>
+<p>Click <strong>▾</strong> next to <strong>Open stage</strong> and choose <strong>Show in the drawer</strong>. Click the green flag above the stage on the right while keeping the code in view. Change <strong>20</strong> to <strong>40</strong> in the blue block and the ball moves twice as far per click. The same menu has <strong>Show in a separate window</strong> if you want more room for the stage.</p>
+<figure><a href="images/en-stage-menu.png"><img loading="lazy" src="images/en-stage-menu.png" alt="The stage menu offers a separate window, a tab, and the drawer"></a><figcaption>Figure 2 · The stage menu offers a separate window, a tab, and the drawer</figcaption></figure>
+<figure><a href="images/en-run.png"><img loading="lazy" src="images/en-run.png" alt="The demo runs on the right, beside the code for the ball"></a><figcaption>Figure 3 · The demo runs on the right, beside the code for the ball</figcaption></figure>
+<h3 id="section-1-3">1.3 Use the sprite list on the left edge</h3>
+<p>Open <code>Ball Demo Plus.sb3</code> for this exercise and the sections that follow. The sprite list has moved from below the stage on the right in Scratch to the <strong>left edge</strong>. If another drawer view is open, click the leftmost <strong>Sprites</strong> icon.</p>
+<p><strong>Drag the divider</strong> between the list and the editor to adjust the width. A wider list fits more tiles per row when you have several sprites. Use the <strong>pin</strong> to keep the list visible. With the pin off, the drawer folds away when you move the pointer out. Move back to the left edge to reveal it.</p>
+<figure><a href="images/en-sprite-drawer.png"><img loading="lazy" src="images/en-sprite-drawer.png" alt="The widened sprite drawer with its divider, pin, and undock controls"></a><figcaption>Figure 4 · The widened sprite drawer with its divider, pin, and undock controls</figcaption></figure>
+<figure><a href="images/en-sprite-unpinned.png"><img loading="lazy" src="images/en-sprite-unpinned.png" alt="The unpinned sprite drawer opens over the code when revealed"></a><figcaption>Figure 5 · The unpinned sprite drawer opens over the code when revealed</figcaption></figure>
+<p>Click <strong>Undock sprite list</strong> next to the pin to put the list in its own window. If the editor remembers a separate window, the same control reads <strong>Reopen in another window</strong>. You can still select a sprite from there. Use the button at the top right of the separate window to dock the list again.</p>
+<figure><a href="images/en-sprite-window.png"><img loading="lazy" src="images/en-sprite-window.png" alt="The Ball sprite in a separate sprite-list window"></a><figcaption>Figure 6 · The Ball sprite in a separate sprite-list window</figcaption></figure>
+<h3 id="section-1-4">1.4 Open sprites and backdrops in tabs</h3>
+<p>Select a sprite or backdrop from the list on the left to open it in a tab above the editor. With <strong>ボール</strong> (Ball) still open, select <strong>Backdrops</strong> at the bottom of the list. Keep both tabs open and click either one to switch between them. You can also split the editor to work with tabs side by side.</p>
+<figure><a href="images/en-sprite-tabs.png"><img loading="lazy" src="images/en-sprite-tabs.png" alt="The Ball and Backdrops tabs are both open. The editor shows the Ball’s code"></a><figcaption>Figure 7 · The Ball and Backdrops tabs are both open. The editor shows the Ball’s code</figcaption></figure>
+<h3 id="section-1-5">1.5 Switch editing views with the buttons</h3>
+<p>The buttons down the left side of each editing pane are <strong>Code, Costumes, Sounds, Properties &amp; Variables, and Messages</strong>. The [x] icon opens <strong>Sprite Properties and Variables</strong>. For the stage, the left side includes <strong>Backdrops</strong> and <strong>Global Variables</strong>. Hover over an icon to see its name. Costumes and Sounds show their own headings above the editor.</p>
+<p>Select the brush icon to edit the purple ball costume. Select the speaker icon to see sounds for that sprite. The demo’s sound list is empty. Select <strong>Code</strong> to return to its blocks.</p>
+<figure><a href="images/en-costumes.png"><img loading="lazy" src="images/en-costumes.png" alt="The Costumes button on the left opens the purple ball costume"></a><figcaption>Figure 8 · The Costumes button on the left opens the purple ball costume</figcaption></figure>
+<figure><a href="images/en-sounds.png"><img loading="lazy" src="images/en-sounds.png" alt="The Sounds button opens the same sprite’s sound editor"></a><figcaption>Figure 9 · The Sounds button opens the same sprite’s sound editor</figcaption></figure>
+<h2 id="section-2">2. Work with sprite properties and variables</h2>
+<h3 id="section-2-1">2.1 Set position, visibility, and direction</h3>
+<p>In the Ball tab, click the <strong>[x] icon</strong> on the left to open <strong>Sprite Properties and Variables</strong>. At the top you can edit the name, x and y, size, and direction. Use the <strong>eye icon</strong> to show the sprite and the <strong>crossed-out eye</strong> to hide it. Open the stage to see your changes. Collapse the stage drawer when it covers controls on the right.</p>
+<figure><a href="images/en-variables.png"><img loading="lazy" src="images/en-variables.png" alt="The Ball’s properties and variables, with name, position, visibility, size, and direction at the top"></a><figcaption>Figure 10 · The Ball’s properties and variables, with name, position, visibility, size, and direction at the top</figcaption></figure>
+<p>Drag the arrow around the <strong>direction dial</strong> from right (90°) to up (0°). The ball is round, so click the flag to see the difference. It now moves up. You can enter a direction in the number field as well. The three buttons below it set the rotation style to <strong>all around</strong>, <strong>left-right</strong>, or <strong>don’t rotate</strong>. Before the next exercise, return the direction to <strong>90</strong> and position to <strong>x = −60, y = 0</strong>.</p>
+<figure><a href="images/en-direction.png"><img loading="lazy" src="images/en-direction.png" alt="The arrow points up, Direction reads 0, and the three rotation styles sit below the number field"></a><figcaption>Figure 11 · The arrow points up, Direction reads 0, and the three rotation styles sit below the number field</figcaption></figure>
+<h3 id="section-2-2">2.2 Change a variable and show the blocks that use it</h3>
+<p>The <strong>Sprite Variables</strong> table shows the variables and lists that belong to Ball. Change <code>speed</code> from <strong>20 to 40</strong>, then press Enter. Click the green flag to see how far the ball moves. Set <code>speed</code> back to <strong>20</strong> for the next exercises.</p>
+<p>Click the <strong>1</strong> in the <strong>Read</strong> column for <code>speed</code>. The search opens with the block that uses the value. Select the result to show <strong>move … steps</strong> in the green-flag script. Click the <strong>1</strong> in <strong>Write</strong> and select the result to show the block that changes the clone’s speed. Hover over a variable row to reveal its rename and delete controls.</p>
+<figure><a href="images/en-variable-reads.png"><img loading="lazy" src="images/en-variable-reads.png" alt="The Read count for speed opens project search filtered to the block that uses it"></a><figcaption>Figure 12 · The Read count for speed opens project search filtered to the block that uses it</figcaption></figure>
+<p>For values shared across the project, select the <strong>Backdrops</strong> tile at the bottom of the sprite list and open <strong>Global Variables</strong>. Check the <strong>Stage</strong> box on the <code>rounds</code> row to display the live value on the stage.</p>
+<figure><a href="images/en-global-variables.png"><img loading="lazy" src="images/en-global-variables.png" alt="The Stage checkbox is on for rounds in Global Variables"></a><figcaption>Figure 13 · The Stage checkbox is on for rounds in Global Variables</figcaption></figure>
+<h3 id="section-2-3">2.3 Edit a list in one place</h3>
+<p>Return to the Ball tab and open Sprite Properties and Variables.</p>
+<p>The <strong>Type</strong> column uses a box for variables and a drawer for lists. Click a column heading such as <strong>Type</strong> or <strong>Read</strong> to sort the table. The <code>route</code> list holds the words the clone can say. The table shows the first five entries and <strong>+1</strong> for the sixth.</p>
+<p>Hover over the <code>route</code> row and click <strong>Edit</strong>.</p>
+<figure><a href="images/en-list-table.png"><img src="images/en-list-table.png" loading="lazy" width="2560" height="1440" alt="The speed variable and route list in the same table, with an Edit button beside route"></a><figcaption>Figure 14 · The speed variable and route list in the same table, with an Edit button beside route</figcaption></figure>
+<p>Change the first item from <code>start</code> to <code>checkpoint</code>. Click the up arrow beside <code>bridge</code> to move it from third to second. Use the trash icon to remove an item or <strong>Add item</strong> to insert a new one. <strong>Cancel</strong> discards edits in the dialog.</p>
+<figure><a href="images/en-list-edit.png"><img src="images/en-list-edit.png" loading="lazy" width="2560" height="1440" alt="The route editor showing checkpoint first and bridge second"></a><figcaption>Figure 15 · The route editor showing checkpoint first and bridge second</figcaption></figure>
+<p>Click <strong>Save</strong> at the bottom right. The table now starts with <strong><code>checkpoint</code> → <code>bridge</code> → <code>turn</code></strong>. To keep the changes in a file, follow <a href="#section-4-7">4.7 Save the edited project as an SB3</a>.</p>
+<figure><a href="images/en-list-saved.png"><img src="images/en-list-saved.png" loading="lazy" width="2560" height="1440" alt="The saved route row starts with checkpoint, bridge, and turn"></a><figcaption>Figure 16 · The saved route row starts with checkpoint, bridge, and turn</figcaption></figure>
+<p>To make an empty list, click <strong>Add a new sprite variable</strong> at the bottom of the pane. Choose the <strong>List</strong> tab, enter a name, and click <strong>Create</strong>. To make a list shared across the project, start from <strong>Global Variables</strong> in the Backdrops tab.</p>
+<h3 id="section-2-4">2.4 Inspect and edit individual clones</h3>
+<p>Open the Ball tab and show the stage in the right-hand drawer. Click the white stage once and press <strong>C</strong>. A second ball appears on the right. A clone is a copy of a sprite created while the project runs. When this clone starts, it adds 10 to its own <code>speed</code> and says the first item in <code>route</code>.</p>
+<p>Open <strong>Sprite Properties and Variables</strong> and choose <strong>1</strong> at the right of the heading. The clone’s <code>speed</code> reads <strong>30</strong>. Set it to <strong>35</strong>, then switch back to <strong>Original sprite</strong>, where the value is still <strong>20</strong>. You can also inspect and edit the clone’s position and list. Changes to individual clone values and properties apply to the current run. With six or more clones, use the numbered list or the left and right arrows to switch between them.</p>
+<figure><a href="images/en-clone.png"><img loading="lazy" src="images/en-clone.png" alt="Clone 1 shows speed 30, and the stage shows the original ball and its clone"></a><figcaption>Figure 17 · Clone 1 shows speed 30, and the stage shows the original ball and its clone</figcaption></figure>
+<h2 id="section-3">3. Follow broadcasts through the project</h2>
+<h3 id="section-3-1">3.1 Open the block that receives a sprite’s broadcast</h3>
+<p>Click the speech-bubble icon <strong>Messages</strong> on the left of the Ball tab. <strong>Sent</strong> and <strong>Received</strong> show how the current sprite uses each message. After moving on the green flag, Ball broadcasts <code>ball started</code>. The <strong>Block</strong> column shows the broadcast and the block that starts its script. Click the underlined <strong>ball started</strong> to show the broadcast block in the code pane.</p>
+<figure><a href="images/en-messages.png"><img loading="lazy" src="images/en-messages.png" alt="Ball’s Sent list shows the message, the broadcast block, and the start of its script"></a><figcaption>Figure 18 · Ball’s Sent list shows the message, the broadcast block, and the start of its script</figcaption></figure>
+<p>To open the receiving block, return to the sender’s <strong>Messages</strong> panel and click <strong>Stage</strong> at the end of the arrow in the diagram. Open <strong>Messages</strong> in the Backdrops tab and click the underlined <strong>ball started</strong> in the <strong>Received</strong> list. The code pane opens at the receiving block of the script that adds 1 to <code>rounds</code>.</p>
+<h3 id="section-3-2">3.2 Follow an arrow to the receiver and see the whole project</h3>
+<p>In the diagram below the lists, each <strong>arrow points from sender to receiver</strong>. The message name sits above the arrow. A thick border marks the current target. Here, the arrow from <strong>ボール</strong> to <strong>Stage</strong> carries <code>ball started</code>.</p>
+<p>The <strong>Messages</strong> panel in the Backdrops tab shows the stage’s <strong>Received</strong> list and a diagram of all broadcasts across the project.</p>
+<figure><a href="images/en-messages-stage.png"><img loading="lazy" src="images/en-messages-stage.png" alt="The stage’s Received list and diagram. The arrow points to the stage, whose border is thicker"></a><figcaption>Figure 19 · The stage’s Received list and diagram. The arrow points to the stage, whose border is thicker</figcaption></figure>
+<h3 id="section-3-3">3.3 Rename a message throughout the project</h3>
+<p>Click the <strong>Rename message</strong> pencil on the <code>ball started</code> row. Enter <code>ball moved</code>, for example, and click <strong>Rename message</strong> to confirm. Messages are shared across the project, so the name changes in both the sending and receiving blocks. To see the new name in the diagram, switch to Code and reopen Messages. Choose <strong>Cancel</strong> to discard an edit before confirming.</p>
+<figure><a href="images/en-message-rename.png"><img loading="lazy" src="images/en-message-rename.png" alt="The pencil opens an inline message name editor in the Sent list"></a><figcaption>Figure 20 · The pencil opens an inline message name editor in the Sent list</figcaption></figure>
+<h2 id="section-4">4. Find, arrange, and reuse code</h2>
+<h3 id="section-4-1">4.1 Edit blocks efficiently with the palette and search</h3>
+<p>Click a category such as <strong>Motion</strong> above the code. Its block palette opens beneath the category. Drag a block from it into the code area. Resize the palette using the handle at its bottom right, then scroll down the block list. <strong>The browser saves the size per category, and the editor remembers each category’s scroll position while you work.</strong> Switch to Looks and back to Motion to pick up where you left off.</p>
+<figure><a href="images/en-palette.png"><img loading="lazy" src="images/en-palette.png" alt="The Motion category opens its block palette below the top row"></a><figcaption>Figure 21 · The Motion category opens its block palette below the top row</figcaption></figure>
+<figure><a href="images/en-palette-reopen.png"><img loading="lazy" src="images/en-palette-reopen.png" alt="Motion reopens with its wider palette and its previous scroll position"></a><figcaption>Figure 22 · Motion reopens with its wider palette and its previous scroll position</figcaption></figure>
+<p>Search inside the palette to find <strong>blocks to add</strong> from that category. Use the search box in the main menu bar to find <strong>blocks already in your project</strong>. In the original Ball Demo, enter <strong>move</strong>, then select <strong>move 20 steps</strong> to show that block in the code pane.</p>
+<figure><a href="images/en-search.png"><img loading="lazy" src="images/en-search.png" alt="Project search finds move 20 steps in the Ball sprite"></a><figcaption>Figure 23 · Project search finds move 20 steps in the Ball sprite</figcaption></figure>
+<h3 id="section-4-2">4.2 Navigate with the code minimap</h3>
+<p>Move the pointer over the code pane to reveal the <strong>minimap at the bottom right</strong>. It shows how the scripts for the current sprite are arranged. Its outline marks the area you’re looking at. In Ball Demo Plus, look for the green flag, C key, clone start, and space-key scripts.</p>
+<p>Click a point on the map or drag its outline to move around the workspace. Use <strong>− / +</strong> below it to zoom. In a larger project, you can see which way to go to reach code outside your current view.</p>
+<figure><a href="images/en-minimap.png"><img loading="lazy" src="images/en-minimap.png" alt="The minimap at bottom right shows the positions of the separate scripts"></a><figcaption>Figure 24 · The minimap at bottom right shows the positions of the separate scripts</figcaption></figure>
+<h3 id="section-4-3">4.3 Read scripts in Z or N order</h3>
+<p>Right-click <strong>empty space in the code area</strong> and open <strong>Change code layout view</strong>. <strong>Z layout</strong> reads the original positions by row, left to right. <strong>N layout</strong> reads them by column, top to bottom. Both display the scripts in a vertical sequence so you can read through them. Choose <strong>Normal layout view</strong> to return to editing the scripts at their original positions.</p>
+<figure><a href="images/en-layout-menu.png"><img loading="lazy" src="images/en-layout-menu.png" alt="Right-click an empty part of the code area to choose Normal, Z, or N layout"></a><figcaption>Figure 25 · Right-click an empty part of the code area to choose Normal, Z, or N layout</figcaption></figure>
+<figure><a href="images/en-layout-z.png"><img loading="lazy" src="images/en-layout-z.png" alt="The Z view displays the four scripts in a vertical sequence"></a><figcaption>Figure 26 · The Z view displays the four scripts in a vertical sequence</figcaption></figure>
+<p>To move the scripts to new positions, return to Normal and choose <strong>Edit → Rearrange Code Blocks</strong>. Pick an order and direction to preview the positions. Click <strong>Rearrange</strong> to apply them.</p>
+<figure><a href="images/en-rearrange.png"><img loading="lazy" src="images/en-rearrange.png" alt="The rearrangement dialog previews the new layout for the chosen order and direction"></a><figcaption>Figure 27 · The rearrangement dialog previews the new layout for the chosen order and direction</figcaption></figure>
+<h3 id="section-4-4">4.4 Split the editor to work side by side</h3>
+<p>At the top right of the code pane, choose <strong>Editor panel layout → Split right</strong>. You now have two views of the same sprite. Edits appear in both, and each pane scrolls and zooms independently.</p>
+<p>In a larger project, keep your setup script in view on one side while working on an event script on the other. To close a pane, use its <strong>Editor panel layout → Close this split</strong>.</p>
+<figure><a href="images/en-split.png"><img loading="lazy" src="images/en-split.png" alt="The Ball code open in two side-by-side panes"></a><figcaption>Figure 28 · The Ball code open in two side-by-side panes</figcaption></figure>
+<h3 id="section-4-5">4.5 Copy a script from one tab to another</h3>
+<p>Right-click the Ball tile in the sprite list and choose <strong>Duplicate</strong> to make <strong>ボール2</strong> (Ball 2). In the original Ball tab, right-click the script that starts with <strong>when space key pressed</strong> and choose <strong>Copy</strong>. Switch to the Ball 2 tab, and open its code. Right-click an empty spot in the code area and choose <strong>Paste</strong>. The connected stack is added to the destination. The duplicate starts with one copy of the script, so you’ll have two after pasting.</p>
+<figure><a href="images/en-copy.png"><img loading="lazy" src="images/en-copy.png" alt="Copy in the context menu for the space-key script"></a><figcaption>Figure 29 · Copy in the context menu for the space-key script</figcaption></figure>
+<figure><a href="images/en-paste.png"><img loading="lazy" src="images/en-paste.png" alt="The code-area menu in the destination tab offers Paste"></a><figcaption>Figure 30 · The code-area menu in the destination tab offers Paste</figcaption></figure>
+<figure><a href="images/en-paste-result.png"><img loading="lazy" src="images/en-paste-result.png" alt="The space-key script has been pasted into the destination tab"></a><figcaption>Figure 31 · The space-key script has been pasted into the destination tab</figcaption></figure>
+<h3 id="section-4-6">4.6 Drag a script to another sprite's tab via the sprite list</h3>
+<p>You can also copy a script directly from the code area to another sprite in the same project.</p>
+<ol>
+<li>Open the <strong>sprite list</strong> on the left and return to the original <strong>ボール</strong> tab.</li>
+<li>Grab the <strong>yellow block at the top</strong> of the space-key script. Start on the block label, clear of the key dropdown. Drag to the <strong>ボール2 tile</strong> in the sprite list and release when the tile reacts.</li>
+<li>Open the <strong>ボール2 tab</strong> at the top to see the copied stack. The original tab still has its script.</li>
+</ol>
+<figure><a href="images/en-drag-motion.png"><img loading="lazy" src="images/en-drag-motion.png" alt="Dragging the yellow event block carries the attached block with it"></a><figcaption>Figure 32 · Dragging the yellow event block carries the attached block with it</figcaption></figure>
+<figure><a href="images/en-drag.png"><img loading="lazy" src="images/en-drag.png" alt="Dragging from the original sprite’s code to the ボール2 tile in the left drawer"></a><figcaption>Figure 33 · Dragging from the original sprite’s code to the ボール2 tile in the left drawer</figcaption></figure>
+<figure><a href="images/en-drag-result.png"><img loading="lazy" src="images/en-drag-result.png" alt="The ボール2 tab now contains the space-key script copied by dragging"></a><figcaption>Figure 34 · The ボール2 tab now contains the space-key script copied by dragging</figcaption></figure>
+<h3 id="section-4-7">4.7 Save the edited project as an SB3 file</h3>
+<p>When you finish editing, you can save your project as an SB3 file. Choose <strong>File → Save As…</strong> and enter a project name. Select <strong>SB3 (current storage settings)</strong>, then click <strong>Choose Where to Save…</strong> at the lower right.</p>
+<figure><a href="images/en-save-dialog.png"><img loading="lazy" src="images/en-save-dialog.png" alt="The Save As dialog with the SB3 format and Choose Where to Save at the lower right"></a><figcaption>Figure 35 · The Save As dialog with the SB3 format and Choose Where to Save at the lower right</figcaption></figure>
+<h2 id="next">Where to go next</h2>
+<p>These guides cover saving projects in folders and working with GitHub.</p>
+<ul>
+<li><a href="../git/#project-folder">Open and save project folders · Japanese</a></li>
+<li><a href="../git/#local-git">Open and restore earlier versions from Git history · Japanese</a></li>
+<li><a href="../github/">Develop projects on GitHub · Japanese</a></li>
+</ul>
+
+</main></body></html>
