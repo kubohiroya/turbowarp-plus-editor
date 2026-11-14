@@ -92,7 +92,7 @@
     "@kubohiroya/turbowarp-plus-editor-host": "0.1.0",
     "@kubohiroya/turbowarp-plus-editor-project-folder": "0.9.3",
     "@kubohiroya/turbowarp-plus-editor-project-model": "0.1.2",
-    "@kubohiroya/turbowarp-plus-editor-project-starter": "0.1.0",
+    "@kubohiroya/turbowarp-plus-editor-project-starter": "0.2.0",
     "@kubohiroya/turbowarp-plus-editor-sprite-panes": "0.1.2",
     "@kubohiroya/turbowarp-plus-editor-ui": "file:packages/editor-ui",
     "@kubohiroya/turbowarp-plus-editor-views": "file:packages/editor-views",
