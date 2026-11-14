@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
 import {test} from 'node:test';
 import {attachStageInput} from '@kubohiroya/turbowarp-plus-editor-workbench';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
@@ -30,4 +31,15 @@ test('the Editor resolves the pinned sprite-panes package split out of the layou
     const {version, resolved} = lock.packages[`node_modules/${name}`];
     assert.equal(manifest.devDependencies[name], version);
     assert.equal(resolved, `https://registry.npmjs.org/${name}/-/turbowarp-plus-editor-sprite-panes-${version}.tgz`);
+});
+
+test('the Editor installs no package from a .tgz archive outside npm and keeps none in the repository', () => {
+    // Bundling package .tgz files is not allowed: publish to npm and pin the published version instead.
+    const specs = Object.entries({...manifest.dependencies, ...manifest.devDependencies, ...manifest.optionalDependencies});
+    assert.deepEqual(specs.filter(([, spec]) => /\.tgz$/u.test(spec)), []);
+    const local = Object.entries(lock.packages).filter(([, entry]) => typeof entry.resolved === 'string' &&
+        entry.resolved.endsWith('.tgz') && !entry.resolved.startsWith('https://registry.npmjs.org/'));
+    assert.deepEqual(local.map(([name]) => name), []);
+    const tracked = execFileSync('git', ['ls-files', '*.tgz'], {cwd: new URL('..', import.meta.url), encoding: 'utf8'}).trim();
+    assert.equal(tracked, '');
 });
