@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ブロックを探して置く・整理する — 機能ガイド — TurboWarp-Plus-Editor</title>
-<meta name="description" content="TurboWarp Plusの横型パレット、パレット内検索、パレットの別画面、削除予告、ミニマップ、右クリックメニュー、コード配置の切り替え、コードタブ間のコピー。">
+<meta name="description" content="TurboWarp Plusの横型パレット、パレット内検索、パレットの別ウィンドウ、削除予告、ミニマップ、右クリックメニュー、コードの並びの切り替えと再配置、別のスプライトへのコピー。">
 <link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="en" href="index.en.html">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
@@ -35,10 +36,11 @@
 <li><a href="#palette-search">6.2 パレットのカテゴリ内でブロックを検索する</a></li>
 <li><a href="#palette-size">6.3 カテゴリの小窓を見やすい大きさにする</a></li>
 <li><a href="#palette-order">6.4 カテゴリの順序を変える</a></li>
-<li><a href="#palette-popout">6.5 ブロックパレットを別画面で開く</a></li>
+<li><a href="#palette-popout">6.5 ブロックパレットを別ウィンドウで開く</a></li>
 <li><a href="#delete-preview">6.6 パレットに戻すとブロックを削除する</a></li>
 <li><a href="#minimap">6.7 ミニマップとズームで長いコードを移動する</a></li>
 <li><a href="#context-menu">6.8 右クリックメニューで操作する</a></li>
+<li><a href="#arrange">6.9 コードを並べ替える・別のスプライトへコピーする</a></li>
 </ol>
 </nav>
 
@@ -46,8 +48,9 @@
 
 <h2>6.1 横型パレットからブロックを置く</h2>
 
-<p>Plus配置では、コード画面の上部にカテゴリが横に並びます。「動き」「見た目」「音」「イベント」「制御」「調べる」「演算」「変数」「リスト」「ブロック定義」の順で、機能拡張を追加するとそのカテゴリも加わります。変数とリストのブロックは、「変数」と「リスト」に分かれています。</p>
+<p><a href="../screen/#layout">Plus標準配置</a>では、コード画面の上部にカテゴリが横に並びます。「動き」「見た目」「音」「イベント」「制御」「調べる」「演算」「変数」「リスト」「ブロック定義」の順で、拡張を追加するとそのカテゴリも加わります。変数とリストのブロックは、「変数」と「リスト」に分かれています。</p>
 <p>カテゴリをクリックすると、その下にブロックの小窓が開きます。使いたいブロックをコード領域へドラッグします。小窓を閉じるには、Escを押すか、小窓の外をクリックします。小窓のスクロール位置はカテゴリごとに保持されます。</p>
+<p>ふだんは、パレットの横表示と縦表示を切り替えられません。URLに <code>twPlusHorizontalBlockPalette=1</code> を付けて開くと、パレットを右クリックして横表示と縦表示を切り替えられるようになります。切り替えても、<a href="#palette-order">並べ替えたカテゴリの順序</a>は引き継がれます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/193">横型パレット</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/216">スクロール位置の復元</a></p>
 
 </section>
@@ -69,7 +72,7 @@
 
 <p>小窓の右下にある斜線をドラッグすると、幅と高さを変えられます。変えたサイズはカテゴリごとにブラウザーに保存されます。ペインや画面が狭いときは表示できる範囲に収まり、十分な広さに戻ると保存したサイズで開きます。</p>
 <figure class="guide-detail"><a href="../images/palette-resize-detail.png"><img src="../images/palette-resize-detail.png" width="330" height="230" alt="「見た目」の小窓の右下部分。右下の角に、幅と高さを変える斜線のハンドルがある。" loading="lazy"></a><figcaption>小窓右下の斜線がリサイズのハンドルです。</figcaption></figure>
-<p>大きな画面でパレットを常に表示しておきたいときは、<a href="#palette-popout">ブロックパレットを別画面で開く</a>こともできます。</p>
+<p>大きな画面でパレットを常に表示しておきたいときは、<a href="#palette-popout">ブロックパレットを別ウィンドウで開く</a>こともできます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/239">小窓のリサイズ</a></p>
 
 </section>
@@ -78,7 +81,7 @@
 
 <h2>6.4 カテゴリの順序を変える</h2>
 
-<p>カテゴリを長押しし、移動先を示す枠に合わせて離すと並べ替えられます。ドラッグ中は、つかんだカテゴリのプレビューがポインターに付いて動きます。パレットの外で離すか、Escを押すと取り消せます。ページを再読み込みすると初期の順序に戻ります。<code>twPlusHorizontalBlockPalette=1</code> を付けて起動した場合は、パレットを右クリックして横表示と縦表示を切り替えられ、並べ替えた順序も引き継がれます。</p>
+<p>カテゴリを長押しし、移動先を示す枠に合わせて離すと並べ替えられます。ドラッグ中は、つかんだカテゴリのプレビューがポインターに付いて動きます。パレットの外で離すか、Escを押すと取り消せます。ページを再読み込みすると初期の順序に戻ります。</p>
 <figure class="guide-detail"><a href="../images/palette-order-detail.png"><img src="../images/palette-order-detail.png" width="540" height="64" alt="横型パレットで「動き」のカテゴリを長押しし、「音」の位置へ移動している途中。「音」に移動先の枠が付き、その上に「動き」のプレビューが重なっている。" loading="lazy"></a><figcaption>つかんだカテゴリのプレビューと移動先の枠を見ながら並べ替えます。</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/250">カテゴリの並べ替え</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/331">ドラッグ中のプレビュー</a></p>
 
@@ -86,11 +89,11 @@
 
 <section id="palette-popout">
 
-<h2>6.5 ブロックパレットを別画面で開く</h2>
+<h2>6.5 ブロックパレットを別ウィンドウで開く</h2>
 
 <p>「編集パネルのレイアウト」から「ブロックパレットを別画面で開く」を選ぶと、横型パレットがブラウザーの別ウィンドウに移ります。左端の丸いカテゴリボタンでカテゴリを選び、ブロックをエディターのコード領域へドラッグして置きます。右上の「ブロックパレットのレイアウト」ボタンには現在の並び方がアイコンで表示されます。押すと「横並びにする」「縦並びにする」で並び方を切り替えられ、「このパネルを別画面から元に戻す」でエディター内に戻せます。</p>
-<figure class="guide-detail"><a href="../images/palette-popout.png"><img src="../images/palette-popout.png" width="520" height="520" alt="別画面で開いたブロックパレット。左端に「動き」から「ブロック定義」までの丸いカテゴリボタンが縦に並び、動きのブロックが表示されている。右上にレイアウトのボタンがある。" loading="lazy"></a><figcaption>別画面で開いたブロックパレット。別画面にある間は、エディター内の横型パレットは表示されません。</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/361">パレットの別画面</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/370">丸いカテゴリボタン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/380">並び方の表示</a></p>
+<figure class="guide-detail"><a href="../images/palette-popout.png"><img src="../images/palette-popout.png" width="520" height="520" alt="別ウィンドウで開いたブロックパレット。左端に「動き」から「ブロック定義」までの丸いカテゴリボタンが縦に並び、動きのブロックが表示されている。右上にレイアウトのボタンがある。" loading="lazy"></a><figcaption>別ウィンドウで開いたブロックパレット。別ウィンドウにある間は、エディター内の横型パレットは表示されません。</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/361">パレットの別ウィンドウ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/370">丸いカテゴリボタン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/380">並び方の表示</a></p>
 
 </section>
 
@@ -107,8 +110,8 @@
 
 <h2>6.7 ミニマップとズームで長いコードを移動する</h2>
 
-<p>Plus配置では、コード画面右下のミニマップでブロック全体の位置を見渡せます。ミニマップとその下のボタンは、ポインターをコードパネルに重ねている間だけ表示されます。ミニマップの枠は現在の表示範囲です。離れたブロックへ移動するときは、ミニマップ内の移動先をクリックするか、枠をドラッグします。下に並ぶボタンで縮小・拡大したり、倍率を初期値に戻したりできます。</p>
-<figure><a href="../images/minimap-current.png"><img src="../images/minimap-current.png" width="1440" height="1000" alt="左上と右下に離してスクリプトを置いたコード画面。右下にミニマップと、縮小・拡大・リセットのボタンが並ぶ。" loading="lazy"></a><figcaption>右下のミニマップには作品のスクリプト全体が表示され、枠が現在の表示範囲を示します。</figcaption></figure>
+<p>Plus標準配置では、コード画面右下のミニマップで、開いているスプライトのブロック全体の位置を見渡せます。ミニマップとその下のボタンは、ポインターをコード領域に置いている間だけ表示されます。ミニマップの枠は現在の表示範囲です。離れたブロックへ移動するときは、ミニマップ内の移動先をクリックするか、枠をドラッグします。下に並ぶボタンで縮小・拡大したり、倍率を初期値に戻したりできます。</p>
+<figure><a href="../images/minimap-current.png"><img src="../images/minimap-current.png" width="1440" height="1000" alt="左上と右下に離してスクリプトを置いたコード画面。右下にミニマップと、縮小・拡大・リセットのボタンが並ぶ。" loading="lazy"></a><figcaption>右下のミニマップには、このスプライトのスクリプト全体が表示され、枠が現在の表示範囲を示します。</figcaption></figure>
 <p>ミニマップを表示しないようにするには、<code>twPlusWorkspaceMinimap=0</code> を指定します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/200">ミニマップの操作</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/222">ズームと配置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/549">ポインターを重ねたパネルに表示</a></p>
 
@@ -131,18 +134,30 @@
 <tr><th scope="row">コスチューム・音</th><td>複製、書き出し、削除</td></tr>
 </tbody></table></div>
 <p>このほか、アドオンが追加する項目（ブロックの画像書き出し、ローカル変数とグローバル変数の切り替え、最前面・最背面への移動など）にもアイコンが付きます。スクリプトの書き出し・読み込みとコピー・貼り付けの使い方は、<a href="../reuse/#transfer">スクリプトとステージを別作品へ転送する</a>で説明しています。</p>
+<p>コードの並びの見え方の切り替えと、別のスプライトへのコピーは<a href="#arrange">コードを並べ替える・別のスプライトへコピーする</a>で説明しています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューの操作アイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">既定で表示</a></p>
+
+</section>
+
+<section id="arrange">
+
+<h2>6.9 コードを並べ替える・別のスプライトへコピーする</h2>
+
 <h3>コードの並びの見え方を切り替える</h3>
-<p>コード領域の空白を右クリックし、「コードの並びの見え方を変更する」から「通常配置の見え方」「Z配置の見え方」「N配置の見え方」を選びます。いまの見え方にはチェックが付きます。Z配置では行の順に、N配置では列の順に、スクリプトを詰めて並べて表示します。見え方を変えても、作品の中のブロックの位置と編集履歴は変わりません。</p>
-<p>ブロックの位置そのものを並べ直したいときは、<a href="../screen/#edit-menu">「編集」メニュー</a>の「コードブロックの再配置」を使います。開いているコードタブのスクリプトについて、「順序」（「Z方式（行順）」または「N方式（列順）」）と「方向」（「垂直」または「水平」）を選んでプレビューを確かめ、「再配置する」で確定します。再配置は「元に戻す」1回で戻せます。</p>
+<p>コード領域の空白を右クリックし、「コードの並びの見え方を変更する」から「通常配置の見え方」「Z配置の見え方」「N配置の見え方」を選びます。いまの見え方にはチェックが付きます。離れた場所にあるスクリプトを順に読みたいときに使います。</p>
+<ul><li><strong>Z配置の見え方</strong>：上端の高さがほぼそろったスクリプトを1つの行とみなし、上の行から順に、行の中では左から右へたどります。</li><li><strong>N配置の見え方</strong>：左端の位置がほぼそろったスクリプトを1つの列とみなし、左の列から順に、列の中では上から下へたどります。</li></ul>
+<p>どちらも、たどった順にスクリプトを縦一列に詰めて表示します。見え方を変えても、作品の中のブロックの位置と編集履歴は変わりません。「通常配置の見え方」に戻すと、元の位置で編集できます。</p>
+<h3>コードブロックを再配置する</h3>
+<p>ブロックの位置そのものを並べ直したいときは、<a href="../screen/#edit-menu">「編集」メニュー</a>の「コードブロックの再配置」を使います。開いているコードタブのスクリプトについて、「順序」（「Z方式（行順）」または「N方式（列順）」）と「方向」（「垂直」または「水平」）を選ぶと、移動後の配置がダイアログ内にプレビューされます。「再配置する」で確定します。順序のたどり方は上の見え方と同じで、「垂直」では縦一列に、「水平」では横一列に、間隔をそろえて並べます。再配置は「元に戻す」1回で戻せます。手順は<a href="../ball-demo/#section-4-3">ボールのデモ</a>でも図付きで説明しています。</p>
 <h3>別のスプライトのコードへブロックをコピーする</h3>
-<p>パネルを分割したり、コードパネルを別画面で開いたりして、同じ作品の2つのコードタブを並べます。一方のコード領域にあるブロックを、もう一方のコード領域へドラッグして離すと、そのスプライトへコピーされます。つながったブロックはスクリプト全体がコピーされ、コピー元のブロックは元の位置とつながりのまま残ります。コピー先では「元に戻す」で取り消せます。ドラッグ中にEscを押すと、コピーせずに終わります。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューの操作アイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">既定で表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/549">コードの見え方と再配置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/563">見え方の切り替えを背景メニューへ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/568">コードタブ間のコピー</a></p>
+<p>パネルを分割したり、コードのパネルを<a href="../workspace/#panel-popout">別ウィンドウで開いたり</a>して、コピー元とコピー先、2つのスプライトのコードタブを並べます。一方のコード領域にあるブロックを、もう一方のコード領域へドラッグして離すと、そのスプライトへコピーされます。つながったブロックはスクリプト全体がコピーされ、コピー元のブロックは元の位置とつながりのまま残ります。コピー先では「元に戻す」で取り消せます。ドラッグ中にEscを押すと、コピーせずに終わります。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/549">コードの見え方と再配置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/563">見え方の切り替えを背景メニューへ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/568">コードタブ間のコピー</a></p>
 
 </section>
 <nav class="pager" aria-label="前後のページ">
-<a class="prev" href="../workspace/"><small>前のページ</small>5. 作業領域を分割・別画面にする</a>
+<a class="prev" href="../workspace/"><small>前のページ</small>5. 作業領域を分割・別ウィンドウにする</a>
 <a class="next" href="../search/"><small>次のページ</small>7. 作品全体を検索・置換する</a>
 </nav>
 </main>
-<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">エディターを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
 </body></html>

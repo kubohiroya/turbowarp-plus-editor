@@ -5,6 +5,7 @@
 <title>スクリプトと素材を再利用する — 機能ガイド — TurboWarp-Plus-Editor</title>
 <meta name="description" content="TurboWarp Plusでスクリプトやステージを別作品へ転送し、バンドル素材を背景・コスチューム・音として追加する方法。">
 <link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="en" href="index.en.html">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
@@ -41,11 +42,11 @@
 
 <h2>9.1 スクリプトとステージを別作品へ転送する</h2>
 
-<p>TurboWarp Plus Editorには、Scratchの編集画面の下端にあるバックパックがありません。スクリプトを再利用するときは、コピー・貼り付けか、.blocks3 の書き出し・読み込みを使います。ステージは .stage3、スプライト全体は .sprite3 で別の作品へ移せます。</p>
-<p>移したいスクリプトのブロックを右クリックし、「スクリプトを書き出し」または「コピー」を選びます。どちらも、右クリックしたブロックを含む、つながった一組のブロック全体が対象です。転送先ではコード領域の空白を右クリックし、ファイルなら「スクリプトを読み込み」、コピーした内容なら「貼り付け」を選びます。コピーと貼り付けには、<a href="../screen/#edit-menu">「編集」メニュー</a>やCtrl／Cmd+C・Vも使えます。</p>
-<p>同じ作品の中で別のスプライトへ移すだけなら、2つのコードタブを並べ、ブロックを相手のコード領域へドラッグしてもコピーできます（<a href="../blocks/#context-menu">別のスプライトのコードへブロックをコピーする</a>）。</p>
+<p>TurboWarp Plus Editorには、Scratchの編集画面の下端にあるバックパックがありません。スクリプトを再利用するときは、コピー・貼り付けか、.blocks3の書き出し・読み込みを使います。ステージは.stage3、スプライト全体は.sprite3で別の作品へ移せます。</p>
+<p>移したいスクリプトのブロックを右クリックし、「スクリプトを書き出し」または「コピー」を選びます。どちらも、右クリックしたブロックを含む、つながった一組のブロック全体が対象です。転送先ではコード領域の空白を右クリックし、ファイルなら「スクリプトを読み込み」、コピーした内容なら「貼り付け」を選びます。コピーと貼り付けには、<a href="../screen/#edit-menu">「編集」メニュー</a>や⌘C／⌘V（WindowsはCtrl+C／Ctrl+V）も使えます。</p>
+<p>同じ作品の中で別のスプライトへ移すだけなら、2つのコードタブを並べ、ブロックを相手のコード領域へドラッグしてもコピーできます（<a href="../blocks/#arrange">コードを並べ替える・別のスプライトへコピーする</a>）。</p>
 <figure class="guide-detail"><a href="../images/block-context-menu.png"><img src="../images/block-context-menu.png" width="640" height="480" alt="ブロックの右クリックメニュー。複製、コメントを追加、ブロックを削除、スクリプトを書き出し、コピー、スペースを確保、すべてコピー、ブロックをコピー、ブロックを切り取りにアイコンが並ぶ。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンです。</figcaption></figure>
-<ul><li><strong>.blocks3</strong> にはスクリプトと、それが使うブロック定義・変数・リスト・メッセージ・拡張の情報が含まれます。同じオリジンで開いたウィンドウ間では、OSのクリップボードへのアクセスを許可していなくてもコピーと貼り付けができます。別のオリジン間では、対応ブラウザーとクリップボードの読み取り許可が必要です。</li><li><strong>.stage3</strong> は、Plus配置なら背景のタイルを右クリックして「ステージを書き出し」を選び、Scratch配置ならステージを右クリックして書き出します。Scratch配置で取り込むには、背景の「選ぶ」メニューで「ステージを読み込み（追加）」を選びます。背景・音・スクリプトが現在のステージに追加されます。</li><li>名前・範囲・種類が一致する変数やリストがあれば、読み込み先にある項目とその値を使います。名前が衝突するブロック定義や素材は、必要に応じて改名されます。計算で決まる背景・音の名前や番号は、自動変換の対象外です。</li><li>拡張を実行できるかどうかは、転送先の設定や承認で決まります。</li></ul>
+<ul><li><strong>.blocks3</strong>には、スクリプトと、それが使うブロック定義・変数・リスト・メッセージ・拡張の情報が含まれます。</li><li>同じサイト（同じオリジン）で開いたエディターのウィンドウ同士なら、OSのクリップボードへのアクセスを許可していなくてもコピーと貼り付けができます。別のサイトで開いたエディターへ貼り付けるには、対応ブラウザーと、クリップボードの読み取りの許可が必要です。</li><li><strong>.stage3</strong>は、<a href="../screen/#layout">Plus標準配置</a>なら背景のタイルを右クリックして「ステージを書き出し」を選び、Scratch配置ならステージを右クリックして書き出します。読み込みはScratch配置で行い、背景の「選ぶ」メニューで「ステージを読み込み（追加）」を選びます。Plus標準配置の背景のタイルの右クリックメニューには、読み込みの項目はありません。背景・音・スクリプトが現在のステージに追加されます。</li><li>名前・範囲・種類が一致する変数やリストがあれば、読み込み先にある項目とその値を使います。名前が衝突するブロック定義や素材は、必要に応じて改名されます。ブロックの引数に演算や変数で指定した背景名・音名は、転送先に合わせて書き換えられません。</li><li>拡張を実行できるかどうかは、転送先の設定や承認で決まります。</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">転送機能の仕様</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/351">バックパックの撤去</a></p>
 
 </section>
@@ -70,5 +71,5 @@
 <a class="next" href="../git/"><small>次のページ</small>10. 作品フォルダとGitで管理する</a>
 </nav>
 </main>
-<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">エディターを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
 </body></html>

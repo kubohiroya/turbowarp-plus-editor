@@ -5,6 +5,7 @@
 <title>Develop projects on GitHub — Feature guide — TurboWarp-Plus-Editor</title>
 <meta name="description" content="How to develop a Scratch project moved to GitHub with TurboWarp Plus Editor, following issues, branches, commits, push, pull requests, merge, and releases.">
 <link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="ja" href="index.html">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
@@ -12,7 +13,7 @@
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 12. Develop projects on GitHub · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
 <p class="eyebrow">Feature guide 12/12 · Updated November 14, 2026</p>
 <h1>Develop projects on GitHub</h1>
-<p class="lead">Manage a project folder on GitHub, and move edits, commits, and reviews forward with issues and working branches. Check project diffs and commit in the Editor, and create pull requests on GitHub or in an Editor that has a GitHub connection set up.</p>
+<p class="lead">Manage a project folder on GitHub, and move edits, commits, and reviews forward with issues and working branches. Check project diffs and commit in the editor, and create pull requests on GitHub or in an editor with a GitHub connection (a web build with a connection target set up, or a supported Desktop app).</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
 <ul>
 <li><a href="../open/index.en.html">Open projects</a></li>
@@ -45,7 +46,7 @@
 </ol>
 </nav>
 
-<p class="guide-note">The figures show the full screen of the public Editor, in English mode, and of GitHub as of November 14, 2026. Screens that need a GitHub connection were captured earlier with a simulated connection for testing, in the Japanese UI. Select an image to open it at full size.</p>
+<p class="guide-note">The figures show the full screen of the public editor (GitHub Pages), in English mode, and of GitHub as of November 14, 2026. Screens that need a GitHub connection were captured earlier with a simulated connection for testing, in the Japanese UI. Select an image to open it at full size.</p>
 <section id="migrate">
 
 <h2>12.1 Put your project on GitHub</h2>
@@ -53,7 +54,7 @@
 <p>This guide assumes <strong>one project per repository</strong>. In a repository created with Project Starter, the project is in <code>project/</code>, and the README and the check and release settings are outside it. Improvements to the same project are made on working branches, and the versions you distribute are managed with releases.</p>
 <pre><code>cat-adventure/          repository root
 ├── .git/
-├── project/            project folder you open in the Editor
+├── project/            project folder you open in the editor
 ├── README.md
 └── .github/workflows/  checks and releases for this project</code></pre>
 
@@ -63,11 +64,11 @@
 <p>The following example assumes <code>cat.sb3</code> is in your working folder. <code>--lang en</code> makes the README and the forms English; without it, they are in Japanese.</p>
 <pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
 <p><code>init</code> creates the repository locally and, if Git author information is set, makes the first commit. If author information is not set, <a href="#commit-author">set the author in the repository</a> and run <code>git -C cat-adventure commit -m "Import cat"</code>. For a Scratch project you have shared, you can pass the project page URL instead of the SB3 path.</p>
-<p>You can open the generated <code>cat-adventure/project</code> with "File" → "Open Project Folder…" in the Editor. When you are ready to put it on GitHub, authenticate with <code>gh auth login</code> and then run <code>publish</code>. By default it creates a private repository and pushes <code>main</code>.</p>
+<p>You can open the generated <code>cat-adventure/project</code> with "File" → "Open Project Folder…" in the editor. When you are ready to put it on GitHub, authenticate with <code>gh auth login</code> and then run <code>publish</code>. By default it creates a private repository and pushes <code>main</code>.</p>
 <pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.1.0 publish cat-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="The repository that is created" tabindex="0">
 <table><caption>The repository that is created</caption><thead><tr><th scope="col">Location</th><th scope="col">Contents</th></tr></thead><tbody>
-<tr><th scope="row"><code>project/</code></th><td>The project folder. Open, edit, and save it in the Editor</td></tr>
+<tr><th scope="row"><code>project/</code></th><td>The project folder. Open, edit, and save it in the editor</td></tr>
 <tr><th scope="row"><code>.github/workflows/check.yml</code></th><td>Checks the project and builds an SB3 to try on pushes to <code>main</code>, pull requests, and manual runs ("Check project")</td></tr>
 <tr><th scope="row"><code>.github/workflows/release.yml</code></th><td>When you publish a release, attaches the SB3 and its SHA-256 to that release</td></tr>
 <tr><th scope="row"><code>.github/workflows/scratch-import.yml</code></th><td>Brings the latest version you shared again on Scratch in as a pull request ("Import from Scratch"). For a project imported from a Scratch share URL, the original Scratch project ID can be used</td></tr>
@@ -85,14 +86,14 @@
 <p>Move each change forward with one issue, one branch, and one pull request. Keep the <code>main</code> branch playable at all times, and do the work on branches.</p>
 <figure class="guide-flow"><div class="flow" role="img" aria-label="Write an issue. Create a branch. Edit and save. Commit. Push. Create a pull request. Check and merge. Release."><div>Issue</div><span aria-hidden="true">→</span><div>Branch</div><span aria-hidden="true">→</span><div>Edit and save</div><span aria-hidden="true">→</span><div>Commit</div><span aria-hidden="true">→</span><div>Push</div><span aria-hidden="true">→</span><div>Pull request</div><span aria-hidden="true">→</span><div>Merge</div><span aria-hidden="true">→</span><div>Release</div></div><figcaption>How one change gets into the project.</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="Where to do each step" tabindex="0">
-<table><caption>Where to do each step</caption><thead><tr><th scope="col">Step</th><th scope="col">Plus Editor</th><th scope="col">GitHub website and other tools</th></tr></thead><tbody>
+<table><caption>Where to do each step</caption><thead><tr><th scope="col">Step</th><th scope="col">The editor</th><th scope="col">GitHub website and other tools</th></tr></thead><tbody>
 <tr><th scope="row">Issue</th><td>—</td><td>"Issues" on GitHub</td></tr>
 <tr><th scope="row">Branch</th><td>Create and switch with the branch button in the menu bar, or with "Create PR" in Local Git</td><td>"Create a branch" on the issue, GitHub Desktop, <code>git switch -c</code></td></tr>
 <tr><th scope="row">Edit and save</th><td>Write to the project folder with "File" → "Save Project"</td><td>—</td></tr>
 <tr><th scope="row">Commit</th><td>Select what to commit in "Commit saved changes", enter a message, and commit</td><td>GitHub Desktop, <code>git commit</code></td></tr>
-<tr><th scope="row">Push and pull</th><td>In an Editor with a GitHub connection set up, authenticate with "Connect to GitHub…" in Local Git and use the buttons in "Sync with GitHub"</td><td>GitHub Desktop, <code>git push</code> and <code>git pull</code></td></tr>
+<tr><th scope="row">Push and pull</th><td>In an editor with a GitHub connection, authenticate with "Connect to GitHub…" in Local Git and use the buttons in "Sync with GitHub"</td><td>GitHub Desktop, <code>git push</code> and <code>git pull</code></td></tr>
 <tr><th scope="row">Pull request</th><td>Compare block by block in "Merge". Depending on the connection and permissions, you can also create PRs, run the compared version, and send reviews</td><td>"Pull requests" on GitHub, <code>gh pr</code></td></tr>
-<tr><th scope="row">Release</th><td>"File" → "Releases…" copies npm commands, creates tags, and sends HTML for Pages (sending tags and HTML needs a connection that allows push)</td><td>"Releases" on GitHub, <code>gh release create</code></td></tr>
+<tr><th scope="row">Release</th><td>"File" → "Releases…" copies npm commands, creates tags, and sends HTML for Pages (sending tags and HTML needs a connection with "Allow sending to GitHub (push)" checked)</td><td>"Releases" on GitHub, <code>gh release create</code></td></tr>
 </tbody></table></div>
 <p>To read and write project folders in the browser, you need Chrome or Edge with File System Access support. You can check the connection and permissions each task needs in the table. <a href="../git/index.en.html#github-sync">Tasks and connections</a></p>
 
@@ -111,10 +112,10 @@
 
 <h2>12.4 Create a working branch</h2>
 
-<p>Before you create a branch, bring your local <code>main</code> up to date with GitHub (pull in <a href="#push">12.7</a>). Then create a branch in the Editor.</p>
+<p>Before you create a branch, bring your local <code>main</code> up to date with GitHub (pull in <a href="#push">12.7</a>). Then create a branch in the editor.</p>
 <ol><li>Choose "File" → "Choose Repository…" and select the repository folder. If the project is not open yet, open <code>project/</code> with "Open Project" at the top of Local Git.</li><li>Stop the project, save all edits, and commit the changes you need. You cannot switch branches while there are unsaved edits or uncommitted changes.</li><li>Open "Create PR" in Local Git, and in "New branch name" under "Local branches", enter a name that shows the issue number and what it is about (for example <code>12-cat-walk</code>). Check "Switch to it" and click "Create Branch". You can also create one with "New Branch…" from the branch button in the menu bar.</li></ol>
 <figure>
-<a href="../images/en/git-branch-workspace.png"><img src="../images/en/git-branch-workspace.png" width="1440" height="960" alt="The branch menu at the top right of the Editor. The current branch 12-cat-walk with a check mark, main to switch to, New Branch…, and Open Local Git are shown." loading="lazy"></a>
+<a href="../images/en/git-branch-workspace.png"><img src="../images/en/git-branch-workspace.png" width="1440" height="960" alt="The branch menu at the top right of the editor. The current branch 12-cat-walk with a check mark, main to switch to, New Branch…, and Open Local Git are shown." loading="lazy"></a>
 <figcaption>Clicking the branch name in the menu bar lists the current branch (checked) and the branches you can switch to. Create a branch with "New Branch…".</figcaption>
 </figure>
 <p>To branch off from an earlier commit, choose "⋯" → "Create branch here…" on the commit in "Git history".</p>
@@ -126,7 +127,7 @@
 
 <h2>12.5 Edit and save the project</h2>
 
-<p>Edit blocks, variables and lists, sprites, costumes, sounds, and so on, then choose "File" → "Save Project". <code>project.source.json</code> in the project folder is updated, and <code>assets/</code> and <code>sb3-source.json</code> are updated as needed. Before saving, the Editor checks that the folder has not been changed outside the Editor.</p>
+<p>Edit blocks, variables and lists, sprites, costumes, sounds, and so on, then choose "File" → "Save Project". <code>project.source.json</code> in the project folder is updated, and <code>assets/</code> and <code>sb3-source.json</code> are updated as needed. Before saving, the editor checks that the folder has not been changed outside the editor.</p>
 <p>While you are updating the project in the same repository, use "Save Project". If you make an SB3 with "Save As…", the link to the project folder is lost. You can check the Git status of saved files in the <a href="../git/index.en.html#folder-files">"Project folder" panel</a>.</p>
 <p><a href="../git/index.en.html#project-folder">Open and save a project folder</a></p>
 
@@ -148,7 +149,7 @@
 <figcaption>The project data is selected with "Include in commit" from the diff of the Cat's code, and a commit message is entered in the fixed box at the lower left. Changes such as README.md stay in your working folder.</figcaption>
 </figure>
 <h3 id="commit-author">Set the commit author</h3>
-<p>For the commit author, the project repository's <code>user.name</code> and <code>user.email</code> take priority. In builds where Desktop passes Git's global author settings to the Editor, those settings are used when the repository has no author information.</p>
+<p>For the commit author, the project repository's <code>user.name</code> and <code>user.email</code> take priority. In builds where Desktop passes Git's global author settings to the editor, those settings are used when the repository has no author information.</p>
 <p>If the author is shown as not set, open the project repository in a terminal and set your name and email address for that repository. For a public repository, you can also use the <code>noreply</code> address shown in your GitHub account settings. After setting them, click "Refresh local status" and commit again.</p>
 <pre><code>git config --local user.name "Your Name"
 git config --local user.email "you@example.com"</code></pre>
@@ -160,12 +161,12 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.7 Send to GitHub (push)</h2>
 
-<p>In an Editor that has a GitHub connection set up, you can push and pull from the Editor. Choose the default connection method with the Plus logo at the left end of the menu bar → "GitHub Connection Settings…".</p>
-<ol><li>Open "Connect to GitHub…" on the first line of Local Git. Confirm the target, check "Allow sending to GitHub (push)", and click "Connect to GitHub". Follow the instructions to authenticate on GitHub.</li><li>After connecting, open "Merge" and click "Send current branch (push)" in "Sync with GitHub". The Editor never force-pushes.</li><li>To bring in changes from GitHub, use "Update remote refs (fetch)" and "Update local branch and files (pull)". Pull runs only when a fast-forward is possible; afterwards, reopen the project with "Reload Project".</li></ol>
+<p>In an editor with a GitHub connection, you can push and pull from the editor. Choose the default connection method with the Plus logo at the left end of the menu bar → "GitHub Connection Settings…".</p>
+<ol><li>Open "Connect to GitHub…" on the first line of Local Git. Confirm the target, check "Allow sending to GitHub (push)", and click "Connect to GitHub". Follow the instructions to authenticate on GitHub.</li><li>After connecting, open "Merge" and click "Send current branch (push)" in "Sync with GitHub". The editor never force-pushes.</li><li>To bring in changes from GitHub, use "Update remote refs (fetch)" and "Update local branch and files (pull)". Pull runs only when a fast-forward is possible; afterwards, reopen the project with "Reload Project".</li></ol>
 <h3 id="push-without-connection">Without a connection</h3>
-<p>If, as in the public Pages version, "Connect to GitHub…" does not appear in Local Git and "GitHub Connection Settings…" shows "No GitHub connection is configured.", push and pull in one of these ways.</p>
+<p>If, as in the public editor (GitHub Pages), "Connect to GitHub…" does not appear in Local Git and "GitHub Connection Settings…" shows "No GitHub connection is configured.", push and pull in one of these ways.</p>
 <ul><li><strong>GitHub Desktop.</strong> Add the repository folder with "File" → "Add local repository", and send with "Push origin" ("Publish branch" for a new branch). To bring in changes, use "Fetch origin" → "Pull origin".</li><li><strong>Commands.</strong> To send a new branch for the first time, run <code>git push -u origin 12-cat-walk</code>; to bring in changes, run <code>git pull --ff-only</code>.</li></ul>
-<p>After working outside the Editor, click "Refresh local status" next to the repository name. To reopen the project, choose the same folder with "File" → "Open Project Folder…". Before reopening, the Editor checks for unsaved edits.</p>
+<p>After working outside the editor, click "Refresh local status" next to the repository name. To reopen the project, choose the same folder with "File" → "Open Project Folder…". Before reopening, the editor checks for unsaved edits.</p>
 <p><a href="../git/index.en.html#github-sync">Sync with GitHub</a></p>
 
 </section>
@@ -174,7 +175,7 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.8 Create a pull request</h2>
 
-<p>If your GitHub connection allows writing, choose the "Base branch" in "Create PR" in Local Git and check the commits under "Commits to include". Fill in "PR title" and "PR description", review the content with "Prepare PR", and then click "Create PR". The Editor applies the selected commits to the base branch and sends a branch for the PR to GitHub. If a selected commit depends on another commit and cannot be applied, select the commits it needs as well. Without a connection, "This GitHub connection does not support creating PRs." is shown, so create the PR on GitHub.</p>
+<p>If you connected to GitHub with "Allow sending to GitHub (push)" checked, choose the "Base branch" in "Create PR" in Local Git and check the commits under "Commits to include". Fill in "PR title" and "PR description", review the content with "Prepare PR", and then click "Create PR". The editor applies the selected commits to the base branch and sends a branch for the PR to GitHub. If a selected commit depends on another commit and cannot be applied, select the commits it needs as well. Without a connection, "This GitHub connection does not support creating PRs." is shown, so create the PR on GitHub.</p>
 <figure>
 <a href="../images/current-git-create-pr.png"><img src="../images/current-git-create-pr.png" width="1440" height="1220" alt="The PR creation screen of Local Git in the Japanese UI. Two of three commits are selected, and a title and description are filled in." loading="lazy"></a>
 <figcaption>(Japanese UI) Just before creating a PR from two of three commits, with a test repository and a simulated GitHub connection. Captured before "Connect to GitHub…" was added at the top.</figcaption>
@@ -184,7 +185,7 @@ git config --local user.email "you@example.com"</code></pre>
 
 <ol><li>When you open the repository on GitHub, "Compare &amp; pull request" appears for the branch you sent. Click it and check that it reads "base: main ← compare: 12-cat-walk".</li><li>Following the form, write what you changed, the sprites and stage you changed, and how to check it. To close the issue when the PR is merged into the default branch, write <code>Closes #12</code> in the description. To only link it, write <code>#12</code>.</li><li>Click "Create pull request". From the command line, you can create it with <code>gh pr create --fill</code>.</li></ol>
 <h3 id="check-project">Check the results and the SB3</h3>
-<p>When you create a pull request in a repository that has the Project Starter workflows, the "Check project" action checks the project folder and builds an SB3. Download the SB3 from "Artifacts" in the pull request's "Checks" → "Check project" → "Summary", open it in TurboWarp or the Editor, and try whether it works as the checks you wrote describe.</p>
+<p>When you create a pull request in a repository that has the Project Starter workflows, the "Check project" action checks the project folder and builds an SB3. Download the SB3 from "Artifacts" in the pull request's "Checks" → "Check project" → "Summary", open it in TurboWarp or the editor, and check that it works as described in the checks you wrote.</p>
 
 </section>
 
@@ -194,28 +195,27 @@ git config --local user.email "you@example.com"</code></pre>
 
 <p>Reviewers read the changes script by script.</p>
 <p>Select a PR in "Merge" in Local Git and open "Files changed" to compare the before and after scripts as blocks for each stage and sprite. Mark scripts you have read with "Reviewed" at the lower right of the comparison frame.</p>
-<ul><li><strong>Public repositories.</strong> Select from "Pull requests" without a connection.</li><li><strong>Private repositories.</strong> After authenticating with "Connect to GitHub…" in Local Git, you can select PRs in repositories you can access. If the base branch cannot be determined and there are several candidates, you can choose the comparison branch.</li></ul>
-<p>While connected, the "Sync with GitHub" section shows the current local branch (for example <code>main</code>). Clicking "Open PR project to run" switches to the local branch <code>pr/42</code>, which points to PR #42.</p>
-<p>The PR number and title in the right pane link to GitHub. The "Open diff in editor tabs" icon at the top right of the PR heading opens the project diff in separate Editor tabs. "Open in another window" at the top right of a changed-file card shows that file's diff in another window. A PR opened while connected can be run by switching to the compared version with "Open PR project to run".</p>
-<h3>Without a connection</h3>
-<p>You can check public PRs in "Files changed" in the Editor. For private PRs, sign in to GitHub and check the diff in the PR's "Files changed". To test how it works, get <a href="#check-project">the SB3 from "Check project"</a> in "Checks" and open it from "File" in the Editor.</p>
-<p>To send a review, check the <a href="../git/index.en.html#send-review">conditions for sending reviews from the Editor</a>. If your connection can allow sending reviews, use "Send Review" on the comparison screen. To send on GitHub, write comments in the PR's "Files changed" or "Conversation". Pushing fixes to the same working branch updates the PR. When the PR is updated, the Editor removes the "Reviewed" marks on scripts whose content changed.</p>
-<figure>
-<a href="../images/github-files-changed.png"><img src="../images/github-files-changed.png" width="1440" height="960" alt="Public PR #219 on GitHub. Checks and Files changed are at the top, the changed file list on the left, and the line-by-line diff on the right." loading="lazy"></a>
-<figcaption>The same public PR #219 opened in "Files changed" on GitHub (signed out; same image as the Japanese guide). The file list on the left jumps to each diff, and "Checks" at the top leads to the check results.</figcaption>
-</figure>
-<h3>Merge in the Editor</h3>
-<p>Check the CI results in the "Merge" list and select the PR. With a GitHub connection that allows merging, once the required checks and reviews pass, a green "Squash and merge" appears at the top right of the merge status card in "Overview". Clicking it opens a dialog to confirm the base branch and the commits. The Editor merges only with squash merge. To read the PR's diff, CI, and mergeability again, click "Reload PR information from GitHub" next to the PR title.</p>
-<figure>
-<a href="../images/current-git-merge-ready.png"><img src="../images/current-git-merge-ready.png" width="1440" height="1220" alt="The Local Git tab in the Japanese UI. The project folder and a PR that passed CI are on the left, the Overview tab and merge status are on the right, and a green merge button is at the top right of the card." loading="lazy"></a>
-<figcaption>(Japanese UI) A test PR whose CI succeeded, with a simulated GitHub connection. The merge status card in "Overview" shows the CI and review status, and you can merge with the button at the top right. Captured before "Connect to GitHub…" was added at the top.</figcaption>
-</figure>
 <figure>
 <a href="../images/en/current-pr-files-tab.png"><img src="../images/en/current-pr-files-tab.png" width="1440" height="1220" alt="The Files changed tab of PR #219. Change review counts and a legend of outline colors are at the top, and the changed-file cards and script list are below." loading="lazy"></a>
 <figcaption>Switching to "Files changed" shows how many stages and sprites are affected, how many code changes there are, how many are reviewed, and the changes in each file. Expanding a script shows its block diff and "Reviewed".</figcaption>
 </figure>
+<ul><li><strong>Public repositories.</strong> Select from "Pull requests" without a connection.</li><li><strong>Private repositories.</strong> After authenticating with "Connect to GitHub…" in Local Git, you can select PRs in repositories you can access. If the base branch cannot be determined and there are several candidates, you can choose the comparison branch.</li></ul>
+<p>A PR opened while connected can be run with "Open PR project to run", which switches to a local branch at the compared version (for PR #219, <code>pr/219</code>). The PR number and title in the right pane link to GitHub. How to open the diff in editor tabs or another window is explained in <a href="../git/index.en.html#pull-request-review">Review pull requests script by script</a>.</p>
+<h3>Without a connection</h3>
+<p>You can check public PRs in "Files changed" in the editor. For private PRs, sign in to GitHub and check the diff in the PR's "Files changed". To test how it works, get <a href="#check-project">the SB3 from "Check project"</a> in "Checks" and open it from "File" in the editor.</p>
+<p>To send a review, check the <a href="../git/index.en.html#send-review">conditions for sending reviews from the editor</a>. If your connection can allow sending reviews, use "Send Review" on the comparison screen. To send on GitHub, write comments in the PR's "Files changed" or "Conversation". Pushing fixes to the same working branch updates the PR. When the PR is updated, the editor removes the "Reviewed" marks on scripts whose content changed.</p>
+<figure>
+<a href="../images/github-files-changed.png"><img src="../images/github-files-changed.png" width="1440" height="960" alt="Public PR #219 on GitHub. Checks and Files changed are at the top, the changed file list on the left, and the line-by-line diff on the right." loading="lazy"></a>
+<figcaption>The same public PR #219 opened in "Files changed" on GitHub (signed out; same image as the Japanese guide). The file list on the left jumps to each diff, and "Checks" at the top leads to the check results.</figcaption>
+</figure>
+<h3>Merge in the editor</h3>
+<p>Check the CI results in the "Merge" list and select the PR. With a GitHub connection that has "Allow sending to GitHub (push)" checked, once the required checks and reviews pass, a green "Squash and merge" appears at the top right of the merge status card in "Overview". Clicking it opens a dialog to confirm the base branch and the commits. The editor merges only with squash merge. To read the PR's diff, CI, and mergeability again, click "Reload PR information from GitHub" next to the PR title.</p>
+<figure>
+<a href="../images/current-git-merge-ready.png"><img src="../images/current-git-merge-ready.png" width="1440" height="1220" alt="Merge in Local Git (Japanese UI). The project folder and a PR that passed CI are on the left, the Overview tab and merge status are on the right, and a green merge button is at the top right of the card." loading="lazy"></a>
+<figcaption>(Japanese UI) A test PR whose CI succeeded, with a simulated GitHub connection. The merge status card in "Overview" shows the CI and review status, and you can merge with the button at the top right. Captured before "Connect to GitHub…" was added at the top.</figcaption>
+</figure>
 <h3>Merge on GitHub</h3>
-<p>When the required checks such as "Check project" and the review are done, confirm the target branch and the latest diff, and merge with a method GitHub offers. "Squash and merge" combines the changes into one commit. When no other PR refers to the working branch, you can choose "Delete branch" on GitHub.</p>
+<p>When the required checks such as "Check project" and the review are done, confirm the target branch and the latest diff, and merge with a method GitHub offers. "Squash and merge" combines the changes into one commit. After merging, you can delete the working branch you no longer need with "Delete branch" on the PR page.</p>
 <p>Locally, switch to <code>main</code> from the branch name in the menu bar, bring in the latest with <a href="#push">pull</a>, and reopen the project with "Reload Project".</p>
 <p><a href="../git/index.en.html#pull-request-review">Review pull requests script by script</a></p>
 
@@ -229,14 +229,14 @@ git config --local user.email "you@example.com"</code></pre>
 <ul>
 <li><strong>npm package.</strong> Click "Copy dry-run command" and run <code>npm publish --dry-run</code> in the package directory. After checking the files to publish, click "Copy publish command" and run <code>npm publish</code> in an authenticated terminal.</li>
 <li><strong>GitHub revision tag.</strong> Check the "Target commit" and enter a "Tag name" (for example <code>v1.0.0</code>). If you are connected to GitHub with push allowed, click "Send tag to GitHub". If push is not allowed, a <code>git push origin …</code> command that sends the tag is shown; run it in a terminal in the repository.</li>
-<li><strong>GitHub Pages.</strong> "Export HTML with Packager" generates a single HTML file. With "Open Pages publishing settings", check the branch and folder of the setting that publishes from a branch. With a connection that allows push, return to the Editor, click "Load publishing branches", and choose the branch, folder (<code>/</code> or <code>/docs</code>), and HTML. Clicking "Send HTML to GitHub" sends a commit that updates only <code>index.html</code> in the chosen location. Without a connection, upload it on GitHub with "Add files on GitHub". You can check the deployment status in GitHub's Pages settings. <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">GitHub's guide to the publishing source</a></li>
+<li><strong>GitHub Pages.</strong> "Export HTML with Packager" generates a single HTML file. With "Open Pages publishing settings", check that the source is "Deploy from a branch", and check that branch and folder. With a connection that allows push, return to the editor, click "Load publishing branches", and choose the branch, folder (<code>/</code> or <code>/docs</code>), and HTML. Clicking "Send HTML to GitHub" sends a commit that updates only <code>index.html</code> in the chosen location. Without a connection, upload it on GitHub with "Add files on GitHub". You can check the deployment status in GitHub's Pages settings. <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">GitHub's guide to the publishing source</a></li>
 </ul>
 <figure>
 <a href="../images/en/current-git-release-workflow.png"><img src="../images/en/current-git-release-workflow.png" width="1440" height="960" alt="The Release dialog lists publishing an npm package, creating a GitHub revision tag, and publishing HTML to GitHub Pages. v1.0.0 is entered as the tag name, and the command to send the tag is shown." loading="lazy"></a>
-<figcaption>"Releases…" opened in the public version without a GitHub connection, with a tag name entered. Because push is not allowed, the command to send the tag and the "Add files on GitHub" link are shown.</figcaption>
+<figcaption>"Releases…" opened in the public editor without a GitHub connection, with a tag name entered. Because push is not allowed, the command to send the tag and the "Add files on GitHub" link are shown.</figcaption>
 </figure>
 <h3>Distribute the project with GitHub Releases</h3>
-<ol><li>In the Editor, choose "Open GitHub Releases" in "File" → "Releases…". On GitHub, choose "Draft a new release".</li><li>In "Choose a tag", select the tag on the commit to publish (for example <code>v1.0.0</code>). To create the tag here, enter a name, choose "Create new tag on publish", and specify the target branch.</li><li>Click "Generate release notes" to fill in the list of merged pull requests. Add notes for players.</li><li>Click "Publish release". From the command line, you can create it with <code>gh release create v1.0.0 --generate-notes</code>.</li></ol>
+<ol><li>In the editor, choose "Open GitHub Releases" in "File" → "Releases…" to open the list of releases on GitHub. Click "Draft a new release".</li><li>In "Choose a tag", select the tag on the commit to publish (for example <code>v1.0.0</code>). To create the tag here, enter a name, choose "Create new tag on publish", and specify the target branch.</li><li>Click "Generate release notes" to fill in the list of merged pull requests. Add notes for players.</li><li>Click "Publish release". From the command line, you can create it with <code>gh release create v1.0.0 --generate-notes</code>.</li></ol>
 <p>When you publish the release, the "Release" action builds an SB3 from the project folder at that tag and attaches <code>&lt;name&gt;-v1.0.0.sb3</code> (the name is <code>sb3Name</code> in <code>scratch-project.json</code>) and <code>SHA256SUMS.txt</code> to the release. The attached SB3 opens in TurboWarp and Scratch. To update the project page on Scratch as well, load the SB3 in the Scratch editor and overwrite it with "Save now".</p>
 <p>For version names, raise the last number (<code>v1.0.1</code>) for bug fixes only, and the middle number (<code>v1.1.0</code>) when there is more to play, so players can tell how big the change is.</p>
 <p><a href="../save/index.en.html">Save and distribute</a></p>
@@ -247,14 +247,14 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.11 When you hit a conflict or get stuck</h2>
 
-<p>A project's blocks and sprite settings are all in one <code>project.source.json</code>. If two branches change nearby parts of the same sprite, the pull request may show "This branch has conflicts". While a Git merge is in progress, the Editor does not commit or switch branches.</p>
-<ul><li><strong>Avoid conflicts.</strong> Keep pull requests small and merge them early. When working at the same time, split up which sprites each person works on.</li><li><strong>Redo the change if they conflict.</strong> Create a new branch from the latest <code>main</code> and make the same change again in the Editor. You can carry scripts over to the new branch's project with the Backpack. Create a new pull request and close the old one.</li><li><strong>Fix the JSON directly.</strong> If you are used to Git, bring in <code>main</code> from the command line, resolve the conflicts in <code>project.source.json</code>, and then check it with <code>sb3-toolchain check project</code>.</li></ul>
+<p>A project's blocks and sprite settings are all in one <code>project.source.json</code>. If two branches change nearby parts of the same sprite, the pull request may show "This branch has conflicts". While a Git merge is in progress, the editor does not commit or switch branches.</p>
+<ul><li><strong>Avoid conflicts.</strong> Keep pull requests small and merge them early. When working at the same time, split up which sprites each person works on.</li><li><strong>Redo the change if they conflict.</strong> Create a new branch from the latest <code>main</code> and make the same change again in the editor. You can carry scripts over to the new branch's project by copying and pasting them or exporting them as .blocks3 (see <a href="../reuse/index.en.html#transfer">9.1</a>). Create a new pull request and close the old one.</li><li><strong>Fix the JSON directly.</strong> If you are used to Git, bring in <code>main</code> from the command line, resolve the conflicts in <code>project.source.json</code>, and then check it with <code>sb3-toolchain check project</code>.</li></ul>
 <div class="table-scroll" role="region" aria-label="Common messages and what to do" tabindex="0">
 <table><caption>Common messages and what to do</caption><thead><tr><th scope="col">Message or situation</th><th scope="col">What to do</th></tr></thead><tbody>
 <tr><th scope="row">You cannot switch branches</th><td>Stop the project, save your edits, and commit them (or undo them), then switch</td></tr>
 <tr><th scope="row">"The repository changed outside the Editor."</th><td>Click "Refresh local status". If the project changed, reopen the same folder from the File menu</td></tr>
 <tr><th scope="row">Pull fails (no fast-forward)</th><td>Both your local branch and GitHub have new commits. Bring them in with GitHub Desktop or commands, or use the "redo the change" approach above</td></tr>
-<tr><th scope="row">"Check project" fails</th><td>Open the log of the failed step. If you deleted or renamed files in <code>assets/</code> outside the Editor, open the project in the Editor and save it again</td></tr>
+<tr><th scope="row">"Check project" fails</th><td>Open the log of the failed step. If you deleted or renamed files in <code>assets/</code> outside the editor, open the project in the editor and save it again</td></tr>
 <tr><th scope="row">The commit author is not set</th><td><a href="#commit-author">Set the author in the repository</a></td></tr>
 </tbody></table></div>
 
@@ -263,5 +263,5 @@ git config --local user.email "you@example.com"</code></pre>
 <a class="prev" href="../save/index.en.html"><small>Previous</small>11. Save and distribute</a>
 </nav>
 </main>
-<footer><a href="../../">Back to top</a> · <a href="../../editor.html?lang=en">Open the Editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and specifications are as of the time of capture. Check the current deployment in <a href="../../build-info.json">deployed version</a>.</p></footer>
+<footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
 </body></html>

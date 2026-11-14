@@ -5,6 +5,7 @@
 <title>Save and distribute — Feature guide — TurboWarp-Plus-Editor</title>
 <meta name="description" content="How to save projects in TurboWarp Plus, record project information, choose how extension code and assets are stored, and export a single HTML file.">
 <link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="ja" href="index.html">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
@@ -34,9 +35,9 @@
 <li><a href="#save">11.1 Choose between Save and Save as</a></li>
 <li><a href="#restore-points">11.2 Restore a project from a restore point</a></li>
 <li><a href="#project-properties">11.3 Record project information in the SB3</a></li>
-<li><a href="#project-uri">11.4 Set the project URI and manage the cache</a></li>
-<li><a href="#storage">11.5 Choose how extension code is saved</a></li>
-<li><a href="#payload-formats">11.6 Choose how source data and assets are stored</a></li>
+<li><a href="#project-uri">11.4 Set the project URI to keep caches separate</a></li>
+<li><a href="#storage">11.5 Choose the storage format for extension code</a></li>
+<li><a href="#payload-formats">11.6 Choose the storage format for source data and assets</a></li>
 <li><a href="#packager">11.7 Export a project as a single HTML file</a></li>
 </ol>
 </nav>
@@ -46,15 +47,16 @@
 <h2>11.1 Choose between Save and Save as</h2>
 
 <p>"File" → "Save Project" overwrites the open SB3 or project folder with the whole project. A new project, or one you saved by downloading, has nothing to overwrite, so this item is unavailable. If you edited a text file in the folder on its own, use "Save file" in that tab.</p>
-<p>What Ctrl+S (⌘S on macOS) does depends on the panel open at the left edge. With "Sprites" it is assigned to "Save Project", and with "Project folder" it is assigned to "Save Active Tab"; the File menu shows the shortcut next to that item. If no savable tab is selected in "Project folder", pressing the shortcut saves nothing.</p>
+<p>What ⌘S (Ctrl+S on Windows) does depends on the panel open at the left edge. With "Sprites" it is assigned to "Save Project", and with "Project folder" it is assigned to "Save Active Tab"; the File menu shows the shortcut next to that item. If no savable tab is selected in "Project folder", pressing the shortcut saves nothing.</p>
 <h3>The <code>*</code> mark for unsaved changes</h3>
 <p>When you edit a project and have unsaved changes, a <code>*</code> appears to the right of the project title in the menu bar and after the names of tabs you are editing, such as sprites. Clicking the <code>*</code> next to the title shows the save actions available at that moment, such as "Save Project" and "Save As…". The <code>*</code> disappears when you save.</p>
+<h3>Save under a new name</h3>
 <p>"File" → "Save As…" saves the project with the name and save format you choose.</p>
 <figure class="guide-detail"><a href="../images/en/save-as-dialog.png"><img src="../images/en/save-as-dialog.png" width="640" height="296" alt="The Save As dialog with a Name field and a Save format menu, and Cancel and Choose Where to Save… buttons at the bottom right." loading="lazy"></a><figcaption>"Save As". In browsers that let you choose a location, click "Choose Where to Save…"; in other browsers, click "Save" to download the file.</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="Save formats in Save As" tabindex="0">
 <table><caption>Available save formats</caption><thead><tr><th scope="col">Save format</th><th scope="col">What is saved</th></tr></thead><tbody>
-<tr><th scope="row">SB3 (current storage settings)</th><td>Saves with the storage settings chosen in <a href="#payload-formats">Project Data</a> and <a href="#storage">Extensions</a></td></tr>
-<tr><th scope="row">SB3 (embed configured scripts and assets)</th><td>Saves scripts and assets set to HTTPS references and the like inside the SB3. Use it to make an SB3 for continuing to edit locally</td></tr>
+<tr><th scope="row">SB3 (current storage settings)</th><td>Saves with the storage formats chosen in <a href="#payload-formats">"Project Data…"</a> and <a href="#storage">"Extensions…"</a></td></tr>
+<tr><th scope="row">SB3 (embed configured scripts and assets)</th><td>Saves YAML scripts (such as Kamishibai YAML scripts) and assets that are set to HTTPS references and the like inside the SB3. Use it to make an SB3 for continuing to edit locally</td></tr>
 <tr><th scope="row">Project folder</th><td>Creates a <a href="../git/index.en.html#project-folder">project folder</a> in the folder you choose, saves to it and opens it. Shown in browsers that can choose folders, such as Chrome and Edge. Existing content in the folder is overwritten</td></tr>
 </tbody></table></div>
 <ul><li><strong>When you choose where to save an SB3.</strong> The file you chose becomes the target of later "Save Project" overwrites. If you cancel choosing a location, the previous target stays.</li><li><strong>When you download an SB3.</strong> No target is set, and "Save Project" stays unavailable.</li><li><strong>When a project folder is open.</strong> "Save Project" updates the <a href="../git/index.en.html#project-folder">project folder</a>. Not only blocks but also variables, sprite positions and sizes, and added or deleted sprites, costumes and sounds are saved. Making an SB3 with "Save As…" disconnects the project from the project folder.</li></ul>
@@ -78,60 +80,62 @@
 <p>"File" → "Project Properties" lets you record the project's title, description and author.</p>
 <ol><li>Fill in "Project title", "Description", "Author name" and "Contact". The description can span several lines.</li><li>Click "Apply" to apply the information to the current project; the project title in the menu bar changes too. Click "Cancel" to discard your changes and close.</li><li>Save from the "File" menu to record the information in the project file.</li></ol>
 <figure class="guide-detail"><a href="../images/en/properties-current.png"><img src="../images/en/properties-current.png" width="640" height="856" alt="The Project Properties dialog with fictional examples entered in Project title, Project URI, Description, Author name and Contact, and previews under Description and Contact. Below Created and Last updated are the Project Diagnostics…, Cancel and Apply buttons." loading="lazy"></a><figcaption>"Project Properties" with fictional examples entered. "Project Diagnostics…" at the bottom opens the <a href="../open/index.en.html#project-diagnostics">loading diagnostics</a>.</figcaption></figure>
-<h3>Author name and contact: choose from the last five or enter a new one</h3>
+<h3>Choose the author name and contact from the history</h3>
 <p>The browser remembers up to five recent author names and contacts that you applied. Using a value again moves it to the top of the history, and you can edit a suggestion you pick. Only the values applied this time go into the SB3. If browser storage is unavailable, the history is available only while the editor is open.</p>
 <p>An email address or <code>mailto:</code> address entered as the contact becomes an email link, and an <code>https:</code> address becomes a web page link, shown below the field. Email links open in your mail app, and web page links open in a new tab. Enter the description as plain text. In the preview below the field, HTTPS URLs can be opened as links.</p>
 <h3>Dates and saving to the SB3</h3>
 <p>The creation and last-updated dates are recorded automatically. A new project gets a creation date, and projects without date information show "Not recorded". The last-updated date is updated when a project file containing changes, such as to project information or blocks, is saved successfully.</p>
-<div class="flow" role="img" aria-label="Enter project information and apply it to the current project. Then save the SB3 to record the information and the update date in the project file; reopening it in Plus Editor restores them."><div>Enter project information<br><small>pick from history or enter new</small></div><span>→</span><div>Apply<br><small>to the current project</small></div><span>→</span><div>Save the SB3<br><small>record info and update date</small></div><span>→</span><div>Reopen in Plus<br><small>title and info restored</small></div></div>
-<p>This information is saved in the SB3 as Plus-specific project information. The author name and contact are visible to anyone who receives the SB3. Saving again in standard Scratch or TurboWarp, or in an Editor with project information disabled, may remove the Plus-specific information, so keep the original SB3. For the storage details, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/project-tools.md">project information and diagnostics specification</a>.</p>
+<div class="flow" role="img" aria-label="Enter project information and apply it to the current project. Then save the SB3 to record the information and the update date in the project file; reopening it in TurboWarp Plus Editor restores them."><div>Enter project information<br><small>pick from history or enter new</small></div><span>→</span><div>Apply<br><small>to the current project</small></div><span>→</span><div>Save the SB3<br><small>record info and update date</small></div><span>→</span><div>Reopen in Plus<br><small>title and info restored</small></div></div>
+<p>This information is saved in the SB3 as Plus-specific project information. The author name and contact are visible to anyone who receives the SB3. Saving again in standard Scratch or TurboWarp, or in an editor with project information disabled, may remove the Plus-specific information, so keep the original SB3. For the storage details, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/project-tools.md">project information and diagnostics specification</a>.</p>
 
 </section>
 
 <section id="project-uri">
 
-<h2>11.4 Set the project URI and manage the cache</h2>
+<h2>11.4 Set the project URI to keep caches separate</h2>
 
 <p>In "File" → "Project Properties", enter an HTTPS address that identifies the project in "Project URI", then click "Apply". Addresses containing a user name or password, or a fragment after <code>#</code>, cannot be used. The applied URI is recorded in the SB3 the next time you save the project.</p>
 <figure class="guide-detail"><a href="../images/en/project-uri-detail.png"><img src="../images/en/project-uri-detail.png" width="622" height="116" alt="The Project URI field in Project Properties with an example HTTPS address entered. Below it, a note says the URI will be recorded in the SB3 the next time you save the project." loading="lazy"></a><figcaption>An example URL entered in the "Project URI" field.</figcaption></figure>
-<p>For extensions that keep a cache per project, changing the URI makes later writes use the new URI. The earlier cache stays as it is. The cache is stored in the browser. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/209">Setting the project URI</a></p>
+<p>For extensions that keep a cache per project, changing the URI makes later writes use the new URI. Changing the URI does not delete the cache; the earlier cache stays as it is. The cache is stored in the browser.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/209">Setting the project URI</a></p>
 
 </section>
 
 <section id="storage">
 
-<h2>11.5 Choose how extension code is saved</h2>
+<h2>11.5 Choose the storage format for extension code</h2>
 
-<p>To add an extension, click "File" → "Extensions…" → "Add Extension" and choose the extension from the "TurboWarp Plus" list. With each extension's "Where it loads from", choose whether its code goes into the project or is fetched from an HTTPS server. When you click "Add" and then save the SB3, the chosen form, a SHA-256 for checking the code, and the run conditions are recorded.</p>
-<div class="table-scroll" role="region" aria-label="Where extension code loads from" tabindex="0"><table><thead><tr><th scope="col">Where it loads from (when adding)</th><th scope="col">Shown in "Extensions…"</th><th scope="col">What is saved and what happens on opening</th></tr></thead><tbody>
+<p>To add an extension, click "File" → "Extensions…" → "Add Extension" and choose the extension from the "TurboWarp Plus" list. With each extension's "Where it loads from", choose whether its code goes into the project or is fetched from an HTTPS server (the storage format of the extension code). When you click "Add" and then save the SB3, the chosen storage format, a SHA-256 for checking the code, and the run conditions are recorded.</p>
+<div class="table-scroll" role="region" aria-label="Where extension code loads from" tabindex="0"><table><caption>Where extension code loads from</caption><thead><tr><th scope="col">Where it loads from (when adding)</th><th scope="col">Shown in "Extensions…"</th><th scope="col">What is saved and what happens on opening</th></tr></thead><tbody>
 <tr><th scope="row">Keep a copy (default)<br><code>remote-cacheable</code></th><td>Fetch from HTTPS, caching allowed</td><td>Records the HTTPS URL. If the person opening the project allows it, the verified code is stored in the browser and reused.</td></tr>
 <tr><th scope="row">Fetch each time<br><code>remote-non-cacheable</code></th><td>Fetch from HTTPS each time</td><td>Records the HTTPS URL. The code is fetched and verified every time the project opens, and nothing is left in the browser.</td></tr>
 <tr><th scope="row">In the project<br><code>embedded-file</code></th><td>File in the SB3</td><td>Bundles the code as a file inside the SB3.</td></tr>
 <tr><th scope="row">In the project, as a data address<br><code>embedded-data</code></th><td>Data in the project JSON</td><td>Bundles the code in the project data as a data URL. Standard TurboWarp can also load code in this form.</td></tr>
 </tbody></table></div>
-<h3>Change the form of an extension you already added</h3>
-<p>Open "File" → "Extensions…" to see the current form of each extension used in the project. For extensions with a recorded source URL, you can choose the form again. After choosing, click "Apply Storage Settings" and save the SB3. A project that uses no extensions shows "No extensions in use."</p>
-<div class="flow" role="img" aria-label="Remote records the URL in the SB3 and reads the code from the server. Embedded bundles the code in the SB3."><div>Remote<br><small>SB3: URL + hash</small></div><span>→</span><div>Fetch from the server<br><small>verify the content</small></div><span class="divider">/</span><div>Embedded<br><small>SB3: code + hash</small></div><span>→</span><div>Load from the project<br><small>verify the content</small></div></div>
-<p>With forms that fetch from a server, verification fails if the content changes, even when the URL stays the same. Whether the project opens without a network depends on whether the code and data it needs are available locally. Even with bundled code, an extension that fetches external APIs or images needs a network. To edit forms and documents of supported extensions, use Plus Editor.</p>
-<p>Use the <a href="#project-uri">project URI</a> to manage per-project caches. For detailed constraints and compatibility, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3 save format</a> and the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-authoring-ui.md">extension list specification</a>.</p>
+<h3>Change the storage format of an extension you already added</h3>
+<p>Open "File" → "Extensions…" to see the current storage format of each extension used in the project. For extensions with a recorded source URL, you can choose the storage format again. After choosing, click "Apply Storage Settings" and save the SB3. A project that uses no extensions shows "No extensions in use."</p>
+<div class="flow" role="img" aria-label="Storage formats that fetch from a server record the URL in the SB3 and read the code from the server. Storage formats that bundle the code put it in the SB3."><div>Fetch from a server<br><small>Keep a copy / Fetch each time<br>SB3: URL + hash</small></div><span>→</span><div>Load from the server<br><small>verify the content</small></div><span class="divider">/</span><div>Bundle in the project<br><small>In the project (including as a data address)<br>SB3: code + hash</small></div><span>→</span><div>Load from the project<br><small>verify the content</small></div></div>
+<p>With storage formats that fetch from a server, verification fails if the content changes, even when the URL stays the same. Whether the project opens without a network depends on whether the code and data it needs are available locally. Even with bundled code, an extension that fetches external APIs or images needs a network.</p>
+<p>To keep caches separate for each project, use the <a href="#project-uri">project URI</a>. For detailed constraints and compatibility, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3 save format</a> and the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-authoring-ui.md">extension list specification</a>.</p>
 
 </section>
 
 <section id="payload-formats">
 
-<h2>11.6 Choose how source data and assets are stored</h2>
+<h2>11.6 Choose the storage format for source data and assets</h2>
 
-<p>Open "File" → "Project Data…" to show "Project Data Formats". In the "Assets" section, choose a storage format for each asset, such as backdrops, costumes and sounds. If the project contains source data that applies, such as YAML for a supported extension, it is also listed in the "Source Data" section. When you choose an HTTPS format, an "HTTPS URL" field appears for that item; enter the URL there. The content fetched from the URL must match the current data byte for byte.</p>
-<figure class="guide-detail"><a href="../images/en/project-data-dialog.png"><img src="../images/en/project-data-dialog.png" width="640" height="568" alt="The Project Data Formats dialog. At the top is an Add Bundle Material to Project… button, followed by the Source Data section and format menus for backdrop1 and costume1. costume1 is set to Fetch from HTTPS each time, with an HTTPS URL field below it. Cancel and Apply buttons are at the bottom right." loading="lazy"></a><figcaption>"Project Data Formats", opened with "Project Data…". A new project lists backdrop1 and costume1. Here, an HTTPS format is chosen for costume1.</figcaption></figure>
-<div class="table-scroll" role="region" aria-label="How source data and assets are stored" tabindex="0">
-<table><caption>How source data and assets are stored</caption><thead><tr><th scope="col">Format shown on screen</th><th scope="col">When to use it</th></tr></thead><tbody>
+<p>Open "File" → "Project Data…" to show "Project Data Formats". In the "Assets" section, choose a storage format for each asset, such as backdrops, costumes and sounds. If the project contains source data that applies, such as YAML for a supported extension, it is also listed in the "Source Data" section. When you choose a storage format that fetches from HTTPS, an "HTTPS URL" field appears for that item; enter the URL there. The content fetched from the URL must match the current data byte for byte.</p>
+<figure class="guide-detail"><a href="../images/en/project-data-dialog.png"><img src="../images/en/project-data-dialog.png" width="640" height="568" alt="The Project Data Formats dialog. At the top is an Add Bundle Material to Project… button, followed by the Source Data section and format menus for backdrop1 and costume1. costume1 is set to Fetch from HTTPS each time, with an HTTPS URL field below it. Cancel and Apply buttons are at the bottom right." loading="lazy"></a><figcaption>"Project Data Formats", opened with "Project Data…". A new project lists backdrop1 and costume1. Here, a storage format that fetches from HTTPS is chosen for costume1.</figcaption></figure>
+<div class="table-scroll" role="region" aria-label="Storage formats for source data and assets" tabindex="0">
+<table><caption>Storage formats for source data and assets</caption><thead><tr><th scope="col">Item shown on screen</th><th scope="col">When to use it</th></tr></thead><tbody>
 <tr><th scope="row">Use default storage</th><td>Clears the setting for that item and saves it the default way</td></tr>
-<tr><th scope="row">Fetch from HTTPS each time</th><td>Fetches from the server every time the project opens</td></tr>
 <tr><th scope="row">Fetch from HTTPS, caching allowed</th><td>If the person opening the project allows it, the verified data is stored in the browser and reused</td></tr>
+<tr><th scope="row">Fetch from HTTPS each time</th><td>Fetches from the server every time the project opens</td></tr>
 <tr><th scope="row">File in the SB3</th><td>Hands the data over as a separate file inside the project</td></tr>
 <tr><th scope="row">Data in the project JSON</th><td>Stores the data directly in the project's JSON</td></tr>
 </tbody></table></div>
-<p>Click "Apply" and save the SB3. The chosen formats are used from the next save. When you need an SB3 that bundles, just this once, the items set to HTTPS references, choose "SB3 (embed configured scripts and assets)" in <a href="#save">Save As</a>. To read data back from the chosen formats, use an editor with the Plus extension loader enabled. When you open a project with HTTPS references, a list of the sources is shown and you can choose whether to allow fetching. How the extension programs themselves are saved is covered in <a href="#storage">how extension code is saved</a>. <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/215">Implementation of project data formats</a></p>
+<p>Click "Apply" and save the SB3. The chosen storage formats are used from the next save. If you need a one-off SB3 with the HTTPS-referenced items bundled in, choose "SB3 (embed configured scripts and assets)" in <a href="#save">Save As</a>. To read back data stored in the chosen storage formats, use an editor with the Plus extension loader enabled. When you open a project with HTTPS references, a list of the sources is shown and you can choose whether to allow fetching. The storage format of the extension programs themselves is covered in <a href="#storage">Choose the storage format for extension code</a>.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/215">Implementation of project data storage formats</a></p>
 
 </section>
 
@@ -140,11 +144,10 @@
 <h2>11.7 Export a project as a single HTML file</h2>
 
 <p>Open "File" → "Export…" and click "Package Project". The project data needed for export is bundled into the output. For an ordinary Scratch 3 or TurboWarp project, the <a href="https://packager.turbowarp.org/">standard TurboWarp Packager</a> opens in a new tab with the project loaded. For a project that records Plus-style extensions, the same action opens the Plus-specific output page instead.</p>
-<p>In Packager output, text that uses web fonts is shown in the fallback font you specify.</p>
 <figure class="guide-detail"><a href="../images/en/export-dialog.png"><img src="../images/en/export-dialog.png" width="640" height="194" alt="The Export dialog, explaining that it creates a file for running or sharing the project and that project data needed for export is included in the output, with a Package Project button at the bottom right." loading="lazy"></a><figcaption>The dialog opened with "Export…".</figcaption></figure>
 <ol><li>On the Plus output page, make sure that none of the Plus extensions depend on external APIs, models, images, audio and the like.</li><li>Check the confirmation box and click the generate button. The page is currently shown only in Japanese, and the button reads <span lang="ja">確認してHTMLを生成</span> (confirm and generate HTML). Extension code served over HTTPS is also put into the HTML after its content is verified. Sandbox settings are carried over as they are.</li><li>Download and open the generated HTML. Extensions that meet the catalog's trust conditions run after being checked against the bundled hashes. For extensions that need individual approval, permission to run is requested each time the HTML is opened.</li></ol>
-<div class="flow" role="img" aria-label="Fetch and verify extension code from a Plus project, and bundle the code and the project into a single HTML file. The run conditions are checked again when the recipient opens it."><div>Plus project</div><span>→</span><div>Fetch and verify code</div><span>→</span><div>Bundle into a single HTML</div><span>→</span><div>Recipient runs it<br><small>reviews the needed extensions</small></div></div>
-<p>A project with no external dependencies works offline. This feature does not collect and bundle external APIs, images, models and the like automatically. For details, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-loader-integration.md">loader and HTML output specification</a>.</p>
+<div class="flow" role="img" aria-label="Fetch and verify extension code from a Plus project, and bundle the code and the project into a single HTML file. The run conditions are checked again when the person opening it runs it."><div>Plus project</div><span>→</span><div>Fetch and verify code</div><span>→</span><div>Bundle into a single HTML</div><span>→</span><div>The person opening it runs it<br><small>reviews the needed extensions</small></div></div>
+<p>A project with no external dependencies works offline. This feature does not collect and bundle external APIs, images, models and the like automatically. In Packager output, text that uses web fonts is shown in the fallback font you specify. For details, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-loader-integration.md">loader and HTML output specification</a>.</p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">

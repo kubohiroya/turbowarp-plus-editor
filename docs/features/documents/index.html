@@ -5,6 +5,7 @@
 <title>拡張のデータと文書を編集する — 機能ガイド — TurboWarp-Plus-Editor</title>
 <meta name="description" content="TurboWarp Plusで、対応する拡張のブロックをフォームで編集し、作品内YAMLをタブで開き、素材や場面をプレビューする方法。">
 <link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="en" href="index.en.html">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
@@ -41,17 +42,17 @@
 
 <section id="forms">
 
-<h2>8.1 ブロックの値をフォームで編集する <span class="badge">一部の機能拡張で利用可能</span></h2>
+<h2>8.1 ブロックの値をフォームで編集する <span class="badge">一部の拡張で利用可能</span></h2>
 
 <p>フォーム編集に対応する拡張では、ブロックの引数を項目ごとの入力欄で編集できます。たとえば、場面名と表示時間を1つのJSON文字列にまとめて持つブロックでも、それぞれを別の欄に入力できます。</p>
-<p><strong>拡張の開発者は、保存するデータのJSON Schemaを用意し、対象のブロックと引数を指定して登録するだけで、そのブロック専用のフォームを用意できます。</strong> エディターはスキーマから入力欄を組み立て、必須項目や値の範囲を検証します。</p>
-<ol><li>対応するブロックをコード領域に置き、ブロックの左端にある「ブロックを編集」アイコンを押します。</li><li>フォームで値を変えます。表示される項目は拡張ごとに異なります。</li><li>「すべて保存」を押すと、検証に通った値がブロックに反映されます。変更をやめるときは「キャンセル」で閉じます。</li><li>作品ファイルに残すには、続けて「ファイル」メニューから保存します。</li></ol>
+<p><strong>拡張の開発者は、保存するデータのJSON Schemaを用意し、対象のブロックと引数を指定して登録するだけで、そのブロック専用のフォームを用意できます。</strong>エディターはスキーマから入力欄を組み立て、必須項目や値の範囲を検証します。</p>
+<ol><li>対応するブロックをコード領域に置き、ブロックの左端にある「ブロックを編集」アイコンを押します。</li><li>フォームで値を変えます。表示される項目は拡張ごとに異なります。</li><li>「すべて保存」を押すと、検証に通った値がブロックに反映されます。変更をやめるときは「キャンセル」で閉じます。フォームで保存した変更は、コード画面で「元に戻す」を1回行えば取り消せます。</li><li>作品ファイルに残すには、続けて「ファイル」メニューから保存します。</li></ol>
 <figure><a href="../images/form-dialog.png"><img src="../images/form-dialog.png" width="820" height="518" alt="scene propertiesを編集するフォーム。Scene labelにオープニング、Duration (seconds)に3が入力され、キャンセルとすべて保存のボタンがある。" loading="lazy"></a><figcaption>リポジトリのサンプル拡張（<code>examples/extensions/block-editor.ts</code>）が登録したフォーム。場面名と表示時間を別々の欄に入力します。</figcaption></figure>
 <h3>入力の誤りを、その場で見つける</h3>
 <p>図のフォームで指定できる表示時間は1〜60秒です。0を入力すると範囲外であることが示され、値を直すまで保存できません。どんな値を受け付けるかは拡張が決めます。</p>
 <figure><a href="../images/validation-dialog.png"><img src="../images/validation-dialog.png" width="820" height="601" alt="Duration (seconds)に0を入力すると、入力欄が赤くなり、1以上にする必要があるという検証メッセージが出て、すべて保存のボタンが無効になる。" loading="lazy"></a><figcaption>表示時間が範囲外のときは入力欄に理由が表示され、「すべて保存」は押せません。</figcaption></figure>
 <h3>入れ子のブロックを編集する</h3>
-<p>拡張が親子のブロックを編集対象に登録していれば、同じフォームでそれぞれの値を変えられます。数値・文字列・選択肢の固定入力も、対応していれば専用の欄で編集できます。フォームで保存した変更は、コード画面で「元に戻す」を1回行えば取り消せます。</p>
+<p>拡張が親子のブロックを編集対象に登録していれば、同じフォームでそれぞれの値を変えられます。数値・文字列・選択肢の固定入力も、対応していれば専用の欄で編集できます。</p>
 <div class="flow" role="img" aria-label="ブロックの値から下書きを開き、検証に成功したら保存。キャンセルなら元のブロックは変えない。最後にSB3を別途保存する。"><div>ブロックの値</div><span>→</span><div>フォームの下書き<br><small>変更・検証・取消</small></div><span>→</span><div>すべて保存<br><small>ブロックへ反映／元に戻す</small></div><span>→</span><div>ファイルから保存<br><small>SB3を手元へ</small></div></div>
 <p>拡張作者向けの入口とサンプルは<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/block-editor.md">フォーム型ブロックエディターの仕様</a>にあります。</p>
 
@@ -59,31 +60,31 @@
 
 <section id="documents">
 
-<h2>8.2 外部YAMLと作品内の文書・ブロックを使い分ける <span class="badge">一部の機能拡張で利用可能</span></h2>
+<h2>8.2 外部YAMLと作品内の文書・ブロックを使い分ける <span class="badge">一部の拡張で利用可能</span></h2>
 
-<p>対応する拡張が登録した文書は、「データソース」ブロックのファイルアイコンから開けます。Plus配置では<a href="#yaml-tabs">作業領域のタブ</a>に表示されます。ブロックの表示名や選べる形式は、文書によって異なります。</p>
+<p>対応する拡張が登録した文書は、「データソース」ブロックから開けます。開き方は<a href="#yaml-tabs">8.3</a>で説明します。ブロックの表示名や選べる形式は、文書によって異なります。</p>
 <p>文書には、どこから読み込むかを決める「参照元」と、テキストで扱うかブロックで扱うかを決める「形式」の設定があります。参照元を変えられる文書では、「SB3内のファイル」と「外部URL」から選べます。ブロックに変換できるかどうかは、文書を提供する拡張が決めます。</p>
 <div class="flow" role="img" aria-label="対応拡張が登録した文書を原文またはブロックで編集し、所有拡張が変換と検証を行う。文書へ保存後、SB3を保存する。"><div>対応する文書<br><small>ファイルアイコン</small></div><span>→</span><div>原文／ブロック<br><small>提供元が対応する表現</small></div><span>→</span><div>変換・検証・保存<br><small>作品の文書へ反映</small></div><span>→</span><div>SB3を保存</div></div>
 <p>外部URLには、ブラウザーからの取得を許可しているHTTPSのURLを指定します。「取得してプレビュー」で内容を確かめてから、「参照元を検証・保存」で適用します。外部の台本を編集したいときは、参照元を「SB3内のファイル」に変えて保存し、作品に取り込んだコピーを編集します。</p>
-<div class="table-scroll" role="region" aria-label="DSL文書を扱う四つの形態" tabindex="0">
-<table><thead><tr><th scope="col">形態</th><th scope="col">文書の置き場所</th><th scope="col">向いている作業</th></tr></thead><tbody>
+<div class="table-scroll" role="region" aria-label="文書を扱う4つの形態" tabindex="0">
+<table><caption>文書を扱う4つの形態</caption><thead><tr><th scope="col">形態</th><th scope="col">文書の置き場所</th><th scope="col">向いている作業</th></tr></thead><tbody>
 <tr><th scope="row">外部YAMLテキスト</th><td>HTTPSの配信元。作品には参照先を記録</td><td>作品と別に管理する台本を読み込む</td></tr>
 <tr><th scope="row">SB3内のYAMLファイル</th><td>原文を作品内のファイルに同梱</td><td>作品と一緒に渡す。原文を編集する</td></tr>
 <tr><th scope="row">SB3内の汎用YAMLブロック</th><td>キー・値・リストを汎用ブロックで表現</td><td>階層を見ながら、項目や順序を変える</td></tr>
 <tr><th scope="row">SB3内の専用ブロック</th><td>文書のスキーマに沿った専用ブロックで表現</td><td>場面やせりふなど、作品の用語で編集する</td></tr>
 </tbody></table></div>
-<p>「形式」を選ぶと、変換後のプレビューが表示されます。ブロック形式のプレビューは見るためのもので、編集はできません。「表示されている形式に変換して検証・保存」を押して確認すると、検証のうえで文書に反映されます。編集中のブロックを別の形式に変えるときは、先に変更を原文へ反映してから変換します。作品ファイルに残すには、最後にSB3を保存します。YAMLの本文は<a href="../search/#project-search">作品全体の検索</a>の対象にもなります。</p>
+<p>「形式」を選ぶと、変換後のプレビューが表示されます。ブロック形式のプレビューは見るためのもので、編集はできません。「表示されている形式に変換して検証・保存」を押して確認すると、検証のうえで文書に反映されます。編集中のブロックを別の形式に変えるときは、先に変更を原文へ反映してから変換します。作品ファイルに残すには、最後にSB3を保存します。YAMLの本文は、<a href="../search/#search-scope">作品全体の検索</a>の「YAML 本文」の対象にもなります。</p>
 <h3>手元のVS Codeで原文を編集する</h3>
-<p>文書の表示・変換・検証は、公開版のブラウザー画面でもできます。VS Codeで編集するには、Node.jsとVS Codeを用意し、手元で動かす補助プロセスが配信するエディターを開きます。「外部エディタで編集」で原文の作業コピーを開き、VS Codeで保存します。エディターに戻って「表示されている形式に変換して検証・保存」を押し、作業コピーを文書に反映してからSB3を保存します。</p>
+<p>文書の表示・変換・検証は、公開版（GitHub Pages）でもできます。VS Codeで編集するには、Node.jsとVS Codeを用意し、READMEの手順でローカル連携（手元で動かし、エディターとVS Codeをつなぐプロセス）を起動して、その配信するエディターを開きます。「外部エディタで編集」で原文の作業コピーを開き、VS Codeで保存します。エディターに戻って「表示されている形式に変換して検証・保存」を押し、作業コピーを文書に反映してからSB3を保存します。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/README.ja.md">ローカル連携の起動手順</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/document-window.md">文書ウィンドウの仕様</a></p>
 
 </section>
 
 <section id="yaml-tabs">
 
-<h2>8.3 作品内YAMLをタブに開いてコードと並べる <span class="badge">一部の機能拡張で利用可能</span></h2>
+<h2>8.3 作品内YAMLをタブに開いてコードと並べる <span class="badge">一部の拡張で利用可能</span></h2>
 
-<p>Plus配置で、対応するデータソースブロックのファイルアイコンを押すと、文書がコードやステージと同じ作業領域にタブとして開きます。ファイル名が同じでも、別の文書は別のタブで開きます。タブを別のペインへドラッグすればコードと並べて作業でき、移動しても下書きは消えません。</p>
+<p><a href="../screen/#layout">Plus標準配置</a>で、対応するデータソースブロックのファイルアイコンを押すと、文書がコードやステージと同じ作業領域にタブとして開きます。ファイル名が同じでも、別の文書は別のタブで開きます。タブを別のペインへドラッグすればコードと並べて作業でき、移動しても下書きは消えません。</p>
 <figure class="guide-schematic"><div class="schematic-panels"><div class="schematic-panel"><strong>コードのペイン</strong><div class="schematic-cells"><span>データソースブロック</span><span>ファイルアイコンから文書を開く</span></div></div><div class="schematic-panel"><strong>YAMLのペイン</strong><div class="schematic-cells"><span>設定のYAMLタブ</span><span>原文・検証・保存</span></div></div></div><figcaption>概念図。コードとYAMLを並べ、文書で設定した値をコードと見比べます。</figcaption></figure>
 <p>保存していない変更があるタブを閉じようとすると、「保存して閉じる」「破棄して閉じる」「キャンセル」から選べます。作品ファイルに残すには、文書を保存したあと、「ファイル」メニューからSB3も保存します。</p>
 <p>Web版で従来の文書ダイアログを使いたいときは、文書とSB3を保存してから、URLに <code>twPlusDockview=0</code> を加えて開き直します。この設定では、作業領域の分割も使えなくなります。</p>
@@ -93,21 +94,22 @@
 
 <section id="asset-preview">
 
-<h2>8.4 素材を見たり再生したりして選ぶ <span class="badge">一部の機能拡張で利用可能</span></h2>
+<h2>8.4 素材を見たり再生したりして選ぶ <span class="badge">一部の拡張で利用可能</span></h2>
 
-<p>公開されている紙芝居拡張rc.87では、編集用の作品にある素材ブロック（Asset）のアイコンを押すと、フォームと一緒に素材のプレビューが開きます。素材の指定を変えると、保存する前に新しい画像を見たり、音声や動画を再生したりできます。画像や動画の寸法、ファイルサイズ、素材の保持形態も確かめられます。対応するTeachable Machineの認識モデルなら、カメラやマイクを起動して認識結果を試せます。</p>
+<p>公開されている紙芝居拡張rc.87では、編集用の作品（台本のYAMLから作った、素材ブロックなどを含む編集用のSB3）にある素材ブロック（Asset）のアイコンを押すと、フォームと一緒に素材のプレビューが開きます。素材の指定を変えると、保存する前に新しい画像を見たり、音声や動画を再生したりできます。画像や動画の寸法、ファイルサイズ、素材の保持形態も確かめられます。対応するTeachable Machineの認識モデルなら、カメラやマイクを起動して認識結果を試せます。</p>
 <figure class="guide-detail"><a href="../images/asset-preview-development.png"><img src="../images/asset-preview-development.png" width="374" height="319" alt="公開前の紙芝居開発版で撮影した画像素材のプレビュー。画像、ピクセル寸法、バイト数、保持形態が表示されている。" loading="lazy"></a><figcaption>公開前の開発版で撮影した例。外部画像の見た目と保持形態を確認できます。</figcaption></figure>
-<p>rc.87の素材プレビューは、はじめから有効です。フォームだけを開きたいときは、エディターの起動URLに <code>twPlusBlockPreview=0</code> を指定します。<a href="#runtime">場面や動作のプレビュー</a>は、別に有効にする指定が必要です。</p>
+<p>rc.87のプレビューは、エディターの起動URLに付ける <code>twPlusBlockPreview</code> で次のように切り替わります。設定は起動時に一度だけ読まれるので、変えたときはエディターを開き直します。</p>
+<ul><li>指定しない場合：素材のプレビューだけが有効です。</li><li><code>twPlusBlockPreview=1</code>：素材に加えて、<a href="#runtime">場面や動作のプレビュー</a>も有効になります。</li><li><code>twPlusBlockPreview=0</code>：プレビューを使わず、素材ブロックのアイコンからはフォームだけが開きます。</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/tag/v4.0.0-rc.87">紙芝居拡張rc.87の公開情報</a> · <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">プレビューの対象と設定</a></p>
 
 </section>
 
 <section id="runtime">
 
-<h2>8.5 場面や動作をプレビューしてから反映する <span class="badge">一部の機能拡張で利用可能</span></h2>
+<h2>8.5 場面や動作をプレビューしてから反映する <span class="badge">一部の拡張で利用可能</span></h2>
 
 <p>拡張がプレビューを登録したブロックでは、フォームの下書きのまま表示や動作を確かめられます。たとえば紙芝居の吹き出しブロックなら、せりふや表示時間を変えて見え方を確認できます。</p>
-<p>紙芝居拡張rc.87で場面や動作を試すには、エディターの起動URLに <code>twPlusBlockPreview=1</code> を指定し、対応する場面・動作ブロックを含む編集用の作品を開きます。</p>
+<p>紙芝居拡張rc.87で場面や動作を試すには、エディターの起動URLに <code>twPlusBlockPreview=1</code> を指定し（<a href="#asset-preview">8.4</a>）、対応する場面・動作ブロックを含む編集用の作品を開きます。</p>
 <figure class="guide-flow"><div class="flow" role="img" aria-label="フォームで下書き。文と表示時間を調整。次に、場面を再生。読める長さかを確認。次に、すべて保存。確定した値をブロックに反映"><div>フォームで下書き<br><small>文と表示時間を調整</small></div><span aria-hidden="true">→</span><div>場面を再生<br><small>読める長さかを確認</small></div><span aria-hidden="true">→</span><div>すべて保存<br><small>確定した値をブロックに反映</small></div></div><figcaption>例。吹き出しの表示を確かめてから、ブロックへ反映する。</figcaption></figure>
 <p>気に入った設定は、フォームの「すべて保存」でブロックに反映します。拡張が追加する操作ボタンは、メニューバー右端の<a href="../screen/#extension-controls">機能拡張のボタン領域</a>に表示されます。表示される条件と動作は拡張ごとに異なります。たとえば紙芝居の制作中に出るリロードのボタンは、紙芝居拡張が提供しています。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">紙芝居拡張の場面・動作プレビュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張が追加する操作ボタン</a></p>
@@ -118,5 +120,5 @@
 <a class="next" href="../reuse/"><small>次のページ</small>9. スクリプトと素材を再利用する</a>
 </nav>
 </main>
-<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">エディターを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
 </body></html>
