@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: a document reader. Sticky tab bar of four documents, one 46rem text column, figures may run wider (60rem). Colors borrow Scratch's block categories: Looks purple = Scratch Addons, TurboWarp red = TurboWarp, Extensions teal = TurboWarp-Plus. */
+/* Layout: a document reader. On wide screens a sticky left contents panel lists the four documents and their sections; narrower screens use a sticky tab bar instead. Each document ends with previous/next buttons. one 46rem text column, figures may run wider (60rem). Colors borrow Scratch's block categories: Looks purple = Scratch Addons, TurboWarp red = TurboWarp, Extensions teal = TurboWarp-Plus. */
 :root {
   --bg: #F5F7FA;
   --panel: #FFFFFF;
@@ -51,6 +51,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .masthead .kicker { font-family: var(--f-mono); font-size: .78rem; letter-spacing: .08em; color: var(--muted); }
 .masthead h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(1.7rem, 4.5vw, 2.5rem); line-height: 1.25; margin: 0; text-wrap: balance; }
 .masthead p { margin: 0; color: var(--muted); max-width: 46rem; }
+.masthead .subtitle { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.1rem, 2.6vw, 1.35rem); line-height: 1.4; color: var(--fg); }
 .legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-size: .85rem; margin-top: .25rem; }
 .legend span { display: inline-flex; align-items: center; gap: .4rem; }
 .legend i { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; }
@@ -74,7 +75,39 @@ nav.tabs a:hover { color: var(--fg); }
 nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--plus); font-weight: 700; }
 nav.tabs a:focus-visible, a:focus-visible { outline: 2px solid var(--plus); outline-offset: 2px; }
 
-main { max-width: 60rem; margin: 0 auto; }
+main { max-width: 60rem; margin: 0 auto; min-width: 0; }
+nav.toc { display: none; }
+@media (min-width: 70rem) {
+  nav.tabs { display: none; }
+  .masthead { max-width: 78rem; padding-left: 18rem; }
+  .reader { max-width: 78rem; margin: 0 auto; display: grid; grid-template-columns: 16rem minmax(0, 60rem); gap: 2rem; }
+  .reader > main { margin: 0; }
+  nav.toc {
+    display: block; position: sticky; top: env(safe-area-inset-top, 0px); align-self: start;
+    max-height: 100vh; overflow-y: auto; padding: 2rem .25rem 2rem 0; font-size: .86rem; line-height: 1.5;
+    border-right: 1px solid var(--line);
+  }
+}
+.toc-title { margin: 0 0 .6rem; font-family: var(--f-mono); font-size: .75rem; letter-spacing: .08em; color: var(--muted); }
+nav.toc ol { list-style: none; margin: 0; padding: 0; }
+nav.toc > ol { display: grid; gap: .35rem; }
+nav.toc a { display: block; text-decoration: none; color: var(--muted); border-left: 3px solid transparent; padding: .3rem .6rem; border-radius: 0 6px 6px 0; }
+nav.toc a:hover { color: var(--fg); background: var(--panel); }
+nav.toc > ol > li > a { font-weight: 700; }
+nav.toc > ol > li > a b { font-family: var(--f-mono); font-weight: 600; font-size: .72rem; margin-right: .4rem; }
+nav.toc li li a { padding-left: 1.6rem; font-size: .82rem; }
+nav.toc > ol > li.current > a { color: var(--fg); }
+nav.toc a[aria-current="page"] { color: var(--fg); background: var(--plus-soft); border-left-color: var(--plus); }
+nav.toc a[aria-current="location"] { color: var(--plus); border-left-color: var(--plus); font-weight: 700; }
+h3[id] { scroll-margin-top: 4rem; }
+@media (min-width: 70rem) { h3[id] { scroll-margin-top: 1.5rem; } }
+
+.pager { max-width: 46rem; margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.pager a { display: grid; gap: .15rem; padding: .85rem 1.1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); text-decoration: none; line-height: 1.5; }
+.pager a:hover { border-color: var(--plus); }
+.pager a span { font-size: .8rem; color: var(--plus); font-weight: 700; }
+.pager .next-doc { grid-column: 2; text-align: right; }
+@media (max-width: 520px) { .pager { grid-template-columns: 1fr; } .pager .next-doc { grid-column: 1; } }
 .doc { padding-top: 2rem; }
 .js .doc:not(.active) { display: none; }
 .doc + .doc { border-top: 1px dashed var(--line); margin-top: 3rem; }
@@ -179,7 +212,8 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 
 <header class="masthead">
   <div class="kicker">SCRATCH ADDONS · TURBOWARP ADDONS · TURBOWARP-PLUS-EDITOR</div>
-  <h1>エディターに機能を足す三つの方式</h1>
+  <h1>TurboWarp-Plus-Editor 開発者ガイド</h1>
+  <p class="subtitle">エディターに機能を足す三つの方式</p>
   <p>Scratch のアドオン、TurboWarp のアドオン、TurboWarp-Plus-Editor の差し込み口を比べ、Plus が追加機能を組み込む仕組みの仕様と、新しい追加機能の作り方をまとめた4つの文書です。</p>
   <p>この文書では、Plus がエディター本体に組み込んで標準 TurboWarp に足している機能を<strong>追加機能</strong>、作品が読み込んで使う Scratch・TurboWarp の拡張機能を<strong>拡張</strong>と呼び分けます。</p>
   <div class="legend" aria-label="色の凡例">
@@ -195,6 +229,47 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <li><a href="#comparison"><b>02</b>比較と結論</a></li>
     <li><a href="#spec"><b>03</b>組み込みの仕様書</a></li>
     <li><a href="#howto"><b>04</b>追加機能の作り方</a></li>
+  </ol>
+</nav>
+
+<div class="reader">
+<nav class="toc" aria-label="目次">
+  <p class="toc-title">開発者ガイド · 4つの文書</p>
+  <ol>
+    <li data-doc="article"><a href="#article"><b>01</b>記事：三つの方式</a></li>
+    <li data-doc="comparison"><a href="#comparison"><b>02</b>比較と結論</a>
+      <ol>
+        <li><a href="#comparison-1">1. Scratch Addons：ページに注入されるブラウザー拡張</a></li>
+        <li><a href="#comparison-2">2. TurboWarp のアドオン：同梱され、同じ API で動く</a></li>
+        <li><a href="#comparison-3">3. TurboWarp-Plus-Editor：ビルド時に口へ結び付ける</a></li>
+        <li><a href="#comparison-4">4. 効き始める時期</a></li>
+        <li><a href="#comparison-5">5. 本家が変わったときの壊れ方</a></li>
+        <li><a href="#comparison-6">6. 観点ごとの比較</a></li>
+        <li><a href="#comparison-7">7. Plus の追加機能をアドオンの形に寄せられるか</a></li>
+        <li><a href="#comparison-8">8. 結論：Plus の方式が優れている理由</a></li>
+      </ol>
+    </li>
+    <li data-doc="spec"><a href="#spec"><b>03</b>組み込みの仕様書</a>
+      <ol>
+        <li><a href="#spec-1">1. 3つのリポジトリと依存の向き</a></li>
+        <li><a href="#spec-2">2. ビルド時の結合</a></li>
+        <li><a href="#spec-3">3. 口の一覧</a></li>
+        <li><a href="#spec-4">4. 口の約束</a></li>
+        <li><a href="#spec-5">5. ワークスペースへの取り付け</a></li>
+        <li><a href="#spec-6">6. 実行時の拡張に公開する API</a></li>
+        <li><a href="#spec-7">7. 起動時フラグ</a></li>
+        <li><a href="#spec-8">8. 同梱アドオンとの関係</a></li>
+        <li><a href="#spec-9">9. 検証</a></li>
+      </ol>
+    </li>
+    <li data-doc="howto"><a href="#howto"><b>04</b>追加機能の作り方</a>
+      <ol>
+        <li><a href="#howto-1">1. 置き場所を決める</a></li>
+        <li><a href="#howto-2">2. 作業の順序</a></li>
+        <li><a href="#howto-3">3. 手順</a></li>
+        <li><a href="#howto-4">4. 出す前の確認</a></li>
+      </ol>
+    </li>
   </ol>
 </nav>
 
@@ -284,6 +359,9 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p>Plus の主な機能はレイアウト、拡張の審査、保存の流れです。これらは「外から付け足す」モデルに収まらないので、Plus がアドオン互換を目指す意味は大きくありません。外して戻せる小さな機能については、アドオンと同じく後から付けて外せる形で書くことにしています。</p>
   </div>
   <p class="next">詳しい比較は <a href="#comparison">02 比較と結論</a>、口の一覧は <a href="#spec">03 仕様書</a> にあります。</p>
+  <nav class="pager" aria-label="前後の記事">
+    <a class="next-doc" href="#comparison" rel="next"><span>次の記事 →</span><b>02 比較と結論</b></a>
+  </nav>
 </article>
 
 <!-- ============================================================ 02 COMPARISON -->
@@ -294,7 +372,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p class="lede">仕組み、効き始める時期、壊れ方、切り替え方の順に比べ、最後に Plus の方式の優位性を理由とともに結論づけます。</p>
   </header>
 
-  <h3>1. Scratch Addons：ページに注入されるブラウザー拡張</h3>
+  <h3 id="comparison-1">1. Scratch Addons：ページに注入されるブラウザー拡張</h3>
   <div class="prose">
     <p>Scratch Addons は Chrome や Firefox に入れるブラウザー拡張です。アドオンは1つずつマニフェストを持ち、名前・説明・タグ・設定項目・既定で有効かどうか・どのページで動くかを宣言します。条件に合うページを開くと、ブラウザー拡張が userscript と userstyle をそのページに注入します。</p>
     <p>userscript は <code>({addon, console, msg})</code> を受け取る非同期関数です。<code>addon.tab</code> の <code>waitForElement</code> で画面要素の出現を待ち、<code>traps</code> で VM や Blockly を手に入れ、Redux の状態を見張ります。公式エディターには口がないので、すべてを外から探し当てます。</p>
@@ -340,7 +418,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図2</b>Scratch Addons では、公式エディターは何も知りません。userscript が画面の要素と内部状態を外から見つけて付け足します。</figcaption>
   </figure>
 
-  <h3>2. TurboWarp のアドオン：同梱され、同じ API で動く</h3>
+  <h3 id="comparison-2">2. TurboWarp のアドオン：同梱され、同じ API で動く</h3>
   <div class="prose">
     <p>TurboWarp は Scratch Addons のエディター向けアドオンを、<code>pull.js</code> というスクリプトで自分のソースに取り込みます。上流のコードに TurboWarp 用のパッチ（<code>TurboWarp/addons</code> の <code>tw</code> ブランチ）を当て、さらに正規表現で書き換えてから <code>src/addons/</code> に置きます。今のフォークには 81 件が入っていて、そのうち 6 件は TurboWarp 独自の <code>tw-</code> アドオンです。</p>
     <p>実行時は、<code>api.js</code> が Scratch Addons の <code>addon</code> オブジェクトを作り直して渡します。ログイン情報のようにブラウザー拡張にしかない API はありません。そのかわり、<code>appendToSharedSpace</code> の共有スペース（<code>stageHeader</code>、<code>afterGreenFlag</code>、<code>afterStopButton</code>、<code>afterSoundTab</code> など 8 か所）のように、TurboWarp の画面に合わせた置き場所が用意されています。メニューバーに「録画」ボタンを足す <code>mediarecorder</code> も、この仕組みでファイルメニューの横の要素を探して差し込みます。</p>
@@ -403,7 +481,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図3</b>TurboWarp では、取り込みはビルド時、接続は実行時です。接続のしかたは Scratch Addons と同じく外から探す形です。</figcaption>
   </figure>
 
-  <h3>3. TurboWarp-Plus-Editor：ビルド時に口へ結び付ける</h3>
+  <h3 id="comparison-3">3. TurboWarp-Plus-Editor：ビルド時に口へ結び付ける</h3>
   <div class="prose">
     <p>Plus はフォークした scratch-gui に、本家に無いファイルを1つも置きません。本家にもある <code>src/addons/hooks.js</code> に <code>getHostIntegration()</code> を置き、hooks.js 以外の 28 のファイルが <code>getHostIntegration()?.EditorLayout</code> のように名前を指定して問い合わせます。</p>
     <p>配信用のビルドでは、webpack の <code>ProvidePlugin</code> が <code>__TW_GUI_HOST__</code> を本リポジトリの <code>site/gui-integration/index.ts</code> に結び付けます。そこから <code>site/plus-integration.ts</code> の統合オブジェクトと、npm で版を持つ <code>@kubohiroya/turbowarp-*</code> パッケージへつながります。GUI を単体でビルドすると <code>__TW_GUI_HOST__</code> は存在せず、getter は <code>null</code> を返し、本家どおりに動きます。</p>
@@ -453,7 +531,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図4</b>Plus ではフォークの呼び出し箇所が口の名前を指定し、ビルド時に供給された値を受け取ります。値が無いときは本家と同じ動きに落ちます。</figcaption>
   </figure>
 
-  <h3>4. 効き始める時期</h3>
+  <h3 id="comparison-4">4. 効き始める時期</h3>
   <div class="prose">
     <p>三つの方式は、機能がいつ効き始めるかが違います。アドオンはページや GUI が動き出してから非同期に付くので、作品の読み込みより前に必ず効いていなければならない処理には向きません。Plus は、拡張の審査のように読み込みの前に決まっていなければならない処理を、口として同期的に渡せます。</p>
   </div>
@@ -496,7 +574,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図5</b>アドオンは後から付き、利用者が切り替えられます。Plus は最初から結び付いていて、作品の読み込みより前に効かせる処理も持てます。</figcaption>
   </figure>
 
-  <h3>5. 本家が変わったときの壊れ方</h3>
+  <h3 id="comparison-5">5. 本家が変わったときの壊れ方</h3>
   <div class="prose">
     <p>アドオンは CSS モジュールのクラス名を前方一致で探します（<code>scratchClass</code>、<code>[class*='menu-bar_file-group']</code> など）。本家が画面の構造を変えると、探し当てられずに何も起きません。Plus の口はフォークのソースに書かれた呼び出しなので、本家の変更とぶつかればマージの衝突や型検査、統合テストで止まります。</p>
   </div>
@@ -537,7 +615,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図6</b>アドオンは黙って効かなくなります。Plus はフォークを更新する時点で気付けます。</figcaption>
   </figure>
 
-  <h3>6. 観点ごとの比較</h3>
+  <h3 id="comparison-6">6. 観点ごとの比較</h3>
   <div class="table-wrap">
     <table class="wide">
       <thead><tr><th>観点</th><th class="sa">Scratch Addons</th><th class="tw">TurboWarp のアドオン</th><th class="plus">TurboWarp-Plus-Editor</th></tr></thead>
@@ -556,7 +634,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     </table>
   </div>
 
-  <h3>7. Plus の追加機能をアドオンの形に寄せられるか</h3>
+  <h3 id="comparison-7">7. Plus の追加機能をアドオンの形に寄せられるか</h3>
   <div class="prose">
     <p>Plus の追加機能を「付け足すか、置き換えるか」と「利用者が切ってよいか、常に効いている必要があるか」の二つの軸で並べると、アドオンの形に寄せられるのは左上の区画だけです。</p>
   </div>
@@ -605,7 +683,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図7</b>アドオンの形に寄せられる A は付け足しの小さな機能だけです。Plus の中心にある C は、アドオンのモデルの外側にあります。</figcaption>
   </figure>
 
-  <h3>8. 結論：Plus の方式が優れている理由</h3>
+  <h3 id="comparison-8">8. 結論：Plus の方式が優れている理由</h3>
   <div class="prose">
     <p>TurboWarp-Plus-Editor が TurboWarp に機能を足すには、アドオンの方式よりも、フォークに名前付きの口を置いてビルド時に実装を結び付ける今の方式が適しています。理由は次の6つです。</p>
   </div>
@@ -625,6 +703,10 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p>そのうえで、図7の A に当たる小さな機能は、アドオンと同じく「後から付けて、<code>dispose</code> で外せる」形で書きます。こうしておけば、利用者が切り替えられるようにしたくなったとき、アドオンの形へ移しやすくなります。既存の機能をアドオン互換に作り直す作業は行いません。</p>
   </div>
   <p class="source">根拠：フォーク <code>src/addons/</code>（81 件、うち <code>tw-</code> 6 件）、<code>api.js</code> の <code>appendToSharedSpace</code>、<code>docs/plus-integration-sockets.md</code>、<code>docs/gui-integration/README.md</code>、<code>site/plus-integration.ts</code>。件数はこのリポジトリが固定しているフォークで数えたものです。</p>
+  <nav class="pager" aria-label="前後の記事">
+    <a class="prev" href="#article" rel="prev"><span>← 前の記事</span><b>01 記事：三つの方式</b></a>
+    <a class="next-doc" href="#spec" rel="next"><span>次の記事 →</span><b>03 組み込みの仕様書</b></a>
+  </nav>
 </article>
 
 <!-- ============================================================ 03 SPEC -->
@@ -635,7 +717,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <p class="lede">Plus の追加機能がフォークの scratch-gui に届くまでの経路、口の一覧、守るべき約束、起動時フラグ、実行時の拡張に公開する API を定めます。</p>
   </header>
 
-  <h3>1. 3つのリポジトリと依存の向き</h3>
+  <h3 id="spec-1">1. 3つのリポジトリと依存の向き</h3>
   <div class="prose">
     <p>Plus の追加機能は3つのリポジトリにまたがります。依存は一方向で、上流は下流を知りません。</p>
   </div>
@@ -684,7 +766,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図8</b>実装はパッケージに、接続と配信は Editor に、口を呼ぶ行だけがフォークにあります。パッケージ側は GPL のコードを import しないので、向きは「GPL 側がパッケージの口を呼ぶ」に固定します。</figcaption>
   </figure>
 
-  <h3>2. ビルド時の結合</h3>
+  <h3 id="spec-2">2. ビルド時の結合</h3>
   <div class="prose">
     <p>フォークの <code>src/addons/hooks.js</code> は次の getter を持ちます。本家にも存在するファイルです。</p>
   </div>
@@ -739,7 +821,7 @@ export const getHostIntegration = () =&gt;
     <figcaption><b>図9</b>画面の部品は橋渡しから直接読み、設定値やサービスは補助関数を通して統合オブジェクトから読みます。補助関数が「無いときの既定値」を一か所で決めます。</figcaption>
   </figure>
 
-  <h3>3. 口の一覧</h3>
+  <h3 id="spec-3">3. 口の一覧</h3>
   <div class="prose">
     <p>フォークが参照している口を用途ごとに並べます。左の名前はフォークが <code>getHostIntegration()?.</code> の後に書く名前、右の項目は統合オブジェクトの項目です。最新の一覧は次のコマンドで取り出せます。</p>
   </div>
@@ -762,7 +844,7 @@ export const getHostIntegration = () =&gt;
     </table>
   </div>
 
-  <h3>4. 口の約束</h3>
+  <h3 id="spec-4">4. 口の約束</h3>
   <div class="prose">
     <p>すべての口は次の約束を守ります。新しい口を開けるときも同じです。</p>
     <ol>
@@ -775,7 +857,7 @@ export const getHostIntegration = () =&gt;
     </ol>
   </div>
 
-  <h3>5. ワークスペースへの取り付け</h3>
+  <h3 id="spec-5">5. ワークスペースへの取り付け</h3>
   <div class="prose">
     <p><code>attachToWorkspace</code> は、Blockly や VM に付く機能をまとめて取り付ける口です。アドオンの userscript に最も近い形をしています。</p>
   </div>
@@ -833,7 +915,7 @@ export const getHostIntegration = () =&gt;
     <p>ScratchBlocks が使えるようになった時点で一度だけ行う登録（ブロックの形、右クリックメニュー、パレットへの項目の追加）は、<code>registerBlockShapes(ScratchBlocks)</code> に置きます。アドオンの起動を待つ必要があるときは、そのアドオンの id を <code>awaitStartupAddons</code> に書きます（今は <code>editor-searchable-dropdowns</code>）。</p>
   </div>
 
-  <h3>6. 実行時の拡張に公開する API</h3>
+  <h3 id="spec-6">6. 実行時の拡張に公開する API</h3>
   <div class="prose">
     <p>非サンドボックスの拡張は <code>Scratch.gui</code> から次の値を読めます。本家にある <code>getBlockly</code> と <code>getBlocklyEagerly</code> に加え、ホストが値を渡したときだけ次の項目が生えます。値が無いときは <code>undefined</code> のままなので、拡張は「このビルドには無い」と判断できます。</p>
   </div>
@@ -893,7 +975,7 @@ export const getHostIntegration = () =&gt;
     <p><code>addButton</code> で足したボタンは <code>visible: false</code> で始まります。表示するには <code>update({visible: true})</code> を呼びます。<code>update</code> で変えられるのは <code>label</code>、<code>text</code>、<code>visible</code>、<code>expanded</code> の4つです。展開したときに見せる要素は、サービスの <code>placePanel(element)</code> でホストに渡します。要素の持ち主は登録した側で、ホストは取り付けるだけです。</p>
   </div>
 
-  <h3>7. 起動時フラグ</h3>
+  <h3 id="spec-7">7. 起動時フラグ</h3>
   <div class="prose">
     <p>機能の有効・無効は、ページの URL クエリ <code>twPlus…</code> で起動時に一度だけ決まります。<code>config/web-startup-feature-flags.ts</code> が URL を読み、<code>config/feature-flags.ts</code> の <code>readStartupFeatureFlags</code> が凍結したオブジェクトを返します。<strong>作品のデータからこの値を受け取ってはいけません。</strong></p>
   </div>
@@ -934,7 +1016,7 @@ export const getHostIntegration = () =&gt;
     </table>
   </div>
 
-  <h3>8. 同梱アドオンとの関係</h3>
+  <h3 id="spec-8">8. 同梱アドオンとの関係</h3>
   <div class="prose">
     <ul>
       <li><strong>既定の有効化：</strong><code>site/addon-manifests.ts</code> が、webpack の alias でフォークの <code>generated/addon-manifests</code> を置き換えます。「おすすめ」タグの付いたアドオンと <code>hide-delete-button</code>、<code>block-palette-icons</code> を既定で有効にし、<code>hide-flyout</code> は無効のままにします。利用者が設定画面で選んだ値が優先されます。</li>
@@ -943,7 +1025,7 @@ export const getHostIntegration = () =&gt;
     </ul>
   </div>
 
-  <h3>9. 検証</h3>
+  <h3 id="spec-9">9. 検証</h3>
   <div class="table-wrap">
     <table class="wide">
       <thead><tr><th>コマンド</th><th>確かめること</th></tr></thead>
@@ -960,6 +1042,10 @@ export const getHostIntegration = () =&gt;
     <div class="label">実マウスを使う E2E</div>
     <p>OS のマウスカーソルを動かす E2E（<code>TW_PLUS_NATIVE_INPUT=1</code>、<code>test:e2e:native</code>）は、その実行を明示的に依頼されたときだけ行います。一般的な E2E の実行や PR の検証の依頼には含まれません（<code>AGENTS.md</code>）。</p>
   </div>
+  <nav class="pager" aria-label="前後の記事">
+    <a class="prev" href="#comparison" rel="prev"><span>← 前の記事</span><b>02 比較と結論</b></a>
+    <a class="next-doc" href="#howto" rel="next"><span>次の記事 →</span><b>04 追加機能の作り方</b></a>
+  </nav>
 </article>
 
 <!-- ============================================================ 04 HOWTO -->
@@ -970,7 +1056,7 @@ export const getHostIntegration = () =&gt;
     <p class="lede">作りたい追加機能をどこに置くかを決め、パッケージに実装し、Editor でつなぎ、検証して配信するまでの手順です。</p>
   </header>
 
-  <h3>1. 置き場所を決める</h3>
+  <h3 id="howto-1">1. 置き場所を決める</h3>
   <div class="prose">
     <p>最初に、機能がどの経路でエディターに届くかを決めます。下の図の上から順に当てはめ、最初に「はい」になったところが置き場所です。</p>
   </div>
@@ -1029,7 +1115,7 @@ export const getHostIntegration = () =&gt;
     <figcaption><b>図13</b>A〜C はフォークを変えずに済みます。D だけがフォークへの変更を伴うので、先に A〜C で届かないことを確かめます。</figcaption>
   </figure>
 
-  <h3>2. 作業の順序</h3>
+  <h3 id="howto-2">2. 作業の順序</h3>
   <div class="prose">
     <p>実装はパッケージのリポジトリで先に公開し、Editor はその npm 公開版に上げてからつなぎます。新しい口が要るときは、フォークの変更を並行して進め、Editor で SHA を固定します。</p>
   </div>
@@ -1078,7 +1164,7 @@ export const getHostIntegration = () =&gt;
     <figcaption><b>図14</b>上流から下流へ一方向に進みます。Editor の変更は、公開された版を使うところから始まります。</figcaption>
   </figure>
 
-  <h3>3. 手順</h3>
+  <h3 id="howto-3">3. 手順</h3>
   <ol class="steps">
     <li>
       <h5>置き場所と口を決める</h5>
@@ -1148,7 +1234,7 @@ if (controls) {
     </li>
   </ol>
 
-  <h3>4. 出す前の確認</h3>
+  <h3 id="howto-4">4. 出す前の確認</h3>
   <ul class="checklist">
     <li>実装の本体はパッケージにあり、Editor の変更は版の更新と数行の接続に収まっている</li>
     <li>付けたものはすべて <code>dispose()</code> で外れる。VM が替わっても二重に付かない</li>
@@ -1170,26 +1256,77 @@ if (controls) {
     <li>依頼されていないのに実マウスを使う E2E を走らせる</li>
   </ul>
   <p class="source">関連文書：<code>docs/plus-integration-sockets.md</code>（口の設計の経緯）、<code>docs/gui-integration/README.md</code>（移設とビルド時の接続）、<code>docs/architecture.md</code>（責務と配信）。</p>
+  <nav class="pager" aria-label="前後の記事">
+    <a class="prev" href="#spec" rel="prev"><span>← 前の記事</span><b>03 組み込みの仕様書</b></a>
+  </nav>
 </article>
 
 </main>
+</div>
 
 <script>
 (function () {
   var docs = Array.prototype.slice.call(document.querySelectorAll('.doc'));
-  var links = Array.prototype.slice.call(document.querySelectorAll('nav.tabs a'));
-  var ids = docs.map(function (d) { return d.id; });
+  var docLinks = Array.prototype.slice.call(document.querySelectorAll('nav.tabs a, nav.toc > ol > li > a'));
+  var tocItems = Array.prototype.slice.call(document.querySelectorAll('nav.toc > ol > li'));
+  var sectionLinks = Array.prototype.slice.call(document.querySelectorAll('nav.toc li li a'));
+  var active = docs[0];
   document.documentElement.classList.add('js');
-  function show() {
-    var id = (location.hash || '').slice(1);
-    if (ids.indexOf(id) < 0) id = 'article';
-    docs.forEach(function (d) { d.classList.toggle('active', d.id === id); });
-    links.forEach(function (a) {
-      if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page');
+  // The hash names either a document or a section inside one; show the document that holds it.
+  function target() {
+    var el = document.getElementById((location.hash || '').slice(1));
+    var doc = el && el.closest('.doc');
+    return {doc: doc || docs[0], section: doc && el !== doc ? el : null};
+  }
+  function show(doc) {
+    active = doc;
+    docs.forEach(function (d) { d.classList.toggle('active', d === doc); });
+    docLinks.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + doc.id) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
+    tocItems.forEach(function (li) { li.classList.toggle('current', li.getAttribute('data-doc') === doc.id); });
+    spy();
   }
-  window.addEventListener('hashchange', function () { show(); window.scrollTo(0, 0); });
-  show();
+  // Mark the section being read: the last heading of the shown document that has scrolled past the top.
+  // At the bottom of the page the last heading may never reach the top, so it counts as read.
+  var toc = document.querySelector('nav.toc');
+  function spy() {
+    var current = null;
+    var headings = active.querySelectorAll('h3[id]');
+    var atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    Array.prototype.forEach.call(headings, function (h) {
+      if (h.getBoundingClientRect().top <= 120) current = h.id;
+    });
+    if (atEnd && current && headings.length) current = headings[headings.length - 1].id;
+    sectionLinks.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + current) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
+    });
+    // Keep the highlighted entry inside the contents panel when the panel itself scrolls.
+    var mark = toc && (toc.querySelector('a[aria-current="location"]') || toc.querySelector('a[aria-current="page"]'));
+    if (mark && toc.scrollHeight > toc.clientHeight) {
+      var top = mark.offsetTop, bottom = top + mark.offsetHeight;
+      if (top < toc.scrollTop + 40) toc.scrollTop = Math.max(0, top - 40);
+      else if (bottom > toc.scrollTop + toc.clientHeight - 40) toc.scrollTop = bottom - toc.clientHeight + 40;
+    }
+  }
+  function go() {
+    var t = target();
+    show(t.doc);
+    if (t.section) t.section.scrollIntoView();
+    else window.scrollTo(0, 0);
+    spy();
+  }
+  var pending = false;
+  window.addEventListener('scroll', function () {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(function () { pending = false; spy(); });
+  }, {passive: true});
+  window.addEventListener('hashchange', go);
+  var first = target();
+  show(first.doc);
+  if (first.section) first.section.scrollIntoView();
 })();
 </script>
