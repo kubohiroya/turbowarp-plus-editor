@@ -100,16 +100,39 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 | [9.1 Transfer scripts and the stage to another project](reuse/index.en.html#transfer) | Yes | Yes | There is no Backpack at the bottom of the Scratch editor. Transfer scripts as `.blocks3` or by copy and paste, the stage as `.stage3`, and whole sprites as `.sprite3`. Scripts that use extensions need the same extensions and permissions in the destination. Pasting between different sites depends on browser support and permissions. |
 | [9.2 Add bundled assets as backdrops, costumes and sounds](reuse/index.en.html#bundle-assets) | No | No | Bundled assets are files stored separately in the project for extensions such as Kamishibai. In an SB3 that contains such a bundle, "Project Data…" → "Add Bundle Material to Project…" copies images and sounds into the project. The originals stay in the bundle. |
 
-## 10. [Manage projects with project folders and Git](git/index.en.html)
+## 10. [Save and distribute](save/index.en.html)
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
-| [10.1 Manage projects and extensions with sb3-toolchain](git/index.en.html#sb3-toolchain) | N/A | N/A | Both formats can be unpacked, checked and rebuilt with the Node.js command-line tool `sb3-toolchain`. See "sb3-toolchain in detail" below for each feature's conditions. |
-| [10.2 Open and save a project folder](git/index.en.html#project-folder) | Yes | Yes | For project folders unpacked with sb3-toolchain v1. Needs a Chromium-based browser with File System Access. From a new project or an SB3, create a project folder with "Create Project Folder" in the "Project folder" panel or the "Project folder" format in "Save As…". Adding and deleting sprites, costumes and sounds also updates `assets/` and `sb3-source.json`. Embedded extensions and custom extensions loaded from a URL can be opened and saved; their code is written back to `extensions/` and `embedded-extensions.json`. Custom font references and files are saved too. |
-| [10.3 Check changes and history with local Git](git/index.en.html#local-git) | Yes | Yes | For a repository with `.git` and project folders inside it. Needs a Chromium-based browser. Fetch, pull and push work against a GitHub HTTPS remote `origin` in environments with a configured connection. |
-| [10.4 Compare project changes as blocks](git/index.en.html#block-diff) | Yes | Yes | Diffs of projects unpacked with sb3-toolchain v1. Blocks from unregistered extensions are shown as placeholder blocks. |
-| [10.5 Sync with GitHub (fetch, pull, push)](git/index.en.html#github-sync) | Yes | Yes | In repositories with a GitHub HTTPS remote `origin`, in environments with a configured connection. Push needs explicit permission when connecting. |
-| [10.6 Review pull requests script by script](git/index.en.html#pull-request-review) | Yes | Yes | Reads PRs of public repositories in a working folder whose `origin` is GitHub. Public API rate limits apply. |
+| [10.1 Choose between Save and Save as](save/index.en.html#save) | Yes | Yes | "Save As…" chooses the name, format and location. In browsers that can choose a location, "Save Project" then overwrites it. A download leaves nothing to overwrite. Unsaved changes add `*` to the project title and tabs. |
+| [10.2 Restore a project from a restore point](save/index.en.html#restore-points) | Yes | Yes | A TurboWarp feature. Restores from restore points recorded in the browser at regular intervals. |
+| [10.3 Record project information in the SB3](save/index.en.html#project-properties) | Yes | Yes | Records the title, description, author and contact in the SB3. Resaving in the standard editor may drop the Plus-specific information. |
+| [10.4 Set the project URI to keep caches separate](save/index.en.html#project-uri) | Yes | Yes | Set an HTTPS URI in Project Properties and record it in the SB3. For extensions that keep a cache per project, later cache writes are kept separate under the new URI (the earlier cache is not deleted). |
+| [10.5 Choose the storage format for extension code](save/index.en.html#storage) | Yes | Yes | When adding an extension from the Plus catalog (1.3), "Where it loads from" chooses one of four: HTTPS reference (cached or not), a file inside the SB3, or data inside the project JSON. For extensions already added, "Extensions…" changes the storage format. |
+| [10.6 Choose the storage format for source data and assets](save/index.en.html#payload-formats) | Yes | Yes | "File" → "Project Data…" chooses the storage format of ordinary backdrops, costumes and sounds: an HTTPS reference (cached or not), a file inside the SB3, or data inside the project JSON. The HTTPS source must have the same content as the current asset. Source data such as YAML is listed when a supported provider and target document exist. |
+| [10.7 Export a project as a single HTML file](save/index.en.html#packager) | Yes | Yes | "File" → "Export…" → "Package Project" produces a single HTML file with the standard TurboWarp Packager. For projects with Plus-format extensions, see "Single-HTML export paths" below. |
+
+### Single-HTML export paths
+
+"File" → "Export…" → "Package Project" opens a different export screen depending on whether the project has Plus extension storage information (a manifest).
+
+| Export path | Ordinary Scratch 3 SB3 | Ordinary TurboWarp SB3 | Project with Plus-format extensions |
+| --- | --- | --- | --- |
+| Standard TurboWarp Packager | Single HTML | Single HTML | The editor's menu leads to the Plus-only export screen |
+| Plus-only export | N/A | N/A | Single HTML. Fetches and verifies extension code, bundles it, and keeps the sandbox settings |
+
+Dependencies on external APIs, or on images and models an extension fetches while running, remain even in a single HTML file. [Standard Packager](https://docs.turbowarp.org/packager) · [Plus extension loader and HTML export](https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-loader-integration.md)
+
+## 11. [Manage projects with project folders and Git](git/index.en.html)
+
+| Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
+| --- | --- | --- | --- |
+| [11.1 Manage projects and extensions with sb3-toolchain](git/index.en.html#sb3-toolchain) | N/A | N/A | Both formats can be unpacked, checked and rebuilt with the Node.js command-line tool `sb3-toolchain`. See "sb3-toolchain in detail" below for each feature's conditions. |
+| [11.2 Open and save a project folder](git/index.en.html#project-folder) | Yes | Yes | For project folders unpacked with sb3-toolchain v1. Needs a Chromium-based browser with File System Access. From a new project or an SB3, create a project folder with "Create Project Folder" in the "Project folder" panel or the "Project folder" format in "Save As…". Adding and deleting sprites, costumes and sounds also updates `assets/` and `sb3-source.json`. Embedded extensions and custom extensions loaded from a URL can be opened and saved; their code is written back to `extensions/` and `embedded-extensions.json`. Custom font references and files are saved too. |
+| [11.3 Check changes and history with local Git](git/index.en.html#local-git) | Yes | Yes | For a repository with `.git` and project folders inside it. Needs a Chromium-based browser. Fetch, pull and push work against a GitHub HTTPS remote `origin` in environments with a configured connection. |
+| [11.4 Compare project changes as blocks](git/index.en.html#block-diff) | Yes | Yes | Diffs of projects unpacked with sb3-toolchain v1. Blocks from unregistered extensions are shown as placeholder blocks. |
+| [11.5 Sync with GitHub (fetch, pull, push)](git/index.en.html#github-sync) | Yes | Yes | In repositories with a GitHub HTTPS remote `origin`, in environments with a configured connection. Push needs explicit permission when connecting. |
+| [11.6 Review pull requests script by script](git/index.en.html#pull-request-review) | Yes | Yes | Reads PRs of public repositories in a working folder whose `origin` is GitHub. Public API rate limits apply. |
 
 ### sb3-toolchain in detail
 
@@ -129,29 +152,6 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 Run permission is handled by the editor when the built SB3 is opened. Extensions that meet the catalog's trust conditions skip individual approval, and a bundle that needs review is shown as one unit. See [1.4 Review how extensions will run before opening a project](open/index.en.html#review).
 
 [Using sb3-toolchain](https://github.com/kubohiroya/sb3-toolchain/blob/main/README.md) · [Extension API compatibility checks](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/extension-api-compatibility.md) · [Bundling and unbundling](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/extension-bundles.md) · [Editing project folders](https://github.com/kubohiroya/turbowarp-plus-editor/issues/305) · [Local Git panel](https://github.com/kubohiroya/turbowarp-plus-editor/pull/313)
-
-## 11. [Save and distribute](save/index.en.html)
-
-| Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
-| --- | --- | --- | --- |
-| [11.1 Choose between Save and Save as](save/index.en.html#save) | Yes | Yes | "Save As…" chooses the name, format and location. In browsers that can choose a location, "Save Project" then overwrites it. A download leaves nothing to overwrite. Unsaved changes add `*` to the project title and tabs. |
-| [11.2 Restore a project from a restore point](save/index.en.html#restore-points) | Yes | Yes | A TurboWarp feature. Restores from restore points recorded in the browser at regular intervals. |
-| [11.3 Record project information in the SB3](save/index.en.html#project-properties) | Yes | Yes | Records the title, description, author and contact in the SB3. Resaving in the standard editor may drop the Plus-specific information. |
-| [11.4 Set the project URI to keep caches separate](save/index.en.html#project-uri) | Yes | Yes | Set an HTTPS URI in Project Properties and record it in the SB3. For extensions that keep a cache per project, later cache writes are kept separate under the new URI (the earlier cache is not deleted). |
-| [11.5 Choose the storage format for extension code](save/index.en.html#storage) | Yes | Yes | When adding an extension from the Plus catalog (1.3), "Where it loads from" chooses one of four: HTTPS reference (cached or not), a file inside the SB3, or data inside the project JSON. For extensions already added, "Extensions…" changes the storage format. |
-| [11.6 Choose the storage format for source data and assets](save/index.en.html#payload-formats) | Yes | Yes | "File" → "Project Data…" chooses the storage format of ordinary backdrops, costumes and sounds: an HTTPS reference (cached or not), a file inside the SB3, or data inside the project JSON. The HTTPS source must have the same content as the current asset. Source data such as YAML is listed when a supported provider and target document exist. |
-| [11.7 Export a project as a single HTML file](save/index.en.html#packager) | Yes | Yes | "File" → "Export…" → "Package Project" produces a single HTML file with the standard TurboWarp Packager. For projects with Plus-format extensions, see "Single-HTML export paths" below. |
-
-### Single-HTML export paths
-
-"File" → "Export…" → "Package Project" opens a different export screen depending on whether the project has Plus extension storage information (a manifest).
-
-| Export path | Ordinary Scratch 3 SB3 | Ordinary TurboWarp SB3 | Project with Plus-format extensions |
-| --- | --- | --- | --- |
-| Standard TurboWarp Packager | Single HTML | Single HTML | The editor's menu leads to the Plus-only export screen |
-| Plus-only export | N/A | N/A | Single HTML. Fetches and verifies extension code, bundles it, and keeps the sandbox settings |
-
-Dependencies on external APIs, or on images and models an extension fetches while running, remain even in a single HTML file. [Standard Packager](https://docs.turbowarp.org/packager) · [Plus extension loader and HTML export](https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/extension-loader-integration.md)
 
 ## Runtime environment and scope of testing
 

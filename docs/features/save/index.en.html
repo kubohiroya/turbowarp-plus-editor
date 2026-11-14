@@ -10,8 +10,8 @@
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
-<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 11. Save and distribute · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
-<p class="eyebrow">Feature guide 11/12 · Updated November 14, 2026</p>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 10. Save and distribute · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 10/12 · Updated November 14, 2026</p>
 <h1>Save and distribute</h1>
 <p class="lead">Save your project, record project information, decide where extension code and assets are kept, and hand the project over as an SB3 or a single HTML file.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
@@ -25,26 +25,26 @@
 <li><a href="../search/index.en.html">Search and replace</a></li>
 <li><a href="../documents/index.en.html">Documents and extension data</a></li>
 <li><a href="../reuse/index.en.html">Reuse</a></li>
-<li><a href="../git/index.en.html">Git and project folders</a></li>
 <li><a href="../save/index.en.html" aria-current="page">Save and distribute</a></li>
+<li><a href="../git/index.en.html">Git and project folders</a></li>
 <li><a href="../github/index.en.html">Develop on GitHub</a></li>
 </ul>
 </nav>
 <nav class="page-toc" aria-label="On this page">
 <ol>
-<li><a href="#save">11.1 Choose between Save and Save as</a></li>
-<li><a href="#restore-points">11.2 Restore a project from a restore point</a></li>
-<li><a href="#project-properties">11.3 Record project information in the SB3</a></li>
-<li><a href="#project-uri">11.4 Set the project URI to keep caches separate</a></li>
-<li><a href="#storage">11.5 Choose the storage format for extension code</a></li>
-<li><a href="#payload-formats">11.6 Choose the storage format for source data and assets</a></li>
-<li><a href="#packager">11.7 Export a project as a single HTML file</a></li>
+<li><a href="#save">10.1 Choose between Save and Save as</a></li>
+<li><a href="#restore-points">10.2 Restore a project from a restore point</a></li>
+<li><a href="#project-properties">10.3 Record project information in the SB3</a></li>
+<li><a href="#project-uri">10.4 Set the project URI to keep caches separate</a></li>
+<li><a href="#storage">10.5 Choose the storage format for extension code</a></li>
+<li><a href="#payload-formats">10.6 Choose the storage format for source data and assets</a></li>
+<li><a href="#packager">10.7 Export a project as a single HTML file</a></li>
 </ol>
 </nav>
 
 <section id="save">
 
-<h2>11.1 Choose between Save and Save as</h2>
+<h2>10.1 Choose between Save and Save as</h2>
 
 <p>"File" → "Save Project" overwrites the open SB3 or project folder with the whole project. A new project, or one you saved by downloading, has nothing to overwrite, so this item is unavailable. If you edited a text file in the folder on its own, use "Save file" in that tab.</p>
 <p>What ⌘S (Ctrl+S on Windows) does depends on the panel open at the left edge. With "Sprites" it is assigned to "Save Project", and with "Project folder" it is assigned to "Save Active Tab"; the File menu shows the shortcut next to that item. If no savable tab is selected in "Project folder", pressing the shortcut saves nothing.</p>
@@ -66,7 +66,7 @@
 
 <section id="restore-points">
 
-<h2>11.2 Restore a project from a restore point</h2>
+<h2>10.2 Restore a project from a restore point</h2>
 
 <p>If saving fails or you forget to save, open "File" → "Restore Points". You can restore the project from restore points that TurboWarp records in the browser at regular intervals. Choose the interval from five steps between "every minute" and "every 30 minutes", or "never".</p>
 <p>Restore points are a last resort and can disappear. Keep your project by <a href="#save">saving</a> it.</p>
@@ -75,7 +75,7 @@
 
 <section id="project-properties">
 
-<h2>11.3 Record project information in the SB3</h2>
+<h2>10.3 Record project information in the SB3</h2>
 
 <p>"File" → "Project Properties" lets you record the project's title, description and author.</p>
 <ol><li>Fill in "Project title", "Description", "Author name" and "Contact". The description can span several lines.</li><li>Click "Apply" to apply the information to the current project; the project title in the menu bar changes too. Click "Cancel" to discard your changes and close.</li><li>Save from the "File" menu to record the information in the project file.</li></ol>
@@ -92,7 +92,7 @@
 
 <section id="project-uri">
 
-<h2>11.4 Set the project URI to keep caches separate</h2>
+<h2>10.4 Set the project URI to keep caches separate</h2>
 
 <p>In "File" → "Project Properties", enter an HTTPS address that identifies the project in "Project URI", then click "Apply". Addresses containing a user name or password, or a fragment after <code>#</code>, cannot be used. The applied URI is recorded in the SB3 the next time you save the project.</p>
 <figure class="guide-detail"><a href="../images/en/project-uri-detail.png"><img src="../images/en/project-uri-detail.png" width="622" height="116" alt="The Project URI field in Project Properties with an example HTTPS address entered. Below it, a note says the URI will be recorded in the SB3 the next time you save the project." loading="lazy"></a><figcaption>An example URL entered in the "Project URI" field.</figcaption></figure>
@@ -103,7 +103,7 @@
 
 <section id="storage">
 
-<h2>11.5 Choose the storage format for extension code</h2>
+<h2>10.5 Choose the storage format for extension code</h2>
 
 <p>To add an extension, click "File" → "Extensions…" → "Add Extension" and choose the extension from the "TurboWarp Plus" list. With each extension's "Where it loads from", choose whether its code goes into the project or is fetched from an HTTPS server (the storage format of the extension code). When you click "Add" and then save the SB3, the chosen storage format, a SHA-256 for checking the code, and the run conditions are recorded.</p>
 <div class="table-scroll" role="region" aria-label="Where extension code loads from" tabindex="0"><table><caption>Where extension code loads from</caption><thead><tr><th scope="col">Where it loads from (when adding)</th><th scope="col">Shown in "Extensions…"</th><th scope="col">What is saved and what happens on opening</th></tr></thead><tbody>
@@ -122,7 +122,7 @@
 
 <section id="payload-formats">
 
-<h2>11.6 Choose the storage format for source data and assets</h2>
+<h2>10.6 Choose the storage format for source data and assets</h2>
 
 <p>Open "File" → "Project Data…" to show "Project Data Formats". In the "Assets" section, choose a storage format for each asset, such as backdrops, costumes and sounds. If the project contains source data that applies, such as YAML for a supported extension, it is also listed in the "Source Data" section. When you choose a storage format that fetches from HTTPS, an "HTTPS URL" field appears for that item; enter the URL there. The content fetched from the URL must match the current data byte for byte.</p>
 <figure class="guide-detail"><a href="../images/en/project-data-dialog.png"><img src="../images/en/project-data-dialog.png" width="640" height="568" alt="The Project Data Formats dialog. At the top is an Add Bundle Material to Project… button, followed by the Source Data section and format menus for backdrop1 and costume1. costume1 is set to Fetch from HTTPS each time, with an HTTPS URL field below it. Cancel and Apply buttons are at the bottom right." loading="lazy"></a><figcaption>"Project Data Formats", opened with "Project Data…". A new project lists backdrop1 and costume1. Here, a storage format that fetches from HTTPS is chosen for costume1.</figcaption></figure>
@@ -141,7 +141,7 @@
 
 <section id="packager">
 
-<h2>11.7 Export a project as a single HTML file</h2>
+<h2>10.7 Export a project as a single HTML file</h2>
 
 <p>Open "File" → "Export…" and click "Package Project". The project data needed for export is bundled into the output. For an ordinary Scratch 3 or TurboWarp project, the <a href="https://packager.turbowarp.org/">standard TurboWarp Packager</a> opens in a new tab with the project loaded. For a project that records Plus-style extensions, the same action opens the Plus-specific output page instead.</p>
 <figure class="guide-detail"><a href="../images/en/export-dialog.png"><img src="../images/en/export-dialog.png" width="640" height="194" alt="The Export dialog, explaining that it creates a file for running or sharing the project and that project data needed for export is included in the output, with a Package Project button at the bottom right." loading="lazy"></a><figcaption>The dialog opened with "Export…".</figcaption></figure>
@@ -151,8 +151,8 @@
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">
-<a class="prev" href="../git/index.en.html"><small>Previous</small>10. Manage projects with project folders and Git</a>
-<a class="next" href="../github/index.en.html"><small>Next</small>12. Develop projects on GitHub</a>
+<a class="prev" href="../reuse/index.en.html"><small>Previous</small>9. Reuse scripts and assets</a>
+<a class="next" href="../git/index.en.html"><small>Next</small>11. Manage projects with project folders and Git</a>
 </nav>
 </main>
 <footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
