@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>画面の構成とメニュー — 機能ガイド — TurboWarp-Plus-Editor</title>
-<meta name="description" content="TurboWarp Plusの最上段のメニューバー、左端のアクティビティバー、TurboWarp Plusメニュー、ファイル・編集メニュー、右端の機能拡張ボタン、配置の切り替え。">
+<meta name="description" content="TurboWarp Plusの最上段のメニューバー、左端のアクティビティバー、TurboWarp Plusメニュー、ファイル・編集メニュー、右上の拡張ボタン、配置の切り替え。">
 <link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="en" href="index.en.html">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
@@ -35,7 +36,7 @@
 <li><a href="#plus-menu">2.2 TurboWarp Plusメニュー</a></li>
 <li><a href="#file-menu">2.3 ファイルメニュー</a></li>
 <li><a href="#edit-menu">2.4 編集メニューとショートカット</a></li>
-<li><a href="#extension-controls">2.5 右上の機能拡張ボタンとデバッガー</a></li>
+<li><a href="#extension-controls">2.5 右上の拡張ボタンとデバッガー</a></li>
 <li><a href="#layout">2.6 Plus標準配置とScratch配置を使い分ける</a></li>
 </ol>
 </nav>
@@ -55,12 +56,12 @@
 <tr><th scope="row">右</th><td>「ステージを開く」と「▾」</td><td><a href="../stage/#stage-open">ステージを開く・開き方を選ぶ</a></td></tr>
 <tr><th scope="row">右</th><td>🎥（録画）</td><td>ステージを録画する。録画中はカウントダウンや「録画を停止」などの状態が横に出る</td></tr>
 <tr><th scope="row">右</th><td>「…」（デバッグ）</td><td><a href="#extension-controls">デバッガーを開く</a></td></tr>
-<tr><th scope="row">右端</th><td>機能拡張のボタン領域</td><td><a href="#extension-controls">拡張の設定や操作</a></td></tr>
+<tr><th scope="row">右端</th><td>拡張のボタン領域</td><td><a href="#extension-controls">拡張の設定や操作</a></td></tr>
 </tbody></table></div>
-<p>メニューバーの下、画面の左端には、縦に並ぶ4つの切り替え（アクティビティバー）があります。左ドロワーに出す内容を「スプライト一覧」「プロジェクトフォルダ」「Git 履歴」「AI エージェント」から選びます。スプライト一覧の上には「スプライトを検索」「スプライト一覧を固定表示」「アンドック」のボタンが、下には「背景」とスプライトを追加するボタンが並びます（<a href="../sprites/">スプライトと背景を編集する</a>、<a href="../git/">Gitと作品フォルダ</a>）。</p>
+<p>メニューバーの下、画面の左端には、縦に並ぶ4つの切り替え（アクティビティバー）があります。左ドロワーに出す内容を「スプライト一覧」「プロジェクトフォルダ」「Git 履歴」「AI エージェント」から選びます。スプライト一覧の上には「スプライトを検索」「スプライト一覧を固定表示」「アンドック」のボタンが、下には「背景」とスプライトを追加するボタンが並びます（<a href="../sprites/">スプライトと背景を編集する</a>、<a href="../git/">作品フォルダとGitで管理する</a>）。</p>
 <figure><a href="../images/plus-workspace-current.png"><img src="../images/plus-workspace-current.png" width="1440" height="1000" alt="起動直後の画面。最上段にロゴ、作品タイトル「プロジェクト」、ファイル、編集、検索欄、右側にGit、ステージを開く、録画のボタン。左端にアクティビティバーとスプライト一覧、中央にスプライト1のタブとコード領域、横型パレット、右下にミニマップとズームボタン。" loading="lazy"></a><figcaption>起動直後の画面。ミニマップは、コード領域にポインターを置くと右下に表示されます。</figcaption></figure>
 <p>時間のかかる操作の間は、マウスポインターが待機中の表示に変わります。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">メニューバーの整理</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">メニューバーからステージを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/476">録画ボタン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/511">Gitのボタンと左ドロワー</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">メニューバーの整理</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">メニューバーからステージを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/476">録画ボタン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/511">Gitのボタンと左ドロワー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/362">待機カーソル</a></p>
 
 </section>
 
@@ -68,9 +69,9 @@
 
 <h2>2.2 TurboWarp Plusメニュー</h2>
 
-<p>ロゴを押すと「TurboWarp Plus プロジェクト情報」メニューが開きます。TurboWarpの各種設定、GitHubとAIエージェントの接続設定、このEditorの情報がまとまっています。</p>
+<p>ロゴを押すと「TurboWarp Plus プロジェクト情報」メニュー（以下、TurboWarp Plusメニュー）が開きます。TurboWarpの各種設定、GitHubとAIエージェントの接続設定、このエディターの情報がまとまっています。</p>
 <figure class="guide-detail"><a href="../images/plus-menu.png"><img src="../images/plus-menu.png" width="720" height="420" alt="ロゴから開いたTurboWarp Plusメニュー。TurboWarp Plus Editor 0.2.0-rc.4について、表示設定、動作設定、アドオン、高度な設定、GitHub 接続設定…、AI エージェント設定…、ソースコード、ライセンスとクレジットが並ぶ。" loading="lazy"></a><figcaption>ロゴから開くメニュー。</figcaption></figure>
-<ul><li><strong>TurboWarp Plus Editor …について</strong>：Editorのバージョンと配信元の情報を開きます。</li><li><strong>表示設定</strong>：テーマや言語などを切り替えます。言語を切り替えても、編集中の作品と読み込んだ拡張は保たれます。</li><li><strong>動作設定</strong>：TurboWarpの実行に関する設定です。</li><li><strong>アドオン</strong>・<strong>高度な設定</strong>：TurboWarpのアドオンと詳細設定を開きます。</li><li><strong>GitHub 接続設定…</strong>：GitHub に接続するときの既定の方式を選びます。公開版では「GitHub 接続先が設定されていません。」と表示されます（<a href="../github/#push-without-connection">接続がない場合</a>）。</li><li><strong>AI エージェント設定…</strong>：左端の「AI エージェント」のメニューに出すサービス（ChatGPT、Claude など）と、その URL を選びます。</li><li><strong>ソースコード</strong>・<strong>ライセンスとクレジット</strong>：リポジトリと、同梱するパッケージのライセンスを開きます。</li></ul>
+<ul><li><strong>TurboWarp Plus Editor …について</strong>：エディターのバージョンと配信元の情報を開きます。</li><li><strong>表示設定</strong>：テーマや言語などを切り替えます。言語を切り替えても、編集中の作品と読み込んだ拡張は保たれます。</li><li><strong>動作設定</strong>：TurboWarpの実行に関する設定です。</li><li><strong>アドオン</strong>・<strong>高度な設定</strong>：TurboWarpのアドオンと詳細設定を開きます。</li><li><strong>GitHub 接続設定…</strong>：GitHub接続付きのエディターでは、GitHubに接続するときの既定の方式を選びます。公開版（GitHub Pages）には接続先がないため、「GitHub 接続先が設定されていません。」と表示されます（<a href="../github/#push-without-connection">接続がない場合</a>）。</li><li><strong>AI エージェント設定…</strong>：左端の「AI エージェント」のメニューに出すサービス（ChatGPT、Claudeなど）と、そのURLを選びます。</li><li><strong>ソースコード</strong>・<strong>ライセンスとクレジット</strong>：リポジトリと、同梱するパッケージのライセンスを開きます。</li></ul>
 <p>右端に矢印付きの四角のアイコンがある項目は、別のタブで開きます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">TurboWarp Plusメニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/392">別タブで開く項目のアイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/284">言語切り替え後も作品を保持</a></p>
 
@@ -80,23 +81,23 @@
 
 <h2>2.3 ファイルメニュー</h2>
 
-<p>作品の作成・読み込み・保存・書き出しと作品の設定は、「ファイル」メニューにまとまっています。項目にはアイコンが付き、用途ごとに区切り線で分かれています。ローカル Git のパネルは、ファイルメニューではなく、メニューバーの「Git ▾」から開きます（<a href="../git/#local-git">「ローカルGitで変更と履歴を確かめる」</a>）。</p>
+<p>作品の作成・読み込み・保存・書き出しと作品の設定は、「ファイル」メニューにまとまっています。項目にはアイコンが付き、用途ごとに区切り線で分かれています。ローカルGitのパネルは、ファイルメニューではなく、メニューバーの「Git ▾」から開きます（<a href="../git/#local-git">「ローカルGitで変更と履歴を確かめる」</a>）。</p>
 <div class="table-scroll" role="region" aria-label="ファイルメニューの項目" tabindex="0">
 <table><caption>ファイルメニューの項目（上から順）</caption><thead><tr><th scope="col">項目</th><th scope="col">できること</th><th scope="col">説明する章</th></tr></thead><tbody>
 <tr><th scope="row">新しいプロジェクトを作成</th><td>編集中の作品を閉じ、新しい作品を始める</td><td><a href="../open/#start">「作品を新しく作る・SB3を開く」</a></td></tr>
 <tr><th scope="row">SB3ファイルを開く…</th><td>手元の .sb3 を開く。旧形式の .sb、.sb2 も選べる</td><td><a href="../open/#start">「作品を新しく作る・SB3を開く」</a>、<a href="../open/#loading">「読み込みの経過を確かめる」</a></td></tr>
 <tr><th scope="row">プロジェクトフォルダを開く…</th><td>sb3-toolchainで展開した作品フォルダを開く</td><td><a href="../git/#project-folder">「作品フォルダを開いて保存する」</a></td></tr>
-<tr><th scope="row">リポジトリを選択…</th><td>ローカル Git で扱うリポジトリのフォルダを選ぶ</td><td><a href="../git/#local-git">「ローカルGitで変更と履歴を確かめる」</a></td></tr>
-<tr><th scope="row">リリース…</th><td>npm パッケージの公開、GitHub のリビジョンタグの作成、GitHub Pages への HTML の公開をまとめたダイアログを開く</td><td><a href="../github/#release">「GitHubで開発」</a>、<a href="../save/#packager">「作品を書き出して単一HTMLで配布する」</a></td></tr>
+<tr><th scope="row">リポジトリを選択…</th><td>ローカルGitで扱うリポジトリのフォルダを選ぶ</td><td><a href="../git/#local-git">「ローカルGitで変更と履歴を確かめる」</a></td></tr>
+<tr><th scope="row">リリース…</th><td>npmパッケージの公開、GitHubのリビジョンタグの作成、GitHub PagesへのHTMLの公開をまとめたダイアログを開く</td><td><a href="../github/#release">「リリースして配る」</a>、<a href="../save/#packager">「作品を書き出して単一HTMLで配布する」</a></td></tr>
 <tr><th scope="row">プロジェクトを保存</th><td>現在のプロジェクト全体を、開いたSB3や作品フォルダに上書き保存する</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
 <tr><th scope="row">名前を変えて保存…</th><td>名前・保存先・格納方式を選んでSB3を作る</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
 <tr><th scope="row">書き出し…</th><td>実行・配布用のファイルを作る</td><td><a href="../save/#packager">「作品を書き出して単一HTMLで配布する」</a></td></tr>
-<tr><th scope="row">作品のプロパティ</th><td>タイトル・URI・作者などを記入し、作品の診断を開く</td><td><a href="../save/#project-properties">「作品情報を記入してSB3に保存する」</a>、<a href="../save/#project-uri">「作品のURIを指定してキャッシュを整理する」</a>、<a href="../open/#project-diagnostics">「作品が開けないときに診断を読む」</a></td></tr>
-<tr><th scope="row">組み込みデータ…</th><td>ソースデータと素材の格納方式を選び、バンドル素材を作品に追加する</td><td><a href="../save/#payload-formats">「ソースデータと素材をどの形式で保存するか選ぶ」</a>、<a href="../reuse/#bundle-assets">「バンドル素材を背景・コスチューム・音に追加する」</a></td></tr>
-<tr><th scope="row">機能拡張…</th><td>使用中の拡張の格納方式を変え、拡張を追加する</td><td><a href="../open/#extensions">「カタログから拡張を追加する」</a>、<a href="../save/#storage">「拡張コードの保存形式を選ぶ」</a></td></tr>
-<tr><th scope="row">復元ポイント</th><td>TurboWarpが定期的に記録した復元ポイントから作品を戻す</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
+<tr><th scope="row">作品のプロパティ</th><td>タイトル・URI・作者などを記入し、作品の診断を開く</td><td><a href="../save/#project-properties">「作品情報を記入してSB3に保存する」</a>、<a href="../save/#project-uri">「作品のURIを指定してキャッシュを分ける」</a>、<a href="../open/#project-diagnostics">「作品が開けないときに診断を読む」</a></td></tr>
+<tr><th scope="row">組み込みデータ…</th><td>ソースデータと素材の格納方式を選び、バンドル素材を作品に追加する</td><td><a href="../save/#payload-formats">「ソースデータと素材の格納方式を選ぶ」</a>、<a href="../reuse/#bundle-assets">「バンドル素材を背景・コスチューム・音に追加する」</a></td></tr>
+<tr><th scope="row">機能拡張…</th><td>使用中の拡張の格納方式を変え、拡張を追加する</td><td><a href="../open/#extensions">「カタログから拡張を追加する」</a>、<a href="../save/#storage">「拡張コードの格納方式を選ぶ」</a></td></tr>
+<tr><th scope="row">復元ポイント</th><td>TurboWarpが定期的に記録した復元ポイントから作品を戻す</td><td><a href="../save/#restore-points">「復元ポイントから作品を戻す」</a></td></tr>
 </tbody></table></div>
-<p>左ドロワーにプロジェクトフォルダを表示し、ファイルをタブで開いているときは、「名前を変えて保存…」の次に「アクティブなタブを保存」が加わります（<a href="#edit-menu">保存のショートカット</a>）。</p>
+<p>左ドロワーに「プロジェクトフォルダ」を表示し、ファイルをタブで開いているときは、「名前を変えて保存…」の次に「アクティブなタブを保存」が加わります（<a href="#edit-menu">保存のショートカット</a>）。</p>
 
 </section>
 
@@ -115,11 +116,11 @@
 <tr><th scope="row">検索と置換</th><td>Ctrl+Shift+F</td><td>⇧⌘F</td></tr>
 <tr><th scope="row">保存（左ドロワーの表示に応じて）</th><td>Ctrl+S</td><td>⌘S</td></tr>
 </tbody></table></div>
-<ul><li>「元に戻す」「繰り返し」は、操作中のコード画面の履歴に対して働きます。</li><li>「切り取り」「コピー」は、コード画面で選んだブロックに対して働きます。「貼り付け」は、コピーしたブロックがあるときに選べます。</li><li>「検索と置換」は、<a href="../search/#project-search">作品全体の検索</a>のパネルを開きます。最上段の検索欄と同じパネルで、検索欄に語句が入っていれば「置換後の文字列」の欄に、空なら検索欄にカーソルが移ります。</li><li>「コードブロックの再配置」は、コード画面のスクリプトを並べ直すダイアログを開きます（<a href="../workspace/#multi-edit-view">コードの並びを変える</a>）。</li></ul>
-<p>左ドロワーがスプライト一覧のときは、Ctrl+S／⌘S でプロジェクト全体を保存します。プロジェクトフォルダを表示しているときは、アクティブなタブのファイルを保存します。どちらに割り当てられているかは、「ファイル」メニューでショートカットが表示されている項目で確かめられます。 <a href="../save/#save">保存の操作</a></p>
+<ul><li>「元に戻す」「繰り返し」は、操作中のコード画面の履歴に対して働きます。</li><li>「切り取り」「コピー」は、コード画面で選んだブロックに対して働きます。「貼り付け」は、コピーしたブロックがあるときに選べます。</li><li>「検索と置換」は、<a href="../search/#project-search">作品全体の検索</a>のパネルを開きます。最上段の検索欄と同じパネルで、検索欄に語句が入っていれば「置換後の文字列」の欄に、空なら検索欄にカーソルが移ります。</li><li>「コードブロックの再配置」は、コード画面のスクリプトを並べ直すダイアログを開きます（<a href="../blocks/#arrange">コードを並べ替える・別のスプライトへコピーする</a>）。</li></ul>
+<p>左ドロワーがスプライト一覧のときは、⌘S（WindowsはCtrl+S）でプロジェクト全体を保存します。「プロジェクトフォルダ」を表示しているときは、アクティブなタブのファイルを保存します。どちらに割り当てられているかは、「ファイル」メニューでショートカットが表示されている項目で確かめられます（<a href="../save/#save">上書き保存と名前を変えて保存を使い分ける</a>）。</p>
 <figure>
-<a href="../images/current-save-active-tab.png"><img src="../images/current-save-active-tab.png" width="1440" height="960" alt="左ドロワーにプロジェクトフォルダ、中央にproject.source.jsonのタブ。ファイルメニューの「アクティブなタブを保存」に ⌘S が表示されている。" loading="lazy"></a>
-<figcaption>左ドロワーでプロジェクトフォルダを表示しているときのファイルメニュー。</figcaption>
+<a href="../images/current-save-active-tab.png"><img src="../images/current-save-active-tab.png" width="1440" height="960" alt="左ドロワーに「プロジェクトフォルダ」、中央にproject.source.jsonのタブ。ファイルメニューの「アクティブなタブを保存」に ⌘S が表示されている。" loading="lazy"></a>
+<figcaption>左ドロワーで「プロジェクトフォルダ」を表示しているときのファイルメニュー。</figcaption>
 </figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/385">編集メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/399">アイコンとショートカット表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/405">検索と置換のショートカット</a></p>
 
@@ -127,10 +128,11 @@
 
 <section id="extension-controls">
 
-<h2>2.5 右上の機能拡張ボタンとデバッガー</h2>
+<h2>2.5 右上の拡張ボタンとデバッガー</h2>
 
-<p>カメラの権限やTeachable Machineのモデルの設定など、機能拡張が用意する操作ボタンは、メニューバー右端の角丸の枠（機能拡張のボタン領域）にまとめて表示されます。ボタンは拡張が必要とするときだけ現れ、作品を読み込み直すと消えます。押すと、その拡張の設定画面や操作が開きます。</p>
-<ul><li>メニューバーのボタンはアイコンだけを表示します。ボタンの名前は、ポインターを置いたときのツールチップで確かめます。</li><li>TurboWarpのデバッガーを有効にしていると、🎥（録画）と機能拡張のボタン領域の間に「…」の「デバッグ」ボタンが表示されます。デバッガーと録画のボタンは、機能拡張のボタン領域には入りません。</li><li>たとえば紙芝居拡張は、YAML台本を実行している間だけ、制作用のリロード操作を表示します。</li></ul>
+<p>カメラの権限やTeachable Machineのモデルの設定など、拡張が用意する操作ボタンは、メニューバー右端の角丸の枠（拡張のボタン領域）にまとめて表示されます。ボタンは拡張が必要とするときだけ現れ、作品を読み込み直すと消えます。押すと、その拡張の設定画面や操作が開きます。</p>
+<ul><li>メニューバーのボタンはアイコンだけを表示します。ボタンの名前は、ポインターを置いたときのツールチップで確かめます。</li><li>TurboWarpのデバッガーを有効にしていると、🎥（録画）と拡張のボタン領域の間に「デバッグ」ボタン（表示は「…」）が表示されます。デバッガーと録画のボタンは、拡張のボタン領域には入りません。</li></ul>
+<p>例：紙芝居拡張（<a href="../documents/">拡張のデータと文書を編集する</a>）は、YAMLで書いた台本を実行している間だけ、制作用の再読み込みのボタンを表示します。</p>
 <p>拡張の作者は、サンドボックスなしの拡張から <code>Scratch.gui.stageControls.addButton</code> でボタンを登録できます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/367">拡張操作をメニューバー右端へ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/395">デバッガーの表示位置</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/511">ボタンのアイコン化</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張作者向けの仕様</a></p>
 
@@ -150,5 +152,5 @@
 <a class="next" href="../sprites/"><small>次のページ</small>3. スプライトと背景を編集する</a>
 </nav>
 </main>
-<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">Editorを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
+<footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">エディターを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>
 </body></html>

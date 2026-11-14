@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Find, place and organize blocks — Feature guide — TurboWarp-Plus-Editor</title>
-<meta name="description" content="The TurboWarp Plus horizontal palette, searching within a palette category, opening the palette in another window, delete preview, the minimap, context menus, switching the code layout view, and copying between code tabs.">
+<meta name="description" content="The TurboWarp Plus horizontal palette, searching within a palette category, opening the palette in a separate window, delete preview, the minimap, context menus, switching the code layout view and rearranging code, and copying code to another sprite.">
+<link rel="alternate" hreflang="ja" href="index.html">
 <link rel="stylesheet" href="../guide.css">
 </head>
 <body>
@@ -39,6 +40,7 @@
 <li><a href="#delete-preview">6.6 Delete blocks by dropping them on the palette</a></li>
 <li><a href="#minimap">6.7 Move around long code with the minimap and zoom</a></li>
 <li><a href="#context-menu">6.8 Work with context menus</a></li>
+<li><a href="#arrange">6.9 Rearrange code and copy it to another sprite</a></li>
 </ol>
 </nav>
 
@@ -46,8 +48,9 @@
 
 <h2>6.1 Place blocks from the horizontal palette</h2>
 
-<p>In the Plus layout, the categories are lined up horizontally at the top of the code area, in this order: "Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables", "Lists", and "My Blocks". Adding an extension adds its category as well. Variable and list blocks are split into "Variables" and "Lists".</p>
-<p>Click a category to open a flyout of its blocks below it. Drag the block you want into the code area. To close the flyout, press Esc or click outside it. Each category remembers its flyout’s scroll position.</p>
+<p>In the <a href="../screen/index.en.html#layout">Plus layout</a>, the categories are lined up horizontally at the top of the code area, in this order: "Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables", "Lists", and "My Blocks". Adding an extension adds its category as well. Variable and list blocks are split into "Variables" and "Lists".</p>
+<p>Click a category to open a flyout of its blocks below it. Drag the block you want into the code area. To close the flyout, press Esc or click outside it. Each category remembers its flyout's scroll position.</p>
+<p>Normally you cannot switch the palette between horizontal and vertical display. If you open the editor with <code>twPlusHorizontalBlockPalette=1</code> added to the URL, you can right-click the palette to switch between horizontal and vertical display. Your <a href="#palette-order">custom category order</a> carries over when you switch.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/193">Horizontal palette</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/216">Restoring the scroll position</a></p>
 
 </section>
@@ -56,8 +59,8 @@
 
 <h2>6.2 Search for blocks within a palette category</h2>
 
-<p>Type in "Search blocks" at the top of the flyout to filter the category’s headings and block labels by partial match. It works with IME input too, and you can drag filtered blocks straight into the code area. When nothing matches, "No matching blocks" is shown.</p>
-<figure><a href="../images/en/palette-search.png"><img src="../images/en/palette-search.png" width="900" height="520" alt="The Motion category of the horizontal palette is open with “steps” typed into Search blocks. Only the “move 10 steps” block is shown." loading="lazy"></a><figcaption>Typing “steps” in "Motion" narrows the list to "move 10 steps".</figcaption></figure>
+<p>Type in "Search blocks" at the top of the flyout to filter the category's headings and block labels by partial match. It works with IME input too, and you can drag filtered blocks straight into the code area. When nothing matches, "No matching blocks" is shown.</p>
+<figure><a href="../images/en/palette-search.png"><img src="../images/en/palette-search.png" width="900" height="520" alt="The Motion category of the horizontal palette is open with "steps" typed into Search blocks. Only the "move 10 steps" block is shown." loading="lazy"></a><figcaption>Typing "steps" in "Motion" narrows the list to "move 10 steps".</figcaption></figure>
 <p>To find blocks used in the project, use the <a href="../search/index.en.html#project-search">project-wide search</a> in the menu bar.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/355">Search within a category</a></p>
 
@@ -69,7 +72,7 @@
 
 <p>Drag the diagonal lines at the bottom right of the flyout to change its width and height. The size is saved in the browser for each category. When the pane or screen is narrow, the flyout fits within the available space, and it opens at the saved size again once there is enough room.</p>
 <figure class="guide-detail"><a href="../images/en/palette-resize-detail.png"><img src="../images/en/palette-resize-detail.png" width="330" height="230" alt="The bottom right of the Looks flyout. In the bottom-right corner is a diagonal-line handle for changing the width and height." loading="lazy"></a><figcaption>The diagonal lines at the bottom right of the flyout are the resize handle.</figcaption></figure>
-<p>On a large screen, if you want the palette always visible, you can also <a href="#palette-popout">open the block palette in another window</a>.</p>
+<p>On a large screen, if you want the palette always visible, you can also <a href="#palette-popout">open the block palette in a separate window</a>.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/239">Resizing the flyout</a></p>
 
 </section>
@@ -78,7 +81,7 @@
 
 <h2>6.4 Reorder the categories</h2>
 
-<p>Press and hold a category, then release it on the frame that marks the destination to reorder it. While you drag, a preview of the category follows the pointer. Release it outside the palette or press Esc to cancel. Reloading the page restores the default order. If you start the editor with <code>twPlusHorizontalBlockPalette=1</code>, you can right-click the palette to switch between horizontal and vertical display, and your custom order carries over.</p>
+<p>Press and hold a category, then release it on the frame that marks the destination to reorder it. While you drag, a preview of the category follows the pointer. Release it outside the palette or press Esc to cancel. Reloading the page restores the default order.</p>
 <figure class="guide-detail"><a href="../images/en/palette-order-detail.png"><img src="../images/en/palette-order-detail.png" width="540" height="64" alt="In the horizontal palette, the Motion category is held down and being moved to the position of Sound. Sound has a destination frame, with a preview of Motion over it." loading="lazy"></a><figcaption>Reorder categories while watching the preview of the held category and the destination frame.</figcaption></figure>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/250">Reordering categories</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/331">Preview while dragging</a></p>
 
@@ -88,9 +91,9 @@
 
 <h2>6.5 Open the block palette in a separate window</h2>
 
-<p>Choose "Open block palette in another window" from "Editor panel layout" to move the horizontal palette into a separate browser window. Choose a category with the round category buttons on the left, then drag blocks into the editor’s code area. The "Block palette layout" button at the top right shows the current arrangement as an icon. Press it to switch the arrangement with "Arrange horizontally" and "Arrange vertically", or choose "Return this panel to the editor" to bring the palette back into the editor.</p>
-<figure class="guide-detail"><a href="../images/en/palette-popout.png"><img src="../images/en/palette-popout.png" width="520" height="520" alt="The block palette opened in another window. Round category buttons from Motion to My Blocks are stacked on the left, and Motion blocks are shown. The layout button is at the top right." loading="lazy"></a><figcaption>The block palette in another window. While it is there, the horizontal palette inside the editor is hidden.</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/361">Palette in another window</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/370">Round category buttons</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/380">Showing the arrangement</a></p>
+<p>Choose "Open block palette in another window" from "Editor panel layout" to move the horizontal palette into a separate browser window. Choose a category with the round category buttons on the left, then drag blocks into the editor's code area. The "Block palette layout" button at the top right shows the current arrangement as an icon. Press it to switch the arrangement with "Arrange horizontally" and "Arrange vertically", or choose "Return this panel to the editor" to bring the palette back into the editor.</p>
+<figure class="guide-detail"><a href="../images/en/palette-popout.png"><img src="../images/en/palette-popout.png" width="520" height="520" alt="The block palette opened in a separate window. Round category buttons from Motion to My Blocks are stacked on the left, and Motion blocks are shown. The layout button is at the top right." loading="lazy"></a><figcaption>The block palette in a separate window. While it is there, the horizontal palette inside the editor is hidden.</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/361">Palette in a separate window</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/370">Round category buttons</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/380">Showing the arrangement</a></p>
 
 </section>
 
@@ -107,8 +110,8 @@
 
 <h2>6.7 Move around long code with the minimap and zoom</h2>
 
-<p>In the Plus layout, the minimap at the bottom right of the code area gives an overview of where all the blocks are. The minimap and the buttons below it appear only while the pointer is over the code panel. The frame in the minimap is the area currently in view. To move to distant blocks, click the destination in the minimap or drag the frame. Use the buttons below it to zoom out, zoom in, or reset the zoom.</p>
-<figure><a href="../images/en/minimap-current.png"><img src="../images/en/minimap-current.png" width="1440" height="1000" alt="A code area with scripts placed far apart at the top left and bottom right. At the bottom right are the minimap and the zoom out, zoom in, and reset buttons." loading="lazy"></a><figcaption>The minimap at the bottom right shows all of the scripts, and its frame marks the area in view.</figcaption></figure>
+<p>In the Plus layout, the minimap at the bottom right of the code area gives an overview of where all of the open sprite's blocks are. The minimap and the buttons below it appear only while the pointer is over the code area. The frame in the minimap is the area currently in view. To move to distant blocks, click the destination in the minimap or drag the frame. Use the buttons below it to zoom out, zoom in, or reset the zoom.</p>
+<figure><a href="../images/en/minimap-current.png"><img src="../images/en/minimap-current.png" width="1440" height="1000" alt="A code area with scripts placed far apart at the top left and bottom right. At the bottom right are the minimap and the zoom out, zoom in, and reset buttons." loading="lazy"></a><figcaption>The minimap at the bottom right shows all of this sprite's scripts, and its frame marks the area in view.</figcaption></figure>
 <p>To hide the minimap, specify <code>twPlusWorkspaceMinimap=0</code>.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/200">Minimap controls</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/222">Zoom and placement</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/549">Showing it on the hovered panel</a></p>
 
@@ -131,12 +134,24 @@
 <tr><th scope="row">Costume or sound</th><td>duplicate, export, delete</td></tr>
 </tbody></table></div>
 <p>Items added by addons (exporting a block as an image, switching between local and global variables, moving to the front or back, and so on) also have icons. How to export and import scripts and how to copy and paste them is explained in <a href="../reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a>.</p>
-<h3>Switching the code layout view</h3>
-<p>Right-click empty space in the code area and choose "Normal layout view", "Z layout view", or "N layout view" from "Change code layout view". The current view has a check mark. The Z layout packs scripts in row order, and the N layout in column order. Changing the view does not change the positions of the blocks in the project or the edit history.</p>
-<p>To actually rearrange block positions, use "Rearrange Code Blocks" in the <a href="../screen/index.en.html#edit-menu">"Edit" menu</a>. For the scripts in the open code tab, choose an "Order" ("Z · by row" or "N · by column") and a "Direction" ("Vertical" or "Horizontal"), check the preview, and confirm with "Rearrange". A single "Undo" reverts the rearrangement.</p>
-<h3>Copying blocks into another sprite’s code</h3>
-<p>Split the panel or open a code panel in another window so that two code tabs from the same project are side by side. Drag a block from one code area and drop it in the other to copy it into that sprite. Connected blocks are copied as a whole script, and the original blocks stay where they were, still connected. In the destination, "Undo" cancels the copy. Press Esc while dragging to stop without copying.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">Action icons in context menus</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">Shown by default</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/549">Code layout views and rearranging</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/563">Moving the view switch to the workspace menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/568">Copying between code tabs</a></p>
+<p>Switching the code layout view and copying code to another sprite are covered in <a href="#arrange">Rearrange code and copy it to another sprite</a>.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">Action icons in context menus</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">Shown by default</a></p>
+
+</section>
+
+<section id="arrange">
+
+<h2>6.9 Rearrange code and copy it to another sprite</h2>
+
+<h3>Switch the code layout view</h3>
+<p>Right-click empty space in the code area and choose "Normal layout view", "Z layout view", or "N layout view" from "Change code layout view". The current view has a check mark. Use these views when you want to read scripts that are far apart in order.</p>
+<ul><li><strong>Z layout view</strong>: Scripts whose top edges are at about the same height are treated as one row. The rows are followed from the top, and within a row the scripts are followed from left to right.</li><li><strong>N layout view</strong>: Scripts whose left edges are at about the same position are treated as one column. The columns are followed from the left, and within a column the scripts are followed from top to bottom.</li></ul>
+<p>Both views show the scripts packed in a single vertical column, in the order they were followed. Changing the view does not change the positions of the blocks in the project or the edit history. Switch back to "Normal layout view" to edit the blocks in their original positions.</p>
+<h3>Rearrange code blocks</h3>
+<p>To actually rearrange block positions, use "Rearrange Code Blocks" in the <a href="../screen/index.en.html#edit-menu">"Edit" menu</a>. For the scripts in the open code tab, choose an "Order" ("Z · by row" or "N · by column") and a "Direction" ("Vertical" or "Horizontal"), and a preview of the new arrangement appears in the dialog. Confirm with "Rearrange". The order is worked out the same way as in the views above; "Vertical" lines the scripts up in a single column and "Horizontal" in a single row, evenly spaced. A single "Undo" reverts the rearrangement. The steps are also illustrated in the <a href="../ball-demo/index.en.html#section-4-3">Ball Demo tutorial</a>.</p>
+<h3>Copy blocks into another sprite's code</h3>
+<p>Split the panel or <a href="../workspace/index.en.html#panel-popout">open a code panel in a separate window</a> so that the code tabs of two sprites, the source and the destination, are side by side. Drag a block from one code area and drop it in the other to copy it into that sprite. Connected blocks are copied as a whole script, and the original blocks stay where they were, still connected. In the destination, "Undo" cancels the copy. Press Esc while dragging to stop without copying.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/549">Code layout views and rearranging</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/563">Moving the view switch to the workspace menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/568">Copying between code tabs</a></p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">

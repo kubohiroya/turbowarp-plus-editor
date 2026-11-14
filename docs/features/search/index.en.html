@@ -5,6 +5,7 @@
 <title>Search and replace across the project — Feature guide — TurboWarp-Plus-Editor</title>
 <meta name="description" content="Searching every sprite, the stage, and embedded YAML documents from the TurboWarp Plus menu bar, choosing what to search, and replacing one match at a time.">
 <link rel="stylesheet" href="../guide.css">
+<link rel="alternate" hreflang="ja" href="index.html">
 </head>
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
@@ -42,11 +43,11 @@
 <h2>7.1 Search the whole project</h2>
 
 <p>Type a term into the "Search" box in the menu bar to search across every sprite and the stage. Results are grouped by kind.</p>
-<p>Search and replace share a single panel. ⌘F (Ctrl+F on Windows) moves the cursor to the search box. If the search box already contains a term, pressing ⇧⌘F (Ctrl+Shift+F on Windows) or choosing <a href="../screen/index.en.html#edit-menu">"Find and Replace"</a> in the "Edit" menu moves the cursor to the "Replace with" field in the same panel. If the search box is empty, the cursor goes to the search box. Press Esc to close the panel.</p>
-<figure><a href="../images/en/project-search.png"><img src="../images/en/project-search.png" width="1100" height="560" alt="Results for “start” typed into the search box. Below the Replace with field and the Search in checkboxes, Broadcasts shows 3 results: the Cat’s sending block and the receiving blocks in the Cat and the Ball." loading="lazy"></a><figcaption>A search for “start”. The sprite name and block are shown to the right of each result.</figcaption></figure>
-<p>Choosing a result opens the matching sprite’s code or asset, or the YAML document, and shows the match. The panel stays open so you can go on to replace. If you choose with the Enter key, the panel closes as it moves to the result. When there are many results, scrolling to the bottom of the list loads more.</p>
+<p>Search and replace share a single panel. ⌘F (Ctrl+F on Windows) moves the cursor to the search box. Press Esc to close the panel. The replace shortcut is described in <a href="#replace">7.3</a>.</p>
+<figure><a href="../images/en/project-search.png"><img src="../images/en/project-search.png" width="1100" height="560" alt="Results for &quot;start&quot; typed into the search box. Below the &quot;Replace with&quot; field and the &quot;Search in&quot; checkboxes, &quot;Broadcasts&quot; shows 3 results: the Cat's sending block and the receiving blocks in the Cat and the Ball." loading="lazy"></a><figcaption>A search for "start". The sprite name and block are shown to the right of each result.</figcaption></figure>
+<p>Choosing a result opens the matching sprite's code or asset, or the YAML document, and shows the match. The panel stays open so you can go on to replace. If you choose with the Enter key, the panel closes as it moves to the result. When there are many results, scrolling to the bottom of the list loads more.</p>
 <h3>Finding blocks that read or change a variable</h3>
-<p>Clicking a "Read" or "Write" count in the "Properties &amp; Variables" table opens this panel with that variable name and shows a "Variable access" switch at the top. Use "Read" and "Write" to switch between blocks that read the variable and blocks that change it. Sprite variables and global variables with the same name are counted separately. Press "Return to all search results" to go back to a normal search. The replace field is hidden while this filter is active (<a href="../sprites/index.en.html#variable-pane">Edit properties, variables and lists</a>).</p>
+<p>Clicking a "Read" or "Write" count in the "Properties &amp; Variables" table (<a href="../sprites/index.en.html#variable-pane">Edit properties, variables and lists</a>) opens this panel with that variable name and shows a "Variable access" switch at the top. Use "Read" and "Write" to switch between blocks that read the variable and blocks that change it. Sprite variables and global variables with the same name are counted separately. Press "Return to all search results" to go back to a normal search. The replace field is hidden while this filter is active.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/346">Searching across sprites and the stage</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/402">Improved project search</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/493">Searching from variable counts</a></p>
 
 </section>
@@ -67,7 +68,7 @@
 <tr><th scope="row">YAML text</th><td>YAML text</td></tr>
 <tr><th scope="row">Asset names</th><td>Costumes, Backdrops, Sounds</td></tr>
 </tbody></table></div>
-<p>"Broadcast names" classifies sending and receiving with the same rules as the <a href="../sprites/index.en.html#messages">Messages</a> table. "YAML text" searches the body of YAML documents that a supporting extension has embedded in the project, such as a Kamishibai script. In projects without such documents, this scope returns no results.</p>
+<p>"Broadcast names" classifies sending and receiving with the same rules as the <a href="../sprites/index.en.html#messages">Messages</a> table. "YAML text" searches the body of YAML documents that a supporting extension has embedded in the project, such as a Kamishibai YAML script. In projects without such documents, this scope returns no results.</p>
 
 </section>
 
@@ -75,8 +76,8 @@
 
 <h2>7.3 Replace the selected match</h2>
 
-<p>In a normal search, the "Replace with" field is always shown at the top of the panel. If the search box contains a term, choosing "Edit" → "Find and Replace" (⇧⌘F, or Ctrl+Shift+F on Windows) moves the cursor to this field. Select one result and press "Replace selected match" to replace just that one match. There is no way to replace across the whole project at once. Results that cannot be replaced are marked "Read only".</p>
-<p>For YAML text results, the button becomes "Replace in preview". Check the replaced content in a preview that shows the matching position; it is saved if the document passes validation.</p>
+<p>In a normal search, the "Replace with" field is always shown at the top of the panel. If the search box contains a term, pressing ⇧⌘F (Ctrl+Shift+F on Windows) or choosing <a href="../screen/index.en.html#edit-menu">"Find and Replace"</a> in the "Edit" menu moves the cursor to this field. If the search box is empty, pressing ⇧⌘F moves the cursor to the search box. Select one result and press "Replace selected match" to replace just that one match. There is no way to replace across the whole project at once. Results that cannot be replaced are marked "Read only".</p>
+<p>For "YAML text" results, the button becomes "Replace in preview". Check the replaced content in a preview that shows the matching position; it is saved if the document passes validation.</p>
 <p>Block replacements can be reverted with "Undo" in the code area. To keep the replacements in the project file, save the project at the end.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/402">Replacing the selected match</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/405">Search and replace shortcuts</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/415">Merging the search box and search dialog</a></p>
 
