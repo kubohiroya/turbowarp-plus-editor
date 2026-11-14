@@ -805,7 +805,7 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     await expect(page.getByRole('navigation', {name: japaneseName})
         .locator(':scope > a, :scope > button, :scope > div > button')).toHaveText([
         `TurboWarp Plus Editor ${editorPackage.version}について`, '表示設定', '動作設定', 'アドオン',
-        '高度な設定', 'AI エージェント設定…', 'ソースコード', 'ライセンスとクレジット'
+        '高度な設定', 'GitHub 接続設定…', 'AI エージェント設定…', 'ソースコード', 'ライセンスとクレジット'
     ]);
 });
 
