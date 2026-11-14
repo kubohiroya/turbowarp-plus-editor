@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TurboWarp-Plus-Editor</title>
+  <meta name="description" content="コードとステージを好きな位置に並べ、作品全体を検索し、変更をGitで追い、ひとつのHTMLにまとめて渡せるTurboWarp Plusのエディター。">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="stylesheet" href="assets/style.css">
+  <script type="module" src="assets/app.js"></script>
+  <script type="module" src="https://kubohiroya.github.io/turbowarp-plus-site-header/dist/auto.js"></script>
+  <script type="application/json" id="landing-translations">{{translations}}</script>
+</head>
+<body>
+  <turbowarp-plus-header repo="turbowarp-plus-editor" site-lang="ja"></turbowarp-plus-header>
+  <a class="skip" href="#main" data-text="skip">{{skip}}</a>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="./"><img src="assets/icon.svg" width="48" height="48" alt=""><span>TurboWarp-Plus-Editor</span></a>
+      <nav aria-label="Language">
+        <button type="button" data-language="ja" lang="ja">日本語</button>
+        <button type="button" data-language="en" lang="en">English</button>
+      </nav>
+    </header>
+    <main id="main">
+      <div class="hero">
+        <div>
+          <p class="eyebrow" data-text="eyebrow">{{eyebrow}}</p>
+          <h1 data-text="heading">{{heading}}</h1>
+          <p class="lead" data-text="intro">{{intro}}</p>
+          <div class="actions">
+            <a class="twpe-edit-button" data-editor href="editor.html?lang=ja"><img src="assets/icon.svg" width="36" height="36" alt="" aria-hidden="true"><span data-text="edit">{{edit}}</span></a>
+          </div>
+          <p class="small" data-text="note">{{note}}</p>
+        </div>
+        <div class="hero-shots">
+          <div class="shot hero-main">
+            <img src="features/images/top-editor.png" data-en-src="features/images/en/top-editor.png" width="1200" height="660" alt="{{heroShot}}" data-alt="heroShot">
+          </div>
+          <img class="shot shot-stage" src="features/images/top-stage-window.png" data-en-src="features/images/en/top-stage-window.png" width="560" height="380" alt="{{heroStageShot}}" data-alt="heroStageShot">
+        </div>
+      </div>
+
+      <section class="terms panel" aria-labelledby="terms-heading">
+        <h2 id="terms-heading" data-text="terms">{{terms}}</h2>
+        <dl>
+          <div><dt data-text="termFeature">{{termFeature}}</dt><dd data-text="termFeatureDef">{{termFeatureDef}}</dd></div>
+          <div><dt data-text="termExtension">{{termExtension}}</dt><dd data-text="termExtensionDef">{{termExtensionDef}}</dd></div>
+          <div><dt data-text="termAddon">{{termAddon}}</dt><dd data-text="termAddonDef">{{termAddonDef}}</dd></div>
+        </dl>
+      </section>
+
+      <div class="cards">
+        <section class="panel">
+          <h2 data-text="open">{{open}}</h2>
+          <form>
+            <label for="project-url" data-text="label">{{label}}</label>
+            <input id="project-url" type="url" required placeholder="https://example.com/project.sb3" aria-describedby="url-note url-error">
+            <p id="url-note" class="small" data-text="urlNote">{{urlNote}}</p>
+            <button type="submit" class="twpe-edit-button"><img src="assets/icon.svg" width="36" height="36" alt="" aria-hidden="true"><span data-text="edit">{{edit}}</span></button>
+            <p id="url-error" class="error" role="alert"></p>
+          </form>
+          <div class="open-flow">
+            <ul class="open-ways">
+              <li data-text="wayNew">{{wayNew}}</li>
+              <li data-text="waySb3">{{waySb3}}</li>
+              <li data-text="wayFolder">{{wayFolder}}</li>
+              <li data-text="wayUrl">{{wayUrl}}</li>
+            </ul>
+            <span class="open-arrow" aria-hidden="true"></span>
+            <p class="open-editor">TurboWarp-Plus-Editor</p>
+            <span class="open-arrow" aria-hidden="true"></span>
+            <p class="open-out" data-text="wayOut">{{wayOut}}</p>
+          </div>
+          <a class="shot crop-shot open-shot" href="features/open/" data-en-href="features/open/index.en.html" tabindex="-1">
+            <img src="features/images/current-open-folder.png" data-en-src="features/images/en/current-open-folder.png" width="1440" height="960" loading="lazy" alt="{{openShot}}" data-alt="openShot">
+          </a>
+        </section>
+        <section class="panel">
+          <h2 data-text="features">{{features}}</h2>
+          <ul>
+            <li data-text="featureOpen">{{featureOpen}}</li>
+            <li data-text="featureManage">{{featureManage}}</li>
+            <li data-text="featureArrange">{{featureArrange}}</li>
+            <li data-text="featureEdit">{{featureEdit}}</li>
+            <li data-text="featureReuse">{{featureReuse}}</li>
+            <li data-text="featureShare">{{featureShare}}</li>
+            <li data-text="featureCollaborate">{{featureCollaborate}}</li>
+            <li><a href="features/save/#project-properties" data-text="featureProperties">{{featureProperties}}</a></li>
+            <li><a href="features/open/#project-diagnostics" data-text="featureDiagnostics">{{featureDiagnostics}}</a></li>
+          </ul>
+          <p class="small" data-text="featureProjectTools">{{featureProjectTools}}</p>
+          <p class="small" data-text="featureCondition">{{featureCondition}}</p>
+        </section>
+      </div>
+
+      <section class="docs" aria-labelledby="docs-heading">
+        <h2 id="docs-heading" data-text="docs">{{docs}}</h2>
+        <div class="cards docs-cards">
+          <section class="panel">
+            <a class="doc-shot" href="features/search/" data-en-href="features/search/index.en.html" tabindex="-1">
+              <img src="features/images/top-search.png" data-en-src="features/images/en/project-search.png" width="454" height="288" loading="lazy" alt="{{featureGuideShot}}" data-alt="featureGuideShot">
+            </a>
+            <p class="eyebrow" data-text="docsUsers">{{docsUsers}}</p>
+            <h3 data-text="featureGuide">{{featureGuide}}</h3>
+            <ul class="doc-languages">
+              <li><a href="features/" hreflang="ja" lang="ja">日本語</a></li>
+              <li><a href="features/index.en.html" hreflang="en" lang="en">English</a></li>
+            </ul>
+            <p class="small" data-text="featureGuideNote">{{featureGuideNote}}</p>
+            <ul class="guide-chapters">
+              <li>
+                <a href="features/screen/" data-en-href="features/screen/index.en.html">
+                  <span class="shot crop-shot"><img src="features/images/plus-workspace-current.png" data-en-src="features/images/en/plus-workspace-current.png" width="1440" height="1000" loading="lazy" alt=""></span>
+                  <span data-text="chapterScreen">{{chapterScreen}}</span>
+                </a>
+              </li>
+              <li>
+                <a href="features/workspace/" data-en-href="features/workspace/index.en.html">
+                  <span class="shot crop-shot"><img src="features/images/media-panes.png" data-en-src="features/images/en/media-panes.png" width="1440" height="1000" loading="lazy" alt=""></span>
+                  <span data-text="chapterWorkspace">{{chapterWorkspace}}</span>
+                </a>
+              </li>
+              <li>
+                <a href="features/save/" data-en-href="features/save/index.en.html">
+                  <span class="shot crop-shot"><img src="features/images/save-as-dialog.png" data-en-src="features/images/en/save-as-dialog.png" width="640" height="296" loading="lazy" alt=""></span>
+                  <span data-text="chapterSave">{{chapterSave}}</span>
+                </a>
+              </li>
+              <li>
+                <a href="features/git/" data-en-href="features/git/index.en.html">
+                  <span class="shot crop-shot"><img src="features/images/current-git-history.png" data-en-src="features/images/en/current-git-history.png" width="1440" height="960" loading="lazy" alt=""></span>
+                  <span data-text="chapterGit">{{chapterGit}}</span>
+                </a>
+              </li>
+            </ul>
+          </section>
+          <section class="panel">
+            <a class="doc-shot" href="developer-guide/#howto" data-en-href="developer-guide/index.en.html#howto" tabindex="-1">
+              <img src="features/images/top-layout-menu.png" data-en-src="features/images/en/layout-menu.png" width="259" height="241" loading="lazy" alt="{{developerGuideShot}}" data-alt="developerGuideShot">
+            </a>
+            <p class="eyebrow" data-text="docsDevelopers">{{docsDevelopers}}</p>
+            <h3 data-text="developerGuide">{{developerGuide}}</h3>
+            <ul class="doc-languages">
+              <li><a href="developer-guide/" hreflang="ja" lang="ja">日本語</a></li>
+              <li><a href="developer-guide/index.en.html" hreflang="en" lang="en">English</a></li>
+            </ul>
+            <p class="small" data-text="developerGuideNote">{{developerGuideNote}}</p>
+            <p class="small" data-text="featurePlatform">{{featurePlatform}}</p>
+            <p class="small"><a href="https://kubohiroya.github.io/turbowarp-plus-packages/" data-text="family">{{family}}</a></p>
+          </section>
+        </div>
+      </section>
+      <p class="small" data-text="independent">{{independent}}</p>
+    </main>
+    <footer>
+      <a href="https://kubohiroya.github.io/turbowarp-plus-packages/" data-text="family">{{family}}</a>
+      <a href="https://github.com/kubohiroya/turbowarp-plus-editor" data-text="source">{{source}}</a>
+      <a href="https://github.com/kubohiroya/turbowarp-plus-editor#edit-button" data-text="button">{{button}}</a>
+      <a href="build-info.json" data-text="build">{{build}}</a>
+      <p class="small">GUI <a href="https://github.com/kubohiroya/scratch-gui/tree/{{guiRevision}}">{{guiRevisionShort}}</a> · Site <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/{{siteRevision}}">{{siteRevisionShort}}</a></p>
+    </footer>
+  </div>
+</body>
+</html>
