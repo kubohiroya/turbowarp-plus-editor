@@ -13,6 +13,7 @@ import {activateTargetView, centerProjectComment, connectProjectSearchNavigation
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
+import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-workbench/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-workbench/sprite-layout-menu.css';
@@ -285,7 +286,10 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                     vm.runtime.emitProjectChanged();
                 }
             },
-            getMessages: id => scanTargetMessages(vm.runtime, id),
+            getMessages: (id): MessagePaneData => ({
+                ...scanTargetMessages(vm.runtime, id),
+                getThumbnailUrl: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset)
+            }),
             openMessage(use) {
                 const search = navigation.current;
                 if (!search || !activateTargetView(search, use.targetId, codeTab)) return;

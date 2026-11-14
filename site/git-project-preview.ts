@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
 import JSZip from '@turbowarp/jszip';
 import type {EmbeddedExtensionManifest, ProjectJson, Sb3SourceManifest} from '@kubohiroya/sb3-toolchain';
 
@@ -65,7 +66,7 @@ export function openProjectVersionPreview(document: Document, oid: string, archi
     frame.title = heading.textContent;
     frame.allow = 'autoplay; fullscreen';
     frame.style.cssText = 'width: min(850px, 85vw); height: min(630px, 75vh); border: 0; display: block';
-    preview.append(heading, close, frame);
+    preview.append(heading, frame, dialogActions(document, dialogAction(close, 'close')));
     const dispose = () => {
         view.removeEventListener('message', send);
         preview.remove();

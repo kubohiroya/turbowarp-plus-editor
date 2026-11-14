@@ -25,6 +25,8 @@
     "./project-publication": "./src/project-publication.ts",
     "./cloudflare-publication": "./src/cloudflare-publication.ts",
     "./project-file-dialogs": "./src/project-file-dialogs.ts",
+    "./dialog-actions": "./src/dialog-actions.ts",
+    "./dialog-actions.css": "./src/dialog-actions.css",
     "./project-commit-dialog": "./src/project-commit-dialog.ts",
     "./project-repository-creation": "./src/project-repository-creation.ts",
     "./project-publication-dialog": "./src/project-publication-dialog.ts",

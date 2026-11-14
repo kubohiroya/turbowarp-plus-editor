@@ -2627,6 +2627,100 @@ test('variable counts open the project search at the selected kind of access', {
     await expect(page.locator('html')).toHaveAttribute('data-test-centered-block', 'access-read');
 });
 
+test('editor pane headings and message diagrams follow the active target', {timeout: 45_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
+    const spriteName = await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const stage = vm.runtime.getTargetForStage();
+        const id = 'layout-message';
+        const name = '準備できた';
+        stage.createVariable(id, name, 'broadcast_msg', false);
+        const block = (blockId, opcode) => ({
+            id: blockId, opcode, topLevel: true, shadow: false, parent: null, next: null, x: 30, y: 30,
+            fields: {BROADCAST_OPTION: {name: 'BROADCAST_OPTION', id, value: name}}, inputs: {}
+        });
+        sprite.blocks.createBlock(block('layout-message-send', 'event_broadcast'));
+        stage.blocks.createBlock(block('layout-message-receive', 'event_whenbroadcastreceived'));
+        vm.emitTargetsUpdate();
+        return sprite.getName();
+    });
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    const heading = toolbar.getByRole('heading');
+    const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
+    await expect(heading).toHaveCount(0);
+    for (const [tab, title] of [['コスチューム', 'コスチューム'], ['音', '音'],
+        ['変数など', 'スプライトのプロパティと変数'], ['メッセージ', 'メッセージ']]) {
+        await section(tab).click();
+        await expect(heading).toHaveText(title);
+    }
+    const pane = page.getByRole('region', {name: 'メッセージ', exact: true});
+    const diagram = pane.locator('figure');
+    const edge = diagram.locator('.tw-sprite-messages__edge');
+    const nodes = diagram.getByRole('button');
+    const sprite = nodes.getByText(spriteName, {exact: true});
+    const stage = nodes.getByText('背景', {exact: true});
+    await expect(edge).toHaveText('準備できた');
+    await expect(edge.locator('svg')).toBeVisible();
+    await expect(nodes).toHaveText([spriteName, '背景']);
+    await expect.poll(() => nodes.locator('img').evaluateAll(images =>
+        images.map(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)))
+        .toEqual([true, true]);
+    const bodySize = await pane.locator('tbody td').first().evaluate(node => getComputedStyle(node).fontSize);
+    for (const text of [diagram.locator('figcaption'), edge.getByText('準備できた'), sprite, stage]) {
+        await expect(text).toHaveCSS('font-size', bodySize);
+    }
+    await expect(nodes.first()).toHaveAttribute('aria-current', 'true');
+    await expect(nodes.first()).toHaveCSS('border-top-width', '3px');
+    await expect(nodes.last()).toHaveCSS('border-top-width', '1px');
+    const accent = await section('メッセージ').evaluate(node => getComputedStyle(node).color);
+    await expect(nodes.first()).toHaveCSS('border-top-color', accent);
+
+    await stage.click();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
+    await expect(heading).toHaveCount(0);
+    await section('変数など').click();
+    await expect(heading).toHaveText('グローバル変数');
+    await section('背景').click();
+    await expect(heading).toHaveText('背景');
+    await section('メッセージ').click();
+    await expect(nodes.last()).toHaveAttribute('aria-current', 'true');
+    await expect(nodes.last()).toHaveCSS('border-top-width', '3px');
+    await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
+});
+
+test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.getByText('File', {exact: true}).click();
+    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
+    const dialog = page.getByRole('dialog', {name: 'Save As', exact: true});
+    const cancel = dialog.getByRole('button', {name: 'Cancel', exact: true});
+    const save = dialog.getByRole('button', {name: 'Save', exact: true});
+    const actions = dialog.locator('.tw-plus-dialog-actions');
+    await expect(actions).toHaveCSS('justify-content', 'flex-end');
+    const icons = await actions.locator('[data-dialog-action]:visible').evaluateAll(buttons =>
+        buttons.map(button => getComputedStyle(button, '::before').maskImage));
+    assert.equal(icons.length, 2);
+    assert.ok(icons.every(icon => icon.startsWith('url("data:image/svg+xml')));
+    assert.notEqual(icons[0], icons[1]);
+    const [cancelBox, saveBox, actionsBox] = await Promise.all([
+        cancel.boundingBox(), save.boundingBox(), actions.boundingBox()
+    ]);
+    assert.ok(cancelBox && saveBox && actionsBox);
+    assert.ok(cancelBox.x < saveBox.x);
+    assert.ok(Math.abs(saveBox.x + saveBox.width - actionsBox.x - actionsBox.width) <= 1);
+    await cancel.click();
+    await expect(dialog).toHaveCount(0);
+    await page.getByText('File', {exact: true}).click();
+    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
+    const download = page.waitForEvent('download');
+    await save.click();
+    assert.match((await download).suggestedFilename(), /\.sb3$/);
+    await expect(dialog).toHaveCount(0);
+});
+
 test('two Dockview code panes keep independent positions and zoom for the same sprite', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];

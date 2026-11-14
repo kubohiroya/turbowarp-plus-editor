@@ -60,7 +60,11 @@ export function createFieldActionDialog(document: Document) {
         const cancel = document.createElement('button');
         cancel.textContent = /^ja(?:-|$)/i.test(locale) ? 'キャンセル' : 'Cancel';
         cancel.addEventListener('click', close);
-        dialog.append(cancel);
+        cancel.dataset.dialogAction = 'cancel';
+        const footer = document.createElement('div');
+        footer.className = 'tw-plus-dialog-actions';
+        footer.append(cancel);
+        dialog.append(footer);
         dialog.addEventListener('cancel', event => {
             event.preventDefault();
             close();

@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
 import {sb3SaveFormats} from '@kubohiroya/turbowarp-sb3-save-format';
 
 const formatLabels = {
@@ -67,7 +68,7 @@ export function renderPayloadForm(document, edit, locale, close) {
     const apply = make('button', label('適用', 'Apply'));
     apply.type = 'submit';
     apply.disabled = !inputs.size;
-    form.append(error, cancel, apply);
+    form.append(error, dialogActions(document, dialogAction(cancel, 'cancel'), dialogAction(apply, 'confirm')));
     form.addEventListener('submit', async event => {
         event.preventDefault();
         if (apply.disabled) return;
@@ -134,7 +135,7 @@ export function renderBundleAssetForm(document, conversion, locale, close) {
     cancel.addEventListener('click', close);
     const add = make('button', label('作品に追加', 'Add to project'));
     add.type = 'submit';
-    form.append(status, error, cancel, add);
+    form.append(status, error, dialogActions(document, dialogAction(cancel, 'close'), dialogAction(add, 'confirm')));
     const showTargets = () => {
         fill(target, targetsFor(kind.value).map(item => [item.id, item.stage ? label('ステージ', 'Stage') : item.name]));
         add.disabled = !target.value;

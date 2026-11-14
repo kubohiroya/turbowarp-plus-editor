@@ -33,7 +33,6 @@
     color: inherit; background: var(--ui-secondary, #f7f8fa); font: inherit; cursor: pointer; }
 .dialog button:disabled { opacity: .5; cursor: default; }
 .dialog :focus-visible { outline: 3px solid var(--looks-secondary, #3b82f6); outline-offset: 2px; }
-.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
 .preview { white-space: pre-wrap; overflow-wrap: anywhere; }
 .dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .dialog summary { cursor: pointer; }

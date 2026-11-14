@@ -34,9 +34,11 @@ test('the Editor resolves the pinned npm windows package split out of the layout
     assert.equal(typeof WindowDesktop, 'function');
 });
 
-test('the Editor resolves the pinned npm sprite-panes package split out of the layout', () => {
+test('the Editor resolves the pinned sprite-panes package split out of the layout', () => {
     const name = '@kubohiroya/turbowarp-plus-editor-sprite-panes';
-    const {version, resolved} = lock.packages[`node_modules/${name}`];
-    assert.equal(manifest.devDependencies[name], version);
-    assert.equal(resolved, `https://registry.npmjs.org/${name}/-/turbowarp-plus-editor-sprite-panes-${version}.tgz`);
+    const {version, resolved, integrity} = lock.packages[`node_modules/${name}`];
+    assert.equal(resolved, `file:vendor/kubohiroya-turbowarp-plus-editor-sprite-panes-${version}.tgz`);
+    assert.equal(manifest.devDependencies[name], resolved);
+    const archive = readFileSync(new URL(`../${resolved.slice(5)}`, import.meta.url));
+    assert.equal(integrity, `sha512-${createHash('sha512').update(archive).digest('base64')}`);
 });

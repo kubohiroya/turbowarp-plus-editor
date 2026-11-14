@@ -37,7 +37,7 @@ export function installProcedureEditor({blocks, workspace, getLocale, canEdit, c
             <div data-procedure-buttons></div>
             <label><input type="checkbox"><span></span></label>
             <p role="alert" hidden></p>
-            <footer></footer>
+            <footer class="tw-plus-dialog-actions"></footer>
         </form>`;
         dialog.querySelector('h2').textContent = text.title;
         dialog.querySelector('label span').textContent = text.warp;
@@ -49,6 +49,7 @@ export function installProcedureEditor({blocks, workspace, getLocale, canEdit, c
             button.textContent = label;
             if (onClick) button.addEventListener('click', onClick);
             dialog.querySelector(container).appendChild(button);
+            return button;
         };
         const area = dialog.querySelector<HTMLElement>('[data-procedure-workspace]');
         document.body.appendChild(dialog);
@@ -94,8 +95,8 @@ export function installProcedureEditor({blocks, workspace, getLocale, canEdit, c
         addPart(text.input, declaration.addStringNumberExternal);
         addPart(text.boolean, declaration.addBooleanExternal);
         addPart(text.label, declaration.addLabelExternal);
-        addButton('footer', text.cancel, () => cancel());
-        addButton('footer', text.save);
+        addButton('footer', text.cancel, () => cancel()).dataset.dialogAction = 'cancel';
+        addButton('footer', text.save).dataset.dialogAction = 'confirm';
         form.addEventListener('submit', event => {
             event.preventDefault();
             if (!canEdit()) {

@@ -66,9 +66,9 @@ function WebFontForm({manager, locale, onClose}) {
             </select>
         </div>
         {error && <p role="alert">{text.duplicate}</p>}
-        <div className={styles.actions}>
-            <button type="button" disabled={busy} onClick={onClose}>{text.cancel}</button>
-            <button type="submit" disabled={busy}>{busy ? text.loading : text.add}</button>
+        <div className={`${styles.actions} tw-plus-dialog-actions`}>
+            <button type="button" data-dialog-action="cancel" disabled={busy} onClick={onClose}>{text.cancel}</button>
+            <button type="submit" data-dialog-action="confirm" disabled={busy}>{busy ? text.loading : text.add}</button>
         </div>
     </form>;
 }
@@ -80,9 +80,9 @@ function WebFontApproval({families, locale, DialogFrame, onComplete}) {
         <div className={styles.body} data-plus-web-fonts>
             <p>{text.notice}</p>
             <ul>{families.map(family => <li key={family}>{family}</li>)}</ul>
-            <div className={styles.actions}>
-                <button type="button" onClick={() => onComplete(false)}>{text.decline}</button>
-                <button type="button" onClick={() => onComplete(true)}>{text.allow}</button>
+            <div className={`${styles.actions} tw-plus-dialog-actions`}>
+                <button type="button" data-dialog-action="cancel" onClick={() => onComplete(false)}>{text.decline}</button>
+                <button type="button" data-dialog-action="confirm" onClick={() => onComplete(true)}>{text.allow}</button>
             </div>
         </div>
     </DialogFrame>;

@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from './dialog-actions.ts';
 import type {CreationInteraction, RepositoryCreationControls, RepositoryCreationProgress, RepositoryReceipt}
     from './project-repository-creation.ts';
 
@@ -344,13 +345,15 @@ export function renderSaveAsForm(document: Document, locale: string, storage: Pr
     const recoverAccess = document.createElement('button');
     recoverAccess.type = 'button';
     recoverAccess.textContent = label('ローカルフォルダへのアクセスを許可…', 'Grant Local Folder Access…');
-    form.append(fields, pending, review, device, status, cancel, back, recoverAccess, submit);
+    const actions = dialogActions(document, back, recoverAccess, dialogAction(cancel, 'cancel'),
+        dialogAction(submit, 'confirm'));
+    form.append(fields, pending, review, device, status, actions);
     const commit = document.createElement('button');
     if (openCommit) {
         commit.type = 'button';
         commit.textContent = label('保存してコミット…', 'Save and Commit…');
         commit.onclick = openCommit;
-        form.append(commit);
+        actions.prepend(commit);
     }
 
     type FolderReview = {name: string; format: 'folder'; git: GitHubRepositoryDraft};
@@ -591,7 +594,7 @@ export function renderExportView(document: Document, locale: string, close: Acti
     button.type = 'button';
     button.textContent = ja ? 'プロジェクトをパッケージ化する' : 'Package Project';
     button.onclick = () => {close(); run();};
-    view.append(explanation, button);
+    view.append(explanation, dialogActions(document, dialogAction(button, 'confirm')));
     return view;
 }
 
@@ -616,13 +619,14 @@ export function renderExtensionsForm(document: Document, locale: string, close: 
     const apply = document.createElement('button');
     apply.textContent = ja ? '格納方式を適用' : 'Apply Storage Settings';
     apply.disabled = true;
-    form.append(entries, status, done, apply);
+    const actions = dialogActions(document, dialogAction(done, 'close'), dialogAction(apply, 'confirm'));
+    form.append(entries, status, actions);
     if (add) {
         const button = document.createElement('button');
         button.type = 'button';
         button.textContent = ja ? '機能拡張の追加' : 'Add Extension';
         button.onclick = () => {close(); add();};
-        form.append(button);
+        actions.prepend(button);
     }
     const labels = {
         'remote-non-cacheable': ja ? 'HTTPSから毎回取得' : 'Fetch from HTTPS each time',

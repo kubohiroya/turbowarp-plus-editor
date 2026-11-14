@@ -27,6 +27,7 @@ export function openRearrangement({workspace, events, canArrange, target}: Rearr
     preview.tabIndex = 0;
     preview.setAttribute('aria-label', translate('Layout preview', '再配置のプレビュー'));
     const footer = document.createElement('footer');
+    footer.className = 'tw-plus-dialog-actions';
     const status = document.createElement('p');
     status.setAttribute('role', 'status');
     const cancel = document.createElement('button');
@@ -91,6 +92,8 @@ export function openRearrangement({workspace, events, canArrange, target}: Rearr
         close();
         if (placements.length) workspace.centerOnBlock(placements[0].script.id);
     });
+    cancel.dataset.dialogAction = 'cancel';
+    apply.dataset.dialogAction = 'confirm';
     footer.append(status, cancel, apply);
     dialog.append(title, controls, preview, footer);
     document.body.append(dialog);
