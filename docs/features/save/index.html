@@ -10,8 +10,8 @@
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
-<p class="breadcrumb"><a href="../">機能ガイド</a> › 11. 保存して配布する · <a href="index.en.html" hreflang="en" lang="en">English</a></p>
-<p class="eyebrow">機能ガイド 11/12 · 2026年11月14日更新</p>
+<p class="breadcrumb"><a href="../">機能ガイド</a> › 10. 保存して配布する · <a href="index.en.html" hreflang="en" lang="en">English</a></p>
+<p class="eyebrow">機能ガイド 10/12 · 2026年11月14日更新</p>
 <h1>保存して配布する</h1>
 <p class="lead">作品を保存し、作品情報を記録し、拡張コードや素材をどこに置くかを決めて、SB3や単一HTMLとして渡します。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
@@ -25,26 +25,26 @@
 <li><a href="../search/">検索と置換</a></li>
 <li><a href="../documents/">文書と拡張データ</a></li>
 <li><a href="../reuse/">再利用</a></li>
-<li><a href="../git/">Gitと作品フォルダ</a></li>
 <li><a href="../save/" aria-current="page">保存と配布</a></li>
+<li><a href="../git/">Gitと作品フォルダ</a></li>
 <li><a href="../github/">GitHubで開発</a></li>
 </ul>
 </nav>
 <nav class="page-toc" aria-label="このページの目次">
 <ol>
-<li><a href="#save">11.1 上書き保存と名前を変えて保存を使い分ける</a></li>
-<li><a href="#restore-points">11.2 復元ポイントから作品を戻す</a></li>
-<li><a href="#project-properties">11.3 作品情報を記入してSB3に保存する</a></li>
-<li><a href="#project-uri">11.4 作品のURIを指定してキャッシュを分ける</a></li>
-<li><a href="#storage">11.5 拡張コードの格納方式を選ぶ</a></li>
-<li><a href="#payload-formats">11.6 ソースデータと素材の格納方式を選ぶ</a></li>
-<li><a href="#packager">11.7 作品を書き出して単一HTMLで配布する</a></li>
+<li><a href="#save">10.1 上書き保存と名前を変えて保存を使い分ける</a></li>
+<li><a href="#restore-points">10.2 復元ポイントから作品を戻す</a></li>
+<li><a href="#project-properties">10.3 作品情報を記入してSB3に保存する</a></li>
+<li><a href="#project-uri">10.4 作品のURIを指定してキャッシュを分ける</a></li>
+<li><a href="#storage">10.5 拡張コードの格納方式を選ぶ</a></li>
+<li><a href="#payload-formats">10.6 ソースデータと素材の格納方式を選ぶ</a></li>
+<li><a href="#packager">10.7 作品を書き出して単一HTMLで配布する</a></li>
 </ol>
 </nav>
 
 <section id="save">
 
-<h2>11.1 上書き保存と名前を変えて保存を使い分ける</h2>
+<h2>10.1 上書き保存と名前を変えて保存を使い分ける</h2>
 
 <p>「ファイル」→「プロジェクトを保存」は、作品全体を、開いているSB3または作品フォルダに上書き保存します。新しい作品やダウンロードで保存した作品には上書き先がないため、この項目は選べません。フォルダ内のテキストファイルを個別に編集した場合は、そのタブの「ファイルを保存」を使います。</p>
 <p>⌘S（WindowsはCtrl+S）の割り当ては、左端で開いているパネルによって変わります。「スプライト一覧」では「プロジェクトを保存」、「プロジェクトフォルダ」では「アクティブなタブを保存」に割り当てられ、ファイルメニューにもその項目の横にショートカットが表示されます。「プロジェクトフォルダ」で保存できるタブを選んでいないときは、ショートカットを押しても何も保存されません。</p>
@@ -66,7 +66,7 @@
 
 <section id="restore-points">
 
-<h2>11.2 復元ポイントから作品を戻す</h2>
+<h2>10.2 復元ポイントから作品を戻す</h2>
 
 <p>保存に失敗したときや保存し忘れたときは、「ファイル」→「復元ポイント」を開きます。TurboWarpが一定の間隔でブラウザーに記録した復元ポイントから、作品を戻せます。記録の間隔は「1分ごと」から「30分ごと」までの5段階か、「なし」から選びます。</p>
 <p>復元ポイントは最後の手段で、消えることもあります。作品は<a href="#save">保存</a>して残してください。</p>
@@ -75,7 +75,7 @@
 
 <section id="project-properties">
 
-<h2>11.3 作品情報を記入してSB3に保存する</h2>
+<h2>10.3 作品情報を記入してSB3に保存する</h2>
 
 <p>「ファイル」→「作品のプロパティ」で、作品のタイトルや概要、作者名を記録できます。</p>
 <ol><li>「作品タイトル」「作品概要」「作者名」「連絡先」を入力します。作品概要は複数行で書けます。</li><li>「適用」を押すと現在の作品に反映され、メニューバーの作品タイトルも変わります。「キャンセル」を押すと、入力中の変更を取り消して閉じます。</li><li>「ファイル」メニューから保存すると、作品ファイルに情報が記録されます。</li></ol>
@@ -92,7 +92,7 @@
 
 <section id="project-uri">
 
-<h2>11.4 作品のURIを指定してキャッシュを分ける</h2>
+<h2>10.4 作品のURIを指定してキャッシュを分ける</h2>
 
 <p>「ファイル」→「作品のプロパティ」の「作品の URI」に、作品を識別するHTTPSのアドレスを入力し、「適用」を押します。ユーザー名・パスワードや、<code>#</code> 以降のフラグメントを含むアドレスは使えません。適用したURIは、次に作品を保存したときにSB3に記録されます。</p>
 <figure class="guide-detail"><a href="../images/project-uri-detail.png"><img src="../images/project-uri-detail.png" width="622" height="116" alt="作品のプロパティの作品の URI 欄に、説明用のHTTPSのアドレスを入力した画面。下に、適用した URI は次に作品を保存したときに SB3 に記録されるという案内がある。" loading="lazy"></a><figcaption>「作品の URI」欄に説明用のURLを入力した例。</figcaption></figure>
@@ -103,7 +103,7 @@
 
 <section id="storage">
 
-<h2>11.5 拡張コードの格納方式を選ぶ</h2>
+<h2>10.5 拡張コードの格納方式を選ぶ</h2>
 
 <p>拡張を追加するときは、「ファイル」→「機能拡張…」→「機能拡張の追加」を押し、「TurboWarp Plus」の一覧から拡張を選びます。拡張ごとの「読み込み元」で、コードを作品に入れるか、HTTPSの配信元から取得するか（拡張コードの格納方式）を指定します。「追加」を押してからSB3を保存すると、選んだ格納方式と、コードを照合するためのSHA-256、実行条件が記録されます。</p>
 <div class="table-scroll" role="region" aria-label="拡張コードの読み込み元" tabindex="0"><table><caption>拡張コードの読み込み元</caption><thead><tr><th scope="col">追加画面で選ぶ読み込み元</th><th scope="col">「機能拡張…」での表示</th><th scope="col">保存するものと開くときの動作</th></tr></thead><tbody>
@@ -122,7 +122,7 @@
 
 <section id="payload-formats">
 
-<h2>11.6 ソースデータと素材の格納方式を選ぶ</h2>
+<h2>10.6 ソースデータと素材の格納方式を選ぶ</h2>
 
 <p>「ファイル」→「組み込みデータ…」を開くと、「作品データの形式」が表示されます。「アセット」欄で、背景・コスチューム・音などの素材ごとに格納方式を選びます。対応する拡張のYAMLなど、対象のソースデータが作品内にあれば「ソースデータ」欄にも並びます。HTTPSから取得する格納方式を選ぶと、その項目の「HTTPS URL」欄が現れるので、URLを入力します。URLから取得した内容は、現在のデータとバイト単位で一致している必要があります。</p>
 <figure class="guide-detail"><a href="../images/project-data-dialog.png"><img src="../images/project-data-dialog.png" width="640" height="568" alt="作品データの形式ダイアログ。上部にバンドル素材を作品に追加…のボタン、ソースデータ欄、背景1とコスチューム1の形式選択がある。コスチューム1はHTTPS から毎回取得を選んでいて、その下にHTTPS URLの入力欄が出ている。右下にキャンセルと適用のボタンがある。" loading="lazy"></a><figcaption>「組み込みデータ…」で開く「作品データの形式」。新しい作品では背景1とコスチューム1が並びます。図はコスチューム1にHTTPSの形式を選んだところです。</figcaption></figure>
@@ -141,7 +141,7 @@
 
 <section id="packager">
 
-<h2>11.7 作品を書き出して単一HTMLで配布する</h2>
+<h2>10.7 作品を書き出して単一HTMLで配布する</h2>
 
 <p>「ファイル」→「書き出し…」を開き、「プロジェクトをパッケージ化する」を押します。書き出しに必要な作品データは出力に同梱されます。通常のScratch 3やTurboWarpの作品なら、<a href="https://packager.turbowarp.org/">標準のTurboWarp Packager</a>が別のタブで開き、作品が読み込まれた状態になります。Plus形式の拡張を記録した作品では、同じ操作でPlus専用の出力画面が開きます。</p>
 <figure class="guide-detail"><a href="../images/export-dialog.png"><img src="../images/export-dialog.png" width="640" height="194" alt="書き出しダイアログ。実行・配布用のファイルを作成し、書き出しに必要な作品データは出力に同梱されるという説明と、右下にプロジェクトをパッケージ化するボタンがある。" loading="lazy"></a><figcaption>「書き出し…」で開くダイアログ。</figcaption></figure>
@@ -151,8 +151,8 @@
 
 </section>
 <nav class="pager" aria-label="前後のページ">
-<a class="prev" href="../git/"><small>前のページ</small>10. 作品フォルダとGitで管理する</a>
-<a class="next" href="../github/"><small>次のページ</small>12. GitHubで作品を開発する</a>
+<a class="prev" href="../reuse/"><small>前のページ</small>9. スクリプトと素材を再利用する</a>
+<a class="next" href="../git/"><small>次のページ</small>11. 作品フォルダとGitで管理する</a>
 </nav>
 </main>
 <footer><a href="../../">トップへ</a> · <a href="../../editor.html?lang=ja">エディターを開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">このガイドのソース</a><p>独立したTurboWarpフォーク。画面・仕様は撮影時点のものです。現在の配信元は<a href="../../build-info.json">配信バージョン</a>で確認できます。</p></footer>

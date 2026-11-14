@@ -10,8 +10,8 @@
 <body>
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
-<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 10. Manage projects with project folders and Git · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
-<p class="eyebrow">Feature guide 10/12 · Updated November 14, 2026</p>
+<p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 11. Manage projects with project folders and Git · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
+<p class="eyebrow">Feature guide 11/12 · Updated November 14, 2026</p>
 <h1>Manage projects with project folders and Git</h1>
 <p class="lead">Open and save a project folder unpacked with sb3-toolchain directly, without repacking it into an SB3, and check Git changes, diffs, and history inside the editor. You can compare public PRs without a connection. In an editor with a GitHub connection (a web build with a connection target set up, or a supported Desktop app), you can also sync and review private PRs.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
@@ -25,26 +25,26 @@
 <li><a href="../search/index.en.html">Search and replace</a></li>
 <li><a href="../documents/index.en.html">Documents and extension data</a></li>
 <li><a href="../reuse/index.en.html">Reuse</a></li>
-<li><a href="../git/index.en.html" aria-current="page">Git and project folders</a></li>
 <li><a href="../save/index.en.html">Save and distribute</a></li>
+<li><a href="../git/index.en.html" aria-current="page">Git and project folders</a></li>
 <li><a href="../github/index.en.html">Develop on GitHub</a></li>
 </ul>
 </nav>
 <nav class="page-toc" aria-label="On this page">
 <ol>
-<li><a href="#sb3-toolchain">10.1 Manage projects and extensions with sb3-toolchain</a></li>
-<li><a href="#project-folder">10.2 Open and save a project folder</a></li>
-<li><a href="#local-git">10.3 Check changes and history with local Git</a></li>
-<li><a href="#block-diff">10.4 Compare project changes as blocks</a></li>
-<li><a href="#github-sync">10.5 Sync with GitHub (fetch, pull, push)</a></li>
-<li><a href="#pull-request-review">10.6 Review pull requests script by script</a></li>
+<li><a href="#sb3-toolchain">11.1 Manage projects and extensions with sb3-toolchain</a></li>
+<li><a href="#project-folder">11.2 Open and save a project folder</a></li>
+<li><a href="#local-git">11.3 Check changes and history with local Git</a></li>
+<li><a href="#block-diff">11.4 Compare project changes as blocks</a></li>
+<li><a href="#github-sync">11.5 Sync with GitHub (fetch, pull, push)</a></li>
+<li><a href="#pull-request-review">11.6 Review pull requests script by script</a></li>
 </ol>
 </nav>
 
 <p class="guide-note">The figures show the full screen of the public editor (GitHub Pages) as of November 14, 2026, in English mode. The projects and repositories are made up for illustration. Select an image to open it at full size.</p>
 <section id="sb3-toolchain">
 
-<h2>10.1 Manage projects and extensions with sb3-toolchain</h2>
+<h2>11.1 Manage projects and extensions with sb3-toolchain</h2>
 
 <p><code>sb3-toolchain</code> is a Node.js tool you run locally. <code>import</code> unpacks an SB3 into project data, assets, and embedded extensions so you can review changes with Git. <code>check</code> validates the unpacked data, and <code>build</code> generates an SB3 for distribution. You can also open and edit an unpacked project folder directly in the editor (see <a href="#project-folder">Open and save a project folder</a>).</p>
 <figure class="guide-flow"><div class="flow" role="img" aria-label="Local SB3: unpack the project. Next, unpacked source managed in Git: project data, assets, and individual extensions. Next, SB3 for distribution: bundle extensions into one when needed."><div>Local SB3<br><small>Unpack the project</small></div><span aria-hidden="true">→</span><div>Unpacked source in Git<br><small>Project data, assets, individual extensions</small></div><span aria-hidden="true">→</span><div>SB3 for distribution<br><small>Bundle extensions into one when needed</small></div></div><figcaption>Manage the unpacked source and generate the SB3 you distribute.</figcaption></figure>
@@ -59,7 +59,7 @@
 
 <section id="project-folder">
 
-<h2>10.2 Open and save a project folder</h2>
+<h2>11.2 Open and save a project folder</h2>
 
 <p>You can open and save a project folder unpacked with sb3-toolchain v1 without packing it back into an SB3. To choose and write a folder in the browser, you need Chrome or Edge with File System Access support.</p>
 <h3>Create a project folder</h3>
@@ -105,7 +105,7 @@
 
 <section id="local-git">
 
-<h2>10.3 Check changes and history with local Git</h2>
+<h2>11.3 Check changes and history with local Git</h2>
 
 <p>Choose "File" → "Choose Repository…" and select the root of a repository that has <code>.git</code>. You can also use the button to the left of "Open stage" on the right of the menu bar. Before you choose a repository, it reads "Git ▾" and offers "Choose Repository…" and "Open Local Git". After you choose a repository, the button shows the current branch name and lets you switch branches, choose "New Branch…", or choose "Open Local Git".</p>
 <p>How to use "File" → "Releases…" is explained in <a href="../github/index.en.html#release">Release and distribute</a>.</p>
@@ -139,7 +139,7 @@
 
 <section id="block-diff">
 
-<h2>10.4 Compare project changes as blocks</h2>
+<h2>11.4 Compare project changes as blocks</h2>
 
 <p>In "Commit saved changes", select "Code" for a stage or sprite to show the diff of the project data (<code>project.source.json</code>) script by script. Switch to "Text" to see the line-by-line diff of the JSON.</p>
 <ul><li>Only scripts that changed become comparison items, and the before and after blocks are shown side by side. Additions, deletions, changed input values, and so on are annotated, and changed inputs and fields are outlined in orange.</li><li>Click "Highlight in Editor" to see where the change is in the script in the editor.</li><li>Scripts that were split or joined are grouped into one item, using the blocks the two versions have in common.</li><li>Changes outside scripts, such as variables, lists, costumes and backdrops, sounds, and monitors, are shown separately.</li></ul>
@@ -155,7 +155,7 @@
 
 <section id="github-sync">
 
-<h2>10.5 Sync with GitHub (fetch, pull, push)</h2>
+<h2>11.5 Sync with GitHub (fetch, pull, push)</h2>
 
 <p>Open "GitHub Connection Settings…" from the Plus logo at the left end of the menu bar and choose the default connection method. The setting is stored in the browser, and you can change it even before opening a project or repository. A change applies from the next connection; the current session continues.</p>
 <p>Authentication for each repository is done with "Connect to GitHub…" on the first line of Local Git. Confirm the target (the GitHub HTTPS remote <code>origin</code> of the selected repository), authenticate, and allow push or sending PR reviews if needed. You also check and end the connection here. Once connected, "Create PR" and "Merge" show a "Sync with GitHub" section that lists the current local branch used for pull and push, and the sync status the editor could confirm.</p>
@@ -212,7 +212,7 @@
 
 <section id="pull-request-review">
 
-<h2>10.6 Review pull requests script by script</h2>
+<h2>11.6 Review pull requests script by script</h2>
 
 <p>You can check a GitHub pull request (PR) from an overview of all changes down to individual scripts. The figures show a public PR opened in "Merge" in the public editor without a GitHub connection. <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/pull/219">PR #219 in turbowarp-kamishibai-app</a></p>
 <ol>
@@ -257,8 +257,8 @@
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">
-<a class="prev" href="../reuse/index.en.html"><small>Previous</small>9. Reuse scripts and assets</a>
-<a class="next" href="../save/index.en.html"><small>Next</small>11. Save and distribute</a>
+<a class="prev" href="../save/index.en.html"><small>Previous</small>10. Save and distribute</a>
+<a class="next" href="../github/index.en.html"><small>Next</small>12. Develop projects on GitHub</a>
 </nav>
 </main>
 <footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>
