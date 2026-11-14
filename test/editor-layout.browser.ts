@@ -2651,7 +2651,15 @@ test('the Dockview variables pane lists only data owned by the selected target',
     await startCreate();
     const cloudOption = create.getByRole('checkbox', {name: 'クラウド変数'});
     await expect(cloudOption).not.toBeChecked();
-    await create.getByRole('textbox').fill('作品用');
+    const globalName = create.getByRole('textbox');
+    const nameError = '同じ名前の変数がすでにあります。';
+    await globalName.fill('得点');
+    await submitCreate();
+    await expect(create.getByRole('alert')).toHaveText(nameError);
+    await expect(globalName).toHaveAccessibleDescription(nameError);
+    assert.equal(await globalName.evaluate(input => input.nextElementSibling?.getAttribute('role')), 'alert');
+    assert.equal(await cloudOption.evaluate(input => input.parentElement?.previousElementSibling?.getAttribute('role')), 'alert');
+    await globalName.fill('作品用');
     await submitCreate();
     await expect(variableRow('作品用')).toBeVisible();
     await startCreate();
