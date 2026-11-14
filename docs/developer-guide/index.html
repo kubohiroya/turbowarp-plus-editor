@@ -52,6 +52,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .masthead h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(1.7rem, 4.5vw, 2.5rem); line-height: 1.25; margin: 0; text-wrap: balance; }
 .masthead p { margin: 0; color: var(--muted); max-width: 46rem; }
 .masthead .subtitle { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.1rem, 2.6vw, 1.35rem); line-height: 1.4; color: var(--fg); }
+.reading { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .35rem; max-width: 46rem; font-size: .92rem; }
+.reading li { display: grid; grid-template-columns: 9.5rem 1fr; gap: .2rem .8rem; }
+.reading b { color: var(--plus); }
+@media (max-width: 520px) { .reading li { grid-template-columns: 1fr; } }
 .legend { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-size: .85rem; margin-top: .25rem; }
 .legend span { display: inline-flex; align-items: center; gap: .4rem; }
 .legend i { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; }
@@ -96,11 +100,12 @@ nav.toc a:hover { color: var(--fg); background: var(--panel); }
 nav.toc > ol > li > a { font-weight: 700; }
 nav.toc > ol > li > a b { font-family: var(--f-mono); font-weight: 600; font-size: .72rem; margin-right: .4rem; }
 nav.toc li li a { padding-left: 1.6rem; font-size: .82rem; }
+nav.toc li li li a { padding-left: 2.6rem; font-size: .78rem; }
 nav.toc > ol > li.current > a { color: var(--fg); }
 nav.toc a[aria-current="page"] { color: var(--fg); background: var(--plus-soft); border-left-color: var(--plus); }
 nav.toc a[aria-current="location"] { color: var(--plus); border-left-color: var(--plus); font-weight: 700; }
-h3[id] { scroll-margin-top: 4rem; }
-@media (min-width: 70rem) { h3[id] { scroll-margin-top: 1.5rem; } }
+h3[id], h5[id] { scroll-margin-top: 4rem; }
+@media (min-width: 70rem) { h3[id], h5[id] { scroll-margin-top: 1.5rem; } }
 
 .pager { max-width: 46rem; margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .pager a { display: grid; gap: .15rem; padding: .85rem 1.1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); text-decoration: none; line-height: 1.5; }
@@ -170,6 +175,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 .callout { max-width: 46rem; border: 1px solid var(--line); border-left: 4px solid var(--plus); background: var(--panel); border-radius: 8px; padding: .9rem 1.1rem; }
 .callout.warn { border-left-color: var(--warn); }
 .callout > * + * { margin-top: .5rem; }
+.callout .checklist { margin: .5rem 0 0; }
 .callout .label { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .08em; color: var(--muted); }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin: 1.5rem 0; }
@@ -211,10 +217,15 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
 </style>
 
 <header class="masthead">
-  <div class="kicker">SCRATCH ADDONS · TURBOWARP ADDONS · TURBOWARP-PLUS-EDITOR</div>
+  <div class="kicker">TURBOWARP-PLUS-EDITOR · DEVELOPER GUIDE</div>
   <h1>TurboWarp-Plus-Editor 開発者ガイド</h1>
   <p class="subtitle">エディターに機能を足す三つの方式</p>
   <p>Scratch のアドオン、TurboWarp のアドオン、TurboWarp-Plus-Editor の差し込み口を比べ、Plus が追加機能を組み込む仕組みの仕様と、新しい追加機能の作り方をまとめた4つの文書です。</p>
+  <ul class="reading" aria-label="読み方">
+    <li><b>全体像をつかむ</b><span><a href="#article">01 記事</a>（短い読み物）から <a href="#comparison">02 比較と結論</a> へ</span></li>
+    <li><b>仕組みを調べる</b><span><a href="#spec">03 仕様書</a>：口の一覧、約束、起動時フラグ、拡張に公開する API</span></li>
+    <li><b>追加機能を作る</b><span><a href="#howto">04 作り方</a>から読み、必要に応じて 03 を引く</span></li>
+  </ul>
   <p>この文書では、Plus がエディター本体に組み込んで標準 TurboWarp に足している機能を<strong>追加機能</strong>、作品が読み込んで使う Scratch・TurboWarp の拡張機能を<strong>拡張</strong>と呼び分けます。</p>
   <div class="legend" aria-label="色の凡例">
     <span><i class="k-sa"></i>Scratch Addons（Scratch 向け）</span>
@@ -266,8 +277,22 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
       <ol>
         <li><a href="#howto-1">1. 置き場所を決める</a></li>
         <li><a href="#howto-2">2. 作業の順序</a></li>
-        <li><a href="#howto-3">3. 手順</a></li>
-        <li><a href="#howto-4">4. 出す前の確認</a></li>
+        <li><a href="#howto-3">3. 手順</a>
+          <ol>
+            <li><a href="#howto-3-1">3.1 置き場所と口を決める</a></li>
+            <li><a href="#howto-3-2">3.2 パッケージに実装する</a></li>
+            <li><a href="#howto-3-3">3.3 版を上げて npm に公開する</a></li>
+            <li><a href="#howto-3-4">3.4 （D のときだけ）フォークに口を開ける</a></li>
+            <li><a href="#howto-3-5">3.5 Editor で版と SHA を上げる</a></li>
+            <li><a href="#howto-3-6">3.6 site/ でつなぐ</a></li>
+            <li><a href="#howto-3-7">3.7 A の場合：拡張から操作欄に登録する</a></li>
+            <li><a href="#howto-3-8">3.8 検証する</a></li>
+            <li><a href="#howto-3-9">3.9 PR を出す</a></li>
+          </ol>
+        </li>
+        <li><a href="#howto-4">4. 画面部品の約束</a></li>
+        <li><a href="#howto-5">5. 出す前の確認</a></li>
+        <li><a href="#howto-6">6. このリポジトリの保守者向けの注意</a></li>
       </ol>
     </li>
   </ol>
@@ -421,7 +446,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <h3 id="comparison-2">2. TurboWarp のアドオン：同梱され、同じ API で動く</h3>
   <div class="prose">
     <p>TurboWarp は Scratch Addons のエディター向けアドオンを、<code>pull.js</code> というスクリプトで自分のソースに取り込みます。上流のコードに TurboWarp 用のパッチ（<code>TurboWarp/addons</code> の <code>tw</code> ブランチ）を当て、さらに正規表現で書き換えてから <code>src/addons/</code> に置きます。今のフォークには 81 件が入っていて、そのうち 6 件は TurboWarp 独自の <code>tw-</code> アドオンです。</p>
-    <p>実行時は、<code>api.js</code> が Scratch Addons の <code>addon</code> オブジェクトを作り直して渡します。ログイン情報のようにブラウザー拡張にしかない API はありません。そのかわり、<code>appendToSharedSpace</code> の共有スペース（<code>stageHeader</code>、<code>afterGreenFlag</code>、<code>afterStopButton</code>、<code>afterSoundTab</code> など 8 か所）のように、TurboWarp の画面に合わせた置き場所が用意されています。メニューバーに「録画」ボタンを足す <code>mediarecorder</code> も、この仕組みでファイルメニューの横の要素を探して差し込みます。</p>
+    <p>実行時は、<code>api.js</code> が Scratch Addons の <code>addon</code> オブジェクトを作り直して渡します。ログイン情報のようにブラウザー拡張にしかない API はありません。そのかわり、<code>appendToSharedSpace</code> の共有スペース（<code>stageHeader</code>、<code>fullscreenStageHeader</code>、<code>afterGreenFlag</code>、<code>afterStopButton</code>、<code>afterSoundTab</code>、<code>monitor</code>、<code>paintEditorZoomControls</code> と、アセットの右クリックメニューの2か所、合わせて 9 か所）のように、TurboWarp の画面に合わせた置き場所が用意されています。メニューバーに「録画」ボタンを足す <code>mediarecorder</code> も、この仕組みでファイルメニューの横の要素を探して差し込みます。</p>
   </div>
   <figure>
     <div class="canvas">
@@ -624,7 +649,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
         <tr><th>機能の単位</th><td>マニフェスト＋userscript／userstyle</td><td>同じ（<code>_manifest_entry.js</code> に変換）</td><td>パッケージの関数・コンポーネントと、統合オブジェクトの項目</td></tr>
         <tr><th>エディターの改変</th><td>不要</td><td>実行器だけ（<code>src/addons/</code>）</td><td>フォーク 28 ファイルに呼び出し行</td></tr>
         <tr><th>接続の時期</th><td>実行時（注入）</td><td>実行時（GUI の起動後）</td><td>ビルド時に結合、描画時に同期参照</td></tr>
-        <tr><th>接続点</th><td>DOM・Redux・VM・Blockly を外から</td><td>同じ＋共有スペース 8 か所</td><td>名前付きの口（React コンポーネント、reducer の断片、サービス）</td></tr>
+        <tr><th>接続点</th><td>DOM・Redux・VM・Blockly を外から</td><td>同じ＋共有スペース 9 か所</td><td>名前付きの口（React コンポーネント、reducer の断片、サービス）</td></tr>
         <tr><th>できること</th><td>付け足し、部分的な差し替え</td><td>同じ</td><td>付け足しに加え、レイアウト全体の置き換え、読み込み前の審査、保存の流れ</td></tr>
         <tr><th>切り替え</th><td>利用者が設定画面で</td><td>利用者が <code>/addons</code> で</td><td>起動時の URL フラグ（<code>?twPlus…=1</code>）</td></tr>
         <tr><th>本家が変わったとき</th><td>黙って効かなくなる</td><td>同じ</td><td>マージ・型検査・テストで止まる</td></tr>
@@ -702,7 +727,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <div class="prose" style="margin-top:1rem">
     <p>そのうえで、図7の A に当たる小さな機能は、アドオンと同じく「後から付けて、<code>dispose</code> で外せる」形で書きます。こうしておけば、利用者が切り替えられるようにしたくなったとき、アドオンの形へ移しやすくなります。既存の機能をアドオン互換に作り直す作業は行いません。</p>
   </div>
-  <p class="source">根拠：フォーク <code>src/addons/</code>（81 件、うち <code>tw-</code> 6 件）、<code>api.js</code> の <code>appendToSharedSpace</code>、<code>docs/plus-integration-sockets.md</code>、<code>docs/gui-integration/README.md</code>、<code>site/plus-integration.ts</code>。件数はこのリポジトリが固定しているフォークで数えたものです。</p>
+  <p class="source">根拠：フォーク <code>src/addons/</code>（81 件、うち <code>tw-</code> 6 件）、<code>api.js</code> の <code>appendToSharedSpace</code>、<code>docs/plus-integration-sockets.md</code>、<code>docs/gui-integration/README.md</code>、<code>site/plus-integration.ts</code>。件数は 2026年11月14日に、このリポジトリが固定しているフォーク（<code>site/source.json</code> の <code>guiRevision</code>、<code>f1e8f96</code>）で数えたものです。フォークを更新したら数え直します。</p>
   <nav class="pager" aria-label="前後の記事">
     <a class="prev" href="#article" rel="prev"><span>← 前の記事</span><b>01 記事：三つの方式</b></a>
     <a class="next-doc" href="#spec" rel="next"><span>次の記事 →</span><b>03 組み込みの仕様書</b></a>
@@ -823,9 +848,11 @@ export const getHostIntegration = () =&gt;
 
   <h3 id="spec-3">3. 口の一覧</h3>
   <div class="prose">
-    <p>フォークが参照している口を用途ごとに並べます。左の名前はフォークが <code>getHostIntegration()?.</code> の後に書く名前、右の項目は統合オブジェクトの項目です。最新の一覧は次のコマンドで取り出せます。</p>
+    <p>フォークが参照している口を用途ごとに並べます。左の名前はフォークが <code>getHostIntegration()?.</code> の後に書く名前、右の項目は統合オブジェクトの項目です。<code>menu-bar.jsx</code> と <code>extension-library.jsx</code> は <code>getHostIntegration()</code> をいったん変数 <code>host</code> に受けてから読むので、最新の一覧はフォークの checkout で次の2つのコマンドを合わせて取り出します。<code>hostIntegration</code> は口ではなく、<code>host…</code> 補助関数に統合オブジェクトを渡すための getter です。</p>
+    <p>表は 2026年11月14日に、固定しているフォーク（<code>f1e8f96</code>）で取り出したものです。</p>
   </div>
-  <pre><code>grep -rhoE "getHostIntegration\(\)\?\.[A-Za-z]+" src | sort | uniq -c</code></pre>
+  <pre><code>grep -rhoE "getHostIntegration\(\)\?\.[A-Za-z]+" src | sort | uniq -c
+grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containers/extension-library.jsx | sort -u</code></pre>
   <div class="table-wrap">
     <table class="wide">
       <thead><tr><th>用途</th><th>フォークが読む名前</th><th>統合オブジェクトの項目</th><th>主な呼び出し元</th></tr></thead>
@@ -833,9 +860,9 @@ export const getHostIntegration = () =&gt;
         <tr><th>画面の構造</th><td><code>EditorLayout</code> <code>StagePanel</code> <code>StageDisplayMenu</code> <code>TargetListLayout</code> <code>TargetListPanel</code> <code>SpriteGrid</code> <code>BackdropTile</code> <code>BackdropListActions</code> <code>BackpackSurface</code></td><td>（直接の値）</td><td><code>gui.jsx</code> ほか</td></tr>
         <tr><th>スプライトとステージ</th><td><code>wrapSpriteInfo</code> <code>spriteListClasses</code> <code>useSpriteCodeWindows</code> <code>attachSpriteCodeWorkspace</code> <code>attachStageInput</code> <code>attachStageMonitorDrag</code></td><td>（直接の値）</td><td><code>sprite-info.jsx</code>、<code>stage.jsx</code> ほか</td></tr>
         <tr><th>メニュー</th><td><code>renderFileMenu</code> <code>createFileMenuItem</code> <code>extensionInFileMenu</code> <code>renderProjectSearch</code> <code>ProjectInfoMenu</code> <code>renderStageControls</code></td><td>（直接の値）</td><td><code>menu-bar.jsx</code>、<code>controls.jsx</code></td></tr>
-        <tr><th>ワークスペースとブロック</th><td><code>createWorkspaceAttachment</code> <code>registerHostBlockShapes</code> <code>createBlocksWrapper</code> <code>getBlockEditorService</code></td><td><code>attachToWorkspace</code> <code>registerBlockShapes</code> <code>blockEditor</code> <code>attachWorkspaceMinimap</code></td><td><code>gui.jsx</code>、<code>blocks.js</code>、<code>blocks.jsx</code></td></tr>
+        <tr><th>ワークスペースとブロック</th><td><code>createWorkspaceAttachment</code> <code>registerHostBlockShapes</code> <code>createBlocksWrapper</code> <code>getBlockEditorService</code> <code>attachHostScriptTransfer</code></td><td><code>attachToWorkspace</code> <code>registerBlockShapes</code> <code>blockEditor</code> <code>attachWorkspaceMinimap</code></td><td><code>gui.jsx</code>、<code>blocks.js</code>、<code>blocks.jsx</code></td></tr>
         <tr><th>状態</th><td><code>hostModalNames</code> <code>hostModalDefaults</code> <code>createCancelSecurityLoad</code> <code>recoverProjectLoad</code> <code>loadedProjectTitle</code> <code>restoreProjectTitle</code></td><td><code>modals</code></td><td><code>reducers/</code>、<code>vm-manager-hoc.jsx</code></td></tr>
-        <tr><th>拡張の読み込みと審査</th><td><code>installSecurityHost</code> <code>getPlusReviewedMode</code> <code>createPreviewVm</code></td><td><code>installExtensionHost</code> <code>securityReview</code> <code>trustedExtensions</code> <code>libraryTab</code> <code>extensionLoadErrors</code></td><td><code>tw-security-manager.jsx</code>、<code>extension-library.jsx</code></td></tr>
+        <tr><th>拡張の読み込みと審査</th><td><code>installSecurityHost</code> <code>getPlusReviewedMode</code> <code>createPreviewVm</code> <code>hostLibraryTab</code></td><td><code>installExtensionHost</code> <code>securityReview</code> <code>trustedExtensions</code> <code>libraryTab</code> <code>extensionLoadErrors</code></td><td><code>tw-security-manager.jsx</code>、<code>extension-library.jsx</code></td></tr>
         <tr><th>入力と翻訳</th><td><code>hostIgnoresKeyEvent</code> <code>hostTranslationsFor</code></td><td><code>shouldIgnoreKeyEvent</code> <code>translations</code></td><td><code>vm-listener-hoc.jsx</code>、<code>tw-translations/</code></td></tr>
         <tr><th>アドオンとの接点</th><td><code>hostAwaitedAddonIds</code> <code>finalizeHostTransferMenu</code> <code>hostStageTransferMenu</code></td><td><code>awaitStartupAddons</code> <code>scriptTransfer</code></td><td><code>addons/api.js</code></td></tr>
         <tr><th>Packager</th><td><code>hostProjectPackager</code></td><td><code>projectPackager</code></td><td><code>tw-packager-integration-hoc.jsx</code></td></tr>
@@ -1009,9 +1036,10 @@ export const getHostIntegration = () =&gt;
     <table class="wide">
       <thead><tr><th>既定</th><th>フラグ（<code>twPlus</code> を省略）</th></tr></thead>
       <tbody>
-        <tr><th>有効（<code>=0</code> で無効）</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>ManualProjectURI</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code>（Web の既定） <code>ExtensionFileMenu</code> <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code></td></tr>
+        <tr><th>有効（<code>=0</code> で無効）</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code>（Web の既定） <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code></td></tr>
         <tr><th>無効（<code>=1</code> で有効）</th><td><code>SpriteProperties</code> <code>WindowLayout</code> <code>HorizontalBlockPalette</code> <code>StageDisplayMenu</code>（<code>StandardLayout</code> のときは有効）</td></tr>
-        <tr><th>他のフラグに従う</th><td><code>BackpackPopout</code> <code>InternalWindows</code>（<code>WindowLayout</code> が必要）、<code>StagePanel</code> <code>TargetList</code> <code>SpriteCodeWindows</code>（<code>WindowLayout</code> と <code>InternalWindows</code> が必要）</td></tr>
+        <tr><th>他のフラグが前提（既定で有効）</th><td><code>ManualProjectURI</code>（<code>ExtensionLoader</code> が必要）、<code>ExtensionFileMenu</code>（<code>StandardLayout</code> が必要）</td></tr>
+        <tr><th>他のフラグが前提（<code>=1</code> で有効）</th><td><code>GitRestoreVersion</code>（<code>LocalGit</code> が必要）、<code>BackpackPopout</code> <code>InternalWindows</code>（<code>WindowLayout</code> が必要）、<code>StagePanel</code> <code>TargetList</code> <code>SpriteCodeWindows</code>（<code>WindowLayout</code> と <code>InternalWindows</code> が必要）</td></tr>
       </tbody>
     </table>
   </div>
@@ -1038,9 +1066,9 @@ export const getHostIntegration = () =&gt;
       </tbody>
     </table>
   </div>
-  <div class="callout warn">
-    <div class="label">実マウスを使う E2E</div>
-    <p>OS のマウスカーソルを動かす E2E（<code>TW_PLUS_NATIVE_INPUT=1</code>、<code>test:e2e:native</code>）は、その実行を明示的に依頼されたときだけ行います。一般的な E2E の実行や PR の検証の依頼には含まれません（<code>AGENTS.md</code>）。</p>
+  <div class="callout">
+    <div class="label">E2E_GUI_ROOT</div>
+    <p>固定したフォークを checkout したディレクトリの絶対パスを指定します。CI と同じく <code>.host/scratch-gui</code> に置くのが基本です。checkout の HEAD は <code>site/source.json</code> の <code>guiRevision</code> と一致している必要があり、食い違うと <code>test:gui-integration</code> は両方の revision を示して止まります。</p>
   </div>
   <nav class="pager" aria-label="前後の記事">
     <a class="prev" href="#comparison" rel="prev"><span>← 前の記事</span><b>02 比較と結論</b></a>
@@ -1167,11 +1195,11 @@ export const getHostIntegration = () =&gt;
   <h3 id="howto-3">3. 手順</h3>
   <ol class="steps">
     <li>
-      <h5>置き場所と口を決める</h5>
+      <h5 id="howto-3-1">置き場所と口を決める</h5>
       <p>図13で A〜D のどれに当たるかを決め、使う口を<a href="#spec">仕様書の口の一覧</a>から選びます。実装がどのパッケージに入るかもこの時点で決めます。Editor の <code>packages/</code> にある既存の実装は移行途中のもので、新しい機能の置き場所にはしません。</p>
     </li>
     <li>
-      <h5>パッケージに実装する</h5>
+      <h5 id="howto-3-2">パッケージに実装する</h5>
       <p>turbowarp-plus-packages の該当パッケージ（無ければ新しいパッケージ）に実装します。GPL のコードは import せず、エディターから受け取るものはすべて引数でもらいます。付ける機能は <code>{dispose}</code> を返します。</p>
 <pre><code>// パッケージ側：document と翻訳を受け取り、外す手段を返す
 export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
@@ -1187,11 +1215,11 @@ export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
       <p>スタイルはパッケージの中に自分のクラスで持ち、色は GUI の公開テーマ変数を使います。単体テストもパッケージに置きます。</p>
     </li>
     <li>
-      <h5>版を上げて npm に公開する</h5>
+      <h5 id="howto-3-3">版を上げて npm に公開する</h5>
       <p>turbowarp-plus-packages の <code>npm run bump</code>（上流から）または <code>npm run bump:downstream</code>（下流へ伝える）で版を決め、<code>v&lt;版&gt;</code> のタグで npm に公開します。tgz を Editor に同梱する方法は使いません。</p>
     </li>
     <li>
-      <h5>（D のときだけ）フォークに口を開ける</h5>
+      <h5 id="howto-3-4">（D のときだけ）フォークに口を開ける</h5>
       <p>本家にもあるファイルの中に、口を呼ぶ行を足します。値が無いときは本家どおりに動くように書きます。</p>
 <pre><code>// scratch-gui フォーク：既存ファイルに足すのはこの形の行だけ
 const SpriteBadges = getHostIntegration()?.SpriteBadges || null;
@@ -1200,11 +1228,11 @@ const SpriteBadges = getHostIntegration()?.SpriteBadges || null;
       <p>新しいファイルやテストはフォークに足しません。口の意味は Editor 側のテストで押さえます。統合オブジェクトの項目として読ませる場合は、<code>site/gui-integration/lib/tw-plus-integration-points.ts</code> に既定値を返す <code>host…</code> 補助関数を足します。</p>
     </li>
     <li>
-      <h5>Editor で版と SHA を上げる</h5>
+      <h5 id="howto-3-5">Editor で版と SHA を上げる</h5>
       <p><code>package.json</code> と <code>package-lock.json</code> を npm 公開版に上げます。D のときは <code>site/source.json</code> のフォークの SHA を、口を開けたコミットの40桁 SHA に替えます。</p>
     </li>
     <li>
-      <h5>site/ でつなぐ</h5>
+      <h5 id="howto-3-6">site/ でつなぐ</h5>
       <p>C の場合は <code>site/plus-integration.ts</code> の <code>attachToWorkspace</code> に1行足します。</p>
 <pre><code>attached.push(attachSpriteBadges(hostDocument, {vm, getMessages}));</code></pre>
       <p>B と D で画面の部品を渡す場合は、<code>site/gui-integration/index.ts</code> から export します。起動時フラグで切り替えたい場合は、<code>config/feature-flags.ts</code> と <code>config/web-startup-feature-flags.ts</code> に <code>twPlus…</code> を1つずつ足し、フラグが無効のときは何も渡さないようにします。</p>
@@ -1212,7 +1240,7 @@ const SpriteBadges = getHostIntegration()?.SpriteBadges || null;
 export const SpriteBadges = startup.spriteBadges ? SpriteBadgesView : undefined;</code></pre>
     </li>
     <li>
-      <h5>A の場合：拡張から操作欄に登録する</h5>
+      <h5 id="howto-3-7">A の場合：拡張から操作欄に登録する</h5>
       <p>実行時の拡張は、Editor の内部を知らずに操作欄を使えます。<code>Scratch.gui.stageControls</code> が無いビルドでは何もしないようにします。</p>
 <pre><code>const controls = Scratch.gui?.stageControls;
 if (controls) {
@@ -1225,16 +1253,26 @@ if (controls) {
       <p>パッケージとして配る拡張は、<code>@kubohiroya/turbowarp-app-shell</code> の操作欄を使うと、ツールバーの無い単一 HTML のプレイヤーでも同じ操作が出ます。</p>
     </li>
     <li>
-      <h5>検証する</h5>
-      <p><code>npm test</code>、<code>npm run typecheck</code>、<code>npm run test:gui-integration</code> を通し、<code>E2E_GUI_ROOT=… npm run build:pages</code> でビルドし直してから画面を確認します。<code>scratch-gui/build</code> に残っている古い成果物は使いません。<code>build-info.json</code> の <code>revision</code> と <code>siteRevision</code> が今の状態に一致しているか確かめます。</p>
+      <h5 id="howto-3-8">検証する</h5>
+      <p><code>npm test</code>、<code>npm run typecheck</code>、<code>npm run test:gui-integration</code> を通し、<code>E2E_GUI_ROOT=… npm run build:pages</code> でビルドし直してから画面を確認します（<code>E2E_GUI_ROOT</code> は<a href="#spec-9">仕様書の検証</a>を参照）。<code>scratch-gui/build</code> に残っている古い成果物は使いません。<code>build-info.json</code> の <code>revision</code> と <code>siteRevision</code> が今の状態に一致しているか確かめます。</p>
     </li>
     <li>
-      <h5>PR を出す</h5>
-      <p>このリポジトリの PR には必須のチェックがありません。<code>--auto</code> を付けると CI を待たずにすぐマージされるので、CI の結果を見てからマージします。</p>
+      <h5 id="howto-3-9">PR を出す</h5>
+      <p>変更の内容と確かめたことを書いて PR を出し、CI の結果を見てからマージします。</p>
     </li>
   </ol>
 
-  <h3 id="howto-4">4. 出す前の確認</h3>
+  <h3 id="howto-4">4. 画面部品の約束</h3>
+  <div class="prose">
+    <p>追加機能が出すダイアログやパネルは、次の形に揃えます。</p>
+    <ul>
+      <li><strong>下部の操作ボタン：</strong>右端にまとめ、キャンセルを左、保存・適用などの主操作を右に置きます。共通の <code>tw-plus-dialog-actions</code> を使い、ボタンの <code>data-dialog-action</code> に <code>cancel</code>、<code>close</code>、<code>confirm</code>、<code>delete</code> のいずれかを指定します。文字のラベルを残し、キャンセルと閉じるには×、保存・確定にはチェック、削除にはごみ箱のアイコンを添えます。</li>
+      <li><strong>見出しの横の閉じるボタン：</strong>パネルやダイアログの右上に置く閉じるボタンには「閉じる」「Close」の文字を出さず、×アイコンだけにします。名前は翻訳した <code>title</code> と <code>aria-label</code> で示します。</li>
+      <li><strong>文字列：</strong>表示する文字列は <code>ja</code> と <code>en</code> の翻訳を持ちます（ひらがな表示が要るものは <code>ja-hira</code> も）。</li>
+    </ul>
+  </div>
+
+  <h3 id="howto-5">5. 出す前の確認</h3>
   <ul class="checklist">
     <li>実装の本体はパッケージにあり、Editor の変更は版の更新と数行の接続に収まっている</li>
     <li>付けたものはすべて <code>dispose()</code> で外れる。VM が替わっても二重に付かない</li>
@@ -1245,16 +1283,22 @@ if (controls) {
     <li>単体テストはパッケージに、口のテストは Editor の <code>test/</code> にある</li>
     <li>ビルドし直した成果物で画面を確かめた</li>
   </ul>
-  <h4>ダイアログの操作ボタン</h4>
-  <p>操作ボタンはダイアログ下部の右端にまとめ、キャンセルを左、保存・適用などの主操作を右に置きます。共通の <code>tw-plus-dialog-actions</code> を使い、ボタンの <code>data-dialog-action</code> に <code>cancel</code>、<code>close</code>、<code>confirm</code>、<code>delete</code> のいずれかを指定します。アイコンはラベルに添え、キャンセルと閉じるには×、保存・確定にはチェック、削除にはごみ箱を使います。</p>
   <h4>してはいけないこと</h4>
   <ul class="checklist no">
     <li>フォークに新しいファイル、独自のテスト、本家のクラス名を狙う CSS を足す</li>
     <li>本家の DOM をクラス名で探して書き換える（それはアドオンの方式で、口があるなら口を使う）</li>
     <li>パッケージから GPL のコード（フォークや Editor の <code>site/</code>）を import する</li>
     <li>パッケージを tgz で Editor に同梱する</li>
-    <li>依頼されていないのに実マウスを使う E2E を走らせる</li>
   </ul>
+  <h3 id="howto-6">6. このリポジトリの保守者向けの注意</h3>
+  <div class="callout warn">
+    <div class="label">保守者・AI エージェント向け</div>
+    <p>ここからは、turbowarp-plus-editor に直接変更を入れる人（AI エージェントを含む）向けの運用規則です。正本は <code>AGENTS.md</code> です。</p>
+    <ul class="checklist no">
+      <li>PR に <code>--auto</code> を付けない。このリポジトリの PR には必須のチェックが無く、<code>--auto</code> を付けると CI を待たずにすぐマージされる</li>
+      <li>OS のマウスカーソルを動かす E2E（<code>TW_PLUS_NATIVE_INPUT=1</code>、<code>test:e2e:native</code>）を、明示的に依頼されていないのに走らせない。一般的な E2E の実行や PR の検証の依頼には含まれない</li>
+    </ul>
+  </div>
   <p class="source">関連文書：<code>docs/plus-integration-sockets.md</code>（口の設計の経緯）、<code>docs/gui-integration/README.md</code>（移設とビルド時の接続）、<code>docs/architecture.md</code>（責務と配信）。</p>
   <nav class="pager" aria-label="前後の記事">
     <a class="prev" href="#spec" rel="prev"><span>← 前の記事</span><b>03 組み込みの仕様書</b></a>
@@ -1293,7 +1337,7 @@ if (controls) {
   var toc = document.querySelector('nav.toc');
   function spy() {
     var current = null;
-    var headings = active.querySelectorAll('h3[id]');
+    var headings = active.querySelectorAll('h3[id], .steps h5[id]');
     var atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
     Array.prototype.forEach.call(headings, function (h) {
       if (h.getBoundingClientRect().top <= 120) current = h.id;
