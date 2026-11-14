@@ -99,6 +99,24 @@ input.projectTitleField:focus {
 
 .display > li > div > ul {
     max-block-size: min(60vh, 28rem);
+    background-color: var(--ui-white);
+    color: var(--text-primary);
+    scrollbar-color: var(--text-primary) var(--ui-white);
+}
+
+.display > li > div > ul::-webkit-scrollbar-track {
+    background: var(--ui-white);
+}
+
+.display > li > div > ul::-webkit-scrollbar-thumb {
+    background-color: var(--text-primary);
+    border-color: var(--ui-white);
+}
+
+/* The native check and caret are white assets designed for an accent-colored menu. */
+.display :global(img[class*="settings-menu_check_"]),
+.display :global(img[class*="settings-menu_expand-caret_"]) {
+    filter: brightness(.4) var(--filter-icon-gray, grayscale(100%));
 }
 
 .display li:focus-visible {
