@@ -108,10 +108,6 @@
 <h2>10.3 ローカルGitで変更と履歴を確かめる</h2>
 
 <p>「ファイル」→「リポジトリを選択…」で <code>.git</code> を持つリポジトリのルートを選びます。ローカル Git は、メニューバーで「ステージを開く」の左にあるブランチのボタンからも開けます。</p>
-<figure>
-<a href="../images/current-git-file-menu.png"><img src="../images/current-git-file-menu.png" width="1440" height="1220" alt="日本語のファイルメニュー。プロジェクトフォルダを開くの下に、リポジトリを選択、GitHub 接続設定、リリースが並んでいる。" loading="lazy"></a>
-<figcaption>「プロジェクトフォルダを開く…」の下に、リポジトリの選択、GitHub 接続設定、リリースが並びます。</figcaption>
-</figure>
 <p>「リリース…」では、npm 公開用のコマンドをコピーし、現在のコミットに GitHub のタグを付け、Packager で書き出した HTML を Pages の公開先に送れます。 <a href="../github/#release">リリースの手順</a></p>
 <p><strong>1 リポジトリに 1 作品</strong>を基本にします。リポジトリの直下、または Project Starter が作る <code>project/</code> に作品があれば、上部の「作品を開く」で読み込めます。ほかの場所にある作品は「ファイル」→「プロジェクトフォルダを開く…」で指定すると、選択中のリポジトリに関連付けられます。作品を開くと、ステージやスプライト別に変更を確認できます。 <a href="../github/#migrate">リポジトリの構成</a></p>
 <p>先頭行にはリポジトリ名が表示されます。リポジトリ名の横にある「ローカル状態を更新」は Git の状態を読み直します。Editor でブランチを切り替えたり pull したりすると、操作の結果に「作品を再読込」が表示されます。作品のファイルは、画面左上の「プロジェクトフォルダ」アイコンから確認できます。左側にプロジェクトフォルダを表示している間は、フォルダのアイコンが付いた「ローカル Git」タブがタブ列の左端に固定されます。</p>
@@ -163,11 +159,8 @@
 
 <h2>10.5 GitHubと同期する（fetch・pull・push）</h2>
 
-<p>「ファイル」→「GitHub 接続設定…」で、認証方式と権限を設定します。この設定は PR の作成・レビュー・マージ・同期で共通です。設定が済んだら「閉じる」を押します。接続先は、選んだリポジトリの GitHub HTTPS リモート <code>origin</code> です。接続すると「PRを作成」と「マージ」に同期ボタンが表示されます。同期ボタンの横に、pull と push の対象となる現在のローカルブランチと、確認できた同期状況が表示されます。</p>
-<figure>
-<a href="../images/current-git-connection-settings.png"><img src="../images/current-git-connection-settings.png" width="1440" height="1220" alt="日本語のローカル Git タブの上に、接続方式と権限を指定する GitHub 接続設定のダイアログが開いている。" loading="lazy"></a>
-<figcaption>ファイルメニューから GitHub 接続設定を開いたところ。</figcaption>
-</figure>
+<p>左端の「TurboWarp Plus」→「GitHub 接続設定…」で、次回の接続に使う方式を選びます。設定はブラウザーに保存され、作品を開く前にも変更できます。</p>
+<p>リポジトリを選び、ローカル Git の上部にある「GitHub に接続…」を開きます。表示された接続先を確認して認証し、必要に応じて push や PR レビュー送信を許可します。接続先は、選んだリポジトリの GitHub HTTPS リモート <code>origin</code> です。接続すると「PRを作成」と「マージ」に同期ボタンが表示されます。同期ボタンの横に、pull と push の対象となる現在のローカルブランチと、確認できた同期状況が表示されます。</p>
 <div class="table-scroll" role="region" aria-label="操作に必要な GitHub 接続" tabindex="0">
 <table><caption>操作に必要な GitHub 接続</caption><thead><tr><th scope="col">操作</th><th scope="col">公開 Pages 版</th><th scope="col">接続を設定した Web 版・対応 Desktop</th></tr></thead><tbody>
 <tr><th scope="row">ローカルの差分・コミット</th><td>接続なしで操作</td><td>接続なしで操作</td></tr>
@@ -180,7 +173,7 @@
 
 <figure>
 <a href="../images/current-git-remote.png"><img src="../images/current-git-remote.png" width="1440" height="960" alt="ローカル Git の「マージ」。左のペインに公開プルリクエストの一覧がある。" loading="lazy"></a>
-<figcaption>「マージ」を開いた直後。公開 PR は左の一覧から選べます。GitHub の認証は「ファイル」→「GitHub 接続設定…」で行います。</figcaption>
+<figcaption>「マージ」を開いた直後。公開 PR は左の一覧から選べます。</figcaption>
 </figure>
 <div class="table-scroll" role="region" aria-label="更新操作の使い分け" tabindex="0">
 <table><caption>更新操作の使い分け</caption><thead><tr><th scope="col">操作</th><th scope="col">場所</th><th scope="col">更新するもの</th></tr></thead><tbody>
@@ -203,7 +196,7 @@
 <ol>
 <li>運用者から案内された GitHub App のページで「Install」を押します。インストール先のアカウントを選び、組織で必要な場合は管理者に承認を依頼します。</li>
 <li>「Only select repositories」で Editor から使うリポジトリを選びます。同期には Contents の権限、レビュー送信には Pull requests の書き込み権限も確認します。</li>
-<li>Editor の「GitHub 接続設定…」で方式と必要な許可を選びます。GitHub の認可画面では App 名と権限を確かめ、自分の Editor に表示されたデバイスコードだけを入力します。</li>
+<li>ローカル Git の「GitHub に接続…」で対象リポジトリと必要な許可を確認します。GitHub の認可画面では App 名と権限を確かめ、自分の Editor に表示されたデバイスコードだけを入力します。</li>
 <li>利用を終えたら Editor で接続を切ります。GitHub の「Settings」→「Applications」で、インストールは「Installed GitHub Apps」、認可は「Authorized GitHub Apps」から取り消せます。</li>
 </ol>
 <p>App に権限が追加されたときは、「Installed GitHub Apps」でインストール先の承認を済ませます。GitHub App のトークンは Cloudflare のサーバーまたは Desktop のメインプロセスが保持します。Editor の Git パネルは、対象リポジトリと操作を限定した短時間のプロキシ用の鍵で通信します。 <a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/github-app-setup.md">接続先運用者向けの GitHub App 設定</a></p>

@@ -120,13 +120,10 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         // An external repository change can keep the previous operation's notice visible during a refresh.
         await expect(action).toBeEnabled();
     };
-    const settings = page.getByRole('dialog', {name: 'GitHub connection settings'});
+    const settings = page.getByRole('dialog', {name: 'Repository GitHub connection'});
     const status = settings.locator('[data-git-connection-state]');
     const settingsButton = (name: string) => settings.getByRole('button', {name, exact: true});
-    const openSettings = async () => {
-        await page.getByText('File', {exact: true}).click();
-        await page.getByRole('button', {name: 'GitHub Connection Settings…', exact: true}).click();
-    };
+    const openSettings = () => button('Connect to GitHub…').click();
     const closeSettings = () => settingsButton('Close').click();
     const notice = panel.getByText('The GitHub operation finished.', {exact: true});
     await panel.getByRole('button', {name: 'Create PR', exact: true}).click();
@@ -135,7 +132,6 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', /./u);
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
     await openSettings();
-    await settings.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const authMethod = settings.getByRole('combobox', {name: 'Authentication method'});
     const connect = async (method: 'fine-grained-pat' | 'git-credential-helper') => {
         await authMethod.selectOption(method);
@@ -279,9 +275,15 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         }
         return route.fulfill({response});
     });
+    await page.getByLabel('TurboWarp Plus project information', {exact: true}).first().click();
+    await page.getByRole('button', {name: 'GitHub Connection Settings…', exact: true}).click();
+    const preferences = page.getByRole('dialog', {name: 'GitHub connection settings'});
+    await preferences.getByRole('combobox', {name: 'Default connection mode'}).selectOption('cloudflare');
+    await preferences.getByRole('button', {name: 'Close', exact: true}).click();
     await openSettings();
-    await settings.getByRole('combobox', {name: 'Connection mode'}).selectOption('cloudflare');
+    await settingsButton('Disconnect').click();
     await expect(status).toHaveText('Disconnected');
+    await settings.getByRole('checkbox', {name: 'Allow sending to GitHub (push)'}).check();
     await settingsButton('Connect to GitHub').click();
     await expect(settings.getByRole('link', {name: 'Open GitHub authorization'})).toBeVisible();
     await settingsButton('Check connection').click();

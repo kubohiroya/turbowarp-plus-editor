@@ -687,7 +687,7 @@ test('the Plus project menu relocates display settings, runtime actions, and set
     const entries = nav.locator(':scope > a, :scope > button, :scope > div > button');
     await expect(entries).toHaveText([
         `About TurboWarp Plus Editor ${editorPackage.version}`, 'Display settings', 'Runtime settings', 'Addons',
-        'Advanced Settings', 'AI agent settings…', 'Source code', 'Licenses and credits'
+        'Advanced Settings', 'GitHub Connection Settings…', 'AI agent settings…', 'Source code', 'Licenses and credits'
     ]);
     const displayToggle = nav.getByRole('button', {name: 'Display settings'});
     const display = nav.getByRole('list', {name: 'Display settings'});

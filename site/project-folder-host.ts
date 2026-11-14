@@ -80,6 +80,13 @@ type PickerWindow = Window & {
     };
     ReduxStore?: GuiStore;
 };
+const gitCloudflare = () => typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
+const gitDesktop = (view: PickerWindow) => view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit;
+
+export function availableGitConnectionModes(view: Window) {
+    return createGitConnectionSettings({desktop: gitDesktop(view), cloudflare: gitCloudflare()}).modes;
+}
+
 const folders = new WeakMap<FolderVM, {folder: LocalFolderMount; workflows(): ProjectFolderWorkflows}>();
 
 export const projectFolderWorkflows = (vm: FolderVM) => folders.get(vm)?.workflows();
@@ -93,9 +100,9 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
     const view = document?.defaultView as PickerWindow;
     if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
-    const cloudflare = typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
+    const cloudflare = gitCloudflare();
     const connectionSettings = localGit ? createGitConnectionSettings({
-        desktop: view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit,
+        desktop: gitDesktop(view),
         cloudflare
     }) : undefined;
     const desktopBridge = view.EditorPreload?.localGitPublication;

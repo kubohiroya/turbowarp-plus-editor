@@ -141,19 +141,42 @@ test('GitHub connection settings isolate the selected provider and keep the work
         view.showDirectoryPicker = async () => fixture.directory;
     });
     await installDesktopFixture(page);
-    const fileCommand = async (target: Page, name: string) => {
+    const choose = async (target: Page) => {
         await target.getByText('File', {exact: true}).click();
-        await target.getByRole('button', {name, exact: true}).click();
+        await expect(target.getByRole('button', {name: 'GitHub Connection Settings…', exact: true})).toHaveCount(0);
+        await target.getByRole('button', {name: 'Choose Repository…', exact: true}).click();
     };
-    const choose = (target: Page) => fileCommand(target, 'Choose Repository…');
     const showSettings = async (target: Page) => {
-        await fileCommand(target, 'GitHub Connection Settings…');
-        const dialog = target.getByRole('dialog', {name: 'GitHub connection settings'});
+        await target.getByRole('button', {name: 'Connect to GitHub…', exact: true}).click();
+        const dialog = target.getByRole('dialog', {name: 'Repository GitHub connection'});
         await expect(dialog).toBeVisible();
         return dialog;
     };
+    const showPreferences = async (target: Page) => {
+        const label = 'TurboWarp Plus project information';
+        await target.getByLabel(label, {exact: true}).first().click();
+        const nav = target.getByRole('navigation', {name: label});
+        const settings = nav.getByRole('button', {name: 'GitHub Connection Settings…'});
+        await expect(settings.locator('xpath=following-sibling::*[1]')).toHaveText('AI agent settings…');
+        await settings.click();
+        return target.getByRole('dialog', {name: 'GitHub connection settings'});
+    };
+    const close = (dialog: ReturnType<Page['getByRole']>) => dialog.getByRole('button', {name: 'Close', exact: true}).click();
     await page.goto(editor);
     await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
+    const preferences = await showPreferences(page);
+    const defaultMode = preferences.getByRole('combobox', {name: 'Default connection mode'});
+    await expect(defaultMode).toHaveValue('desktop');
+    await expect(preferences.getByRole('checkbox')).toHaveCount(0);
+    await expect(preferences.getByRole('button', {name: 'Connect to GitHub'})).toHaveCount(0);
+    await defaultMode.selectOption('cloudflare');
+    await close(preferences);
+    await expect(page.getByLabel('TurboWarp Plus project information', {exact: true}).first()).toBeFocused();
+    await page.reload();
+    await expect(await showPreferences(page)).toBeVisible();
+    await expect(defaultMode).toHaveValue('cloudflare');
+    await defaultMode.selectOption('desktop');
+    await close(preferences);
     const cdp = await page.context().newCDPSession(page);
     for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
         await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
@@ -162,16 +185,18 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await page.waitForFunction(() => (window as any).gitConnectionFixture.directory?.kind === 'directory');
     await choose(page);
     const panel = await showSettings(page);
-    const mode = panel.getByRole('combobox', {name: 'Connection mode'});
+    const mode = panel.getByText(/^Connection mode · /);
+    await expect(panel.getByText('Repository · owner/project')).toBeVisible();
+    await expect(panel.getByRole('combobox', {name: 'Default connection mode'})).toHaveCount(0);
     const status = panel.locator('[data-git-connection-state]');
     const connect = panel.getByRole('button', {name: 'Connect to GitHub'});
     const check = panel.getByRole('button', {name: 'Check connection'});
-    await mode.selectOption('desktop');
+    await expect(mode).toHaveText('Connection mode · Desktop local');
     await expect(connect).toBeEnabled();
     assert.equal(requests.length, 0);
     await connect.click();
     await expect(panel.getByRole('alert')).toContainText('Retry using the selected connection');
-    await expect(mode).toHaveValue('desktop');
+    await expect(mode).toHaveText('Connection mode · Desktop local');
     await connect.click();
     await expect(panel.getByText('TEST-CODE')).toBeVisible();
     await check.click();
@@ -180,19 +205,26 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await expect(panel.getByText('http://127.0.0.1:49152')).toBeVisible();
     assert.equal(requests.length, 0);
 
-    await page.evaluate(() => {(window as any).gitConnectionFixture.failDisconnect = true;});
-    await mode.selectOption('cloudflare');
-    await expect(panel.getByRole('alert')).toContainText('Retry using the selected connection');
-    await expect(mode).toHaveValue('desktop');
+    await close(panel);
+    await showPreferences(page);
+    await defaultMode.selectOption('cloudflare');
+    await close(preferences);
+    await showSettings(page);
+    await expect(status).toHaveText('Connected');
+    await expect(mode).toHaveText('Connection mode · Desktop local');
     assert.equal(requests.length, 0);
+    await page.evaluate(() => {(window as any).gitConnectionFixture.failDisconnect = true;});
+    const disconnect = panel.getByRole('button', {name: 'Disconnect', exact: true});
+    await disconnect.click();
+    await expect(panel.getByRole('alert')).toContainText('Retry using the selected connection');
     await page.evaluate(() => {(window as any).gitConnectionFixture.failDisconnect = false;});
-    await mode.selectOption('cloudflare');
+    await disconnect.click();
     await expect(status).toHaveText('Disconnected');
-    await expect(panel.getByText(proxy, {exact: true})).toBeVisible();
+    await expect(mode).toHaveText('Connection mode · Cloudflare');
     assert.equal(requests.length, 0);
     await connect.click();
     await expect(panel.getByRole('alert')).toContainText('Retry using the selected connection');
-    await expect(mode).toHaveValue('cloudflare');
+    await expect(mode).toHaveText('Connection mode · Cloudflare');
     failCloudflare = false;
     await connect.click();
     await expect(panel.getByRole('link', {name: 'Open GitHub authorization'})).toHaveAttribute('href',
@@ -203,9 +235,12 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await check.click();
     await expect(status).toHaveText('Connected');
     await expect(panel.getByText('Account · cloud-account')).toBeVisible();
-    await mode.selectOption('desktop');
+    await disconnect.click();
     await expect(status).toHaveText('Disconnected');
-    await expect(mode).toHaveValue('desktop');
+    await close(panel);
+    await showPreferences(page);
+    await defaultMode.selectOption('desktop');
+    await close(preferences);
 
     assert.deepEqual(await page.evaluate(() => (window as any).gitConnectionFixture.calls), [
         ['begin', false], ['disconnect'], ['begin', false], ['finish'], ['authorize', remote, false], ['disconnect'], ['disconnect']
@@ -229,7 +264,6 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await desktop.waitForFunction(() => (window as any).gitConnectionFixture.directory?.kind === 'directory');
     await choose(desktop);
     const desktopPanel = await showSettings(desktop);
-    await desktopPanel.getByRole('combobox', {name: 'Connection mode'}).selectOption('desktop');
     const auth = desktopPanel.getByRole('combobox', {name: 'Authentication method'});
     const desktopStatus = desktopPanel.locator('[data-git-connection-state]');
     const desktopConnect = desktopPanel.getByRole('button', {name: 'Connect to GitHub'});
@@ -266,7 +300,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
     const web = await page.context().newPage();
     await web.goto(editor);
     await web.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
-    const webPanel = await showSettings(web);
+    const webPanel = await showPreferences(web);
     await expect(webPanel.getByRole('combobox').locator('option[value="cloudflare"]')).toHaveCount(1);
     await expect(webPanel.getByRole('combobox').locator('option[value="desktop"]')).toHaveCount(0);
     const unsupported = await context.newPage();
@@ -274,7 +308,9 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await unsupported.goto(editor);
     await unsupported.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
     await unsupported.getByText('File', {exact: true}).click();
-    await expect(unsupported.getByText('Local Git…', {exact: true})).toHaveCount(0);
+    await expect(unsupported.getByText('Choose Repository…', {exact: true})).toHaveCount(0);
     await expect(unsupported.locator('.twgit-branch-button')).toHaveCount(0);
+    await unsupported.getByLabel('TurboWarp Plus project information', {exact: true}).first().click();
+    await expect(unsupported.getByRole('button', {name: 'GitHub Connection Settings…'})).toHaveCount(0);
     assert.equal(requests.length, 5);
 });

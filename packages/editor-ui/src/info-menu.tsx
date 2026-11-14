@@ -39,6 +39,7 @@ interface ProjectInfoMenuProps extends ProjectSettingsMenuProps {
     openAbout?(): void;
     openPrivacy?(): void;
     sourceUrl?: string;
+    githubConnection?: MenuAction;
 }
 
 type Submenu = 'display' | 'runtime';
@@ -55,7 +56,7 @@ const newTabIcon = (
 );
 
 export function ProjectInfoMenu({
-    locale, version, logo, leading, displaySettings, renderRuntimeSettings, addons, advanced, aiAgents,
+    locale, version, logo, leading, displaySettings, renderRuntimeSettings, addons, advanced, githubConnection, aiAgents,
     openAbout, openPrivacy, sourceUrl = 'https://github.com/kubohiroya/turbowarp-plus-editor'
 }: ProjectInfoMenuProps) {
     const menu = React.useRef<HTMLDetailsElement>(null);
@@ -201,6 +202,7 @@ export function ProjectInfoMenu({
             </div>}
             {action(japanese ? 'アドオン' : 'Addons', addons, true)}
             {action(japanese ? '高度な設定' : 'Advanced Settings', advanced)}
+            {action(japanese ? 'GitHub 接続設定…' : 'GitHub Connection Settings…', githubConnection)}
             {action(japanese ? 'AI エージェント設定…' : 'AI agent settings…', aiAgents)}
             <hr className={styles.divider} />
             <a className={styles.entry} href={sourceUrl}
