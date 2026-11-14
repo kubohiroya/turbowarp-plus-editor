@@ -93,7 +93,7 @@
     "@kubohiroya/turbowarp-plus-editor-project-folder": "file:vendor/kubohiroya-turbowarp-plus-editor-project-folder-0.9.1-folder-overwrite.0.tgz",
     "@kubohiroya/turbowarp-plus-editor-project-model": "0.1.0",
     "@kubohiroya/turbowarp-plus-editor-project-starter": "0.1.0",
-    "@kubohiroya/turbowarp-plus-editor-sprite-panes": "file:vendor/kubohiroya-turbowarp-plus-editor-sprite-panes-0.1.2-message-graph.1.tgz",
+    "@kubohiroya/turbowarp-plus-editor-sprite-panes": "file:vendor/kubohiroya-turbowarp-plus-editor-sprite-panes-0.1.2-message-graph.2.tgz",
     "@kubohiroya/turbowarp-plus-editor-ui": "file:packages/editor-ui",
     "@kubohiroya/turbowarp-plus-editor-views": "file:packages/editor-views",
     "@kubohiroya/turbowarp-plus-editor-windows": "0.1.0",

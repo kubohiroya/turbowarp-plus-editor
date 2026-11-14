@@ -2652,6 +2652,14 @@ test('editor pane headings and message diagrams follow the active target', {time
     await expect(heading).toHaveCount(0);
     await section('変数など').hover();
     await expect(toolbar.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('スプライトのプロパティと変数');
+    await section('変数など').click();
+    const visibility = page.getByRole('radiogroup', {name: '表示', exact: true});
+    for (const [label, visible] of [['表示しない', false], ['表示する', true]] as const) {
+        const choice = visibility.getByRole('radio', {name: label, exact: true});
+        await choice.click();
+        await expect(choice).toBeChecked();
+        await expect.poll(() => page.evaluate(() => vm.editingTarget.visible)).toBe(visible);
+    }
     for (const [tab, title] of [['コスチューム', 'コスチューム'], ['音', '音'],
         ['変数など', 'スプライトのプロパティと変数'], ['メッセージ', 'メッセージ']]) {
         await section(tab).click();
