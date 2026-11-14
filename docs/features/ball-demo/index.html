@@ -46,7 +46,7 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <li><a href="Ball%20Demo.sb3">Ball Demo.sb3</a> は節 1.1〜1.2 で使います。緑の旗でボールが20歩進むデモです。</li>
 <li><a href="Ball%20Demo%20Plus.sb3">Ball Demo Plus.sb3</a> は節 1.3 から使います。同じデモに変数、リスト、メッセージ、クローンを加えています。</li>
 </ul>
-<nav aria-label="目次"><strong>目次</strong><ul><li><a href="#section-1">1. Scratch で使っていた画面はどこにある？</a><ul><li><a href="#section-1-1">1.1 SB3 を開く</a></li><li><a href="#section-1-2">1.2 ステージを開く</a></li><li><a href="#section-1-3">1.3 画面左端のスプライト一覧を使う</a></li><li><a href="#section-1-4">1.4 スプライト一覧から選んだ対象をタブで編集する</a></li><li><a href="#section-1-5">1.5 スプライト編集パネルをボタンで切り替える</a></li></ul></li><li><a href="#section-2">2. スプライトのプロパティと変数を使う</a><ul><li><a href="#section-2-1">2.1 プロパティで位置・表示・向きを変える</a></li><li><a href="#section-2-2">2.2 変数を変更し、その変数を使うブロックを表示する</a></li><li><a href="#section-2-3">2.3 リストの中身をまとめて編集する</a></li><li><a href="#section-2-4">2.4 クローンを選んで個体ごとの値を見る</a></li></ul></li><li><a href="#section-3">3. メッセージの流れをたどる</a><ul><li><a href="#section-3-1">3.1 スプライトが送信するメッセージを受信するブロックを表示する</a></li><li><a href="#section-3-2">3.2 矢印で受信先を見つけ、背景から全体を見る</a></li><li><a href="#section-3-3">3.3 メッセージ名を作品全体で変える</a></li></ul></li><li><a href="#section-4">4. コードを探す、広げる、使い回す</a><ul><li><a href="#section-4-1">4.1 効率的な動線でブロック編集をする</a></li><li><a href="#section-4-2">4.2 ミニマップで離れたコードへ移動する</a></li><li><a href="#section-4-3">4.3 Z配置・N配置でコードを順に読む</a></li><li><a href="#section-4-4">4.4 パネルを横に分割して並べて編集する</a></li><li><a href="#section-4-5">4.5 タブを切り替えてスクリプトをコピーする</a></li><li><a href="#section-4-6">4.6 左のスプライト一覧へドラッグして別タブにコピーする</a></li><li><a href="#section-4-7">4.7 編集した作品を SB3 で保存する</a></li></ul></li><li><a href="#next">次に進む</a></li></ul></nav>
+<nav aria-label="目次"><strong>目次</strong><ul><li><a href="#section-1">1. Scratch で使っていた画面はどこにある？</a><ul><li><a href="#section-1-1">1.1 SB3 を開く</a></li><li><a href="#section-1-2">1.2 ステージを開く</a></li><li><a href="#section-1-3">1.3 画面左端のスプライト一覧を使う</a></li><li><a href="#section-1-4">1.4 スプライト一覧から選んだ対象をタブで編集する</a></li><li><a href="#section-1-5">1.5 スプライト編集パネルをボタンで切り替える</a></li></ul></li><li><a href="#section-2">2. スプライトのプロパティと変数を使う</a><ul><li><a href="#section-2-1">2.1 プロパティで位置・表示・向きを変える</a></li><li><a href="#section-2-2">2.2 変数を変更し、その変数を使うブロックを表示する</a></li><li><a href="#section-2-3">2.3 リストの中身をまとめて編集する</a><ul><li><a href="#create-sprite-list">新しいリストを作り、項目を追加する</a></li></ul></li><li><a href="#section-2-4">2.4 クローンを選んで個体ごとの値を見る</a></li></ul></li><li><a href="#section-3">3. メッセージの流れをたどる</a><ul><li><a href="#section-3-1">3.1 スプライトが送信するメッセージを受信するブロックを表示する</a></li><li><a href="#section-3-2">3.2 矢印で受信先を見つけ、背景から全体を見る</a></li><li><a href="#section-3-3">3.3 メッセージ名を作品全体で変える</a></li></ul></li><li><a href="#section-4">4. コードを探す、広げる、使い回す</a><ul><li><a href="#section-4-1">4.1 効率的な動線でブロック編集をする</a></li><li><a href="#section-4-2">4.2 ミニマップで離れたコードへ移動する</a></li><li><a href="#section-4-3">4.3 Z配置・N配置でコードを順に読む</a></li><li><a href="#section-4-4">4.4 パネルを横に分割して並べて編集する</a></li><li><a href="#section-4-5">4.5 タブを切り替えてスクリプトをコピーする</a></li><li><a href="#section-4-6">4.6 左のスプライト一覧へドラッグして別タブにコピーする</a></li><li><a href="#section-4-7">4.7 編集した作品を SB3 で保存する</a></li></ul></li><li><a href="#next">次に進む</a></li></ul></nav>
 <h2 id="section-1">1. Scratch で使っていた画面はどこにある？</h2>
 <h3 id="section-1-1">1.1 SB3 を開く</h3>
 <p>まずは、あなたが編集したい Scratch のプロジェクトファイルを用意してください。ここでは、<a href="Ball%20Demo.sb3">Ball Demo.sb3</a> をダウンロードして開くことにします。</p>
@@ -92,49 +92,62 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <figure><a href="images/ja-list-edit.png"><img src="images/ja-list-edit.png" loading="lazy" width="2560" height="1440" alt="route の編集画面。1番目が checkpoint、2番目が bridge になっている"></a><figcaption>図 15 · route の編集画面。1番目が checkpoint、2番目が bridge になっている</figcaption></figure>
 <p>右下の <strong>「保存」</strong> を押すと、表の先頭に <strong><code>checkpoint</code> → <code>bridge</code> → <code>turn</code></strong> が表示されます。変更した作品をファイルに残す手順は <a href="#section-4-7">4.7 編集した作品を SB3 で保存する</a> を参照してください。</p>
 <figure><a href="images/ja-list-saved.png"><img src="images/ja-list-saved.png" loading="lazy" width="2560" height="1440" alt="保存後の表。route の先頭に checkpoint、bridge、turn が並んでいる"></a><figcaption>図 16 · 保存後の表。route の先頭に checkpoint、bridge、turn が並んでいる</figcaption></figure>
-<p>空のリストを作るには、パネル左下の <strong>「新しいスプライト変数を追加」</strong> を押し、<strong>「リスト」</strong> タブで名前を入力して <strong>「作成」</strong> を押します。作品全体で共有するリストは、背景の「グローバル変数」から同じように作れます。</p>
+<h4 id="create-sprite-list">新しいリストを作り、項目を追加する</h4>
+<ol>
+<li><p><strong>パネルを開く</strong>。「ボール」のタブで <strong>「変数など」</strong>（左側の [×] アイコン）を開き、パネル左下の <strong>「新しいスプライト変数を追加」</strong> を押します。</p>
+<figure><a href="images/ja-list-create-01-open-panel.png"><img src="images/ja-list-create-01-open-panel.png" loading="lazy" width="2560" height="1440" alt="ボールの変数パネルの左下に「新しいスプライト変数を追加」がある"></a><figcaption>図 17 · ボールの変数パネルの左下に「新しいスプライト変数を追加」がある</figcaption></figure></li>
+<li><p><strong>リストに名前を付ける</strong>。<strong>「リスト」</strong> タブを選び、新しいリスト名に <code>チェックポイント</code> と入力して、右下の <strong>「作成」</strong> を押します。</p>
+<figure><a href="images/ja-list-create-02-create-list.png"><img src="images/ja-list-create-02-create-list.png" loading="lazy" width="904" height="834" alt="「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている"></a><figcaption>図 18 · 「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている</figcaption></figure></li>
+<li><p><strong>空のリストを開く</strong>。表に追加された「チェックポイント」の行にポインターを重ね、鉛筆アイコン付きの <strong>「編集」</strong> を押します。</p>
+<figure><a href="images/ja-list-create-03-empty-list.png"><img src="images/ja-list-create-03-empty-list.png" loading="lazy" width="2258" height="376" alt="空の「チェックポイント」リストの行に「編集」ボタンが表示されている"></a><figcaption>図 19 · 空の「チェックポイント」リストの行に「編集」ボタンが表示されている</figcaption></figure></li>
+<li><p><strong>項目を追加して保存する</strong>。左下の <strong>「項目を追加」</strong> を押すたびに入力欄が増えます。<code>スタート</code>、<code>橋</code>、<code>ゴール</code> を順に入力し、右下の <strong>「保存」</strong> を押します。</p>
+<figure><a href="images/ja-list-create-04-add-items.png"><img src="images/ja-list-create-04-add-items.png" loading="lazy" width="1352" height="690" alt="リスト編集ダイアログに「スタート」「橋」「ゴール」が入り、右下に「保存」がある"></a><figcaption>図 20 · リスト編集ダイアログに「スタート」「橋」「ゴール」が入り、右下に「保存」がある</figcaption></figure></li>
+<li><p><strong>表で確認する</strong>。「チェックポイント」の行に3項目が入力順で表示されます。作品をファイルに残すには、<a href="#section-4-7">SB3 で保存</a>します。</p>
+<figure><a href="images/ja-list-create-05-saved-list.png"><img src="images/ja-list-create-05-saved-list.png" loading="lazy" width="2258" height="376" alt="保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる"></a><figcaption>図 21 · 保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる</figcaption></figure></li>
+</ol>
+<p>作品全体で共有するリストは、背景の「グローバル変数」から同じように作れます。</p>
 <h3 id="section-2-4">2.4 クローンを選んで個体ごとの値を見る</h3>
 <p>「ボール」のタブを開き、右にステージを引き出しで表示します。ステージの白い部分を一度クリックして <strong>C キー</strong>を押すと、右にもう一つボールが現れます。クローンは実行中に作れるスプライトのコピーです。このクローンは作られたときに自分の <code>speed</code> を10増やし、<code>route</code> の先頭の言葉を吹き出しに出します。</p>
 <p><strong>「変数など」</strong> を開き、見出し右の <strong>「1」</strong> を選びます。<code>speed</code> が <strong>30</strong> のクローンを表示しています。値を <strong>35</strong> に変え、<strong>「元のスプライト」</strong> に戻すと、そちらは <strong>20</strong> のままです。クローンの位置やリストも同様に確認・編集できます。個体の値や位置への変更は実行中だけ有効です。6体以上になると、番号の選択リストと左右の矢印で切り替えられます。</p>
-<figure><a href="images/ja-clone.png"><img loading="lazy" src="images/ja-clone.png" alt="クローン1の speed は30。右のステージには元のボールとクローンが表示されている"></a><figcaption>図 17 · クローン1の speed は30。右のステージには元のボールとクローンが表示されている</figcaption></figure>
+<figure><a href="images/ja-clone.png"><img loading="lazy" src="images/ja-clone.png" alt="クローン1の speed は30。右のステージには元のボールとクローンが表示されている"></a><figcaption>図 22 · クローン1の speed は30。右のステージには元のボールとクローンが表示されている</figcaption></figure>
 <h2 id="section-3">3. メッセージの流れをたどる</h2>
 <h3 id="section-3-1">3.1 スプライトが送信するメッセージを受信するブロックを表示する</h3>
 <p>「ボール」の左端にある吹き出しアイコン <strong>「メッセージ」</strong> を押します。<strong>「送信」「受信」</strong> に分かれて、選んだ対象がどのメッセージを使うかが並びます。ボールは緑の旗で動いた直後に <code>ball started</code> を送ります。<strong>「ブロック」</strong> 欄には送信ブロックと、それが入っているスクリプトの開始ブロックが表示されます。下線付きの <strong>ball started</strong> を押すと、送信ブロックに移動できます。</p>
-<figure><a href="images/ja-messages.png"><img loading="lazy" src="images/ja-messages.png" alt="ボールの「送信」一覧。メッセージ名と送信ブロック、スクリプトの開始位置が分かる"></a><figcaption>図 18 · ボールの「送信」一覧。メッセージ名と送信ブロック、スクリプトの開始位置が分かる</figcaption></figure>
+<figure><a href="images/ja-messages.png"><img loading="lazy" src="images/ja-messages.png" alt="ボールの「送信」一覧。メッセージ名と送信ブロック、スクリプトの開始位置が分かる"></a><figcaption>図 23 · ボールの「送信」一覧。メッセージ名と送信ブロック、スクリプトの開始位置が分かる</figcaption></figure>
 <p>受信ブロックを表示するには、送信元の <strong>「メッセージ」</strong> パネルに戻り、関係図の矢印の先にある <strong>「背景」</strong> を押します。背景の <strong>「メッセージ」</strong> パネルを開き、<strong>「受信」</strong> 欄の下線付きの <strong>ball started</strong> を押します。コード画面に移動し、背景が <code>rounds</code> を1増やすスクリプトの受信ブロックが表示されます。</p>
 <h3 id="section-3-2">3.2 矢印で受信先を見つけ、背景から全体を見る</h3>
 <p>同じパネルの下にある関係図では、<strong>矢印が送信元から受信先</strong>を指します。矢印の上がメッセージ名で、選んでいる対象には太い枠が付きます。このデモでは <strong>ボール → 背景</strong> の矢印に <code>ball started</code> が表示されます。</p>
 <p>背景の <strong>「メッセージ」</strong> パネルでは、背景の受信一覧に加え、作品全体の送受信が関係図に表示されます。</p>
-<figure><a href="images/ja-messages-stage.png"><img loading="lazy" src="images/ja-messages-stage.png" alt="背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い"></a><figcaption>図 19 · 背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い</figcaption></figure>
+<figure><a href="images/ja-messages-stage.png"><img loading="lazy" src="images/ja-messages-stage.png" alt="背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い"></a><figcaption>図 24 · 背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い</figcaption></figure>
 <h3 id="section-3-3">3.3 メッセージ名を作品全体で変える</h3>
 <p><code>ball started</code> の行の <strong>鉛筆アイコン「メッセージ名を変更」</strong> を押します。たとえば <code>ball moved</code> と入力し、<strong>「メッセージ名を変更」</strong> で確定します。作品全体で共有する名前なので、ボールの送信ブロックと背景の受信ブロックが一緒に変わります。関係図で新しい名前を確認するには、いったん「コード」に切り替えてから「メッセージ」を開き直します。入力中の変更を取り消すときは <strong>「キャンセル」</strong> を押します。</p>
-<figure><a href="images/ja-message-rename.png"><img loading="lazy" src="images/ja-message-rename.png" alt="鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中"></a><figcaption>図 20 · 鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中</figcaption></figure>
+<figure><a href="images/ja-message-rename.png"><img loading="lazy" src="images/ja-message-rename.png" alt="鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中"></a><figcaption>図 25 · 鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中</figcaption></figure>
 <h2 id="section-4">4. コードを探す、広げる、使い回す</h2>
 <h3 id="section-4-1">4.1 効率的な動線でブロック編集をする</h3>
 <p>コード画面の上に並ぶ <strong>「動き」</strong> などのカテゴリを押すと、その下にブロックの小窓が開きます。使うブロックはそこからコード領域にドラッグします。小窓の右下のハンドルで幅と高さを変え、一覧の中をスクロールしてみましょう。<strong>サイズはブラウザーにカテゴリ別で保存され、作業中のスクロール位置もカテゴリ別に覚えます。</strong> 「見た目」を開いてから「動き」に戻ると、続きから探せます。</p>
-<figure><a href="images/ja-palette.png"><img loading="lazy" src="images/ja-palette.png" alt="コード画面上の動きカテゴリから開いたブロックパレット"></a><figcaption>図 21 · コード画面上の動きカテゴリから開いたブロックパレット</figcaption></figure>
-<figure><a href="images/ja-palette-reopen.png"><img loading="lazy" src="images/ja-palette-reopen.png" alt="見た目を開いてから動きに戻すと、広げた小窓とスクロール位置が戻る"></a><figcaption>図 22 · 見た目を開いてから動きに戻すと、広げた小窓とスクロール位置が戻る</figcaption></figure>
+<figure><a href="images/ja-palette.png"><img loading="lazy" src="images/ja-palette.png" alt="コード画面上の動きカテゴリから開いたブロックパレット"></a><figcaption>図 26 · コード画面上の動きカテゴリから開いたブロックパレット</figcaption></figure>
+<figure><a href="images/ja-palette-reopen.png"><img loading="lazy" src="images/ja-palette-reopen.png" alt="見た目を開いてから動きに戻すと、広げた小窓とスクロール位置が戻る"></a><figcaption>図 27 · 見た目を開いてから動きに戻すと、広げた小窓とスクロール位置が戻る</figcaption></figure>
 <p>パレットの検索は <strong>そのカテゴリから追加するブロック</strong> を探すときに使います。上のメニューバーの検索は <strong>作品ですでに使っているブロック</strong> を探す入口です。元のデモで「歩動かす」を検索し、結果を選ぶと、ボールのコードに該当するブロックが表示されます。</p>
-<figure><a href="images/ja-search.png"><img loading="lazy" src="images/ja-search.png" alt="メニューバーの作品検索で見つけた「20 歩動かす」"></a><figcaption>図 23 · メニューバーの作品検索で見つけた「20 歩動かす」</figcaption></figure>
+<figure><a href="images/ja-search.png"><img loading="lazy" src="images/ja-search.png" alt="メニューバーの作品検索で見つけた「20 歩動かす」"></a><figcaption>図 28 · メニューバーの作品検索で見つけた「20 歩動かす」</figcaption></figure>
 <h3 id="section-4-2">4.2 ミニマップで離れたコードへ移動する</h3>
 <p>「ボール」の <strong>コード画面にポインターを置く</strong>と、右下に小さなコードの地図が現れます。枠は今見えている範囲です。<code>Ball Demo Plus.sb3</code> では、旗、Cキー、クローンが作られたとき、スペースキーの各スクリプトが地図に表示されます。</p>
 <p>地図の離れた場所をクリックするか、枠をドラッグして表示範囲を移します。下の <strong>−／＋</strong> で縮小・拡大できます。長くなったコードでも、どちらへスクロールすればよいか見当がつきます。</p>
-<figure><a href="images/ja-minimap.png"><img loading="lazy" src="images/ja-minimap.png" alt="離れたスクリプトの位置が見える右下のミニマップ"></a><figcaption>図 24 · 離れたスクリプトの位置が見える右下のミニマップ</figcaption></figure>
+<figure><a href="images/ja-minimap.png"><img loading="lazy" src="images/ja-minimap.png" alt="離れたスクリプトの位置が見える右下のミニマップ"></a><figcaption>図 29 · 離れたスクリプトの位置が見える右下のミニマップ</figcaption></figure>
 <h3 id="section-4-3">4.3 Z配置・N配置でコードを順に読む</h3>
 <p>コード領域の <strong>空白を右クリック</strong>し、<strong>「コードの並びの見え方を変更する」</strong> を開きます。<strong>Z配置</strong> は元の配置を上の段から左→右の順に、<strong>N配置</strong> は左の列から上→下の順にたどり、スクリプトを縦に表示します。離れたスクリプトを順番に読みたいときに使えます。<strong>「通常配置の見え方」</strong> を選ぶと元の座標で編集できます。</p>
-<figure><a href="images/ja-layout-menu.png"><img loading="lazy" src="images/ja-layout-menu.png" alt="コードの空白を右クリックすると、通常・Z・Nの表示を選べる"></a><figcaption>図 25 · コードの空白を右クリックすると、通常・Z・Nの表示を選べる</figcaption></figure>
-<figure><a href="images/ja-layout-z.png"><img loading="lazy" src="images/ja-layout-z.png" alt="Z配置で四つのスクリプトを縦に並べて表示したところ"></a><figcaption>図 26 · Z配置で四つのスクリプトを縦に並べて表示したところ</figcaption></figure>
+<figure><a href="images/ja-layout-menu.png"><img loading="lazy" src="images/ja-layout-menu.png" alt="コードの空白を右クリックすると、通常・Z・Nの表示を選べる"></a><figcaption>図 30 · コードの空白を右クリックすると、通常・Z・Nの表示を選べる</figcaption></figure>
+<figure><a href="images/ja-layout-z.png"><img loading="lazy" src="images/ja-layout-z.png" alt="Z配置で四つのスクリプトを縦に並べて表示したところ"></a><figcaption>図 31 · Z配置で四つのスクリプトを縦に並べて表示したところ</figcaption></figure>
 <p>座標も整理するには、通常配置に戻り、上の <strong>「編集」→「コードブロックの再配置」</strong> を選びます。順序と方向を選ぶと移動先をプレビューできます。<strong>「再配置する」</strong> を押すと、プレビューの位置に移ります。</p>
-<figure><a href="images/ja-rearrange.png"><img loading="lazy" src="images/ja-rearrange.png" alt="順序と方向を指定すると、ダイアログ内に再配置のプレビューが表示される"></a><figcaption>図 27 · 順序と方向を指定すると、ダイアログ内に再配置のプレビューが表示される</figcaption></figure>
+<figure><a href="images/ja-rearrange.png"><img loading="lazy" src="images/ja-rearrange.png" alt="順序と方向を指定すると、ダイアログ内に再配置のプレビューが表示される"></a><figcaption>図 32 · 順序と方向を指定すると、ダイアログ内に再配置のプレビューが表示される</figcaption></figure>
 <h3 id="section-4-4">4.4 パネルを横に分割して並べて編集する</h3>
 <p>コード画面右上の <strong>「編集パネルのレイアウト」→「パネルを横に分割」</strong> を選ぶと、同じスプライトのコードが二つのペインに並びます。両側で別々の場所を表示していても、片方で編集した内容はもう片方に反映されます。スクロール位置と拡大率はそれぞれ変えられます。</p>
 <p>大きな作品では、左に初期化のコードを置いたまま、右でイベントのスクリプトを編集できます。片方を閉じるときは、その側の <strong>「編集パネルのレイアウト」→「この分割パネルを閉じる」</strong> を選びます。</p>
-<figure><a href="images/ja-split.png"><img loading="lazy" src="images/ja-split.png" alt="ボールのコードを左右のペインに分割したところ"></a><figcaption>図 28 · ボールのコードを左右のペインに分割したところ</figcaption></figure>
+<figure><a href="images/ja-split.png"><img loading="lazy" src="images/ja-split.png" alt="ボールのコードを左右のペインに分割したところ"></a><figcaption>図 33 · ボールのコードを左右のペインに分割したところ</figcaption></figure>
 <h3 id="section-4-5">4.5 タブを切り替えてスクリプトをコピーする</h3>
 <p>左の一覧で「ボール」を右クリックして <strong>「複製」</strong> し、練習用に「ボール2」を作ります。元の「ボール」タブで、離れた場所にある <strong>「スペースキーが押されたとき」</strong> のスクリプトを右クリックし、<strong>「コピー」</strong> を選びます。「ボール2」タブを開いてコード画面に移り、<strong>空白部分を右クリックして「貼り付け」</strong> を選ぶと、つながったブロックの一組が追加されます。複製直後は同じスクリプトが一組あるので、貼り付けると二組に増えます。</p>
-<figure><a href="images/ja-copy.png"><img loading="lazy" src="images/ja-copy.png" alt="スクリプトの右クリックメニューにある「コピー」"></a><figcaption>図 29 · スクリプトの右クリックメニューにある「コピー」</figcaption></figure>
-<figure><a href="images/ja-paste.png"><img loading="lazy" src="images/ja-paste.png" alt="コピー先のボール2タブで「貼り付け」を選ぶ"></a><figcaption>図 30 · コピー先のボール2タブで「貼り付け」を選ぶ</figcaption></figure>
-<figure><a href="images/ja-paste-result.png"><img loading="lazy" src="images/ja-paste-result.png" alt="貼り付け後の「ボール2」。スペースキーのスクリプトが追加された"></a><figcaption>図 31 · 貼り付け後の「ボール2」。スペースキーのスクリプトが追加された</figcaption></figure>
+<figure><a href="images/ja-copy.png"><img loading="lazy" src="images/ja-copy.png" alt="スクリプトの右クリックメニューにある「コピー」"></a><figcaption>図 34 · スクリプトの右クリックメニューにある「コピー」</figcaption></figure>
+<figure><a href="images/ja-paste.png"><img loading="lazy" src="images/ja-paste.png" alt="コピー先のボール2タブで「貼り付け」を選ぶ"></a><figcaption>図 35 · コピー先のボール2タブで「貼り付け」を選ぶ</figcaption></figure>
+<figure><a href="images/ja-paste-result.png"><img loading="lazy" src="images/ja-paste-result.png" alt="貼り付け後の「ボール2」。スペースキーのスクリプトが追加された"></a><figcaption>図 36 · 貼り付け後の「ボール2」。スペースキーのスクリプトが追加された</figcaption></figure>
 <h3 id="section-4-6">4.6 左のスプライト一覧へドラッグして別タブにコピーする</h3>
 <p>同じ作品でもう一つのスプライトに動きを渡すときは、コードから直接ドラッグできます。</p>
 <ol>
@@ -142,12 +155,12 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <li>スペースキーのスクリプトの <strong>いちばん上の黄色いブロック</strong> をつかみます。キーを選ぶメニューを避け、ブロックの文字のあたりからドラッグします。左の一覧で <strong>「ボール2」のタイル</strong> に重ね、タイルが反応したところで離します。</li>
 <li>上の <strong>「ボール2」タブ</strong> を開いてコードを確認します。スクリプトのコピーが追加され、元の「ボール」にも一組残ります。</li>
 </ol>
-<figure><a href="images/ja-drag-motion.png"><img loading="lazy" src="images/ja-drag-motion.png" alt="黄色いブロックをつかむと、下につながったブロックも一緒に動く"></a><figcaption>図 32 · 黄色いブロックをつかむと、下につながったブロックも一緒に動く</figcaption></figure>
-<figure><a href="images/ja-drag.png"><img loading="lazy" src="images/ja-drag.png" alt="「ボール」のコードからドラッグし、左の一覧の「ボール2」タイルに重ねたところ"></a><figcaption>図 33 · 「ボール」のコードからドラッグし、左の一覧の「ボール2」タイルに重ねたところ</figcaption></figure>
-<figure><a href="images/ja-drag-result.png"><img loading="lazy" src="images/ja-drag-result.png" alt="「ボール2」タブに、ドラッグしたスペースキーのスクリプトが追加された"></a><figcaption>図 34 · 「ボール2」タブに、ドラッグしたスペースキーのスクリプトが追加された</figcaption></figure>
+<figure><a href="images/ja-drag-motion.png"><img loading="lazy" src="images/ja-drag-motion.png" alt="黄色いブロックをつかむと、下につながったブロックも一緒に動く"></a><figcaption>図 37 · 黄色いブロックをつかむと、下につながったブロックも一緒に動く</figcaption></figure>
+<figure><a href="images/ja-drag.png"><img loading="lazy" src="images/ja-drag.png" alt="「ボール」のコードからドラッグし、左の一覧の「ボール2」タイルに重ねたところ"></a><figcaption>図 38 · 「ボール」のコードからドラッグし、左の一覧の「ボール2」タイルに重ねたところ</figcaption></figure>
+<figure><a href="images/ja-drag-result.png"><img loading="lazy" src="images/ja-drag-result.png" alt="「ボール2」タブに、ドラッグしたスペースキーのスクリプトが追加された"></a><figcaption>図 39 · 「ボール2」タブに、ドラッグしたスペースキーのスクリプトが追加された</figcaption></figure>
 <h3 id="section-4-7">4.7 編集した作品を SB3 で保存する</h3>
 <p>編集を終えたら、作品を SB3 ファイルとして保存できます。<strong>「ファイル」→「名前を変えて保存…」</strong> を選び、作品名を入力します。保存形式は <strong>「SB3（現在の格納方式）」</strong> を選び、右下の <strong>「保存先を選ぶ…」</strong> から保存します。</p>
-<figure><a href="images/ja-save-dialog.png"><img loading="lazy" src="images/ja-save-dialog.png" alt="名前を変えて保存するダイアログ。保存形式と右下の「保存先を選ぶ…」"></a><figcaption>図 35 · 名前を変えて保存するダイアログ。保存形式と右下の「保存先を選ぶ…」</figcaption></figure>
+<figure><a href="images/ja-save-dialog.png"><img loading="lazy" src="images/ja-save-dialog.png" alt="名前を変えて保存するダイアログ。保存形式と右下の「保存先を選ぶ…」"></a><figcaption>図 40 · 名前を変えて保存するダイアログ。保存形式と右下の「保存先を選ぶ…」</figcaption></figure>
 <h2 id="next">次に進む</h2>
 <p>作品をフォルダで保存する方法や、GitHub と連携する手順は、次のガイドで紹介しています。</p>
 <ul>
