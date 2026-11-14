@@ -2540,7 +2540,9 @@ test('the Dockview variables pane lists only data owned by the selected target',
     const remove = page.getByRole('dialog', {name: '変数を削除', exact: true});
     const variableRow = (name: string) => pane.getByRole('row').filter({has: page.getByRole('textbox', {name, exact: true})});
     const startCreate = () => pane.getByRole('button', {name: /^新しい(スプライト|グローバル)変数を追加$/}).click();
-    const submitCreate = () => create.getByRole('button', {name: 'OK', exact: true}).click();
+    const submitCreate = () => create.getByRole('button', {name: '作成', exact: true}).click();
+    const variableTab = create.getByRole('tab', {name: '変数', exact: true});
+    const listTab = create.getByRole('tab', {name: 'リスト', exact: true});
 
     await showVariables();
     await expect(pane.getByRole('heading', {name: 'スプライト変数', exact: true})).toBeVisible();
@@ -2571,6 +2573,16 @@ test('the Dockview variables pane lists only data owned by the selected target',
     await score.press('Enter');
 
     await startCreate();
+    await expect(variableTab).toHaveAttribute('aria-selected', 'true');
+    await expect(variableTab.locator('svg')).toBeVisible();
+    await expect(listTab.locator('svg')).toBeVisible();
+    assert.equal(await create.evaluate(dialog => getComputedStyle(dialog, '::backdrop').backgroundColor),
+        'rgba(23, 33, 42, 0.5)');
+    const actionIcons = (dialog: typeof create) => dialog.locator('button[data-dialog-action]').evaluateAll(buttons =>
+        buttons.map(button => getComputedStyle(button, '::before').maskImage));
+    const creationIcons = await actionIcons(create);
+    assert.equal(creationIcons.length, 2);
+    assert.ok(creationIcons.every(icon => icon.startsWith('url(')));
     await expect(create.getByRole('checkbox')).toHaveCount(0);
     await create.getByRole('textbox').fill('得点');
     await submitCreate();
@@ -2603,6 +2615,28 @@ test('the Dockview variables pane lists only data owned by the selected target',
     await expect(remove).toHaveCount(0);
     await expect(variableRow('速さ')).toHaveCount(0);
 
+    await startCreate();
+    await variableTab.press('ArrowRight');
+    await expect(listTab).toBeFocused();
+    await expect(listTab).toHaveAttribute('aria-selected', 'true');
+    await expect(create.getByRole('checkbox')).toHaveCount(0);
+    const createdList = create.getByRole('tabpanel', {name: 'リスト'}).getByRole('textbox', {name: '新しいリスト名:'});
+    await createdList.fill('持ち物');
+    await createdList.press('Enter');
+    const localList = pane.getByRole('row').filter({has: page.getByRole('rowheader', {name: '持ち物', exact: true})});
+    await expect(localList.getByRole('img', {name: 'リスト'})).toBeVisible();
+    await expect(localList.getByText('空のリスト', {exact: true})).toBeVisible();
+    await localList.hover();
+    await localList.getByRole('button', {name: '編集', exact: true}).click();
+    const listEditor = page.getByRole('dialog', {name: 'リストを編集：持ち物', exact: true});
+    assert.deepEqual(await actionIcons(listEditor), creationIcons);
+    await listEditor.getByRole('button', {name: 'キャンセル', exact: true}).click();
+    assert.deepEqual(await page.evaluate(() => {
+        const variables = Object.values(vm.editingTarget.variables) as {name: string; type: string; value: unknown}[];
+        const list = variables.find(variable => variable.name === '持ち物');
+        return [list?.type, list?.value];
+    }), ['list', []]);
+
     await page.getByRole('button', {name: '背景', exact: true}).click();
     await showVariables(true);
     await expect(pane.getByText('この背景とすべてのスプライトで参照・利用できる変数です。')).toBeVisible();
@@ -2617,7 +2651,15 @@ test('the Dockview variables pane lists only data owned by the selected target',
     await startCreate();
     const cloudOption = create.getByRole('checkbox', {name: 'クラウド変数'});
     await expect(cloudOption).not.toBeChecked();
-    await create.getByRole('textbox').fill('作品用');
+    const globalName = create.getByRole('textbox');
+    const nameError = '同じ名前の変数がすでにあります。';
+    await globalName.fill('得点');
+    await submitCreate();
+    await expect(create.getByRole('alert')).toHaveText(nameError);
+    await expect(globalName).toHaveAccessibleDescription(nameError);
+    assert.equal(await globalName.evaluate(input => input.nextElementSibling?.getAttribute('role')), 'alert');
+    assert.equal(await cloudOption.evaluate(input => input.parentElement?.previousElementSibling?.getAttribute('role')), 'alert');
+    await globalName.fill('作品用');
     await submitCreate();
     await expect(variableRow('作品用')).toBeVisible();
     await startCreate();
@@ -2643,6 +2685,28 @@ test('the Dockview variables pane lists only data owned by the selected target',
     }, created.id), [true, null]);
     await cloudMonitor.click();
     await expect(cloudMonitor).not.toBeChecked();
+
+    await startCreate();
+    await expect(variableTab).toHaveAttribute('aria-selected', 'true');
+    await cloudOption.check();
+    await listTab.click();
+    await expect(listTab).toHaveAttribute('aria-selected', 'true');
+    await expect(create.locator('[name="isCloud"]')).toHaveCount(0);
+    await createdList.fill('作品用');
+    await submitCreate();
+    const globalList = pane.getByRole('row').filter({has: page.getByRole('img', {name: 'リスト', exact: true})})
+        .filter({has: page.getByRole('rowheader', {name: '作品用', exact: true})});
+    await expect(globalList.getByText('空のリスト', {exact: true})).toBeVisible();
+    assert.deepEqual(await page.evaluate(() => {
+        const stage = vm.runtime.getTargetForStage();
+        const variables = Object.values(stage.variables) as {name: string; type: string; value: unknown; isCloud: boolean}[];
+        const list = variables.find(variable => variable.name === '作品用' && variable.type === 'list');
+        return [list?.value, list?.isCloud];
+    }), [[], false]);
+    await startCreate();
+    await expect(variableTab).toHaveAttribute('aria-selected', 'true');
+    await expect(cloudOption).not.toBeChecked();
+    await create.getByRole('button', {name: 'キャンセル'}).click();
 
     await page.getByRole('tab', {name: spriteName, exact: true}).click();
     await showVariables();
@@ -2852,8 +2916,19 @@ test('clone pages edit the selected runtime instance and fall back when it disap
     await addCloneVariable.click();
     const newVariable = page.getByRole('dialog', {name: '新しいスプライト変数'});
     await newVariable.getByRole('textbox').fill('体力の上限');
-    await newVariable.getByRole('button', {name: 'OK', exact: true}).click();
+    await newVariable.getByRole('button', {name: '作成', exact: true}).click();
     await expect(page.getByRole('textbox', {name: '体力の上限', exact: true})).toHaveValue('0');
+    await addCloneVariable.click();
+    await newVariable.getByRole('tab', {name: 'リスト', exact: true}).click();
+    await newVariable.getByRole('textbox').fill('クローンの記録');
+    await newVariable.getByRole('button', {name: '作成', exact: true}).click();
+    await expect(page.getByRole('row', {name: /クローンの記録/}).getByText('空のリスト')).toBeVisible();
+    assert.deepEqual(await page.evaluate(() => {
+        const sprite = vm.editingTarget;
+        const variables = Object.values(sprite.variables) as {id: string; name: string}[];
+        const list = variables.find(variable => variable.name === 'クローンの記録');
+        return list && sprite.sprite.clones.map(clone => [clone.variables[list.id].type, clone.variables[list.id].value]);
+    }), Array.from({length: 6}, () => ['list', []]));
     const monitor = page.getByRole('checkbox', {name: '元のスプライトの「体力」をステージに表示'});
     await expect(monitor).not.toBeChecked();
     await monitor.click();
