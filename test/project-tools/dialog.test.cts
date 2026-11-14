@@ -34,7 +34,7 @@ test('properties has editable recent combobox values, plain-text link preview an
     assert.ok(author.hasAttribute('list'));
     assert.equal(f.document.getElementById(author.getAttribute('list')).children[0].value, 'Recent author');
     author.value = 'Cancelled';
-    dialog.querySelector('button[type="button"]').click();
+    dialog.querySelector('button[data-dialog-action="cancel"]').click();
     assert.equal(f.document.querySelector('dialog'), null);
     assert.equal(f.document.activeElement.id, 'origin');
     assert.equal(f.history.snapshot().names.includes('Cancelled'), false);

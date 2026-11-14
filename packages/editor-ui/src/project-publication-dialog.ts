@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from './dialog-actions.ts';
 import type {PreparedPublication, ProjectPublicationPort, PublicationCommit, PublicationIssue,
     PublicationJob, PublicationStackParent} from './project-publication.ts';
 
@@ -200,8 +201,10 @@ export function renderProjectPublicationDialog(document: Document, locale: strin
     const resume = button(l('処理を再開', 'Resume publication'), () =>
         prepared?.resume(prepared.progress().job?.pause === 'mergeRejected'));
     resume.hidden = true;
-    element.append(references, fields, status, alert, links,
-        button(l('コミットに戻る', 'Back to commits'), back), ' ', button(l('閉じる', 'Close'), close), ' ', submit, resume);
+    const closeButton = button(l('閉じる', 'Close'), close);
+    element.append(references, fields, status, alert, links, dialogActions(document,
+        button(l('コミットに戻る', 'Back to commits'), back), dialogAction(closeButton, 'close'),
+        dialogAction(submit, 'confirm'), dialogAction(resume, 'confirm')));
 
     let prepared: PreparedPublication | undefined;
     let stopListening: (() => void) | undefined;

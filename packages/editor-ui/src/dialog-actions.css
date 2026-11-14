@@ -1,0 +1,36 @@
+:global(.tw-plus-dialog-actions) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-block-start: 1rem;
+}
+
+:global(.tw-plus-dialog-actions > button[data-dialog-action]:not([hidden])) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4em;
+}
+
+:global(.tw-plus-dialog-actions > button[data-dialog-action]::before) {
+    content: "";
+    flex: none;
+    inline-size: 1em;
+    block-size: 1em;
+    background-color: currentColor;
+    mask: var(--tw-plus-dialog-action-icon) center / contain no-repeat;
+}
+
+:global(.tw-plus-dialog-actions > button:is([data-dialog-action="cancel"], [data-dialog-action="close"])) {
+    --tw-plus-dialog-action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' d='m4 4 8 8m0-8-8 8'/%3E%3C/svg%3E");
+}
+
+:global(.tw-plus-dialog-actions > button[data-dialog-action="confirm"]) {
+    --tw-plus-dialog-action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M12 8v4H3V3h6m-3 4 2.3 2.3L14 3.6'/%3E%3C/svg%3E");
+}
+
+:global(.tw-plus-dialog-actions > button[data-dialog-action="delete"]) {
+    --tw-plus-dialog-action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round' d='M3 4.5h10M6 4.5V3h4v1.5m-6 0 .8 8.5h6.4l.8-8.5M7 7v3.5M9 7v3.5'/%3E%3C/svg%3E");
+}

@@ -122,8 +122,9 @@ export function createPlusPermissionUI (document: Document, locale = 'ja', {show
                 dialog.appendChild(text(document, 'p', label('同じ内容・取得元への許可は、このエディターを閉じるまで保持されます。',
                     'Approval for this exact content and source lasts until this editor is closed.')));
                 const controls = document.createElement('menu');
-                const deny = text(document, 'button', label('許可しない', 'Deny'), {type: 'button', 'data-testid': 'tw-plus-deny'});
-                const allow = text(document, 'button', label('許可して実行', 'Allow and run'), {type: 'button', 'data-testid': 'tw-plus-allow'});
+                controls.className = 'tw-plus-dialog-actions';
+                const deny = text(document, 'button', label('許可しない', 'Deny'), {type: 'button', 'data-testid': 'tw-plus-deny', 'data-dialog-action': 'cancel'});
+                const allow = text(document, 'button', label('許可して実行', 'Allow and run'), {type: 'button', 'data-testid': 'tw-plus-allow', 'data-dialog-action': 'confirm'});
                 controls.appendChild(deny); controls.appendChild(allow); dialog.appendChild(controls);
                 let settled = false;
                 const finish = approved => {

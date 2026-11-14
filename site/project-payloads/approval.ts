@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
 import styles from '../project-tools/dialog.css';
 
 /** Ask before sending an SB3-provided URL any request, including for non-cacheable data. */
@@ -34,9 +35,10 @@ export function approveProjectPayloads(document, locale, urls, cacheable, signal
         };
         dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
         signal?.addEventListener('abort', cancel, {once: true});
-        dialog.append(title, list, button(ja ? 'キャンセル' : 'Cancel', undefined),
-            button(cacheable ? (ja ? 'キャッシュせずに開く' : 'Open without caching') : (ja ? '開く' : 'Open'), false));
-        if (cacheable) dialog.append(button(ja ? 'キャッシュを許可して開く' : 'Allow caching and open', true));
+        const actions = dialogActions(document, dialogAction(button(ja ? 'キャンセル' : 'Cancel', undefined), 'cancel'),
+            dialogAction(button(cacheable ? (ja ? 'キャッシュせずに開く' : 'Open without caching') : (ja ? '開く' : 'Open'), false), 'confirm'));
+        if (cacheable) actions.append(dialogAction(button(ja ? 'キャッシュを許可して開く' : 'Allow caching and open', true), 'confirm'));
+        dialog.append(title, list, actions);
         document.body.append(dialog);
         dialog.showModal();
     });

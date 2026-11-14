@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
 import styles from './dialog.css';
 import snackbarStyles from '../styles/snackbar.css';
 import {contactLink, descriptionParts} from './links.ts';
@@ -169,14 +170,14 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             const canApplyMetadata = Boolean(history) && !value.readOnly;
             const error = element(document, 'p', '', {role: 'alert'});
             form.appendChild(error);
-            const actions = element(document, 'div', undefined, {class: styles.actions});
             const cancel = element(document, 'button', label('キャンセル', 'Cancel'), {type: 'button'});
             cancel.addEventListener('click', close);
             const apply = element(document, 'button', label('適用', 'Apply'), {type: 'submit'});
             apply.disabled = value.loading || (!canApplyMetadata && !uriInput);
             const diagnosticsButton = element(document, 'button', label('作品の診断…', 'Project Diagnostics…'), {type: 'button'});
             diagnosticsButton.addEventListener('click', () => api.showDiagnostics(locale));
-            actions.append(cancel, apply, diagnosticsButton); form.appendChild(actions);
+            form.append(dialogActions(document, diagnosticsButton, dialogAction(cancel, 'cancel'),
+                dialogAction(apply, 'confirm')));
             form.addEventListener('submit', async event => {
                 event.preventDefault();
                 if (apply.disabled) return;
@@ -233,10 +234,10 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             selectorLabel.appendChild(selector); dialog.appendChild(selectorLabel);
             const content = element(document, 'div'); dialog.appendChild(content);
             const status = element(document, 'p', '', {role: 'status'}); dialog.appendChild(status);
-            const actions = element(document, 'div', undefined, {class: styles.actions});
             const copy = element(document, 'button', label('診断をコピー', 'Copy diagnostics'), {type: 'button'});
             const done = element(document, 'button', label('閉じる', 'Close'), {type: 'button'});
-            done.addEventListener('click', close); actions.append(copy, done); dialog.appendChild(actions);
+            done.addEventListener('click', close);
+            dialog.append(dialogActions(document, copy, dialogAction(done, 'close')));
             let selected = initialSession;
             let exported = '';
             const states = {

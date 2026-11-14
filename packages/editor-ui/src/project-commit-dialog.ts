@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from './dialog-actions.ts';
 import type {PublicationCommit} from './project-publication.ts';
 
 type Localize = (ja: string, en: string) => string;
@@ -65,7 +66,8 @@ export function renderProjectCommitDialog(document: Document, locale: string, po
     closeButton.onclick = close;
     const submit = document.createElement('button');
     submit.type = 'submit';
-    form.append(selection, status, jobs, closeButton, submit);
+    form.append(selection, status, jobs, dialogActions(document, dialogAction(closeButton, 'close'),
+        dialogAction(submit, 'confirm')));
 
     const saved = new Map<string, ProjectCommitJob>();
     let review: Awaited<ReturnType<ProjectCommitPort['prepare']>> = null;

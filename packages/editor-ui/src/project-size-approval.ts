@@ -1,3 +1,4 @@
+import {dialogAction, dialogActions} from './dialog-actions.ts';
 /**
  * Ask whether to open a project larger than the Editor's standard limit (issue #428).
  *
@@ -63,7 +64,8 @@ export function confirmLargeProject(document: Document | undefined, locale: stri
         const decline = button(ja ? '開かない' : 'Don’t Open', false);
         dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
         signal?.addEventListener('abort', cancel, {once: true});
-        dialog.append(title, message, advice, decline, button(ja ? '開く' : 'Open', true));
+        dialog.append(title, message, advice, dialogActions(document, dialogAction(decline, 'cancel'),
+            dialogAction(button(ja ? '開く' : 'Open', true), 'confirm')));
         document.body.append(dialog);
         dialog.showModal();
         // The safe answer has the focus, so Enter alone does not open the project.
