@@ -35,9 +35,10 @@ test('the Editor resolves the pinned sprite-panes package split out of the layou
 
 test('the Editor installs no package from a .tgz archive outside npm and keeps none in the repository', () => {
     // Bundling package .tgz files is not allowed: publish to npm and pin the published version instead.
-    const specs = Object.entries({...manifest.dependencies, ...manifest.devDependencies, ...manifest.optionalDependencies});
+    const deps = manifest as unknown as Record<string, Record<string, string> | undefined>;
+    const specs = Object.entries({...deps.dependencies, ...deps.devDependencies, ...deps.optionalDependencies});
     assert.deepEqual(specs.filter(([, spec]) => /\.tgz$/u.test(spec)), []);
-    const local = Object.entries(lock.packages).filter(([, entry]) => typeof entry.resolved === 'string' &&
+    const local = Object.entries(lock.packages as Record<string, {resolved?: unknown}>).filter(([, entry]) => typeof entry.resolved === 'string' &&
         entry.resolved.endsWith('.tgz') && !entry.resolved.startsWith('https://registry.npmjs.org/'));
     assert.deepEqual(local.map(([name]) => name), []);
     const tracked = execFileSync('git', ['ls-files', '*.tgz'], {cwd: new URL('..', import.meta.url), encoding: 'utf8'}).trim();
