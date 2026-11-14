@@ -2650,6 +2650,8 @@ test('editor pane headings and message diagrams follow the active target', {time
     const heading = toolbar.getByRole('heading');
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     await expect(heading).toHaveCount(0);
+    await section('変数など').hover();
+    await expect(toolbar.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('スプライトのプロパティと変数');
     for (const [tab, title] of [['コスチューム', 'コスチューム'], ['音', '音'],
         ['変数など', 'スプライトのプロパティと変数'], ['メッセージ', 'メッセージ']]) {
         await section(tab).click();
