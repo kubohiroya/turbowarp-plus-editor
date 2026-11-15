@@ -15,6 +15,7 @@ import {activateTargetView, centerProjectComment, connectProjectSearchNavigation
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
+import {readTemporaryVariables, watchTemporaryVariables} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/temporary-variables';
 import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-workbench/dockview-styles';
@@ -270,9 +271,12 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                         view.active && section !== 'variables' && section !== 'messages' ?
                         renderEditorTabRow(null) : undefined} />;
             },
-            wrapVariablePane: (viewId, targetId, editable, pane) => vm.runtime.getTargetById(targetId)?.isStage ?
-                React.cloneElement(pane, {global: {canAddCloudVariable: vm.runtime.canAddCloudVariable()}}) :
-                <SpriteCloneVariables {...{viewId, targetId, locale, editable}}>{pane}</SpriteCloneVariables>,
+            wrapVariablePane(viewId, targetId, editable, pane) {
+                pane = React.cloneElement(pane, {temporaryVariables: readTemporaryVariables(vm.runtime, targetId)});
+                return vm.runtime.getTargetById(targetId)?.isStage ?
+                    React.cloneElement(pane, {global: {canAddCloudVariable: vm.runtime.canAddCloudVariable()}}) :
+                    <SpriteCloneVariables {...{viewId, targetId, locale, editable}}>{pane}</SpriteCloneVariables>;
+            },
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             editVariable: (id, edit) => editClonedSpriteVariable(vm, id, edit, () => editSpriteVariable(vm, id, edit)),
@@ -358,7 +362,9 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         vm.on('PROJECT_CHANGED', refreshVariables);
         vm.on('MONITORS_UPDATE', refreshMonitorVisibility);
         refreshMonitorVisibility(vm.runtime.getMonitorState());
+        const stopTemporaryVariables = watchTemporaryVariables(vm.runtime, refreshVariables);
         return () => {
+            stopTemporaryVariables();
             vm.removeListener('PROJECT_CHANGED', refreshVariables);
             vm.removeListener('MONITORS_UPDATE', refreshMonitorVisibility);
             if (refreshFrame !== undefined) cancelAnimationFrame(refreshFrame);
