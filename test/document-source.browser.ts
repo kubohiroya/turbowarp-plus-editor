@@ -12,7 +12,7 @@ import {startYamlEditorHost} from '../scripts/yaml-editor/host.ts';
 import {fixtureSources} from '../scripts/yaml-editor/build-document-source-fixture.ts';
 
 const documents = project => project.extensionStorage.kubohiroyadocumentdata.documents;
-const omitDocuments = project => {const p = structuredClone(project); delete p.extensionStorage.kubohiroyadocumentdata.documents; return p;};
+const omitDocuments = project => {const p = structuredClone(project); delete p.extensionStorage.kubohiroyadocumentdata.documents; if (p.turboWarpPlusProject) delete p.turboWarpPlusProject.updatedAt; return p;};
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const saveLabel = '表示されている形式に変換して検証・保存';
 
@@ -37,9 +37,9 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
     let stage = 'load';
     async function load(p, filename) {
         await p.goto(`${base}editor.html?lang=ja&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
-        const security = p.locator('.twextsec-modal'); await security.waitFor({timeout: 60000});
-        await security.getByRole('button', {name: 'サンドボックスなし', exact: true}).click();
-        await security.getByRole('button', {name: 'OK', exact: true}).click(); await security.waitFor({state: 'hidden'});
+        const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')}); await security.waitFor({timeout: 60000});
+        await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
+        await security.getByRole('button', {name: 'OK', exact: true}).click(); await security.waitFor({state: 'hidden', timeout: 60000});
         await selectBackdrop(p);
         await expect(p.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2, {timeout: 60000});
     }
@@ -79,7 +79,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
         stage = 'preview-without-launch';
         const dialog = await open('document-yaml');
         await expect(dialog.getByRole('tab', {name: 'YAMLテキスト', exact: true})).toHaveAttribute('aria-selected', 'true');
-        await expect(dialog.locator('#twpe-yaml-preview')).toHaveValue(fixtureSources['yaml-settings'].replace(/\r\n/gu,'\n'));
+        await expect(dialog.getByRole('textbox', {name: 'YAMLテキスト', exact: true})).toHaveValue(fixtureSources['yaml-settings'].replace(/\r\n/gu,'\n'));
         await expect(dialog.getByRole('button', {name: saveLabel, exact: true})).toBeEnabled();
         assert.equal(launches.length,0); assert.equal((await state()).projected.volume,50);
         assert.deepEqual((await state()).sources.map(document=>document.source), Object.values<any>(fixtureSources));
@@ -98,14 +98,14 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
         stage='json-edit';
         const jsonDialog = await open('document-json');
         await expect(jsonDialog.getByRole('tab', {name: 'JSONテキスト', exact: true})).toHaveAttribute('aria-selected', 'true');
-        await expect(jsonDialog.locator('#twpe-yaml-preview')).toHaveValue(fixtureSources['json-settings'].replace(/\r\n/gu,'\n'));
+        await expect(jsonDialog.getByRole('textbox', {name: 'JSONテキスト', exact: true})).toHaveValue(fixtureSources['json-settings'].replace(/\r\n/gu,'\n'));
         const jsonLaunch = await editExternally(jsonDialog, 2);
         assert.equal(path.basename(jsonLaunch.file),'settings.json'); assert.equal(jsonLaunch.profile.format,'json');
         const json=fixtureSources['json-settings'].replace('day','night'); await writeFile(jsonLaunch.file,json);
         await jsonDialog.getByRole('button',{name:saveLabel,exact:true}).click(); await expect(jsonDialog).toBeHidden({timeout:30000});
         assert.equal((await state()).sources[1].source,json);
         await page.screenshot({path:path.join(output,'02-json-saved.png')});
-        stage='save';
+        stage='save'; const saveStarted=Date.now();
         // The File menu always downloads; the menu-bar shortcut can sit under the extension status panel.
         await page.getByText('ファイル',{exact:true}).click();
         const pending=page.waitForEvent('download'); await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
@@ -113,6 +113,8 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
         const zip=await JSZip.loadAsync(await readFile(saved)), savedProject=JSON.parse(await zip.file('project.json').async('string'));
         assert.equal(documents(savedProject)['yaml-settings'].source,yaml); assert.equal(documents(savedProject)['json-settings'].source,json);
         assert.equal(documents(savedProject)['yaml-settings'].format,'yaml'); assert.equal(documents(savedProject)['json-settings'].format,'json');
+        // Editing a document also advances the project's modification date when project tools are enabled.
+        if(original.turboWarpPlusProject){const updatedAt=Date.parse(savedProject.turboWarpPlusProject?.updatedAt);assert(updatedAt>=saveStarted&&updatedAt<=Date.now(),'A changed project must record this save time.');}
         assert.deepEqual(omitDocuments(savedProject),omitDocuments(original));
         const initialZip=await JSZip.loadAsync(await readFile(fixture)); const assets=Object.keys(initialZip.files).filter(name=>name!=='project.json'&&!initialZip.files[name].dir);
         assert(assets.length > 0, 'The fixture must contain assets to preserve.');
