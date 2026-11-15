@@ -251,8 +251,14 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     );
     const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
         <div className={styles.tabRow}>{tabs}{tabAction}</div>;
-    // The message section opens blocks through the same navigation the project search uses.
+    // The message section and the temporary variable tables open blocks through the same navigation
+    // the project search uses: the target's code, with the block centered.
     const navigation = React.useRef<SearchNavigation | null>(null);
+    const openBlock = (targetId: string, blockId: string) => {
+        const search = navigation.current;
+        if (!search || !activateTargetView(search, targetId, codeTab)) return;
+        requestAnimationFrame(() => search.centerBlock(blockId));
+    };
     const spriteTabs = useSpriteTabs({
         available: dockviewSpriteTabsEnabled, enabled: workspaceEnabled && dockviewSpriteTabsEnabled,
         vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
@@ -272,7 +278,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                         renderEditorTabRow(null) : undefined} />;
             },
             wrapVariablePane(viewId, targetId, editable, pane) {
-                pane = React.cloneElement(pane, {temporaryVariables: readTemporaryVariables(vm.runtime, targetId)});
+                pane = React.cloneElement(pane, {temporaryVariables: readTemporaryVariables(vm.runtime, targetId),
+                    onOpenFunction: openBlock});
                 return vm.runtime.getTargetById(targetId)?.isStage ?
                     React.cloneElement(pane, {global: {canAddCloudVariable: vm.runtime.canAddCloudVariable()}}) :
                     <SpriteCloneVariables {...{viewId, targetId, locale, editable}}>{pane}</SpriteCloneVariables>;
@@ -303,11 +310,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 ...scanTargetMessages(vm.runtime, id),
                 getThumbnailUrl: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset)
             }),
-            openMessage(use) {
-                const search = navigation.current;
-                if (!search || !activateTargetView(search, use.targetId, codeTab)) return;
-                requestAnimationFrame(() => search.centerBlock(use.blockId));
-            },
+            openMessage: use => openBlock(use.targetId, use.blockId),
             openMessageTarget(id) {
                 if (navigation.current) activateTargetView(navigation.current, id, codeTab);
             },
