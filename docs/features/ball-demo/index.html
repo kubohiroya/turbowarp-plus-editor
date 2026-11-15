@@ -69,13 +69,13 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <p>左端の一覧でスプライトや背景を選ぶと、編集パネルの上部にそれぞれのタブが開きます。「ボール」を開いたまま、一覧の下にある<strong>「背景」</strong>を選んでみましょう。上部の<strong>「ボール」</strong>と<strong>「背景」</strong>のタブを押すだけで、編集する対象を切り替えられます。パネルを分割すれば、2つのタブを横に並べて編集することもできます（<a href="#section-4-4">4.4</a>）。</p>
 <figure><a href="images/ja-sprite-tabs.png"><img loading="lazy" src="images/ja-sprite-tabs.png" alt="左のスプライト一覧から開いた「ボール」と「背景」のタブ。今は「ボール」のコードを表示している"></a><figcaption>図7 · 左のスプライト一覧から開いた「ボール」と「背景」のタブ。今は「ボール」のコードを表示している</figcaption></figure>
 <h3 id="section-1-5">1.5 左端のボタンで編集画面を切り替える</h3>
-<p>編集パネルの左端には、上から<strong>「コード」「コスチューム」「音」「変数など」「メッセージ」</strong>のボタンが並びます。背景のタブでは、「コスチューム」が<strong>「背景」</strong>に、「変数など」が<strong>「グローバル変数」</strong>に変わります。どのボタンか分からないときは、ポインターを重ねると名前が表示されます。コスチュームや音の画面では、パネル上部の見出しにも画面の名前が表示されます。</p>
-<p>「ボール」のタブで筆のアイコン（「コスチューム」）を押すと、紫のボールのコスチュームを編集できます。スピーカーのアイコン（「音」）を押すと、同じスプライトの音の画面に切り替わります。このデモには音が入っていません。ブロックに戻るには、左端の<strong>「コード」</strong>を押します。</p>
+<p>編集パネルの左端には、上から<strong>「自由配置」「ハット・関数一覧」「呼び出し関係」「コスチューム」「音」「変数」「メッセージ」</strong>のボタンが、線で3つのまとまりに分かれて並びます。「自由配置」がブロックを並べるコードの画面です。背景のタブでは、「コスチューム」が<strong>「背景」</strong>に、「変数」が<strong>「グローバル変数」</strong>に変わります。どのボタンか分からないときは、ポインターを重ねると名前が表示されます。コスチュームや音の画面では、パネル上部の見出しにも画面の名前が表示されます。</p>
+<p>「ボール」のタブで筆のアイコン（「コスチューム」）を押すと、紫のボールのコスチュームを編集できます。スピーカーのアイコン（「音」）を押すと、同じスプライトの音の画面に切り替わります。このデモには音が入っていません。ブロックに戻るには、左端の<strong>「自由配置」</strong>を押します。</p>
 <figure><a href="images/ja-costumes.png"><img loading="lazy" src="images/ja-costumes.png" alt="左端の筆アイコンを選び、ボールのコスチュームを開いた画面"></a><figcaption>図8 · 左端の筆アイコンを選び、ボールのコスチュームを開いた画面</figcaption></figure>
 <figure><a href="images/ja-sounds.png"><img loading="lazy" src="images/ja-sounds.png" alt="同じスプライトで左端の音アイコンを選んだ画面"></a><figcaption>図9 · 同じスプライトで左端の音アイコンを選んだ画面</figcaption></figure>
 <h2 id="section-2">2. スプライトのプロパティと変数を使う</h2>
 <h3 id="section-2-1">2.1 プロパティで位置・表示・向きを変える</h3>
-<p>「ボール」のタブで、左端の<strong>[x]のアイコン「変数など」</strong>を押すと、<strong>「スプライトのプロパティと変数」</strong>が開きます。上部では、スプライト名、位置（x・y）、大きさ、向きを編集できます。「表示」の<strong>目のアイコン</strong>で表示、<strong>斜線付きの目のアイコン</strong>で非表示に切り替えます。変更の結果はステージで確かめられます。ステージの引出しが右側の操作に重なるときは、いったん右端に畳んでください。</p>
+<p>「ボール」のタブで、左端の<strong>[x]のアイコン「変数」</strong>を押すと、<strong>「スプライトのプロパティと変数」</strong>が開きます。上部では、スプライト名、位置（x・y）、大きさ、向きを編集できます。「表示」の<strong>目のアイコン</strong>で表示、<strong>斜線付きの目のアイコン</strong>で非表示に切り替えます。変更の結果はステージで確かめられます。ステージの引出しが右側の操作に重なるときは、いったん右端に畳んでください。</p>
 <figure><a href="images/ja-variables.png"><img loading="lazy" src="images/ja-variables.png" alt="ボールのプロパティと変数。名前、位置、表示、大きさ、向きが上部に並ぶ"></a><figcaption>図10 · ボールのプロパティと変数。名前、位置、表示、大きさ、向きが上部に並ぶ</figcaption></figure>
 <p>右端の<strong>向きのダイヤル</strong>で、円周上の矢印を右（90°）から上（0°）へドラッグします。ボールは丸いので見た目は変わりませんが、緑の旗を押すと、右に進んでいたボールが上に進むようになります。向きは「向き」の数値欄に入力しても変えられます。その下の3つのアイコンでは、回転方法を<strong>「自由に回転」「左右のみ」「回転しない」</strong>から選びます。次の練習の前に、向きを<strong>90</strong>、位置を<strong>x = −60、y = 0</strong>に戻しておきます。</p>
 <figure><a href="images/ja-direction.png"><img loading="lazy" src="images/ja-direction.png" alt="矢印を上へドラッグすると、向きの欄が0に変わる。数値欄の下に3つの回転方法が並ぶ"></a><figcaption>図11 · 矢印を上へドラッグすると、向きの欄が0に変わる。数値欄の下に3つの回転方法が並ぶ</figcaption></figure>
@@ -86,7 +86,7 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <p>作品全体で共有する変数を見るには、スプライト一覧の下にある<strong>「背景」</strong>を選び、<strong>「グローバル変数」</strong>を開きます。<code>rounds</code>の行の<strong>「ステージ」列</strong>にチェックを入れると、実行中の値がステージに表示されます。</p>
 <figure><a href="images/ja-global-variables.png"><img loading="lazy" src="images/ja-global-variables.png" alt="背景のグローバル変数でroundsのステージ表示をオンにしたところ"></a><figcaption>図13 · 背景のグローバル変数でroundsのステージ表示をオンにしたところ</figcaption></figure>
 <h3 id="section-2-3">2.3 リストの中身をまとめて編集する</h3>
-<p>「ボール」のタブに戻り、左端の「変数など」を開きます。</p>
+<p>「ボール」のタブに戻り、左端の「変数」を開きます。</p>
 <p>表の<strong>「種類」</strong>列では、変数は箱のアイコン、リストは表のアイコンで示されます。「種類」や「読み取り」などの見出しを押すと、その列で表を並べ替えられます。<code>route</code>は、クローンが吹き出しで言う言葉を入れたリストです。表には先頭の5項目が並び、<strong>+1</strong>は残りがあと1項目あることを示します。</p>
 <p><code>route</code>の行にポインターを重ね、<strong>「編集」</strong>を押します。</p>
 <figure><a href="images/ja-list-table.png"><img src="images/ja-list-table.png" loading="lazy" width="2560" height="1440" alt="変数speedとリストrouteの行。routeの右に鉛筆アイコン付きの「編集」が見える"></a><figcaption>図14 · 変数speedとリストrouteの行。routeの右に鉛筆アイコン付きの「編集」が見える</figcaption></figure>
@@ -96,7 +96,7 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <figure><a href="images/ja-list-saved.png"><img src="images/ja-list-saved.png" loading="lazy" width="2560" height="1440" alt="保存後の表。routeの先頭にcheckpoint、bridge、turnが並んでいる"></a><figcaption>図16 · 保存後の表。routeの先頭にcheckpoint、bridge、turnが並んでいる</figcaption></figure>
 <h4 id="create-sprite-list">新しいリストを作り、項目を追加する</h4>
 <ol>
-<li><p><strong>パネルを開く</strong>。「ボール」のタブで<strong>「変数など」</strong>（左端の[x]のアイコン）を開き、パネル左下の<strong>「新しいスプライト変数を追加」</strong>を押します。</p>
+<li><p><strong>パネルを開く</strong>。「ボール」のタブで<strong>「変数」</strong>（左端の[x]のアイコン）を開き、パネル左下の<strong>「新しいスプライト変数を追加」</strong>を押します。</p>
 <figure><a href="images/ja-list-create-01-open-panel.png"><img src="images/ja-list-create-01-open-panel.png" loading="lazy" width="2560" height="1440" alt="ボールの変数パネルの左下に「新しいスプライト変数を追加」がある"></a><figcaption>図17 · ボールの変数パネルの左下に「新しいスプライト変数を追加」がある</figcaption></figure></li>
 <li><p><strong>リストに名前を付ける</strong>。「新しいスプライト変数」ダイアログで<strong>「リスト」</strong>タブを選び、「新しいリスト名」に<code>チェックポイント</code>と入力して、右下の<strong>「作成」</strong>を押します。</p>
 <figure><a href="images/ja-list-create-02-create-list.png"><img src="images/ja-list-create-02-create-list.png" loading="lazy" width="904" height="834" alt="「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている"></a><figcaption>図18 · 「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている</figcaption></figure></li>
@@ -110,7 +110,7 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <p>作品全体で共有するリストは、背景のタブの「グローバル変数」から同じ手順で作れます。</p>
 <h3 id="section-2-4">2.4 クローンを選んで個体ごとの値を見る</h3>
 <p>「ボール」のタブを開いたまま、1.2と同じ手順でステージを右側の引出しに表示します。ステージの白い部分を一度クリックしてから<strong>Cキー</strong>を押すと、右にもう1つボールが現れます。これがクローン（実行中に作られるスプライトのコピー）です。このクローンは、作られると自分の<code>speed</code>を10増やし、<code>route</code>の1番目の言葉を2秒間言います。2.3でリストを編集していれば、吹き出しには<code>checkpoint</code>と表示されます。</p>
-<p><strong>「変数など」</strong>を開き、見出しの右にある<strong>「1」</strong>を押します。パネルに「クローン 1 を編集中」と表示され、<code>speed</code>は<strong>30</strong>になっています。値を<strong>35</strong>に変えてから<strong>「元のスプライト」</strong>に戻ると、元のスプライトの<code>speed</code>は<strong>20</strong>のままです。クローンの位置やリストも同じように確かめたり編集したりできますが、クローンへの変更はその実行の間だけ有効です。クローンが6体以上になると、番号の選択リストと左右の矢印で切り替えます。</p>
+<p><strong>「変数」</strong>を開き、見出しの右にある<strong>「1」</strong>を押します。パネルに「クローン 1 を編集中」と表示され、<code>speed</code>は<strong>30</strong>になっています。値を<strong>35</strong>に変えてから<strong>「元のスプライト」</strong>に戻ると、元のスプライトの<code>speed</code>は<strong>20</strong>のままです。クローンの位置やリストも同じように確かめたり編集したりできますが、クローンへの変更はその実行の間だけ有効です。クローンが6体以上になると、番号の選択リストと左右の矢印で切り替えます。</p>
 <figure><a href="images/ja-clone.png"><img loading="lazy" src="images/ja-clone.png" width="1360" height="665" alt="クローン1のspeedは30。右のステージには元のボールと、checkpointと言っているクローンが表示されている"></a><figcaption>図22 · クローン1のspeedは30。右のステージには元のボールと、checkpointと言っているクローンが表示されている</figcaption></figure>
 <h2 id="section-3">3. メッセージの流れをたどる</h2>
 <h3 id="section-3-1">3.1 送ったメッセージを受け取るブロックを表示する</h3>
@@ -122,7 +122,7 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <p>背景の<strong>「メッセージ」</strong>パネルでは、背景が受け取るメッセージの一覧に加えて、作品全体の送受信が関係図に表示されます。</p>
 <figure><a href="images/ja-messages-stage.png"><img loading="lazy" src="images/ja-messages-stage.png" alt="背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い"></a><figcaption>図24 · 背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い</figcaption></figure>
 <h3 id="section-3-3">3.3 メッセージ名を作品全体で変える</h3>
-<p><code>ball started</code>の行にある鉛筆アイコンの<strong>「メッセージ名を変更」</strong>を押します。入力欄に<code>ball moved</code>などと入力し、隣の<strong>「メッセージ名を変更」</strong>を押して確定します。メッセージ名は作品全体で共通なので、ボールの送るブロックと背景の受け取るブロックの名前がそろって変わります。関係図に新しい名前を反映するには、いったん「コード」に切り替えてから「メッセージ」を開き直します。名前を変えずにやめるときは<strong>「キャンセル」</strong>を押します。</p>
+<p><code>ball started</code>の行にある鉛筆アイコンの<strong>「メッセージ名を変更」</strong>を押します。入力欄に<code>ball moved</code>などと入力し、隣の<strong>「メッセージ名を変更」</strong>を押して確定します。メッセージ名は作品全体で共通なので、ボールの送るブロックと背景の受け取るブロックの名前がそろって変わります。関係図に新しい名前を反映するには、いったん「自由配置」に切り替えてから「メッセージ」を開き直します。名前を変えずにやめるときは<strong>「キャンセル」</strong>を押します。</p>
 <figure><a href="images/ja-message-rename.png"><img loading="lazy" src="images/ja-message-rename.png" alt="鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中"></a><figcaption>図25 · 鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中</figcaption></figure>
 <h2 id="section-4">4. コードを探す、広げる、使い回す</h2>
 <h3 id="section-4-1">4.1 パレットと検索でブロックを探す</h3>

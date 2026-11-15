@@ -8,7 +8,7 @@
 
 TurboWarp Plusの作品をつくるための、そして手元にあるScratch・TurboWarpの作品を編集するためのエディターです。パネルを好きな位置に並べ、分割し、ステージ・スプライト一覧・パレット・コードを別のウィンドウに出して、次に開いたときにその配置を復元します。作品全体を検索し、選択箇所を置換します。作品をひとつのSB3ではなく、Gitで追えるフォルダとして持てます。拡張の取得元と実行条件を確認してから動かします。できた作品は、Plus拡張を同梱したひとつのHTMLとして書き出せます。
 
-kubohiroyaがフォークした[scratch-gui](https://github.com/kubohiroya/scratch-gui)・[scratch-vm](https://github.com/kubohiroya/scratch-vm)の固定リビジョンと、独立に版を持つ約20の `@kubohiroya/turbowarp-*` パッケージからビルドし、日本語と英語でGitHub Pagesから配信します。
+kubohiroyaがフォークした[scratch-gui](https://github.com/kubohiroya/scratch-gui)・[scratch-vm](https://github.com/kubohiroya/scratch-vm)の固定リビジョンと、独立に版を持つ20を超える `@kubohiroya/turbowarp-*` パッケージからビルドし、日本語と英語でGitHub Pagesから配信します。
 
 - サイト: <https://kubohiroya.github.io/turbowarp-plus-editor/>
 - エディター: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja>
@@ -46,23 +46,26 @@ kubohiroyaがフォークした[scratch-gui](https://github.com/kubohiroya/scrat
 | 作品を開く | SB3の読み込みと拡張の実行確認 | 読み込みの経過表示、Plusカタログ、読み込みの診断 |
 | 作品を管理する | SB3ファイル単位の保存 | 作品フォルダの読み書き、ローカルGitの差分と履歴 |
 | 作業画面を整える | コード・ステージ・スプライトの基本配置 | パネルの分割、パネルとパレットの別画面、ステージの別表示、配置復元 |
-| 編集する | ブロックの入力欄やメニュー | 作品全体の検索と置換、編集メニュー、検索付きの横型パレット、ミニマップ、対応する拡張が提供するフォームとYAMLタブ |
+| 編集する | ブロックの入力欄やメニュー | 作品全体の検索と置換、編集メニュー、検索付きの横型パレット、ミニマップ、選んだ関数やスクリプトだけを分割したビューで編集、ハットと定義の折りたたみ、長いテキスト引数の省略表示とダイアログでの編集、対応する拡張が提供するフォームとYAMLタブ |
+| スプライトの中身を見る | コード・コスチューム・音のタブ | ハット・関数一覧と呼び出し関係の図、名前を入れて関数を追加、一時変数拡張のスレッド変数とランタイム変数も表示する変数ペイン、メッセージの一覧 |
 | 再利用する | バックパックなどで再利用 | スクリプトやステージのファイル転送、バンドル素材の追加 |
 | 保存して渡す | SB3の保存と標準Packager | 上書き保存と名前を変えて保存、組み込みデータの格納方式、拡張コードの保存方式、Plus拡張を同梱したHTML |
 
 Plus固有の機能には、対応する拡張や専用データが必要なものがあります。どれが必要かは[機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)に記録しています。
 
-作品全体の検索は、すべてのスプライトとステージを横断し、結果を種類ごとにまとめます。対象はブロック名、変数・リスト名、メッセージ名、引数の値、機能拡張名、コメント文、YAML本文、素材名です。[Project Properties（作品のプロパティ）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-properties)はタイトル・概要・作者・連絡先を日時とともにSB3へ保存し、作者名と連絡先の履歴を各5件保持して、メールやHTTPSのリンクを開きます。[Project Diagnostics（作品の診断）](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-diagnostics)は、作品が開けないときのために検証・実行許可・読み込み・再試行・失敗の記録を集めます。診断記録はEditorを開いている間だけ保持します。どちらも通常URLから利用でき、追加拡張や有効化の設定は不要です。
+作品全体の検索は、すべてのスプライトとステージを横断し、結果を種類ごとにまとめます。対象はブロック名、変数・リスト名、メッセージ名、引数の値、機能拡張名、コメント文、YAML本文、素材名です。[Project Properties（作品のプロパティ）](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/#project-properties)はタイトル・概要・作者・連絡先を日時とともにSB3へ保存し、作者名と連絡先の履歴を各5件保持して、メールやHTTPSのリンクを開きます。[Project Diagnostics（作品の診断）](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/#project-diagnostics)は、作品が開けないときのために検証・実行許可・読み込み・再試行・失敗の記録を集めます。診断記録はEditorを開いている間だけ保持します。どちらも通常URLから利用でき、追加拡張や有効化の設定は不要です。
 
 **書き出し**は作品を配布用にまとめます。通常のScratch 3やTurboWarpのSB3なら標準のTurboWarp Packagerが開き、Plus形式の拡張を記録した作品では同じ操作でPlus専用の出力画面が開きます。HTTPSで配信される拡張コードも、記録したハッシュと照合したうえでHTMLに入り、サンドボックスの指定は保持されます。カタログの信頼条件を満たす拡張は、同梱されたハッシュと照合して実行します。外部依存のない作品は、そのHTMLだけでオフラインで動きます。
 
-[実画面と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)は、ここまでの内容を分野別の11ページで、実際の画面・操作図・比較表・利用条件・保存と互換性とともに説明しています。
+[実画面と操作図で読む追加機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)は、ここまでの内容を分野別の12ページで、実際の画面・操作図・比較表・利用条件・保存と互換性とともに説明しています。
 
 [![対応ブロックのデータをフォームで編集する例](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
 
 ## エディターの配置
 
 TurboWarp Plus 標準配置では、起動時にスプライト一覧が編集領域の左側に固定表示されます。ピンを外すと、左端にポインターを置いて一覧を開けます。検索アイコンから名前で探せます。固定表示中に区切り線をドラッグすると、横幅に応じて列数が増えます。操作列のアンドックボタンで、一覧と背景タイルを別のウィンドウに移せます。中央上部の横長パレットでカテゴリを選ぶと、その下からブロックをドラッグできます。
+
+スプライトの編集タブは、縦に並んだボタンで「自由配置」「ハット・関数一覧」「呼び出し関係」「コスチューム」「音」「変数」「メッセージ」を切り替えます。「ハット・関数一覧」では名前を入れて関数を追加できます。「呼び出し関係」は関数の呼び出し図で、ほかのスプライトとステージのグローバル関数も含めます。どちらかで選んだ関数やスクリプトは、右に分割したコード領域にそれだけを表示して編集でき、そのスクリプトを削除するとビューが閉じます。コード領域では、ハットの右クリックメニューの「折りたたみ」でハットや定義を畳めます。長いテキスト引数は「…」で短く表示し、クリックするとダイアログで編集できます。「変数」には、一時変数拡張のスレッド変数とランタイム変数も表示します。
 
 ステージ右上の「ステージの表示」メニューで、全画面・表示と非表示を切り替えられます。非表示の間も作品は実行されます。自由配置を有効にしている場合は、配置メニューからアンドックボタンを表示できます。
 
@@ -94,14 +97,16 @@ TurboWarp Plus 標準配置では、起動時にスプライト一覧が編集�
 
 ## パッケージ・差し込み口・ビルド
 
-Editorは、フォークが抱えるパッチではなく、独立に版を持つパッケージから組み立てます。実装は約20の `@kubohiroya/turbowarp-*` パッケージが持ち、それぞれが自分の版・テスト・リリースを持ちます。
+Editorは、フォークが抱えるパッチではなく、独立に版を持つパッケージから組み立てます。実装は20を超える `@kubohiroya/turbowarp-*` パッケージが持ち、それぞれが自分の版・テスト・リリースを持ちます。
 
 ```text
-yaml-json · named-data · structured-data · document-data · document-source · document-editor ┐
-extension-data-editor · extension-loader · extension-security-dialog · sb3-save-format       ├→ turbowarp-plus-editor → GitHub Pages
+yaml-json · named-data · structured-data · document-data · document-source · document-editor  ┐
+extension-data-editor · extension-loader · extension-security-dialog · sb3-save-format        ├→ turbowarp-plus-editor → GitHub Pages
 plus-editor-workbench · plus-editor-code-views · plus-editor-windows · plus-editor-fonts      │
-plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-transfer             ┘
-   scratch-gui フォーク · scratch-vm フォーク · @turbowarp/packager（いずれもリビジョン固定）───┘
+plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-transfer             │
+plus-editor-project-model · plus-editor-project-starter · plus-editor-sprite-panes            │
+plus-editor-host · sb3-toolchain                                                              ┘
+ scratch-gui フォーク · scratch-vm フォーク · @turbowarp/packager（いずれもリビジョン固定）───┘
 ```
 
 上流のパッケージが下流のものを取得・ビルド・配信することはありません。`scratch-gui` フォークは、**本家TurboWarpに存在しないファイルを1つも持ちません**。追加していた32のモジュール・ツール・文書・テストは本リポジトリへ移設し、残る接続は任意の1オブジェクト `plusIntegration()` を通ります。その名前付きの口が、拡張ホスト、モーダル、テーマトークン、翻訳、ブロック形状、workspaceへの接続、キー処理、project-stateの還元、ステージとカメラの操作、拡張ライブラリ、GUIの拡張API、アドオンを運びます。素のGUIビルドではこのgetterが `null` を返し、本家とまったく同じに動きます。測った差分・残る改変・それぞれの行き先は[差し込み口の設計](docs/plus-integration-sockets.md)に、移設とビルド契約は[移設一覧](docs/gui-integration/README.md)に記録しています。
@@ -197,7 +202,7 @@ const html = renderEditButton({language: 'ja', projectURL: 'https://example.com/
 
 ## 開発と配信
 
-scratch-guiの本家に存在しなかった実装・ツール・文書・テストは、本リポジトリに集約します。[移設一覧とビルド契約](docs/gui-integration/README.md)を参照してください。
+scratch-guiの本家に存在しなかった実装・ツール・文書・テストは、フォークの外に置きます。機能の実装本体はturbowarp-plus familyのパッケージ（`turbowarp-plus-editor-*`）が持ち、本リポジトリはその版を固定し、パッケージの口をGUIに渡す結線を持ちます。[移設一覧とビルド契約](docs/gui-integration/README.md)を参照してください。
 
 Node.js 26を使用します。自作コード・スクリプト・設定・テストはTypeScript（`.ts` / CommonJSの`.cts`）で管理します。開発用スクリプトはNode.jsの型除去で実行します。`npm run build` は公開用JavaScriptと型定義を `dist/` へ生成し、`npm pack` でも自動実行されます。実VSCode検証の前に `npm run build:test-driver` を実行します。
 

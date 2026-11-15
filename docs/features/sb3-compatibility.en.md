@@ -6,7 +6,7 @@
 
 Each verdict describes **a normal Scratch 3 or standard TurboWarp SB3 right after it is opened in the public editor (GitHub Pages) of TurboWarp Plus Editor**. The project contains no Plus extensions or Plus-specific data, and the editor starts with its default settings. "Yes" means the feature works with ordinary project data, "No" means it does not work in that state, and "N/A" means the operation happens outside the editor. When extra extensions, data or startup settings are needed, or a feature only works in a development build, the last column says so.
 
-Section numbers match the "page.section" numbers of the [feature guide](index.en.html) (revised for the public editor as of November 14, 2026). Page 12, "Develop projects on GitHub", is not in this list because it is mostly about working on GitHub. Where the public editor differs, or a feature is still in development, the table says so. [Feature guide revision, issue #181](https://github.com/kubohiroya/turbowarp-plus-editor/issues/181)
+Section numbers match the "page.section" numbers of the [feature guide](index.en.html) (revised for the public editor as of November 15, 2026). Page 12, "Develop projects on GitHub", is not in this list because it is mostly about working on GitHub. Where the public editor differs, or a feature is still in development, the table says so. [Feature guide revision, issue #181](https://github.com/kubohiroya/turbowarp-plus-editor/issues/181)
 
 ## 1. [Open projects and prepare extensions](open/index.en.html)
 
@@ -35,11 +35,12 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
 | [3.1 Find and pin sprites in the sprite list](sprites/index.en.html#sprite-drawer) | Yes | Yes | Search by name in the Plus layout's list and drag the divider to change its width. When unpinned, the list opens from the left edge. |
-| [3.2 Sprite tabs and the editor panel icons](sprites/index.en.html#sprite-tabs) | Yes | Yes | Plus layout. Switch with the sprite tabs at the top and the icons down the left edge of the editor panel (Code, Costumes, Sounds, Properties & Variables, Messages). The backdrop shows "Backdrops" instead of "Costumes". Opening the same sprite in several tabs gives numbered tabs such as "Cat(2)". |
+| [3.2 Sprite tabs and the editor panel icons](sprites/index.en.html#sprite-tabs) | Yes | Yes | Plus layout. Switch with the sprite tabs at the top and the seven icons down the left edge of the editor panel, in three groups (Free layout, Hats and functions, Calls / Costumes, Sounds / Variables, Messages). The backdrop shows "Backdrops" instead of "Costumes". Opening the same sprite in several tabs gives numbered tabs such as "Cat(2)". |
 | [3.3 Edit costumes and sounds](sprites/index.en.html#media-panes) | Yes | Yes | Select costumes and sounds in the project; each pane keeps its own selection. Sounds can be played. The height limit on the costume preview is in the local integration build. |
-| [3.4 Edit properties, variables and lists](sprites/index.en.html#variable-pane) | Yes | Yes | Show, create, rename and delete variables and lists: the sprite's own for a sprite, project-wide ones for the backdrop. "Edit list" edits list items. Variables used by blocks cannot be deleted. |
+| [3.4 Edit properties, variables and lists](sprites/index.en.html#variable-pane) | Yes | Yes | Show, create, rename and delete variables and lists: the sprite's own for a sprite, project-wide ones for the backdrop. "Edit list" edits list items. Variables used by blocks cannot be deleted. Projects that use the Temporary Variables extension also get tables of thread and runtime variables (values while paused with the debugger). |
 | [3.5 Check who sends and receives messages](sprites/index.en.html#messages) | Yes | Yes | Lists what each sprite and the backdrop sends and receives; the backdrop also shows the project-wide relation diagram. Renaming applies to the whole project. |
 | [3.6 Edit the backdrop](sprites/index.en.html#backdrop) | Yes | Yes | From the backdrop tile, edit the stage's code, backdrops and sounds. |
+| [3.7 List hats and functions and see their calls](sprites/index.en.html#functions) | Yes | Yes | Plus layout. Lists hats and functions (custom blocks and named functions) and shows a picked script alone, for editing, in a code area split to the right. Shows the calls between functions as a diagram. Adding a named function loads the "TurboWarp-Named-Functions" extension. |
 
 ## 4. [Open the stage and run your project](stage/index.en.html)
 
@@ -65,14 +66,14 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
-| [6.1 Place blocks from the horizontal palette](blocks/index.en.html#palette) | Yes | Yes | Plus layout. Place standard blocks and blocks from extensions that loaded. |
+| [6.1 Place blocks from the horizontal palette](blocks/index.en.html#palette) | Yes | Yes | Plus layout. Place standard blocks and blocks from extensions that loaded. Long text arguments are shown cut and edited in a dialog (the value is unchanged). |
 | [6.2 Search for blocks within a palette category](blocks/index.en.html#palette-search) | Yes | Yes | "Search blocks" in the horizontal palette filters within a category. |
 | [6.3 Resize a category flyout](blocks/index.en.html#palette-size) | Yes | Yes | Each category flyout of the horizontal palette can be resized. |
 | [6.4 Reorder the categories](blocks/index.en.html#palette-order) | Yes | Yes | The category order resets on reload. Context menus show action icons by default. |
 | [6.5 Open the block palette in a separate window](blocks/index.en.html#palette-popout) | Yes | Yes | Opens the palette in a separate browser window and switches between horizontal and vertical arrangement. |
 | [6.6 Delete blocks by dropping them on the palette](blocks/index.en.html#delete-preview) | Yes | Yes | Dragging a block from the code area over the palette shows a delete preview. |
 | [6.7 Move around long code with the minimap and zoom](blocks/index.en.html#minimap) | Yes | Yes | Plus layout. Navigate with the minimap and adjust the zoom. |
-| [6.8 Work with context menus](blocks/index.en.html#context-menu) | Yes | Yes | Context menus for blocks, the code area, sprites and assets show icons. |
+| [6.8 Work with context menus](blocks/index.en.html#context-menu) | Yes | Yes | Context menus for blocks, the code area, sprites and assets show icons. "Fold" on a hat writes `tw-plus-folded="true"` into the hat's `mutation` and saves it in the SB3 (unfolding removes it). The standard TurboWarp editor does not read this attribute, so it shows the whole script unfolded. How Scratch 3 shows it has not been checked. |
 | [6.9 Rearrange code and copy it to another sprite](blocks/index.en.html#arrange) | Yes | Yes | Switch the code layout view (Z or N layout view) and use "Edit" → "Rearrange Code Blocks". Put two sprites' code tabs side by side and drag blocks to copy them. |
 
 ## 7. [Search and replace across the project](search/index.en.html)

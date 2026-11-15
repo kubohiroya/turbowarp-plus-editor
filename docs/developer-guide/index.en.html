@@ -750,11 +750,11 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
           <marker id="s1p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
         </defs>
         <rect x="20" y="20" width="220" height="180" rx="10" class="box plus"/>
-        <text x="130" y="46" text-anchor="middle" class="t-b">turbowarp-plus-packages</text>
+        <text x="130" y="46" text-anchor="middle" class="t-b">turbowarp-plus-editor-*</text>
         <text x="130" y="64" text-anchor="middle" class="t-s">npm · MPL-2.0 and others</text>
         <text x="38" y="96" class="t-s">· The implementations</text>
         <text x="38" y="118" class="t-s">· Unit tests</text>
-        <text x="38" y="140" class="t-s">· Versions, releases (v tags)</text>
+        <text x="38" y="140" class="t-s">· Versions, npm publishing</text>
         <text x="38" y="162" class="t-s">· Unaware of downstream</text>
 
         <rect x="270" y="20" width="220" height="180" rx="10" class="box"/>
@@ -784,7 +784,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
         <line x1="380" y1="202" x2="380" y2="241" class="ln" marker-end="url(#s1)"/>
       </svg>
     </div>
-    <figcaption><b>Fig. 8</b>Implementations live in the packages, wiring and deployment in the Editor, and only the socket call lines in the fork. The packages never import GPL code, so the direction is fixed: the GPL side calls the packages' sockets.</figcaption>
+    <figcaption><b>Fig. 8</b>Implementations live in the family packages (such as <code>turbowarp-plus-editor-*</code>, each in its own repository), wiring and deployment in the Editor, and only the socket call lines in the fork. The packages never import GPL code, so the direction is fixed: the GPL side calls the packages' sockets. The family catalog and documents such as the architecture and migration plan live in turbowarp-plus-packages.</figcaption>
   </figure>
 
   <h3 id="spec-2">2. Binding at build time</h3>
@@ -1054,7 +1054,7 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
     <table class="wide">
       <thead><tr><th>Command</th><th>What it checks</th></tr></thead>
       <tbody>
-        <tr><td><code>npm test</code></td><td>Unit tests for this repository and <code>packages/</code>. <code>test/plus-integration.test.ts</code> pins each entry of the integration object</td></tr>
+        <tr><td><code>npm test</code></td><td>Unit tests for this repository (<code>node --test --import ./test/asset-hooks.ts test/*.test.ts</code>). <code>test/plus-integration.test.ts</code> pins each entry of the integration object</td></tr>
         <tr><td><code>E2E_GUI_ROOT=… npm run test:gui-integration</code></td><td>The pinned fork has no files upstream lacks; socket semantics; relocated tests</td></tr>
         <tr><td><code>npm run typecheck</code></td><td>Type checking</td></tr>
         <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>The distribution build. <code>revision</code> and <code>siteRevision</code> in <code>build-info.json</code> must match the current HEAD and <code>site/source.json</code></td></tr>
@@ -1141,11 +1141,11 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
 
   <h3 id="howto-2">2. Order of work</h3>
   <div class="prose">
-    <p>Publish the implementation from the packages repository first; the Editor upgrades to that npm release and then wires it in. When a new socket is needed, work on the fork change in parallel and pin its SHA in the Editor.</p>
+    <p>Publish the implementation from the package's own repository first; the Editor upgrades to that npm release and then wires it in. When a new socket is needed, work on the fork change in parallel and pin its SHA in the Editor.</p>
   </div>
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 760 270" role="img" aria-label="Order of work. Implement and unit-test in turbowarp-plus-packages, then publish to npm with a v tag. Only when a new socket is needed, open a PR in the scratch-gui fork. In turbowarp-plus-editor, upgrade to the npm release and the fork's SHA, wire it in site, verify with tests and a build, and open a PR.">
+      <svg viewBox="0 0 760 270" role="img" aria-label="Order of work. Implement and unit-test in the relevant package's repository, then bump the version and publish to npm. Only when a new socket is needed, open a PR in the scratch-gui fork. In turbowarp-plus-editor, upgrade to the npm release and the fork's SHA, wire it in site, verify with tests and a build, and open a PR.">
         <defs>
           <marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
         </defs>
@@ -1160,8 +1160,8 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
         <text x="170" y="45" text-anchor="middle" class="t-s t-b">① Implement and</text>
         <text x="170" y="62" text-anchor="middle" class="t-s t-b">unit-test</text>
         <rect x="260" y="24" width="140" height="48" rx="8" class="box plus"/>
-        <text x="330" y="45" text-anchor="middle" class="t-s t-b">② bump the version,</text>
-        <text x="330" y="62" text-anchor="middle" class="t-s t-b">publish via v tag</text>
+        <text x="330" y="45" text-anchor="middle" class="t-s t-b">② Bump the version,</text>
+        <text x="330" y="62" text-anchor="middle" class="t-s t-b">publish to npm</text>
         <line x1="242" y1="48" x2="257" y2="48" class="ln" marker-end="url(#h2)"/>
 
         <rect x="100" y="104" width="300" height="48" rx="8" class="box warn"/>
@@ -1192,11 +1192,11 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
   <ol class="steps">
     <li>
       <h5 id="howto-3-1">Decide the placement and the socket</h5>
-      <p>Use Fig. 13 to decide which of A to D applies, and pick the socket from the <a href="#spec">socket list in the spec</a>. Also decide now which package the implementation goes into. Existing code in the Editor's <code>packages/</code> is mid-migration; don't use it as a home for new features.</p>
+      <p>Use Fig. 13 to decide which of A to D applies, and pick the socket from the <a href="#spec">socket list in the spec</a>. Also decide now, while writing the design or issue, which package (which repository) the implementation goes into. The body of a new feature goes into a separate turbowarp-plus family package (MPL-2.0, <code>turbowarp-plus-editor-*</code>); the Editor holds only the pinned versions and the wiring that hands the packages' sockets to the GUI. The former <code>packages/editor-*</code> have all moved to family packages (for example, in-page windows and dialog actions to <code>-windows</code>, project reads and edits to <code>-project-model</code>, the Git panel and publishing to <code>-git</code>, code views and the block palette to <code>-code-views</code>, web fonts to <code>-fonts</code>, and layout, menus, file dialogs, stage controls and the backpack to <code>-workbench</code>). Don't recreate <code>packages/</code> in the Editor.</p>
     </li>
     <li>
       <h5 id="howto-3-2">Implement it in a package</h5>
-      <p>Implement it in the relevant package of turbowarp-plus-packages (or a new package if none fits). Don't import GPL code; receive everything from the editor as arguments. Features that attach something return <code>{dispose}</code>.</p>
+      <p>Implement it in the relevant package's repository (for example <code>github.com/kubohiroya/turbowarp-plus-editor-windows</code>; see <code>repository</code> in each package's <code>package.json</code>). If none fits, create a new repository named <code>turbowarp-plus-editor-*</code>. Don't import GPL code; receive everything from the editor as arguments. Features that attach something return <code>{dispose}</code>.</p>
 <pre><code>// Package side: receive the document and translations, return a way to detach
 export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
     const onTargetsUpdate = () =&gt; render(hostDocument, vm, getMessages());
@@ -1212,7 +1212,7 @@ export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
     </li>
     <li>
       <h5 id="howto-3-3">Raise the version and publish to npm</h5>
-      <p>In turbowarp-plus-packages, decide the version with <code>npm run bump</code> (from upstream) or <code>npm run bump:downstream</code> (to propagate downstream), and publish to npm with a <code>v&lt;version&gt;</code> tag. Don't bundle tgz files into the Editor.</p>
+      <p>Each package publishes to npm from its own repository, and the trigger differs per repository. Most publish through GitHub Actions trusted publishing (OIDC) when a version bump in <code>package.json</code> reaches main and that version is not yet on npm. <code>turbowarp-plus-editor-git</code> publishes when a <code>v&lt;version&gt;</code> tag is pushed. Publish the first version of a new package by hand, then configure its Trusted Publisher on npm (trusted publishing can only be set up for an existing package). Don't bundle tgz files into the Editor.</p>
     </li>
     <li>
       <h5 id="howto-3-4">(D only) Open a socket in the fork</h5>
@@ -1289,10 +1289,11 @@ if (controls) {
   <h3 id="howto-6">6. Notes for maintainers of this repository</h3>
   <div class="callout warn">
     <div class="label">FOR MAINTAINERS AND AI AGENTS</div>
-    <p>These are working rules for people (including AI agents) who change turbowarp-plus-editor directly. <code>AGENTS.md</code> is the source of truth.</p>
+    <p>These are working rules for people (including AI agents) who change turbowarp-plus-editor directly. The first two come from <code>AGENTS.md</code>, which is the source of truth; the last is a caution that follows from this repository's settings.</p>
     <ul class="checklist no">
-      <li>Don't use <code>--auto</code> on PRs. PRs in this repository have no required checks, so <code>--auto</code> merges at once without waiting for CI</li>
+      <li>Don't put the body of a new feature in this repository. It holds only pinned versions and wiring; don't recreate workspace packages (the former <code>packages/editor-*</code>). When unsure where something belongs, decide which repository it goes into while writing the design or issue</li>
       <li>Don't run E2E tests that move the OS mouse cursor (<code>TW_PLUS_NATIVE_INPUT=1</code>, <code>test:e2e:native</code>) unless explicitly asked to. A general request to run E2E or to verify a PR doesn't count</li>
+      <li>Don't rely on <code>gh pr merge --auto</code> to wait for CI. PRs in this repository have no required checks, so <code>--auto</code> merges at once without waiting for CI</li>
     </ul>
   </div>
   <p class="source">Related documents: <code>docs/plus-integration-sockets.md</code> (history of the socket design), <code>docs/gui-integration/README.md</code> (relocation and build-time wiring), <code>docs/architecture.md</code> (responsibilities and deployment).</p>

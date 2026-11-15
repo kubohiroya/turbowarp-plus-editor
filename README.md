@@ -8,7 +8,7 @@ English | [日本語](README.ja.md)
 
 An editor for building TurboWarp Plus projects, and for editing the Scratch and TurboWarp projects you already have. Arrange and split the panels, put the stage, the sprite list, the palette and code panels in windows of their own, and get that arrangement back the next time you open it. Search a whole project and replace what you select. Keep a project as a folder under Git instead of one SB3 file. Check where every extension comes from and on what terms it runs. Export a single HTML file with the project's Plus extensions bundled in it.
 
-The Editor is built from pinned revisions of kubohiroya's [scratch-gui](https://github.com/kubohiroya/scratch-gui) and [scratch-vm](https://github.com/kubohiroya/scratch-vm) forks and around twenty independently versioned `@kubohiroya/turbowarp-*` packages, and served through GitHub Pages in Japanese and English.
+The Editor is built from pinned revisions of kubohiroya's [scratch-gui](https://github.com/kubohiroya/scratch-gui) and [scratch-vm](https://github.com/kubohiroya/scratch-vm) forks and more than twenty independently versioned `@kubohiroya/turbowarp-*` packages, and served through GitHub Pages in Japanese and English.
 
 - Site: <https://kubohiroya.github.io/turbowarp-plus-editor/>
 - Editor: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en>
@@ -17,7 +17,7 @@ The Editor is built from pinned revisions of kubohiroya's [scratch-gui](https://
 
 ## What this editor is for
 
-**Your existing projects open here.** An SB3 saved by Scratch 3 or by standard TurboWarp opens as it is, and what you make here saves back to an SB3 that those editors read. Nothing has to be rebuilt or ported to move a project in, so this is not a separate world you commit to; it is the same work, in an editor that does more with it. [The compatibility list](docs/features/sb3-compatibility.md) records exactly what travels in each direction.
+**Your existing projects open here.** An SB3 saved by Scratch 3 or by standard TurboWarp opens as it is, and what you make here saves back to an SB3 that those editors read. Nothing has to be rebuilt or ported to move a project in, so this is not a separate world you commit to; it is the same work, in an editor that does more with it. [The compatibility list](docs/features/sb3-compatibility.en.md) records exactly what travels in each direction.
 
 **Learning where things are.** The route from the sprite list, through the block palette, to running the stage has been straightened out. The sprite list is pinned beside the editing area from startup, finds sprites by name, and grows columns as you widen it. The palette is a wide band across the top: pick a category, search inside it, drag blocks from below it, and press and hold a category to put the categories in the order you want. The stage has its own display menu for full screen, visible and hidden, and the project keeps running while it is hidden. Variables, lists and messages stop being invisible: project-wide search finds them by name and lists every place each one is used, alongside block names, argument values, extension names, comment text and asset names.
 
@@ -46,23 +46,26 @@ This is what the documents are for: a domain expert — someone who knows the su
 | Open a project | Loading an SB3 and confirming extension execution | Load progress, the TurboWarp Plus catalog, loading diagnostics |
 | Manage a project | Saving one SB3 file at a time | Reading and writing a project folder, local Git diffs and history |
 | Arrange the workspace | The basic code, stage and sprite arrangement | Splitting panels, panels and the palette in separate windows, a separate stage display, layout restoration |
-| Edit | Block input fields and menus | Project-wide search and replace, an edit menu, a searchable horizontal palette, a minimap, and the forms and YAML tabs a supporting extension provides |
+| Edit | Block input fields and menus | Project-wide search and replace, an edit menu, a searchable horizontal palette, a minimap, editing a selected function or script on its own in a split view, folding hats and definitions, long text arguments shortened and edited in a dialog, and the forms and YAML tabs a supporting extension provides |
+| Look inside a sprite | Code, costume and sound tabs | A list of hats and functions and a call graph, adding a function by name, a variables pane that also shows the thread and runtime variables of the temporary variables extension, a list of messages |
 | Reuse | The backpack and similar | Script and stage transfer as files, adding bundled assets |
 | Save and hand over | Saving an SB3, the standard Packager | Save and Save As, the storage format for embedded data, the storage format for extension code, HTML with Plus extensions bundled |
 
-Some Plus features need a supporting extension or data of their own; the [guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/) marks which.
+Some Plus features need a supporting extension or data of their own; the [guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) marks which.
 
-Project-wide search covers every sprite and the stage, and groups its results by kind: block names, variable and list names, message names, argument values, extension names, comment text, YAML body, and asset names. [Project Properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-properties) stores the title, description, author and contact with timestamps in the SB3, keeping the five most recent author and contact entries and opening email and HTTPS links. [Project Diagnostics](https://kubohiroya.github.io/turbowarp-plus-editor/features/#project-diagnostics) collects validation, execution-approval, loading, retry and failure records for when a project will not open; those records last only while the Editor page stays open. Both are on ordinary Editor URLs, with no supporting extension or activation option required.
+Project-wide search covers every sprite and the stage, and groups its results by kind: block names, variable and list names, message names, argument values, extension names, comment text, YAML body, and asset names. [Project Properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html#project-properties) stores the title, description, author and contact with timestamps in the SB3, keeping the five most recent author and contact entries and opening email and HTTPS links. [Project Diagnostics](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html#project-diagnostics) collects validation, execution-approval, loading, retry and failure records for when a project will not open; those records last only while the Editor page stays open. Both are on ordinary Editor URLs, with no supporting extension or activation option required.
 
 **Export** packages a project for distribution: an ordinary Scratch 3 or TurboWarp SB3 opens the standard TurboWarp Packager, while a project that records Plus extensions opens the Plus output screen instead. Extension code served over HTTPS is checked against its recorded hash before it goes into the HTML, sandbox requirements are preserved, and catalog extensions that meet the trust conditions run against the bundled hash. A project with no external dependencies then works offline.
 
-The [illustrated feature guide (Japanese)](https://kubohiroya.github.io/turbowarp-plus-editor/features/) walks through all of this in eleven topic pages with real screenshots, workflow diagrams, the comparison table, availability conditions, and saving and compatibility details.
+The [illustrated feature guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) walks through all of this in twelve topic pages with real screenshots, workflow diagrams, the comparison table, availability conditions, and saving and compatibility details.
 
-[![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
+[![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#forms)
 
 ## Editor layout
 
 In the standard TurboWarp Plus layout, the sprite list is pinned to the left of the editing area at startup. Unpin it and the list opens when you move the pointer to the left edge. The search icon finds sprites by name. While the list is pinned, dragging the divider adds columns as the width allows. The undock button in the action column moves the list and the backdrop tiles into a separate window. Pick a category in the wide palette at the top centre and drag blocks from below it.
+
+The sprite editing tab switches with a vertical row of buttons between **Free layout**, **Hats and functions**, **Calls**, **Costumes**, **Sounds**, **Variables** and **Messages**. **Hats and functions** adds a function by the name you type. **Calls** is a call graph of the functions, including the global functions of the other sprites and the stage. A function or script chosen in either opens on its own in a code area split to the right, where you can edit it; deleting that script closes the view. In the code area, **Fold** in a hat's context menu folds a hat or a definition. Long text arguments are shortened with "…", and clicking one edits it in a dialog. **Variables** also shows the thread and runtime variables of the temporary variables extension.
 
 The **Stage display** menu at the top right of the stage switches between full screen, visible, and hidden. The project keeps running while the stage is hidden. With free placement enabled, the layout menu can show undock buttons.
 
@@ -94,13 +97,15 @@ The comparison uses the merge base and PR head. Expand changes to `project.sourc
 
 ## Packages, the fork and the build
 
-The Editor is assembled from independently versioned packages, not from patches carried in a fork. Around twenty `@kubohiroya/turbowarp-*` packages hold the implementation, each with its own version, tests and release:
+The Editor is assembled from independently versioned packages, not from patches carried in a fork. More than twenty `@kubohiroya/turbowarp-*` packages hold the implementation, each with its own version, tests and release:
 
 ```text
-yaml-json · named-data · structured-data · document-data · document-source · document-editor ┐
-extension-data-editor · extension-loader · extension-security-dialog · sb3-save-format       ├→ turbowarp-plus-editor → GitHub Pages
+yaml-json · named-data · structured-data · document-data · document-source · document-editor  ┐
+extension-data-editor · extension-loader · extension-security-dialog · sb3-save-format        ├→ turbowarp-plus-editor → GitHub Pages
 plus-editor-workbench · plus-editor-code-views · plus-editor-windows · plus-editor-fonts      │
-plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-transfer             ┘
+plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-transfer             │
+plus-editor-project-model · plus-editor-project-starter · plus-editor-sprite-panes            │
+plus-editor-host · sb3-toolchain                                                              ┘
          scratch-gui fork · scratch-vm fork · @turbowarp/packager (all pinned by revision) ───┘
 ```
 
@@ -197,7 +202,7 @@ The package includes the brand SVG, button CSS, URL/HTML helpers, and pinned dis
 
 ## Development and deployment
 
-Implementation files, tools, documentation and tests that do not exist upstream in scratch-gui are collected in this repository. See the [relocation inventory and build contract](docs/gui-integration/README.md).
+Implementation files, tools, documentation and tests that do not exist upstream in scratch-gui live outside the fork. The implementation of a feature belongs in a turbowarp-plus family package (`turbowarp-plus-editor-*`); this repository pins its version and holds the wiring that hands the package's sockets to the GUI. See the [relocation inventory and build contract](docs/gui-integration/README.md).
 
 Use Node.js 26. All maintained JavaScript sources, build scripts, configurations, and tests are authored in TypeScript (`.ts`, or `.cts` for CommonJS). Node.js runs development scripts directly with native type stripping. Browser modules are emitted as JavaScript with esbuild, and npm entry points and declarations are compiled into `dist/` with TypeScript.
 
@@ -221,6 +226,20 @@ To check the minimap alone, build first and then run `npm run test:e2e -- worksp
 Check out the GUI and Packager SHAs recorded in `site/source.json`. Install the GUI dependencies and prepare that upstream checkout with `node scripts/prepublish.mjs`. The build verifies the GUI SHA, installed data-editor SHA, and security-dialog version against the pins. Pages deploys from main after successful integration checks. Release tags must match the npm version.
 
 For the Cloudflare option in the Local Git panel, set both `TW_PLUS_GIT_BFF_ORIGIN` and `TW_PLUS_GIT_PROXY_ORIGIN` to exact HTTPS origins at build time. The Desktop local option is available when the host exposes `EditorPreload.localGitAuth` or `EditorPreload.localGit`. Use `twPlusLocalGit=0` to hide the Git panel at startup.
+
+#### Local verification of GitHub repository creation and PR registration
+
+To check against unpublished dependencies, set `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` for the local webpack build to the absolute path of a directory whose `node_modules/@kubohiroya/` holds built copies of `sb3-toolchain`, `turbowarp-plus-editor-project-folder`, `turbowarp-plus-editor-project-starter`, `turbowarp-plus-editor-git` and `turbowarp-plus-editor-auth`. The GUI uses the version pinned in `site/source.json`.
+
+- In **File → Save As → Project folder**, choose **Use Git version control**. Paste a URL, or choose an authorized owner and a name, then confirm the visibility and the project details. Once the first push has finished and you open the project, every later **Save** writes back to `project/` inside the chosen repository.
+- **File → Save and Commit… → Create or view PR** registers a PR for a completed commit. Connect the target repository to the Local Git GitHub App with write permission. On Desktop, approve in the confirmation dialog. On Cloudflare, confirm the GitHub account on the configured BFF's page, then review the target commit and operation and approve. The same commit's row shows the PR link, the CI and merge status and the resume action.
+- When stacking is enabled for the connection, choose **Stack on an existing pull request** and confirm the parent PR's number, branch and commit. A job set to merge waits until every lower PR has been merged, the child PR's diff matches, and the updated CI and review conditions are met.
+
+For headless verification, set `E2E_PROJECT_SAVE_BUILD` to the build output and `E2E_GIT_HTTP_FIXTURE` to the absolute path of `test/smart-http-fixture.js` in the Git package. Build with `TW_PLUS_GIT_BFF_ORIGIN=https://github-create.example.invalid` and `TW_PLUS_GIT_PROXY_ORIGIN=https://github-git.example.invalid` as the endpoints. The creation and PR tests mock GitHub and verify the actual Git traffic against a local Git CGI.
+
+```sh
+node --test --test-concurrency=1 test/project-folder-save.browser.ts test/project-repository-creation.browser.ts test/project-publication.browser.ts
+```
 
 The Local Git panel never receives a GitHub token. Either way, it gets a short-lived Bearer for a proxy that relays only the four Git Smart HTTP routes under `/v1/git/<owner>/<repo>.git/`. On every request, the proxy checks the caller's origin, the Bearer, the repository ID recorded at sign-in and the operation. A push also needs a `Git-Push-Id` reserved before it is sent upstream.
 
