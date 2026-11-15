@@ -236,7 +236,8 @@ const editorEntries = Object.fromEntries(['workbench', 'backpack', 'views'].map(
 }));
 // The layout and the project search read projects through this package. Webpack 4 does not read
 // package exports, so each subpath needs an alias, and its modules need the transpilation below.
-const projectModelSource = path.dirname(['project-messages', 'sprite-variable-edit'].map(entry => {
+const projectModelSource = path.dirname(['project-messages', 'sprite-variable-edit', 'project-search',
+    'project-search-replace', 'project-search-connections'].map(entry => {
     const specifier = `@kubohiroya/turbowarp-plus-editor-project-model/${entry}`;
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 })[0]);

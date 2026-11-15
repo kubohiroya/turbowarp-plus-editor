@@ -1,15 +1,10 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
 import {searchProject, searchYamlDocuments, variableAccessLabels, type ProjectSearchResult, type SearchKind,
-    type SearchProject, type SearchResult, type VariableSearch} from './project-search.ts';
+    type SearchProject, type SearchResult, type VariableSearch} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search';
 import {activateTargetView, connectProjectReplaceOpener, connectVariableSearchOpener, connectionFor, projectReplaceShortcut,
-    type SearchDocuments} from './project-search-connections.ts';
-import {applyProjectSearchReplacement, replacementText, type ReplaceOutcome} from './project-search-replace.ts';
-export {connectProjectSearchNavigation} from './project-search-connections.ts';
-export {activateTargetView, type SearchNavigation} from './project-search-connections.ts';
-export {renameProjectMessage} from './project-search-replace.ts';
-export {countVariableAccesses} from './project-search.ts';
-export {openVariableSearch} from './project-search-connections.ts';
+    type SearchDocuments} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
+import {applyProjectSearchReplacement, replacementText, type ReplaceOutcome} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-replace';
 import styles from './project-search.css';
 
 const pageSize = 60;
