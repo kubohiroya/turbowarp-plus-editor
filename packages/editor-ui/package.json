@@ -21,18 +21,14 @@
     "./project-info-menu": "./src/info-menu.tsx",
     "./stage-controls": "./src/stage-controls.ts",
     "./stage-controls-view": "./src/stage-controls-view.tsx",
-    "./project-publication": "./src/project-publication.ts",
-    "./cloudflare-publication": "./src/cloudflare-publication.ts",
     "./project-file-dialogs": "./src/project-file-dialogs.ts",
-    "./project-commit-dialog": "./src/project-commit-dialog.ts",
-    "./project-repository-creation": "./src/project-repository-creation.ts",
-    "./project-publication-dialog": "./src/project-publication-dialog.ts",
     "./project-file-menu": "./src/project-file-menu.tsx",
     "./browser-tab-title": "./src/browser-tab-title.ts",
     "./web-fonts": "./src/web-fonts.ts",
     "./web-font-dialogs": "./src/web-font-dialogs.tsx"
   },
   "dependencies": {
+    "@kubohiroya/turbowarp-plus-editor-git": "0.21.0",
     "@kubohiroya/turbowarp-plus-editor-project-model": "0.2.0",
     "@kubohiroya/turbowarp-plus-editor-windows": "0.2.0"
   },

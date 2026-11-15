@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import {setImmediate} from 'node:timers/promises';
 import {test, type TestContext} from 'node:test';
 import {JSDOM} from 'jsdom';
-import {renderSaveAsForm, type GitHubCreationAccount, type ProjectFileStorage, type SaveAsFormOptions,
+import type {GitHubCreationAccount} from '@kubohiroya/turbowarp-plus-editor-git/project-repository-creation';
+import {renderSaveAsForm, type ProjectFileStorage, type SaveAsFormOptions,
     type SaveAsRequest} from '../src/project-file-dialogs.ts';
 
 const account: GitHubCreationAccount = {
