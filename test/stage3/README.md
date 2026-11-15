@@ -6,7 +6,7 @@ Editor の `feat/backpack/product-integration` と、`site/source.json` が参�
 | --- | --- |
 | `@kubohiroya/turbowarp-plus-editor-windows/surfaces` | 表示先の遷移、準備完了、切断、復帰 |
 | `@kubohiroya/turbowarp-plus-editor-windows/transfer` | 一時参照、読込の取消、適用先の確定、一度だけの適用 |
-| `@kubohiroya/turbowarp-editor-backpack` | 既存バックパックの表示移動、操作ラベル、スクリプトの読込とコード画面へのドロップ。上の2パッケージと既存の `turbowarp-script-transfer` を利用する |
+| `@kubohiroya/turbowarp-plus-editor-workbench/backpack` | 既存バックパックの表示移動、操作ラベル、スクリプトの読込とコード画面へのドロップ。上の2パッケージと既存の `turbowarp-script-transfer` を利用する |
 | Editor | 依存の固定、起動フラグと ⚓ への接続、ブラウザー用表示先と既存スクリプト適用処理を渡す |
 | scratch-gui | 任意の表示ラッパーとスクリプトのドラッグハンドルを受け取る。ストレージ、項目の操作、展開状態は既存コンテナが保持する |
 
@@ -21,8 +21,8 @@ Editor の `feat/backpack/product-integration` と、`site/source.json` が参�
 ```sh
 # Editor 作業ツリー
 node --test --import ./test/asset-hooks.ts test/extension-loader.test.ts \
-  test/project-tools/properties.test.ts test/stage2/contracts.test.ts \
-  packages/editor-backpack/test/script.test.ts
+  test/project-tools/properties.test.ts test/stage2/contracts.test.ts
+# バックパックのスクリプトの単体テストは turbowarp-plus-editor-workbench に移った（test/backpack-script.test.ts）
 
 # scratch-gui 作業ツリー
 CI=1 NODE_ENV=production ROOT=/turbowarp-plus-editor/ E2E_GUI_ROOT="$PWD" \

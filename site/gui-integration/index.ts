@@ -13,14 +13,20 @@ import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../pr
 import {projectFolderWorkflows} from '../project-folder-host.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
-import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
+import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-menu';
 import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import '@kubohiroya/turbowarp-plus-editor-code-views/styles.css';
 import '@kubohiroya/turbowarp-plus-editor-fonts/styles.css';
-import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import '@kubohiroya/turbowarp-plus-editor-workbench/edit-menu.css';
+import '@kubohiroya/turbowarp-plus-editor-workbench/info-menu.css';
+import '@kubohiroya/turbowarp-plus-editor-workbench/project-file-menu.css';
+import '@kubohiroya/turbowarp-plus-editor-workbench/project-load-progress.css';
+import '@kubohiroya/turbowarp-plus-editor-workbench/project-search.css';
+import '@kubohiroya/turbowarp-plus-editor-workbench/stage-controls.css';
+import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
 import {GitFileMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
-import StageControlsView from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls-view';
+import StageControlsView from '@kubohiroya/turbowarp-plus-editor-workbench/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
@@ -30,9 +36,9 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-code-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
 import {attachDockedScriptLayout, getDockedScriptLayout} from '@kubohiroya/turbowarp-plus-editor-code-views/script-layout';
-import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-workbench/project-search';
 import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
-    renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
+    renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-workbench/edit-menu';
 import {renderMenuIcon} from '../context-menu-icons/index.ts';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 
@@ -80,6 +86,12 @@ export const renderStageControls = props => React.createElement(ExtensionControl
 export const setDebuggerMenuButton = (vm: object, element: HTMLElement | null) => {
     const service = hostStageControls(vm, hostIntegration());
     if (!service) return false;
+    // The workbench styles and drives the add-on's button by these marks, not by the GUI's class names.
+    const mark = (selector: string, attribute: string) =>
+        element?.querySelectorAll(selector).forEach(node => node.setAttribute(attribute, ''));
+    mark('[class*="stage-header_stage-button"]:not([class*="stage-header_stage-button-icon"])', 'data-tw-stage-button');
+    mark('[class*="stage-header_stage-button-icon"]', 'data-tw-stage-button-icon');
+    mark('[class*="button_content"]', 'data-tw-stage-button-content');
     service.setDebuggerButton(element);
     return true;
 };

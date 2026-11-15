@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {createControlsDock, installControlsDock} from '../site/controls-dock.ts';
-import {createStageControlsService} from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
+import {createStageControlsService} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-controls';
 
 const DOCK = Symbol.for('@kubohiroya/turbowarp-app-shell/runtime-controls-dock/v1');
 const hostDocument = () => ({} as unknown as Document & Record<symbol, unknown>);

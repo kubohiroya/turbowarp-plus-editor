@@ -21,7 +21,7 @@ import {createIndexedDBContentCache} from '@kubohiroya/turbowarp-extension-loade
 
 import {readPlusFlags} from '../extension-library/flags.ts';
 import {createExtensionAuthoringController, createProjectAddresser, setExtensionAuthoringHost} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
-import {confirmLargeProject} from '@kubohiroya/turbowarp-plus-editor-ui/project-size-approval';
+import {confirmLargeProject} from '@kubohiroya/turbowarp-plus-editor-workbench/project-size-approval';
 import {confirmedProjectArchiveOptions, extensionProjectArchiveOptions} from './config.ts';
 import {installPlusExtensionHost} from './host.ts';
 import {gateProjectSize} from './project-size-gate.ts';

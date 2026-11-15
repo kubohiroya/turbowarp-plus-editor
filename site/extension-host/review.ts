@@ -30,7 +30,7 @@ import {embeddedExtensionName} from './embedded-extension-name.ts';
 import {pendingPlusReview} from './review-channel.ts';
 import type {ReadEmbeddedReviewFile} from './review-channel.ts';
 import {reviewedProjectArchive} from './shared-project-archive.ts';
-import {duringProjectLoadApproval} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
+import {duringProjectLoadApproval} from '@kubohiroya/turbowarp-plus-editor-workbench/project-load-progress';
 import styles from './review.css';
 
 const hex = bytes => Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');

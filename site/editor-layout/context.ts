@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
-import type {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import type {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 
 export const WindowLayoutContext = React.createContext<{
     showUndock: boolean;

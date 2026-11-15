@@ -1,7 +1,7 @@
 import React from 'react';
-import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 import {captureProjectLoad, duringProjectLoadApproval, reportProjectAssets, reportProjectFinishing}
-    from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
+    from '@kubohiroya/turbowarp-plus-editor-workbench/project-load-progress';
 import {MANUAL_PROJECT_URI_ENABLED, PROJECT_TOOLS_ENABLED} from './config.ts';
 import {installProjectProperties} from './properties.ts';
 import {createAuthorHistory} from './history.ts';
@@ -10,8 +10,8 @@ import {installEditorExtensionHost} from '../extension-host/editor-host.ts';
 import {editProjectURI, getExtensionAuthoringHost, withProjectSerialization} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import {createProjectDiagnostics} from './diagnostics.ts';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
-import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
-import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
+import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
 import {renderProjectCommitDialog} from '@kubohiroya/turbowarp-plus-editor-git/project-commit-dialog';
 import {renderProjectPublicationDialog} from '@kubohiroya/turbowarp-plus-editor-git/project-publication-dialog';
 import type {PublicationCommit} from '@kubohiroya/turbowarp-plus-editor-git/project-publication';

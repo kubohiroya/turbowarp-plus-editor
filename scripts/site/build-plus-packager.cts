@@ -62,13 +62,14 @@ const config = withExtensionLoaderWebpack4({
     resolve: {modules: [path.join(gui, 'node_modules'), path.resolve('node_modules'), 'node_modules'],
         alias: {'@turbowarp/packager-web$': path.join(packager, 'src/packager/web/export.js'),
             '@kubohiroya/turbowarp-extension-loader': loaderRoot,
-            '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor$': rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui/busy-cursor')}},
+            '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor$': rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor')}},
     module: {rules: [
-        {test: /\.tsx?$/, include: [path.resolve('site'), path.resolve('packages/editor-ui/src')],
+        {test: /\.tsx?$/, include: [path.resolve('site')],
             loader: path.join(__dirname, 'transpile-local-typescript.cts')},
 
         {test: /\.js$/, include: [path.join(gui, 'src'), path.join(packager, 'src'), vmSource,
-            path.resolve('site'), path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json'))],
+            path.resolve('site'), path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
+            path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor'))],
             loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
                 presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}},
         {test: /\.png$/, loader: hostRequire.resolve('url-loader'), options: {limit: 1000000}}

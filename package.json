@@ -49,7 +49,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test --import ./test/asset-hooks.ts test/*.test.ts packages/*/test/*.test.ts",
+    "test": "node --test --import ./test/asset-hooks.ts test/*.test.ts",
     "test:extension-host": "node --test --import ./test/asset-hooks.ts test/extension-host/*.test.ts test/extension-library/*.test.ts test/extension-library/*.test.cts test/packager/*.test.ts test/packager/*.test.cts test/block-editor/*.test.ts",
     "build:pages": "node scripts/site/build.ts",
     "test:e2e": "playwright test --config test/e2e/turbowarp/playwright.config.cts",
@@ -80,7 +80,6 @@
   "devDependencies": {
     "@kubohiroya/sb3-toolchain": "0.24.0",
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
-    "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
     "@kubohiroya/turbowarp-extension-data-editor": "0.10.0",
     "@kubohiroya/turbowarp-extension-loader": "0.11.0",
     "@kubohiroya/turbowarp-extension-security-dialog": "0.8.9",
@@ -94,9 +93,8 @@
     "@kubohiroya/turbowarp-plus-editor-project-model": "0.2.0",
     "@kubohiroya/turbowarp-plus-editor-project-starter": "0.2.0",
     "@kubohiroya/turbowarp-plus-editor-sprite-panes": "0.7.0",
-    "@kubohiroya/turbowarp-plus-editor-ui": "file:packages/editor-ui",
     "@kubohiroya/turbowarp-plus-editor-windows": "0.2.0",
-    "@kubohiroya/turbowarp-plus-editor-workbench": "0.15.0",
+    "@kubohiroya/turbowarp-plus-editor-workbench": "0.16.0",
     "@kubohiroya/turbowarp-structured-data": "0.11.0-rc.3",
     "@kubohiroya/turbowarp-yaml-json": "0.9.0-rc.0",
     "@playwright/test": "^1.64.1",

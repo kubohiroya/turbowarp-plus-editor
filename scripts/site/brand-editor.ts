@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {EDITOR_TAB_NAME} from '@kubohiroya/turbowarp-plus-editor-ui/browser-tab-title';
+import {EDITOR_TAB_NAME} from '@kubohiroya/turbowarp-plus-editor-workbench/browser-tab-title';
 export async function brandEditor(output, prefix = '/turbowarp-plus-editor/') {
     const editor = path.join(output, 'editor.html');
     let html = await fs.readFile(editor, 'utf8');
