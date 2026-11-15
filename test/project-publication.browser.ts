@@ -8,7 +8,7 @@ import {test} from 'node:test';
 import {pathToFileURL} from 'node:url';
 import {chromium, expect} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
-import type {PublicationIntent, PublicationJob} from '../packages/editor-ui/src/project-publication.ts';
+import type {PublicationIntent, PublicationJob} from '@kubohiroya/turbowarp-plus-editor-git/project-publication';
 
 const prefix = '/turbowarp-plus-editor/';
 const bearer = 'w'.repeat(43);

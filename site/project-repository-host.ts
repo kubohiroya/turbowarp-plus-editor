@@ -1,8 +1,8 @@
 import {createProjectRepositoryWorkflow, creationError, repositoryCreationJournal}
-    from '@kubohiroya/turbowarp-plus-editor-ui/project-repository-creation';
+    from '@kubohiroya/turbowarp-plus-editor-git/project-repository-creation';
 import type {CreationInteraction, RepositoryCreationInspection, RepositoryCreationProvider, RepositoryDeviceCode, RepositoryReceipt}
-    from '@kubohiroya/turbowarp-plus-editor-ui/project-repository-creation';
-import type {GitHubCreationAccount, GitHubRepositoryDraft} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
+    from '@kubohiroya/turbowarp-plus-editor-git/project-repository-creation';
+import type {GitHubCreationAccount, GitHubRepositoryDraft} from '@kubohiroya/turbowarp-plus-editor-git/project-repository-creation';
 import type {GitAuthProvider, GitProxyConnection, GitProxySession} from '@kubohiroya/turbowarp-plus-editor-auth';
 
 type Author = {name: string; email: string};

@@ -1,32 +1,11 @@
 import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
-import type {CreationInteraction, RepositoryCreationControls, RepositoryCreationProgress, RepositoryReceipt}
-    from './project-repository-creation.ts';
+import type {CreationInteraction, GitHubCreationAccount, GitHubRepositoryDraft, RepositoryCreationControls,
+    RepositoryCreationProgress, RepositoryReceipt} from '@kubohiroya/turbowarp-plus-editor-git/project-repository-creation';
 
 export type Action = () => void;
 export type FolderActions = {open: Action; save?: Action; detach: Action};
 export type SaveFormat = 'current' | 'embedded' | 'folder';
 type Serialize = <T>(run: () => T) => T;
-
-export type GitHubVisibility = 'private' | 'public';
-export interface GitHubCreationAccount {
-    account: {login: string};
-    owners: readonly {
-        login: string;
-        type: 'User' | 'Organization';
-        canCreate: Record<GitHubVisibility, boolean>;
-    }[];
-}
-
-export interface GitHubRepositoryDraft {
-    account: string;
-    owner: string;
-    name: string;
-    title: string;
-    description: string;
-    topics: readonly string[];
-    license: string | null;
-    visibility: GitHubVisibility;
-}
 
 export type SaveAsRequest =
     | {name: string; format: 'current' | 'embedded'}
