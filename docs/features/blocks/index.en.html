@@ -11,7 +11,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 6. Find, place and organize blocks · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
-<p class="eyebrow">Feature guide 6/12 · Updated November 14, 2026</p>
+<p class="eyebrow">Feature guide 6/12 · Updated November 15, 2026</p>
 <h1>Find, place and organize blocks</h1>
 <p class="lead">Find blocks in the horizontal palette at the top of the code area and place them. Move around long code with the minimap, and tidy it up with context menus.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
@@ -51,7 +51,8 @@
 <p>In the <a href="../screen/index.en.html#layout">Plus layout</a>, the categories are lined up horizontally at the top of the code area, in this order: "Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables", "Lists", and "My Blocks". Adding an extension adds its category as well. Variable and list blocks are split into "Variables" and "Lists".</p>
 <p>Click a category to open a flyout of its blocks below it. Drag the block you want into the code area. To close the flyout, press Esc or click outside it. Each category remembers its flyout's scroll position.</p>
 <p>Normally you cannot switch the palette between horizontal and vertical display. If you open the editor with <code>twPlusHorizontalBlockPalette=1</code> added to the URL, you can right-click the palette to switch between horizontal and vertical display. Your <a href="#palette-order">custom category order</a> carries over when you switch.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/193">Horizontal palette</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/216">Restoring the scroll position</a></p>
+<p>When a text argument of a placed block is long, it is shown cut to fit 30 half-width characters (a full-width character counts as two), ending in "…". A value with line breaks shows only its first line. Click such a value to open the "Edit text" dialog; "Save" applies the change and "Cancel" discards it. A saved change can be undone in one step. Only the display is shortened; the value stays the same.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/193">Horizontal palette</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/216">Restoring the scroll position</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/591">Long text arguments</a></p>
 
 </section>
 
@@ -127,7 +128,8 @@
 <figure class="guide-detail"><a href="../images/en/block-context-menu.png"><img src="../images/en/block-context-menu.png" width="640" height="480" alt="The context menu for a block: Duplicate, Add Comment, Delete Block, Export Script, Copy, Make Space, Copy All, Copy Block, and Cut Block, each with an icon." loading="lazy"></a><figcaption>The context menu for a block. Export has a downward arrow and delete has a trash can icon.</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="Main context menu items" tabindex="0">
 <table><caption>Main items</caption><thead><tr><th scope="col">Where you right-click</th><th scope="col">Main items</th></tr></thead><tbody>
-<tr><th scope="row">Block</th><td>Edit (definition blocks), Add Comment, Cut This Block Only, Duplicate, Copy This Block Only, Copy From Here Down, Copy Whole Stack, Save Stack to File…, Tidy Up, Leaving Room Below This Stack, Delete Block. They appear in this order, with a divider between groups</td></tr>
+<tr><th scope="row">Block</th><td>Edit (definition blocks), Add Comment, Cut This Block Only, Duplicate, Copy This Block Only, Copy From Here Down, Copy Whole Stack, Save Stack to File…, Tidy Up, Leaving Room Below This Stack, Delete Block. They appear in this order, with a divider between groups. On a block that calls a function, "Show this function" comes first and opens that function in the split on the right (<a href="../sprites/index.en.html#functions">List hats and functions</a>)</td></tr>
+<tr><th scope="row">Hat block with blocks below it (including definition blocks)</th><td>The block items plus Fold. A folded script shows only its hat, with a "▸ Folded" mark below it. To restore it, click the mark or choose "Unfold" from the context menu</td></tr>
 <tr><th scope="row">Empty space in the code area</th><td>Undo, Redo, Clean up Blocks, Add Comment, Delete Blocks, Load from File…, Paste, Change code layout view</td></tr>
 <tr><th scope="row">Sprite tile</th><td>Open, duplicate, export, Rename sprite, delete, create folder</td></tr>
 <tr><th scope="row">Backdrops tile</th><td>Open, Export Stage</td></tr>
@@ -135,7 +137,7 @@
 </tbody></table></div>
 <p>Items added by addons (exporting a block as an image, switching between local and global variables, moving to the front or back, and so on) also have icons. How to export and import scripts and how to copy and paste them is explained in <a href="../reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a>.</p>
 <p>Switching the code layout view and copying code to another sprite are covered in <a href="#arrange">Rearrange code and copy it to another sprite</a>.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">Action icons in context menus</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">Shown by default</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">Action icons in context menus</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">Shown by default</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">Show this function</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/600">Folding</a></p>
 
 </section>
 

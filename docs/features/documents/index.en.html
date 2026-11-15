@@ -11,7 +11,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 8. Edit extension data and documents · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
-<p class="eyebrow">Feature guide 8/12 · Updated November 14, 2026</p>
+<p class="eyebrow">Feature guide 8/12 · Updated November 15, 2026</p>
 <h1>Edit extension data and documents</h1>
 <p class="lead">With a supported extension, you can edit block values in a form, or open YAML documents such as Kamishibai YAML scripts in a tab next to your code.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
@@ -49,10 +49,11 @@
 <ol><li>Place a supported block in the code area and click the "Edit block" icon at the left end of the block.</li><li>Change the values in the form. The fields shown depend on the extension.</li><li>Click "Save all" to apply the values that pass validation to the block. To discard your changes, close the form with "Cancel". A change saved from the form can be reverted with a single "Undo" in the code area.</li><li>To keep the changes in the project file, save the project from the "File" menu.</li></ol>
 <figure><a href="../images/en/form-dialog.png"><img src="../images/en/form-dialog.png" width="820" height="514" alt="The Edit scene properties form. Scene label contains Opening and Duration (seconds) contains 3, with Cancel and Save all buttons." loading="lazy"></a><figcaption>A form registered by the sample extension in the repository (<code>examples/extensions/block-editor.ts</code>). The scene name and the display time are entered in separate fields.</figcaption></figure>
 <h3>Catch input errors as you type</h3>
-<p>The form in the figure accepts a display time from 1 to 60 seconds. If you enter 0, the form shows that the value is out of range, and you cannot save until you correct it. Which values are accepted is up to the extension.</p>
+<p>The form in the figure accepts a display time from 1 to 60 seconds. If you enter 0, the form shows that the value is out of range, and you cannot save until you correct it. While problems remain, a note next to the buttons gives their number, such as "Fix 2 problems to save". Which values are accepted is up to the extension.</p>
 <figure><a href="../images/en/validation-dialog.png"><img src="../images/en/validation-dialog.png" width="820" height="595" alt="After entering 0 in Duration (seconds), the field turns red, a validation message says the value must be at least 1, and the Save all button is disabled." loading="lazy"></a><figcaption>When the display time is out of range, the reason appears under the field and "Save all" cannot be clicked.</figcaption></figure>
 <h3>Edit nested blocks</h3>
 <p>If the extension registers parent and child blocks for editing, you can change the values of each in the same form. Fixed inputs such as numbers, strings and dropdowns can also be edited in dedicated fields when supported.</p>
+<p>A form that does not handle nested blocks, such as the dedicated fields for fixed inputs, has "Save" instead of "Save all". For a block whose values differ from those it has when placed from the palette, the button reads "Update"; it stays disabled, with "No changes" next to it, until you change something.</p>
 <div class="flow" role="img" aria-label="A draft is opened from the block's values and saved when validation succeeds. Cancel leaves the original block unchanged. Finally, save the SB3 separately."><div>Block values</div><span>→</span><div>Draft in the form<br><small>change, validate, cancel</small></div><span>→</span><div>Save all<br><small>apply to the block / undo</small></div><span>→</span><div>Save from File<br><small>keep the SB3</small></div></div>
 <p>The starting point and samples for extension authors are in the <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/block-editor.md">form-based block editor specification</a>.</p>
 

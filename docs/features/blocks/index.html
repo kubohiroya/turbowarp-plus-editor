@@ -11,7 +11,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../">機能ガイド</a> › 6. ブロックを探して置く・整理する · <a href="index.en.html" hreflang="en" lang="en">English</a></p>
-<p class="eyebrow">機能ガイド 6/12 · 2026年11月14日更新</p>
+<p class="eyebrow">機能ガイド 6/12 · 2026年11月15日更新</p>
 <h1>ブロックを探して置く・整理する</h1>
 <p class="lead">コード画面上部の横型パレットからブロックを探して置きます。長いコードはミニマップで移動し、右クリックメニューで整理します。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
@@ -51,7 +51,8 @@
 <p><a href="../screen/#layout">Plus標準配置</a>では、コード画面の上部にカテゴリが横に並びます。「動き」「見た目」「音」「イベント」「制御」「調べる」「演算」「変数」「リスト」「ブロック定義」の順で、拡張を追加するとそのカテゴリも加わります。変数とリストのブロックは、「変数」と「リスト」に分かれています。</p>
 <p>カテゴリをクリックすると、その下にブロックの小窓が開きます。使いたいブロックをコード領域へドラッグします。小窓を閉じるには、Escを押すか、小窓の外をクリックします。小窓のスクロール位置はカテゴリごとに保持されます。</p>
 <p>ふだんは、パレットの横表示と縦表示を切り替えられません。URLに <code>twPlusHorizontalBlockPalette=1</code> を付けて開くと、パレットを右クリックして横表示と縦表示を切り替えられるようになります。切り替えても、<a href="#palette-order">並べ替えたカテゴリの順序</a>は引き継がれます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/193">横型パレット</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/216">スクロール位置の復元</a></p>
+<p>置いたブロックの文字の引数が長いときは、半角30文字分（全角文字は2文字分）に収まるよう、末尾を「…」にして表示します。改行を含む値は1行目だけを表示します。こうした値をクリックすると「テキストを編集」ダイアログが開き、「保存」で確定、「キャンセル」で取りやめます。保存した変更は1回の取り消しで元に戻せます。表示が短くなるだけで、値は変わりません。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/193">横型パレット</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/216">スクロール位置の復元</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/591">長いテキスト引数</a></p>
 
 </section>
 
@@ -127,7 +128,8 @@
 <figure class="guide-detail"><a href="../images/block-context-menu.png"><img src="../images/block-context-menu.png" width="640" height="480" alt="ブロックの右クリックメニュー。複製、コメントを追加、ブロックを削除、スクリプトを書き出し、コピー、スペースを確保、すべてコピー、ブロックをコピー、ブロックを切り取りにアイコンが並ぶ。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。書き出しは下向き矢印、削除はゴミ箱のアイコンです。</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="右クリックメニューの主な項目" tabindex="0">
 <table><caption>主な項目</caption><thead><tr><th scope="col">右クリックする場所</th><th scope="col">主な項目</th></tr></thead><tbody>
-<tr><th scope="row">ブロック</th><td>編集（定義ブロック）、コメントを追加、このブロックだけ切り取り、複製、このブロックだけコピー、ここから下をコピー、かたまりごとコピー、かたまりをファイルに保存…、このかたまりの下を空けて整列、ブロックを削除。この順に並び、グループの間に仕切りが入ります</td></tr>
+<tr><th scope="row">ブロック</th><td>編集（定義ブロック）、コメントを追加、このブロックだけ切り取り、複製、このブロックだけコピー、ここから下をコピー、かたまりごとコピー、かたまりをファイルに保存…、このかたまりの下を空けて整列、ブロックを削除。この順に並び、グループの間に仕切りが入ります。関数を呼ぶブロックでは、先頭に「この関数を表示」が加わり、その関数を右側の分割で開きます（<a href="../sprites/#functions">ハットと関数を一覧する</a>）</td></tr>
+<tr><th scope="row">下にブロックがつながったハットブロック（定義ブロックを含む）</th><td>ブロックの項目に加えて、折りたたみ。折りたたむとハットだけが表示され、下に「▸ 折りたたみ中」の印が付きます。元に戻すには、印を押すか、右クリックメニューの「折りたたみを解除」を選びます</td></tr>
 <tr><th scope="row">コード領域の空白</th><td>取り消し、やり直し、きれいにする、コメントを追加、ブロックを削除、ファイルから読み込み…、貼り付け、コードの並びの見え方を変更する</td></tr>
 <tr><th scope="row">スプライトのタイル</th><td>開く、複製、書き出し、スプライト名の変更、削除、フォルダーを作成</td></tr>
 <tr><th scope="row">背景のタイル</th><td>開く、ステージを書き出し</td></tr>
@@ -135,7 +137,7 @@
 </tbody></table></div>
 <p>このほか、アドオンが追加する項目（ブロックの画像書き出し、ローカル変数とグローバル変数の切り替え、最前面・最背面への移動など）にもアイコンが付きます。スクリプトの書き出し・読み込みとコピー・貼り付けの使い方は、<a href="../reuse/#transfer">スクリプトとステージを別作品へ転送する</a>で説明しています。</p>
 <p>コードの並びの見え方の切り替えと、別のスプライトへのコピーは<a href="#arrange">コードを並べ替える・別のスプライトへコピーする</a>で説明しています。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューの操作アイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">既定で表示</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/194">右クリックメニューの操作アイコン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/334">既定で表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">この関数を表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/600">折りたたみ</a></p>
 
 </section>
 

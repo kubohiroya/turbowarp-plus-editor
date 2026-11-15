@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Edit sprites and the backdrop — Feature guide — TurboWarp-Plus-Editor</title>
-<meta name="description" content="The TurboWarp Plus sprite list, sprite tabs and the editor panel icons, costumes and sounds, properties, variables and lists, message senders and receivers, and editing the backdrop.">
+<meta name="description" content="The TurboWarp Plus sprite list, sprite tabs and the editor panel icons, costumes and sounds, properties, variables and lists, message senders and receivers, editing the backdrop, and the list and call graph of hats and functions.">
 <link rel="stylesheet" href="../guide.css">
 <link rel="alternate" hreflang="ja" href="index.html">
 </head>
@@ -11,9 +11,9 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 3. Edit sprites and the backdrop · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
-<p class="eyebrow">Feature guide 3/12 · Updated November 14, 2026</p>
+<p class="eyebrow">Feature guide 3/12 · Updated November 15, 2026</p>
 <h1>Edit sprites and the backdrop</h1>
-<p class="lead">Choose what to edit in the sprite list on the left, then use the icons stacked along the left edge of the editor panel to switch between code, costumes, sounds, properties and variables, and messages.</p>
+<p class="lead">Choose what to edit in the sprite list on the left, then use the icons stacked along the left edge of the editor panel to switch between the free layout of code, the list of hats and functions, the calls between functions, costumes, sounds, variables, and messages.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
 <ul>
 <li><a href="../open/index.en.html">Open projects</a></li>
@@ -38,6 +38,7 @@
 <li><a href="#variable-pane">3.4 Edit properties, variables and lists</a></li>
 <li><a href="#messages">3.5 Check who sends and receives messages</a></li>
 <li><a href="#backdrop">3.6 Edit the backdrop</a></li>
+<li><a href="#functions">3.7 List hats and functions and see their calls</a></li>
 </ol>
 </nav>
 
@@ -58,9 +59,9 @@
 <h2>3.2 Sprite tabs and the editor panel icons</h2>
 
 <p>When you choose a sprite in the list, a tab for that sprite opens in the top row of the editor panel. Switch between open sprites with these tabs. Right-click a tab to choose "Open in new tab" or "Rename sprite". "Open in new tab" opens the same sprite again in a numbered tab such as "Cat(2)", so each tab can show something different (for example, code in one and costumes in the other).</p>
-<p>Five icons are stacked along the left edge of the editor panel. From the top, they are "Code", "Costumes" ("Backdrops" for the stage), "Sounds", "Properties &amp; Variables" ("Global Variables" for the stage), and "Messages". The selected icon is shown with color and a line on its left. Hover over an icon to see its name.</p>
-<figure><a href="../images/en/plus-workspace-current.png"><img src="../images/en/plus-workspace-current.png" width="1440" height="1000" alt="The Code, Costumes, Sounds, Properties &amp; Variables, and Messages icons are stacked along the left edge of the editor panel." loading="lazy"></a><figcaption>The editor right after it starts. The five icons for Code, Costumes, Sounds, Properties &amp; Variables, and Messages line the left edge of the editor panel.</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/248">Sprite editor tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/32">Editor panel icon strip</a></p>
+<p>Seven icons are stacked along the left edge of the editor panel, separated by lines into three groups. From the top, they are "Free layout", "Hats and functions", and "Calls"; "Costumes" ("Backdrops" for the stage) and "Sounds"; and "Variables" ("Global Variables" for the stage) and "Messages". "Free layout" is the code area that holds all of the sprite's scripts. "Hats and functions" and "Calls" are explained in <a href="#functions">List hats and functions and see their calls</a>. The selected icon is shown with color and a line on its left. Hover over an icon to see its name.</p>
+<figure><a href="../images/en/plus-workspace-current.png"><img src="../images/en/plus-workspace-current.png" width="1440" height="1000" alt="The Free layout, Hats and functions, and Calls icons, the Costumes and Sounds icons, and the Variables and Messages icons are stacked along the left edge of the editor panel, separated by lines." loading="lazy"></a><figcaption>The editor right after it starts. Seven icons in three groups line the left edge of the editor panel.</figcaption></figure>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/248">Sprite editor tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/32">Editor panel icon strip</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">Icons for Hats and functions and Calls</a></p>
 
 </section>
 
@@ -83,15 +84,15 @@
 
 <h2>3.4 Edit properties, variables and lists</h2>
 
-<p>Open "Properties &amp; Variables" to see the sprite's properties and its "Sprite Variables" under the heading "Sprite Properties and Variables".</p>
-<ul><li><strong>Properties</strong>: Edit the sprite name, x, y, visibility (eye icon to show, slashed eye to hide), size, direction, and rotation style (all around, left-right, or don't rotate).</li><li><strong>Variable list</strong>: Shows the variables and lists that belong to what is open. A sprite's "Properties &amp; Variables" lists the sprite variables that only that sprite uses; the stage's "Global Variables" lists the global variables shared by the whole project. Cloud variables have a cloud icon to the right of the name.</li><li><strong>Changing values</strong>: Type a value and press Enter, or move focus out of the field, to apply it. Press Esc before applying to cancel the edit.</li></ul>
+<p>Open "Variables" to see the sprite's properties and its "Sprite Variables" under the heading "Sprite Properties and Variables".</p>
+<ul><li><strong>Properties</strong>: Edit the sprite name, x, y, visibility (eye icon to show, slashed eye to hide), size, direction, and rotation style (all around, left-right, or don't rotate).</li><li><strong>Variable list</strong>: Shows the variables and lists that belong to what is open. A sprite's "Variables" lists the sprite variables that only that sprite uses; the stage's "Global Variables" lists the global variables shared by the whole project. Cloud variables have a cloud icon to the right of the name.</li><li><strong>Changing values</strong>: Type a value and press Enter, or move focus out of the field, to apply it. Press Esc before applying to cancel the edit.</li></ul>
 <p>You can type the direction as a number or drag the arrow on the edge of the dial. Switch the rotation style with the three icons under the direction field. With "All around" the dial lets you choose any direction; with "Left-right", only left or right. With "Don't rotate", the dial is locked and you change the movement direction by typing a number.</p>
 <h3>Reviewing variables and lists in the table</h3>
 <p>The table's columns are "Stage", "Type", "Variable name", "Value", "Read", "Write", and "Actions". The "Stage" checkbox turns the value's display on the stage on or off. "Type" shows a box icon for variables and a table icon for lists. Click a column heading to sort by it.</p>
 <p>The "Read" and "Write" columns show how many blocks read and change the variable. Click a count to open the menu-bar search filtered by "Variable access", where you can jump to the matching blocks (<a href="../search/index.en.html#project-search">Search the whole project</a>).</p>
 <p>A list's "Value" shows its first five items, and the number of remaining items appears as, for example, "+1". Press "Edit", with the pencil icon in the "Value" column, to open the "Edit list" dialog, where you can change items, move them up or down, delete them, and use "Add item". Press "Save" to apply the changes.</p>
-<figure><a href="../images/en/properties-variables.png"><img src="../images/en/properties-variables.png" width="1440" height="1000" alt="Under "Sprite Properties and Variables" in the left pane are the sprite name, x, y, visibility, size, direction, rotation style, and a row for the sprite variable speed, with 1 read and 1 write. The right pane, Cat(2), contains code that uses speed." loading="lazy"></a><figcaption>"Properties &amp; Variables" on the left and "Code" on the right. The code next to it uses the sprite variable "speed".</figcaption></figure>
-<p>Split the panel and open "Properties &amp; Variables" in one pane and "Code" in the other to edit code while watching the values (<a href="../workspace/index.en.html#split-panes">splitting panels</a>).</p>
+<figure><a href="../images/en/properties-variables.png"><img src="../images/en/properties-variables.png" width="1440" height="1000" alt="Under &quot;Sprite Properties and Variables&quot; in the left pane are the sprite name, x, y, visibility, size, direction, rotation style, and a row for the sprite variable speed, with 1 read and 1 write. The right pane, Cat(2), contains code that uses speed." loading="lazy"></a><figcaption>"Variables" on the left and "Free layout" on the right. The code next to it uses the sprite variable "speed".</figcaption></figure>
+<p>Split the panel and open "Variables" in one pane and "Free layout" in the other to edit code while watching the values (<a href="../workspace/index.en.html#split-panes">splitting panels</a>).</p>
 <p><a href="../ball-demo/index.en.html#section-2-3">Editing and saving a list from the table in the Ball Demo</a></p>
 <h3>Creating, renaming, and deleting variables and lists</h3>
 <p>Press "Add a new sprite variable" ("Add a new global variable" for the stage) at the bottom left of the panel to open the creation dialog. Choose what to create with the "Variable" and "List" tabs at the top, enter a name, and press "Create". When creating a global variable, you can also choose "Cloud variable".</p>
@@ -100,7 +101,10 @@
 <h3>Checking values for each clone</h3>
 <p>When clones are created while the project runs, you can choose which one to show to the right of the "Sprite Properties and Variables" heading. Up to five clones can be picked directly by number; with six or more, move with the left and right arrows or pick a number from the list in the middle. You can edit the selected clone's position, direction, size, visibility, and rotation style, and the values of its sprite variables. The sprite name is read-only. Changes to properties and values last only for that run, and if the selected clone disappears, the pane returns to the original sprite.</p>
 <p>While a clone is selected, the "Read" and "Write" counts still come from the original sprite's code, and you can search for uses from the counts. Adding, renaming, or deleting a variable applies to the original sprite and all of its clones. Turning on display on the stage shows the original sprite's value.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/15">Merging the properties and variables tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/410">Creating, renaming, and deleting variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/493">Searching from the counts</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/565">Editing lists and clone variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/569">Creating lists from the dialog</a></p>
+<h3>Checking temporary variables</h3>
+<p>When the Temporary Variables extension is loaded or its blocks are used, a "Thread Variables" table is added below the variable list. The stage's "Global Variables" also gets a "Runtime Variables" table. The tables list the variables whose names are written as fixed text in the code, with the functions that set them ("Defined in"). For runtime variables, the functions that read them ("Read in") and that change them ("Changed in") are also listed, with counts.</p>
+<p>Values appear in the "Value" column while the project is paused with the debugger. Each thread variable value shows which sprite (or clone) and which thread it belongs to. Click a function name or a hat picture to show that function or script in the middle of the code.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/15">Merging the properties and variables tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/410">Creating, renaming, and deleting variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/493">Searching from the counts</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/565">Editing lists and clone variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/569">Creating lists from the dialog</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/593">Temporary variable tables</a></p>
 
 </section>
 
@@ -108,7 +112,7 @@
 
 <h2>3.5 Check who sends and receives messages</h2>
 
-<p>Open "Messages", below "Properties &amp; Variables", to see which messages the open sprite or backdrop sends and with which blocks, and which messages it receives and with which hat blocks, split into "Sent" and "Received".</p>
+<p>Open "Messages", below "Variables", to see which messages the open sprite or backdrop sends and with which blocks, and which messages it receives and with which hat blocks, split into "Sent" and "Received".</p>
 <p>The "Block" column shows the block used to send or receive. When that block is in the middle of a script, a line such as "Script starts with when green flag clicked" below it shows where the script begins.</p>
 <figure><a href="../images/en/messages-sprite.png"><img src="../images/en/messages-sprite.png" width="1440" height="1000" alt="The Ball's Messages panel lists game over under Sent and start under Received. In the diagram, an arrow for game over runs from the Ball, framed in red, to the Stage, and arrows for start run from the Cat to the Cat and the Ball." loading="lazy"></a><figcaption>"Messages" for the sprite "Ball". It receives "start" and sends "game over" to the stage.</figcaption></figure>
 <figure><a href="../images/en/messages-stage.png"><img src="../images/en/messages-stage.png" width="1440" height="1000" alt="The stage's Messages panel lists game over under Received, and in the diagram the receiving Stage is framed in red. The sending and receiving of start is also shown below." loading="lazy"></a><figcaption>"Messages" for the stage. It shows the received messages and a diagram of sending and receiving across the whole project.</figcaption></figure>
@@ -127,9 +131,26 @@
 <h2>3.6 Edit the backdrop</h2>
 
 <p>Choose the "Backdrops" tile below the sprite list to open the editor panel for the stage. Like the tile, its tab is labeled "Backdrops".</p>
-<p>The icons along the left edge of the editor panel are in the same order as for sprites, except that "Backdrops" replaces "Costumes" and "Global Variables" replaces "Properties &amp; Variables". Edit the stage's backdrop images in "Backdrops", its scripts in "Code", and its sounds in "Sounds". "Global Variables" lists the variables and lists used by the whole project, and the diagram in "Messages" shows all sending and receiving in the project (<a href="#messages">Check who sends and receives messages</a>).</p>
+<p>The icons along the left edge of the editor panel are in the same order as for sprites, except that "Backdrops" replaces "Costumes" and "Global Variables" replaces "Variables". Edit the stage's backdrop images in "Backdrops", its scripts in "Free layout", and its sounds in "Sounds". "Global Variables" lists the variables and lists used by the whole project, and the diagram in "Messages" shows all sending and receiving in the project (<a href="#messages">Check who sends and receives messages</a>).</p>
 <p>Right-click the backdrop tile to choose "Open" or "Export Stage". "Export Stage" exports the stage as a .stage3 file (<a href="../reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a>).</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/403">Backdrop tab fix</a></p>
+
+</section>
+<section id="functions">
+
+<h2>3.7 List hats and functions and see their calls</h2>
+
+<p>Open "Hats and functions" to see the scripts of the open sprite or backdrop, split into "Hats" and "Functions". Each hat shows a picture of its hat block and a name such as "when space key pressed". Each function shows the name of its custom block and how often it is used, such as "Used 2 times". Named functions of the "TurboWarp-Named-Functions" extension are grouped under the heading "TurboWarp Plus named functions". Choose the order under "Order": "Name (A–Z)", "Z order (rows)", or "N order (columns)". Click the usage count to open the list of places that use the function, and pick one to go there.</p>
+<h3>Show and edit one script on its own</h3>
+<p>Pick a hat or a function in the list to split the panel to the right of the sprite and open a code area that shows only that script, in a numbered tab such as "Sprite1(2)". The other scripts are only hidden; they stay in the project. This code area has no icons along its left edge, and the block palette and context menus work as in "Free layout". Picking another item switches what the same code area shows, and the list highlights the item being shown. If you delete the script being shown, this code area closes.</p>
+<figure><a href="../images/en/sprite-functions.png"><img src="../images/en/sprite-functions.png" width="1440" height="1000" alt="In the left pane, &quot;Hats and functions&quot; lists the hats &quot;when green flag clicked&quot; and &quot;when space key pressed&quot; and the functions jump (Used 2 times) and land (Used once), with jump highlighted. The right pane, Sprite1(2), shows only the definition of jump." loading="lazy"></a><figcaption>"jump" picked in "Hats and functions". The code area split to the right shows only its definition.</figcaption></figure>
+<p>"Show this function" in the context menu of a block that calls a function also opens the function in the same code area (<a href="../blocks/index.en.html#context-menu">Work with context menus</a>). "Fold" in a hat's context menu shows a script as its hat alone.</p>
+<h3>Adding a function</h3>
+<p>Press "+ Add a new function" below the list to open a dialog for the "Function name" and its "Kind": "Standard (My Blocks)" or "TurboWarp-Plus named function". Press "Add" to create the function below the existing scripts and open it in the code area on the right. A standard function is a custom block definition with no inputs. You cannot add a function whose name is already taken. If you choose a named function and the "TurboWarp-Named-Functions" extension is not loaded, it is loaded at that point.</p>
+<h3>Seeing which function calls which</h3>
+<p>Open "Calls" to see a diagram with functions as boxes and calls as arrows. A function called from a script that is not a function, such as a hat script, is marked with ▶. Global named functions defined in other sprites or the stage also appear, with the name of the sprite or stage that defines them, when they are connected by calls.</p>
+<p>Point at a box to highlight the arrows connected to it. Click the box of a function of the open sprite or backdrop to open that function in the code area on the right. The buttons at the top right switch the flow between "Left to right (LR)" and "Top to bottom (TD)", and the buttons at the bottom right zoom in and out. You can also add a function with "+ Add a new function" at the bottom left.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/592">Function sections and the call graph</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">Editing in the split on the right</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/597">Adding a function by name</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/599">Closing the tab of a deleted script</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/600">Showing one script on its own</a></p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">

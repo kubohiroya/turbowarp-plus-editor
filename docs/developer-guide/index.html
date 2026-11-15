@@ -754,11 +754,11 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
           <marker id="s1p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah plus"/></marker>
         </defs>
         <rect x="20" y="20" width="220" height="180" rx="10" class="box plus"/>
-        <text x="130" y="46" text-anchor="middle" class="t-b">turbowarp-plus-packages</text>
+        <text x="130" y="46" text-anchor="middle" class="t-b">turbowarp-plus-editor-*</text>
         <text x="130" y="64" text-anchor="middle" class="t-s">npm・MPL-2.0 など</text>
         <text x="38" y="96" class="t-s">・実装の本体</text>
         <text x="38" y="118" class="t-s">・単体テスト</text>
-        <text x="38" y="140" class="t-s">・版とリリース（v タグ）</text>
+        <text x="38" y="140" class="t-s">・版と npm への公開</text>
         <text x="38" y="162" class="t-s">・下流を知らない</text>
 
         <rect x="270" y="20" width="220" height="180" rx="10" class="box"/>
@@ -788,7 +788,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
         <line x1="380" y1="202" x2="380" y2="241" class="ln" marker-end="url(#s1)"/>
       </svg>
     </div>
-    <figcaption><b>図8</b>実装はパッケージに、接続と配信は Editor に、口を呼ぶ行だけがフォークにあります。パッケージ側は GPL のコードを import しないので、向きは「GPL 側がパッケージの口を呼ぶ」に固定します。</figcaption>
+    <figcaption><b>図8</b>実装は family の各パッケージ（それぞれ自分のリポジトリを持つ <code>turbowarp-plus-editor-*</code> など）に、接続と配信は Editor に、口を呼ぶ行だけがフォークにあります。パッケージ側は GPL のコードを import しないので、向きは「GPL 側がパッケージの口を呼ぶ」に固定します。family の一覧と、構成・移行計画などの文書は turbowarp-plus-packages にあります。</figcaption>
   </figure>
 
   <h3 id="spec-2">2. ビルド時の結合</h3>
@@ -1058,7 +1058,7 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
     <table class="wide">
       <thead><tr><th>コマンド</th><th>確かめること</th></tr></thead>
       <tbody>
-        <tr><td><code>npm test</code></td><td>このリポジトリと <code>packages/</code> の単体テスト。<code>test/plus-integration.test.ts</code> が統合オブジェクトの各項目を固定する</td></tr>
+        <tr><td><code>npm test</code></td><td>このリポジトリの単体テスト（<code>node --test --import ./test/asset-hooks.ts test/*.test.ts</code>）。<code>test/plus-integration.test.ts</code> が統合オブジェクトの各項目を固定する</td></tr>
         <tr><td><code>E2E_GUI_ROOT=… npm run test:gui-integration</code></td><td>固定したフォークに本家に無いファイルが無いこと、口の意味、移設したテスト</td></tr>
         <tr><td><code>npm run typecheck</code></td><td>型検査</td></tr>
         <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>配信ビルド。<code>build-info.json</code> の <code>revision</code> と <code>siteRevision</code> が今の HEAD と <code>site/source.json</code> に一致すること</td></tr>
@@ -1149,7 +1149,7 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
   </div>
   <figure>
     <div class="canvas">
-      <svg viewBox="0 0 760 270" role="img" aria-label="作業の順序。turbowarp-plus-packages で実装と単体テストを行い、v タグで npm に公開する。新しい口が要るときだけ scratch-gui フォークで口を開ける PR を出す。turbowarp-plus-editor で npm 公開版とフォークの SHA に上げ、site でつなぎ、テストとビルドで確かめて PR を出す。">
+      <svg viewBox="0 0 760 270" role="img" aria-label="作業の順序。該当するパッケージのリポジトリで実装と単体テストを行い、版を上げて npm に公開する。新しい口が要るときだけ scratch-gui フォークで口を開ける PR を出す。turbowarp-plus-editor で npm 公開版とフォークの SHA に上げ、site でつなぎ、テストとビルドで確かめて PR を出す。">
         <defs>
           <marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
         </defs>
@@ -1164,8 +1164,8 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
         <text x="170" y="45" text-anchor="middle" class="t-s t-b">① 実装と</text>
         <text x="170" y="62" text-anchor="middle" class="t-s t-b">単体テスト</text>
         <rect x="260" y="24" width="140" height="48" rx="8" class="box plus"/>
-        <text x="330" y="45" text-anchor="middle" class="t-s t-b">② bump で版を決め</text>
-        <text x="330" y="62" text-anchor="middle" class="t-s t-b">v タグで npm 公開</text>
+        <text x="330" y="45" text-anchor="middle" class="t-s t-b">② 版を上げて</text>
+        <text x="330" y="62" text-anchor="middle" class="t-s t-b">npm に公開</text>
         <line x1="242" y1="48" x2="257" y2="48" class="ln" marker-end="url(#h2)"/>
 
         <rect x="100" y="104" width="300" height="48" rx="8" class="box warn"/>
@@ -1196,11 +1196,11 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
   <ol class="steps">
     <li>
       <h5 id="howto-3-1">置き場所と口を決める</h5>
-      <p>図13で A〜D のどれに当たるかを決め、使う口を<a href="#spec">仕様書の口の一覧</a>から選びます。実装がどのパッケージに入るかもこの時点で決めます。Editor の <code>packages/</code> にある既存の実装は移行途中のもので、新しい機能の置き場所にはしません。</p>
+      <p>図13で A〜D のどれに当たるかを決め、使う口を<a href="#spec">仕様書の口の一覧</a>から選びます。実装がどのパッケージ（どのリポジトリ）に入るかもこの時点で、設計や issue を書く段階で決めます。新しい機能の実装本体は turbowarp-plus family の別パッケージ（MPL-2.0、<code>turbowarp-plus-editor-*</code>）に置き、Editor には版の固定と、パッケージの口を GUI に渡す結線だけを置きます。以前の <code>packages/editor-*</code> はすべて family のパッケージへ移しました（たとえば画面内のウィンドウやダイアログの操作は <code>-windows</code>、作品の読み取りと編集は <code>-project-model</code>、Git の画面と公開は <code>-git</code>、コードの画面とブロックパレットは <code>-code-views</code>、Web フォントは <code>-fonts</code>、レイアウト・メニュー・ファイルのダイアログ・ステージの操作・バックパックは <code>-workbench</code>）。Editor に <code>packages/</code> を作り直しません。</p>
     </li>
     <li>
       <h5 id="howto-3-2">パッケージに実装する</h5>
-      <p>turbowarp-plus-packages の該当パッケージ（無ければ新しいパッケージ）に実装します。GPL のコードは import せず、エディターから受け取るものはすべて引数でもらいます。付ける機能は <code>{dispose}</code> を返します。</p>
+      <p>該当するパッケージのリポジトリ（たとえば <code>github.com/kubohiroya/turbowarp-plus-editor-windows</code>。各パッケージの <code>package.json</code> の <code>repository</code> にあります）に実装します。当てはまるものが無ければ、<code>turbowarp-plus-editor-*</code> の名前で新しいリポジトリを作ります。GPL のコードは import せず、エディターから受け取るものはすべて引数でもらいます。付ける機能は <code>{dispose}</code> を返します。</p>
 <pre><code>// パッケージ側：document と翻訳を受け取り、外す手段を返す
 export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
     const onTargetsUpdate = () =&gt; render(hostDocument, vm, getMessages());
@@ -1216,7 +1216,7 @@ export const attachSpriteBadges = (hostDocument, {vm, getMessages}) =&gt; {
     </li>
     <li>
       <h5 id="howto-3-3">版を上げて npm に公開する</h5>
-      <p>turbowarp-plus-packages の <code>npm run bump</code>（上流から）または <code>npm run bump:downstream</code>（下流へ伝える）で版を決め、<code>v&lt;版&gt;</code> のタグで npm に公開します。tgz を Editor に同梱する方法は使いません。</p>
+      <p>各パッケージは自分のリポジトリから npm に公開します。公開の契機はリポジトリごとに異なります。多くは、<code>package.json</code> の版を上げて main に入れると、その版が npm にまだ無ければ GitHub Actions が trusted publishing（OIDC）で公開します。<code>turbowarp-plus-editor-git</code> は <code>v&lt;版&gt;</code> のタグを push したときに公開します。新しいパッケージの最初の版は手で公開し、そのあと npm で Trusted Publisher を設定します（trusted publishing は既存のパッケージにしか設定できないため）。tgz を Editor に同梱する方法は使いません。</p>
     </li>
     <li>
       <h5 id="howto-3-4">（D のときだけ）フォークに口を開ける</h5>
@@ -1293,10 +1293,11 @@ if (controls) {
   <h3 id="howto-6">6. このリポジトリの保守者向けの注意</h3>
   <div class="callout warn">
     <div class="label">保守者・AI エージェント向け</div>
-    <p>ここからは、turbowarp-plus-editor に直接変更を入れる人（AI エージェントを含む）向けの運用規則です。正本は <code>AGENTS.md</code> です。</p>
+    <p>ここからは、turbowarp-plus-editor に直接変更を入れる人（AI エージェントを含む）向けの運用規則です。最初の2つの正本は <code>AGENTS.md</code> です。最後の1つは、このリポジトリの設定から来る注意です。</p>
     <ul class="checklist no">
-      <li>PR に <code>--auto</code> を付けない。このリポジトリの PR には必須のチェックが無く、<code>--auto</code> を付けると CI を待たずにすぐマージされる</li>
+      <li>新しい機能の実装本体をこのリポジトリに置かない。本リポジトリには版の固定と結線だけを置き、ワークスペースのパッケージ（以前の <code>packages/editor-*</code>）を作り直さない。置き場所に迷うときは、設計や issue を書く段階でどのリポジトリに入れるかを先に決める</li>
       <li>OS のマウスカーソルを動かす E2E（<code>TW_PLUS_NATIVE_INPUT=1</code>、<code>test:e2e:native</code>）を、明示的に依頼されていないのに走らせない。一般的な E2E の実行や PR の検証の依頼には含まれない</li>
+      <li>CI を待つつもりで <code>gh pr merge --auto</code> を使わない。このリポジトリの PR には必須のチェックが無く、<code>--auto</code> を付けると CI を待たずにすぐマージされる</li>
     </ul>
   </div>
   <p class="source">関連文書：<code>docs/plus-integration-sockets.md</code>（口の設計の経緯）、<code>docs/gui-integration/README.md</code>（移設とビルド時の接続）、<code>docs/architecture.md</code>（責務と配信）。</p>

@@ -16,7 +16,7 @@
   "images": {
     "plus-workspace-current.png": {
       "size": "1440x1000",
-      "description": "New project at startup; pointer over the code area so the minimap and zoom buttons show."
+      "description": "New project at startup; pointer over the code area so the minimap and zoom buttons show. Recaptured on 2026-11-15 from a local build of main 7947047 (seven-button section rail of sprite-panes 0.7.0), same viewport and browser settings."
     },
     "plus-menu.png": {
       "size": "720x420",
@@ -89,6 +89,10 @@
     "messages-sprite.png": {
       "size": "1440x1000",
       "description": "メッセージ of the ボール sprite."
+    },
+    "sprite-functions.png": {
+      "size": "1440x1000",
+      "description": "New project; functions ジャンプする (calls 着地する) and 着地する plus two hats calling ジャンプする, placed through ScratchBlocks as the browser test does; ハット・関数一覧 opened and ジャンプする picked, so it shows alone in the split view on the right. Captured on 2026-11-15 from a local build of main 7947047, same viewport and browser settings."
     },
     "messages-stage.png": {
       "size": "1440x1000",
@@ -408,6 +412,10 @@
         "size": "1440x1000",
         "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: メッセージ of the ボール sprite."
       },
+      "sprite-functions.png": {
+        "size": "1440x1000",
+        "description": "Same composition as the Japanese image, captured in English mode with the functions jump and land. Japanese capture: New project; functions ジャンプする (calls 着地する) and 着地する plus two hats calling ジャンプする, placed through ScratchBlocks as the browser test does; ハット・関数一覧 opened and ジャンプする picked, so it shows alone in the split view on the right. Captured on 2026-11-15 from a local build of main 7947047, same viewport and browser settings."
+      },
       "messages-stage.png": {
         "size": "1440x1000",
         "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: メッセージ of the backdrop (whole-project relation diagram)."
@@ -438,7 +446,7 @@
       },
       "plus-workspace-current.png": {
         "size": "1440x1000",
-        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: New project at startup; pointer over the code area so the minimap and zoom buttons show."
+        "description": "Same composition as the Japanese image, captured in English mode. Japanese capture: New project at startup; pointer over the code area so the minimap and zoom buttons show. Recaptured on 2026-11-15 from a local build of main 7947047."
       },
       "project-data-dialog.png": {
         "size": "640x568",
