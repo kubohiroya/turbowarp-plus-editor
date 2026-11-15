@@ -58,6 +58,38 @@ const withoutEvents = (blocks, action) => {
     }
 };
 
+type MeasuredField = {textElement_?: {textContent?: string | null} | null; size_?: {width: number}};
+type MeasuredBlock = {
+    rendered?: boolean;
+    inputList: {fieldRow: MeasuredField[]}[];
+    getRootBlock(): MeasuredBlock;
+    getDescendants(ordered: boolean): MeasuredBlock[];
+    render(bubble?: boolean): void;
+};
+
+/**
+ * Lay out again the blocks a workspace drew while it was not displayed. ScratchBlocks measures text with the
+ * SVG it draws, which reads as no width in a hidden container, and keeps that width: labels then overlap and
+ * blocks shrink. Children are laid out before their parents, so each parent takes their new size.
+ * Returns whether anything was laid out again.
+ */
+export function remeasureHiddenFields(workspace: {getAllBlocks(ordered: boolean): MeasuredBlock[]}) {
+    const unmeasured = (field: MeasuredField) => Boolean(field.textElement_?.textContent) && field.size_?.width === 0;
+    const roots = new Set<MeasuredBlock>();
+    for (const block of workspace.getAllBlocks(false)) {
+        if (block.rendered && block.inputList.some(input => input.fieldRow.some(unmeasured))) roots.add(block.getRootBlock());
+    }
+    for (const root of roots) {
+        for (const block of root.getDescendants(false).reverse()) {
+            for (const input of block.inputList) {
+                for (const field of input.fieldRow) if (field.size_ && field.textElement_) field.size_.width = 0;
+            }
+            if (block.rendered) block.render(false);
+        }
+    }
+    return roots.size > 0;
+}
+
 function targetXml(vm: {runtime: {getTargetForStage(): CodeTarget}}, target: CodeTarget) {
     const stage = vm.runtime.getTargetForStage();
     const globals = Object.values(stage.variables).map(variable => variable.toXML());
@@ -320,6 +352,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
         },
         dispose() {
             blockDrag.dispose();
+            shown?.disconnect();
             if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
             if (parentFrame !== null) cancelAnimationFrame(parentFrame);
             if (workspace.updateToolbox !== updateToolbox) workspace.updateToolbox = updateToolbox;
@@ -330,6 +363,15 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             vm.runtime.removeListener('PROJECT_CHANGED', changed);
         }
     };
+
+    // The code area loads the editing target's scripts while another section covers it, such as after a function
+    // is added from the functions sections; lay them out again once it shows.
+    const injection = workspace.getInjectionDiv();
+    const view = injection.ownerDocument.defaultView;
+    const shown = typeof view?.ResizeObserver === 'function' ? new view.ResizeObserver(() => {
+        if (injection.clientWidth && injection.clientHeight) withoutEvents(blocks, () => remeasureHiddenFields(workspace));
+    }) : null;
+    shown?.observe(injection);
 
     const blockDrag = attachBlockDrag({vm, workspace, ScratchBlocks: blocks, onError, prepareImport: bridge.prepareImport});
     session.bridge = bridge;
@@ -601,6 +643,8 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
 
     const observer = new view.ResizeObserver(() => {
         if (!element.clientWidth || !element.clientHeight) return;
+        // A tab may load its script before it is shown.
+        withoutEvents(blocks, () => remeasureHiddenFields(editor));
         blocks.svgResize(editor);
         if (!positioned) positioned = position();
         reveal();

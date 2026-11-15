@@ -6,6 +6,7 @@ import {captureNativeFieldDrawing} from '../native-field-svg.ts';
 import {createIsolatedNativeField, registerCustomFields, reserveAttachedNativeField} from '../custom-extension-fields.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
 import {foldedDefinitionAttribute, isFoldedDefinition, removeObsoleteProcedureInputs, setFoldedDefinition} from '../procedure-edits.ts';
+import {remeasureHiddenFields} from '../workspace.ts';
 
 function fixture(receiveBackpackDrop) {
     const document = {defaultView: new EventTarget(), hasFocus: () => focused === document};
@@ -747,4 +748,41 @@ test('folding keeps a mutation the hat already has', () => {
     assert.deepEqual(hat.mutation, {tagName: 'mutation', children: [], name: 'greet', [foldedDefinitionAttribute]: 'true'});
     setFoldedDefinition(hat, false);
     assert.deepEqual(hat.mutation, {tagName: 'mutation', children: [], name: 'greet'});
+});
+
+test('blocks drawn while hidden are laid out again, children before parents', () => {
+    const order: string[] = [];
+    const field = (text: string, width: number) => ({textElement_: {textContent: text}, size_: {width}});
+    function block(name: string, fields: ReturnType<typeof field>[], children: object[] = []) {
+        const self = {
+            name, rendered: true, inputList: [{fieldRow: fields}], parent: null as object | null,
+            getRootBlock() {
+                let current = self;
+                while (current.parent) current = current.parent as typeof self;
+                return current;
+            },
+            getDescendants: () => [self, ...children.flatMap(child => (child as typeof self).getDescendants(false))],
+            render() {
+                order.push(name);
+            }
+        };
+        for (const child of children) (child as typeof self).parent = self;
+        return self;
+    }
+    // A definition whose labels were measured while hidden, and a script laid out while shown.
+    const name = field('hop', 0);
+    const prototype = block('prototype', [name]);
+    const label = field('define', 0);
+    const definition = block('definition', [label], [prototype]);
+    const shown = block('shown', [field('move', 40), field('', 0)]);
+    const workspace = {getAllBlocks: () => [definition, prototype, shown]};
+
+    assert.equal(remeasureHiddenFields(workspace as never), true);
+    assert.deepEqual(order, ['prototype', 'definition'], 'only the hidden script, its children first');
+    assert.equal(name.size_.width, 0, 'cleared so the next render measures it');
+    order.length = 0;
+    name.size_.width = 31;
+    label.size_.width = 32;
+    assert.equal(remeasureHiddenFields(workspace as never), false, 'nothing to do once measured');
+    assert.deepEqual(order, []);
 });
