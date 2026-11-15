@@ -14,7 +14,7 @@ import {projectFolderWorkflows} from '../project-folder-host.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
-import '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions.css';
+import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {GitFileMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
@@ -32,7 +32,7 @@ import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search
 import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
     renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
 import {renderMenuIcon} from '../context-menu-icons/index.ts';
-import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
+import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 
 export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.

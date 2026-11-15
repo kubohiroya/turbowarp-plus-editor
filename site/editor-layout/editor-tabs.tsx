@@ -1,7 +1,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import {createAssetTransferPanel, type ProjectAssetTransferPort} from '@kubohiroya/turbowarp-script-transfer';
-import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
+import {createSurface} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';

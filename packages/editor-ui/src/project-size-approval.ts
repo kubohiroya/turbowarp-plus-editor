@@ -1,4 +1,4 @@
-import {dialogAction, dialogActions} from './dialog-actions.ts';
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
 /**
  * Ask whether to open a project larger than the Editor's standard limit (issue #428).
  *

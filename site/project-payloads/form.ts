@@ -1,4 +1,4 @@
-import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {sb3SaveFormats} from '@kubohiroya/turbowarp-sb3-save-format';
 
 const formatLabels = {

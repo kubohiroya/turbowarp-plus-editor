@@ -9,7 +9,7 @@ import {createProjectDialogs} from './dialog.ts';
 import {installEditorExtensionHost} from '../extension-host/editor-host.ts';
 import {editProjectURI, getExtensionAuthoringHost, withProjectSerialization} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import {createProjectDiagnostics} from './diagnostics.ts';
-import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
+import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {renderExportView, renderExtensionsForm, renderSaveAsForm, saveProjectAs} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import type {ProjectFileStorage, ExtensionStorage} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {renderProjectCommitDialog} from '@kubohiroya/turbowarp-plus-editor-ui/project-commit-dialog';

@@ -1,4 +1,4 @@
-import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
 import styles from './dialog.css';
 import snackbarStyles from '../styles/snackbar.css';
 import {contactLink, descriptionParts} from './links.ts';

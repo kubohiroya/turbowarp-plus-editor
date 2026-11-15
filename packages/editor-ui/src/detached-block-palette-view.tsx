@@ -1,5 +1,6 @@
 import React from 'react';
-import {IconMenuButton} from './icon-menu-button.tsx';
+import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-windows';
+import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import type {PaletteItem, PaletteSource} from './detached-block-palette.ts';
 import styles from './detached-block-palette.css';
 

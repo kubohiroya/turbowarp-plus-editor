@@ -1,4 +1,4 @@
-import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
 import JSZip from '@turbowarp/jszip';
 import type {EmbeddedExtensionManifest, ProjectJson, Sb3SourceManifest} from '@kubohiroya/sb3-toolchain';
 

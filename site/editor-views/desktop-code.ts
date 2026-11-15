@@ -1,5 +1,5 @@
 import {createCodeSession} from '@kubohiroya/turbowarp-plus-editor-views';
-import {createSurface, pendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
+import {createSurface, pendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {createDesktopPanelHost} from '../editor-layout/desktop-panel-host.ts';
 
 const host = createDesktopPanelHost('code', 'twPlusCodePopout', 830, 600, false);

@@ -1,4 +1,4 @@
-import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-ui/dialog-actions';
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
 import styles from '../project-tools/dialog.css';
 
 /** Ask before sending an SB3-provided URL any request, including for non-cacheable data. */
