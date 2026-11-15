@@ -110,7 +110,6 @@
 <figcaption>Selecting a file opens a tab in the same area as the code. Switch the view with "Edit" and "Diff" at the top right, and after editing text, click "Save file" to write it.</figcaption>
 </figure>
 <p>You can also use Project Starter, a command that unpacks an SB3 into a project folder (see <a href="../github/index.en.html#starter">Move a Scratch project with Project Starter</a>).</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/305">Editing project folders</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/319">Reloading folder diffs</a></p>
 
 </section>
 
@@ -144,7 +143,6 @@
 <figcaption>Selecting "Change how far the cat walks (#12)" in "Git history" on the left opens "Create PR". Here the Cat's code is selected to show that commit's changes.</figcaption>
 </figure>
 <p>Working trees added with git worktree, submodules, and symbolic links are not supported. Changes to execute permissions in the working tree cannot be detected from the browser. If you do not use local Git, add <code>twPlusLocalGit=0</code> to the launch URL. The "Git ▾" button in the menu bar and the "Git history" button are then hidden too.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/313">Local Git panel</a></p>
 
 </section>
 
@@ -160,7 +158,6 @@
 <figcaption>The Cat's steps changed from 10 to 25. Hovering over a comparison frame shows a minimap and zoom buttons at its lower right. Check "Move both versions together" below the comparison frames to scroll and zoom the before and after views together.</figcaption>
 </figure>
 <p>Extension blocks that the editor has no definition for are shown as placeholder blocks that keep their names and connections. The editor does not fetch or run the extension code.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">Script-by-script PR review</a></p>
 
 </section>
 
@@ -199,7 +196,7 @@
 <tr><th scope="row">Fine-grained PAT on Desktop</th><td>Uses a fine-grained PAT (personal access token). Available with a supported bundled version. On GitHub, select the target repositories and create a token with read access to Contents (read and write for push), then enter it in Desktop's input screen. Where saving is offered, the token is encrypted with the OS protection feature</td></tr>
 <tr><th scope="row">Git credential helper on Desktop</th><td>With a supported bundled version, uses the credentials of the helper that applies to the target repository. Enter your GitHub account name and agree on Desktop's confirmation screen</td></tr>
 </tbody></table></div>
-<p>PAT and credential helper are methods for use without a client ID. You can choose them when both Desktop and its bundled editor support them. You can check the bundled version in the build information of the Desktop release. <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/blob/main/config/plus-renderer.json">Desktop's pinned revision</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/521">Editor-side support</a></p>
+<p>PAT and credential helper are methods for use without a client ID. You can choose them when both Desktop and its bundled editor support them. You can check the bundled version in the build information of the Desktop release. <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/blob/main/config/plus-renderer.json">Desktop's pinned revision</a></p>
 
 <h3>Install and authorize the GitHub App</h3>
 <ol>
@@ -217,7 +214,7 @@
 <li><strong>Push.</strong> Allow push when connecting, then click "Send current branch (push)". If the result is unclear, fetch to check the remote branch before sending again.</li>
 </ul>
 
-<p><a href="../github/index.en.html#push">Steps to send to GitHub</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/316">Connection integration testing</a></p>
+<p><a href="../github/index.en.html#push">Steps to send to GitHub</a></p>
 
 </section>
 
@@ -263,8 +260,7 @@
 <h3 id="send-review">Send a review</h3>
 <p>"Reviewed" is a mark for your own progress. To send a review to GitHub, select "Allow sending reviews" when connecting, then open the PR. The connection target must have the review GitHub API enabled, and you need permission to send reviews in the repository.</p>
 <p>In "Send a review", check the overall comment and the comments on code, choose "Comment", "Approve", or "Request changes" as the result, and click "Send Review". Before sending, the screen shows whether code comments can become threads or go into the review body. If you cannot use the review form, open the PR on GitHub and review it from "Files changed". <a href="../github/index.en.html#merge">Steps for checks, review, and merge</a></p>
-<p>Connection operators enable API groups with <code>GIT_GITHUB_API</code> on Cloudflare and <code>TW_PLUS_DESKTOP_GIT_GITHUB_API</code> on Desktop. <code>review-threads</code> handles comments attached to positions in the diff, and <code>reviews-body</code> can be used to send reviews with a body only. The Desktop API is off by default. <a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/git-smart-http.md#github-api-routes">API settings</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/444">Review sending test status</a></p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">Connecting to the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/418">PR review procedure</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">Review PRs as Scratch scripts</a></p>
+<p>Connection operators enable API groups with <code>GIT_GITHUB_API</code> on Cloudflare and <code>TW_PLUS_DESKTOP_GIT_GITHUB_API</code> on Desktop. <code>review-threads</code> handles comments attached to positions in the diff, and <code>reviews-body</code> can be used to send reviews with a body only. The Desktop API is off by default. <a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/git-smart-http.md#github-api-routes">API settings</a></p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">

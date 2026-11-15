@@ -3,7 +3,7 @@
 現在の配置は[GUI追加ファイルの全面移設](gui-integration/README.md)を参照してください。以下の旧パス・GUI側に残す判断は、各時点の履歴です。現在は本家に存在しなかったファイルをGUIからすべて撤去し、接続実装・文書・ツール・テストを本リポジトリが所有します。
 
 
-親仕様: scratch-gui の差し込み口は [kubohiroya/scratch-gui#111](https://github.com/kubohiroya/scratch-gui/pull/111) で開いた。この文書は、残る本家ファイルの改変を**すべて**差し込み口へ置き換えるための設計と段階順を定める。
+scratch-gui の差し込み口は `plusIntegration()` で開いている。この文書は、残る本家ファイルの改変を**すべて**差し込み口へ置き換えるための設計と段階順を定める。
 
 ## 測った差分（2026-11-02）
 
@@ -21,7 +21,7 @@
 
 ## 差し込み口の形
 
-`src/lib/tw-plus-integration.js` の `plusIntegration()` が返す1つのオブジェクトに、名前の付いた口を並べる。口はすべて**任意**で、無ければフォークは今の本家の動作に落ちる。これは #111 が開いた形の素直な拡張で、口を増やしてもフォーク側に増えるのは「その口を参照する数行」だけになる。
+`src/lib/tw-plus-integration.js` の `plusIntegration()` が返す1つのオブジェクトに、名前の付いた口を並べる。口はすべて**任意**で、無ければフォークは今の本家の動作に落ちる。これは最初に開いた口の素直な拡張で、口を増やしてもフォーク側に増えるのは「その口を参照する数行」だけになる。
 
 ```js
 /** @returns {PlusIntegration|null} */
@@ -29,7 +29,7 @@ export const plusIntegration = () => null;
 
 // PlusIntegration
 // {
-//   installExtensionHost?(vm, settings): unknown        // #111 で開いた口
+//   installExtensionHost?(vm, settings): unknown        // 最初に開いた口
 //   modals?: readonly string[]                          // reducers/modals.js
 //   securityModals?: Readonly<Record<string, string>>   // tw-security-manager-constants.js
 //   themeTokens?: {light?: object, dark?: object}       // lib/themes/gui/*.js
@@ -55,7 +55,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | 本家ファイル | 行数 | 運ぶ口 |
 |---|---|---|
 | `reducers/modals.js` | +8 | `modals`。`blockEditorModal` の名前と初期値、open/close を名前の一覧から作る |
-| `reducers/project-state.js` | +9 → +7 | `createCancelSecurityLoad`。必要な値を**引数で渡す**。既定はフォーク、ホストが上書き（[scratch-gui#114](https://github.com/kubohiroya/scratch-gui/pull/114)） |
+| `reducers/project-state.js` | +9 → +7 | `createCancelSecurityLoad`。必要な値を**引数で渡す**。既定はフォーク、ホストが上書き |
 | `lib/tw-security-manager-constants.js` | +1 | `securityModals`。`LoadExtensions` を追加する |
 | `lib/themes/gui/light.js` | +4 | `themeTokens.light`。`block-editor-*` の3色 |
 | `lib/themes/gui/dark.js` | +4 | `themeTokens.dark`。同上 |
@@ -73,7 +73,7 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 | `components/controls/controls.css` | +40 | **口にしない。移さない**（下の「いま残っている差分」。当初は段階8で移す予定だった） |
 | `components/library/library.css` | +24 | **口にしない。移さない**（同上。当初は段階9で移す予定だった） |
 | `components/modal/modal.css` | +5 -2 | **口にしない。** モバイルでoverlayがはみ出すのを直す汎用修正。`modal.jsx` と同じ扱い |
-| `components/stage/stage.css` | +1 | `@import` の1行は残り、中身の `preview-reload.css`(259行) は**配信側へ移った**（下の「台帳の訂正」。GUI #136 / [#105](https://github.com/kubohiroya/turbowarp-plus-editor/pull/105)） |
+| `components/stage/stage.css` | +1 | `@import` の1行は残り、中身の `preview-reload.css`(259行) は**配信側へ移った**（下の「台帳の訂正」） |
 | `components/tw-security-manager-modal/data-url.css` | +1 -1 | **口にしない。** textareaの高さを 5rem→10rem にする汎用修正。同上 |
 | `components/modal/modal.jsx` | +3 -2 | **口にしない。** `hideCloseButton` はPlus固有でない汎用prop。本家に出せる形なので、汎用変更として残すか上流へ送る |
 | `components/library/library.jsx` | +27 -10 | **口にしない。** `busy` 中の操作を抑える汎用変更。同上 |
@@ -92,10 +92,10 @@ CSS には口を作らない。当初は空のスタイルシートを同じ仕�
 
 | 段階 | 内容 | 依存 |
 |---|---|---|
-| 3 | `installExtensionHost` の口（#111）と、配信側の空モジュール差し替え | 済・[PR #57](https://github.com/kubohiroya/turbowarp-plus-editor/pull/57) |
+| 3 | `installExtensionHost` の口と、配信側の空モジュール差し替え | 済 |
 | 4 | 表の口を一覧で足す: `modals` / `securityModals` / `themeTokens` / `translations` / `registerBlockShapes` / `shouldIgnoreKeyEvent`。いずれも数行で、互いに依存しない | 3 |
 | 5 | ~~CSS差し込み口~~ 取り消し。CSSは段階8・9と汎用変更へ振り分けた | — |
-| 6 | 文書エディタの結線の移送。開けた口は `attachToWorkspace`（[scratch-gui#113](https://github.com/kubohiroya/scratch-gui/pull/113)）で、結線は本リポジトリの `site/plus-integration.ts` に置いた（[PR #61](https://github.com/kubohiroya/turbowarp-plus-editor/pull/61)）。当初案の `alwaysMountedModals` と `TWDocumentEditor` の移送は取らなかった: 文書エディタはモーダルではなくVM・言語・ScratchBlocksに付くもので、フォークが渡すべきは描画先ではなくそれらだった | 済 |
+| 6 | 文書エディタの結線の移送。開けた口は `attachToWorkspace` で、結線は本リポジトリの `site/plus-integration.ts` に置いた。当初案の `alwaysMountedModals` と `TWDocumentEditor` の移送は取らなかった: 文書エディタはモーダルではなくVM・言語・ScratchBlocksに付くもので、フォークが渡すべきは描画先ではなくそれらだった | 済 |
 | 7 | `createCancelSecurityLoad`（値を引数で渡し、既定をホストが上書き） | 4 |
 | 8 | `stageControls` / `cameraControls` と `controls.jsx` 2件・`camera-control/*`・`tw-stage-controls.js`・`tw-camera-controls.js` の移送 | 4 |
 | 9 | `extensionLibrary` / `extensionGuiApi` / `addons` | 4 |
@@ -131,7 +131,7 @@ case CANCEL_SECURITY_LOAD:
     return createCancelSecurityLoad(initialState, defaultProjectId, LoadingState, hostIntegration());
 ```
 
-既定はフォークに置き、ホストが渡したときだけ上書きする。何も渡されなければ既定が走るので、フォークは単体でも今までどおり動く。既定をフォークから出す形も試したが、そちらは既存の取消テストがホストの用意を必要とし、素のフォークから機能が消える。実装は [scratch-gui#114](https://github.com/kubohiroya/scratch-gui/pull/114)。
+既定はフォークに置き、ホストが渡したときだけ上書きする。何も渡されなければ既定が走るので、フォークは単体でも今までどおり動く。既定をフォークから出す形も試したが、そちらは既存の取消テストがホストの用意を必要とし、素のフォークから機能が消える。
 
 **この手は他の段階にも効く。** 「GUI内部の値が必要だから運べない」という理由は、値を引数で渡すことで解けるものが多い。残りの段階では、口を諦める前にこの形を先に検討する。段階5（CSS）の取り消しは理由が別（CSSモジュールのクラス名がビルド時にハッシュされ、全域スタイルシートから狙えない）なので変わらない。
 
@@ -369,7 +369,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 
 文書エディタ・loader・security-dialog と、同じ移動を3回やった。`verifyHost` がホストの manifest / lock / 実体を見ていた分を、`verify〇〇Dependency(directory, pins)` として配信側の install に向ける。`verifyHost` に残るのは GUI 自身の依存（scratch-vm の git 固定、コアの build-info）だけになった。
 
-**依存を外す作業は4つ動く: 機能・import・依存・検査。** 4つめを忘れるとCIが落ちる(#86)ので、気づけるようにはなっている。
+**依存を外す作業は4つ動く: 機能・import・依存・検査。** 4つめを忘れるとCIが落ちるので、気づけるようにはなっている。
 
 ## ブロックエディタ: family 依存が全て外れた（2026-11-03）
 
@@ -413,7 +413,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 | 移す前 | 先 | 後 | 60px |
 | 移した後 | 後 | 先 | 100px |
 
-40px 下がった分、900px の viewport でダイアログの操作ボタンが画面外に出る。直しは詳細度で決めること（`.theme.commonLayout` の2クラス）で、kubohiroya/scratch-gui#130。
+40px 下がった分、900px の viewport でダイアログの操作ボタンが画面外に出る。直しは詳細度で決めること（`.theme.commonLayout` の2クラス）。
 
 **突き止め方も記録しておく。** 推測を重ねずに済んだのは、両方のビルドを作って比べたから。
 
@@ -442,7 +442,7 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 | lockfile を除く | 81 | +3,292 / -52 |
 | うち本家ファイルへの改変 | 33 | — |
 
-`git diff upstream/develop origin/develop` の実測で、[kubohiroya/scratch-gui#132](https://github.com/kubohiroya/scratch-gui/pull/132)（`develop` の `a98d56cd9`）のあとの値。**この数は上流が動くだけでも変わる**——いまフォークは上流より20コミット遅れており、`package.json` / `webpack.config.js` / `addons/api.js` / `tw-security-manager.jsx` の4件は上流側の変更も混ざっている。数そのものより、下の内訳を見ること。
+`git diff upstream/develop origin/develop` の実測で、`develop` の `a98d56cd9` での値。**この数は上流が動くだけでも変わる**——いまフォークは上流より20コミット遅れており、`package.json` / `webpack.config.js` / `addons/api.js` / `tw-security-manager.jsx` の4件は上流側の変更も混ざっている。数そのものより、下の内訳を見ること。
 
 **「23件の割り当て」の本家ファイルは、すべて口の呼び出しだけになった。** 読んで確かめた: `reducers/modals.js`・`lib/themes/gui/light.js`・`lib/blocks.js`・`lib/vm-listener-hoc.jsx`・`containers/extension-library.jsx`・`containers/controls.jsx`・`addons/api.js`・`lib/tw-extension-gui-api.js` のどれも、足されている行は `hostIntegration()` と口の関数を import して呼ぶ数行である。つまり残っている33件の改変は、**設計どおり残すもの**で、消す対象ではない。
 
@@ -453,14 +453,14 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 1. **これらが装飾するのはフォークが描く要素**である。口の設計は「サービスを受け取って描く部分は本家側に残す」形になった（`controls.jsx` の表の行がそう書いてある）。描く側が本家なら、そのクラス名も本家のものになる。
 2. **本家の変数に依存している。** `controls.css` は `@import "../../css/colors.css"`、`library.css` は `$library-header-height` を使う。配信側から渡せる形にならない。
 
-これは「CSSに口を作らない理由（2026-11-02 訂正）」と同じ結論で、[kubohiroya/scratch-gui#130](https://github.com/kubohiroya/scratch-gui/pull/130) の注入順の件が、境界をまたぐ移送のほうが**危険**だと示した後でもある。
+これは「CSSに口を作らない理由（2026-11-02 訂正）」と同じ結論で、スタイルの注入順の件（上の「スタイルシートが境界を越えると…」）が、境界をまたぐ移送のほうが**危険**だと示した後でもある。
 
 ### 残っている本当の取りこぼし2件
 
 | | 内容 | 進められる条件 |
 | --- | --- | --- |
-| レビューUIのクラス名 | `lib/vm-listener-hoc.jsx:205` が `.twextsec-modal` を直書きしている。口（`shouldIgnoreKeyEvent`）は開いているが、**配信側が何も渡していない**。`src/css/extension-security-dialog.css`(14行) も同じパッケージのグローバルクラスを狙っている | [#92](https://github.com/kubohiroya/turbowarp-plus-editor/pull/92) がレビューUIを `ExtensionReview` に書き換え中で、**その markup のクラス名が変わりうる**。#92 のマージ後に、配信側が `shouldIgnoreKeyEvent` を埋め、フォークの直書きを外す |
-| 死んだプレビュー導線 | `scripts/local-plus-preview.cjs`(47行) が `@kubohiroya/turbowarp-extension-security-dialog` をフォークのビルドに alias する。フォークはもうその依存を持たないので、alias 先を import するモジュールが無く、素のGUIが出るだけ。フォークで family に触れている最後の1ファイル | [kubohiroya/scratch-gui#132](https://github.com/kubohiroya/scratch-gui/pull/132) で撤去（文書と合わせて160行減、`develop` 向け） |
+| レビューUIのクラス名 | `lib/vm-listener-hoc.jsx:205` が `.twextsec-modal` を直書きしている。口（`shouldIgnoreKeyEvent`）は開いているが、**配信側が何も渡していない**。`src/css/extension-security-dialog.css`(14行) も同じパッケージのグローバルクラスを狙っている | レビューUIを `ExtensionReview` に書き換えている最中で、**その markup のクラス名が変わりうる**。書き換えの後に、配信側が `shouldIgnoreKeyEvent` を埋め、フォークの直書きを外す |
+| 死んだプレビュー導線 | `scripts/local-plus-preview.cjs`(47行) が `@kubohiroya/turbowarp-extension-security-dialog` をフォークのビルドに alias する。フォークはもうその依存を持たないので、alias 先を import するモジュールが無く、素のGUIが出るだけ。フォークで family に触れている最後の1ファイル | フォークから撤去（文書と合わせて160行減） |
 
 ### 残りの内訳（移す対象ではないもの）
 
@@ -475,9 +475,9 @@ loader 依存が外れたので `withExtensionLoaderWebpack4` の適用も配信
 
 **この一覧がこの文書の現在の結論である。** フォークの差分を「まだ移せるもの」と読んではいけない。移せるものは上の取りこぼし2件だけで、他は口の呼び出しか、本家側に残すと決めたものである。
 
-## GUI #136によるCSS境界の更新（2026-11-03）
+## CSS境界の更新（2026-11-03）
 
-既存文書の「preview-reload.cssも移さない」という結論は、GUI #136で変更する。
+既存文書の「preview-reload.cssも移さない」という結論は、ここで変更する。
 GUIは `[data-gui-stage]` 上に配置情報をCSS変数として提供し、固有IDのスタイルは
 `site/styles/preview-reload.css` が所有する。色はGUIが既に公開するテーマ変数を参照する。
 ハッシュ済みクラス名、複製したGUI寸法、本家のビルド時変数には依存しない。
@@ -492,22 +492,22 @@ GUIは `[data-gui-stage]` 上に配置情報をCSS変数として提供し、固
 
 | | どこで |
 | --- | --- |
-| レビューUIのクラス名の直書き | [kubohiroya/scratch-gui#143](https://github.com/kubohiroya/scratch-gui/pull/143) が `vm-listener-hoc.jsx` の直書き・`extension-security-dialog.css`・その import の3件を削除。`git grep twextsec origin/develop -- src test` は0件。配信側は [#106](https://github.com/kubohiroya/turbowarp-plus-editor/pull/106) が口 `shouldIgnoreKeyEvent` を埋め、[#111](https://github.com/kubohiroya/turbowarp-plus-editor/pull/111) が [#105](https://github.com/kubohiroya/turbowarp-plus-editor/pull/105) との重複を1つに戻した |
-| 死んだプレビュー導線 | [kubohiroya/scratch-gui#132](https://github.com/kubohiroya/scratch-gui/pull/132) |
+| レビューUIのクラス名の直書き | フォークから `vm-listener-hoc.jsx` の直書き・`extension-security-dialog.css`・その import の3件を削除。`git grep twextsec origin/develop -- src test` は0件。配信側が口 `shouldIgnoreKeyEvent` を埋め、重複していた実装を1つに戻した |
+| 死んだプレビュー導線 | フォークから撤去 |
 
 ### この文書の結論2つが覆された
 
-**1. 「CSSは移さない」は、2件について間違いだった。** `preview-reload.css`(259行) と `block-editor.css`(38行) はフォークから出た。通った理由は、配信側が本家のハッシュ済みクラス名を狙うのを諦め、**本家が値を渡す**形に替えたこと——GUI #136 が `[data-gui-stage]` に配置情報をCSS変数として出し、固有IDのスタイルは `site/styles/preview-reload.css` が持つ。色は本家が既に公開しているテーマ変数を読む。
+**1. 「CSSは移さない」は、2件について間違いだった。** `preview-reload.css`(259行) と `block-editor.css`(38行) はフォークから出た。通った理由は、配信側が本家のハッシュ済みクラス名を狙うのを諦め、**本家が値を渡す**形に替えたこと——フォークが `[data-gui-stage]` に配置情報をCSS変数として出し、固有IDのスタイルは `site/styles/preview-reload.css` が持つ。色は本家が既に公開しているテーマ変数を読む。
 
 つまり移送の条件は「CSSかどうか」ではなく、**本家が必要な値を安定した属性セレクタ上の変数として公開できるか**である。残るのは `controls.css`(+40) と `library.css`(+24) で、こちらは本家のJSXが `styles.extensionControl` のようにハッシュ済みクラスを参照しているので、同じ手を使うには描く側も動かすことになる。
 
-**2. 「翻訳文は動かせない」も、形を変えれば動いた。** ブロックエディタの `tw-translations/block-editor.json`(40行) と theme tokens は [kubohiroya/scratch-gui#145](https://github.com/kubohiroya/scratch-gui/pull/145) でフォークから出た。文を移したのではなく、**フォークが自分の `intl` を口に渡す**形に替えた（`tw-block-editor-modal.jsx` が `intl` / `nodeAppearances` / `nodeLabels` を渡し、配信側が描く）。整形は本家の `intl` を通る。idと日英の文そのものは配信側の `site/block-editor/translations.json` が持ち、既存の `translations` の口から本家のIntlへ登録される——次の節がその仕組みを書いている。
+**2. 「翻訳文は動かせない」も、形を変えれば動いた。** ブロックエディタの `tw-translations/block-editor.json`(40行) と theme tokens もフォークから出た。文を移したのではなく、**フォークが自分の `intl` を口に渡す**形に替えた（`tw-block-editor-modal.jsx` が `intl` / `nodeAppearances` / `nodeLabels` を渡し、配信側が描く）。整形は本家の `intl` を通る。idと日英の文そのものは配信側の `site/block-editor/translations.json` が持ち、既存の `translations` の口から本家のIntlへ登録される——次の節がその仕組みを書いている。
 
 ### 読み方
 
 **「移せない」と書いた結論のうち2つが、半日で覆った。** どちらも同じ替え方で通っている——配信側が本家のものを狙う形を捨て、本家が値を渡す形にする。この文書に「移さない」と書いてあっても、その替え方が見つかれば覆る。数も結論も、見た日付とともに読むこと。
 
-## GUI #137によるフォーム表示の所有更新（2026-11-03）
+## フォーム表示の所有更新（2026-11-03）
 
 旧結論「翻訳文は動かせない」を変更する。既存IDと日英翻訳を
 `site/block-editor/translations.json` に保持し、既存の `translations` 差し込み口でGUIのIntlへ登録する。

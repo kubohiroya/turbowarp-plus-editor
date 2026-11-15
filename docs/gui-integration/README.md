@@ -1,6 +1,6 @@
 # GUI追加ファイルの全面移設
 
-2026-11-03の指示により、TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。#151 の方針に従い、その後に追加する GUI 側の接続契約テストは、用途とパスを記録して例外とする。
+TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。その後に追加する GUI 側の接続契約テストは、用途とパスを記録して例外とする。
 
 比較元は `TurboWarp/scratch-gui:3c017c528c853af3111df9641914704745c1fdf6`、移設前のGUIは `c24b587ec49b871e9cbdc7530d54635a521a5d6e`、公開時の受け側の基準は `121e1eae083d3abdedd03ae19a725eeb3bf95c04`。
 
@@ -24,7 +24,7 @@ GUIには本家に既存の `src/addons/hooks.js` 内の `getHostIntegration()` 
 
 配信ビルドの `scripts/site/webpack.config.cts` はwebpackの `ProvidePlugin` で `__TW_GUI_HOST__` を `site/gui-integration/index.ts` に結び付ける。ランタイムglobalへの代入や起動順に依存しない。GUI単体では値が存在せず、getterは `null` を返す。追加のローダー・フォーム・プレビューVM等は設置されず、通常のGUIが起動する。
 
-共有するReact、React DOM、Redux/Intl、VMとcentral dispatchは、配信ビルドが固定GUIの実体に解決する。GUIのModal・遅延ScratchBlocks・logger・Redux action creatorは呼出し時に渡す。受け側の接続モジュールがGUIのreducerやUIを直接importして初期化の循環を作らない。 Scratch GUI #172 のスプライト一覧のスタイル、プロパティのラッパー、別ウィンドウのステージ入力には、レイアウトパッケージの接続口を渡す。
+共有するReact、React DOM、Redux/Intl、VMとcentral dispatchは、配信ビルドが固定GUIの実体に解決する。GUIのModal・遅延ScratchBlocks・logger・Redux action creatorは呼出し時に渡す。受け側の接続モジュールがGUIのreducerやUIを直接importして初期化の循環を作らない。 スプライト一覧のスタイル、プロパティのラッパー、別ウィンドウのステージ入力には、レイアウトパッケージの接続口を渡す。
 
 機能の有効化条件・既存の起動時フラグ・保存形式は変更しない。独立プレビューVMのdispatch退避、VM単位のサービス同一性、workspaceの差替え・破棄、権限拒否時の初期状態への復帰と失敗表示も受け側の接続実装が保持する。
 
@@ -36,11 +36,11 @@ UI と読み込みは `@kubohiroya/turbowarp-plus-editor-fonts` が担当しま�
 
 作品フォルダの処理は `turbowarp-plus-editor-project-folder` が担当します。Editor では変更を含むソース付きアーカイブをロックファイルで固定します。埋め込みフォント付きの作品フォルダを SB3 に戻すには、同対応を含む `sb3-toolchain build` を使います。
 
-切り戻す場合は Editor の #495 の変更を一式戻し、`package.json` とロックファイルも同じ時点に戻して再ビルドします。保存済みの Web フォント付き SB3 は通常の TurboWarp でシステムフォントとして読み込めます。
+保存済みの Web フォント付き SB3 は通常の TurboWarp でシステムフォントとして読み込めます。
 
 ## 検証
 
-- `test:gui-integration` は固定 GUI に本家への追加ファイルがなく、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。GUI 側にあった `test/sprite-properties-host.test.mjs` は Scratch GUI #172 で削除した。
+- `test:gui-integration` は固定 GUI に本家への追加ファイルがなく、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。GUI 側にあった `test/sprite-properties-host.test.mjs` は削除済み。
 - CIは固定GUIを用意し、比較元の本家コミットをfetchした後、GUIの標準unitと受け側の接続テストを実行する。
 - GUI標準unit 33件、受け側の既存境界182件、移設分と配置監査54件が成功。受け側の型検査と変更GUIソースのeslintも成功。
 - GUI単体と配信ホストの両方で、production設定のブラウザー6エントリーをビルド。ローカル検証ではminifyのみOFF。micro:bitの通常生成物は同一基準の既存インストールから使用した。
@@ -67,26 +67,20 @@ GUIの撤去コミット `b4a575aad956147de1db416b89ab2decdaa0f612` を先に公
 
 問題時は受け側を移設差分を載せる前のホスト基準 `121e1eae083d3abdedd03ae19a725eeb3bf95c04` へ戻し、その `site/source.json` が指す移設前GUI `c24b587ec49b871e9cbdc7530d54635a521a5d6e` を使う。sourceを戻す場合は両リポジトリの今回の変更を組としてrevertする。GUIの履歴・default branchは書き換えず、既存の完全SHAを取得可能なまま保持する。SB3・利用者データ・公開済みnpmは書き換えない。
 
-公開前に受け側の最新mainへ載せ直し、security 0.8.1（`5c816492b39831a7c4ffeaabde01536046104c6a`）の固定と既存修正を保持した。この組合せでも既存境界182件・移設と配置監査54件、型検査と関連12件が成功した。
+## テスト補助の依存解決
 
-## 記録と公開範囲
+CIと同じ入れ子checkoutでは、テスト補助のresolverの転送対象を配信側のsite/testに限定し、GUI自身の依存解決まで再転送しない。入れ子配置の独立プロセス回帰テストがこれを確かめる。
 
-先行整理の履歴は [scratch-gui #133](https://github.com/kubohiroya/scratch-gui/issues/133) と [#140](https://github.com/kubohiroya/scratch-gui/issues/140)。先行Issueの完了は、今回の全面移設が当時完了していたことを意味しない。
-
-この変更はユーザーの追加指示に基づくローカル実装・検証。Issue投稿、push、PR作成、merge、Pages配信は、この文書の作成では実行していない。公開用のIssue・PR本文は別途草案として用意する。
-
-CIと同じ入れ子checkoutで、テスト補助のresolverがGUI自身の依存解決まで再転送する問題を修正した。転送対象を配信側のsite/testに限定し、入れ子配置の独立プロセス回帰テストを追加した。この配置で既存182件・移設と配置監査54件が成功した。
-
-## Issue #126：追加操作列の描画をホストで所有する
+## 追加操作列の描画をホストで所有する
 
 `@kubohiroya/turbowarp-plus-editor-workbench/stage-controls-view` がボタンとパネルの描画、サービスの購読と破棄を担当します。
-通常の編集画面では Editor のビルドでメニューバー末尾を `renderStageControls` に接続します（#365）。
+通常の編集画面では Editor のビルドでメニューバー末尾を `renderStageControls` に接続します。
 プレイヤーと全画面表示では、GUI の `afterStop` を使います。
 `Scratch.gui.stageControls` と同じVM単位のserviceを使い、登録APIと表示条件は維持します。
 GUI単体は任意の描画部品がなければ標準の操作列を表示します。CSSはGUIの公開テーマ変数を使います。
 切戻しはGUI/hostを移管前の互換なpinへ戻して行います。作品の形式は変更しません。
 
-## Issue #127：拡張一覧の追加レイアウトをホストで所有する
+## 拡張一覧の追加レイアウトをホストで所有する
 
 `libraryTab.classes` がlibrary/content/tagsのCSS Modulesクラスを提供し、GUIは任意の `customClasses` として受け取ります。
 追加の幅・余白・スクロール規則は `site/extension-library/plus-library.css` が所有します。
@@ -94,13 +88,13 @@ GUI単体は任意の描画部品がなければ標準の操作列を表示し�
 標準の検索・タグ選択・busy・closeの状態管理はGUIに残します。
 切戻しはGUIの受渡しとホストCSSを既知のpin組合せへ戻して行います。
 
-## Issue #163：ステージ転送メニューの描画をホストで所有する
+## ステージ転送メニューの描画をホストで所有する
 
 `site/gui-integration/lib/tw-plus-transfer.ts` がステージ転送項目をネイティブメニューに渡す形へ整え、右クリックメニューとラッパーを描画します。ラッパーのレイアウトは同じディレクトリのCSSで管理します。
 GUIはネイティブのコンテキストメニュー部品とファイル選択用アイコンを明示的に渡し、ステージ選択・ドロップ処理・背景ボタンの配置を担当します。
 切戻しはGUIとホストを移管前の互換なpinに戻して行います。
 
-## Issue #192 の標準配置
+## 標準配置
 
 配置切り替え、ステージ表示、対象一覧のレイアウトと CSS は `@kubohiroya/turbowarp-plus-editor-workbench` が所有します。Editor は起動設定、既存画面、ウィンドウ操作とパレットを接続します。
 
@@ -119,7 +113,7 @@ Web 版では Dockview の分割ワークスペースが既定で有効です。
 - 呼び出し側は、翻訳済みの `label`、トリガーの装飾アイコン `icon`、表示順に並べた `items` を渡す。項目には一意の `id`、`label`、`onSelect` を指定し、必要に応じて `icon`、選択状態の `checked`、独立したオン・オフ項目を示す `checkbox`、現在のウィンドウ状態などを示す `current`、`disabled`、前に区切り線を置く `separatorBefore` を加える。
 - 共通部品がテーマに沿った描画、メニューのアクセシブル名、矢印キー・Home・End での移動、Esc やメニュー外操作での閉鎖を担当する。ステージの表示・サイズ・ドック状態と起動フラグは、ステージ側が管理する。
 
-UI パッケージは Editor リポジトリ内の `file:` 依存として Web と Desktop のビルドで共有する。React はホストから受け取り、GUI の Redux やステージの状態に依存しない。
+windows パッケージは npm の完全一致版として Web と Desktop のビルドで共有し、スタイルはその `styles.css` から読む。React はホストから受け取り、GUI の Redux やステージの状態に依存しない。
 
 受け入れ基準は、ステージで従来の表示と操作が再現され、別のツールバーからステージの状態や GUI 接続に依存せずに呼び出せること。抽出を戻す場合は、ステージの呼び出しと共通部品を同じ差分で戻す。
 
@@ -129,20 +123,20 @@ UI パッケージは Editor リポジトリ内の `file:` 依存として Web �
 
 Plus 標準配置では既定で、ファイルメニューの項目にアイコンが付き、末尾の「機能拡張の追加」から既存のライブラリを開く。切り戻す場合は URL に `twPlusExtensionFileMenu=0` を指定して再読み込みする。
 
-項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu` が担当する。Editor は Scratch GUI #170 で提供された接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。拡張カタログの画面操作はデスクトップ幅で検証する。
+項目の描画と文言は `@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu` が担当する。Editor は GUI の接続口に、既存のライブラリを開く操作とファイルメニュー項目を渡す。拡張カタログの画面操作はデスクトップ幅で検証する。
 
 ## 別窓ステージ入力とスプライト設定の接続
 
-独立した `@kubohiroya/turbowarp-plus-editor-workbench` が、別窓ステージの入力管理、スプライト設定フォーム、ウィンドウ部品とスタイルを提供する。Editor は起動設定と表示先を接続する。`site/source.json` の GUI 固定先は、Scratch GUI #172 の接続変更を含む `a8fcdd7a2`。スプライト設定は Plus 配置または起動オプション `twPlusSpriteProperties=1` から利用できる。
+独立した `@kubohiroya/turbowarp-plus-editor-workbench` が、別窓ステージの入力管理、スプライト設定フォーム、ウィンドウ部品とスタイルを提供する。Editor は起動設定と表示先を接続する。`site/source.json` の GUI 固定先は、この接続口を含む版である。スプライト設定は Plus 配置または起動オプション `twPlusSpriteProperties=1` から利用できる。
 
-`package.json` と `package-lock.json` は layout 0.1.2 の同梱アーカイブと SHA-512 を固定する。アーカイブは独立リポジトリのコミット `835ab558ca7ca2054bfd0f89b948e28f3cd12804` から `npm ci` と `npm pack` で再生成できる。配信時は `notices/family.json` にライセンスと同梱ソースを記録する。
+`package.json` と `package-lock.json` は workbench を npm の完全一致版と integrity で固定する。配信時は `notices/family.json` にライセンスと同梱ソースを記録する。
 
 `node --test test/layout-package.test.ts test/family-notices.test.ts test/extension-artifact.test.ts` で固定と配信情報を検証する。ドックと別窓の入力は `test/editor-layout.browser.ts` が検証する。切り戻す場合はこの組み込み変更を revert する。作品の保存形式は共通。
 
 ## デバッガーをワークスペースのタブで開く
 
 ビルド時に `scripts/site/connect-addon-menu-buttons.cts` が、デバッガーアドオンのボタンに加えてウィンドウ要素もホストへ渡します。GUI のソースは変更しません。
-タブ化と配色はレイアウトパッケージ（0.1.38 以降）の `debugger-panel` と `debugger-panel.css` が担当し、Editor は `setDebuggerInterface` で受け取った要素をそこへ渡すだけです。
+タブ化と配色は workbench パッケージの `debugger-panel` と `debugger-panel.css` が担当し、Editor は `setDebuggerInterface` で受け取った要素をそこへ渡すだけです。
 Dockview のワークスペースがパネルを受け付けるときは「デバッガー」タブで開き、タブとデバッガーの開閉が連動します。`twPlusDockview=0` などで Dockview を使わない起動では、従来どおり浮動ウィンドウで開きます。どちらでもアドオン固有の青緑の代わりに GUI のテーマ変数を使います。
 切り戻しは、このローダーの差し替え部分とホストの `setDebuggerInterface` を外して行います。
 

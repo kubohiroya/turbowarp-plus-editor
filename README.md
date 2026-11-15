@@ -6,137 +6,77 @@ English | [日本語](README.ja.md)
 
 **[Open TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/?lang=en)**
 
-An editor for building TurboWarp Plus projects, and for editing the Scratch and TurboWarp projects you already have. Arrange and split the panels, put the stage, the sprite list, the palette and code panels in windows of their own, and get that arrangement back the next time you open it. Search a whole project and replace what you select. Keep a project as a folder under Git instead of one SB3 file. Check where every extension comes from and on what terms it runs. Export a single HTML file with the project's Plus extensions bundled in it.
+TurboWarp-Plus-Editor is an editor for Scratch 3 and TurboWarp projects that adds what a long or shared project needs: a workspace you can split and rearrange, project-wide search and replace, a project kept as a folder under Git, a visible check of every extension before it runs, and export to a single HTML file with the project's Plus extensions bundled in. An SB3 from Scratch or TurboWarp opens as it is, and what you save here opens there again.
 
-The Editor is built from pinned revisions of kubohiroya's [scratch-gui](https://github.com/kubohiroya/scratch-gui) and [scratch-vm](https://github.com/kubohiroya/scratch-vm) forks and more than twenty independently versioned `@kubohiroya/turbowarp-*` packages, and served through GitHub Pages in Japanese and English.
-
-- Site: <https://kubohiroya.github.io/turbowarp-plus-editor/>
 - Editor: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en>
-- npm: `@kubohiroya/turbowarp-plus-editor`
-- Family index and dashboard: <https://kubohiroya.github.io/turbowarp-plus-packages/>
+- Feature guide: <https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html>
+- Developer guide: <https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/index.en.html>
+- npm: [`@kubohiroya/turbowarp-plus-editor`](https://www.npmjs.com/package/@kubohiroya/turbowarp-plus-editor)
+- TurboWarp Plus family (extensions, apps, dashboard): <https://kubohiroya.github.io/turbowarp-plus-packages/>
 
-## What this editor is for
+[![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#forms)
 
-**Your existing projects open here.** An SB3 saved by Scratch 3 or by standard TurboWarp opens as it is, and what you make here saves back to an SB3 that those editors read. Nothing has to be rebuilt or ported to move a project in, so this is not a separate world you commit to; it is the same work, in an editor that does more with it. [The compatibility list](docs/features/sb3-compatibility.en.md) records exactly what travels in each direction.
+## Contents
 
-**Learning where things are.** The route from the sprite list, through the block palette, to running the stage has been straightened out. The sprite list is pinned beside the editing area from startup, finds sprites by name, and grows columns as you widen it. The palette is a wide band across the top: pick a category, search inside it, drag blocks from below it, and press and hold a category to put the categories in the order you want. The stage has its own display menu for full screen, visible and hidden, and the project keeps running while it is hidden. Variables, lists and messages stop being invisible: project-wide search finds them by name and lists every place each one is used, alongside block names, argument values, extension names, comment text and asset names.
+- [What it is for](#what-it-is-for)
+- [What Plus adds to standard TurboWarp](#what-plus-adds-to-standard-turbowarp)
+- [Opening projects](#opening-projects)
+- [“Edit in TurboWarp-Plus-Editor” button](#edit-button)
+- [The npm package and its commands](#the-npm-package-and-its-commands)
+- [URL switches](#url-switches)
+- [How the Editor is built](#how-the-editor-is-built)
+- [Development](#development)
+- [Documentation](#documentation)
+- [License and author](#license-and-author)
 
-**Pushing a long project further.** The whole workspace is Dockview: split a panel left and right or top and bottom, drag the dividers, open the editing panel and the block palette in windows of their own, and get the arrangement back next time. A minimap and zoom controls move you around long scripts. The edit menu carries undo, redo, cut, copy, paste and delete with shortcuts and icons. The custom-block definition dialog is this project's own, with boolean arguments, labels and run-without-screen-refresh. Script and stage transfer moves work between projects as `.blocks3` and `.stage3` files or by copy and paste between windows.
+## What it is for
 
-**A project as a folder in Git.** `sb3-toolchain` unpacks an SB3 into project data, assets and individual extensions, and rebuilds the SB3 to distribute from them. In between, the project is text and files that Git can diff, branch, review and merge. The Editor opens such a folder directly and shows the diffs, the branches, the last fifty commits and the pull requests in the **Local Git** panel, opened from the **branch button** in the menu bar. This changes what remixing is: Scratch culture is built on taking someone's project apart and making it yours, and until now that meant downloading a binary and losing the thread back to the original. As a folder under Git it stays a history you can read, a diff you can review, and a change you can send back.
-
-**Working with an AI, on a Scratch project.** **File → Open project folder…** reads a project folder and **Save** writes `project.source.json` back into it, next to the local images, sounds and extension code, after checking that the folder has not changed underneath you. That is the whole project as text and ordinary files, so an agent can read and edit it with the file tools it already has — no binary SB3 to decode first, and no screen to drive. You take turns: the agent writes the folder, you reload the project and look. Then you review it the way you would review code. Local Git shows the diff; the pull request view expands a change to `project.source.json` per target and per script, so what you read is the blocks that changed rather than JSON, and blocks from an extension you have not registered are drawn as substitute blocks carrying their names and connections, so a change stays readable without the extension. Embedded YAML documents are plain source with schemas, editable in VS Code through the local companion. Vibe coding for Scratch needs none of this to be special-cased: it follows from the project being files.
-
-**From using extensions to writing them.** Extensions come from the TurboWarp Plus catalog, and before one runs you see where it came from, what it contains and on what terms it executes. You then choose how its code is stored with the project: `remote-non-cacheable`, `remote-cacheable`, `embedded-file` or `embedded-data`, in bulk or one at a time. Past that, your own extension can be embedded in the SB3 as a file and travel with the project. An extension can give its blocks a form through `Scratch.gui.blockEditors.register`, a preview through `registerPreview`, fields it draws itself inside the block, and documents it owns with their own validation and schemas. `sb3-toolchain` then takes it the rest of the way: name, description and sandbox requirement read from the code header, a GitHub commit or npm version pinned, the embedded code's SHA-256 verified, API manifests compared across updates, and several extensions bundled as one composite extension with the original code kept. The path from adding someone's extension to publishing your own is a series of steps, each one visible in the Editor.
-
-**Extensions in TypeScript, with the npm ecosystem behind them.** Writing extensions in TypeScript is the recommended path, and the whole project is built that way: every source here is TypeScript — `.ts`, or `.cts` for CommonJS — run directly by Node's native type stripping in development, emitted as browser JavaScript by esbuild, and compiled with declarations by `tsc` for npm. The family packages publish their own `.d.ts` declarations behind subpath exports, so an extension is written against typed APIs instead of against guesses about the host, and a mistake surfaces in the editor rather than at runtime on someone else's stage. And because an extension is an npm package built with ordinary Node tooling, the npm ecosystem is reachable from inside a Scratch extension: take a parser, a geometry library or a model runtime off npm, bundle it, and let `sb3-toolchain` pin the version and verify the SHA-256 of what you ship. That is a way out of Scratch into the Node.js world, and a way back in.
-
-**YAML documents and JSON Schema as first-class parts of a project.** A project carries documents, not only scripts. A document is YAML or JSON source with a JSON Schema attached by the provider that owns it, and the Editor treats three things as the same document: the source text, shared YAML blocks that represent keys, arrays, values and comments one at a time, and schema-specific blocks that an owning App supplies. Switching representation applies the current edits to source and converts within one save; regeneration from source is refused when it would overwrite block edits that have not been applied. From a schema alone the standard editor generates a form with react-jsonschema-form and validates against it, so an error shows up where it is typed instead of at runtime. In VS Code the local companion writes the owner's schema and its association into a private working area, so completion and diagnostics come from the schema the expert declared — through the official Red Hat YAML extension, without touching their existing settings. `yaml-json`, `named-data`, `structured-data`, `document-data` and `document-source` carry the parsing, the references, the deterministic path operations, the persistence and the provider contracts.
-
-This is what the documents are for: a domain expert — someone who knows the subject rather than the code — declares a schema and writes the document, and the project operates it. Blocks stop being the place where an entire program is typed out and become the place where a domain model is driven, which is a different proposition from blocks as a way to learn to code. [`turbowarp-kamishibai-app`](https://www.npmjs.com/package/@kubohiroya/turbowarp-kamishibai-app) is that taken as far as a product: an AI-assisted interactive storytelling system whose stories are documents, not scripts.
-
-**A host for interactive works and device applications.** The Editor supplies a controls area in its menu bar that capability extensions register into, and shares it through `@kubohiroya/turbowarp-app-shell` so an extension bundled independently reaches the same dock — in a packaged single-HTML player too, where there is no toolbar. The family already uses it: [`camera-source`](https://www.npmjs.com/package/@kubohiroya/turbowarp-camera-source) shares one `MediaDevices` camera stream across extensions, with `camera-calibration` publishing its intrinsics, `ar` holding camera-based target state, `jsqr` reading QR codes including Structured Append sequences, and `teachable-machine` recognising pose, image and audio models. `async-input` handles target-scoped asynchronous keyboard, pointer and accumulated pose input; `bubble`, `svg-text`, `diagnostic-overlay`, `runtime-expression`, `kvs` and `asset-cache` cover speech bubbles with portrait layers, ruby text, SVG diagnostics on the stage, safe condition evaluation, key-value storage and a browser-local asset cache. Nothing in the Editor knows about any particular extension: a camera or sensor host application is an extension plus a project, not a fork of the Editor.
-
-**Where it starts, for a child.** None of the above matters to a ten-year-old until something on the screen is worth making. [`turbowarp-kamishibai-app`](https://www.npmjs.com/package/@kubohiroya/turbowarp-kamishibai-app) is the way in: the story is a document, the pictures and the voices are assets in the project, and a child who wants the next scene to branch has a reason to open a block. After that it is the same project that has a schema, a Git history, a typed extension and a camera attached to it, and the same editor they are already in. The intent is plain: a standard tool for STEAM education, reached through a story rather than through a tutorial.
+- **Keep working on the projects you have.** Nothing has to be ported. [The compatibility list](docs/features/sb3-compatibility.en.md) records what travels in each direction between this Editor, Scratch 3 and TurboWarp.
+- **Find your way around a project.** The sprite list stays beside the code and searches by name; the palette is a searchable band across the top whose categories you can reorder; search covers every sprite and the stage and lists where each variable, list and message is used.
+- **See how a project fits together.** The icons on the left of each sprite and the stage include **Hats and functions** and **Calls**. **Hats and functions** lists every script by its hat and every custom block definition, and the call graph under **Calls** draws which function calls which, including the global functions of other sprites and the stage. Pick a function or a script there, or choose **Show this function** on a block that calls one, and it opens alone in a real code area beside the sprite, with the palette, zoom and minimap of the main one. Add a function by name — a standard custom block or a TurboWarp Plus named function — from either of them ([guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#functions)). The variables pane also shows the thread and runtime variables of the temporary-variables extension and the functions that set or read them, and the message diagram shows which hat or function sends each message.
+- **Keep long scripts readable.** Collapse a script from its hat's context menu so that only the hat remains; the state is saved in the project and the collapsed body still updates when a function it calls changes. Long text arguments are shortened in the block and edited in a dialog, and the block context menu is grouped by kind of operation ([guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html#context-menu)).
+- **Push a long project further.** The workspace is [Dockview](https://dockview.dev/): split panels, open the code and the palette in windows of their own, and get the same arrangement back next time. A minimap, an edit menu with shortcuts, and `.blocks3` / `.stage3` transfer between projects come with it.
+- **Keep a project as a folder in Git.** [`sb3-toolchain`](https://www.npmjs.com/package/@kubohiroya/sb3-toolchain) unpacks an SB3 into text and files. The Editor opens that folder directly, saves `project.source.json` back into it, and shows diffs, branches, history and pull requests in its **Local Git** panel — with changes drawn as blocks, not JSON. A remix stays connected to the original as a history you can read and a change you can send back.
+- **Work alongside an AI agent.** Because the project is ordinary files, an agent edits it with the file tools it already has; you reload and review the block diff.
+- **Go from using extensions to writing them.** See where an extension comes from and on what terms it runs, choose how its code is stored with the project, embed your own, and let `sb3-toolchain` pin and verify it. Extensions are best written in TypeScript against the family packages' typed APIs, with npm libraries bundled in.
+- **Treat YAML documents and JSON Schema as part of a project.** A document can be edited as source, as shared YAML blocks, or as blocks its owning extension supplies; a schema gives it a generated form and validation, and VS Code completion through the local companion.
+- **Host interactive works and devices.** Extensions register controls into the Editor's menu bar through `@kubohiroya/turbowarp-app-shell`, so camera, AR, QR and Teachable Machine hosts are an extension plus a project, not a fork of the Editor.
+- **Start from a story.** [`turbowarp-kamishibai-app`](https://www.npmjs.com/package/@kubohiroya/turbowarp-kamishibai-app) is the way in for children: the story is a document, and branching the next scene is a reason to open a block.
 
 ## What Plus adds to standard TurboWarp
 
 | Task | Standard TurboWarp | What Plus adds |
 | --- | --- | --- |
 | Open a project | Loading an SB3 and confirming extension execution | Load progress, the TurboWarp Plus catalog, loading diagnostics |
-| Manage a project | Saving one SB3 file at a time | Reading and writing a project folder, local Git diffs and history |
-| Arrange the workspace | The basic code, stage and sprite arrangement | Splitting panels, panels and the palette in separate windows, a separate stage display, layout restoration |
-| Edit | Block input fields and menus | Project-wide search and replace, an edit menu, a searchable horizontal palette, a minimap, editing a selected function or script on its own in a split view, folding hats and definitions, long text arguments shortened and edited in a dialog, and the forms and YAML tabs a supporting extension provides |
-| Look inside a sprite | Code, costume and sound tabs | A list of hats and functions and a call graph, adding a function by name, a variables pane that also shows the thread and runtime variables of the temporary variables extension, a list of messages |
-| Reuse | The backpack and similar | Script and stage transfer as files, adding bundled assets |
-| Save and hand over | Saving an SB3, the standard Packager | Save and Save As, the storage format for embedded data, the storage format for extension code, HTML with Plus extensions bundled |
+| Manage a project | Saving one SB3 file at a time | Reading and writing a project folder, local Git diffs, history and pull requests |
+| Arrange the workspace | The basic code, stage and sprite arrangement | Split panels, panels and the palette in separate windows, a stage display menu, layout restoration |
+| Understand the structure | Scrolling through the code area | A list of hats and functions, a call graph across sprites and the stage, a function or script opened on its own, where variables and messages are used |
+| Edit | Block input fields and menus | Project-wide search and replace, an edit menu, a searchable horizontal palette, a minimap, collapsing scripts, a dialog for long text arguments, and forms and YAML tabs from supporting extensions |
+| Reuse | The backpack | Script and stage transfer as files, adding bundled assets |
+| Save and hand over | Saving an SB3, the standard Packager | Save and Save As, storage formats for embedded data and extension code, HTML with Plus extensions bundled |
 
-Some Plus features need a supporting extension or data of their own; the [guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) marks which.
+Some of these need a supporting extension or data of their own; the [feature guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) marks which, and walks through each topic with screenshots: the screen, the workspace, sprites, the stage, blocks, search, documents, reuse, saving, project folders and Git, and GitHub.
 
-Project-wide search covers every sprite and the stage, and groups its results by kind: block names, variable and list names, message names, argument values, extension names, comment text, YAML body, and asset names. [Project Properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html#project-properties) stores the title, description, author and contact with timestamps in the SB3, keeping the five most recent author and contact entries and opening email and HTTPS links. [Project Diagnostics](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html#project-diagnostics) collects validation, execution-approval, loading, retry and failure records for when a project will not open; those records last only while the Editor page stays open. Both are on ordinary Editor URLs, with no supporting extension or activation option required.
+A few things worth knowing up front:
 
-**Export** packages a project for distribution: an ordinary Scratch 3 or TurboWarp SB3 opens the standard TurboWarp Packager, while a project that records Plus extensions opens the Plus output screen instead. Extension code served over HTTPS is checked against its recorded hash before it goes into the HTML, sandbox requirements are preserved, and catalog extensions that meet the trust conditions run against the bundled hash. A project with no external dependencies then works offline.
-
-The [illustrated feature guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) walks through all of this in twelve topic pages with real screenshots, workflow diagrams, the comparison table, availability conditions, and saving and compatibility details.
-
-[![Form editing for a supported block](docs/features/images/form.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#forms)
-
-## Editor layout
-
-In the standard TurboWarp Plus layout, the sprite list is pinned to the left of the editing area at startup. Unpin it and the list opens when you move the pointer to the left edge. The search icon finds sprites by name. While the list is pinned, dragging the divider adds columns as the width allows. The undock button in the action column moves the list and the backdrop tiles into a separate window. Pick a category in the wide palette at the top centre and drag blocks from below it.
-
-The sprite editing tab switches with a vertical row of buttons between **Free layout**, **Hats and functions**, **Calls**, **Costumes**, **Sounds**, **Variables** and **Messages**. **Hats and functions** adds a function by the name you type. **Calls** is a call graph of the functions, including the global functions of the other sprites and the stage. A function or script chosen in either opens on its own in a code area split to the right, where you can edit it; deleting that script closes the view. In the code area, **Fold** in a hat's context menu folds a hat or a definition. Long text arguments are shortened with "…", and clicking one edits it in a dialog. **Variables** also shows the thread and runtime variables of the temporary variables extension.
-
-The **Stage display** menu at the top right of the stage switches between full screen, visible, and hidden. The project keeps running while the stage is hidden. With free placement enabled, the layout menu can show undock buttons.
-
-To start with the previous layout, add `twPlusStandardLayout=0` to the Editor URL and reload.
-
-In the standard layout, the code area shows a minimap above the zoom out, zoom in, and reset buttons at the bottom right. Click it or drag the viewport frame to move. To hide it, add `twPlusWorkspaceMinimap=0` to the Editor URL and reload.
-
-Press and hold a category icon to reorder categories in either the vertical or the horizontal palette. Releasing over another position commits the move, and releasing outside the palette cancels it. To disable reordering, add `twPlusPaletteCategoryReorder=0` and reload.
-
-The context menus of the sprite and asset lists, of blocks, and of the code area show an icon next to each action name. To disable the icons, add `twPlusContextMenuIcons=0` to the Editor URL and reload.
-
-Dragging a block from the code area far enough into the palette blurs the palette and shows a wastebasket at its centre. In the horizontal palette it also appears on the category band while the block list is closed. To disable the preview, add `twPlusPaletteDeletePreview=0` and reload. To check the rollback, delete a block by dropping it on the palette and confirm that Undo restores it.
-
-**Panels and windows.** The workspace is a Dockview arrangement: drag a divider to resize, split a panel left and right or top and bottom, and the arrangement comes back the next time you open the Editor. In the public build the editing panel and the block palette open in a window of their own. Development builds go further and are verified there: several code views side by side, the stage, the sprite list and the sprite properties form each in a window, and costume, sound and variable views that keep their selection while you edit. A child window runs its own ScratchBlocks against the parent's single VM over a `MessagePort` and holds no VM, Node, preload or opener itself. It takes the edit ownership of one target at a time, with Undo and Redo history kept per target, so what is committed is still what the VM saves into the SB3. The same panel hosts work inside the Desktop application.
-
-**Editing.** The custom-block definition dialog is this project's own: add number or text arguments, boolean arguments and labels, and set run-without-screen-refresh, in Japanese or English. The edit menu carries undo, redo, cut, copy, paste and delete with their shortcuts and icons. Where an extension supplies them, a block can also carry a field drawn by the extension itself, and the nested blocks of a supported block can be edited in place.
-
-## Project folders, Git and sb3-toolchain
-
-A project does not have to live as a single SB3 file. `sb3-toolchain` is a local Node.js tool: `import` unpacks an SB3 into project data, assets and individual embedded extensions so Git can see what changed, `check` validates the unpacked data, and `build` produces the SB3 to distribute. An unpacked project folder can also be opened and edited directly in the Editor, including projects with custom fonts. Bundling reads the name, description and sandbox requirement from each extension's code header, pins a GitHub commit or an npm version, verifies the SHA-256 of the code it embeds, and can compare API manifests across updates. Several extensions can be embedded as one composite extension while their original code is kept, and execution is then approved for the composite as a whole. In the public Editor, extensions that meet the conditions of the [TurboWarp Plus family catalog](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json), which `turbowarp-plus-packages` publishes, are treated as trusted: the Editor matches the recorded origin and the code's SHA-256 and skips the individual approval screen.
-
-Open **Local Git** from the branch button in the menu bar and choose the repository root. **Review changes** shows diffs by stage, sprite or file and lets you stage files for the next commit. Block comparisons show the before and after versions side by side, with minimap and zoom controls at the bottom right of each frame. **Record locally** opens the commit form, history and branch controls. **Send to GitHub** opens connection settings and pull requests. [Project folder and Git guide](docs/features/git/) · [GitHub workflow guide](docs/features/github/)
-
-**Reviewing a PR.** Open **Send to GitHub** → **Pull requests** in the Git panel for a repository whose `origin` is on GitHub. The public API supplies the list, title and description and is subject to its own rate limits. With **GitHub connection** active, the Editor fetches the PR head and base branches over Git Smart HTTP and compares their Git objects. An authorized connection also lists pull requests from private repositories. With the connection inactive, public PR comparisons use the public API.
-
-The comparison uses the merge base and PR head. Expand changes to `project.source.json` by target and script. Reviewed marks stay in the browser across reloads and reset for individual scripts when their contents change. Unregistered extension blocks appear with their names and connections.
-
-**Running a PR locally.** Open the project folder from the Git panel, then open the connected PR and choose **Open here as pr/…**. The Editor switches to a local branch at the reviewed commit and reopens the project folder. Stop the project and resolve unsaved edits or working-tree changes before switching. An existing branch at a different commit prevents the switch. Return to your previous branch under **Record locally** and use **Reload Project** to load its files again. Keep the temporary review branch local.
-
-## Packages, the fork and the build
-
-The Editor is assembled from independently versioned packages, not from patches carried in a fork. More than twenty `@kubohiroya/turbowarp-*` packages hold the implementation, each with its own version, tests and release:
-
-```text
-yaml-json · named-data · structured-data · document-data · document-source · document-editor  ┐
-extension-data-editor · extension-loader · extension-security-dialog · sb3-save-format        ├→ turbowarp-plus-editor → GitHub Pages
-plus-editor-workbench · plus-editor-code-views · plus-editor-windows · plus-editor-fonts      │
-plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-transfer             │
-plus-editor-project-model · plus-editor-project-starter · plus-editor-sprite-panes            │
-plus-editor-host · sb3-toolchain                                                              ┘
-         scratch-gui fork · scratch-vm fork · @turbowarp/packager (all pinned by revision) ───┘
-```
-
-No package upstream of this one fetches, builds or deploys anything downstream of it. The `scratch-gui` fork now carries **no files that upstream TurboWarp does not have**: the thirty-two added modules, tools, documents and tests were relocated into this repository, and what remains is reached through one optional object, `plusIntegration()`, whose named sockets carry extension hosting, modals, theme tokens, translations, block shapes, workspace attachment, key handling, project-state reduction, stage and camera controls, the extension library, the GUI extension API and addons. A plain GUI build gets `null` from that getter and behaves exactly like upstream. [The socket design](docs/plus-integration-sockets.md) records the measured diff, every remaining modification and where each one goes; [the relocation inventory](docs/gui-integration/README.md) records the move and its build contract.
-
-[`site/source.json`](site/source.json) pins the GUI, VM, data-editor core, extension loader, Packager and document-editor by forty-hex revision, and the security dialog and core by exact npm version. The build refuses to proceed unless the checkout, the installed packages and the pins all agree. The published `build-info.json` records the GUI, VM, library and site versions that were actually used together, and `notices/family.json` indexes the license text and source location of every bundled family package. The former data-editor Pages site is being retired; this site replaces it.
-
-Verification is part of the distribution rather than a step after it. Regular CI runs the unit tests, the integration groundwork, the pinned-GUI connection tests and the build. The browser E2E specs (nineteen, twenty-four with the fixed-input profile) do not run in CI; they run locally during development. Pages deploys only the artifact of a fully green run on `main` for that exact SHA, re-verifying the pinned identifiers rather than rebuilding. npm publishes through a Trusted Publisher over OIDC, with no token held in the workflow, and stops if an existing version differs by a single byte.
-
-Where this repository sits in the family is a division of ownership, not a hierarchy. [`turbowarp-plus-packages`](https://github.com/kubohiroya/turbowarp-plus-packages) is the index and dashboard for the whole family — seventy-odd repositories in thirteen categories, with their dependency graphs, demos, open issues and release freshness on [one page](https://kubohiroya.github.io/turbowarp-plus-packages/) — and it owns three things this repository deliberately does not: the official extension catalog it publishes as [`extensions-v1.json`](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json) (each entry naming the npm package, the version, a jsDelivr URL, a SHA-256, a category and whether it needs to run unsandboxed), the extension display names and icons under `assets/extension-icons/`, and the design canon in its `docs/editor-architecture.ja.md`, which the documents here cite rather than restate.
-
-This repository is the Editor, and a consumer of all three. [`site/plus-catalog.ts`](site/plus-catalog.ts) fetches that catalog at the pinned URL and the Editor verifies an extension's origin and SHA-256 against it before skipping an individual approval; the GUI holds no name-mapping logic of its own. The link runs the other way too: the family page's demos open in this Editor through the edit button described below, so a package there is one click from being edited here.
-
-The landing page loads the shared `turbowarp-plus-site-header`. The Editor itself displays the GUI across the full screen.
+- **Export** opens the standard TurboWarp Packager for an ordinary SB3 and the Plus output screen for a project that records Plus extensions. Extension code is checked against its recorded hash before it goes into the HTML, and a project with no external dependencies then works offline.
+- [Project Properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html#project-properties) stores the title, description, author and contact in the SB3. [Project Diagnostics](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html#project-diagnostics) collects validation, approval, loading and failure records while the Editor page is open.
+- Extensions that meet the conditions of the [family catalog](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json) — matching origin and SHA-256 — run without an individual approval. Anything else asks first, in the Editor and again in exported HTML.
 
 ## Opening projects
 
-Choose **Edit in TurboWarp-Plus-Editor** on the landing page to open the Editor. Open a local SB3 file from the Editor’s **File** menu. To open a URL, provide an HTTPS SB3 file that allows browser fetching.
+Open a local SB3 or a project folder from the Editor's **File** menu. To open a project by URL, point `project_url` at an HTTPS SB3 that allows browser fetching, URL-encoded:
 
 ```text
 https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en&project_url=https%3A%2F%2Fexample.com%2Fstory.sb3
 ```
 
-URL-encode `project_url`. Both `lang=ja` and `lang=en` are supported. The edit button forwards the project URL and other Editor parameters supplied to the landing page.
+`lang` takes `en` or `ja`. The landing page's edit button forwards `project_url` and any other Editor parameters it was given.
 
 <a id="edit-button"></a>
 ## “Edit in TurboWarp-Plus-Editor” button
 
-The edit icon is a brand variant of the existing blue TurboWarp Plus base, drawn over with a blue pencil. Display the action label alongside the image and use a keyboard-focusable link. The shared CSS provides a minimum height of 56px, a 36px image, and a visible focus indicator.
-
-Load the stylesheet once in the page’s `<head>`, then place the following link where you want the button:
+Put a button on your own page that opens a project here. Load the stylesheet once in `<head>`, then place the link:
 
 ```html
 <link rel="stylesheet"
@@ -150,38 +90,12 @@ Load the stylesheet once in the page’s `<head>`, then place the following link
 </a>
 ```
 
-Omit `project_url` to create a new project. For Japanese, use `lang=ja` and `TurboWarp-Plus-Editorで編集`.
+- Omit `project_url` to start a new project. For Japanese, use `lang=ja` and `TurboWarp-Plus-Editorで編集`.
+- For a small button, add `twpe-edit-button--small`, show **Edit** (`編集`) with a 24px image, and set `title` and `aria-label` to the full label.
+- The button follows the OS color scheme. Set `<html data-theme="light">` or `dark` to fix it.
+- GitHub READMEs cannot load external CSS; there, use a plain link around the icon image and the label.
 
-The regular button shows the icon and action label. For a small button, add `twpe-edit-button--small`, use **Edit** as the visible text, and set both `title` and `aria-label` to **Edit in TurboWarp-Plus-Editor**. The Japanese equivalents are `編集` and `TurboWarp-Plus-Editorで編集`. The `title` supplies the hover tooltip.
-
-```html
-<a class="twpe-edit-button twpe-edit-button--small"
-   href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en"
-   title="Edit in TurboWarp-Plus-Editor" aria-label="Edit in TurboWarp-Plus-Editor">
-  <img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg"
-       width="24" height="24" alt="" aria-hidden="true">
-  <span>Edit</span>
-</a>
-```
-
-Both sizes follow the OS color scheme by default (`auto`). Set `<html data-theme="light">` or `dark` to fix the theme; use `auto` or remove the attribute to restore automatic selection. To generate a button in code, use `renderEditButton({size: 'small', language: 'en', projectURL: 'https://example.com/story.sb3'})`. The default size is regular.
-
-GitHub READMEs cannot apply external CSS. Use an image link instead:
-
-```html
-<a href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en">
-  <img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg"
-       width="36" height="36" alt=""> Edit in TurboWarp-Plus-Editor
-</a>
-```
-
-The TurboWarp Plus extension catalog is available on ordinary Editor URLs. To use the legacy catalog path, reload with `twPlusExtensionLoader=0&twPlusExtensions=1`. Other GUI feature flags remain unchanged, and the button preserves supplied parameters.
-
-The extension loader from Issue #4 consists of an independent loader core and thin GUI/VM adapters. In the regular distribution, the Embedded/Remote validation and permission UI is enabled on ordinary launch URLs without a feature flag (fixed at startup, on by default). The Packager action for Plus projects opens the local output screen. Extensions listed in the catalog run without confirmation, as in the Editor; only extensions outside the catalog need approval, both when generating the HTML and every time the generated HTML is opened. Reload with `twPlusExtensionLoader=0` to disable it. Explicit `=1` remains supported; invalid values disable it. See the [integration specification](docs/extension-loader-integration.md) for configuration, validation, Desktop limitations, and rollback.
-
-See the [Issue #11 authoring guide](docs/extension-authoring-ui.md) for bulk and individual Embedded/Remote settings in the extension catalog. This UI is on by default for ordinary launches; reload with `twPlusExtensionLoader=0` to turn it off. "Custom Extension" is the same screen as in TurboWarp and does not go through the loader.
-
-## Using the npm package
+## The npm package and its commands
 
 ```sh
 npm install @kubohiroya/turbowarp-plus-editor
@@ -195,193 +109,140 @@ const url = createEditorURL({
     projectURL: 'https://example.com/story.sb3',
     parameters: {fps: 60}
 });
-const html = renderEditButton({language: 'en', projectURL: 'https://example.com/story.sb3'});
+const html = renderEditButton({size: 'small', language: 'en', projectURL: 'https://example.com/story.sb3'});
 ```
 
-The package includes the brand SVG, button CSS, URL/HTML helpers, and pinned distribution metadata. It ships compiled JavaScript and TypeScript declarations. The large GUI output is built for Pages from the pins rather than included in npm. URL helpers reject project URLs outside HTTP(S) and unsupported languages.
+The package ships the brand SVG (`./assets/icon.svg`), the button CSS (`./assets/edit-button.css`), the URL and HTML helpers with TypeScript declarations, the extension loader bootstrap (`./extension-loader`) and the pinned distribution metadata (`./source.json`). The URL helpers reject non-HTTP(S) project URLs and unsupported languages. The Editor itself is built for Pages and is not in the package.
 
-## Development and deployment
+It also installs two commands:
 
-Implementation files, tools, documentation and tests that do not exist upstream in scratch-gui live outside the fork. The implementation of a feature belongs in a turbowarp-plus family package (`turbowarp-plus-editor-*`); this repository pins its version and holds the wiring that hands the package's sockets to the GUI. See the [relocation inventory and build contract](docs/gui-integration/README.md).
+- **`turbowarp-plus-editor-sb3-format`** saves the extensions of an existing SB3 again as `remote-non-cacheable`, `remote-cacheable`, `embedded-file` or `embedded-data`. `remote-cacheable` only permits a browser to keep a verified copy; for an SB3 that runs offline, choose one of the `embedded-*` formats.
 
-Use Node.js 26. All maintained JavaScript sources, build scripts, configurations, and tests are authored in TypeScript (`.ts`, or `.cts` for CommonJS). Node.js runs development scripts directly with native type stripping. Browser modules are emitted as JavaScript with esbuild, and npm entry points and declarations are compiled into `dist/` with TypeScript.
+  ```sh
+  npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format --input in.sb3 --output out.sb3 --extensions embedded-file
+  ```
+
+- **`turbowarp-plus-editor-yaml`** serves a built Editor locally together with the companion process that lets you edit embedded YAML documents in VS Code. VS Code gets dedicated working files and an isolated settings area, and the first schema-bearing document installs `redhat.vscode-yaml` there without touching your own settings or extensions.
+
+  ```sh
+  npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-yaml --site-dir /absolute/path/to/editor/build --data-dir /absolute/path/to/work-files
+  ```
+
+## URL switches
+
+Everything below is on by default. Add the parameter to the Editor URL and reload to change it.
+
+| Parameter | Effect |
+| --- | --- |
+| `twPlusStandardLayout=0` | The previous layout instead of the standard Plus layout |
+| `twPlusWorkspaceMinimap=0` | Hide the code-area minimap |
+| `twPlusPaletteCategoryReorder=0` | Stop press-and-hold reordering of palette categories |
+| `twPlusPaletteDeletePreview=0` | No wastebasket preview when dragging a block onto the palette |
+| `twPlusContextMenuIcons=0` | No icons in context menus |
+| `twPlusDockview=0` | Open embedded documents in the earlier modal instead of Dockview tabs |
+| `twPlusLocalGit=0` | Hide the Local Git panel |
+| `twPlusExtensionLoader=0` | Turn off the Plus extension loader and its approval UI |
+
+## How the Editor is built
+
+This repository holds no editor fork of its own. It builds the Editor from pinned upstream sources and from family packages published on npm, and the `scratch-gui` fork only carries the sockets they plug into.
+
+**Pinned sources** ([`site/source.json`](site/source.json)). The build checks out and verifies these by full commit SHA, and stops unless the checkout, the installed packages and the pins agree:
+
+| Source | Role |
+| --- | --- |
+| [`kubohiroya/scratch-gui`](https://github.com/kubohiroya/scratch-gui) | TurboWarp's GUI with one optional `plusIntegration()` socket object and no files upstream lacks; a plain build gets `null` and behaves like upstream |
+| [`kubohiroya/scratch-vm`](https://github.com/kubohiroya/scratch-vm) | The VM, pinned together with the upstream revision it is based on |
+| [`TurboWarp/packager`](https://github.com/TurboWarp/packager) | The standard Packager behind **Export** |
+
+**Family packages from npm.** Everything Plus adds comes from `@kubohiroya/*` packages installed at exact versions from npm; no package is vendored as an archive. Those also recorded in `site/source.json` (the data editor, extension loader, document editor and script transfer) are checked against their published version, integrity and source commit.
+
+| Area | Packages |
+| --- | --- |
+| Editor workbench | `turbowarp-plus-editor-workbench` (layout, sprite tabs, stage and its controls, menus, project dialogs, the backpack), `-windows` (in-page windows, menus, dialog actions, external surfaces and transfers), `-code-views` (code in tabs and windows, the detached palette, script layout, block field editing), `-sprite-panes` (assets, variables, messages, functions and the call graph, properties), `-fonts` (web fonts), `-host` (the host contract the family is written against), `-project-model` (UI-free project reads and edits, project-wide search and replace) |
+| Project folders and Git | `turbowarp-plus-editor-project-folder`, `-project-starter` (move a project into a GitHub repository), `-git` (Local Git panel, publishing and repository creation), `-auth` (Git proxy sessions), and `sb3-toolchain` |
+| Extensions | `turbowarp-extension-loader` (verified loading), `turbowarp-extension-security-dialog` (review before running), `turbowarp-extension-data-editor` (form editing of extension data), `turbowarp-sb3-save-format` (storage-format vocabulary) |
+| Documents | `turbowarp-document-editor`, `turbowarp-document-data`, `turbowarp-document-source`, `turbowarp-structured-data`, `turbowarp-named-data`, `turbowarp-yaml-json` |
+| Reuse | `turbowarp-script-transfer` (`.blocks3` / `.stage3`) |
+
+**What lives here.** This repository holds no implementation packages of its own: new features go into family packages, and this repository only pins their versions and wires their entry points into the GUI (see [`AGENTS.md`](AGENTS.md)). That wiring lives in [`site/`](site/).
+
+**Family boundaries.** [`turbowarp-plus-packages`](https://github.com/kubohiroya/turbowarp-plus-packages) owns the extension catalog, the extension names and icons, and the design canon; its [dashboard](https://kubohiroya.github.io/turbowarp-plus-packages/) shows every package's versions and dependencies. This repository consumes the catalog through [`site/plus-catalog.ts`](site/plus-catalog.ts). No package upstream of the Editor fetches, builds or deploys it.
+
+The published `build-info.json` records the versions that were used together, and `notices/family.json` indexes the license and source of every bundled family package. [The socket design](docs/plus-integration-sockets.md) records what remains in the GUI fork (Japanese), and the [developer guide](https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/index.en.html) explains why Plus uses sockets rather than addons and how to build a new feature into the Editor.
+
+## Development
+
+Use the Node.js version in [`.nvmrc`](.nvmrc) (26). Every source is TypeScript (`.ts`, or `.cts` for CommonJS): Node runs it directly with type stripping, esbuild emits the browser bundles, and `tsc` compiles the npm entry points and declarations into `dist/`.
 
 ```sh
-TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
+npm ci
 npm run typecheck
-npm run build
 npm test
 npm run test:package
-E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
-TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
-E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui npm run test:e2e
 ```
 
-The review dialog is a Git dependency whose build reads its own revision, and npm installs it from an archive with no history to read it from — so a plain `npm ci` stops there. The pin is what it asks for, which is why the install carries it; this is the form the workflows use.
+**Building the site.** Check out the GUI and Packager at the revisions in `site/source.json`, install the GUI's dependencies and run `node scripts/prepublish.mjs` inside the GUI checkout, then build here:
 
-To check the minimap alone, build first and then run `npm run test:e2e -- workspace-minimap.spec.cts` with `E2E_GUI_ROOT` set. It covers the default display, hiding it from the URL, and moving by click and drag.
+```sh
+E2E_GUI_ROOT=/absolute/path/to/pinned/scratch-gui \
+TW_PLUS_PACKAGER_ROOT=/absolute/path/to/pinned/packager npm run build:pages
+```
 
-`npm run build` produces the npm JavaScript and declarations; `npm pack` runs it automatically. `npm run build:test-driver` compiles the optional VSCode test extension before native VSCode checks.
+For the browser-side Local Git option, also set `TW_PLUS_GIT_BFF_ORIGIN` and `TW_PLUS_GIT_PROXY_ORIGIN` to exact HTTPS origins at build time.
 
-Check out the GUI and Packager SHAs recorded in `site/source.json`. Install the GUI dependencies and prepare that upstream checkout with `node scripts/prepublish.mjs`. The build verifies the GUI SHA, installed data-editor SHA, and security-dialog version against the pins. Pages deploys from main after successful integration checks. Release tags must match the npm version.
+**Tests.** `npm test` and the other `test:*` scripts are unit and integration tests. The Playwright E2E (`npm run test:e2e` with `E2E_GUI_ROOT` set) and the `*.browser.ts` suites run against a built Editor and are run locally during development, not in CI.
 
-For the Cloudflare option in the Local Git panel, set both `TW_PLUS_GIT_BFF_ORIGIN` and `TW_PLUS_GIT_PROXY_ORIGIN` to exact HTTPS origins at build time. The Desktop local option is available when the host exposes `EditorPreload.localGitAuth` or `EditorPreload.localGit`. Use `twPlusLocalGit=0` to hide the Git panel at startup.
+**CI and release.** CI runs the typecheck, unit and integration tests, package checks and the site build. With the repository variable `TW_PLUS_CI_SCOPED=1`, a PR runs only the checks its diff needs and `main` reuses checks already passed for the same tree; unreadable diffs fall back to full verification. Pages deploys the artifact of a green `main` run for that exact SHA. npm releases are published through a Trusted Publisher over OIDC from tags that match the package version.
 
-#### Local verification of GitHub repository creation and PR registration
+### Local Git and GitHub connection
 
-To check against unpublished dependencies, set `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` for the local webpack build to the absolute path of a directory whose `node_modules/@kubohiroya/` holds built copies of `sb3-toolchain`, `turbowarp-plus-editor-project-folder`, `turbowarp-plus-editor-project-starter`, `turbowarp-plus-editor-git` and `turbowarp-plus-editor-auth`. The GUI uses the version pinned in `site/source.json`.
+The Local Git panel never receives a GitHub token. It gets a short-lived Bearer for a proxy that relays only the four Git Smart HTTP routes under `/v1/git/<owner>/<repo>.git/` and checks the caller's origin, the Bearer, the repository recorded at sign-in and the operation on every request; a push also needs a `Git-Push-Id` reserved beforehand.
 
-- In **File → Save As → Project folder**, choose **Use Git version control**. Paste a URL, or choose an authorized owner and a name, then confirm the visibility and the project details. Once the first push has finished and you open the project, every later **Save** writes back to `project/` inside the chosen repository.
-- **File → Save and Commit… → Create or view PR** registers a PR for a completed commit. Connect the target repository to the Local Git GitHub App with write permission. On Desktop, approve in the confirmation dialog. On Cloudflare, confirm the GitHub account on the configured BFF's page, then review the target commit and operation and approve. The same commit's row shows the PR link, the CI and merge status and the resume action.
-- When stacking is enabled for the connection, choose **Stack on an existing pull request** and confirm the parent PR's number, branch and commit. A job set to merge waits until every lower PR has been merged, the child PR's diff matches, and the updated CI and review conditions are met.
+- **Browser (Cloudflare).** The Editor starts sign-in at the BFF's `/v1/git-auth/start`, opens the GitHub App authorization, and polls `/v1/git-auth/session` with a ticket held only in memory. Tokens stay encrypted in a Durable Object. A sign-in lasts up to eight hours; the proxy Bearer is renewed every five minutes.
+- **Desktop.** The main process authenticates and relays Git through a loopback proxy on `127.0.0.1` that accepts only the `tw-editor://.` origin. Tokens stay in the main process, encrypted with the OS keychain when saved. GitHub App device flow, a fine-grained PAT or a Git credential helper can be offered depending on the host. ([Connection methods](docs/features/git/index.en.html#connection-methods))
 
-For headless verification, set `E2E_PROJECT_SAVE_BUILD` to the build output and `E2E_GIT_HTTP_FIXTURE` to the absolute path of `test/smart-http-fixture.js` in the Git package. Build with `TW_PLUS_GIT_BFF_ORIGIN=https://github-create.example.invalid` and `TW_PLUS_GIT_PROXY_ORIGIN=https://github-git.example.invalid` as the endpoints. The creation and PR tests mock GitHub and verify the actual Git traffic against a local Git CGI.
+The GitHub App asks only for Metadata read and Contents read and write, on the repositories where it is installed. Its client ID is not a secret and device flow uses no client secret, so the remaining risk is phishing: enter only codes the Editor itself shows, and revoke access under **Settings → Applications → Authorized GitHub Apps** on GitHub.
+
+To check repository creation and pull-request registration headlessly, build with `TW_PLUS_GIT_BFF_ORIGIN=https://github-create.example.invalid` and `TW_PLUS_GIT_PROXY_ORIGIN=https://github-git.example.invalid`, set `E2E_PROJECT_SAVE_BUILD` to the build output and `E2E_GIT_HTTP_FIXTURE` to the Git package's `test/smart-http-fixture.js`, and run the following. GitHub is simulated, and the Git traffic goes through a local Git CGI.
 
 ```sh
 node --test --test-concurrency=1 test/project-folder-save.browser.ts test/project-repository-creation.browser.ts test/project-publication.browser.ts
 ```
 
-The Local Git panel never receives a GitHub token. Either way, it gets a short-lived Bearer for a proxy that relays only the four Git Smart HTTP routes under `/v1/git/<owner>/<repo>.git/`. On every request, the proxy checks the caller's origin, the Bearer, the repository ID recorded at sign-in and the operation. A push also needs a `Git-Push-Id` reserved before it is sent upstream.
+To try unpublished dependencies, set the local webpack's `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` to the absolute path of a directory whose `node_modules/@kubohiroya/` holds built `sb3-toolchain`, `turbowarp-plus-editor-project-folder`, `turbowarp-plus-editor-project-starter`, `turbowarp-plus-editor-git` and `turbowarp-plus-editor-auth`.
 
-- **Cloudflare (browser).** The Editor POSTs `{remote, write}` to the BFF's `/v1/git-auth/start` and opens the returned GitHub App authorization URL. It then polls `/v1/git-auth/session` with the sign-in ticket, which it keeps in memory only. The BFF keeps the GitHub tokens encrypted in a Durable Object. The Git route in the CORS Worker asks that object to authorize each request. A sign-in lasts up to eight hours, and the proxy Bearer is renewed every five minutes. ([BFF contract](https://github.com/kubohiroya/turbowarp-plus-editor/issues/315))
-- **Desktop.** The main process authenticates with GitHub and relays Git through a loopback proxy on `127.0.0.1` that accepts only the `tw-editor://.` origin. The tokens stay in the main process, encrypted with the OS keychain when the person chooses to save them. Compatible Desktop and bundled Editor builds can offer GitHub App device flow, fine-grained PAT or Git credential helper, depending on the host configuration. Device flow requires a GitHub App client ID. [Connection requirements](docs/features/git/#connection-methods)
+### Embedded documents
 
-A GitHub App client ID is not a secret, and the device flow uses no client secret. The remaining risk is phishing: someone starts a device flow with the same client ID and talks a person into entering the code. Enter only codes that the Editor itself shows. You can revoke access under **Settings → Applications → Authorized GitHub Apps** on GitHub. The App asks only for Metadata read and Contents read and write, and reaches only the repositories where it is installed.
+Document editing is owned by the packages, not by this repository: `turbowarp-document-editor` provides the dialogs, previews and external-editor bridge; `turbowarp-document-data` the persistence, references and provider registration; `turbowarp-document-source` the hats and shared YAML blocks; `turbowarp-yaml-json`, `turbowarp-named-data` and `turbowarp-structured-data` the parsing, schemas and projections. Each extension that owns documents supplies their validation, schemas and conversions. The Editor embeds no App and shows a document's file icon only when a registered provider owns it.
 
-This repository verifies the integrated Editor. Existing upstream unit tests and GUI feature flags are preserved. After verifying the new distribution, migrate references and stop the former data-editor Pages site without leaving a redirect deployment. To roll back, revert to the previous GUI pin and site changes, then redeploy the previous artifact. To undo the TypeScript migration, revert its changes and restore the previous JavaScript sources and package configuration.
-
-### CI verification scope
-
-While the repository variable `TW_PLUS_CI_SCOPED` is unset, the previous verification runs in full. Set it to `1` and an ordinary PR runs the items that match its diff, while `main` reuses the items that already passed in a PR CI run with the same Git tree and verification contract. When the diff or the evidence cannot be read, it falls back to full verification. Artifacts for Pages are always built from the `main` revision.
-
-To return to the previous verification, unset the variable or set it to `0`. Before a stable release, run full verification against the commit the tag points at.
-
-## Editing embedded documents (0.2.0-rc.1)
-
-This feature tracks [Issue #3](https://github.com/kubohiroya/turbowarp-plus-editor/issues/3) and [shared-package Issue #6](https://github.com/kubohiroya/turbowarp-plus-editor/issues/6). It has no startup switch: a hat gets its file icon only when a registered provider owns its document, so a project without such a provider looks like upstream TurboWarp. To edit in VSCode, install Visual Studio Code and Node.js, then open the Editor through the local companion process. The shared `@kubohiroya/turbowarp-document-editor` package owns the editing UI and external-editor bridge, and the scratch-gui fork embeds it directly. This distribution pins, builds, and serves the GUI. `@kubohiroya/turbowarp-document-data` owns source persistence, document references, and provider registration; the independent `@kubohiroya/turbowarp-document-source` package owns hats, YAML icons, and shared YAML blocks. Extensions register documents, and the shared UI delegates validation and document updates to their owners. The GUI handles standard SB3 file saving.
-
-Providers live in the extensions that own their documents and use those extensions’ own validation APIs and schemas. The Editor’s browser code embeds no App or App parser, and the Editor has no App among its dependencies. Each App documents which of its projects are supported and how to migrate older ones.
-
-Add the tools to a prepared Editor build and start it locally. A new `build:pages` build performs the same addition automatically.
+To add the YAML tools to an existing build (`build:pages` does this already) and serve it with the companion:
 
 ```sh
-npm ci --ignore-scripts
 npm run build:yaml-tools -- /absolute/path/to/editor/build
 npm run editor:yaml -- --site-dir /absolute/path/to/editor/build --data-dir /absolute/path/to/work-files
 ```
 
-VSCode integration requires the local companion serving a built Editor. It can also be launched from npm:
+`npm run test:yaml` covers the build and the CLI. The round-trip checks (`test:yaml:roundtrip`, `test:yaml:multi-document`) drive a real Chrome against a built Editor using `TWPE_YAML_SITE`, `TWPE_YAML_FIXTURE`, `TWPE_YAML_EVIDENCE` and `TWPE_CHROME_EXECUTABLE`; build their fixtures with the scripts in [`scripts/yaml-editor/`](scripts/yaml-editor/). Native VS Code checks use the test-only driver in [`test/vscode-edit-driver/`](test/vscode-edit-driver/) (`npm run build:test-driver`).
 
-```sh
-npx --package=@kubohiroya/turbowarp-plus-editor@0.2.0-rc.1 turbowarp-plus-editor-yaml --site-dir /absolute/path/to/editor/build --data-dir /absolute/path/to/work-files
-```
+## Documentation
 
-GitHub Pages supports document display, conversion, and validation. Launching VSCode is available when opening the local URL above.
+Most design documents are in Japanese.
 
-Embedded YAML opens in the same Dockview workspace as code and the stage by default in the Web Editor. Drafts survive tab moves and splits, and closing a tab with a draft offers save, discard, and cancel. To return to the previous layout and document modal, save the document and SB3, then reopen the Editor with `twPlusDockview=0` in the URL.
-
-1. Open an SB3 containing an embedded document and select the file icon on its **Data source** hat. In the YAML text tab of the document dialog, choose **Edit in external editor**.
-2. Edit the YAML and save it in VSCode.
-3. Return to the Editor and choose **Convert, validate and save the displayed format** at the lower right. It reads the saved VSCode working copy, validates its format, asset references, and project identity, and applies the document and consistency metadata in the Editor.
-4. Save the SB3 using the Editor’s standard **File** menu or **Save to your computer**. Saving in the document dialog does not download a file. Image and audio storage remains unchanged.
-
-The hat is the entry point to embedded YAML. Its dropdown shows the filename, while the SB3 stores a provider ID and document ID reference rather than duplicating the script text in a block argument. IDs distinguish documents even when filenames match. In the document modal, save or cancel the current edit before switching documents. The owning provider handles retrieval, validation, and updates. Supported SB3s contain hats added by their owning extension. The Editor does not automatically inject unknown blocks or extension code into older hatless SB3s. When a provider registers conversion capabilities, the document editor can convert between source files, shared YAML blocks, and schema-specific blocks.
-
-Providers may attach `schema: {id, schema}` to each document. Local integration writes the owner’s schema and associations to the working directory without inserting configuration comments into the YAML. The first opening of a document with a schema downloads the official Red Hat YAML extension, `redhat.vscode-yaml@2.0.0`, into a private extensions directory. Existing VSCode settings and extensions remain unchanged. The initial download requires network access. Documents without schemas continue to use owner validation when importing.
-
-VSCode completion and diagnostics use [Red Hat YAML schema associations](https://github.com/redhat-developer/vscode-yaml#associating-schemas). An owner may supply an authoring schema for its source; import also runs the owner’s own validation.
-
-The companion accepts only authenticated operations from its local Editor. VSCode receives dedicated working files and an isolated settings area, preserving existing windows, settings, and extensions. Saved working files remain after sessions close or the process stops. The web interface cannot specify executable commands or arbitrary local paths.
-
-Invalid YAML and project switches do not overwrite the previous content. Drafts that could not be applied remain in VSCode’s working files. **X** and **Cancel** discard dialog candidates and close without changing the Editor or deleting working files. New asset references in a document must validate against the project’s existing asset set.
-
-If a storage path exceeds macOS IPC path limits, only the VSCode settings area moves automatically into a short private directory; working files stay in place. The working area’s `host.json` records the actual locations.
-
-To roll back, revert the integration commit and redeploy, or restore the previous verified version. Stopping the companion preserves working files.
-
-Relevant checks:
-
-```sh
-npm run test:yaml
-# Build the test-only fixtures from any SB3 that contains assets
-# (CI generates one with `node test/fixtures/yaml-editor/base-project.ts /absolute/path/to/base.sb3`).
-node scripts/yaml-editor/build-settings-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/settings.sb3
-node scripts/yaml-editor/build-document-source-fixture.ts /absolute/path/to/base.sb3 /absolute/path/to/document-source.sb3
-TWPE_YAML_SITE=/absolute/path/to/editor/build \
-TWPE_YAML_FIXTURE=/absolute/path/to/settings.sb3 \
-TWPE_YAML_EVIDENCE=/absolute/path/to/evidence \
-TWPE_CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
-npm run test:yaml:roundtrip
-# The same variables also check the two-document settings fixture.
-npm run test:yaml:multi-document
-# Representation previews use the document-source fixture with the same variables.
-node --test test/representation-preview.browser.ts
-```
-
-Source previews, cancellation, saving, fresh retrieval and conversion to an embedded file are tested in `@kubohiroya/turbowarp-document-editor` with its own test provider. This repository checks that they reach the built Editor: `test/e2e/turbowarp/document-source.spec.cts` opens the `twpeyamlsettings` fixture without any URL switch and expects the source controls, a preview that fetches only when asked, and a save; setting the removed URL switches to `0` changes nothing. `document-refusal.spec.cts` opens a hat whose provider is not registered and a document its owner refuses, expecting the unavailable message and no project change. Both run in `npm run test:e2e` against the built Editor.
-
-SB3 round-trip browser regressions inject only the native launcher and exercise the real GUI, VM, and SB3. `test:yaml:roundtrip` and `test:yaml:multi-document` run locally during development against the built Editor, keeping their screenshots and `result.json` under `test-results/yaml-roundtrip/` and `test-results/yaml-multi-document/`. CI does not run them. Native VSCode checks use the test-only Extension Development Host in `test/vscode-edit-driver/`, saving working YAML through VSCode’s own document-editing and saving APIs. The normal companion does not require this driver.
-
-### Source, shared YAML blocks, and schema-specific blocks
-
-Source files, shared YAML blocks representing keys/arrays/values/comments, and schema-specific blocks supplied by an owning App are three representations of the same document. Source is the reference for meaning and conversion, while block edits are retained in Editor state. Switching to another block representation applies the current edits to source before converting, within one save operation. Selecting a conversion target alone does not change the project. The initial tab is the currently stored representation; the label above the preview identifies it with 💽. Saving another tab asks for confirmation; **OK** validates, converts, and applies it to the Editor. **Cancel** returns to the dialog with the selection retained. **X** and **Cancel** perform the same cancellation. Regeneration from source is rejected when it would overwrite unapplied block edits.
-
-Each tab previews its format: text for source, read-only ScratchBlocks for block representations. Viewing does not change the project. Preview blocks cannot be moved or edited, but scrolling and zooming are available. 💽 identifies the representation currently stored in the Editor, not a downloaded SB3 file.
-
-Shared YAML blocks represent comments one line at a time and multiline strings as line and line-break-kind blocks, avoiding newline loss in standard text fields. Unedited source preserves line breaks, quotes, and comments. The owner and YAML library determine formatting for edited content. JSON does not allow comments.
-
-- `turbowarp-yaml-json`: YAML/JSON parsing and serialization, source syntax, and schema validation.
-- `turbowarp-document-data`: Source, schemas, document references, provider registration, and SB3 persistence.
-- `turbowarp-structured-data`: Temporary projections from source into runtime values, without rewriting source.
-- `turbowarp-document-source`: Shared hats and blocks, conversion candidates, and application contracts.
-- Each App: DSL-specific validation, schema-specific block conversion, and runtime-data regeneration.
-- `turbowarp-document-editor`: Dialogs, external-editor integration, previews, and document-save operations.
-- The scratch-gui fork: Shared UI mounting, VM/Blockly integration, and standard SB3 file saving.
-- TurboWarp-Plus-Editor: GUI pinning, builds, and distribution.
-
-`turbowarp-document-data` source documents support YAML and JSON while preserving existing HTML/Markdown APIs. YAML/JSON detection is also added to the lower-level `turbowarp-named-data` package. The limited schema interpretation for structured data remains a separate contract from complete JSON Schema document validation.
-
-Document persistence, projections, and representation conversion have no startup switch; they are available for documents a registered provider owns. Owners supply each document’s conversion capabilities; unsupported extensions do not acquire conversion automatically. If an older block script has no stored original module YAML, conversion does not claim to restore the original file and its comments.
-
-**View guide** opens the provider’s website in another tab. There is no separate validation button: **Convert, validate and save the displayed format** validates and applies the displayed format. VSCode actions are disabled while block edits await application to source. JSON source uses VSCode’s standard JSON support and schema associations.
-
-## Rewriting how extensions are saved
-
-A helper CLI saves the extensions of a built SB3 again as `remote-non-cacheable`, `remote-cacheable`, `embedded-file` or `embedded-data`. The vocabulary and the writer come from `@kubohiroya/turbowarp-sb3-save-format` and its `./writer`; reading and writing the ZIP, and the defaults (no extension is requested unsandboxed unless named), stay here. `--extensions` takes the security dialog's `ReviewDecision.loading` as it is; the old spellings `embedded`, `remote` and `cached` are refused.
-
-```bash
-npx --package=@kubohiroya/turbowarp-plus-editor turbowarp-plus-editor-sb3-format --input in.sb3 --output out.sb3 --extensions embedded-file
-```
-
-`remote-cacheable` only records that the opener's browser may keep a verified copy. The CLI cannot write, read or check that copy (IndexedDB), so it is no reason the saved SB3 runs offline; choose `embedded-file` or `embedded-data` for that.
+- [Responsibilities and distribution](docs/architecture.md)
+- [Integration sockets left in the fork](docs/plus-integration-sockets.md) · [Relocation inventory and build contract](docs/gui-integration/README.md)
+- [Extension loader integration](docs/extension-loader-integration.md) · [Embedded / Remote settings in the extension library](docs/extension-authoring-ui.md) · [SB3 save formats](docs/sb3-save-format.md)
+- [SB3 compatibility and feature list](docs/features/sb3-compatibility.en.md) (English)
+- [Form-based block editor](docs/block-editor.md) · [Embedded document windows](docs/document-window.md)
+- [Project properties and diagnostics](docs/project-tools.md) · [Script and stage transfer](docs/script-stage-transfer.md)
+- [Checking catalog display locally](docs/local-catalog-preview.md) · [Checking extension security locally](docs/gui-integration/local-security-preview.ja.md)
 
 ## License and author
 
-License: GPL-3.0-or-later, except the edit-button snippet, which is MPL-2.0. See the individual licenses and NOTICE files for the integrated GUI and bundled components.
+GPL-3.0-or-later, except the edit-button snippet, which is MPL-2.0.
 
-- The MPL-2.0 part is `src/index.ts`, which builds the Editor URL and the edit-button HTML (`createEditorURL`, `renderEditButton` and their constants; `dist/src/index.js` and `dist/src/index.d.ts` in the npm package), and the button stylesheet `assets/edit-button.css`. Each file carries `SPDX-License-Identifier: MPL-2.0`; the full text is in [`LICENSE.MPL-2.0`](LICENSE.MPL-2.0). Other sites can load it from their JavaScript without taking on GPL-3.0 obligations.
-- Everything else, including the icon (`assets/icon.svg`), the extension loader bootstrap (`./extension-loader`) and the YAML editing command, is GPL-3.0-or-later; the full text is in [`LICENSE`](LICENSE).
-- The Editor served on Pages is a GPL-3.0 work. Its `notices/` directory records the license text and source location (npm and GitHub) of every bundled turbowarp-plus family package, indexed by `notices/family.json`.
+- **MPL-2.0:** `src/index.ts` (`createEditorURL`, `renderEditButton` and their constants; `dist/src/index.*` in the npm package) and `assets/edit-button.css`. Each carries `SPDX-License-Identifier: MPL-2.0`; the text is in [`LICENSE.MPL-2.0`](LICENSE.MPL-2.0). Other sites can use them without taking on GPL-3.0 obligations.
+- **GPL-3.0-or-later:** everything else, including the icon, the extension loader bootstrap and the commands; the text is in [`LICENSE`](LICENSE).
+- The Editor served on Pages is a GPL-3.0 work. Its `notices/` directory records the license and source of every bundled family package. See also [`NOTICE`](NOTICE).
 
-Author: [Hiroya Kubo](https://github.com/kubohiroya)
-
-## Block icon previews
-
-The integrated data editor provides the optional `Scratch.gui.blockEditors.registerPreview` API, documented in `docs/block-preview.md` of `@kubohiroya/turbowarp-extension-data-editor`. An extension registers previews for its own blocks. A preview shares the existing form’s draft, and the form’s Save remains the only persistence path, so one save is one undo step. `Scratch.gui.createPreviewVm()` creates an isolated VM that cannot load extensions.
-
-Extensions own their previews and any switch that enables them. The Editor ships no previews or preview samples of its own. `@kubohiroya/turbowarp-extension-data-editor` verifies previews with a test-only extension on the Editor's pinned VM and Scratch Blocks (`test/runtime/block-preview.browser.ts`). The Editor's E2E checks that an ordinary startup gives extensions `registerPreview` and `Scratch.gui.createPreviewVm()`, and `test/gui-integration/unit/block-editor/preview-vm.test.ts` checks that a preview VM leaves the Editor's dispatch services in place.
-
-## Local data-source migration candidate
-
-Documents whose provider marks their source location as editable offer **File inside SB3** and **External URL** source choices; there is no flag for them. Source location is separate from the YAML text, YAML blocks, and schema-specific block representations. Document names and references are preserved. The generic label is **Data source**; a provider may supply its own label.
-
-After changing the source location, fetch and preview it, then save to apply the same validated candidate. Cancel leaves the project unchanged. External sources must use browser-accessible HTTPS URLs with CORS support. To edit or convert external content into blocks, first import it by switching to **File inside SB3** and saving. External sites are never written back to. Fetching URL content again at runtime is the provider’s responsibility, and a provider must not silently fall back to stale cached data on failure.
-
-There is no startup switch; the provider decides per document. To roll back, revert the integration commit and use the original SB3. These dependencies identify migration candidates; updating published references or publishing new packages/repositories is separate work.
-
-This candidate includes the preceding UI changes: preventing preview overlays, showing the stored format within the tab, a floating external-editor button, and guide/schema links.
-
-
-## Script and stage transfer
-
-`.blocks3` script export/import, copying and pasting scripts between windows, and `.stage3` stage export/import are always available. No startup option is needed, and there is no flag to turn them off. Importing a stage adds its contents to the current stage. See the [transfer specification (Japanese)](docs/script-stage-transfer.md) for operations, dependency handling, limits, and rollback instructions.
+TurboWarp-Plus-Editor is open-source software in the [TurboWarp Plus Project](https://kubohiroya.github.io/turbowarp-plus-packages/) family by [Hiroya Kubo](https://github.com/kubohiroya), Chiba University of Commerce, Japan.

@@ -49,7 +49,6 @@
 <p>手元の作品は「ファイル」→「SB3ファイルを開く…」から開きます。Scratch 3で保存したSB3も、標準TurboWarpで保存したSB3も開けます。旧形式の .sb、.sb2 も選べますが、上書き保存はできないため、編集後は「名前を変えて保存…」で .sb3 にします。SB3をsb3-toolchain（作品をファイル単位に展開するツール）で展開したフォルダを、このガイドでは「作品フォルダ」と呼びます（画面では「プロジェクトフォルダ」と表示）。作品フォルダは「プロジェクトフォルダを開く…」から開きます（<a href="../git/#project-folder">作品フォルダを開いて保存する</a>）。</p>
 <figure><a href="../images/current-open-folder.png"><img src="../images/current-open-folder.png" width="1440" height="960" alt="エディター全体。ファイルメニューが開き、新しいプロジェクトを作成、SB3ファイルを開く…、プロジェクトフォルダを開く…、リポジトリを選択…、リリース…、プロジェクトを保存、名前を変えて保存…、書き出し…、作品のプロパティ、組み込みデータ…、機能拡張…、復元ポイントが並ぶ。右上の「ステージを開く」の左に「Git ▾」ボタンがある。" loading="lazy"></a><figcaption>「ファイル」メニュー。ローカルGitのパネルは、メニューバーの「Git ▾」から開きます。<a href="../screen/#file-menu">ファイルメニューの項目</a> · <a href="../git/#local-git">ローカルGitの開き方</a></figcaption></figure>
 <p>展開後の大きさが標準の上限（64 MiB）を超える作品を開こうとすると、「大きな作品を開く」の確認が出ます。確認画面には、展開後のおおよその大きさと、メモリを大量に使ってタブが応答しなくなるおそれがあることが表示されます。「開く」を選んだときだけ、その回に限り最大256 MiBまで開きます。既定で選ばれているのは「開かない」です。作成者や入手元に心当たりのない作品は開かないでください。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/387">ファイルメニューと保存・書き出しの整理</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/325">大きなSB3の読み込み上限</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/429">上限を超える作品の確認</a></p>
 
 </section>
 
@@ -70,7 +69,6 @@
 <tr><th scope="row">エディターを準備中…</th><td>読み込んだ作品を画面に表示する</td></tr>
 </tbody></table></div>
 <p>「読み込み履歴」には、完了した工程ごとに、時刻と読み込み開始からの経過秒数が並びます。まだ完了した工程がないときは「完了した工程はまだありません。」と表示されます。読み込みに失敗したときの原因は、<a href="#project-diagnostics">作品の診断</a>で確かめます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/375">読み込み画面の工程と履歴</a></p>
 
 </section>
 
@@ -83,7 +81,6 @@
 <figure class="guide-detail"><a href="../images/extensions-dialog.png"><img src="../images/extensions-dialog.png" width="640" height="184" alt="機能拡張ダイアログ。「使用中の機能拡張はありません。」と表示され、機能拡張の追加、閉じる、格納方式を適用のボタンが並ぶ。" loading="lazy"></a><figcaption>拡張を使っていない作品で開いた「機能拡張」ダイアログ。拡張がある作品では、拡張ごとに格納方式を選ぶ欄が並びます。</figcaption></figure>
 <figure><a href="../images/catalog-current.png"><img src="../images/catalog-current.png" width="1440" height="1000" alt="機能拡張を作品に追加する画面でTurboWarp Plusを選んだところ。TurboWarp-Markdownにチェックが入っている。各行に拡張のアイコン・名前・ID・信頼の印・バージョン・配信元のURL・説明・製作者と、読み込み元の選択肢が並ぶ。" loading="lazy"></a><figcaption>拡張の追加画面で「TurboWarp-Markdown」を選んだところ。名前の横の、TurboWarp Plusのロゴに緑のチェックを重ねた印は、このエディターが信頼する拡張であることを示します。安全を保証する印ではありません。</figcaption></figure>
 <p>公式カタログに載っている拡張は、エディターが信頼済みとして扱います。作品を開くときに個別には確認せず、サンドボックスなしで動かします。拡張の説明はエディターの表示言語に合わせて表示され、提供元のWebサイト、リリース、製作者の連絡先へのリンクも開けます。カタログにないURLから追加するときは、「すべて」や「TurboWarp」にある標準の「カスタム拡張機能」を使います。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/32">拡張の追加入口の統一</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/49">カタログの拡張を確認なしで動かす</a></p>
 
 </section>
 
@@ -95,7 +92,6 @@
 <figure class="guide-detail"><a href="../images/review-dialog.png"><img src="../images/review-dialog.png" width="768" height="359" alt="作品を開く際の拡張の確認画面「この作品は機能拡張を使います」。Block editor demoについて、ID、作品の中にdata:アドレスとして書かれていること、説明、製作者、サンドボックスなしが必要という表示と、動かし方の選択肢が並ぶ。" loading="lazy"></a><figcaption>カタログにない拡張を data: アドレスで含む作品（説明用に用意したもの）を開いた例。作品のすべての拡張（この例では1つ）が「サンドボックスなしが必要」と申告しているため、「サンドボックスなしで」だけが選ばれた状態で表示されます。「OK」を押すまで、拡張は実行されません。</figcaption></figure>
 <ul><li>動かし方は、最初は「サンドボックスの中で」が選ばれています。作品のすべての拡張が「サンドボックスなしが必要」と申告している場合だけ、最初から「サンドボックスなしで」が選ばれ、ほかの選択肢と「すべての動かし方」は表示されません。このときは「OK」で実行するか、「キャンセル」で開くのをやめます。</li><li>「サンドボックスなしが必要」と申告している拡張にほかの動かし方を選ぶと、警告が表示されます。</li><li>「動かさない」を選んだ拡張は、コードを取得せず、読み込みません。</li><li>ZIPにまとめて配布された拡張では、SHA-256が一致したZIP内のコードから拡張名を読み取り、実行前に表示します。名前を確定できない場合は拡張のIDを表示します。</li><li>確認画面は移動・リサイズ・最大化できます。</li></ul>
 <p>SHA-256で確かめるのは、コードの内容が記録されたものと一致するかどうかです。サンドボックスなしの拡張は、作品・エディター・このサイトのデータにアクセスできます。「サンドボックスなしで」は、内容と提供元を確かめた信頼できるコードにだけ選びます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/391">ZIP内の拡張名の表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/96">Plus拡張も同じ確認画面で尋ねる</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/302">拒否した拡張の取得停止</a></p>
 
 </section>
 
@@ -106,7 +102,6 @@
 <p>拡張コードの取得を待っている間は、画面中央に待機中のダイアログが表示されます。</p>
 <ul><li>カタログの一覧の取得に失敗した場合は「再試行」で一覧を取り直します。</li><li>拡張コードの取得に失敗し、やり直せば成功する見込みがある場合だけ「もう一度試す」が表示されます。選んだ格納方式はそのまま保たれます。</li><li>ハッシュの不一致や配信元の404など、やり直しても結果が変わらない失敗では、表示された理由を確認します。</li></ul>
 <p>失敗した回の詳しい記録は<a href="#project-diagnostics">作品の診断</a>で確認できます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/120">やり直す価値のあるときだけ再試行</a></p>
 
 </section>
 

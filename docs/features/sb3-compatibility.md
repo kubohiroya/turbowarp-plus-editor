@@ -6,7 +6,7 @@
 
 判定の基準は、**通常のScratch 3または標準TurboWarpのSB3を、TurboWarp Plus Editorの公開版（GitHub Pages）で普通に開いた直後**の状態です。作品にはPlus対応の拡張や専用のデータが含まれず、エディターは既定の設定で起動したものとします。「使える」は通常の作品データで使える機能、「使えない」はその状態では使えない機能、「対象外」はエディターの外で行う操作です。追加の拡張・データ・起動設定が必要な場合や、開発版でだけ使える範囲は、右端の列に書いています。
 
-章番号は[機能ガイド](./)の「ページ番号.章番号」に対応します（2026年11月15日の公開版に合わせて改訂）。12ページ目「GitHubで作品を開発する」はGitHub上の操作が中心のため、この一覧には含めていません。公開版と操作が異なる箇所や、開発中の機能は表の中に書いています。 [機能ガイドの改訂 Issue #181](https://github.com/kubohiroya/turbowarp-plus-editor/issues/181)
+章番号は[機能ガイド](./)の「ページ番号.章番号」に対応します（2026年11月15日の公開版に合わせて改訂）。12ページ目「GitHubで作品を開発する」はGitHub上の操作が中心のため、この一覧には含めていません。公開版と操作が異なる箇所や、開発中の機能は表の中に書いています。
 
 ## 1. [作品を開き、拡張を準備する](open/)
 
@@ -152,7 +152,7 @@
 
 実行許可は、生成したSB3を開くときにエディターが扱います。カタログで信頼条件を満たす拡張は個別承認を省略し、確認が必要なバンドルでは全体を一つの単位として表示します。[1.4 作品を開く前に拡張の実行条件を確認する](open/#review)を参照してください。
 
-[sb3-toolchainの使い方](https://github.com/kubohiroya/sb3-toolchain/blob/main/README.ja.md) · [拡張APIの互換性検査](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/ja/extension-api-compatibility.md) · [バンドルと解除の仕様](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/ja/extension-bundles.md) · [作品フォルダの編集](https://github.com/kubohiroya/turbowarp-plus-editor/issues/305) · [ローカルGitパネル](https://github.com/kubohiroya/turbowarp-plus-editor/pull/313)
+[sb3-toolchainの使い方](https://github.com/kubohiroya/sb3-toolchain/blob/main/README.ja.md) · [拡張APIの互換性検査](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/ja/extension-api-compatibility.md) · [バンドルと解除の仕様](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/ja/extension-bundles.md) · [作品フォルダの編集](git/#project-folder) · [ローカルGitパネル](git/#local-git)
 
 ## 実行環境と確認範囲
 

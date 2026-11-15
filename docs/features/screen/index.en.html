@@ -61,7 +61,6 @@
 <p>Below the menu bar, at the left edge of the screen, are four switches stacked in a column (the activity bar). They choose what the left drawer shows: "Sprites", "Project folder", "Git history" or "AI agents". Above the sprite list are the "Search sprites", "Pin sprite list" and "Undock sprite list" buttons, and below it are "Backdrops" and the button for adding a sprite (<a href="../sprites/index.en.html">Edit sprites and the backdrop</a>, <a href="../git/index.en.html">Manage projects with project folders and Git</a>).</p>
 <figure><a href="../images/en/plus-workspace-current.png"><img src="../images/en/plus-workspace-current.png" width="1440" height="1000" alt="The screen right after startup. The top row has the logo, the project title Project, File, Edit and the search field, and on the right the Git, Open stage and Record buttons. The activity bar and sprite list are at the left edge; in the middle are the Sprite1 tab, the code area and the horizontal palette, with the minimap and zoom buttons at the bottom right." loading="lazy"></a><figcaption>The screen right after startup. The minimap appears at the bottom right when the pointer is over the code area.</figcaption></figure>
 <p>During long operations, the mouse pointer changes to a busy cursor.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">Reorganized menu bar</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/409">Open the stage from the menu bar</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/476">Record button</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/511">Git button and left drawer</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/362">Busy cursor</a></p>
 
 </section>
 
@@ -73,7 +72,6 @@
 <figure class="guide-detail"><a href="../images/en/plus-menu.png"><img src="../images/en/plus-menu.png" width="720" height="420" alt="The TurboWarp Plus menu opened from the logo, listing About TurboWarp Plus Editor 0.2.0-rc.4, Display settings, Runtime settings, Addons, Advanced Settings, GitHub Connection Settings…, AI agent settings…, Source code, and Licenses and credits." loading="lazy"></a><figcaption>The menu opened from the logo.</figcaption></figure>
 <ul><li><strong>About TurboWarp Plus Editor …</strong>: Opens the editor's version and build information.</li><li><strong>Display settings</strong>: Switches the theme, language and so on. Switching the language keeps the project you are editing and the extensions you have loaded.</li><li><strong>Runtime settings</strong>: Settings for how TurboWarp runs projects.</li><li><strong>Addons</strong> and <strong>Advanced Settings</strong>: Open TurboWarp's addons and advanced settings.</li><li><strong>GitHub Connection Settings…</strong>: On an editor with a GitHub connection, chooses the default way to connect to GitHub. The public editor (GitHub Pages) has no connection configured, so it shows "No GitHub connection is configured." (<a href="../github/index.en.html#push-without-connection">When there is no connection</a>).</li><li><strong>AI agent settings…</strong>: Chooses which services (ChatGPT, Claude and others) appear in the "AI agents" menu at the left edge, and their URLs.</li><li><strong>Source code</strong> and <strong>Licenses and credits</strong>: Open the repository and the licenses of the bundled packages.</li></ul>
 <p>Items with a box-and-arrow icon at the right end open in a new tab.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/359">TurboWarp Plus menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/392">Icon for items that open in a new tab</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/284">Keep the project when switching languages</a></p>
 
 </section>
 
@@ -122,7 +120,6 @@
 <a href="../images/en/current-save-active-tab.png"><img src="../images/en/current-save-active-tab.png" width="1440" height="960" alt="The project folder in the left drawer and a project.source.json tab in the middle. In the File menu, Save Active Tab shows ⌘S." loading="lazy"></a>
 <figcaption>The File menu while the left drawer shows the project folder.</figcaption>
 </figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/385">Edit menu</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/399">Icons and shortcut labels</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/405">Shortcut for find and replace</a></p>
 
 </section>
 
@@ -134,7 +131,7 @@
 <ul><li>Buttons in the menu bar show only an icon. Check a button's name in the tooltip that appears when you hover over it.</li><li>When TurboWarp's debugger is enabled, a "Debugger" button (shown as "…") appears between 🎥 (Record) and the extension button area. The debugger and record buttons are not part of the extension button area.</li></ul>
 <p>For example, the Kamishibai extension (<a href="../documents/index.en.html">Edit extension data and documents</a>) shows a reload button for production work only while a YAML script is running.</p>
 <p>Extension authors can register a button from an unsandboxed extension with <code>Scratch.gui.stageControls.addButton</code>.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/367">Extension controls moved to the right end of the menu bar</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/395">Debugger position</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/511">Icon-only buttons</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">Specification for extension authors</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">Specification for extension authors</a></p>
 
 </section>
 
@@ -144,7 +141,6 @@
 
 <p>The Plus layout opens with the activity bar at the left edge and the sprite list pinned. You edit code and assets in the tabs in the middle, and use "Open stage" in the menu bar to open the stage in a separate window, a tab or the drawer (<a href="../stage/index.en.html">Open the stage and run your project</a>).</p>
 <p>To work in the classic Scratch layout, reopen the editor with <code>twPlusStandardLayout=0</code> added to its URL. The stage and sprite list sit to the right of the code area, and the button for adding extensions appears at the bottom left.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/221">Plus layout</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/292">Sprite list at startup</a></p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">

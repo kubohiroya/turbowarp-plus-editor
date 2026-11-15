@@ -1,6 +1,5 @@
 # 作品のプロパティと診断
 
-追跡: [Issue #138](https://github.com/kubohiroya/turbowarp-plus-editor/issues/138)、[Issue #146](https://github.com/kubohiroya/turbowarp-plus-editor/issues/146)。
 通常のエディタURLから、Fileメニュー最下部の「Project Properties…」（日本語では
 「作品のプロパティ…」）と「Project Diagnostics…」（「作品の診断…」）を利用できます。
 作品情報の `twPlusProjectTools` は起動時固定・既定ONです。URLへの指定は不要です。
