@@ -18,3 +18,29 @@ export function removeObsoleteProcedureInputs(blocks, blockIds: Set<string>) {
         blocks.resetCache();
     }
 }
+
+/**
+ * Whether a script editor shows only the hat of a script. The flag is kept in the hat's mutation, so it is
+ * saved in the project and travels with the script. ScratchBlocks ignores the attribute on hats that read
+ * no mutation, such as a function definition's.
+ */
+export const foldedDefinitionAttribute = 'tw-plus-folded';
+
+type MutableBlock = {mutation?: Record<string, unknown> & {tagName?: string; children?: unknown[]}} | undefined;
+
+export function isFoldedDefinition(block: MutableBlock) {
+    return block?.mutation?.[foldedDefinitionAttribute] === 'true';
+}
+
+export function setFoldedDefinition(block: NonNullable<MutableBlock>, folded: boolean) {
+    if (folded) {
+        block.mutation = {tagName: 'mutation', children: [], ...block.mutation, [foldedDefinitionAttribute]: 'true'};
+        return;
+    }
+    if (!block.mutation) return;
+    const {[foldedDefinitionAttribute]: _, ...rest} = block.mutation;
+    // Drop the mutation this flag made, so an unfolded hat saves as it did before.
+    const empty = Object.keys(rest).every(key => key === 'tagName' || key === 'children') && !rest.children?.length;
+    if (empty) delete block.mutation;
+    else block.mutation = rest;
+}

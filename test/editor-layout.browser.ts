@@ -2296,7 +2296,7 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     await clone('Pane sprite(3)');
     await expect(tab('Pane sprite(4)')).toHaveAttribute('aria-selected', 'true');
     await expect(groups).toHaveCount(1);
-    await section('コード').click();
+    await section('自由配置').click();
     await chooseView(tile, 'Pane sprite(3)');
     await expect(section('コスチューム')).toHaveAttribute('aria-selected', 'true');
     await tile.click();
@@ -2527,7 +2527,7 @@ test('the Dockview variables pane lists only data owned by the selected target',
         return sprite.getName();
     });
     const showVariables = (stage = false) => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
-        .getByRole('tab', {name: stage ? 'グローバル変数' : '変数など', exact: true}).click();
+        .getByRole('tab', {name: stage ? 'グローバル変数' : '変数', exact: true}).click();
     const pane = page.getByRole('region', {name: /^(スプライト変数|グローバル変数)$/});
     const fields = pane.locator('input[data-variable-id]');
     const variableIds = () => fields.evaluateAll(inputs => inputs.map(input => input.getAttribute('data-variable-id')));
@@ -2741,7 +2741,7 @@ test('the variables table sorts mixed rows and saves list items for the selected
         return sprite.id;
     });
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
-    await toolbar.getByRole('tab', {name: '変数など', exact: true}).click();
+    await toolbar.getByRole('tab', {name: '変数', exact: true}).click();
     const pane = page.getByRole('region', {name: 'スプライト変数', exact: true});
     const row = (label: string) => pane.getByRole('row').filter({has: page.getByRole('rowheader', {name: label, exact: true})});
     const colors = row('Colors');
@@ -2885,7 +2885,7 @@ test('clone pages edit the selected runtime instance and fall back when it disap
         vm.emitTargetsUpdate(false);
     });
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
-    await toolbar.getByRole('tab', {name: '変数など', exact: true}).click();
+    await toolbar.getByRole('tab', {name: '変数', exact: true}).click();
     const pages = toolbar.getByRole('navigation', {name: 'クローンを切り替える'});
     await expect(pages).toHaveCount(0);
     const createClones = (start: number, count: number) => page.evaluate(([start, count]) => {
@@ -3034,7 +3034,7 @@ test('clone variables keep the original sprite reference counts and definition a
         vm.refreshWorkspace();
     });
     await page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
-        .getByRole('tab', {name: '変数など', exact: true}).click();
+        .getByRole('tab', {name: '変数', exact: true}).click();
     const pane = page.getByRole('region', {name: 'スプライト変数', exact: true});
     const row = (name: string) => pane.getByRole('row').filter({has: page.getByRole('textbox', {name, exact: true})});
     const pages = page.getByRole('navigation', {name: 'クローンを切り替える'});
@@ -3106,9 +3106,9 @@ test('editor pane headings and message diagrams follow the active target', {time
     const heading = toolbar.getByRole('heading');
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     await expect(heading).toHaveCount(0);
-    await section('変数など').hover();
+    await section('変数').hover();
     await expect(toolbar.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('スプライトのプロパティと変数');
-    await section('変数など').click();
+    await section('変数').click();
     const visibility = page.getByRole('radiogroup', {name: '表示', exact: true});
     for (const [label, visible] of [['表示しない', false], ['表示する', true]] as const) {
         const choice = visibility.getByRole('radio', {name: label, exact: true});
@@ -3117,7 +3117,7 @@ test('editor pane headings and message diagrams follow the active target', {time
         await expect.poll(() => page.evaluate(() => vm.editingTarget.visible)).toBe(visible);
     }
     for (const [tab, title] of [['コスチューム', 'コスチューム'], ['音', '音'],
-        ['変数など', 'スプライトのプロパティと変数'], ['メッセージ', 'メッセージ']]) {
+        ['変数', 'スプライトのプロパティと変数'], ['メッセージ', 'メッセージ']]) {
         await section(tab).click();
         await expect(heading).toHaveText(title);
     }
@@ -3163,7 +3163,7 @@ test('editor pane headings and message diagrams follow the active target', {time
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
 });
 
-test('the functions section edits each definition in its own code area and draws the call graph', {timeout: 60_000}, async t => {
+test('the hats and functions list and the calls section open each script in a tab beside the sprite', {timeout: 60_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage &&
@@ -3184,15 +3184,20 @@ test('the functions section edits each definition in its own code area and draws
             `<block type="event_whenflagclicked" x="40" y="400"><next>${call('jump')}</next></block></xml>`), workspace);
     });
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
-    await toolbar.getByRole('tab', {name: '関数', exact: true}).click();
-    await expect(toolbar.getByRole('heading')).toHaveText('関数');
-    const pane = page.getByRole('region', {name: '関数', exact: true});
-    const toggles = pane.locator('.tw-sprite-functions__toggle');
-    await expect(toggles.locator('.tw-sprite-functions__name')).toHaveText(['jump', 'land']);
+    await expect.poll(() => toolbar.getByRole('tab').evaluateAll(tabs => tabs.map(tab => tab.getAttribute('aria-label'))))
+        .toEqual(['自由配置', 'ハット・関数一覧', '呼び出し関係', 'コスチューム', '音', '変数', 'メッセージ']);
+    await toolbar.getByRole('tab', {name: 'ハット・関数一覧', exact: true}).click();
+    await expect(toolbar.getByRole('heading')).toHaveText('ハット・関数一覧');
+    const pane = page.getByRole('region', {name: 'ハット・関数一覧', exact: true});
+    await expect(pane.locator('.tw-sprite-functions__name')).toHaveText(['緑の旗 が押されたとき', 'jump', 'land']);
+    await expect(pane.getByRole('button', {name: '一覧', exact: true})).toHaveCount(0);
 
-    await toggles.first().click();
-    const editor = pane.getByRole('group', {name: 'jump のコード', exact: true});
-    await expect(editor.locator('.blocklySvg')).toBeVisible();
+    // A function opens as the active tab of a split beside the sprite, with the code area's palette.
+    await pane.getByRole('button', {name: 'jump のコードを開く', exact: true}).click();
+    const tab = (name: string) => page.locator('.dv-tab').filter({hasText: new RegExp(`^${name}$`)});
+    await expect(tab('jump')).toHaveClass(/dv-active-tab/);
+    const editor = page.locator('.dv-groupview.dv-active-group [data-code-hover-surface]');
+    await expect(editor.locator('.blocklyToolboxDiv')).toBeVisible();
     await editor.locator('.blocklyEditableText').first().click();
     await page.keyboard.press('ControlOrMeta+a');
     await page.keyboard.type('25');
@@ -3202,31 +3207,35 @@ test('the functions section edits each definition in its own code area and draws
         return blocks.getBlock(blocks.getBlock('layout-steps').inputs.STEPS.shadow).fields.NUM.value;
     });
     await expect.poll(steps).toBe('25');
-    await toolbar.getByRole('tab', {name: 'コード', exact: true}).click();
+
+    // A hat script opens the same way, in the same split.
+    await pane.getByRole('button', {name: '緑の旗 が押されたとき のスクリプトを開く', exact: true}).click();
+    await expect(tab('緑の旗 が押されたとき')).toHaveClass(/dv-active-tab/);
+    await expect(tab('jump')).toHaveCount(1);
+
+    await toolbar.getByRole('tab', {name: '自由配置', exact: true}).click();
     await expect.poll(() => page.evaluate(() => {
         const workspace = window.ScratchBlocks.getMainWorkspace();
         return workspace.getBlockById('layout-steps')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM');
     })).toBe('25');
 
-    await toolbar.getByRole('tab', {name: '関数', exact: true}).click();
-    await pane.getByRole('button', {name: '呼び出し図', exact: true}).click();
-    const graph = pane.locator('figure');
+    await toolbar.getByRole('tab', {name: '呼び出し関係', exact: true}).click();
+    const calls = page.getByRole('region', {name: '呼び出し関係', exact: true});
+    await expect(calls.getByRole('button', {name: '呼び出し図', exact: true})).toHaveCount(0);
+    const graph = calls.locator('figure');
     await expect(graph.locator('[data-edge]')).toHaveAttribute('data-edge', 'layout-jump>layout-land');
     const jump = graph.locator('[data-function-key="layout-jump"]');
     const land = graph.locator('[data-function-key="layout-land"]');
     const box = async () => [await jump.boundingBox(), await land.boundingBox()];
     let [from, to] = await box();
     assert.ok(to.x > from.x + from.width, 'LR puts the callee to the right of its caller');
-    await pane.getByRole('button', {name: '上から下 (TD)', exact: true}).click();
+    await calls.getByRole('button', {name: '上から下 (TD)', exact: true}).click();
     [from, to] = await box();
     assert.ok(to.y > from.y + from.height, 'TD puts the callee below its caller');
 
     await land.click();
-    const dialog = page.getByRole('dialog', {name: 'land のコード', exact: true});
-    await expect(dialog.locator('.blocklySvg')).toBeVisible();
-    await expect(dialog.locator('.blocklyDraggable')).not.toHaveCount(0);
-    await dialog.getByRole('button', {name: '閉じる', exact: true}).click();
-    await expect(dialog).toHaveCount(0);
+    await expect(tab('land')).toHaveClass(/dv-active-tab/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
