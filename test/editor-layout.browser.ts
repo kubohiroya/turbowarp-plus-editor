@@ -2100,12 +2100,12 @@ test('the editor layout menu opens the live block palette and the Dockview panel
 
     const panel = await open('Open panel in another window');
     await expect(panel).toHaveURL(/dockview-popout\.html$/);
-    await expect(panel.getByRole('tab', {name: 'Code', exact: true})).toBeVisible();
+    await expect(panel.getByRole('tab', {name: 'Free layout', exact: true})).toBeVisible();
     await expect(panel.locator('[data-horizontal-block-palette]')).toBeVisible();
     await expect(toolbox).toHaveCount(0);
     await panel.getByRole('tab', {name: 'Costumes', exact: true}).click();
     await expect(panel.getByRole('tab', {name: 'Costumes', exact: true})).toHaveAttribute('aria-selected', 'true');
-    await panel.getByRole('tab', {name: 'Code', exact: true}).click();
+    await panel.getByRole('tab', {name: 'Free layout', exact: true}).click();
     await expect(panel.locator('[data-horizontal-block-palette]')).toBeVisible();
     await expect(panel.locator(blockSelector)).toHaveCount(2);
     await panel.getByRole('button', {name: 'Motion', exact: true}).click();
@@ -2151,9 +2151,9 @@ test('the default Dockview splits one sprite editor and restores each view secti
     const menu = (group: ReturnType<typeof page.locator>) => group.getByRole('button', {name: 'Editor panel layout'});
     await expect(originalTab).toBeVisible();
     await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
-    const code = section('Code');
-    const costumes = section('Costumes');
-    const sections = ['Code', 'Costumes', 'Sounds', 'Functions', 'Properties & Variables', 'Messages'];
+    const code = section('Free layout');
+    const functions = section('Hats and functions');
+    const sections = ['Free layout', 'Hats and functions', 'Calls', 'Costumes', 'Sounds', 'Variables', 'Messages'];
     await expect(toolbar.getByRole('tab')).toHaveCount(sections.length);
     const bounds = await Promise.all(sections.map(async name => {
         const tab = section(name);
@@ -2169,11 +2169,11 @@ test('the default Dockview splits one sprite editor and restores each view secti
     const lastTab = bounds.at(-1);
     assert(railBounds && lastTab && lastTab.y + lastTab.height < railBounds.y + railBounds.height - 40);
     await code.hover();
-    await expect(page.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('Code');
+    await expect(page.locator('.tw-plus-sprite-toolbar-tooltip')).toHaveText('Free layout');
     await code.press('ArrowDown');
-    await expect(costumes).toBeFocused();
-    await expect(costumes).toHaveAttribute('aria-selected', 'true');
-    await costumes.press('ArrowUp');
+    await expect(functions).toBeFocused();
+    await expect(functions).toHaveAttribute('aria-selected', 'true');
+    await functions.press('ArrowUp');
     await expect(code).toHaveAttribute('aria-selected', 'true');
     await page.evaluate(() => document.documentElement.style.setProperty('--ui-white', 'rgb(38, 47, 65)'));
     await expect(groups.first().getByRole('tab', {name: spriteName, exact: true}))
@@ -2208,12 +2208,12 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await expect(originalTab).toBeVisible();
     await expect(splitTab).toBeVisible();
     await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
-    await section('Code').click();
-    await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
+    await section('Free layout').click();
+    await expect(section('Free layout')).toHaveAttribute('aria-selected', 'true');
     await originalTab.click();
     await expect(section('Costumes')).toHaveAttribute('aria-selected', 'true');
     await splitTab.click();
-    await expect(section('Code')).toHaveAttribute('aria-selected', 'true');
+    await expect(section('Free layout')).toHaveAttribute('aria-selected', 'true');
     await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
 
     await menu(groups.last()).click();
@@ -2279,6 +2279,11 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     await tile.click({button: 'right'});
     const listRename = listMenu.getByRole('menuitem', {name: rename});
     const pencil = await listRename.locator('svg path').getAttribute('d');
+    // react-contextmenu redraws a menu on hover and shows it again two frames later, even if a click hid it
+    // meanwhile, so the pointer rests on the item before pressing it, as a person's would.
+    await listRename.hover();
+    await expect(listRename).toHaveClass(/react-contextmenu-item--selected/);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await listRename.click();
     await expect(page.getByRole('dialog', {name: rename})).toBeVisible();
     await page.keyboard.press('Escape');
@@ -2459,7 +2464,7 @@ test('the Dockview asset connection restores the native costume and sound select
     await page.keyboard.press('Enter');
     await expect(selected).toContainText('Pane sound B');
     await expect(page.locator('[class*="sound-editor_waveform-container_"]:visible')).toBeVisible();
-    await section('Code').click();
+    await section('Free layout').click();
     await section('Sounds').click();
     await expect(selected).toContainText('Pane sound B');
 
@@ -2477,7 +2482,7 @@ test('the Dockview asset connection restores the native costume and sound select
     await expect.poll(() => page.evaluate(() => window.vm.editingTarget.getName())).toBe(spriteName);
     await expect(selected).toContainText('Pane sound B');
 
-    await section('Properties & Variables').click();
+    await section('Variables').click();
     const viewIds = await Promise.all([0, 1].map(index => viewTab(index).getAttribute('data-tab-panel-id')));
     const pane = (group: number) => page.locator('[id="' + viewIds[group] + '-content"]');
     const variable = (group: number) => pane(group).getByRole('textbox', {name: 'Pane counter'});
@@ -2489,7 +2494,7 @@ test('the Dockview asset connection restores the native costume and sound select
     const width = (await first.boundingBox()).width;
     await first.fill('17');
     await activate(1);
-    await section('Properties & Variables').click();
+    await section('Variables').click();
     await expect(first).not.toBeEditable();
     await expect(properties(0)).toBeDisabled();
     await expect(properties(1)).toBeEditable();
@@ -2743,7 +2748,7 @@ test('the variables table sorts mixed rows and saves list items for the selected
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
     await toolbar.getByRole('tab', {name: '変数', exact: true}).click();
     const pane = page.getByRole('region', {name: 'スプライト変数', exact: true});
-    const row = (label: string) => pane.getByRole('row').filter({has: page.getByRole('rowheader', {name: label, exact: true})});
+    const row = (label: string) => pane.getByRole('row').filter({has: page.getByRole('rowheader', {name: new RegExp(`^${label}(?: 変数名を変更)?$`)})});
     const colors = row('Colors');
     await expect(colors.getByRole('img', {name: 'リスト', exact: true})).toHaveAttribute('title', 'リスト');
     await expect(row('Count').getByRole('img', {name: '変数', exact: true})).toHaveAttribute('title', '変数');
@@ -3122,26 +3127,37 @@ test('editor pane headings and message diagrams follow the active target', {time
         await expect(heading).toHaveText(title);
     }
     const pane = page.getByRole('region', {name: 'メッセージ', exact: true});
-    const sent = pane.getByRole('region', {name: '送信', exact: true});
-    await expect(sent.getByRole('columnheader')).toHaveText(['メッセージ', 'ブロック', '操作']);
-    const rename = sent.getByRole('button', {name: 'メッセージ名を変更', exact: true});
+    const sides = pane.getByRole('tablist', {name: 'メッセージ', exact: true}).getByRole('tab');
+    await expect(sides).toHaveText(['送信1', '受信0']);
+    await expect(sides.first()).toHaveAttribute('aria-selected', 'true');
+    const diagram = pane.getByRole('tabpanel').getByRole('figure', {name: 'スプライト・背景とメッセージの関係', exact: true});
+    const headings = diagram.locator('.tw-sprite-messages__headings > span');
+    await expect(headings).toHaveText(['送信元', '受信先']);
+    const sendScript = diagram.locator('[data-script-id="layout-message-send"]').getByRole('button');
+    await expect(sendScript).toHaveAttribute('title', 'このブロックを開く');
+    await expect(sendScript.getByRole('img')).toBeVisible();
+    const actions = diagram.getByRole('button', {name: '「準備できた」の操作', exact: true});
+    await expect(actions.locator('svg')).toBeVisible();
+    await actions.click();
+    const rename = diagram.getByRole('menuitem', {name: 'メッセージ名を変更', exact: true});
     await expect(rename.locator('svg')).toBeVisible();
     await rename.click();
-    await expect(sent.getByRole('textbox', {name: 'メッセージ名'})).toHaveValue('準備できた');
-    await sent.getByRole('button', {name: 'キャンセル', exact: true}).click();
-    const diagram = pane.locator('figure');
+    const renameDialog = page.getByRole('dialog', {name: 'メッセージ名を変更', exact: true});
+    await expect(renameDialog.getByRole('textbox', {name: '新しいメッセージ名:'})).toHaveValue('準備できた');
+    await renameDialog.getByRole('button', {name: 'キャンセル', exact: true}).click();
+    await expect(renameDialog).toHaveCount(0);
     const edge = diagram.locator('.tw-sprite-messages__edge');
-    const nodes = diagram.getByRole('button');
-    const sprite = nodes.getByText(spriteName, {exact: true});
-    const stage = nodes.getByText('背景', {exact: true});
+    const nodes = diagram.locator('.tw-sprite-messages__node');
+    const sprite = diagram.getByRole('button', {name: spriteName, exact: true});
+    const stage = diagram.getByRole('button', {name: '背景', exact: true});
     await expect(edge).toHaveText('準備できた');
-    await expect(edge.locator('svg')).toBeVisible();
-    await expect(nodes).toHaveText([spriteName, '背景']);
+    await expect(edge.locator('.tw-sprite-messages__icon')).toBeVisible();
+    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, '背景']);
     await expect.poll(() => nodes.locator('img').evaluateAll(images =>
         images.map(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)))
         .toEqual([true, true]);
-    const bodySize = await pane.locator('tbody td').first().evaluate(node => getComputedStyle(node).fontSize);
-    for (const text of [diagram.locator('figcaption'), edge.getByText('準備できた'), sprite, stage]) {
+    const bodySize = await diagram.evaluate(node => getComputedStyle(node).fontSize);
+    for (const text of [headings.first(), headings.last(), sprite, stage]) {
         await expect(text).toHaveCSS('font-size', bodySize);
     }
     await expect(nodes.first()).toHaveAttribute('aria-current', 'true');
@@ -3158,6 +3174,10 @@ test('editor pane headings and message diagrams follow the active target', {time
     await section('背景').click();
     await expect(heading).toHaveText('背景');
     await section('メッセージ').click();
+    // The stage only receives the message, so the pane opens on what it receives.
+    await expect(sides).toHaveText(['送信0', '受信1']);
+    await expect(sides.last()).toHaveAttribute('aria-selected', 'true');
+    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, '背景']);
     await expect(nodes.last()).toHaveAttribute('aria-current', 'true');
     await expect(nodes.last()).toHaveCSS('border-top-width', '3px');
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
@@ -3590,7 +3610,7 @@ test('two Dockview code panes keep independent positions and zoom for the same s
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"] [role="tablist"]:visible');
     await toolbar.getByRole('tab', {name: 'Costumes', exact: true}).click();
     await expect(page.locator('.tw-plus-sprite-tab-slot--split .blocklyToolboxDiv:visible')).toHaveCount(0);
-    await toolbar.getByRole('tab', {name: 'Code', exact: true}).click();
+    await toolbar.getByRole('tab', {name: 'Free layout', exact: true}).click();
     await expect(palette(editor)).toBeVisible();
     await expect.poll(() => readViewport(editor)).toEqual(left);
     assert.equal(await page.evaluate(() => window.vm.editingTarget.id), targetId);
