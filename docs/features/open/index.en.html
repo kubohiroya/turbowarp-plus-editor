@@ -49,7 +49,6 @@
 <p>Open a project from your computer with "File" → "Open SB3 File…". It opens SB3 files saved by Scratch 3 as well as by standard TurboWarp. You can also choose the older .sb and .sb2 formats, but they cannot be saved over, so after editing, use "Save As…" to make an .sb3. sb3-toolchain is a tool that unpacks an SB3 into separate files; this guide calls the folder it produces a "project folder". Open a project folder with "Open Project Folder…" (<a href="../git/index.en.html#project-folder">Open and save a project folder</a>).</p>
 <figure><a href="../images/en/current-open-folder.png"><img src="../images/en/current-open-folder.png" width="1440" height="960" alt="The whole editor with the File menu open, listing Create New Project, Open SB3 File…, Open Project Folder…, Choose Repository…, Releases…, Save Project, Save As…, Export…, Project Properties, Project Data…, Extensions… and Restore Points. At the top right, a Git ▾ button sits to the left of Open stage." loading="lazy"></a><figcaption>The "File" menu. The Local Git panel opens from "Git ▾" in the menu bar. <a href="../screen/index.en.html#file-menu">File menu items</a> · <a href="../git/index.en.html#local-git">How to open the Local Git panel</a></figcaption></figure>
 <p>If you try to open a project whose unpacked size exceeds the standard limit (64 MiB), an "Open a Large Project" confirmation appears. It shows the approximate unpacked size and warns that the tab may use a lot of memory and stop responding. The project opens only if you choose "Open", and only this once (up to 256 MiB). "Don't Open" is selected by default. Do not open projects whose creator or source you do not recognize.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/387">Reorganized File menu, saving and exporting</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/325">Loading limit for large SB3 files</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/429">Confirmation for projects over the limit</a></p>
 
 </section>
 
@@ -70,7 +69,6 @@
 <tr><th scope="row">Preparing the editor…</th><td>Showing the loaded project in the editor</td></tr>
 </tbody></table></div>
 <p>The "Loading history" lists each completed step with its time and the seconds elapsed since loading began. Until a step has completed, it shows "No previous steps yet." If loading fails, find the cause in the <a href="#project-diagnostics">project diagnostics</a>.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/375">Steps and history on the loading screen</a></p>
 
 </section>
 
@@ -83,7 +81,6 @@
 <figure class="guide-detail"><a href="../images/en/extensions-dialog.png"><img src="../images/en/extensions-dialog.png" width="640" height="184" alt="The Extensions dialog showing No extensions in use., with the buttons Add Extension, Close and Apply Storage Settings." loading="lazy"></a><figcaption>The "Extensions" dialog opened on a project that uses no extensions. For a project with extensions, each extension gets a field for choosing how it is stored.</figcaption></figure>
 <figure><a href="../images/en/catalog-current.png"><img src="../images/en/catalog-current.png" width="1440" height="1000" alt="The Add Extensions to the Project screen with TurboWarp Plus selected and TurboWarp-Markdown checked. Each row shows the extension's icon, name, ID, trust mark, version, source URL, description and creator, with the choices for where it loads from." loading="lazy"></a><figcaption>"TurboWarp-Markdown" selected on the add-extension screen. The mark next to the name, the TurboWarp Plus logo with a green check, shows that this editor trusts the extension. It does not guarantee that the extension is safe.</figcaption></figure>
 <p>The editor treats extensions listed in the official catalog as trusted: it does not ask about them when a project opens, and runs them without the sandbox. Extension descriptions follow the editor's display language, and you can open links to the provider's website, the release and the creator's contact. To add an extension from a URL that is not in the catalog, use the standard "Custom Extension" under "All" or "TurboWarp".</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/32">One entry point for adding extensions</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/49">Run catalog extensions without review</a></p>
 
 </section>
 
@@ -95,7 +92,6 @@
 <figure class="guide-detail"><a href="../images/en/review-dialog.png"><img src="../images/en/review-dialog.png" width="768" height="353" alt="The extension review screen This project wants to run extensions shown when opening a project. For Block editor demo it shows the ID, that it is written into the project as a data address, the description, the creator, a note that it needs to run without the sandbox, and the How it runs choice." loading="lazy"></a><figcaption>Opening a project (prepared for this guide) that contains an extension not in the catalog as a data: address. Because every extension in the project (here, just one) declares that it needs to run without the sandbox, only "Without the sandbox" is shown, already selected. The extension does not run until you press "OK".</figcaption></figure>
 <ul><li>"In the sandbox" is selected at first. Only when every extension in the project declares that it needs to run without the sandbox is "Without the sandbox" selected from the start; the other choices and "How they all run" are then hidden, and you either press "OK" to run them or "Cancel" to stop opening the project.</li><li>If you choose another way to run for an extension that declares it needs to run without the sandbox, a warning appears.</li><li>Extensions set to "Do not run" are not loaded, and their code is not fetched.</li><li>For extensions distributed as a ZIP, the editor reads the extension name from the code in the ZIP whose SHA-256 matches, and shows it before anything runs. If the name cannot be determined, the extension ID is shown instead.</li><li>The review screen can be moved, resized and maximized.</li></ul>
 <p>SHA-256 only confirms that the code matches what was recorded. An extension running without the sandbox can reach the project, the editor and this site's data. Choose "Without the sandbox" only for trusted code whose content and provider you have checked.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/391">Extension names from inside ZIPs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/96">Plus extensions use the same review screen</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/302">Stop fetching rejected extensions</a></p>
 
 </section>
 
@@ -106,7 +102,6 @@
 <p>While the editor waits for extension code, a waiting dialog appears in the middle of the screen.</p>
 <ul><li>If the catalog list fails to load, fetch it again with "Retry".</li><li>If fetching extension code fails and trying again might succeed, and only then, "Try again" appears. The storage settings you chose are kept.</li><li>For failures that trying again would not change, such as a hash mismatch or a 404 from the source, check the reason shown.</li></ul>
 <p>A detailed record of the failed attempt is available in the <a href="#project-diagnostics">project diagnostics</a>.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/120">Retry only when it is worth it</a></p>
 
 </section>
 

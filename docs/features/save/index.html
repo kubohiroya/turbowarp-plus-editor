@@ -60,7 +60,7 @@
 <tr><th scope="row">プロジェクトフォルダ</th><td>選んだフォルダに<a href="../git/#project-folder">作品フォルダ</a>を作って保存し、そのフォルダを開く。フォルダを選べるChromeやEdgeなどで表示される。フォルダにあった内容は上書きされる</td></tr>
 </tbody></table></div>
 <ul><li><strong>SB3の保存先を選んだ場合。</strong>選んだファイルが、以後の「プロジェクトを保存」の上書き先になります。保存先の選択をキャンセルすると、以前の上書き先のままです。</li><li><strong>SB3をダウンロードした場合。</strong>上書き先は設定されず、「プロジェクトを保存」は選べないままです。</li><li><strong>作品フォルダを開いている場合。</strong>「プロジェクトを保存」で<a href="../git/#project-folder">作品フォルダ</a>を更新します。ブロックだけでなく、変数、スプライトの位置や大きさ、スプライト・コスチューム・音の追加や削除も保存されます。「名前を変えて保存…」でSB3を作ると、作品フォルダとの接続は外れます。</li></ul>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/387">保存と書き出しの整理</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3保存形式</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3保存形式</a></p>
 
 </section>
 
@@ -97,7 +97,6 @@
 <p>「ファイル」→「作品のプロパティ」の「作品の URI」に、作品を識別するHTTPSのアドレスを入力し、「適用」を押します。ユーザー名・パスワードや、<code>#</code> 以降のフラグメントを含むアドレスは使えません。適用したURIは、次に作品を保存したときにSB3に記録されます。</p>
 <figure class="guide-detail"><a href="../images/project-uri-detail.png"><img src="../images/project-uri-detail.png" width="622" height="116" alt="作品のプロパティの作品の URI 欄に、説明用のHTTPSのアドレスを入力した画面。下に、適用した URI は次に作品を保存したときに SB3 に記録されるという案内がある。" loading="lazy"></a><figcaption>「作品の URI」欄に説明用のURLを入力した例。</figcaption></figure>
 <p>作品ごとにキャッシュを保存する拡張では、URIを変えると、以後の書き込みに新しいURIが使われます。URIを変えてもキャッシュは削除されず、以前のキャッシュはそのまま残ります。キャッシュはブラウザーの中に保存されます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/209">作品URIの指定</a></p>
 
 </section>
 
@@ -135,7 +134,6 @@
 <tr><th scope="row">作品 JSON 内のデータ</th><td>作品のJSONにデータを直接格納する</td></tr>
 </tbody></table></div>
 <p>「適用」を押し、SB3を保存します。設定した格納方式は次の保存から使われます。HTTPS参照に設定した項目を、その時だけ同梱したSB3が必要なときは、<a href="#save">名前を変えて保存</a>で「SB3（設定対象の台本・素材を同梱）」を選びます。設定した格納方式のデータを読み戻すには、Plusの拡張ローダーが有効なエディターを使います。HTTPS参照がある作品を開くと、取得先の一覧が表示され、取得を許可するかどうかを選べます。拡張のプログラム自体の格納方式は、<a href="#storage">拡張コードの格納方式を選ぶ</a>で説明しています。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/215">作品データの格納方式の実装</a></p>
 
 </section>
 

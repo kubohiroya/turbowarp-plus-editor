@@ -6,7 +6,7 @@
 
 Each verdict describes **a normal Scratch 3 or standard TurboWarp SB3 right after it is opened in the public editor (GitHub Pages) of TurboWarp Plus Editor**. The project contains no Plus extensions or Plus-specific data, and the editor starts with its default settings. "Yes" means the feature works with ordinary project data, "No" means it does not work in that state, and "N/A" means the operation happens outside the editor. When extra extensions, data or startup settings are needed, or a feature only works in a development build, the last column says so.
 
-Section numbers match the "page.section" numbers of the [feature guide](index.en.html) (revised for the public editor as of November 15, 2026). Page 12, "Develop projects on GitHub", is not in this list because it is mostly about working on GitHub. Where the public editor differs, or a feature is still in development, the table says so. [Feature guide revision, issue #181](https://github.com/kubohiroya/turbowarp-plus-editor/issues/181)
+Section numbers match the "page.section" numbers of the [feature guide](index.en.html) (revised for the public editor as of November 15, 2026). Page 12, "Develop projects on GitHub", is not in this list because it is mostly about working on GitHub. Where the public editor differs, or a feature is still in development, the table says so.
 
 ## 1. [Open projects and prepare extensions](open/index.en.html)
 
@@ -152,7 +152,7 @@ Dependencies on external APIs, or on images and models an extension fetches whil
 
 Run permission is handled by the editor when the built SB3 is opened. Extensions that meet the catalog's trust conditions skip individual approval, and a bundle that needs review is shown as one unit. See [1.4 Review how extensions will run before opening a project](open/index.en.html#review).
 
-[Using sb3-toolchain](https://github.com/kubohiroya/sb3-toolchain/blob/main/README.md) · [Extension API compatibility checks](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/extension-api-compatibility.md) · [Bundling and unbundling](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/extension-bundles.md) · [Editing project folders](https://github.com/kubohiroya/turbowarp-plus-editor/issues/305) · [Local Git panel](https://github.com/kubohiroya/turbowarp-plus-editor/pull/313)
+[Using sb3-toolchain](https://github.com/kubohiroya/sb3-toolchain/blob/main/README.md) · [Extension API compatibility checks](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/extension-api-compatibility.md) · [Bundling and unbundling](https://github.com/kubohiroya/sb3-toolchain/blob/main/docs/extension-bundles.md) · [Editing project folders](git/index.en.html#project-folder) · [Local Git panel](git/index.en.html#local-git)
 
 ## Runtime environment and scope of testing
 

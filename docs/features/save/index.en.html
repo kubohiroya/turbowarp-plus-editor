@@ -60,7 +60,7 @@
 <tr><th scope="row">Project folder</th><td>Creates a <a href="../git/index.en.html#project-folder">project folder</a> in the folder you choose, saves to it and opens it. Shown in browsers that can choose folders, such as Chrome and Edge. Existing content in the folder is overwritten</td></tr>
 </tbody></table></div>
 <ul><li><strong>When you choose where to save an SB3.</strong> The file you chose becomes the target of later "Save Project" overwrites. If you cancel choosing a location, the previous target stays.</li><li><strong>When you download an SB3.</strong> No target is set, and "Save Project" stays unavailable.</li><li><strong>When a project folder is open.</strong> "Save Project" updates the <a href="../git/index.en.html#project-folder">project folder</a>. Not only blocks but also variables, sprite positions and sizes, and added or deleted sprites, costumes and sounds are saved. Making an SB3 with "Save As…" disconnects the project from the project folder.</li></ul>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/387">Reorganizing save and export</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3 save format</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3 save format</a></p>
 
 </section>
 
@@ -97,7 +97,6 @@
 <p>In "File" → "Project Properties", enter an HTTPS address that identifies the project in "Project URI", then click "Apply". Addresses containing a user name or password, or a fragment after <code>#</code>, cannot be used. The applied URI is recorded in the SB3 the next time you save the project.</p>
 <figure class="guide-detail"><a href="../images/en/project-uri-detail.png"><img src="../images/en/project-uri-detail.png" width="622" height="116" alt="The Project URI field in Project Properties with an example HTTPS address entered. Below it, a note says the URI will be recorded in the SB3 the next time you save the project." loading="lazy"></a><figcaption>An example URL entered in the "Project URI" field.</figcaption></figure>
 <p>For extensions that keep a cache per project, changing the URI makes later writes use the new URI. Changing the URI does not delete the cache; the earlier cache stays as it is. The cache is stored in the browser.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/209">Setting the project URI</a></p>
 
 </section>
 
@@ -135,7 +134,6 @@
 <tr><th scope="row">Data in the project JSON</th><td>Stores the data directly in the project's JSON</td></tr>
 </tbody></table></div>
 <p>Click "Apply" and save the SB3. The chosen storage formats are used from the next save. If you need a one-off SB3 with the HTTPS-referenced items bundled in, choose "SB3 (embed configured scripts and assets)" in <a href="#save">Save As</a>. To read back data stored in the chosen storage formats, use an editor with the Plus extension loader enabled. When you open a project with HTTPS references, a list of the sources is shown and you can choose whether to allow fetching. The storage format of the extension programs themselves is covered in <a href="#storage">Choose the storage format for extension code</a>.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/215">Implementation of project data storage formats</a></p>
 
 </section>
 

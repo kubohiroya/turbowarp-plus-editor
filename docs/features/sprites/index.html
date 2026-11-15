@@ -50,7 +50,6 @@
 <figure class="guide-detail"><a href="../images/sprite-search.png"><img src="../images/sprite-search.png" width="560" height="360" alt="スプライト一覧の検索欄に「ボ」と入力し、ボールのタイルが赤い枠で強調されている。右にはネコのコードが開いている。" loading="lazy"></a><figcaption>「ボ」で検索すると、一致した「ボール」のタイルに枠が付きます。</figcaption></figure>
 <p>ピンのボタンで固定表示を解除すると、ピンに斜線が付き、一覧は左端に収まります。左端にポインターを置くか「スプライト一覧を展開」を押すと、一覧が開きます。固定表示中に一覧の幅を広げると、タイルが複数列に並びます。作品全体からブロックや素材を探すときは、メニューバーの<a href="../search/#project-search">検索欄</a>を使います。</p>
 <p>スプライトのタイルを右クリックすると、「開く」「複製」「書き出し」「スプライト名の変更」「削除」「フォルダーを作成」のメニューが開きます（<a href="../blocks/#context-menu">右クリックメニュー</a>）。同じスプライトを複数のタブで開いているときは、「開く」のサブメニューに「ネコ」「ネコ(2)」のように開いているタブが並び、前面に出すタブを選べます（<a href="#sprite-tabs">スプライトのタブ</a>）。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/225">一覧の展開・検索・固定</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/350">未固定のピンの表示</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/490">番号付きタブを一覧から選ぶ</a></p>
 
 </section>
 
@@ -61,7 +60,6 @@
 <p>一覧でスプライトを選ぶと、編集パネルの上段にそのスプライトのタブが開きます。開いたスプライトはタブで切り替えます。タブを右クリックすると「新しいタブで開く」と「スプライト名の変更」を選べます。「新しいタブで開く」を選ぶと、同じスプライトが「ネコ(2)」のような番号付きのタブでもう1つ開き、タブごとに別の内容（たとえばコードとコスチューム）を表示できます。</p>
 <p>編集パネルの左端には、アイコンが縦に7つ並び、線で3つのまとまりに分かれます。上から「自由配置」「ハット・関数一覧」「呼び出し関係」、「コスチューム」（背景では「背景」）「音」、「変数」（背景では「グローバル変数」）「メッセージ」です。「自由配置」は、スプライトのすべてのスクリプトを置いたコード領域です。「ハット・関数一覧」と「呼び出し関係」は<a href="#functions">ハットと関数を一覧する・呼び出し関係を見る</a>で説明します。選んでいるアイコンは色と左の線で示されます。アイコンの名前はポインターを重ねると表示されます（スプライトの「変数」には「スプライトのプロパティと変数」と表示されます）。</p>
 <figure><a href="../images/plus-workspace-current.png"><img src="../images/plus-workspace-current.png" width="1440" height="1000" alt="編集パネルの左端に、「自由配置」「ハット・関数一覧」「呼び出し関係」、「コスチューム」「音」、「変数」「メッセージ」のアイコンが、線で区切られて縦に並ぶ。" loading="lazy"></a><figcaption>起動直後の画面。編集パネルの左端に、3つのまとまりに分かれた7つのアイコンが並びます。</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/248">スプライトの編集タブ</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/32">編集パネルのアイコン列</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">ハット・関数一覧と呼び出し関係のアイコン</a></p>
 
 </section>
 
@@ -76,7 +74,6 @@
 <figure><a href="../images/media-panes.png"><img src="../images/media-panes.png" width="1440" height="1000" alt="左のペイン「ネコ」にコスチュームのプレビュー、右のペイン「ネコ(2)」に音「ポーン」の波形、再生ボタン、効果のボタンが並ぶ。" loading="lazy"></a><figcaption>パネルを横に分割し、左で「コスチューム」、右で「音」を開いたところ。いま操作している右のペインに音の編集画面が表示されています。</figcaption></figure>
 <p><span class="badge planned">開発中</span> 開発版（ローカル統合版）では、操作していないペインのコスチュームプレビューの高さに上限を設けています。</p>
 <figure><a href="../images/local-media-panes.png"><img src="../images/local-media-panes.png" width="1440" height="575" alt="開発版の左ペインに高さを抑えたコスチュームプレビュー、右ペインに音の波形と再生ボタン。" loading="lazy"></a><figcaption>開発版の比較画像。コスチュームのプレビューを小さく収めています。</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">素材の選択と編集状態</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/326">録音先のスプライト</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/499">フォント管理</a></p>
 
 </section>
 
@@ -104,7 +101,6 @@
 <h3>一時変数を確かめる</h3>
 <p>一時変数拡張（Temporary Variables）を読み込んでいるか、そのブロックを使っているときは、変数の一覧の下に「スレッド変数」の表が加わります。背景の「グローバル変数」には「ランタイム変数」の表も加わります。表には、コード中で名前を固定テキストで書いた変数と、その変数に値を入れる関数（「定義した関数」）が並びます。ランタイム変数では、読み取る関数（「参照している関数」）と書き換える関数（「書き換えている関数」）も件数付きで並びます。</p>
 <p>値は、デバッガーで作品を一時停止したときに「値」の列に表示されます。スレッド変数の値には、どのスプライト（クローン）のどのスレッドの値かが添えられます。関数名やハットの絵を押すと、その関数やスクリプトがコードの中央に表示されます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/15">プロパティ・変数タブの統合</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/410">変数の作成・名前変更・削除</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/493">件数から検索</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/565">リストの編集とクローンの変数</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/569">ダイアログからリストを作成</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/593">一時変数の表</a></p>
 
 </section>
 
@@ -122,7 +118,6 @@
 <h3>メッセージの名前を変える</h3>
 <p>一覧の「操作」の列にある、鉛筆アイコン付きの「メッセージ名を変更」で、メッセージ名を変えられます。メッセージは作品全体で共有されるため、名前を変えると、送る・受け取るすべてのブロックの表示が変わります。同じ名前のメッセージがすでにある場合は変更できません。</p>
 <p>作品全体の検索でメッセージ名を探すときも、この一覧と同じ基準で送信・受信を判定します（<a href="../search/#search-scope">検索対象を選ぶ</a>）。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/414">メッセージの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/564">関係図と送受信一覧の改善</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/408">メッセージの設計</a></p>
 
 </section>
 
@@ -133,7 +128,6 @@
 <p>スプライト一覧の下にある「背景」のタイルを選ぶと、ステージの編集パネルが開きます。タブには一覧と同じく「背景」と表示されます。</p>
 <p>編集パネル左端のアイコンはスプライトと同じ並びですが、「コスチューム」の代わりに「背景」、「変数」の代わりに「グローバル変数」があります。「背景」でステージの背景画像を、「自由配置」でステージのスクリプトを、「音」でステージの音を編集します。「グローバル変数」には作品全体で使う変数とリストが並び、「メッセージ」の関係図には作品全体の送受信が表示されます（<a href="#messages">メッセージの送受信を確かめる</a>）。</p>
 <p>背景のタイルを右クリックすると、「開く」と「ステージを書き出し」を選べます。「ステージを書き出し」でステージを .stage3 に書き出せます（<a href="../reuse/#transfer">スクリプトとステージを別作品へ転送する</a>）。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/403">背景タブの修正</a></p>
 
 </section>
 <section id="functions">
@@ -150,7 +144,6 @@
 <h3>関数の呼び出し関係を図で見る</h3>
 <p>「呼び出し関係」を開くと、関数を箱、呼び出しを矢印で表した図が表示されます。ハットのスクリプトなど、関数以外のスクリプトから呼ばれる関数には ▶ の印が付きます。ほかのスプライトや背景で定義したグローバルな名前付き関数も、呼び出しでつながっていれば、定義した側の名前とともに表示されます。</p>
 <p>箱にポインターを重ねると、つながる矢印が強調されます。開いているスプライトや背景の関数の箱を押すと、その関数が右側の領域で開きます。右上のボタンで流れを「左から右 (LR)」と「上から下 (TD)」に切り替え、右下のボタンで拡大・縮小します。左下の「＋ 新しい関数を追加」からも関数を作れます。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/592">関数のセクションと呼び出し図</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">右側の分割で編集</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/597">名前を入れて関数を追加</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/599">削除したスクリプトのタブを閉じる</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/600">スクリプトを1つだけ表示</a></p>
 
 </section>
 <nav class="pager" aria-label="前後のページ">

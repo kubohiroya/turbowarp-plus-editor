@@ -50,7 +50,6 @@
 <figure class="guide-detail"><a href="../images/en/sprite-search.png"><img src="../images/en/sprite-search.png" width="560" height="360" alt="The sprite list search box contains "B", and the Ball tile is highlighted with a red frame. The Cat's code is open on the right." loading="lazy"></a><figcaption>Searching for "B" puts a frame around the matching "Ball" tile.</figcaption></figure>
 <p>When you unpin the list with the pin button, the pin is shown with a slash and the list tucks into the left edge. Rest the pointer on the left edge or press "Reveal sprite list" to open it. While the list is pinned, widening it arranges the tiles in multiple columns. To search the whole project for blocks or assets, use the <a href="../search/index.en.html#project-search">search box</a> in the menu bar.</p>
 <p>Right-click a sprite tile to open a menu with "Open", "duplicate", "export", "Rename sprite", "delete", and "create folder" (<a href="../blocks/index.en.html#context-menu">context menus</a>). When the same sprite is open in more than one tab, the "Open" submenu lists the open tabs, such as "Cat" and "Cat(2)", so you can choose which tab to bring to the front (<a href="#sprite-tabs">sprite tabs</a>).</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/225">Expanding, searching, and pinning the list</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/350">Unpinned pin icon</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/490">Choosing a numbered tab from the list</a></p>
 
 </section>
 
@@ -61,7 +60,6 @@
 <p>When you choose a sprite in the list, a tab for that sprite opens in the top row of the editor panel. Switch between open sprites with these tabs. Right-click a tab to choose "Open in new tab" or "Rename sprite". "Open in new tab" opens the same sprite again in a numbered tab such as "Cat(2)", so each tab can show something different (for example, code in one and costumes in the other).</p>
 <p>Seven icons are stacked along the left edge of the editor panel, separated by lines into three groups. From the top, they are "Free layout", "Hats and functions", and "Calls"; "Costumes" ("Backdrops" for the stage) and "Sounds"; and "Variables" ("Global Variables" for the stage) and "Messages". "Free layout" is the code area that holds all of the sprite's scripts. "Hats and functions" and "Calls" are explained in <a href="#functions">List hats and functions and see their calls</a>. The selected icon is shown with color and a line on its left. Hover over an icon to see its name.</p>
 <figure><a href="../images/en/plus-workspace-current.png"><img src="../images/en/plus-workspace-current.png" width="1440" height="1000" alt="The Free layout, Hats and functions, and Calls icons, the Costumes and Sounds icons, and the Variables and Messages icons are stacked along the left edge of the editor panel, separated by lines." loading="lazy"></a><figcaption>The editor right after it starts. Seven icons in three groups line the left edge of the editor panel.</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/248">Sprite editor tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/32">Editor panel icon strip</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">Icons for Hats and functions and Calls</a></p>
 
 </section>
 
@@ -76,7 +74,6 @@
 <figure><a href="../images/en/media-panes.png"><img src="../images/en/media-panes.png" width="1440" height="1000" alt="The left pane, Cat, shows a costume preview. The right pane, Cat(2), shows the waveform of the sound Pop, a play button, and effect buttons." loading="lazy"></a><figcaption>The panel split with "Costumes" on the left and "Sounds" on the right. The right pane, which is in use, shows the sound editor.</figcaption></figure>
 <p><span class="badge planned">In development</span> In a development build (the local integration build), the costume preview in the inactive pane has a maximum height.</p>
 <figure><a href="../images/local-media-panes.png"><img src="../images/local-media-panes.png" width="1440" height="575" alt="In a development build, the left pane shows a shorter costume preview and the right pane shows a sound waveform and play button." loading="lazy"></a><figcaption>Comparison image from a development build (Japanese UI). The costume preview is kept small.</figcaption></figure>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/253">Asset selection and editor state</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/326">Recording target sprite</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/499">Font management</a></p>
 
 </section>
 
@@ -104,7 +101,6 @@
 <h3>Checking temporary variables</h3>
 <p>When the Temporary Variables extension is loaded or its blocks are used, a "Thread Variables" table is added below the variable list. The stage's "Global Variables" also gets a "Runtime Variables" table. The tables list the variables whose names are written as fixed text in the code, with the functions that set them ("Defined in"). For runtime variables, the functions that read them ("Read in") and that change them ("Changed in") are also listed, with counts.</p>
 <p>Values appear in the "Value" column while the project is paused with the debugger. Each thread variable value shows which sprite (or clone) and which thread it belongs to. Click a function name or a hat picture to show that function or script in the middle of the code.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/15">Merging the properties and variables tabs</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/410">Creating, renaming, and deleting variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/493">Searching from the counts</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/565">Editing lists and clone variables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/569">Creating lists from the dialog</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/593">Temporary variable tables</a></p>
 
 </section>
 
@@ -122,7 +118,6 @@
 <h3>Renaming a message</h3>
 <p>Use "Rename message", with the pencil icon in the table's "Actions" column, to change a message's name. Messages are shared across the whole project, so renaming one changes how it appears in every block that sends or receives it. You cannot rename a message to a name that is already in use.</p>
 <p>When you search the whole project for a message name, sending and receiving are classified the same way as in this table (<a href="../search/index.en.html#search-scope">Choose what to search</a>).</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/414">Message connections</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/564">Improved diagram and send/receive tables</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/408">Message design</a></p>
 
 </section>
 
@@ -133,7 +128,6 @@
 <p>Choose the "Backdrops" tile below the sprite list to open the editor panel for the stage. Like the tile, its tab is labeled "Backdrops".</p>
 <p>The icons along the left edge of the editor panel are in the same order as for sprites, except that "Backdrops" replaces "Costumes" and "Global Variables" replaces "Variables". Edit the stage's backdrop images in "Backdrops", its scripts in "Free layout", and its sounds in "Sounds". "Global Variables" lists the variables and lists used by the whole project, and the diagram in "Messages" shows all sending and receiving in the project (<a href="#messages">Check who sends and receives messages</a>).</p>
 <p>Right-click the backdrop tile to choose "Open" or "Export Stage". "Export Stage" exports the stage as a .stage3 file (<a href="../reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a>).</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/403">Backdrop tab fix</a></p>
 
 </section>
 <section id="functions">
@@ -150,7 +144,6 @@
 <h3>Seeing which function calls which</h3>
 <p>Open "Calls" to see a diagram with functions as boxes and calls as arrows. A function called from a script that is not a function, such as a hat script, is marked with ▶. Global named functions defined in other sprites or the stage also appear, with the name of the sprite or stage that defines them, when they are connected by calls.</p>
 <p>Point at a box to highlight the arrows connected to it. Click the box of a function of the open sprite or backdrop to open that function in the code area on the right. The buttons at the top right switch the flow between "Left to right (LR)" and "Top to bottom (TD)", and the buttons at the bottom right zoom in and out. You can also add a function with "+ Add a new function" at the bottom left.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/592">Function sections and the call graph</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/595">Editing in the split on the right</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/597">Adding a function by name</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/599">Closing the tab of a deleted script</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/600">Showing one script on its own</a></p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">

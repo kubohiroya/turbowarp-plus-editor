@@ -1,7 +1,5 @@
 # フォーム型ブロックエディター
 
-関連: [GUI #135](https://github.com/kubohiroya/scratch-gui/issues/135)、[GUI #137](https://github.com/kubohiroya/scratch-gui/issues/137)。
-
 この配信物は `site/block-editor/editor.ts` の `plusBlockEditor` をGUIの `blockEditor` 差し込み口へ渡します。
 共通エディターの依存と、Schema・SOURCE・固定入力の対応は配信側で管理します。
 GUIはworkspace、VM、ScratchBlocks、現在の言語とモーダルの接続を提供します。
@@ -24,8 +22,4 @@ GUIの接続テストはGUI側、実ブロック・ダイアログの挙動は `
 実装変更時は変更した境界に対応するものだけを実行します。
 表示・保存の切戻しはGUIと配信側を検証済みの固定元へ戻して行い、保存済みSB3を移行しません。
 
-## 過去の記録
-
-移管前の段階導入・測定値・当時の依存は、[GUIの調査基準コミット](https://github.com/kubohiroya/scratch-gui/tree/3df07d08bc5ac114ca5aa6b88dd500b8a6a39f15/docs)と関連Issueに残します。
-過去のフラグ16組合せや公開物ハッシュを、現行配信物の検証結果として読み替えません。
 拡張操作のサービスと描画は `@kubohiroya/turbowarp-plus-editor-workbench`（`./stage-controls`・`./stage-controls-view`）が担当し、`site/controls-dock.ts` が拡張向けの接続を提供します。

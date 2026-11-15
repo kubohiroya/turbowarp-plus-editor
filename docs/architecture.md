@@ -1,26 +1,19 @@
 # TurboWarp-Plus-Editorの責務と配信
 
-現在の配置は[GUI追加ファイルの全面移設](gui-integration/README.md)を参照してください。以下の旧パス・GUI側に残す判断は、各時点の履歴です。現在は本家に存在しなかったファイルをGUIからすべて撤去し、接続実装・文書・ツール・テストを本リポジトリが所有します。
-
-
-本リポジトリは、kubohiroyaのscratch-guiフォークに上流ライブラリを組み込んだEditorの統合・検証・GitHub Pages配信を所有します。名称は **TurboWarp-Plus-Editor** で統一します。
+本リポジトリは、TurboWarp-Plus-Editorの統合・検証・GitHub Pages配信を所有します。名称は **TurboWarp-Plus-Editor** で統一します。
 
 ## 依存方向
 
-- `turbowarp-extension-data-editor` は編集API・フォーム・互換配布物を提供します。
-- `turbowarp-extension-security-dialog` は拡張の情報解析と確認UIを提供します。
-- `scratch-gui` フォークは両ライブラリを使うGUI接続を所有します。
-- `turbowarp-plus-editor` はGUIを固定ソースからビルドし、案内画面・ブランド・編集ボタン・統合E2Eと配信を所有します。
-
-上流ライブラリは本リポジトリやGUIを取得・ビルド・配信しません。GUIの内部コードをここでパッチせず、公開用webpack設定はGUIが提供するブラウザー構成だけを選択します。
-
-この分担は、[turbowarp-plus-packagesの設計書](https://github.com/kubohiroya/turbowarp-plus-packages/blob/main/docs/editor-architecture.ja.md)に従って移行中です。移行後は、本リポジトリが独自拡張のパッケージに依存してビルド時にGUIへ差し込み、`scratch-gui` フォークは差し込み口だけを持ちます。
+- `scratch-gui` フォークは、本家にないファイルを持たず、任意の差し込み口 `plusIntegration()` だけを持ちます（[差し込み口の設計](plus-integration-sockets.md)）。
+- 追加機能の実装は、npmに公開されたファミリーパッケージ（`@kubohiroya/turbowarp-*`・`@kubohiroya/turbowarp-plus-editor-*`）が持ちます。本リポジトリは実装のパッケージを持ちません。
+- 本リポジトリは、それらを `site/` の接続コードで差し込み口へ渡し、固定したGUI・VM・Packagerからビルドして、案内画面・ブランド・編集ボタン・統合検証と配信を所有します。
+- 上流のパッケージは本リポジトリやGUIを取得・ビルド・配信しません。設計の基準は[turbowarp-plus-packagesの設計書](https://github.com/kubohiroya/turbowarp-plus-packages/blob/main/docs/editor-architecture.ja.md)です。
 
 ## 固定ソースと成果物
 
-`site/source.json` はGUI/coreの40桁SHA、coreとセキュリティUIのnpm完全版を持ちます。coreはGUIの依存ではなくなったので、GUIのnode_modulesへ配布物を差し替える手順はありません。ビルド前にGUI checkoutと、本リポジトリが導入したcoreのbuild-info、security完全版と実際のインストール版を照合します。
+`site/source.json` はGUI・VM・Packagerの40桁SHAと、データエディター・拡張ローダー・文書エディター・スクリプト転送・セキュリティUIのnpm完全版（必要に応じてintegrityと公開元コミット）を持ちます。ビルド前に、GUI checkoutとインストール済みパッケージを固定値と照合します。
 
-セキュリティUIをGitソースで固定する場合は、`site/source.json` の任意の `securityRevision` に40桁SHAを指定します。GUIのmanifestとlockが同じリポジトリ・SHAを参照し、導入した版が `securityVersion` と一致することを確認します。省略した場合は従来のnpm完全版を使用します。
+セキュリティUIをGitソースで固定する場合は、任意の `securityRevision` に40桁SHAを指定し、インストール時に `TWEXTSEC_SOURCE_REVISION` へ同じ値を渡します。省略した場合はnpm完全版を使用します。
 
 `build-info.json` の `revision` はGUI、`coreRevision` はdata-editor製品ソース、`coreVersion` は実際に導入した完全版、`siteRevision` は本サイトのソースです。`securityPackage` / `securityVersion` と、指定した場合の `securityRevision` も記録し、配信gateと公開E2Eで固定値と照合します。製品の版とテストrunnerの版は区別し、配信された値を期待値へ自己採用しません。
 
@@ -88,7 +81,7 @@ curl -fsS -H 'Cache-Control: no-cache' \
 
 対象が最新 `main` で、その SHA の通常の push CI が成功し、前回の配信が終了していて、競合する配信が進行していない場合に、失敗した公開処理の再実行を1回試します。権限や成果物のエラーがあれば先に解消します。同じ SHA で再発したら再実行を打ち切ります。`deploy-pages@v4` は `GITHUB_SHA` をビルドバージョンに使います。同じ SHA の手動実行で新しい成果物 ID が割り当てられても、ビルドバージョンはその SHA です。v4 の待機上限は10分です。 [ビルドバージョンの実装](https://github.com/actions/deploy-pages/blob/v4/src/internal/context.js) · [タイムアウトの実装](https://github.com/actions/deploy-pages/blob/v4/src/internal/deployment.js)
 
-対象の修正を含む後続コミットが `main` にあれば、差分を確認し、その SHA の通常 CI と自動公開を追います。新しい公開がすでに進行中の場合も、その結果を待ちます。後続の公開候補がない場合や別の SHA でも再発する場合は、配信中の版を維持し、記録したログと ID を添えて Pages 側の調査に引き継ぎます。`d14d065` の3回の失敗と `f59f954` での復旧は Issue #177 に記録しています。Pages 内部の原因は未確定です。 [復旧時の記録](https://github.com/kubohiroya/turbowarp-plus-editor/issues/177#issuecomment-6702835809)
+対象の修正を含む後続コミットが `main` にあれば、差分を確認し、その SHA の通常 CI と自動公開を追います。新しい公開がすでに進行中の場合も、その結果を待ちます。後続の公開候補がない場合や別の SHA でも再発する場合は、配信中の版を維持し、記録したログと ID を添えて Pages 側の調査に引き継ぎます。
 
 #### 公開版での復旧確認
 

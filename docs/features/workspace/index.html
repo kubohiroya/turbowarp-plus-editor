@@ -47,7 +47,7 @@
 
 <p>境界にある3点のグリップをドラッグすると、隣り合う領域の大きさが変わります。<a href="../screen/#layout">Plus標準配置</a>では、左ドロワー（スプライト一覧など）の幅を調整できます。<a href="../screen/#layout">Scratch配置</a>では、コード領域とステージ側の幅、ステージとスプライト一覧の高さを調整できます。</p>
 <figure class="guide-detail"><a href="../images/sprite-divider.png"><img src="../images/sprite-divider.png" width="700" height="560" alt="左ドロワーのスプライト一覧とコード領域の境界。フォーカスした境界が赤く強調表示され、一覧の幅が広がっている。" loading="lazy"></a><figcaption>スプライト一覧とコード領域の境界にフォーカスを移し、右矢印キーで一覧を広げたところ。</figcaption></figure>
-<p>境界にフォーカスを移すと、矢印キーでも調整できます。Enterで初期値に戻ります。Scratch配置で調整した比率はブラウザーに保存されます。URLに <code>twPlusSplitter=0</code> を付けて開き直すと、この節で扱う境界がなくなります。その場合も、ステージ自体の大きさの調整や<a href="#split-panes">編集パネルの分割</a>は使えます。<a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/227">境界のグリップ</a></p>
+<p>境界にフォーカスを移すと、矢印キーでも調整できます。Enterで初期値に戻ります。Scratch配置で調整した比率はブラウザーに保存されます。URLに <code>twPlusSplitter=0</code> を付けて開き直すと、この節で扱う境界がなくなります。その場合も、ステージ自体の大きさの調整や<a href="#split-panes">編集パネルの分割</a>は使えます。</p>
 
 </section>
 
@@ -61,7 +61,7 @@
 <p>「タブを垂直に並べて表示」を選ぶと、タブの列がパネルの左側に縦に並びます。タブが多いときや、長いスプライト名を読みやすくしたいときに使います。元に戻すには、同じメニューの「タブを水平に並べて表示」を選びます。</p>
 <p>たとえばコードを左、ステージを右に置けます（<a href="../stage/#dock">ステージを作業領域や別ウィンドウに移す</a>）。対応する拡張で開いたYAML文書も、タブとして並べられます。</p>
 <p>「ハット・関数一覧」や「呼び出し関係」で関数やハットを選んだときも、スプライトの右にパネルが分割され、そのスクリプトだけを表示したコード領域が開きます。表示中のスクリプトを削除すると、この分割は閉じます（<a href="../sprites/#functions">ハットと関数を一覧する・呼び出し関係を見る</a>）。</p>
-<p>パネルの分割を使わない従来の編集レイアウト（作品内の文書をタブではなくダイアログで開く表示）で作業するには、作品を保存してから、URLに <code>twPlusDockview=0</code> を付けて開き直します。<a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/261">分割ワークスペースの既定化</a></p>
+<p>パネルの分割を使わない従来の編集レイアウト（作品内の文書をタブではなくダイアログで開く表示）で作業するには、作品を保存してから、URLに <code>twPlusDockview=0</code> を付けて開き直します。</p>
 
 </section>
 
@@ -72,7 +72,7 @@
 <p><a href="#split-panes">パネルを分割</a>して同じスプライトのコードを2つのペインに表示すると、スクロール位置とズーム倍率を別々に保てます。片方で初期化のコードを見ながら、もう片方でイベントのコードを編集するときに使えます。編集したブロックは両方に反映されます。編集するペインを切り替えるには、そのペインをクリックするか、フォーカスを当ててEnterを押します。</p>
 <div class="flow" role="img" aria-label="同じスプライトのコードを2つのペインで共有し、それぞれ別の範囲と倍率で表示する。"><div>コード画面A<br><small>初期化のブロックを表示</small></div><span>↔</span><div>同じスプライト<br><small>ブロックの編集を共有</small></div><span>↔</span><div>コード画面B<br><small>イベントのブロックを表示</small></div></div>
 <p>コードの並びの見え方の切り替えと、ブロックの位置の並べ直し（再配置）は、<a href="../blocks/#arrange">コードを並べ替える・別のスプライトへコピーする</a>で説明しています。</p>
-<p><span class="badge planned">開発中</span> macOS向けDesktop開発版では、同じスプライトをOSの別ウィンドウで開き、コード編集と「取り消し」「やり直し」を共有する動作を検証しています。拡張独自の入力欄を別ウィンドウで使う試作は、対応する形式に限って検証しています。<a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/255">コードペイン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/test/stage6/README.md">Desktopのコードの別ウィンドウと検証範囲</a></p>
+<p><span class="badge planned">開発中</span> macOS向けDesktop開発版では、同じスプライトをOSの別ウィンドウで開き、コード編集と「取り消し」「やり直し」を共有する動作を検証しています。拡張独自の入力欄を別ウィンドウで使う試作は、対応する形式に限って検証しています。<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/test/stage6/README.md">Desktopのコードの別ウィンドウと検証範囲</a></p>
 
 </section>
 
@@ -82,7 +82,6 @@
 
 <p>「編集パネルのレイアウト」から「パネルを別画面で開く」を選ぶと、そのパネルをブラウザーの別ウィンドウで開けます。ディスプレイが2台あるときは、コードと素材の編集を別々のディスプレイに置けます。別ウィンドウのパネルは「このパネルを別画面から元に戻す」で元の位置に戻ります。</p>
 <p>ブロックパレットだけを別ウィンドウにする方法は<a href="../blocks/#palette-popout">ブロックパレットを別ウィンドウで開く</a>で説明しています。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/361">編集パネルとパレットの別ウィンドウ</a></p>
 
 </section>
 
@@ -92,7 +91,7 @@
 
 <p>Plus標準配置では、起動時から左ドロワーにスプライト一覧が固定表示されています。一覧上部の「アンドック」を押すと、一覧がブラウザーの別ウィンドウに移り、元の場所には「ここに戻す」ボタンが残ります。別ウィンドウでもスプライトの選択・追加・削除ができます。別ウィンドウ右上の「レイアウト変更」から「元の画面に戻す（ドックする）」を選ぶか、元の場所の「ここに戻す」を押すと、左ドロワーに戻ります。ウィンドウの最大化・最小化の項目は、ブラウザーでは選べません。</p>
 <figure class="guide-detail"><a href="../images/sprite-list-window.png"><img src="../images/sprite-list-window.png" width="540" height="420" alt="別ウィンドウに移したスプライト一覧。ネコとボールのタイル、背景のタイル、スプライトを追加するボタン。右上のレイアウト変更から開いたメニューで、元の画面に戻す（ドックする）だけが選べる。" loading="lazy"></a><figcaption>別ウィンドウに移したスプライト一覧で、右上の「レイアウト変更」を開いたところ。</figcaption></figure>
-<p><span class="badge planned">開発中</span> macOSのDesktop開発版では、ステージ・スプライト設定・一覧をアプリの別ウィンドウに移して元に戻す操作も確認しています。<a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/388">一覧を直接別ウィンドウで開く</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/224">レイアウト変更メニュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-desktop/issues/11">Desktopへの導入状況</a></p>
+<p><span class="badge planned">開発中</span> macOSのDesktop開発版では、ステージ・スプライト設定・一覧をアプリの別ウィンドウに移して元に戻す操作も確認しています。</p>
 
 </section>
 
@@ -106,7 +105,7 @@
 <tr><th scope="row">タブの順序・分割・選択状態</th><td>同じブラウザープロファイル内のエディターの保存領域（作品ごと）</td><td>同じエディターで同じ作品を開く</td></tr>
 <tr><th scope="row">ブロックや素材、確定した作品内文書</th><td>作品のSB3または作品フォルダ</td><td>編集を反映し、ファイルメニューで保存する</td></tr>
 </tbody></table></div>
-<p>ブラウザーに残るのは、作品ごとの直近の配置です。Desktop開発版で直接開いた外部YAMLファイルのタブは、復元対象から外れます。<a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/264">再起動後の配置復元</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/505">作品ごとの配置の再現</a></p>
+<p>ブラウザーに残るのは、作品ごとの直近の配置です。Desktop開発版で直接開いた外部YAMLファイルのタブは、復元対象から外れます。</p>
 
 </section>
 <nav class="pager" aria-label="前後のページ">

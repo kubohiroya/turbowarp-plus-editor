@@ -110,7 +110,6 @@
 <figcaption>ファイルを選ぶと、コードと同じ領域にタブが開きます。右上の「編集」「差分」で表示を切り替え、テキストを編集したら「ファイルを保存」で書き込みます。</figcaption>
 </figure>
 <p>SB3を作品フォルダに展開するコマンドProject Starterも使えます（<a href="../github/#starter">Project StarterでScratch作品を移す</a>）。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/305">作品フォルダの編集</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/319">フォルダの差分再読み込み</a></p>
 
 </section>
 
@@ -144,7 +143,6 @@
 <figcaption>左の「Git 履歴」で「ネコが進む歩数を変更 (#12)」を選ぶと「PRを作成」が開きます。ネコのコードを選び、そのコミットの変更を表示した例。</figcaption>
 </figure>
 <p>git worktreeで追加した作業ツリー、サブモジュール、シンボリックリンクは扱えません。作業ツリーの実行権限の変更はブラウザーからは確認できません。ローカルGitを使わない場合は起動URLに<code>twPlusLocalGit=0</code>を指定します。このときメニューバーの「Git ▾」ボタンと「Git 履歴」ボタンも表示されません。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/313">ローカルGitパネル</a></p>
 
 </section>
 
@@ -160,7 +158,6 @@
 <figcaption>ネコの進む歩数を10から25に変更した例。比較枠にポインターを重ねると右下にミニマップとズームボタンが出ます。比較枠の下にある「変更前と変更後を連動して動かす」にチェックを入れると、変更前と変更後のスクロールとズームが連動します。</figcaption>
 </figure>
 <p>エディターに定義がない拡張ブロックは、名前とつながりが分かる代替ブロックで示します。拡張のコードを取得したり実行したりはしません。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRのスクリプト単位のレビュー</a></p>
 
 </section>
 
@@ -199,7 +196,7 @@
 <tr><th scope="row">Desktopのfine-grained PAT</th><td>fine-grained PAT（個人用アクセストークン）を使います。対応する同梱版で選べます。GitHubで対象リポジトリを選び、Contentsの読み取り（pushには読み書き）を許可したトークンをDesktopの入力画面に入れます。保存を選べる環境ではOSの保護機能で暗号化します</td></tr>
 <tr><th scope="row">DesktopのGit credential helper</th><td>対応する同梱版で、対象リポジトリに適用されるhelperの認証情報を使います。GitHubアカウント名を入力し、Desktopの確認画面で同意します</td></tr>
 </tbody></table></div>
-<p>PATとcredential helperはclient IDなしで使うための方式です。Desktop本体と同梱のエディターの両方が対応している場合に選べます。同梱版は配布物のビルド情報で確認できます。<a href="https://github.com/kubohiroya/turbowarp-plus-desktop/blob/main/config/plus-renderer.json">Desktopの固定リビジョン</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/521">エディター側の対応</a></p>
+<p>PATとcredential helperはclient IDなしで使うための方式です。Desktop本体と同梱のエディターの両方が対応している場合に選べます。同梱版は配布物のビルド情報で確認できます。<a href="https://github.com/kubohiroya/turbowarp-plus-desktop/blob/main/config/plus-renderer.json">Desktopの固定リビジョン</a></p>
 
 <h3>GitHub Appをインストールして認可する</h3>
 <ol>
@@ -217,7 +214,7 @@
 <li><strong>push。</strong>接続時にpushを許可し、「現在のブランチを送る（push）」を押します。結果が不明なら、再送する前にfetchでリモートのブランチを確かめます。</li>
 </ul>
 
-<p><a href="../github/#push">GitHubに送る手順</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/316">接続の統合検証</a></p>
+<p><a href="../github/#push">GitHubに送る手順</a></p>
 
 </section>
 
@@ -263,8 +260,7 @@
 <h3 id="send-review">レビューを送信する</h3>
 <p>「確認済み」は自分の確認状況を示す印です。GitHubにレビューを送信するには、接続時に「レビューの送信を許可する」を選んでから、PRを開きます。接続先でレビュー用GitHub APIが有効で、リポジトリでレビューを送れる権限が必要です。</p>
 <p>「レビューを送る」で全体とコードへのコメントを確認し、結果に「コメント」「承認」「修正を依頼」のいずれかを選び、「レビューを送信」を押します。コードへのコメントをスレッドにできるか、本文に入るかは送信前の表示で確認できます。送信欄を使えない場合はGitHubのPRを開き、「Files changed」からレビューします。<a href="../github/#merge">検査・レビュー・マージの手順</a></p>
-<p>接続先の運用者はCloudflareの<code>GIT_GITHUB_API</code>、Desktopの<code>TW_PLUS_DESKTOP_GIT_GITHUB_API</code>でAPIのグループを有効にします。<code>review-threads</code>は差分の位置に付けるコメントを扱い、<code>reviews-body</code>は本文だけのレビュー送信に使えます。DesktopのAPIは既定で無効です。<a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/git-smart-http.md#github-api-routes">APIの設定</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/issues/444">レビュー送信の検証状況</a></p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/407">エディターへの接続</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/pull/418">PRレビューの操作手順</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/5">PRをScratchスクリプトでレビュー</a></p>
+<p>接続先の運用者はCloudflareの<code>GIT_GITHUB_API</code>、Desktopの<code>TW_PLUS_DESKTOP_GIT_GITHUB_API</code>でAPIのグループを有効にします。<code>review-threads</code>は差分の位置に付けるコメントを扱い、<code>reviews-body</code>は本文だけのレビュー送信に使えます。DesktopのAPIは既定で無効です。<a href="https://github.com/kubohiroya/hierarchidb/blob/main/packages/backend/bff/docs/git-smart-http.md#github-api-routes">APIの設定</a></p>
 
 </section>
 <nav class="pager" aria-label="前後のページ">
