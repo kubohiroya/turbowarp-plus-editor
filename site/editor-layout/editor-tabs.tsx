@@ -31,6 +31,8 @@ import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';
 import {openDetachedBlockPalette} from '../horizontal-block-palette/index.ts';
 import {resources as categoryArtwork} from '@tw-plus/gui-block-category-artwork';
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
+import {parseExtensionCatalog} from '@kubohiroya/turbowarp-extension-security-dialog';
+import {plusCatalog} from '../plus-catalog.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
 import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points.ts';
@@ -39,9 +41,29 @@ import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points
 const attachCodeNavigation = (workspace: object, blocks: object) => (hostIntegration() as {
     attachWorkspaceMinimap?: (workspace: object, blocks: object) => {dispose(): void};
 }).attachWorkspaceMinimap?.(workspace, blocks);
-import {attachFunctionCallMenu, BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, mountProcedureEditor, readHatScripts, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {attachFunctionCallMenu, BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, createFunction, mountProcedureEditor, readHatScripts, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
+
+/**
+ * Add named-functions from this distribution's catalog, dependencies first. A listed URL is what this
+ * distribution trusts, so it loads unsandboxed as it does from the extension library.
+ */
+async function loadNamedFunctions(vm) {
+    const {catalog} = await plusCatalog.read(AbortSignal.timeout(15000));
+    const entries = new Map(parseExtensionCatalog(catalog).map(entry => [entry.id, entry]));
+    const order = [];
+    const visit = id => {
+        const entry = entries.get(id);
+        if (!entry || order.includes(entry)) return;
+        entry.dependencies.forEach(visit);
+        order.push(entry);
+    };
+    visit('kubohiroyanamedfunctions');
+    for (const entry of order) {
+        if (!vm.extensionManager.isExtensionLoaded(entry.id)) await vm.extensionManager.loadExtensionURL(entry.url);
+    }
+}
 const soundsTab = 2;
 const categoryIcons = {
     motion: categoryArtwork['icons/motion_icon.svg'],
@@ -370,6 +392,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 const definitions = new Set(data.functions.map(fn => fn.id));
                 return {...data, hats: readHatScripts(target, window.ScratchBlocks, definitions)};
             },
+            createFunction: (targetId, kind, name) =>
+                createFunction(vm, targetId, kind, name, {loadNamedFunctions: () => loadNamedFunctions(vm)}),
             mountFunctionEditor: (element, targetId, functionId, options) =>
                 mountProcedureEditor(vm, locale, element, targetId, functionId, {...options, attachNavigation: attachCodeNavigation}),
             openFunction: (targetId, fn, options) => openScriptTab(targetId, fn.id, functionLabel(fn), options?.block),

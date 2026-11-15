@@ -305,6 +305,12 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 }
             };
         },
+        createFunction(target: CodeTarget & {id: string}, kind: 'procedure' | 'named', name: string, {loadNamedFunctions}: {
+            loadNamedFunctions?(): Promise<void>;
+        } = {}) {
+            return createFunctionDefinition({vm, blocks, workspace, target, kind, name, loadNamedFunctions,
+                loadedTarget: () => loadedTarget, refreshParent});
+        },
         editProcedure(element: HTMLElement, {target, definitionId, editable, attachNavigation, locale = '', focusBlock}: {
             target: CodeTarget & {id: string}; definitionId: string; editable: boolean;
             attachNavigation?: AttachWorkspaceNavigation; locale?: string; focusBlock?: string;
@@ -646,4 +652,99 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
             withoutEvents(blocks, () => editor.dispose());
         }
     };
+}
+
+const namedFunctionsExtension = 'kubohiroyanamedfunctions';
+const escapeXml = (text: string) => text.replace(/[<>&"']/g, character =>
+    ({'<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;'})[character]);
+
+const createError = (message: string, code: 'duplicate' | 'invalid' | 'unavailable') => Object.assign(new Error(message), {code});
+
+/**
+ * Add a function definition of the name the functions section asked for. A Scratch custom block gets
+ * that text and no arguments, which its own Edit dialog can add later; a named function starts from the
+ * extension's palette entry with that name. A name another definition here already has is refused.
+ * The definition goes into the target's blocks directly, so it does not depend on the code area being
+ * shown, and the code area is reloaded when it shows this target. Resolves with the id of the new hat.
+ */
+async function createFunctionDefinition({vm, blocks, workspace, target: codeTarget, kind, name: asked, loadNamedFunctions,
+    loadedTarget, refreshParent}) {
+    const name = String(asked ?? '').replace(/\s+/g, ' ').trim();
+    if (!name) throw createError('A function needs a name', 'invalid');
+    const target = codeTarget as ProcedureTarget & {blocks: {_blocks: Record<string, {
+        topLevel?: boolean; shadow?: boolean; x?: number; y?: number; opcode?: string;
+        mutation?: {proccode?: string}; inputs?: Record<string, {block?: string}>; fields?: Record<string, {value?: unknown}>;
+    }>}};
+    const exists = () => vm.runtime.getTargetById(target.id) === target;
+    const tops = () => Object.values(target.blocks._blocks).filter(block => block.topLevel && !block.shadow);
+    // Below the scripts already there, in the code area's coordinates.
+    function place() {
+        const shown = loadedTarget() === target ? workspace : null;
+        let x = Infinity;
+        let bottom = -Infinity;
+        for (const [id, block] of Object.entries(target.blocks._blocks)) {
+            if (!block.topLevel || block.shadow) continue;
+            x = Math.min(x, Number(block.x) || 0);
+            const height = shown?.getBlockById(id)?.getHeightWidth?.().height;
+            bottom = Math.max(bottom, (Number(block.y) || 0) + (height || 160));
+        }
+        return Number.isFinite(x) ? {x: Math.round(x), y: Math.round(bottom + 48)} : {x: 48, y: 48};
+    }
+    function insert(xml: string, id: string) {
+        if (!exists()) throw new Error('The sprite was removed');
+        target.blocks.blocklyListen({type: 'create', blockId: id, xml: {outerHTML: xml}});
+        refreshParent(target);
+        return id;
+    }
+    const id = blocks.utils.genUid();
+
+    if (kind === 'procedure') {
+        // %s, %n and %b would read as argument slots in the block text.
+        if (/%[snb]/.test(name)) throw createError('The name reads as an argument', 'invalid');
+        // Each definition has one prototype, so a prototype with this proccode means the block exists.
+        if (Object.values(target.blocks._blocks).some(block =>
+            block.opcode === 'procedures_prototype' && block.mutation?.proccode === name)) {
+            throw createError('A block with this definition already exists', 'duplicate');
+        }
+        const {x, y} = place();
+        return insert(`<block type="procedures_definition" id="${id}" x="${x}" y="${y}"><value name="custom_block">` +
+            `<shadow type="procedures_prototype" id="${blocks.utils.genUid()}"><mutation proccode="${escapeXml(name)}" ` +
+            `argumentids="[]" argumentnames="[]" argumentdefaults="[]" warp="false"></mutation></shadow></value></block>`, id);
+    }
+
+    if (!vm.extensionManager.isExtensionLoaded(namedFunctionsExtension)) {
+        if (!loadNamedFunctions) throw Object.assign(new Error('named-functions is not loaded'), {code: 'unavailable'});
+        await loadNamedFunctions();
+        if (!vm.extensionManager.isExtensionLoaded(namedFunctionsExtension) || !exists()) {
+            throw Object.assign(new Error('named-functions could not be loaded'), {code: 'unavailable'});
+        }
+    }
+    // The palette entry has the defaults of the loaded version, including fields a newer one adds.
+    const category = vm.runtime.getBlocksXML(target).find(entry => entry.id === namedFunctionsExtension);
+    const palette = new DOMParser().parseFromString(category?.xml ?? '<xml/>', 'text/xml');
+    const hat = [...palette.getElementsByTagName('block')]
+        .find(block => block.getAttribute('type') === `${namedFunctionsExtension}_defineFunction`);
+    if (!hat) throw Object.assign(new Error('named-functions has no define function block'), {code: 'unavailable'});
+    const used = new Set(tops().filter(block => block.opcode === `${namedFunctionsExtension}_defineFunction`)
+        .map(block => String(target.blocks._blocks[block.inputs?.NAME?.block]?.fields?.TEXT?.value ?? '').trim()));
+    if (used.has(name)) throw createError('A named function with this name already exists', 'duplicate');
+    const field = (name: string) => [...hat.children].find(child => child.getAttribute('name') === name)
+        ?.getElementsByTagName('field')[0];
+    const nameField = field('NAME');
+    if (nameField) nameField.textContent = name;
+    for (const name of ['DESCRIPTION', 'RETURNS']) {
+        const text = field(name);
+        if (text) text.textContent = '';
+    }
+    const schema = field('SCHEMA');
+    if (schema) schema.textContent = '{"type":"object","properties":{}}';
+    // Shadows from the palette carry no ids; the VM needs one for each block.
+    for (const node of [hat, ...hat.querySelectorAll('block, shadow')]) {
+        if (node !== hat && !node.getAttribute('id')) node.setAttribute('id', blocks.utils.genUid());
+    }
+    const {x, y} = place();
+    hat.setAttribute('id', id);
+    hat.setAttribute('x', String(x));
+    hat.setAttribute('y', String(y));
+    return insert(new XMLSerializer().serializeToString(hat), id);
 }
