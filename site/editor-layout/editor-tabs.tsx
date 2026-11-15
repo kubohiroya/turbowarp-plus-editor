@@ -15,6 +15,9 @@ import {activateTargetView, centerProjectComment, connectProjectSearchNavigation
     type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
+import {readTemporaryVariables, watchTemporaryVariables} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/temporary-variables';
+import {createBlockImageRenderer} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/block-image';
+import {describeScriptStart} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/script-start';
 import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
 import {functionLabel, readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
@@ -306,8 +309,17 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     );
     const renderEditorTabRow = tabs => layout.renderEditorTabRow ? layout.renderEditorTabRow(tabs, tabAction) :
         <div className={styles.tabRow}>{tabs}{tabAction}</div>;
-    // The message section opens blocks through the same navigation the project search uses.
+    // The message section and the temporary variable tables open blocks through the same navigation
+    // the project search uses: the target's code, with the block centered.
     const navigation = React.useRef<SearchNavigation | null>(null);
+    // The variable and message panes draw the hats of scripts in any target as Scratch shows them.
+    const blockImages = React.useMemo(() => createBlockImageRenderer(() => window.ScratchBlocks, vm.runtime), [vm]);
+    React.useEffect(() => () => blockImages.dispose(), [blockImages]);
+    const openBlock = (targetId: string, blockId: string) => {
+        const search = navigation.current;
+        if (!search || !activateTargetView(search, targetId, codeTab)) return;
+        requestAnimationFrame(() => search.centerBlock(blockId));
+    };
     const spriteTabs = useSpriteTabs({
         available: dockviewSpriteTabsEnabled, enabled: workspaceEnabled && dockviewSpriteTabsEnabled,
         vm, locale, className: styles.spriteTabs, activeSection: activeEditorTab,
@@ -326,9 +338,13 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                         view.active && section !== 'variables' && section !== 'messages' && section !== 'functions' ?
                         renderEditorTabRow(null) : undefined} />;
             },
-            wrapVariablePane: (viewId, targetId, editable, pane) => vm.runtime.getTargetById(targetId)?.isStage ?
-                React.cloneElement(pane, {global: {canAddCloudVariable: vm.runtime.canAddCloudVariable()}}) :
-                <SpriteCloneVariables {...{viewId, targetId, locale, editable}}>{pane}</SpriteCloneVariables>,
+            wrapVariablePane(viewId, targetId, editable, pane) {
+                pane = React.cloneElement(pane, {temporaryVariables: readTemporaryVariables(vm.runtime, targetId),
+                    onOpenFunction: openBlock, getBlockImage: blockImages.render});
+                return vm.runtime.getTargetById(targetId)?.isStage ?
+                    React.cloneElement(pane, {global: {canAddCloudVariable: vm.runtime.canAddCloudVariable()}}) :
+                    <SpriteCloneVariables {...{viewId, targetId, locale, editable}}>{pane}</SpriteCloneVariables>;
+            },
             getAssetPreview: (id, kind) => readSpriteAssets(vm, id, kind),
             getVariables: id => readSpriteVariables(vm, id),
             editVariable: (id, edit) => editClonedSpriteVariable(vm, id, edit, () => editSpriteVariable(vm, id, edit)),
@@ -353,13 +369,11 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             getMessages: (id): MessagePaneData => ({
                 ...scanTargetMessages(vm.runtime, id),
-                getThumbnailUrl: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset)
+                getThumbnailUrl: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset),
+                getBlockImage: blockImages.render,
+                describeScript: (targetId, blockId) => describeScriptStart(vm.runtime, targetId, blockId)
             }),
-            openMessage(use) {
-                const search = navigation.current;
-                if (!search || !activateTargetView(search, use.targetId, codeTab)) return;
-                requestAnimationFrame(() => search.centerBlock(use.blockId));
-            },
+            openMessage: use => openBlock(use.targetId, use.blockId),
             openMessageTarget(id) {
                 if (navigation.current) activateTargetView(navigation.current, id, codeTab);
             },
@@ -462,7 +476,9 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         vm.on('PROJECT_CHANGED', refreshVariables);
         vm.on('MONITORS_UPDATE', refreshMonitorVisibility);
         refreshMonitorVisibility(vm.runtime.getMonitorState());
+        const stopTemporaryVariables = watchTemporaryVariables(vm.runtime, refreshVariables);
         return () => {
+            stopTemporaryVariables();
             vm.removeListener('PROJECT_CHANGED', refreshVariables);
             vm.removeListener('MONITORS_UPDATE', refreshMonitorVisibility);
             if (refreshFrame !== undefined) cancelAnimationFrame(refreshFrame);
