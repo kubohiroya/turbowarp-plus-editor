@@ -26,6 +26,7 @@ import {installControlsDock} from './controls-dock.ts';
 import {attachProjectFolder} from './project-folder-host.ts';
 import {webFontOwnsKeyEvent} from '@kubohiroya/turbowarp-plus-editor-fonts/web-fonts';
 import getStageControls from '@kubohiroya/turbowarp-plus-editor-workbench/stage-controls';
+import {attachBreakpointMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/debugger-breakpoints';
 import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {addonMessages} from './context-menu-icons/index.ts';
@@ -170,6 +171,8 @@ export const createPlusIntegration = ({
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
+        // Breakpoints marked on blocks; the debugger add-on does the pausing.
+        attached.push(attachBreakpointMenu({vm, getBlockly, getLocale: () => locale}));
         if (projectFolderBlocks) {
             attached.push(attachProjectFolder(vm, hostDocument, localGit, gitRestoreVersion, locale, getBlockly, projectFolderBlocks,
                 workspaceMinimap || standardLayout ? (workspace, blocks, watermark) =>
