@@ -1,5 +1,5 @@
 import React from 'react';
-import {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
 import {useTargetTabMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {createPortal} from 'react-dom';
 import {BasicPanel} from './basic-panel.tsx';

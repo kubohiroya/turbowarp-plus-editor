@@ -48,7 +48,7 @@ import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points
 const attachCodeNavigation = (workspace: object, blocks: object) => (hostIntegration() as {
     attachWorkspaceMinimap?: (workspace: object, blocks: object) => {dispose(): void};
 }).attachWorkspaceMinimap?.(workspace, blocks);
-import {attachFunctionCallMenu, BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, createFunction, mountProcedureEditor, readHatScripts, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {attachFunctionCallMenu, BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, createFunction, mountProcedureEditor, readHatScripts, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
 
 const codeTab = 0;
 

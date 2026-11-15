@@ -1,4 +1,4 @@
-import type {NativeFieldEditSession} from '../../../packages/editor-views/index.ts';
+import type {NativeFieldEditSession} from '@kubohiroya/turbowarp-plus-editor-code-views';
 
 declare const TW_TEST_NATIVE_SVG: boolean;
 declare const TW_TEST_PARENT_DOCUMENT: boolean;

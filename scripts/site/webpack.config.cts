@@ -228,8 +228,8 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const editorEntries = Object.fromEntries(['workbench', 'backpack', 'views'].map(feature => {
-    const name = `@kubohiroya/turbowarp-${['workbench', 'views'].includes(feature) ? 'plus-' : ''}editor-${feature}`;
+const editorEntries = Object.fromEntries(['workbench', 'backpack'].map(feature => {
+    const name = `@kubohiroya/turbowarp-${feature === 'workbench' ? 'plus-' : ''}editor-${feature}`;
     const entry = rootRequire.resolve(name);
     config.resolve.alias[`${name}$`] = entry;
     return [feature, path.dirname(entry)];
@@ -256,12 +256,16 @@ const spritePanesSource = path.dirname([
     const specifier = `@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}`;
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 })[0]);
-config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows$'] =
-    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows');
-config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/target-combobox$'] =
-    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/target-combobox');
-config.resolve.alias['@kubohiroya/turbowarp-plus-editor-views/script-layout$'] =
-    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-views/script-layout');
+// The code views, split out in the same way: every export gets an alias, read from the manifest so a
+// new one cannot be left out. Their stylesheet is global.
+const codeViewsExports = Object.keys(rootRequire('@kubohiroya/turbowarp-plus-editor-code-views/package.json').exports)
+    .filter(entry => entry !== './package.json');
+for (const entry of codeViewsExports) {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-code-views${entry.slice(1)}`;
+    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+}
+const codeViewsSource = path.dirname(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views$']);
+const codeViewsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views/styles.css$'];
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
     'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel', 'ai-agents']) {
@@ -325,7 +329,7 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
 const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-workbench/${entry}$`]);
-globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1],
+globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1], codeViewsStyles,
     ...spritePanesGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}$`]));
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
 const previewReloadStyles = path.join(siteSource, 'styles', 'preview-reload.css');
@@ -382,7 +386,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 );
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    documentSourceRoot, transferSource, editorEntries.workbench, editorEntries.backpack, editorEntries.views,
+    documentSourceRoot, transferSource, editorEntries.workbench, editorEntries.backpack, codeViewsSource,
     projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource,
     ...(projectUnpackEntry ? [path.dirname(projectUnpackEntry), projectUnpackHashSource] : []),
     ...(repositoryCreation ? [path.dirname(repositorySeedEntry)] : [])

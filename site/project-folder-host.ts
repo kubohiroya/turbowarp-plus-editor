@@ -2,7 +2,7 @@ import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersio
 import {followProjectFolder, mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
-import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-views';
+import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
 import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, pushPublicationCommit}
     from '@kubohiroya/turbowarp-plus-editor-git';
 import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-auth';

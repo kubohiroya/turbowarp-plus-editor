@@ -1,9 +1,9 @@
-import {attachPaletteCategoryReorder} from '@kubohiroya/turbowarp-plus-editor-ui/palette-category-reorder';
+import {attachPaletteCategoryReorder} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-reorder';
 import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} from
-    '@kubohiroya/turbowarp-plus-editor-ui/palette-category-search';
-import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-ui/palette-dropdown-resize';
+    '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-search';
+import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
-    '@kubohiroya/turbowarp-plus-editor-ui/detached-block-palette';
+    '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
 import styles from './palette.css';
 
 const installed = new WeakSet();

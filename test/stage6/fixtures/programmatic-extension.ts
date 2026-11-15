@@ -1,4 +1,4 @@
-import type {ProgrammaticExtensionField} from '../../../packages/editor-views/index.ts';
+import type {ProgrammaticExtensionField} from '@kubohiroya/turbowarp-plus-editor-code-views';
 
 declare const TW_TEST_PROGRAMMATIC_PROMISE: boolean;
 

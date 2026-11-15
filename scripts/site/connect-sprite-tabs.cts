@@ -26,7 +26,7 @@ module.exports = (source: string) => {
         source.indexOf(slot) < 0 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
         throw new Error('The pinned Editor Layout sprite tab connections have changed');
     }
-    const unsaved = path.resolve(__dirname, '../../packages/editor-views/dockview-unsaved.ts');
+    const unsaved = require.resolve('@kubohiroya/turbowarp-plus-editor-code-views/dockview-unsaved');
     return `import {mountDockviewUnsaved} from ${JSON.stringify(unsaved)};\n` + source
         .replace(targets, `${targets}\n    const unsaved = multiView && mountDockviewUnsaved(vm, root, locale);`)
         .replace(tab, `createTabComponent: ({id}) => {
