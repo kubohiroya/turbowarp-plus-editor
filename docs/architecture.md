@@ -26,6 +26,10 @@
 
 出力はGUI checkoutの `build/` です。`ROOT=/turbowarp-plus-editor/` に固定し、GUIのplayerを `player.html` に保持します。`editor.html`、ブロック編集サンプル、拡張セキュリティUI、GUIのLICENSEを同梱します。入口は `index.html`、共有資産は `assets/icon.svg` と `assets/edit-button.css` です。
 
+### 本家への追従
+
+フォーク（`kubohiroya/scratch-gui`・`kubohiroya/scratch-vm`）への本家 develop の取り込みと、`guiRevision` / `vmRevision` / `vmBaseRevision` / `packagerRevision` の更新は、[turbowarp-plus-packages](https://github.com/kubohiroya/turbowarp-plus-packages) の `npm run upstream:sync -- --repos-dir <親dir>` で行います。このコマンドは、フォークの追従ブランチと本リポジトリの `chore/upstream/sync-<id>` をローカルに作り、上の照合を含む CI と同じ検証を走らせて報告します。push と PR の作成は `--publish` を付けたときだけ行い、1件ずつ確認を取ります。手順、衝突時の再開、リリースまでの流れは、同リポジトリの [docs/release-executor.md の「本家追従」](https://github.com/kubohiroya/turbowarp-plus-packages/blob/main/docs/release-executor.md#本家追従turbowarp-plus-editor)を参照してください。フォークの PR はマージコミットで入れます。squash では、固定した SHA が develop から辿れなくなります。
+
 ## 実験で起動する Editor の版
 
 最新版の実験では開始時にリモート `main` を解決し、その SHA の checkout と固定依存で成果物を用意します。過去版を再現する場合は、対象の完全な SHA を指定して結果を区別します。
