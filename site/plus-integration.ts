@@ -26,7 +26,7 @@ import {installControlsDock} from './controls-dock.ts';
 import {attachProjectFolder} from './project-folder-host.ts';
 import {webFontOwnsKeyEvent} from '@kubohiroya/turbowarp-plus-editor-ui/web-fonts';
 import getStageControls from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
-import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
+import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {addonMessages} from './context-menu-icons/index.ts';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';

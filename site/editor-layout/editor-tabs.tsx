@@ -10,9 +10,11 @@ import {editSpriteVariable, readSpriteVariable, showSpriteVariableOnStage, write
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
 import {editClonedSpriteVariable, SpriteCloneInspector, SpriteClonePagination, SpriteCloneVariables}
     from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-clone-inspector';
-import {activateTargetView, centerProjectComment, connectProjectSearchNavigation, countVariableAccesses,
-    openVariableSearch, renameProjectMessage,
-    type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {centerProjectComment} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
+import {activateTargetView, connectProjectSearchNavigation, openVariableSearch,
+    type SearchNavigation} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
+import {countVariableAccesses} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search';
+import {renameProjectMessage} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-replace';
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
 import {readTemporaryVariables, watchTemporaryVariables} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/temporary-variables';

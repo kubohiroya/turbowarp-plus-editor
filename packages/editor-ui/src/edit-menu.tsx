@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './edit-menu.css';
-import {isMacPlatform, projectReplaceOpener, projectReplaceShortcut} from './project-search-connections.ts';
-import type {SearchProject} from './project-search.ts';
+import {isMacPlatform, projectReplaceOpener, projectReplaceShortcut} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
+import type {SearchProject} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search';
 
 interface Workspace {
     options: {readOnly: boolean};

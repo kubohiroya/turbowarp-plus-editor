@@ -1,5 +1,5 @@
 import React from 'react';
-import {isMacPlatform} from './project-search-connections.ts';
+import {isMacPlatform} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import styles from './project-file-menu.css';
 import type {Action, FolderActions, ProjectFileStorage} from './project-file-dialogs.ts';
 
