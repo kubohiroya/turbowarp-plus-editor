@@ -2153,7 +2153,7 @@ test('the default Dockview splits one sprite editor and restores each view secti
     await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
     const code = section('Code');
     const costumes = section('Costumes');
-    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables', 'Messages'];
+    const sections = ['Code', 'Costumes', 'Sounds', 'Properties & Variables', 'Messages', 'Functions'];
     await expect(toolbar.getByRole('tab')).toHaveCount(sections.length);
     const bounds = await Promise.all(sections.map(async name => {
         const tab = section(name);
@@ -3161,6 +3161,72 @@ test('editor pane headings and message diagrams follow the active target', {time
     await expect(nodes.last()).toHaveAttribute('aria-current', 'true');
     await expect(nodes.last()).toHaveCSS('border-top-width', '3px');
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
+});
+
+test('the functions section edits each definition in its own code area and draws the call graph', {timeout: 60_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage &&
+        window.ScratchBlocks?.getMainWorkspace());
+    await page.evaluate(() => {
+        const definition = (id: string, name: string, x: number, body: string) =>
+            `<block type="procedures_definition" id="${id}" x="${x}" y="40"><value name="custom_block">` +
+            `<shadow type="procedures_prototype"><mutation proccode="${name}" argumentids="[]" argumentnames="[]" ` +
+            `argumentdefaults="[]" warp="false"></mutation></shadow></value><next>${body}</next></block>`;
+        const call = (name: string) =>
+            `<block type="procedures_call"><mutation proccode="${name}" argumentids="[]" warp="false"></mutation></block>`;
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        window.ScratchBlocks.Xml.domToWorkspace(window.ScratchBlocks.Xml.textToDom('<xml>' +
+            definition('layout-jump', 'jump', 40, call('land').replace('</block>',
+                '<next><block type="motion_movesteps" id="layout-steps"><value name="STEPS"><shadow type="math_number">' +
+                '<field name="NUM">10</field></shadow></value></block></next></block>')) +
+            definition('layout-land', 'land', 400, '<block type="motion_turnright"></block>') +
+            `<block type="event_whenflagclicked" x="40" y="400"><next>${call('jump')}</next></block></xml>`), workspace);
+    });
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    await toolbar.getByRole('tab', {name: '関数', exact: true}).click();
+    await expect(toolbar.getByRole('heading')).toHaveText('関数');
+    const pane = page.getByRole('region', {name: '関数', exact: true});
+    const toggles = pane.locator('.tw-sprite-functions__toggle');
+    await expect(toggles.locator('.tw-sprite-functions__name')).toHaveText(['jump', 'land']);
+
+    await toggles.first().click();
+    const editor = pane.getByRole('group', {name: 'jump のコード', exact: true});
+    await expect(editor.locator('.blocklySvg')).toBeVisible();
+    await editor.locator('.blocklyEditableText').first().click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('25');
+    await page.keyboard.press('Enter');
+    const steps = () => page.evaluate(() => {
+        const blocks = vm.editingTarget.blocks;
+        return blocks.getBlock(blocks.getBlock('layout-steps').inputs.STEPS.shadow).fields.NUM.value;
+    });
+    await expect.poll(steps).toBe('25');
+    await toolbar.getByRole('tab', {name: 'コード', exact: true}).click();
+    await expect.poll(() => page.evaluate(() => {
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        return workspace.getBlockById('layout-steps')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM');
+    })).toBe('25');
+
+    await toolbar.getByRole('tab', {name: '関数', exact: true}).click();
+    await pane.getByRole('button', {name: '呼び出し図', exact: true}).click();
+    const graph = pane.locator('figure');
+    await expect(graph.locator('[data-edge]')).toHaveAttribute('data-edge', 'layout-jump>layout-land');
+    const jump = graph.locator('[data-function-key="layout-jump"]');
+    const land = graph.locator('[data-function-key="layout-land"]');
+    const box = async () => [await jump.boundingBox(), await land.boundingBox()];
+    let [from, to] = await box();
+    assert.ok(to.x > from.x + from.width, 'LR puts the callee to the right of its caller');
+    await pane.getByRole('button', {name: '上から下 (TD)', exact: true}).click();
+    [from, to] = await box();
+    assert.ok(to.y > from.y + from.height, 'TD puts the callee below its caller');
+
+    await land.click();
+    const dialog = page.getByRole('dialog', {name: 'land のコード', exact: true});
+    await expect(dialog.locator('.blocklySvg')).toBeVisible();
+    await expect(dialog.locator('.blocklyDraggable')).not.toHaveCount(0);
+    await dialog.getByRole('button', {name: '閉じる', exact: true}).click();
+    await expect(dialog).toHaveCount(0);
 });
 
 test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
