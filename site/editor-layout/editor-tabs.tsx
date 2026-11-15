@@ -16,6 +16,7 @@ import {activateTargetView, centerProjectComment, connectProjectSearchNavigation
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
 import {readTemporaryVariables, watchTemporaryVariables} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/temporary-variables';
+import {createBlockImageRenderer} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/block-image';
 import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
 import {readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
@@ -255,6 +256,9 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     // The message section and the temporary variable tables open blocks through the same navigation
     // the project search uses: the target's code, with the block centered.
     const navigation = React.useRef<SearchNavigation | null>(null);
+    // The variable and message panes draw the hats of scripts in any target as Scratch shows them.
+    const blockImages = React.useMemo(() => createBlockImageRenderer(() => window.ScratchBlocks, vm.runtime), [vm]);
+    React.useEffect(() => () => blockImages.dispose(), [blockImages]);
     const openBlock = (targetId: string, blockId: string) => {
         const search = navigation.current;
         if (!search || !activateTargetView(search, targetId, codeTab)) return;
@@ -280,7 +284,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             wrapVariablePane(viewId, targetId, editable, pane) {
                 pane = React.cloneElement(pane, {temporaryVariables: readTemporaryVariables(vm.runtime, targetId),
-                    onOpenFunction: openBlock});
+                    onOpenFunction: openBlock, getBlockImage: blockImages.render});
                 return vm.runtime.getTargetById(targetId)?.isStage ?
                     React.cloneElement(pane, {global: {canAddCloudVariable: vm.runtime.canAddCloudVariable()}}) :
                     <SpriteCloneVariables {...{viewId, targetId, locale, editable}}>{pane}</SpriteCloneVariables>;
@@ -309,7 +313,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             getMessages: (id): MessagePaneData => ({
                 ...scanTargetMessages(vm.runtime, id),
-                getThumbnailUrl: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset)
+                getThumbnailUrl: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset),
+                getBlockImage: blockImages.render
             }),
             openMessage: use => openBlock(use.targetId, use.blockId),
             openMessageTarget(id) {
