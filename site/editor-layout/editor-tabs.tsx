@@ -17,6 +17,7 @@ import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-mode
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
 import {readTemporaryVariables, watchTemporaryVariables} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/temporary-variables';
 import {createBlockImageRenderer} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/block-image';
+import {describeScriptStart} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/script-start';
 import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
 import {readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
@@ -314,7 +315,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             getMessages: (id): MessagePaneData => ({
                 ...scanTargetMessages(vm.runtime, id),
                 getThumbnailUrl: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset),
-                getBlockImage: blockImages.render
+                getBlockImage: blockImages.render,
+                describeScript: (targetId, blockId) => describeScriptStart(vm.runtime, targetId, blockId)
             }),
             openMessage: use => openBlock(use.targetId, use.blockId),
             openMessageTarget(id) {
