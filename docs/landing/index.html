@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>TurboWarp-Plus-Editor</title>
-  <meta name="description" content="コードとステージを好きな位置に並べ、作品全体を検索し、変更をGitで追い、ひとつのHTMLにまとめて渡せるTurboWarp Plusのエディター。">
+  <meta name="description" content="複数のパネルでブロックを並べて編集し、クローンや変数、メッセージを確認。作品をファイルに展開し、Gitで変更を追えるScratch・TurboWarp作品向けのIDE。">
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="stylesheet" href="assets/style.css">
   <script type="module" src="assets/app.js"></script>
@@ -28,6 +28,8 @@
           <p class="eyebrow" data-text="eyebrow">{{eyebrow}}</p>
           <h1 data-text="heading">{{heading}}</h1>
           <p class="lead" data-text="intro">{{intro}}</p>
+          <p class="lead" data-text="introEditing">{{introEditing}}</p>
+          <p class="lead" data-text="introInspect">{{introInspect}}</p>
           <div class="actions">
             <a class="twpe-edit-button" data-editor href="editor.html?lang=ja"><img src="assets/icon.svg" width="36" height="36" alt="" aria-hidden="true"><span data-text="edit">{{edit}}</span></a>
           </div>
@@ -41,7 +43,33 @@
         </div>
       </div>
 
-      <section class="terms panel" aria-labelledby="terms-heading">
+      <section class="summary-panel extension-highlights panel" aria-labelledby="extension-highlights-heading">
+        <h2 id="extension-highlights-heading" data-text="extensionHighlights">{{extensionHighlights}}</h2>
+        <dl>
+          <div>
+            <dt><a href="features/open/#review" data-en-href="features/open/index.en.html#review" data-text="extensionSecurity">{{extensionSecurity}}</a></dt>
+            <dd data-text="extensionSecurityNote">{{extensionSecurityNote}}</dd>
+          </div>
+          <div>
+            <dt><a href="features/documents/#forms" data-en-href="features/documents/index.en.html#forms" data-text="extensionForms">{{extensionForms}}</a></dt>
+            <dd data-text="extensionFormsNote">{{extensionFormsNote}}</dd>
+          </div>
+          <div>
+            <dt><a href="features/documents/#documents" data-en-href="features/documents/index.en.html#documents" data-text="projectData">{{projectData}}</a></dt>
+            <dd data-text="projectDataNote">{{projectDataNote}}</dd>
+          </div>
+          <div>
+            <dt><a href="https://kubohiroya.github.io/turbowarp-named-functions/ja/" data-en-href="https://kubohiroya.github.io/turbowarp-named-functions/" data-text="namedFunctions">{{namedFunctions}}</a></dt>
+            <dd data-text="namedFunctionsNote">{{namedFunctionsNote}}</dd>
+          </div>
+          <div>
+            <dt><a href="features/save/#payload-formats" data-en-href="features/save/index.en.html#payload-formats" data-text="assetDelivery">{{assetDelivery}}</a></dt>
+            <dd data-text="assetDeliveryNote">{{assetDeliveryNote}}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="summary-panel panel" aria-labelledby="terms-heading">
         <h2 id="terms-heading" data-text="terms">{{terms}}</h2>
         <dl>
           <div><dt data-text="termFeature">{{termFeature}}</dt><dd data-text="termFeatureDef">{{termFeatureDef}}</dd></div>
