@@ -40,13 +40,14 @@ test('script file export/import from menus available by default without any quer
     expect(new URL(page.url()).search).toBe('?lang=en');
     await seedScript(page);
     await workspaceMenu(page);
-    await expect(menuItem(page, 'Import Script')).toBeVisible();
+    await expect(menuItem(page, 'Load from File…')).toBeVisible();
     await expect(menuItem(page, 'Paste')).toBeVisible();
     await page.keyboard.press('Escape');
     await blockMenu(page);
-    await expect(menuItem(page, 'Copy')).toBeVisible();
+    await expect(menuItem(page, 'Copy Whole Stack')).toBeVisible();
+    await expect(menuItem(page, 'Copy This Block Only')).toBeVisible();
     const pending = page.waitForEvent('download');
-    await menuItem(page, 'Export Script').click();
+    await menuItem(page, 'Save Stack to File…').click();
     const download = await pending;
     expect(download.suggestedFilename()).toBe('script.blocks3');
     const filename = info.outputPath('script.blocks3');
@@ -55,7 +56,7 @@ test('script file export/import from menus available by default without any quer
     expect(payload.variables).toContainEqual({id: 'transfer-counter', name: 'Transfer counter', type: '', scope: 'local', value: 37});
     await workspaceMenu(page);
     const chooser = page.waitForEvent('filechooser');
-    await menuItem(page, 'Import Script').click();
+    await menuItem(page, 'Load from File…').click();
     await (await chooser).setFiles(filename);
     await expect.poll(() => countImported(page)).toBe(2);
 });
@@ -71,7 +72,7 @@ test('two windows copy/paste using menus and Ctrl+C/V despite denied OS clipboar
     await startTransfer(page);
     await seedScript(page);
     await blockMenu(page);
-    await menuItem(page, 'Copy').click();
+    await menuItem(page, 'Copy Whole Stack').click();
     // Open after copying: localStorage must serve a late-joining window too.
     const other = await context.newPage(); evidence.observe(other);
     await startTransfer(other);
@@ -143,7 +144,7 @@ test('OS clipboard includes scratchblocks text and imports JSON across origins',
     await startTransfer(page);
     await seedScript(page);
     await blockMenu(page);
-    await menuItem(page, 'Copy').click();
+    await menuItem(page, 'Copy Whole Stack').click();
     await expect.poll(() => page.evaluate(async () => {
         const items = await navigator.clipboard.read();
         return items.flatMap(item => [...item.types]);

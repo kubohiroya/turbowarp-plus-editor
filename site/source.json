@@ -22,10 +22,10 @@
   "documentEditorSource": "npm",
   "documentEditorIntegrity": "sha512-ZSa3Hloqc+lH+irjQZ5mZySkQ3YyqbzjmYMKzyxX4122AoS8MTBeqQItk/oEBSnbYPjzIQuFTYWIz+qKFwSNYw==",
   "scriptTransferRepository": "kubohiroya/turbowarp-script-transfer",
-  "scriptTransferRevision": "f96ac910eb4e350aeaee639a01f4c9994a05635d",
-  "scriptTransferVersion": "0.1.4",
+  "scriptTransferRevision": "91ae495ff741bcd045ce4803149a1433f940b73f",
+  "scriptTransferVersion": "0.1.5",
   "scriptTransferSource": "npm",
-  "scriptTransferIntegrity": "sha512-kRgmtCu3OdRpl3Xz35hqvoDDG6YVQ4onWWhy4qU4dxsV8TT/4LsFBewiVwouyWJ3SjyTkZygbU2vjtu0Xgz9Cg==",
+  "scriptTransferIntegrity": "sha512-jw+Z0nPWwzUsbb5mUME6UXQohqglT+AHdkIJ5ug3OQN9pJWVJTrlu+HA/9YerNnnjZFCoJCHs7TTttYVcYAkyw==",
   "previewReloadStyles": {
     "revision": "c493768e51e4824c5a07094e49b1d307375fdb2d",
     "sha256": "b577908b996319396249132c5309f5b8639fc70da3212646f47fb920b85c80ec"

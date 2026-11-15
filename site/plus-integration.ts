@@ -28,6 +28,7 @@ import {webFontOwnsKeyEvent} from '@kubohiroya/turbowarp-plus-editor-ui/web-font
 import getStageControls from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
 import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
+import {addonMessages} from './context-menu-icons/index.ts';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
 import {installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.ts';
@@ -61,7 +62,7 @@ export const createPlusIntegration = ({
     securityReview = plusSecurityReview,
     scriptTransfer = {
         attach: context => attachScriptTransfer({...context, projectTransfer: desktopProjectTransfer(context.document, 'script')}),
-        stageMenu: stageTransferMenu, finalizeMenu: finalizeTransferMenu
+        stageMenu: stageTransferMenu, finalizeMenu: items => finalizeTransferMenu(items, {addonMessages})
     },
     blockEditor = plusBlockEditor
 }) => ({
