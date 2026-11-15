@@ -81,7 +81,7 @@
     "@kubohiroya/sb3-toolchain": "0.24.0",
     "@kubohiroya/turbowarp-document-source": "0.2.0-rc.0",
     "@kubohiroya/turbowarp-editor-backpack": "file:packages/editor-backpack",
-    "@kubohiroya/turbowarp-extension-data-editor": "0.9.0",
+    "@kubohiroya/turbowarp-extension-data-editor": "0.10.0",
     "@kubohiroya/turbowarp-extension-loader": "0.11.0",
     "@kubohiroya/turbowarp-extension-security-dialog": "0.8.9",
     "@kubohiroya/turbowarp-named-data": "0.8.0-rc.0",

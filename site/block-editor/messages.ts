@@ -38,6 +38,19 @@ export const dialogMessages = intl => ({
         saveAll: intl.formatMessage({
             id: 'tw.blockEditor.saveAll', defaultMessage: 'Save all', description: 'Save all block forms'
         }),
+        update: intl.formatMessage({
+            id: 'tw.blockEditor.update', defaultMessage: 'Update',
+            description: 'Save button when the block already differs from its palette defaults'
+        }),
+        noChanges: intl.formatMessage({
+            id: 'tw.blockEditor.noChanges', defaultMessage: 'No changes',
+            description: 'Why Update is disabled: nothing changed'
+        }),
+        // The dialog fills {count} itself, so it passes through formatting unchanged.
+        fixToSave: intl.formatMessage({
+            id: 'tw.blockEditor.fixToSave', defaultMessage: 'Fix {count} problems to save',
+            description: 'Why the save button is disabled; {count} is the number of problems'
+        }, {count: '{count}'}),
         structureError: intl.formatMessage({
             id: 'tw.blockEditor.structureError',
             defaultMessage: 'This hierarchy is invalid or exceeds 500 blocks or 32 levels. No blocks were saved.',
