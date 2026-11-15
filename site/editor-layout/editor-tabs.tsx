@@ -239,7 +239,24 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                     update();
                 });
                 placed.observe(element);
+                // A script deleted elsewhere, such as in the code area, or a removed sprite takes its tab with it.
+                // A project being loaded may restore the tab before its sprite exists, so wait for it.
+                let closing: number | undefined;
+                const closeIfGone = () => {
+                    if (closing !== undefined || isProjectLoading(vm)) return;
+                    if (vm.runtime.getTargetById(targetId)?.blocks._blocks[id]) return;
+                    // After the change that removed it has been handled.
+                    closing = requestAnimationFrame(() => {
+                        closing = undefined;
+                        if (!isProjectLoading(vm) && !vm.runtime.getTargetById(targetId)?.blocks._blocks[id]) close();
+                    });
+                };
+                vm.runtime.on('PROJECT_CHANGED', closeIfGone);
+                vm.runtime.on('TARGETS_UPDATE', closeIfGone);
                 return {requestClose: close, dispose() {
+                    vm.runtime.removeListener('PROJECT_CHANGED', closeIfGone);
+                    vm.runtime.removeListener('TARGETS_UPDATE', closeIfGone);
+                    if (closing !== undefined) cancelAnimationFrame(closing);
                     placed.disconnect();
                     overlayChanges.disconnect();
                     if (scriptEditors.get(key) === editor) scriptEditors.delete(key);
