@@ -10,7 +10,22 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
     const session = getCodeSession(vm);
     const label = /^ja(?:-|$)/i.test(locale) ? 'このペインでコードを編集' : 'Edit code in this pane';
     const views = new Map<string, ScriptView>();
+    // Views that show one script, a hat or a function, by pane id; `onLost` runs when that script is deleted.
+    const focused = new Map<string, {scriptId: string; onLost?: () => void}>();
+    // The code pane the code area is in, which shows its script there.
+    let current: string | undefined;
+    const applyFocus = (paneId?: string) => {
+        const focus = paneId === undefined ? undefined : focused.get(paneId);
+        session.bridge?.focusScript(focus?.scriptId, focus && (() => focus.onLost?.()));
+    };
     let pending: {frame: number; pane: Pane; presentation: Presentation} | undefined;
+    // The GUI can attach the code area again, with a new bridge; the view it is in still shows its script.
+    let attached = session.bridge;
+    session.subscribe(() => {
+        if (session.bridge === attached) return;
+        attached = session.bridge;
+        if (current !== undefined) applyFocus(current);
+    });
     const costumeUpdates = new Set<() => void>();
     const updateCostumes = () => costumeUpdates.forEach(update => update());
 
@@ -35,6 +50,27 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
     }
 
     return {
+        /**
+         * Make a code view show one script, a hat or a function, or every script again without `scriptId`.
+         * The code area shows it while it is in that view, and the view's preview shows it otherwise.
+         */
+        focusPane(paneId: string, scriptId?: string, onLost?: () => void) {
+            if (scriptId) focused.set(paneId, {scriptId, onLost});
+            else focused.delete(paneId);
+            if (current === paneId) applyFocus(paneId);
+            // Previews of other views redraw with their script.
+            session.changed();
+        },
+        focusedScript: (paneId: string) => focused.get(paneId)?.scriptId,
+        /** Forget a view that has closed. */
+        forgetPane(paneId: string) {
+            focused.delete(paneId);
+            views.delete(paneId);
+            if (current === paneId) {
+                current = undefined;
+                applyFocus(undefined);
+            }
+        },
         ownsClick: (element: EventTarget) => Boolean((element as Element)?.closest?.('[data-code-view-control]')),
         watchEditingCostume: (image: HTMLImageElement) => watchCostume(image, () => vm.editingTarget),
         capture(pane: Pane) {
@@ -52,6 +88,8 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
             if (pending) cancelAnimationFrame(pending.frame);
             pending = undefined;
             if (pane.section !== 0) return;
+            current = pane.id;
+            applyFocus(pane.id);
             getDockedScriptLayout(vm)?.view.setView(views.get(pane.id) ?? 'free');
             if (!presentation) return;
             const frame = requestAnimationFrame(() => {
@@ -94,12 +132,15 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
             const stopCostume = watchCostume(image, () => target);
             let bridge: Bridge | null;
             let preview: ReturnType<Bridge['preview']> | undefined;
+            let shownScript: string | undefined;
             function update() {
-                if (bridge !== session.bridge) {
+                if (bridge !== session.bridge || shownScript !== focused.get(pane.id)?.scriptId) {
                     preview?.dispose();
                     bridge = session.bridge;
+                    shownScript = focused.get(pane.id)?.scriptId;
                     preview = bridge?.preview(blocks, chrome, {target, presentation, attachMinimap, watermark, locale, dropElement: surface,
-                        scriptView: views.get(pane.id), onScriptViewChange: view => views.set(pane.id, view)});
+                        scriptView: views.get(pane.id), onScriptViewChange: view => views.set(pane.id, view),
+                        scriptId: focused.get(pane.id)?.scriptId});
                 }
                 preview?.update();
             }

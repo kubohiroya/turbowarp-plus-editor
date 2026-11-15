@@ -5,7 +5,7 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
-import {getDocumentWorkspace, SpriteTargetTabsContext, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {SpriteTargetTabsContext, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {editSpriteVariable, readSpriteVariable, showSpriteVariableOnStage, writeSpriteVariableValue} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
 import {editClonedSpriteVariable, SpriteCloneInspector, SpriteClonePagination, SpriteCloneVariables}
@@ -19,7 +19,7 @@ import {readTemporaryVariables, watchTemporaryVariables} from '@kubohiroya/turbo
 import {createBlockImageRenderer} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/block-image';
 import {describeScriptStart} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/script-start';
 import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
-import {functionLabel, readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
+import {readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-workbench/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-workbench/sprite-layout-menu.css';
@@ -202,71 +202,51 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         identify: () => identifyProject(vm),
         isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)
     } : undefined, [multiView, vm]);
-    // The script whose tab shows in the split beside the sprite, which the list of hats and functions highlights.
+    // The script shown beside the sprite, which the list of hats and functions highlights.
     const [selectedScript, setSelectedScript] = React.useState<{targetId: string; id: string}>();
-    const scriptEditors = React.useRef(new Map<string, ReturnType<typeof mountProcedureEditor>>()).current;
-    // A function or hat script picked in the functions sections opens as the active tab of a split beside
-    // the sprite, with the other scripts opened from there. `block` asks to show one of its blocks.
-    const openScriptTab = (targetId: string, id: string, title: string, block?: string) => {
-        const key = `${targetId}/${id}`;
-        const opened = scriptEditors.get(key);
-        const select = () => setSelectedScript(current =>
-            current?.targetId === targetId && current.id === id ? current : {targetId, id});
-        select();
-        getDocumentWorkspace(vm).open({
-            reference: {providerId: 'tw-plus-script', documentId: key},
-            filename: title, title, area: 'functions',
-            mount(element, close) {
-                const editor = mountProcedureEditor(vm, locale, element, targetId, id,
-                    {editable: true, attachNavigation: attachCodeNavigation, focusBlock: block});
-                scriptEditors.set(key, editor);
-                // Dockview keeps every tab of a split laid out and hides all but the one shown, so watch the
-                // overlay that holds the tab, which may only exist once the tab is placed.
-                const isShown = () => element.isConnected && element.clientWidth > 0 &&
-                    element.ownerDocument.defaultView.getComputedStyle(element).visibility === 'visible';
-                const update = () => {
-                    if (isShown()) select();
-                };
-                let overlay: Element | null = null;
-                const overlayChanges = new MutationObserver(update);
-                const placed = new ResizeObserver(() => {
-                    const next = element.closest('.dv-render-overlay') ?? element.parentElement;
-                    if (next !== overlay) {
-                        overlayChanges.disconnect();
-                        overlay = next;
-                        if (overlay) overlayChanges.observe(overlay, {attributes: true, attributeFilter: ['style', 'class', 'hidden']});
-                    }
-                    update();
-                });
-                placed.observe(element);
-                // A script deleted elsewhere, such as in the code area, or a removed sprite takes its tab with it.
-                // A project being loaded may restore the tab before its sprite exists, so wait for it.
-                let closing: number | undefined;
-                const closeIfGone = () => {
-                    if (closing !== undefined || isProjectLoading(vm)) return;
-                    if (vm.runtime.getTargetById(targetId)?.blocks._blocks[id]) return;
-                    // After the change that removed it has been handled.
-                    closing = requestAnimationFrame(() => {
-                        closing = undefined;
-                        if (!isProjectLoading(vm) && !vm.runtime.getTargetById(targetId)?.blocks._blocks[id]) close();
-                    });
-                };
-                vm.runtime.on('PROJECT_CHANGED', closeIfGone);
-                vm.runtime.on('TARGETS_UPDATE', closeIfGone);
-                return {requestClose: close, dispose() {
-                    vm.runtime.removeListener('PROJECT_CHANGED', closeIfGone);
-                    vm.runtime.removeListener('TARGETS_UPDATE', closeIfGone);
-                    if (closing !== undefined) cancelAnimationFrame(closing);
-                    placed.disconnect();
-                    overlayChanges.disconnect();
-                    if (scriptEditors.get(key) === editor) scriptEditors.delete(key);
-                    editor();
-                    setSelectedScript(current => current?.targetId === targetId && current.id === id ? undefined : current);
-                }};
+    // The code view beside the sprite that shows one script at a time: the code area itself, without the other
+    // scripts and without the section buttons.
+    const [scriptView, setScriptView] = React.useState<{viewId: string; targetId: string}>();
+    const scriptViewRef = React.useRef(scriptView);
+    scriptViewRef.current = scriptView;
+    // A function or hat script picked in the functions sections shows there. `block` asks to show one of its blocks.
+    const openScriptView = (targetId: string, id: string, block?: string) => {
+        const views = spriteTabs.controller.current;
+        if (!views) return;
+        let viewId = scriptViewRef.current?.targetId === targetId &&
+            views.views().some(view => view.id === scriptViewRef.current.viewId) ? scriptViewRef.current.viewId : undefined;
+        if (!viewId) {
+            const current = views.currentView();
+            const from = current?.targetId === targetId ? current.id : views.views().find(view => view.targetId === targetId)?.id;
+            viewId = from && views.split('right', from);
+            if (!viewId) return;
+            const opened = {viewId, targetId};
+            scriptViewRef.current = opened;
+            setScriptView(opened);
+        }
+        const shown = viewId;
+        codePaneAdapter.focusPane(shown, id, () => requestAnimationFrame(() => {
+            // The script was deleted, so its view goes too.
+            codePaneAdapter.forgetPane(shown);
+            spriteTabs.controller.current?.closeSplit(shown);
+            if (scriptViewRef.current?.viewId === shown) {
+                scriptViewRef.current = undefined;
+                setScriptView(undefined);
             }
-        });
-        // A tab already open only comes to the front, so show the block in it here.
-        if (opened && block) opened.showBlock(block);
+            setSelectedScript(current => current?.targetId === targetId && current.id === id ? undefined : current);
+        }));
+        views.setViewSection(shown, codeTab);
+        views.activateView(shown);
+        setSelectedScript(current => current?.targetId === targetId && current.id === id ? current : {targetId, id});
+        if (block) {
+            requestAnimationFrame(() => {
+                const workspace = window.ScratchBlocks?.getMainWorkspace();
+                const found = workspace?.getBlockById(block);
+                if (!found) return;
+                workspace.centerOnBlock(block);
+                found.select();
+            });
+        }
     };
     const codePaneAdapter = React.useMemo(() =>
         createCodePaneAdapter(vm, locale, layoutFlags.workspaceMinimap ? attachCodePreviewMinimap : undefined), [vm, locale]);
@@ -368,6 +348,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         ...(multiView && {
             multiView, workspaceLayout, stagePane: stage?.pane, viewAdapter: codePaneAdapter, popouts,
             renderToolbar(view, actions) {
+                // The view that shows one script keeps to the code: no section buttons.
+                if (view.id === scriptView?.viewId && view.section === codeTab) return <></>;
                 const section = spriteEditorSections[view.section] ?? 'code';
                 return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}
                     activeGroup={view.groupActive} propertiesInVariables
@@ -427,8 +409,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 createFunction(vm, targetId, kind, name, {loadNamedFunctions: () => loadNamedFunctions(vm)}),
             mountFunctionEditor: (element, targetId, functionId, options) =>
                 mountProcedureEditor(vm, locale, element, targetId, functionId, {...options, attachNavigation: attachCodeNavigation}),
-            openFunction: (targetId, fn, options) => openScriptTab(targetId, fn.id, functionLabel(fn), options?.block),
-            openScript: (targetId, hat, options) => openScriptTab(targetId, hat.id, hat.label, options?.block),
+            openFunction: (targetId, fn, options) => openScriptView(targetId, fn.id, options?.block),
+            openScript: (targetId, hat, options) => openScriptView(targetId, hat.id, options?.block),
             selectedScript,
             renameMessage(message, name) {
                 const workspace = window.ScratchBlocks?.getMainWorkspace();
@@ -439,8 +421,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         })
     });
     // “Show this function” on a block that calls one opens it in the list of hats and functions beside the sprite.
-    const openScriptTabRef = React.useRef(openScriptTab);
-    openScriptTabRef.current = openScriptTab;
+    const openScriptViewRef = React.useRef(openScriptView);
+    openScriptViewRef.current = openScriptView;
     React.useEffect(() => {
         if (!multiView) return undefined;
         const callee = (blockId: string) => {
@@ -458,9 +440,8 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 open(functionId) {
                     const target = vm.editingTarget;
                     const fn = target && readTargetFunctions(target).functions.find(item => item.id === functionId);
-                    if (!fn || !navigation.current) return;
-                    if (!activateTargetView(navigation.current, target.id, spriteEditorSections.indexOf('functions'))) return;
-                    openScriptTabRef.current(target.id, fn.id, functionLabel(fn));
+                    if (!fn) return;
+                    openScriptViewRef.current(target.id, fn.id);
                 }
             });
         };

@@ -101,7 +101,8 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner, prev
         const paths = document.createDocumentFragment();
         for (const block of workspace.getAllBlocks(false)) {
             const root = block.getSvgRoot();
-            if (!root || !canvas.contains(root)) continue;
+            // Scripts the code area hides, such as in a view of one script or under a folded hat, stay out.
+            if (!root || !canvas.contains(root) || root.closest('[data-tw-plus-hidden]')) continue;
             const source = root.querySelector(':scope > .blocklyPath');
             const shape = source?.getAttribute('d');
             if (!shape) continue;
@@ -283,7 +284,7 @@ function attachWorkspaceMinimap (workspace, ScratchBlocks, zoom, getCorner, prev
             type === 'childList' || (target !== canvas && target !== workspaceSvg));
         schedule();
     });
-    changes.observe(canvas, {childList: true, subtree: true, attributeFilter: ['transform', 'd', 'fill', 'style']});
+    changes.observe(canvas, {childList: true, subtree: true, attributeFilter: ['transform', 'd', 'fill', 'style', 'data-tw-plus-hidden']});
     changes.observe(workspaceSvg, {attributeFilter: ['style']});
     const resize = new window.ResizeObserver(schedule);
     resize.observe(container);
