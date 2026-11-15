@@ -1,12 +1,14 @@
 import {attachBlockDrag} from './block-drag.ts';
 import {workspaceXML, type CodeTarget} from './history.ts';
-import {removeObsoleteProcedureInputs} from './procedure-edits.ts';
+import {isFoldedDefinition, removeObsoleteProcedureInputs, setFoldedDefinition} from './procedure-edits.ts';
 import {decodeEdit, encodeEdit, isCommentEdit} from './protocol.ts';
 import {captureCodePreviewChrome} from './preview-chrome.ts';
 import type {PresentationElements} from './preview-chrome.ts';
 import {attachScriptView, getDockedScriptLayout, type ScriptView} from './script-layout-view.ts';
 
 export type AttachPreviewMinimap = (workspace, ScratchBlocks, watermark: HTMLElement) => {dispose(): void};
+/** Adds the code area's zoom buttons and minimap to another workspace. */
+export type AttachWorkspaceNavigation = (workspace, ScratchBlocks) => {dispose(): void} | undefined;
 
 // Keep VM identity and workspace lifetime separate from the lifetime of a floating window.
 interface Presentation {
@@ -127,6 +129,15 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             withoutEvents(blocks, () => vm.emit('workspaceUpdate', {xml: workspaceXML(vm, target)}));
         });
     }
+
+    // Function editors take the code area's palette, which the GUI replaces as the editing target changes.
+    const toolboxListeners = new Set<() => void>();
+    const updateToolbox = workspace.updateToolbox;
+    workspace.updateToolbox = function (...args) {
+        const result = updateToolbox.apply(this, args);
+        for (const listener of toolboxListeners) listener();
+        return result;
+    };
 
     const bridge = {
         onError,
@@ -294,16 +305,18 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 }
             };
         },
-        editProcedure(element: HTMLElement, {target, definitionId, editable}: {
+        editProcedure(element: HTMLElement, {target, definitionId, editable, attachNavigation, locale = '', focusBlock}: {
             target: CodeTarget & {id: string}; definitionId: string; editable: boolean;
+            attachNavigation?: AttachWorkspaceNavigation; locale?: string; focusBlock?: string;
         }) {
-            return attachProcedureEditor({vm, blocks, workspace, options, onError, homeDocument,
-                element, target, definitionId, editable, refreshParent});
+            return attachProcedureEditor({vm, blocks, workspace, options, onError, homeDocument, element, target,
+                definitionId, editable, attachNavigation, toolboxListeners, refreshParent, locale, focusBlock});
         },
         dispose() {
             blockDrag.dispose();
             if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
             if (parentFrame !== null) cancelAnimationFrame(parentFrame);
+            if (workspace.updateToolbox !== updateToolbox) workspace.updateToolbox = updateToolbox;
             if (session.bridge === bridge) {
                 session.bridge = null;
                 session.changed();
@@ -322,34 +335,53 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
 type ProcedureTarget = CodeTarget & {
     id: string;
     blocks: CodeTarget['blocks'] & {
-        _blocks: Record<string, {topLevel?: boolean}>;
+        _blocks: Record<string, {topLevel?: boolean; mutation?: Record<string, unknown>}>;
         blockToXML(id: string, comments: CodeTarget['comments']): string;
         blocklyListen(event: object): void;
     };
 };
 
+const foldedBodyType = 'twplus_folded_body';
+
+/** The mark below a folded hat: a statement that ends the stack and holds only its label. */
+function registerFoldedBodyBlock(blocks) {
+    blocks.Blocks[foldedBodyType] ??= {
+        init() {
+            this.jsonInit({
+                message0: '%1', args0: [{type: 'field_label', name: 'LABEL', text: ''}],
+                previousStatement: null, colour: '#9E9E9E', colourSecondary: '#8A8A8A', colourTertiary: '#757575'
+            });
+        }
+    };
+}
+
 /**
  * An editor of one custom block definition script, for the functions section of a sprite tab.
- * It shares this page's ScratchBlocks, so extension blocks and field editors work as in the code area.
+ * It shares this page's ScratchBlocks, so extension blocks and field editors work as in the code area,
+ * and it takes the code area's palette, zoom buttons and minimap, which show while the pointer is over it.
  * Edits go straight to the target's blocks, and edits made anywhere else reload it.
  * The definition hat cannot be moved or deleted here: moving it would rearrange the code area, and
  * deleting it would leave the calls in other scripts without a definition.
  */
 function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDocument, element, target: codeTarget,
-    definitionId, editable, refreshParent}) {
+    definitionId, editable, attachNavigation, toolboxListeners, refreshParent, locale, focusBlock}) {
     const target = codeTarget as ProcedureTarget;
     const document: Document = element.ownerDocument;
-    const staging = document === homeDocument ? null : homeDocument.createElement('div');
+    // ScratchBlocks injects only into a container in its own document, and a tab may mount before it is shown.
+    const staging = document === homeDocument && element.isConnected ? null : homeDocument.createElement('div');
     if (staging) homeDocument.body.appendChild(staging);
+    // The palette is the code area's, which holds the editing target's blocks; a read-only editor has none.
+    const palette = (): Node | null => editable && vm.editingTarget === codeTarget ?
+        workspace.options.languageTree?.cloneNode(true) ?? null : null;
     let editor;
     try {
-        // An editable workspace gets the default categories when it has no toolbox, and any toolbox, even an
-        // empty one, gets a flyout over the script. This editor has no palette, so it takes neither.
+        // An editable workspace gets the default categories when it has no toolbox.
         const defaultToolbox = blocks.Blocks.defaultToolbox;
         blocks.Blocks.defaultToolbox = null;
         try {
             editor = withoutEvents(blocks, () => blocks.inject(staging ?? element, {
-                readOnly: !editable, scrollbars: true, sounds: false, comments: true, trashcan: false,
+                readOnly: !editable, toolbox: palette() ?? undefined,
+                scrollbars: true, sounds: false, comments: true, trashcan: false,
                 media: options.media, rtl: options.rtl, colours: options.colours, grid: options.grid,
                 zoom: {...options.zoom, controls: true}
             }));
@@ -363,6 +395,30 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
     // Injecting focuses the new workspace; the GUI keeps reading the code area as the main one.
     workspace.markFocused();
 
+    function refreshPalette() {
+        const tree = palette();
+        if (tree && editor.toolbox_) editor.updateToolbox(tree);
+    }
+    if (editor.toolbox_) {
+        // My Blocks lists every function of the target, as in the code area, not only the one shown here.
+        const callbacks = {...editor.toolboxCategoryCallbacks_};
+        const procedures = callbacks[blocks.PROCEDURE_CATEGORY_NAME];
+        callbacks[blocks.PROCEDURE_CATEGORY_NAME] = flyoutWorkspace => vm.editingTarget === target ?
+            blocks.Procedures.flyoutCategory(workspace) : procedures(flyoutWorkspace);
+        editor.toolboxCategoryCallbacks_ = callbacks;
+        toolboxListeners.add(refreshPalette);
+    }
+    // The zoom buttons and minimap show while the pointer is over the editor, as in the code area,
+    // and so does the palette, which would otherwise sit over a single script all the time.
+    element.setAttribute('data-code-hover-surface', '');
+    element.setAttribute('data-hover-palette', '');
+    let navigation: {dispose(): void} | undefined;
+    try {
+        navigation = attachNavigation?.(editor, blocks) ?? undefined;
+    } catch (error) {
+        onError(error);
+    }
+
     const exists = () => vm.runtime.getTargetById(target.id) === target;
     // Scripts pulled out of the definition here stay in view until this editor closes.
     const detached = new Set<string>();
@@ -374,6 +430,57 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
         const locals = target.isStage ? [] : Object.values(target.variables).map(variable => variable.toXML(true));
         return `<xml xmlns="http://www.w3.org/1999/xhtml"><variables>${globals.join('')}${locals.join('')}</variables>` +
             roots().map(id => target.blocks.blockToXML(id, target.comments)).join('') + '</xml>';
+    }
+
+    // A script can be folded to its hat, with a mark below it that unfolds it when clicked.
+    // The dialog, for working on the whole body, always shows it.
+    const modal = element.closest('dialog');
+    const foldable = !modal;
+    const foldLabels = /^ja(?:-|$)/i.test(locale) ? {fold: '折りたたみ', unfold: '折りたたみを解除', folded: '折りたたみ中'} :
+        {fold: 'Fold', unfold: 'Unfold', folded: 'Folded'};
+    const foldedBodyId = `${definitionId}:tw-plus-folded`;
+    const folded = () => foldable && isFoldedDefinition(target.blocks._blocks[definitionId]);
+    function fold(value: boolean) {
+        const hat = target.blocks._blocks[definitionId];
+        if (!editable || !exists() || !hat || isFoldedDefinition(hat) === value) return;
+        setFoldedDefinition(hat, value);
+        vm.runtime.emitProjectChanged();
+        // A click or menu choice is still being handled, so reload after it.
+        scheduleLoad();
+    }
+    // Add-ons append items such as cut to every block menu; these blocks offer only folding.
+    function offerOnly(block, option: {text: string; enabled: boolean; callback(): void}) {
+        block.contextMenu = editable;
+        block.customContextMenu = options => {
+            options.splice(0, options.length, option);
+        };
+        // Shown as ScratchBlocks shows a menu, without ContextMenu.show, where add-ons append and decorate items.
+        block.showContextMenu_ = function (event) {
+            if (this.workspace.options.readOnly || !this.contextMenu) return;
+            const {ContextMenu, WidgetDiv} = blocks;
+            WidgetDiv.show(ContextMenu, this.RTL, null);
+            const menu = ContextMenu.populate_([{...option, callback() {
+                ContextMenu.hide();
+                option.callback();
+            }}], this.RTL);
+            ContextMenu.position_(menu, event, this.RTL);
+            setTimeout(() => menu.getElement()?.focus(), 1);
+        };
+    }
+    const unfoldOption = {text: foldLabels.unfold, enabled: true, callback: () => fold(false)};
+    function showFolded(hat) {
+        withoutEvents(blocks, () => {
+            hat.nextConnection?.targetBlock()?.dispose(false);
+            registerFoldedBodyBlock(blocks);
+            const mark = blocks.Xml.domToBlock(blocks.Xml.textToDom(
+                `<xml><block type="${foldedBodyType}" id="${foldedBodyId}"></block></xml>`).firstElementChild, editor);
+            mark.setFieldValue(foldLabels.folded, 'LABEL');
+            mark.setMovable(false);
+            mark.setDeletable(false);
+            mark.setEditable(false);
+            offerOnly(mark, unfoldOption);
+            hat.nextConnection?.connect(mark.previousConnection);
+        });
     }
 
     let rendered: string | undefined;
@@ -405,8 +512,12 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
         if (definition) {
             definition.setMovable(false);
             definition.setDeletable(false);
-            // Its menu edits the block's inputs, which needs the callers that live in other scripts.
-            definition.contextMenu = false;
+            // A definition's own menu edits its inputs, which needs the callers that live in other scripts.
+            // Only folding is offered here, and the dialog offers nothing.
+            if (foldable) offerOnly(definition, folded() ? unfoldOption :
+                {text: foldLabels.fold, enabled: true, callback: () => fold(true)});
+            else definition.contextMenu = false;
+            if (folded()) showFolded(definition);
         }
         editor.clearUndo();
         if (positioned) {
@@ -414,6 +525,23 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
             editor.scrollY = scrollY;
             editor.resize();
         } else positioned = position();
+        reveal();
+    }
+
+    // A block to show, such as a call picked in the list of a function's uses. A folded script unfolds for it,
+    // and a hidden tab shows it once it is laid out.
+    let pendingBlock: string | undefined = focusBlock;
+    function reveal() {
+        if (!pendingBlock || !element.clientWidth || !element.clientHeight) return;
+        const block = editor.getBlockById(pendingBlock);
+        if (!block) {
+            if (folded() && target.blocks._blocks[pendingBlock]) fold(false);
+            else pendingBlock = undefined;
+            return;
+        }
+        pendingBlock = undefined;
+        editor.centerOnBlock(block.id);
+        block.select();
     }
 
     let frame: number | undefined;
@@ -429,8 +557,19 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
 
     editor.addChangeListener(event => {
         if (!editable || !exists()) return;
+        if (event.type === 'ui' && event.element === 'click' && event.blockId === foldedBodyId) {
+            fold(false);
+            return;
+        }
         const edit = decodeEdit(encodeEdit(event));
         if (!edit) return;
+        // The folded mark stands for the body the VM still has: nothing may take its place under the hat.
+        if (folded() && (edit.blockId === foldedBodyId || edit.newParentId === definitionId ||
+            edit.newParentId === foldedBodyId)) {
+            rendered = undefined;
+            scheduleLoad();
+            return;
+        }
         // The VM files comments under the editing target, whatever blocks container receives them.
         if (isCommentEdit(edit) && vm.runtime.getEditingTarget() !== target) {
             rendered = undefined;
@@ -458,6 +597,7 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
         if (!element.clientWidth || !element.clientHeight) return;
         blocks.svgResize(editor);
         if (!positioned) positioned = position();
+        reveal();
     });
     observer.observe(element);
     // A click elsewhere in the GUI gives the code area back its place as the main workspace,
@@ -475,14 +615,21 @@ function attachProcedureEditor({vm, blocks, workspace, options, onError, homeDoc
     // In a modal dialog the rest of the page is inert, including the text and dropdown editors
     // ScratchBlocks keeps in the body. Lend them to the dialog, which covers the viewport so their
     // page coordinates still line up, as the block definition dialog does.
-    const modal = element.closest('dialog');
     const popups = modal ? [blocks.WidgetDiv?.DIV, blocks.DropDownDiv?.DIV_].filter(Boolean) as HTMLElement[] : [];
     const lent = popups.map(popup => ({popup, parent: popup.parentNode}));
     for (const popup of popups) modal.appendChild(popup);
 
     return {
         workspace: editor,
+        showBlock(id: string) {
+            pendingBlock = id;
+            reveal();
+        },
         dispose() {
+            toolboxListeners.delete(refreshPalette);
+            navigation?.dispose();
+            element.removeAttribute('data-code-hover-surface');
+            element.removeAttribute('data-hover-palette');
             observer.disconnect();
             document.removeEventListener('pointerdown', releaseFocus, true);
             vm.runtime.removeListener('PROJECT_CHANGED', scheduleLoad);

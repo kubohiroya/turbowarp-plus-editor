@@ -5,7 +5,7 @@ import {createSurface} from '@kubohiroya/turbowarp-editor-surfaces';
 import {DockablePanel, OpenWindowButton, useWindowHost} from '@kubohiroya/turbowarp-plus-editor-windows';
 import {desktopCodeEnabled, openDesktopCode} from '../editor-views/desktop-code.ts';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
-import {SpriteTargetTabsContext, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {getDocumentWorkspace, SpriteTargetTabsContext, useSpriteTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {editSpriteVariable, readSpriteVariable, showSpriteVariableOnStage, writeSpriteVariableValue} from '@kubohiroya/turbowarp-plus-editor-project-model/sprite-variable-edit';
 import {SpriteEditorToolbar, spriteEditorSections} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar';
 import {editClonedSpriteVariable, SpriteCloneInspector, SpriteClonePagination, SpriteCloneVariables}
@@ -19,7 +19,7 @@ import {readTemporaryVariables, watchTemporaryVariables} from '@kubohiroya/turbo
 import {createBlockImageRenderer} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/block-image';
 import {describeScriptStart} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/script-start';
 import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
-import {readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
+import {functionLabel, readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-workbench/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-workbench/sprite-layout-menu.css';
@@ -36,7 +36,13 @@ import {resources as categoryArtwork} from '@tw-plus/gui-block-category-artwork'
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
-import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, mountProcedureEditor, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points.ts';
+
+/** Adds the code area's zoom buttons and minimap to a function editor. */
+const attachCodeNavigation = (workspace: object, blocks: object) => (hostIntegration() as {
+    attachWorkspaceMinimap?: (workspace: object, blocks: object) => {dispose(): void};
+}).attachWorkspaceMinimap?.(workspace, blocks);
+import {attachFunctionCallMenu, BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, mountProcedureEditor, readHatScripts, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
 const soundsTab = 2;
@@ -174,6 +180,55 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         identify: () => identifyProject(vm),
         isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)
     } : undefined, [multiView, vm]);
+    // The script whose tab shows in the split beside the sprite, which the list of hats and functions highlights.
+    const [selectedScript, setSelectedScript] = React.useState<{targetId: string; id: string}>();
+    const scriptEditors = React.useRef(new Map<string, ReturnType<typeof mountProcedureEditor>>()).current;
+    // A function or hat script picked in the functions sections opens as the active tab of a split beside
+    // the sprite, with the other scripts opened from there. `block` asks to show one of its blocks.
+    const openScriptTab = (targetId: string, id: string, title: string, block?: string) => {
+        const key = `${targetId}/${id}`;
+        const opened = scriptEditors.get(key);
+        const select = () => setSelectedScript(current =>
+            current?.targetId === targetId && current.id === id ? current : {targetId, id});
+        select();
+        getDocumentWorkspace(vm).open({
+            reference: {providerId: 'tw-plus-script', documentId: key},
+            filename: title, title, area: 'functions',
+            mount(element, close) {
+                const editor = mountProcedureEditor(vm, locale, element, targetId, id,
+                    {editable: true, attachNavigation: attachCodeNavigation, focusBlock: block});
+                scriptEditors.set(key, editor);
+                // Dockview keeps every tab of a split laid out and hides all but the one shown, so watch the
+                // overlay that holds the tab, which may only exist once the tab is placed.
+                const isShown = () => element.isConnected && element.clientWidth > 0 &&
+                    element.ownerDocument.defaultView.getComputedStyle(element).visibility === 'visible';
+                const update = () => {
+                    if (isShown()) select();
+                };
+                let overlay: Element | null = null;
+                const overlayChanges = new MutationObserver(update);
+                const placed = new ResizeObserver(() => {
+                    const next = element.closest('.dv-render-overlay') ?? element.parentElement;
+                    if (next !== overlay) {
+                        overlayChanges.disconnect();
+                        overlay = next;
+                        if (overlay) overlayChanges.observe(overlay, {attributes: true, attributeFilter: ['style', 'class', 'hidden']});
+                    }
+                    update();
+                });
+                placed.observe(element);
+                return {requestClose: close, dispose() {
+                    placed.disconnect();
+                    overlayChanges.disconnect();
+                    if (scriptEditors.get(key) === editor) scriptEditors.delete(key);
+                    editor();
+                    setSelectedScript(current => current?.targetId === targetId && current.id === id ? undefined : current);
+                }};
+            }
+        });
+        // A tab already open only comes to the front, so show the block in it here.
+        if (opened && block) opened.showBlock(block);
+    };
     const codePaneAdapter = React.useMemo(() =>
         createCodePaneAdapter(vm, locale, layoutFlags.workspaceMinimap ? attachCodePreviewMinimap : undefined), [vm, locale]);
     const popouts = React.useMemo(() => ({
@@ -324,10 +379,16 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             },
             getFunctions(id) {
                 const target = vm.runtime.getTargetById(id);
-                return target ? readTargetFunctions(target) : {targetId: id, isStage: false, functions: []};
+                if (!target) return {targetId: id, isStage: false, functions: []};
+                const data = readTargetFunctions(target);
+                const definitions = new Set(data.functions.map(fn => fn.id));
+                return {...data, hats: readHatScripts(target, window.ScratchBlocks, definitions)};
             },
             mountFunctionEditor: (element, targetId, functionId, options) =>
-                mountProcedureEditor(vm, locale, element, targetId, functionId, options),
+                mountProcedureEditor(vm, locale, element, targetId, functionId, {...options, attachNavigation: attachCodeNavigation}),
+            openFunction: (targetId, fn, options) => openScriptTab(targetId, fn.id, functionLabel(fn), options?.block),
+            openScript: (targetId, hat, options) => openScriptTab(targetId, hat.id, hat.label, options?.block),
+            selectedScript,
             renameMessage(message, name) {
                 const workspace = window.ScratchBlocks?.getMainWorkspace();
                 if (!workspace || !message.id) return 'unavailable';
@@ -336,6 +397,39 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             }
         })
     });
+    // “Show this function” on a block that calls one opens it in the list of hats and functions beside the sprite.
+    const openScriptTabRef = React.useRef(openScriptTab);
+    openScriptTabRef.current = openScriptTab;
+    React.useEffect(() => {
+        if (!multiView) return undefined;
+        const callee = (blockId: string) => {
+            const target = vm.editingTarget;
+            return target && readTargetFunctions(target).functions.find(fn => fn.uses?.some(use => use.block === blockId));
+        };
+        let detach: (() => void) | undefined;
+        // ScratchBlocks loads with the code area, which says so with its first workspace update.
+        const attach = () => {
+            const blocks = window.ScratchBlocks;
+            if (detach || !blocks?.BlockSvg) return;
+            detach = attachFunctionCallMenu(blocks, {
+                label: () => (/^ja(?:-|$)/i.test(locale) ? 'この関数を表示' : 'Show this function'),
+                find: blockId => callee(blockId)?.id,
+                open(functionId) {
+                    const target = vm.editingTarget;
+                    const fn = target && readTargetFunctions(target).functions.find(item => item.id === functionId);
+                    if (!fn || !navigation.current) return;
+                    if (!activateTargetView(navigation.current, target.id, spriteEditorSections.indexOf('functions'))) return;
+                    openScriptTabRef.current(target.id, fn.id, functionLabel(fn));
+                }
+            });
+        };
+        attach();
+        vm.on('workspaceUpdate', attach);
+        return () => {
+            vm.removeListener('workspaceUpdate', attach);
+            detach?.();
+        };
+    }, [vm, locale, multiView]);
     React.useLayoutEffect(() => {
         if (!multiView) return;
         const current: SearchNavigation = {

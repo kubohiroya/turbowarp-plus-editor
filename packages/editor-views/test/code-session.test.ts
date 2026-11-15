@@ -5,7 +5,7 @@ import {attachDockedCodeExtensions, getCodeDynamicShapes, getCodeExtensions} fro
 import {captureNativeFieldDrawing} from '../native-field-svg.ts';
 import {createIsolatedNativeField, registerCustomFields, reserveAttachedNativeField} from '../custom-extension-fields.ts';
 import {createCodeSession, encodeEdit} from '../index.ts';
-import {removeObsoleteProcedureInputs} from '../procedure-edits.ts';
+import {foldedDefinitionAttribute, isFoldedDefinition, removeObsoleteProcedureInputs, setFoldedDefinition} from '../procedure-edits.ts';
 
 function fixture(receiveBackpackDrop) {
     const document = {defaultView: new EventTarget(), hasFocus: () => focused === document};
@@ -726,4 +726,25 @@ test('after a project switch the old windows close and their edits, input and dr
     assert.equal(b.messages.length, sent);
     await session.flush();
     session.dispose();
+});
+
+test('folding a hat is kept in its mutation and leaves no trace once unfolded', () => {
+    const hat: {mutation?: Record<string, unknown>} = {};
+    assert.equal(isFoldedDefinition(hat), false);
+    setFoldedDefinition(hat, true);
+    assert.deepEqual(hat.mutation, {tagName: 'mutation', children: [], [foldedDefinitionAttribute]: 'true'});
+    assert.equal(isFoldedDefinition(hat), true);
+    // The project file carries the flag through a save and a load.
+    assert.equal(isFoldedDefinition(JSON.parse(JSON.stringify(hat))), true);
+    setFoldedDefinition(hat, false);
+    assert.equal(hat.mutation, undefined);
+    assert.equal(isFoldedDefinition(undefined), false);
+});
+
+test('folding keeps a mutation the hat already has', () => {
+    const hat = {mutation: {tagName: 'mutation', children: [], name: 'greet'} as Record<string, unknown>};
+    setFoldedDefinition(hat, true);
+    assert.deepEqual(hat.mutation, {tagName: 'mutation', children: [], name: 'greet', [foldedDefinitionAttribute]: 'true'});
+    setFoldedDefinition(hat, false);
+    assert.deepEqual(hat.mutation, {tagName: 'mutation', children: [], name: 'greet'});
 });

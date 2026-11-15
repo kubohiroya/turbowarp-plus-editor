@@ -6,6 +6,15 @@
     pointer-events: none;
 }
 
+/* A function editor shows its palette only while the pointer is over it, or while typing in its search. */
+:global([data-hover-palette]:not(:hover, :focus-within) .injectionDiv > :is(
+    .blocklyToolboxDiv, .blocklyFlyout, .blocklyFlyoutScrollbar,
+    [class*="palette-category-search_"], [class*="palette-dropdown-resize_"]
+)) {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 :global(.tw-script-view-menu-arrow) {
     display: inline-block;
     inline-size: 0.4em;
