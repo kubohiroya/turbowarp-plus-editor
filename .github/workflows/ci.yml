@@ -79,9 +79,6 @@ jobs:
       - run: npm run test:e2e:infrastructure
         id: infrastructure-tests
         if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|infrastructure|')
-      - run: node --test 'packages/editor-backpack/test/**/*.test.ts'
-        id: backpack-unit
-        if: (inputs.release_revision != '' || env.TW_PLUS_CI_SCOPED == '1') && (steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|backpack-unit|'))
       - name: Record per-check reuse candidates
         if: github.event_name == 'push' && inputs.release_revision == '' && env.TW_PLUS_CI_SCOPED != '1'
         continue-on-error: true

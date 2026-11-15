@@ -13,7 +13,7 @@ import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-co
 import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
 import JSZip from '@turbowarp/jszip';
 import Packager from '@turbowarp/packager-web';
-import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {createPlusPermissionUI} from '../extension-host/permission-ui.ts';

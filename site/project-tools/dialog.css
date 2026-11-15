@@ -36,3 +36,10 @@
 .preview { white-space: pre-wrap; overflow-wrap: anywhere; }
 .dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .dialog summary { cursor: pointer; }
+
+/* The GUI's own settings items, which the workbench project menu shows under its display settings: their check and
+   caret are white assets designed for an accent-colored menu. */
+:global(.tw-info-menu__display img[class*="settings-menu_check_"]),
+:global(.tw-info-menu__display img[class*="settings-menu_expand-caret_"]) {
+    filter: brightness(.4) var(--filter-icon-gray, grayscale(100%));
+}

@@ -14,7 +14,7 @@
 
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import JSZip from '@turbowarp/jszip';
-import {withWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {withWaitCursor} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 import {withPackagerFontFallbacks} from '@kubohiroya/turbowarp-plus-editor-fonts/web-fonts';
 
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';

@@ -14,8 +14,8 @@ const ReactDOM = require('react-dom');
 globalThis.MessageChannel = MessageChannel;
 const {IntlProvider} = require('react-intl');
 const Controls = require('../../../src/components/controls/controls.jsx').default;
-const StageControlsView = require('../../../../packages/editor-ui/src/stage-controls-view.tsx').default;
-const {createStageControlsService} = require('../../../../packages/editor-ui/src/stage-controls.ts');
+const StageControlsView = require('@kubohiroya/turbowarp-plus-editor-workbench/stage-controls-view').default;
+const {createStageControlsService} = require('@kubohiroya/turbowarp-plus-editor-workbench/stage-controls');
 
 const trackedService = () => {
     const service = createStageControlsService();

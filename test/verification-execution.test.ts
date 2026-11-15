@@ -36,7 +36,7 @@ test('documentation needs only Git and a selected GUI check needs npm and the GU
 test('main runs missing items and its own build even if supplied matching evidence for the build', () => {
     const plan = scoped(['typecheck', 'unit', 'gui-integration', 'site-build']);
     const execution = select(plan, {main: true, evidence: {reason: 'verified-items',
-        reusable: ['typecheck', 'gui-integration', 'site-build', 'backpack-unit']}});
+        reusable: ['typecheck', 'gui-integration', 'site-build', 'project-tools']}});
     assert.deepEqual(execution.reused, ['typecheck', 'gui-integration']);
     assert.deepEqual(execution.checks, ['unit', 'site-build']);
     assert.equal(execution.needsGui, true);
@@ -46,10 +46,10 @@ test('main runs missing items and its own build even if supplied matching eviden
 });
 
 test('missing, mismatched or unavailable evidence returns main to full verification', () => {
-    const plan = scoped(['backpack-unit', 'site-build']);
+    const plan = scoped(['project-tools', 'site-build']);
     for (const reason of [undefined, 'no-verified-pr-run', 'missing-compatible-evidence', 'invalid-evidence',
         'unverified-attempt', 'evidence-unavailable']) {
-        assert.deepEqual(select(plan, {main: true, evidence: reason && {reason, reusable: ['backpack-unit']}}),
+        assert.deepEqual(select(plan, {main: true, evidence: reason && {reason, reusable: ['project-tools']}}),
             {mode: 'full', reason: reason ?? 'missing-evidence'});
     }
 });

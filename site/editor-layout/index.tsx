@@ -1,6 +1,6 @@
 import React from 'react';
 import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
-import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
+import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 import {connectDesktopWorkspaceLayouts, type DesktopWorkspaceLayouts} from './desktop-workspace-layout.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {getDocumentWorkspace, useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';

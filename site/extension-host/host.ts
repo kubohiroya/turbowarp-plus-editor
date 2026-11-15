@@ -79,7 +79,7 @@ export interface ExtensionHostOptions {
     onProjectURI?: (uri: string | undefined) => void;
     addressProject?: ReturnType<typeof createProjectAddresser>;
     onProjectManifest?: (manifest: unknown) => void;
-    captureProjectProgress?: () => ReturnType<typeof import('@kubohiroya/turbowarp-plus-editor-ui/project-load-progress').captureProjectLoad>;
+    captureProjectProgress?: () => ReturnType<typeof import('@kubohiroya/turbowarp-plus-editor-workbench/project-load-progress').captureProjectLoad>;
     projectArchives?: typeof editorProjectArchives;
     runProjectLoad?: <T>(run: () => Promise<T>) => Promise<T>;
     waitForUser?: <T>(ask: () => T) => Promise<Awaited<T>>;

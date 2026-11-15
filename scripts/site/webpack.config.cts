@@ -228,12 +228,9 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const editorEntries = Object.fromEntries(['workbench', 'backpack'].map(feature => {
-    const name = `@kubohiroya/turbowarp-${feature === 'workbench' ? 'plus-' : ''}editor-${feature}`;
-    const entry = rootRequire.resolve(name);
-    config.resolve.alias[`${name}$`] = entry;
-    return [feature, path.dirname(entry)];
-}));
+const workbenchEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench');
+config.resolve.alias['@kubohiroya/turbowarp-plus-editor-workbench$'] = workbenchEntry;
+const workbenchSource = path.dirname(workbenchEntry);
 // The layout and the project search read projects through this package. Webpack 4 does not read
 // package exports, so each subpath needs an alias, and its modules need the transpilation below.
 const projectModelSource = path.dirname(['project-messages', 'sprite-variable-edit', 'project-search',
@@ -274,10 +271,14 @@ for (const entry of Object.keys(rootRequire('@kubohiroya/turbowarp-plus-editor-f
 const fontsSource = path.dirname(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-fonts$']);
 const fontsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-fonts/styles.css$'];
 const codeViewsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views/styles.css$'];
-const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
-for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
-    'sprite-tabs', 'stage-surface', 'dockview-styles', 'debugger-panel', 'ai-agents']) {
-    const specifier = `@kubohiroya/turbowarp-plus-editor-workbench/${entry}`;
+// editor.css and targets.css are CSS modules the host passes in; the others are global.
+const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css', 'edit-menu.css', 'info-menu.css',
+    'project-file-menu.css', 'project-load-progress.css', 'project-search.css', 'stage-controls.css'];
+// Every subpath the package exports, read from its manifest so a new one cannot be left out. The package does not
+// export its manifest; it sits beside the `dist` its entries are in.
+const workbenchExports = JSON.parse(fs.readFileSync(path.join(workbenchSource, '..', 'package.json'), 'utf8')).exports;
+for (const entry of Object.keys(workbenchExports).filter(key => key.startsWith('./'))) {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-workbench/${entry.slice(2)}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 config.module.rules.push({
@@ -292,14 +293,6 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
     config.resolve.alias[`${specifier}$`] = projectSaveRequire.resolve(specifier);
 }
 config.resolve.alias[`${authPackage}$`] = authEntry;
-const editorUiSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui/busy-cursor'));
-// Every subpath the package exports, read from its manifest so a new one cannot be left out.
-// The package does not export its manifest; it sits beside the `src` its entries are in.
-const editorUiExports = JSON.parse(fs.readFileSync(path.join(editorUiSource, '..', 'package.json'), 'utf8')).exports;
-for (const entry of Object.keys(editorUiExports).filter(key => key.startsWith('./'))) {
-    const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry.slice(2)}`;
-    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
-}
 config.resolve.extensions = [...(config.resolve.extensions || ['.wasm', '.mjs', '.js', '.json']), '.ts', '.tsx'];
 const siteSource = path.join(__dirname, '..', '..', 'site');
 // Both the web and Desktop renderers request the upstream Backpack container.
@@ -372,7 +365,7 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
 }));
 config.module.rules.push({test: /\.tsx?$/, include: [
     siteSource,
-    path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), editorUiSource
+    path.resolve(__dirname, '../desktop'), workbenchSource
 ], loader: path.join(__dirname, 'transpile-local-typescript.cts')});
 config.module.rules.push({
     include: path.join(gui, 'src/components/loader/loader.jsx'),
@@ -394,7 +387,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 );
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    documentSourceRoot, transferSource, editorEntries.workbench, editorEntries.backpack, codeViewsSource, fontsSource,
+    documentSourceRoot, transferSource, workbenchSource, codeViewsSource, fontsSource,
     projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource,
     ...(projectUnpackEntry ? [path.dirname(projectUnpackEntry), projectUnpackHashSource] : []),
     ...(repositoryCreation ? [path.dirname(repositorySeedEntry)] : [])

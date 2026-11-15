@@ -2,7 +2,7 @@ import React from 'react';
 import {createAiAgents, type DesktopAiAgentsPort} from '@kubohiroya/turbowarp-plus-editor-workbench/ai-agents';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import {ProjectInfoMenu as InfoMenu, projectTitleFieldClassName, projectTitleGroupClassName,
-    type ProjectSettingsMenuProps} from '@kubohiroya/turbowarp-plus-editor-ui/project-info-menu';
+    type ProjectSettingsMenuProps} from '@kubohiroya/turbowarp-plus-editor-workbench/project-info-menu';
 import {GitConnectionPreferences} from '@kubohiroya/turbowarp-plus-editor-git';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {availableGitConnectionModes} from '../project-folder-host.ts';

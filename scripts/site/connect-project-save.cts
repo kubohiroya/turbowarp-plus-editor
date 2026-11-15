@@ -17,7 +17,7 @@ module.exports = (source: string) => {
         }
     }
     return `import {getHostIntegration} from '../addons/hooks.js';
-import {withWaitCursor} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';\n${source
+import {withWaitCursor} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';\n${source
         .replace(download, 'withWaitCursor([document], () => this.props.saveProjectSb3()).then(content => {')
         .replace(start, start.replace('await new Promise', 'await withWaitCursor([document], () => new Promise'))
         .replace(end, end.replace('});', '})).catch(async error => {\n            await writable.abort().catch(() => {});\n            throw error;\n        });'))

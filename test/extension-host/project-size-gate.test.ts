@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
-import {confirmLargeProject} from '@kubohiroya/turbowarp-plus-editor-ui/project-size-approval';
+import {confirmLargeProject} from '@kubohiroya/turbowarp-plus-editor-workbench/project-size-approval';
 import {confirmedProjectArchiveOptions, extensionProjectArchiveOptions} from '../../site/extension-host/config.ts';
 import {installPlusExtensionHost} from '../../site/extension-host/host.ts';
 import {gateProjectSize, measureOversizedProject} from '../../site/extension-host/project-size-gate.ts';

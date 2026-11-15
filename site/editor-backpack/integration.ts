@@ -1,5 +1,5 @@
 import {importScript, importScriptWithReceipt} from '@kubohiroya/turbowarp-script-transfer';
-import {createBackpackIntegration} from '@kubohiroya/turbowarp-editor-backpack';
+import {createBackpackIntegration} from '@kubohiroya/turbowarp-plus-editor-workbench/backpack';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {decorateSurface} from './surface-styles.ts';
 import {createBrowserHost} from './browser-host.ts';

@@ -1,5 +1,5 @@
 import JSZip from '@turbowarp/jszip';
-import {beginProjectLoad} from '@kubohiroya/turbowarp-plus-editor-ui/project-load-progress';
+import {beginProjectLoad} from '@kubohiroya/turbowarp-plus-editor-workbench/project-load-progress';
 import {beginProjectArchiveRead} from '../extension-host/shared-project-archive.ts';
 import {projectSerializationOptions} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import type {ProjectArchive} from '../extension-host/shared-project-archive.ts';
