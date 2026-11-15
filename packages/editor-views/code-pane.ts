@@ -114,3 +114,41 @@ export function createCodePaneAdapter(vm, locale: string, attachMinimap?: Attach
         }
     };
 }
+
+/**
+ * Mount an editor of one custom block definition in `element`, for the functions section.
+ * It follows the code area: when the GUI replaces its workspace, the editor is rebuilt on the new one.
+ */
+export function mountProcedureEditor(vm, locale: string, element: HTMLElement, targetId: string, definitionId: string,
+    {editable}: {editable: boolean}) {
+    const session = getCodeSession(vm);
+    const notice = element.ownerDocument.createElement('p');
+    notice.className = 'tw-sprite-functions__empty';
+    notice.textContent = /^ja(?:-|$)/i.test(locale) ? 'コード領域の準備ができるまで待っています…' : 'Waiting for the code area…';
+    let bridge: Bridge | null | undefined;
+    let editor: {dispose(): void} | undefined;
+    function update() {
+        if (bridge === session.bridge) return;
+        editor?.dispose();
+        editor = undefined;
+        bridge = session.bridge;
+        const target = vm.runtime.getTargetById(targetId);
+        if (!bridge || !target) {
+            element.appendChild(notice);
+            return;
+        }
+        notice.remove();
+        try {
+            editor = bridge.editProcedure(element, {target, definitionId, editable});
+        } catch (error) {
+            bridge.onError?.(error);
+        }
+    }
+    const unsubscribe = session.subscribe(update);
+    update();
+    return () => {
+        unsubscribe();
+        editor?.dispose();
+        notice.remove();
+    };
+}

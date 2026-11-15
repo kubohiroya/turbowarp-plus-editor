@@ -16,6 +16,7 @@ import {activateTargetView, centerProjectComment, connectProjectSearchNavigation
 import {scanTargetMessages} from '@kubohiroya/turbowarp-plus-editor-project-model/project-messages';
 import type {SpriteVariable} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-asset-pane';
 import type {MessagePaneData} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-message-pane';
+import {readTargetFunctions} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-function-pane';
 import type {SpriteAssetKind, SpriteAssetPreviewData, SpriteAssetSelection} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import '@kubohiroya/turbowarp-plus-editor-workbench/dockview-styles';
 import '@kubohiroya/turbowarp-plus-editor-workbench/sprite-layout-menu.css';
@@ -32,7 +33,7 @@ import {resources as categoryArtwork} from '@tw-plus/gui-block-category-artwork'
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
-import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+import {BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, mountProcedureEditor, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
 
 const codeTab = 0;
 const soundsTab = 2;
@@ -267,7 +268,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                     onSectionChange={next => actions.setSection(spriteEditorSections.indexOf(next))}
                     actions={section === 'variables' && !view.isStage ?
                         <SpriteClonePagination viewId={view.id} targetId={view.targetId} locale={locale} /> :
-                        view.active && section !== 'variables' && section !== 'messages' ?
+                        view.active && section !== 'variables' && section !== 'messages' && section !== 'functions' ?
                         renderEditorTabRow(null) : undefined} />;
             },
             wrapVariablePane: (viewId, targetId, editable, pane) => vm.runtime.getTargetById(targetId)?.isStage ?
@@ -307,6 +308,12 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             openMessageTarget(id) {
                 if (navigation.current) activateTargetView(navigation.current, id, codeTab);
             },
+            getFunctions(id) {
+                const target = vm.runtime.getTargetById(id);
+                return target ? readTargetFunctions(target) : {targetId: id, isStage: false, functions: []};
+            },
+            mountFunctionEditor: (element, targetId, functionId, options) =>
+                mountProcedureEditor(vm, locale, element, targetId, functionId, options),
             renameMessage(message, name) {
                 const workspace = window.ScratchBlocks?.getMainWorkspace();
                 if (!workspace || !message.id) return 'unavailable';
@@ -339,7 +346,10 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
         let refreshFrame: number | undefined;
         const refreshVariables = () => {
             const views = spriteTabs.controller.current;
-            if (refreshFrame !== undefined || !views?.views().some(view => view.section === spriteEditorSections.indexOf('variables'))) return;
+            // Variables show values, and functions list definitions, that change with the project.
+            if (refreshFrame !== undefined || !views?.views().some(view =>
+                view.section === spriteEditorSections.indexOf('variables') ||
+                view.section === spriteEditorSections.indexOf('functions'))) return;
             refreshFrame = requestAnimationFrame(() => {
                 refreshFrame = undefined;
                 spriteTabs.controller.current?.refreshSurfaces();
