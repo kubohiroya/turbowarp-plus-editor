@@ -38,6 +38,8 @@ import {resources as categoryArtwork} from '@tw-plus/gui-block-category-artwork'
 import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {parseExtensionCatalog} from '@kubohiroya/turbowarp-extension-security-dialog';
 import {plusCatalog} from '../plus-catalog.ts';
+import loadPlusExtensions from '../extension-library/load-extensions.ts';
+import {beginPlusReview, canLoadPlusExtension} from '../gui-integration/lib/tw-plus-extension-permissions.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
 import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points.ts';
@@ -52,7 +54,9 @@ const codeTab = 0;
 
 /**
  * Add named-functions from this distribution's catalog, dependencies first. A listed URL is what this
- * distribution trusts, so it loads unsandboxed as it does from the extension library.
+ * distribution trusts, so it loads unsandboxed as it does from the extension library. The mode has to
+ * be given through the same review bookkeeping: the GUI's own `getSandboxMode` sandboxes any URL it
+ * is not told about, and named-functions refuses to run sandboxed.
  */
 async function loadNamedFunctions(vm) {
     const {catalog} = await plusCatalog.read(AbortSignal.timeout(15000));
@@ -65,9 +69,8 @@ async function loadNamedFunctions(vm) {
         order.push(entry);
     };
     visit('kubohiroyanamedfunctions');
-    for (const entry of order) {
-        if (!vm.extensionManager.isExtensionLoaded(entry.id)) await vm.extensionManager.loadExtensionURL(entry.url);
-    }
+    await loadPlusExtensions(vm, order, new Map(order.map(entry => [entry.url, 'unsandboxed'])),
+        {beginReview: beginPlusReview, canLoad: canLoadPlusExtension});
 }
 const soundsTab = 2;
 const categoryIcons = {
