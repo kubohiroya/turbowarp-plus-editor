@@ -99,7 +99,7 @@ The Editor is assembled from independently versioned packages, not from patches 
 ```text
 yaml-json · named-data · structured-data · document-data · document-source · document-editor ┐
 extension-data-editor · extension-loader · extension-security-dialog · sb3-save-format       ├→ turbowarp-plus-editor → GitHub Pages
-editor-layout · editor-ui · editor-views · plus-editor-windows · editor-backpack              │
+editor-layout · editor-ui · plus-editor-code-views · plus-editor-windows · editor-backpack    │
 plus-editor-git · plus-editor-auth · plus-editor-project-folder · script-transfer             ┘
          scratch-gui fork · scratch-vm fork · @turbowarp/packager (all pinned by revision) ───┘
 ```

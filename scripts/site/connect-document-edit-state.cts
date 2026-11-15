@@ -6,7 +6,7 @@ module.exports = (source: string) => {
     if ([render, saved].some(slot => source.indexOf(slot) < 0 || source.indexOf(slot) !== source.lastIndexOf(slot))) {
         throw new Error('The pinned document editor edit state connection has changed');
     }
-    const unsaved = path.resolve(__dirname, '../../packages/editor-views/dockview-unsaved.ts');
+    const unsaved = require.resolve('@kubohiroya/turbowarp-plus-editor-code-views/dockview-unsaved');
     return `import {documentEditEvent} from ${JSON.stringify(unsaved)};\n` + source
         .replace(render, `        if (docked) docked.element.dispatchEvent(new win.CustomEvent(documentEditEvent, {
             detail: {draft: hasWork(), applied: false}

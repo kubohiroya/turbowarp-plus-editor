@@ -23,7 +23,7 @@ const prefix = '/turbowarp-plus-editor/';
 const [driver, extension] = await Promise.all([
     build({
         stdin: {resolveDir: import.meta.dirname, contents: `
-            import {createCodeSession} from '../../packages/editor-views/index.ts';
+            import {createCodeSession} from '@kubohiroya/turbowarp-plus-editor-code-views';
             import {createSurface, flushPendingSurfaceEdits, pendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
             import {createBrowserHost} from '../../site/editor-backpack/browser-host.ts';
             const {vm, ScratchBlocks} = window;

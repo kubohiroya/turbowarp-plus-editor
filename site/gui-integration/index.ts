@@ -15,6 +15,7 @@ import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
+import '@kubohiroya/turbowarp-plus-editor-code-views/styles.css';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {GitFileMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
@@ -25,9 +26,9 @@ import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-poin
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
 import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu as createStageMenu} from './lib/tw-plus-transfer.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-views';
-import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
-import {attachDockedScriptLayout, getDockedScriptLayout} from '@kubohiroya/turbowarp-plus-editor-views/script-layout';
+import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-code-views';
+import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
+import {attachDockedScriptLayout, getDockedScriptLayout} from '@kubohiroya/turbowarp-plus-editor-code-views/script-layout';
 import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-ui/project-search';
 import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
     renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-ui/edit-menu';
@@ -95,13 +96,23 @@ export const setDebuggerInterface = (vm: object, debuggerInterface: DebuggerInte
     return true;
 };
 
+// The GUI's own elements around the workspace, which the code views receive instead of looking up GUI class names.
+const presentationElements = (injection: HTMLElement) => {
+    const wrapper = injection.closest('[class*="gui_blocks-wrapper_"]');
+    return {
+        wrapper,
+        extensionButton: wrapper?.parentElement.querySelector<HTMLElement>(':scope > [class*="gui_extension-button-container_"]'),
+        watermark: wrapper?.parentElement.querySelector<HTMLElement>(':scope > [class*="gui_watermark_"]')
+    };
+};
+
 export const attachHostScriptTransfer = (context, integration) => {
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);
     const code = attachDesktopCode({...context, receiveBackpackDrop});
     const extensions = attachDockedCodeExtensions(context);
     const prewarm = startup.stageCodePrewarm ? attachStageCodePrewarm(context) : undefined;
     const editMenu = attachEditMenuWorkspace(context);
-    const scriptLayout = attachDockedScriptLayout(context);
+    const scriptLayout = attachDockedScriptLayout({...context, presentationElements});
     return {dispose() {
         scriptLayout.dispose();
         editMenu.dispose();
@@ -117,15 +128,8 @@ export {EditorLayout} from '../editor-layout/index.tsx';
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startup = readWebStartupFeatureFlags(startupSearch);
 export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.standardLayout) && !desktopCodeEnabled ?
-    context => attachCodeWorkspace({...context, presentationElements: injection => {
-        const wrapper = injection.closest('[class*="gui_blocks-wrapper_"]');
-        return {
-            wrapper,
-            extensionButton: wrapper?.parentElement.querySelector<HTMLElement>(':scope > [class*="gui_extension-button-container_"]'),
-            watermark: wrapper?.parentElement.querySelector<HTMLElement>(':scope > [class*="gui_watermark_"]')
-        };
-    }}) : undefined;
-export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-views/sprite-code-windows';
+    context => attachCodeWorkspace({...context, presentationElements}) : undefined;
+export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
 export const wrapSpriteInfo = (startup.spriteProperties || startup.standardLayout) ?
     Fallback => createSpriteInfoAdapter(Fallback, SpritePropertiesPanel) : undefined;
 export {spriteListClasses} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';

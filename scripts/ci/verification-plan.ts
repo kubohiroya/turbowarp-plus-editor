@@ -4,16 +4,13 @@ import {fileURLToPath} from 'node:url';
 
 const allChecks = [
     'documentation', 'typecheck', 'package', 'unit', 'infrastructure',
-    'views-unit', 'backpack-unit', 'extension-host',
+    'backpack-unit', 'extension-host',
     'gui-integration', 'script-transfer', 'project-tools', 'site-build'
 ] as const;
 type Check = typeof allChecks[number];
 
 const rules: {area: string; path: RegExp; checks: readonly Check[]}[] = [
     {area: 'documentation', path: /^(?:README(?:\.ja)?\.md|docs\/.+\.md)$/, checks: ['documentation']},
-    {area: 'views-tests', path: /^packages\/editor-views\/test\/.+\.test\.(?:ts|js|mjs)$/, checks: ['views-unit']},
-    {area: 'views', path: /^packages\/editor-views\/[^/]+\.(?:[jt]sx?|css)$/,
-        checks: ['typecheck', 'views-unit', 'gui-integration', 'site-build']},
     {area: 'backpack-tests', path: /^packages\/editor-backpack\/test\/.+\.test\.(?:ts|js|mjs)$/, checks: ['backpack-unit']},
     {area: 'backpack', path: /^packages\/editor-backpack\/[^/]+\.[jt]sx?$/,
         checks: ['typecheck', 'backpack-unit', 'gui-integration', 'script-transfer', 'site-build']},

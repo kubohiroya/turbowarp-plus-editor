@@ -18,18 +18,18 @@ test('CI selects no browser checks: those run locally during development', () =>
 test('documentation, isolated package tests and multiple areas select distinct checks', () => {
     assert.deepEqual(selectVerification(['README.ja.md', 'docs/gui-integration/README.md']).checks, ['documentation']);
     assert.deepEqual(selectVerification(['README.md'], true).checks, ['documentation', 'site-build']);
-    assert.deepEqual(selectVerification(['packages/editor-views/test/code-session.test.ts']).checks, ['views-unit']);
+    assert.deepEqual(selectVerification(['test/project-tools/dialog.test.ts']).checks, ['project-tools']);
     const plan = selectVerification([
-        'packages/editor-views/index.ts',
-        'packages/editor-backpack/test/script.test.ts'
+        'packages/editor-backpack/index.tsx',
+        'test/project-tools/dialog.test.ts'
     ]);
     assert.equal(plan.mode, 'scoped');
-    assert.deepEqual(plan.areas, ['backpack-tests', 'views']);
-    assert.deepEqual(plan.checks, ['typecheck', 'views-unit', 'backpack-unit', 'gui-integration', 'site-build']);
+    assert.deepEqual(plan.areas, ['backpack', 'project-tools-tests']);
+    assert.deepEqual(plan.checks, ['typecheck', 'backpack-unit', 'gui-integration', 'script-transfer', 'project-tools', 'site-build']);
 });
 
 test('pins, shared infrastructure, unknown paths and empty diffs plan a full run', () => {
-    for (const path of ['site/source.json', 'package-lock.json', 'packages/editor-views/package.json',
+    for (const path of ['site/source.json', 'package-lock.json', 'packages/editor-backpack/package.json',
         '.github/workflows/ci.yml', 'site/gui-integration/index.ts', 'docs/tool.sh', 'unclassified.txt']) {
         const plan = selectVerification(['README.md', path]);
         assert.equal(plan.mode, 'full', path);
@@ -54,9 +54,9 @@ test('the PR merge candidate is compared to its exact base and a rename covers b
     git(['config', 'user.name', 'Verification Plan Test']);
     git(['config', 'user.email', 'verification-plan@example.invalid']);
     git(['config', 'commit.gpgsign', 'false']);
-    const source = 'packages/editor-views/test/sample.test.ts';
+    const source = 'test/project-tools/sample.test.ts';
     const destination = 'packages/editor-backpack/test/sample.test.ts';
-    mkdirSync(join(cwd, 'packages/editor-views/test'), {recursive: true});
+    mkdirSync(join(cwd, 'test/project-tools'), {recursive: true});
     mkdirSync(join(cwd, 'packages/editor-backpack/test'), {recursive: true});
     writeFileSync(join(cwd, source), 'const value = 1;\n');
     git(['add', '--', source]);
@@ -77,7 +77,7 @@ test('the PR merge candidate is compared to its exact base and a rename covers b
     const plan = planForEvent('pull_request', event, revision, git);
     assert.equal(plan.mode, 'scoped');
     assert.deepEqual([...plan.paths].sort(), [destination, source]);
-    assert.deepEqual(plan.checks, ['views-unit', 'backpack-unit']);
+    assert.deepEqual(plan.checks, ['backpack-unit', 'project-tools']);
     assert.equal(planForEvent('pull_request', {pull_request: {base: {sha: base}, head: {sha: base}}},
         revision, git).reason, 'checkout-mismatch');
 
@@ -89,7 +89,7 @@ test('the PR merge candidate is compared to its exact base and a rename covers b
     assert.deepEqual(planForEvent('pull_request', event, revision, shallowGit), plan);
 
     const push = planForEvent('push', {ref: 'refs/heads/main', before: base, after: revision}, revision, git);
-    assert.deepEqual(push.checks, ['views-unit', 'backpack-unit', 'site-build']);
+    assert.deepEqual(push.checks, ['backpack-unit', 'project-tools', 'site-build']);
 
     const summary = join(cwd, 'summary.md');
     const eventPath = join(cwd, 'event.json');
@@ -99,7 +99,7 @@ test('the PR merge candidate is compared to its exact base and a rename covers b
         GITHUB_EVENT_NAME: 'pull_request', GITHUB_EVENT_PATH: eventPath, GITHUB_SHA: revision,
         GITHUB_STEP_SUMMARY: summary}, encoding: 'utf8'});
     assert.deepEqual(JSON.parse(output), plan);
-    assert.match(readFileSync(summary, 'utf8'), /observation only[\s\S]*Checks: views-unit, backpack-unit/);
+    assert.match(readFileSync(summary, 'utf8'), /observation only[\s\S]*Checks: backpack-unit, project-tools/);
 });
 
 test('stale checkout, missing commits and unavailable diffs fall back to full', () => {

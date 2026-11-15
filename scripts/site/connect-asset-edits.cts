@@ -1,6 +1,6 @@
 const path = require('node:path');
 
-const session = path.resolve(__dirname, '../../packages/editor-views/asset-edit-session.ts');
+const session = require.resolve('@kubohiroya/turbowarp-plus-editor-code-views/asset-edit-session');
 const imports: Record<string, string> = {
     'sound-editor.jsx': `import {createAssetEditSession, prepareAssetHistoryMove} from ${JSON.stringify(session)};\n`,
     'record-modal.jsx': `import {captureRecordingTarget} from ${JSON.stringify(session)};\n`,

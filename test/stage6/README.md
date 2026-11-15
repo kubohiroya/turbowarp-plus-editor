@@ -19,8 +19,9 @@ node test/stage3/check-desktop.ts /absolute/path/to/trial.app --code-stage
 node test/stage3/check-desktop.ts /absolute/path/to/trial.app --code-comments
 node test/stage3/check-desktop.ts /absolute/path/to/trial.app --code-backpack
 TW_PLUS_NATIVE_INPUT=1 node test/stage3/check-desktop.ts /absolute/path/to/trial.app --code-backpack-native
-node --test packages/editor-views/test/code-session.test.ts
 ```
+
+コードの表示の単体テスト（`code-session.test.ts`）は、[turbowarp-plus-editor-code-views](https://github.com/kubohiroya/turbowarp-plus-editor-code-views) に移った。そちらで `npm test` を実行する。
 
 フォーカスは Electron のネイティブウィンドウで切り替え、コード編集と Undo／Redo は Playwright／CDP で実際の ScratchBlocks と操作ボタンに入力する。親の VM、両ワークスペース、親コード画面への引き継ぎを観測する。移動したブロックと追加したブロックは、SB3 を保存して再読込した後にも照合する。
 

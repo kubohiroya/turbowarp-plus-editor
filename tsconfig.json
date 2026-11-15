@@ -29,8 +29,6 @@
     "packages/**/src/**/*.tsx",
     "packages/editor-backpack/*.ts",
     "packages/editor-backpack/*.tsx",
-    "packages/editor-views/*.ts",
-    "packages/editor-views/*.tsx",
     "scripts/**/*.ts",
     "scripts/**/*.cts",
     "test/**/*.ts",
