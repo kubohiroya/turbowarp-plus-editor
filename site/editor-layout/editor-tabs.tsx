@@ -388,7 +388,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             getFunctions(id) {
                 const target = vm.runtime.getTargetById(id);
                 if (!target) return {targetId: id, isStage: false, functions: []};
-                const data = readTargetFunctions(target);
+                const data = readTargetFunctions(target, {others: vm.runtime.targets.filter(other => other.isOriginal)});
                 const definitions = new Set(data.functions.map(fn => fn.id));
                 return {...data, hats: readHatScripts(target, window.ScratchBlocks, definitions)};
             },
