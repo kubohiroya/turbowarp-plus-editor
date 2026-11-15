@@ -301,3 +301,12 @@ export function attachFunctionCallMenu(ScratchBlocks, {label, find, open}: {
         if (prototype.showContextMenu_ === patched) prototype.showContextMenu_ = showContextMenu;
     };
 }
+
+/** Add a function definition of this name to a target through the code area's bridge. Resolves with the new hat's id. */
+export async function createFunction(vm, targetId: string, kind: 'procedure' | 'named', name: string,
+    options: {loadNamedFunctions?(): Promise<void>} = {}) {
+    const bridge = getCodeSession(vm).bridge;
+    const target = vm.runtime.getTargetById(targetId);
+    if (!bridge || !target) throw Object.assign(new Error('The code area is not ready'), {code: 'unavailable'});
+    return bridge.createFunction(target, kind, name, options);
+}
