@@ -3163,7 +3163,7 @@ test('editor pane headings and message diagrams follow the active target', {time
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
 });
 
-test('the hats and functions list and the calls section open each script in a tab beside the sprite', {timeout: 60_000}, async t => {
+test('the hats and functions list and the calls section show each script alone in a code view beside the sprite', {timeout: 90_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage &&
@@ -3181,10 +3181,12 @@ test('the hats and functions list and the calls section open each script in a ta
                 '<next><block type="motion_movesteps" id="layout-steps"><value name="STEPS"><shadow type="math_number">' +
                 '<field name="NUM">10</field></shadow></value></block></next></block>')) +
             definition('layout-land', 'land', 400, '<block type="motion_turnright"></block>') +
-            `<block type="event_whenflagclicked" x="40" y="400"><next>${call('jump')}</next></block></xml>`), workspace);
+            `<block type="event_whenflagclicked" id="layout-flag" x="40" y="400"><next>${call('jump')}</next></block></xml>`),
+        workspace);
     });
-    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
-    await expect.poll(() => toolbar.getByRole('tab').evaluateAll(tabs => tabs.map(tab => tab.getAttribute('aria-label'))))
+    // The sprite's own view keeps its section buttons; the view of one script has none.
+    const toolbar = page.locator('.tw-plus-sprite-toolbar');
+    await expect.poll(() => toolbar.first().getByRole('tab').evaluateAll(tabs => tabs.map(tab => tab.getAttribute('aria-label'))))
         .toEqual(['自由配置', 'ハット・関数一覧', '呼び出し関係', 'コスチューム', '音', '変数', 'メッセージ']);
     await toolbar.getByRole('tab', {name: 'ハット・関数一覧', exact: true}).click();
     await expect(toolbar.getByRole('heading')).toHaveText('ハット・関数一覧');
@@ -3192,13 +3194,22 @@ test('the hats and functions list and the calls section open each script in a ta
     await expect(pane.locator('.tw-sprite-functions__name')).toHaveText(['緑の旗 が押されたとき', 'jump', 'land']);
     await expect(pane.getByRole('button', {name: '一覧', exact: true})).toHaveCount(0);
 
-    // A function opens as the active tab of a split beside the sprite, with the code area's palette.
+    /** The scripts the code area shows, by the id of their top block. */
+    const shown = () => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks(false)
+        .filter(block => getComputedStyle(block.getSvgRoot()).display !== 'none').map(block => block.id).sort());
+    const groups = page.locator('.dv-groupview');
+    const scriptView = groups.nth(1);
+    // The first click on a view that is not active only activates it.
+    const activateSprite = () => toolbar.first().getByRole('heading').click();
+
+    // A function shows alone in the code area, in a view split beside the sprite, with the palette and no sections.
     await pane.getByRole('button', {name: 'jump のコードを開く', exact: true}).click();
-    const tab = (name: string) => page.locator('.dv-tab').filter({hasText: new RegExp(`^${name}$`)});
-    await expect(tab('jump')).toHaveClass(/dv-active-tab/);
-    const editor = page.locator('.dv-groupview.dv-active-group [data-code-hover-surface]');
-    await expect(editor.locator('.blocklyToolboxDiv')).toBeVisible();
-    await editor.locator('.blocklyEditableText').first().click();
+    await expect(groups).toHaveCount(2);
+    await expect.poll(shown).toEqual(['layout-jump']);
+    await expect(scriptView.locator('.blocklyToolboxDiv')).toBeVisible();
+    await expect(scriptView.locator('.tw-plus-sprite-toolbar-sections')).toHaveCount(0);
+    await expect(pane.locator('[data-function-key][aria-current="true"]')).toHaveText(/jump/);
+    await scriptView.locator('.blocklyEditableText').first().click();
     await page.keyboard.press('ControlOrMeta+a');
     await page.keyboard.type('25');
     await page.keyboard.press('Enter');
@@ -3208,18 +3219,40 @@ test('the hats and functions list and the calls section open each script in a ta
     });
     await expect.poll(steps).toBe('25');
 
-    // A hat script opens the same way, in the same split.
-    await pane.getByRole('button', {name: '緑の旗 が押されたとき のスクリプトを開く', exact: true}).click();
-    await expect(tab('緑の旗 が押されたとき')).toHaveClass(/dv-active-tab/);
-    await expect(tab('jump')).toHaveCount(1);
+    // A hat folds to itself from its menu, as in the code area anywhere, and the mark below it unfolds it.
+    const hat = () => page.evaluate(() => {
+        const block = window.ScratchBlocks.getMainWorkspace().getBlockById('layout-jump');
+        const {x, y} = block.getSvgRoot().getBoundingClientRect();
+        return {x: x + 12, y: y + 16};
+    });
+    let at = await hat();
+    await page.mouse.click(at.x, at.y, {button: 'right'});
+    await page.getByText('折りたたみ', {exact: true}).click();
+    const folded = () => page.evaluate(() => vm.editingTarget.blocks.getBlock('layout-jump').mutation?.['tw-plus-folded'] ?? null);
+    await expect.poll(folded).toBe('true');
+    const mark = scriptView.locator('[data-tw-plus-folded-mark]');
+    await expect(mark).toHaveText('▸ 折りたたみ中');
+    await expect.poll(() => page.evaluate(() => getComputedStyle(window.ScratchBlocks.getMainWorkspace()
+        .getBlockById('layout-jump').getNextBlock().getSvgRoot()).display)).toBe('none');
+    await mark.click();
+    await expect.poll(folded).toBe(null);
+    await expect(mark).toHaveCount(0);
 
-    await toolbar.getByRole('tab', {name: '自由配置', exact: true}).click();
+    // A hat script shows the same way, in the same view.
+    await activateSprite();
+    await pane.getByRole('button', {name: '緑の旗 が押されたとき のスクリプトを開く', exact: true}).click();
+    await expect.poll(shown).toEqual(['layout-flag']);
+    await expect(groups).toHaveCount(2);
+
+    // The sprite's own code view shows every script, with the edit made beside it.
+    await toolbar.first().getByRole('tab', {name: '自由配置', exact: true}).click();
+    await expect.poll(shown).toEqual(['layout-flag', 'layout-jump', 'layout-land']);
     await expect.poll(() => page.evaluate(() => {
         const workspace = window.ScratchBlocks.getMainWorkspace();
         return workspace.getBlockById('layout-steps')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM');
     })).toBe('25');
 
-    await toolbar.getByRole('tab', {name: '呼び出し関係', exact: true}).click();
+    await toolbar.first().getByRole('tab', {name: '呼び出し関係', exact: true}).click();
     const calls = page.getByRole('region', {name: '呼び出し関係', exact: true});
     await expect(calls.getByRole('button', {name: '呼び出し図', exact: true})).toHaveCount(0);
     const graph = calls.locator('figure');
@@ -3234,10 +3267,11 @@ test('the hats and functions list and the calls section open each script in a ta
     assert.ok(to.y > from.y + from.height, 'TD puts the callee below its caller');
 
     await land.click();
-    await expect(tab('land')).toHaveClass(/dv-active-tab/);
+    await expect.poll(shown).toEqual(['layout-land']);
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
-    // The bottom left corner of the graph adds a function by name, which opens beside the sprite, selected.
+    // The bottom left corner of the graph adds a function by name, which shows there alone, selected.
+    await activateSprite();
     const add = graph.locator('.tw-sprite-functions__corner').getByRole('button', {name: '新しい関数を追加', exact: true});
     await add.click();
     const addDialog = page.getByRole('dialog', {name: '新しい関数を追加', exact: true});
@@ -3245,32 +3279,37 @@ test('the hats and functions list and the calls section open each script in a ta
     await page.keyboard.type('hop');
     await addDialog.getByRole('button', {name: '追加', exact: true}).click();
     await expect(addDialog).toHaveCount(0);
-    await expect(tab('hop')).toHaveClass(/dv-active-tab/);
+    const hopId = () => page.evaluate(() => Object.values(vm.editingTarget.blocks._blocks as Record<string, {
+        id: string; opcode: string; parent?: string; mutation?: {proccode?: string};
+    }>).find(block => block.opcode === 'procedures_prototype' && block.mutation.proccode === 'hop')?.parent);
+    await expect.poll(async () => (await shown()).join() === await hopId()).toBe(true);
     const hop = graph.locator('.tw-sprite-functions__node').filter({hasText: /^hop$/});
     await expect(hop).toHaveAttribute('aria-current', 'true');
     // Calling nothing and called by nothing, it sits apart below the others.
     const [hopBox, jumpBox] = [await hop.boundingBox(), await jump.boundingBox()];
     assert.ok(hopBox.y > Math.max(jumpBox.y, (await land.boundingBox()).y) + jumpBox.height, 'below the linked functions');
-    expect(await page.evaluate(() => Object.values(vm.editingTarget.blocks._blocks as Record<string, {
-        opcode: string; mutation?: {proccode?: string};
-    }>).filter(block => block.opcode === 'procedures_prototype').map(block => block.mutation.proccode).sort()))
-        .toEqual(['hop', 'jump', 'land']);
     // The same name is refused in the dialog.
+    await activateSprite();
     await add.click();
     await page.keyboard.type('hop');
     await addDialog.getByRole('button', {name: '追加', exact: true}).click();
     await expect(addDialog.getByRole('alert')).toHaveText('同じ名前の関数がすでにあります。');
     await addDialog.getByRole('button', {name: 'キャンセル', exact: true}).click();
 
-    // Below the list, the same button offers both kinds. The new tab holds the active group now, so reach
-    // the sprite's own toolbar. (A named function needs the extension from the catalog, which this page cannot reach.)
-    await page.locator('.tw-plus-sprite-toolbar').getByRole('tab', {name: 'ハット・関数一覧', exact: true}).click();
+    // A script deleted while it is shown takes its view with it.
+    await page.evaluate(id => window.ScratchBlocks.getMainWorkspace().getBlockById(id).dispose(true), await hopId());
+    await expect(groups).toHaveCount(1);
+    await expect(graph.locator('[aria-current="true"]')).toHaveCount(0);
+
+    // Below the list, the same button offers both kinds. (A named function needs the extension from the catalog,
+    // which this page cannot reach.)
+    await toolbar.first().getByRole('tab', {name: 'ハット・関数一覧', exact: true}).click();
     await pane.getByRole('button', {name: '新しい関数を追加', exact: true}).click();
     await expect(addDialog.getByRole('radio', {name: 'TurboWarp-Plus の名前付き関数', exact: true})).toBeVisible();
     await expect(addDialog.getByRole('radio', {name: '標準（ブロック定義）', exact: true})).toBeChecked();
     await page.keyboard.type('wave');
     await addDialog.getByRole('button', {name: '追加', exact: true}).click();
-    await expect(tab('wave')).toHaveClass(/dv-active-tab/);
+    await expect(groups).toHaveCount(2);
     await expect(pane.locator('[data-function-key][aria-current="true"]')).toHaveText(/wave/);
 });
 

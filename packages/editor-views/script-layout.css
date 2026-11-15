@@ -156,3 +156,9 @@
     background: var(--looks-secondary, #7951d1);
     color: white;
 }
+
+/* Scripts the one-script mode leaves out, and the body of a folded script. ScratchBlocks sets the display of
+   every script as it scrolls in and out of view, so the hiding must win over its inline style. */
+:global([data-tw-plus-hidden]) {
+    display: none !important;
+}

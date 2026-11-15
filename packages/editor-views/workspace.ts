@@ -73,6 +73,15 @@ type MeasuredBlock = {
  * blocks shrink. Children are laid out before their parents, so each parent takes their new size.
  * Returns whether anything was laid out again.
  */
+/** The variables of a target and one of its scripts, as `targetXml` gives all of them. */
+function scriptXml(vm: {runtime: {getTargetForStage(): CodeTarget}}, target: CodeTarget, id: string) {
+    const stage = vm.runtime.getTargetForStage();
+    const globals = Object.values(stage.variables).map(variable => variable.toXML());
+    const locals = target === stage ? [] : Object.values(target.variables).map(variable => variable.toXML(true));
+    return `<xml xmlns="http://www.w3.org/1999/xhtml"><variables>${globals.join('')}${locals.join('')}</variables>` +
+        `${(target.blocks as unknown as {blockToXML(id: string, comments: object): string}).blockToXML(id, target.comments)}</xml>`;
+}
+
 export function remeasureHiddenFields(workspace: {getAllBlocks(ordered: boolean): MeasuredBlock[]}) {
     const unmeasured = (field: MeasuredField) => Boolean(field.textElement_?.textContent) && field.size_?.width === 0;
     const roots = new Set<MeasuredBlock>();
@@ -98,6 +107,310 @@ function targetXml(vm: {runtime: {getTargetForStage(): CodeTarget}}, target: Cod
         .map(comment => comment.toXML());
     return `<xml xmlns="http://www.w3.org/1999/xhtml"><variables>${globals.join('')}${locals.join('')}</variables>` +
         `${comments.join('')}${target.blocks.toXML(target.comments)}</xml>`;
+}
+
+const svgNamespace = 'http://www.w3.org/2000/svg';
+const foldMarkAttribute = 'data-tw-plus-folded-mark';
+
+type StackBlock = {
+    id: string;
+    workspace?: unknown;
+    isInFlyout?: boolean;
+    previousConnection?: unknown;
+    outputConnection?: unknown;
+    nextConnection?: {setHidden(hidden: boolean): void} | null;
+    height?: number;
+    width?: number;
+    comment?: {bubble_?: {bubbleGroup_?: SVGElement}} | null;
+    getSvgRoot(): SVGGElement | null;
+    getParent(): StackBlock | null;
+    getNextBlock(): StackBlock | null;
+    getDescendants(ordered: boolean): StackBlock[];
+    setConnectionsHidden(hidden: boolean): void;
+    getColour?(): string;
+    getColourTertiary?(): string;
+};
+
+/** Marks the workspace methods the one-script mode puts in place, so a later attachment can take them away. */
+const focusOverride = Symbol('tw-plus-focus-override');
+
+/** Hide an element of the workspace in a way ScratchBlocks does not undo (see script-layout.css). */
+const setElementHidden = (element: Element | null | undefined, hidden: boolean) => element?.toggleAttribute('data-tw-plus-hidden', hidden);
+const isElementHidden = (element: Element | null | undefined) => Boolean(element?.hasAttribute('data-tw-plus-hidden'));
+
+const isHatBlock = (block: StackBlock) => !block.previousConnection && !block.outputConnection;
+
+function setCommentsHidden(block: StackBlock, hidden: boolean) {
+    for (const item of block.getDescendants(false)) {
+        setElementHidden(item.comment?.bubble_?.bubbleGroup_, hidden);
+    }
+}
+
+/**
+ * Show a hat without the rest of its script, with a “Folded” mark below it, or show the whole script again.
+ * The body stays in the workspace, so editing a function still updates its calls there; it is only hidden
+ * and cannot be snapped to. `onUnfold` makes the mark a button.
+ */
+function paintFold(hat: StackBlock, folded: boolean, label: string, onUnfold?: () => void) {
+    const root = hat.getSvgRoot();
+    const body = hat.getNextBlock();
+    const mark = root?.querySelector(`:scope > [${foldMarkAttribute}]`);
+    if (!folded || !body || !root) {
+        mark?.remove();
+        if (isElementHidden(body?.getSvgRoot())) {
+            setElementHidden(body.getSvgRoot(), false);
+            body.setConnectionsHidden(false);
+            setCommentsHidden(body, false);
+            hat.nextConnection?.setHidden(false);
+        }
+        return;
+    }
+    setElementHidden(body.getSvgRoot(), true);
+    body.setConnectionsHidden(true);
+    setCommentsHidden(body, true);
+    hat.nextConnection?.setHidden(true);
+    if (mark) mark.remove();
+    const document = root.ownerDocument;
+    const group = document.createElementNS(svgNamespace, 'g');
+    group.setAttribute(foldMarkAttribute, '');
+    group.setAttribute('transform', `translate(0, ${hat.height ?? 48})`);
+    const width = Math.max(120, Math.min(hat.width ?? 120, 220));
+    const back = document.createElementNS(svgNamespace, 'rect');
+    for (const [name, value] of Object.entries({width, height: 28, rx: 4, fill: hat.getColour?.() ?? '#888',
+        stroke: hat.getColourTertiary?.() ?? '#666', 'fill-opacity': 0.6, 'stroke-dasharray': '4 3'})) {
+        back.setAttribute(name, String(value));
+    }
+    const text = document.createElementNS(svgNamespace, 'text');
+    text.setAttribute('class', 'blocklyText');
+    text.setAttribute('x', '12');
+    text.setAttribute('y', '18');
+    text.textContent = `▸ ${label}`;
+    group.append(back, text);
+    if (onUnfold) {
+        group.setAttribute('role', 'button');
+        group.style.cursor = 'pointer';
+        // The mark sits in the hat's group; pressing it must not start dragging the hat.
+        for (const type of ['mousedown', 'pointerdown', 'touchstart']) group.addEventListener(type, event => event.stopPropagation());
+        group.addEventListener('click', event => {
+            event.stopPropagation();
+            onUnfold();
+        });
+    }
+    root.appendChild(group);
+}
+
+/**
+ * Folding and the one-script mode of the code area.
+ *
+ * A hat whose script is folded (`tw-plus-folded` in its mutation, as the script editors save it) shows only the
+ * hat and a mark that unfolds it. In the one-script mode the code area shows a single hat or function and what is
+ * made or pulled out there; the other scripts and the workspace comments stay in the workspace, hidden, with no
+ * connections to snap to and outside the scroll area. Both are painted again after every reload of the workspace.
+ */
+const visibilities = new WeakMap<object, {dispose(): void}>();
+
+function attachScriptVisibility({vm, blocks, workspace, homeDocument, onError}) {
+    // The GUI can attach the code area again without letting go of the earlier attachment; only the latest paints.
+    visibilities.get(workspace)?.dispose();
+    const japanese = () => /^ja(?:-|$)/i.test(blocks.ScratchMsgs?.currentLocale_ ?? homeDocument.documentElement.lang ?? '');
+    const labels = () => japanese() ? {fold: '折りたたみ', unfold: '折りたたみを解除', folded: '折りたたみ中'} :
+        {fold: 'Fold', unfold: 'Unfold', folded: 'Folded'};
+    const vmBlock = (id: string) => vm.editingTarget?.blocks._blocks[id];
+    const isFolded = (block: StackBlock) => isHatBlock(block) && isFoldedDefinition(vmBlock(block.id));
+
+    let focus: {id: string; extras: Set<string>; onLost?: () => void} | undefined;
+    // The GUI can attach the code area again; what an earlier attachment left on the workspace is not its own.
+    const own = (name: string) => Object.prototype.hasOwnProperty.call(workspace, name) && !workspace[name][focusOverride] ?
+        workspace[name] : undefined;
+    const ownBoundingBox = own('getBlocksBoundingBox');
+    const ownCleanUp = own('cleanUp');
+    if (workspace.getBlocksBoundingBox?.[focusOverride] || workspace.cleanUp?.[focusOverride]) restoreWorkspaceMethods();
+    const shown = (block: StackBlock) => !focus || block.id === focus.id || focus.extras.has(block.id);
+
+    function restoreWorkspaceMethods() {
+        if (ownBoundingBox) workspace.getBlocksBoundingBox = ownBoundingBox;
+        else delete workspace.getBlocksBoundingBox;
+        if (ownCleanUp) workspace.cleanUp = ownCleanUp;
+        else delete workspace.cleanUp;
+    }
+
+    function paint() {
+        if (focus && !vmBlock(focus.id)) {
+            const {onLost} = focus;
+            setFocus(undefined);
+            onLost?.();
+            return;
+        }
+        for (const top of workspace.getTopBlocks(false) as StackBlock[]) {
+            const visible = shown(top);
+            setElementHidden(top.getSvgRoot(), !visible);
+            top.setConnectionsHidden(!visible);
+            setCommentsHidden(top, !visible);
+            if (visible) paintFold(top, isFolded(top), labels().folded, () => fold(top.id, false));
+        }
+        for (const comment of workspace.getTopComments?.(false) ?? []) {
+            setElementHidden(comment.getSvgRoot?.(), Boolean(focus));
+        }
+    }
+
+    function safePaint() {
+        try {
+            paint();
+        } catch (error) {
+            onError(error);
+        }
+    }
+
+    // The GUI redraws the workspace on several paths; paint again whenever scripts are added to the canvas.
+    // A block dragged in from the palette is painted once the drag ends, when it has been counted.
+    const view = homeDocument.defaultView;
+    let frame: number | undefined;
+    function schedulePaint() {
+        if (frame !== undefined) return;
+        frame = view.requestAnimationFrame(() => {
+            frame = undefined;
+            if (workspace.isDragging?.()) return;
+            safePaint();
+            reveal();
+        });
+    }
+    const canvasObserver = new view.MutationObserver(schedulePaint);
+    // The VM takes in an edit after the workspace shows it, such as the deletion of the shown script.
+    vm.runtime.on('PROJECT_CHANGED', schedulePaint);
+    const observeCanvas = () => {
+        const canvas = workspace.getCanvas?.();
+        if (canvas) canvasObserver.observe(canvas, {childList: true});
+    };
+    observeCanvas();
+
+    function fold(id: string, value: boolean) {
+        const hat = vmBlock(id);
+        if (!hat || isFoldedDefinition(hat) === value || workspace.options.readOnly) return;
+        setFoldedDefinition(hat, value);
+        vm.runtime.emitProjectChanged();
+        safePaint();
+    }
+
+    /**
+     * Put the shown script at the top left of the view, once the code area has its size there: the view it
+     * moves into may only be laid out after the script was picked.
+     */
+    let revealPending = false;
+    function reveal() {
+        if (!revealPending) return;
+        const block = focus && workspace.getBlockById(focus.id);
+        const injection = workspace.getInjectionDiv();
+        if (!block || !injection.clientWidth || !injection.clientHeight) return;
+        // The scroll area follows the shown scripts, which may have changed since the scrollbars were sized.
+        workspace.resize?.();
+        const metrics = workspace.getMetrics?.();
+        if (!metrics?.viewWidth || !metrics.viewHeight) return;
+        revealPending = false;
+        const {x, y} = block.getRelativeToSurfaceXY();
+        const padding = 16;
+        workspace.scrollbar?.set(x * workspace.scale - metrics.contentLeft - padding,
+            y * workspace.scale - metrics.contentTop - padding);
+    }
+
+    function setFocus(next?: {id: string; onLost?: () => void}) {
+        const changedScript = next?.id !== focus?.id;
+        focus = next && {id: next.id, onLost: next.onLost, extras: changedScript ? new Set() : focus?.extras ?? new Set()};
+        if (focus) {
+            workspace.getBlocksBoundingBox = Object.assign(function () {
+                let box: {left: number; top: number; right: number; bottom: number} | undefined;
+                for (const top of this.getTopBlocks(false) as (StackBlock & {getBoundingRectangle()})[]) {
+                    if (!shown(top)) continue;
+                    const {topLeft, bottomRight} = top.getBoundingRectangle();
+                    box = box ? {left: Math.min(box.left, topLeft.x), top: Math.min(box.top, topLeft.y),
+                        right: Math.max(box.right, bottomRight.x), bottom: Math.max(box.bottom, bottomRight.y)} :
+                        {left: topLeft.x, top: topLeft.y, right: bottomRight.x, bottom: bottomRight.y};
+                }
+                return box ? {x: box.left, y: box.top, width: box.right - box.left, height: box.bottom - box.top} :
+                    {x: 0, y: 0, width: 0, height: 0};
+            }, {[focusOverride]: true});
+            // Cleaning up would also move the scripts that are not shown.
+            workspace.cleanUp = Object.assign(() => undefined, {[focusOverride]: true});
+        } else restoreWorkspaceMethods();
+        safePaint();
+        if (workspace.rendered && workspace.isVisible?.() !== false) workspace.resize?.();
+        if (focus && changedScript) {
+            revealPending = true;
+            reveal();
+            schedulePaint();
+        }
+    }
+
+    // Blocks dragged in from the palette, or pulled out of the shown script, stay in view. Only the end of a
+    // drag counts: a reload of the workspace also sends a create event for every block, after the load.
+    const listener = event => {
+        if (event.type !== 'endDrag') return;
+        const block = focus && !event.isOutside ? workspace.getBlockById(event.blockId) as StackBlock | null : null;
+        if (block && !block.getParent() && block.id !== focus.id) focus.extras.add(block.id);
+        schedulePaint();
+    };
+    workspace.addChangeListener(listener);
+
+    const prototype = blocks.BlockSvg.prototype;
+    const showContextMenu = prototype.showContextMenu_;
+    const patched = function (this: StackBlock & {customContextMenu?(options: unknown[]): void}, event) {
+        if (this.workspace !== workspace || this.isInFlyout || this.getParent() || !isHatBlock(this) ||
+            workspace.options.readOnly || (!this.getNextBlock() && !isFolded(this))) {
+            return showContextMenu.call(this, event);
+        }
+        const owned = Object.prototype.hasOwnProperty.call(this, 'customContextMenu');
+        const custom = this.customContextMenu;
+        const folded = isFolded(this);
+        const id = this.id;
+        this.customContextMenu = function (options: {text: string; enabled: boolean; callback(): void}[]) {
+            custom?.call(this, options);
+            options.push({text: folded ? labels().unfold : labels().fold, enabled: true, callback: () => fold(id, !folded)});
+        };
+        try {
+            return showContextMenu.call(this, event);
+        } finally {
+            if (owned) this.customContextMenu = custom;
+            else delete this.customContextMenu;
+        }
+    };
+    prototype.showContextMenu_ = patched;
+
+    let disposed = false;
+    const visibility = {
+        paint: () => {
+            if (!disposed) safePaint();
+        },
+        /** The code area has a size again, such as after moving to another view. */
+        resized: () => {
+            if (!disposed) reveal();
+        },
+        focus: (id?: string, onLost?: () => void) => {
+            if (!disposed) setFocus(id ? {id, onLost} : undefined);
+        },
+        get focusedScript() { return focus?.id; },
+        dispose() {
+            if (disposed) return;
+            disposed = true;
+            if (visibilities.get(workspace) === visibility) visibilities.delete(workspace);
+            workspace.removeChangeListener(listener);
+            canvasObserver.disconnect();
+            vm.runtime.removeListener('PROJECT_CHANGED', schedulePaint);
+            if (frame !== undefined) view.cancelAnimationFrame(frame);
+            if (prototype.showContextMenu_ === patched) prototype.showContextMenu_ = showContextMenu;
+            if (focus) {
+                focus = undefined;
+                restoreWorkspaceMethods();
+            }
+        }
+    };
+    visibilities.set(workspace, visibility);
+    return visibility;
+}
+
+/** Paint the folded scripts of a read-only workspace, such as the preview of a code view. */
+function paintPreviewFolds(blocks, preview, target, label: string) {
+    for (const top of preview.getTopBlocks(false) as StackBlock[]) {
+        paintFold(top, isHatBlock(top) && isFoldedDefinition(target.blocks._blocks[top.id]), label);
+    }
 }
 
 export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, options, onError, presentationElements = null as PresentationElements | null}) {
@@ -241,6 +554,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 workspace.undoStack_ = history.undo.slice();
                 workspace.redoStack_ = history.redo.slice();
             }
+            visibility.paint();
             changed();
         },
         select(view) {
@@ -257,7 +571,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
             return true;
         },
         preview(element, chrome, view) {
-            const {target, presentation, attachMinimap, watermark, locale, onScriptViewChange, dropElement} = view;
+            const {target, presentation, attachMinimap, watermark, locale, onScriptViewChange, dropElement, scriptId} = view;
             // ScratchBlocks injects into the document where its bundle was evaluated.
             // Initialize the read-only preview there, then move it into the popout.
             const staging = element.ownerDocument === homeDocument ? null : homeDocument.createElement('div');
@@ -316,11 +630,14 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 workspace: preview,
                 update() {
                     if (vm.runtime.getTargetById(target.id) !== target) return;
-                    const xml = targetXml(vm, target);
+                    // A view that shows one script previews only that script.
+                    const xml = scriptId && target.blocks._blocks[scriptId] ? scriptXml(vm, target, scriptId) : targetXml(vm, target);
                     if (renderedXml === xml) return;
                     try {
                         withoutEvents(blocks, () => blocks.Xml.clearWorkspaceAndLoadFromXml(
                             blocks.Xml.textToDom(xml), preview));
+                        paintPreviewFolds(blocks, preview, target,
+                            /^ja(?:-|$)/i.test(locale ?? homeDocument.documentElement.lang ?? '') ? '折りたたみ中' : 'Folded');
                         renderedXml = xml;
                         resize();
                     } catch (error) {
@@ -337,6 +654,14 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
                 }
             };
         },
+        /**
+         * Show only one script in the code area, a hat or a function, or every script again without `id`.
+         * `onLost` runs when that script is deleted.
+         */
+        focusScript(id?: string, onLost?: () => void) {
+            visibility.focus(id, onLost);
+        },
+        get focusedScript() { return visibility.focusedScript; },
         createFunction(target: CodeTarget & {id: string}, kind: 'procedure' | 'named', name: string, {loadNamedFunctions}: {
             loadNamedFunctions?(): Promise<void>;
         } = {}) {
@@ -353,6 +678,7 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
         dispose() {
             blockDrag.dispose();
             shown?.disconnect();
+            visibility.dispose();
             if (pendingFrame !== null) cancelAnimationFrame(pendingFrame);
             if (parentFrame !== null) cancelAnimationFrame(parentFrame);
             if (workspace.updateToolbox !== updateToolbox) workspace.updateToolbox = updateToolbox;
@@ -369,11 +695,15 @@ export function attachCodeWorkspace({vm, ScratchBlocks: blocks, workspace, optio
     const injection = workspace.getInjectionDiv();
     const view = injection.ownerDocument.defaultView;
     const shown = typeof view?.ResizeObserver === 'function' ? new view.ResizeObserver(() => {
-        if (injection.clientWidth && injection.clientHeight) withoutEvents(blocks, () => remeasureHiddenFields(workspace));
+        if (!injection.clientWidth || !injection.clientHeight) return;
+        withoutEvents(blocks, () => remeasureHiddenFields(workspace));
+        visibility.resized();
     }) : null;
     shown?.observe(injection);
 
     const blockDrag = attachBlockDrag({vm, workspace, ScratchBlocks: blocks, onError, prepareImport: bridge.prepareImport});
+    const visibility = attachScriptVisibility({vm, blocks, workspace, homeDocument, onError});
+    visibility.paint();
     session.bridge = bridge;
     vm.runtime.on('PROJECT_CHANGED', changed);
     changed();
