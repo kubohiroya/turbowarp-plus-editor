@@ -1,4 +1,4 @@
-import {dialogAction, dialogActions} from './dialog-actions.ts';
+import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
 import type {PreparedPublication, ProjectPublicationPort, PublicationCommit, PublicationIssue,
     PublicationJob, PublicationStackParent} from './project-publication.ts';
 

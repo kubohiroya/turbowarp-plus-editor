@@ -6,7 +6,6 @@
   "type": "module",
   "license": "GPL-3.0-or-later",
   "exports": {
-    ".": "./src/icon-menu-button.tsx",
     "./busy-cursor": "./src/busy-cursor.ts",
     "./block-argument-text": "./src/block-argument-text.ts",
     "./detached-block-palette": "./src/detached-block-palette.ts",
@@ -26,8 +25,6 @@
     "./project-publication": "./src/project-publication.ts",
     "./cloudflare-publication": "./src/cloudflare-publication.ts",
     "./project-file-dialogs": "./src/project-file-dialogs.ts",
-    "./dialog-actions": "./src/dialog-actions.ts",
-    "./dialog-actions.css": "./src/dialog-actions.css",
     "./project-commit-dialog": "./src/project-commit-dialog.ts",
     "./project-repository-creation": "./src/project-repository-creation.ts",
     "./project-publication-dialog": "./src/project-publication-dialog.ts",
@@ -35,6 +32,9 @@
     "./browser-tab-title": "./src/browser-tab-title.ts",
     "./web-fonts": "./src/web-fonts.ts",
     "./web-font-dialogs": "./src/web-font-dialogs.tsx"
+  },
+  "dependencies": {
+    "@kubohiroya/turbowarp-plus-editor-windows": "0.2.0"
   },
   "peerDependencies": {
     "react": ">=16.8",

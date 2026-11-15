@@ -1,5 +1,6 @@
 import React from 'react';
-import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
+import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-windows';
+import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import styles from './popup-layout.css';
 
 interface PopupLayoutProps {

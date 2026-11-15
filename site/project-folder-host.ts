@@ -14,7 +14,7 @@ import type {PublicationBridge, ProjectPublicationPort}
     from '@kubohiroya/turbowarp-plus-editor-ui/project-publication';
 import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-editor-ui/cloudflare-publication';
 import {loadedProjectTitle} from './project-tools/index.ts';
-import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-editor-surfaces';
+import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-ui/project-search-connections';
 import {bindProjectRepositoryCreation} from './project-repository-host.ts';

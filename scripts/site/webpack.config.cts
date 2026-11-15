@@ -228,7 +228,7 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 // from here becomes a CSS module exactly as one of its own does.
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
-const editorEntries = Object.fromEntries(['workbench', 'surfaces', 'transfer', 'backpack', 'views'].map(feature => {
+const editorEntries = Object.fromEntries(['workbench', 'backpack', 'views'].map(feature => {
     const name = `@kubohiroya/turbowarp-${['workbench', 'views'].includes(feature) ? 'plus-' : ''}editor-${feature}`;
     const entry = rootRequire.resolve(name);
     config.resolve.alias[`${name}$`] = entry;
@@ -241,7 +241,7 @@ const projectModelSource = path.dirname(['project-messages', 'sprite-variable-ed
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 })[0]);
 // The in-page windows, split out of the layout in the same way. Their stylesheet is global.
-const windowsEntries = ['', '/styles.css'].map(entry => {
+const windowsEntries = ['', '/styles.css', '/surfaces', '/transfer'].map(entry => {
     const specifier = `@kubohiroya/turbowarp-plus-editor-windows${entry}`;
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 });
@@ -277,12 +277,10 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
     config.resolve.alias[`${specifier}$`] = projectSaveRequire.resolve(specifier);
 }
 config.resolve.alias[`${authPackage}$`] = authEntry;
-const editorUiEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui');
-config.resolve.alias['@kubohiroya/turbowarp-plus-editor-ui$'] = editorUiEntry;
+const editorUiSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-ui/busy-cursor'));
 // Every subpath the package exports, read from its manifest so a new one cannot be left out.
-// The package does not export its manifest; it sits beside the `src` its main entry is in.
-const editorUiExports = JSON.parse(fs.readFileSync(
-    path.join(path.dirname(editorUiEntry), '..', 'package.json'), 'utf8')).exports;
+// The package does not export its manifest; it sits beside the `src` its entries are in.
+const editorUiExports = JSON.parse(fs.readFileSync(path.join(editorUiSource, '..', 'package.json'), 'utf8')).exports;
 for (const entry of Object.keys(editorUiExports).filter(key => key.startsWith('./'))) {
     const specifier = `@kubohiroya/turbowarp-plus-editor-ui/${entry.slice(2)}`;
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
@@ -359,7 +357,7 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
 }));
 config.module.rules.push({test: /\.tsx?$/, include: [
     siteSource,
-    path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), path.dirname(editorUiEntry)
+    path.resolve(__dirname, '../desktop'), ...Object.values(editorEntries), editorUiSource
 ], loader: path.join(__dirname, 'transpile-local-typescript.cts')});
 config.module.rules.push({
     include: path.join(gui, 'src/components/loader/loader.jsx'),

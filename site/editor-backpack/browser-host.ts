@@ -1,4 +1,4 @@
-import type {DisconnectCause, SurfaceConnection, SurfaceHost} from '@kubohiroya/turbowarp-editor-surfaces';
+import type {DisconnectCause, SurfaceConnection, SurfaceHost} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 
 export interface MountedSurface {
     mount: HTMLElement;

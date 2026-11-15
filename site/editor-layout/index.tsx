@@ -1,6 +1,5 @@
 import React from 'react';
 import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
-import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
 import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-ui/busy-cursor';
 import {connectDesktopWorkspaceLayouts, type DesktopWorkspaceLayouts} from './desktop-workspace-layout.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
@@ -8,7 +7,7 @@ import {getDocumentWorkspace, useDockviewStage} from '@kubohiroya/turbowarp-plus
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import targetStyles from '@kubohiroya/turbowarp-plus-editor-workbench/targets.css';
-import {EditorFullscreenButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-windows';
+import {EditorFullscreenButton, IconMenuButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-windows';
 import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import {BasicPanel} from './basic-panel.tsx';
 import {createWebPanelHost} from './desktop-panel-host.ts';

@@ -1,8 +1,8 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
 import {connect} from 'react-redux';
-import type {IconMenuItem} from '@kubohiroya/turbowarp-plus-editor-ui';
-import {IconMenuButton} from '@kubohiroya/turbowarp-plus-editor-ui';
+import {IconMenuButton, type IconMenuItem} from '@kubohiroya/turbowarp-plus-editor-windows';
+import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import {panelLayoutIconPath} from '@kubohiroya/turbowarp-plus-editor-workbench';
 import {stageDockActionLabel, stageDrawerPinItem, stagePresentationItems,
     useStageDocumentFullscreen} from '@kubohiroya/turbowarp-plus-editor-workbench/stage-surface';

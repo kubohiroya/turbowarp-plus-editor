@@ -24,7 +24,7 @@ const [driver, extension] = await Promise.all([
     build({
         stdin: {resolveDir: import.meta.dirname, contents: `
             import {createCodeSession} from '../../packages/editor-views/index.ts';
-            import {createSurface, flushPendingSurfaceEdits, pendingSurfaceEdits} from '../../packages/editor-surfaces/index.ts';
+            import {createSurface, flushPendingSurfaceEdits, pendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
             import {createBrowserHost} from '../../site/editor-backpack/browser-host.ts';
             const {vm, ScratchBlocks} = window;
             const host = createBrowserHost(window, url => window.open(url.href, '_blank', 'popup'), 'code-popout.html', true);

@@ -5,7 +5,7 @@ import {attachWorkspaceNavigation} from '../workspace-minimap/index.ts';
 import {installBlockContextMenuIcons} from '../context-menu-icons/index.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import ScratchBlocks from 'scratch-blocks';
-import {transferMime} from '@kubohiroya/turbowarp-editor-transfer';
+import {transferMime} from '@kubohiroya/turbowarp-plus-editor-windows/transfer';
 import {installProcedureEditor} from '@kubohiroya/turbowarp-plus-editor-views/procedure-editor';
 import {createCodeExtensionPalette, createFieldActionDialog} from '@kubohiroya/turbowarp-plus-editor-views/code-extensions';
 import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-views';

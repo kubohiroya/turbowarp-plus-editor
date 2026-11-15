@@ -1,8 +1,8 @@
 import React from 'react';
 import {createPortal} from 'react-dom';
-import {createSurface, pendingSurfaceEdits, recordSurface} from '@kubohiroya/turbowarp-editor-surfaces';
-import type {SurfaceRecovery, SurfaceState} from '@kubohiroya/turbowarp-editor-surfaces';
-import {createTransferSession, transferMime} from '@kubohiroya/turbowarp-editor-transfer';
+import {createSurface, pendingSurfaceEdits, recordSurface} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
+import type {SurfaceRecovery, SurfaceState} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
+import {createTransferSession, transferMime} from '@kubohiroya/turbowarp-plus-editor-windows/transfer';
 import {jsonDataUrl, readBackpackScript} from './script.ts';
 
 const kind = 'backpack-script';
