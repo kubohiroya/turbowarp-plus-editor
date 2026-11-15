@@ -3251,8 +3251,9 @@ test('the hats and functions list and the calls section open each script in a ta
     // Calling nothing and called by nothing, it sits apart below the others.
     const [hopBox, jumpBox] = [await hop.boundingBox(), await jump.boundingBox()];
     assert.ok(hopBox.y > Math.max(jumpBox.y, (await land.boundingBox()).y) + jumpBox.height, 'below the linked functions');
-    expect(await page.evaluate(() => Object.values(vm.editingTarget.blocks._blocks)
-        .filter(block => block.opcode === 'procedures_prototype').map(block => block.mutation.proccode).sort()))
+    expect(await page.evaluate(() => Object.values(vm.editingTarget.blocks._blocks as Record<string, {
+        opcode: string; mutation?: {proccode?: string};
+    }>).filter(block => block.opcode === 'procedures_prototype').map(block => block.mutation.proccode).sort()))
         .toEqual(['hop', 'jump', 'land']);
     // The same name is refused in the dialog.
     await add.click();
@@ -3261,18 +3262,16 @@ test('the hats and functions list and the calls section open each script in a ta
     await expect(addDialog.getByRole('alert')).toHaveText('同じ名前の関数がすでにあります。');
     await addDialog.getByRole('button', {name: 'キャンセル', exact: true}).click();
 
-    // Below the list, the same button makes a TurboWarp-Plus named function.
-    await toolbar.getByRole('tab', {name: 'ハット・関数一覧', exact: true}).click();
+    // Below the list, the same button offers both kinds. The new tab holds the active group now, so reach
+    // the sprite's own toolbar. (A named function needs the extension from the catalog, which this page cannot reach.)
+    await page.locator('.tw-plus-sprite-toolbar').getByRole('tab', {name: 'ハット・関数一覧', exact: true}).click();
     await pane.getByRole('button', {name: '新しい関数を追加', exact: true}).click();
-    await page.keyboard.type('greet');
-    await addDialog.getByRole('radio', {name: 'TurboWarp-Plus の名前付き関数', exact: true}).check();
+    await expect(addDialog.getByRole('radio', {name: 'TurboWarp-Plus の名前付き関数', exact: true})).toBeVisible();
+    await expect(addDialog.getByRole('radio', {name: '標準（ブロック定義）', exact: true})).toBeChecked();
+    await page.keyboard.type('wave');
     await addDialog.getByRole('button', {name: '追加', exact: true}).click();
-    await expect(addDialog).toHaveCount(0, {timeout: 20_000});
-    await expect(tab('greet')).toHaveClass(/dv-active-tab/);
-    await expect(pane.locator('[data-function-key][aria-current="true"]')).toHaveText(/greet/);
-    await expect.poll(() => page.evaluate(() => Object.values(vm.editingTarget.blocks._blocks)
-        .filter(block => block.opcode === 'kubohiroyanamedfunctions_defineFunction')
-        .map(block => vm.editingTarget.blocks._blocks[block.inputs.NAME.block].fields.TEXT.value))).toEqual(['greet']);
+    await expect(tab('wave')).toHaveClass(/dv-active-tab/);
+    await expect(pane.locator('[data-function-key][aria-current="true"]')).toHaveText(/wave/);
 });
 
 test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
