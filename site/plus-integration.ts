@@ -32,6 +32,7 @@ import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts
 import {installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.ts';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
+import {installBlockArgumentText} from '@kubohiroya/turbowarp-plus-editor-ui/block-argument-text';
 import {attachReviewNavigation, attachWorkspaceNavigation} from './workspace-minimap/index.ts';
 
 const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap, localGit, gitRestoreVersion} =
@@ -220,6 +221,7 @@ const integration = createPlusIntegration({
             });
         }
         installBlockContextMenuIcons(ScratchBlocks);
+        installBlockArgumentText(ScratchBlocks);
     }
 });
 

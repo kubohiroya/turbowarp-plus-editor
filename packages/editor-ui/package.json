@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/icon-menu-button.tsx",
     "./busy-cursor": "./src/busy-cursor.ts",
+    "./block-argument-text": "./src/block-argument-text.ts",
     "./detached-block-palette": "./src/detached-block-palette.ts",
     "./edit-menu": "./src/edit-menu.tsx",
     "./palette-category-reorder": "./src/palette-category-reorder.ts",
