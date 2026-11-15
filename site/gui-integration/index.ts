@@ -16,6 +16,7 @@ import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-menu';
 import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import '@kubohiroya/turbowarp-plus-editor-code-views/styles.css';
+import '@kubohiroya/turbowarp-plus-editor-fonts/styles.css';
 import {collectBeforeSaving, projectSaveShortcut} from '@kubohiroya/turbowarp-plus-editor-ui/project-file-dialogs';
 import {GitFileMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
@@ -38,7 +39,7 @@ import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-window
 export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
 export {flushPendingSurfaceEdits};
-export {default as webFontDialogs} from '@kubohiroya/turbowarp-plus-editor-ui/web-font-dialogs';
+export {default as webFontDialogs} from '@kubohiroya/turbowarp-plus-editor-fonts/web-font-dialogs';
 export const renderEditMenu = props => renderEditCommands({...props,
     getRearrangement: () => getDockedScriptLayout(props.vm), renderIcon: renderMenuIcon});
 export const renderEditMenuRestore = label => renderRestoreLabel(label, renderMenuIcon);

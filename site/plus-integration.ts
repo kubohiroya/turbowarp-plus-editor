@@ -24,7 +24,7 @@ import {plusProjectPackager} from './packager/handoff.ts';
 
 import {installControlsDock} from './controls-dock.ts';
 import {attachProjectFolder} from './project-folder-host.ts';
-import {webFontOwnsKeyEvent} from '@kubohiroya/turbowarp-plus-editor-ui/web-fonts';
+import {webFontOwnsKeyEvent} from '@kubohiroya/turbowarp-plus-editor-fonts/web-fonts';
 import getStageControls from '@kubohiroya/turbowarp-plus-editor-ui/stage-controls';
 import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';

@@ -265,6 +265,14 @@ for (const entry of codeViewsExports) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const codeViewsSource = path.dirname(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views$']);
+// The web fonts, split out in the same way. Their stylesheet is global too.
+for (const entry of Object.keys(rootRequire('@kubohiroya/turbowarp-plus-editor-fonts/package.json').exports)
+    .filter(entry => entry !== './package.json')) {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-fonts${entry.slice(1)}`;
+    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+}
+const fontsSource = path.dirname(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-fonts$']);
+const fontsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-fonts/styles.css$'];
 const codeViewsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views/styles.css$'];
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css'];
 for (const entry of [...layoutGlobalStyleEntries, 'standard-layout', 'editor.css', 'targets.css', 'extension-file-menu',
@@ -329,7 +337,7 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
 const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-workbench/${entry}$`]);
-globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1], codeViewsStyles,
+globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1], codeViewsStyles, fontsStyles,
     ...spritePanesGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}$`]));
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
 const previewReloadStyles = path.join(siteSource, 'styles', 'preview-reload.css');
@@ -386,7 +394,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 );
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
-    documentSourceRoot, transferSource, editorEntries.workbench, editorEntries.backpack, codeViewsSource,
+    documentSourceRoot, transferSource, editorEntries.workbench, editorEntries.backpack, codeViewsSource, fontsSource,
     projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource,
     ...(projectUnpackEntry ? [path.dirname(projectUnpackEntry), projectUnpackHashSource] : []),
     ...(repositoryCreation ? [path.dirname(repositorySeedEntry)] : [])
