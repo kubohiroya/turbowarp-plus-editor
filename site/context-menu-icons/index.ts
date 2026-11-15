@@ -62,14 +62,6 @@ const messageActions = {
     HELP: 'help'
 };
 
-// Script transfer 0.1 exposes the menu labels in English and Japanese without action IDs.
-const transferActions = new Map([
-    ['Export Script', 'export'], ['スクリプトを書き出し', 'export'],
-    ['Import Script', 'import'], ['スクリプトを読み込み', 'import'],
-    ['Copy', 'copy'], ['コピー', 'copy'],
-    ['Paste', 'paste'], ['貼り付け', 'paste']
-]);
-
 const blockAddonActions = {
     'editor-devtools/paste': 'paste',
     'editor-devtools/make-space': 'space',
@@ -113,7 +105,7 @@ const folderActions = {
 };
 
 // The GUI loads addon translations into this same catalog before registering their menus.
-const addonMessages = typeof __TW_GUI_ADDON_MESSAGES__ === 'undefined' ? {} : __TW_GUI_ADDON_MESSAGES__;
+export const addonMessages = typeof __TW_GUI_ADDON_MESSAGES__ === 'undefined' ? {} : __TW_GUI_ADDON_MESSAGES__;
 
 const matchesMessage = (text, message, placeholder) => {
     if (typeof message !== 'string') return false;
@@ -203,7 +195,7 @@ export function installBlockContextMenuIcons (ScratchBlocks, showIcons = enabled
             const {text} = option;
             if (typeof text !== 'string') return option;
             const action = option.twPlusMenuIcon || (variableChoices.has(option.callback) && 'switch') ||
-                localizedAction(text, Msg, messageActions, '%1') || transferActions.get(text) ||
+                localizedAction(text, Msg, messageActions, '%1') ||
                 localizedAction(text, addonMessages, blockAddonActions, '{var}') ||
                 ((isArgument || Object.keys(addonMessages).some(key => key.startsWith('block-switching/') &&
                     addonMessages[key] === text)) && 'switch');
