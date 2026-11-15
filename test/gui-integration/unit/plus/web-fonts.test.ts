@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import FontManager from 'scratch-vm/src/engine/tw-font-manager.js';
-import {installWebFonts, webFontEditor, withPackagerFontFallbacks} from '@kubohiroya/turbowarp-plus-editor-ui/web-fonts';
+import {installWebFonts, webFontEditor, withPackagerFontFallbacks} from '@kubohiroya/turbowarp-plus-editor-fonts/web-fonts';
 
 const system = {system: true, family: 'Arial', fallback: 'Sans Serif'};
 const web = {system: true, family: 'Press Start 2P', fallback: 'Pixel',
