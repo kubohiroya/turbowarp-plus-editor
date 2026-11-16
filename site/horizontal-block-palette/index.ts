@@ -4,12 +4,12 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
-import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog,
+import {attachPaletteMenuButton, createPaletteOrder, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog,
     installExtensionPaletteGroups, paletteGroupSets, paletteScreenStateKey, paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import type {PaletteCategoryInfo, PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
-import {attachPaletteCategoryGroups, hasCategoryGroups, prepareGroupedToolboxTree} from
+import {attachPaletteCategoryGroups, hasCategoryGroups} from
     '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-groups';
 import styles from './palette.css';
 
@@ -61,7 +61,8 @@ const refreshPalettes = () => setTimeout(() => {for (const update of paletteRefr
  * state, as the tab layout is saved. Returns the function that stops it.
  */
 export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => PaletteScreenState | undefined = () => undefined) => {
-    const store = createPaletteVisibilityStore({catalog: () => catalogOf(vm)});
+    // A reordered palette is saved with the project, as the groups it shows are.
+    const store = createPaletteVisibilityStore({catalog: () => catalogOf(vm), onOrderChange: () => vm.runtime.emitProjectChanged()});
     const removeExtensionGroups = installExtensionPaletteGroups(vm.runtime ?? {});
     paletteVM = vm;
     paletteStore = store;
@@ -213,7 +214,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         choose: category => toolbox.setSelectedItem(category),
         onChange: () => updateCategoryButtons(),
         reorder: allowCategoryReorder,
-        onReorder: () => reordered()
+        onReorder: () => reordered(),
+        order: () => paletteOrder()
     });
     const search = attachPaletteCategorySearch(panel, getLocale, (query, previous) => {
         const category = categoryById(openId);
@@ -367,12 +369,15 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     };
     // The categories the menu shows: a group's members are moved with it, so only the group is ordered.
     const shownCategories = () => categories().filter(category => groups.topLevelId(category.id_) === category.id_);
-    let categoryOrder: string[] = [];
+    // The order is the project's, or this palette's own without a project.
+    const ownOrder = createPaletteOrder();
+    const paletteOrder = () => paletteStore?.order ?? ownOrder;
     const applyCategoryOrder = () => {
         const current = categories();
+        const order = paletteOrder().categories();
         const ordered: typeof current = groups.arrange(current, id => {
-            const index = categoryOrder.indexOf(id);
-            return index < 0 ? categoryOrder.length : index;
+            const index = order.indexOf(id);
+            return index < 0 ? order.length : index;
         });
         if (ordered.every((category, index) => category === current[index])) return;
         current.splice(0, current.length, ...ordered);
@@ -384,7 +389,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         (from, to) => {
             const ordered = shownCategories().map(category => category.id_);
             ordered.splice(to, 0, ordered.splice(from, 1)[0]);
-            categoryOrder = ordered.concat(categoryOrder.filter(id => !ordered.includes(id)));
+            paletteOrder().setCategories(ordered.concat(paletteOrder().categories().filter(id => !ordered.includes(id))));
             groups.close();
             reordered();
         }
@@ -479,7 +484,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         if (reorder) reorder.cancel();
         if (tree) {
             lastTree = tree.cloneNode(true) as Element;
-            const found = prepareGroupedToolboxTree(tree,
+            const found = groups.prepare(tree,
                 {catalog: paletteVM ? catalogOf(paletteVM, getLocale()) : undefined, visible: visibleNow()});
             original.populate.call(toolbox, tree);
             groups.update(found);
