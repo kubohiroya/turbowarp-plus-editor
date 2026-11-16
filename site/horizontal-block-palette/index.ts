@@ -4,12 +4,63 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
+import {attachPaletteMenuButton, filterToolboxTree, paletteGroupSets, paletteVisibilityMenuLabel, readTargetPalette,
+    usedGroups, visibleGroups, writeTargetPalette} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
+import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
+import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
 import styles from './palette.css';
 
 const installed = new WeakSet();
 const closeOnDragExit = new WeakMap();
 const palettes = new Set<(horizontal: boolean) => void>();
 let horizontalLayout = false;
+
+// The VM whose editing target decides which block groups the palette shows.
+type PaletteVM = {
+    editingTarget?: any;
+    runtime: {
+        _blockInfo?: {id: string; name?: string; menuIconURI?: string; blockIconURI?: string}[];
+        getTargetForStage(): any;
+        emitProjectChanged(): void;
+        on(event: string, listener: (...args: any[]) => void): void;
+        off(event: string, listener: (...args: any[]) => void): void;
+    };
+    on(event: string, listener: (...args: any[]) => void): void;
+    off(event: string, listener: (...args: any[]) => void): void;
+};
+let paletteVM: PaletteVM | null = null;
+const paletteRefreshers = new Set<() => void>();
+const extensionIds = (vm: PaletteVM) => (vm.runtime._blockInfo ?? []).map(info => info.id);
+
+/** Lets the palette show each sprite's and the stage's own block groups. Returns the function that stops it. */
+export const connectPaletteVisibility = (vm: PaletteVM) => {
+    paletteVM = vm;
+    // Another sprite may share the same toolbox XML, in which case the GUI does not redraw the palette.
+    const refresh = () => setTimeout(() => {for (const update of paletteRefreshers) update();}, 0);
+    // An extension added from the library shows in the sprite or stage being edited.
+    const added = (info: {id?: string}) => {
+        const target = vm.editingTarget;
+        if (!target || !info?.id) return;
+        const groups = visibleGroups(target, extensionIds(vm));
+        if (groups.has(info.id)) return;
+        writeTargetPalette(target, [...groups, info.id], {extensionIds: extensionIds(vm)});
+        vm.runtime.emitProjectChanged();
+        refresh();
+    };
+    // A host that passes a VM without events still gets the filtering; only the redraws are missing.
+    const listens = typeof vm.on === 'function' && typeof vm.runtime?.on === 'function';
+    if (listens) {
+        vm.on('workspaceUpdate', refresh);
+        vm.runtime.on('EXTENSION_ADDED', added);
+    }
+    return () => {
+        if (listens) {
+            vm.off('workspaceUpdate', refresh);
+            vm.runtime.off('EXTENSION_ADDED', added);
+        }
+        if (paletteVM === vm) paletteVM = null;
+    };
+};
 
 export const setHorizontalBlockPalette = (horizontal: boolean) => {
     horizontalLayout = horizontal;
@@ -221,9 +272,67 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         if (category) showCategory(category, flyout.getScrollPos());
         else close();
     };
+    // The toolbox as the GUI gave it, so the palette can be drawn again when a sprite's groups change.
+    let lastTree: Element | null = null;
+    const visibleNow = () => {
+        const target = paletteVM?.editingTarget;
+        return target ? visibleGroups(target, extensionIds(paletteVM)) : null;
+    };
+    const redraw = () => {
+        if (lastTree) workspace.updateToolbox(lastTree.cloneNode(true));
+    };
+    paletteRefreshers.add(redraw);
+    const openGroupSettings = () => {
+        const vm = paletteVM;
+        const target = vm?.editingTarget;
+        if (!vm || !target) return;
+        const ids = extensionIds(vm);
+        const stage = vm.runtime.getTargetForStage();
+        const projectSets = (stage && readTargetPalette(stage)?.sets) || {};
+        openPaletteVisibilityDialog(doc, {
+            locale: getLocale(),
+            targetName: target.getName(),
+            isStage: target.isStage,
+            initial: visibleGroups(target, ids),
+            used: usedGroups(target),
+            extensions: (vm.runtime._blockInfo ?? []).map(info => ({
+                id: info.id,
+                metadata: {name: info.name || info.id, banner: info.menuIconURI || info.blockIconURI}
+            })),
+            sets: paletteGroupSets(getLocale(), projectSets),
+            onApply({groups, addedSets}) {
+                if (addedSets.length && stage) {
+                    const sets = {...projectSets};
+                    for (const set of addedSets) sets[set.id] = {name: set.name, groups: [...set.groups]};
+                    const stageGroups = target === stage ? groups : [...visibleGroups(stage, ids)];
+                    writeTargetPalette(stage, stageGroups, {extensionIds: ids, sets});
+                }
+                if (!(addedSets.length && target === stage)) writeTargetPalette(target, groups, {extensionIds: ids});
+                vm.runtime.emitProjectChanged();
+                redraw();
+            },
+            onCancel() {}
+        });
+    };
+    const openExtensionLibrary = () => {
+        const button: HTMLElement | null = doc.querySelector(
+            '[data-code-extension-button] button, [class*="gui_extension-button-container_"] button');
+        button?.click();
+    };
+    const paletteMenu = attachPaletteMenuButton(menu, getLocale, locale => [
+        {label: paletteVisibilityMenuLabel(locale), onSelect: openGroupSettings},
+        {label: /^ja(?:-|$)/i.test(locale) ? '機能拡張を追加' : 'Add Extension', separated: true, onSelect: openExtensionLibrary}
+    ]);
+
     toolbox.populate_ = tree => {
         if (reorder) reorder.cancel();
+        if (tree) {
+            lastTree = tree.cloneNode(true) as Element;
+            const visible = visibleNow();
+            if (visible) filterToolboxTree(tree, visible);
+        }
         original.populate.call(toolbox, tree);
+        paletteMenu.update();
         if (!horizontal) return;
         const category = categoryById(openId);
         if (category) toolbox.setSelectedItem(category, false);
@@ -439,6 +548,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         }
     });
     toolbox.dispose = () => {
+        paletteRefreshers.delete(redraw);
+        paletteMenu.dispose();
         disconnectPalette();
         if (inputDocument !== doc) moveBlockWidgets(ScratchBlocks, doc);
         palettes.delete(setMode);

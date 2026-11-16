@@ -31,10 +31,27 @@
     display: initial;
 }
 
+.horizontal:global(.blocklyToolboxDiv)[data-horizontal-block-palette] {
+    display: flex;
+    align-items: center;
+}
+
 .horizontal :global(.scratchCategoryMenu) {
     display: flex;
+    flex: 1 0 auto;
     width: max-content;
-    min-width: 100%;
+}
+
+/* The ▼ menu at the end of the categories: the right end of a horizontal palette, the bottom of a vertical one. */
+.horizontal > :global(.tw-palette-menu-button) {
+    position: sticky;
+    right: 0;
+    background: var(--ui-primary, white);
+}
+
+:global(.blocklyToolboxDiv):not(.horizontal) > :global(.tw-palette-menu-button) {
+    display: flex;
+    margin: 0.25rem auto;
 }
 
 .horizontal :global(.scratchCategoryMenuItem) {

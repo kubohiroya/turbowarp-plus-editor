@@ -31,7 +31,7 @@ import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-p
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {addonMessages} from './context-menu-icons/index.ts';
 import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
-import {installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
+import {connectPaletteVisibility, installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.ts';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
 import {installBlockArgumentText} from '@kubohiroya/turbowarp-plus-editor-code-views/block-argument-text';
@@ -173,6 +173,8 @@ export const createPlusIntegration = ({
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
         // Breakpoints marked on blocks; the debugger add-on does the pausing.
         attached.push(attachBreakpointMenu({vm, getBlockly, getLocale: () => locale}));
+        // Each sprite and the stage show their own block groups in the palette.
+        attached.push({dispose: connectPaletteVisibility(vm)});
         if (projectFolderBlocks) {
             attached.push(attachProjectFolder(vm, hostDocument, localGit, gitRestoreVersion, locale, getBlockly, projectFolderBlocks,
                 workspaceMinimap || standardLayout ? (workspace, blocks, watermark) =>
