@@ -59,7 +59,7 @@
     white-space: nowrap;
 }
 
-.horizontal :global(.scratchCategoryMenuItem.categorySelected)[aria-expanded="false"] {
+.horizontal :global(.scratchCategoryMenuItem.categorySelected)[aria-expanded="false"]:not([data-palette-group-shown]) {
     background: transparent;
 }
 
