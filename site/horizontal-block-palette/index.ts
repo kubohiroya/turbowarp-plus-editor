@@ -4,7 +4,7 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
-import {attachPaletteMenuButton, createPaletteVisibilityStore, filterToolboxTree, paletteGroupSets, paletteScreenStateKey,
+import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, filterToolboxTree, paletteGroupSets, paletteScreenStateKey,
     paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import type {PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
@@ -45,6 +45,8 @@ const newSpritePrompts: ((target: any) => void)[] = [];
 
 const extensionIds = (vm: PaletteVM) => (vm.runtime._blockInfo ?? []).map(info => info.id);
 const originalTargets = (vm: PaletteVM) => (vm.runtime.targets ?? []).filter(target => target.isOriginal);
+const sameGroupSet = (left: ReadonlySet<string>, right: readonly string[]) =>
+    left.size === right.length && right.every(group => left.has(group));
 // Another sprite may share the same toolbox XML, in which case the GUI does not redraw the palette.
 const refreshPalettes = () => setTimeout(() => {for (const update of paletteRefreshers) update();}, 0);
 
@@ -107,14 +109,17 @@ export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => Pa
         };
     }
     // A sprite painted, chosen, uploaded or picked by surprise asks which groups it shows, when the project has
-    // extension groups to choose from.
+    // extension groups to choose from or another sprite shows groups other than its default, which it can copy.
     if (typeof originalAddSprite === 'function') {
         vm.addSprite = function (...args: unknown[]) {
             const before = vm.editingTarget;
             return originalAddSprite.apply(this, args).then(result => {
                 const target = vm.editingTarget;
                 if (paletteStore !== store || !target || target === before || target.isStage) return result;
-                if (extensionIds(vm).length) newSpritePrompts.at(-1)?.(target);
+                const ids = extensionIds(vm);
+                const customized = originalTargets(vm).some(other => !other.isStage && other !== target &&
+                    !sameGroupSet(store.visible(other, ids), defaultVisibleGroups(other, ids)));
+                if (ids.length || customized) newSpritePrompts.at(-1)?.(target);
                 return result;
             });
         };
@@ -370,6 +375,9 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             targetName: target.getName(),
             isStage: target.isStage,
             newSprite,
+            // A second or later sprite can copy the groups one already made shows.
+            copySources: newSprite ? originalTargets(vm).filter(other => !other.isStage && other !== target)
+                .map(other => ({name: other.getName(), groups: [...store.visible(other, ids)]})) : undefined,
             initial: store.visible(target, ids),
             used: usedGroups(target),
             extensions: (vm.runtime._blockInfo ?? []).map(info => ({
