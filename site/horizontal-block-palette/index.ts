@@ -4,12 +4,13 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
-import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog, filterToolboxTree,
+import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog,
     installExtensionPaletteGroups, paletteGroupSets, paletteScreenStateKey, paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import type {PaletteCategoryInfo, PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
-import {attachPaletteCategoryGroups, filterGroupedToolboxTree, flattenCategoryGroups} from '../palette-category-groups/index.ts';
+import {attachPaletteCategoryGroups, hasCategoryGroups, prepareGroupedToolboxTree} from
+    '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-groups';
 import styles from './palette.css';
 
 const installed = new WeakSet();
@@ -210,7 +211,9 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         horizontal: () => horizontal,
         rtl: workspace.RTL,
         choose: category => toolbox.setSelectedItem(category),
-        onChange: () => updateCategoryButtons()
+        onChange: () => updateCategoryButtons(),
+        reorder: allowCategoryReorder,
+        onReorder: () => reordered()
     });
     const search = attachPaletteCategorySearch(panel, getLocale, (query, previous) => {
         const category = categoryById(openId);
@@ -326,16 +329,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const updateCategoryButtons = () => {
         for (const category of toolbox.categoryMenu_.categories_) {
             const item = category.item_;
-            // A group's icon opens its child palette, which keeps aria-expanded itself.
-            if (groups.isGroup(category.id_)) {
-                if (horizontal) item.tabIndex = 0;
-                else item.removeAttribute('tabindex');
-                item.setAttribute('role', 'button');
-                // The group stays marked while one of its categories' blocks are shown.
-                item.toggleAttribute('data-palette-group-shown', horizontal && openId !== null &&
-                    openId !== category.id_ && groups.topLevelId(openId) === category.id_);
-                continue;
-            }
+            // A group's icon opens its child palette, which marks it itself.
+            if (groups.isGroup(category.id_)) continue;
             if (horizontal) {
                 item.tabIndex = 0;
                 item.setAttribute('role', 'button');
@@ -346,6 +341,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
                 item.removeAttribute('aria-expanded');
             }
         }
+        groups.syncButtons(openId);
     };
 
     toolbox.getWidth = () => horizontal ? 0 : original.getWidth.call(toolbox);
@@ -373,13 +369,11 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const shownCategories = () => categories().filter(category => groups.topLevelId(category.id_) === category.id_);
     let categoryOrder: string[] = [];
     const applyCategoryOrder = () => {
-        if (!categoryOrder.length) return;
         const current = categories();
-        const rank = id => {
-            const index = categoryOrder.indexOf(groups.topLevelId(id));
+        const ordered: typeof current = groups.arrange(current, id => {
+            const index = categoryOrder.indexOf(id);
             return index < 0 ? categoryOrder.length : index;
-        };
-        const ordered = current.slice().sort((a, b) => rank(a.id_) - rank(b.id_));
+        });
         if (ordered.every((category, index) => category === current[index])) return;
         current.splice(0, current.length, ...ordered);
         toolbox.categoryMenu_.table.append(...ordered.map(category => category.item_.parentElement));
@@ -391,17 +385,22 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             const ordered = shownCategories().map(category => category.id_);
             ordered.splice(to, 0, ordered.splice(from, 1)[0]);
             categoryOrder = ordered.concat(categoryOrder.filter(id => !ordered.includes(id)));
-            applyCategoryOrder();
-            if (horizontal) {
-                resizer.followAnchor();
-                flyout.position();
-            } else {
-                const selected = toolbox.getSelectedItem();
-                original.showAll.call(toolbox);
-                if (selected) original.scrollToId.call(toolbox, selected.id_);
-            }
+            groups.close();
+            reordered();
         }
     );
+    // Lays the palette out again after its categories or a group's members were reordered.
+    function reordered() {
+        applyCategoryOrder();
+        if (horizontal) {
+            resizer.followAnchor();
+            flyout.position();
+        } else {
+            const selected = toolbox.getSelectedItem();
+            original.showAll.call(toolbox);
+            if (selected) original.scrollToId.call(toolbox, selected.id_);
+        }
+    }
 
     toolbox.showAll_ = () => {
         applyCategoryOrder();
@@ -470,24 +469,18 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         {label: /^ja(?:-|$)/i.test(locale) ? '機能拡張を追加' : 'Add Extension', separated: true, onSelect: openExtensionLibrary}
     ]);
 
-    // The GUI selects an extension by its ID once it is added; an extension split into groups has its first shown group.
+    // The GUI selects an extension by its ID once it is added; one shown as a group selects its first shown group.
     const selectCategoryById = toolbox.setSelectedCategoryById;
     toolbox.setSelectedCategoryById = function (id: string) {
-        const group = !categoryById(id) && paletteVM ? catalogOf(paletteVM).groups
-            .find(item => item.extensionId === id && categoryById(item.id)) : undefined;
-        return selectCategoryById.call(this, group ? group.id : id);
+        return selectCategoryById.call(this, groups.selectionTarget(id));
     };
 
     toolbox.populate_ = tree => {
         if (reorder) reorder.cancel();
         if (tree) {
             lastTree = tree.cloneNode(true) as Element;
-            let found = flattenCategoryGroups(tree);
-            const visible = visibleNow();
-            if (visible) {
-                found = filterGroupedToolboxTree(tree, found,
-                    filtered => filterToolboxTree(filtered, visible, paletteVM ? catalogOf(paletteVM, getLocale()) : undefined));
-            }
+            const found = prepareGroupedToolboxTree(tree,
+                {catalog: paletteVM ? catalogOf(paletteVM, getLocale()) : undefined, visible: visibleNow()});
             original.populate.call(toolbox, tree);
             groups.update(found);
         } else {
@@ -730,7 +723,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     };
     // Scratch Blocks drew the first toolbox before the palette was attached, dropping the categories nested in groups.
     const firstTree = workspace.options.languageTree;
-    if (firstTree?.querySelector?.('category category')) toolbox.populate_(firstTree.cloneNode(true));
+    if (hasCategoryGroups(firstTree)) toolbox.populate_(firstTree.cloneNode(true));
     palettes.add(setMode);
     setMode(horizontalLayout);
 };
