@@ -99,31 +99,31 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <li><p><strong>パネルを開く</strong>。「ボール」のタブで<strong>「変数」</strong>（左端の[x]のアイコン）を開き、パネル左下の<strong>「新しいスプライト変数を追加」</strong>を押します。</p>
 <figure><a href="images/ja-list-create-01-open-panel.png"><img src="images/ja-list-create-01-open-panel.png" loading="lazy" width="2560" height="1440" alt="ボールの変数パネルの左下に「新しいスプライト変数を追加」がある"></a><figcaption>図17 · ボールの変数パネルの左下に「新しいスプライト変数を追加」がある</figcaption></figure></li>
 <li><p><strong>リストに名前を付ける</strong>。「新しいスプライト変数」ダイアログで<strong>「リスト」</strong>タブを選び、「新しいリスト名」に<code>チェックポイント</code>と入力して、右下の<strong>「作成」</strong>を押します。</p>
-<figure><a href="images/ja-list-create-02-create-list.png"><img src="images/ja-list-create-02-create-list.png" loading="lazy" width="904" height="834" alt="「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている"></a><figcaption>図18 · 「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている</figcaption></figure></li>
+<figure><a href="images/ja-list-create-02-create-list.png"><img src="images/ja-list-create-02-create-list.png" loading="lazy" width="720" height="652" alt="「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている"></a><figcaption>図18 · 「リスト」タブが選ばれ、新しいリスト名に「チェックポイント」が入っている</figcaption></figure></li>
 <li><p><strong>空のリストを開く</strong>。表に加わった「チェックポイント」の行にポインターを重ね、鉛筆アイコン付きの<strong>「編集」</strong>を押します。</p>
-<figure><a href="images/ja-list-create-03-empty-list.png"><img src="images/ja-list-create-03-empty-list.png" loading="lazy" width="2258" height="376" alt="空の「チェックポイント」リストの行に「編集」ボタンが表示されている"></a><figcaption>図19 · 空の「チェックポイント」リストの行に「編集」ボタンが表示されている</figcaption></figure></li>
+<figure><a href="images/ja-list-create-03-empty-list.png"><img src="images/ja-list-create-03-empty-list.png" loading="lazy" width="2216" height="328" alt="空の「チェックポイント」リストの行に「編集」ボタンが表示されている"></a><figcaption>図19 · 空の「チェックポイント」リストの行に「編集」ボタンが表示されている</figcaption></figure></li>
 <li><p><strong>項目を追加して保存する</strong>。左下の<strong>「項目を追加」</strong>を押すたびに入力欄が1つ増えます。<code>スタート</code>、<code>橋</code>、<code>ゴール</code>を順に入力し、右下の<strong>「保存」</strong>を押します。</p>
-<figure><a href="images/ja-list-create-04-add-items.png"><img src="images/ja-list-create-04-add-items.png" loading="lazy" width="1352" height="690" alt="リスト編集ダイアログに「スタート」「橋」「ゴール」が入り、右下に「保存」がある"></a><figcaption>図20 · リスト編集ダイアログに「スタート」「橋」「ゴール」が入り、右下に「保存」がある</figcaption></figure></li>
+<figure><a href="images/ja-list-create-04-add-items.png"><img src="images/ja-list-create-04-add-items.png" loading="lazy" width="1216" height="556" alt="リスト編集ダイアログに「スタート」「橋」「ゴール」が入り、右下に「保存」がある"></a><figcaption>図20 · リスト編集ダイアログに「スタート」「橋」「ゴール」が入り、右下に「保存」がある</figcaption></figure></li>
 <li><p><strong>表で確かめる</strong>。「チェックポイント」の行に、3つの項目が入力した順に表示されます。作品をファイルに残すには、<a href="#section-4-7">SB3で保存</a>します。</p>
-<figure><a href="images/ja-list-create-05-saved-list.png"><img src="images/ja-list-create-05-saved-list.png" loading="lazy" width="2258" height="376" alt="保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる"></a><figcaption>図21 · 保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる</figcaption></figure></li>
+<figure><a href="images/ja-list-create-05-saved-list.png"><img src="images/ja-list-create-05-saved-list.png" loading="lazy" width="2216" height="328" alt="保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる"></a><figcaption>図21 · 保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる</figcaption></figure></li>
 </ol>
 <p>作品全体で共有するリストは、背景のタブの「グローバル変数」から同じ手順で作れます。</p>
 <h3 id="section-2-4">2.4 クローンを選んで個体ごとの値を見る</h3>
 <p>「ボール」のタブを開いたまま、1.2と同じ手順でステージを右側の引出しに表示します。ステージの白い部分を一度クリックしてから<strong>Cキー</strong>を押すと、右にもう1つボールが現れます。これがクローン（実行中に作られるスプライトのコピー）です。このクローンは、作られると自分の<code>speed</code>を10増やし、<code>route</code>の1番目の言葉を2秒間言います。2.3でリストを編集していれば、吹き出しには<code>checkpoint</code>と表示されます。</p>
 <p><strong>「変数」</strong>を開き、見出しの右にある<strong>「1」</strong>を押します。パネルに「クローン 1 を編集中」と表示され、<code>speed</code>は<strong>30</strong>になっています。値を<strong>35</strong>に変えてから<strong>「元のスプライト」</strong>に戻ると、元のスプライトの<code>speed</code>は<strong>20</strong>のままです。クローンの位置やリストも同じように確かめたり編集したりできますが、クローンへの変更はその実行の間だけ有効です。クローンが6体以上になると、番号の選択リストと左右の矢印で切り替えます。</p>
-<figure><a href="images/ja-clone.png"><img loading="lazy" src="images/ja-clone.png" width="1360" height="665" alt="クローン1のspeedは30。右のステージには元のボールと、checkpointと言っているクローンが表示されている"></a><figcaption>図22 · クローン1のspeedは30。右のステージには元のボールと、checkpointと言っているクローンが表示されている</figcaption></figure>
+<figure><a href="images/ja-clone.png"><img loading="lazy" src="images/ja-clone.png" width="1360" height="665" alt="クローン1を編集中で、speedは30。右のステージには元のボールとクローンが並んでいる"></a><figcaption>図22 · クローン1を編集中で、speedは30。右のステージには元のボールとクローンが並んでいる</figcaption></figure>
 <h2 id="section-3">3. メッセージの流れをたどる</h2>
 <h3 id="section-3-1">3.1 送ったメッセージを受け取るブロックを表示する</h3>
-<p>「ボール」のタブで、左端の吹き出しのアイコン<strong>「メッセージ」</strong>を押します。このスプライトが使うメッセージが<strong>「送信」</strong>と<strong>「受信」</strong>に分けて並びます。ボールは緑の旗で動いた直後に<code>ball started</code>を送ります。「ブロック」列には、送るブロックと、そのブロックを含むスクリプトの最初のブロックが表示されます。下線付きの<strong>ball started</strong>を押すと、コード画面に切り替わり、その送るブロックが表示されます。</p>
-<figure><a href="images/ja-messages.png"><img loading="lazy" src="images/ja-messages.png" alt="ボールの「送信」一覧。メッセージ名と送信ブロック、スクリプトの開始位置が分かる"></a><figcaption>図23 · ボールの「送信」一覧。メッセージ名と送信ブロック、スクリプトの開始位置が分かる</figcaption></figure>
-<p>受け取る側のブロックを見るには、もう一度「ボール」の<strong>「メッセージ」</strong>を開き、パネル下部の関係図で矢印の先にある<strong>「背景」</strong>を押します。背景のタブが開いたら、左端の<strong>「メッセージ」</strong>を押し、<strong>「受信」</strong>の下線付きの<strong>ball started</strong>を押します。コード画面に切り替わり、<code>rounds</code>を1ずつ変える背景のスクリプトの、受け取るブロックが表示されます。</p>
+<p>「ボール」のタブで、左端の吹き出しのアイコン<strong>「メッセージ」</strong>を押します。このスプライトが送るメッセージと受け取るメッセージが、<strong>「送信」</strong>と<strong>「受信」</strong>の2つのタブに分かれ、それぞれ関係図で表示されます。ボールは緑の旗で動いた直後に<code>ball started</code>を送るので、「送信」タブに、左の送信元「ボール」から右の受信先「背景」への矢印が描かれます。送信元には、送るスクリプトのハットが小さく描かれ、「緑の旗が押されたとき」と添えられています。これを押すと、コード画面に切り替わり、その送るブロックが表示されます。</p>
+<figure><a href="images/ja-messages.png"><img loading="lazy" src="images/ja-messages.png" width="1360" height="575" alt="ボールの「メッセージ」の「送信」タブ。送信元のボールに緑の旗のハットが添えられ、ball startedの矢印が受信先の背景へ伸びている"></a><figcaption>図23 · ボールの「送信」タブ。送信元に、送るスクリプトのハットが添えられる</figcaption></figure>
+<p>受け取る側のブロックを見るには、もう一度「ボール」の<strong>「メッセージ」</strong>を開き、矢印の先にある<strong>「背景」</strong>を押します。背景のコードが開き、<code>ball started</code>を受け取って<code>rounds</code>を1ずつ変えるスクリプトが表示されます。</p>
 <h3 id="section-3-2">3.2 関係図で送信元と受信先をたどる</h3>
-<p>パネル下部の関係図「スプライト・背景とメッセージの関係」では、<strong>矢印が送信元から受信先</strong>へ向かい、矢印の上にメッセージ名が表示されます。今開いている対象には太い枠が付きます。このデモでは、<strong>ボール→背景</strong>の矢印に<code>ball started</code>が表示されます。</p>
-<p>背景の<strong>「メッセージ」</strong>パネルでは、背景が受け取るメッセージの一覧に加えて、作品全体の送受信が関係図に表示されます。</p>
-<figure><a href="images/ja-messages-stage.png"><img loading="lazy" src="images/ja-messages-stage.png" alt="背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い"></a><figcaption>図24 · 背景の「メッセージ」。受信一覧の下に送信元から背景への矢印があり、背景の枠が太い</figcaption></figure>
+<p>関係図では、<strong>矢印が送信元から受信先</strong>へ向かい、矢印の上にメッセージ名が表示されます。今開いている対象には太い枠が付きます。タブの数字は、それぞれのメッセージの数です。</p>
+<p>背景のタブで<strong>「メッセージ」</strong>を開くと、背景はメッセージを送らないので、はじめから「受信」タブが開きます。ボールから背景へ<code>ball started</code>が届いていることが分かります。</p>
+<figure><a href="images/ja-messages-stage.png"><img loading="lazy" src="images/ja-messages-stage.png" width="1360" height="575" alt="背景の「メッセージ」の「受信」タブ。ボールからball startedの矢印が、太い枠の付いた背景へ伸びている"></a><figcaption>図24 · 背景の「受信」タブ。矢印の先の背景に太い枠が付く</figcaption></figure>
 <h3 id="section-3-3">3.3 メッセージ名を作品全体で変える</h3>
-<p><code>ball started</code>の行にある鉛筆アイコンの<strong>「メッセージ名を変更」</strong>を押します。入力欄に<code>ball moved</code>などと入力し、隣の<strong>「メッセージ名を変更」</strong>を押して確定します。メッセージ名は作品全体で共通なので、ボールの送るブロックと背景の受け取るブロックの名前がそろって変わります。関係図に新しい名前を反映するには、いったん「自由配置」に切り替えてから「メッセージ」を開き直します。名前を変えずにやめるときは<strong>「キャンセル」</strong>を押します。</p>
-<figure><a href="images/ja-message-rename.png"><img loading="lazy" src="images/ja-message-rename.png" alt="鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中"></a><figcaption>図25 · 鉛筆アイコンを押して、送信一覧の中でメッセージ名を編集中</figcaption></figure>
+<p>関係図の<code>ball started</code>の右にある<strong>▼</strong>を押し、<strong>「メッセージ名を変更」</strong>を選びます。ダイアログの「新しいメッセージ名:」に<code>ball moved</code>などと入力し、Enterキーを押して確定します。メッセージ名は作品全体で共通なので、ボールの送るブロックと背景の受け取るブロックの名前がそろって変わります。関係図に新しい名前を反映するには、いったん「自由配置」に切り替えてから「メッセージ」を開き直します。名前を変えずにやめるときは<strong>「キャンセル」</strong>を押します。</p>
+<figure><a href="images/ja-message-rename.png"><img loading="lazy" src="images/ja-message-rename.png" width="1360" height="575" alt="「メッセージ名を変更」のダイアログで、新しいメッセージ名にball movedを入力したところ"></a><figcaption>図25 · ▼から開いた「メッセージ名を変更」のダイアログ</figcaption></figure>
 <h2 id="section-4">4. コードを探す、広げる、使い回す</h2>
 <h3 id="section-4-1">4.1 パレットと検索でブロックを探す</h3>
 <p>コード画面の上に並ぶ<strong>「動き」</strong>などのカテゴリを押すと、その下にブロックの小窓（パレット）が開きます。使いたいブロックを、小窓からコード領域へドラッグします。小窓の右下のハンドルで幅と高さを変え、中をスクロールしてみましょう。<strong>小窓の大きさはカテゴリごとにブラウザーに保存され、スクロール位置も作業中はカテゴリごとに保たれます。</strong>「見た目」を開いてから「動き」に戻ると、さっきの続きから探せます。</p>
@@ -147,7 +147,7 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <figure><a href="images/ja-split.png"><img loading="lazy" src="images/ja-split.png" alt="ボールのコードを左右のペインに分割したところ"></a><figcaption>図33 · ボールのコードを左右のペインに分割したところ</figcaption></figure>
 <h3 id="section-4-5">4.5 右クリックでスクリプトを別のタブにコピーする</h3>
 <p>まず、左の一覧で「ボール」を右クリックして<strong>「複製」</strong>を選び、練習用の「ボール2」を作ります。元の「ボール」のタブで、離れた場所にある<strong>「スペースキーが押されたとき」</strong>のスクリプトを右クリックし、<strong>「かたまりごとコピー」</strong>を選びます。次に「ボール2」のタブを開いてコード画面に切り替え、<strong>何もないところを右クリックして「貼り付け」</strong>を選ぶと、つながったブロックがひとまとまりで追加されます。複製した直後の「ボール2」にも同じスクリプトが1つあるので、貼り付けると2つになります。</p>
-<figure><a href="images/ja-copy.png"><img loading="lazy" src="images/ja-copy.png" alt="スクリプトの右クリックメニューにある「コピー」"></a><figcaption>図34 · スクリプトの右クリックメニューにある「コピー」</figcaption></figure>
+<figure><a href="images/ja-copy.png"><img loading="lazy" src="images/ja-copy.png" alt="スクリプトの右クリックメニューにある「かたまりごとコピー」"></a><figcaption>図34 · スクリプトの右クリックメニューにある「かたまりごとコピー」</figcaption></figure>
 <figure><a href="images/ja-paste.png"><img loading="lazy" src="images/ja-paste.png" alt="コピー先のボール2タブで「貼り付け」を選ぶ"></a><figcaption>図35 · コピー先のボール2タブで「貼り付け」を選ぶ</figcaption></figure>
 <figure><a href="images/ja-paste-result.png"><img loading="lazy" src="images/ja-paste-result.png" alt="貼り付け後の「ボール2」。スペースキーのスクリプトが追加された"></a><figcaption>図36 · 貼り付け後の「ボール2」。スペースキーのスクリプトが追加された</figcaption></figure>
 <h3 id="section-4-6">4.6 ドラッグでスクリプトを別のスプライトにコピーする</h3>

@@ -95,7 +95,7 @@
 <h2>10.4 作品のURIを指定してキャッシュを分ける</h2>
 
 <p>「ファイル」→「作品のプロパティ」の「作品の URI」に、作品を識別するHTTPSのアドレスを入力し、「適用」を押します。ユーザー名・パスワードや、<code>#</code> 以降のフラグメントを含むアドレスは使えません。適用したURIは、次に作品を保存したときにSB3に記録されます。</p>
-<figure class="guide-detail"><a href="../images/project-uri-detail.png"><img src="../images/project-uri-detail.png" width="622" height="116" alt="作品のプロパティの作品の URI 欄に、説明用のHTTPSのアドレスを入力した画面。下に、適用した URI は次に作品を保存したときに SB3 に記録されるという案内がある。" loading="lazy"></a><figcaption>「作品の URI」欄に説明用のURLを入力した例。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/project-uri-detail.png"><img src="../images/project-uri-detail.png" width="608" height="116" alt="作品のプロパティの作品の URI 欄に、説明用のHTTPSのアドレスを入力した画面。下に、適用した URI は次に作品を保存したときに SB3 に記録されるという案内がある。" loading="lazy"></a><figcaption>「作品の URI」欄に説明用のURLを入力した例。</figcaption></figure>
 <p>作品ごとにキャッシュを保存する拡張では、URIを変えると、以後の書き込みに新しいURIが使われます。URIを変えてもキャッシュは削除されず、以前のキャッシュはそのまま残ります。キャッシュはブラウザーの中に保存されます。</p>
 
 </section>
@@ -124,7 +124,7 @@
 <h2>10.6 ソースデータと素材の格納方式を選ぶ</h2>
 
 <p>「ファイル」→「組み込みデータ…」を開くと、「作品データの形式」が表示されます。「アセット」欄で、背景・コスチューム・音などの素材ごとに格納方式を選びます。対応する拡張のYAMLなど、対象のソースデータが作品内にあれば「ソースデータ」欄にも並びます。HTTPSから取得する格納方式を選ぶと、その項目の「HTTPS URL」欄が現れるので、URLを入力します。URLから取得した内容は、現在のデータとバイト単位で一致している必要があります。</p>
-<figure class="guide-detail"><a href="../images/project-data-dialog.png"><img src="../images/project-data-dialog.png" width="640" height="568" alt="作品データの形式ダイアログ。上部にバンドル素材を作品に追加…のボタン、ソースデータ欄、背景1とコスチューム1の形式選択がある。コスチューム1はHTTPS から毎回取得を選んでいて、その下にHTTPS URLの入力欄が出ている。右下にキャンセルと適用のボタンがある。" loading="lazy"></a><figcaption>「組み込みデータ…」で開く「作品データの形式」。新しい作品では背景1とコスチューム1が並びます。図はコスチューム1にHTTPSの形式を選んだところです。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/project-data-dialog.png"><img src="../images/project-data-dialog.png" width="640" height="716" alt="作品データの形式ダイアログ。上部にバンドル素材を作品に追加…のボタン、ソースデータ欄、背景1・コスチューム1・ポーン・ボールの形式選択がある。コスチューム1はHTTPS から毎回取得を選んでいて、その下にHTTPS URLの入力欄が出ている。右下にキャンセルと適用のボタンがある。" loading="lazy"></a><figcaption>「組み込みデータ…」で開く「作品データの形式」。作品の素材ごとに形式を選べます。図はネコとボールの作品で、コスチューム1にHTTPSの形式を選んだところです。</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="ソースデータと素材の格納方式" tabindex="0">
 <table><caption>ソースデータと素材の格納方式</caption><thead><tr><th scope="col">画面で選ぶ項目</th><th scope="col">使い分け</th></tr></thead><tbody>
 <tr><th scope="row">標準の格納方式を使う</th><td>その項目への個別指定を解除し、標準の方式で保存する</td></tr>
