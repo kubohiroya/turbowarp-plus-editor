@@ -118,7 +118,7 @@
     "tag": "next"
   },
   "dependencies": {
-    "@kubohiroya/turbowarp-document-data": "0.6.1",
+    "@kubohiroya/turbowarp-document-data": "0.6.2",
     "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.8",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
     "@kubohiroya/turbowarp-script-transfer": "0.1.5",
