@@ -2,17 +2,17 @@
   "date": "2026-11-16",
   "site": "https://kubohiroya.github.io/turbowarp-plus-editor/",
   "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-  "siteRevision": "6b9a46bafa5a4d4848f57463da8003a067059cc0",
+  "siteRevision": "f98acb6a4c73c245174d5da2abe1e6cec3f2c3e4",
   "editorVersion": "0.2.0-rc.4",
   "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
-  "securityVersion": "0.8.9",
+  "securityVersion": "0.9.0",
   "catalog": "https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json",
   "browser": "Playwright 1.64.1 Chromium, headless, ja-JP, deviceScaleFactor 1",
   "viewport": {
     "width": 1440,
     "height": 1000
   },
-  "note": "Every image except those under \"retained\" was captured in one scripted run from the public Editor at siteRevision 6b9a46b, which pinned every family package at its latest npm version; the site revision was checked before and after the run. No feature-flag queries; no UI text was altered. Sample projects are fictional and built as SB3 files: ネコ/ボール (variable 速さ, messages 開始 and ゲームオーバー, sound ポーン), Ball Demo.sb3 and Ball Demo Plus.sb3 from the tutorial, and the ネコのさんぽ repository (sb3-toolchain import, Git with branch 12-neko-walk, origin kubohiroya/turbowarp-kamishibai-app) handed to the real directory picker through a CDP drop. Projects with extensions are opened with project_url from a routed test host. PR images read public PR #219 without signing in. Headless Chromium does not show the 「…」 debug button or the アドオン palette category.",
+  "note": "Every image except those under \"retained\" was captured in one scripted run from the public Editor at siteRevision f98acb6, which pinned every family package at its latest npm version; the site revision was checked before and after the run. No feature-flag queries; no UI text was altered. Sample projects are fictional and built as SB3 files: ネコ/ボール (variable 速さ, messages 開始 and ゲームオーバー, sound ポーン), Ball Demo.sb3 and Ball Demo Plus.sb3 from the tutorial, and the ネコのさんぽ repository (sb3-toolchain import, Git with branch 12-neko-walk, origin kubohiroya/turbowarp-kamishibai-app) handed to the real directory picker through a CDP drop. Projects with extensions are opened with project_url from a routed test host. PR images read public PR #219 without signing in. Headless Chromium does not show the 「…」 debug button or the アドオン palette category.",
   "retained": {
     "current-git-create-pr.png": {
       "size": "1440x1220",
@@ -229,6 +229,10 @@
       "size": "640x296",
       "description": "File → 名前を変えて保存… (dialog element; focus moved off the input)."
     },
+    "sprite-calls.png": {
+      "size": "1440x1000",
+      "description": "Sprite with four functions (ジャンプする calls 着地する and 効果音を鳴らす; 得点を数える calls 効果音を鳴らす) called from two hats, built as an SB3; 呼び出し関係 opened and zoomed in twice."
+    },
     "sprite-context-menu.png": {
       "size": "420x360",
       "description": "Context menu of the ネコ tile (clip x0 y80)."
@@ -269,7 +273,7 @@
   "topPage": {
     "date": "2026-11-16",
     "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja",
-    "siteRevision": "6b9a46bafa5a4d4848f57463da8003a067059cc0",
+    "siteRevision": "f98acb6a4c73c245174d5da2abe1e6cec3f2c3e4",
     "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
     "viewport": {
       "width": 1200,
@@ -287,7 +291,7 @@
   "english": {
     "date": "2026-11-16",
     "url": "https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en",
-    "siteRevision": "6b9a46bafa5a4d4848f57463da8003a067059cc0",
+    "siteRevision": "f98acb6a4c73c245174d5da2abe1e6cec3f2c3e4",
     "browser": "Playwright 1.64.1 Chromium, headless, en-US, deviceScaleFactor 1",
     "directory": "images/en/",
     "note": "Images for the English guide pages, taken in the same run and states as the Japanese images with English sample names (Cat/Ball, speed, start, game over, Pop; Git fixture \"Cat Walk\" with branch 12-cat-walk; functions jump and land). The English pages reuse the Japanese images listed under \"retained\".",
@@ -339,6 +343,7 @@
       "properties-variables.png",
       "review-dialog.png",
       "save-as-dialog.png",
+      "sprite-calls.png",
       "sprite-context-menu.png",
       "sprite-divider.png",
       "sprite-functions.png",
@@ -356,7 +361,7 @@
   },
   "tutorial": {
     "date": "2026-11-16",
-    "siteRevision": "6b9a46bafa5a4d4848f57463da8003a067059cc0",
+    "siteRevision": "f98acb6a4c73c245174d5da2abe1e6cec3f2c3e4",
     "directory": "../ball-demo/images/",
     "note": "Ball demo tutorial figures (ja-*, en-*), captured in the same run by following the tutorial steps on Ball Demo.sb3 and Ball Demo Plus.sb3. Most are 1320 or 1360 px wide at deviceScaleFactor 1; the list figures and the sprite list close-ups use deviceScaleFactor 2. English figures keep the sprite name ボール, as the English tutorial does."
   }

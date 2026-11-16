@@ -34,11 +34,11 @@
 <ol>
 <li><a href="#sprite-drawer">3.1 Find and pin sprites in the sprite list</a></li>
 <li><a href="#sprite-tabs">3.2 Sprite tabs and the editor panel icons</a></li>
-<li><a href="#media-panes">3.3 Edit costumes and sounds</a></li>
-<li><a href="#variable-pane">3.4 Edit properties, variables and lists</a></li>
-<li><a href="#messages">3.5 Check who sends and receives messages</a></li>
-<li><a href="#backdrop">3.6 Edit the backdrop</a></li>
-<li><a href="#functions">3.7 List hats and functions and see their calls</a></li>
+<li><a href="#functions">3.3 List hats and functions and see their calls</a></li>
+<li><a href="#media-panes">3.4 Edit costumes and sounds</a></li>
+<li><a href="#variable-pane">3.5 Edit properties, variables and lists</a></li>
+<li><a href="#messages">3.6 Check who sends and receives messages</a></li>
+<li><a href="#backdrop">3.7 Edit the backdrop</a></li>
 </ol>
 </nav>
 
@@ -63,9 +63,27 @@
 
 </section>
 
+<section id="functions">
+
+<h2>3.3 List hats and functions and see their calls</h2>
+
+<p>Open "Hats and functions" to see the scripts of the open sprite or backdrop, split into "Hats" and "Functions". Each hat shows a picture of its hat block and a name such as "when space key pressed". Each function shows the name of its custom block and how often it is used, such as "Used 2 times". Named functions of the "TurboWarp-Named-Functions" extension are grouped under the heading "TurboWarp Plus named functions". Choose the order under "Order": "Name (A–Z)", "Z order (rows)", or "N order (columns)". Click the usage count to open the list of places that use the function, and pick one to go there.</p>
+<h3>Show and edit one script on its own</h3>
+<p>Pick a hat or a function in the list to split the panel to the right of the sprite and open a code area that shows only that script, in a numbered tab such as "Sprite1(2)". The other scripts are only hidden; they stay in the project. This code area has no icons along its left edge, and the block palette and context menus work as in "Free layout". Picking another item switches what the same code area shows, and the list highlights the item being shown. If you delete the script being shown, this code area closes.</p>
+<figure><a href="../images/en/sprite-functions.png"><img src="../images/en/sprite-functions.png" width="1440" height="1000" alt="In the left pane, &quot;Hats and functions&quot; lists the hats &quot;when green flag clicked&quot; and &quot;when space key pressed&quot; and the functions jump (Used 2 times) and land (Used once), with jump highlighted. The right pane, Sprite1(2), shows only the definition of jump." loading="lazy"></a><figcaption>"jump" picked in "Hats and functions". The code area split to the right shows only its definition.</figcaption></figure>
+<p>"Show this function" in the context menu of a block that calls a function also opens the function in the same code area (<a href="../blocks/index.en.html#context-menu">Work with context menus</a>). "Fold" in a hat's context menu shows a script as its hat alone.</p>
+<h3>Adding a function</h3>
+<p>Press "+ Add a new function" below the list to open a dialog for the "Function name" and its "Kind": "Standard (My Blocks)" or "TurboWarp-Plus named function". Press "Add" to create the function below the existing scripts and open it in the code area on the right. A standard function is a custom block definition with no inputs. You cannot add a function whose name is already taken. If you choose a named function and the "TurboWarp-Named-Functions" extension is not loaded, it is loaded at that point.</p>
+<h3>Seeing which function calls which</h3>
+<p>Open "Calls" to see a diagram with functions as boxes and calls as arrows. A function called from a script that is not a function, such as a hat script, is marked with ▶. Global named functions defined in other sprites or the stage also appear, with the name of the sprite or stage that defines them, when they are connected by calls.</p>
+<figure><a href="../images/en/sprite-calls.png"><img src="../images/en/sprite-calls.png" width="1440" height="1000" alt="The Calls diagram. Arrows run from count score to play sound, and from jump to play sound and land. count score and jump, which hats call, carry a ▶ mark. The direction buttons are at the top right, the minimap and zoom buttons at the bottom right, and Add a new function at the bottom left." loading="lazy"></a><figcaption>"Calls" opened and zoomed in. "jump" calls "land" and "play sound", and "count score" also calls "play sound".</figcaption></figure>
+<p>Point at a box to highlight the arrows connected to it. Click the box of a function of the open sprite or backdrop to open that function in the code area on the right. The buttons at the top right switch the flow between "Left to right (LR)" and "Top to bottom (TD)", and the buttons at the bottom right zoom in and out. You can also add a function with "+ Add a new function" at the bottom left.</p>
+
+</section>
+
 <section id="media-panes">
 
-<h2>3.3 Edit costumes and sounds</h2>
+<h2>3.4 Edit costumes and sounds</h2>
 
 <p>Choose "Split right" from "Editor panel layout" at the top right of the tabs to open the same sprite on the right in a numbered tab (for example, "Cat(2)"). This guide calls each of the areas created by a split a pane. Choose "Costumes" on the left and "Sounds" on the right to work with costumes and sounds side by side. Selecting a sound in "Sounds" shows its waveform, and the play button below it lets you listen. If the sprite has no sounds, add one with the button at the bottom left.</p>
 <p>Only the pane you are working in shows the full editor. The other pane shows a preview of its selected costume or sound. Interact with that pane and it switches to the editor.</p>
@@ -79,7 +97,7 @@
 
 <section id="variable-pane">
 
-<h2>3.4 Edit properties, variables and lists</h2>
+<h2>3.5 Edit properties, variables and lists</h2>
 
 <p>Open "Variables" to see the sprite's properties and its "Sprite Variables" under the heading "Sprite Properties and Variables".</p>
 <ul><li><strong>Properties</strong>: Edit the sprite name, x, y, visibility (eye icon to show, slashed eye to hide), size, direction, and rotation style (all around, left-right, or don't rotate).</li><li><strong>Variable list</strong>: Shows the variables and lists that belong to what is open. A sprite's "Variables" lists the sprite variables that only that sprite uses; the stage's "Global Variables" lists the global variables shared by the whole project. Cloud variables have a cloud icon to the right of the name.</li><li><strong>Changing values</strong>: Type a value and press Enter, or move focus out of the field, to apply it. Press Esc before applying to cancel the edit.</li></ul>
@@ -106,7 +124,7 @@
 
 <section id="messages">
 
-<h2>3.5 Check who sends and receives messages</h2>
+<h2>3.6 Check who sends and receives messages</h2>
 
 <p>Open "Messages", below "Variables", to see the messages the open sprite or backdrop sends and receives, on two tabs, "Sent" and "Received". The number on each tab is how many messages it covers. For a sprite or backdrop that only receives messages, the "Received" tab opens first.</p>
 <p>Both tabs show a diagram. For each message, an arrow runs from "Sends" on the left to "Receives" on the right, with sprite and stage thumbnails at each end. The message name appears next to the speech-bubble icon above the arrow. The open sprite or backdrop has a thick frame in the accent color.</p>
@@ -121,27 +139,11 @@
 
 <section id="backdrop">
 
-<h2>3.6 Edit the backdrop</h2>
+<h2>3.7 Edit the backdrop</h2>
 
 <p>Choose the "Backdrops" tile below the sprite list to open the editor panel for the stage. Like the tile, its tab is labeled "Backdrops".</p>
 <p>The icons along the left edge of the editor panel are in the same order as for sprites, except that "Backdrops" replaces "Costumes" and "Global Variables" replaces "Variables". Edit the stage's backdrop images in "Backdrops", its scripts in "Free layout", and its sounds in "Sounds". "Global Variables" lists the variables and lists used by the whole project, and the diagram in "Messages" shows all sending and receiving in the project (<a href="#messages">Check who sends and receives messages</a>).</p>
 <p>Right-click the backdrop tile to choose "Open" or "Export Stage". "Export Stage" exports the stage as a .stage3 file (<a href="../reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a>).</p>
-
-</section>
-<section id="functions">
-
-<h2>3.7 List hats and functions and see their calls</h2>
-
-<p>Open "Hats and functions" to see the scripts of the open sprite or backdrop, split into "Hats" and "Functions". Each hat shows a picture of its hat block and a name such as "when space key pressed". Each function shows the name of its custom block and how often it is used, such as "Used 2 times". Named functions of the "TurboWarp-Named-Functions" extension are grouped under the heading "TurboWarp Plus named functions". Choose the order under "Order": "Name (A–Z)", "Z order (rows)", or "N order (columns)". Click the usage count to open the list of places that use the function, and pick one to go there.</p>
-<h3>Show and edit one script on its own</h3>
-<p>Pick a hat or a function in the list to split the panel to the right of the sprite and open a code area that shows only that script, in a numbered tab such as "Sprite1(2)". The other scripts are only hidden; they stay in the project. This code area has no icons along its left edge, and the block palette and context menus work as in "Free layout". Picking another item switches what the same code area shows, and the list highlights the item being shown. If you delete the script being shown, this code area closes.</p>
-<figure><a href="../images/en/sprite-functions.png"><img src="../images/en/sprite-functions.png" width="1440" height="1000" alt="In the left pane, &quot;Hats and functions&quot; lists the hats &quot;when green flag clicked&quot; and &quot;when space key pressed&quot; and the functions jump (Used 2 times) and land (Used once), with jump highlighted. The right pane, Sprite1(2), shows only the definition of jump." loading="lazy"></a><figcaption>"jump" picked in "Hats and functions". The code area split to the right shows only its definition.</figcaption></figure>
-<p>"Show this function" in the context menu of a block that calls a function also opens the function in the same code area (<a href="../blocks/index.en.html#context-menu">Work with context menus</a>). "Fold" in a hat's context menu shows a script as its hat alone.</p>
-<h3>Adding a function</h3>
-<p>Press "+ Add a new function" below the list to open a dialog for the "Function name" and its "Kind": "Standard (My Blocks)" or "TurboWarp-Plus named function". Press "Add" to create the function below the existing scripts and open it in the code area on the right. A standard function is a custom block definition with no inputs. You cannot add a function whose name is already taken. If you choose a named function and the "TurboWarp-Named-Functions" extension is not loaded, it is loaded at that point.</p>
-<h3>Seeing which function calls which</h3>
-<p>Open "Calls" to see a diagram with functions as boxes and calls as arrows. A function called from a script that is not a function, such as a hat script, is marked with ▶. Global named functions defined in other sprites or the stage also appear, with the name of the sprite or stage that defines them, when they are connected by calls.</p>
-<p>Point at a box to highlight the arrows connected to it. Click the box of a function of the open sprite or backdrop to open that function in the code area on the right. The buttons at the top right switch the flow between "Left to right (LR)" and "Top to bottom (TD)", and the buttons at the bottom right zoom in and out. You can also add a function with "+ Add a new function" at the bottom left.</p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">
