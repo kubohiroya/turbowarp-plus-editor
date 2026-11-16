@@ -20,7 +20,7 @@ import type {FollowExplorerGit, FollowFileStatuses} from '@kubohiroya/turbowarp-
 import {followExplorerGit, followFileStatuses, readProjectHeadFile, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
 import {aiAgents} from '../project-tools/info-menu.tsx';
 import {projectFolderWorkflows} from '../project-folder-host.ts';
-import {createFolderFromCurrentProject} from '../project-tools/index.ts';
+import {createFolderFromCurrentProject, projectScreenState} from '../project-tools/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
@@ -143,6 +143,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
             storage={getStorage()}
             storageKey="twPlusEditorLayout"
             drawerViews={drawerViews}
+            screenState={projectScreenState(vm)}
             stageDrawerLayout={stage?.drawerLayout}
             updateStageDrawer={stage?.updateDrawer}
             onPaletteModeChange={setHorizontalBlockPalette}

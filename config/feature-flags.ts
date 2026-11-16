@@ -22,7 +22,8 @@ export function readStartupFeatureFlags({
     twPlusLocalGit: localGit = null,
     twPlusGitRestoreVersion: gitRestoreVersion = null,
     twPlusWorkspaceMinimap: workspaceMinimap = null,
-    twPlusStageCodePrewarm: stageCodePrewarm = null
+    twPlusStageCodePrewarm: stageCodePrewarm = null,
+    twPlusSaveWorkspace: saveWorkspace = null
 } = {}) {
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
@@ -47,6 +48,8 @@ export function readStartupFeatureFlags({
         localGit: localGit === null || localGit === '1',
         gitRestoreVersion: (localGit === null || localGit === '1') && gitRestoreVersion === '1',
         workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1',
-        stageCodePrewarm: stageCodePrewarm === null || stageCodePrewarm === '1'
+        stageCodePrewarm: stageCodePrewarm === null || stageCodePrewarm === '1',
+        // Saving writes the screen of the project into its SB3 or project folder; files saved earlier still open as saved.
+        saveWorkspace: saveWorkspace === null || saveWorkspace === '1'
     });
 }

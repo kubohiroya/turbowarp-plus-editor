@@ -136,6 +136,7 @@ const html = renderEditButton({size: 'small', language: 'ja', projectURL: 'https
 | --- | --- |
 | `twPlusStandardLayout=0` | 標準のPlus配置ではなく、以前の配置で開く |
 | `twPlusWorkspaceMinimap=0` | コード領域のミニマップを隠す |
+| `twPlusSaveWorkspace=0` | 画面（ドロワー・タブ・ペイン）を SB3 や作品フォルダに保存しない |
 | `twPlusPaletteCategoryReorder=0` | パレットのカテゴリを長押しで並べ替えない |
 | `twPlusPaletteDeletePreview=0` | ブロックをパレットへドラッグしたときのごみ箱表示を出さない |
 | `twPlusContextMenuIcons=0` | コンテキストメニューのアイコンを出さない |

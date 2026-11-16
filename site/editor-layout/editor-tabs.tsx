@@ -30,7 +30,7 @@ import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-editor-toolbar.css
 import type {WorkspaceProjectIdentity} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {desktopProjectKey, desktopWorkspaceLayoutStore, dockviewMultiViewEnabled, dockviewSpriteTabsEnabled,
     layoutFlags, WindowLayoutContext} from './index.tsx';
-import {isProjectLoading, loadedProjectTitle, subscribeProjectLoad} from '../project-tools/index.ts';
+import {isProjectLoading, loadedProjectTitle, projectScreenState, subscribeProjectLoad} from '../project-tools/index.ts';
 import {projectFolderDirectory} from '../project-folder-host.ts';
 import {StageDisplayMenuContext, TargetSwitchContext} from './context.ts';
 import {openDetachedBlockPalette} from '../horizontal-block-palette/index.ts';
@@ -205,7 +205,9 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
     const workspaceLayout = React.useMemo(() => multiView ? {
         store: desktopWorkspaceLayoutStore,
         identify: () => identifyProject(vm),
-        isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener)
+        isProjectLoading: () => isProjectLoading(vm), subscribeProject: listener => subscribeProjectLoad(vm, listener),
+        // Read when the tabs mount and each project opens, after the project tools installed it.
+        get screenState() { return projectScreenState(vm); }
     } : undefined, [multiView, vm]);
     // The script shown beside the sprite, which the list of hats and functions highlights.
     const [selectedScript, setSelectedScript] = React.useState<{targetId: string; id: string}>();
