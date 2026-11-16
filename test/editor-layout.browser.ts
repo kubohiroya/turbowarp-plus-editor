@@ -626,7 +626,8 @@ test('the enabled debugger opens from its own menu bar button, outside the exten
     await page.reload();
 
     // The debugger is always on the bar once enabled, so it stands on its own: with no project
-    // extensions there is no tray at all, and the button is a round "…" of the row's height.
+    // extensions there is no tray at all, and the button is a round 🐞 of the row's height, the mark the
+    // editor uses for debugging.
     const open = page.getByRole('button', {name: 'Debugger', exact: true});
     await expect(open).toBeVisible();
     await expect(debuggerButton).toHaveCount(1);
@@ -634,7 +635,7 @@ test('the enabled debugger opens from its own menu bar button, outside the exten
     const bounds = await open.boundingBox();
     assert.deepEqual([bounds.width, bounds.height], [32, 32]);
     assert.equal(await open.evaluate(element =>
-        getComputedStyle(element.querySelector('[class*="button_content"]'), '::before').content), '"…"');
+        getComputedStyle(element.querySelector('[class*="button_content"]'), '::before').content), '"🐞"');
     await expect(open.locator('img')).toBeHidden();
 
     // Stage launcher, recorder, debugger and extension tray follow one another in that order.
