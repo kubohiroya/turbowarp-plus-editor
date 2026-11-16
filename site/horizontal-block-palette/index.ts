@@ -5,7 +5,7 @@ import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-cod
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
 import {attachPaletteMenuButton, createPaletteVisibilityStore, filterToolboxTree, paletteGroupSets, paletteScreenStateKey,
-    paletteVisibilityMenuLabel, standardGroups, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
+    paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import type {PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
@@ -43,21 +43,6 @@ const paletteRefreshers = new Set<() => void>();
 // The palettes that can ask which groups a sprite just added shows; the latest one asks.
 const newSpritePrompts: ((target: any) => void)[] = [];
 
-// Whether to ask for each new sprite, and the groups chosen when the answer was not to ask again. Per browser.
-const newSpritePreferenceKey = 'twPlus.paletteNewSprite';
-type NewSpritePreference = {ask: boolean; groups?: string[]};
-const readNewSpritePreference = (): NewSpritePreference => {
-    try {
-        const value = JSON.parse(globalThis.localStorage?.getItem(newSpritePreferenceKey) ?? 'null');
-        if (value && value.ask === false && Array.isArray(value.groups)) return {ask: false, groups: value.groups.map(String)};
-    } catch {}
-    return {ask: true};
-};
-const writeNewSpritePreference = (preference: NewSpritePreference) => {
-    try {
-        globalThis.localStorage?.setItem(newSpritePreferenceKey, JSON.stringify(preference));
-    } catch {}
-};
 const extensionIds = (vm: PaletteVM) => (vm.runtime._blockInfo ?? []).map(info => info.id);
 const originalTargets = (vm: PaletteVM) => (vm.runtime.targets ?? []).filter(target => target.isOriginal);
 // Another sprite may share the same toolbox XML, in which case the GUI does not redraw the palette.
@@ -122,23 +107,14 @@ export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => Pa
         };
     }
     // A sprite painted, chosen, uploaded or picked by surprise asks which groups it shows, when the project has
-    // extension groups to choose from, unless the person chose not to be asked again.
+    // extension groups to choose from.
     if (typeof originalAddSprite === 'function') {
         vm.addSprite = function (...args: unknown[]) {
             const before = vm.editingTarget;
             return originalAddSprite.apply(this, args).then(result => {
                 const target = vm.editingTarget;
                 if (paletteStore !== store || !target || target === before || target.isStage) return result;
-                const ids = extensionIds(vm);
-                if (!ids.length) return result;
-                const preference = readNewSpritePreference();
-                if (!preference.ask) {
-                    const offered = new Set<string>([...standardGroups, ...ids]);
-                    store.set(target, preference.groups.filter(group => offered.has(group)), ids);
-                    changed();
-                } else {
-                    newSpritePrompts.at(-1)?.(target);
-                }
+                if (extensionIds(vm).length) newSpritePrompts.at(-1)?.(target);
                 return result;
             });
         };
@@ -401,8 +377,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
                 metadata: {name: info.name || info.id, banner: info.menuIconURI || info.blockIconURI}
             })),
             sets: paletteGroupSets(getLocale(), store.sets()),
-            onApply({groups, addedSets, dontAskAgain}) {
-                if (dontAskAgain) writeNewSpritePreference({ask: false, groups});
+            onApply({groups, addedSets}) {
                 store.addSets(addedSets);
                 store.set(target, groups, ids);
                 vm.runtime.emitProjectChanged();
