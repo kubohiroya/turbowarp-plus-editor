@@ -47,10 +47,10 @@
 <p>フォーム編集に対応する拡張では、ブロックの引数を項目ごとの入力欄で編集できます。たとえば、場面名と表示時間を1つのJSON文字列にまとめて持つブロックでも、それぞれを別の欄に入力できます。</p>
 <p><strong>拡張の開発者は、保存するデータのJSON Schemaを用意し、対象のブロックと引数を指定して登録するだけで、そのブロック専用のフォームを用意できます。</strong>エディターはスキーマから入力欄を組み立て、必須項目や値の範囲を検証します。</p>
 <ol><li>対応するブロックをコード領域に置き、ブロックの左端にある「ブロックを編集」アイコンを押します。</li><li>フォームで値を変えます。表示される項目は拡張ごとに異なります。</li><li>「すべて保存」を押すと、検証に通った値がブロックに反映されます。変更をやめるときは「キャンセル」で閉じます。フォームで保存した変更は、コード画面で「元に戻す」を1回行えば取り消せます。</li><li>作品ファイルに残すには、続けて「ファイル」メニューから保存します。</li></ol>
-<figure><a href="../images/form-dialog.png"><img src="../images/form-dialog.png" width="820" height="518" alt="scene propertiesを編集するフォーム。Scene labelにオープニング、Duration (seconds)に3が入力され、キャンセルとすべて保存のボタンがある。" loading="lazy"></a><figcaption>リポジトリのサンプル拡張（<code>examples/extensions/block-editor.ts</code>）が登録したフォーム。場面名と表示時間を別々の欄に入力します。</figcaption></figure>
+<figure><a href="../images/form-dialog.png"><img src="../images/form-dialog.png" width="820" height="520" alt="scene propertiesを編集するフォーム。Scene labelにOpening、Duration (seconds)に2が入力され、キャンセルとすべて保存のボタンがある。" loading="lazy"></a><figcaption>リポジトリのサンプル拡張（<code>examples/extensions/block-editor.ts</code>）が登録したフォーム。場面名と表示時間を別々の欄に入力します。</figcaption></figure>
 <h3>入力の誤りを、その場で見つける</h3>
 <p>図のフォームで指定できる表示時間は1〜60秒です。0を入力すると範囲外であることが示され、値を直すまで保存できません。問題が残っているあいだは、ボタンの横に「2件の問題を直すと保存できます」のように件数が表示されます。どんな値を受け付けるかは拡張が決めます。</p>
-<figure><a href="../images/validation-dialog.png"><img src="../images/validation-dialog.png" width="820" height="601" alt="Duration (seconds)に0を入力すると、入力欄が赤くなり、1以上にする必要があるという検証メッセージが出て、すべて保存のボタンが無効になる。" loading="lazy"></a><figcaption>表示時間が範囲外のときは入力欄に理由が表示され、「すべて保存」は押せません。</figcaption></figure>
+<figure><a href="../images/validation-dialog.png"><img src="../images/validation-dialog.png" width="820" height="601" alt="Scene labelを空にすると、入力欄が赤くなり、必須の項目であることを示す検証メッセージが出て、すべて保存のボタンが無効になる。" loading="lazy"></a><figcaption>必須の欄が空のときや値が範囲外のときは入力欄に理由が表示され、「すべて保存」は押せません。</figcaption></figure>
 <h3>入れ子のブロックを編集する</h3>
 <p>拡張が親子のブロックを編集対象に登録していれば、同じフォームでそれぞれの値を変えられます。数値・文字列・選択肢の固定入力も、対応していれば専用の欄で編集できます。</p>
 <p>固定入力の専用の欄など、入れ子のブロックを扱わないフォームでは、ボタンは「すべて保存」ではなく「保存」です。値がパレットから置いたときの初期値と違うブロックでは「更新」になり、何も変えていないあいだは押せず、「変更はありません」と表示されます。</p>
