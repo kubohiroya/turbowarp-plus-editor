@@ -5,7 +5,7 @@ import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-cod
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
 import {attachPaletteMenuButton, createPaletteVisibilityStore, filterToolboxTree, paletteGroupSets, paletteScreenStateKey,
-    paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
+    paletteVisibilityMenuLabel, standardGroups, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import type {PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
@@ -29,6 +29,8 @@ type PaletteVM = {
     };
     on(event: string, listener: (...args: any[]) => void): void;
     off(event: string, listener: (...args: any[]) => void): void;
+    addSprite?(...args: any[]): Promise<unknown>;
+    duplicateSprite?(targetId: string): Promise<unknown>;
 };
 /** The part of the editor's screen state the palette settings are saved with. */
 type PaletteScreenState = {
@@ -38,6 +40,24 @@ type PaletteScreenState = {
 let paletteVM: PaletteVM | null = null;
 let paletteStore: PaletteVisibilityStore | null = null;
 const paletteRefreshers = new Set<() => void>();
+// The palettes that can ask which groups a sprite just added shows; the latest one asks.
+const newSpritePrompts: ((target: any) => void)[] = [];
+
+// Whether to ask for each new sprite, and the groups chosen when the answer was not to ask again. Per browser.
+const newSpritePreferenceKey = 'twPlus.paletteNewSprite';
+type NewSpritePreference = {ask: boolean; groups?: string[]};
+const readNewSpritePreference = (): NewSpritePreference => {
+    try {
+        const value = JSON.parse(globalThis.localStorage?.getItem(newSpritePreferenceKey) ?? 'null');
+        if (value && value.ask === false && Array.isArray(value.groups)) return {ask: false, groups: value.groups.map(String)};
+    } catch {}
+    return {ask: true};
+};
+const writeNewSpritePreference = (preference: NewSpritePreference) => {
+    try {
+        globalThis.localStorage?.setItem(newSpritePreferenceKey, JSON.stringify(preference));
+    } catch {}
+};
 const extensionIds = (vm: PaletteVM) => (vm.runtime._blockInfo ?? []).map(info => info.id);
 const originalTargets = (vm: PaletteVM) => (vm.runtime.targets ?? []).filter(target => target.isOriginal);
 // Another sprite may share the same toolbox XML, in which case the GUI does not redraw the palette.
@@ -83,25 +103,61 @@ export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => Pa
         store.set(target, [...groups, info.id], extensionIds(vm));
         changed();
     };
+    // The VM tells a duplicate, a new sprite and a loaded one apart only by the method that made it, and each
+    // makes the new sprite the editing target.
+    const originalDuplicate = vm.duplicateSprite;
+    const originalAddSprite = vm.addSprite;
     // A duplicated sprite starts with the groups of the sprite it was made from.
-    const created = (target: {id: string}, source?: {id: string}) => {
-        if (source) store.copy(source, target);
-    };
+    if (typeof originalDuplicate === 'function') {
+        vm.duplicateSprite = function (targetId: string) {
+            const source = vm.runtime.targets?.find(target => target.id === targetId);
+            return originalDuplicate.call(this, targetId).then(result => {
+                const target = vm.editingTarget;
+                if (paletteStore === store && source && target && target !== source) {
+                    store.copy(source, target);
+                    refreshPalettes();
+                }
+                return result;
+            });
+        };
+    }
+    // A sprite painted, chosen, uploaded or picked by surprise asks which groups it shows, when the project has
+    // extension groups to choose from, unless the person chose not to be asked again.
+    if (typeof originalAddSprite === 'function') {
+        vm.addSprite = function (...args: unknown[]) {
+            const before = vm.editingTarget;
+            return originalAddSprite.apply(this, args).then(result => {
+                const target = vm.editingTarget;
+                if (paletteStore !== store || !target || target === before || target.isStage) return result;
+                const ids = extensionIds(vm);
+                if (!ids.length) return result;
+                const preference = readNewSpritePreference();
+                if (!preference.ask) {
+                    const offered = new Set<string>([...standardGroups, ...ids]);
+                    store.set(target, preference.groups.filter(group => offered.has(group)), ids);
+                    changed();
+                } else {
+                    newSpritePrompts.at(-1)?.(target);
+                }
+                return result;
+            });
+        };
+    }
     // A host that passes a VM without events still gets the filtering; only the redraws are missing.
     const listens = typeof vm.on === 'function' && typeof vm.runtime?.on === 'function';
     if (listens) {
         vm.on('workspaceUpdate', refreshPalettes);
         vm.runtime.on('PROJECT_LOADED', loaded);
         vm.runtime.on('EXTENSION_ADDED', added);
-        vm.runtime.on('targetWasCreated', created);
     }
     return () => {
         if (listens) {
             vm.off('workspaceUpdate', refreshPalettes);
             vm.runtime.off('PROJECT_LOADED', loaded);
             vm.runtime.off('EXTENSION_ADDED', added);
-            vm.runtime.off('targetWasCreated', created);
         }
+        if (vm.duplicateSprite !== originalDuplicate) vm.duplicateSprite = originalDuplicate;
+        if (vm.addSprite !== originalAddSprite) vm.addSprite = originalAddSprite;
         unregister?.();
         if (paletteVM === vm) paletteVM = null;
         if (paletteStore === store) paletteStore = null;
@@ -328,16 +384,16 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         if (lastTree) workspace.updateToolbox(lastTree.cloneNode(true));
     };
     paletteRefreshers.add(redraw);
-    const openGroupSettings = () => {
+    const openGroupSettings = (target = paletteVM?.editingTarget, newSprite = false) => {
         const vm = paletteVM;
         const store = paletteStore;
-        const target = vm?.editingTarget;
         if (!vm || !store || !target) return;
         const ids = extensionIds(vm);
         openPaletteVisibilityDialog(doc, {
             locale: getLocale(),
             targetName: target.getName(),
             isStage: target.isStage,
+            newSprite,
             initial: store.visible(target, ids),
             used: usedGroups(target),
             extensions: (vm.runtime._blockInfo ?? []).map(info => ({
@@ -345,7 +401,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
                 metadata: {name: info.name || info.id, banner: info.menuIconURI || info.blockIconURI}
             })),
             sets: paletteGroupSets(getLocale(), store.sets()),
-            onApply({groups, addedSets}) {
+            onApply({groups, addedSets, dontAskAgain}) {
+                if (dontAskAgain) writeNewSpritePreference({ask: false, groups});
                 store.addSets(addedSets);
                 store.set(target, groups, ids);
                 vm.runtime.emitProjectChanged();
@@ -354,13 +411,15 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             onCancel() {}
         });
     };
+    const askNewSprite = (target: any) => openGroupSettings(target, true);
+    newSpritePrompts.push(askNewSprite);
     const openExtensionLibrary = () => {
         const button: HTMLElement | null = doc.querySelector(
             '[data-code-extension-button] button, [class*="gui_extension-button-container_"] button');
         button?.click();
     };
     const paletteMenu = attachPaletteMenuButton(menu, getLocale, locale => [
-        {label: paletteVisibilityMenuLabel(locale), onSelect: openGroupSettings},
+        {label: paletteVisibilityMenuLabel(locale), onSelect: () => openGroupSettings()},
         {label: /^ja(?:-|$)/i.test(locale) ? '機能拡張を追加' : 'Add Extension', separated: true, onSelect: openExtensionLibrary}
     ]);
 
@@ -589,6 +648,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     });
     toolbox.dispose = () => {
         paletteRefreshers.delete(redraw);
+        newSpritePrompts.splice(newSpritePrompts.indexOf(askNewSprite) >>> 0, 1);
         paletteMenu.dispose();
         disconnectPalette();
         if (inputDocument !== doc) moveBlockWidgets(ScratchBlocks, doc);
