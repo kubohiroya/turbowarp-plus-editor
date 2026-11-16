@@ -228,6 +228,25 @@ npm run editor:yaml -- --site-dir /absolute/path/to/editor/build --data-dir /abs
 
 ## Documentation
 
+### Feature guide (published)
+
+The illustrated [feature guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) covers the following twelve topics. To try the Editor first, start with the [ball demo](https://kubohiroya.github.io/turbowarp-plus-editor/features/ball-demo/index.en.html).
+
+1. [Open projects and prepare extensions](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html)
+2. [Screen layout and menus](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html)
+3. [Edit sprites and the backdrop](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html)
+4. [Open the stage and run your project](https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/index.en.html)
+5. [Split the workspace and open panels separately](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/index.en.html)
+6. [Find, place and organize blocks](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html)
+7. [Search and replace across the project](https://kubohiroya.github.io/turbowarp-plus-editor/features/search/index.en.html)
+8. [Edit extension data and documents](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html)
+9. [Reuse scripts and assets](https://kubohiroya.github.io/turbowarp-plus-editor/features/reuse/index.en.html)
+10. [Save and distribute](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html)
+11. [Manage projects with project folders and Git](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html)
+12. [Develop projects on GitHub](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/index.en.html)
+
+### Design documents
+
 Most design documents are in Japanese.
 
 - [Responsibilities and distribution](docs/architecture.md)

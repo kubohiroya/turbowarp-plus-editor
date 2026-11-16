@@ -228,6 +228,25 @@ npm run editor:yaml -- --site-dir /absolute/path/to/editor/build --data-dir /abs
 
 ## ドキュメント
 
+### 機能ガイド（公開版）
+
+画面付きの機能ガイドは[機能ガイドのトップ](https://kubohiroya.github.io/turbowarp-plus-editor/features/)にあり、次の12ページで構成しています。最初に[ボールのデモ](https://kubohiroya.github.io/turbowarp-plus-editor/features/ball-demo/)で試せます。
+
+1. [作品を開き、拡張を準備する](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/)
+2. [画面の構成とメニュー](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/)
+3. [スプライトと背景を編集する](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/)
+4. [ステージを開いて作品を動かす](https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/)
+5. [作業領域を分割・別ウィンドウにする](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/)
+6. [ブロックを探して置く・整理する](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/)
+7. [作品全体を検索・置換する](https://kubohiroya.github.io/turbowarp-plus-editor/features/search/)
+8. [拡張のデータと文書を編集する](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/)
+9. [スクリプトと素材を再利用する](https://kubohiroya.github.io/turbowarp-plus-editor/features/reuse/)
+10. [保存して配布する](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/)
+11. [作品フォルダとGitで管理する](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/)
+12. [GitHubで作品を開発する](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/)
+
+### 設計ドキュメント
+
 - [TurboWarp-Plus-Editorの責務と配信](docs/architecture.md)
 - [フォークに残す差し込み口の設計](docs/plus-integration-sockets.md) ・ [GUI追加ファイルの全面移設](docs/gui-integration/README.md)
 - [拡張ローダーの統合](docs/extension-loader-integration.md) ・ [機能拡張一覧でEmbedded／Remoteを設定する](docs/extension-authoring-ui.md) ・ [SB3の保存形式](docs/sb3-save-format.md)
