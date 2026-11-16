@@ -4,12 +4,13 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
-import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog, filterToolboxTree,
+import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog, filterToolboxTree, splitExtensionCategories,
     installExtensionPaletteGroups, paletteGroupSets, paletteScreenStateKey, paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import type {PaletteCategoryInfo, PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
-import {attachPaletteCategoryGroups, filterGroupedToolboxTree, flattenCategoryGroups} from '../palette-category-groups/index.ts';
+import {attachPaletteCategoryGroups, filterGroupedToolboxTree, flattenCategoryGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-groups';
+import type {PaletteGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-groups';
 import styles from './palette.css';
 
 const installed = new WeakSet();
@@ -442,25 +443,30 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         {label: /^ja(?:-|$)/i.test(locale) ? '機能拡張を追加' : 'Add Extension', separated: true, onSelect: openExtensionLibrary}
     ]);
 
-    // The GUI selects an extension by its ID once it is added; an extension split into groups has its first shown group.
+    // The groups of the palette as last drawn.
+    let shownGroups: PaletteGroups = {members: new Map(), withOwnContents: new Set()};
+    // The GUI selects an extension by its ID once it is added. An extension whose groups the palette shows in a
+    // child palette, without blocks of its own, has its first shown group selected instead.
     const selectCategoryById = toolbox.setSelectedCategoryById;
     toolbox.setSelectedCategoryById = function (id: string) {
-        const group = !categoryById(id) && paletteVM ? catalogOf(paletteVM).groups
-            .find(item => item.extensionId === id && categoryById(item.id)) : undefined;
-        return selectCategoryById.call(this, group ? group.id : id);
+        let target = id;
+        while (shownGroups.members.has(target) && !shownGroups.withOwnContents.has(target) && shownGroups.members.get(target).length) {
+            target = shownGroups.members.get(target)[0];
+        }
+        return selectCategoryById.call(this, target);
     };
 
     toolbox.populate_ = tree => {
         if (reorder) reorder.cancel();
         if (tree) {
             lastTree = tree.cloneNode(true) as Element;
+            // An extension that declares groups becomes a group whose child palette offers them.
+            if (paletteVM) splitExtensionCategories(tree, catalogOf(paletteVM, getLocale()), {nested: true});
             let found = flattenCategoryGroups(tree);
             const visible = visibleNow();
-            if (visible) {
-                found = filterGroupedToolboxTree(tree, found,
-                    filtered => filterToolboxTree(filtered, visible, paletteVM ? catalogOf(paletteVM, getLocale()) : undefined));
-            }
+            if (visible) found = filterGroupedToolboxTree(tree, found, filtered => filterToolboxTree(filtered, visible));
             original.populate.call(toolbox, tree);
+            shownGroups = found;
             groups.update(found);
         } else {
             original.populate.call(toolbox, tree);
