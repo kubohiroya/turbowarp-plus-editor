@@ -239,7 +239,7 @@ const projectModelSource = path.dirname(['project-messages', 'sprite-variable-ed
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 })[0]);
 // The in-page windows, split out of the layout in the same way. Their stylesheet is global.
-const windowsEntries = ['', '/styles.css', '/surfaces', '/transfer'].map(entry => {
+const windowsEntries = ['', '/styles.css', '/surfaces', '/transfer', '/opener-document'].map(entry => {
     const specifier = `@kubohiroya/turbowarp-plus-editor-windows${entry}`;
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 });
