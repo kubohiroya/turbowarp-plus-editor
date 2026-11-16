@@ -215,7 +215,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         onChange: () => updateCategoryButtons(),
         reorder: allowCategoryReorder,
         onReorder: () => reordered(),
-        order: () => paletteOrder()
+        order: () => paletteOrder(),
+        locale: getLocale
     });
     const search = attachPaletteCategorySearch(panel, getLocale, (query, previous) => {
         const category = categoryById(openId);
@@ -697,6 +698,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             color: item_.querySelector('.scratchCategoryItemBubble')?.style.backgroundColor,
             image: item_.querySelector('.scratchCategoryItemIcon')?.style.backgroundImage
         })),
+        grouping: () => ({groups: groups.current(), order: paletteOrder()}),
         show(id) {
             const category = categoryById(id);
             if (category) showCategory(category, 0);
