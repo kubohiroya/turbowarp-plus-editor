@@ -4,8 +4,9 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
-import {attachPaletteMenuButton, filterToolboxTree, paletteGroupSets, paletteVisibilityMenuLabel, readTargetPalette,
-    usedGroups, visibleGroups, writeTargetPalette} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
+import {attachPaletteMenuButton, createPaletteVisibilityStore, filterToolboxTree, paletteGroupSets, paletteScreenStateKey,
+    paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
+import type {PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
 import styles from './palette.css';
@@ -19,6 +20,7 @@ let horizontalLayout = false;
 type PaletteVM = {
     editingTarget?: any;
     runtime: {
+        targets?: any[];
         _blockInfo?: {id: string; name?: string; menuIconURI?: string; blockIconURI?: string}[];
         getTargetForStage(): any;
         emitProjectChanged(): void;
@@ -28,37 +30,81 @@ type PaletteVM = {
     on(event: string, listener: (...args: any[]) => void): void;
     off(event: string, listener: (...args: any[]) => void): void;
 };
+/** The part of the editor's screen state the palette settings are saved with. */
+type PaletteScreenState = {
+    register(key: string, slice: {capture(): unknown}): () => void;
+    whenLoaded(): Promise<{slices: Record<string, unknown>} | undefined>;
+};
 let paletteVM: PaletteVM | null = null;
+let paletteStore: PaletteVisibilityStore | null = null;
 const paletteRefreshers = new Set<() => void>();
 const extensionIds = (vm: PaletteVM) => (vm.runtime._blockInfo ?? []).map(info => info.id);
+const originalTargets = (vm: PaletteVM) => (vm.runtime.targets ?? []).filter(target => target.isOriginal);
+// Another sprite may share the same toolbox XML, in which case the GUI does not redraw the palette.
+const refreshPalettes = () => setTimeout(() => {for (const update of paletteRefreshers) update();}, 0);
 
-/** Lets the palette show each sprite's and the stage's own block groups. Returns the function that stops it. */
-export const connectPaletteVisibility = (vm: PaletteVM) => {
+/**
+ * Lets the palette show each sprite's and the stage's own block groups, and saves them with the editor's screen
+ * state, as the tab layout is saved. Returns the function that stops it.
+ */
+export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => PaletteScreenState | undefined = () => undefined) => {
+    const store = createPaletteVisibilityStore();
     paletteVM = vm;
-    // Another sprite may share the same toolbox XML, in which case the GUI does not redraw the palette.
-    const refresh = () => setTimeout(() => {for (const update of paletteRefreshers) update();}, 0);
+    paletteStore = store;
+    let unregister: (() => void) | undefined;
+    const register = () => {
+        if (unregister) return;
+        unregister = getScreenState()?.register(paletteScreenStateKey, {capture: () => store.capture(originalTargets(vm))});
+    };
+    register();
+    // A project opens with its own settings, or with every target at its default.
+    const loaded = () => {
+        register();
+        store.reset();
+        refreshPalettes();
+        getScreenState()?.whenLoaded().then(state => {
+            if (paletteStore !== store) return;
+            const saved = state?.slices?.[paletteScreenStateKey];
+            if (saved === undefined) return;
+            store.apply(saved, originalTargets(vm));
+            refreshPalettes();
+        }, () => {});
+    };
+    const changed = () => {
+        vm.runtime.emitProjectChanged();
+        refreshPalettes();
+    };
     // An extension added from the library shows in the sprite or stage being edited.
     const added = (info: {id?: string}) => {
         const target = vm.editingTarget;
         if (!target || !info?.id) return;
-        const groups = visibleGroups(target, extensionIds(vm));
+        const groups = store.visible(target, extensionIds(vm));
         if (groups.has(info.id)) return;
-        writeTargetPalette(target, [...groups, info.id], {extensionIds: extensionIds(vm)});
-        vm.runtime.emitProjectChanged();
-        refresh();
+        store.set(target, [...groups, info.id], extensionIds(vm));
+        changed();
+    };
+    // A duplicated sprite starts with the groups of the sprite it was made from.
+    const created = (target: {id: string}, source?: {id: string}) => {
+        if (source) store.copy(source, target);
     };
     // A host that passes a VM without events still gets the filtering; only the redraws are missing.
     const listens = typeof vm.on === 'function' && typeof vm.runtime?.on === 'function';
     if (listens) {
-        vm.on('workspaceUpdate', refresh);
+        vm.on('workspaceUpdate', refreshPalettes);
+        vm.runtime.on('PROJECT_LOADED', loaded);
         vm.runtime.on('EXTENSION_ADDED', added);
+        vm.runtime.on('targetWasCreated', created);
     }
     return () => {
         if (listens) {
-            vm.off('workspaceUpdate', refresh);
+            vm.off('workspaceUpdate', refreshPalettes);
+            vm.runtime.off('PROJECT_LOADED', loaded);
             vm.runtime.off('EXTENSION_ADDED', added);
+            vm.runtime.off('targetWasCreated', created);
         }
+        unregister?.();
         if (paletteVM === vm) paletteVM = null;
+        if (paletteStore === store) paletteStore = null;
     };
 };
 
@@ -276,7 +322,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     let lastTree: Element | null = null;
     const visibleNow = () => {
         const target = paletteVM?.editingTarget;
-        return target ? visibleGroups(target, extensionIds(paletteVM)) : null;
+        return target && paletteStore ? paletteStore.visible(target, extensionIds(paletteVM)) : null;
     };
     const redraw = () => {
         if (lastTree) workspace.updateToolbox(lastTree.cloneNode(true));
@@ -284,30 +330,24 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     paletteRefreshers.add(redraw);
     const openGroupSettings = () => {
         const vm = paletteVM;
+        const store = paletteStore;
         const target = vm?.editingTarget;
-        if (!vm || !target) return;
+        if (!vm || !store || !target) return;
         const ids = extensionIds(vm);
-        const stage = vm.runtime.getTargetForStage();
-        const projectSets = (stage && readTargetPalette(stage)?.sets) || {};
         openPaletteVisibilityDialog(doc, {
             locale: getLocale(),
             targetName: target.getName(),
             isStage: target.isStage,
-            initial: visibleGroups(target, ids),
+            initial: store.visible(target, ids),
             used: usedGroups(target),
             extensions: (vm.runtime._blockInfo ?? []).map(info => ({
                 id: info.id,
                 metadata: {name: info.name || info.id, banner: info.menuIconURI || info.blockIconURI}
             })),
-            sets: paletteGroupSets(getLocale(), projectSets),
+            sets: paletteGroupSets(getLocale(), store.sets()),
             onApply({groups, addedSets}) {
-                if (addedSets.length && stage) {
-                    const sets = {...projectSets};
-                    for (const set of addedSets) sets[set.id] = {name: set.name, groups: [...set.groups]};
-                    const stageGroups = target === stage ? groups : [...visibleGroups(stage, ids)];
-                    writeTargetPalette(stage, stageGroups, {extensionIds: ids, sets});
-                }
-                if (!(addedSets.length && target === stage)) writeTargetPalette(target, groups, {extensionIds: ids});
+                store.addSets(addedSets);
+                store.set(target, groups, ids);
                 vm.runtime.emitProjectChanged();
                 redraw();
             },

@@ -16,7 +16,7 @@ import {attachScriptTransfer, createProjectJSONTransfer, stageTransferMenu, fina
 
 import {plusBlockEditor} from './block-editor/editor.ts';
 import blockEditorTranslations from './block-editor/translations.json' with {type: 'json'};
-import {installProjectToolsHost, projectToolsOwnKeyEvent} from './project-tools/index.ts';
+import {installProjectToolsHost, projectScreenState, projectToolsOwnKeyEvent} from './project-tools/index.ts';
 import {plusSecurityReview} from './extension-host/review.ts';
 import {extensionLoadErrors} from './extension-host/load-errors.ts';
 import {plusLibraryTab} from './extension-library/tab.ts';
@@ -173,8 +173,8 @@ export const createPlusIntegration = ({
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
         // Breakpoints marked on blocks; the debugger add-on does the pausing.
         attached.push(attachBreakpointMenu({vm, getBlockly, getLocale: () => locale}));
-        // Each sprite and the stage show their own block groups in the palette.
-        attached.push({dispose: connectPaletteVisibility(vm)});
+        // Each sprite and the stage show their own block groups in the palette, saved with the screen state.
+        attached.push({dispose: connectPaletteVisibility(vm, () => projectScreenState(vm))});
         if (projectFolderBlocks) {
             attached.push(attachProjectFolder(vm, hostDocument, localGit, gitRestoreVersion, locale, getBlockly, projectFolderBlocks,
                 workspaceMinimap || standardLayout ? (workspace, blocks, watermark) =>
