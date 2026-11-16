@@ -265,6 +265,10 @@ for (const entry of codeViewsExports) {
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const codeViewsSource = path.dirname(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views$']);
+// The code views read and write the palette comments with the toolchain's browser entry. Webpack 4 cannot find it
+// through package exports; it is the entry the project folder uses, and it is transpiled below with it.
+config.resolve.alias['@kubohiroya/sb3-toolchain/browser$'] = projectUnpackEntry ??
+    rootRequire.resolve('@kubohiroya/sb3-toolchain/browser');
 // The web fonts, split out in the same way. Their stylesheet is global too.
 for (const entry of Object.keys(rootRequire('@kubohiroya/turbowarp-plus-editor-fonts/package.json').exports)
     .filter(entry => entry !== './package.json')) {
