@@ -46,7 +46,8 @@ const paletteRefreshers = new Set<() => void>();
 const newSpritePrompts: ((target: any) => void)[] = [];
 
 // The groups the loaded extensions offer: one per extension, or one per group an extension declares.
-const catalogOf = (vm: PaletteVM) => extensionPaletteCatalog(vm.runtime._blockInfo);
+// Group names are in the editor's language, where the palette and the settings screen show them.
+const catalogOf = (vm: PaletteVM, locale?: string) => extensionPaletteCatalog(vm.runtime._blockInfo, locale);
 const extensionIds = (vm: PaletteVM) => catalogOf(vm).groups.map(group => group.id);
 const originalTargets = (vm: PaletteVM) => (vm.runtime.targets ?? []).filter(target => target.isOriginal);
 const sameGroupSet = (left: ReadonlySet<string>, right: readonly string[]) =>
@@ -398,7 +399,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         const vm = paletteVM;
         const store = paletteStore;
         if (!vm || !store || !target) return;
-        const catalog = catalogOf(vm);
+        const catalog = catalogOf(vm, getLocale());
         const ids = catalog.groups.map(group => group.id);
         openPaletteVisibilityDialog(doc, {
             locale: getLocale(),
@@ -457,7 +458,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             const visible = visibleNow();
             if (visible) {
                 found = filterGroupedToolboxTree(tree, found,
-                    filtered => filterToolboxTree(filtered, visible, paletteVM ? catalogOf(paletteVM) : undefined));
+                    filtered => filterToolboxTree(filtered, visible, paletteVM ? catalogOf(paletteVM, getLocale()) : undefined));
             }
             original.populate.call(toolbox, tree);
             groups.update(found);
