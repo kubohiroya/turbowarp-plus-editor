@@ -6,6 +6,7 @@ import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-
 import {WindowDesktop} from '@kubohiroya/turbowarp-plus-editor-windows';
 import lock from '../package-lock.json' with {type: 'json'};
 import manifest from '../package.json' with {type: 'json'};
+import {connectDesktopWorkspaceLayouts} from '../site/editor-layout/desktop-workspace-layout.ts';
 
 test('the Editor resolves the pinned layout package and its host entry points', () => {
     const name = '@kubohiroya/turbowarp-plus-editor-workbench';
@@ -43,4 +44,32 @@ test('the Editor installs no package from a .tgz archive outside npm and keeps n
     assert.deepEqual(local.map(([name]) => name), []);
     const tracked = execFileSync('git', ['ls-files', '*.tgz'], {cwd: new URL('..', import.meta.url), encoding: 'utf8'}).trim();
     assert.equal(tracked, '');
+});
+
+test('Desktop reports when a project layout last changed, so a newer one wins over the project file', async () => {
+    const records = new Map<string, {layout: string; savedAt?: number}>([['legacy', {layout: '{"old":true}'}]]);
+    const store = connectDesktopWorkspaceLayouts({
+        read: async key => records.get(key)?.layout ?? null,
+        readRecord: async key => records.get(key) ?? null,
+        write: async (key, layout) => {
+            records.set(key, {layout, savedAt: 2000});
+            return 2000;
+        }
+    });
+    const open = (key: string) => store.open({kind: 'desktop', name: 'Game', key}, '');
+    const legacy = await open('legacy');
+    assert.equal(legacy.layout, '{"old":true}');
+    assert.equal(legacy.savedAt, undefined);
+    const fresh = await open('fresh');
+    assert.equal(fresh.savedAt, undefined);
+    await fresh.write('{"new":true}', '');
+    assert.equal(fresh.savedAt, 2000);
+    assert.equal((await open('fresh')).savedAt, 2000);
+
+    // A Desktop without the time keeps working, and its layouts lose to the file.
+    const older = connectDesktopWorkspaceLayouts({read: async () => '{}', write: async () => true});
+    const session = await older.open({kind: 'desktop', name: 'Game', key: 'k'}, '');
+    await session.write('{}', '');
+    assert.equal(session.saved, true);
+    assert.equal(session.savedAt, undefined);
 });
