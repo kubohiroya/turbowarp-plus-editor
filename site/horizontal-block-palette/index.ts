@@ -211,7 +211,9 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         horizontal: () => horizontal,
         rtl: workspace.RTL,
         choose: category => toolbox.setSelectedItem(category),
-        onChange: () => updateCategoryButtons()
+        onChange: () => updateCategoryButtons(),
+        reorder: allowCategoryReorder,
+        onReorder: () => reordered()
     });
     const search = attachPaletteCategorySearch(panel, getLocale, (query, previous) => {
         const category = categoryById(openId);
@@ -339,13 +341,11 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const shownCategories = () => categories().filter(category => groups.topLevelId(category.id_) === category.id_);
     let categoryOrder: string[] = [];
     const applyCategoryOrder = () => {
-        if (!categoryOrder.length) return;
         const current = categories();
-        const rank = id => {
-            const index = categoryOrder.indexOf(groups.topLevelId(id));
+        const ordered: typeof current = groups.arrange(current, id => {
+            const index = categoryOrder.indexOf(id);
             return index < 0 ? categoryOrder.length : index;
-        };
-        const ordered = current.slice().sort((a, b) => rank(a.id_) - rank(b.id_));
+        });
         if (ordered.every((category, index) => category === current[index])) return;
         current.splice(0, current.length, ...ordered);
         toolbox.categoryMenu_.table.append(...ordered.map(category => category.item_.parentElement));
@@ -357,17 +357,22 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             const ordered = shownCategories().map(category => category.id_);
             ordered.splice(to, 0, ordered.splice(from, 1)[0]);
             categoryOrder = ordered.concat(categoryOrder.filter(id => !ordered.includes(id)));
-            applyCategoryOrder();
-            if (horizontal) {
-                resizer.followAnchor();
-                flyout.position();
-            } else {
-                const selected = toolbox.getSelectedItem();
-                original.showAll.call(toolbox);
-                if (selected) original.scrollToId.call(toolbox, selected.id_);
-            }
+            groups.close();
+            reordered();
         }
     );
+    // Lays the palette out again after its categories or a group's members were reordered.
+    function reordered() {
+        applyCategoryOrder();
+        if (horizontal) {
+            resizer.followAnchor();
+            flyout.position();
+        } else {
+            const selected = toolbox.getSelectedItem();
+            original.showAll.call(toolbox);
+            if (selected) original.scrollToId.call(toolbox, selected.id_);
+        }
+    }
 
     toolbox.showAll_ = () => {
         applyCategoryOrder();
