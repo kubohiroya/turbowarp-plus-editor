@@ -9,6 +9,7 @@ import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGro
 import type {PaletteCategoryInfo, PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
+import {attachPaletteCategoryGroups, filterGroupedToolboxTree, flattenCategoryGroups} from '../palette-category-groups/index.ts';
 import styles from './palette.css';
 
 const installed = new WeakSet();
@@ -202,6 +203,14 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const verticalPosition = workspace.toolboxPosition;
     const categoryById = id => toolbox.categoryMenu_.categories_.find(category => category.id_ === id);
     const getLocale = () => ScratchBlocks.ScratchMsgs.currentLocale_ || doc.documentElement.lang;
+    // A category nested in another opens from its group's child palette.
+    const groups = attachPaletteCategoryGroups(menu, {
+        categories: () => toolbox.categoryMenu_.categories_,
+        horizontal: () => horizontal,
+        rtl: workspace.RTL,
+        choose: category => toolbox.setSelectedItem(category),
+        onChange: () => updateCategoryButtons()
+    });
     const search = attachPaletteCategorySearch(panel, getLocale, (query, previous) => {
         const category = categoryById(openId);
         if (!category) return;
@@ -217,6 +226,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         search.close();
         categoryById(openId)?.item_.setAttribute('aria-expanded', 'false');
         openId = null;
+        updateCategoryButtons();
         flyout.hide();
     };
 
@@ -280,12 +290,23 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         resizer.open(openId);
         toolbox.setSelectedItem(category, false);
         category.item_.setAttribute('aria-expanded', 'true');
+        updateCategoryButtons();
         showCategory(category, scrollPositions.get(category.id_) ?? 0);
     };
 
     const updateCategoryButtons = () => {
         for (const category of toolbox.categoryMenu_.categories_) {
             const item = category.item_;
+            // A group's icon opens its child palette, which keeps aria-expanded itself.
+            if (groups.isGroup(category.id_)) {
+                if (horizontal) item.tabIndex = 0;
+                else item.removeAttribute('tabindex');
+                item.setAttribute('role', 'button');
+                // The group stays marked while one of its categories' blocks are shown.
+                item.toggleAttribute('data-palette-group-shown', horizontal && openId !== null &&
+                    openId !== category.id_ && groups.topLevelId(openId) === category.id_);
+                continue;
+            }
             if (horizontal) {
                 item.tabIndex = 0;
                 item.setAttribute('role', 'button');
@@ -319,12 +340,14 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         // Addons may split categories into separate lists.
         return categories_.every(category => category.item_.parentElement.parentElement === table) ? categories_ : [];
     };
+    // The categories the menu shows: a group's members are moved with it, so only the group is ordered.
+    const shownCategories = () => categories().filter(category => groups.topLevelId(category.id_) === category.id_);
     let categoryOrder: string[] = [];
     const applyCategoryOrder = () => {
         if (!categoryOrder.length) return;
         const current = categories();
         const rank = id => {
-            const index = categoryOrder.indexOf(id);
+            const index = categoryOrder.indexOf(groups.topLevelId(id));
             return index < 0 ? categoryOrder.length : index;
         };
         const ordered = current.slice().sort((a, b) => rank(a.id_) - rank(b.id_));
@@ -334,9 +357,9 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     };
     const reorder = allowCategoryReorder && attachPaletteCategoryReorder(
         menu,
-        () => categories().map(category => category.item_),
+        () => shownCategories().map(category => category.item_),
         (from, to) => {
-            const ordered = categories().map(category => category.id_);
+            const ordered = shownCategories().map(category => category.id_);
             ordered.splice(to, 0, ordered.splice(from, 1)[0]);
             categoryOrder = ordered.concat(categoryOrder.filter(id => !ordered.includes(id)));
             applyCategoryOrder();
@@ -430,10 +453,17 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         if (reorder) reorder.cancel();
         if (tree) {
             lastTree = tree.cloneNode(true) as Element;
+            let found = flattenCategoryGroups(tree);
             const visible = visibleNow();
-            if (visible) filterToolboxTree(tree, visible, paletteVM ? catalogOf(paletteVM) : undefined);
+            if (visible) {
+                found = filterGroupedToolboxTree(tree, found,
+                    filtered => filterToolboxTree(filtered, visible, paletteVM ? catalogOf(paletteVM) : undefined));
+            }
+            original.populate.call(toolbox, tree);
+            groups.update(found);
+        } else {
+            original.populate.call(toolbox, tree);
         }
-        original.populate.call(toolbox, tree);
         paletteMenu.update();
         if (!horizontal) return;
         const category = categoryById(openId);
@@ -483,7 +513,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             return;
         }
 
-        const anchor = category.item_.getBoundingClientRect();
+        // A category in a group is placed under the group's icon, since its own is hidden.
+        const anchor = groups.anchorOf(category).getBoundingClientRect();
         const preferredLeft = resizer.left ?? (workspace.RTL ? anchor.right - width : anchor.left) - bounds.surfaceLeft;
         const left = Math.min(Math.max(bounds.left, preferredLeft), bounds.right - width);
 
@@ -530,6 +561,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         if (reorder) reorder.cancel();
         const category = toolbox.getSelectedItem();
         workspace.cancelCurrentGesture();
+        groups.close();
         close();
         flyout.scrollTarget = null;
         horizontal = next;
@@ -587,7 +619,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         const category = toolbox.categoryMenu_.categories_.find(item => item.item_ === event.target);
         if (!category) return;
         event.preventDefault();
-        if (openId === category.id_) close();
+        if (groups.isGroup(category.id_)) groups.toggle(category, true);
+        else if (openId === category.id_) close();
         else open(category);
     }, capture);
     menu.addEventListener('scroll', () => {
@@ -602,12 +635,12 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const onPointerDown = event => {
         if (WidgetDiv.DIV?.contains(event.target)) return;
         WidgetDiv.hideIfOwner(toolbox);
-        if (openId === null || resizer.contains(event.target) || search.contains(event.target) || [menu, panel, scrollbar, DropDownDiv.DIV]
+        if (openId === null || groups.contains(event.target) || resizer.contains(event.target) || search.contains(event.target) || [menu, panel, scrollbar, DropDownDiv.DIV]
             .some(element => element?.contains(event.target))) return;
         closeIfUnpinned();
     };
     const onKeyDown = event => {
-        if (event.key !== 'Escape' || event.isComposing) return;
+        if (event.key !== 'Escape' || event.isComposing || groups.isOpen()) return;
         if (WidgetDiv.owner_ === toolbox) WidgetDiv.hideIfOwner(toolbox);
         else if (!WidgetDiv.isVisible() && !DropDownDiv.isVisible()) close();
     };
@@ -653,6 +686,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         paletteRefreshers.delete(redraw);
         newSpritePrompts.splice(newSpritePrompts.indexOf(askNewSprite) >>> 0, 1);
         paletteMenu.dispose();
+        groups.dispose();
         disconnectPalette();
         if (inputDocument !== doc) moveBlockWidgets(ScratchBlocks, doc);
         palettes.delete(setMode);
@@ -665,6 +699,9 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         WidgetDiv.hideIfOwner(toolbox);
         original.dispose.call(toolbox);
     };
+    // Scratch Blocks drew the first toolbox before the palette was attached, dropping the categories nested in groups.
+    const firstTree = workspace.options.languageTree;
+    if (firstTree?.querySelector?.('category category')) toolbox.populate_(firstTree.cloneNode(true));
     palettes.add(setMode);
     setMode(horizontalLayout);
 };
