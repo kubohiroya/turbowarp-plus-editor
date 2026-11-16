@@ -26,6 +26,7 @@ import {installControlsDock} from './controls-dock.ts';
 import {attachProjectFolder} from './project-folder-host.ts';
 import {webFontOwnsKeyEvent} from '@kubohiroya/turbowarp-plus-editor-fonts/web-fonts';
 import getStageControls from '@kubohiroya/turbowarp-plus-editor-workbench/stage-controls';
+import {installImeKeyInput} from '@kubohiroya/turbowarp-plus-editor-workbench/ime-key';
 import {attachBreakpointMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/debugger-breakpoints';
 import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
@@ -35,6 +36,11 @@ import {connectPaletteVisibility, installHorizontalBlockPalette} from './horizon
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.ts';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
 import {installBlockArgumentText} from '@kubohiroya/turbowarp-plus-editor-code-views/block-argument-text';
+import {installCleanUpComments} from '@kubohiroya/turbowarp-plus-editor-code-views/clean-up-comments';
+import {attachSpriteCopyNotice} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-copy-notice';
+import {attachSpriteRestoreHistory} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-restore-history';
+import {attachTargetUndoHistory} from '@kubohiroya/turbowarp-plus-editor-code-views/target-undo-history';
+import {attachVariableMerge} from '@kubohiroya/turbowarp-plus-editor-code-views/variable-merge';
 import {installBlockNumberInput} from '@kubohiroya/turbowarp-plus-editor-code-views/block-number-input';
 import {attachReviewNavigation, attachWorkspaceNavigation} from './workspace-minimap/index.ts';
 
@@ -176,6 +182,14 @@ export const createPlusIntegration = ({
         attached.push(attachBreakpointMenu({vm, getBlockly, getLocale: () => locale}));
         // Each sprite and the stage show their own block groups in the palette, saved with the screen state.
         attached.push({dispose: connectPaletteVisibility(vm, () => projectScreenState(vm))});
+        // Each sprite keeps its own undo history, and Restore Sprite goes back through recent deletions.
+        attached.push(attachTargetUndoHistory({vm, getBlockly}));
+        const store = (hostDocument.defaultView as {ReduxStore?: Parameters<typeof attachSpriteRestoreHistory>[0]['store']} | null)?.ReduxStore;
+        if (store) attached.push(attachSpriteRestoreHistory({store, vm}));
+        // A script dropped on the sprite list says where it was copied, with Undo.
+        attached.push(attachSpriteCopyNotice({vm, document: hostDocument, locale}));
+        // Renaming to an existing name offers a merge; the palette switches a variable's scope.
+        attached.push(attachVariableMerge({vm, getBlockly, document: hostDocument, locale}));
         if (projectFolderBlocks) {
             attached.push(attachProjectFolder(vm, hostDocument, localGit, gitRestoreVersion, locale, getBlockly, projectFolderBlocks,
                 workspaceMinimap || standardLayout ? (workspace, blocks, watermark) =>
@@ -217,6 +231,9 @@ export const createPlusIntegration = ({
     }
 });
 
+// Keys pressed with an IME on reach the stage as `Process`; recover them before the stage reads them.
+if (typeof document !== 'undefined') installImeKeyInput(document);
+
 const integration = createPlusIntegration({
     mountEditor: mountDocumentEditor,
     registerBlockShapes (ScratchBlocks) {
@@ -229,6 +246,7 @@ const integration = createPlusIntegration({
         }
         installBlockContextMenuIcons(ScratchBlocks);
         installBlockArgumentText(ScratchBlocks);
+        installCleanUpComments(ScratchBlocks);
         installBlockNumberInput(ScratchBlocks);
     }
 });
