@@ -4,13 +4,13 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
-import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog, filterToolboxTree, splitExtensionCategories,
+import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog,
     installExtensionPaletteGroups, paletteGroupSets, paletteScreenStateKey, paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import type {PaletteCategoryInfo, PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
-import {attachPaletteCategoryGroups, filterGroupedToolboxTree, flattenCategoryGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-groups';
-import type {PaletteGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-groups';
+import {attachPaletteCategoryGroups, hasCategoryGroups, prepareGroupedToolboxTree} from
+    '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-groups';
 import styles from './palette.css';
 
 const installed = new WeakSet();
@@ -299,16 +299,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     const updateCategoryButtons = () => {
         for (const category of toolbox.categoryMenu_.categories_) {
             const item = category.item_;
-            // A group's icon opens its child palette, which keeps aria-expanded itself.
-            if (groups.isGroup(category.id_)) {
-                if (horizontal) item.tabIndex = 0;
-                else item.removeAttribute('tabindex');
-                item.setAttribute('role', 'button');
-                // The group stays marked while one of its categories' blocks are shown.
-                item.toggleAttribute('data-palette-group-shown', horizontal && openId !== null &&
-                    openId !== category.id_ && groups.topLevelId(openId) === category.id_);
-                continue;
-            }
+            // A group's icon opens its child palette, which marks it itself.
+            if (groups.isGroup(category.id_)) continue;
             if (horizontal) {
                 item.tabIndex = 0;
                 item.setAttribute('role', 'button');
@@ -319,6 +311,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
                 item.removeAttribute('aria-expanded');
             }
         }
+        groups.syncButtons(openId);
     };
 
     toolbox.getWidth = () => horizontal ? 0 : original.getWidth.call(toolbox);
@@ -443,30 +436,19 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         {label: /^ja(?:-|$)/i.test(locale) ? '機能拡張を追加' : 'Add Extension', separated: true, onSelect: openExtensionLibrary}
     ]);
 
-    // The groups of the palette as last drawn.
-    let shownGroups: PaletteGroups = {members: new Map(), withOwnContents: new Set()};
-    // The GUI selects an extension by its ID once it is added. An extension whose groups the palette shows in a
-    // child palette, without blocks of its own, has its first shown group selected instead.
+    // The GUI selects an extension by its ID once it is added; one shown as a group selects its first shown group.
     const selectCategoryById = toolbox.setSelectedCategoryById;
     toolbox.setSelectedCategoryById = function (id: string) {
-        let target = id;
-        while (shownGroups.members.has(target) && !shownGroups.withOwnContents.has(target) && shownGroups.members.get(target).length) {
-            target = shownGroups.members.get(target)[0];
-        }
-        return selectCategoryById.call(this, target);
+        return selectCategoryById.call(this, groups.selectionTarget(id));
     };
 
     toolbox.populate_ = tree => {
         if (reorder) reorder.cancel();
         if (tree) {
             lastTree = tree.cloneNode(true) as Element;
-            // An extension that declares groups becomes a group whose child palette offers them.
-            if (paletteVM) splitExtensionCategories(tree, catalogOf(paletteVM, getLocale()), {nested: true});
-            let found = flattenCategoryGroups(tree);
-            const visible = visibleNow();
-            if (visible) found = filterGroupedToolboxTree(tree, found, filtered => filterToolboxTree(filtered, visible));
+            const found = prepareGroupedToolboxTree(tree,
+                {catalog: paletteVM ? catalogOf(paletteVM, getLocale()) : undefined, visible: visibleNow()});
             original.populate.call(toolbox, tree);
-            shownGroups = found;
             groups.update(found);
         } else {
             original.populate.call(toolbox, tree);
@@ -708,7 +690,7 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
     };
     // Scratch Blocks drew the first toolbox before the palette was attached, dropping the categories nested in groups.
     const firstTree = workspace.options.languageTree;
-    if (firstTree?.querySelector?.('category category')) toolbox.populate_(firstTree.cloneNode(true));
+    if (hasCategoryGroups(firstTree)) toolbox.populate_(firstTree.cloneNode(true));
     palettes.add(setMode);
     setMode(horizontalLayout);
 };
