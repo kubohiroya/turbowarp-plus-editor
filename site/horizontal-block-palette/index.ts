@@ -4,9 +4,9 @@ import {attachPaletteCategorySearch, matchPaletteBlocks, paletteSearchHeight} fr
 import {attachPaletteDropdownResize} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-dropdown-resize';
 import {connectDetachedBlockPalette, openDetachedBlockPalette as openPaletteWindow, installGestureOwnerDocument, moveBlockWidgets} from
     '@kubohiroya/turbowarp-plus-editor-code-views/detached-block-palette';
-import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, filterToolboxTree, paletteGroupSets, paletteScreenStateKey,
-    paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
-import type {PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
+import {attachPaletteMenuButton, createPaletteVisibilityStore, defaultVisibleGroups, extensionPaletteCatalog, filterToolboxTree,
+    installExtensionPaletteGroups, paletteGroupSets, paletteScreenStateKey, paletteVisibilityMenuLabel, usedGroups} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
+import type {PaletteCategoryInfo, PaletteVisibilityStore} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-category-visibility';
 import {openPaletteVisibilityDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/palette-visibility-dialog';
 import '@kubohiroya/turbowarp-extension-security-dialog/webpack4.css';
 import styles from './palette.css';
@@ -21,7 +21,8 @@ type PaletteVM = {
     editingTarget?: any;
     runtime: {
         targets?: any[];
-        _blockInfo?: {id: string; name?: string; menuIconURI?: string; blockIconURI?: string}[];
+        _blockInfo?: PaletteCategoryInfo[];
+        _fillExtensionCategory?(...args: any[]): unknown;
         getTargetForStage(): any;
         emitProjectChanged(): void;
         on(event: string, listener: (...args: any[]) => void): void;
@@ -43,7 +44,9 @@ const paletteRefreshers = new Set<() => void>();
 // The palettes that can ask which groups a sprite just added shows; the latest one asks.
 const newSpritePrompts: ((target: any) => void)[] = [];
 
-const extensionIds = (vm: PaletteVM) => (vm.runtime._blockInfo ?? []).map(info => info.id);
+// The groups the loaded extensions offer: one per extension, or one per group an extension declares.
+const catalogOf = (vm: PaletteVM) => extensionPaletteCatalog(vm.runtime._blockInfo);
+const extensionIds = (vm: PaletteVM) => catalogOf(vm).groups.map(group => group.id);
 const originalTargets = (vm: PaletteVM) => (vm.runtime.targets ?? []).filter(target => target.isOriginal);
 const sameGroupSet = (left: ReadonlySet<string>, right: readonly string[]) =>
     left.size === right.length && right.every(group => left.has(group));
@@ -55,7 +58,8 @@ const refreshPalettes = () => setTimeout(() => {for (const update of paletteRefr
  * state, as the tab layout is saved. Returns the function that stops it.
  */
 export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => PaletteScreenState | undefined = () => undefined) => {
-    const store = createPaletteVisibilityStore();
+    const store = createPaletteVisibilityStore({catalog: () => catalogOf(vm)});
+    const removeExtensionGroups = installExtensionPaletteGroups(vm.runtime ?? {});
     paletteVM = vm;
     paletteStore = store;
     let unregister: (() => void) | undefined;
@@ -81,13 +85,14 @@ export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => Pa
         vm.runtime.emitProjectChanged();
         refreshPalettes();
     };
-    // An extension added from the library shows in the sprite or stage being edited.
+    // An extension added from the library shows all its groups in the sprite or stage being edited.
     const added = (info: {id?: string}) => {
         const target = vm.editingTarget;
         if (!target || !info?.id) return;
         const groups = store.visible(target, extensionIds(vm));
-        if (groups.has(info.id)) return;
-        store.set(target, [...groups, info.id], extensionIds(vm));
+        const offered = catalogOf(vm).groups.filter(group => group.extensionId === info.id).map(group => group.id);
+        if (offered.every(group => groups.has(group))) return;
+        store.set(target, [...groups, ...offered.filter(group => !groups.has(group))], extensionIds(vm));
         changed();
     };
     // The VM tells a duplicate, a new sprite and a loaded one apart only by the method that made it, and each
@@ -140,6 +145,7 @@ export const connectPaletteVisibility = (vm: PaletteVM, getScreenState: () => Pa
         if (vm.duplicateSprite !== originalDuplicate) vm.duplicateSprite = originalDuplicate;
         if (vm.addSprite !== originalAddSprite) vm.addSprite = originalAddSprite;
         unregister?.();
+        removeExtensionGroups();
         if (paletteVM === vm) paletteVM = null;
         if (paletteStore === store) paletteStore = null;
     };
@@ -369,7 +375,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         const vm = paletteVM;
         const store = paletteStore;
         if (!vm || !store || !target) return;
-        const ids = extensionIds(vm);
+        const catalog = catalogOf(vm);
+        const ids = catalog.groups.map(group => group.id);
         openPaletteVisibilityDialog(doc, {
             locale: getLocale(),
             targetName: target.getName(),
@@ -379,11 +386,16 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             copySources: newSprite ? originalTargets(vm).filter(other => !other.isStage && other !== target)
                 .map(other => ({name: other.getName(), groups: [...store.visible(other, ids)]})) : undefined,
             initial: store.visible(target, ids),
-            used: usedGroups(target),
-            extensions: (vm.runtime._blockInfo ?? []).map(info => ({
-                id: info.id,
-                metadata: {name: info.name || info.id, banner: info.menuIconURI || info.blockIconURI}
-            })),
+            used: usedGroups(target, catalog),
+            extensions: (vm.runtime._blockInfo ?? []).map(info => {
+                const groups = catalog.groups.filter(group => group.extensionId === info.id);
+                return {
+                    id: info.id,
+                    metadata: {name: info.name || info.id, banner: info.menuIconURI || info.blockIconURI},
+                    groups: groups.some(group => group.declared) ?
+                        groups.map(group => ({id: group.id, name: group.name, color: group.color1})) : undefined
+                };
+            }),
             sets: paletteGroupSets(getLocale(), store.sets()),
             onApply({groups, addedSets}) {
                 store.addSets(addedSets);
@@ -406,12 +418,20 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         {label: /^ja(?:-|$)/i.test(locale) ? '機能拡張を追加' : 'Add Extension', separated: true, onSelect: openExtensionLibrary}
     ]);
 
+    // The GUI selects an extension by its ID once it is added; an extension split into groups has its first shown group.
+    const selectCategoryById = toolbox.setSelectedCategoryById;
+    toolbox.setSelectedCategoryById = function (id: string) {
+        const group = !categoryById(id) && paletteVM ? catalogOf(paletteVM).groups
+            .find(item => item.extensionId === id && categoryById(item.id)) : undefined;
+        return selectCategoryById.call(this, group ? group.id : id);
+    };
+
     toolbox.populate_ = tree => {
         if (reorder) reorder.cancel();
         if (tree) {
             lastTree = tree.cloneNode(true) as Element;
             const visible = visibleNow();
-            if (visible) filterToolboxTree(tree, visible);
+            if (visible) filterToolboxTree(tree, visible, paletteVM ? catalogOf(paletteVM) : undefined);
         }
         original.populate.call(toolbox, tree);
         paletteMenu.update();
