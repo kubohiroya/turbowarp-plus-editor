@@ -1,3 +1,5 @@
+import {connectOpenerDocument} from '@kubohiroya/turbowarp-plus-editor-windows/opener-document';
+
 export function decorateSurface(doc) {
     const mirror = () => {
         doc.head.querySelectorAll('[data-backpack-style]').forEach(style => style.remove());
@@ -17,5 +19,9 @@ export function decorateSurface(doc) {
     observer.observe(document.head, {childList: true, subtree: true, characterData: true, attributes: true});
     observer.observe(document.body, {attributes: true});
     observer.observe(document.documentElement, {attributes: true});
-    return () => observer.disconnect();
+    const disconnect = connectOpenerDocument(doc, {opener: document});
+    return () => {
+        observer.disconnect();
+        disconnect();
+    };
 }

@@ -238,11 +238,14 @@ const projectModelSource = path.dirname(['project-messages', 'sprite-variable-ed
     const specifier = `@kubohiroya/turbowarp-plus-editor-project-model/${entry}`;
     return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 })[0]);
-// The in-page windows, split out of the layout in the same way. Their stylesheet is global.
-const windowsEntries = ['', '/styles.css', '/surfaces', '/transfer'].map(entry => {
-    const specifier = `@kubohiroya/turbowarp-plus-editor-windows${entry}`;
-    return config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
-});
+// The in-page windows, split out of the layout in the same way: every export gets an alias, read from the
+// manifest beside the `dist` its entries are in, so a new one cannot be left out. Their stylesheet is global.
+const windowsSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-windows'));
+for (const entry of Object.keys(JSON.parse(fs.readFileSync(path.join(windowsSource, '..', 'package.json'), 'utf8')).exports)) {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-windows${entry.slice(1)}`;
+    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+}
+const windowsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-windows/styles.css$'];
 // The panes inside a sprite editing tab, split out of the layout in the same way. The layout imports
 // them too, and three of them carry a global stylesheet.
 const spritePanesGlobalStyleEntries = ['sprite-asset-pane.css', 'sprite-editor-toolbar.css', 'sprite-properties.css'];
@@ -330,7 +333,7 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
 const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-workbench/${entry}$`]);
-globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsEntries[1], codeViewsStyles, fontsStyles,
+globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsStyles, codeViewsStyles, fontsStyles,
     ...spritePanesGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-sprite-panes/${entry}$`]));
 const cssModules = config.module.rules.find(rule => rule.test?.test('styles.css'));
 const previewReloadStyles = path.join(siteSource, 'styles', 'preview-reload.css');
@@ -388,7 +391,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
     documentSourceRoot, transferSource, workbenchSource, codeViewsSource, fontsSource,
-    projectModelSource, path.dirname(windowsEntries[0]), spritePanesSource,
+    projectModelSource, windowsSource, spritePanesSource,
     ...(projectUnpackEntry ? [path.dirname(projectUnpackEntry), projectUnpackHashSource] : []),
     ...(repositoryCreation ? [path.dirname(repositorySeedEntry)] : [])
 ],
