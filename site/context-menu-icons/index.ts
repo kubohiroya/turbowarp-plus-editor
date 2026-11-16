@@ -36,7 +36,9 @@ const paths = {
     paletteVertical: 'M3 4h18v16H3zM9 4v16M6 8h.01m0 4h.01m0 4h.01',
     switch: 'M3 8h17m-4-4 4 4-4 4M21 16H4m4-4-4 4 4 4',
     locate: 'M12 2v4m0 12v4M2 12h4m12 0h4M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12z',
-    help: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4m0 3h.01'
+    help: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4m0 3h.01',
+    // A ladybug, the mark of debugging in the editor (breakpoints, the debugger).
+    debug: 'M5.5 14a6.5 6.5 0 1 0 13 0 6.5 6.5 0 1 0-13 0M9 8.2a3 3 0 0 1 6 0M12 7.5v13M10.3 5.8 8.8 3.6m4.9 2.2 1.5-2.2M9 12h.01M15 12h.01M9 16.5h.01M15 16.5h.01'
 };
 
 const messageActions = {
