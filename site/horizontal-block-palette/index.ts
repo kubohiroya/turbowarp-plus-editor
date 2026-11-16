@@ -217,7 +217,8 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         if (!category) return;
         if (!previous) scrollBeforeSearch = flyout.getScrollPos();
         flyout.scrollTarget = null;
-        showCategory(category, query ? 0 : scrollBeforeSearch);
+        if (query) showAllCategories();
+        else showCategory(category, scrollBeforeSearch);
     });
 
     const close = () => {
@@ -236,18 +237,26 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
         if (!pin || win.getComputedStyle(pin).display === 'none') close();
     };
 
-    const showCategory = (category, scroll) => {
+    const categoryLabel = category => {
         const label = doc.createElement('label');
         label.setAttribute('text', category.name_);
         label.setAttribute('web-class', 'categoryLabel');
         label.setAttribute('showStatusButton', category.showStatusButton_);
+        return label;
+    };
+    const showContents = (contents, scroll) => {
         if (flyout.RTL) {
             layoutWidth = flyout.getWidth();
             flyout.workspace_.scrollX = 0;
         }
-        flyout.show([label].concat(category.getContents()));
+        flyout.show(contents);
         flyout.setScrollPos(scroll);
     };
+    const showCategory = (category, scroll) => showContents([categoryLabel(category)].concat(category.getContents()), scroll);
+    // A search looks through every category the palette offers, whatever group it sits in: nested groups are
+    // flattened into the toolbox, and the groups the target hides are not in it.
+    const showAllCategories = () => showContents(toolbox.categoryMenu_.categories_
+        .flatMap(category => [categoryLabel(category)].concat(category.getContents())), 0);
 
     flyout.layout_ = (contents, gaps) => {
         const category = categoryById(openId);
@@ -255,19 +264,38 @@ const attach = (ScratchBlocks, toolbox, {allowManualToggle, allowCategoryReorder
             original.layout.call(flyout, contents, gaps);
             return;
         }
-        const matching = matchPaletteBlocks(contents, category.name_, search.query, ScratchBlocks.utils.replaceMessageReferences,
+        // Each category's heading leads its blocks, so a query naming a category finds all of its blocks. A name
+        // broken over lines also matches with the break read as a space or as nothing.
+        const heading = (text: string) => {
+            const name = ScratchBlocks.utils.replaceMessageReferences(text);
+            return name.includes('\n') ? `${name.replace(/\s*\n\s*/g, ' ')} ${name.replace(/\s*\n\s*/g, '')}` : name;
+        };
+        const matching = matchPaletteBlocks(contents, '', search.query, heading,
             (block: {inputList: {fieldRow: {getText(): string}[]}[]}) => block.inputList.flatMap(input => input.fieldRow)
                 .filter(field => field instanceof ScratchBlocks.FieldLabel)
                 .map(field => field.getText()).join(' '));
+        // A heading or button stays only when a block it leads still matches: a category heading for its category,
+        // any other label or button for the blocks up to the next label.
+        const isCategoryHeading = item => item.type === 'button' && item.button.isLabel_ &&
+            item.button.cssClass_ === 'categoryLabel';
+        const leads = (start: number, isEnd: (item) => boolean) => {
+            for (let index = start + 1; index < contents.length && !isEnd(contents[index]); index++) {
+                if (contents[index].type === 'block' && matching.has(contents[index].block)) return true;
+            }
+            return false;
+        };
         const kept = [];
         const keptGaps = [];
         for (let index = 0; index < contents.length; index++) {
             const item = contents[index];
-            if (item.type === 'block' && !matching.has(item.block)) {
-                item.block.dispose(false, false);
-            } else {
+            const keep = item.type === 'block' ? matching.has(item.block) :
+                isCategoryHeading(item) ? leads(index, isCategoryHeading) :
+                    leads(index, next => next.type === 'button' && next.button.isLabel_);
+            if (keep) {
                 kept.push(item);
                 keptGaps.push(gaps[index]);
+            } else if (item.type === 'block') {
+                item.block.dispose(false, false);
             }
         }
         flyout.permanentlyDisabled_ = flyout.permanentlyDisabled_.filter(block => matching.has(block));
