@@ -136,6 +136,7 @@ Everything below is on by default. Add the parameter to the Editor URL and reloa
 | --- | --- |
 | `twPlusStandardLayout=0` | The previous layout instead of the standard Plus layout |
 | `twPlusWorkspaceMinimap=0` | Hide the code-area minimap |
+| `twPlusSaveWorkspace=0` | Stop saving the screen (drawer, tabs, panes) into the SB3 or project folder |
 | `twPlusPaletteCategoryReorder=0` | Stop press-and-hold reordering of palette categories |
 | `twPlusPaletteDeletePreview=0` | No wastebasket preview when dragging a block onto the palette |
 | `twPlusContextMenuIcons=0` | No icons in context menus |
