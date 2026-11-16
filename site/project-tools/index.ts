@@ -19,8 +19,13 @@ import type {ProjectFolderWorkflows} from '../project-folder-host.ts';
 import {projectFolderOverwriteWarning} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {ExtensionSpec} from '@kubohiroya/turbowarp-extension-loader';
 import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
+import JSZip from '@turbowarp/jszip';
+import {installProjectScreenState} from '@kubohiroya/turbowarp-plus-editor-workbench/project-screen-state';
+import type {ProjectScreenState} from '@kubohiroya/turbowarp-plus-editor-workbench/project-screen-state';
+import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 
 const projects = new WeakMap();
+const screenStates = new WeakMap<object, ProjectScreenState>();
 const storageFor = document => {
     try { return document.defaultView?.localStorage; } catch (error) { return undefined; }
 };
@@ -36,6 +41,10 @@ export const installProjectToolsHost = (vm, settings: Parameters<typeof installE
         waitForUser: document ? ask => duringProjectLoadApproval(vm, () => withoutWaitCursor(document, ask)) : undefined,
         diagnostics: event => { diagnostics.record(event); settings.diagnostics?.(event); },
         onProjectManifest: manifest => { diagnostics.describe(manifest); settings.onProjectManifest?.(manifest); }});
+    // After the extension loader's bridge, so a save replaces the screen state the loaded file carried.
+    const screenState = installProjectScreenState(vm, {Zip: JSZip,
+        save: readWebStartupFeatureFlags(settings.search ?? globalThis.location?.search).saveWorkspace});
+    screenStates.set(vm, screenState);
     const shareArchives = 'projectIO' in host && 'supportsSharedArchive' in host.projectIO && host.projectIO.supportsSharedArchive === true;
     const properties = installProjectProperties(vm, {...settings, metadataEnabled: enabled, runProjectLoad, shareArchives});
     const reportAssets = (finished: number, total: number) => reportProjectAssets(vm, finished, total);
@@ -65,11 +74,16 @@ export const installProjectToolsHost = (vm, settings: Parameters<typeof installE
             vm.off?.('ASSET_PROGRESS', reportAssets);
             vm.runtime?.off?.('PROJECT_LOADED', finishProject);
             unsubscribe(); dialogs?.dispose(); properties.dispose(); diagnostics.dispose(); projects.delete(vm);
+            screenStates.delete(vm);
+            screenState.dispose();
             await host.dispose();
         })();
         return disposal;
     }};
 };
+
+/** The screen state the project files keep for `vm`, once the project tools are installed. */
+export const projectScreenState = (vm): ProjectScreenState | undefined => screenStates.get(vm);
 
 export const loadedProjectTitle = vm => projects.get(vm)?.properties.loadedTitle();
 export const restoreProjectTitle = vm => projects.get(vm)?.properties.restoreTitle();

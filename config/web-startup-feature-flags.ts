@@ -27,6 +27,7 @@ export function readWebStartupFeatureFlags(search = '') {
         twPlusLocalGit: params.get('twPlusLocalGit'),
         twPlusGitRestoreVersion: params.get('twPlusGitRestoreVersion'),
         twPlusWorkspaceMinimap: params.get('twPlusWorkspaceMinimap'),
-        twPlusStageCodePrewarm: params.get('twPlusStageCodePrewarm')
+        twPlusStageCodePrewarm: params.get('twPlusStageCodePrewarm'),
+        twPlusSaveWorkspace: params.get('twPlusSaveWorkspace')
     });
 }

@@ -13,7 +13,7 @@ import {bindDesktopPublicationPushSession, createProjectPublication} from '@kubo
 import type {PublicationBridge, ProjectPublicationPort}
     from '@kubohiroya/turbowarp-plus-editor-git/project-publication';
 import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-editor-git/cloudflare-publication';
-import {loadedProjectTitle} from './project-tools/index.ts';
+import {loadedProjectTitle, projectScreenState} from './project-tools/index.ts';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
@@ -176,6 +176,12 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         },
         isProjectDirty: host.isProjectDirty,
         saveWithLock,
+        // A project folder is not an SB3, so it keeps the screen state the project tools installed for this VM.
+        screenState: {
+            serialize: () => projectScreenState(vm)?.serialize(),
+            prepareLoad: text => projectScreenState(vm)?.prepareLoad(text),
+            register: (key, slice) => projectScreenState(vm)?.register(key, slice) ?? (() => {})
+        },
         beforeLoad: () => store.dispatch(__TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__(null)),
         onOpened(title) {
             store.dispatch(__TW_PLUS_PROJECT_FOLDER_SET_TITLE__(loadedProjectTitle(vm) ?? title));
