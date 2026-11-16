@@ -138,7 +138,7 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
                 if (format === 'folder') {
                     const serialize = () => serializeProjectFolder(vm, payloads, name);
                     return request.git ? await folderWorkflows?.repositoryCreation?.start(request.git, serialize, current, signal) :
-                        await folderWorkflows?.createFolder?.(serialize, current);
+                        await folderWorkflows?.createFolder?.(serialize, current, name);
                 }
                 let embed: (() => void) | undefined;
                 let commitMetadata: (() => void) | undefined;
@@ -163,6 +163,7 @@ export function projectFileActions(vm, locale: string, storage: ProjectFileStora
             }
         }, close, {
             folder: folderWorkflows?.createFolder ? {
+                location: folderWorkflows.folderLocation,
                 overwriteWarning: projectFolderOverwriteWarning(locale),
                 github: folderWorkflows.repositoryCreation && {
                     connectForCreation: folderWorkflows.repositoryCreation.connect,

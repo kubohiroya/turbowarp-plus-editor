@@ -65,7 +65,10 @@ type PublicationGitAccess = {
     guard(): void;
 };
 export interface ProjectFolderWorkflows {
-    createFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean): Promise<boolean>;
+    /** `title` names a folder made in the browser, where the user names a new folder instead of picking one. */
+    createFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string): Promise<boolean>;
+    /** `browser` when new project folders go to the browser's own storage, where there is no folder picker. */
+    folderLocation?: 'device' | 'browser';
     repositoryCreation?: NonNullable<ReturnType<typeof bindProjectRepositoryCreation>>;
     commit?: ProjectCommitPort;
     publication?: ProjectPublicationPort;
@@ -79,6 +82,7 @@ type PickerWindow = Window & {
         localGitAuthor?(): Promise<GitAuthor | null>;
     };
     ReduxStore?: GuiStore;
+    showDirectoryPicker?(options: {id: string; mode: 'readwrite'}): Promise<FileSystemDirectoryHandle>;
 };
 const gitCloudflare = () => typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
 const gitDesktop = (view: PickerWindow) => view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit;
@@ -209,15 +213,16 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             return files;
         } : undefined;
     const createFolder = folder.createFromSnapshot && unpackProject ?
-        async (serialize: () => Promise<Uint8Array>, current: () => boolean) => {
+        async (serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string) => {
             try {
-                return await folder.createFromSnapshot({current, collectEdits: flushPendingSurfaceEdits,
+                return await folder.createFromSnapshot({current, collectEdits: flushPendingSurfaceEdits, title,
                     prepareFiles: () => unpackProject(serialize, current)}) === 'opened';
             } catch (error) {
                 if ((error as DOMException).name === 'AbortError') return false;
                 throw error;
             }
         } : undefined;
+    const folderLocation = folder.browserProjects && !view.showDirectoryPicker ? 'browser' as const : 'device' as const;
     const repositoryCreation = localGit && createFolder ? bindProjectRepositoryCreation({
         view, locale, desktop: view.EditorPreload?.localGitCreation,
         cloudflare,
@@ -252,7 +257,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         const repository = gitPanel?.getCommitRepository?.();
         if (!directory || !repository || !folder.save || !saveWithLock ||
             typeof __TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__ !== 'function' ||
-            typeof __TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ !== 'function' || !view.indexedDB) return {createFolder, repositoryCreation};
+            typeof __TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ !== 'function' || !view.indexedDB) return {createFolder, folderLocation, repositoryCreation};
         const guard = () => {
             if (!repository.current() || folder.directory !== directory || store.getState().scratchGui.vm !== vm) {
                 throw Object.assign(new Error('The project or repository changed'), {code: 'changed'});
@@ -299,7 +304,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             return __TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__({root: repository.root, journal, projectFolder: relative.join('/'),
                 guard, author: readAuthor});
         })();
-        return {createFolder, repositoryCreation, publication: canPublish ? publication?.port : undefined, commit: {
+        return {createFolder, folderLocation, repositoryCreation, publication: canPublish ? publication?.port : undefined, commit: {
             async prepare(current) {
                 const queue = await getQueue();
                 const selection = await saveWithLock(async () => {
