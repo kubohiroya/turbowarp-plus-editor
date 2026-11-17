@@ -11,7 +11,7 @@
   "heroStageShot": "別のウィンドウに出したステージ",
   "heroLayoutCaption": "編集ツールにすぐ届く画面構成",
   "heroStageCaption": "ステージやパネルを別ウィンドウへ",
-  "heroSplit": "コードを並べて編集",
+  "heroSplit": "コードを並べて編集、ミニマップで全体状況確認",
   "heroSplitShot": "右のコードパネルの右下にミニマップが表示されている",
   "heroMessages": "メッセージの送受信を関係図で確認",
   "heroDiff": "Gitの差分をブロックで比較",

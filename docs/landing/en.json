@@ -11,7 +11,7 @@
   "heroStageShot": "The stage in its own window",
   "heroLayoutCaption": "Keep editing tools within reach",
   "heroStageCaption": "Open the stage or panels in separate windows",
-  "heroSplit": "Edit code side by side",
+  "heroSplit": "Edit code side by side and see the full layout in the minimap",
   "heroSplitShot": "The minimap is visible in the lower-right corner of the right code pane",
   "heroMessages": "Trace broadcasts in a diagram",
   "heroDiff": "Compare Git changes as blocks",
