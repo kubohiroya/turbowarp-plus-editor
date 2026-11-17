@@ -2,7 +2,7 @@
   "skip": "Skip to content",
   "eyebrow": "SCRATCH AND TURBOWARP PROJECTS OPEN HERE",
   "heading": "An extensible IDE (Integrated Development Environment) for Scratch and TurboWarp projects.",
-  "intro": "Split or detach panels to arrange scripts across tabs and windows. Compare code from different sprites side by side, or keep one sprite’s initialization code in view while you edit its event handlers in another pane.",
+  "intro": "Open multiple panels to edit different sprites or work on the same sprite in several views at once.",
   "introEditing": "Hover to reveal controls, and drag and drop to rearrange tabs or copy blocks between sprites. Use the minimap to see how scripts are laid out. Saving a project also stores your tab and panel layout and your position in the code, so you can pick up where you left off when you reopen it.",
   "introInspect": "Inspect individual clones while your project runs, check variable and list values, and see who sends and receives broadcasts in a diagram. Unpack your project into data and asset files and track its history with Git.",
   "edit": "Edit in TurboWarp-Plus-Editor",
