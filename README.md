@@ -14,6 +14,8 @@ TurboWarp-Plus-Editor is an editor for Scratch 3 and TurboWarp projects that add
 - npm: [`@kubohiroya/turbowarp-plus-editor`](https://www.npmjs.com/package/@kubohiroya/turbowarp-plus-editor)
 - TurboWarp Plus family (extensions, apps, dashboard): <https://kubohiroya.github.io/turbowarp-plus-packages/>
 
+[![The workspace right after startup](docs/features/images/en/plus-workspace-current.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html)
+
 ## Contents
 
 - [What it is for](#what-it-is-for)

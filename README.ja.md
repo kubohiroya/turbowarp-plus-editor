@@ -14,6 +14,8 @@ TurboWarp-Plus-Editorは、Scratch 3とTurboWarpの作品のためのエディ�
 - npm: [`@kubohiroya/turbowarp-plus-editor`](https://www.npmjs.com/package/@kubohiroya/turbowarp-plus-editor)
 - TurboWarp Plusファミリー（機能拡張・アプリ・ダッシュボード）: <https://kubohiroya.github.io/turbowarp-plus-packages/>
 
+[![起動直後の作業画面](docs/features/images/plus-workspace-current.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/)
+
 ## 目次
 
 - [このエディターでできること](#このエディターでできること)
