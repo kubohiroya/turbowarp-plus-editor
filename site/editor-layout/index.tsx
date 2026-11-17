@@ -97,11 +97,12 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
     const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
     const launcher = React.useMemo(() => stageLauncherEnabled ?
         {mount: stageLauncherSlot(vm), styles, MenuButton: IconMenuButton} : undefined, [vm]);
-    // The project folder and the local Git panel need a folder picker; both views show what those already hold.
-    // The AI agent menu needs nothing of the kind.
+    // The project folder and the local Git panel need a folder picker, or the browser's own storage (OPFS) where there is
+    // none, as in Safari and Firefox (#660); both views show what those already hold. The AI agent menu needs neither.
     const drawerViews = React.useMemo(() => {
         const agents = {id: 'agents' as const, render: aiAgents.renderPanel};
-        if (typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker !== 'function') return {views: [agents]};
+        const picker = typeof (window as Window & {showDirectoryPicker?: unknown}).showDirectoryPicker === 'function';
+        if (!picker && typeof navigator.storage?.getDirectory !== 'function') return {views: [agents]};
         const fileStatuses: FollowFileStatuses = (directory, update) => followFileStatuses(vm, directory, update);
         const git: FollowExplorerGit = (directory, update) => followExplorerGit(vm, directory, update);
         const readBaseline = (directory: FileSystemDirectoryHandle, path: string, limit: number) =>

@@ -268,6 +268,16 @@ for (const {mode, storage} of cases) {
         await expect(dialog).toBeHidden();
         await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
         await expect(page.getByRole('textbox', {name: 'Project title here'})).toHaveValue('First GitHub project');
+        if (storage === 'browser') {
+            // Without the folder picker, the drawer still shows the project folder and the Git history kept in the browser.
+            const drawerView = (name: string) => page.getByRole('toolbar', {name: 'Drawer views', exact: true})
+                .getByRole('button', {name, exact: true});
+            await drawerView('Project folder').click();
+            await expect(page.locator('[data-drawer-content]').getByText('project.source.json').first()).toBeVisible();
+            await drawerView('Git history').click();
+            await expect(page.locator('[data-drawer-content]').getByText('Import project from TurboWarp Plus Editor').first())
+                .toBeVisible();
+        }
         assert.deepEqual(errors, []);
     });
 }
