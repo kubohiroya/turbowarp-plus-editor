@@ -12,7 +12,17 @@
     "width": 1440,
     "height": 1000
   },
-  "note": "Every image except those under \"retained\" was captured in one scripted run from the public Editor at siteRevision f98acb6, which pinned every family package at its latest npm version; the site revision was checked before and after the run. No feature-flag queries; no UI text was altered. Sample projects are fictional and built as SB3 files: ネコ/ボール (variable 速さ, messages 開始 and ゲームオーバー, sound ポーン), Ball Demo.sb3 and Ball Demo Plus.sb3 from the tutorial, and the ネコのさんぽ repository (sb3-toolchain import, Git with branch 12-neko-walk, origin kubohiroya/turbowarp-kamishibai-app) handed to the real directory picker through a CDP drop. Projects with extensions are opened with project_url from a routed test host. PR images read public PR #219 without signing in. Headless Chromium does not show the 「…」 debug button or the アドオン palette category.",
+  "note": "Images outside \"retained\" and \"additionalCaptures\" were captured in one scripted run from the public Editor at siteRevision f98acb6, which pinned every family package at its latest npm version; the site revision was checked before and after the run. No feature-flag queries; no UI text was altered. Sample projects are fictional and built as SB3 files: ネコ/ボール (variable 速さ, messages 開始 and ゲームオーバー, sound ポーン), Ball Demo.sb3 and Ball Demo Plus.sb3 from the tutorial, and the ネコのさんぽ repository (sb3-toolchain import, Git with branch 12-neko-walk, origin kubohiroya/turbowarp-kamishibai-app) handed to the real directory picker through a CDP drop. Projects with extensions are opened with project_url from a routed test host. PR images read public PR #219 without signing in. Headless Chromium does not show the 「…」 debug button or the アドオン palette category.",
+  "additionalCaptures": {
+    "top-split-minimap.png": {
+      "english": "en/top-split-minimap.png",
+      "date": "2026-11-17",
+      "siteRevision": "c442e05243ad7bcbe444b111b934ae89d93bd176",
+      "viewport": {"width": 1080, "height": 485},
+      "deviceScaleFactor": 2,
+      "description": "Ball Demo Plus.sb3 in the public Editor. Split the workspace, zoomed and panned both code panes, then hovered the right pane to show the minimap. Crop from x=110 and y=48 to the viewport edges."
+    }
+  },
   "retained": {
     "current-git-create-pr.png": {
       "size": "1440x1220",
