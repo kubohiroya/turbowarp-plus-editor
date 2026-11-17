@@ -1,5 +1,5 @@
 import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
-import {followProjectFolder, mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import {chooseBrowserProject, followProjectFolder, mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
@@ -18,7 +18,7 @@ import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-window
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {bindProjectRepositoryCreation} from './project-repository-host.ts';
-import type {DesktopRepositoryCreation} from './project-repository-host.ts';
+import type {BrowserRepositoryFolders, DesktopRepositoryCreation} from './project-repository-host.ts';
 import {withProjectFolderTitle} from './project-tools/properties.ts';
 
 type RuntimeThread = {updateMonitor?: boolean};
@@ -223,9 +223,24 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
         } : undefined;
     const folderLocation = folder.browserProjects && !view.showDirectoryPicker ? 'browser' as const : 'device' as const;
+    // Without the folder picker, repositories live in the browser's storage, with the project folder inside (#660).
+    const browserProjects = folderLocation === 'browser' ? folder.browserProjects : null;
+    const browserFolders: BrowserRepositoryFolders | undefined = browserProjects ? {
+        async create(title) {
+            const {root} = await browserProjects.create(title, {projectPath: 'project'});
+            // The initial commit is written only into an empty folder, and brings the project folder itself.
+            await root.removeEntry('project');
+            return root;
+        },
+        async choose() {
+            const choice = await chooseBrowserProject({document, projects: browserProjects, locale, purpose: 'open'});
+            return choice && browserProjects.root(choice.project.id);
+        }
+    } : undefined;
     const repositoryCreation = localGit && createFolder ? bindProjectRepositoryCreation({
         view, locale, desktop: view.EditorPreload?.localGitCreation,
         cloudflare,
+        browserFolders,
         author: readAuthor,
         async prepareSource(serialize, current, title) {
             await flushPendingSurfaceEdits();
@@ -343,6 +358,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             desktopPublication : cloudflarePublication,
         // Stage and commit with the repository's own Git identity (#318).
         localWrite: {author: () => author},
+        ...browserFolders && {chooseRoot: browserFolders.choose},
         renderReviewBlock,
         openProject: folder.openDirectory,
         projectDirectory: () => folder.directory,
