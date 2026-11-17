@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scratch数値入力の仕様メモ — TurboWarp-Plus-Editor</title>
+<meta name="description" content="Scratchの数値引数欄における全角数字・小数・整数の扱いを整理した仕様メモ草案。">
+<link rel="stylesheet" href="../guide.css">
+</head>
+<body>
+<header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
+<main>
+<p class="eyebrow"><a href="../">← 機能ガイド</a> · 草案</p>
+<h1>Scratch数値入力の仕様メモ</h1>
+<p class="lead">全角数字・小数・整数の扱いを整理した仕様メモです。対象は TurboWarp-Plus-Editor の数値引数欄です。状態は草案（実装前）です。Scratch 実行時の挙動は未検証です。</p>
+
+<h2 id="background">1. 背景</h2>
+<ul>
+<li>日本語 IME で入力すると、全角数字（例：「１２３」）が数値欄に入力できてしまう。</li>
+<li>Scratch の数値欄は、利用者にとって数値として扱われているように見えるが、全角数字は計算で正しく扱われない。</li>
+<li>私の理解では、Scratch 実行時は非数値を <code>0</code> として扱うため、エラーが出ず無言で <code>0</code> になる可能性が高い。この点は実際の挙動を確認してから断定すること。</li>
+<li>英語圏フォーラムでも、日本の利用者による同様の報告がある（有効な数字かどうかを判別する機能を求める投稿）。Scratch 公式による注意喚起や修正は今回の調査では見つからなかった。</li>
+</ul>
+
+<h2 id="terms">2. 用語定義</h2>
+<p>公式な規格名は見つからなかったため、本プロジェクトで次のように定義する。</p>
+<table>
+<thead><tr><th>名前</th><th>定義（半角のみ）</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>ScratchNumericInput</code></td><td><code>^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$</code></td><td>座標、角度、秒数、拡大率など、一般の数値引数</td></tr>
+<tr><td><code>ScratchIntegerInput</code></td><td><code>^[+-]?\d+$</code></td><td>リストの番号、繰り返し回数、文字列の何文字目など、整数が前提の引数</td></tr>
+</tbody>
+</table>
+<ul>
+<li><code>ScratchNumericInput</code> は JSON Schema や ECMAScript の正式な名前ではない。ドキュメント内でのみ使う独自名である。</li>
+<li>ECMAScript の <code>StrDecimalLiteral</code> などは空白、<code>Infinity</code>、16進数も許すため、今回の要件より広い。そのまま採用しない。</li>
+</ul>
+
+<h2 id="input">3. 入力時の処理</h2>
+<ol>
+<li>全角の <code>０</code>〜<code>９</code>、<code>－</code>（全角マイナス）、<code>．</code>（全角ピリオド）、<code>＋</code> を半角に変換する。</li>
+<li>変換対象は上記に限定する。NFKC 正規化の全面適用は行わない。</li>
+<li>IME 変換中（<code>compositionstart</code>〜<code>compositionend</code>）は値を書き換えない。確定時（<code>compositionend</code>）に変換する。</li>
+<li>貼り付け（<code>paste</code>）にも同じ変換を適用する。</li>
+<li>全角の <code>ｅ</code> / <code>Ｅ</code> を指数表記として扱うかは未決定（後述）。</li>
+</ol>
+
+<h2 id="commit">4. 確定時（Enter・blur）の処理</h2>
+<ul>
+<li>変換が行われた場合：控えめな通知（例：「全角数字を半角に変換しました」）を表示する。</li>
+<li>変換後も定義に合わない場合：該当ブロックにエラーマークを付け、警告を表示する。</li>
+<li>文字列欄（「こんにちは」を言う等）には、この変換と検証を適用しない。</li>
+</ul>
+
+<h2 id="preflight">5. 実行前の検査</h2>
+<ul>
+<li>全角のまま保存された、または外部から読み込んだプロジェクトに対し、実行前に検査を行い警告を出す。</li>
+<li>対象は <code>ScratchIntegerInput</code> の引数に小数や不正値が入っている場合を含む。</li>
+</ul>
+
+<h2 id="open">6. 未決定事項</h2>
+<ul>
+<li>全角の <code>ｅ</code> / <code>Ｅ</code> を指数表記として許可するか。</li>
+<li><code>ScratchIntegerInput</code> で <code>1.0</code> のような値を許可するか（整数として扱うか、警告するか）。</li>
+<li>Scratch 実行時の非数値の扱い（<code>0</code> になるか）を、実機で確認する。</li>
+<li>既存の Scratch 公式フォーラム（日本語カテゴリ）で、公式の対応有無を検索する。</li>
+</ul>
+
+<h2 id="references">7. 参考</h2>
+<ul>
+<li>英語圏フォーラム：全角数字を計算で無効とする報告と、Web 拡張機能による回避の事例。</li>
+<li>日本語フォーラム：全角数字を一文字ずつリストで照合して半角と同じように扱う回避策の解説。</li>
+<li>数値欄の入力制約（小数点・負数の禁止オプション）を求める Snap! フォーラムの提案。</li>
+</ul>
+</main>
+</body>
+</html>
