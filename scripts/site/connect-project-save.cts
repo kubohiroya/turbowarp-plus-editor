@@ -60,6 +60,8 @@ ${close}`)
                 const blob = await withWaitCursor([document], () => serialize(() => this.props.saveProjectSb3()));
                 if (current()) downloadBlob(filename, blob);
             },
+            // Save a Copy leaves the project's file, title and unsaved state alone; only the save indicator ends.
+            copied: () => this.props.onShowSaveSuccessAlert(),
             finish: (handle, title, unchanged) => {
                 this.props.onSetFileHandle(handle);
                 this.props.onSetProjectTitle(title);

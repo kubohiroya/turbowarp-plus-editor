@@ -51,7 +51,7 @@
   "featureArrange": "Arrange: split the panels, the palette and code in separate windows, a selected function or script edited in a split tab, folding hats and definitions, the layout restored next time",
   "featureEdit": "Fix: project-wide search and replace, an edit menu, a searchable horizontal palette, a minimap, the Hats and functions and Calls sections, functions added by name, and long text arguments edited in a dialog",
   "featureReuse": "Reuse: transfer scripts and stages, add bundled assets",
-  "featureShare": "Hand over: Save and Save As, storage formats for data and extension code, one HTML with the Plus extensions bundled",
+  "featureShare": "Hand over: Save and Save a Copy, storage formats for data and extension code, one HTML with the Plus extensions bundled",
   "featureCollaborate": "Work with an AI: a project folder is text and ordinary files, so an agent can read and write it and you review the result as a diff or a PR",
   "featureProperties": "Project Properties: save the title, description, author, contact, and timestamps in the SB3; choose from five recent author/contact entries and open email/HTTPS links",
   "featureDiagnostics": "Project Diagnostics: inspect and copy validation, execution approval, loading, and failure records",

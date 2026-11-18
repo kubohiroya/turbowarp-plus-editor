@@ -3,10 +3,12 @@ import {beginProjectLoad} from '@kubohiroya/turbowarp-plus-editor-workbench/proj
 import {beginProjectArchiveRead} from '../extension-host/shared-project-archive.ts';
 import {projectSerializationOptions} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import type {ProjectArchive} from '../extension-host/shared-project-archive.ts';
+import {isValidSaveName} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
 
 export const PROJECT_INFO_KEY = 'turboWarpPlusProject';
-const fields = ['title', 'description', 'author', 'contact'];
-const empty = () => ({schemaVersion: 1, title: '', description: '', author: '', contact: '',
+// `saveName` names the project's folder or repository where the title cannot (#679); empty means none yet.
+const fields = ['title', 'description', 'author', 'contact', 'saveName'];
+const empty = () => ({schemaVersion: 1, title: '', description: '', author: '', contact: '', saveName: '',
     createdAt: null, updatedAt: null});
 const clone = value => JSON.parse(JSON.stringify(value));
 const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
@@ -215,7 +217,10 @@ export function installProjectProperties(vm, {
             const next = {...previous, ...Object.fromEntries(fields.map(key =>
                 [key, String(draft[key] ?? previous[key])]))};
             next.title = next.title.slice(0, 100);
-            next.author = next.author.trim(); next.contact = next.contact.trim();
+            next.author = next.author.trim(); next.contact = next.contact.trim(); next.saveName = next.saveName.trim();
+            if (next.saveName && !isValidSaveName(next.saveName)) {
+                throw Object.assign(new Error('The save name is not valid'), {code: 'INVALID_SAVE_NAME'});
+            }
             if (fields.every(key => next[key] === previous[key])) return false;
             info = next;
             projectState.setTitle?.(next.title);

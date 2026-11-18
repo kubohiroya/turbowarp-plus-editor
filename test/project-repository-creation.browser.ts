@@ -205,10 +205,10 @@ for (const {mode, storage} of cases) {
         } else assert.equal(await page.evaluate(() => typeof (window as any).showDirectoryPicker), 'undefined');
         const showSaveAs = async () => {
             await page.getByText('File', {exact: true}).click();
-            await page.getByText('Save As…', {exact: true}).click();
+            await page.getByText('Save a Copy of the Project…', {exact: true}).click();
         };
         await showSaveAs();
-        const dialog = page.getByRole('dialog', {name: 'Save As', exact: true});
+        const dialog = page.getByRole('dialog', {name: 'Save a Copy of the Project', exact: true});
         const button = (name: string) => dialog.getByRole('button', {name, exact: true});
         await dialog.getByLabel('Save format').selectOption('folder');
         await dialog.getByLabel('Use Git version control').check();

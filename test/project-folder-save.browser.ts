@@ -133,8 +133,8 @@ test('Editor confirms project folder overwrite and commits only project files', 
         await page.getByRole('button', {name, exact: true}).click();
     };
     await choose('occupied');
-    await command('Save As…');
-    const saveAs = page.getByRole('dialog', {name: 'Save As', exact: true});
+    await command('Save Project');
+    const saveAs = page.getByRole('dialog', {name: 'Save Project', exact: true});
     await saveAs.getByLabel('Save format').selectOption('folder');
     await expect(saveAs.getByText(warning, {exact: true})).toBeVisible();
     await clickWithConfirmation(saveAs.getByRole('button', {name: 'Choose Where to Save…'}), true);
