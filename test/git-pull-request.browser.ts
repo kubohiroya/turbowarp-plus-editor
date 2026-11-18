@@ -33,6 +33,36 @@ const project = (steps: string, message = 'hi') => JSON.stringify({targets: [{na
 // The PR's head can move on; each head's version of the project.
 const heads = new Map([[newHead, project('25', 'hello')], [laterHead, project('30', 'hello')]]);
 
+const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32"/></svg>';
+const assetId = createHash('md5').update(svg).digest('hex');
+const costume = {name: 'Square', assetId, dataFormat: 'svg', md5ext: assetId + '.svg',
+    rotationCenterX: 16, rotationCenterY: 16, bitmapResolution: 1};
+const playableProject = (steps: string) => {
+    const sprite = JSON.parse(project(steps)).targets[0];
+    sprite.blocks.flag.next = 'move';
+    sprite.blocks.move.parent = 'flag';
+    delete sprite.blocks.custom;
+    const target = {variables: {}, lists: {}, broadcasts: {}, comments: {}, costumes: [costume],
+        sounds: [], currentCostume: 0, volume: 100};
+    return JSON.stringify({
+        targets: [{...target, name: 'Stage', isStage: true, blocks: {}}, {...target, ...sprite, x: 0, y: 0, visible: true,
+            size: 100, direction: 90, draggable: false, rotationStyle: 'all around'}],
+        monitors: [], extensions: [], meta: {semver: '3.0.0'}
+    }, null, 2) + '\n';
+};
+/** Writes a project folder, with the project at the root of `folder`. */
+async function writeProjectFolder(folder: string, steps: string) {
+    await mkdir(path.join(folder, 'assets'), {recursive: true});
+    await mkdir(path.join(folder, 'extensions'));
+    await Promise.all([
+        writeFile(path.join(folder, 'assets', costume.md5ext), svg),
+        writeFile(path.join(folder, 'embedded-extensions.json'), JSON.stringify({formatVersion: 1, extensions: []})),
+        writeFile(path.join(folder, 'sb3-source.json'), JSON.stringify({formatVersion: 1, project: 'project.source.json',
+            embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets', archiveEntries: ['project.json', costume.md5ext]})),
+        writeFile(path.join(folder, 'project.source.json'), playableProject(steps))
+    ]);
+}
+
 function launchBrowser() {
     const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
     if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
@@ -84,8 +114,12 @@ async function openRepository(page: Page, directory: string, editorOrigin = orig
         await cdp.detach();
     }
     await page.waitForFunction(() => Reflect.get(window, 'gitReviewDirectoryReady'));
+    // The repository is a project folder: opening it opens its project and connects Git, and the branch menu then
+    // opens the Git panel.
     await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Choose Repository…', exact: true}).click();
+    await page.getByRole('button', {name: 'Open Folder…', exact: true}).click();
+    await page.getByRole('button', {name: /^Branch: /u}).click();
+    await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
     const panel = page.locator('.twgit-panel:not(.twgit-connection-dialog)');
     await expect(panel.locator('header strong')).toHaveText(path.basename(directory));
     return panel;
@@ -100,6 +134,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     t.after(() => rm(directory, {recursive: true, force: true}));
     const git = (...args: string[]) => execFileSync('git', args, {cwd: directory, encoding: 'utf8'});
     await writeFile(path.join(directory, 'README.md'), 'Local repository\n');
+    await writeProjectFolder(directory, '10');
     git('init', '-q');
     git('add', '.');
     git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture');
@@ -302,36 +337,11 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     const {startFixture, git} = await import(pathToFileURL(fixtureFile).href);
     const fixture = await startFixture(t);
     const {client, seed, bare} = fixture;
-    const folder = path.join(seed, 'project');
-    const source = 'project/project.source.json';
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32"/></svg>';
-    const assetId = createHash('md5').update(svg).digest('hex');
-    const costume = {name: 'Square', assetId, dataFormat: 'svg', md5ext: assetId + '.svg',
-        rotationCenterX: 16, rotationCenterY: 16, bitmapResolution: 1};
-    const playableProject = (steps: string) => {
-        const sprite = JSON.parse(project(steps)).targets[0];
-        sprite.blocks.flag.next = 'move';
-        sprite.blocks.move.parent = 'flag';
-        delete sprite.blocks.custom;
-        const target = {variables: {}, lists: {}, broadcasts: {}, comments: {}, costumes: [costume],
-            sounds: [], currentCostume: 0, volume: 100};
-        return JSON.stringify({
-            targets: [{...target, name: 'Stage', isStage: true, blocks: {}}, {...target, ...sprite, x: 0, y: 0, visible: true,
-                size: 100, direction: 90, draggable: false, rotationStyle: 'all around'}],
-            monitors: [], extensions: [], meta: {semver: '3.0.0'}
-        }, null, 2) + '\n';
-    };
-    await mkdir(path.join(folder, 'assets'), {recursive: true});
-    await mkdir(path.join(folder, 'extensions'));
-    await Promise.all([
-        writeFile(path.join(folder, 'assets', costume.md5ext), svg),
-        writeFile(path.join(folder, 'embedded-extensions.json'), JSON.stringify({formatVersion: 1, extensions: []})),
-        writeFile(path.join(folder, 'sb3-source.json'), JSON.stringify({formatVersion: 1, project: 'project.source.json',
-            embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets', archiveEntries: ['project.json', costume.md5ext]})),
-        writeFile(path.join(seed, source), playableProject('10'))
-    ]);
+    const folder = seed;
+    const source = 'project.source.json';
+    await writeProjectFolder(folder, '10');
     const record = (message: string) => {
-        git(seed, 'add', 'project');
+        git(seed, 'add', '-A');
         git(seed, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', message);
         return git(seed, 'rev-parse', 'HEAD');
     };
@@ -341,7 +351,7 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     git(client, 'config', 'user.name', 'Fixture');
     git(client, 'config', 'user.email', 'fixture@example.invalid');
     // Git does not record an empty extensions directory, but the folder format requires it.
-    await mkdir(path.join(client, 'project', 'extensions'));
+    await mkdir(path.join(client, 'extensions'));
     const config = await readFile(path.join(client, '.git/config'));
     await writeFile(path.join(seed, source), playableProject('25'));
     const head = record('PR project');
@@ -431,7 +441,7 @@ test('the Editor compares a connected PR and runs its project on a local branch'
     const panel = await openRepository(page, client, editorOrigin);
     const button = (name: string) => panel.getByRole('button', {name, exact: true});
 
-    await button('Open Project').click();
+    // Opening the folder opened its project, so the panel offers no separate step for it.
     await expect(panel.getByRole('button', {name: 'Open Project', exact: true})).toHaveCount(0);
     const spriteX = () => page.evaluate(() => Reflect.get(window, 'vm').runtime.getSpriteTargetByName('Sprite')?.x);
     await expect.poll(spriteX).toBe(0);
