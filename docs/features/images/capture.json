@@ -49,14 +49,67 @@
     "project-folder-detail.png": {
       "english": "en/project-folder-detail.png",
       "date": "2026-11-18",
-      "source": "current-project-file.png",
-      "englishSource": "en/current-project-file.png",
-      "description": "Detail from existing project-folder screenshots. Crop x=0, y=0, width=1000, height=490 at original scale."
+      "siteRevision": "ad2d8d25c357a25ad5fc825f3c523b881649f1ac",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "projectFolderVersion": "0.15.1",
+      "documentEditorVersion": "0.1.0-rc.9",
+      "viewport": {
+        "width": 1200,
+        "height": 700
+      },
+      "deviceScaleFactor": 1,
+      "description": "A native 1200x700 viewport capture for the README and landing page; the full floating controls and minimap fit in the image.",
+      "method": "Local production build with exact npm pins, served by the companion. Fictional project, actual directory handles; the OS picker and VSCode launcher were injected. No UI text changes or feature-flag queries."
     },
     "project-tools-workflow.svg": {
       "english": "en/project-tools-workflow.svg",
       "date": "2026-11-18",
       "description": "Code-native workflow illustration for shared project-folder editing with VS Code and AI coding apps, followed by Editor verification and Git review. A conceptual diagram, not an application screenshot."
+    },
+    "current-project-file.png": {
+      "english": "en/current-project-file.png",
+      "date": "2026-11-18",
+      "siteRevision": "ad2d8d25c357a25ad5fc825f3c523b881649f1ac",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "projectFolderVersion": "0.15.1",
+      "documentEditorVersion": "0.1.0-rc.9",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "deviceScaleFactor": 1,
+      "description": "The real file tab with the transparent floating toolbar, capsule view toggle and bottom-right minimap.",
+      "method": "Local production build with exact npm pins, served by the companion. Fictional project, actual directory handles; the OS picker and VSCode launcher were injected. No UI text changes or feature-flag queries."
+    },
+    "current-project-file-states.png": {
+      "english": "en/current-project-file-states.png",
+      "date": "2026-11-18",
+      "siteRevision": "ad2d8d25c357a25ad5fc825f3c523b881649f1ac",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "projectFolderVersion": "0.15.1",
+      "documentEditorVersion": "0.1.0-rc.9",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "deviceScaleFactor": 1,
+      "description": "The real file list shows an unsaved README, modified project data, an untracked todo and a deleted note beside the file tab.",
+      "method": "Local production build with exact npm pins, served by the companion. Fictional project, actual directory handles; the OS picker and VSCode launcher were injected. No UI text changes or feature-flag queries."
+    },
+    "current-project-file-external.png": {
+      "english": "en/current-project-file-external.png",
+      "date": "2026-11-18",
+      "siteRevision": "ad2d8d25c357a25ad5fc825f3c523b881649f1ac",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "projectFolderVersion": "0.15.1",
+      "documentEditorVersion": "0.1.0-rc.9",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "deviceScaleFactor": 1,
+      "description": "The real companion session locks the file tab while its workcopy is open for external editing. The VSCode launcher is injected; no native window was opened.",
+      "method": "Local production build with exact npm pins, served by the companion. Fictional project, actual directory handles; the OS picker and VSCode launcher were injected. No UI text changes or feature-flag queries."
     }
   },
   "retained": {
