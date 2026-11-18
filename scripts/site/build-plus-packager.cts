@@ -8,7 +8,7 @@ const packager = process.env.TW_PLUS_PACKAGER_ROOT;
 if (!gui || !path.isAbsolute(gui) || !packager || !path.isAbsolute(packager)) {
     throw new Error('Absolute E2E_GUI_ROOT and TW_PLUS_PACKAGER_ROOT checkouts are required');
 }
-const expected = 'c115bdf525c5f49f0fb689a21b335ccb70fc22d2';
+const expected = 'd690225b9f326c98be617a51c7c65f76758048ee';
 if (execFileSync('git', ['rev-parse', 'HEAD'], {cwd: packager, encoding: 'utf8'}).trim() !== expected) {
     throw new Error('Packager source differs from the reviewed fixed revision');
 }
