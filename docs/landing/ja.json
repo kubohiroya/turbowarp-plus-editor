@@ -71,7 +71,6 @@
   "developerGuideNote": "Scratch AddonsやTurboWarpのアドオンとの比較、追加機能をエディターに組み込む仕組みの仕様、新しい追加機能を作る手順をまとめています。",
   "developerGuideShot": "Plusが加えた、編集パネルのレイアウトのメニュー",
   "featurePlatform": "拡張は使うだけでなく、書く側にも進めます。一覧から追加して保存形式を選び、自分で書いた拡張をSB3に同梱し、sb3-toolchainで名前・サンドボックス要件・SHA-256を固定して配布できます。拡張はTypeScriptで書くことをすすめています。型定義の付いたAPIに対して書き、npmのライブラリをそのまま使えます。ドメインの専門家がJSON Schemaとその文書でDSLを定義し、作品がそれを運用する、という組み立てもできます。使える拡張とアプリの一覧は、TurboWarp Plusファミリーのページにあります。カメラ映像の共有、カメラ校正、AR、QR読み取り、Teachable Machineの認識、非同期入力といったPlus拡張を使えば、インタラクティブ作品やカメラ・センサーのホストアプリも、Editorをフォークせずに作れます。",
-  "independent": "kubohiroyaによる独立したTurboWarpフォークです。20を超える独立したパッケージから組み立て、固定したリビジョンで配信しています。",
   "family": "TurboWarp Plusファミリーの機能拡張一覧",
   "source": "ソースコード",
   "button": "編集ボタンの設置方法",
@@ -95,5 +94,10 @@
   "editorAction": "エディターを開く",
   "projectAction": "指定された作品を開く",
   "urlAction": "このURLの作品を開く",
-  "projectNote": "URLで指定された作品を、ブラウザーのEditorで開きます。編集した作品は「ファイル」メニューから保存できます。"
+  "projectNote": "URLで指定された作品を、ブラウザーのEditorで開きます。編集した作品は「ファイル」メニューから保存できます。",
+  "attributionLead": "TurboWarp-Plus-Editor は、",
+  "attributionFirstLink": "久保 裕也",
+  "attributionMiddle": "（千葉商科大学）が進める ",
+  "attributionSecondLink": "TurboWarp Plus Project",
+  "attributionEnd": " ファミリーのオープンソースソフトウェアの一つです。"
 }
