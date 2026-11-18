@@ -24,8 +24,6 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
     let notice = null;
     let noticeReturnFocus = null;
     let notifiedError = '';
-    let message = null;
-    let messageTimer = 0;
     const close = () => {
         if (!active) return;
         disposeView?.(); disposeView = null;
@@ -330,28 +328,8 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             disposeView = diagnostics?.subscribe(render);
             render(); dialog.showModal(); done.focus();
         },
-        /** A short notice that does not block the editor, such as what a title change could not rename. */
-        showNotice(text: string, locale = 'en') {
-            message?.remove();
-            document.defaultView?.clearTimeout(messageTimer);
-            const ja = locale.startsWith('ja');
-            const notice = element(document, 'aside', undefined, {class: snackbarStyles.snackbar, 'data-project-tools': '',
-                'data-testid': 'project-notice-snackbar'});
-            notice.appendChild(element(document, 'span', text, {role: 'status', 'aria-atomic': 'true'}));
-            const dismiss = element(document, 'button', ja ? '閉じる' : 'Dismiss', {type: 'button'});
-            dismiss.addEventListener('click', () => notice.remove());
-            notice.appendChild(dismiss);
-            document.body.appendChild(notice);
-            message = notice;
-            messageTimer = document.defaultView?.setTimeout(() => {
-                if (!notice.contains(document.activeElement)) notice.remove();
-            }, 12000) ?? 0;
-        },
         ownsKeyEvent: event => Boolean(event.target?.closest?.('[data-project-tools]')),
-        dispose () {
-            unsubscribe(); stopNotice?.(); notice?.remove(); message?.remove();
-            document.defaultView?.clearTimeout(messageTimer); close();
-        }
+        dispose () { unsubscribe(); stopNotice?.(); notice?.remove(); close(); }
     };
     return api;
 };
