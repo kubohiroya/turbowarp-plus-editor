@@ -71,11 +71,12 @@
 <p>Some folders that earlier versions saved in the browser keep the project in <code>project/</code>. When you open such a folder with "Open Folder Saved in This Browser…", the Editor first moves the project to the root of the folder and then opens it. In a Git repository, the move shows up as renamed files in the next commit. If a file or folder with the same name already exists at the root, nothing is moved and "This folder is not a project folder." is shown.</p>
 <p>If the chosen folder has <code>.git</code>, that repository is bound to Git and used by "Git history" in the left drawer and by Local Git. A folder without <code>.git</code> opens without Git (see <a href="#local-git">Check changes and history with local Git</a>).</p>
 <figure>
-<a href="../images/en/current-open-folder.png"><img src="../images/en/current-open-folder.png" width="1440" height="960" alt="The editor's File menu shows the item for opening a project folder." loading="lazy"></a>
+<a href="../images/en/current-open-folder.png"><img src="../images/en/current-open-folder.png" width="1440" height="960" alt="The editor's File menu with the pointer on Open Folder…, followed by Open Folder Saved in This Browser… and Open Remote Git Repository…." loading="lazy"></a>
 <figcaption>Open a project folder from "File" at the top left.</figcaption>
 </figure>
 <h3 id="open-remote">Open a remote Git repository</h3>
 <p>In an editor with a GitHub connection, "File" → "Open Remote Git Repository…" downloads and opens a project repository on GitHub. The item is right below "Open Folder Saved in This Browser…" and has a cloud-with-arrow icon.</p>
+<figure class="guide-detail"><a href="../images/en/open-remote-dialog.png"><img src="../images/en/open-remote-dialog.png" width="462" height="257" alt="The Open Remote Git Repository dialog with the Repository URL field, Save to options A folder on this device (selected) and In this browser, and the Open button." loading="lazy"></a><figcaption>"File" → "Open Remote Git Repository…". Enter the URL, choose where to save, and press "Open".</figcaption></figure>
 <ol>
 <li>Choose "File" → "Open Remote Git Repository…" and enter the repository URL (<code>https://github.com/&lt;owner&gt;/&lt;repo&gt;</code>).</li>
 <li>Choose where to save it: "A folder on this device" or "In this browser". In Safari and Firefox, "A folder on this device" is unavailable for the same reason as "Open Folder…".</li>

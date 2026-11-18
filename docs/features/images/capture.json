@@ -150,11 +150,11 @@
     },
     "current-git-blocks.png": {
       "size": "1440x960",
-      "description": "Local Git, 保存のコミット with the ネコ コード: 1 か所 entry selected."
+      "description": "Local Git, 保存のコミット with the ネコ コード: 1 か所 entry selected. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-git-commit.png": {
       "size": "1440x960",
-      "description": "コミットに含める pressed and message ネコが進む歩数を変更 (#12) typed."
+      "description": "コミットに含める pressed and message ネコが進む歩数を変更 (#12) typed. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-git-file-window.png": {
       "size": "1200x860",
@@ -162,27 +162,27 @@
     },
     "current-git-file.png": {
       "size": "1440x960",
-      "description": "Local Git, 保存のコミット with README.md selected after saving."
+      "description": "Local Git, 保存のコミット with README.md selected after saving. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-git-history.png": {
       "size": "1440x960",
-      "description": "Git 履歴 drawer; PRを作成 with the commit and the ネコ code selected."
+      "description": "Git 履歴 drawer; PRを作成 with the commit and the ネコ code selected. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-git-release-workflow.png": {
       "size": "1440x960",
-      "description": "File → リリース… with tag v1.0.0; without a connection the tag push command is shown."
+      "description": "File → リリース… with tag v1.0.0; without a connection the tag push command is shown. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-git-remote.png": {
       "size": "1440x960",
-      "description": "マージ step with the PR list (no GitHub connection)."
+      "description": "マージ step with the PR list (no GitHub connection). The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-git-unsaved.png": {
       "size": "1440x960",
-      "description": "Local Git, ファイルの保存 with README.md selected."
+      "description": "Local Git, ファイルの保存 with README.md selected. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-open-folder.png": {
       "size": "1440x960",
-      "description": "File menu of a new project, pointer on プロジェクトフォルダを開く… (viewport 1440x960)."
+      "description": "File menu of a new project, pointer on フォルダを開く…; a divider sets リリース… apart from the open commands (viewport 1440x960)."
     },
     "current-pr-blocks.png": {
       "size": "1440x960",
@@ -214,7 +214,7 @@
     },
     "current-project-folder.png": {
       "size": "1440x960",
-      "description": "Project folder view; ネコ moved 25 steps and its x changed through the VM, so project.source.json is unsaved."
+      "description": "Project folder view; ネコ moved 25 steps and its x changed through the VM, so project.source.json is unsaved. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-save-active-tab.png": {
       "size": "1440x960",
@@ -242,7 +242,7 @@
     },
     "git-branch-workspace.png": {
       "size": "1440x960",
-      "description": "Branch menu of the ネコのさんぽ repository (viewport 1440x960)."
+      "description": "Branch menu of the ネコのさんぽ repository right after File → フォルダを開く…, which opened the project and connected Git (viewport 1440x960)."
     },
     "layout-menu.png": {
       "size": "600x329",
@@ -309,12 +309,12 @@
       "description": "Menu-bar search for 開始 (clip x0 y0)."
     },
     "project-uri-detail.png": {
-      "size": "608x116",
-      "description": "Same dialog, URI field focused; clipped around the 作品の URI field."
+      "size": "622x116",
+      "description": "Same dialog, URI field focused; clipped around the 作品の URI field and its note."
     },
     "properties-current.png": {
-      "size": "640x856",
-      "description": "File → 作品のプロパティ with fictional values (URI https://example.com/projects/neko-game, author 山田 花子); not applied."
+      "size": "640x1016",
+      "description": "File → 作品のプロパティ with fictional values (title ネコのさんぽ, URI https://example.com/projects/neko-game, author 山田 花子); 保存用の名前 left empty; not applied. Viewport 1440x1200 so the whole dialog fits."
     },
     "properties-variables.png": {
       "size": "1440x1000",
@@ -326,7 +326,7 @@
     },
     "save-as-dialog.png": {
       "size": "640x296",
-      "description": "File → 名前を変えて保存… (dialog element; focus moved off the input)."
+      "description": "File → プロジェクトのコピーを保存… (dialog element; focus moved off the input)."
     },
     "sprite-calls.png": {
       "size": "1440x1000",
@@ -367,6 +367,14 @@
     "workspace-context-menu.png": {
       "size": "600x340",
       "description": "Workspace context menu with コードの並びの見え方を変更する expanded (clip x680 y540)."
+    },
+    "new-project-dialog.png": {
+      "size": "512x290",
+      "description": "File → 新しいプロジェクトを作成… (dialog element). The public Editor has no GitHub connection, so the Git remote destination is not listed."
+    },
+    "open-remote-dialog.png": {
+      "size": "462x257",
+      "description": "File → Git のリモートリポジトリを開く… (dialog clipped below its Open button)."
     }
   },
   "topPage": {
@@ -455,7 +463,9 @@
       "top-search.png",
       "top-stage-window.png",
       "validation-dialog.png",
-      "workspace-context-menu.png"
+      "workspace-context-menu.png",
+      "new-project-dialog.png",
+      "open-remote-dialog.png"
     ]
   },
   "tutorial": {
@@ -463,5 +473,53 @@
     "siteRevision": "f98acb6a4c73c245174d5da2abe1e6cec3f2c3e4",
     "directory": "../ball-demo/images/",
     "note": "Ball demo tutorial figures (ja-*, en-*), captured in the same run by following the tutorial steps on Ball Demo.sb3 and Ball Demo Plus.sb3. Most are 1320 or 1360 px wide at deviceScaleFactor 1; the list figures and the sprite list close-ups use deviceScaleFactor 2. English figures keep the sprite name ボール, as the English tutorial does."
-  }
+  },
+  "retakes": [
+    {
+      "date": "2026-11-18",
+      "site": "https://kubohiroya.github.io/turbowarp-plus-editor/",
+      "siteRevision": "0b8b47d5c4d542b84f120f07eb6d5372caec039e",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "packages": {
+        "@kubohiroya/turbowarp-plus-editor-auth": "0.5.0",
+        "@kubohiroya/turbowarp-plus-editor-code-views": "0.19.0",
+        "@kubohiroya/turbowarp-plus-editor-fonts": "0.1.0",
+        "@kubohiroya/turbowarp-plus-editor-git": "0.25.2",
+        "@kubohiroya/turbowarp-plus-editor-host": "0.1.1",
+        "@kubohiroya/turbowarp-plus-editor-project-folder": "0.20.0",
+        "@kubohiroya/turbowarp-plus-editor-project-model": "0.2.0",
+        "@kubohiroya/turbowarp-plus-editor-project-starter": "0.3.1",
+        "@kubohiroya/turbowarp-plus-editor-sprite-panes": "0.10.0",
+        "@kubohiroya/turbowarp-plus-editor-windows": "0.2.1",
+        "@kubohiroya/turbowarp-plus-editor-workbench": "0.26.0"
+      },
+      "browser": "Playwright Chromium, headless, ja-JP and en-US, deviceScaleFactor 1",
+      "images": [
+        "current-open-folder.png",
+        "plus-menu.png",
+        "save-as-dialog.png",
+        "properties-current.png",
+        "project-uri-detail.png",
+        "git-branch-workspace.png",
+        "current-project-folder.png",
+        "current-git-unsaved.png",
+        "current-git-file.png",
+        "current-git-blocks.png",
+        "current-git-commit.png",
+        "current-git-history.png",
+        "current-git-release-workflow.png",
+        "current-git-remote.png",
+        "current-pr-overview.png",
+        "current-pr-commits.png",
+        "current-pr-checks.png",
+        "current-pr-files-tab.png",
+        "current-pr-blocks.png",
+        "current-git-file-window.png",
+        "new-project-dialog.png",
+        "open-remote-dialog.png"
+      ],
+      "english": "The same images in images/en/, taken in the same run with the English fixture (Cat Walk, branch 12-cat-walk).",
+      "note": "Retaken after the File menu, Git setup and project-folder changes: opening a folder with .git connects Git, Local Git opens from the branch menu, and Releases… has its own section. The site revision was checked before and after the run, and every family package was at its latest npm version. The ネコのさんぽ fixture keeps the project at the repository root. Call graph and text editing figures (sprite-calls, call-graph-detail, current-project-file, current-project-file-states, current-project-file-external, current-save-active-tab) are on hold and not retaken here. The project folder now records screen state in .tw-plus/workspace.json, which Local Git lists as an untracked file."
+    }
+  ]
 }
