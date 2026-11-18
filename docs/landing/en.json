@@ -71,7 +71,6 @@
   "developerGuideNote": "Compares Plus with Scratch Addons and TurboWarp addons, specifies how added features are built into the editor, and explains how to build a new one.",
   "developerGuideShot": "The panel layout menu that Plus adds",
   "featurePlatform": "Extensions are not only something you use. Add one from the catalog, choose how its code is stored, embed one you wrote yourself in the SB3, and pin its name, sandbox requirement and SHA-256 with sb3-toolchain. Writing extensions in TypeScript is the recommended path: you write against typed APIs and can pull libraries straight from npm. A domain expert can also define a DSL as a JSON Schema and its documents, and let the project operate it. The extensions and apps you can use are listed on the TurboWarp Plus family page. With Plus extensions for shared camera streams, camera calibration, AR, QR reading, Teachable Machine recognition and asynchronous input, an interactive work or a camera or sensor host application is an extension plus a project, not a fork of the Editor.",
-  "independent": "An independent TurboWarp fork by kubohiroya, assembled from more than twenty independently versioned packages and served from pinned revisions.",
   "family": "The TurboWarp Plus family of extensions",
   "source": "Source code",
   "button": "Add an edit button",
@@ -95,5 +94,10 @@
   "editorAction": "Open the editor",
   "projectAction": "Open the linked project",
   "urlAction": "Open the project at this URL",
-  "projectNote": "Opens the project specified in the URL in the browser editor. Save your edits from the File menu."
+  "projectNote": "Opens the project specified in the URL in the browser editor. Save your edits from the File menu.",
+  "attributionLead": "TurboWarp-Plus-Editor is open-source software in the ",
+  "attributionFirstLink": "TurboWarp Plus Project",
+  "attributionMiddle": " family by ",
+  "attributionSecondLink": "Hiroya Kubo",
+  "attributionEnd": ", Chiba University of Commerce, Japan."
 }
