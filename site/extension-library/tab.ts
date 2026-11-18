@@ -14,7 +14,7 @@ import React from 'react';
 import {PLUS_LIBRARY_ENABLED} from './flags.ts';
 import icon from './icon.svg';
 import PlusLibrary from './plus-library.tsx';
-import styles from './plus-library.css';
+import styles from '@kubohiroya/turbowarp-extension-security-dialog/catalog-library.css';
 import {beginPlusReview, canLoadPlusExtension} from '../gui-integration/lib/tw-plus-extension-permissions.ts';
 
 const activateTab = event => {

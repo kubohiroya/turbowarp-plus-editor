@@ -1,123 +1,12 @@
-/* Keep the palette and its scrollbar within the code surface's own stacking context. */
-:global(.injectionDiv):has(> :global([data-horizontal-block-palette])) {
-    isolation: isolate;
-}
-
-:global([data-detached-palette-source]) {
-    visibility: hidden !important;
-    pointer-events: none;
-}
-
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) + :global([class*="gui_extension-button-container_"]) {
     inset: 1px auto auto 1px;
     width: var(--plus-extension-button-width, 3.75rem);
     height: 50px;
     box-sizing: border-box;
 }
-
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) + :global([class*="gui_extension-button-container_"])::before {
     display: none;
 }
-
-.horizontal:global(.blocklyToolboxDiv)[data-horizontal-block-palette] {
-    inset: 0 var(--plus-stage-overlap, 0px) auto 0;
-    height: auto !important;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-}
-
-.horizontal:global(.blocklyToolboxDiv)::-webkit-scrollbar {
-    display: initial;
-}
-
-.horizontal:global(.blocklyToolboxDiv)[data-horizontal-block-palette] {
-    display: flex;
-    align-items: center;
-}
-
-.horizontal :global(.scratchCategoryMenu) {
-    display: flex;
-    flex: 1 0 auto;
-    width: max-content;
-}
-
-/* The ▼ menu at the end of the categories: the right end of a horizontal palette, the bottom of a vertical one. */
-.horizontal > :global(.tw-palette-menu-button) {
-    position: sticky;
-    right: 0;
-    background: var(--ui-primary, white);
-}
-
-:global(.blocklyToolboxDiv):not(.horizontal) > :global(.tw-palette-menu-button) {
-    display: flex;
-    margin: 0.25rem auto;
-}
-
-.horizontal :global(.scratchCategoryMenuItem) {
-    padding-inline: 0.65rem;
-    white-space: nowrap;
-}
-
-.horizontal :global(.scratchCategoryMenuItem.categorySelected)[aria-expanded="false"]:not([data-palette-group-shown]) {
-    background: transparent;
-}
-
-.panel:global(.blocklyFlyout) {
-    z-index: 29;
-    filter: drop-shadow(0 3px 6px rgb(0 0 0 / 25%));
-}
-
-.panel :global(.blocklyFlyoutBackground) {
-    fill-opacity: 1;
-}
-
-.scrollbar:global(.blocklyFlyoutScrollbar) {
-    z-index: 31;
-}
-
-/* The auto-hide addon slides the vertical flyout away by changing its left margin. */
-:global(.injectionDiv) > .panel:global(.blocklyFlyout.sa-flyoutClose),
-:global(.injectionDiv) > .scrollbar:global(.blocklyFlyoutScrollbar.sa-flyoutClose) {
-    margin-left: 0;
-}
-
-.panel:global(.blocklyFlyout) > :global(.sa-lock-object) {
-    /* Anchor the addon's SVG control to the current flyout viewport. */
-    x: max(0px, calc(100% - 32px - 15px));
-    y: 3px;
-    width: min(32px, 100%);
-    transform: none;
-}
-
-.panel:global(.blocklyFlyout) > :global(.sa-lock-object) > :global(.sa-lock-button) {
-    background-color: transparent;
-    border-color: transparent;
-    color: rgb(128 128 128 / 88%);
-}
-
-.panel:global(.blocklyFlyout) > :global(.sa-lock-object.locked) > :global(.sa-lock-button) {
-    border-color: currentColor;
-    color: var(--text-primary, #404040);
-    color: light-dark(#404040, #d4d4d4);
-}
-
-.panel:global(.blocklyFlyout) :global(.sa-lock-button) img {
-    display: none;
-}
-
-.panel:global(.blocklyFlyout) :global(.sa-lock-button)::before {
-    content: '';
-    width: 20px;
-    height: 20px;
-    background-color: currentColor;
-    mask: url('./pin-off.svg') center / contain no-repeat;
-}
-
-.panel:global(.blocklyFlyout) :global(.sa-lock-object.locked .sa-lock-button)::before {
-    mask-image: url('./pin.svg');
-}
-
 :global([class*="gui_blocks-wrapper_"]):has(.horizontal) > :global(.sa-flyout-placeHolder) {
     display: none !important;
 }

@@ -80,6 +80,11 @@ const config = withExtensionLoaderWebpack4({
         new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1})],
     node: {fs: 'empty'}
 }, {hostRoot: gui});
+const {installPackageExports} = require('./package-exports.cts');
+installPackageExports(config, rootRequire, [
+    '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog',
+    '@kubohiroya/turbowarp-sb3-save-format', '@kubohiroya/turbowarp-plus-editor-workbench'
+]);
 webpack(config, (error, stats) => {
     if (error || stats.hasErrors()) {
         console.error(error || stats.toString({all: false, errors: true}));

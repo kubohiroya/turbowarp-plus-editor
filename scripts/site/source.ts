@@ -4,6 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const sha = value => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
@@ -37,9 +38,9 @@ export function validatePins(pins) {
             assert.ok(sha(pins[key]), `Full ${key} is required`);
         }
         // An npm loader keeps loaderRevision as the commit it was published from.
-        assert.ok(pins.loaderSource === undefined || ['git', 'npm'].includes(pins.loaderSource),
-            'Loader source must be git or npm');
-        if (pins.loaderSource === 'npm') {
+        assert.ok(pins.loaderSource === undefined || ['git', 'npm', 'tarball'].includes(pins.loaderSource),
+            'Loader source must be git, npm or tarball');
+        if (['npm', 'tarball'].includes(pins.loaderSource)) {
             assert.ok(exactVersion(pins.loaderVersion), 'An exact npm loader version is required');
             assert.match(pins.loaderIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
                 'The published loader integrity is required');
@@ -57,7 +58,35 @@ export function validatePins(pins) {
                 'The published script transfer integrity is required');
         }
     }
+    for (const archive of Object.values(pins.packageArchives ?? {}) as PackageArchive[]) {
+        assert.match(archive.path, /^vendor\/[A-Za-z0-9._-]+\.tgz$/, 'Package archives must be fixed vendor tarballs');
+        assert.ok(exactVersion(archive.version) && sha(archive.revision), 'Package archives need exact versions and revisions');
+        assert.match(archive.integrity, /^sha512-[A-Za-z0-9+/]{86}==$/, 'Package archive integrity is required');
+    }
+    if (pins.loaderSource === 'tarball') assert.ok(pins.packageArchives?.['@kubohiroya/turbowarp-extension-loader']);
+    if (pins.securitySource === 'tarball') assert.ok(pins.packageArchives?.[pins.securityPackage]);
     return pins;
+}
+
+interface PackageArchive {path: string; version: string; revision: string; integrity: string}
+
+/** Validate local release candidates with the same immutable-byte requirement as registry pins. */
+export async function verifyPackageArchive(directory: string, name: string, archive: PackageArchive) {
+    assert.match(archive.path, /^vendor\/[A-Za-z0-9._-]+\.tgz$/);
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
+    const reference = `file:${archive.path}`;
+    assert.equal(({...manifest.dependencies, ...manifest.devDependencies})[name], reference, 'Manifest differs from the archive pin');
+    assert.equal(({...lock.packages[''].dependencies, ...lock.packages[''].devDependencies})[name], reference, 'Root lock differs from the archive pin');
+    const entry = lock.packages[`node_modules/${name}`];
+    assert.equal(entry.version, archive.version, 'Locked archive version differs from the pin');
+    assert.equal(entry.resolved, reference, 'Lock must resolve to the fixed archive');
+    assert.equal(entry.integrity, archive.integrity, 'Locked archive integrity differs from the pin');
+    const bytes = await fs.readFile(path.join(directory, archive.path));
+    assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, archive.integrity, 'Package archive bytes differ from the pin');
+    const installed = JSON.parse(await fs.readFile(path.join(directory, 'node_modules', name, 'package.json'), 'utf8'));
+    assert.equal(installed.name, name, 'Installed archive identifies another package');
+    assert.equal(installed.version, archive.version, 'Installed archive version differs from the pin');
 }
 export async function readPins() {
     return validatePins(JSON.parse(await fs.readFile(path.join(root, 'site/source.json'), 'utf8')));
@@ -109,6 +138,18 @@ export async function verifyDocumentEditorDependency(directory, pins) {
  * this is pointed at whichever install owns it, the way the document editor's check is.
  */
 export async function verifySecurityDependency(directory, pins) {
+    if (pins.securitySource === 'tarball') {
+        const archive = pins.packageArchives[pins.securityPackage];
+        await verifyPackageArchive(directory, pins.securityPackage, archive);
+        assert.equal(archive.version, pins.securityVersion);
+        const info = JSON.parse(await fs.readFile(
+            path.join(directory, 'node_modules', pins.securityPackage, 'dist/build-info.json'), 'utf8'));
+        assert.equal(info.name, pins.securityPackage);
+        assert.equal(info.version, pins.securityVersion);
+        assert.equal(info.revision, archive.revision, 'Security archive revision differs from the pin');
+        assert.equal(info.sourceState, 'commit', 'Security archive must be built from committed inputs');
+        return {version: pins.securityVersion};
+    }
     const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
     const dependencies = {...manifest.dependencies, ...manifest.devDependencies};
     const expected = pins.securityRevision ?
@@ -139,6 +180,12 @@ export async function verifySecurityDependency(directory, pins) {
 
 export async function verifyLoaderDependency(directory, pins) {
     const name = '@kubohiroya/turbowarp-extension-loader';
+    if (pins.loaderSource === 'tarball') {
+        await verifyPackageArchive(directory, name, pins.packageArchives[name]);
+        assert.equal(pins.packageArchives[name].version, pins.loaderVersion);
+        assert.equal(pins.packageArchives[name].integrity, pins.loaderIntegrity);
+        return;
+    }
     const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
     const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
     const entry = lock.packages[`node_modules/${name}`];

@@ -4,9 +4,10 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {
     verifyDocumentEditorDependency, verifyHost, verifyInstalledCore, verifyLoaderDependency,
-    verifySecurityDependency
+    verifySecurityDependency, verifyPackageArchive
 } from '../scripts/site/source.ts';
 
 test('an install\'s core, security package and document editor are checked against the pins', async () => {
@@ -211,7 +212,7 @@ test('an install\'s Loader is checked as an exact npm version or a full Git revi
         await writeLoader('0.1.0');
         await assert.rejects(verifyLoaderDependency(gui, pins), /Installed loader differs/);
         await writeLoader('0.2.0');
-        await assert.rejects(verifyHost(gui, {...pins, loaderSource: 'local'}), /source must be git or npm/);
+        await assert.rejects(verifyHost(gui, {...pins, loaderSource: 'local'}), /source must be git, npm or tarball/);
         await assert.rejects(verifyHost(gui, {...pins, loaderIntegrity: 'unknown'}), /published loader integrity/);
 
         // A Git loader keeps the full-revision pin, and the npm form no longer satisfies it.
@@ -223,5 +224,32 @@ test('an install\'s Loader is checked as an exact npm version or a full Git revi
         await verifyLoaderDependency(gui, gitPins);
     } finally {
         await fs.rm(gui, {recursive: true, force: true});
+    }
+});
+
+test('a package archive is fixed by manifest, lock, installed version and actual bytes', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twplus-package-archive-'));
+    const name = '@kubohiroya/turbowarp-plus-editor-workbench';
+    const archive = {path: 'vendor/workbench.tgz', version: '0.27.1-ownership.0', revision: 'a'.repeat(40),
+        integrity: `sha512-${createHash('sha512').update('verified bytes').digest('base64')}`};
+    const reference = `file:${archive.path}`;
+    const writeJSON = (filename, value) => fs.writeFile(path.join(directory, filename), JSON.stringify(value));
+    try {
+        await fs.mkdir(path.join(directory, 'vendor'), {recursive: true});
+        await fs.mkdir(path.join(directory, 'node_modules', name), {recursive: true});
+        await fs.writeFile(path.join(directory, archive.path), 'verified bytes');
+        await writeJSON('package.json', {devDependencies: {[name]: reference}});
+        await writeJSON('package-lock.json', {packages: {'': {devDependencies: {[name]: reference}},
+            [`node_modules/${name}`]: {version: archive.version, resolved: reference, integrity: archive.integrity}}});
+        await writeJSON(`node_modules/${name}/package.json`, {name, version: archive.version});
+        await verifyPackageArchive(directory, name, archive);
+        await fs.writeFile(path.join(directory, archive.path), 'changed bytes');
+        await assert.rejects(verifyPackageArchive(directory, name, archive), /archive bytes differ/);
+        await fs.writeFile(path.join(directory, archive.path), 'verified bytes');
+        await writeJSON(`node_modules/${name}/package.json`, {name, version: '0.27.0'});
+        await assert.rejects(verifyPackageArchive(directory, name, archive), /Installed archive version differs/);
+        await assert.rejects(verifyPackageArchive(directory, name, {...archive, path: '../workbench.tgz'}));
+    } finally {
+        await fs.rm(directory, {recursive: true, force: true});
     }
 });
