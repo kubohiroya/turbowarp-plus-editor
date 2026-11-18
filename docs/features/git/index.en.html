@@ -61,14 +61,16 @@
 
 <h2>11.2 Open and save a project folder</h2>
 
-<p>You can open and save a project folder unpacked with sb3-toolchain v1 without packing it back into an SB3. To choose and write a folder in the browser, you need Chrome or Edge with File System Access support.</p>
+<p>You can open and save a project folder unpacked with sb3-toolchain v1 without packing it back into an SB3. To choose and write a folder on your device in the browser, you need Chrome or Edge with File System Access support. In Safari and Firefox, which cannot choose folders, use a folder saved in the browser (OPFS).</p>
 <h3>Create a project folder</h3>
 <p>While a new project or an SB3 is open, click the "Project folder" button at the top left to open the panel, then click "Create Project Folder" and choose the folder to save to. If the folder is not empty, a screen asks you to confirm that its contents may be overwritten. When creation finishes, the panel shows the files in that folder, and later saves write to that folder.</p>
 <h3>Open a project folder</h3>
-<p>Choose "File" → "Open Project Folder…", select the project folder, and allow reading and writing. The project data and the local images and sounds are loaded.</p>
+<p>Choose "File" → "Open Folder…", select the project folder, and allow reading and writing. The project data and the local images and sounds are loaded. To open a folder saved in the browser, choose "File" → "Open Folder Saved in This Browser…". This item appears in every browser.</p>
+<p>In Safari and Firefox, "Open Folder…" is shown but cannot be chosen, and the reason is given: "This browser cannot open folders on your device. Use Chrome or Edge, or open a folder saved in this browser."</p>
+<p>If the chosen folder has <code>.git</code>, that repository is bound to Git and used by "Git history" in the left drawer and by Local Git. The project can be at the root of the folder or in <code>project/</code>. A folder without <code>.git</code> opens without Git (see <a href="#local-git">Check changes and history with local Git</a>).</p>
 <figure>
-<a href="../images/en/current-open-folder.png"><img src="../images/en/current-open-folder.png" width="1440" height="960" alt="The editor's File menu shows Open Project Folder…" loading="lazy"></a>
-<figcaption>Open a project folder from "File" at the top left. You can also choose a repository from "Git ▾" at the top right.</figcaption>
+<a href="../images/en/current-open-folder.png"><img src="../images/en/current-open-folder.png" width="1440" height="960" alt="The editor's File menu shows the item for opening a project folder." loading="lazy"></a>
+<figcaption>Open a project folder from "File" at the top left.</figcaption>
 </figure>
 <h3>Save to the project folder</h3>
 <ol><li>Edit blocks, variables and lists, sprites and costumes, sprite positions and sizes, and so on. Positions and variable values that changed while running the project are saved too.</li><li>Choose "File" → "Save Project" to update <code>project.source.json</code> in the folder. Before saving, the editor checks that the folder has not been changed outside the editor.</li></ol>
@@ -124,9 +126,12 @@
 
 <h2>11.3 Check changes and history with local Git</h2>
 
-<p>Choose "File" → "Choose Repository…" and select the root of a repository that has <code>.git</code>. You can also use the button to the left of "Open stage" on the right of the menu bar. Before you choose a repository, it reads "Git ▾" and offers "Choose Repository…" and "Open Local Git". After you choose a repository, the button shows the current branch name and lets you switch branches, choose "New Branch…", or choose "Open Local Git".</p>
+<p>Choose "File" → "Open Folder…" and select the root of a repository that has <code>.git</code>. Opening the folder binds Git automatically. The browser cannot read the parent of the folder you choose, so choosing only <code>project/</code> does not find the repository. When you open a folder without <code>.git</code>, the Git panel says "The open folder is not a Git repository."</p>
+<p>Set up Git in "Git history" in the left drawer. Before a repository is bound, it shows "Set up Git" with these steps:</p>
+<ol><li>"Connection Mode…": Chooses the default way to connect to GitHub. It appears only in an editor with a GitHub connection (see <a href="#github-sync">Sync with GitHub</a>).</li><li>"Open Folder…" or "Open Folder Saved in This Browser…": Opens the repository folder, the same commands as in the File menu.</li></ol>
+<p>Once a repository is bound, a button showing the current branch name (for example "main ▾") appears to the left of "Open stage" on the right of the menu bar. From it you can switch branches, choose "New Branch…", or choose "Open Local Git". The button does not appear before a repository is bound.</p>
 <p>How to use "File" → "Releases…" is explained in <a href="../github/index.en.html#release">Release and distribute</a>.</p>
-<p>The basic rule is <strong>one project per repository</strong>. If a project is at the root of the repository or in the <code>project/</code> folder that Project Starter creates, and it is not open yet, "Open Project" appears at the top of Local Git. If you open a project in another location with "File" → "Open Project Folder…", it is associated with the selected repository. Once the project is open, you can check changes for the stage and each sprite. <a href="../github/index.en.html#migrate">Repository layout</a></p>
+<p>A repository holds <strong>one project</strong>. Put the project at the root of the repository or in the <code>project/</code> folder that Project Starter creates. Choosing the repository root opens the project in <code>project/</code>. Once the project is open, you can check changes for the stage and each sprite. <a href="../github/index.en.html#migrate">Repository layout</a></p>
 <p>The first line of Local Git shows "Repository: <var>name</var>". "Refresh local status" next to it reads the Git status again; click it after using Git outside the editor. In an editor with a GitHub connection, "Connect to GitHub…" also appears here. When you switch branches or pull in the editor, "Reload Project" appears in the result; click it to reopen that version of the project. While the "Project folder" panel is shown on the left, the "Local Git" tab with a folder icon is pinned to the left end of the tab row.</p>
 <p>Below it, switch views with "Save files", "Commit saved changes", "Create PR", and "Merge". "Save files" and "Commit saved changes" show how many files they cover.</p>
 <ul>
@@ -149,7 +154,7 @@
 <a href="../images/en/current-git-history.png"><img src="../images/en/current-git-history.png" width="1440" height="960" alt="Git history in the drawer on the left. Create PR in Local Git shows Records (commits) and Local branches, and the block diff of the selected commit is on the right." loading="lazy"></a>
 <figcaption>Selecting "Change how far the cat walks (#12)" in "Git history" on the left opens "Create PR". Here the Cat's code is selected to show that commit's changes.</figcaption>
 </figure>
-<p>Working trees added with git worktree, submodules, and symbolic links are not supported. Changes to execute permissions in the working tree cannot be detected from the browser. If you do not use local Git, add <code>twPlusLocalGit=0</code> to the launch URL. The "Git ▾" button in the menu bar and the "Git history" button are then hidden too.</p>
+<p>Working trees added with git worktree, submodules, and symbolic links are not supported. Changes to execute permissions in the working tree cannot be detected from the browser. If you do not use local Git, add <code>twPlusLocalGit=0</code> to the launch URL. The branch button in the menu bar and the "Git history" button are then hidden too.</p>
 
 </section>
 
@@ -172,8 +177,8 @@
 
 <h2>11.5 Sync with GitHub (fetch, pull, push)</h2>
 
-<p>Open "GitHub Connection Settings…" from the Plus logo at the left end of the menu bar and choose the default connection method. The setting is stored in the browser, and you can change it even before opening a project or repository. A change applies from the next connection; the current session continues.</p>
-<p>Authentication for each repository is done with "Connect to GitHub…" on the first line of Local Git. Confirm the target (the GitHub HTTPS remote <code>origin</code> of the selected repository), authenticate, and allow push or sending PR reviews if needed. You also check and end the connection here. Once connected, "Create PR" and "Merge" show a "Sync with GitHub" section that lists the current local branch used for pull and push, and the sync status the editor could confirm.</p>
+<p>Open "Connection Mode…" under "Set up Git" in "Git history" in the left drawer and choose the default connection method. The setting is stored in the browser, and you can change it even before opening a project or repository. A change applies from the next connection; the current session continues.</p>
+<p>Authentication for each repository is done with "Connect to GitHub…". Once a repository is bound, it appears above the history graph in "Git history" and on the first line of Local Git. Confirm the target (the GitHub HTTPS remote <code>origin</code> of the selected repository), authenticate, and allow push or sending PR reviews if needed. You also check and end the connection here. Once connected, "Create PR" and "Merge" show a "Sync with GitHub" section that lists the current local branch used for pull and push, and the sync status the editor could confirm.</p>
 <div class="table-scroll" role="region" aria-label="GitHub connection needed for each task" tabindex="0">
 <table><caption>GitHub connection needed for each task</caption><thead><tr><th scope="col">Task</th><th scope="col">The public editor (GitHub Pages)</th><th scope="col">An editor with a GitHub connection</th></tr></thead><tbody>
 <tr><th scope="row">Local diffs and commits</th><td>Works without a connection</td><td>Works without a connection</td></tr>
@@ -182,7 +187,7 @@
 <tr><th scope="row">Create and merge PRs</th><td>Use GitHub</td><td>Use a connection with "Allow sending to GitHub (push)" checked (if the connection target supports creating and merging PRs)</td></tr>
 <tr><th scope="row">Send reviews</th><td>Send from the PR page on GitHub</td><td>Use a connection that allows sending reviews and has the matching GitHub API enabled</td></tr>
 </tbody></table></div>
-<p>In the public editor (GitHub Pages), "GitHub Connection Settings…" shows "No GitHub connection is configured.", and "Connect to GitHub…" does not appear in Local Git. Even where you cannot connect, you can keep syncing and reviewing with Git and the GitHub website. <a href="../github/index.en.html#push-without-connection">Steps without a connection</a></p>
+<p>The public editor (GitHub Pages) has no GitHub connection, so "Connection Mode…" and "Connect to GitHub…" do not appear. Even where you cannot connect, you can keep syncing and reviewing with Git and the GitHub website. <a href="../github/index.en.html#push-without-connection">Steps without a connection</a></p>
 
 <figure>
 <a href="../images/en/current-git-remote.png"><img src="../images/en/current-git-remote.png" width="1440" height="960" alt="Merge in Local Git. The left pane lists public pull requests." loading="lazy"></a>

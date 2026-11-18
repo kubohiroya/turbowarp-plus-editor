@@ -1,5 +1,5 @@
 import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
-import {chooseBrowserProject, followProjectFolder, mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import {chooseBrowserProject, followProjectFolder, mountProjectFolder, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
@@ -44,6 +44,7 @@ type LocalFolderMount = NonNullable<ReturnType<typeof mountProjectFolder>> & {
 type GitCommitMount = NonNullable<ReturnType<typeof mountGitPanel>> & {
     getCommitRepository?(): {root: FileSystemDirectoryHandle; current(): boolean} | null;
     selectRepository?(root: FileSystemDirectoryHandle, project: FileSystemDirectoryHandle): Promise<boolean>;
+    clearRepository?(): void;
 };
 type Selection = {branch: string; files: {path: string}[]};
 type CommitQueue = {
@@ -86,10 +87,6 @@ type PickerWindow = Window & {
 };
 const gitCloudflare = () => typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
 const gitDesktop = (view: PickerWindow) => view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit;
-
-export function availableGitConnectionModes(view: Window) {
-    return createGitConnectionSettings({desktop: gitDesktop(view), cloudflare: gitCloudflare()}).modes;
-}
 
 const folders = new WeakMap<FolderVM, {folder: LocalFolderMount; workflows(): ProjectFolderWorkflows}>();
 
@@ -196,7 +193,9 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             void gitPanel?.refresh();
         }
     };
-    const folder = mountProjectFolder({vm: host.vm, document, locale: host.locale, host: folderHost}) as LocalFolderMount | null;
+    // Folders saved in the browser are offered in every browser, beside the device's folders where the browser has them.
+    const folder = mountProjectFolder({vm: host.vm, document, locale: host.locale, host: folderHost,
+        browserStorage: 'always'}) as LocalFolderMount | null;
     if (!folder) return null;
     const unpackProject = typeof __TW_PLUS_UNPACK_PROJECT_FOLDER__ === 'function' ?
         async (serialize: () => Promise<Uint8Array>, current: () => boolean) => {
@@ -359,6 +358,10 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         // Stage and commit with the repository's own Git identity (#318).
         localWrite: {author: () => author},
         ...browserFolders && {chooseRoot: browserFolders.choose},
+        // Git is set up by opening a folder, with the File menu's own commands; the panel no longer chooses a repository.
+        openFolder: language => projectFolderActions(vm, language)?.open(),
+        ...folder.browserProjects && {openBrowserFolder: (language: string) => projectFolderActions(vm, language)?.openBrowser?.()},
+        deviceFolders: typeof view.showDirectoryPicker === 'function',
         renderReviewBlock,
         openProject: folder.openDirectory,
         projectDirectory: () => folder.directory,
@@ -418,6 +421,20 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             return () => {unfollow(); unsubscribe(); stopFiles(); vm.runtime.off('PROJECT_LOADED', loaded);};
         }
     }});
+    // One repository holds one project: an opened folder with `.git` binds the Git panel to that repository, any other
+    // folder unbinds it. `root` is the folder the user chose, which may hold the project in `project/`.
+    let boundDirectory: FileSystemDirectoryHandle | null | undefined;
+    const unfollowBinding = followProjectFolder(vm, (_folder, directory, root) => {
+        if (directory === boundDirectory) return;
+        boundDirectory = directory;
+        const candidate = root ?? directory;
+        void (async () => {
+            const repository = candidate && await hasGitDirectory(candidate) ? candidate : null;
+            if (boundDirectory !== directory) return;
+            if (repository && directory) await gitPanel?.selectRepository?.(repository, directory);
+            else gitPanel?.clearRepository?.();
+        })();
+    });
     let disposed = false;
     let scheduled = false;
     const ensureProjectTab = () => {
@@ -434,7 +451,18 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         disposed = true;
         stopProjectTab();
         if (folders.get(vm)?.folder === folder) folders.delete(vm);
+        unfollowBinding();
         gitPanel?.dispose();
         folder.dispose();
     }};
+}
+
+/** Whether `directory` is the root of a Git repository, as the Git panel opens one. */
+async function hasGitDirectory(directory: FileSystemDirectoryHandle) {
+    try {
+        await directory.getDirectoryHandle('.git');
+        return true;
+    } catch {
+        return false;
+    }
 }

@@ -64,7 +64,7 @@
 <p>次の例は、作業フォルダに<code>neko.sb3</code>がある場合です。</p>
 <pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.2.0 init ./neko.sb3 --dir neko-adventure</code></pre>
 <p><code>init</code>は手元にリポジトリを作り、Gitの作者情報があれば最初のコミットまで行います。作者情報が未設定の場合は、<a href="#commit-author">リポジトリで作者を設定</a>し、<code>git -C neko-adventure commit -m "Import neko"</code>を実行します。共有しているScratch作品は、SB3のパスの代わりに作品ページのURLを渡せます。</p>
-<p>生成した<code>neko-adventure/project</code>は、エディターの「ファイル」→「プロジェクトフォルダを開く…」で開けます。GitHubに置く準備ができたら、<code>gh auth login</code>で認証してから<code>publish</code>を実行します。既定では非公開のリポジトリを作り、<code>main</code>を送ります。</p>
+<p>エディターの「ファイル」→「フォルダを開く…」で、生成したリポジトリのルート<code>neko-adventure</code>を選ぶと、<code>project/</code>の作品が開き、Gitも結び付きます。GitHubに置く準備ができたら、<code>gh auth login</code>で認証してから<code>publish</code>を実行します。既定では非公開のリポジトリを作り、<code>main</code>を送ります。</p>
 <pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.2.0 publish neko-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="作られるリポジトリ" tabindex="0">
 <table><caption>作られるリポジトリ</caption><thead><tr><th scope="col">場所</th><th scope="col">中身</th></tr></thead><tbody>
@@ -123,13 +123,13 @@
 <h2>12.4 作業用のブランチを作る</h2>
 
 <p>ブランチを作る前に、手元の<code>main</code>をGitHubの最新に合わせます（<a href="#push">12.7</a>のpull）。そのあと、エディターでブランチを作ります。</p>
-<ol><li>「ファイル」→「リポジトリを選択…」でリポジトリのフォルダを選びます。作品をまだ開いていなければ、ローカルGitの上部の「作品を開く」で<code>project/</code>を開きます。</li><li>作品の実行を止め、編集をすべて保存し、必要な変更をコミットしておきます。未保存の編集や未コミットの変更があると、ブランチを切り替えられません。</li><li>ローカルGitの「PRを作成」を開き、「ローカルブランチ」の「新しいブランチの名前」に、issueの番号と内容が分かる名前（例：<code>12-neko-walk</code>）を入れます。「作ったら切り替える」にチェックし、「ブランチを作る」を押します。メニューバーのブランチのボタンの「新しいブランチ…」からも作れます。</li></ol>
+<ol><li>「ファイル」→「フォルダを開く…」でリポジトリのルートのフォルダを選びます。<code>project/</code>の作品が開き、Gitが結び付きます。<code>project/</code>だけを選ぶとリポジトリが見つからないため、必ずルートを選びます。</li><li>作品の実行を止め、編集をすべて保存し、必要な変更をコミットしておきます。未保存の編集や未コミットの変更があると、ブランチを切り替えられません。</li><li>ローカルGitの「PRを作成」を開き、「ローカルブランチ」の「新しいブランチの名前」に、issueの番号と内容が分かる名前（例：<code>12-neko-walk</code>）を入れます。「作ったら切り替える」にチェックし、「ブランチを作る」を押します。メニューバーのブランチのボタンの「新しいブランチ…」からも作れます。</li></ol>
 <figure>
 <a href="../images/git-branch-workspace.png"><img src="../images/git-branch-workspace.png" width="1440" height="960" alt="エディター右上のブランチメニュー。チェックの付いた現在のブランチ12-neko-walk、切り替え先のmain、「新しいブランチ…」「ローカル Git を開く」が見える。" loading="lazy"></a>
 <figcaption>メニューバーのブランチ名を押すと、現在のブランチ（チェック付き）と切り替え先が並びます。「新しいブランチ…」でブランチを作れます。</figcaption>
 </figure>
 <p>過去のコミットから枝分かれさせるときは、「Git 履歴」でコミットの「⋯」→「ここからブランチを作る…」を選びます。</p>
-<p>GitHubのissueの「Development」→「Create a branch」で作った場合は、手元でfetchしてから、「GitHub（origin）のブランチ」の一覧で「作って切り替える」を押します。GitHub Desktopの「New branch」や<code>git switch -c 12-neko-walk</code>で作った場合は、ローカルGitの「ローカル状態を更新」を押します。必要に応じて「ファイル」→「プロジェクトフォルダを開く…」で同じフォルダを開き直します。</p>
+<p>GitHubのissueの「Development」→「Create a branch」で作った場合は、手元でfetchしてから、「GitHub（origin）のブランチ」の一覧で「作って切り替える」を押します。GitHub Desktopの「New branch」や<code>git switch -c 12-neko-walk</code>で作った場合は、ローカルGitの「ローカル状態を更新」を押します。必要に応じて「ファイル」→「フォルダを開く…」で同じフォルダを開き直します。</p>
 
 </section>
 
@@ -171,12 +171,12 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.7 GitHubに送る（push）</h2>
 
-<p>GitHub接続付きのエディターでは、エディターからpush・pullできます。既定の接続方式は、メニューバー左端のPlusロゴ→「GitHub 接続設定…」で選びます。</p>
-<ol><li>ローカルGitの先頭行にある「GitHub に接続…」を開きます。接続先を確認し、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>接続後に「マージ」を開き、「GitHub と同期」の「現在のブランチを送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「リモートの情報を更新（fetch）」と「手元のブランチとファイルを更新（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
+<p>GitHub接続付きのエディターでは、エディターからpush・pullできます。既定の接続方式は、リポジトリを開く前に、左ドロワーの「Git 履歴」の「Git の設定」→「接続方式…」で選びます。</p>
+<ol><li>「Git 履歴」の履歴のグラフの上、またはローカルGitの先頭行にある「GitHub に接続…」を開きます。接続先を確認し、「GitHub に送ることを許可する（push）」にチェックして「GitHub に接続」を押します。表示に従ってGitHubで認証します。</li><li>接続後に「マージ」を開き、「GitHub と同期」の「現在のブランチを送る（push）」を押します。強制pushは行いません。</li><li>GitHubの変更を取り込むときは「リモートの情報を更新（fetch）」と「手元のブランチとファイルを更新（pull）」を使います。pullはfast-forwardできる場合だけ行い、取り込んだあとは「作品を再読込」で開き直します。</li></ol>
 <h3 id="push-without-connection">接続がない場合</h3>
-<p>公開版（GitHub Pages）のように、ローカルGitに「GitHub に接続…」が出ず、「GitHub 接続設定…」に「GitHub 接続先が設定されていません。」と表示される場合は、次のいずれかでpush・pullを行います。</p>
+<p>公開版（GitHub Pages）のように、「Git の設定」に「接続方式…」が出ず、リポジトリを開いても「GitHub に接続…」が出ない場合は、次のいずれかでpush・pullを行います。</p>
 <ul><li><strong>GitHub Desktop。</strong>「File」→「Add local repository」でリポジトリのフォルダを追加し、「Push origin」（新しいブランチでは「Publish branch」）で送ります。取り込むときは「Fetch origin」→「Pull origin」を使います。</li><li><strong>コマンド。</strong>新しいブランチを初めて送るときは<code>git push -u origin 12-neko-walk</code>、取り込むときは<code>git pull --ff-only</code>を実行します。</li></ul>
-<p>エディターの外で操作したあとは、リポジトリ名の横の「ローカル状態を更新」を押します。作品を開き直すときは「ファイル」→「プロジェクトフォルダを開く…」で同じフォルダを選びます。エディターは開き直す前に、保存していない編集がないかを確かめます。</p>
+<p>エディターの外で操作したあとは、リポジトリ名の横の「ローカル状態を更新」を押します。作品を開き直すときは「ファイル」→「フォルダを開く…」で同じフォルダを選びます。エディターは開き直す前に、保存していない編集がないかを確かめます。</p>
 <p><a href="../git/#github-sync">GitHubと同期する</a></p>
 
 </section>
