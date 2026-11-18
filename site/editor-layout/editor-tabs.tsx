@@ -224,7 +224,11 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             views.views().some(view => view.id === scriptViewRef.current.viewId) ? scriptViewRef.current.viewId : undefined;
         if (!viewId) {
             const current = views.currentView();
-            const from = current?.targetId === targetId ? current.id : views.views().find(view => view.targetId === targetId)?.id;
+            let from = current?.targetId === targetId ? current.id : views.views().find(view => view.targetId === targetId)?.id;
+            if (!from && navigation.current) {
+                from = activateTargetView(navigation.current, targetId, codeTab)?.viewId;
+                if (current) views.activateView(current.id);
+            }
             viewId = from && views.split('right', from);
             if (!viewId) return;
             const opened = {viewId, targetId};
@@ -408,16 +412,28 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             getFunctions(id) {
                 const target = vm.runtime.getTargetById(id);
                 if (!target) return {targetId: id, isStage: false, functions: []};
-                const data = readTargetFunctions(target, {others: vm.runtime.targets.filter(other => other.isOriginal)});
+                const hats = new Map<string, ReturnType<typeof readHatScripts>>();
+                const targetHats = targetId => {
+                    if (!hats.has(targetId)) {
+                        const owner = vm.runtime.getTargetById(targetId);
+                        hats.set(targetId, owner ? readHatScripts(owner, window.ScratchBlocks) : []);
+                    }
+                    return hats.get(targetId)!;
+                };
+                const data = readTargetFunctions(target, {
+                    others: vm.runtime.targets.filter(other => other.isOriginal),
+                    describeScript: (targetId, scriptId) => targetHats(targetId).find(hat => hat.id === scriptId)?.label
+                });
                 const definitions = new Set(data.functions.map(fn => fn.id));
-                return {...data, hats: readHatScripts(target, window.ScratchBlocks, definitions)};
+                return {...data, hats: targetHats(id).filter(hat => !definitions.has(hat.id))};
             },
             createFunction: (targetId, kind, name) =>
                 createFunction(vm, targetId, kind, name, {loadNamedFunctions: () => loadNamedFunctions(vm)}),
             mountFunctionEditor: (element, targetId, functionId, options) =>
                 mountProcedureEditor(vm, locale, element, targetId, functionId, {...options, attachNavigation: attachCodeNavigation}),
-            openFunction: (targetId, fn, options) => openScriptView(targetId, fn.id, options?.block),
-            openScript: (targetId, hat, options) => openScriptView(targetId, hat.id, options?.block),
+            openFunction: (targetId, fn, options) =>
+                openScriptView(fn.owner?.targetId ?? targetId, fn.owner?.functionId ?? fn.id, options?.block),
+            openScript: (targetId, hat, options) => openScriptView(hat.targetId ?? targetId, hat.id, options?.block),
             selectedScript,
             renameMessage(message, name) {
                 const workspace = window.ScratchBlocks?.getMainWorkspace();
