@@ -3185,6 +3185,83 @@ test('editor pane headings and message diagrams follow the active target', {time
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
 });
 
+test('the calls section independently toggles function calls and messages and opens a receiver in another target', {timeout: 60_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage &&
+        window.ScratchBlocks?.getMainWorkspace());
+    const stageId = await page.evaluate(() => {
+        const stage = vm.runtime.getTargetForStage();
+        stage.createVariable('graph-ready', 'ready', 'broadcast_msg', false);
+        stage.blocks.createBlock({
+            id: 'graph-receiver', opcode: 'event_whenbroadcastreceived', topLevel: true,
+            shadow: false, parent: null, next: null, x: 30, y: 30,
+            fields: {BROADCAST_OPTION: {name: 'BROADCAST_OPTION', id: 'graph-ready', value: 'ready'}}, inputs: {}
+        });
+        const definition = (id, name, body) =>
+            `<block type="procedures_definition" id="${id}" x="40" y="40"><value name="custom_block">` +
+            `<shadow type="procedures_prototype"><mutation proccode="${name}" argumentids="[]" argumentnames="[]" ` +
+            `argumentdefaults="[]" warp="false"></mutation></shadow></value><next>${body}</next></block>`;
+        const send = '<block type="event_broadcast" id="graph-send"><value name="BROADCAST_INPUT">' +
+            '<shadow type="event_broadcast_menu"><field name="BROADCAST_OPTION" id="graph-ready" variabletype="broadcast_msg">' +
+            'ready</field></shadow></value></block>';
+        const call = '<block type="procedures_call"><mutation proccode="land" argumentids="[]" warp="false"></mutation>' +
+            `<next>${send}</next></block>`;
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        window.ScratchBlocks.Xml.domToWorkspace(window.ScratchBlocks.Xml.textToDom('<xml>' +
+            definition('graph-jump', 'jump', call) +
+            definition('graph-land', 'land', '<block type="motion_turnright"></block>') + '</xml>'), workspace);
+        vm.emitTargetsUpdate();
+        return stage.id;
+    });
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
+    await section('Calls').click();
+    const graph = page.getByRole('region', {name: 'Calls', exact: true}).locator('figure');
+    const calls = graph.getByRole('button', {name: 'Function calls', exact: true});
+    const messages = graph.getByRole('button', {name: 'Messages', exact: true});
+    const callEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-relation="call"]');
+    const messageEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-relation="message"]');
+    const both = async () => {
+        await expect(callEdges).toHaveCount(1);
+        await expect(messageEdges).toHaveCount(1);
+    };
+    await expect(calls).toHaveAttribute('aria-pressed', 'true');
+    await expect(messages).toHaveAttribute('aria-pressed', 'true');
+    await both();
+    await expect(graph.locator('.tw-sprite-functions__edge-label')).toHaveText('ready');
+    const before = await page.evaluate(() => vm.toJSON());
+    await calls.click();
+    await expect(callEdges).toHaveCount(0);
+    await expect(messageEdges).toHaveCount(1);
+    await messages.click();
+    await expect(messageEdges).toHaveCount(0);
+    await calls.click();
+    await expect(callEdges).toHaveCount(1);
+    await expect(messageEdges).toHaveCount(0);
+    await messages.click();
+    await both();
+    assert.equal(await page.evaluate(() => vm.toJSON()), before, 'arrow visibility does not edit the project');
+
+    await messages.click();
+    await section('Hats and functions').click();
+    await section('Calls').click();
+    await expect(messages).toHaveAttribute('aria-pressed', 'false');
+    await expect(messageEdges).toHaveCount(0);
+    await messages.click();
+    await graph.getByRole('button', {name: 'Top to bottom (TD)', exact: true}).click();
+    await both();
+    const receiver = graph.locator('[data-script-key]');
+    await expect(receiver).toHaveCount(1);
+    await expect(receiver).toContainText('ready');
+    await receiver.click();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.id)).toBe(stageId);
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks(false)
+        .filter(block => getComputedStyle(block.getSvgRoot()).display !== 'none').map(block => block.id)))
+        .toEqual(['graph-receiver']);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
 test('the hats and functions list and the calls section show each script alone in a code view beside the sprite', {timeout: 90_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
