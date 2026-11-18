@@ -79,11 +79,11 @@
 
 [![作品フォルダのファイル一覧と、project.source.jsonを開いた実画面](docs/features/images/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#folder-files)
 
-*作品データ、画像・音、拡張をファイルとして開く。*
+*ファイルを直接編集し、「通常表示／差分表示」のカプセル型切り替えと右下のミニマップで内容を確認できます。保存は未保存の変更があるときに有効になります。*
 
 #### VS Codeでテキストを編集
 
-作品フォルダのテキストファイルをVS Codeで編集できます。組み込みYAML文書は、ローカル補助プロセスを起動すると「外部エディタで編集」で作業コピーを開き、保存後に検証して作品へ反映できます。 [VS Codeでテキストを編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#vscode)
+ローカル補助プロセスからEditorを開くと、ファイルタブの「VSCodeで編集」で作業コピーを開けます。VSCodeで保存し、「終了して取り込む」→「ファイルを保存」で元のファイルへ反映します。外部編集中はタブの表示・操作全体が無効になります。OPFSもローカル連携のURLの保存領域で利用できます。 [ファイルタブと外部編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#folder-files)
 
 #### 生成AIアプリと共同編集
 

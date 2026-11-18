@@ -79,11 +79,11 @@ Choose “Create project folder” in the left drawer to unpack the open SB3. Su
 
 [![The actual Editor showing the project folder and project.source.json](docs/features/images/en/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#folder-files)
 
-*Open project data, images, sounds, and extensions as files.*
+*Edit files directly. Use the “Normal view / Diff view” capsule toggle and the bottom-right minimap to inspect the content. Saving is enabled when the file has unsaved changes.*
 
 #### Edit text with VS Code
 
-Edit text files in the project folder with VS Code. For embedded YAML documents, start the local companion process and use “Edit in external editor” to open a working copy. After saving, validate and apply it to the project. [Edit text with VS Code](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#vscode)
+Open the Editor through the local companion and choose “Edit in VSCode” in a file tab to open a working copy. Save in VSCode, choose “Finish and import edits”, then “Save file” to update the original file. The tab's content and controls are disabled during external editing. OPFS also works in the local companion URL's storage. [File tabs and external editing](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#folder-files)
 
 #### Work with generative AI apps
 

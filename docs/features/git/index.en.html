@@ -106,8 +106,15 @@
 <figcaption>README.md is being edited and not saved, the project data has saved changes, and todo.txt is untracked. The deleted old-notes.txt is struck through where it used to be.</figcaption>
 </figure>
 <figure>
-<a href="../images/en/current-project-file.png"><img src="../images/en/current-project-file.png" width="1440" height="960" alt="With the project folder still on the left, the project data JSON is open in a tab in the center. Edit, Diff, and Save file are at the top right of the tab." loading="lazy"></a>
-<figcaption>Selecting a file opens a tab in the same area as the code. Switch the view with "Edit" and "Diff" at the top right, and after editing text, click "Save file" to write it.</figcaption>
+<a href="../images/en/current-project-file.png"><img src="../images/en/current-project-file.png" width="1440" height="960" alt="project.source.json is open in a workspace tab, with a Normal view / Diff view capsule toggle, Save file and Edit in VSCode at the top right, and a minimap at the bottom right." loading="lazy"></a>
+<figcaption>Edit text directly in the tab. Switch between "Normal view" and "Diff view", and use the bottom-right minimap to navigate. "Save file" is enabled only when the file has unsaved changes; a successful save shows "Saved.".</figcaption>
+</figure>
+<h3>Edit a file tab in VSCode</h3>
+<p>Open the Editor through the local companion, then choose "Edit in VSCode" to open a working copy of the current content. Save in VSCode, choose "Finish and import edits" to return the content to the tab, then "Save file" to write the original file. "Finish without importing" keeps the tab's content from before external editing. Normal view, diff view, the minimap, and all tab controls are disabled during external editing.</p>
+<p>The same workflow works with OPFS stored under the local companion's URL. Its storage is separate from the public site's OPFS. "Edit in VSCode" is disabled when the local companion is unavailable. For embedded YAML documents, see the <a href="../documents/index.en.html#vscode">document guide</a>.</p>
+<figure>
+<a href="../images/en/current-project-file-external.png"><img src="../images/en/current-project-file-external.png" width="1440" height="960" alt="The Editing in VSCode overlay offers Finish and import edits or Finish without importing, with the file tab and controls disabled behind it." loading="lazy"></a>
+<figcaption>The tab stays locked during external editing. Import the content saved in VSCode, then save it to the original file.</figcaption>
 </figure>
 <p>You can also use Project Starter, a command that unpacks an SB3 into a project folder (see <a href="../github/index.en.html#starter">Move a Scratch project with Project Starter</a>).</p>
 
