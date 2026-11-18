@@ -137,7 +137,9 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout.getByText('palette test variable', {exact: true}).first()).toBeVisible();
     const search = page.getByRole('searchbox', {name: 'Search blocks'});
     await search.fill('set');
-    await expect(flyout.getByText('set', {exact: true})).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace()
+        .getFlyout().getWorkspace().getTopBlocks(false).some(block => block.type === 'data_setvariableto'))).toBe(true);
+    await expect(flyout.getByText('set', {exact: true}).first()).toBeVisible();
     await expect(flyout.getByText('change', {exact: true})).toHaveCount(0);
 
     await toolbox.locator('.scratchCategoryId-myBlocks').click();

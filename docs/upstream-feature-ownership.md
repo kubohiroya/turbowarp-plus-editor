@@ -9,7 +9,7 @@
 | --- | --- |
 | turbowarp-plus-editor-code-views | 横パレットと表示グループ、削除予告、メニューのアイコン、別窓でのコード編集 |
 | turbowarp-plus-editor-workbench | 作品のプロパティ・診断・履歴・保存と新規作成の段取り、スプライトタブ、パネル、ステージと別窓の操作メニュー |
-| turbowarp-extension-loader | カタログの設定の読み書き、依存順・拒否した依存を考慮した拡張読み込み |
+| turbowarp-extension-loader | カタログの設定の読み書き、依存順・拒否した依存を考慮した拡張読み込み、VM ホストの承認状態・破棄、作品サイズの判定と同意の確認 |
 | turbowarp-extension-security-dialog | 拡張一覧の UI と状態、作品を開く前のレビュー、許可・再試行の画面、レビュー中の状態と失敗の説明 |
 | turbowarp-sb3-save-format | 作品データの調査・変換・検証、保存形式の設定と読み込み、組み込み素材の変換 |
 
@@ -35,7 +35,7 @@ GUI の Redux、ScratchBlocks 本体、画像、全画面ボタンの要素は E
 | --- | --- | --- | --- |
 | @kubohiroya/turbowarp-plus-editor-code-views | `0.21.3-ownership.0` | `ed0600e2385011ef87ff66f7d84b3bc32588094e` | `f2a2a742adaa33838b72d35229d1d88be44d6f04` |
 | @kubohiroya/turbowarp-plus-editor-workbench | `0.27.1-ownership.0` | `1e7849a16339325b77ab8605437a7c84b2120863` | `4315ae6283543a18386fa0835ad14d3a598f96f3` |
-| @kubohiroya/turbowarp-extension-loader | `0.11.2-ownership.0` | `7faa8e6b427b12199a28131c8f6f64b26e341f71` | `438f5b5a5acf403be9dd3f5900a848819b36ca0e` |
+| @kubohiroya/turbowarp-extension-loader | `0.11.2-ownership.2` | `82bb54d31880483ff4d7a27387b39da4f5f40884` | `438f5b5a5acf403be9dd3f5900a848819b36ca0e` |
 | @kubohiroya/turbowarp-extension-security-dialog | `0.9.1-ownership.0` | `8d750ae16362bf6256b7214880eecd6b2773433a` | `3b5531912d7999a85c96f2cfcfdc9d3fb2e222fb` |
 | @kubohiroya/turbowarp-sb3-save-format | `0.4.0-rc.3-ownership.0` | `265fcb3042c7840f1c877f881ad26197a4834d2f` | `46cf5890d57f77186db046e0ca5b3eb49cb687b5` |
 

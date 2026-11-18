@@ -6,10 +6,10 @@
   "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
   "securityVersion": "0.9.1-ownership.0",
   "loaderRepository": "kubohiroya/turbowarp-extension-loader",
-  "loaderRevision": "7faa8e6b427b12199a28131c8f6f64b26e341f71",
-  "loaderVersion": "0.11.2-ownership.0",
+  "loaderRevision": "82bb54d31880483ff4d7a27387b39da4f5f40884",
+  "loaderVersion": "0.11.2-ownership.2",
   "loaderSource": "tarball",
-  "loaderIntegrity": "sha512-pLBmTgzi58KM3/IMeBt3TiWUI3E/nMUlM6nLlONa5999aHgrWIaFTLZAgQvOppc/vjN+cGwpDxO/Wue1zf7oSg==",
+  "loaderIntegrity": "sha512-dq2ZGE2yhPFrElk1yO7jJvRQKi5EGLwDgfDT+NijqMcO0QDSrQZKtwwS2Earb50xeY7PWuO9g3g/uI7A/jFP6A==",
   "vmRepository": "kubohiroya/scratch-vm",
   "vmRevision": "e623546e0e173d70e0314d06d8a17bf84c72afeb",
   "vmBaseRevision": "0cb82afe62506f3d9f2ff849c95593f0473b5d2c",
@@ -44,10 +44,10 @@
       "integrity": "sha512-2k0iVbDP9w7Erf+m2tVdOIzPAF8vJ8f91YdD+XzlGE3iUZbTr2jDfqpXvZzkFdB/F64Ol9Ws4OIy3LpV4Pgajg=="
     },
     "@kubohiroya/turbowarp-extension-loader": {
-      "path": "vendor/kubohiroya-turbowarp-extension-loader-0.11.2-ownership.0.tgz",
-      "version": "0.11.2-ownership.0",
-      "revision": "7faa8e6b427b12199a28131c8f6f64b26e341f71",
-      "integrity": "sha512-pLBmTgzi58KM3/IMeBt3TiWUI3E/nMUlM6nLlONa5999aHgrWIaFTLZAgQvOppc/vjN+cGwpDxO/Wue1zf7oSg=="
+      "path": "vendor/kubohiroya-turbowarp-extension-loader-0.11.2-ownership.2.tgz",
+      "version": "0.11.2-ownership.2",
+      "revision": "82bb54d31880483ff4d7a27387b39da4f5f40884",
+      "integrity": "sha512-dq2ZGE2yhPFrElk1yO7jJvRQKi5EGLwDgfDT+NijqMcO0QDSrQZKtwwS2Earb50xeY7PWuO9g3g/uI7A/jFP6A=="
     },
     "@kubohiroya/turbowarp-extension-security-dialog": {
       "path": "vendor/kubohiroya-turbowarp-extension-security-dialog-0.9.1-ownership.0.tgz",

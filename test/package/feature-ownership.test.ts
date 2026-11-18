@@ -12,6 +12,7 @@ test('migrated feature adapters contain wiring without local UI or feature state
         'site/editor-views/code-popout.tsx', 'site/editor-views/desktop-code.ts',
         'site/project-tools/dialog.ts', 'site/project-tools/properties.ts', 'site/project-tools/index.ts',
         'site/project-payloads/codec.ts', 'site/project-payloads/host.ts', 'site/project-payloads/native-assets.ts',
+        'site/extension-host/host.ts', 'site/extension-host/project-size-gate.ts',
         'site/extension-host/review.ts', 'site/extension-host/review-channel.ts',
         'site/extension-host/permission-ui.ts', 'site/extension-library/plus-library.tsx',
         'site/extension-library/catalog-settings.ts', 'site/extension-library/load-extensions.ts'
