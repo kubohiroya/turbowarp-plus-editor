@@ -1,5 +1,6 @@
 import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
-import {chooseBrowserProject, followProjectFolder, mountProjectFolder, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import {chooseBrowserProject, createProjectFolder, followProjectFolder, mountProjectFolder, projectFolderActions}
+    from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
@@ -14,7 +15,9 @@ import {bindDesktopPublicationPushSession, createProjectPublication} from '@kubo
 import type {PublicationBridge, ProjectPublicationPort}
     from '@kubohiroya/turbowarp-plus-editor-git/project-publication';
 import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-editor-git/cloudflare-publication';
-import {loadedProjectTitle, projectScreenState} from './project-tools/index.ts';
+import {loadedProjectTitle, projectSaveName, projectScreenState, setProjectSaveName, showProjectNotice} from './project-tools/index.ts';
+import {askSaveName, isValidSaveName, suggestSaveName} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
+import {projectTitleFieldClassName} from '@kubohiroya/turbowarp-plus-editor-workbench/project-info-menu';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
@@ -29,7 +32,7 @@ type ProjectFolderVM = FolderVM & EditorHost['vm'] & {
 };
 type Action = {type: string};
 type GuiStore = {
-    getState(): {scratchGui: {vm: FolderVM; projectChanged: boolean; vmStatus: {running: boolean}}};
+    getState(): {scratchGui: {vm: FolderVM; projectChanged: boolean; projectTitle: string; vmStatus: {running: boolean}}};
     dispatch(action: Action): void;
     subscribe(listener: () => void): () => void;
 };
@@ -67,8 +70,21 @@ type PublicationGitAccess = {
     guard(): void;
 };
 export interface ProjectFolderWorkflows {
-    /** `title` names a folder made in the browser, where the user names a new folder instead of picking one. */
-    createFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string): Promise<boolean>;
+    /**
+     * Creates a project folder from the current project and opens it. `title` names a folder made in the browser, where
+     * the user names a new folder instead of picking one. `destination` is `browser` for a new folder in the browser's
+     * storage, or an empty folder already picked on the device; without it the folder follows `folderLocation`.
+     */
+    createFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string,
+        destination?: 'browser' | FileSystemDirectoryHandle): Promise<boolean>;
+    /** Writes the current project into a new folder and leaves the open project as it is (Save a Copy, #679). */
+    copyFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string): Promise<boolean>;
+    /** Picks an empty folder on the device for a new project; `null` when the person cancelled. */
+    pickEmptyFolder?(language: string): Promise<FileSystemDirectoryHandle | null>;
+    /** Where new project folders can be made: the browser's own storage, and folders picked on the device. */
+    locations?: {browser: boolean; device: boolean};
+    /** Marks the open project as saved, for a new default project that is about to be replaced by its folder. */
+    markSaved?(): void;
     /** `browser` when new project folders go to the browser's own storage, where there is no folder picker. */
     folderLocation?: 'device' | 'browser';
     repositoryCreation?: NonNullable<ReturnType<typeof bindProjectRepositoryCreation>>;
@@ -215,17 +231,78 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
             return files;
         } : undefined;
+    const browserStorage = folder.browserProjects;
+    // A new folder in the browser's storage, named by the project title, removed again when nothing is written to it.
+    const withNewBrowserFolder = async (title: string | undefined, run: (directory: FileSystemDirectoryHandle) => Promise<boolean>) => {
+        const project = await browserStorage!.create(title || 'Project', {projectPath: ''});
+        let kept = false;
+        try {
+            kept = await run(project.root);
+            return kept;
+        } finally {
+            if (!kept) await browserStorage!.remove(project.id).catch(() => {});
+        }
+    };
     const createFolder = folder.createFromSnapshot && unpackProject ?
-        async (serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string) => {
+        async (serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string,
+            destination?: 'browser' | FileSystemDirectoryHandle) => {
+            const create = async (directory?: FileSystemDirectoryHandle) => {
+                try {
+                    return await folder.createFromSnapshot({current, collectEdits: flushPendingSurfaceEdits, title, directory,
+                        prepareFiles: () => unpackProject(serialize, current)}) === 'opened';
+                } catch (error) {
+                    if ((error as DOMException).name === 'AbortError') return false;
+                    throw error;
+                }
+            };
+            if (destination === 'browser') return browserStorage ? withNewBrowserFolder(title, create) : false;
+            return create(destination);
+        } : undefined;
+    const folderLocation = folder.browserProjects && !view.showDirectoryPicker ? 'browser' as const : 'device' as const;
+    const isEmptyFolder = async (directory: FileSystemDirectoryHandle) => {
+        for await (const _entry of (directory as unknown as {values(): AsyncIterable<unknown>}).values()) return false;
+        return true;
+    };
+    const pickEmptyFolder = typeof view.showDirectoryPicker === 'function' ? async (language: string) => {
+        let directory: FileSystemDirectoryHandle;
+        try {
+            directory = await view.showDirectoryPicker!({id: 'turbowarp-plus-project-folder', mode: 'readwrite'});
+        } catch (error) {
+            if ((error as DOMException).name === 'AbortError') return null;
+            throw error;
+        }
+        if (!await isEmptyFolder(directory)) throw new Error(language.startsWith('ja') ? '空のフォルダを選んでください。' : 'Choose an empty folder.');
+        return directory;
+    } : undefined;
+    // Save a Copy writes the folder without opening it, so the open project keeps its own file or folder (#679).
+    const copyFolder = unpackProject ? async (serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string) => {
+        const write = async (directory: FileSystemDirectoryHandle, picked: boolean) => {
             try {
-                return await folder.createFromSnapshot({current, collectEdits: flushPendingSurfaceEdits, title,
-                    prepareFiles: () => unpackProject(serialize, current)}) === 'opened';
+                const overwrite = picked && !await isEmptyFolder(directory);
+                if (!current() || overwrite && !view.confirm(locale.startsWith('ja') ?
+                    '指定されたフォルダは空ではありません。フォルダに保存されている内容が上書きされる場合があります。よろしいですか？' :
+                    'The selected folder is not empty. Contents in the folder may be overwritten. Continue?')) return false;
+                await flushPendingSurfaceEdits();
+                if (!current()) return false;
+                const files = await unpackProject(serialize, current);
+                await createProjectFolder({directory, files, storage: vm.runtime.storage, overwrite, current});
+                return true;
             } catch (error) {
                 if ((error as DOMException).name === 'AbortError') return false;
                 throw error;
             }
-        } : undefined;
-    const folderLocation = folder.browserProjects && !view.showDirectoryPicker ? 'browser' as const : 'device' as const;
+        };
+        if (folderLocation === 'browser') return browserStorage ? withNewBrowserFolder(title, directory => write(directory, false)) : false;
+        let directory: FileSystemDirectoryHandle;
+        try {
+            directory = await view.showDirectoryPicker!({id: 'turbowarp-plus-project-folder', mode: 'readwrite'});
+        } catch (error) {
+            if ((error as DOMException).name === 'AbortError') return false;
+            throw error;
+        }
+        return write(directory, true);
+    } : undefined;
+    const locations = {browser: Boolean(browserStorage), device: typeof view.showDirectoryPicker === 'function'};
     // Without the folder picker, repositories live in the browser's storage, with the project folder inside (#660).
     const browserProjects = folderLocation === 'browser' ? folder.browserProjects : null;
     const browserFolders: BrowserRepositoryFolders | undefined = browserProjects ? {
@@ -242,6 +319,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         view, locale, desktop: view.EditorPreload?.localGitCreation,
         cloudflare,
         browserFolders,
+        createBrowserFolder: browserStorage ? async title => (await browserStorage.create(title, {projectPath: ''})).root : undefined,
         author: readAuthor,
         async prepareSource(serialize, current, title) {
             await flushPendingSurfaceEdits();
@@ -269,11 +347,12 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     let publication: {directory: FileSystemDirectoryHandle; root: FileSystemDirectoryHandle; current(): boolean;
         mode: 'desktop' | 'cloudflare'; port: ProjectPublicationPort} | undefined;
     const workflows = (): ProjectFolderWorkflows => {
+        const common = {createFolder, copyFolder, pickEmptyFolder, locations, markSaved: host.markSaved, folderLocation, repositoryCreation};
         const directory = folder.directory;
         const repository = gitPanel?.getCommitRepository?.();
         if (!directory || !repository || !folder.save || !saveWithLock ||
             typeof __TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__ !== 'function' ||
-            typeof __TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ !== 'function' || !view.indexedDB) return {createFolder, folderLocation, repositoryCreation};
+            typeof __TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ !== 'function' || !view.indexedDB) return common;
         const guard = () => {
             if (!repository.current() || folder.directory !== directory || store.getState().scratchGui.vm !== vm) {
                 throw Object.assign(new Error('The project or repository changed'), {code: 'changed'});
@@ -320,7 +399,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             return __TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__({root: repository.root, journal, projectFolder: relative.join('/'),
                 guard, author: readAuthor});
         })();
-        return {createFolder, folderLocation, repositoryCreation, publication: canPublish ? publication?.port : undefined, commit: {
+        return {...common, publication: canPublish ? publication?.port : undefined, commit: {
             async prepare(current) {
                 const queue = await getQueue();
                 const selection = await saveWithLock(async () => {
@@ -383,9 +462,35 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         });
     } : undefined;
     folders.set(vm, {folder, workflows, openRemote});
+    const stopTitleWatch = watchTitleCommits(document, () => store.getState().scratchGui.projectTitle, title => {
+        void reflectProjectTitle(title).catch(() => {});
+    });
+    // A title the person committed in the menu bar renames what the browser can rename, and says what it cannot (#679).
+    async function reflectProjectTitle(title: string) {
+        const directory = folder.directory;
+        const repository = Boolean(gitPanel?.getCommitRepository?.());
+        if (!directory || !title.trim()) return;
+        const language = document.documentElement.lang || locale;
+        const ja = language.startsWith('ja');
+        const entry = browserStorage ? await browserStorage.find(folder.root ?? directory).catch(() => null) : null;
+        if (folder.directory !== directory) return;
+        if (entry) await browserStorage!.rename(entry.id, title).catch(() => {});
+        if (!isValidSaveName(title) && !projectSaveName(vm)) {
+            const name = await askSaveName({document, locale: language, title, current: suggestSaveName(title) || undefined});
+            if (name && folder.directory === directory) setProjectSaveName(vm, name);
+        }
+        const notes = [];
+        if (!entry) notes.push(ja ?
+            'この作品のフォルダは手元のフォルダなので、フォルダ名は変わりません（ブラウザー版では手元のフォルダ名を変えられません）。' :
+            'This project folder is on your device, so its name stays as it is (the browser version cannot rename folders on your device).');
+        // Renaming the GitHub repository needs the keybroker's rename route first (#681).
+        if (repository) notes.push(ja ? 'Git のリポジトリの名前は、まだ変わりません。' : 'The Git repository keeps its name for now.');
+        if (notes.length) showProjectNotice(vm, notes.join(' '), language);
+    }
     let author: GitAuthor | undefined;
     if (localGit) void readAuthor().then(value => {author = value;});
     if (!localGit) return {...folder, dispose() {
+        stopTitleWatch();
         if (folders.get(vm)?.folder === folder) folders.delete(vm);
         folder.dispose();
     }};
@@ -491,12 +596,53 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     ensureProjectTab();
     return {...folder, dispose() {
         disposed = true;
+        stopTitleWatch();
         stopProjectTab();
         if (folders.get(vm)?.folder === folder) folders.delete(vm);
         unfollowBinding();
         gitPanel?.dispose();
         folder.dispose();
     }};
+}
+
+/**
+ * Calls `commit` with the new title when the person commits an edit of the menu bar's title field, on Enter or when
+ * the field loses focus, as the GUI's own field does. Titles set by loading, a new project or the properties are not
+ * edits of the field, so they are not reported.
+ */
+function watchTitleCommits(document: Document, readTitle: () => string, commit: (title: string) => void) {
+    const view = document.defaultView;
+    if (!view) return () => {};
+    const isTitleField = (target: EventTarget | null) =>
+        target instanceof view.HTMLInputElement && target.classList.contains(projectTitleFieldClassName);
+    let before: string | null = null;
+    let scheduled = false;
+    const focus = (event: Event) => {
+        if (isTitleField(event.target) && !scheduled) before = readTitle();
+    };
+    const settle = (event: Event) => {
+        if (before === null || scheduled || !isTitleField(event.target)) return;
+        if (event.type === 'keydown' && ((event as KeyboardEvent).key !== 'Enter' || (event as KeyboardEvent).isComposing)) return;
+        const previous = before;
+        scheduled = true;
+        // The field writes the title after this event (Enter also blurs it); read it once the GUI has handled both.
+        view.setTimeout(() => {
+            scheduled = false;
+            const title = readTitle();
+            before = isTitleField(document.activeElement) ? title : null;
+            if (title !== previous) commit(title);
+        }, 0);
+    };
+    document.addEventListener('focusin', focus, true);
+    document.addEventListener('keydown', settle, true);
+    document.addEventListener('change', settle, true);
+    document.addEventListener('focusout', settle, true);
+    return () => {
+        document.removeEventListener('focusin', focus, true);
+        document.removeEventListener('keydown', settle, true);
+        document.removeEventListener('change', settle, true);
+        document.removeEventListener('focusout', settle, true);
+    };
 }
 
 /** Whether `directory` is the root of a Git repository, as the Git panel opens one. */

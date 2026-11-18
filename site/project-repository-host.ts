@@ -162,10 +162,13 @@ function cloudflareProvider(view: Window, {bffOrigin}: Cloudflare) {
     } satisfies RepositoryCreationProvider<Session>;
 }
 
-export function bindProjectRepositoryCreation({view, desktop, cloudflare, browserFolders, locale, author, prepareSource, openProject}: {
+export function bindProjectRepositoryCreation({view, desktop, cloudflare, browserFolders, createBrowserFolder, locale, author, prepareSource,
+    openProject}: {
     view: CreationWindow;
     /** Puts new repositories in the browser's own storage instead of a picked folder. */
     browserFolders?: BrowserRepositoryFolders;
+    /** Makes a new empty folder in the browser's storage, for a working copy the person chose to keep there (#679). */
+    createBrowserFolder?: BrowserRepositoryFolders['create'];
     desktop?: DesktopRepositoryCreation;
     cloudflare?: Cloudflare;
     locale: string;
@@ -251,10 +254,17 @@ export function bindProjectRepositoryCreation({view, desktop, cloudflare, browse
     return {
         ...workflow,
         licenses: licenses.map(({id}) => ({id, label: id})),
-        async start(draft: GitHubRepositoryDraft, serialize: () => Promise<Uint8Array>, current: () => boolean, signal: AbortSignal) {
+        /**
+         * `target` is where the working copy goes: `browser` for a new folder in the browser's storage, or an empty
+         * folder already picked on the device. Without it, the folder follows where this browser keeps new folders.
+         */
+        async start(draft: GitHubRepositoryDraft, serialize: () => Promise<Uint8Array>, current: () => boolean, signal: AbortSignal,
+            target?: 'browser' | FileSystemDirectoryHandle) {
+            const createInBrowser = target === 'browser' || !target && browserFolders ? browserFolders?.create ?? createBrowserFolder : undefined;
+            if (target === 'browser' && !createInBrowser) throw creationError('invalidRequest');
             // A folder in the browser is made only once the project is ready, so a cancelled creation leaves none behind.
-            const directory = browserFolders ? null : await pickDirectory();
-            if (!browserFolders && !directory || !current()) return null;
+            const directory = typeof target === 'object' ? target : createInBrowser ? null : await pickDirectory();
+            if (!createInBrowser && !directory || !current()) return null;
             if (directory) {
                 for await (const _entry of (directory as FileSystemDirectoryHandle & {values(): AsyncIterable<FileSystemHandle>}).values())
                     throw creationError('directoryNotEmpty');
@@ -271,7 +281,7 @@ export function bindProjectRepositoryCreation({view, desktop, cloudflare, browse
             __TW_PLUS_SB3_TOOLCHAIN_VERSION__);
             const identity = await author() ?? {name: draft.account, email: draft.account + '@users.noreply.github.com'};
             if (!current()) return null;
-            return workflow.start({directory: directory ?? await browserFolders!.create(draft.title), draft, author: identity, files: [...seed].map(([path, bytes]) => ({path, bytes})), signal});
+            return workflow.start({directory: directory ?? await createInBrowser!(draft.title), draft, author: identity, files: [...seed].map(([path, bytes]) => ({path, bytes})), signal});
         }
     };
 }

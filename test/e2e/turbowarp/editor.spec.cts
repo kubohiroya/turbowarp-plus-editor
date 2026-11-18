@@ -156,8 +156,8 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
     await page.getByPlaceholder('プロジェクトのタイトルを入力', {exact: true}).fill('block-editor-e2e');
     await page.getByText('ファイル', {exact: true}).click();
     const downloadPending = page.waitForEvent('download');
-    await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click();
-    await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
+    await page.getByRole('button', {name: 'プロジェクトのコピーを保存…', exact: true}).click();
+    await page.getByRole('dialog', {name: 'プロジェクトのコピーを保存'}).getByRole('button', {name: '保存', exact: true}).click();
     const download = await downloadPending;
     expect(download.suggestedFilename()).toBe('block-editor-e2e.sb3');
     const filename = testInfo.outputPath('roundtrip.sb3');

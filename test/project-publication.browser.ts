@@ -247,8 +247,8 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
         await page.getByText('File', {exact: true}).click();
         await page.getByRole('button', {name, exact: true}).click();
     };
-    await command('Save As…');
-    const save = page.getByRole('dialog', {name: 'Save As', exact: true});
+    await command('Save Project');
+    const save = page.getByRole('dialog', {name: 'Save Project', exact: true});
     await save.getByLabel('Save format').selectOption('folder');
     await save.getByRole('button', {name: 'Choose Where to Save…'}).click();
     await expect(save).toBeHidden();

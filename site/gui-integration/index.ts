@@ -9,7 +9,7 @@ import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/contex
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
-import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
+import {projectCreation, projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 import {projectFolderOpenRemote, projectFolderWorkflows} from '../project-folder-host.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
@@ -188,20 +188,22 @@ const collectingSaves = (storage, folder) => collectBeforeSaving(storage, folder
 
 export const renderProjectSaveMenu = ({vm, locale = 'en', storage: gui}) => {
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
-    const {saveAs, saveCommit} = projectFileActions(vm, locale, storage, () => folder?.detach(), undefined, projectFolderWorkflows(vm));
-    return React.createElement(ProjectSaveMenu, {locale, entries: {storage, folder, saveAs, saveCommit}});
+    const {saveAs, saveNew, saveCommit} = projectFileActions(vm, locale, storage, () => folder?.detach(), undefined, projectFolderWorkflows(vm));
+    return React.createElement(ProjectSaveMenu, {locale, entries: {storage, folder, saveAs, saveNew, saveCommit}});
 };
 
 export const renderProjectFileWorkflow = ({
-    vm, locale = 'en', MenuItem, MenuSection, close, storage: gui, create, newWindow, open, restore, exportProject, addExtension
+    vm, locale = 'en', MenuItem, MenuSection, close, storage: gui, create, newWindow, open, restore, exportProject, addExtension, defaultTitle
 }) => {
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
-    const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension, projectFolderWorkflows(vm));
+    const workflows = projectFolderWorkflows(vm);
+    const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension, workflows);
+    const {createIn, newProject} = projectCreation(vm, locale, create, workflows, defaultTitle);
     const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
     const openExport = exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject);
     const openRemote = projectFolderOpenRemote(vm);
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
-        ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
+        ...actions, create, createIn, newProject, newWindow, open, storage, folder, restore,
         exportProject: openExport,
         openRemote: openRemote && (() => openRemote(locale)),
         git: React.createElement(GitFileMenu, {...inline, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
@@ -216,6 +218,7 @@ export const saveProjectFromFileMenu = (vm, gui, promptForTarget) => {
     }
     const locale = document.documentElement.lang || 'en';
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
+    // A project with no save target yet asks where to save it, and that place becomes its target (#679).
     projectSaveShortcut(storage, folder, promptForTarget ?
-        () => projectFileActions(vm, locale, storage, () => folder?.detach(), undefined, projectFolderWorkflows(vm)).saveAs?.() : undefined);
+        () => projectFileActions(vm, locale, storage, () => folder?.detach(), undefined, projectFolderWorkflows(vm)).saveNew?.() : undefined);
 };

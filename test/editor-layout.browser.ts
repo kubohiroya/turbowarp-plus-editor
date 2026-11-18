@@ -98,7 +98,8 @@ test('the browser tab follows the current project title', {timeout: 30_000}, asy
     await expect(page).toHaveTitle('読み込んだ作品 - TurboWarp Plus Editor');
 
     await openFileMenu();
-    await page.getByText('Create New Project', {exact: true}).click();
+    await page.getByText('Create New Project…', {exact: true}).click();
+    await page.getByRole('dialog', {name: 'Create New Project'}).getByRole('button', {name: 'Create', exact: true}).click();
     await expect(title).toHaveValue('Project');
     await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
 });
@@ -140,7 +141,7 @@ test('the unsaved marker stays by the project name and its hint fits in the view
     const longTitle = await title.boundingBox();
     assert(longTitle && longTitle.width > shortTitle.width && longTitle.width < 192);
     await marker.press('Enter');
-    await expect(page.getByRole('button', {name: '名前を変えて保存…', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'プロジェクトのコピーを保存…', exact: true})).toBeVisible();
 });
 
 test('the real editor resizes both dividers and preserves editing and stage input', {timeout: 90_000}, async t => {
@@ -301,8 +302,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
 
     await page.getByText('File', {exact: true}).click();
     const pending = page.waitForEvent('download');
-    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
-    await page.getByRole('dialog', {name: 'Save As'}).getByRole('button', {name: 'Save', exact: true}).click();
+    await page.getByRole('button', {name: 'Save a Copy of the Project…', exact: true}).click();
+    await page.getByRole('dialog', {name: 'Save a Copy of the Project'}).getByRole('button', {name: 'Save', exact: true}).click();
     const archive = await readFile(await (await pending).path());
     const zip = await JSZip.loadAsync(archive, {checkCRC32: true});
     const json = await zip.file('project.json').async('string');
@@ -3334,12 +3335,12 @@ test('the hats and functions list and the calls section show each script alone i
     await expect(pane.locator('[data-function-key][aria-current="true"]')).toHaveText(/wave/);
 });
 
-test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
+test('Save a Copy of the Project keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');
     await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
-    const dialog = page.getByRole('dialog', {name: 'Save As', exact: true});
+    await page.getByRole('button', {name: 'Save a Copy of the Project…', exact: true}).click();
+    const dialog = page.getByRole('dialog', {name: 'Save a Copy of the Project', exact: true});
     const cancel = dialog.getByRole('button', {name: 'Cancel', exact: true});
     const save = dialog.getByRole('button', {name: 'Save', exact: true});
     const actions = dialog.locator('.tw-plus-dialog-actions');
@@ -3358,7 +3359,7 @@ test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30
     await cancel.click();
     await expect(dialog).toHaveCount(0);
     await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
+    await page.getByRole('button', {name: 'Save a Copy of the Project…', exact: true}).click();
     const download = page.waitForEvent('download');
     await save.click();
     assert.match((await download).suggestedFilename(), /\.sb3$/);

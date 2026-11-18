@@ -26,7 +26,8 @@ module.exports = (source: string) => {
                                                 create: this.handleClickNew, newWindow: this.props.onClickNewWindow && this.handleClickNewWindow,
                                                 open: this.props.onStartSelectingFileUpload, restore: this.handleClickRestorePoints,
                                                 exportProject: this.props.onClickPackager && this.handleClickPackager,
-                                                addExtension: this.props.onAddExtension
+                                                addExtension: this.props.onAddExtension,
+                                                defaultTitle: this.props.intl.formatMessage({id: 'tw.gui.defaultProjectTitle', defaultMessage: 'Project'})
                                             })}
                                         </SB3Downloader> : <React.Fragment>
 ${original}                                    </React.Fragment>}

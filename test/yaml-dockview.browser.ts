@@ -182,7 +182,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     await expect(saveMarker).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByRole('button', {name: 'プロジェクトを保存', exact: true})).toHaveCount(0);
     const pending = page.waitForEvent('download');
-    await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click(); await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
+    await page.getByRole('button', {name: 'プロジェクトのコピーを保存…', exact: true}).click(); await page.getByRole('dialog', {name: 'プロジェクトのコピーを保存'}).getByRole('button', {name: '保存', exact: true}).click();
     archive = await readFile(await (await pending).path());
     await expect(saveMarker).toHaveCount(0);
     await expect(unsaved(docTab(page, 'settings'))).toBeHidden();

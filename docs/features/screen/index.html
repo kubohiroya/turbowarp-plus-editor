@@ -82,21 +82,21 @@
 <p>作品の作成・読み込み・保存・書き出しと作品の設定は、「ファイル」メニューにまとまっています。項目にはアイコンが付き、用途ごとに区切り線で分かれています。ローカルGitのパネルは、ファイルメニューではなく、リポジトリのあるフォルダを開いたあとにメニューバーに出るブランチのボタン（例：「main ▾」）から開きます。Gitの設定は左ドロワーの「Git 履歴」で行います（<a href="../git/#local-git">「ローカルGitで変更と履歴を確かめる」</a>）。</p>
 <div class="table-scroll" role="region" aria-label="ファイルメニューの項目" tabindex="0">
 <table><caption>ファイルメニューの項目（上から順）</caption><thead><tr><th scope="col">項目</th><th scope="col">できること</th><th scope="col">説明する章</th></tr></thead><tbody>
-<tr><th scope="row">新しいプロジェクトを作成</th><td>編集中の作品を閉じ、新しい作品を始める</td><td><a href="../open/#start">「作品を新しく作る・SB3を開く」</a></td></tr>
+<tr><th scope="row">新しいプロジェクトを作成…</th><td>編集中の作品を閉じ、新しい作品を始める。作成先は、メモリ上のSB3、ブラウザー内または手元のプロジェクトフォルダ、GitHubの新しいリポジトリから選ぶ</td><td><a href="../open/#start">「作品を新しく作る・SB3を開く」</a></td></tr>
 <tr><th scope="row">SB3ファイルを開く…</th><td>手元の .sb3 を開く。旧形式の .sb、.sb2 も選べる</td><td><a href="../open/#start">「作品を新しく作る・SB3を開く」</a>、<a href="../open/#loading">「読み込みの経過を確かめる」</a></td></tr>
 <tr><th scope="row">フォルダを開く…</th><td>sb3-toolchainで展開した作品フォルダを開く。フォルダに<code>.git</code>があれば、そのリポジトリでGitを使う。フォルダを選べないSafariやFirefoxでは選べない</td><td><a href="../git/#project-folder">「作品フォルダを開いて保存する」</a>、<a href="../git/#local-git">「ローカルGitで変更と履歴を確かめる」</a></td></tr>
 <tr><th scope="row">ブラウザーに保存したフォルダを開く…</th><td>ブラウザー（OPFS）に保存した作品フォルダを開く。どのブラウザーでも使える</td><td><a href="../git/#project-folder">「作品フォルダを開いて保存する」</a></td></tr>
 <tr><th scope="row">Git のリモートリポジトリを開く…</th><td>GitHubにある作品のリポジトリを取得し、手元のフォルダかブラウザー内に保存して開く。Gitはそのリポジトリに結び付く。GitHub接続付きのエディターだけに表示される</td><td><a href="../git/#open-remote">「Gitのリモートリポジトリを開く」</a></td></tr>
 <tr><th scope="row">リリース…</th><td>npmパッケージの公開、GitHubのリビジョンタグの作成、GitHub PagesへのHTMLの公開をまとめたダイアログを開く</td><td><a href="../github/#release">「リリースして配る」</a>、<a href="../save/#packager">「作品を書き出して単一HTMLで配布する」</a></td></tr>
-<tr><th scope="row">プロジェクトを保存</th><td>現在のプロジェクト全体を、開いたSB3や作品フォルダに上書き保存する</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
-<tr><th scope="row">名前を変えて保存…</th><td>名前・保存先・格納方式を選んでSB3を作る</td><td><a href="../save/#save">「上書き保存と名前を変えて保存を使い分ける」</a></td></tr>
+<tr><th scope="row">プロジェクトを保存</th><td>現在のプロジェクト全体を、開いたSB3や作品フォルダに上書き保存する。上書き先がないときは保存先を尋ね、選んだ場所を以後の保存先にする</td><td><a href="../save/#save">「プロジェクトの保存とコピーの保存を使い分ける」</a></td></tr>
+<tr><th scope="row">プロジェクトのコピーを保存…</th><td>名前・保存先・格納方式を選んで作品の写しを作る。編集中の作品とその保存先は変わらない</td><td><a href="../save/#save">「プロジェクトの保存とコピーの保存を使い分ける」</a></td></tr>
 <tr><th scope="row">書き出し…</th><td>実行・配布用のファイルを作る</td><td><a href="../save/#packager">「作品を書き出して単一HTMLで配布する」</a></td></tr>
-<tr><th scope="row">作品のプロパティ</th><td>タイトル・URI・作者などを記入し、作品の診断を開く</td><td><a href="../save/#project-properties">「作品情報を記入してSB3に保存する」</a>、<a href="../save/#project-uri">「作品のURIを指定してキャッシュを分ける」</a>、<a href="../open/#project-diagnostics">「作品が開けないときに診断を読む」</a></td></tr>
+<tr><th scope="row">作品のプロパティ</th><td>タイトル・URI・作者・保存用の名前などを記入し、作品の診断を開く</td><td><a href="../save/#project-properties">「作品情報を記入してSB3に保存する」</a>、<a href="../save/#project-uri">「作品のURIを指定してキャッシュを分ける」</a>、<a href="../open/#project-diagnostics">「作品が開けないときに診断を読む」</a></td></tr>
 <tr><th scope="row">組み込みデータ…</th><td>ソースデータと素材の格納方式を選び、バンドル素材を作品に追加する</td><td><a href="../save/#payload-formats">「ソースデータと素材の格納方式を選ぶ」</a>、<a href="../reuse/#bundle-assets">「バンドル素材を背景・コスチューム・音に追加する」</a></td></tr>
 <tr><th scope="row">機能拡張…</th><td>使用中の拡張の格納方式を変え、拡張を追加する</td><td><a href="../open/#extensions">「カタログから拡張を追加する」</a>、<a href="../save/#storage">「拡張コードの格納方式を選ぶ」</a></td></tr>
 <tr><th scope="row">復元ポイント</th><td>TurboWarpが定期的に記録した復元ポイントから作品を戻す</td><td><a href="../save/#restore-points">「復元ポイントから作品を戻す」</a></td></tr>
 </tbody></table></div>
-<p>左ドロワーに「プロジェクトフォルダ」を表示し、ファイルをタブで開いているときは、「名前を変えて保存…」の次に「アクティブなタブを保存」が加わります（<a href="#edit-menu">保存のショートカット</a>）。</p>
+<p>左ドロワーに「プロジェクトフォルダ」を表示し、ファイルをタブで開いているときは、「プロジェクトのコピーを保存…」の次に「アクティブなタブを保存」が加わります（<a href="#edit-menu">保存のショートカット</a>）。</p>
 
 </section>
 
@@ -116,7 +116,7 @@
 <tr><th scope="row">保存（左ドロワーの表示に応じて）</th><td>Ctrl+S</td><td>⌘S</td></tr>
 </tbody></table></div>
 <ul><li>「元に戻す」「繰り返し」は、操作中のコード画面の履歴に対して働きます。</li><li>「切り取り」「コピー」は、コード画面で選んだブロックに対して働きます。「貼り付け」は、コピーしたブロックがあるときに選べます。</li><li>「検索と置換」は、<a href="../search/#project-search">作品全体の検索</a>のパネルを開きます。最上段の検索欄と同じパネルで、検索欄に語句が入っていれば「置換後の文字列」の欄に、空なら検索欄にカーソルが移ります。</li><li>「コードブロックの再配置」は、コード画面のスクリプトを並べ直すダイアログを開きます（<a href="../blocks/#arrange">コードを並べ替える・別のスプライトへコピーする</a>）。</li></ul>
-<p>左ドロワーがスプライト一覧のときは、⌘S（WindowsはCtrl+S）でプロジェクト全体を保存します。「プロジェクトフォルダ」を表示しているときは、アクティブなタブのファイルを保存します。どちらに割り当てられているかは、「ファイル」メニューでショートカットが表示されている項目で確かめられます（<a href="../save/#save">上書き保存と名前を変えて保存を使い分ける</a>）。</p>
+<p>左ドロワーがスプライト一覧のときは、⌘S（WindowsはCtrl+S）でプロジェクト全体を保存します。「プロジェクトフォルダ」を表示しているときは、アクティブなタブのファイルを保存します。どちらに割り当てられているかは、「ファイル」メニューでショートカットが表示されている項目で確かめられます（<a href="../save/#save">プロジェクトの保存とコピーの保存を使い分ける</a>）。</p>
 <figure>
 <a href="../images/current-save-active-tab.png"><img src="../images/current-save-active-tab.png" width="1440" height="960" alt="左ドロワーに「プロジェクトフォルダ」、中央にproject.source.jsonのタブ。ファイルメニューの「アクティブなタブを保存」に ⌘S が表示されている。" loading="lazy"></a>
 <figcaption>左ドロワーで「プロジェクトフォルダ」を表示しているときのファイルメニュー。</figcaption>
