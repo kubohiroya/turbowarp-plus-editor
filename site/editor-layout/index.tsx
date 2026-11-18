@@ -1,8 +1,5 @@
 import React from 'react';
-import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
 import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
-import {connectDesktopWorkspaceLayouts, type DesktopWorkspaceLayouts} from './desktop-workspace-layout.ts';
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {getDocumentWorkspace, useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
@@ -23,29 +20,10 @@ import {projectFolderWorkflows} from '../project-folder-host.ts';
 import {createFolderFromCurrentProject, projectScreenState} from '../project-tools/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
-const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
-const startupParams = new URLSearchParams(startupSearch);
-export const layoutFlags = readWebStartupFeatureFlags(startupSearch);
-export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
-    startupParams.get('twPlusDockviewSpriteTabs') !== '0';
-const desktopHost = typeof window !== 'undefined' && (window as Window & {
-    EditorPreload?: {
-        externalYaml?: ExternalYamlFilePort;
-        /** The key the Dockview layout of an opened SB3 is kept under. */
-        workspaceProjectKey?(fileId: string): string | null;
-        workspaceLayouts?: DesktopWorkspaceLayouts | null;
-    };
-}).EditorPreload;
-export const dockviewMultiViewEnabled = dockviewSpriteTabsEnabled && startupParams.get('twPlusDockview') !== '0' &&
-    (typeof EditorPreload === 'undefined' || Boolean(desktopHost && desktopHost.externalYaml));
-export const externalYamlPort = dockviewMultiViewEnabled && desktopHost && desktopHost.externalYaml;
-export const desktopProjectKey = desktopHost && desktopHost.workspaceProjectKey;
-export const desktopWorkspaceLayoutStore = desktopHost?.workspaceLayouts ?
-    connectDesktopWorkspaceLayouts(desktopHost.workspaceLayouts) : undefined;
-export const stageDrawerEnabled = layoutFlags.standardLayout && layoutFlags.stageDisplayMenu &&
-    startupParams.get('twPlusStageDrawer') !== '0';
-export const stageLauncherEnabled = stageDrawerEnabled && startupParams.get('twPlusStageLauncher') !== '0';
-export const stageCanUndock = layoutFlags.stagePanel || (layoutFlags.standardLayout && layoutFlags.stageDisplayMenu);
+export {layoutFlags, dockviewSpriteTabsEnabled, dockviewMultiViewEnabled, externalYamlPort,
+    desktopProjectKey, desktopWorkspaceLayoutStore, stageDrawerEnabled, stageLauncherEnabled, stageCanUndock} from './config.ts';
+import {layoutFlags, dockviewSpriteTabsEnabled, dockviewMultiViewEnabled, externalYamlPort,
+    desktopWorkspaceLayoutStore, stageDrawerEnabled, stageLauncherEnabled, stageCanUndock} from './config.ts';
 const layoutMenuIcon = (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <circle cx="6" cy="12" r="1.5" />

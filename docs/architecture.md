@@ -9,6 +9,9 @@
 - 本リポジトリは、それらを `site/` の接続コードで差し込み口へ渡し、固定したGUI・VM・Packagerからビルドして、案内画面・ブランド・編集ボタン・統合検証と配信を所有します。
 - 上流のパッケージは本リポジトリやGUIを取得・ビルド・配信しません。設計の基準は[turbowarp-plus-packagesの設計書](https://github.com/kubohiroya/turbowarp-plus-packages/blob/main/docs/editor-architecture.ja.md)です。
 
+機能ごとの移管先と公開 API の境界は[上流への責務移管](upstream-feature-ownership.md)を参照してください。
+上流で公開した npm の完全版を固定し、lockfile の配布元・integrity と導入版を照合します。機能パッケージのアーカイブは本リポジトリへ同梱しません。
+
 ## 固定ソースと成果物
 
 `site/source.json` はGUI・VM・Packagerの40桁SHAと、データエディター・拡張ローダー・文書エディター・スクリプト転送・セキュリティUIのnpm完全版（必要に応じてintegrityと公開元コミット）を持ちます。ビルド前に、GUI checkoutとインストール済みパッケージを固定値と照合します。

@@ -1,3 +1,5 @@
+import type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
+export type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
 import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
 import {chooseBrowserProject, followProjectFolder, mountProjectFolder, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
@@ -68,28 +70,6 @@ type PublicationGitAccess = {
     getSession: ReturnType<typeof createGitConnectionSettings>['getSession'];
     guard(): void;
 };
-export interface ProjectFolderWorkflows {
-    /**
-     * Creates a project folder from the current project and opens it. `title` names a folder made in the browser, where
-     * the user names a new folder instead of picking one. `destination` is `browser` for a new folder in the browser's
-     * storage, or an empty folder already picked on the device; without it the folder follows `folderLocation`.
-     */
-    createFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string,
-        destination?: 'browser' | FileSystemDirectoryHandle): Promise<boolean>;
-    /** Writes the current project into a new folder and leaves the open project as it is (Save a Copy, #679). */
-    copyFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string): Promise<boolean>;
-    /** Picks an empty folder on the device for a new project; `null` when the person cancelled or it was not empty. */
-    pickEmptyFolder?(language: string): Promise<FileSystemDirectoryHandle | null>;
-    /** Where new project folders can be made: the browser's own storage, and folders picked on the device. */
-    locations?: {browser: boolean; device: boolean};
-    /** Marks the open project as saved, for a new default project that is about to be replaced by its folder. */
-    markSaved?(): void;
-    /** `browser` when new project folders go to the browser's own storage, where there is no folder picker. */
-    folderLocation?: 'device' | 'browser';
-    repositoryCreation?: NonNullable<ReturnType<typeof bindProjectRepositoryCreation>>;
-    commit?: ProjectCommitPort;
-    publication?: ProjectPublicationPort;
-}
 type PickerWindow = Window & {
     EditorPreload?: {
         localGitAuth?: DesktopGitPreload | null;

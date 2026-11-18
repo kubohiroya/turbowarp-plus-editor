@@ -1,5 +1,5 @@
 import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
-import styles from '../project-tools/dialog.css';
+import styles from '@kubohiroya/turbowarp-plus-editor-workbench/project-dialog.css';
 
 /** Ask before sending an SB3-provided URL any request, including for non-cacheable data. */
 export function approveProjectPayloads(document, locale, urls, cacheable, signal) {

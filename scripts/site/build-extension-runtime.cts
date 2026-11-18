@@ -38,6 +38,11 @@ const config = withExtensionLoaderWebpack4({
         loader: hostRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
             presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}}]}
 }, {hostRoot: gui});
+const {installPackageExports} = require('./package-exports.cts');
+installPackageExports(config, rootRequire, [
+    '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog',
+    '@kubohiroya/turbowarp-sb3-save-format'
+]);
 webpack(config, (error, stats) => {
     if (error || stats.hasErrors()) {
         console.error(error || stats.toString({all: false, errors: true}));

@@ -447,5 +447,10 @@ config.module.rules.push({
 });
 // The block editor helper aliases its subpaths to precompiled entries in this repository's install.
 const {withBlockEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-data-editor/webpack4');
+const {installPackageExports} = require('./package-exports.cts');
+installPackageExports(config, rootRequire, [
+    '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog',
+    '@kubohiroya/turbowarp-sb3-save-format'
+]);
 module.exports = withBlockEditorWebpack4(
     withExtensionLoaderWebpack4(withDocumentEditorWebpack4(config), {hostRoot: gui}), {hostRoot: gui});

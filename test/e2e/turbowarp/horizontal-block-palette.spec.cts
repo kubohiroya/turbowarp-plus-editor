@@ -137,7 +137,9 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     await expect(flyout.getByText('palette test variable', {exact: true}).first()).toBeVisible();
     const search = page.getByRole('searchbox', {name: 'Search blocks'});
     await search.fill('set');
-    await expect(flyout.getByText('set', {exact: true})).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace()
+        .getFlyout().getWorkspace().getTopBlocks(false).some(block => block.type === 'data_setvariableto'))).toBe(true);
+    await expect(flyout.getByText('set', {exact: true}).first()).toBeVisible();
     await expect(flyout.getByText('change', {exact: true})).toHaveCount(0);
 
     await toolbox.locator('.scratchCategoryId-myBlocks').click();
@@ -172,6 +174,8 @@ test('横パレットの見出しとラベルを検索し、絞り込んだブ�
     const flyout = page.locator('.blocklyFlyout');
     const search = page.getByRole('searchbox', {name: 'ブロックを検索'});
     const blocks = flyout.locator('.blocklyBlockCanvas > .blocklyDraggable');
+    const paletteBlockTypes = () => page.evaluate(() => window.ScratchBlocks.getMainWorkspace()
+        .getFlyout().getWorkspace().getTopBlocks(false).map(block => block.type).sort());
     const workspace = page.locator('.blocklySvg').first();
     const placed = workspace.locator('> .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable');
 
@@ -179,12 +183,15 @@ test('横パレットの見出しとラベルを検索し、絞り込んだブ�
     await expect(search).toBeVisible();
     const fullCount = await blocks.count();
     expect(fullCount).toBeGreaterThan(1);
+    const motionTypes = await paletteBlockTypes();
     const input = await search.boundingBox();
     const pin = await flyout.locator('.sa-lock-button').boundingBox();
     expect(input.x + input.width).toBeLessThan(pin.x);
 
     await search.fill('動');
-    await expect(blocks).toHaveCount(fullCount);
+    // Search spans all categories: a Looks block's label also matches "動".
+    await expect.poll(paletteBlockTypes).toEqual([...motionTypes, 'looks_gotofrontback'].sort());
+    await expect(blocks).toHaveCount(fullCount + 1);
     await search.fill('表示にない語句');
     await expect(blocks).toHaveCount(0);
     await expect(flyout.getByText('一致するブロックがありません', {exact: true})).toBeVisible();
