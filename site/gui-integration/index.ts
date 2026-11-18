@@ -10,7 +10,7 @@ import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
 import {projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
-import {projectFolderWorkflows} from '../project-folder-host.ts';
+import {projectFolderOpenRemote, projectFolderWorkflows} from '../project-folder-host.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-menu';
@@ -199,9 +199,11 @@ export const renderProjectFileWorkflow = ({
     const actions = projectFileActions(vm, locale, storage, () => folder?.detach(), addExtension, projectFolderWorkflows(vm));
     const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
     const openExport = exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject);
+    const openRemote = projectFolderOpenRemote(vm);
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, saveAs: actions.saveAs, create, newWindow, open, storage, folder, restore,
         exportProject: openExport,
+        openRemote: openRemote && (() => openRemote(locale)),
         git: React.createElement(GitFileMenu, {...inline, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
     }, workspace: getDocumentWorkspace(vm)});
 };

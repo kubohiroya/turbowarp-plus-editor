@@ -67,11 +67,23 @@
 <h3>Open a project folder</h3>
 <p>Choose "File" → "Open Folder…", select the project folder, and allow reading and writing. The project data and the local images and sounds are loaded. To open a folder saved in the browser, choose "File" → "Open Folder Saved in This Browser…". This item appears in every browser.</p>
 <p>In Safari and Firefox, "Open Folder…" is shown but cannot be chosen, and the reason is given: "This browser cannot open folders on your device. Use Chrome or Edge, or open a folder saved in this browser."</p>
-<p>If the chosen folder has <code>.git</code>, that repository is bound to Git and used by "Git history" in the left drawer and by Local Git. The project can be at the root of the folder or in <code>project/</code>. A folder without <code>.git</code> opens without Git (see <a href="#local-git">Check changes and history with local Git</a>).</p>
+<p>The project files (<code>project.source.json</code>, <code>sb3-source.json</code>, and <code>embedded-extensions.json</code>) must be at the root of the folder you choose. A folder without them is not a project folder: a "Cannot Open Folder" dialog says "This folder is not a project folder." and nothing is opened. The project you had open stays as it is. The same applies when you open a folder saved in the browser.</p>
+<p>If the chosen folder has <code>.git</code>, that repository is bound to Git and used by "Git history" in the left drawer and by Local Git. A folder without <code>.git</code> opens without Git (see <a href="#local-git">Check changes and history with local Git</a>).</p>
 <figure>
 <a href="../images/en/current-open-folder.png"><img src="../images/en/current-open-folder.png" width="1440" height="960" alt="The editor's File menu shows the item for opening a project folder." loading="lazy"></a>
 <figcaption>Open a project folder from "File" at the top left.</figcaption>
 </figure>
+<h3 id="open-remote">Open a remote Git repository</h3>
+<p>In an editor with a GitHub connection, "File" → "Open Remote Git Repository…" downloads and opens a project repository on GitHub. The item is right below "Open Folder Saved in This Browser…" and has a cloud-with-arrow icon.</p>
+<ol>
+<li>Choose "File" → "Open Remote Git Repository…" and enter the repository URL (<code>https://github.com/&lt;owner&gt;/&lt;repo&gt;</code>).</li>
+<li>Choose where to save it: "A folder on this device" or "In this browser". In Safari and Firefox, "A folder on this device" is unavailable for the same reason as "Open Folder…".</li>
+<li>The editor connects to GitHub with read access. In the browser version an authorization window opens; in Desktop a link and a code are shown. Follow them to authenticate on GitHub.</li>
+<li>The editor downloads the default branch with its history and checks that the repository root is a project folder. If it is not, "Cannot Open Folder" appears and nothing is saved. An empty repository cannot be opened either.</li>
+<li>If you chose "A folder on this device", click "Choose a Folder…" after the download finishes and choose an empty folder. This step is needed because the browser does not let the first click after a long wait open the folder picker.</li>
+<li>The project opens and the Git panel is bound to the repository.</li>
+</ol>
+<p>The connection used to open the repository is read-only. To push, connect again from "Connect to GitHub…" with "Allow sending to GitHub (push)" checked (see <a href="#github-sync">Sync with GitHub</a>).</p>
 <h3>Save to the project folder</h3>
 <ol><li>Edit blocks, variables and lists, sprites and costumes, sprite positions and sizes, and so on. Positions and variable values that changed while running the project are saved too.</li><li>Choose "File" → "Save Project" to update <code>project.source.json</code> in the folder. Before saving, the editor checks that the folder has not been changed outside the editor.</li></ol>
 <p>Adding, deleting, and renaming sprites, and adding and deleting costumes and sounds, are saved as well. In that case the editor also updates <code>assets/</code> and <code>sb3-source.json</code> in the folder and deletes image and sound files that are no longer used. References to system fonts and web fonts are saved in the project data; font files are saved in <code>assets/</code>.</p>
@@ -126,12 +138,12 @@
 
 <h2>11.3 Check changes and history with local Git</h2>
 
-<p>Choose "File" → "Open Folder…" and select the root of a repository that has <code>.git</code>. Opening the folder binds Git automatically. The browser cannot read the parent of the folder you choose, so choosing only <code>project/</code> does not find the repository. When you open a folder without <code>.git</code>, the Git panel says "The open folder is not a Git repository."</p>
+<p>Choose "File" → "Open Folder…" and select the root of a repository that has <code>.git</code>. Opening the folder binds Git automatically. In an editor with a GitHub connection, you can also open a GitHub repository with "File" → "Open Remote Git Repository…" (see <a href="#open-remote">Open a remote Git repository</a>). When you open a folder without <code>.git</code>, the Git panel says "The open folder is not a Git repository."</p>
 <p>Set up Git in "Git history" in the left drawer. Before a repository is bound, it shows "Set up Git" with these steps:</p>
 <ol><li>"Connection Mode…": Chooses the default way to connect to GitHub. It appears only in an editor with a GitHub connection (see <a href="#github-sync">Sync with GitHub</a>).</li><li>"Open Folder…" or "Open Folder Saved in This Browser…": Opens the repository folder, the same commands as in the File menu.</li></ol>
 <p>Once a repository is bound, a button showing the current branch name (for example "main ▾") appears to the left of "Open stage" on the right of the menu bar. From it you can switch branches, choose "New Branch…", or choose "Open Local Git". The button does not appear before a repository is bound.</p>
 <p>How to use "File" → "Releases…" is explained in <a href="../github/index.en.html#release">Release and distribute</a>.</p>
-<p>A repository holds <strong>one project</strong>. Put the project at the root of the repository or in the <code>project/</code> folder that Project Starter creates. Choosing the repository root opens the project in <code>project/</code>. Once the project is open, you can check changes for the stage and each sprite. <a href="../github/index.en.html#migrate">Repository layout</a></p>
+<p>A repository holds <strong>one project</strong>. The project files (<code>project.source.json</code>, <code>sb3-source.json</code>, <code>embedded-extensions.json</code>, <code>assets/</code>, <code>extensions/</code>, and so on) are at the root of the repository. For a repository in the older layout with the project in <code>project/</code>, move the contents of <code>project/</code> to the repository root before opening it (for repositories made with Project Starter, <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.md">its README</a> explains the steps). Once the project is open, you can check changes for the stage and each sprite. <a href="../github/index.en.html#migrate">Repository layout</a></p>
 <p>The first line of Local Git shows "Repository: <var>name</var>". "Refresh local status" next to it reads the Git status again; click it after using Git outside the editor. In an editor with a GitHub connection, "Connect to GitHub…" also appears here. When you switch branches or pull in the editor, "Reload Project" appears in the result; click it to reopen that version of the project. While the "Project folder" panel is shown on the left, the "Local Git" tab with a folder icon is pinned to the left end of the tab row.</p>
 <p>Below it, switch views with "Save files", "Commit saved changes", "Create PR", and "Merge". "Save files" and "Commit saved changes" show how many files they cover.</p>
 <ul>
