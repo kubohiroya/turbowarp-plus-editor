@@ -206,7 +206,8 @@ export const renderProjectFileWorkflow = ({
         ...actions, create, createIn, newProject, newWindow, open, storage, folder, restore,
         exportProject: openExport,
         openRemote: openRemote && (() => openRemote(locale)),
-        git: React.createElement(GitFileMenu, {...inline, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
+        // Releases… keeps the GUI's MenuSection, so a divider sets it apart from the open commands above it.
+        git: React.createElement(GitFileMenu, {...inline, MenuSection, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
     }, workspace: getDocumentWorkspace(vm)});
 };
 
