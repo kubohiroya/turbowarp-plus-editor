@@ -8,7 +8,7 @@ import ScratchBlocks from 'scratch-blocks';
 import {transferMime} from '@kubohiroya/turbowarp-plus-editor-windows/transfer';
 import {installProcedureEditor} from '@kubohiroya/turbowarp-plus-editor-code-views/procedure-editor';
 import {createCodeExtensionPalette, createFieldActionDialog} from '@kubohiroya/turbowarp-plus-editor-code-views/code-extensions';
-import {encodeEdit} from '@kubohiroya/turbowarp-plus-editor-code-views';
+import {encodeEdit, fitScriptInWorkspace} from '@kubohiroya/turbowarp-plus-editor-code-views';
 import {installScopedVariableReferences} from '@kubohiroya/turbowarp-plus-editor-code-views/variable-references';
 import {TargetCombobox} from '@kubohiroya/turbowarp-plus-editor-code-views/target-combobox';
 import {attachScriptView} from '@kubohiroya/turbowarp-plus-editor-code-views/script-layout';
@@ -246,7 +246,7 @@ function receive({data: message}) {
             scriptView.setView('free');
             requestAnimationFrame(() => {
                 const block = workspace.getBlockById(message.blockId) ?? workspace.getBlockById(message.scriptId);
-                if (block) workspace.centerOnBlock(block.id);
+                if (block) fitScriptInWorkspace(workspace, message.scriptId, ScratchBlocks);
             });
             break;
         case 'rename-result':
