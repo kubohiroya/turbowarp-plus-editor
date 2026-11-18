@@ -29,10 +29,10 @@ test('Editor confirms project folder overwrite and commits only project files', 
     await writeFile(path.join(root, 'occupied', 'project.source.json'), 'Old project');
     await mkdir(path.join(root, 'occupied', 'assets'));
     await writeFile(path.join(root, 'occupied', 'assets', 'old.svg'), 'Old asset');
-    const git = (...args: string[]) => execFileSync('git', args, {cwd: root, encoding: 'utf8'}).trim();
-    await writeFile(path.join(root, 'notes.txt'), 'Existing repository file\n');
+    // One repository holds one project, at its root: the project folder is the repository.
+    const git = (...args: string[]) => execFileSync('git', args, {cwd: projectFolder, encoding: 'utf8'}).trim();
+    await writeFile(path.join(projectFolder, 'notes.txt'), 'Existing repository file\n');
     git('init', '-q', '-b', 'main');
-    await writeFile(path.join(root, '.git', 'info', 'exclude'), '/blank/\n/occupied/\n');
     git('config', 'user.name', 'Save fixture');
     git('config', 'user.email', 'save@example.invalid');
     git('add', 'notes.txt');
@@ -98,7 +98,7 @@ test('Editor confirms project folder overwrite and commits only project files', 
     await page.waitForFunction(() => Boolean((window as unknown as {rootHandle?: object}).rootHandle));
     const drawer = page.getByRole('toolbar', {name: 'Drawer views'});
     await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
-    const create = page.getByRole('button', {name: 'Create Project Folder', exact: true});
+    const create = page.getByRole('button', {name: 'Choose a Folder and Save…', exact: true});
     const warning = 'Contents in the selected folder will be overwritten.';
     const confirmOverwrite = 'The selected folder is not empty. Contents in the folder may be overwritten. Continue?';
     await expect(page.getByText(warning, {exact: true})).toBeVisible();
@@ -147,10 +147,12 @@ test('Editor confirms project folder overwrite and commits only project files', 
     if (await drawer.getByRole('button', {name: 'Project folder', exact: true}).getAttribute('aria-pressed') !== 'true') {
         await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
     }
+    // The repository already has a file, so saving there asks first, and the folder keeps that file.
     await choose('project');
-    await create.click();
+    await clickWithConfirmation(create, true);
     await expect(page.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
     assert.equal(await readFile(path.join(projectFolder, 'assets', md5ext), 'utf8'), svg);
+    assert.equal(await readFile(path.join(projectFolder, 'notes.txt'), 'utf8'), 'Existing repository file\n');
     const volume = async () => JSON.parse(await readFile(path.join(projectFolder, 'project.source.json'), 'utf8')).targets[0].volume;
     const edit = (volume: number) => page.evaluate(value => {
         window.vm.runtime.getTargetForStage().volume = value;
@@ -163,26 +165,27 @@ test('Editor confirms project folder overwrite and commits only project files', 
     await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder saved.');
     assert.equal(await volume(), 42);
 
-    await command('Choose Repository…');
+    // The folder has a .git directory, so saving there connects its repository without another step.
     const gitPanel = page.locator('.twgit-panel');
-    await expect(gitPanel.locator('.twgit-repository-heading strong')).toHaveText(path.basename(root));
+    await expect(gitPanel.locator('.twgit-repository-heading strong')).toHaveText(path.basename(projectFolder));
     await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
-    await writeFile(path.join(root, 'notes.txt'), 'Unrelated private notes\n');
+    await writeFile(path.join(projectFolder, 'notes.txt'), 'Unrelated private notes\n');
     await edit(31);
     await command('Save and Commit…');
     const dialog = page.getByRole('dialog', {name: 'Save and Commit', exact: true});
     await dialog.getByRole('button', {name: 'Save and review changes'}).click();
     await expect(dialog.getByRole('heading', {name: 'Project changes to commit · main'})).toBeVisible();
-    await expect(dialog.getByText('project/project.source.json', {exact: true})).toBeVisible();
+    await expect(dialog.getByText('project.source.json', {exact: true})).toBeVisible();
     await expect(dialog.getByText('notes.txt', {exact: true})).toHaveCount(0);
     assert.equal(await volume(), 31);
     await dialog.getByLabel('Commit message').fill('Record project changes');
     await dialog.getByRole('button', {name: 'Commit', exact: true}).click();
     await expect(dialog.getByText(/^Record project changes · Committed/u)).toBeVisible();
     assert.equal(git('log', '-1', '--format=%s'), 'Record project changes');
-    assert.equal(JSON.parse(git('show', 'HEAD:project/project.source.json')).targets[0].volume, 31);
+    assert.equal(JSON.parse(git('show', 'HEAD:project.source.json')).targets[0].volume, 31);
     assert.equal(git('show', 'HEAD:notes.txt'), 'Existing repository file');
-    assert.equal(git('status', '--porcelain').trim(), 'M notes.txt');
+    // The Editor's screen state (.tw-plus/) stays in the folder and is not part of the project commit.
+    assert.equal(git('status', '--porcelain', '--', '.', ':!.tw-plus').trim(), 'M notes.txt');
     await dialog.getByRole('button', {name: 'Close', exact: true}).click();
     await command('Save and Commit…');
     await expect(dialog.getByText(/^Record project changes · Committed/u)).toBeVisible();
