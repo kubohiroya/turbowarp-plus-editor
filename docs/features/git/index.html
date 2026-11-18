@@ -106,8 +106,15 @@
 <figcaption>README.mdは編集中で未保存、作品データは保存済みの変更あり、作業メモは未追跡です。削除した古いメモには、元の場所で打ち消し線が付きます。</figcaption>
 </figure>
 <figure>
-<a href="../images/current-project-file.png"><img src="../images/current-project-file.png" width="1440" height="960" alt="作品フォルダを左側に表示したまま、中央のタブで作品データのJSONを開いている。タブの右上に「編集」「差分」「ファイルを保存」がある。" loading="lazy"></a>
-<figcaption>ファイルを選ぶと、コードと同じ領域にタブが開きます。右上の「編集」「差分」で表示を切り替え、テキストを編集したら「ファイルを保存」で書き込みます。</figcaption>
+<a href="../images/current-project-file.png"><img src="../images/current-project-file.png" width="1440" height="960" alt="作品フォルダのproject.source.jsonを作業タブで開いた画面。右上に「通常表示／差分表示」のカプセル型切り替えと保存・VSCodeで編集のボタン、右下にミニマップがある。" loading="lazy"></a>
+<figcaption>テキストはその場で編集できます。「通常表示／差分表示」を切り替えて確認し、右下のミニマップで移動します。「ファイルを保存」は未保存の変更がある場合だけ有効になり、成功すると「保存しました」を表示します。</figcaption>
+</figure>
+<h3>ファイルタブからVSCodeで編集する</h3>
+<p>ローカル補助プロセスからEditorを開くと、右上の「VSCodeで編集」で現在の内容の作業コピーを開けます。VSCodeで保存後、「終了して取り込む」でタブに戻し、「ファイルを保存」で元のファイルに書き込みます。「取り込まずに終了」では、外部編集を開始する前のタブの内容を保持します。外部編集中は、通常表示・差分表示・ミニマップ・操作ボタン全体を無効にします。</p>
+<p>OPFSでも同じ操作を使えます。対象はローカル連携のURLで保存した作品で、通常の配信サイトのOPFSとは保存領域が異なります。ローカル連携を利用していない場合、「VSCodeで編集」は無効になります。組み込みYAML文書の外部編集は<a href="../documents/#vscode">文書のガイド</a>を参照してください。</p>
+<figure>
+<a href="../images/current-project-file-external.png"><img src="../images/current-project-file-external.png" width="1440" height="960" alt="VSCodeで編集中の覆い表示。「終了して取り込む」「取り込まずに終了」を選べ、背後のファイルタブ全体は無効になっている。" loading="lazy"></a>
+<figcaption>外部編集中はタブをロックします。VSCodeで保存した内容を取り込んだ後、元のファイルへ保存します。</figcaption>
 </figure>
 <p>SB3を作品フォルダに展開するコマンドProject Starterも使えます（<a href="../github/#starter">Project StarterでScratch作品を移す</a>）。</p>
 

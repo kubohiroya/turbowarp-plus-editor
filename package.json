@@ -89,7 +89,7 @@
     "@kubohiroya/turbowarp-plus-editor-fonts": "0.1.0",
     "@kubohiroya/turbowarp-plus-editor-git": "0.23.0",
     "@kubohiroya/turbowarp-plus-editor-host": "0.1.1",
-    "@kubohiroya/turbowarp-plus-editor-project-folder": "0.14.0",
+    "@kubohiroya/turbowarp-plus-editor-project-folder": "0.15.0",
     "@kubohiroya/turbowarp-plus-editor-project-model": "0.2.0",
     "@kubohiroya/turbowarp-plus-editor-project-starter": "0.2.0",
     "@kubohiroya/turbowarp-plus-editor-sprite-panes": "0.8.1",
@@ -119,7 +119,7 @@
   },
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.6.2",
-    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.8",
+    "@kubohiroya/turbowarp-document-editor": "0.1.0-rc.9",
     "@kubohiroya/turbowarp-sb3-save-format": "0.4.0-rc.2",
     "@kubohiroya/turbowarp-script-transfer": "0.1.5",
     "@turbowarp/jszip": "^3.12.0"
@@ -132,6 +132,7 @@
   "overrides": {
     "@kubohiroya/turbowarp-extension-loader": "$@kubohiroya/turbowarp-extension-loader",
     "@kubohiroya/turbowarp-plus-editor-sprite-panes": "$@kubohiroya/turbowarp-plus-editor-sprite-panes",
-    "@kubohiroya/turbowarp-plus-editor-project-model": "$@kubohiroya/turbowarp-plus-editor-project-model"
+    "@kubohiroya/turbowarp-plus-editor-project-model": "$@kubohiroya/turbowarp-plus-editor-project-model",
+    "@kubohiroya/turbowarp-plus-editor-git": "$@kubohiroya/turbowarp-plus-editor-git"
   }
 }
