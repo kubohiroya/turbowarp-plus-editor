@@ -3299,7 +3299,7 @@ test('the hats and functions list and the calls section show each script alone i
     await expect(relationItem.locator('svg path')).toHaveAttribute('d',
         await toolbar.first().getByRole('tab', {name: '呼び出し関係', exact: true}).locator('svg path').getAttribute('d'));
     assert.deepEqual(await editScript.locator('..').getByRole('menuitem').evaluateAll(nodes => nodes.slice(0, 3)
-        .map(node => getComputedStyle(node).borderTopWidth)), ['0px', '0px', '1px']);
+        .map(node => node.classList.contains('tw-script-editor-menu-divider'))), [false, false, true]);
     await editScript.click();
     await expect(page.locator('.dv-groupview')).toHaveCount(2);
     await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks(false)
