@@ -29,6 +29,7 @@ GUI の Redux、ScratchBlocks 本体、画像、全画面ボタンの要素は E
 次のコミットとアーカイブは未公開。上流はそれぞれ独立した Git リポジトリで、Editor の workspace パッケージを再作成していない。
 アーカイブは `site/source.json` の `packageArchives` と npm lockfile で完全版・コミット・SHA-512 を固定する。
 ビルド前にアーカイブの実バイト列と、manifest・lock・導入版を照合する。security-dialog は build-info のコミットと `sourceState: commit` も照合する。
+配布物のライセンス台帳には未公開候補であることを記録し、検証済みアーカイブ自体を `notices/<package>@<version>/source.tgz` に同梱する。成果物検証も同梱ソースの SHA-512 を照合し、出所を固定していないローカルアーカイブは引き続き拒否する。
 
 | パッケージ | 候補の完全版 | コミット | ベース |
 | --- | --- | --- | --- |

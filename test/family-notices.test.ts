@@ -100,7 +100,14 @@ test('this repository records every family package it supplies, dev entries incl
         const lock = JSON.parse(await fs.readFile(path.join(root, 'package-lock.json'), 'utf8'));
         for (const entry of index.packages) {
             const installed = lock.packages[`node_modules/${entry.package}`];
-            assert.ok(!installed?.resolved?.startsWith('file:'), `Installed from a local archive: ${entry.package}`);
+            if (installed?.resolved?.startsWith('file:')) {
+                const pins = JSON.parse(await fs.readFile(path.join(root, 'site/source.json'), 'utf8'));
+                assert.equal(entry.source.npm, null);
+                assert.equal(entry.source.pendingPublication, true);
+                assert.equal(entry.source.integrity, pins.packageArchives[entry.package].integrity);
+                assert.deepEqual(await fs.readFile(path.join(output, entry.source.archive)),
+                    await fs.readFile(path.join(root, pins.packageArchives[entry.package].path)));
+            }
             assert.ok((entry.source.npm || entry.source.revision) && entry.source.repository, `Missing source: ${entry.package}`);
             if (!entry.licenseStatus) assert.ok(entry.files.some(file => /\/LICENSE$/u.test(file)), `Missing license: ${entry.package}`);
         }
@@ -113,4 +120,16 @@ test('this repository records every family package it supplies, dev entries incl
         assert.ok(built.packages.some(name => name.startsWith('@kubohiroya/turbowarp-structured-data@')),
             'this install records its dev entries too');
     } finally { await fs.rm(output, {recursive: true, force: true}); }
+});
+
+test('an unpinned local archive is rejected even when it has a license', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'twpe-unpinned-source-'));
+    try {
+        const gui = path.join(directory, 'gui');
+        await fixture(gui, [[
+            '@kubohiroya/turbowarp-extension-loader', '0.11.2', 'MPL-2.0', ['LICENSE'], 'file:vendor/unreviewed.tgz'
+        ]]);
+        await assert.rejects(buildFamilyNotices(path.join(directory, 'build'), [{origin: 'test', directory: gui}],
+            {required: [], warn: () => {}}), /must be installed from npm or a pinned source archive/);
+    } finally { await fs.rm(directory, {recursive: true, force: true}); }
 });
