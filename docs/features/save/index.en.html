@@ -32,7 +32,7 @@
 </nav>
 <nav class="page-toc" aria-label="On this page">
 <ol>
-<li><a href="#save">10.1 Choose between Save and Save as</a></li>
+<li><a href="#save">10.1 Choose between Save and Save a Copy</a></li>
 <li><a href="#restore-points">10.2 Restore a project from a restore point</a></li>
 <li><a href="#project-properties">10.3 Record project information in the SB3</a></li>
 <li><a href="#project-uri">10.4 Set the project URI to keep caches separate</a></li>
@@ -44,22 +44,22 @@
 
 <section id="save">
 
-<h2>10.1 Choose between Save and Save as</h2>
+<h2>10.1 Choose between Save and Save a Copy</h2>
 
-<p>"File" → "Save Project" overwrites the open SB3 or project folder with the whole project. A new project, or one you saved by downloading, has nothing to overwrite, so this item is unavailable. If you edited a text file in the folder on its own, use "Save file" in that tab.</p>
+<p>"File" → "Save Project" overwrites the open SB3 or project folder with the whole project. When there is nothing to overwrite, as for a new project or one you saved by downloading, the "Save Project" dialog asks where to save it. The SB3, project folder or GitHub repository you choose there becomes where this project is saved from then on. If you edited a text file in the folder on its own, use "Save file" in that tab.</p>
 <p>What ⌘S (Ctrl+S on Windows) does depends on the panel open at the left edge. With "Sprites" it is assigned to "Save Project", and with "Project folder" it is assigned to "Save Active Tab"; the File menu shows the shortcut next to that item. If no savable tab is selected in "Project folder", pressing the shortcut saves nothing.</p>
 <h3>The <code>*</code> mark for unsaved changes</h3>
-<p>When you edit a project and have unsaved changes, a <code>*</code> appears to the right of the project title in the menu bar and after the names of tabs you are editing, such as sprites. Clicking the <code>*</code> next to the title shows the save actions available at that moment, such as "Save Project" and "Save As…". The <code>*</code> disappears when you save.</p>
-<h3>Save under a new name</h3>
-<p>"File" → "Save As…" saves the project with the name and save format you choose.</p>
-<figure class="guide-detail"><a href="../images/en/save-as-dialog.png"><img src="../images/en/save-as-dialog.png" width="640" height="296" alt="The Save As dialog with a Name field and a Save format menu, and Cancel and Choose Where to Save… buttons at the bottom right." loading="lazy"></a><figcaption>"Save As". In browsers that let you choose a location, click "Choose Where to Save…"; in other browsers, click "Save" to download the file.</figcaption></figure>
-<div class="table-scroll" role="region" aria-label="Save formats in Save As" tabindex="0">
+<p>When you edit a project and have unsaved changes, a <code>*</code> appears to the right of the project title in the menu bar and after the names of tabs you are editing, such as sprites. Clicking the <code>*</code> next to the title shows the save actions available at that moment, such as "Save Project" and "Save a Copy of the Project…". The <code>*</code> disappears when you save.</p>
+<h3>Save a copy of the project</h3>
+<p>"File" → "Save a Copy of the Project…" saves a copy of the current project with the name and save format you choose. Saving a copy leaves the project you are editing as it is: its name, where it is saved and its unsaved changes stay the same, and "Save Project" still saves to the same place.</p>
+<figure class="guide-detail"><a href="../images/en/save-as-dialog.png"><img src="../images/en/save-as-dialog.png" width="640" height="296" alt="The Save a Copy of the Project dialog with a Name field and a Save format menu, and Cancel and Choose Where to Save… buttons at the bottom right." loading="lazy"></a><figcaption>"Save a Copy of the Project". In browsers that let you choose a location, click "Choose Where to Save…"; in other browsers, click "Save" to download the file.</figcaption></figure>
+<div class="table-scroll" role="region" aria-label="Save formats in Save a Copy of the Project" tabindex="0">
 <table><caption>Available save formats</caption><thead><tr><th scope="col">Save format</th><th scope="col">What is saved</th></tr></thead><tbody>
 <tr><th scope="row">SB3 (current storage settings)</th><td>Saves with the storage formats chosen in <a href="#payload-formats">"Project Data…"</a> and <a href="#storage">"Extensions…"</a></td></tr>
 <tr><th scope="row">SB3 (embed configured scripts and assets)</th><td>Saves YAML scripts (such as Kamishibai YAML scripts) and assets that are set to HTTPS references and the like inside the SB3. Use it to make an SB3 for continuing to edit locally</td></tr>
-<tr><th scope="row">Project folder</th><td>Creates a <a href="../git/index.en.html#project-folder">project folder</a> in the folder you choose, saves to it and opens it. Shown in browsers that can choose folders, such as Chrome and Edge. Existing content in the folder is overwritten</td></tr>
+<tr><th scope="row">Project folder</th><td>Creates a <a href="../git/index.en.html#project-folder">project folder</a> in the folder you choose and saves the copy to it. The project you are editing stays open. Shown in browsers that can choose folders, such as Chrome and Edge. Existing content in the folder is overwritten. With "Use Git version control", a new GitHub repository is created, and the editor switches to its project only when you click "Open the Local Project" at the end</td></tr>
 </tbody></table></div>
-<ul><li><strong>When you choose where to save an SB3.</strong> The file you chose becomes the target of later "Save Project" overwrites. If you cancel choosing a location, the previous target stays.</li><li><strong>When you download an SB3.</strong> No target is set, and "Save Project" stays unavailable.</li><li><strong>When a project folder is open.</strong> "Save Project" updates the <a href="../git/index.en.html#project-folder">project folder</a>. Not only blocks but also variables, sprite positions and sizes, and added or deleted sprites, costumes and sounds are saved. Making an SB3 with "Save As…" disconnects the project from the project folder.</li></ul>
+<ul><li><strong>When you save a project without a target with "Save Project".</strong> The SB3 or project folder you choose in the dialog becomes the target of later overwrites. If you cancel choosing a location, no target is set.</li><li><strong>When you download an SB3.</strong> No target is set, and the next "Save Project" asks where to save again.</li><li><strong>When a project folder is open.</strong> "Save Project" updates the <a href="../git/index.en.html#project-folder">project folder</a>. Not only blocks but also variables, sprite positions and sizes, and added or deleted sprites, costumes and sounds are saved. Making an SB3 with "Save a Copy of the Project…" keeps the project connected to the project folder.</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/sb3-save-format.md">SB3 save format</a></p>
 
 </section>
@@ -77,9 +77,12 @@
 
 <h2>10.3 Record project information in the SB3</h2>
 
-<p>"File" → "Project Properties" lets you record the project's title, description and author.</p>
+<p>"File" → "Project Properties" lets you record the project's title, description, author and save name.</p>
 <ol><li>Fill in "Project title", "Description", "Author name" and "Contact". The description can span several lines.</li><li>Click "Apply" to apply the information to the current project; the project title in the menu bar changes too. Click "Cancel" to discard your changes and close.</li><li>Save from the "File" menu to record the information in the project file.</li></ol>
 <figure class="guide-detail"><a href="../images/en/properties-current.png"><img src="../images/en/properties-current.png" width="640" height="856" alt="The Project Properties dialog with fictional examples entered in Project title, Project URI, Description, Author name and Contact, and previews under Description and Contact. Below Created and Last updated are the Project Diagnostics…, Cancel and Apply buttons." loading="lazy"></a><figcaption>"Project Properties" with fictional examples entered. "Project Diagnostics…" at the bottom opens the <a href="../open/index.en.html#project-diagnostics">loading diagnostics</a>.</figcaption></figure>
+<h3>Save name</h3>
+<p>The "Save name" is the name used for the project folder or the GitHub repository. Use letters, digits, "-", "_" and ".", up to 100 characters. ".", ".." and names ending in ".git" cannot be used. When the project title follows these rules, the title is used while the save name is empty.</p>
+<p>When a project saved in a project folder or a repository gets a title in the menu bar that does not follow these rules, a dialog asks for a save name (only while the project has none). The field starts with a name made from the title. If you cancel, the save name stays empty. "Save a Copy of the Project…" and "Save Project" use the save name as the initial name of a new repository. The save name entered in "Create New Project…" is recorded in the new project.</p>
 <h3>Choose the author name and contact from the history</h3>
 <p>The browser remembers up to five recent author names and contacts that you applied. Using a value again moves it to the top of the history, and you can edit a suggestion you pick. Only the values applied this time go into the SB3. If browser storage is unavailable, the history is available only while the editor is open.</p>
 <p>An email address or <code>mailto:</code> address entered as the contact becomes an email link, and an <code>https:</code> address becomes a web page link, shown below the field. Email links open in your mail app, and web page links open in a new tab. Enter the description as plain text. In the preview below the field, HTTPS URLs can be opened as links.</p>
@@ -133,7 +136,7 @@
 <tr><th scope="row">File in the SB3</th><td>Hands the data over as a separate file inside the project</td></tr>
 <tr><th scope="row">Data in the project JSON</th><td>Stores the data directly in the project's JSON</td></tr>
 </tbody></table></div>
-<p>Click "Apply" and save the SB3. The chosen storage formats are used from the next save. If you need a one-off SB3 with the HTTPS-referenced items bundled in, choose "SB3 (embed configured scripts and assets)" in <a href="#save">Save As</a>. To read back data stored in the chosen storage formats, use an editor with the Plus extension loader enabled. When you open a project with HTTPS references, a list of the sources is shown and you can choose whether to allow fetching. The storage format of the extension programs themselves is covered in <a href="#storage">Choose the storage format for extension code</a>.</p>
+<p>Click "Apply" and save the SB3. The chosen storage formats are used from the next save. If you need a one-off SB3 with the HTTPS-referenced items bundled in, choose "SB3 (embed configured scripts and assets)" in <a href="#save">Save a Copy of the Project</a>. To read back data stored in the chosen storage formats, use an editor with the Plus extension loader enabled. When you open a project with HTTPS references, a list of the sources is shown and you can choose whether to allow fetching. The storage format of the extension programs themselves is covered in <a href="#storage">Choose the storage format for extension code</a>.</p>
 
 </section>
 

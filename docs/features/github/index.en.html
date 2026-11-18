@@ -51,30 +51,36 @@
 
 <h2>12.1 Put your project on GitHub</h2>
 
-<p>This guide assumes <strong>one project per repository</strong>. In a repository created with Project Starter, the project is in <code>project/</code>, and the README and the check and release settings are outside it. Improvements to the same project are made on working branches, and the versions you distribute are managed with releases.</p>
-<pre><code>cat-adventure/          repository root
+<p>This guide assumes <strong>one project per repository</strong>. The project files (<code>project.source.json</code>, <code>sb3-source.json</code>, <code>embedded-extensions.json</code>, <code>assets/</code>, <code>extensions/</code>, and so on) are at the root of the repository, next to the README and the check and release settings. In the editor, you open the repository root as the project folder. Improvements to the same project are made on working branches, and the versions you distribute are managed with releases.</p>
+<pre><code>cat-adventure/               repository root (the project folder you open in the editor)
 ├── .git/
-├── project/            project folder you open in the editor
+├── project.source.json      project data
+├── sb3-source.json
+├── embedded-extensions.json
+├── assets/                  costumes and sounds
+├── extensions/              code of embedded extensions
 ├── README.md
-└── .github/workflows/  checks and releases for this project</code></pre>
+└── .github/workflows/       checks and releases for this project</code></pre>
+<p>To start from a project repository that is already on GitHub, choose "File" → "Open Remote Git Repository…" in an editor with a GitHub connection. Even in the browser version, the editor downloads the repository without a local clone, opens it, and binds Git (see <a href="../git/index.en.html#open-remote">Open a remote Git repository</a>). In the public build without a connection, clone it with GitHub Desktop or Git, then choose "File" → "Open Folder…" and select the repository root.</p>
 
 <h3 id="starter">Move a Scratch project with Project Starter</h3>
 
 <p>You can move a project you have been making on scratch.mit.edu into a GitHub repository with <code>turbowarp-plus-editor-project-starter</code>. It unpacks the project into an sb3-toolchain project folder and creates a repository with GitHub Actions for checks and releases, plus forms for issues and pull requests. You need Node.js 24 or later, Git, and the GitHub CLI (<code>gh</code>).</p>
 <p>The following example assumes <code>cat.sb3</code> is in your working folder. <code>--lang en</code> makes the README and the forms English; without it, they are in Japanese.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.2.0 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
 <p><code>init</code> creates the repository locally and, if Git author information is set, makes the first commit. If author information is not set, <a href="#commit-author">set the author in the repository</a> and run <code>git -C cat-adventure commit -m "Import cat"</code>. For a Scratch project you have shared, you can pass the project page URL instead of the SB3 path.</p>
-<p>You can open the generated <code>cat-adventure/project</code> with "File" → "Open Project Folder…" in the editor. When you are ready to put it on GitHub, authenticate with <code>gh auth login</code> and then run <code>publish</code>. By default it creates a private repository and pushes <code>main</code>.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.2.0 publish cat-adventure</code></pre>
+<p>In the editor, choose "File" → "Open Folder…" and select the generated repository root <code>cat-adventure</code>; the project opens and Git is bound too. When you are ready to put it on GitHub, authenticate with <code>gh auth login</code> and then run <code>publish</code>. By default it creates a private repository and pushes <code>main</code>.</p>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 publish cat-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="The repository that is created" tabindex="0">
 <table><caption>The repository that is created</caption><thead><tr><th scope="col">Location</th><th scope="col">Contents</th></tr></thead><tbody>
-<tr><th scope="row"><code>project/</code></th><td>The project folder. Open, edit, and save it in the editor</td></tr>
+<tr><th scope="row"><code>project.source.json</code>, <code>assets/</code>, and others</th><td>The project files. Open the repository root in the editor as the project folder, then edit and save</td></tr>
 <tr><th scope="row"><code>.github/workflows/check.yml</code></th><td>Checks the project and builds an SB3 to try on pushes to <code>main</code>, pull requests, and manual runs ("Check project")</td></tr>
 <tr><th scope="row"><code>.github/workflows/release.yml</code></th><td>When you publish a release, attaches the SB3 and its SHA-256 to that release</td></tr>
 <tr><th scope="row"><code>.github/workflows/scratch-import.yml</code></th><td>Brings the latest version you shared again on Scratch in as a pull request ("Import from Scratch"). For a project imported from a Scratch share URL, the original Scratch project ID can be used</td></tr>
 <tr><th scope="row"><code>.github/ISSUE_TEMPLATE/</code> and others</th><td>Issue forms for "Bug" and "Idea or improvement", and a checklist for pull requests</td></tr>
 <tr><th scope="row"><code>AGENTS.md</code>, <code>CLAUDE.md</code></th><td>Working rules for coding agents. <code>CLAUDE.md</code> has Claude Code read <code>AGENTS.md</code> (<a href="#agent">Leave it to an agent</a>)</td></tr>
 </tbody></table></div>
+<p>From Project Starter 0.3.0, the project is at the repository root. For a repository made with an earlier version, where the project is in <code>project/</code>, move the contents of <code>project/</code> to the repository root before opening it. The <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.md">Project Starter README</a> explains the steps.</p>
 <p>If you keep editing on Scratch during the move, and for what to do with the project page on Scratch, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.md">migration steps</a>.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter">turbowarp-plus-editor-project-starter</a> · <a href="../git/index.en.html#sb3-toolchain">sb3-toolchain project folders</a></p>
 
@@ -105,7 +111,7 @@
 <li>When the agent switches branches or pulls and the project folder changes, "External changes detected." appears at the bottom right of the editor and the changes are loaded (<a href="../git/index.en.html#external-changes">When the folder changes outside the editor</a>).</li>
 <li>When the pull request is ready, compare it block by block in the editor's "Merge" as in <a href="#merge">12.9</a>, or check it on GitHub, and a person merges it.</li>
 </ol>
-<p>Tell the agent in the repository's <code>AGENTS.md</code> not to rewrite the working tree before you save, to run <code>sb3-toolchain check</code> after changing <code>project.source.json</code>, and to merge or release only when asked. Project Starter 0.2.0 and later create <code>AGENTS.md</code> and a <code>CLAUDE.md</code> that has Claude Code read it. For a repository made earlier, copy the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/en/AGENTS.md">AGENTS.md template</a> and replace <code>__PROJECT_DIR__</code> and the other placeholders with your project folder name and sb3-toolchain version.</p>
+<p>Tell the agent in the repository's <code>AGENTS.md</code> not to rewrite the working tree before you save, to run <code>sb3-toolchain check</code> after changing <code>project.source.json</code>, and to merge or release only when asked. Project Starter 0.2.0 and later create <code>AGENTS.md</code> and a <code>CLAUDE.md</code> that has Claude Code read it. For a repository made earlier, copy the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/en/AGENTS.md">AGENTS.md template</a> and replace <code>__TOOLCHAIN_VERSION__</code> and the other placeholders with your sb3-toolchain version.</p>
 
 </section>
 
@@ -123,13 +129,13 @@
 <h2>12.4 Create a working branch</h2>
 
 <p>Before you create a branch, bring your local <code>main</code> up to date with GitHub (pull in <a href="#push">12.7</a>). Then create a branch in the editor.</p>
-<ol><li>Choose "File" → "Choose Repository…" and select the repository folder. If the project is not open yet, open <code>project/</code> with "Open Project" at the top of Local Git.</li><li>Stop the project, save all edits, and commit the changes you need. You cannot switch branches while there are unsaved edits or uncommitted changes.</li><li>Open "Create PR" in Local Git, and in "New branch name" under "Local branches", enter a name that shows the issue number and what it is about (for example <code>12-cat-walk</code>). Check "Switch to it" and click "Create Branch". You can also create one with "New Branch…" from the branch button in the menu bar.</li></ol>
+<ol><li>Choose "File" → "Open Folder…" and select the root folder of the repository. The project opens and Git is bound.</li><li>Stop the project, save all edits, and commit the changes you need. You cannot switch branches while there are unsaved edits or uncommitted changes.</li><li>Open "Create PR" in Local Git, and in "New branch name" under "Local branches", enter a name that shows the issue number and what it is about (for example <code>12-cat-walk</code>). Check "Switch to it" and click "Create Branch". You can also create one with "New Branch…" from the branch button in the menu bar.</li></ol>
 <figure>
 <a href="../images/en/git-branch-workspace.png"><img src="../images/en/git-branch-workspace.png" width="1440" height="960" alt="The branch menu at the top right of the editor. The current branch 12-cat-walk with a check mark, main to switch to, New Branch…, and Open Local Git are shown." loading="lazy"></a>
 <figcaption>Clicking the branch name in the menu bar lists the current branch (checked) and the branches you can switch to. Create a branch with "New Branch…".</figcaption>
 </figure>
 <p>To branch off from an earlier commit, choose "⋯" → "Create branch here…" on the commit in "Git history".</p>
-<p>If you created the branch with "Development" → "Create a branch" on a GitHub issue, fetch locally and then click "Create and Switch" in the "Branches on GitHub (origin)" list. If you created it with "New branch" in GitHub Desktop or with <code>git switch -c 12-cat-walk</code>, click "Refresh local status" in Local Git. If needed, reopen the same folder with "File" → "Open Project Folder…".</p>
+<p>If you created the branch with "Development" → "Create a branch" on a GitHub issue, fetch locally and then click "Create and Switch" in the "Branches on GitHub (origin)" list. If you created it with "New branch" in GitHub Desktop or with <code>git switch -c 12-cat-walk</code>, click "Refresh local status" in Local Git. If needed, reopen the same folder with "File" → "Open Folder…".</p>
 
 </section>
 
@@ -138,7 +144,7 @@
 <h2>12.5 Edit and save the project</h2>
 
 <p>Edit blocks, variables and lists, sprites, costumes, sounds, and so on, then choose "File" → "Save Project". <code>project.source.json</code> in the project folder is updated, and <code>assets/</code> and <code>sb3-source.json</code> are updated as needed. Before saving, the editor checks that the folder has not been changed outside the editor.</p>
-<p>While you are updating the project in the same repository, use "Save Project". If you make an SB3 with "Save As…", the link to the project folder is lost. You can check the Git status of saved files in the <a href="../git/index.en.html#folder-files">"Project folder" panel</a>.</p>
+<p>While you are updating the project in the same repository, use "Save Project". Making an SB3 with "Save a Copy of the Project…" keeps the link to the project folder. You can check the Git status of saved files in the <a href="../git/index.en.html#folder-files">"Project folder" panel</a>.</p>
 <p><a href="../git/index.en.html#project-folder">Open and save a project folder</a> · <a href="../git/index.en.html#external-changes">When the folder changes outside the editor</a></p>
 
 </section>
@@ -171,12 +177,12 @@ git config --local user.email "you@example.com"</code></pre>
 
 <h2>12.7 Send to GitHub (push)</h2>
 
-<p>In an editor with a GitHub connection, you can push and pull from the editor. Choose the default connection method with the Plus logo at the left end of the menu bar → "GitHub Connection Settings…".</p>
-<ol><li>Open "Connect to GitHub…" on the first line of Local Git. Confirm the target, check "Allow sending to GitHub (push)", and click "Connect to GitHub". Follow the instructions to authenticate on GitHub.</li><li>After connecting, open "Merge" and click "Send current branch (push)" in "Sync with GitHub". The editor never force-pushes.</li><li>To bring in changes from GitHub, use "Update remote refs (fetch)" and "Update local branch and files (pull)". Pull runs only when a fast-forward is possible; afterwards, reopen the project with "Reload Project".</li></ol>
+<p>In an editor with a GitHub connection, you can push and pull from the editor. Before opening a repository, choose the default connection method with "Set up Git" → "Connection Mode…" in "Git history" in the left drawer.</p>
+<ol><li>Open "Connect to GitHub…" above the history graph in "Git history" or on the first line of Local Git. Confirm the target, check "Allow sending to GitHub (push)", and click "Connect to GitHub". Follow the instructions to authenticate on GitHub.</li><li>After connecting, open "Merge" and click "Send current branch (push)" in "Sync with GitHub". The editor never force-pushes.</li><li>To bring in changes from GitHub, use "Update remote refs (fetch)" and "Update local branch and files (pull)". Pull runs only when a fast-forward is possible; afterwards, reopen the project with "Reload Project".</li></ol>
 <h3 id="push-without-connection">Without a connection</h3>
-<p>If, as in the public editor (GitHub Pages), "Connect to GitHub…" does not appear in Local Git and "GitHub Connection Settings…" shows "No GitHub connection is configured.", push and pull in one of these ways.</p>
+<p>If, as in the public editor (GitHub Pages), "Set up Git" has no "Connection Mode…" and "Connect to GitHub…" does not appear after opening a repository, push and pull in one of these ways.</p>
 <ul><li><strong>GitHub Desktop.</strong> Add the repository folder with "File" → "Add local repository", and send with "Push origin" ("Publish branch" for a new branch). To bring in changes, use "Fetch origin" → "Pull origin".</li><li><strong>Commands.</strong> To send a new branch for the first time, run <code>git push -u origin 12-cat-walk</code>; to bring in changes, run <code>git pull --ff-only</code>.</li></ul>
-<p>After working outside the editor, click "Refresh local status" next to the repository name. To reopen the project, choose the same folder with "File" → "Open Project Folder…". Before reopening, the editor checks for unsaved edits.</p>
+<p>After working outside the editor, click "Refresh local status" next to the repository name. To reopen the project, choose the same folder with "File" → "Open Folder…". Before reopening, the editor checks for unsaved edits.</p>
 <p><a href="../git/index.en.html#github-sync">Sync with GitHub</a></p>
 
 </section>

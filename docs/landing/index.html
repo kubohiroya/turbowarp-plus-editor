@@ -31,17 +31,69 @@
           <p class="lead" data-text="introEditing">{{introEditing}}</p>
           <p class="lead" data-text="introInspect">{{introInspect}}</p>
           <div class="actions">
-            <a class="twpe-edit-button" data-editor href="editor.html?lang=ja"><img src="assets/icon.svg" width="36" height="36" alt="" aria-hidden="true"><span data-text="edit">{{edit}}</span></a>
+            <a class="twpe-edit-button" data-editor href="editor.html?lang=ja"><img src="assets/icon.svg" width="36" height="36" alt="" aria-hidden="true"><span data-text="editorAction">{{editorAction}}</span></a>
           </div>
-          <p class="small" data-text="note">{{note}}</p>
+          <p class="small" data-editor-note data-text="note">{{note}}</p>
         </div>
         <div class="hero-shots">
-          <div class="shot hero-main">
-            <img src="features/images/top-editor.png" data-en-src="features/images/en/top-editor.png" width="1200" height="660" alt="{{heroShot}}" data-alt="heroShot">
+          <a class="hero-detail hero-detail-split" href="features/workspace/#multi-edit-view" data-en-href="features/workspace/index.en.html#multi-edit-view">
+            <img class="shot" src="features/images/top-split-minimap.png" data-en-src="features/images/en/top-split-minimap.png" width="970" height="437" alt="{{heroSplitShot}}" data-alt="heroSplitShot">
+            <span data-text="heroSplit">{{heroSplit}}</span>
+          </a>
+          <div class="hero-editor">
+            <a class="hero-detail hero-layout" href="features/screen/#layout" data-en-href="features/screen/index.en.html#layout">
+              <span class="shot hero-main"><img src="features/images/top-editor.png" data-en-src="features/images/en/top-editor.png" width="1200" height="660" alt="{{heroShot}}" data-alt="heroShot"></span>
+              <span data-text="heroLayoutCaption">{{heroLayoutCaption}}</span>
+            </a>
+            <a class="hero-detail hero-stage" href="features/stage/#dock" data-en-href="features/stage/index.en.html#dock">
+              <img class="shot" src="features/images/top-stage-window.png" data-en-src="features/images/en/top-stage-window.png" width="560" height="380" alt="{{heroStageShot}}" data-alt="heroStageShot">
+              <span data-text="heroStageCaption">{{heroStageCaption}}</span>
+            </a>
           </div>
-          <img class="shot shot-stage" src="features/images/top-stage-window.png" data-en-src="features/images/en/top-stage-window.png" width="560" height="380" alt="{{heroStageShot}}" data-alt="heroStageShot">
+          <a class="hero-detail hero-detail-messages" href="features/sprites/#messages" data-en-href="features/sprites/index.en.html#messages">
+            <span class="shot hero-crop"><img src="features/images/messages-sprite.png" data-en-src="features/images/en/messages-sprite.png" width="1440" height="1000" loading="lazy" alt=""></span>
+            <span data-text="heroMessages">{{heroMessages}}</span>
+          </a>
+          <a class="hero-detail hero-detail-calls" href="features/sprites/#call-graph" data-en-href="features/sprites/index.en.html#call-graph">
+            <img class="shot" src="features/images/call-graph-detail.png" data-en-src="features/images/en/call-graph-detail.png" width="655" height="195" loading="lazy" alt="{{heroCallsShot}}" data-alt="heroCallsShot">
+            <span data-text="heroCalls">{{heroCalls}}</span>
+          </a>
+          <a class="hero-detail hero-detail-diff" href="features/git/#block-diff" data-en-href="features/git/index.en.html#block-diff">
+            <span class="shot hero-crop"><img src="features/images/current-git-blocks.png" data-en-src="features/images/en/current-git-blocks.png" width="1440" height="960" loading="lazy" alt=""></span>
+            <span data-text="heroDiff">{{heroDiff}}</span>
+          </a>
         </div>
       </div>
+
+      <section class="summary-panel project-tools panel" aria-labelledby="project-tools-heading">
+        <h2 id="project-tools-heading" data-text="workflowTitle">{{workflowTitle}}</h2>
+        <p data-text="workflowIntro">{{workflowIntro}}</p>
+        <figure class="workflow-diagram">
+          <a href="features/images/project-tools-workflow.svg" data-en-href="features/images/en/project-tools-workflow.svg"><img src="features/images/project-tools-workflow.svg" data-en-src="features/images/en/project-tools-workflow.svg" width="1120" height="270" alt="{{workflowDiagramAlt}}" data-alt="workflowDiagramAlt" loading="lazy"></a>
+          <figcaption data-text="workflowDiagramCaption">{{workflowDiagramCaption}}</figcaption>
+        </figure>
+        <div class="project-tools-grid">
+          <div>
+            <h3><a href="features/git/#project-folder" data-en-href="features/git/index.en.html#project-folder" data-text="workflowFolder">{{workflowFolder}}</a></h3>
+            <p data-text="workflowFolderNote">{{workflowFolderNote}}</p>
+            <figure>
+              <a href="features/git/#folder-files" data-en-href="features/git/index.en.html#folder-files"><img class="shot" src="features/images/project-folder-detail.png" data-en-src="features/images/en/project-folder-detail.png" width="1200" height="700" alt="{{workflowFolderShot}}" data-alt="workflowFolderShot" loading="lazy"></a>
+              <figcaption data-text="workflowFolderCaption">{{workflowFolderCaption}}</figcaption>
+            </figure>
+          </div>
+          <div>
+            <h3><a href="features/git/#block-diff" data-en-href="features/git/index.en.html#block-diff" data-text="workflowGit">{{workflowGit}}</a></h3>
+            <p data-text="workflowGitNote">{{workflowGitNote}}</p>
+            <figure>
+              <a href="features/git/#block-diff" data-en-href="features/git/index.en.html#block-diff"><img class="shot" src="features/images/readme-block-diff.png" data-en-src="features/images/en/readme-block-diff.png" width="740" height="286" alt="{{heroDiff}}" data-alt="heroDiff" loading="lazy"></a>
+              <figcaption data-text="heroDiff">{{heroDiff}}</figcaption>
+            </figure>
+          </div>
+          <div><h3><a href="features/documents/#vscode" data-en-href="features/documents/index.en.html#vscode" data-text="workflowVSCode">{{workflowVSCode}}</a></h3><p data-text="workflowVSCodeNote">{{workflowVSCodeNote}}</p></div>
+          <div><h3><a href="features/github/#agent" data-en-href="features/github/index.en.html#agent" data-text="workflowAI">{{workflowAI}}</a></h3><p data-text="workflowAINote">{{workflowAINote}}</p></div>
+        </div>
+        <p class="small"><span data-text="workflowReload">{{workflowReload}}</span> <a href="features/git/#external-changes" data-en-href="features/git/index.en.html#external-changes" data-text="workflowReloadLink">{{workflowReloadLink}}</a></p>
+      </section>
 
       <section class="summary-panel extension-highlights panel" aria-labelledby="extension-highlights-heading">
         <h2 id="extension-highlights-heading" data-text="extensionHighlights">{{extensionHighlights}}</h2>
@@ -85,7 +137,7 @@
             <label for="project-url" data-text="label">{{label}}</label>
             <input id="project-url" type="url" required placeholder="https://example.com/project.sb3" aria-describedby="url-note url-error">
             <p id="url-note" class="small" data-text="urlNote">{{urlNote}}</p>
-            <button type="submit" class="twpe-edit-button"><img src="assets/icon.svg" width="36" height="36" alt="" aria-hidden="true"><span data-text="edit">{{edit}}</span></button>
+            <button type="submit" class="twpe-edit-button"><img src="assets/icon.svg" width="36" height="36" alt="" aria-hidden="true"><span data-text="urlAction">{{urlAction}}</span></button>
             <p id="url-error" class="error" role="alert"></p>
           </form>
           <div class="open-flow">
@@ -179,7 +231,7 @@
           </section>
         </div>
       </section>
-      <p class="small" data-text="independent">{{independent}}</p>
+      <p class="small" data-project-attribution><span data-text="attributionLead">{{attributionLead}}</span><a href="https://github.com/kubohiroya" data-en-href="https://kubohiroya.github.io/turbowarp-plus-packages/" data-text="attributionFirstLink">{{attributionFirstLink}}</a><span data-text="attributionMiddle">{{attributionMiddle}}</span><a href="https://kubohiroya.github.io/turbowarp-plus-packages/" data-en-href="https://github.com/kubohiroya" data-text="attributionSecondLink">{{attributionSecondLink}}</a><span data-text="attributionEnd">{{attributionEnd}}</span></p>
     </main>
     <footer>
       <a href="https://kubohiroya.github.io/turbowarp-plus-packages/" data-text="family">{{family}}</a>

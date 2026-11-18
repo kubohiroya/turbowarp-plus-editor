@@ -98,7 +98,8 @@ test('the browser tab follows the current project title', {timeout: 30_000}, asy
     await expect(page).toHaveTitle('読み込んだ作品 - TurboWarp Plus Editor');
 
     await openFileMenu();
-    await page.getByText('Create New Project', {exact: true}).click();
+    await page.getByText('Create New Project…', {exact: true}).click();
+    await page.getByRole('dialog', {name: 'Create New Project'}).getByRole('button', {name: 'Create', exact: true}).click();
     await expect(title).toHaveValue('Project');
     await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
 });
@@ -140,7 +141,7 @@ test('the unsaved marker stays by the project name and its hint fits in the view
     const longTitle = await title.boundingBox();
     assert(longTitle && longTitle.width > shortTitle.width && longTitle.width < 192);
     await marker.press('Enter');
-    await expect(page.getByRole('button', {name: '名前を変えて保存…', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'プロジェクトのコピーを保存…', exact: true})).toBeVisible();
 });
 
 test('the real editor resizes both dividers and preserves editing and stage input', {timeout: 90_000}, async t => {
@@ -301,8 +302,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
 
     await page.getByText('File', {exact: true}).click();
     const pending = page.waitForEvent('download');
-    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
-    await page.getByRole('dialog', {name: 'Save As'}).getByRole('button', {name: 'Save', exact: true}).click();
+    await page.getByRole('button', {name: 'Save a Copy of the Project…', exact: true}).click();
+    await page.getByRole('dialog', {name: 'Save a Copy of the Project'}).getByRole('button', {name: 'Save', exact: true}).click();
     const archive = await readFile(await (await pending).path());
     const zip = await JSZip.loadAsync(archive, {checkCRC32: true});
     const json = await zip.file('project.json').async('string');
@@ -3184,6 +3185,83 @@ test('editor pane headings and message diagrams follow the active target', {time
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
 });
 
+test('the calls section independently toggles function calls and messages and opens a receiver in another target', {timeout: 60_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage &&
+        window.ScratchBlocks?.getMainWorkspace());
+    const stageId = await page.evaluate(() => {
+        const stage = vm.runtime.getTargetForStage();
+        stage.createVariable('graph-ready', 'ready', 'broadcast_msg', false);
+        stage.blocks.createBlock({
+            id: 'graph-receiver', opcode: 'event_whenbroadcastreceived', topLevel: true,
+            shadow: false, parent: null, next: null, x: 30, y: 30,
+            fields: {BROADCAST_OPTION: {name: 'BROADCAST_OPTION', id: 'graph-ready', value: 'ready'}}, inputs: {}
+        });
+        const definition = (id, name, body) =>
+            `<block type="procedures_definition" id="${id}" x="40" y="40"><value name="custom_block">` +
+            `<shadow type="procedures_prototype"><mutation proccode="${name}" argumentids="[]" argumentnames="[]" ` +
+            `argumentdefaults="[]" warp="false"></mutation></shadow></value><next>${body}</next></block>`;
+        const send = '<block type="event_broadcast" id="graph-send"><value name="BROADCAST_INPUT">' +
+            '<shadow type="event_broadcast_menu"><field name="BROADCAST_OPTION" id="graph-ready" variabletype="broadcast_msg">' +
+            'ready</field></shadow></value></block>';
+        const call = '<block type="procedures_call"><mutation proccode="land" argumentids="[]" warp="false"></mutation>' +
+            `<next>${send}</next></block>`;
+        const workspace = window.ScratchBlocks.getMainWorkspace();
+        window.ScratchBlocks.Xml.domToWorkspace(window.ScratchBlocks.Xml.textToDom('<xml>' +
+            definition('graph-jump', 'jump', call) +
+            definition('graph-land', 'land', '<block type="motion_turnright"></block>') + '</xml>'), workspace);
+        vm.emitTargetsUpdate();
+        return stage.id;
+    });
+    const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
+    const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
+    await section('Calls').click();
+    const graph = page.getByRole('region', {name: 'Calls', exact: true}).locator('figure');
+    const calls = graph.getByRole('button', {name: 'Function calls', exact: true});
+    const messages = graph.getByRole('button', {name: 'Messages', exact: true});
+    const callEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-relation="call"]');
+    const messageEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-relation="message"]');
+    const both = async () => {
+        await expect(callEdges).toHaveCount(1);
+        await expect(messageEdges).toHaveCount(1);
+    };
+    await expect(calls).toHaveAttribute('aria-pressed', 'true');
+    await expect(messages).toHaveAttribute('aria-pressed', 'true');
+    await both();
+    await expect(graph.locator('.tw-sprite-functions__edge-label')).toHaveText('ready');
+    const before = await page.evaluate(() => vm.toJSON());
+    await calls.click();
+    await expect(callEdges).toHaveCount(0);
+    await expect(messageEdges).toHaveCount(1);
+    await messages.click();
+    await expect(messageEdges).toHaveCount(0);
+    await calls.click();
+    await expect(callEdges).toHaveCount(1);
+    await expect(messageEdges).toHaveCount(0);
+    await messages.click();
+    await both();
+    assert.equal(await page.evaluate(() => vm.toJSON()), before, 'arrow visibility does not edit the project');
+
+    await messages.click();
+    await section('Hats and functions').click();
+    await section('Calls').click();
+    await expect(messages).toHaveAttribute('aria-pressed', 'false');
+    await expect(messageEdges).toHaveCount(0);
+    await messages.click();
+    await graph.getByRole('button', {name: 'Top to bottom (TD)', exact: true}).click();
+    await both();
+    const receiver = graph.locator('[data-script-key]');
+    await expect(receiver).toHaveCount(1);
+    await expect(receiver).toContainText('ready');
+    await receiver.click();
+    await expect.poll(() => page.evaluate(() => vm.editingTarget.id)).toBe(stageId);
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks(false)
+        .filter(block => getComputedStyle(block.getSvgRoot()).display !== 'none').map(block => block.id)))
+        .toEqual(['graph-receiver']);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
 test('the hats and functions list and the calls section show each script alone in a code view beside the sprite', {timeout: 90_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
@@ -3334,12 +3412,12 @@ test('the hats and functions list and the calls section show each script alone i
     await expect(pane.locator('[data-function-key][aria-current="true"]')).toHaveText(/wave/);
 });
 
-test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
+test('Save a Copy of the Project keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');
     await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
-    const dialog = page.getByRole('dialog', {name: 'Save As', exact: true});
+    await page.getByRole('button', {name: 'Save a Copy of the Project…', exact: true}).click();
+    const dialog = page.getByRole('dialog', {name: 'Save a Copy of the Project', exact: true});
     const cancel = dialog.getByRole('button', {name: 'Cancel', exact: true});
     const save = dialog.getByRole('button', {name: 'Save', exact: true});
     const actions = dialog.locator('.tw-plus-dialog-actions');
@@ -3358,7 +3436,7 @@ test('Save As keeps the labelled dialog actions at the right edge', {timeout: 30
     await cancel.click();
     await expect(dialog).toHaveCount(0);
     await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Save As…', exact: true}).click();
+    await page.getByRole('button', {name: 'Save a Copy of the Project…', exact: true}).click();
     const download = page.waitForEvent('download');
     await save.click();
     assert.match((await download).suggestedFilename(), /\.sb3$/);

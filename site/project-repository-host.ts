@@ -15,6 +15,13 @@ type Target = Omit<WriteGrant, 'session'>;
 type Cloudflare = {bffOrigin: string; proxyOrigin: string};
 type SeedFile = {path: string; bytes: Uint8Array};
 type DiskRepository = Target & {directory: FileSystemDirectoryHandle; operationId: string; signal: AbortSignal};
+/** Folders kept in the browser's own storage (OPFS), where the browser cannot pick folders. */
+export interface BrowserRepositoryFolders {
+    /** Makes a new empty folder named `title`, for the repository with its project folder inside. */
+    create(title: string): Promise<FileSystemDirectoryHandle>;
+    /** Lets the user choose one of the folders, or resolves with `null`. */
+    choose(): Promise<FileSystemDirectoryHandle | null>;
+}
 
 export interface DesktopRepositoryCreation {
     getConnection(): Promise<GitProxyConnection>;
@@ -155,8 +162,13 @@ function cloudflareProvider(view: Window, {bffOrigin}: Cloudflare) {
     } satisfies RepositoryCreationProvider<Session>;
 }
 
-export function bindProjectRepositoryCreation({view, desktop, cloudflare, locale, author, prepareSource, openProject}: {
+export function bindProjectRepositoryCreation({view, desktop, cloudflare, browserFolders, createBrowserFolder, locale, author, prepareSource,
+    openProject}: {
     view: CreationWindow;
+    /** Puts new repositories in the browser's own storage instead of a picked folder. */
+    browserFolders?: BrowserRepositoryFolders;
+    /** Makes a new empty folder in the browser's storage, for a working copy the person chose to keep there (#679). */
+    createBrowserFolder?: BrowserRepositoryFolders['create'];
     desktop?: DesktopRepositoryCreation;
     cloudflare?: Cloudflare;
     locale: string;
@@ -164,7 +176,7 @@ export function bindProjectRepositoryCreation({view, desktop, cloudflare, locale
     prepareSource(serialize: () => Promise<Uint8Array>, current: () => boolean, title: string): Promise<ReadonlyMap<string, Uint8Array>>;
     openProject(directory: FileSystemDirectoryHandle, root: FileSystemDirectoryHandle): Promise<boolean>;
 }) {
-    if (!view.indexedDB || !view.navigator.locks || !view.showDirectoryPicker || !view.crypto?.subtle ||
+    if (!view.indexedDB || !view.navigator.locks || !(browserFolders || view.showDirectoryPicker) || !view.crypto?.subtle ||
         typeof __TW_PLUS_CREATE_REPOSITORY_CLIENT__ !== 'function' || typeof __TW_PLUS_COMPOSE_REPOSITORY_SEED__ !== 'function' ||
         typeof __TW_PLUS_PREPARE_INITIAL_REPOSITORY__ !== 'function' || typeof __TW_PLUS_PUSH_INITIAL_REPOSITORY__ !== 'function' ||
         typeof __TW_PLUS_SB3_TOOLCHAIN_VERSION__ !== 'string') return undefined;
@@ -173,8 +185,9 @@ export function bindProjectRepositoryCreation({view, desktop, cloudflare, locale
     const provider = desktop ? desktopProvider(desktop) : cloudflareProvider(view, cloudflare);
     const licenses = typeof __TW_PLUS_REPOSITORY_LICENSES__ === 'undefined' ? [] : __TW_PLUS_REPOSITORY_LICENSES__;
     const pickDirectory = async () => {
+        if (browserFolders) return browserFolders.choose();
         try {
-            return await view.showDirectoryPicker({id: 'turbowarp-plus-new-git-repository', mode: 'readwrite'});
+            return await view.showDirectoryPicker!({id: 'turbowarp-plus-new-git-repository', mode: 'readwrite'});
         } catch (error) {
             if ((error as DOMException).name === 'AbortError') return null;
             throw error;
@@ -241,11 +254,21 @@ export function bindProjectRepositoryCreation({view, desktop, cloudflare, locale
     return {
         ...workflow,
         licenses: licenses.map(({id}) => ({id, label: id})),
-        async start(draft: GitHubRepositoryDraft, serialize: () => Promise<Uint8Array>, current: () => boolean, signal: AbortSignal) {
-            const directory = await pickDirectory();
-            if (!directory || !current()) return null;
-            for await (const _entry of (directory as FileSystemDirectoryHandle & {values(): AsyncIterable<FileSystemHandle>}).values())
-                throw creationError('directoryNotEmpty');
+        /**
+         * `target` is where the working copy goes: `browser` for a new folder in the browser's storage, or an empty
+         * folder already picked on the device. Without it, the folder follows where this browser keeps new folders.
+         */
+        async start(draft: GitHubRepositoryDraft, serialize: () => Promise<Uint8Array>, current: () => boolean, signal: AbortSignal,
+            target?: 'browser' | FileSystemDirectoryHandle) {
+            const createInBrowser = target === 'browser' || !target && browserFolders ? browserFolders?.create ?? createBrowserFolder : undefined;
+            if (target === 'browser' && !createInBrowser) throw creationError('invalidRequest');
+            // A folder in the browser is made only once the project is ready, so a cancelled creation leaves none behind.
+            const directory = typeof target === 'object' ? target : createInBrowser ? null : await pickDirectory();
+            if (!createInBrowser && !directory || !current()) return null;
+            if (directory) {
+                for await (const _entry of (directory as FileSystemDirectoryHandle & {values(): AsyncIterable<FileSystemHandle>}).values())
+                    throw creationError('directoryNotEmpty');
+            }
             const project = await prepareSource(serialize, current, draft.title).catch(error => {
                 if ((error as DOMException).name === 'AbortError') return null;
                 throw error;
@@ -258,7 +281,7 @@ export function bindProjectRepositoryCreation({view, desktop, cloudflare, locale
             __TW_PLUS_SB3_TOOLCHAIN_VERSION__);
             const identity = await author() ?? {name: draft.account, email: draft.account + '@users.noreply.github.com'};
             if (!current()) return null;
-            return workflow.start({directory, draft, author: identity, files: [...seed].map(([path, bytes]) => ({path, bytes})), signal});
+            return workflow.start({directory: directory ?? await createInBrowser!(draft.title), draft, author: identity, files: [...seed].map(([path, bytes]) => ({path, bytes})), signal});
         }
     };
 }

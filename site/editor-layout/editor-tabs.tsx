@@ -48,7 +48,7 @@ import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points
 const attachCodeNavigation = (workspace: object, blocks: object) => (hostIntegration() as {
     attachWorkspaceMinimap?: (workspace: object, blocks: object) => {dispose(): void};
 }).attachWorkspaceMinimap?.(workspace, blocks);
-import {attachFunctionCallMenu, BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, createFunction, mountProcedureEditor, readHatScripts, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
+import {attachFunctionCallMenu, BackCodeWindows, CodePaneCostumeThumbnail, createCodePaneAdapter, createFunction, mountProcedureEditor, readHatScripts, readScriptRelationGraph, SpriteCodeProvider, useCodeWindows} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
 
 const codeTab = 0;
 
@@ -224,7 +224,11 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             views.views().some(view => view.id === scriptViewRef.current.viewId) ? scriptViewRef.current.viewId : undefined;
         if (!viewId) {
             const current = views.currentView();
-            const from = current?.targetId === targetId ? current.id : views.views().find(view => view.targetId === targetId)?.id;
+            let from = current?.targetId === targetId ? current.id : views.views().find(view => view.targetId === targetId)?.id;
+            if (!from && navigation.current) {
+                from = activateTargetView(navigation.current, targetId, codeTab)?.viewId;
+                if (current) views.activateView(current.id);
+            }
             viewId = from && views.split('right', from);
             if (!viewId) return;
             const opened = {viewId, targetId};
@@ -360,6 +364,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 const section = spriteEditorSections[view.section] ?? 'code';
                 return <SpriteEditorToolbar viewId={view.id} locale={locale} section={section} isStage={view.isStage}
                     activeGroup={view.groupActive} propertiesInVariables
+                    sectionControls={actions.sectionControls}
                     onSectionChange={next => actions.setSection(spriteEditorSections.indexOf(next))}
                     actions={section === 'variables' && !view.isStage ?
                         <SpriteClonePagination viewId={view.id} targetId={view.targetId} locale={locale} /> :
@@ -408,16 +413,31 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
             getFunctions(id) {
                 const target = vm.runtime.getTargetById(id);
                 if (!target) return {targetId: id, isStage: false, functions: []};
-                const data = readTargetFunctions(target, {others: vm.runtime.targets.filter(other => other.isOriginal)});
+                const hats = new Map<string, ReturnType<typeof readHatScripts>>();
+                const targetHats = targetId => {
+                    if (!hats.has(targetId)) {
+                        const owner = vm.runtime.getTargetById(targetId);
+                        hats.set(targetId, owner ? readHatScripts(owner, window.ScratchBlocks) : []);
+                    }
+                    return hats.get(targetId)!;
+                };
+                const data = readTargetFunctions(target, {
+                    others: vm.runtime.targets.filter(other => other.isOriginal),
+                    getTargetThumbnail: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset),
+                    describeScript: (targetId, scriptId) => targetHats(targetId).find(hat => hat.id === scriptId)?.label
+                });
                 const definitions = new Set(data.functions.map(fn => fn.id));
-                return {...data, hats: readHatScripts(target, window.ScratchBlocks, definitions)};
+                return {...data, hats: targetHats(id).filter(hat => !definitions.has(hat.id)),
+                    ...readScriptRelationGraph(vm.runtime.targets, window.ScratchBlocks)};
             },
             createFunction: (targetId, kind, name) =>
                 createFunction(vm, targetId, kind, name, {loadNamedFunctions: () => loadNamedFunctions(vm)}),
             mountFunctionEditor: (element, targetId, functionId, options) =>
                 mountProcedureEditor(vm, locale, element, targetId, functionId, {...options, attachNavigation: attachCodeNavigation}),
-            openFunction: (targetId, fn, options) => openScriptView(targetId, fn.id, options?.block),
-            openScript: (targetId, hat, options) => openScriptView(targetId, hat.id, options?.block),
+            openFunction: (targetId, fn, options) =>
+                openScriptView(fn.owner?.targetId ?? targetId, fn.owner?.functionId ?? fn.id, options?.block),
+            openScript: (targetId, hat, options) => openScriptView(hat.targetId ?? targetId, hat.id, options?.block),
+            openRelationScript: endpoint => openScriptView(endpoint.targetId, endpoint.scriptId, endpoint.blockId),
             selectedScript,
             renameMessage(message, name) {
                 const workspace = window.ScratchBlocks?.getMainWorkspace();

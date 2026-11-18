@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {once} from 'node:events';
-import {mkdir, readFile, writeFile} from 'node:fs/promises';
+import {readFile, writeFile} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import path from 'node:path';
 import {test} from 'node:test';
@@ -62,7 +62,6 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
     fixture.origins.add(origin);
     fixture.sessions.set(bearer, {mode: 'desktop', write: true});
     fixture.sessions.set(cloudBearer, {mode: 'desktop', write: true});
-    await mkdir(path.join(client, 'project'));
     git(client, 'config', 'user.name', 'Fixture');
     git(client, 'config', 'user.email', 'fixture@example.invalid');
 
@@ -221,8 +220,8 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
             directory = await item.getAsFileSystemHandle();
             view.publicationDirectoryReady = true;
         }, {capture: true});
-        view.showDirectoryPicker = async ({id}) => id === 'turbowarp-plus-git-root' ? directory :
-            directory.getDirectoryHandle('project');
+        // One repository holds one project, at its root: the project folder is the repository.
+        view.showDirectoryPicker = async () => directory;
     }, {proxyOrigin: fixture.origin, bearer, cloud, stacked, parentOid, pushSessionId: createHash('sha256').update(bearer).digest('hex')});
     await page.goto(origin + prefix + 'editor.html?lang=en');
     await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
@@ -247,14 +246,17 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
         await page.getByText('File', {exact: true}).click();
         await page.getByRole('button', {name, exact: true}).click();
     };
-    await command('Save As…');
-    const save = page.getByRole('dialog', {name: 'Save As', exact: true});
+    await command('Save Project');
+    const save = page.getByRole('dialog', {name: 'Save Project', exact: true});
     await save.getByLabel('Save format').selectOption('folder');
+    // The repository already has files, so saving there asks first.
+    page.once('dialog', dialog => void dialog.accept());
     await save.getByRole('button', {name: 'Choose Where to Save…'}).click();
     await expect(save).toBeHidden();
 
-    await command('Choose Repository…');
-    await expect(page.locator('.twgit-repository-heading strong')).toHaveText(path.basename(client));
+    // The folder has a .git directory, so saving there connects its repository without another step. Its settings
+    // are in the Git panel on the left.
+    await page.getByRole('toolbar', {name: 'Drawer views'}).getByRole('button', {name: 'Git history', exact: true}).click();
     await page.getByRole('button', {name: 'Connect to GitHub…', exact: true}).click();
     const settings = page.getByRole('dialog', {name: 'Repository GitHub connection'});
     await settings.getByLabel('Allow sending to GitHub (push)').check();
@@ -265,7 +267,6 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
     } else await settings.getByRole('button', {name: 'Restore saved Desktop connection'}).click();
     await expect(settings.locator('[data-git-connection-state]')).toHaveText('Connected');
     await settings.getByRole('button', {name: 'Close', exact: true}).click();
-    if (!cloud) await page.locator('.twgit-backdrop').getByRole('button', {name: 'Close', exact: true}).click();
     await command('Save and Commit…');
     const local = page.getByRole('dialog', {name: 'Save and Commit', exact: true});
     await local.getByRole('button', {name: 'Save and review changes'}).click();

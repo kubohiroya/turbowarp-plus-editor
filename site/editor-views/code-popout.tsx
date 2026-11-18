@@ -68,12 +68,18 @@ let locale;
 let backpackDrop = false;
 let lease;
 let editable = false;
-let history = {canUndo: false, canRedo: false};
+let history = {canUndo: false, canRedo: false, blocks: {}, scriptRelations: []};
 let group;
 let edits = [];
 const scriptView = attachScriptView({workspace, ScratchBlocks, getLocale: () => locale,
     mount: workspaceArea, canShowBlock: () => editable && !blockedSnapshot,
-    hasWorkspaceMenu: () => !mount.inert});
+    hasWorkspaceMenu: () => !mount.inert,
+    relations: {
+        getTarget: () => targetId ? {id: targetId, blocks: {_blocks: history.blocks}} : undefined,
+        getRelations: () => history.scriptRelations,
+        getTargetName: id => targets.find(candidate => candidate.id === id)?.name,
+        navigate: endpoint => port?.postMessage({type: 'relation-navigate', ...endpoint})
+    }});
 installScopedVariableReferences(ScratchBlocks, workspace, () => locale);
 const procedureEditor = installProcedureEditor({
     blocks: ScratchBlocks, workspace, getLocale: () => locale, canEdit: () => editable && !blockedSnapshot && document.hasFocus(),
@@ -149,7 +155,7 @@ function renderLayout(canDuplicate) {
 }
 
 function snapshot(message) {
-    history = message;
+    history = {...history, ...message};
     if (message.extensions) updateExtensions(message.extensions);
     if (message.dynamicShapes) extensionPalette.setDynamicShapes(message.dynamicShapes);
     if (message.xml) {
@@ -169,6 +175,7 @@ function snapshot(message) {
     }
     updateWorkspaceAccess();
     buttons();
+    scriptView.relations?.update();
 }
 
 function flush() {
@@ -235,6 +242,13 @@ function receive({data: message}) {
             snapshot(message);
             renderTarget();
             break;
+        case 'relation-focus':
+            scriptView.setView('free');
+            requestAnimationFrame(() => {
+                const block = workspace.getBlockById(message.blockId) ?? workspace.getBlockById(message.scriptId);
+                if (block) workspace.centerOnBlock(block.id);
+            });
+            break;
         case 'rename-result':
             if (lease === message.lease) {
                 renameError.textContent = /^ja(?:-|$)/i.test(locale) ?
@@ -288,6 +302,7 @@ function receive({data: message}) {
             break;
         case 'history':
         case 'update':
+        case 'relations':
             snapshot(message);
             break;
         case 'step-result':

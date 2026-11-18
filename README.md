@@ -2,24 +2,20 @@
 
 English | [日本語](README.ja.md)
 
-[![TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/)
+**An extensible IDE for Scratch and TurboWarp projects.**
 
-**[Open TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/?lang=en)**
+Open multiple panels to edit different sprites or work on the same sprite in several views at once.
 
-TurboWarp-Plus-Editor is an editor for Scratch 3 and TurboWarp projects that adds what a long or shared project needs: a workspace you can split and rearrange, project-wide search and replace, a project kept as a folder under Git, a visible check of every extension before it runs, and export to a single HTML file with the project's Plus extensions bundled in. An SB3 from Scratch or TurboWarp opens as it is, and what you save here opens there again.
-
-- Editor: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en>
-- Feature guide: <https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html>
-- Developer guide: <https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/index.en.html>
-- npm: [`@kubohiroya/turbowarp-plus-editor`](https://www.npmjs.com/package/@kubohiroya/turbowarp-plus-editor)
-- TurboWarp Plus family (extensions, apps, dashboard): <https://kubohiroya.github.io/turbowarp-plus-packages/>
+[Open the editor](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en) · [Feature guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) · [Developer guide](https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/index.en.html)
 
 [![The workspace right after startup](docs/features/images/en/plus-workspace-current.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html)
 
+*The workspace right after startup.*
+
 ## Contents
 
-- [What it is for](#what-it-is-for)
-- [What Plus adds to standard TurboWarp](#what-plus-adds-to-standard-turbowarp)
+- [Editing and inspecting projects](#what-it-is-for)
+- [Extensions, data, and assets](#extensions-data-and-assets)
 - [Opening projects](#opening-projects)
 - [“Edit in TurboWarp-Plus-Editor” button](#edit-button)
 - [The npm package and its commands](#the-npm-package-and-its-commands)
@@ -29,39 +25,115 @@ TurboWarp-Plus-Editor is an editor for Scratch 3 and TurboWarp projects that add
 - [Documentation](#documentation)
 - [License and author](#license-and-author)
 
-## What it is for
+<a id="what-it-is-for"></a>
 
-- **Keep working on the projects you have.** Nothing has to be ported. [The compatibility list](docs/features/sb3-compatibility.en.md) records what travels in each direction between this Editor, Scratch 3 and TurboWarp.
-- **Find your way around a project.** The sprite list stays beside the code and searches by name; the palette is a searchable band across the top whose categories you can reorder; search covers every sprite and the stage and lists where each variable, list and message is used.
-- **See how a project fits together.** The icons on the left of each sprite and the stage include **Hats and functions** and **Calls**. **Hats and functions** lists every script by its hat and every custom block definition, and the call graph under **Calls** draws which function calls which, including the global functions of other sprites and the stage. Pick a function or a script there, or choose **Show this function** on a block that calls one, and it opens alone in a real code area beside the sprite, with the palette, zoom and minimap of the main one. Add a function by name — a standard custom block or a TurboWarp Plus named function — from either of them ([guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#functions)). The variables pane also shows the thread and runtime variables of the temporary-variables extension and the functions that set or read them, and the message diagram shows which hat or function sends each message.
-- **Keep long scripts readable.** Collapse a script from its hat's context menu so that only the hat remains; the state is saved in the project and the collapsed body still updates when a function it calls changes. Long text arguments are shortened in the block and edited in a dialog, and the block context menu is grouped by kind of operation ([guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html#context-menu)).
-- **Push a long project further.** The workspace is [Dockview](https://dockview.dev/): split panels, open the code and the palette in windows of their own, and get the same arrangement back next time. A minimap, an edit menu with shortcuts, and `.blocks3` / `.stage3` transfer between projects come with it.
-- **Keep a project as a folder in Git.** [`sb3-toolchain`](https://www.npmjs.com/package/@kubohiroya/sb3-toolchain) unpacks an SB3 into text and files. The Editor opens that folder directly, saves `project.source.json` back into it, and shows diffs, branches, history and pull requests in its **Local Git** panel — with changes drawn as blocks, not JSON. A remix stays connected to the original as a history you can read and a change you can send back.
-- **Work alongside an AI agent.** Because the project is ordinary files, an agent edits it with the file tools it already has; you reload and review the block diff.
-- **Go from using extensions to writing them.** See where an extension comes from and on what terms it runs, choose how its code is stored with the project, embed your own, and let `sb3-toolchain` pin and verify it. Extensions are best written in TypeScript against the family packages' typed APIs, with npm libraries bundled in.
-- **Treat YAML documents and JSON Schema as part of a project.** A document can be edited as source, as shared YAML blocks, or as blocks its owning extension supplies; a schema gives it a generated form and validation, and VS Code completion through the local companion.
-- **Host interactive works and devices.** Extensions register controls into the Editor's menu bar through `@kubohiroya/turbowarp-app-shell`, so camera, AR, QR and Teachable Machine hosts are an extension plus a project, not a fork of the Editor.
-- **Start from a story.** [`turbowarp-kamishibai-app`](https://www.npmjs.com/package/@kubohiroya/turbowarp-kamishibai-app) is the way in for children: the story is a document, and branching the next scene is a reason to open a block.
+## Editing and inspecting projects
 
-## What Plus adds to standard TurboWarp
+### Keep editing tools within reach
 
-| Task | Standard TurboWarp | What Plus adds |
-| --- | --- | --- |
-| Open a project | Loading an SB3 and confirming extension execution | Load progress, the TurboWarp Plus catalog, loading diagnostics |
-| Manage a project | Saving one SB3 file at a time | Reading and writing a project folder, local Git diffs, history and pull requests |
-| Arrange the workspace | The basic code, stage and sprite arrangement | Split panels, panels and the palette in separate windows, a stage display menu, layout restoration |
-| Understand the structure | Scrolling through the code area | A list of hats and functions, a call graph across sprites and the stage, a function or script opened on its own, where variables and messages are used |
-| Edit | Block input fields and menus | Project-wide search and replace, an edit menu, a searchable horizontal palette, a minimap, collapsing scripts, a dialog for long text arguments, and forms and YAML tabs from supporting extensions |
-| Reuse | The backpack | Script and stage transfer as files, adding bundled assets |
-| Save and hand over | Saving an SB3, the standard Packager | Save and Save As, storage formats for embedded data and extension code, HTML with Plus extensions bundled |
+Hover to reveal controls, and drag and drop to rearrange tabs or copy blocks between sprites. Use the minimap to see how scripts are laid out. Saving a project also stores your tab and panel layout and your position in the code, so you can pick up where you left off when you reopen it.
 
-Some of these need a supporting extension or data of their own; the [feature guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) marks which, and walks through each topic with screenshots: the screen, the workspace, sprites, the stage, blocks, search, documents, reuse, saving, project folders and Git, and GitHub.
+| Keep editing tools within reach | Open the stage or panels in separate windows |
+| --- | --- |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html#layout"><img src="docs/features/images/en/top-editor.png" width="640" alt="The code area with the cat and ball sprites and their scripts"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/index.en.html#dock"><img src="docs/features/images/en/top-stage-window.png" width="300" alt="The stage in its own window"></a> |
 
-A few things worth knowing up front:
+The sprite list is on the left, block categories are across the top of the code area, and buttons down the side of each panel open code, costumes, sounds, variables, and messages. The palette remembers each category’s size and scroll position. Panels can be pinned, resized, and moved between the workspace and separate windows. [Screen layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html) · [Workspace layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/index.en.html)
 
-- **Export** opens the standard TurboWarp Packager for an ordinary SB3 and the Plus output screen for a project that records Plus extensions. Extension code is checked against its recorded hash before it goes into the HTML, and a project with no external dependencies then works offline.
-- [Project Properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html#project-properties) stores the title, description, author and contact in the SB3. [Project Diagnostics](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html#project-diagnostics) collects validation, approval, loading and failure records while the Editor page is open.
-- Extensions that meet the conditions of the [family catalog](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json) — matching origin and SHA-256 — run without an individual approval. Anything else asks first, in the Editor and again in exported HTML.
+### Inspect clones, variables, lists, and messages
+
+Choose an individual clone to inspect and edit its properties and sprite variables while the project runs. The variables pane lists variables and lists together and shows how many blocks read or change each one. Follow a count to find those blocks, or open a list to edit and reorder its items. [Properties and variables](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#variable-pane)
+
+[![Clone 1 selected, showing its position and sprite variables](docs/features/ball-demo/images/en-clone.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#variable-pane)
+
+*Inspect and edit each clone’s own properties and variable values.*
+
+[![Trace broadcasts in a diagram](docs/features/images/en/readme-messages.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#messages)
+
+*Trace broadcasts in a diagram.*
+
+See which sprites or the stage send and receive each broadcast. The diagram uses sprite thumbnails for the participants and labels the connecting arrows with message names. Select a participant to open its code. [Messages](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#messages)
+
+The variables pane also shows thread and runtime variables from the temporary-variables extension and the functions that read or write them. [Variable usage](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#variable-pane)
+
+### Trace function calls in a graph
+
+**Calls** shows which function calls which, using boxes for functions and arrows for calls. The graph also includes connected global named functions defined in other sprites or the stage.
+
+[![A function call graph with arrows from jump to land and play sound, and from count score to play sound](docs/features/images/en/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+
+*Trace function calls in a graph. Both jump and count score call the shared play sound function.*
+
+Hover over a box to highlight its connected arrows. Select a function belonging to the current sprite or stage to open it in the code panel on the right. **Hats and functions** also lets you select and edit individual scripts and custom block definitions. [Functions and calls](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+
+### Connect block editing with your other tools
+
+Unpack a project into a project folder to work with its data, assets, and extensions as files. Edit with VS Code or an AI app, then return to the Editor to run the project and review the changes.
+
+[![Save a project folder in the Editor, edit its files with VS Code or Claude Code and Codex, then return to the Editor to load changes, test the project, review Git diffs, and commit](docs/features/images/en/project-tools-workflow.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/index.en.html#agent)
+
+*Example workflow diagram. A shared project folder carries changes between the tools.*
+
+#### Save in a project folder
+
+Choose “Create project folder” in the left drawer to unpack the open SB3. Subsequent saves write to that same folder. [Save in a project folder](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#project-folder)
+
+[![The actual Editor showing the project folder and project.source.json](docs/features/images/en/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#folder-files)
+
+*Edit files directly. Use the “Normal view / Diff view” capsule toggle and the bottom-right minimap to inspect the content. Saving is enabled when the file has unsaved changes.*
+
+#### Edit text with VS Code
+
+Open the Editor through the local companion and choose “Edit in VSCode” in a file tab to open a working copy. Save in VSCode, choose “Finish and import edits”, then “Save file” to update the original file. The tab's content and controls are disabled during external editing. OPFS also works in the local companion URL's storage. [File tabs and external editing](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#folder-files)
+
+#### Work with generative AI apps
+
+Give Claude Code, Codex, or another AI app that reads and writes local files access to your project folder. Ask it to change a script, for example to change the cat’s movement speed, then test the result and review the block diff in the Editor. [Work with generative AI apps](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/index.en.html#agent)
+
+Save in the Editor and stop the project before editing externally. Script changes apply automatically when there are no unsaved edits. Changes to assets or variables require a full project reload; when you have unsaved edits, compare the versions and choose what to keep. [How external changes are loaded](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#external-changes)
+
+#### Compare and record changes with Git
+
+Review changed files and block diffs in Local Git, then commit. Choose a past commit in Git History to trace its changes. Use branches and pull requests to review work with others. [Compare and record changes with Git](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
+
+[![In the diff view, horizontal and vertical guide bands intersect at the changed part of the script.](docs/features/images/en/readme-block-diff.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
+
+*In the diff view, horizontal and vertical guide bands intersect at the changed part of the script.*
+
+You can also collapse scripts from their hats, edit long text arguments in a dialog, search across the project, and transfer scripts or the stage between projects as `.blocks3` or `.stage3` files. [Block editing](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html) · [Search](https://kubohiroya.github.io/turbowarp-plus-editor/features/search/index.en.html) · [Reuse](https://kubohiroya.github.io/turbowarp-plus-editor/features/reuse/index.en.html)
+
+<a id="what-plus-adds-to-standard-turbowarp"></a>
+
+## Extensions, data, and assets
+
+### Extension verification and approval
+
+Before running a Plus-format extension, Plus Editor verifies its code against the recorded SHA-256 hash. When approval is required, review the source and execution requirements and choose whether and how to run each extension, including in a sandbox when supported. The family catalog identifies trusted extensions by their source and hash. [Loading and approval](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html#review)
+
+### Form editing for custom extension blocks
+
+When a compatible extension registers a JSON Schema, Plus Editor uses React JSON Schema Form to build inputs for the block’s arguments. You can edit each field, and the editor checks required values and allowed ranges before saving.
+
+[![Form inputs for the scene name and duration of a supported extension block](docs/features/images/en/form-dialog.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#forms)
+
+*Form editing for a block registered by a compatible extension. [Block forms](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#forms)*
+
+### Embed structured data and DSLs in a project
+
+With a compatible extension, write settings or a domain-specific language (DSL) such as a story script in YAML or blocks, then embed it in the SB3. For example, the Kamishibai extension reads the script at runtime to switch scenes and display dialogue. Open YAML documents in tabs beside the code, and use the forms supported by the extension that owns the document. [Documents and blocks](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#documents)
+
+### Choose which function to call by name at runtime
+
+With the Named Functions extension, define a function with blocks and give it a name as you write your code. At runtime, pass the name as a string, for example from a variable. The extension looks up the function by that name and runs it. Use JSON for arguments and return values, with JSON Schema to validate each. [Named Functions guide](https://kubohiroya.github.io/turbowarp-named-functions/)
+
+### External assets and caching
+
+In Plus Editor, choose which costume images, backdrops, and sounds to bundle with your project and which to serve over HTTPS. Reuse verified assets from the cache. Add a compatible extension such as Kamishibai to use externally hosted video. [Asset storage](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html#payload-formats)
+
+Extensions can add controls, previews, and blocks for interactive projects using cameras, AR, QR codes, or Teachable Machine. Write an extension in TypeScript using the family’s typed APIs and npm libraries, choose how its code is stored with the project, and pin and verify it with `sb3-toolchain`. [Developer guide](https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/index.en.html) · [TurboWarp Plus family](https://kubohiroya.github.io/turbowarp-plus-packages/)
+
+Save your work as an SB3, or export a single HTML file that includes its Plus extensions. Export checks extension code against the recorded hash and retains its execution requirements. [Saving and export](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html)
+
+The [compatibility list](docs/features/sb3-compatibility.en.md) describes how project files and Plus features work in Scratch, TurboWarp, and Plus Editor. Project properties such as title, author, and contact are saved in the SB3, and project diagnostics show validation, approval, loading, and failure records while the editor is open. [Project properties](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/index.en.html#project-properties) · [Diagnostics](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html#project-diagnostics)
 
 ## Opening projects
 

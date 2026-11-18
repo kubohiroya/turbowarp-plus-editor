@@ -80,8 +80,8 @@ async function openCatalog(page, count = specifications.length, fileLabel, addLa
 async function saveSB3(page) {
     await page.getByText('ファイル', {exact: true}).click();
     const downloading = page.waitForEvent('download');
-    await page.getByRole('button', {name: '名前を変えて保存…', exact: true}).click();
-    await page.getByRole('dialog', {name: '名前を変えて保存'}).getByRole('button', {name: '保存', exact: true}).click();
+    await page.getByRole('button', {name: 'プロジェクトのコピーを保存…', exact: true}).click();
+    await page.getByRole('dialog', {name: 'プロジェクトのコピーを保存'}).getByRole('button', {name: '保存', exact: true}).click();
     return readFile(await (await downloading).path());
 }
 

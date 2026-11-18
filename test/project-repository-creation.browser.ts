@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
-import {mkdir, readFile} from 'node:fs/promises';
+import {mkdir, mkdtemp, readFile, rm} from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {test} from 'node:test';
-import {chromium, expect} from '@playwright/test';
+import {chromium, expect, webkit} from '@playwright/test';
+import type {Page} from '@playwright/test';
 
 const origin = 'http://localhost:41017';
 const bffOrigin = 'https://github-create.example.invalid';
@@ -16,8 +18,11 @@ const gitState = 'g'.repeat(43);
 const sessionKey = 's'.repeat(43);
 const writeBearer = 'w'.repeat(43);
 
-for (const mode of ['desktop', 'cloudflare'] as const) {
-    test(`Editor creates, resumes and pushes the first local Git commit via ${mode}`, {timeout: 120000}, async t => {
+// Without the folder picker, as in Safari, the repository goes to the browser's own storage (OPFS) instead (#660).
+const cases = [{mode: 'desktop', storage: 'device'}, {mode: 'cloudflare', storage: 'device'}, {mode: 'cloudflare', storage: 'browser'}] as const;
+for (const {mode, storage} of cases) {
+    const where = storage === 'browser' ? ' into the browser\'s storage' : '';
+    test(`Editor creates, resumes and pushes the first local Git commit via ${mode}${where}`, {timeout: 120000}, async t => {
         const build = process.env.E2E_PROJECT_SAVE_BUILD;
         const fixtureFile = process.env.E2E_GIT_HTTP_FIXTURE;
         assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_SAVE_BUILD to the creation preview');
@@ -45,11 +50,24 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
         let desktopReconciled = false;
         let cloudflareRevoke = 0;
 
-        const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
-        if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
-        const browser = await chromium.launch({headless: true, args});
-        t.after(() => browser.close());
-        const page = await browser.newPage({viewport: {width: 1280, height: 920}});
+        const viewport = {width: 1280, height: 920};
+        let page: Page;
+        if (storage === 'browser') {
+            // WebKit has no folder picker, and keeps an origin private file system only in a persistent profile.
+            const profile = await mkdtemp(path.join(os.tmpdir(), 'tw-plus-webkit-'));
+            const context = await webkit.launchPersistentContext(profile, {headless: true, viewport});
+            t.after(async () => {
+                await context.close();
+                await rm(profile, {recursive: true, force: true});
+            });
+            page = context.pages()[0] ?? await context.newPage();
+        } else {
+            const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
+            if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
+            const browser = await chromium.launch({headless: true, args});
+            t.after(() => browser.close());
+            page = await browser.newPage({viewport});
+        }
         const errors: string[] = [];
         page.on('pageerror', error => errors.push(error.stack || error.message));
         await page.exposeFunction('didAdopt', (id: string, repositoryId: number) => {
@@ -126,7 +144,7 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
             }
             return reply(404);
         });
-        await page.addInitScript(({mode, connection, grant, writeBearer, repository}) => {
+        await page.addInitScript(({mode, storage, connection, grant, writeBearer, repository}) => {
             const view = window as any;
             view.open = () => ({opener: view, closed: false, location: {replace() {}}, close() {}});
             if (mode === 'desktop') {
@@ -153,6 +171,13 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
                     async disconnect() {}
                 }};
             }
+            if (storage === 'browser') {
+                // Playwright's WebKit hands a Blob body to page.route as empty, so the push is sent as bytes here.
+                const send = window.fetch.bind(window);
+                window.fetch = async (input, init) => init?.body instanceof Blob ?
+                    send(input, {...init, body: await init.body.arrayBuffer()}) : send(input, init);
+                return;
+            }
             for (const type of ['dragenter', 'dragover', 'drop']) window.addEventListener(type, async event => {
                 event.preventDefault();
                 event.stopImmediatePropagation();
@@ -163,7 +188,7 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
                 view.repoDirectory = await item.getAsFileSystemHandle();
             }, {capture: true});
             view.showDirectoryPicker = async () => view.repoDirectory;
-        }, {mode, connection, grant, writeBearer, repository});
+        }, {mode, storage, connection, grant, writeBearer, repository});
         await page.goto(origin + prefix + 'editor.html?lang=en');
         await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
         await page.evaluate(async () => {
@@ -172,16 +197,18 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
             const sb3 = await vm.saveProjectSb3('arraybuffer');
             await vm.loadProject(sb3);
         });
-        const cdp = await page.context().newCDPSession(page);
-        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
-            data: {items: [], files: [destination], dragOperationsMask: 1}});
-        await page.waitForFunction(() => Boolean((window as any).repoDirectory));
+        if (storage === 'device') {
+            const cdp = await page.context().newCDPSession(page);
+            for (const type of ['dragEnter', 'dragOver', 'drop'] as const) await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
+                data: {items: [], files: [destination], dragOperationsMask: 1}});
+            await page.waitForFunction(() => Boolean((window as any).repoDirectory));
+        } else assert.equal(await page.evaluate(() => typeof (window as any).showDirectoryPicker), 'undefined');
         const showSaveAs = async () => {
             await page.getByText('File', {exact: true}).click();
-            await page.getByText('Save As…', {exact: true}).click();
+            await page.getByText('Save a Copy of the Project…', {exact: true}).click();
         };
         await showSaveAs();
-        const dialog = page.getByRole('dialog', {name: 'Save As', exact: true});
+        const dialog = page.getByRole('dialog', {name: 'Save a Copy of the Project', exact: true});
         const button = (name: string) => dialog.getByRole('button', {name, exact: true});
         await dialog.getByLabel('Save format').selectOption('folder');
         await dialog.getByLabel('Use Git version control').check();
@@ -209,22 +236,31 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
         await button('Check Creation Result').click();
         await expect(dialog.getByText(/An empty repository with ID 37/u)).toBeVisible();
         await button('Continue with This Repository').click();
-        await expect(button('Authorize and Push…')).toBeEnabled();
+        await expect(button('Authorize and Push…')).toBeEnabled().catch(async error => {
+            t.diagnostic(JSON.stringify({errors, text: await dialog.innerText()}));
+            throw error;
+        });
         assert.equal(topicRequests, 1);
         assert.equal(fixture.upstream.length, 0);
-        const localOid = git(destination, 'rev-parse', 'HEAD');
-        assert.match(git(destination, 'show', 'HEAD:README.md'), /First GitHub project/u);
-        assert.match(git(destination, 'show', 'HEAD:LICENSE'), /Mozilla Public License/u);
-        const project = JSON.parse(git(destination, 'show', 'HEAD:project/project.source.json'));
-        assert.equal(project.targets[0].volume, 72);
-        assert.equal(project.turboWarpPlusProject.title, 'First GitHub project');
+        // The commit is read from the picked folder before the push; a commit in the browser's storage, from GitHub after it.
+        const checkCommit = (directory: string, commit: string) => {
+            assert.match(git(directory, 'show', commit + ':README.md'), /First GitHub project/u);
+            assert.match(git(directory, 'show', commit + ':LICENSE'), /Mozilla Public License/u);
+            const project = JSON.parse(git(directory, 'show', commit + ':project/project.source.json'));
+            assert.equal(project.targets[0].volume, 72);
+            assert.equal(project.turboWarpPlusProject.title, 'First GitHub project');
+        };
+        const localOid = storage === 'device' ? git(destination, 'rev-parse', 'HEAD') : null;
+        if (storage === 'device') checkCommit(destination, 'HEAD');
         await button('Authorize and Push…').click();
         await expect(button('Open the Local Project')).toBeEnabled().catch(error => {
             t.diagnostic(JSON.stringify({errors, proxyRequests: fixture.requests.map(({url, method}) => ({url, method}))}));
             throw error;
         });
-        assert.equal(git(fixture.bare, 'rev-parse', 'main'), localOid);
-        assert.equal(git(destination, 'rev-parse', 'origin/main'), localOid);
+        if (storage === 'device') {
+            assert.equal(git(fixture.bare, 'rev-parse', 'main'), localOid);
+            assert.equal(git(destination, 'rev-parse', 'origin/main'), localOid);
+        } else checkCommit(fixture.bare, 'main');
         assert.equal(fixture.upstream.filter(request => request.method === 'POST').length, 1);
         if (mode === 'cloudflare') await expect.poll(() => cloudflareRevoke).toBe(1);
         page.once('dialog', prompt => prompt.accept());
@@ -232,6 +268,16 @@ for (const mode of ['desktop', 'cloudflare'] as const) {
         await expect(dialog).toBeHidden();
         await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
         await expect(page.getByRole('textbox', {name: 'Project title here'})).toHaveValue('First GitHub project');
+        if (storage === 'browser') {
+            // Without the folder picker, the drawer still shows the project folder and the Git history kept in the browser.
+            const drawerView = (name: string) => page.getByRole('toolbar', {name: 'Drawer views', exact: true})
+                .getByRole('button', {name, exact: true});
+            await drawerView('Project folder').click();
+            await expect(page.locator('[data-drawer-content]').getByText('project.source.json').first()).toBeVisible();
+            await drawerView('Git history').click();
+            await expect(page.locator('[data-drawer-content]').getByText('Import project from TurboWarp Plus Editor').first())
+                .toBeVisible();
+        }
         assert.deepEqual(errors, []);
     });
 }

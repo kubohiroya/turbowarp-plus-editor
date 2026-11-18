@@ -2,24 +2,20 @@
 
 [English](README.md) | 日本語
 
-[![TurboWarp-Plus-Editor](https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/)
+**Scratch・TurboWarp作品のための、拡張可能なIDE（統合開発環境）。**
 
-**[TurboWarp-Plus-Editorを開く](https://kubohiroya.github.io/turbowarp-plus-editor/)**
+異なるスプライトや同じスプライトを、複数のパネルで開いて同時に編集できます。
 
-TurboWarp-Plus-Editorは、Scratch 3とTurboWarpの作品のためのエディターです。長い作品や人と共有する作品に要るものを加えています。分割して並べ替えられる作業画面、作品全体の検索と置換、Gitで追える作品フォルダ、動かす前に確かめられる機能拡張、Plus拡張を同梱したひとつのHTMLへの書き出しです。ScratchやTurboWarpのSB3はそのまま開き、ここで保存したものはそちらでもまた開けます。
-
-- エディター: <https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja>
-- 機能ガイド: <https://kubohiroya.github.io/turbowarp-plus-editor/features/>
-- 開発者ガイド: <https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/>
-- npm: [`@kubohiroya/turbowarp-plus-editor`](https://www.npmjs.com/package/@kubohiroya/turbowarp-plus-editor)
-- TurboWarp Plusファミリー（機能拡張・アプリ・ダッシュボード）: <https://kubohiroya.github.io/turbowarp-plus-packages/>
+[エディターを開く](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja) · [機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/) · [開発者ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/)
 
 [![起動直後の作業画面](docs/features/images/plus-workspace-current.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/)
 
+*起動直後の作業画面。*
+
 ## 目次
 
-- [このエディターでできること](#このエディターでできること)
-- [標準TurboWarpから増える機能](#標準turbowarpから増える機能)
+- [編集と動作確認](#このエディターでできること)
+- [拡張・データ・アセット](#拡張データアセット)
 - [作品を開く](#作品を開く)
 - [「TurboWarp-Plus-Editorで編集」ボタン](#edit-button)
 - [npmパッケージとコマンド](#npmパッケージとコマンド)
@@ -29,39 +25,115 @@ TurboWarp-Plus-Editorは、Scratch 3とTurboWarpの作品のためのエディ�
 - [ドキュメント](#ドキュメント)
 - [ライセンス・製作者](#ライセンス製作者)
 
-## このエディターでできること
+<a id="このエディターでできること"></a>
 
-- **手元の作品を、そのまま続けられる。** 移植は要りません。このエディター・Scratch 3・TurboWarpのあいだで、どちらの向きに何が保たれるかは[互換性の一覧](docs/features/sb3-compatibility.md)に記録しています。
-- **作品の中で迷わない。** スプライト一覧はコードの横に固定され、名前で探せます。パレットは画面上部の検索できる帯で、カテゴリの順番を並べ替えられます。検索はすべてのスプライトとステージを横断し、変数・リスト・メッセージがどこで使われているかを一覧にします。
-- **作品の組み立てが見える。** スプライトとステージの左端のアイコンに、**ハット・関数一覧**と**呼び出し関係**があります。**ハット・関数一覧**はすべてのスクリプトをハットごとに、ブロック定義を関数ごとに並べ、**呼び出し関係**の図はどの関数がどの関数を呼ぶかを、ほかのスプライトやステージのグローバル関数まで含めて描きます。そこで関数やスクリプトを選ぶか、関数を呼ぶブロックの右クリックで**この関数を表示**を選ぶと、それだけを表示した本物のコード領域がスプライトの右に開きます。パレット・ズーム・ミニマップも通常のコード領域と同じです。どちらからも、名前を入れて関数（通常のブロック定義か TurboWarp Plus の名前付き関数）を追加できます（[ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#functions)）。変数ペインは一時変数拡張のスレッド変数・ランタイム変数と、それを読み書きする関数を示し、メッセージの関係図は、どのハットや関数が送っているかを示します。
-- **長いスクリプトも読みやすく。** ハットの右クリックでスクリプトを折りたたむと、ハットだけが残ります。状態は作品に保存され、折りたたんだ中の関数呼び出しも、関数を直せば追従します。長いテキスト引数はブロックの中で短く表示し、ダイアログで編集します。ブロックの右クリックメニューは操作の種類ごとに並びます（[ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/#context-menu)）。
-- **長い作品を、先へ進められる。** 作業画面は[Dockview](https://dockview.dev/)です。パネルを分割し、コードとパレットを別のウィンドウに出し、次に開いたときに同じ配置が戻ります。ミニマップ、ショートカット付きの編集メニュー、作品間で `.blocks3` / `.stage3` を移す転送も備えています。
-- **作品をGitのフォルダとして持つ。** [`sb3-toolchain`](https://www.npmjs.com/package/@kubohiroya/sb3-toolchain) がSB3をテキストとファイルに展開します。Editorはそのフォルダを直接開き、`project.source.json` に保存し、**ローカル Git** パネルで差分・ブランチ・履歴・プルリクエストを見せます。差分はJSONではなくブロックで描きます。リミックスは、元の作品から切れたバイナリではなく、読める履歴と送り返せる変更になります。
-- **AIエージェントと組んで作る。** 作品が普通のファイルなので、エージェントは手持ちのファイル操作で編集できます。こちらは再読込して、ブロックの差分をレビューします。
-- **拡張を使う側から、書く側へ。** 拡張の取得元と実行条件を確かめ、作品と一緒にコードをどう保存するかを選び、自分の拡張を埋め込み、`sb3-toolchain` で固定・検証します。拡張はTypeScriptで、ファミリーの型付きAPIに対して書き、npmのライブラリを同梱することをすすめています。
-- **YAML文書とJSON Schemaを、作品の一部として扱う。** 文書は原文・共通YAMLブロック・所有する拡張が提供するブロックのどれでも編集できます。スキーマがあればフォームと検証が生成され、ローカル補助プロセス経由のVS Codeで補完も効きます。
-- **インタラクティブ作品とデバイスの土台になる。** 拡張は `@kubohiroya/turbowarp-app-shell` を通してメニューバーに操作を登録します。カメラ・AR・QR・Teachable Machineのホストアプリは、Editorのフォークではなく、拡張と作品の組み合わせとして作れます。
-- **入口は物語から。** [`turbowarp-kamishibai-app`](https://www.npmjs.com/package/@kubohiroya/turbowarp-kamishibai-app) が子どもの入口です。物語は文書で、次の場面を分岐させたくなったときが、ブロックを開く理由になります。
+## 編集と動作確認
 
-## 標準TurboWarpから増える機能
+### 編集ツールにすぐ届く画面構成
 
-| 作業 | 標準のTurboWarp | Plusで加わる操作 |
-| --- | --- | --- |
-| 作品を開く | SB3の読み込みと拡張の実行確認 | 読み込みの経過表示、Plusカタログ、読み込みの診断 |
-| 作品を管理する | SB3ファイル単位の保存 | 作品フォルダの読み書き、ローカルGitの差分・履歴・プルリクエスト |
-| 作業画面を整える | コード・ステージ・スプライトの基本配置 | パネルの分割、パネルとパレットの別画面、ステージ表示メニュー、配置の復元 |
-| 構造をつかむ | コード領域をスクロールして探す | ハット・関数一覧、スプライトとステージをまたぐ呼び出し図、関数やスクリプトだけの表示、変数とメッセージの使われ方 |
-| 編集する | ブロックの入力欄やメニュー | 作品全体の検索と置換、編集メニュー、検索付きの横型パレット、ミニマップ、スクリプトの折りたたみ、長いテキスト引数のダイアログ、対応する拡張のフォームとYAMLタブ |
-| 再利用する | バックパック | スクリプトやステージのファイル転送、バンドル素材の追加 |
-| 保存して渡す | SB3の保存と標準Packager | 上書き保存と名前を変えて保存、組み込みデータと拡張コードの保存方式、Plus拡張を同梱したHTML |
+必要な操作はポインターを重ねると現れます。ドラッグ＆ドロップでタブを並べ替えたり、別のスプライトにブロックをコピーしたりできます。ミニマップでコード全体を見渡せます。タブやパネルの配置、コード画面の表示位置は作品と一緒に保存されるので、開き直してすぐに作業を再開できます。
 
-対応する拡張や専用データが必要なものもあります。どれが必要かは[機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/)に記録しています。ガイドは画面構成・作業領域・スプライト・ステージ・ブロック・検索・文書・再利用・保存・作品フォルダとGit・GitHubの各ページを、実際の画面とともに説明しています。
+| 編集ツールにすぐ届く画面構成 | ステージやパネルを別ウィンドウへ |
+| --- | --- |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/#layout"><img src="docs/features/images/top-editor.png" width="640" alt="ネコとボールのスプライトと、ブロックを並べたコードの画面"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/#dock"><img src="docs/features/images/top-stage-window.png" width="300" alt="別のウィンドウに出したステージ"></a> |
 
-最初に知っておくとよいこと:
+スプライト一覧は左側に、ブロックのカテゴリはコード画面の上辺に、コード・コスチューム・音・変数・メッセージの切り替えはパネル側面のボタンにまとまっています。パレットのサイズとスクロール位置はカテゴリごとに保持されます。パネルの固定やサイズ調整、作業領域と別ウィンドウ間の移動もできます。[画面構成](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/) · [作業領域](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/)
 
-- **書き出し**は、通常のSB3なら標準のTurboWarp Packagerを、Plus拡張を記録した作品ならPlus専用の出力画面を開きます。拡張コードは記録したハッシュと照合してからHTMLに入るので、外部依存のない作品はそのHTMLだけでオフラインで動きます。
-- [作品のプロパティ](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/#project-properties)はタイトル・概要・作者・連絡先をSB3に保存します。[作品の診断](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/#project-diagnostics)は、Editorを開いている間、検証・実行許可・読み込み・失敗の記録を集めます。
-- [ファミリーのカタログ](https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json)の条件（取得元とSHA-256の一致）を満たす拡張は、個別の確認なしで動きます。それ以外の拡張は、Editorでも書き出したHTMLでも、動かす前に確認します。
+### クローン・変数・リスト・メッセージを確認する
+
+実行中のクローンを選び、その個体のプロパティやスプライト変数を確認・編集できます。変数のパネルには変数とリストが並び、それぞれを読み取る・変更するブロックの数が表示されます。件数から使用箇所を探したり、リストの項目を編集・並べ替えたりできます。[プロパティと変数](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#variable-pane)
+
+[![クローン1を選び、その個体の位置とスプライト変数を表示した画面](docs/features/ball-demo/images/ja-clone.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#variable-pane)
+
+*クローンごとに異なるプロパティと変数の値を確認・編集。*
+
+[![メッセージの送受信を関係図で確認](docs/features/images/readme-messages.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#messages)
+
+*メッセージの送受信を関係図で確認。*
+
+メッセージを送る・受け取るスプライトや背景を一覧と関係図で確かめられます。関係図では、対象のサムネイルを載せた枠をメッセージ名付きの矢印でつなぎます。枠を選ぶと、その対象のコードが開きます。[メッセージ](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#messages)
+
+変数のパネルでは、一時変数拡張のスレッド変数・ランタイム変数と、それを読み書きする関数も確認できます。[変数の使われ方](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#variable-pane)
+
+### 関数の呼び出し関係をグラフでたどる
+
+**呼び出し関係**では、どの関数がどの関数を呼ぶかを、関数の箱と矢印で確認できます。ほかのスプライトや背景で定義したグローバルな名前付き関数とのつながりも表示されます。
+
+[![「ジャンプする」から「着地する」と「効果音を鳴らす」へ、「得点を数える」から「効果音を鳴らす」へ矢印が伸びる呼び出し関係グラフ](docs/features/images/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
+
+*関数の呼び出し関係をグラフでたどる。「ジャンプする」と「得点を数える」は、共通の「効果音を鳴らす」を呼び出しています。*
+
+箱にポインターを重ねると、つながる矢印が強調されます。開いているスプライトや背景の関数の箱を選ぶと、その関数が右側のコードパネルに開きます。**ハット・関数一覧**からも、スクリプトやブロック定義を選んで編集できます。[関数と呼び出し関係](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
+
+### ブロック編集を、外の道具とつなぐ
+
+作品をプロジェクトフォルダに展開すると、データ・素材・拡張をファイルとして扱えます。VS Codeや生成AIアプリで編集し、Editorへ戻って動作と変更内容を確かめる制作ができます。
+
+[![Editorで保存した作品フォルダをVS CodeやClaude Code・Codexで編集し、Editorに戻って変更の読み込み、動作確認、Git差分レビューとコミットを行う流れ](docs/features/images/project-tools-workflow.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/#agent)
+
+*外部ツールとの連携例（模式図）。共通の作品フォルダを介して変更を受け渡します。*
+
+#### プロジェクトフォルダで保存
+
+左ドロワーの「プロジェクトフォルダを作成」から、開いているSB3をフォルダに展開。その後の保存も、同じフォルダに書き込みます。 [プロジェクトフォルダで保存](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#project-folder)
+
+[![作品フォルダのファイル一覧と、project.source.jsonを開いた実画面](docs/features/images/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#folder-files)
+
+*ファイルを直接編集し、「通常表示／差分表示」のカプセル型切り替えと右下のミニマップで内容を確認できます。保存は未保存の変更があるときに有効になります。*
+
+#### VS Codeでテキストを編集
+
+ローカル補助プロセスからEditorを開くと、ファイルタブの「VSCodeで編集」で作業コピーを開けます。VSCodeで保存し、「終了して取り込む」→「ファイルを保存」で元のファイルへ反映します。外部編集中はタブの表示・操作全体が無効になります。OPFSもローカル連携のURLの保存領域で利用できます。 [ファイルタブと外部編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#folder-files)
+
+#### 生成AIアプリと共同編集
+
+Claude Code・Codexなど、ローカルファイルを読み書きする生成AIアプリに作品フォルダを渡して、スクリプトの修正を依頼できます。たとえば「ネコの移動速度を変える」という変更を依頼し、Editorで動作とブロック差分を確かめます。 [生成AIアプリと共同編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/#agent)
+
+外部編集前にEditorで保存し、作品を止めます。未保存の編集がなければスクリプトの変更は自動反映されます。素材や変数などの変更は作品全体を再読み込みし、未保存の編集がある場合は比較して採用する内容を選びます。 [外部変更の取り込み方](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#external-changes)
+
+#### Gitで変更を比較・記録
+
+「ローカル Git」で変更ファイルとブロック差分を確認してコミット。「Git 履歴」で過去のコミットを選んで変更をたどれます。ブランチやプルリクエストで、ほかの人とのレビューにも進めます。 [Gitで変更を比較・記録](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
+
+[![差分レビュー画面では、スクリプトの中の変更された箇所を、水平・垂直の帯状のガイドが交差する部分で示します。](docs/features/images/readme-block-diff.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
+
+*差分レビュー画面では、スクリプトの中の変更された箇所を、水平・垂直の帯状のガイドが交差する部分で示します。*
+
+ハットからのスクリプトの折りたたみ、長いテキスト引数のダイアログ編集、作品全体の検索、`.blocks3`・`.stage3`による作品間の転送も使えます。[ブロック編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/) · [検索](https://kubohiroya.github.io/turbowarp-plus-editor/features/search/) · [再利用](https://kubohiroya.github.io/turbowarp-plus-editor/features/reuse/)
+
+<a id="標準turbowarpから増える機能"></a>
+
+## 拡張・データ・アセット
+
+### 拡張コードの検証と実行許可
+
+Plus Editorは、Plus形式の拡張コードを実行前にSHA-256で照合します。確認が必要な拡張は、取得元と実行条件を確認し、サンドボックス内での実行などを選べます。 ファミリーのカタログでは、取得元とハッシュによって信頼済みの拡張を識別します。[拡張の読み込みと実行許可](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/#review)
+
+### カスタム拡張ブロックのフォーム編集
+
+対応する拡張がJSON Schemaを登録すると、Plus EditorはReact JSON Schema Formでブロックの引数の入力欄を生成します。項目ごとに値を編集でき、必須項目や値の範囲を保存前に検証します。
+
+[![対応する拡張ブロックの場面名と表示時間を入力するフォーム](docs/features/images/form-dialog.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
+
+*対応する拡張が登録したブロックのフォーム編集。[ブロックのフォーム](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)*
+
+### データ構造とDSLを作品に組み込む
+
+対応する拡張を使うと、設定データや、台本などのDSL（用途に特化した言語）をYAMLやブロックで記述し、SB3に組み込めます。たとえば、紙芝居の拡張は実行時に台本を読み、場面を切り替えたり、せりふを表示したりします。 YAML文書はコードの隣のタブに開けます。文書を提供する拡張が対応する形式で編集します。[文書とブロック](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#documents)
+
+### 実行時に名前で呼び出す関数を選ぶ
+
+Named Functions拡張では、コードを書くときにブロックで関数を定義し、名前を付けます。実行時に、変数などから関数名を文字列で渡すと、拡張がその名前の関数を探して実行します。引数と戻り値にはJSONを使い、それぞれをJSON Schemaで検証できます。 [Named Functions利用ガイド](https://kubohiroya.github.io/turbowarp-named-functions/ja/)
+
+### アセットの外部配信とキャッシュ
+
+Plus Editorでは、コスチューム画像・背景画像・音などの素材ごとに、作品への同梱かHTTPS配信かを選べます。照合済みの素材はキャッシュで再利用できます。紙芝居などの対応拡張を作品に追加すると、外部動画も使えます。 [素材の格納方式](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/#payload-formats)
+
+カメラ・AR・QR・Teachable Machineなどを使うインタラクティブ作品向けに、拡張から操作ボタンやプレビュー、ブロックを追加できます。TypeScriptとファミリーの型付きAPI、npmのライブラリで拡張を作り、コードの保存方式を選び、`sb3-toolchain`で固定・検証できます。[開発者ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/) · [TurboWarp Plusファミリー](https://kubohiroya.github.io/turbowarp-plus-packages/)
+
+制作した作品はSB3で保存でき、Plus拡張を含む単一HTMLとしても書き出せます。書き出し時も拡張コードを記録済みのハッシュと照合し、実行条件を引き継ぎます。[保存と書き出し](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/)
+
+[互換性の一覧](docs/features/sb3-compatibility.md)では、Scratch・TurboWarp・Plus Editorで作品や追加機能をどう扱うかを説明しています。タイトル・作者・連絡先などは作品のプロパティとしてSB3に保存でき、エディターを開いている間の検証・実行許可・読み込み・失敗の記録は作品の診断で確認できます。[作品のプロパティ](https://kubohiroya.github.io/turbowarp-plus-editor/features/save/#project-properties) · [作品の診断](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/#project-diagnostics)
 
 ## 作品を開く
 

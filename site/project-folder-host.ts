@@ -1,9 +1,10 @@
 import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
-import {followProjectFolder, mountProjectFolder} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import {chooseBrowserProject, followProjectFolder, mountProjectFolder, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
-import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, pushPublicationCommit}
+import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, openRemoteRepositoryDialog,
+    pushPublicationCommit}
     from '@kubohiroya/turbowarp-plus-editor-git';
 import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
@@ -13,12 +14,14 @@ import {bindDesktopPublicationPushSession, createProjectPublication} from '@kubo
 import type {PublicationBridge, ProjectPublicationPort}
     from '@kubohiroya/turbowarp-plus-editor-git/project-publication';
 import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-editor-git/cloudflare-publication';
-import {loadedProjectTitle, projectScreenState} from './project-tools/index.ts';
+import {loadedProjectTitle, projectSaveName, projectScreenState, setProjectSaveName} from './project-tools/index.ts';
+import {followProjectTitleCommits, reflectProjectTitle} from '@kubohiroya/turbowarp-plus-editor-workbench/project-title';
+import {showNotice} from '@kubohiroya/turbowarp-plus-editor-workbench/project-notice';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {bindProjectRepositoryCreation} from './project-repository-host.ts';
-import type {DesktopRepositoryCreation} from './project-repository-host.ts';
+import type {BrowserRepositoryFolders, DesktopRepositoryCreation} from './project-repository-host.ts';
 import {withProjectFolderTitle} from './project-tools/properties.ts';
 
 type RuntimeThread = {updateMonitor?: boolean};
@@ -28,7 +31,7 @@ type ProjectFolderVM = FolderVM & EditorHost['vm'] & {
 };
 type Action = {type: string};
 type GuiStore = {
-    getState(): {scratchGui: {vm: FolderVM; projectChanged: boolean; vmStatus: {running: boolean}}};
+    getState(): {scratchGui: {vm: FolderVM; projectChanged: boolean; projectTitle: string; vmStatus: {running: boolean}}};
     dispatch(action: Action): void;
     subscribe(listener: () => void): () => void;
 };
@@ -44,6 +47,7 @@ type LocalFolderMount = NonNullable<ReturnType<typeof mountProjectFolder>> & {
 type GitCommitMount = NonNullable<ReturnType<typeof mountGitPanel>> & {
     getCommitRepository?(): {root: FileSystemDirectoryHandle; current(): boolean} | null;
     selectRepository?(root: FileSystemDirectoryHandle, project: FileSystemDirectoryHandle): Promise<boolean>;
+    clearRepository?(): void;
 };
 type Selection = {branch: string; files: {path: string}[]};
 type CommitQueue = {
@@ -65,8 +69,21 @@ type PublicationGitAccess = {
     guard(): void;
 };
 export interface ProjectFolderWorkflows {
-    /** `title` names a folder made in the browser, where the user names a new folder instead of picking one. */
-    createFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string): Promise<boolean>;
+    /**
+     * Creates a project folder from the current project and opens it. `title` names a folder made in the browser, where
+     * the user names a new folder instead of picking one. `destination` is `browser` for a new folder in the browser's
+     * storage, or an empty folder already picked on the device; without it the folder follows `folderLocation`.
+     */
+    createFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string,
+        destination?: 'browser' | FileSystemDirectoryHandle): Promise<boolean>;
+    /** Writes the current project into a new folder and leaves the open project as it is (Save a Copy, #679). */
+    copyFolder?(serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string): Promise<boolean>;
+    /** Picks an empty folder on the device for a new project; `null` when the person cancelled or it was not empty. */
+    pickEmptyFolder?(language: string): Promise<FileSystemDirectoryHandle | null>;
+    /** Where new project folders can be made: the browser's own storage, and folders picked on the device. */
+    locations?: {browser: boolean; device: boolean};
+    /** Marks the open project as saved, for a new default project that is about to be replaced by its folder. */
+    markSaved?(): void;
     /** `browser` when new project folders go to the browser's own storage, where there is no folder picker. */
     folderLocation?: 'device' | 'browser';
     repositoryCreation?: NonNullable<ReturnType<typeof bindProjectRepositoryCreation>>;
@@ -87,13 +104,12 @@ type PickerWindow = Window & {
 const gitCloudflare = () => typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
 const gitDesktop = (view: PickerWindow) => view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit;
 
-export function availableGitConnectionModes(view: Window) {
-    return createGitConnectionSettings({desktop: gitDesktop(view), cloudflare: gitCloudflare()}).modes;
-}
-
-const folders = new WeakMap<FolderVM, {folder: LocalFolderMount; workflows(): ProjectFolderWorkflows}>();
+const folders = new WeakMap<FolderVM, {folder: LocalFolderMount; workflows(): ProjectFolderWorkflows;
+    openRemote?(locale: string): void}>();
 
 export const projectFolderWorkflows = (vm: FolderVM) => folders.get(vm)?.workflows();
+/** Opens a remote Git repository: clones it, then opens the project at its root (#676). */
+export const projectFolderOpenRemote = (vm: FolderVM) => folders.get(vm)?.openRemote;
 
 /** The folder the loaded project came from, so its Dockview layout is kept apart from other projects. */
 export const projectFolderDirectory = (vm: FolderVM) => folders.get(vm)?.folder.directory ?? null;
@@ -196,7 +212,9 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             void gitPanel?.refresh();
         }
     };
-    const folder = mountProjectFolder({vm: host.vm, document, locale: host.locale, host: folderHost}) as LocalFolderMount | null;
+    // Folders saved in the browser are offered in every browser, beside the device's folders where the browser has them.
+    const folder = mountProjectFolder({vm: host.vm, document, locale: host.locale, host: folderHost,
+        browserStorage: 'always'}) as LocalFolderMount | null;
     if (!folder) return null;
     const unpackProject = typeof __TW_PLUS_UNPACK_PROJECT_FOLDER__ === 'function' ?
         async (serialize: () => Promise<Uint8Array>, current: () => boolean) => {
@@ -212,10 +230,12 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
             return files;
         } : undefined;
+    const browserStorage = folder.browserProjects;
     const createFolder = folder.createFromSnapshot && unpackProject ?
-        async (serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string) => {
+        async (serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string,
+            destination?: 'browser' | FileSystemDirectoryHandle) => {
             try {
-                return await folder.createFromSnapshot({current, collectEdits: flushPendingSurfaceEdits, title,
+                return await folder.createFromSnapshot({current, collectEdits: flushPendingSurfaceEdits, title, destination,
                     prepareFiles: () => unpackProject(serialize, current)}) === 'opened';
             } catch (error) {
                 if ((error as DOMException).name === 'AbortError') return false;
@@ -223,9 +243,37 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
         } : undefined;
     const folderLocation = folder.browserProjects && !view.showDirectoryPicker ? 'browser' as const : 'device' as const;
+    const locations = {browser: folder.locations.includes('browser'), device: folder.locations.includes('device')};
+    const pickEmptyFolder = locations.device ? (language: string) => folder.pickEmptyFolder({locale: language}) : undefined;
+    // Save a Copy writes the folder without opening it, so the open project keeps its own file or folder (#679).
+    const copyFolder = unpackProject ? async (serialize: () => Promise<Uint8Array>, current: () => boolean, title?: string) => {
+        try {
+            const destination = folderLocation === 'browser' ? 'browser' as const :
+                await view.showDirectoryPicker!({id: 'turbowarp-plus-project-folder', mode: 'readwrite'});
+            return Boolean(await folder.copyToFolder({destination, title, current, collectEdits: flushPendingSurfaceEdits,
+                prepareFiles: () => unpackProject(serialize, current)}));
+        } catch (error) {
+            if ((error as DOMException).name === 'AbortError') return false;
+            throw error;
+        }
+    } : undefined;
+    // Without the folder picker, repositories live in the browser's storage, with the project folder inside (#660).
+    const browserProjects = folderLocation === 'browser' ? folder.browserProjects : null;
+    const browserFolders: BrowserRepositoryFolders | undefined = browserProjects ? {
+        async create(title) {
+            // One repository holds one project at its root; the initial commit is written into the empty folder.
+            return (await browserProjects.create(title, {projectPath: ''})).root;
+        },
+        async choose() {
+            const choice = await chooseBrowserProject({document, projects: browserProjects, locale, purpose: 'open'});
+            return choice && browserProjects.root(choice.project.id);
+        }
+    } : undefined;
     const repositoryCreation = localGit && createFolder ? bindProjectRepositoryCreation({
         view, locale, desktop: view.EditorPreload?.localGitCreation,
         cloudflare,
+        browserFolders,
+        createBrowserFolder: browserStorage ? async title => (await browserStorage.create(title, {projectPath: ''})).root : undefined,
         author: readAuthor,
         async prepareSource(serialize, current, title) {
             await flushPendingSurfaceEdits();
@@ -253,11 +301,12 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     let publication: {directory: FileSystemDirectoryHandle; root: FileSystemDirectoryHandle; current(): boolean;
         mode: 'desktop' | 'cloudflare'; port: ProjectPublicationPort} | undefined;
     const workflows = (): ProjectFolderWorkflows => {
+        const common = {createFolder, copyFolder, pickEmptyFolder, locations, markSaved: host.markSaved, folderLocation, repositoryCreation};
         const directory = folder.directory;
         const repository = gitPanel?.getCommitRepository?.();
         if (!directory || !repository || !folder.save || !saveWithLock ||
             typeof __TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__ !== 'function' ||
-            typeof __TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ !== 'function' || !view.indexedDB) return {createFolder, folderLocation, repositoryCreation};
+            typeof __TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ !== 'function' || !view.indexedDB) return common;
         const guard = () => {
             if (!repository.current() || folder.directory !== directory || store.getState().scratchGui.vm !== vm) {
                 throw Object.assign(new Error('The project or repository changed'), {code: 'changed'});
@@ -304,7 +353,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             return __TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__({root: repository.root, journal, projectFolder: relative.join('/'),
                 guard, author: readAuthor});
         })();
-        return {createFolder, folderLocation, repositoryCreation, publication: canPublish ? publication?.port : undefined, commit: {
+        return {...common, publication: canPublish ? publication?.port : undefined, commit: {
             async prepare(current) {
                 const queue = await getQueue();
                 const selection = await saveWithLock(async () => {
@@ -328,10 +377,64 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
         }};
     };
-    folders.set(vm, {folder, workflows});
+    // Open Remote Git Repository…: a read session clones the repository into an empty folder on the device or in the
+    // browser, then the root opens as the project folder and the Git panel binds to it.
+    const openRemote = connectionSettings ? (language: string) => {
+        const projects = folder.browserProjects;
+        const created = new Map<FileSystemDirectoryHandle, string>();
+        void openRemoteRepositoryDialog({
+            document, locale: language, connectionSettings,
+            deviceFolders: typeof view.showDirectoryPicker === 'function',
+            ...typeof view.showDirectoryPicker === 'function' && {async pickDeviceFolder() {
+                let directory: FileSystemDirectoryHandle;
+                try {
+                    directory = await view.showDirectoryPicker!({id: 'turbowarp-plus-remote-repository', mode: 'readwrite'});
+                } catch (error) {
+                    if ((error as DOMException).name === 'AbortError') return null;
+                    throw error;
+                }
+                for await (const _entry of (directory as unknown as {values(): AsyncIterable<unknown>}).values()) {
+                    view.alert(language.startsWith('ja') ? '空のフォルダを選んでください。' : 'Choose an empty folder.');
+                    return null;
+                }
+                return directory;
+            }},
+            ...projects && {
+                async createBrowserFolder(name: string) {
+                    const project = await projects.create(name, {projectPath: ''});
+                    created.set(project.root, project.id);
+                    return project.root;
+                },
+                async removeBrowserFolder(handle: FileSystemDirectoryHandle) {
+                    const id = created.get(handle);
+                    if (id) await projects.remove(id);
+                }
+            },
+            openProject: (root: FileSystemDirectoryHandle) => folder.openDirectory(root, () => view.confirm(
+                language.startsWith('ja') ? '現在の作品に未保存の変更があります。リポジトリの作品を開きますか？' :
+                    'The current project has unsaved changes. Open the repository\'s project?'), root, {locale: language})
+        });
+    } : undefined;
+    folders.set(vm, {folder, workflows, openRemote});
+    // A title the person committed in the menu bar renames what the browser can rename, and says what it cannot (#679).
+    const stopTitleWatch = followProjectTitleCommits(document, {
+        readTitle: () => store.getState().scratchGui.projectTitle,
+        onCommit(title) {
+            const directory = folder.directory;
+            const language = document.documentElement.lang || locale;
+            void reflectProjectTitle({document, locale: language, title, saveName: projectSaveName(vm),
+                location: folder.location ?? 'none',
+                gitBound: Boolean(gitPanel?.getCommitRepository?.()),
+                renameBrowserFolder: async name => {await folder.renameCurrentBrowserFolder(name);},
+                setSaveName: name => setProjectSaveName(vm, name),
+                notify: text => showNotice(document, text, {locale: language}),
+                current: () => folder.directory === directory}).catch(() => {});
+        }
+    });
     let author: GitAuthor | undefined;
     if (localGit) void readAuthor().then(value => {author = value;});
     if (!localGit) return {...folder, dispose() {
+        stopTitleWatch();
         if (folders.get(vm)?.folder === folder) folders.delete(vm);
         folder.dispose();
     }};
@@ -343,8 +446,15 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             desktopPublication : cloudflarePublication,
         // Stage and commit with the repository's own Git identity (#318).
         localWrite: {author: () => author},
+        ...browserFolders && {chooseRoot: browserFolders.choose},
+        // Git is set up by opening a folder, with the File menu's own commands; the panel no longer chooses a repository.
+        openFolder: language => projectFolderActions(vm, language)?.open(),
+        ...folder.browserProjects && {openBrowserFolder: (language: string) => projectFolderActions(vm, language)?.openBrowser?.()},
+        deviceFolders: typeof view.showDirectoryPicker === 'function',
         renderReviewBlock,
-        openProject: folder.openDirectory,
+        // A folder that is not a project shows project-folder's own dialog; the panel hears that nothing opened.
+        openProject: async (directory, confirmReplace) =>
+            await folder.openDirectory(directory, confirmReplace) === 'opened' ? 'opened' : 'cancelled',
         projectDirectory: () => folder.directory,
         ...hasProjectVersionValidator() && {
             restoreProjectVersions: gitRestoreVersion,
@@ -402,6 +512,20 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             return () => {unfollow(); unsubscribe(); stopFiles(); vm.runtime.off('PROJECT_LOADED', loaded);};
         }
     }});
+    // One repository holds one project: an opened folder with `.git` binds the Git panel to that repository, any other
+    // folder unbinds it. `root` is the folder the user chose, which may hold the project in `project/`.
+    let boundDirectory: FileSystemDirectoryHandle | null | undefined;
+    const unfollowBinding = followProjectFolder(vm, (_folder, directory, root) => {
+        if (directory === boundDirectory) return;
+        boundDirectory = directory;
+        const candidate = root ?? directory;
+        void (async () => {
+            const repository = candidate && await hasGitDirectory(candidate) ? candidate : null;
+            if (boundDirectory !== directory) return;
+            if (repository && directory) await gitPanel?.selectRepository?.(repository, directory);
+            else gitPanel?.clearRepository?.();
+        })();
+    });
     let disposed = false;
     let scheduled = false;
     const ensureProjectTab = () => {
@@ -416,9 +540,21 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     ensureProjectTab();
     return {...folder, dispose() {
         disposed = true;
+        stopTitleWatch();
         stopProjectTab();
         if (folders.get(vm)?.folder === folder) folders.delete(vm);
+        unfollowBinding();
         gitPanel?.dispose();
         folder.dispose();
     }};
+}
+
+/** Whether `directory` is the root of a Git repository, as the Git panel opens one. */
+async function hasGitDirectory(directory: FileSystemDirectoryHandle) {
+    try {
+        await directory.getDirectoryHandle('.git');
+        return true;
+    } catch {
+        return false;
+    }
 }

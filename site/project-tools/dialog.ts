@@ -4,6 +4,7 @@ import snackbarStyles from '../styles/snackbar.css';
 import {contactLink, descriptionParts} from './links.ts';
 import {diagnosticText} from './diagnostics.ts';
 import {renderBundleAssetForm, renderPayloadForm} from '../project-payloads/form.ts';
+import {isValidSaveName} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
 
 const element = <Tag extends keyof HTMLElementTagNameMap>(document: Document, tag: Tag, text?: string, attributes: Record<string, string> = {}) => {
     const node = document.createElement(tag);
@@ -97,7 +98,7 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
                 const row = element(document, 'label', title, {for: id});
                 const input = element(document, key === 'description' ? 'textarea' : 'input', undefined,
                     {id, name: key});
-                input.value = value[key];
+                input.value = value[key] ?? '';
                 input.disabled = value.readOnly || value.loading;
                 if (key === 'title') input.maxLength = 100;
                 if (key === 'description') (input as HTMLTextAreaElement).rows = 5;
@@ -111,6 +112,32 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
                 return input;
             };
             if (history) field('title', label('作品タイトル', 'Project title'));
+            let saveNameInput: HTMLInputElement | undefined;
+            const saveNameError = element(document, 'p', '', {'aria-live': 'polite'});
+            const checkSaveName = () => {
+                const name = saveNameInput.value.trim();
+                const valid = !name || isValidSaveName(name);
+                if (valid) saveNameInput.removeAttribute('aria-invalid');
+                else saveNameInput.setAttribute('aria-invalid', 'true');
+                saveNameError.textContent = valid ? '' : label('この名前は使えません。使える文字を確かめてください。',
+                    'This name cannot be used. Check the allowed characters.');
+                return valid;
+            };
+            if (history) {
+                // The name of the project's folder or GitHub repository, where the title cannot be used (#679).
+                saveNameInput = field('saveName', label('保存用の名前', 'Save name')) as HTMLInputElement;
+                saveNameInput.maxLength = 100;
+                saveNameInput.spellcheck = false;
+                saveNameInput.setAttribute('autocomplete', 'off');
+                const help = element(document, 'p', label(
+                    'フォルダや GitHub のリポジトリの名前に使います。使える文字は英数字と「-」「_」「.」で、100 文字までです（「.」「..」と、末尾の「.git」は使えません）。空のままにすると、作品名が使えるときは作品名を使います。',
+                    'Used as the name of the project\'s folder or GitHub repository. Use letters, digits, "-", "_" and ".", up to 100 characters (not "." or "..", and not ending in ".git"). When it is empty, the project title is used if it can be.'),
+                {id: `${saveNameInput.id}-help`});
+                saveNameInput.setAttribute('aria-describedby', `${help.id} ${saveNameInput.id}-error`);
+                saveNameError.id = `${saveNameInput.id}-error`;
+                saveNameInput.addEventListener('input', checkSaveName);
+                form.append(help, saveNameError);
+            }
             let uriInput;
             if (editURI) {
                 const id = `project-uri-${identity}`;
@@ -181,6 +208,10 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
             form.addEventListener('submit', async event => {
                 event.preventDefault();
                 if (apply.disabled) return;
+                if (saveNameInput && !checkSaveName()) {
+                    saveNameInput.focus();
+                    return;
+                }
                 apply.disabled = true;
                 error.textContent = '';
                 const draft = Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));
@@ -194,7 +225,9 @@ export const createProjectDialogs = (document, properties, history, diagnostics,
                     }
                     close();
                 } catch (failure) {
-                    error.textContent = failure.code === 'INVALID_PROJECT_URI' ?
+                    error.textContent = failure.code === 'INVALID_SAVE_NAME' ?
+                        label('保存用の名前に使えない文字があります。', 'The save name has characters that cannot be used.') :
+                        failure.code === 'INVALID_PROJECT_URI' ?
                         label('認証情報やフラグメントを含まない HTTPS URI を入力してください。',
                             'Enter an HTTPS URI without credentials or a fragment.') :
                         label('作品情報を適用できませんでした。読み込み完了後に開き直してください。',
