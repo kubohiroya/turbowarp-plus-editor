@@ -1,7 +1,7 @@
 # Editor の機能実装を上流へ移す変更
 
-対象 Editor は `fd11930fa10eaad70b8332eb76b34f9888a59157` をベースとする。既存の機能の責務を移し、新しいパッケージや起動フラグは作らない。
-固定 GUI は `e9d05e0f6f931693f95eaf40245b3bde2d76d283`、VM は `e623546e0e173d70e0314d06d8a17bf84c72afeb` のまま。GUI ソースへの変更はない。
+移管の調査元は Editor `fd11930fa10eaad70b8332eb76b34f9888a59157`。公開時の base は最新 main を使用する。既存の機能の責務を移し、新しいパッケージや起動フラグは作らない。
+公開準備時に Editor main #713 の固定先更新を取り込み、GUI は `97b876ac206c2a7b6a4cd47a77e5827c70f3173a`、VM は `e623546e0e173d70e0314d06d8a17bf84c72afeb` のまま。GUI ソースへの変更はない。
 
 ## 機能の所有者
 
@@ -24,23 +24,21 @@ GUI の Redux、ScratchBlocks 本体、画像、全画面ボタンの要素は E
 各上流リポジトリの `EDITOR-MIGRATION.md` に移管元を、新規ソースに SPDX を記録する。
 本家 GUI のコード・コンポーネントは移さない。Acorn / Acorn Walk の MIT 表示を保持する。
 
-## 固定したローカル候補
+## 公開版の固定
 
-次のコミットとアーカイブは未公開。上流はそれぞれ独立した Git リポジトリで、Editor の workspace パッケージを再作成していない。
-アーカイブは `site/source.json` の `packageArchives` と npm lockfile で完全版・コミット・SHA-512 を固定する。
-ビルド前にアーカイブの実バイト列と、manifest・lock・導入版を照合する。security-dialog は build-info のコミットと `sourceState: commit` も照合する。
-配布物のライセンス台帳には未公開候補であることを記録し、検証済みアーカイブ自体を `notices/<package>@<version>/source.tgz` に同梱する。成果物検証も同梱ソースの SHA-512 を照合し、出所を固定していないローカルアーカイブは引き続き拒否する。
+上流 5 件をそれぞれの main へ Squash Merge し、既存のリリース workflow から npm へ公開した。
+Editor は公開された完全版を直接固定する。検討中のローカルアーカイブと、それを配布するための一時的なビルド対応は取り除く。
 
-| パッケージ | 候補の完全版 | コミット | ベース |
+| パッケージ | 完全版 | マージコミット | 公開差分 |
 | --- | --- | --- | --- |
-| @kubohiroya/turbowarp-plus-editor-code-views | `0.21.3-ownership.0` | `ed0600e2385011ef87ff66f7d84b3bc32588094e` | `f2a2a742adaa33838b72d35229d1d88be44d6f04` |
-| @kubohiroya/turbowarp-plus-editor-workbench | `0.27.1-ownership.0` | `1e7849a16339325b77ab8605437a7c84b2120863` | `4315ae6283543a18386fa0835ad14d3a598f96f3` |
-| @kubohiroya/turbowarp-extension-loader | `0.11.2-ownership.2` | `82bb54d31880483ff4d7a27387b39da4f5f40884` | `438f5b5a5acf403be9dd3f5900a848819b36ca0e` |
-| @kubohiroya/turbowarp-extension-security-dialog | `0.9.1-ownership.0` | `8d750ae16362bf6256b7214880eecd6b2773433a` | `3b5531912d7999a85c96f2cfcfdc9d3fb2e222fb` |
-| @kubohiroya/turbowarp-sb3-save-format | `0.4.0-rc.3-ownership.0` | `265fcb3042c7840f1c877f881ad26197a4834d2f` | `46cf5890d57f77186db046e0ca5b3eb49cb687b5` |
+| @kubohiroya/turbowarp-plus-editor-code-views | `0.21.3` | `99e32b3dec0cedaecf3798889096cd09e9f1a14f` | [PR](https://github.com/kubohiroya/turbowarp-plus-editor-code-views/pull/37) |
+| @kubohiroya/turbowarp-plus-editor-workbench | `0.27.1` | `225a814ad0ebe62b4bef4bc50b5c1404f30e636d` | [PR](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/113) |
+| @kubohiroya/turbowarp-extension-security-dialog | `0.9.1` | `213ca71969be75943f2e775e29e89193e910181f` | [PR](https://github.com/kubohiroya/turbowarp-extension-security-dialog/pull/93) |
+| @kubohiroya/turbowarp-sb3-save-format | `0.4.0-rc.3` | `519a703b3e4b019e03a18aa1b0a59690d4423a29` | [PR](https://github.com/kubohiroya/turbowarp-sb3-save-format/pull/6) |
+| @kubohiroya/turbowarp-extension-loader | `0.11.2` | `1440c4e63713748e5de93d630a23c4dc2597c782` | [PR](https://github.com/kubohiroya/turbowarp-extension-loader/pull/35) |
 
-上流の作業ブランチは `refactor/editor/feature-ownership`。ローカルの複製は `.host/upstream/<directory>`、復元用 Git bundle は `.host/review-bundles/` にある。
-公開済み npm 版を差し替えない。公開操作の承認を得て上流を公開した後は、承認した版・バイト列を照合して通常の npm pin に置き換えられる。
+順序は、上流の CI・マージ・npm 公開確認 → Editor の依存と lockfile の更新 → Editor の CI・マージ・Pages 配信。
+アーカイブのバイト列は npm の SHA-512 と照合する。security-dialog はアーカイブに含まれる build-info の公開元コミットも確認する。
 
 ## 受け入れ条件と検証
 
@@ -50,9 +48,9 @@ GUI の Redux、ScratchBlocks 本体、画像、全画面ボタンの要素は E
 - 固定 GUI の製品ビルドを作り、横パレット・削除予告・コード表示・拡張の許可と保存形式をヘッドレス Chromium で確認する。
 - Desktop の実ウィンドウ、OS のフォーカスやカーソルを使う検証は実行しない。
 
-## 検証結果（2026-11-19）
+## 移管実装段階の検証結果（2026-11-19）
 
-最終の実装コミットは Editor `86526ebcaa763b118e5ae0512ab59b2fe91cfa7b`。
+移管実装を最初に検証した Editor コミットは `86526ebcaa763b118e5ae0512ab59b2fe91cfa7b`。
 このコミットの製品ビルドと `build-info.json` を照合し、`check-artifact.ts` が通った。
 この結果の追記による文書だけの変更では、ビルド・E2E を繰り返さない。
 
@@ -74,20 +72,19 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 `site/` の TypeScript・TSX・CSS は、移管前の 10,694 行から 4,798 行へ減った。
 通常上限・許可後上限、既定で有効な機能、作品の保存形式は維持する。
 
+## 公開版での統合確認
+
+上流 5 件を公式 npm から取得し、全 tarball の SHA-512、security-dialog の build-info とマージコミットを照合した。
+最新 GUI の lockfile に合わせて依存を導入し、型チェック、Editor の単体テスト 123 件、結合テスト 116 件、GUI 接続テスト 73 件が成功した。
+公開版を使った製品ビルド・成果物検証と、変更範囲のヘッドレス E2E を実施してから Editor をマージ・配信する。
+
 ## 切り戻し
 
-Editor のこの変更を revert し、接続コードと依存の固定を `fd11930` の組み合わせへ戻して再ビルドする。
+Editor のこの変更を revert し、接続コードと依存の固定を公開直前の main の組み合わせへ戻して再ビルドする。
 上流候補だけを旧版へ戻すと新しい接続口がなくなるため、Editor のアダプターと同時に戻す。
 作品の JSON キー・保存形式と既存機能の既定値は変えておらず、保存済み作品の移行は不要。
 
-## Issue 追記案（未投稿）
+## 作業記録
 
-関連: [Editor #1](https://github.com/kubohiroya/turbowarp-plus-editor/issues/1) の組み立て・配信責務、
-[Editor #462](https://github.com/kubohiroya/turbowarp-plus-editor/issues/462) の上流での機能検証。
-
-- ブランチ: `refactor/editor/upstream-feature-ownership`。
-- 依存と順序: 上流 5 件の API・テスト → 固定アーカイブ → Editor の接続・統合検証。公開は承認後に上流 → Editor の順。
-- start: 2026-11-19 JST。残存実装の調査、著作権者の MPL 提供承認、既存パッケージへの移管を実施。
-- 検証中に判明した境界: Webpack 4 の exports 解決、GUI の表示設定の循環 import、移管した CSS の参照先を接続側で修正。
-- done: 上流 5 パッケージへの移管、Editor の接続化、型チェック・対象テスト・製品ビルド・成果物照合・ヘッドレス E2E を完了。GUI ソースの変更はゼロ。
-- DoD と切り戻しは上記の通り。Issue の作成・編集・コメント、push、PR、npm publish は行っていない。
+ブランチは `refactor/editor/upstream-feature-ownership`。各上流 PR に責務・依存順・検証・受け入れ条件・切り戻しを記録した。
+2026-11-19 にローカル実装を検証し、ユーザーの「マージして公開して」の指示で上流から順に公開する。

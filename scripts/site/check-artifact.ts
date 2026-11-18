@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {createHash} from 'node:crypto';
 import {readPins, sha} from './source.ts';
 import {contentHash} from './extension-assets.ts';
 import {requiredFamilyPackages} from './family-notices.ts';
@@ -40,19 +39,7 @@ if (layoutLock.resolved.startsWith('https://registry.npmjs.org/')) {
 }
 for (const entry of family.packages) {
     const installed = lock.packages[`node_modules/${entry.package}`];
-    if (installed?.resolved?.startsWith('file:')) {
-        const archive = pins.packageArchives?.[entry.package];
-        assert.ok(archive, `Bundled from an unpinned local archive: ${entry.package}`);
-        assert.equal(entry.version, archive.version);
-        assert.equal(entry.source?.npm, null, 'A candidate must not claim an npm publication');
-        assert.equal(entry.source?.pendingPublication, true);
-        assert.equal(entry.source?.revision, archive.revision);
-        assert.equal(entry.source?.integrity, archive.integrity);
-        assert.equal(entry.source?.archive, `notices/${entry.package.split('/').at(-1)}@${entry.version}/source.tgz`);
-        const bytes = await fs.readFile(path.join(directory, entry.source.archive));
-        assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, archive.integrity,
-            `Bundled candidate source differs from the pin: ${entry.package}`);
-    }
+    assert.ok(!installed?.resolved?.startsWith('file:'), `Bundled from a local archive: ${entry.package}`);
     assert.ok(entry.source?.repository, `Missing source repository: ${entry.package}`);
     for (const file of entry.files) assert.ok((await fs.stat(path.join(directory, file))).isFile(), `Missing notice: ${file}`);
 }

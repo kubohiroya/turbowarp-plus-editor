@@ -8,7 +8,7 @@ import {brandEditor} from './brand-editor.ts';
 import {buildDocumentEditorMetadata} from './build-yaml-editor.ts';
 import {
     root, readPins, verifyHost, verifyDocumentEditorDependency, verifyLoaderDependency,
-    verifySecurityDependency, verifyInstalledCore, verifyScriptTransferDependency, verifyPackageArchive, sha
+    verifySecurityDependency, verifyInstalledCore, verifyScriptTransferDependency, sha
 } from './source.ts';
 import {buildExtensionAssets} from './extension-assets.ts';
 import {buildFamilyNotices} from './family-notices.ts';
@@ -23,9 +23,6 @@ export async function buildPages(pins = undefined) {
     if (pins.loaderRepository) await verifyLoaderDependency(root, pins);
     if (pins.scriptTransferRepository) await verifyScriptTransferDependency(root, pins);
     const {version: securityVersion} = await verifySecurityDependency(root, pins);
-    for (const [name, archive] of Object.entries(pins.packageArchives ?? {})) {
-        await verifyPackageArchive(root, name, archive as Parameters<typeof verifyPackageArchive>[2]);
-    }
     const siteRevision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim();
     assert.ok(sha(siteRevision), 'Site source must have a full revision');
     const prefix = process.env.ROOT || '/turbowarp-plus-editor/';

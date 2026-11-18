@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {sha, verifyPackageArchive} from './source.ts';
 
 // The Pages Editor is distributed as a GPL-3.0 work. Every turbowarp-plus family package it bundles
 // keeps its own license, so the build records each one's license text and where to get its source.
@@ -82,20 +81,9 @@ async function sourceOf(name: string, manifest, {lock, local}, directory: string
         const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: directory, encoding: 'utf8'}).trim();
         return {npm: null, repository, revision, directory: manifest.repository.directory};
     }
-    if (typeof lock.resolved === 'string' && lock.resolved.startsWith('file:')) {
-        let pins;
-        try { pins = JSON.parse(await fs.readFile(path.join(directory, 'site/source.json'), 'utf8')); }
-        catch (error) { if (error.code !== 'ENOENT') throw error; }
-        const archive = pins?.packageArchives?.[name];
-        assert.ok(archive && sha(archive.revision), `${name} must be installed from npm or a pinned source archive`);
-        await verifyPackageArchive(directory, name, archive);
-        const repository = githubURL(manifest.repository);
-        assert.ok(repository, `${name} must identify its source repository`);
-        const source = `notices/${label}/source.tgz`;
-        await fs.copyFile(path.join(directory, archive.path), path.join(output, source));
-        return {npm: null, repository, revision: archive.revision, archive: source,
-            integrity: archive.integrity, pendingPublication: true};
-    }
+    // Family packages come from npm only; a local archive has no published source to point to.
+    assert.ok(!(typeof lock.resolved === 'string' && lock.resolved.startsWith('file:')),
+        `${name} must be installed from npm, not ${lock.resolved}`);
     // A git dependency records its commit, but the lock only says what the install declared:
     // trust its source only while it still matches the version the installed package reports.
     const git = lock.version === manifest.version && typeof lock.resolved === 'string' &&
