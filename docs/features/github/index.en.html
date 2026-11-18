@@ -67,10 +67,10 @@
 
 <p>You can move a project you have been making on scratch.mit.edu into a GitHub repository with <code>turbowarp-plus-editor-project-starter</code>. It unpacks the project into an sb3-toolchain project folder and creates a repository with GitHub Actions for checks and releases, plus forms for issues and pull requests. You need Node.js 24 or later, Git, and the GitHub CLI (<code>gh</code>).</p>
 <p>The following example assumes <code>cat.sb3</code> is in your working folder. <code>--lang en</code> makes the README and the forms English; without it, they are in Japanese.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.0 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
 <p><code>init</code> creates the repository locally and, if Git author information is set, makes the first commit. If author information is not set, <a href="#commit-author">set the author in the repository</a> and run <code>git -C cat-adventure commit -m "Import cat"</code>. For a Scratch project you have shared, you can pass the project page URL instead of the SB3 path.</p>
 <p>In the editor, choose "File" → "Open Folder…" and select the generated repository root <code>cat-adventure</code>; the project opens and Git is bound too. When you are ready to put it on GitHub, authenticate with <code>gh auth login</code> and then run <code>publish</code>. By default it creates a private repository and pushes <code>main</code>.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.0 publish cat-adventure</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 publish cat-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="The repository that is created" tabindex="0">
 <table><caption>The repository that is created</caption><thead><tr><th scope="col">Location</th><th scope="col">Contents</th></tr></thead><tbody>
 <tr><th scope="row"><code>project.source.json</code>, <code>assets/</code>, and others</th><td>The project files. Open the repository root in the editor as the project folder, then edit and save</td></tr>

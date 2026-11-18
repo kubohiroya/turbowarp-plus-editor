@@ -67,10 +67,10 @@
 
 <p>scratch.mit.eduで作ってきた作品は、<code>turbowarp-plus-editor-project-starter</code>でGitHubのリポジトリに移せます。作品をsb3-toolchainの作品フォルダに展開し、検査とリリースを行うGitHub Actionsと、issue・プルリクエストの書式を加えたリポジトリを作ります。Node.js 24以降、Git、GitHub CLI（<code>gh</code>）が必要です。</p>
 <p>次の例は、作業フォルダに<code>neko.sb3</code>がある場合です。</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.0 init ./neko.sb3 --dir neko-adventure</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 init ./neko.sb3 --dir neko-adventure</code></pre>
 <p><code>init</code>は手元にリポジトリを作り、Gitの作者情報があれば最初のコミットまで行います。作者情報が未設定の場合は、<a href="#commit-author">リポジトリで作者を設定</a>し、<code>git -C neko-adventure commit -m "Import neko"</code>を実行します。共有しているScratch作品は、SB3のパスの代わりに作品ページのURLを渡せます。</p>
 <p>エディターの「ファイル」→「フォルダを開く…」で、生成したリポジトリのルート<code>neko-adventure</code>を選ぶと、作品が開き、Gitも結び付きます。GitHubに置く準備ができたら、<code>gh auth login</code>で認証してから<code>publish</code>を実行します。既定では非公開のリポジトリを作り、<code>main</code>を送ります。</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.0 publish neko-adventure</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 publish neko-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="作られるリポジトリ" tabindex="0">
 <table><caption>作られるリポジトリ</caption><thead><tr><th scope="col">場所</th><th scope="col">中身</th></tr></thead><tbody>
 <tr><th scope="row"><code>project.source.json</code>、<code>assets/</code>など</th><td>作品のファイル。リポジトリのルートを作品フォルダとしてエディターで開き、編集して保存する</td></tr>
