@@ -8,9 +8,9 @@
 
 [エディターを開く](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja) · [機能ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/features/) · [開発者ガイド](https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/)
 
-[![右のコードパネルの右下にミニマップが表示されている](docs/features/images/top-split-minimap.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/#multi-edit-view)
+[![起動直後の作業画面](docs/features/images/plus-workspace-current.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/)
 
-*コードを並べて編集、ミニマップで全体状況確認。*
+*起動直後の作業画面。*
 
 ## 目次
 

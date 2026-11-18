@@ -8,9 +8,9 @@ Open multiple panels to edit different sprites or work on the same sprite in sev
 
 [Open the editor](https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en) · [Feature guide](https://kubohiroya.github.io/turbowarp-plus-editor/features/index.en.html) · [Developer guide](https://kubohiroya.github.io/turbowarp-plus-editor/developer-guide/index.en.html)
 
-[![The minimap is visible in the lower-right corner of the right code pane](docs/features/images/en/top-split-minimap.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/index.en.html#multi-edit-view)
+[![The workspace right after startup](docs/features/images/en/plus-workspace-current.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html)
 
-*Edit code side by side and see the full layout in the minimap.*
+*The workspace right after startup.*
 
 ## Contents
 
