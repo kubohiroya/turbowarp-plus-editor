@@ -15,6 +15,10 @@ npm run preview:security
 
 確認URLには `lang=ja&project_url=...` が含まれます。起動時の機能設定は配信ホストと同じです。サンプル機能拡張は名前を返すレポーターブロックだけを登録します。バナーはリポジトリ内の音楽機能拡張の実画像を使用します。GitHubのソーシャルプレビューはネットワーク状況により共通バナーへフォールバックします。
 
+別ウィンドウ用の `stage-popout.html`・`backpack-popout.html`・`dockview-popout.html` と、作品の版を確認する `git-project-preview.html` も同じビルドに含めます。これらが欠けたビルドは配信前に拒否します。旧ビルドでステージ別窓が Not Found の後に閉じる場合は、修正後のスクリプトで再ビルドしてください。
+
+関連: [Issue #430](https://github.com/kubohiroya/turbowarp-plus-editor/issues/430) の初期化失敗時の検証。修正を切り戻す場合はこの変更を revert して再ビルドします。
+
 ## 未公開の共通UIをローカルで確認する
 
 `turbowarp-extension-security-dialog` の実行・保存方法アイコンなどを確認する場合は、共通パッケージをビルドした後、その絶対パスを指定します。

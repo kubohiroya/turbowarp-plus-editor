@@ -12,12 +12,13 @@ const guiRequire = createRequire(path.join(repo, 'package.json'));
 const storage = path.join(hostRoot, '.local-preview', 'security');
 const fixturePath = 'local-security-preview';
 const required = [
-    'editor.html', 'js/iframe-extension-worker.js',
+    'editor.html', 'stage-popout.html', 'backpack-popout.html', 'dockview-popout.html',
+    'git-project-preview.html', 'js/iframe-extension-worker.js',
     `${fixturePath}/extension-security-preview.sb3`,
     `${fixturePath}/previewbanner.js`, `${fixturePath}/previewgithub.js`,
     `${fixturePath}/previewcommon.js`, `${fixturePath}/extension-banner.png`
 ];
-// A synchronously imported iframe worker is carried by the editor chunk instead of a lazy chunk.
+// A synchronously imported iframe worker is carried by the editor's initial chunks instead of a lazy chunk.
 const requiredFiles = manifest => required.map(name => name === 'js/iframe-extension-worker.js' ?
     manifest.iframeWorkerAsset || name : name);
 const digest = data => crypto.createHash('sha256').update(data).digest('hex');
@@ -94,7 +95,10 @@ interface PreviewManifest {
 interface PreviewStats {
     hasWarnings(): boolean;
     toString(options: {all: boolean; warnings?: boolean}): string;
-    compilation: {modules: Array<{resource?: string; chunksIterable: Iterable<{files: string[]}>}>};
+    compilation: {
+        modules: Array<{resource?: string; chunksIterable: Iterable<{files: string[]}>}>;
+        entrypoints: Map<string, {chunks: Array<{files: string[]}>}>;
+    };
 }
 async function createManifest (directory: string, port: number): Promise<PreviewManifest> {
     const files = {};
@@ -136,7 +140,6 @@ async function buildSnapshot (port) {
         ENABLE_SERVICE_WORKER: '', BUILD_MODE: ''});
     process.chdir(repo);
     const webpack = guiRequire('webpack');
-    const HtmlWebpackPlugin = guiRequire('html-webpack-plugin');
     process.env.E2E_GUI_ROOT = repo;
     const config = require('./site/webpack.config.cts');
     // A local package is opt-in here; published site builds keep their pinned dependency.
@@ -155,10 +158,8 @@ async function buildSnapshot (port) {
         securityPreview = {root: securityRoot,
             ...JSON.parse(await fs.readFile(path.join(securityRoot, 'dist/build-info.json'), 'utf8'))};
     }
-    config.entry = {editor: './src/playground/editor.jsx'};
+    // Keep the site's companion pages and entries so editor windows can complete their handshake.
     config.output.path = directory;
-    config.plugins = config.plugins.filter(plugin => !(plugin instanceof HtmlWebpackPlugin) ||
-        plugin.options.filename === 'editor.html');
     console.log('エディターと全ワーカーを専用ディレクトリへビルドしています…');
     const stats = await new Promise<PreviewStats>((resolve, reject) => {
         webpack(config, (error, result) => {
@@ -172,9 +173,10 @@ async function buildSnapshot (port) {
     const manifest = await createManifest(directory, port);
     const iframeWorker = stats.compilation.modules.find(module => module.resource &&
         module.resource.endsWith('/extension-support/tw-iframe-extension-worker.js'));
-    if (iframeWorker && [...iframeWorker.chunksIterable].some(chunk => chunk.files.includes('js/editor.js'))) {
-        manifest.iframeWorkerAsset = 'js/editor.js';
-    }
+    const editorChunks = new Set(stats.compilation.entrypoints.get('editor')?.chunks);
+    const workerChunk = iframeWorker && [...iframeWorker.chunksIterable].find(chunk => editorChunks.has(chunk));
+    const workerAsset = workerChunk?.files.find(name => name.endsWith('.js'));
+    if (workerAsset) manifest.iframeWorkerAsset = workerAsset;
     if (securityPreview) manifest.securityPreview = securityPreview;
     manifest.commit = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: repo, encoding: 'utf8'}).trim();
     manifest.dirty = Boolean(execFileSync('git', ['status', '--porcelain'], {cwd: repo, encoding: 'utf8'}).trim());
