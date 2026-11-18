@@ -79,7 +79,7 @@
 
 <p>「ファイル」→「作品のプロパティ」で、作品のタイトルや概要、作者名、保存用の名前を記録できます。</p>
 <ol><li>「作品タイトル」「作品概要」「作者名」「連絡先」を入力します。作品概要は複数行で書けます。</li><li>「適用」を押すと現在の作品に反映され、メニューバーの作品タイトルも変わります。「キャンセル」を押すと、入力中の変更を取り消して閉じます。</li><li>「ファイル」メニューから保存すると、作品ファイルに情報が記録されます。</li></ol>
-<figure class="guide-detail"><a href="../images/properties-current.png"><img src="../images/properties-current.png" width="640" height="856" alt="作品のプロパティダイアログ。作品タイトル、作品の URI、作品概要、作者名、連絡先に架空の例を入力し、作品概要と連絡先の下にプレビューが出ている。作成日時と最終更新日時の下に、作品の診断…、キャンセル、適用のボタンが並ぶ。" loading="lazy"></a><figcaption>「作品のプロパティ」に架空の例を入力したところ。下端の「作品の診断…」から<a href="../open/#project-diagnostics">読み込みの診断</a>を開けます。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/properties-current.png"><img src="../images/properties-current.png" width="640" height="1016" alt="作品のプロパティダイアログ。作品タイトル、作品の URI、作品概要、作者名、連絡先に架空の例を入力し（保存用の名前は空欄のまま）、作品概要と連絡先の下にプレビューが出ている。作成日時と最終更新日時の下に、作品の診断…、キャンセル、適用のボタンが並ぶ。" loading="lazy"></a><figcaption>「作品のプロパティ」に架空の例を入力したところ。下端の「作品の診断…」から<a href="../open/#project-diagnostics">読み込みの診断</a>を開けます。</figcaption></figure>
 <h3>保存用の名前</h3>
 <p>「保存用の名前」は、作品フォルダやGitHubのリポジトリの名前に使う名前です。使える文字は英数字と「-」「_」「.」で、100文字までです。「.」「..」と、末尾が「.git」の名前は使えません。作品タイトルがこの規則に収まれば、空のままでも作品タイトルを使います。</p>
 <p>作品フォルダやリポジトリに保存してある作品で、メニューバーの作品タイトルをこの規則に収まらない名前に変えると、保存用の名前を尋ねるダイアログが開きます（保存用の名前がまだないときだけ）。入力欄には作品タイトルから作った候補が入ります。キャンセルすると、保存用の名前は空のままです。「プロジェクトのコピーを保存…」と「プロジェクトを保存」は、保存用の名前を新しいリポジトリの名前の初期値に使います。「新しいプロジェクトを作成…」で入力した保存用の名前は、新しい作品に記録されます。</p>
@@ -98,7 +98,7 @@
 <h2>10.4 作品のURIを指定してキャッシュを分ける</h2>
 
 <p>「ファイル」→「作品のプロパティ」の「作品の URI」に、作品を識別するHTTPSのアドレスを入力し、「適用」を押します。ユーザー名・パスワードや、<code>#</code> 以降のフラグメントを含むアドレスは使えません。適用したURIは、次に作品を保存したときにSB3に記録されます。</p>
-<figure class="guide-detail"><a href="../images/project-uri-detail.png"><img src="../images/project-uri-detail.png" width="608" height="116" alt="作品のプロパティの作品の URI 欄に、説明用のHTTPSのアドレスを入力した画面。下に、適用した URI は次に作品を保存したときに SB3 に記録されるという案内がある。" loading="lazy"></a><figcaption>「作品の URI」欄に説明用のURLを入力した例。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/project-uri-detail.png"><img src="../images/project-uri-detail.png" width="622" height="116" alt="作品のプロパティの作品の URI 欄に、説明用のHTTPSのアドレスを入力した画面。下に、適用した URI は次に作品を保存したときに SB3 に記録されるという案内がある。" loading="lazy"></a><figcaption>「作品の URI」欄に説明用のURLを入力した例。</figcaption></figure>
 <p>作品ごとにキャッシュを保存する拡張では、URIを変えると、以後の書き込みに新しいURIが使われます。URIを変えてもキャッシュは削除されず、以前のキャッシュはそのまま残ります。キャッシュはブラウザーの中に保存されます。</p>
 
 </section>

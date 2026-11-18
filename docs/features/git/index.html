@@ -68,13 +68,15 @@
 <p>「ファイル」→「フォルダを開く…」を選び、作品フォルダを選んで読み書きを許可します。作品データとローカルの画像・音声が読み込まれます。ブラウザーに保存したフォルダは「ファイル」→「ブラウザーに保存したフォルダを開く…」で開きます。この項目はどのブラウザーにも表示されます。</p>
 <p>SafariやFirefoxでは、「フォルダを開く…」は表示されますが選べず、「このブラウザーでは端末のフォルダを開けません。Chrome か Edge を使うか、ブラウザーに保存したフォルダを開いてください。」と理由が示されます。</p>
 <p>作品のファイル（<code>project.source.json</code>、<code>sb3-source.json</code>、<code>embedded-extensions.json</code>）は、選んだフォルダの直下にある必要があります。これらがないフォルダはプロジェクトフォルダではないため、「フォルダを開けません」という画面に「このフォルダはプロジェクトフォルダではありません。」と表示され、何も開きません。開いていた作品はそのまま残ります。ブラウザーに保存したフォルダを開くときも同じです。</p>
+<p>以前の版がブラウザーに保存したフォルダには、作品を<code>project/</code>の下に置いたものがあります。こうしたフォルダは、「ブラウザーに保存したフォルダを開く…」で開くときに、作品をフォルダの直下へ移してから開きます。Gitのリポジトリなら、この移動は次のコミットでファイル名の変更として表れます。直下に同じ名前のファイルやフォルダが既にあるときは移さず、「このフォルダはプロジェクトフォルダではありません。」と表示されます。</p>
 <p>選んだフォルダに<code>.git</code>があれば、そのリポジトリがGitに結び付き、左ドロワーの「Git 履歴」とローカルGitで使われます。<code>.git</code>のないフォルダはGitなしで開きます（<a href="#local-git">ローカルGitで変更と履歴を確かめる</a>）。</p>
 <figure>
-<a href="../images/current-open-folder.png"><img src="../images/current-open-folder.png" width="1440" height="960" alt="エディターのファイルメニューに、作品フォルダを開く項目が表示される。" loading="lazy"></a>
+<a href="../images/current-open-folder.png"><img src="../images/current-open-folder.png" width="1440" height="960" alt="エディターのファイルメニューで、「フォルダを開く…」にポインターを重ねている。その下に「ブラウザーに保存したフォルダを開く…」と「Git のリモートリポジトリを開く…」がある。" loading="lazy"></a>
 <figcaption>左上の「ファイル」から作品フォルダを開きます。</figcaption>
 </figure>
 <h3 id="open-remote">Gitのリモートリポジトリを開く</h3>
 <p>GitHub接続付きのエディターでは、「ファイル」→「Git のリモートリポジトリを開く…」で、GitHubにある作品のリポジトリを取得して開けます。この項目は「ブラウザーに保存したフォルダを開く…」のすぐ下にあり、雲と矢印のアイコンが付いています。</p>
+<figure class="guide-detail"><a href="../images/open-remote-dialog.png"><img src="../images/open-remote-dialog.png" width="462" height="257" alt="「Git のリモートリポジトリを開く」ダイアログ。リポジトリの URL の欄、保存先として手元のフォルダ（選択中）とブラウザー内、開くのボタンが並ぶ。" loading="lazy"></a><figcaption>「ファイル」→「Git のリモートリポジトリを開く…」。URLを入れ、保存先を選んで「開く」を押します。</figcaption></figure>
 <ol>
 <li>「ファイル」→「Git のリモートリポジトリを開く…」を選び、リポジトリのURL（<code>https://github.com/&lt;owner&gt;/&lt;repo&gt;</code>）を入力します。</li>
 <li>保存先に「手元のフォルダ」か「ブラウザー内」を選びます。SafariやFirefoxでは、「フォルダを開く…」と同じ理由で「手元のフォルダ」を選べません。</li>

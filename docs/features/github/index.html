@@ -270,7 +270,7 @@ git config --local user.email "you@example.com"</code></pre>
 <tr><th scope="row">ブランチを切り替えられない</th><td>実行を止め、編集を保存してコミット（または取り消し）してから切り替える</td></tr>
 <tr><th scope="row">「Editor の外でリポジトリが変更されました」</th><td>「ローカル状態を更新」を押す。作品が変わっていればファイルメニューから同じフォルダを開き直す</td></tr>
 <tr><th scope="row">pullできない（fast-forwardできない）</th><td>手元とGitHubの両方に新しいコミットがある。GitHub Desktopかコマンドで取り込むか、上の「作り直す」方法を使う</td></tr>
-<tr><th scope="row">「Check project」が失敗する</th><td>失敗したステップのログを開く。作品フォルダの外で<code>assets/</code>のファイルを消したり名前を変えたりした場合は、エディターで開いて保存し直す</td></tr>
+<tr><th scope="row">「Check project」が失敗する</th><td>失敗したステップのログを開く。作品フォルダの外で<code>assets/</code>のファイルを消したり名前を変えたりした場合は、エディターで開いて保存し直す。Project Starter 0.3.0以前で作ったリポジトリでは、機能拡張のない作品の検査が<code>extensions</code>が見つからないという理由で失敗したり、<code>block-palette.json</code>を持つ作品が受け付けられなかったりする。<code>.github/workflows/</code>の<code>@kubohiroya/sb3-toolchain@</code>の版を0.28.0以降に上げる</td></tr>
 <tr><th scope="row">コミットの作者が設定されていない</th><td><a href="#commit-author">リポジトリに作者を設定する</a></td></tr>
 </tbody></table></div>
 
