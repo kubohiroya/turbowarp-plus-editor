@@ -26,7 +26,7 @@ test('branded landing preserves signed project URLs, settings and language befor
     await expect(page.locator('header .brand')).toContainText('TurboWarp-Plus-Editor');
     await expect(page.locator('header .brand img')).toHaveAttribute('src','assets/icon.svg');
     const button=page.locator('a[data-editor]');
-    await expect(button).toHaveText('TurboWarp-Plus-Editorで編集');
+    await expect(button).toHaveText('指定された作品を開く');
     assertTarget(await button.getAttribute('href'),original,'ja');
     expect((await button.boundingBox()).height).toBeGreaterThanOrEqual(48);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -35,7 +35,7 @@ test('branded landing preserves signed project URLs, settings and language befor
     const languageURL=new URL(page.url());
     expect(languageURL.searchParams.get('lang')).toBe('en');
     expect(languageURL.searchParams.get('project_url')).toBe(original);
-    await expect(button).toHaveText('Edit in TurboWarp-Plus-Editor');
+    await expect(button).toHaveText('Open the linked project');
     assertTarget(await button.getAttribute('href'),original,'en');
     await destination(page,testInfo);
     await button.click();

@@ -34,8 +34,8 @@ h2 { font-size:1.35rem; line-height:1.45; margin:0 0 12px; } input { width:100%;
 .hero-detail:hover span:last-child, .hero-detail:focus-visible span:last-child { text-decoration:underline; }
 .hero-crop { overflow:hidden; aspect-ratio:var(--crop-ratio); }
 .hero-crop img { display:block; width:var(--image-width); height:auto; transform:translate(var(--image-x),var(--image-y)); }
-.hero-detail-split, .hero-detail-diff { width:94%; }
-.hero-detail-split img { width:100%; height:auto; }
+.hero-detail-split, .hero-detail-calls, .hero-detail-diff { width:94%; }
+.hero-detail-split img, .hero-detail-calls img { width:100%; height:auto; }
 /* Crop the source PNGs to the message arrow and the before/after blocks. */
 .hero-detail-messages { --crop-ratio:1284/190; --image-width:112.15%; --image-x:-10.83%; --image-y:-12.3%; }
 .hero-detail-diff { --crop-ratio:740/286; --image-width:194.59%; --image-x:-46.875%; --image-y:-28.54%; }
@@ -53,3 +53,14 @@ h2 { font-size:1.35rem; line-height:1.45; margin:0 0 12px; } input { width:100%;
 .guide-chapters a { display:grid; gap:8px; font-size:.9rem; font-weight:650; line-height:1.45; text-decoration:none; } .guide-chapters a:hover span:last-child { text-decoration:underline; }
 .guide-chapters .shot { aspect-ratio:16/10; box-shadow:none; } .guide-chapters img { width:100%; height:100%; object-fit:cover; object-position:left top; }
 @media(prefers-color-scheme:dark) { .shot { box-shadow:0 18px 44px rgba(0,0,0,.5); } .doc-shot, .open-flow { background:#22364f; } .open-editor { background:#a8d6ff; color:#101c2b; } .open-shot, .guide-chapters .shot { box-shadow:none; } }
+
+/* File-based collaboration with external tools */
+.project-tools figure { margin:20px 0; }
+.project-tools img { display:block; width:100%; height:auto; }
+.project-tools figcaption { margin-top:8px; font-size:.9rem; color:var(--muted); }
+.workflow-diagram { overflow-x:auto; }
+.workflow-diagram img { min-width:760px; }
+.project-tools-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 28px; }
+.project-tools h3 { margin:16px 0 8px; font-size:1.05rem; }
+.project-tools p { margin:8px 0 16px; }
+@media(max-width:650px) { .project-tools-grid { grid-template-columns:1fr; } }
