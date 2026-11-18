@@ -496,7 +496,6 @@
       "browser": "Playwright Chromium, headless, ja-JP and en-US, deviceScaleFactor 1",
       "images": [
         "current-open-folder.png",
-        "plus-menu.png",
         "save-as-dialog.png",
         "properties-current.png",
         "project-uri-detail.png",
@@ -520,6 +519,15 @@
       ],
       "english": "The same images in images/en/, taken in the same run with the English fixture (Cat Walk, branch 12-cat-walk).",
       "note": "Retaken after the File menu, Git setup and project-folder changes: opening a folder with .git connects Git, Local Git opens from the branch menu, and Releases… has its own section. The site revision was checked before and after the run, and every family package was at its latest npm version. The ネコのさんぽ fixture keeps the project at the repository root. Call graph and text editing figures (sprite-calls, call-graph-detail, current-project-file, current-project-file-states, current-project-file-external, current-save-active-tab) are on hold and not retaken here. The project folder now records screen state in .tw-plus/workspace.json, which Local Git lists as an untracked file."
+    },
+    {
+      "date": "2026-11-18",
+      "siteRevision": "6d402772a807ac596ccfe8e1058e4dfef5667318",
+      "editorVersion": "0.2.0-rc.5",
+      "images": [
+        "plus-menu.png"
+      ],
+      "note": "Retaken in Japanese and English after the version moved to 0.2.0-rc.5, so the menu shows the version being released. Nothing else on screen changed between 0b8b47d and 6d40277."
     }
   ]
 }
