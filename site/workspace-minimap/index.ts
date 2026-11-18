@@ -75,7 +75,7 @@ function attachWorkspaceMinimap(workspace, ScratchBlocks, zoom, getCorner, previ
     return attachWorkspaceOverview({workspace, ScratchBlocks, zoomHeight: zoom?.height, getCorner,
         watermark: previewWatermark,
         getWatermark: zoom ? () => {
-            const container = workspace.getInjectionDiv();
+            const container: HTMLElement = workspace.getInjectionDiv();
             const host = container.closest('[class*="gui_blocks-wrapper_"]')?.parentElement;
             return host?.querySelector<HTMLElement>(':scope > [data-dockview-costume-thumbnail]') ??
                 host?.querySelector<HTMLElement>(':scope > [class*="gui_watermark_"]');
