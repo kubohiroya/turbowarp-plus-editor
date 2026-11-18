@@ -53,17 +53,51 @@
 
 メッセージを送る・受け取るスプライトや背景を一覧と関係図で確かめられます。関係図では、対象のサムネイルを載せた枠をメッセージ名付きの矢印でつなぎます。枠を選ぶと、その対象のコードが開きます。[メッセージ](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#messages)
 
-**ハット・関数一覧**にはスクリプトとブロック定義が並び、**呼び出し関係**にはスプライトや背景をまたぐ関数のつながりが表示されます。選んだ関数やスクリプトを、パレット・ズーム・ミニマップ付きのコードパネルで開けます。変数のパネルでは、一時変数拡張のスレッド変数・ランタイム変数と、それを読み書きする関数も確認できます。[関数と呼び出し関係](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#functions)
+変数のパネルでは、一時変数拡張のスレッド変数・ランタイム変数と、それを読み書きする関数も確認できます。[変数の使われ方](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#variable-pane)
 
-### 作品をファイルに展開し、Gitで履歴を管理する
+### 関数の呼び出し関係をグラフでたどる
 
-作品をデータや素材などのファイルに展開し、そのフォルダをエディターで直接開けます。**ローカル Git**には、変更ファイル、ブランチ、コミット、プルリクエストが表示されます。[作品フォルダとGit](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/)
+**呼び出し関係**では、どの関数がどの関数を呼ぶかを、関数の箱と矢印で確認できます。ほかのスプライトや背景で定義したグローバルな名前付き関数とのつながりも表示されます。
+
+[![「ジャンプする」から「着地する」と「効果音を鳴らす」へ、「得点を数える」から「効果音を鳴らす」へ矢印が伸びる呼び出し関係グラフ](docs/features/images/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
+
+*関数の呼び出し関係をグラフでたどる。「ジャンプする」と「得点を数える」は、共通の「効果音を鳴らす」を呼び出しています。*
+
+箱にポインターを重ねると、つながる矢印が強調されます。開いているスプライトや背景の関数の箱を選ぶと、その関数が右側のコードパネルに開きます。**ハット・関数一覧**からも、スクリプトやブロック定義を選んで編集できます。[関数と呼び出し関係](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
+
+### ブロック編集を、外の道具とつなぐ
+
+作品をプロジェクトフォルダに展開すると、データ・素材・拡張をファイルとして扱えます。VS Codeや生成AIアプリで編集し、Editorへ戻って動作と変更内容を確かめる制作ができます。
+
+[![Editorで保存した作品フォルダをVS CodeやClaude Code・Codexで編集し、Editorに戻って変更の読み込み、動作確認、Git差分レビューとコミットを行う流れ](docs/features/images/project-tools-workflow.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/#agent)
+
+*外部ツールとの連携例（模式図）。共通の作品フォルダを介して変更を受け渡します。*
+
+#### プロジェクトフォルダで保存
+
+左ドロワーの「プロジェクトフォルダを作成」から、開いているSB3をフォルダに展開。その後の保存も、同じフォルダに書き込みます。 [プロジェクトフォルダで保存](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#project-folder)
+
+[![作品フォルダのファイル一覧と、project.source.jsonを開いた実画面](docs/features/images/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#folder-files)
+
+*作品データ、画像・音、拡張をファイルとして開く。*
+
+#### VS Codeでテキストを編集
+
+作品フォルダのテキストファイルをVS Codeで編集できます。組み込みYAML文書は、ローカル補助プロセスを起動すると「外部エディタで編集」で作業コピーを開き、保存後に検証して作品へ反映できます。 [VS Codeでテキストを編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#vscode)
+
+#### 生成AIアプリと共同編集
+
+Claude Code・Codexなど、ローカルファイルを読み書きする生成AIアプリに作品フォルダを渡して、スクリプトの修正を依頼できます。たとえば「ネコの移動速度を変える」という変更を依頼し、Editorで動作とブロック差分を確かめます。 [生成AIアプリと共同編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/#agent)
+
+外部編集前にEditorで保存し、作品を止めます。未保存の編集がなければスクリプトの変更は自動反映されます。素材や変数などの変更は作品全体を再読み込みし、未保存の編集がある場合は比較して採用する内容を選びます。 [外部変更の取り込み方](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#external-changes)
+
+#### Gitで変更を比較・記録
+
+「ローカル Git」で変更ファイルとブロック差分を確認してコミット。「Git 履歴」で過去のコミットを選んで変更をたどれます。ブランチやプルリクエストで、ほかの人とのレビューにも進めます。 [Gitで変更を比較・記録](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
 
 [![差分レビュー画面では、スクリプトの中の変更された箇所を、水平・垂直の帯状のガイドが交差する部分で示します。](docs/features/images/readme-block-diff.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
 
 *差分レビュー画面では、スクリプトの中の変更された箇所を、水平・垂直の帯状のガイドが交差する部分で示します。*
-
-変更前と変更後のスクリプトを並べ、変更された入力欄もブロックの上で確認できます。展開したファイルをAIエージェントが編集し、エディターで再読込して変更をレビューする使い方もできます。[ブロック差分](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
 
 ハットからのスクリプトの折りたたみ、長いテキスト引数のダイアログ編集、作品全体の検索、`.blocks3`・`.stage3`による作品間の転送も使えます。[ブロック編集](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/) · [検索](https://kubohiroya.github.io/turbowarp-plus-editor/features/search/) · [再利用](https://kubohiroya.github.io/turbowarp-plus-editor/features/reuse/)
 

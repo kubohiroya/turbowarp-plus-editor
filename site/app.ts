@@ -24,7 +24,11 @@ function applyLanguage(language) {
         target.search = query.toString();
         target.searchParams.set('lang', language);
         link.href = target.href;
+        const label = link.querySelector<HTMLElement>('[data-text]');
+        if (label) label.textContent = words[query.get('project_url') ? 'projectAction' : 'editorAction'];
     }
+    const editorNote = document.querySelector<HTMLElement>('[data-editor-note]');
+    if (editorNote) editorNote.textContent = words[query.get('project_url') ? 'projectNote' : 'note'];
     document.querySelector<HTMLInputElement>('#project-url').value = query.get('project_url') || '';
 }
 let language = chooseLanguage();

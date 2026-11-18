@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 270" role="img" aria-labelledby="title">
+  <title id="title">Editorで保存した作品フォルダをVS CodeやClaude Code・Codexで編集し、Editorに戻って変更の読み込み、動作確認、Git差分レビューとコミットを行う流れ</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10" fill="none" stroke="#6a5ac4" stroke-width="2"/>
+    </marker>
+  </defs>
+  <rect width="1120" height="270" rx="16" fill="#f5f6fe"/>
+  <g font-family="system-ui, sans-serif" fill="#26324c">
+    <rect x="20" y="55" width="240" height="155" rx="14" fill="white" stroke="#c7c3e8" stroke-width="2"/>
+    <circle cx="45" cy="80" r="13" fill="#7053c1"/>
+    <text x="45" y="86" text-anchor="middle" fill="white" font-size="17" font-weight="700">1</text>
+    <text x="140" y="118" text-anchor="middle" font-size="18" font-weight="700">Editor</text>
+    <text x="140" y="150" text-anchor="middle" font-size="17" font-weight="400">ブロックで編集</text>
+    <text x="140" y="182" text-anchor="middle" font-size="17" font-weight="400">作品を保存</text>
+    <path d="M268 145h24" stroke="#6a5ac4" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="280" y="132" text-anchor="middle" font-size="14">保存</text>
+    <rect x="300" y="55" width="240" height="155" rx="14" fill="white" stroke="#c7c3e8" stroke-width="2"/>
+    <circle cx="325" cy="80" r="13" fill="#7053c1"/>
+    <text x="325" y="86" text-anchor="middle" fill="white" font-size="17" font-weight="700">2</text>
+    <text x="420" y="118" text-anchor="middle" font-size="18" font-weight="700">プロジェクトフォルダ</text>
+    <text x="420" y="150" text-anchor="middle" font-size="17" font-weight="400">project.source.json</text>
+    <text x="420" y="182" text-anchor="middle" font-size="17" font-weight="400">assets/  ·  extensions/</text>
+    <path d="M548 145h24" stroke="#6a5ac4" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="560" y="132" text-anchor="middle" font-size="14">編集</text>
+    <rect x="580" y="55" width="240" height="155" rx="14" fill="white" stroke="#c7c3e8" stroke-width="2"/>
+    <circle cx="605" cy="80" r="13" fill="#7053c1"/>
+    <text x="605" y="86" text-anchor="middle" fill="white" font-size="17" font-weight="700">3</text>
+    <text x="700" y="118" text-anchor="middle" font-size="18" font-weight="700">VS Code / 生成AIアプリ</text>
+    <text x="700" y="150" text-anchor="middle" font-size="17" font-weight="400">ファイルを編集</text>
+    <text x="700" y="182" text-anchor="middle" font-size="17" font-weight="400">Claude Code · Codex</text>
+    <path d="M828 145h24" stroke="#6a5ac4" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="840" y="132" text-anchor="middle" font-size="14">確認</text>
+    <rect x="860" y="55" width="240" height="155" rx="14" fill="white" stroke="#c7c3e8" stroke-width="2"/>
+    <circle cx="885" cy="80" r="13" fill="#7053c1"/>
+    <text x="885" y="86" text-anchor="middle" fill="white" font-size="17" font-weight="700">4</text>
+    <text x="980" y="118" text-anchor="middle" font-size="18" font-weight="700">Editor + Git</text>
+    <text x="980" y="150" text-anchor="middle" font-size="17" font-weight="400">読み込み・動作確認</text>
+    <text x="980" y="182" text-anchor="middle" font-size="17" font-weight="400">差分レビュー → コミット</text>
+  </g>
+</svg>

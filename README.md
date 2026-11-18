@@ -53,17 +53,51 @@ Choose an individual clone to inspect and edit its properties and sprite variabl
 
 See which sprites or the stage send and receive each broadcast. The diagram uses sprite thumbnails for the participants and labels the connecting arrows with message names. Select a participant to open its code. [Messages](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#messages)
 
-**Hats and functions** lists scripts and custom block definitions, and **Calls** shows the relationships between functions across sprites and the stage. Open a selected function or script in its own code panel with its palette, zoom, and minimap. The variables pane also shows thread and runtime variables from the temporary-variables extension and the functions that read or write them. [Functions and calls](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#functions)
+The variables pane also shows thread and runtime variables from the temporary-variables extension and the functions that read or write them. [Variable usage](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#variable-pane)
 
-### Track project changes with Git
+### Trace function calls in a graph
 
-Expand a project into data and asset files and open the folder directly in the editor. **Local Git** shows changed files, branches, commits, and pull requests. [Project folders and Git](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html)
+**Calls** shows which function calls which, using boxes for functions and arrows for calls. The graph also includes connected global named functions defined in other sprites or the stage.
+
+[![A function call graph with arrows from jump to land and play sound, and from count score to play sound](docs/features/images/en/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+
+*Trace function calls in a graph. Both jump and count score call the shared play sound function.*
+
+Hover over a box to highlight its connected arrows. Select a function belonging to the current sprite or stage to open it in the code panel on the right. **Hats and functions** also lets you select and edit individual scripts and custom block definitions. [Functions and calls](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+
+### Connect block editing with your other tools
+
+Unpack a project into a project folder to work with its data, assets, and extensions as files. Edit with VS Code or an AI app, then return to the Editor to run the project and review the changes.
+
+[![Save a project folder in the Editor, edit its files with VS Code or Claude Code and Codex, then return to the Editor to load changes, test the project, review Git diffs, and commit](docs/features/images/en/project-tools-workflow.svg)](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/index.en.html#agent)
+
+*Example workflow diagram. A shared project folder carries changes between the tools.*
+
+#### Save in a project folder
+
+Choose “Create project folder” in the left drawer to unpack the open SB3. Subsequent saves write to that same folder. [Save in a project folder](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#project-folder)
+
+[![The actual Editor showing the project folder and project.source.json](docs/features/images/en/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#folder-files)
+
+*Open project data, images, sounds, and extensions as files.*
+
+#### Edit text with VS Code
+
+Edit text files in the project folder with VS Code. For embedded YAML documents, start the local companion process and use “Edit in external editor” to open a working copy. After saving, validate and apply it to the project. [Edit text with VS Code](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#vscode)
+
+#### Work with generative AI apps
+
+Give Claude Code, Codex, or another AI app that reads and writes local files access to your project folder. Ask it to change a script, for example to change the cat’s movement speed, then test the result and review the block diff in the Editor. [Work with generative AI apps](https://kubohiroya.github.io/turbowarp-plus-editor/features/github/index.en.html#agent)
+
+Save in the Editor and stop the project before editing externally. Script changes apply automatically when there are no unsaved edits. Changes to assets or variables require a full project reload; when you have unsaved edits, compare the versions and choose what to keep. [How external changes are loaded](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#external-changes)
+
+#### Compare and record changes with Git
+
+Review changed files and block diffs in Local Git, then commit. Choose a past commit in Git History to trace its changes. Use branches and pull requests to review work with others. [Compare and record changes with Git](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
 
 [![In the diff view, horizontal and vertical guide bands intersect at the changed part of the script.](docs/features/images/en/readme-block-diff.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
 
 *In the diff view, horizontal and vertical guide bands intersect at the changed part of the script.*
-
-Compare the before and after versions of scripts side by side, with changed inputs marked in the blocks. An AI agent can also edit the expanded files, and you can reload and review the changes here. [Block diffs](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
 
 You can also collapse scripts from their hats, edit long text arguments in a dialog, search across the project, and transfer scripts or the stage between projects as `.blocks3` or `.stage3` files. [Block editing](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html) · [Search](https://kubohiroya.github.io/turbowarp-plus-editor/features/search/index.en.html) · [Reuse](https://kubohiroya.github.io/turbowarp-plus-editor/features/reuse/index.en.html)
 
