@@ -106,7 +106,8 @@
 <h2>6.7 ミニマップとズームで長いコードを移動する</h2>
 
 <p>Plus標準配置では、コード画面右下のミニマップで、開いているスプライトのブロック全体の位置を見渡せます。ミニマップとその下のボタンは、ポインターをコード領域に置いている間だけ表示されます。ミニマップの枠は現在の表示範囲です。離れたブロックへ移動するときは、ミニマップ内の移動先をクリックするか、枠をドラッグします。下に並ぶボタンで縮小・拡大したり、倍率を初期値に戻したりできます。</p>
-<figure><a href="../images/minimap-current.png"><img src="../images/minimap-current.png" width="1440" height="1000" alt="左上と右下に離してスクリプトを置いたコード画面。右下にミニマップと、縮小・拡大・リセットのボタンが並ぶ。" loading="lazy"></a><figcaption>右下のミニマップには、このスプライトのスクリプト全体が表示され、枠が現在の表示範囲を示します。</figcaption></figure>
+<figure><a href="../images/minimap-current.png"><img src="../images/minimap-current.png" width="1440" height="1000" alt="自由配置に関数の定義と呼び出しを置き、離れた位置にメッセージを受け取るスクリプトを置いた画面。右下のミニマップには画面外のスクリプトも表示されている。" loading="lazy"></a><figcaption>右下のミニマップには、画面外に離して置いたスクリプトも表示され、枠が現在の表示範囲を示します。実線は関数呼び出し、破線はメッセージ送信の関係です。</figcaption></figure>
+<p>自由配置では、倍率を2%まで縮小できます。広く配置したスクリプト全体を見渡してから、編集したい場所を拡大できます。</p>
 <p>ミニマップを表示しないようにするには、<code>twPlusWorkspaceMinimap=0</code> を指定します。</p>
 
 </section>
@@ -116,7 +117,7 @@
 <h2>6.8 右クリックメニューで操作する</h2>
 
 <p>ブロック、コード領域の空白、スプライトのタイル、コスチュームや音などの右クリックメニューでは、各項目に操作を表すアイコンが付きます。</p>
-<figure class="guide-detail"><a href="../images/workspace-context-menu.png"><img src="../images/workspace-context-menu.png" width="600" height="340" alt="コード領域の空白の右クリックメニュー。取り消し、やり直し、きれいにする +、コメントを追加、9 個のブロックを削除、スクリプトを読み込み、貼り付け、コードの並びの見え方を変更するが並び、サブメニューに通常配置の見え方（チェック付き）、Z配置の見え方、N配置の見え方が表示されている。" loading="lazy"></a><figcaption>コード領域の空白の右クリックメニュー。「コードの並びの見え方を変更する」のサブメニューを開いたところ。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/workspace-context-menu.png"><img src="../images/workspace-context-menu.png" width="575" height="311" alt="自由配置の空白を右クリックし、「コードの並びの見え方を変更する」から、通常配置・Z配置・N配置のサブメニューを開いた画面。" loading="lazy"></a><figcaption>コード領域の空白の右クリックメニュー。「コードの並びの見え方を変更する」のサブメニューを開いたところ。</figcaption></figure>
 <figure class="guide-detail"><a href="../images/sprite-context-menu.png"><img src="../images/sprite-context-menu.png" width="420" height="360" alt="スプライトのタイルの右クリックメニュー。開く、複製、書き出し、スプライト名の変更、削除、フォルダーを作成にアイコンが並ぶ。" loading="lazy"></a><figcaption>スプライトのタイルの右クリックメニュー。</figcaption></figure>
 <figure class="guide-detail"><a href="../images/block-context-menu.png"><img src="../images/block-context-menu.png" width="640" height="480" alt="ブロックの右クリックメニュー。コメントを追加、このブロックだけ切り取り、複製、このブロックだけコピー、ここから下をコピー、かたまりごとコピー、かたまりをファイルに保存…、このかたまりの下を空けて整列、折りたたみ、ブロックを削除が、操作の種類ごとに区切られて並ぶ。" loading="lazy"></a><figcaption>ブロックの右クリックメニュー。「かたまりをファイルに保存…」は下向き矢印、「ブロックを削除」はゴミ箱のアイコンです。</figcaption></figure>
 <div class="table-scroll" role="region" aria-label="右クリックメニューの主な項目" tabindex="0">
