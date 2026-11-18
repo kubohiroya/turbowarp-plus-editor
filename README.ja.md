@@ -59,7 +59,7 @@
 
 **呼び出し関係**では、どの関数がどの関数を呼ぶかを、関数の箱と矢印で確認できます。ほかのスプライトや背景で定義したグローバルな名前付き関数とのつながりも表示されます。
 
-[![「ジャンプする」から「着地する」と「効果音を鳴らす」へ、「得点を数える」から「効果音を鳴らす」へ矢印が伸びる呼び出し関係グラフ](docs/features/images/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
+[![緑の旗とスペース キーのハットから「ジャンプする」と「得点を数える」へ、そこから「着地する」と「効果音を鳴らす」へ矢印が伸びる呼び出し関係グラフ](docs/features/images/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
 
 *関数の呼び出し関係をグラフでたどる。「ジャンプする」と「得点を数える」は、共通の「効果音を鳴らす」を呼び出しています。*
 

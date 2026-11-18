@@ -59,7 +59,7 @@ The variables pane also shows thread and runtime variables from the temporary-va
 
 **Calls** shows which function calls which, using boxes for functions and arrows for calls. The graph also includes connected global named functions defined in other sprites or the stage.
 
-[![A function call graph with arrows from jump to land and play sound, and from count score to play sound](docs/features/images/en/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+[![A call graph with arrows from the green flag and space key hats to jump and count score, and from there to land and play sound](docs/features/images/en/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
 
 *Trace function calls in a graph. Both jump and count score call the shared play sound function.*
 

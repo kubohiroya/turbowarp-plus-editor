@@ -15,7 +15,7 @@
   "heroSplitShot": "The minimap is visible in the lower-right corner of the right code pane",
   "heroMessages": "Trace broadcasts in a diagram",
   "heroCalls": "Trace function calls in a graph",
-  "heroCallsShot": "A function call graph with arrows from jump to land and play sound, and from count score to play sound",
+  "heroCallsShot": "A call graph with arrows from the green flag and space key hats to jump and count score, and from there to land and play sound",
   "heroDiff": "In the diff view, horizontal and vertical guide bands intersect at the changed part of the script.",
   "extensionHighlights": "Extensions, data, and assets",
   "extensionSecurity": "Extension verification and approval",
