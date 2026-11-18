@@ -105,13 +105,15 @@ Gitのリポジトリのフォルダを開くと、Gitが結び付きます。�
 
 ## 拡張・データ・アセット
 
+エディタの機能を、もっと便利にしたくありませんか？独自の機能拡張ブロックで、もっと自由に開発したいですよね？　TurboWarp-Plusファミリーのプロジェクト群が、そんなあなたの希望を叶えます。
+
 ### 拡張コードの検証と実行許可
 
 Plus Editorは、Plus形式の拡張コードを実行前にSHA-256で照合します。確認が必要な拡張は、取得元と実行条件を確認し、サンドボックス内での実行などを選べます。 ファミリーのカタログでは、取得元とハッシュによって信頼済みの拡張を識別します。[拡張の読み込みと実行許可](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/#review)
 
 ### カスタム拡張ブロックのフォーム編集
 
-対応する拡張がJSON Schemaを登録すると、Plus EditorはReact JSON Schema Formでブロックの引数の入力欄を生成します。項目ごとに値を編集でき、必須項目や値の範囲を保存前に検証します。
+機能拡張ブロックにはカスタムUIを持たせることができます。カスタムUIはJSON Schemaから自動生成可能です。React JSON Schema Formによる入力欄で、ブロックの引数を項目ごとに編集し、必須項目や値の範囲を保存前に検証します。
 
 [![対応する拡張ブロックの場面名と表示時間を入力するフォーム](docs/features/images/form-dialog.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/#forms)
 
