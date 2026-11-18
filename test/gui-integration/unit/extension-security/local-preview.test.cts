@@ -10,7 +10,8 @@ const {createManifest, validateSnapshot, createServer, listen, checkHttp} =
 test('incomplete or modified snapshots are rejected before serving', async t => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'security-preview-'));
     t.after(() => fs.rm(directory, {recursive: true, force: true}));
-    const files = ['editor.html', 'js/iframe-extension-worker.js',
+    const files = ['editor.html', 'stage-popout.html', 'backpack-popout.html', 'dockview-popout.html',
+        'git-project-preview.html', 'js/iframe-extension-worker.js',
         'local-security-preview/extension-security-preview.sb3',
         'local-security-preview/previewbanner.js', 'local-security-preview/previewgithub.js',
         'local-security-preview/previewcommon.js', 'local-security-preview/extension-banner.png'];
@@ -20,6 +21,12 @@ test('incomplete or modified snapshots are rejected before serving', async t => 
     }
     const manifest = await createManifest(directory, 8601);
     await validateSnapshot(directory, manifest);
+    for (const page of ['stage-popout.html', 'backpack-popout.html', 'dockview-popout.html', 'git-project-preview.html']) {
+        await fs.rm(path.join(directory, page));
+        await assert.rejects(validateSnapshot(directory, await createManifest(directory, 8601)),
+            new RegExp(page.replaceAll('.', '\\.')));
+        await fs.writeFile(path.join(directory, page), page);
+    }
     const worker = path.join(directory, 'js/iframe-extension-worker.js');
     await fs.rm(worker);
     await assert.rejects(validateSnapshot(directory, manifest), {code: 'ENOENT'});
@@ -39,7 +46,8 @@ test('incomplete or modified snapshots are rejected before serving', async t => 
 test('HTTP serves the selected snapshot without cache or fallback and detects missing chunks', async t => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'security-preview-http-'));
     t.after(() => fs.rm(directory, {recursive: true, force: true}));
-    const files = ['editor.html', 'js/iframe-extension-worker.js', 'js/another-lazy-chunk.js',
+    const files = ['editor.html', 'stage-popout.html', 'backpack-popout.html', 'dockview-popout.html',
+        'git-project-preview.html', 'js/iframe-extension-worker.js', 'js/another-lazy-chunk.js',
         'local-security-preview/extension-security-preview.sb3',
         'local-security-preview/previewbanner.js', 'local-security-preview/previewgithub.js',
         'local-security-preview/previewcommon.js', 'local-security-preview/extension-banner.png'];
@@ -64,6 +72,9 @@ test('HTTP serves the selected snapshot without cache or fallback and detects mi
     assert.equal(await status('missing.js'), 404);
     assert.equal(await status('../package.json'), 404);
     assert.equal(await status('%2e%2e%2fpackage.json'), 404);
+    await fs.rm(path.join(directory, 'stage-popout.html'));
+    await assert.rejects(checkHttp(port, manifest), /HTTP 404.*stage-popout/);
+    await fs.writeFile(path.join(directory, 'stage-popout.html'), 'stage-popout.html');
     await fs.rm(path.join(directory, 'js/another-lazy-chunk.js'));
     await assert.rejects(checkHttp(port, manifest), /HTTP 404.*another-lazy-chunk/);
 });
