@@ -75,7 +75,7 @@ Unpack a project into a project folder to work with its data, assets, and extens
 
 #### Save in a project folder
 
-Choose “Create project folder” in the left drawer to unpack the open SB3. Subsequent saves write to that same folder. [Save in a project folder](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#project-folder)
+In the left drawer's Project folder view, choose “Choose a Folder and Save…” or “Name and Save in This Browser…” to unpack the open SB3. Subsequent saves write to that same folder. Open the folder again with File → Open Folder…. [Save in a project folder](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#project-folder)
 
 [![The actual Editor showing the project folder and project.source.json](docs/features/images/en/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#folder-files)
 
@@ -93,7 +93,7 @@ Save in the Editor and stop the project before editing externally. Script change
 
 #### Compare and record changes with Git
 
-Review changed files and block diffs in Local Git, then commit. Choose a past commit in Git History to trace its changes. Use branches and pull requests to review work with others. [Compare and record changes with Git](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
+Opening the folder of a Git repository connects Git. Review changed files and block diffs in Local Git, then commit. Choose a past commit in Git History to trace its changes. Use branches and pull requests to review work with others. [Compare and record changes with Git](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
 
 [![In the diff view, horizontal and vertical guide bands intersect at the changed part of the script.](docs/features/images/en/readme-block-diff.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/index.en.html#block-diff)
 

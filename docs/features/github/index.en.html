@@ -270,7 +270,7 @@ git config --local user.email "you@example.com"</code></pre>
 <tr><th scope="row">You cannot switch branches</th><td>Stop the project, save your edits, and commit them (or undo them), then switch</td></tr>
 <tr><th scope="row">"The repository changed outside the Editor."</th><td>Click "Refresh local status". If the project changed, reopen the same folder from the File menu</td></tr>
 <tr><th scope="row">Pull fails (no fast-forward)</th><td>Both your local branch and GitHub have new commits. Bring them in with GitHub Desktop or commands, or use the "redo the change" approach above</td></tr>
-<tr><th scope="row">"Check project" fails</th><td>Open the log of the failed step. If you deleted or renamed files in <code>assets/</code> outside the editor, open the project in the editor and save it again</td></tr>
+<tr><th scope="row">"Check project" fails</th><td>Open the log of the failed step. If you deleted or renamed files in <code>assets/</code> outside the editor, open the project in the editor and save it again. In a repository made with Project Starter 0.3.0 or earlier, the check can fail because <code>extensions</code> is missing for a project without extensions, or reject a project that has <code>block-palette.json</code>. Raise the version in <code>@kubohiroya/sb3-toolchain@</code> in <code>.github/workflows/</code> to 0.28.0 or later</td></tr>
 <tr><th scope="row">The commit author is not set</th><td><a href="#commit-author">Set the author in the repository</a></td></tr>
 </tbody></table></div>
 

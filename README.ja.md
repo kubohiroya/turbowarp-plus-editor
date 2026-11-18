@@ -75,7 +75,7 @@
 
 #### プロジェクトフォルダで保存
 
-左ドロワーの「プロジェクトフォルダを作成」から、開いているSB3をフォルダに展開。その後の保存も、同じフォルダに書き込みます。 [プロジェクトフォルダで保存](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#project-folder)
+左ドロワーの「プロジェクトフォルダ」で「フォルダを選んで保存…」か「名前を付けてブラウザー内に保存…」を選び、開いているSB3をフォルダに展開。その後の保存も、同じフォルダに書き込みます。保存したフォルダは「ファイル」→「フォルダを開く…」で開き直せます。 [プロジェクトフォルダで保存](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#project-folder)
 
 [![作品フォルダのファイル一覧と、project.source.jsonを開いた実画面](docs/features/images/project-folder-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#folder-files)
 
@@ -93,7 +93,7 @@ Claude Code・Codexなど、ローカルファイルを読み書きする生成A
 
 #### Gitで変更を比較・記録
 
-「ローカル Git」で変更ファイルとブロック差分を確認してコミット。「Git 履歴」で過去のコミットを選んで変更をたどれます。ブランチやプルリクエストで、ほかの人とのレビューにも進めます。 [Gitで変更を比較・記録](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
+Gitのリポジトリのフォルダを開くと、Gitが結び付きます。「ローカル Git」で変更ファイルとブロック差分を確認してコミット。「Git 履歴」で過去のコミットを選んで変更をたどれます。ブランチやプルリクエストで、ほかの人とのレビューにも進めます。 [Gitで変更を比較・記録](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
 
 [![差分レビュー画面では、スクリプトの中の変更された箇所を、水平・垂直の帯状のガイドが交差する部分で示します。](docs/features/images/readme-block-diff.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/git/#block-diff)
 
