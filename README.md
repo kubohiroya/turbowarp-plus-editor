@@ -105,13 +105,15 @@ You can also collapse scripts from their hats, edit long text arguments in a dia
 
 ## Extensions, data, and assets
 
+Want to make your editor even more useful? Want more freedom to develop with your own extension blocks? The projects in the TurboWarp Plus family help you turn those ideas into reality.
+
 ### Extension verification and approval
 
 Before running a Plus-format extension, Plus Editor verifies its code against the recorded SHA-256 hash. When approval is required, review the source and execution requirements and choose whether and how to run each extension, including in a sandbox when supported. The family catalog identifies trusted extensions by their source and hash. [Loading and approval](https://kubohiroya.github.io/turbowarp-plus-editor/features/open/index.en.html#review)
 
 ### Form editing for custom extension blocks
 
-When a compatible extension registers a JSON Schema, Plus Editor uses React JSON Schema Form to build inputs for the block’s arguments. You can edit each field, and the editor checks required values and allowed ranges before saving.
+Extension blocks can have custom UIs. These UIs can be generated automatically from JSON Schema. Plus Editor uses React JSON Schema Form to let you edit block arguments field by field and validate required values and allowed ranges before saving.
 
 [![Form inputs for the scene name and duration of a supported extension block](docs/features/images/en/form-dialog.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/documents/index.en.html#forms)
 

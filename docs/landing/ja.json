@@ -19,7 +19,7 @@
   "extensionSecurity": "拡張コードの検証と実行許可",
   "extensionSecurityNote": "Plus Editorは、Plus形式の拡張コードを実行前にSHA-256で照合します。確認が必要な拡張は、取得元と実行条件を確認し、サンドボックス内での実行などを選べます。",
   "extensionForms": "カスタム拡張ブロックのフォーム編集",
-  "extensionFormsNote": "対応する拡張がJSON Schemaを登録すると、Plus EditorはReact JSON Schema Formでブロックの引数の入力欄を生成します。項目ごとに値を編集でき、必須項目や値の範囲を保存前に検証します。",
+  "extensionFormsNote": "機能拡張ブロックにはカスタムUIを持たせることができます。カスタムUIはJSON Schemaから自動生成可能です。React JSON Schema Formによる入力欄で、ブロックの引数を項目ごとに編集し、必須項目や値の範囲を保存前に検証します。",
   "projectData": "データ構造とDSLを作品に組み込む",
   "projectDataNote": "対応する拡張を使うと、設定データや、台本などのDSL（用途に特化した言語）をYAMLやブロックで記述し、SB3に組み込めます。たとえば、紙芝居の拡張は実行時に台本を読み、場面を切り替えたり、せりふを表示したりします。",
   "namedFunctions": "実行時に名前で呼び出す関数を選ぶ",
@@ -99,5 +99,6 @@
   "attributionFirstLink": "久保 裕也",
   "attributionMiddle": "（千葉商科大学）が進める ",
   "attributionSecondLink": "TurboWarp Plus Project",
-  "attributionEnd": " ファミリーのオープンソースソフトウェアの一つです。"
+  "attributionEnd": " ファミリーのオープンソースソフトウェアの一つです。",
+  "extensionHighlightsIntro": "エディタの機能を、もっと便利にしたくありませんか？独自の機能拡張ブロックで、もっと自由に開発したいですよね？　TurboWarp-Plusファミリーのプロジェクト群が、そんなあなたの希望を叶えます。"
 }
