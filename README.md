@@ -35,7 +35,7 @@ Hover to reveal controls, and drag and drop to rearrange tabs or copy blocks bet
 
 | Keep editing tools within reach | Open the stage or panels in separate windows |
 | --- | --- |
-| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html#layout"><img src="docs/features/images/en/top-editor.png" width="640" alt="The code area with the cat and ball sprites and their scripts"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/index.en.html#dock"><img src="docs/features/images/en/top-stage-window.png" width="300" alt="The stage in its own window"></a> |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html#layout"><img src="docs/features/images/en/top-editor.png" width="640" alt="Free layout with Cat and Ball, solid function-call arrows, dashed message-broadcast arrows, and the minimap"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/index.en.html#dock"><img src="docs/features/images/en/top-stage-window.png" width="300" alt="The stage in its own window"></a> |
 
 The sprite list is on the left, block categories are across the top of the code area, and buttons down the side of each panel open code, costumes, sounds, variables, and messages. The palette remembers each category’s size and scroll position. Panels can be pinned, resized, and moved between the workspace and separate windows. [Screen layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html) · [Workspace layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/index.en.html)
 

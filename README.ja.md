@@ -35,7 +35,7 @@
 
 | 編集ツールにすぐ届く画面構成 | ステージやパネルを別ウィンドウへ |
 | --- | --- |
-| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/#layout"><img src="docs/features/images/top-editor.png" width="640" alt="ネコとボールのスプライトと、ブロックを並べたコードの画面"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/#dock"><img src="docs/features/images/top-stage-window.png" width="300" alt="別のウィンドウに出したステージ"></a> |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/#layout"><img src="docs/features/images/top-editor.png" width="640" alt="ネコとボールの自由配置。関数呼び出しの実線とメッセージ送信の破線、右下のミニマップを表示"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/#dock"><img src="docs/features/images/top-stage-window.png" width="300" alt="別のウィンドウに出したステージ"></a> |
 
 スプライト一覧は左側に、ブロックのカテゴリはコード画面の上辺に、コード・コスチューム・音・変数・メッセージの切り替えはパネル側面のボタンにまとまっています。パレットのサイズとスクロール位置はカテゴリごとに保持されます。パネルの固定やサイズ調整、作業領域と別ウィンドウ間の移動もできます。[画面構成](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/) · [作業領域](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/)
 

@@ -37,14 +37,39 @@
     },
     "top-split-minimap.png": {
       "english": "en/top-split-minimap.png",
-      "date": "2026-11-17",
-      "siteRevision": "c442e05243ad7bcbe444b111b934ae89d93bd176",
+      "date": "2026-11-19",
+      "siteRevision": "dbf1ba3f4a2ef316dd321090d32e411bec24c449",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "codeViewsVersion": "0.21.2",
+      "workbenchVersion": "0.27.0",
+      "sourceType": "local production build",
       "viewport": {
-        "width": 1080,
-        "height": 485
+        "width": 1440,
+        "height": 646
       },
       "deviceScaleFactor": 2,
-      "description": "Ball Demo Plus.sb3 in the public Editor. Split the workspace, zoomed and panned both code panes, then hovered the right pane to show the minimap. Crop from x=110 and y=48 to the viewport edges."
+      "imageSize": {
+        "width": 2656,
+        "height": 1196
+      },
+      "englishImageSize": {
+        "width": 2656,
+        "height": 1196
+      },
+      "description": "Cat/Ball sample split right, zoom 65%, pointer over the right code pane. Native viewport crop excludes the menu bar and activity drawer.",
+      "method": "Exact npm pins, production build, headless Playwright Chromium. Native screenshots and viewport clips only; no UI text or image pixels were edited. Fictional sample project; no project execution or OS input.",
+      "clip": {
+        "x": 112,
+        "y": 48,
+        "width": 1328,
+        "height": 598
+      },
+      "englishClip": {
+        "x": 112,
+        "y": 48,
+        "width": 1328,
+        "height": 598
+      }
     },
     "project-folder-detail.png": {
       "english": "en/project-folder-detail.png",
@@ -110,6 +135,114 @@
       "deviceScaleFactor": 1,
       "description": "The real companion session locks the file tab while its workcopy is open for external editing. The VSCode launcher is injected; no native window was opened.",
       "method": "Local production build with exact npm pins, served by the companion. Fictional project, actual directory handles; the OS picker and VSCode launcher were injected. No UI text changes or feature-flag queries."
+    },
+    "plus-workspace-current.png": {
+      "english": "en/plus-workspace-current.png",
+      "date": "2026-11-19",
+      "siteRevision": "dbf1ba3f4a2ef316dd321090d32e411bec24c449",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "codeViewsVersion": "0.21.2",
+      "workbenchVersion": "0.27.0",
+      "sourceType": "local production build",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "imageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "englishImageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "description": "New project at startup in Free layout; pointer over the code area to show the minimap.",
+      "method": "Exact npm pins, production build, headless Playwright Chromium. Native screenshots and viewport clips only; no UI text or image pixels were edited. Fictional sample project; no project execution or OS input."
+    },
+    "top-editor.png": {
+      "english": "en/top-editor.png",
+      "date": "2026-11-19",
+      "siteRevision": "dbf1ba3f4a2ef316dd321090d32e411bec24c449",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "codeViewsVersion": "0.21.2",
+      "workbenchVersion": "0.27.0",
+      "sourceType": "local production build",
+      "viewport": {
+        "width": 1200,
+        "height": 660
+      },
+      "deviceScaleFactor": 2,
+      "imageSize": {
+        "width": 2400,
+        "height": 1320
+      },
+      "englishImageSize": {
+        "width": 2400,
+        "height": 1320
+      },
+      "description": "Fictional Cat/Ball sample in Free layout, with a custom procedure call and a message receiver. Solid function and dashed message arrows are visible.",
+      "method": "Exact npm pins, production build, headless Playwright Chromium. Native screenshots and viewport clips only; no UI text or image pixels were edited. Fictional sample project; no project execution or OS input."
+    },
+    "minimap-current.png": {
+      "english": "en/minimap-current.png",
+      "date": "2026-11-19",
+      "siteRevision": "dbf1ba3f4a2ef316dd321090d32e411bec24c449",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "codeViewsVersion": "0.21.2",
+      "workbenchVersion": "0.27.0",
+      "sourceType": "local production build",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "imageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "englishImageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "description": "The same sample with its message receiver at (1650,1400), outside the viewport but visible in the minimap.",
+      "method": "Exact npm pins, production build, headless Playwright Chromium. Native screenshots and viewport clips only; no UI text or image pixels were edited. Fictional sample project; no project execution or OS input."
+    },
+    "workspace-context-menu.png": {
+      "english": "en/workspace-context-menu.png",
+      "date": "2026-11-19",
+      "siteRevision": "dbf1ba3f4a2ef316dd321090d32e411bec24c449",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "codeViewsVersion": "0.21.2",
+      "workbenchVersion": "0.27.0",
+      "sourceType": "local production build",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "imageSize": {
+        "width": 575,
+        "height": 311
+      },
+      "englishImageSize": {
+        "width": 533,
+        "height": 261
+      },
+      "description": "Native workspace context menu with its Normal/Z/N layout submenu open. Cropped directly by Playwright around both menus.",
+      "method": "Exact npm pins, production build, headless Playwright Chromium. Native screenshots and viewport clips only; no UI text or image pixels were edited. Fictional sample project; no project execution or OS input.",
+      "clip": {
+        "x": 692,
+        "y": 662,
+        "width": 575.1875,
+        "height": 311
+      },
+      "englishClip": {
+        "x": 692,
+        "y": 662,
+        "width": 533.546875,
+        "height": 261.546875
+      }
     }
   },
   "retained": {
@@ -559,6 +692,27 @@
         "call-graph-detail.png"
       ],
       "note": "Japanese and English, retaken after sprite-panes 0.10.1, which wraps call graph text between words, so English hat names no longer break in the middle of a word. Same project and steps as the previous capture."
+    },
+    {
+      "date": "2026-11-19",
+      "siteRevision": "dbf1ba3f4a2ef316dd321090d32e411bec24c449",
+      "guiRevision": "e9d05e0f6f931693f95eaf40245b3bde2d76d283",
+      "sourceType": "local production build",
+      "codeViewsVersion": "0.21.2",
+      "browser": "Playwright 1.64.1 Chromium, headless, ja-JP and en-US",
+      "images": [
+        "plus-workspace-current.png",
+        "en/plus-workspace-current.png",
+        "top-editor.png",
+        "en/top-editor.png",
+        "minimap-current.png",
+        "en/minimap-current.png",
+        "workspace-context-menu.png",
+        "en/workspace-context-menu.png",
+        "top-split-minimap.png",
+        "en/top-split-minimap.png"
+      ],
+      "note": "Free-layout figures refreshed after the code-views 0.21.2 pin and production build. Screenshot source is local production build dbf1ba3, not the previously published 4944f9f build. README, landing page and feature guides keep the same image paths."
     }
   ]
 }
