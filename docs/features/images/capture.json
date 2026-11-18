@@ -19,7 +19,7 @@
       "date": "2026-11-18",
       "source": "sprite-calls.png",
       "englishSource": "en/sprite-calls.png",
-      "description": "Detail from the existing call graph screenshots for the README and landing page. Crop x=470, y=465, width=655, height=195 at the original image scale."
+      "description": "Detail of sprite-calls.png for the README and landing page: the graph nodes and arrows, clipped 24 px around the node boxes in the same capture run (993x247)."
     },
     "readme-messages.png": {
       "english": "en/readme-messages.png",
@@ -166,7 +166,7 @@
     },
     "current-git-history.png": {
       "size": "1440x960",
-      "description": "Git 履歴 drawer; PRを作成 with the commit and the ネコ code selected. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
+      "description": "Git 履歴 drawer; PRを作成 with the commit and the ネコ そのほかの設定: X 座標 change selected, so the block diff stays in current-git-blocks.png. The folder was opened with File → フォルダを開く…, and Local Git with ローカル Git を開く in the branch menu."
     },
     "current-git-release-workflow.png": {
       "size": "1440x960",
@@ -330,7 +330,7 @@
     },
     "sprite-calls.png": {
       "size": "1440x1000",
-      "description": "Sprite with four functions (ジャンプする calls 着地する and 効果音を鳴らす; 得点を数える calls 効果音を鳴らす) called from two hats, built as an SB3; 呼び出し関係 opened and zoomed in twice."
+      "description": "Sprite with four functions (ジャンプする calls 着地する and 効果音を鳴らす; 得点を数える calls 効果音を鳴らす) called from the green flag and space key hats, built as an SB3; 呼び出し関係 opened and zoomed in twice. The hats appear as boxes at the left edge, and the direction buttons are in the toolbar on the left."
     },
     "sprite-context-menu.png": {
       "size": "420x360",
@@ -528,6 +528,17 @@
         "plus-menu.png"
       ],
       "note": "Retaken in Japanese and English after the version moved to 0.2.0-rc.5, so the menu shows the version being released. Nothing else on screen changed between 0b8b47d and 6d40277."
+    },
+    {
+      "date": "2026-11-18",
+      "siteRevision": "80e26a863ecd29dedbaf0331734e9988bf6b1823",
+      "editorVersion": "0.2.0-rc.5",
+      "images": [
+        "sprite-calls.png",
+        "call-graph-detail.png",
+        "current-git-history.png"
+      ],
+      "note": "Japanese and English. The call graph now includes hat scripts and per-view controls (workbench 0.26.0, code-views 0.19.0). current-git-history.png now shows the other-settings change of the commit instead of repeating the block diff in current-git-blocks.png. English hat labels in the call graph wrap in the middle of words in the public Editor, and the figure shows that as it is."
     }
   ]
 }
