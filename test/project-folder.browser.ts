@@ -83,6 +83,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await mkdir(path.join(folder, 'assets'));
     await mkdir(path.join(folder, 'extensions'));
     await Promise.all([
+        writeFile(path.join(folder, '.gitignore'), '.tw-plus/\n'),
         writeFile(path.join(folder, projectFile), stringify(project)),
         writeFile(path.join(folder, 'assets', costume.md5ext), svg),
         writeFile(path.join(folder, 'assets', sound.md5ext), wav),
@@ -246,12 +247,18 @@ test('the browser folder commands save localized Git diffs to the original worki
     await page.locator(`[data-path="${noteFile}"]`).press('Enter');
     const editor = preview.getByRole('textbox', {name: noteFile, exact: true});
     const previewButton = (name: string) => preview.getByRole('button', {name, exact: true});
+    const previewMode = (name: string) => preview.getByRole('radio', {name, exact: true});
     const leftCode = preview.locator('.cm-merge-a .cm-content');
     const rightCode = preview.locator('.cm-merge-b .cm-content');
     await expect(editor.locator('.twpf-syntax-keyword').first()).toHaveText('export');
-    await previewButton('Diff').click();
+    await expect(preview.locator('.twpf-file-path')).toHaveCount(0);
+    await expect(preview.getByRole('radiogroup', {name: 'View mode'})).toBeVisible();
+    await expect(previewMode('Normal view')).toHaveAttribute('aria-checked', 'true');
+    await expect(preview.getByRole('slider', {name: 'File minimap'})).toBeVisible();
+    await expect(previewButton('Save file')).toBeDisabled();
+    await previewMode('Diff view').click();
     await expect(preview.getByText('No differences.', {exact: true})).toBeVisible();
-    await previewButton('Edit').click();
+    await previewMode('Normal view').click();
     const editNote = async (value: string) => {
         await editor.focus();
         await page.keyboard.press('ControlOrMeta+a');
@@ -289,7 +296,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(editor).toContainText('working draft');
     assert.equal(await readFile(path.join(folder, noteFile), 'utf8'),
         '\uFEFF' + note('committed').replaceAll('\n', '\r\n'));
-    await previewButton('Diff').click();
+    await previewMode('Diff view').click();
     await expect(preview.locator('.twpf-diff-headings')).toContainText(git('rev-parse', 'HEAD').slice(0, 8));
     await expect(leftCode.locator('.twpf-syntax-string', {hasText: 'committed'})).toBeVisible();
     await expect(rightCode.locator('.twpf-syntax-string', {hasText: 'working draft'})).toBeVisible();
@@ -299,18 +306,18 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(rightCode.getByText('// Footer', {exact: true})).toBeVisible();
     await previewButton('Changes only').click();
     await expect(leftCode.getByText('// Header', {exact: true})).toHaveCount(0);
-    await previewButton('Edit').click();
+    await previewMode('Normal view').click();
     await expect(editor).toContainText('working draft');
     await drawerView('Project folder').focus();
     await page.keyboard.press('ControlOrMeta+s');
-    await expect(preview.getByText('File saved.', {exact: true})).toBeVisible();
+    await expect(preview.locator('.twpf-file-snackbar').filter({hasText: 'Saved.'})).toBeVisible();
     await expect(noteStar).toHaveCount(0);
     assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), '\uFEFF' + note('working draft').replaceAll('\n', '\r\n'));
     assert.equal(git('diff', '--cached', '--name-only'), '');
     await editNote('menu save');
     await fileMenu.click();
     await tabSave.click();
-    await expect(preview.getByText('File saved.', {exact: true})).toBeVisible();
+    await expect(preview.locator('.twpf-file-snackbar').filter({hasText: 'Saved.'})).toBeVisible();
     assert.equal(await readFile(path.join(folder, noteFile), 'utf8'), '\uFEFF' + note('menu save').replaceAll('\n', '\r\n'));
 
     await editNote('conflicting draft');
@@ -328,7 +335,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('restore', '--', noteFile);
 
     await openFile('new.txt');
-    await previewButton('Diff').click();
+    await previewMode('Diff view').click();
     await expect(preview.getByText('This file is not in the latest commit.', {exact: true})).toBeVisible();
     await expect(rightCode).toContainText('A new file');
     await closeFile('new.txt');
