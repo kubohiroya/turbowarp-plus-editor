@@ -19,7 +19,7 @@
       "date": "2026-11-18",
       "source": "sprite-calls.png",
       "englishSource": "en/sprite-calls.png",
-      "description": "Detail of sprite-calls.png for the README and landing page: the graph nodes and arrows, clipped 24 px around the node boxes in the same capture run (993x247)."
+      "description": "Detail of sprite-calls.png for the README and landing page: every node and arrow tag of the graph, clipped 24 px around them in the same capture run (1478x387 in Japanese, 1378x329 in English)."
     },
     "readme-messages.png": {
       "english": "en/readme-messages.png",
@@ -329,8 +329,8 @@
       "description": "File → プロジェクトのコピーを保存… (dialog element; focus moved off the input)."
     },
     "sprite-calls.png": {
-      "size": "1440x1000",
-      "description": "Sprite with four functions (ジャンプする calls 着地する and 効果音を鳴らす; 得点を数える calls 効果音を鳴らす) called from the green flag and space key hats, built as an SB3; 呼び出し関係 opened and zoomed in twice. The hats appear as boxes at the left edge, and the direction buttons are in the toolbar on the left."
+      "size": "1800x1000",
+      "description": "SB3 built for the guide: ネコ (green flag → ジャンプする → 着地する, which broadcasts and waits for 着地 and calls 背景をゆらす; space key → はねる; receiving 得点 → 得点を数える), ボール (named function はねる for all sprites; receiving 着地 broadcasts 得点) and the stage (named function 背景をゆらす; receiving 着地), with the Named Functions extension 0.4.2 from the catalog. 呼び出し関係 of ネコ, zoomed out once in Japanese and twice in English so the graph fits (viewport 1800x1000)."
     },
     "sprite-context-menu.png": {
       "size": "420x360",
@@ -539,6 +539,16 @@
         "current-git-history.png"
       ],
       "note": "Japanese and English. The call graph now includes hat scripts and per-view controls (workbench 0.26.0, code-views 0.19.0). current-git-history.png now shows the other-settings change of the commit instead of repeating the block diff in current-git-blocks.png. English hat labels in the call graph wrap in the middle of words in the public Editor, and the figure shows that as it is."
+    },
+    {
+      "date": "2026-11-18",
+      "siteRevision": "c5b81577feac35af65977985f9f9a18ff1b4dbf6",
+      "editorVersion": "0.2.0-rc.5",
+      "images": [
+        "sprite-calls.png",
+        "call-graph-detail.png"
+      ],
+      "note": "Japanese and English. A project with messages and named functions in other sprites and the stage, so the figure shows message arrows and gray boxes for other targets' functions (sprite-panes 0.10.0, code-views 0.19.0, workbench 0.26.0). English hat labels wrap in the middle of words in the public Editor."
     }
   ]
 }
