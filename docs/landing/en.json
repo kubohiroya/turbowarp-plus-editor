@@ -78,7 +78,7 @@
   "workflowTitle": "Connect block editing with your other tools",
   "workflowIntro": "Unpack a project into a project folder to work with its data, assets, and extensions as files. Edit with VS Code or an AI app, then return to the Editor to run the project and review the changes.",
   "workflowFolder": "Save in a project folder",
-  "workflowFolderNote": "Choose “Create project folder” in the left drawer to unpack the open SB3. Subsequent saves write to that same folder.",
+  "workflowFolderNote": "In the left drawer's Project folder view, choose “Choose a Folder and Save…” or “Name and Save in This Browser…” to unpack the open SB3. Subsequent saves write to that same folder.",
   "workflowFolderShot": "The actual Editor showing the project folder and project.source.json",
   "workflowFolderCaption": "Inspect file content with the Normal view / Diff view capsule toggle and the minimap.",
   "workflowDiagramAlt": "Save a project folder in the Editor, edit its files with VS Code or Claude Code and Codex, then return to the Editor to load changes, test the project, review Git diffs, and commit",

@@ -78,7 +78,7 @@
   "workflowTitle": "ブロック編集を、外の道具とつなぐ",
   "workflowIntro": "作品をプロジェクトフォルダに展開すると、データ・素材・拡張をファイルとして扱えます。VS Codeや生成AIアプリで編集し、Editorへ戻って動作と変更内容を確かめる制作ができます。",
   "workflowFolder": "プロジェクトフォルダで保存",
-  "workflowFolderNote": "左ドロワーの「プロジェクトフォルダを作成」から、開いているSB3をフォルダに展開。その後の保存も、同じフォルダに書き込みます。",
+  "workflowFolderNote": "左ドロワーの「プロジェクトフォルダ」で「フォルダを選んで保存…」か「名前を付けてブラウザー内に保存…」を選び、開いているSB3をフォルダに展開。その後の保存も、同じフォルダに書き込みます。",
   "workflowFolderShot": "作品フォルダのファイル一覧と、project.source.jsonを開いた実画面",
   "workflowFolderCaption": "通常表示／差分表示のカプセル型切り替えとミニマップで、ファイルの内容を確認できます。",
   "workflowDiagramAlt": "Editorで保存した作品フォルダをVS CodeやClaude Code・Codexで編集し、Editorに戻って変更の読み込み、動作確認、Git差分レビューとコミットを行う流れ",
