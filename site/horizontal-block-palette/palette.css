@@ -1,12 +1,12 @@
-:global([class*="gui_blocks-wrapper_"]):has(.horizontal) + :global([class*="gui_extension-button-container_"]) {
+:global([class*="gui_blocks-wrapper_"]):has(:global([data-horizontal-block-palette])) + :global([class*="gui_extension-button-container_"]) {
     inset: 1px auto auto 1px;
     width: var(--plus-extension-button-width, 3.75rem);
     height: 50px;
     box-sizing: border-box;
 }
-:global([class*="gui_blocks-wrapper_"]):has(.horizontal) + :global([class*="gui_extension-button-container_"])::before {
+:global([class*="gui_blocks-wrapper_"]):has(:global([data-horizontal-block-palette])) + :global([class*="gui_extension-button-container_"])::before {
     display: none;
 }
-:global([class*="gui_blocks-wrapper_"]):has(.horizontal) > :global(.sa-flyout-placeHolder) {
+:global([class*="gui_blocks-wrapper_"]):has(:global([data-horizontal-block-palette])) > :global(.sa-flyout-placeHolder) {
     display: none !important;
 }
