@@ -538,7 +538,7 @@
         "call-graph-detail.png",
         "current-git-history.png"
       ],
-      "note": "Japanese and English. The call graph now includes hat scripts and per-view controls (workbench 0.26.0, code-views 0.19.0). current-git-history.png now shows the other-settings change of the commit instead of repeating the block diff in current-git-blocks.png. English hat labels in the call graph wrap in the middle of words in the public Editor, and the figure shows that as it is."
+      "note": "Japanese and English. The call graph now includes hat scripts and per-view controls (workbench 0.26.0, code-views 0.19.0). current-git-history.png now shows the other-settings change of the commit instead of repeating the block diff in current-git-blocks.png."
     },
     {
       "date": "2026-11-18",
@@ -548,7 +548,17 @@
         "sprite-calls.png",
         "call-graph-detail.png"
       ],
-      "note": "Japanese and English. A project with messages and named functions in other sprites and the stage, so the figure shows message arrows and gray boxes for other targets' functions (sprite-panes 0.10.0, code-views 0.19.0, workbench 0.26.0). English hat labels wrap in the middle of words in the public Editor."
+      "note": "Japanese and English. A project with messages and named functions in other sprites and the stage, so the figure shows message arrows and gray boxes for other targets' functions (sprite-panes 0.10.0, code-views 0.19.0, workbench 0.26.0)."
+    },
+    {
+      "date": "2026-11-18",
+      "siteRevision": "291abede91625b073bb1859aa366ea23016d3338",
+      "editorVersion": "0.2.0-rc.5",
+      "images": [
+        "sprite-calls.png",
+        "call-graph-detail.png"
+      ],
+      "note": "Japanese and English, retaken after sprite-panes 0.10.1, which wraps call graph text between words, so English hat names no longer break in the middle of a word. Same project and steps as the previous capture."
     }
   ]
 }
