@@ -57,11 +57,11 @@ The variables pane also shows thread and runtime variables from the temporary-va
 
 ### Trace function calls in a graph
 
-**Calls** shows which function calls which, using boxes for functions and arrows for calls. The graph also includes connected global named functions defined in other sprites or the stage.
+**Calls** shows which function calls which, using boxes for functions and arrows for calls. The graph also includes connected global named functions defined in other sprites or the stage, and links from scripts that send messages to the scripts that receive them.
 
-[![A call graph with arrows from the green flag and space key hats to jump and count score, and from there to land and play sound](docs/features/images/en/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+[![A call graph with solid arrows from hats to functions, dashed arrows from scripts that send messages to the scripts that receive them, and gray boxes for functions in other sprites and the stage](docs/features/images/en/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
 
-*Trace function calls in a graph. Both jump and count score call the shared play sound function.*
+*Trace function calls and messages in a graph. The Stage and Ball receive "landed" sent by land, and Ball's "point" leads to Cat's count score.*
 
 Hover over a box to highlight its connected arrows. Select a function belonging to the current sprite or stage to open it in the code panel on the right. **Hats and functions** also lets you select and edit individual scripts and custom block definitions. [Functions and calls](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
 
