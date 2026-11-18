@@ -9,7 +9,7 @@ if (!gui || !path.isAbsolute(gui) || !packager || !path.isAbsolute(packager)) {
     throw new Error('Absolute E2E_GUI_ROOT and TW_PLUS_PACKAGER_ROOT checkouts are required');
 }
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: packager, encoding: 'utf8'}).trim();
-if (revision !== 'c115bdf525c5f49f0fb689a21b335ccb70fc22d2') throw new Error('Unexpected Packager source revision');
+if (revision !== 'd690225b9f326c98be617a51c7c65f76758048ee') throw new Error('Unexpected Packager source revision');
 if (execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', 'src', 'webpack.config.js'], {cwd: packager, encoding: 'utf8'}).trim()) {
     throw new Error('Packager source checkout must be clean');
 }
