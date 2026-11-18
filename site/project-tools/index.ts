@@ -14,7 +14,8 @@ import {isValidSaveName, projectFileDialogTitle, renderExportView, renderExtensi
     suggestSaveName} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
 import type {NewProjectChoices, NewProjectRequest, NewProjectResult, ProjectFileStorage, ExtensionStorage}
     from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
-import type {RepositoryCreationProgress} from '@kubohiroya/turbowarp-plus-editor-git/project-repository-creation';
+import {createNewProjectHandler} from '@kubohiroya/turbowarp-plus-editor-workbench/new-project';
+import {showNotice} from '@kubohiroya/turbowarp-plus-editor-workbench/project-notice';
 import {renderProjectCommitDialog} from '@kubohiroya/turbowarp-plus-editor-git/project-commit-dialog';
 import {renderProjectPublicationDialog} from '@kubohiroya/turbowarp-plus-editor-git/project-publication-dialog';
 import type {PublicationCommit} from '@kubohiroya/turbowarp-plus-editor-git/project-publication';
@@ -101,8 +102,6 @@ export const setProjectSaveName = (vm, saveName: string) => {
         // Properties that cannot be edited (an unsupported version, loading) keep their save name.
     }
 };
-/** Shows a short notice that does not block the editor. */
-export const showProjectNotice = (vm, text: string, locale: string) => projects.get(vm)?.dialogs?.showNotice(text, locale);
 /** The default name of a folder or repository made from the project: its save name, or a usable title, or a slug of it. */
 const defaultSaveName = (properties): string => {
     const {saveName, title} = properties.snapshot();
@@ -252,27 +251,24 @@ type GuiStore = {
     getState(): {scratchGui: {projectState: {loadingState: string}}};
     subscribe(listener: () => void): () => void;
 };
-type RepositoryCreation = NonNullable<ProjectFolderWorkflows['repositoryCreation']>;
-
 /**
- * Create New Project… (#679): the new project dialog's choices and the host's `createIn`. The in-memory project is
- * the GUI's own `create`; a folder or a GitHub repository starts from the same default project, named by the dialog.
+ * Create New Project… (#679): the new project dialog's choices and its `createIn`, from the workbench's handler. This
+ * host supplies only what depends on the GUI and its storage.
  */
 export function projectCreation(vm, locale: string, create: () => void, folderWorkflows?: ProjectFolderWorkflows,
     defaultTitle?: string): {createIn?: (request: NewProjectRequest, signal: AbortSignal) => Promise<NewProjectResult>;
         newProject?: NewProjectChoices} {
     const tools = projects.get(vm);
-    const view = tools?.dialogs && globalThis.document?.defaultView as (Window & {ReduxStore?: GuiStore}) | undefined;
-    if (!tools || !view?.ReduxStore || !folderWorkflows?.createFolder) return {};
+    const document = globalThis.document;
+    const view = tools?.dialogs && document?.defaultView as (Window & {ReduxStore?: GuiStore}) | undefined;
+    const createFolder = folderWorkflows?.createFolder;
+    if (!tools || !view?.ReduxStore || !createFolder) return {};
     const {properties, payloads} = tools;
     const store = view.ReduxStore;
-    const ja = locale.startsWith('ja');
-    const label = (jp: string, en: string) => ja ? jp : en;
-    const repositoryCreation = folderWorkflows.repositoryCreation;
     const locations = folderWorkflows.locations ?? {browser: folderWorkflows.folderLocation === 'browser', device: false};
     // Replaces the project with the GUI's default project, as Create New Project does, and waits until it is shown.
     // `false` when the person kept the current project at the unsaved-changes question.
-    const startDefaultProject = async (signal: AbortSignal) => {
+    const openDefaultProject = async (signal: AbortSignal) => {
         const loadingState = () => store.getState().scratchGui.projectState.loadingState;
         const before = loadingState();
         const sequence = properties.loadState().sequence;
@@ -289,7 +285,7 @@ export function projectCreation(vm, locale: string, create: () => void, folderWo
                 done = true;
                 stopStore(); stopLoad?.(); signal.removeEventListener('abort', check);
                 if (signal.aborted) reject(signal.reason);
-                else if (failed) reject(new Error(label('新しい作品を開けませんでした。', 'Could not open the new project.')));
+                else if (failed) reject(new Error(locale.startsWith('ja') ? '新しい作品を開けませんでした。' : 'Could not open the new project.'));
                 else resolve();
             };
             const stopStore = store.subscribe(check);
@@ -301,79 +297,29 @@ export function projectCreation(vm, locale: string, create: () => void, folderWo
         await new Promise(resolve => view.setTimeout(resolve, 0));
         return true;
     };
-    const name = (title: string, saveName: string) => {
-        try {
-            properties.apply({title, saveName});
-        } catch {
-            tools.projectState?.setTitle?.(title);
-        }
-    };
-    const repositoryError = (error: unknown) => {
-        const code = (error as {code?: string})?.code;
-        if (!code) return error;
-        return new Error(code === 'popupBlocked' ?
-            label('GitHub の認証画面を開けませんでした。ポップアップを許可して、もう一度「リポジトリを作成」を押してください。',
-                'Could not open the GitHub authorization window. Allow pop-ups and press "Create Repository" again.') :
-            code === 'nameConflict' ? label('同じ名前のリポジトリがすでにあります。', 'A repository with this name already exists.') :
-                label('リポジトリの作成を完了できませんでした。もう一度「リポジトリを作成」を押すと続きから再開します。',
-                    'Could not finish creating the repository. Press "Create Repository" again to continue where it stopped.'));
-    };
-    // Creates the repository, pushes the first commit and opens its root as the project folder.
-    const finishRepository = async (creation: RepositoryCreation, started: RepositoryCreationProgress, signal: AbortSignal,
-        fresh: boolean) => {
-        const interaction = {signal, deviceCode({userCode, verificationUri}) {
-            showProjectNotice(vm, label(`GitHub で認証してください：${verificationUri}（コード ${userCode}）`,
-                `Authorize on GitHub: ${verificationUri} (code ${userCode})`), locale);
-        }};
-        let progress = started;
-        try {
-            for (let step = 0; progress.phase !== 'open'; step++) {
-                const {progress: next} = await creation.advance(progress, interaction);
-                if (step > 8 || next.phase === 'unknown' && progress.phase === 'unknown') throw Object.assign(new Error('unknown'), {code: 'unknown'});
-                progress = next;
-            }
-        } catch (error) {
-            throw repositoryError(error);
-        }
-        // The default project only stood in for the repository's project, so opening it asks nothing.
-        if (fresh) folderWorkflows.markSaved?.();
-        return creation.open(progress);
-    };
-    const createIn = async (request: NewProjectRequest, signal: AbortSignal): Promise<NewProjectResult> => {
-        if (request.destination === 'memory') {
-            create();
-            return 'created';
-        }
-        const {title, saveName} = request;
-        if (request.destination === 'github') {
-            if (!repositoryCreation) return 'cancelled';
-            // Pressing Create again after a stopped setup resumes it instead of making another repository.
-            const pending = (await repositoryCreation.list()).find(entry =>
-                entry.owner.toLowerCase() === request.draft.owner.toLowerCase() && entry.name.toLowerCase() === request.draft.name.toLowerCase());
-            if (pending) return await finishRepository(repositoryCreation, pending, signal, false) ? 'created' : 'cancelled';
-            // The folder is picked first, while the click that asked for it still allows the picker.
-            const target = request.workingCopy === 'device' ? await folderWorkflows.pickEmptyFolder?.(locale) : 'browser';
-            if (!target || !await startDefaultProject(signal)) return 'cancelled';
-            name(title, saveName);
-            const sequence = properties.loadState().sequence;
-            const current = () => !signal.aborted && projects.get(vm) === tools && properties.loadState().sequence === sequence;
-            const progress = await repositoryCreation.start(request.draft, () => serializeProjectFolder(vm, payloads, title), current,
-                signal, target).catch(error => {throw repositoryError(error);});
-            if (!progress) return 'cancelled';
-            return await finishRepository(repositoryCreation, progress, signal, true) ? 'created' : 'cancelled';
-        }
-        const target = request.destination === 'device' ? await folderWorkflows.pickEmptyFolder?.(locale) : 'browser';
-        if (!target || !await startDefaultProject(signal)) return 'cancelled';
-        name(title, saveName);
-        return await createFolderFromCurrentProject(vm, (serialize, current) =>
-            folderWorkflows.createFolder(serialize, current, title, target)) ? 'created' : 'cancelled';
-    };
-    return {createIn, newProject: {
-        defaultTitle,
+    return createNewProjectHandler({
+        locale, defaultTitle, create, openDefaultProject,
         browserFolders: locations.browser,
         deviceFolders: locations.device,
-        github: repositoryCreation && {connectForCreation: repositoryCreation.connect, licenses: repositoryCreation.licenses}
-    }};
+        nameProject(title, saveName) {
+            try {
+                properties.apply({title, saveName});
+            } catch {
+                tools.projectState?.setTitle?.(title);
+            }
+        },
+        pickDeviceFolder: folderWorkflows.pickEmptyFolder && (() => folderWorkflows.pickEmptyFolder(locale)),
+        createFolder: (destination, title) => createFolderFromCurrentProject(vm, (serialize, current) =>
+            createFolder(serialize, current, title, destination)),
+        repositoryCreation: folderWorkflows.repositoryCreation,
+        serialize: title => serializeProjectFolder(vm, payloads, title),
+        trackProject() {
+            const sequence = properties.loadState().sequence;
+            return () => projects.get(vm) === tools && properties.loadState().sequence === sequence;
+        },
+        markSaved: folderWorkflows.markSaved,
+        notify: text => showNotice(document, text, {locale})
+    });
 }
 
 /** The GUI supplies its native menu components; this host owns the added entries and dialogs. */
