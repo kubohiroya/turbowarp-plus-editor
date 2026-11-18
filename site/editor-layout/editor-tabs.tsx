@@ -423,6 +423,7 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 };
                 const data = readTargetFunctions(target, {
                     others: vm.runtime.targets.filter(other => other.isOriginal),
+                    getTargetThumbnail: targetId => assetImage(vm.runtime.getTargetById(targetId)?.getCurrentCostume()?.asset),
                     describeScript: (targetId, scriptId) => targetHats(targetId).find(hat => hat.id === scriptId)?.label
                 });
                 const definitions = new Set(data.functions.map(fn => fn.id));
