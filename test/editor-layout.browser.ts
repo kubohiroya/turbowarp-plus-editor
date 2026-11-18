@@ -3287,7 +3287,23 @@ test('the hats and functions list and the calls section show each script alone i
     const toolbar = page.locator('.tw-plus-sprite-toolbar');
     await expect.poll(() => toolbar.first().getByRole('tab').evaluateAll(tabs => tabs.map(tab => tab.getAttribute('aria-label'))))
         .toEqual(['自由配置', 'ハット・関数一覧', '呼び出し関係', 'コスチューム', '音', '変数', 'メッセージ']);
-    await toolbar.getByRole('tab', {name: 'ハット・関数一覧', exact: true}).click();
+    // A body block opens its own script, with the list beside the individual editor.
+    const body = page.locator('.dv-active-group .blocklyBlockCanvas [data-id="layout-steps"] > .blocklyBlockBackground');
+    await body.click({button: 'right', position: {x: 12, y: 16}});
+    const editScript = page.getByRole('menuitem', {name: 'このスクリプトを個別の画面で編集する', exact: true});
+    await expect(editScript).toBeVisible();
+    await expect(editScript.locator('..').getByRole('menuitem').first()).toHaveText('このスクリプトを個別の画面で編集する');
+    const relationItem = page.getByRole('menuitem', {name: 'このスクリプトの呼び出し関係を開く', exact: true});
+    await expect(editScript.locator('svg path')).toHaveAttribute('d',
+        await toolbar.first().getByRole('tab', {name: 'ハット・関数一覧', exact: true}).locator('svg path').getAttribute('d'));
+    await expect(relationItem.locator('svg path')).toHaveAttribute('d',
+        await toolbar.first().getByRole('tab', {name: '呼び出し関係', exact: true}).locator('svg path').getAttribute('d'));
+    assert.deepEqual(await editScript.locator('..').getByRole('menuitem').evaluateAll(nodes => nodes.slice(0, 3)
+        .map(node => getComputedStyle(node).borderTopWidth)), ['0px', '0px', '1px']);
+    await editScript.click();
+    await expect(page.locator('.dv-groupview')).toHaveCount(2);
+    await expect.poll(() => page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getTopBlocks(false)
+        .filter(block => getComputedStyle(block.getSvgRoot()).display !== 'none').map(block => block.id))).toEqual(['layout-jump']);
     await expect(toolbar.getByRole('heading')).toHaveText('ハット・関数一覧');
     const pane = page.getByRole('region', {name: 'ハット・関数一覧', exact: true});
     await expect(pane.locator('.tw-sprite-functions__name')).toHaveText(['緑の旗 が押されたとき', 'jump', 'land']);
@@ -3351,19 +3367,38 @@ test('the hats and functions list and the calls section show each script alone i
         return workspace.getBlockById('layout-steps')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM');
     })).toBe('25');
 
+    await body.click({button: 'right', position: {x: 12, y: 16}});
+    const openCalls = page.getByRole('menuitem', {name: 'このスクリプトの呼び出し関係を開く', exact: true});
+    await expect(openCalls).toBeVisible();
+    await expect(openCalls.locator('..').getByRole('menuitem').nth(1)).toHaveText('このスクリプトの呼び出し関係を開く');
+    await openCalls.click();
+    const centeredGraph = page.getByRole('region', {name: '呼び出し関係', exact: true}).locator('figure');
+    const selectedNode = centeredGraph.locator('[data-function-key="layout-jump"]');
+    await expect(selectedNode).toHaveAttribute('aria-current', 'true');
+    await expect(selectedNode).toHaveAttribute('data-highlight', 'self');
+    await expect.poll(async () => {
+        const node = await selectedNode.boundingBox(), graph = await centeredGraph.boundingBox();
+        return Math.hypot(node.x + node.width / 2 - graph.x - graph.width / 2,
+            node.y + node.height / 2 - graph.y - graph.height / 2);
+    }).toBeLessThan(2);
+    await expect.poll(shown).toEqual(['layout-jump']);
+    await expect(groups).toHaveCount(2);
+
     await toolbar.first().getByRole('tab', {name: '呼び出し関係', exact: true}).click();
     const calls = page.getByRole('region', {name: '呼び出し関係', exact: true});
     await expect(calls.getByRole('button', {name: '呼び出し図', exact: true})).toHaveCount(0);
     const graph = calls.locator('figure');
-    await expect(graph.locator('[data-edge]')).toHaveAttribute('data-edge', 'layout-jump>layout-land');
+    await expect(graph.locator('[data-edge="layout-jump>layout-land"]')).toHaveCount(1);
     const jump = graph.locator('[data-function-key="layout-jump"]');
     const land = graph.locator('[data-function-key="layout-land"]');
     const box = async () => [await jump.boundingBox(), await land.boundingBox()];
     let [from, to] = await box();
     assert.ok(to.x > from.x + from.width, 'LR puts the callee to the right of its caller');
-    await calls.getByRole('button', {name: '上から下 (TD)', exact: true}).click();
-    [from, to] = await box();
-    assert.ok(to.y > from.y + from.height, 'TD puts the callee below its caller');
+    await toolbar.first().getByRole('button', {name: /上から下 \(TD\)$/}).click();
+    await expect.poll(async () => {
+        [from, to] = await box();
+        return to.y > from.y + from.height;
+    }, {message: 'TD puts the callee below its caller'}).toBe(true);
 
     await land.click();
     await expect.poll(shown).toEqual(['layout-land']);
