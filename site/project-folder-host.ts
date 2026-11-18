@@ -3,7 +3,8 @@ import {chooseBrowserProject, followProjectFolder, mountProjectFolder, projectFo
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
-import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, pushPublicationCommit}
+import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, openRemoteRepositoryDialog,
+    pushPublicationCommit}
     from '@kubohiroya/turbowarp-plus-editor-git';
 import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-auth';
 import type {DesktopGitPreload} from '@kubohiroya/turbowarp-plus-editor-auth';
@@ -88,9 +89,12 @@ type PickerWindow = Window & {
 const gitCloudflare = () => typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? null : __TW_PLUS_GIT_CLOUDFLARE__;
 const gitDesktop = (view: PickerWindow) => view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit;
 
-const folders = new WeakMap<FolderVM, {folder: LocalFolderMount; workflows(): ProjectFolderWorkflows}>();
+const folders = new WeakMap<FolderVM, {folder: LocalFolderMount; workflows(): ProjectFolderWorkflows;
+    openRemote?(locale: string): void}>();
 
 export const projectFolderWorkflows = (vm: FolderVM) => folders.get(vm)?.workflows();
+/** Opens a remote Git repository: clones it, then opens the project at its root (#676). */
+export const projectFolderOpenRemote = (vm: FolderVM) => folders.get(vm)?.openRemote;
 
 /** The folder the loaded project came from, so its Dockview layout is kept apart from other projects. */
 export const projectFolderDirectory = (vm: FolderVM) => folders.get(vm)?.folder.directory ?? null;
@@ -226,10 +230,8 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     const browserProjects = folderLocation === 'browser' ? folder.browserProjects : null;
     const browserFolders: BrowserRepositoryFolders | undefined = browserProjects ? {
         async create(title) {
-            const {root} = await browserProjects.create(title, {projectPath: 'project'});
-            // The initial commit is written only into an empty folder, and brings the project folder itself.
-            await root.removeEntry('project');
-            return root;
+            // One repository holds one project at its root; the initial commit is written into the empty folder.
+            return (await browserProjects.create(title, {projectPath: ''})).root;
         },
         async choose() {
             const choice = await chooseBrowserProject({document, projects: browserProjects, locale, purpose: 'open'});
@@ -342,7 +344,45 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
         }};
     };
-    folders.set(vm, {folder, workflows});
+    // Open Remote Git Repository…: a read session clones the repository into an empty folder on the device or in the
+    // browser, then the root opens as the project folder and the Git panel binds to it.
+    const openRemote = connectionSettings ? (language: string) => {
+        const projects = folder.browserProjects;
+        const created = new Map<FileSystemDirectoryHandle, string>();
+        void openRemoteRepositoryDialog({
+            document, locale: language, connectionSettings,
+            deviceFolders: typeof view.showDirectoryPicker === 'function',
+            ...typeof view.showDirectoryPicker === 'function' && {async pickDeviceFolder() {
+                let directory: FileSystemDirectoryHandle;
+                try {
+                    directory = await view.showDirectoryPicker!({id: 'turbowarp-plus-remote-repository', mode: 'readwrite'});
+                } catch (error) {
+                    if ((error as DOMException).name === 'AbortError') return null;
+                    throw error;
+                }
+                for await (const _entry of (directory as unknown as {values(): AsyncIterable<unknown>}).values()) {
+                    view.alert(language.startsWith('ja') ? '空のフォルダを選んでください。' : 'Choose an empty folder.');
+                    return null;
+                }
+                return directory;
+            }},
+            ...projects && {
+                async createBrowserFolder(name: string) {
+                    const project = await projects.create(name, {projectPath: ''});
+                    created.set(project.root, project.id);
+                    return project.root;
+                },
+                async removeBrowserFolder(handle: FileSystemDirectoryHandle) {
+                    const id = created.get(handle);
+                    if (id) await projects.remove(id);
+                }
+            },
+            openProject: (root: FileSystemDirectoryHandle) => folder.openDirectory(root, () => view.confirm(
+                language.startsWith('ja') ? '現在の作品に未保存の変更があります。リポジトリの作品を開きますか？' :
+                    'The current project has unsaved changes. Open the repository\'s project?'), root, {locale: language})
+        });
+    } : undefined;
+    folders.set(vm, {folder, workflows, openRemote});
     let author: GitAuthor | undefined;
     if (localGit) void readAuthor().then(value => {author = value;});
     if (!localGit) return {...folder, dispose() {
@@ -363,7 +403,9 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         ...folder.browserProjects && {openBrowserFolder: (language: string) => projectFolderActions(vm, language)?.openBrowser?.()},
         deviceFolders: typeof view.showDirectoryPicker === 'function',
         renderReviewBlock,
-        openProject: folder.openDirectory,
+        // A folder that is not a project shows project-folder's own dialog; the panel hears that nothing opened.
+        openProject: async (directory, confirmReplace) =>
+            await folder.openDirectory(directory, confirmReplace) === 'opened' ? 'opened' : 'cancelled',
         projectDirectory: () => folder.directory,
         ...hasProjectVersionValidator() && {
             restoreProjectVersions: gitRestoreVersion,
