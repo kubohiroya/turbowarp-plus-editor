@@ -254,7 +254,6 @@ function EditorTabs({vm, activeEditorTab, onActivateEditorTab, editorTargetIsSta
                 const workspace = window.ScratchBlocks?.getMainWorkspace();
                 const found = workspace?.getBlockById(block);
                 if (!found) return;
-                workspace.centerOnBlock(block);
                 found.select();
             });
         }
