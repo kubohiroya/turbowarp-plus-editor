@@ -163,7 +163,7 @@ test('code view order and rearrangement preview preserve script connections and 
     await block.click({button: 'right', position: {x: 25, y: 18}});
     await expect(page.locator('.blocklyWidgetDiv .blocklyContextMenu')).toBeVisible();
     await expect(page.getByRole('menuitem', {name: layoutLabel})).toHaveCount(0);
-    await workspace.click({position: {x: 425, y: 360}});
+    await background.click({position: await emptyLayoutPosition(background)});
     await expect(page.locator('.blocklyWidgetDiv .blocklyContextMenu')).toBeHidden();
 
     const normal = await openLayoutMenu(page, background, layoutLabel, backgroundPosition);
