@@ -35,9 +35,21 @@ Hover to reveal controls, and drag and drop to rearrange tabs or copy blocks bet
 
 | Keep editing tools within reach | Open the stage or panels in separate windows |
 | --- | --- |
-| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html#layout"><img src="docs/features/images/en/top-editor.png" width="640" alt="Free layout with Cat and Ball, solid function-call arrows, dashed message-broadcast arrows, and the minimap"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/index.en.html#dock"><img src="docs/features/images/en/top-stage-window.png" width="300" alt="The stage in its own window"></a> |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html#layout"><img src="docs/features/images/en/free-layout-current.png" width="640" alt="Free layout with solid function-call arrows, distinct dashes for broadcast and broadcast and wait, and the minimap"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/index.en.html#dock"><img src="docs/features/images/en/top-stage-window.png" width="300" alt="The stage in its own window"></a> |
 
 The sprite list is on the left, block categories are across the top of the code area, and buttons down the side of each panel open code, costumes, sounds, variables, and messages. The palette remembers each category’s size and scroll position. Panels can be pinned, resized, and moved between the workspace and separate windows. [Screen layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html) · [Workspace layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/index.en.html)
+
+### Read scripts in Z or N order
+
+Right-click the code background and use **Change code layout view** to choose Z or N order. The scripts form a spaced vertical column, and the minimap follows that view. Click a script to edit it while keeping its original free-layout position. Use ▼ / ▶ on the left to fold or unfold one script, or right-click the background for **Fold all** / **Unfold all**. Arrows curve widely to the right, with space on the left for incoming arrows. [Code layout views](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html#arrange)
+
+While a panel switches or an opened project first draws its code, the pointer shows a wait cursor.
+
+| Z layout | N layout |
+| --- | --- |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html#arrange"><img src="docs/features/images/en/zn-layout.png" width="420" alt="Z layout view"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html#arrange"><img src="docs/features/images/en/n-layout.png" width="420" alt="N layout view"></a> |
+
+*Z and N layout views, with fold buttons, a matching minimap, and different dashes for each broadcast type.*
 
 ### Inspect clones, variables, lists, and messages
 
@@ -59,9 +71,11 @@ The variables pane also shows thread and runtime variables from the temporary-va
 
 **Calls** shows which function calls which, using boxes for functions and arrows for calls. The graph also includes connected global named functions defined in other sprites or the stage, and links from scripts that send messages to the scripts that receive them.
 
-[![A call graph with solid arrows from hats to functions, dashed arrows from scripts that send messages to the scripts that receive them, and gray boxes for functions in other sprites and the stage](docs/features/images/en/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+[![A call graph with a solid arrow to prepare scene and separate dashed arrows for broadcasting ready and broadcasting it and waiting](docs/features/images/en/call-graph-current-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
 
-*Trace function calls and messages in a graph. The Stage and Ball receive "landed" sent by land, and Ball's "point" leads to Cat's count score.*
+*Trace function calls and messages. Ordinary and waiting broadcasts between the same scripts have separate dashed arrows.*
+
+Message arrows use fine dashes for **broadcast** and longer dashes for **broadcast and wait**. This rule also applies in Free layout, Hats and functions, Z/N views, and minimaps; hourglass icons are no longer shown.
 
 Hover over a box to highlight its connected arrows. Select a function belonging to the current sprite or stage to open it in the code panel on the right. **Hats and functions** also lets you select and edit individual scripts and custom block definitions. [Functions and calls](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
 
