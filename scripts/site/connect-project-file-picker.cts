@@ -16,10 +16,13 @@ module.exports = (source: string) => {
                         }
                     }`;
     const title = '                        if (filename) {';
-    if (!picker.includes(earlyHandle) || !picker.includes(title)) {
+    const drawn = '                        this.props.vm.renderer.draw();';
+    if (!picker.includes(earlyHandle) || !picker.includes(title) || !picker.includes(drawn)) {
         throw new Error('The pinned GUI project file handle connection has changed');
     }
     return picker.replace(earlyHandle, '                    this.projectFileHandle = thisFileInput.handle || null;')
+        .replace(drawn, `                        getHostIntegration()?.projectFileOpened?.(this.props.vm, this.fileToUpload);
+${drawn}`)
         .replace('            this.fileToUpload = null;', '            this.fileToUpload = null;\n            this.projectFileHandle = null;')
         .replace('                let loadingSuccess = false;', '                const handle = this.projectFileHandle;\n                let loadingSuccess = false;')
         .replace(title, `                        this.props.onSetFileHandle(/\\.sb3$/i.test(filename || '') ? handle : null);
