@@ -11,7 +11,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../">機能ガイド</a> › 2. 画面の構成とメニュー · <a href="index.en.html" hreflang="en" lang="en">English</a></p>
-<p class="eyebrow">機能ガイド 2/12 · 2026年11月15日更新</p>
+<p class="eyebrow">機能ガイド 2/12 · 2026年11月19日更新</p>
 <h1>画面の構成とメニュー</h1>
 <p class="lead">最上段のメニューバーでは、作品の操作を「ファイル」「編集」メニューに、ステージ・Git・録画・デバッグと拡張の操作を右側にまとめています。</p>
 <nav class="topic-nav" aria-label="機能ガイドの分野">
@@ -55,7 +55,7 @@
 <tr><th scope="row">右</th><td>「Git ▾」（リポジトリのあるフォルダを開くと表示され、現在のブランチ名、例：「main ▾」になる）</td><td>「ローカル Git を開く」、<a href="../git/#local-git">ブランチの切り替え</a></td></tr>
 <tr><th scope="row">右</th><td>「ステージを開く」と「▾」</td><td><a href="../stage/#stage-open">ステージを開く・開き方を選ぶ</a></td></tr>
 <tr><th scope="row">右</th><td>🎥（録画）</td><td>ステージを録画する。録画中はカウントダウンや「録画を停止」などの状態が横に出る</td></tr>
-<tr><th scope="row">右</th><td>「…」（デバッグ）</td><td><a href="#extension-controls">デバッガーを開く</a></td></tr>
+<tr><th scope="row">右</th><td>テントウムシのアイコン（デバッグ）</td><td><a href="#extension-controls">デバッガーを開く</a></td></tr>
 <tr><th scope="row">右端</th><td>拡張のボタン領域</td><td><a href="#extension-controls">拡張の設定や操作</a></td></tr>
 </tbody></table></div>
 <p>メニューバーの下、画面の左端には、縦に並ぶ4つの切り替え（アクティビティバー）があります。左ドロワーに出す内容を「スプライト一覧」「プロジェクトフォルダ」「Git 履歴」「AI エージェント」から選びます。スプライト一覧の上には「スプライトを検索」「スプライト一覧を固定表示」「アンドック」のボタンが、下には「背景」とスプライトを追加するボタンが並びます（<a href="../sprites/">スプライトと背景を編集する</a>、<a href="../git/">作品フォルダとGitで管理する</a>）。</p>
@@ -129,10 +129,11 @@
 <h2>2.5 右上の拡張ボタンとデバッガー</h2>
 
 <p>カメラの権限やTeachable Machineのモデルの設定など、拡張が用意する操作ボタンは、メニューバー右端の角丸の枠（拡張のボタン領域）にまとめて表示されます。ボタンは拡張が必要とするときだけ現れ、作品を読み込み直すと消えます。押すと、その拡張の設定画面や操作が開きます。</p>
-<ul><li>メニューバーのボタンはアイコンだけを表示します。ボタンの名前は、ポインターを置いたときのツールチップで確かめます。</li><li>TurboWarpのデバッガーを有効にしていると、🎥（録画）と拡張のボタン領域の間に「デバッグ」ボタン（表示は「…」）が表示されます。デバッガーと録画のボタンは、拡張のボタン領域には入りません。</li></ul>
+<ul><li>メニューバーのボタンはアイコンだけを表示します。ボタンの名前は、ポインターを置いたときのツールチップで確かめます。</li><li>TurboWarpのデバッガーを有効にしていると、🎥（録画）と拡張のボタン領域の間にテントウムシのアイコンの「デバッグ」ボタンが表示されます。デバッガーと録画のボタンは、拡張のボタン領域には入りません。</li></ul>
 <p>例：紙芝居拡張（<a href="../documents/">拡張のデータと文書を編集する</a>）は、YAMLで書いた台本を実行している間だけ、制作用の再読み込みのボタンを表示します。</p>
 <p>拡張の作者は、サンドボックスなしの拡張から <code>Scratch.gui.stageControls.addButton</code> でボタンを登録できます。</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張作者向けの仕様</a></p>
+<p>ブロックの右クリックメニューから<a href="../blocks/#context-menu">ブレークポイントを設定</a>すると、そのブロックを実行する直前に一時停止できます。一時停止すると、デバッガーのタブがほかのタブの後ろにあっても前面に出ます。デバッガーでスレッドを確認し、ステップ実行や再開へ進めます。コンパイル実行中にブレークポイントを追加した場合は、次の実行開始から有効になります。</p>
 
 </section>
 

@@ -55,10 +55,11 @@ SHA-256は内容を固定する値で、発行者の本人性やコードの安�
 
 ## 実装と依存順
 
-- Security Dialog: `ExtensionReview` 1つで追加（`add`）と作品を開くとき（`open`）の両方を尋ねます。4形式の綴りは Loader の Manifest・SB3の保存形式と同じなので、画面の答えを対応表なしで Loader へ渡します。旧綴り（`remote` / `embedded` / `cached`）は読み替えずに拒否します。
+- Security Dialog: 拡張一覧の UI・状態、作品を開く前のレビュー、許可・再試行と失敗の説明を持ちます。`ExtensionReview` 1つで追加（`add`）と作品を開くとき（`open`）の両方を尋ねます。4形式の綴りは Loader の Manifest・SB3の保存形式と同じなので、画面の答えを対応表なしで Loader へ渡します。旧綴り（`remote` / `embedded` / `cached`）は読み替えずに拒否します。
 - Loader: SHA-256・取得・検証・認可・Manifest/SB3更新。`prepareCatalogExtensionChanges` は複数パッケージをまとめて準備し、既存コードを更新せず配布方式を変更します。
 - VM: 所有portから隔離iframeを登録し、ID・RPC・worker/serviceの所有権を照合して破棄します。
-- Editor（`site/extension-host/`）: 実状態の復元、入力と許可UIの接続、作品切替の競合防止、適用失敗時の復元を担当します。復元できない場合も、追加前SB3の保存リンクを提供します。
+- Loader の `./scratch-vm`: 実状態の復元、作品切替の競合防止、適用失敗時の復元と、復元できない場合の追加前SB3の回復処理を担当します。
+- Editor（`site/extension-host/`・`site/extension-library/`）: 起動設定・信頼方針・GUIの値とコールバックを、上記の公開 API へ渡します。[責務の一覧](upstream-feature-ownership.md)を参照してください。
 - GUIフォーク: 上記を差し込む口だけを持ちます。
 
 ## ローカルでの確認
