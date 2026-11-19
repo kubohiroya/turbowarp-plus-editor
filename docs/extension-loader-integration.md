@@ -2,7 +2,7 @@
 
 ## 実装場所と依存方向
 
-Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB3保持、配布元変換は独立した [`turbowarp-extension-loader`](https://github.com/kubohiroya/turbowarp-extension-loader) に集約している。許可UI、VM登録、ロード/保存フック、Packagerとの受け渡しの接続はこのリポジトリの `site/extension-host/` が持ち、`scratch-gui` フォークは差し込み口（[差し込み口の設計](plus-integration-sockets.md)）を開けるだけである。VMは拡張を所有サービスとして登録するportを持つ（差分は `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持）。
+Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB3保持、VM登録・復元とロード/保存処理は独立した [`turbowarp-extension-loader`](https://github.com/kubohiroya/turbowarp-extension-loader) が持つ。拡張一覧・許可・再試行と作品を開く前のレビューは `turbowarp-extension-security-dialog`、作品データの調査・保存形式の変換は `turbowarp-sb3-save-format` が持つ。本リポジトリの `site/extension-host/` は起動設定・信頼方針・IndexedDBキャッシュの選択と、GUI・Packagerの値やコールバックを各パッケージへ渡す接続を担当する（[責務の一覧](upstream-feature-ownership.md)）。`scratch-gui` フォークは差し込み口（[差し込み口の設計](plus-integration-sockets.md)）を持つ。VMは拡張を所有サービスとして登録するportを持つ（差分は `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持）。
 
 Loaderはnpmの完全一致版（`site/source.json` の `loaderVersion` と `loaderIntegrity`、公開元コミットは `loaderRevision`）で、GUI・VM・Packagerは完全SHAで固定する。通常ビルドがLoader入りのscaffolding・runtime・ローカルPackager画面を生成し、artifact gateが依存の固定値・既定ON・資産hashを検証する。
 
@@ -12,7 +12,7 @@ Loaderはnpmの完全一致版（`site/source.json` の `loaderVersion` と `loa
 
 ホストが静的に組み込んだLoader、UI、VM registrarを接続する。作品からLoader・認可ポリシーを取得しない。coreが検証したexact bytesと取得元をUIへ渡し、id・取得元・発行者の未検証の申告・version・digest・unsandboxed要求・capabilityを表示する。拒否・Esc・閉じる・abortは拒否となる。承認はホストセッション内で要求の全情報に束縛し、破棄時に失効する。明示的な外部ホストポリシーをUI前に適用し、拒否をユーザー操作で上書きしない。
 
-SHA-256はバイト列の一貫性の検証であり、安全性や発行者本人性の証明ではない。RemoteはHTTPSのみ、資格情報・fragment・redirect・未証明の最終URLを拒否する。キャッシュは既定8 MiB/1時間のセッションLRUで、ヒット時にも再検証・認可する。通信不能時に異なるdigestのコードへフォールバックしない。
+SHA-256はバイト列の一貫性の検証であり、安全性や発行者本人性の証明ではない。RemoteはHTTPSのみ、資格情報・fragment・redirect・未証明の最終URLを拒否する。Loaderのメモリキャッシュは既定8 MiB/1時間のセッションLRUで、Editorは利用可能ならIndexedDBの永続キャッシュを接続する。`remote-cacheable` の検証済みコードを作品のURIと結び付けて保持し、利用者がキャッシュを辞退した場合は保存しない。ヒット時にも再検証・認可する。通信不能時に異なるdigestのコードへフォールバックしない。
 
 コアは全件を検証・認可してから登録する。認可証跡はコピーできないtransaction限定の証跡で、作品の自己申告を受け付けない。registrarはVMが提供する所有サービスportへ登録し、getInfo().idを照合してからVMブロックを登録する。失敗時は所有サービス・primitive・hat・category等を解除し、失敗したホストを再利用しない。任意の特権JSによるネットワーク・DOM等の副作用は巻き戻せない。承認後のJS評価でID不一致を検出した場合は登録を拒否する。
 

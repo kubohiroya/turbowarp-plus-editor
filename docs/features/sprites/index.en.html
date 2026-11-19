@@ -11,7 +11,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 3. Edit sprites and the backdrop · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
-<p class="eyebrow">Feature guide 3/12 · Updated November 15, 2026</p>
+<p class="eyebrow">Feature guide 3/12 · Updated November 19, 2026</p>
 <h1>Edit sprites and the backdrop</h1>
 <p class="lead">Choose what to edit in the sprite list on the left, then use the icons stacked along the left edge of the editor panel to switch between the free layout of code, the list of hats and functions, the calls between functions, costumes, sounds, variables, and messages.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
@@ -72,6 +72,8 @@
 <p>Pick a hat or a function in the list to split the panel to the right of the sprite and open a code area that shows only that script, in a numbered tab such as "Sprite1(2)". The other scripts are only hidden; they stay in the project. This code area has no icons along its left edge, and the block palette and context menus work as in "Free layout". Picking another item switches what the same code area shows, and the list highlights the item being shown. If you delete the script being shown, this code area closes.</p>
 <figure><a href="../images/en/sprite-functions.png"><img src="../images/en/sprite-functions.png" width="1440" height="1000" alt="In the left pane, &quot;Hats and functions&quot; lists the hats &quot;when green flag clicked&quot; and &quot;when space key pressed&quot; and the functions jump (Used 2 times) and land (Used once), with jump highlighted. The right pane, Sprite1(2), shows only the definition of jump." loading="lazy"></a><figcaption>"jump" picked in "Hats and functions". The code area split to the right shows only its definition.</figcaption></figure>
 <p>"Show this function" in the context menu of a block that calls a function also opens the function in the same code area (<a href="../blocks/index.en.html#context-menu">Work with context menus</a>). "Fold" in a hat's context menu shows a script as its hat alone.</p>
+<p>In Free layout, right-click a block and choose "Edit this script in a separate view" to open Hats and functions on the left and individually edit the script containing that block on the right. "Open relationships for this script" centers that script in Calls on the left and opens it for editing on the right. Unlike "Show this function", which opens the called function, these actions open the script containing the chosen block.</p>
+<p>An individual script opens at a zoom between 50% and 125%, fitted to the available area. The first block starts 24px from the top and left edges of the code area. This also applies when opening it from Calls or a separate window. Only the view position and zoom change; block coordinates in the project stay the same.</p>
 <h3>Adding a function</h3>
 <p>Press "+ Add a new function" below the list to open a dialog for the "Function name" and its "Kind": "Standard (My Blocks)" or "TurboWarp-Plus named function". Press "Add" to create the function below the existing scripts and open it in the code area on the right. A standard function is a custom block definition with no inputs. You cannot add a function whose name is already taken. If you choose a named function and the "TurboWarp-Named-Functions" extension is not loaded, it is loaded at that point.</p>
 <h3 id="call-graph">Seeing which function calls which</h3>

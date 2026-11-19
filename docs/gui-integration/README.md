@@ -1,12 +1,14 @@
 # GUI追加ファイルの全面移設
 
+この文書の移設先・差分件数・検証結果は、各移設時点の記録です。現在の機能実装は独立パッケージが所有し、`site/` はその公開 API と GUI の接続を担当します。[現在の責務](../upstream-feature-ownership.md)と[固定ソース・配信](../architecture.md)を参照してください。
+
 TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。その後に追加する GUI 側の接続契約テストは、用途とパスを記録して例外とする。
 
 比較元は `TurboWarp/scratch-gui:3c017c528c853af3111df9641914704745c1fdf6`、移設前のGUIは `c24b587ec49b871e9cbdc7530d54635a521a5d6e`、公開時の受け側の基準は `121e1eae083d3abdedd03ae19a725eeb3bf95c04`。
 
 ## 配置と責務
 
-32ファイルの旧パスと移設先は [relocation.json](relocation.json) に記録する。
+32ファイルの旧パスと最初の移設先は [relocation.json](relocation.json) に記録する。その後に独立パッケージへ移った実装もあるため、現在の所有者は[上流への責務移管](../upstream-feature-ownership.md)を参照する。
 
 | 移設前のGUI | 移設先・扱い |
 | --- | --- |
@@ -83,7 +85,7 @@ GUI単体は任意の描画部品がなければ標準の操作列を表示し�
 ## 拡張一覧の追加レイアウトをホストで所有する
 
 `libraryTab.classes` がlibrary/content/tagsのCSS Modulesクラスを提供し、GUIは任意の `customClasses` として受け取ります。
-追加の幅・余白・スクロール規則は `site/extension-library/plus-library.css` が所有します。
+一覧の UI・状態と追加の幅・余白・スクロール規則は `@kubohiroya/turbowarp-extension-security-dialog` が所有します。`site/extension-library/plus-library.tsx` は共通一覧へGUIの値を渡し、`plus-library.css` はGUIとの接続に必要なスタイルだけを持ちます。
 ホストのrootと追加クラスを組み合わせた規則で、GUIの基本レイアウトとの注入順に依存しません。
 標準の検索・タグ選択・busy・closeの状態管理はGUIに残します。
 切戻しはGUIの受渡しとホストCSSを既知のpin組合せへ戻して行います。

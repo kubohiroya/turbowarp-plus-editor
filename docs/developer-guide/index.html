@@ -727,7 +727,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <div class="prose" style="margin-top:1rem">
     <p>そのうえで、図7の A に当たる小さな機能は、アドオンと同じく「後から付けて、<code>dispose</code> で外せる」形で書きます。こうしておけば、利用者が切り替えられるようにしたくなったとき、アドオンの形へ移しやすくなります。既存の機能をアドオン互換に作り直す作業は行いません。</p>
   </div>
-  <p class="source">根拠：フォーク <code>src/addons/</code>（81 件、うち <code>tw-</code> 6 件）、<code>api.js</code> の <code>appendToSharedSpace</code>、<code>docs/plus-integration-sockets.md</code>、<code>docs/gui-integration/README.md</code>、<code>site/plus-integration.ts</code>。件数は 2026年11月14日に、このリポジトリが固定しているフォーク（<code>site/source.json</code> の <code>guiRevision</code>、<code>f1e8f96</code>）で数えたものです。フォークを更新したら数え直します。</p>
+  <p class="source">根拠：フォーク <code>src/addons/</code>、<code>api.js</code> の <code>appendToSharedSpace</code>、<code>docs/plus-integration-sockets.md</code>、<code>docs/gui-integration/README.md</code>、<code>site/plus-integration.ts</code>。調査対象は <code>site/source.json</code> の <code>guiRevision</code> に固定したフォークです。追加・削除によってアドオンの件数は変わるため、現在の一覧はその checkout で確認します。</p>
   <nav class="pager" aria-label="前後の記事">
     <a class="prev" href="#article" rel="prev"><span>← 前の記事</span><b>01 記事：三つの方式</b></a>
     <a class="next-doc" href="#spec" rel="next"><span>次の記事 →</span><b>03 組み込みの仕様書</b></a>
@@ -791,6 +791,21 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>図8</b>実装は family の各パッケージ（それぞれ自分のリポジトリを持つ <code>turbowarp-plus-editor-*</code> など）に、接続と配信は Editor に、口を呼ぶ行だけがフォークにあります。パッケージ側は GPL のコードを import しないので、向きは「GPL 側がパッケージの口を呼ぶ」に固定します。family の一覧と、構成・移行計画などの文書は turbowarp-plus-packages にあります。</figcaption>
   </figure>
 
+  <div class="prose">
+    <p>2026年11月19日時点で、パレット・作品ツール・拡張レビュー・保存変換の実装も既存の独立パッケージへ移管済みです。Editor の <code>site/</code> は、起動設定・依存固定と、GUI の値やコールバックを渡す接続を持ちます。</p>
+  </div>
+  <div class="table-wrap"><table class="wide">
+    <thead><tr><th>機能の所有者</th><th>実装・状態・文言・対象の検証</th></tr></thead>
+    <tbody>
+      <tr><th><code>turbowarp-plus-editor-code-views</code></th><td>パレット・表示グループ・削除予告・コード表示とメニュー</td></tr>
+      <tr><th><code>turbowarp-plus-editor-workbench</code></th><td>作品情報・診断・履歴・保存と新規作成の段取り、タブ・パネル・ステージの操作</td></tr>
+      <tr><th><code>turbowarp-extension-loader</code></th><td>カタログ設定・依存順・承認状態・VM登録と復元・作品サイズの判定</td></tr>
+      <tr><th><code>turbowarp-extension-security-dialog</code></th><td>拡張一覧・作品を開く前のレビュー・許可と再試行の画面</td></tr>
+      <tr><th><code>turbowarp-sb3-save-format</code></th><td>作品データの調査・変換・検証と保存形式</td></tr>
+    </tbody>
+  </table></div>
+  <p class="source">現在の責務と公開 API の境界：<a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/upstream-feature-ownership.md">上流への責務移管</a>。移管時の版と現在の固定版は異なるため、導入版は <code>package.json</code>・<code>package-lock.json</code>・<code>site/source.json</code> で確認します。</p>
+
   <h3 id="spec-2">2. ビルド時の結合</h3>
   <div class="prose">
     <p>フォークの <code>src/addons/hooks.js</code> は次の getter を持ちます。本家にも存在するファイルです。</p>
@@ -849,7 +864,7 @@ export const getHostIntegration = () =&gt;
   <h3 id="spec-3">3. 口の一覧</h3>
   <div class="prose">
     <p>フォークが参照している口を用途ごとに並べます。左の名前はフォークが <code>getHostIntegration()?.</code> の後に書く名前、右の項目は統合オブジェクトの項目です。<code>menu-bar.jsx</code> と <code>extension-library.jsx</code> は <code>getHostIntegration()</code> をいったん変数 <code>host</code> に受けてから読むので、最新の一覧はフォークの checkout で次の2つのコマンドを合わせて取り出します。<code>hostIntegration</code> は口ではなく、<code>host…</code> 補助関数に統合オブジェクトを渡すための getter です。</p>
-    <p>表は 2026年11月14日に、固定しているフォーク（<code>f1e8f96</code>）で取り出したものです。</p>
+    <p>表の呼び出し名は2026年11月19日に、<code>site/source.json</code> の固定GUI <code>97b876ac206c2a7b6a4cd47a77e5827c70f3173a</code> で再確認しました。接続を変更するときは <code>site/gui-integration/index.ts</code>・<code>site/plus-integration.ts</code> と照合し、下記の固定GUI接続テストで確認します。</p>
   </div>
   <pre><code>grep -rhoE "getHostIntegration\(\)\?\.[A-Za-z]+" src | sort | uniq -c
 grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containers/extension-library.jsx | sort -u</code></pre>
@@ -1036,7 +1051,7 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
     <table class="wide">
       <thead><tr><th>既定</th><th>フラグ（<code>twPlus</code> を省略）</th></tr></thead>
       <tbody>
-        <tr><th>有効（<code>=0</code> で無効）</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code>（Web の既定） <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code></td></tr>
+        <tr><th>有効（<code>=0</code> で無効）</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code>（Web の既定） <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code> <code>SaveWorkspace</code></td></tr>
         <tr><th>無効（<code>=1</code> で有効）</th><td><code>SpriteProperties</code> <code>WindowLayout</code> <code>HorizontalBlockPalette</code> <code>StageDisplayMenu</code>（<code>StandardLayout</code> のときは有効）</td></tr>
         <tr><th>他のフラグが前提（既定で有効）</th><td><code>ManualProjectURI</code>（<code>ExtensionLoader</code> が必要）、<code>ExtensionFileMenu</code>（<code>StandardLayout</code> が必要）</td></tr>
         <tr><th>他のフラグが前提（<code>=1</code> で有効）</th><td><code>GitRestoreVersion</code>（<code>LocalGit</code> が必要）、<code>BackpackPopout</code> <code>InternalWindows</code>（<code>WindowLayout</code> が必要）、<code>StagePanel</code> <code>TargetList</code> <code>SpriteCodeWindows</code>（<code>WindowLayout</code> と <code>InternalWindows</code> が必要）</td></tr>
@@ -1054,14 +1069,16 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
   </div>
 
   <h3 id="spec-9">9. 検証</h3>
+  <p>変更した機能は所有パッケージで、Editor の接続は影響する境界に絞って検証します。以下は検証の選択肢で、文書変更や公開操作だけを理由に全件を繰り返す手順ではありません。現在の CI は単体・接続・ビルドを担当し、ブラウザー E2E は開発時にローカルのヘッドレス環境で実行します。</p>
   <div class="table-wrap">
     <table class="wide">
       <thead><tr><th>コマンド</th><th>確かめること</th></tr></thead>
       <tbody>
         <tr><td><code>npm test</code></td><td>このリポジトリの単体テスト（<code>node --test --import ./test/asset-hooks.ts test/*.test.ts</code>）。<code>test/plus-integration.test.ts</code> が統合オブジェクトの各項目を固定する</td></tr>
         <tr><td><code>E2E_GUI_ROOT=… npm run test:gui-integration</code></td><td>固定したフォークに本家に無いファイルが無いこと、口の意味、移設したテスト</td></tr>
+        <tr><td><code>node --test test/package/feature-ownership.test.ts</code></td><td>移管済みの接続にローカル UI・クラス・機能状態を持ち込んでいないこと</td></tr>
         <tr><td><code>npm run typecheck</code></td><td>型検査</td></tr>
-        <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>配信ビルド。<code>build-info.json</code> の <code>revision</code> と <code>siteRevision</code> が今の HEAD と <code>site/source.json</code> に一致すること</td></tr>
+        <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>配信ビルド。<code>TW_PLUS_PACKAGER_ROOT</code> に固定Packagerのcheckoutも指定する。<code>build-info.json</code> の <code>revision</code> は固定GUI、<code>siteRevision</code> は対象Editorの完全SHAと照合する</td></tr>
         <tr><td><code>npm run test:e2e</code></td><td>Playwright による統合 E2E</td></tr>
       </tbody>
     </table>
@@ -1293,10 +1310,11 @@ if (controls) {
   <h3 id="howto-6">6. このリポジトリの保守者向けの注意</h3>
   <div class="callout warn">
     <div class="label">保守者・AI エージェント向け</div>
-    <p>ここからは、turbowarp-plus-editor に直接変更を入れる人（AI エージェントを含む）向けの運用規則です。最初の2つの正本は <code>AGENTS.md</code> です。最後の1つは、このリポジトリの設定から来る注意です。</p>
+    <p>ここからは、turbowarp-plus-editor に直接変更を入れる人（AI エージェントを含む）向けの運用規則です。配置・機能の既定値・GUI境界・検証の正本は <code>AGENTS.md</code> です。マージ方法はリポジトリの設定も確認します。</p>
     <ul class="checklist no">
       <li>新しい機能の実装本体をこのリポジトリに置かない。本リポジトリには版の固定と結線だけを置き、ワークスペースのパッケージ（以前の <code>packages/editor-*</code>）を作り直さない。置き場所に迷うときは、設計や issue を書く段階でどのリポジトリに入れるかを先に決める</li>
-      <li>OS のマウスカーソルを動かす E2E（<code>TW_PLUS_NATIVE_INPUT=1</code>、<code>test:e2e:native</code>）を、明示的に依頼されていないのに走らせない。一般的な E2E の実行や PR の検証の依頼には含まれない</li>
+      <li>通常のローカル CI・E2E はヘッドレスで実行する。OSカーソルを動かす、ウィンドウを表示する、フォーカスを切り替える検証は、今回の作業で明示的に依頼された場合だけ実行する。<code>TW_PLUS_NATIVE_INPUT=1</code>、<code>E2E_HEADED=1</code>、<code>E2E_NATIVE=1</code>、<code>--headed</code>、画面付きのElectronも対象。一般的なE2E・PR検証の依頼には含まれない</li>
+      <li>新機能は原則として既定で有効にし、対象の回帰確認と切り戻し手順を用意する。既定OFFの段階導入は対象と条件を事前に合意する</li>
       <li>CI を待つつもりで <code>gh pr merge --auto</code> を使わない。このリポジトリの PR には必須のチェックが無く、<code>--auto</code> を付けると CI を待たずにすぐマージされる</li>
     </ul>
   </div>

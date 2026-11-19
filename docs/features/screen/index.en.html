@@ -11,7 +11,7 @@
 <header><a href="../../">TurboWarp-Plus-Editor</a><a href="https://github.com/kubohiroya/turbowarp-plus-editor">GitHub</a></header>
 <main>
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 2. Screen layout and menus · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
-<p class="eyebrow">Feature guide 2/12 · Updated November 15, 2026</p>
+<p class="eyebrow">Feature guide 2/12 · Updated November 19, 2026</p>
 <h1>Screen layout and menus</h1>
 <p class="lead">In the menu bar at the very top, project operations are grouped in the "File" and "Edit" menus, and the stage, Git, recording, debugging and extension controls are gathered on the right.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
@@ -55,7 +55,7 @@
 <tr><th scope="row">Right</th><td>"Git ▾" (appears once a folder with a repository is open, and shows the current branch name, for example "main ▾")</td><td>"Open Local Git" and <a href="../git/index.en.html#local-git">switching branches</a></td></tr>
 <tr><th scope="row">Right</th><td>"Open stage" and "▾"</td><td><a href="../stage/index.en.html#stage-open">Open the stage and choose where it opens</a></td></tr>
 <tr><th scope="row">Right</th><td>🎥 (Record)</td><td>Records the stage. While recording, the state, such as a countdown or "Stop recording", appears beside it</td></tr>
-<tr><th scope="row">Right</th><td>"…" (Debugger)</td><td><a href="#extension-controls">Opens the debugger</a></td></tr>
+<tr><th scope="row">Right</th><td>Ladybug icon (Debugger)</td><td><a href="#extension-controls">Opens the debugger</a></td></tr>
 <tr><th scope="row">Far right</th><td>Extension button area</td><td><a href="#extension-controls">Extension settings and controls</a></td></tr>
 </tbody></table></div>
 <p>Below the menu bar, at the left edge of the screen, are four switches stacked in a column (the activity bar). They choose what the left drawer shows: "Sprites", "Project folder", "Git history" or "AI agents". Above the sprite list are the "Search sprites", "Pin sprite list" and "Undock sprite list" buttons, and below it are "Backdrops" and the button for adding a sprite (<a href="../sprites/index.en.html">Edit sprites and the backdrop</a>, <a href="../git/index.en.html">Manage projects with project folders and Git</a>).</p>
@@ -129,10 +129,11 @@
 <h2>2.5 Extension buttons and the debugger at the top right</h2>
 
 <p>Control buttons provided by extensions, such as camera permission or Teachable Machine model settings, are gathered in the rounded box at the right end of the menu bar (the extension button area). A button appears only while its extension needs it, and disappears when the project is reloaded. Pressing it opens that extension's settings or controls.</p>
-<ul><li>Buttons in the menu bar show only an icon. Check a button's name in the tooltip that appears when you hover over it.</li><li>When TurboWarp's debugger is enabled, a "Debugger" button (shown as "…") appears between 🎥 (Record) and the extension button area. The debugger and record buttons are not part of the extension button area.</li></ul>
+<ul><li>Buttons in the menu bar show only an icon. Check a button's name in the tooltip that appears when you hover over it.</li><li>When TurboWarp's debugger is enabled, a "Debugger" button with a ladybug icon appears between 🎥 (Record) and the extension button area. The debugger and record buttons are not part of the extension button area.</li></ul>
 <p>For example, the Kamishibai extension (<a href="../documents/index.en.html">Edit extension data and documents</a>) shows a reload button for production work only while a YAML script is running.</p>
 <p>Extension authors can register a button from an unsandboxed extension with <code>Scratch.gui.stageControls.addButton</code>.</p>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">Specification for extension authors</a></p>
+<p><a href="../blocks/index.en.html#context-menu">Set a breakpoint</a> from a block's context menu to pause just before that block runs. Pausing brings the debugger tab to the front even if another tab covered it. Use the debugger to inspect threads, step or resume. A breakpoint added during compiled execution takes effect from the next start.</p>
 
 </section>
 

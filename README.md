@@ -39,6 +39,8 @@ Hover to reveal controls, and drag and drop to rearrange tabs or copy blocks bet
 
 The sprite list is on the left, block categories are across the top of the code area, and buttons down the side of each panel open code, costumes, sounds, variables, and messages. The palette remembers each category’s size and scroll position. Panels can be pinned, resized, and moved between the workspace and separate windows. [Screen layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/index.en.html) · [Workspace layout](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/index.en.html)
 
+Palette search spans all visible categories. Choose block groups for each sprite or backdrop, pin groups open and reorder them. Visibility settings and order are saved with the project. [Find and organize blocks](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html)
+
 ### Read scripts in Z or N order
 
 Right-click the code background and use **Change code layout view** to choose Z or N order. The scripts form a spaced vertical column, and the minimap follows that view. Click a script to edit it while keeping its original free-layout position. Use ▼ / ▶ on the left to fold or unfold one script, or right-click the background for **Fold all** / **Unfold all**. Arrows curve widely to the right, with space on the left for incoming arrows. [Code layout views](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html#arrange)
@@ -78,6 +80,8 @@ The variables pane also shows thread and runtime variables from the temporary-va
 Message arrows use fine dashes for **broadcast** and longer dashes for **broadcast and wait**. This rule also applies in Free layout, Hats and functions, Z/N views, and minimaps; hourglass icons are no longer shown.
 
 Hover over a box to highlight its connected arrows. Select a function belonging to the current sprite or stage to open it in the code panel on the right. **Hats and functions** also lets you select and edit individual scripts and custom block definitions. [Functions and calls](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/index.en.html#call-graph)
+
+Right-click a block in Free layout and choose **Edit this script in a separate view** or **Open relationships for this script** to edit the script containing that block and inspect its relationships. [Script actions](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/index.en.html#context-menu)
 
 ### Connect block editing with your other tools
 

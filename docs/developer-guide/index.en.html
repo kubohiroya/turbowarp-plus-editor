@@ -723,7 +723,7 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
   <div class="prose" style="margin-top:1rem">
     <p>That said, small features in area A of Fig. 7 are written like addons: "attached later, removed with <code>dispose</code>". That makes them easy to move to the addon form if we ever want users to toggle them. We will not rebuild existing features to be addon-compatible.</p>
   </div>
-  <p class="source">Sources: the fork's <code>src/addons/</code> (81 addons, 6 of them <code>tw-</code>), <code>appendToSharedSpace</code> in <code>api.js</code>, <code>docs/plus-integration-sockets.md</code>, <code>docs/gui-integration/README.md</code>, <code>site/plus-integration.ts</code>. Counts were taken on 14 November 2026 from the fork pinned by this repository (<code>guiRevision</code> in <code>site/source.json</code>, <code>f1e8f96</code>). Recount them when the fork is updated.</p>
+  <p class="source">Sources: the fork's <code>src/addons/</code>, <code>appendToSharedSpace</code> in <code>api.js</code>, <code>docs/plus-integration-sockets.md</code>, <code>docs/gui-integration/README.md</code>, <code>site/plus-integration.ts</code>. The source to inspect is the fork pinned by <code>guiRevision</code> in <code>site/source.json</code>. Addon counts change as entries are added or removed; check the current list in that checkout.</p>
   <nav class="pager" aria-label="Previous and next documents">
     <a class="prev" href="#article" rel="prev"><span>← Previous</span><b>01 Article: three approaches</b></a>
     <a class="next-doc" href="#spec" rel="next"><span>Next →</span><b>03 How features are built in</b></a>
@@ -787,6 +787,21 @@ th.sa, td.sa-c { border-top: 3px solid var(--sa); } th.tw { border-top: 3px soli
     <figcaption><b>Fig. 8</b>Implementations live in the family packages (such as <code>turbowarp-plus-editor-*</code>, each in its own repository), wiring and deployment in the Editor, and only the socket call lines in the fork. The packages never import GPL code, so the direction is fixed: the GPL side calls the packages' sockets. The family catalog and documents such as the architecture and migration plan live in turbowarp-plus-packages.</figcaption>
   </figure>
 
+  <div class="prose">
+    <p>As of 19 November 2026, the implementations for palettes, project tools, extension reviews and save conversion have also moved to existing independent packages. The Editor's <code>site/</code> keeps startup settings, pinned dependencies and wiring that passes GUI values and callbacks.</p>
+  </div>
+  <div class="table-wrap"><table class="wide">
+    <thead><tr><th>Feature owner</th><th>Implementation, state, wording and focused verification</th></tr></thead>
+    <tbody>
+      <tr><th><code>turbowarp-plus-editor-code-views</code></th><td>Palettes, visible groups, deletion previews, code views and menus</td></tr>
+      <tr><th><code>turbowarp-plus-editor-workbench</code></th><td>Project properties, diagnostics, history, save and new-project flows, tabs, panels and stage controls</td></tr>
+      <tr><th><code>turbowarp-extension-loader</code></th><td>Catalog settings, dependency order, approval state, VM registration and recovery, project-size checks</td></tr>
+      <tr><th><code>turbowarp-extension-security-dialog</code></th><td>Extension lists, reviews before opening a project, permission and retry screens</td></tr>
+      <tr><th><code>turbowarp-sb3-save-format</code></th><td>Project inspection, conversion, validation and save formats</td></tr>
+    </tbody>
+  </table></div>
+  <p class="source">Current ownership and API boundaries: <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/upstream-feature-ownership.md">upstream feature ownership (Japanese)</a>. Versions recorded at migration time differ from current pins; check <code>package.json</code>, <code>package-lock.json</code> and <code>site/source.json</code> for the installed versions.</p>
+
   <h3 id="spec-2">2. Binding at build time</h3>
   <div class="prose">
     <p>The fork's <code>src/addons/hooks.js</code>, a file upstream also has, contains this getter.</p>
@@ -845,7 +860,7 @@ export const getHostIntegration = () =&gt;
   <h3 id="spec-3">3. List of sockets</h3>
   <div class="prose">
     <p>The sockets the fork refers to, grouped by purpose. The left column is the name the fork writes after <code>getHostIntegration()?.</code>; the right column is the entry in the integration object. <code>menu-bar.jsx</code> and <code>extension-library.jsx</code> first store <code>getHostIntegration()</code> in a variable named <code>host</code>, so extract the current list by combining the two commands below in a checkout of the fork. <code>hostIntegration</code> is not a socket; it is the getter that hands the integration object to the <code>host…</code> helpers.</p>
-    <p>The table was extracted on 14 November 2026 from the pinned fork (<code>f1e8f96</code>).</p>
+    <p>The call names in this table were rechecked on 19 November 2026 against the GUI pinned by <code>site/source.json</code>, <code>97b876ac206c2a7b6a4cd47a77e5827c70f3173a</code>. When changing wiring, compare it with <code>site/gui-integration/index.ts</code> and <code>site/plus-integration.ts</code>, then use the pinned-GUI integration tests below.</p>
   </div>
   <pre><code>grep -rhoE "getHostIntegration\(\)\?\.[A-Za-z]+" src | sort | uniq -c
 grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containers/extension-library.jsx | sort -u</code></pre>
@@ -1032,7 +1047,7 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
     <table class="wide">
       <thead><tr><th>Default</th><th>Flags (<code>twPlus</code> prefix omitted)</th></tr></thead>
       <tbody>
-        <tr><th>On (<code>=0</code> turns off)</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code> (web default) <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code></td></tr>
+        <tr><th>On (<code>=0</code> turns off)</th><td><code>ExtensionLoader</code> <code>ProjectTools</code> <code>PayloadFormats</code> <code>Splitter</code> <code>StandardLayout</code> (web default) <code>PaletteDeletePreview</code> <code>PaletteCategoryReorder</code> <code>ContextMenuIcons</code> <code>LocalGit</code> <code>WorkspaceMinimap</code> <code>StageCodePrewarm</code> <code>SaveWorkspace</code></td></tr>
         <tr><th>Off (<code>=1</code> turns on)</th><td><code>SpriteProperties</code> <code>WindowLayout</code> <code>HorizontalBlockPalette</code> <code>StageDisplayMenu</code> (on with <code>StandardLayout</code>)</td></tr>
         <tr><th>Needs another flag (on by default)</th><td><code>ManualProjectURI</code> (needs <code>ExtensionLoader</code>); <code>ExtensionFileMenu</code> (needs <code>StandardLayout</code>)</td></tr>
         <tr><th>Needs another flag (<code>=1</code> turns on)</th><td><code>GitRestoreVersion</code> (needs <code>LocalGit</code>); <code>BackpackPopout</code> <code>InternalWindows</code> (need <code>WindowLayout</code>); <code>StagePanel</code> <code>TargetList</code> <code>SpriteCodeWindows</code> (need <code>WindowLayout</code> and <code>InternalWindows</code>)</td></tr>
@@ -1050,14 +1065,16 @@ grep -hoE "host\??\.[A-Za-z]+" src/components/menu-bar/menu-bar.jsx src/containe
   </div>
 
   <h3 id="spec-9">9. Verification</h3>
+  <p>Verify a changed feature in its owning package and limit Editor checks to affected integration boundaries. The commands below are options, not a requirement to repeat every check for a documentation edit or publication alone. Current CI runs unit and integration checks and builds; browser E2E runs locally in headless mode during development.</p>
   <div class="table-wrap">
     <table class="wide">
       <thead><tr><th>Command</th><th>What it checks</th></tr></thead>
       <tbody>
         <tr><td><code>npm test</code></td><td>Unit tests for this repository (<code>node --test --import ./test/asset-hooks.ts test/*.test.ts</code>). <code>test/plus-integration.test.ts</code> pins each entry of the integration object</td></tr>
         <tr><td><code>E2E_GUI_ROOT=… npm run test:gui-integration</code></td><td>The pinned fork has no files upstream lacks; socket semantics; relocated tests</td></tr>
+        <tr><td><code>node --test test/package/feature-ownership.test.ts</code></td><td>Migrated adapters contain no local UI, classes or feature state</td></tr>
         <tr><td><code>npm run typecheck</code></td><td>Type checking</td></tr>
-        <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>The distribution build. <code>revision</code> and <code>siteRevision</code> in <code>build-info.json</code> must match the current HEAD and <code>site/source.json</code></td></tr>
+        <tr><td><code>E2E_GUI_ROOT=… npm run build:pages</code></td><td>The distribution build. Also set <code>TW_PLUS_PACKAGER_ROOT</code> to the pinned Packager checkout. Compare <code>revision</code> in <code>build-info.json</code> with the pinned GUI and <code>siteRevision</code> with the full target Editor SHA</td></tr>
         <tr><td><code>npm run test:e2e</code></td><td>Integration E2E with Playwright</td></tr>
       </tbody>
     </table>
@@ -1289,10 +1306,11 @@ if (controls) {
   <h3 id="howto-6">6. Notes for maintainers of this repository</h3>
   <div class="callout warn">
     <div class="label">FOR MAINTAINERS AND AI AGENTS</div>
-    <p>These are working rules for people (including AI agents) who change turbowarp-plus-editor directly. The first two come from <code>AGENTS.md</code>, which is the source of truth; the last is a caution that follows from this repository's settings.</p>
+    <p>These are working rules for people (including AI agents) who change turbowarp-plus-editor directly. Placement, feature defaults, GUI boundaries and verification follow <code>AGENTS.md</code>. Also inspect repository settings before choosing how to merge.</p>
     <ul class="checklist no">
       <li>Don't put the body of a new feature in this repository. It holds only pinned versions and wiring; don't recreate workspace packages (the former <code>packages/editor-*</code>). When unsure where something belongs, decide which repository it goes into while writing the design or issue</li>
-      <li>Don't run E2E tests that move the OS mouse cursor (<code>TW_PLUS_NATIVE_INPUT=1</code>, <code>test:e2e:native</code>) unless explicitly asked to. A general request to run E2E or to verify a PR doesn't count</li>
+      <li>Run normal local CI and E2E headlessly. Tests that move the OS cursor, show windows or switch focus require an explicit request for this task. This includes <code>TW_PLUS_NATIVE_INPUT=1</code>, <code>E2E_HEADED=1</code>, <code>E2E_NATIVE=1</code>, <code>--headed</code> and visible Electron windows. A general E2E or PR-verification request does not include them</li>
+      <li>Enable new features by default, with focused regression checks and rollback instructions. Agree on the feature and conditions before using a default-off rollout</li>
       <li>Don't rely on <code>gh pr merge --auto</code> to wait for CI. PRs in this repository have no required checks, so <code>--auto</code> merges at once without waiting for CI</li>
     </ul>
   </div>
