@@ -9,7 +9,8 @@ import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/contex
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
-import {projectCreation, projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
+import {projectCatalog, projectCreation, projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
+export {projectFileOpened} from '../project-tools/index.ts';
 import {projectFolderOpenRemote, projectFolderWorkflows} from '../project-folder-host.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
@@ -204,6 +205,7 @@ export const renderProjectFileWorkflow = ({
     const openRemote = projectFolderOpenRemote(vm);
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, create, createIn, newProject, newWindow, open, storage, folder, restore,
+        catalog: () => projectCatalog(vm, locale, gui),
         exportProject: openExport,
         openRemote: openRemote && (() => openRemote(locale)),
         // Releases… keeps the GUI's MenuSection, so a divider sets it apart from the open commands above it.

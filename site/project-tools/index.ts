@@ -5,11 +5,22 @@ import {installEditorExtensionHost} from '../extension-host/editor-host.ts';
 import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
 import {MANUAL_PROJECT_URI_ENABLED, PROJECT_TOOLS_ENABLED} from './config.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import '@kubohiroya/turbowarp-plus-editor-workbench/project-catalog.css';
 
-export const {installProjectToolsHost, projectScreenState, loadedProjectTitle, restoreProjectTitle, isProjectLoading, subscribeProjectLoad, projectSaveName, setProjectSaveName, createFolderFromCurrentProject, projectFileActions, projectCreation, renderFileMenu, projectToolsOwnKeyEvent} = createProjectTools({
+export const {installProjectToolsHost, projectScreenState, loadedProjectTitle, restoreProjectTitle, isProjectLoading, subscribeProjectLoad, projectSaveName, setProjectSaveName, createFolderFromCurrentProject, projectFileActions, projectCreation, renderFileMenu, projectToolsOwnKeyEvent,
+    bindProjectCatalogFolder, projectCatalog, projectFileOpened} = createProjectTools({
     installEditorExtensionHost, installProjectProperties, createProjectDialogs, editorProjectArchives,
     projectToolsEnabled: PROJECT_TOOLS_ENABLED, manualProjectURIEnabled: MANUAL_PROJECT_URI_ENABLED,
     readStartupFlags: readWebStartupFeatureFlags,
+    catalogEnvironment(document) {
+        const store = (document.defaultView as Window & {ReduxStore?: {
+            getState(): {scratchGui: {tw: {fileHandle?: FileSystemFileHandle}; projectChanged: boolean}};
+            subscribe(listener: () => void): () => void;
+        }})?.ReduxStore;
+        return store && {readFile: () => store.getState().scratchGui.tw.fileHandle ?? null,
+            isDirty: () => store.getState().scratchGui.projectChanged,
+            subscribeLocation: listener => store.subscribe(listener)};
+    },
     projectLoadState(document) {
         const store = (document?.defaultView as Window & {ReduxStore?: {
             getState(): {scratchGui: {projectState: {loadingState: string}}};

@@ -5,7 +5,7 @@ import {chooseBrowserProject, followProjectFolder, mountProjectFolder, projectFo
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
-import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, openRemoteRepositoryDialog,
+import {createScratchBlocksDiffRenderer, inspectPublicationRepository, mountGitPanel, openProjectComparison, openRemoteRepositoryDialog, readProjectRemote,
     pushPublicationCommit}
     from '@kubohiroya/turbowarp-plus-editor-git';
 import {createGitConnectionSettings} from '@kubohiroya/turbowarp-plus-editor-auth';
@@ -16,7 +16,7 @@ import {bindDesktopPublicationPushSession, createProjectPublication} from '@kubo
 import type {PublicationBridge, ProjectPublicationPort}
     from '@kubohiroya/turbowarp-plus-editor-git/project-publication';
 import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-editor-git/cloudflare-publication';
-import {loadedProjectTitle, projectSaveName, projectScreenState, setProjectSaveName} from './project-tools/index.ts';
+import {bindProjectCatalogFolder, loadedProjectTitle, projectSaveName, projectScreenState, setProjectSaveName} from './project-tools/index.ts';
 import {followProjectTitleCommits, reflectProjectTitle} from '@kubohiroya/turbowarp-plus-editor-workbench/project-title';
 import {showNotice} from '@kubohiroya/turbowarp-plus-editor-workbench/project-notice';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
@@ -85,7 +85,7 @@ const gitCloudflare = () => typeof __TW_PLUS_GIT_CLOUDFLARE__ === 'undefined' ? 
 const gitDesktop = (view: PickerWindow) => view.EditorPreload?.localGitAuth ?? view.EditorPreload?.localGit;
 
 const folders = new WeakMap<FolderVM, {folder: LocalFolderMount; workflows(): ProjectFolderWorkflows;
-    openRemote?(locale: string): void}>();
+    openRemote?(locale: string, remote?: string): Promise<boolean>}>();
 
 export const projectFolderWorkflows = (vm: FolderVM) => folders.get(vm)?.workflows();
 /** Opens a remote Git repository: clones it, then opens the project at its root (#676). */
@@ -359,11 +359,11 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     };
     // Open Remote Git Repository…: a read session clones the repository into an empty folder on the device or in the
     // browser, then the root opens as the project folder and the Git panel binds to it.
-    const openRemote = connectionSettings ? (language: string) => {
+    const openRemote = connectionSettings ? (language: string, initialRemote?: string) => {
         const projects = folder.browserProjects;
         const created = new Map<FileSystemDirectoryHandle, string>();
-        void openRemoteRepositoryDialog({
-            document, locale: language, connectionSettings,
+        return openRemoteRepositoryDialog({
+            document, locale: language, connectionSettings, initialRemote,
             deviceFolders: typeof view.showDirectoryPicker === 'function',
             ...typeof view.showDirectoryPicker === 'function' && {async pickDeviceFolder() {
                 let directory: FileSystemDirectoryHandle;
@@ -396,6 +396,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         });
     } : undefined;
     folders.set(vm, {folder, workflows, openRemote});
+    bindProjectCatalogFolder(vm, {folder, openRemote, readRemote: readProjectRemote});
     // A title the person committed in the menu bar renames what the browser can rename, and says what it cannot (#679).
     const stopTitleWatch = followProjectTitleCommits(document, {
         readTitle: () => store.getState().scratchGui.projectTitle,

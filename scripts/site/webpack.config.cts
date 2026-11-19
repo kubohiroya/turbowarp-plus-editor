@@ -276,7 +276,7 @@ const fontsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-font
 const codeViewsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views/styles.css$'];
 // editor.css and targets.css are CSS modules the host passes in; the others are global.
 const layoutGlobalStyleEntries = ['sprite-layout-menu.css', 'debugger-panel.css', 'edit-menu.css', 'info-menu.css',
-    'project-file-menu.css', 'project-load-progress.css', 'project-search.css', 'stage-controls.css'];
+    'project-file-menu.css', 'project-catalog.css', 'project-load-progress.css', 'project-search.css', 'stage-controls.css'];
 // Every subpath the package exports, read from its manifest so a new one cannot be left out. The package does not
 // export its manifest; it sits beside the `dist` its entries are in.
 const workbenchExports = JSON.parse(fs.readFileSync(path.join(workbenchSource, '..', 'package.json'), 'utf8')).exports;
