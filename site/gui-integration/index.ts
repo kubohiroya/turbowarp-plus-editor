@@ -205,7 +205,7 @@ export const renderProjectFileWorkflow = ({
     const openRemote = projectFolderOpenRemote(vm);
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, create, createIn, newProject, newWindow, open, storage, folder, restore,
-        catalog: () => projectCatalog(vm, locale, gui),
+        catalog: createProject => projectCatalog(vm, locale, gui, createProject),
         exportProject: openExport,
         openRemote: openRemote && (() => openRemote(locale)),
         // Releases… keeps the GUI's MenuSection, so a divider sets it apart from the open commands above it.
