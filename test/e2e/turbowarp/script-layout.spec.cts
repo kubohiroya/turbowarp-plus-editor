@@ -1,4 +1,5 @@
 const {test, expect} = require('./fixtures.cts');
+const {installMessageScripts, messageScriptPositions} = require('./message-scripts.cts');
 
 async function openLayoutMenu(page, background, label, position) {
     await background.click({button: 'right', position});
@@ -14,6 +15,105 @@ async function expectLayoutSelection(submenu, label) {
     await expect(checked).toHaveCount(1);
     await expect(checked).toHaveText(label);
 }
+
+test('message styles and script editing survive Z/N projection without moving free scripts', async ({page}) => {
+    await page.goto('editor.html?lang=en');
+    await installMessageScripts(page);
+    const surface = page.locator('.tw-script-view-surface');
+    const workspace = page.locator('.injectionDiv').filter({has: surface});
+    const original = await messageScriptPositions(page);
+    const expectMessageStyles = async scope => {
+        const messages = scope.locator('[data-script-relation="message"]');
+        await expect(messages).toHaveCount(2);
+        await expect.poll(() => messages.evaluateAll(groups => groups.map(group => ({
+            wait: group.getAttribute('data-wait'),
+            dash: getComputedStyle(group.querySelector('.tw-script-relation-line')).strokeDasharray
+                .split(/[ ,]+/).map(parseFloat)
+        })).sort((a, b) => a.wait.localeCompare(b.wait)))).toEqual([
+            {wait: 'false', dash: [3.5, 2.5]}, {wait: 'true', dash: [7, 5]}
+        ]);
+        await expect(scope.locator('.tw-script-relation-wait')).toHaveCount(0);
+        expect(await scope.locator('[data-script-relation-guide]').evaluateAll(
+            nodes => nodes.some(node => node.textContent.includes('⏳')))).toBe(false);
+    };
+    await expectMessageStyles(workspace);
+    for (const layout of ['Z', 'N']) {
+        const background = layout === 'Z' ? workspace.locator('.blocklyMainBackground') : surface;
+        const position = await emptyLayoutPosition(background);
+        const menu = await openLayoutMenu(page, background, 'Change code layout view', position);
+        await menu.trigger.hover();
+        await menu.submenu.getByRole('menuitemradio', {name: `${layout} layout view`, exact: true}).click();
+        await expect(surface).toBeVisible();
+        await expectMessageStyles(surface);
+
+        const fold = page.locator('[data-script-fold-toggle="message-receiver"]');
+        await fold.click();
+        await expect(fold).toHaveAttribute('aria-expanded', 'false');
+        await expectMessageStyles(surface);
+        await fold.click();
+        await expect(fold).toHaveAttribute('aria-expanded', 'true');
+
+        await surface.locator('[data-script-view-block="message-key"]').click();
+        const dialog = page.getByRole('dialog', {name: 'Edit script'});
+        await expect(dialog).toBeVisible();
+        await dialog.locator('[data-id="message-key"] .blocklyEditableText').click();
+        const key = layout === 'Z' ? 'a' : 'b';
+        await page.locator('.blocklyDropDownDiv').getByText(key, {exact: true}).click();
+        await dialog.getByRole('button', {name: 'Close', exact: true}).click();
+        await expect(dialog).toBeHidden();
+        await expect.poll(() => page.evaluate(() => window.vm.editingTarget.blocks
+            .getBlock('message-key').fields.KEY_OPTION.value)).toBe(key);
+        expect(await messageScriptPositions(page)).toEqual(original);
+        await expect(surface).toBeVisible();
+        await expectMessageStyles(surface);
+    }
+    const menu = await openLayoutMenu(page, surface, 'Change code layout view', await emptyLayoutPosition(surface));
+    await menu.trigger.hover();
+    await menu.submenu.getByRole('menuitemradio', {name: 'Normal layout view', exact: true}).click();
+    await expect(surface).toBeHidden();
+    expect(await messageScriptPositions(page)).toEqual(original);
+    await expectMessageStyles(workspace);
+});
+
+// Block sizes depend on the current locale and zoom; open menus on a visible blank point.
+async function emptyLayoutPosition(background) {
+    return background.evaluate(element => {
+        const box = element.getBoundingClientRect();
+        for (let y = 25; y < Math.min(box.height, innerHeight - box.top) - 10; y += 40) {
+            for (let x = 25; x < Math.min(box.width, innerWidth - box.left) - 10; x += 40) {
+                const target = document.elementFromPoint(box.left + x, box.top + y);
+                if (target && (target === element || element.contains(target)) && !target.closest('[data-script-view-block]')) {
+                    return {x, y};
+                }
+            }
+        }
+        throw new Error('No visible code background point');
+    });
+}
+
+test('the real project loader retains the wait cursor through its host continuation', async ({page}) => {
+    await page.goto('editor.html?lang=en');
+    await page.waitForFunction(() => window.vm?.editingTarget && window.ScratchBlocks?.getMainWorkspace());
+    await expect(page.locator('[data-tw-plus-wait-cursor]')).toHaveCount(0);
+    const cursor = await page.evaluate(async () => {
+        const vm = window.vm;
+        let loading;
+        const onLoaded = () => {loading = getComputedStyle(document.body).cursor;};
+        vm.runtime.on('PROJECT_LOADED', onLoaded);
+        try {
+            await vm.loadProject(vm.toJSON());
+            const continuation = getComputedStyle(document.body).cursor;
+            const firstFrame = await new Promise(resolve => requestAnimationFrame(() =>
+                resolve(getComputedStyle(document.body).cursor)));
+            return {loading, continuation, firstFrame};
+        } finally {
+            vm.runtime.removeListener('PROJECT_LOADED', onLoaded);
+        }
+    });
+    expect(cursor).toEqual({loading: 'wait', continuation: 'wait', firstFrame: 'wait'});
+    await expect(page.locator('[data-tw-plus-wait-cursor]')).toHaveCount(0);
+    await expect(page.locator('body')).not.toHaveCSS('cursor', 'wait');
+});
 
 test('code view order and rearrangement preview preserve script connections and support undo', async ({page}) => {
     await page.goto('editor.html?lang=ja');

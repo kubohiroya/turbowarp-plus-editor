@@ -35,9 +35,21 @@
 
 | 編集ツールにすぐ届く画面構成 | ステージやパネルを別ウィンドウへ |
 | --- | --- |
-| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/#layout"><img src="docs/features/images/top-editor.png" width="640" alt="ネコとボールの自由配置。関数呼び出しの実線とメッセージ送信の破線、右下のミニマップを表示"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/#dock"><img src="docs/features/images/top-stage-window.png" width="300" alt="別のウィンドウに出したステージ"></a> |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/#layout"><img src="docs/features/images/free-layout-current.png" width="640" alt="自由配置。関数呼び出しの実線と、通常の送信・送って待つを区別する破線、右下のミニマップを表示"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/stage/#dock"><img src="docs/features/images/top-stage-window.png" width="300" alt="別のウィンドウに出したステージ"></a> |
 
 スプライト一覧は左側に、ブロックのカテゴリはコード画面の上辺に、コード・コスチューム・音・変数・メッセージの切り替えはパネル側面のボタンにまとまっています。パレットのサイズとスクロール位置はカテゴリごとに保持されます。パネルの固定やサイズ調整、作業領域と別ウィンドウ間の移動もできます。[画面構成](https://kubohiroya.github.io/turbowarp-plus-editor/features/screen/) · [作業領域](https://kubohiroya.github.io/turbowarp-plus-editor/features/workspace/)
+
+### Z配置・N配置でスクリプトを順に読む
+
+コードの背景を右クリックし、**コードの並びの見え方を変更する**からZ配置・N配置を選ぶと、スクリプトを間隔のある縦一列で読めます。ミニマップも表示中の配置に追従します。スクリプトをクリックすると、自由配置での位置を保ったまま内容を編集できます。左縁の▼／▶で個別に折りたたみを切り替え、背景の右クリックでは**すべて折りたたむ**／**折りたたみをすべて解除**を選べます。矢印は右へ張り出して大きく曲がり、左から入る矢印のための余白も確保します。[コードの並びの見え方](https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/#arrange)
+
+パネルの切り替え中と、作品を開いて初めてコードを描画する間は、待機カーソルを表示します。
+
+| Z配置 | N配置 |
+| --- | --- |
+| <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/#arrange"><img src="docs/features/images/zn-layout.png" width="420" alt="Z配置"></a> | <a href="https://kubohiroya.github.io/turbowarp-plus-editor/features/blocks/#arrange"><img src="docs/features/images/n-layout.png" width="420" alt="N配置"></a> |
+
+*Z配置とN配置。左縁の折りたたみボタン、配置に追従するミニマップ、送信方式ごとに異なる破線。*
 
 ### クローン・変数・リスト・メッセージを確認する
 
@@ -59,9 +71,11 @@
 
 **呼び出し関係**では、どの関数がどの関数を呼ぶかを、関数の箱と矢印で確認できます。ほかのスプライトや背景で定義したグローバルな名前付き関数とのつながりや、メッセージを送るスクリプトから受け取るスクリプトへのつながりも表示されます。
 
-[![ハットから関数へ実線の矢印、メッセージを送るスクリプトから受け取るスクリプトへ破線の矢印が伸び、ほかのスプライトと背景の関数が灰色の箱で並ぶ呼び出し関係グラフ](docs/features/images/call-graph-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
+[![旗のハットから準備するへ実線、readyを受け取るハットへ通常の送信と送って待つの2本の破線を表示した呼び出し関係図](docs/features/images/call-graph-current-detail.png)](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
 
-*関数の呼び出しとメッセージのやり取りをグラフでたどる。「着地する」が送ったメッセージ「着地」を背景とボールが受け取り、ボールの「得点」がネコの「得点を数える」につながります。*
+*関数の呼び出しとメッセージの流れを図で確認。同じ送信元・受信先でも、「送る」と「送って待つ」を別々の破線で表示します。*
+
+メッセージの矢印は、**送る**を細かい破線、**送って待つ**を長い破線で区別します。自由配置、ハット・関数一覧、Z/N配置、ミニマップでも同じルールを使い、砂時計アイコンは表示しません。
 
 箱にポインターを重ねると、つながる矢印が強調されます。開いているスプライトや背景の関数の箱を選ぶと、その関数が右側のコードパネルに開きます。**ハット・関数一覧**からも、スクリプトやブロック定義を選んで編集できます。[関数と呼び出し関係](https://kubohiroya.github.io/turbowarp-plus-editor/features/sprites/#call-graph)
 
