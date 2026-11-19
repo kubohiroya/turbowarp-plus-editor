@@ -91,6 +91,45 @@ async function emptyLayoutPosition(background) {
     });
 }
 
+for (const locale of ['ja', 'en']) {
+    test(`semantic rearrangement from the free background preserves messages and supports undo (${locale})`, async ({page}) => {
+        await page.goto(`editor.html?lang=${locale}`);
+        await installMessageScripts(page);
+        const before = await messageScriptPositions(page);
+        const surface = page.locator('.tw-script-view-surface');
+        const workspace = page.locator('.injectionDiv').filter({has: surface});
+        const background = workspace.locator('.blocklyMainBackground');
+        const label = locale === 'ja' ? 'スクリプトを意味に応じて再配置する' : 'Rearrange scripts by relationships';
+        const open = async () => {
+            await background.click({button: 'right', position: await emptyLayoutPosition(background)});
+            await page.getByRole('menuitem', {name: label, exact: true}).click();
+            const dialog = page.getByRole('dialog', {name: label, exact: true});
+            await expect(dialog.locator('[data-layout-metrics]')).toHaveCount(1);
+            return dialog;
+        };
+        let dialog = await open();
+        await expect(dialog.locator('[data-script-view-block]')).toHaveCount(3);
+        await expect(dialog.locator('[data-semantic-relation="message"]')).toHaveCount(2);
+        expect(await messageScriptPositions(page)).toEqual(before);
+        await dialog.getByRole('button', {name: locale === 'ja' ? 'キャンセル' : 'Cancel', exact: true}).click();
+        expect(await messageScriptPositions(page)).toEqual(before);
+        dialog = await open();
+        await dialog.getByRole('button', {name: locale === 'ja' ? '再配置する' : 'Rearrange', exact: true}).click();
+        await expect(dialog).toBeHidden();
+        const after = await messageScriptPositions(page);
+        expect(after).not.toEqual(before);
+        expect(after[1][0]).toBeGreaterThan(after[0][0]);
+        expect(await page.evaluate(() => window.vm.editingTarget.blocks.getBlock('message-start').next)).toBe('message-send');
+        const edit = page.getByText(locale === 'ja' ? '編集' : 'Edit', {exact: true});
+        await edit.click();
+        await page.getByRole('button', {name: locale === 'ja' ? '元に戻す' : 'Undo', exact: true}).click();
+        await expect.poll(() => messageScriptPositions(page)).toEqual(before);
+        await edit.click();
+        await page.getByRole('button', {name: locale === 'ja' ? '繰り返し' : 'Redo', exact: true}).click();
+        await expect.poll(() => messageScriptPositions(page)).toEqual(after);
+    });
+}
+
 test('the real project loader retains the wait cursor through its host continuation', async ({page}) => {
     await page.goto('editor.html?lang=en');
     await page.waitForFunction(() => window.vm?.editingTarget && window.ScratchBlocks?.getMainWorkspace());
