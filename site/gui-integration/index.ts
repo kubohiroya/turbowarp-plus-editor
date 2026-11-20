@@ -178,9 +178,9 @@ const renderExternalYamlMenu = ({vm, locale, MenuItem, MenuSection, onRequestClo
             void action.open();
         }}, action.label));
 };
-export const renderFileMenu = props => React.createElement(React.Fragment, null,
+export const renderFileMenu = startup.standardLayout ? props => React.createElement(React.Fragment, null,
     renderProjectFileMenu(props), renderProjectFolderMenu(React.createElement, props), React.createElement(GitFileMenu, props),
-    renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props));
+    renderExternalYamlMenu(props), extensionInFileMenu && renderExtensionFileMenu(props)) : undefined;
 
 export {serializeProjectForExport} from '../packager/handoff.ts';
 
@@ -192,11 +192,11 @@ export const projectFileTypes = [
 // Overwriting and saving into the project folder collect other windows' edits first, as Save As does.
 const collectingSaves = (storage, folder) => collectBeforeSaving(storage, folder, () => flushPendingSurfaceEdits());
 
-export const renderProjectSaveMenu = ({vm, locale = 'en', storage: gui}) => {
+export const renderProjectSaveMenu = startup.standardLayout ? ({vm, locale = 'en', storage: gui}) => {
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
     const {saveAs, saveNew, saveCommit} = projectFileActions(vm, locale, storage, () => folder?.detach(), undefined, projectFolderWorkflows(vm));
     return React.createElement(ProjectSaveMenu, {locale, entries: {storage, folder, saveAs, saveNew, saveCommit}});
-};
+} : undefined;
 
 const openProjectURLFromMenu = (vm, locale, storage) => openProjectURL(document, locale, {
     vm, storage, loadedTitle: () => loadedProjectTitle(vm),
@@ -220,7 +220,7 @@ export const bindProjectOpenTabStorage = ({vm, locale = 'en', storage, create, d
     return null;
 };
 
-export const renderProjectFileWorkflow = ({
+export const renderProjectFileWorkflow = startup.standardLayout ? ({
     vm, locale = 'en', MenuItem, MenuSection, close, storage: gui, create, newWindow, open, restore, exportProject, addExtension, defaultTitle
 }) => {
     const {storage, folder} = collectingSaves(gui, projectFolderActions(vm, locale));
@@ -251,7 +251,7 @@ export const renderProjectFileWorkflow = ({
         // Releases… keeps the GUI's MenuSection, so a divider sets it apart from the open commands above it.
         git: React.createElement(GitFileMenu, {...inline, MenuSection, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
     }, workspace: getDocumentWorkspace(vm)});
-};
+} : undefined;
 
 export const saveProjectFromFileMenu = (vm, gui, promptForTarget) => {
     const workspace = getDocumentWorkspace(vm);

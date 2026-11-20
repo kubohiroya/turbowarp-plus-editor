@@ -453,6 +453,33 @@ test('the Plus File menu groups project settings and opens the extension library
     await expect(add).toHaveCount(0);
 });
 
+test('classic startup hides Plus menus and the minimap while preserving the original File commands', {timeout: 90_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    for (const extra of ['', '&twPlusHorizontalBlockPalette=1&twPlusWorkspaceMinimap=1&twPlusExtensionFileMenu=1']) {
+        await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStandardLayout=0' + extra);
+        await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
+        await expect(page.getByRole('button', {name: 'Palette menu', exact: true})).toHaveCount(0);
+        await expect(page.locator('[data-workspace-minimap]')).toHaveCount(0);
+        await page.getByText('File', {exact: true}).click();
+        const items = page.getByText('New', {exact: true}).locator('xpath=ancestor::ul[1]').locator(':scope > li');
+        await expect(items).toHaveText(['New', 'Load from your computer', 'Save to your computer', 'Package project', 'Restore points']);
+        await page.keyboard.press('Escape');
+        await projectInfoMenuButton(page).click();
+        await expect(page.getByRole('button', {name: /AI agent settings/i})).toHaveCount(0);
+    }
+    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await expect(page.getByRole('button', {name: 'Palette menu', exact: true})).toBeVisible();
+    await expect(page.locator('[data-workspace-minimap]')).toHaveCount(1);
+    await page.getByText('File', {exact: true}).click();
+    await expect(page.getByText('Open SB3 File…', {exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await projectInfoMenuButton(page).click();
+    await expect(page.getByRole('button', {name: /AI agent settings/i})).toBeVisible();
+    assert.deepEqual(errors, []);
+});
+
 test('the first menu row orders the Plus logo, project title, File, Edit, and search', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
