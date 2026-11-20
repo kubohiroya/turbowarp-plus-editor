@@ -108,7 +108,8 @@ test('the host installs the batch review under the loader and restores it after 
     let review;
     const dispose = installSecurityHost(vm, {
         securityManager: {}, locale: 'ja', DialogFrame, isTrusted, projectState: undefined,
-        extensionLibrary: [{extensionId: 'music', iconURL: 'native-icon'}],
+        extensionLibrary: [{extensionId: 'music', iconURL: 'native-icon'},
+            {extensionId: 'listed', extensionURL: 'https://example.test/listed.js', iconURL: 'listed-icon'}],
         requestModal (render, cancelled) {
             assert.equal(cancelled, null);
             return render(onComplete, 'en');
@@ -120,6 +121,9 @@ test('the host installs the batch review under the loader and restores it after 
                 assert.equal(options.vm, vm);
                 assert.equal(options.isTrusted, isTrusted);
                 assert.equal(options.bannerFor({ids: ['music']}), 'native-icon');
+                assert.equal(options.bannerFor({ids: ['music'], url: 'https://other.test/music.js'}), undefined);
+                assert.equal(options.bannerFor({ids: ['listed'], url: 'https://other.test/listed.js'}), undefined);
+                assert.equal(options.bannerFor({ids: ['other'], url: 'https://example.test/listed.js'}), 'listed-icon');
                 review = options.showReview;
                 return () => order.push('restore');
             },

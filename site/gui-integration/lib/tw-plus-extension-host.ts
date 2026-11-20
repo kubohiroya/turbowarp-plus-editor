@@ -127,8 +127,8 @@ function attachSecurityHost (vm, {
         if (review && !canLoadExtensionFromProject && !getSandboxMode) {
             restoreBatchLoader = review.installBatchLoader({
                 vm, defaultURLs: defaultExtensionURLs, isTrusted,
-                bannerFor: ({ids, url}) => extensionLibrary.find(item => ids.includes(item.extensionId) ||
-                    (item.extensionURL && item.extensionURL === url))?.iconURL,
+                bannerFor: ({ids, url}) => extensionLibrary.find(item => url ? item.extensionURL === url :
+                    ids.includes(item.extensionId))?.iconURL,
                 showReview: (entries, initialChoices) => {
                     const mount = getMount();
                     if (!active || !mount) return null;
