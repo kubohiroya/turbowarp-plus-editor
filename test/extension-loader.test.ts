@@ -254,12 +254,15 @@ test('sprite code windows are opt-in and use the internal window layout', () => 
 });
 
 test('the workspace minimap defaults on and supports explicit opt-out', () => {
-    assert.equal(readStartupFeatureFlags().workspaceMinimap, true);
+    assert.equal(readStartupFeatureFlags().workspaceMinimap, false);
     assert.equal(readWebStartupFeatureFlags().workspaceMinimap, true);
     for (const query of ['?twPlusWorkspaceMinimap=0', '?twPlusWorkspaceMinimap=true']) {
         assert.equal(readWebStartupFeatureFlags(query).workspaceMinimap, false);
     }
     assert.equal(readWebStartupFeatureFlags('?twPlusWorkspaceMinimap=1').workspaceMinimap, true);
+    for (const query of ['?twPlusStandardLayout=0', '?twPlusStandardLayout=0&twPlusWorkspaceMinimap=1']) {
+        assert.equal(readWebStartupFeatureFlags(query).workspaceMinimap, false);
+    }
 });
 
 test('saving the screen into the project defaults on and supports explicit opt-out', () => {

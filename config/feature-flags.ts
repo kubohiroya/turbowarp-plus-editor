@@ -47,7 +47,7 @@ export function readStartupFeatureFlags({
         contextMenuIcons: contextMenuIcons === null || contextMenuIcons === '1',
         localGit: localGit === null || localGit === '1',
         gitRestoreVersion: (localGit === null || localGit === '1') && gitRestoreVersion === '1',
-        workspaceMinimap: workspaceMinimap === null || workspaceMinimap === '1',
+        workspaceMinimap: standardLayout === '1' && (workspaceMinimap === null || workspaceMinimap === '1'),
         stageCodePrewarm: stageCodePrewarm === null || stageCodePrewarm === '1',
         // Saving writes the screen of the project into its SB3 or project folder; files saved earlier still open as saved.
         saveWorkspace: saveWorkspace === null || saveWorkspace === '1'

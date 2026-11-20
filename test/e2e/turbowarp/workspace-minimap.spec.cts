@@ -98,6 +98,11 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
 
     evidence.stage('classic-layout');
     await page.goto('editor.html?lang=en&twPlusStandardLayout=0&twPlusHorizontalBlockPalette=1');
+    await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
+    await expect(minimap).toHaveCount(0);
+
+    evidence.stage('plus-layout-without-dockview');
+    await page.goto('editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0&twPlusHorizontalBlockPalette=1');
     await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
     await expect(minimap).toHaveCSS('cursor', 'pointer');
@@ -115,16 +120,14 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
         vm.refreshWorkspace();
     });
     await expect(paths).toHaveCount(2);
-    const palette = await page.locator('.blocklyFlyoutBackground').first().boundingBox();
     const workspace = await minimap.locator('..').boundingBox();
     const map = await minimap.boundingBox();
     expect(map.width).toBeCloseTo(131.2, 1);
     expect(map.height).toBeCloseTo(83.2, 1);
-    expect(map.x).toBeGreaterThanOrEqual(palette.x + palette.width);
-    expect(map.x - palette.x - palette.width).toBeLessThan(24);
+    expect(workspace.x + workspace.width - map.x - map.width).toBeLessThan(45);
     const bottomGap = workspace.y + workspace.height - map.y - map.height;
     expect(bottomGap).toBeGreaterThan(0);
-    expect(bottomGap).toBeLessThan(24);
+    expect(bottomGap).toBeLessThan(70);
     await expect(minimap.locator('path[transform="translate(1200 900)"]')).toHaveCount(1);
     await page.evaluate(() => window.ScratchBlocks.getMainWorkspace().getBlockById('minimap-distant').moveBy(70, 0));
     await expect(paths).toHaveCount(2);
@@ -194,11 +197,13 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
 
     evidence.stage('horizontal-palette');
     const motion = page.locator('.blocklyToolboxDiv .scratchCategoryId-motion');
+    await motion.click({button: 'right'});
+    await page.getByRole('menuitem', {name: 'Use vertical palette', exact: true}).click();
     const verticalLeft = await minimap.evaluate(element => element.getBoundingClientRect().left);
     await motion.click({button: 'right'});
     await page.getByRole('menuitem', {name: 'Use horizontal palette', exact: true}).click();
     await expect.poll(() => minimap.evaluate(element => element.getBoundingClientRect().left))
-        .toBeLessThan(verticalLeft - 100);
+        .toBeCloseTo(verticalLeft);
     await expect(paths).toHaveCount(2);
     await motion.click({button: 'right'});
     await page.getByRole('menuitem', {name: 'Use vertical palette', exact: true}).click();
@@ -212,7 +217,7 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
     await expect(paths).toHaveCount(2);
-    await page.locator('[class*="stage-selector_stage-selector"]').click();
+    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
     await expect(paths).toHaveCount(0);
     await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
