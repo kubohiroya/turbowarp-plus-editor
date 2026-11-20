@@ -63,14 +63,14 @@
 └── .github/workflows/       この作品の検査とリリース</code></pre>
 <p>GitHubにすでにある作品のリポジトリから始めるときは、GitHub接続付きのエディターなら「ファイル」→「Git のリモートリポジトリを開く…」で開けます。ブラウザー版でも、手元でクローンせずにリポジトリを取得して開き、Gitが結び付きます（<a href="../git/#open-remote">Gitのリモートリポジトリを開く</a>）。接続のない公開版では、GitHub DesktopやGitでクローンしてから、「ファイル」→「フォルダを開く…」でリポジトリのルートを選びます。</p>
 
-<h3 id="starter">Project StarterでScratch作品を移す</h3>
+<h3 id="starter">Project Folder StarterでScratch作品を移す</h3>
 
-<p>scratch.mit.eduで作ってきた作品は、<code>turbowarp-plus-editor-project-starter</code>でGitHubのリポジトリに移せます。作品をsb3-toolchainの作品フォルダに展開し、検査とリリースを行うGitHub Actionsと、issue・プルリクエストの書式を加えたリポジトリを作ります。Node.js 24以降、Git、GitHub CLI（<code>gh</code>）が必要です。</p>
+<p>scratch.mit.eduで作ってきた作品は、<code>turbowarp-plus-project-folder-starter</code>でGitHubのリポジトリに移せます。作品をsb3-toolchainの作品フォルダに展開し、検査とリリースを行うGitHub Actionsと、issue・プルリクエストの書式を加えたリポジトリを作ります。Node.js 24以降、Git、GitHub CLI（<code>gh</code>）が必要です。</p>
 <p>次の例は、作業フォルダに<code>neko.sb3</code>がある場合です。</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 init ./neko.sb3 --dir neko-adventure</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-project-folder-starter@0.4.0 init ./neko.sb3 --dir neko-adventure</code></pre>
 <p><code>init</code>は手元にリポジトリを作り、Gitの作者情報があれば最初のコミットまで行います。作者情報が未設定の場合は、<a href="#commit-author">リポジトリで作者を設定</a>し、<code>git -C neko-adventure commit -m "Import neko"</code>を実行します。共有しているScratch作品は、SB3のパスの代わりに作品ページのURLを渡せます。</p>
 <p>エディターの「ファイル」→「フォルダを開く…」で、生成したリポジトリのルート<code>neko-adventure</code>を選ぶと、作品が開き、Gitも結び付きます。GitHubに置く準備ができたら、<code>gh auth login</code>で認証してから<code>publish</code>を実行します。既定では非公開のリポジトリを作り、<code>main</code>を送ります。</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 publish neko-adventure</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-project-folder-starter@0.4.0 publish neko-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="作られるリポジトリ" tabindex="0">
 <table><caption>作られるリポジトリ</caption><thead><tr><th scope="col">場所</th><th scope="col">中身</th></tr></thead><tbody>
 <tr><th scope="row"><code>project.source.json</code>、<code>assets/</code>など</th><td>作品のファイル。リポジトリのルートを作品フォルダとしてエディターで開き、編集して保存する</td></tr>
@@ -80,9 +80,9 @@
 <tr><th scope="row"><code>.github/ISSUE_TEMPLATE/</code>など</th><td>「不具合」「アイデア・改善」のissueの書式と、プルリクエストの確認項目</td></tr>
 <tr><th scope="row"><code>AGENTS.md</code>、<code>CLAUDE.md</code></th><td>コーディングエージェント向けの作業ルール。<code>CLAUDE.md</code>はClaude Codeに<code>AGENTS.md</code>を読ませる（<a href="#agent">エージェントに任せる</a>）</td></tr>
 </tbody></table></div>
-<p>Project Starter 0.3.0から、作品をリポジトリのルートに置きます。それより前の版で作った、作品が<code>project/</code>にあるリポジトリは、<code>project/</code>の中身をリポジトリのルートに移してから開きます。手順は<a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.ja.md">Project StarterのREADME</a>で説明しています。</p>
-<p>移行期間にScratchでも編集を続ける場合や、Scratch側の作品ページの扱いは、<a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.ja.md">移行の手順</a>で説明しています。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter">turbowarp-plus-editor-project-starter</a> · <a href="../git/#sb3-toolchain">sb3-toolchainの作品フォルダ</a></p>
+<p>Project Starter 0.3.0から、作品をリポジトリのルートに置きます。それより前の版で作った、作品が<code>project/</code>にあるリポジトリは、<code>project/</code>の中身をリポジトリのルートに移してから開きます。手順は<a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter/blob/main/README.ja.md">Project Folder StarterのREADME</a>で説明しています。</p>
+<p>移行期間にScratchでも編集を続ける場合や、Scratch側の作品ページの扱いは、<a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter/blob/main/README.ja.md">移行の手順</a>で説明しています。</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter">turbowarp-plus-project-folder-starter</a> · <a href="../git/#sb3-toolchain">sb3-toolchainの作品フォルダ</a></p>
 
 </section>
 
@@ -111,7 +111,7 @@
 <li>エージェントがブランチを切り替えたりpullしたりして作品フォルダが変わると、エディターの右下に「外部変更あり」が出て、変更を読み込みます（<a href="../git/#external-changes">フォルダが外で変わったとき</a>）。</li>
 <li>プルリクエストができたら、<a href="#merge">12.9</a>のとおりエディターの「マージ」でブロック単位に比べるか、GitHubの画面で確かめて、人がマージします。</li>
 </ol>
-<p>エージェントには、保存前の作業ツリーを書き換えないこと、<code>project.source.json</code>を変えたら<code>sb3-toolchain check</code>を通すこと、マージやリリースは頼まれたときだけ行うことを、リポジトリの<code>AGENTS.md</code>で伝えます。Project Starter 0.2.0以降は、<code>AGENTS.md</code>と、Claude Codeにそれを読ませる<code>CLAUDE.md</code>を作ります。それより前に作ったリポジトリには、<a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/ja/AGENTS.md">AGENTS.mdのテンプレート</a>を写し、<code>__TOOLCHAIN_VERSION__</code>などをsb3-toolchainの版に置き換えて置きます。</p>
+<p>エージェントには、保存前の作業ツリーを書き換えないこと、<code>project.source.json</code>を変えたら<code>sb3-toolchain check</code>を通すこと、マージやリリースは頼まれたときだけ行うことを、リポジトリの<code>AGENTS.md</code>で伝えます。Project Starter 0.2.0以降は、<code>AGENTS.md</code>と、Claude Codeにそれを読ませる<code>CLAUDE.md</code>を作ります。それより前に作ったリポジトリには、<a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter/blob/main/templates/ja/AGENTS.md">AGENTS.mdのテンプレート</a>を写し、<code>__TOOLCHAIN_VERSION__</code>などをsb3-toolchainの版に置き換えて置きます。</p>
 
 </section>
 
@@ -201,7 +201,7 @@ git config --local user.email "you@example.com"</code></pre>
 
 <ol><li>GitHubでリポジトリを開くと、送ったブランチの「Compare &amp; pull request」が表示されます。押して、「base: main ← compare: 12-neko-walk」になっていることを確かめます。</li><li>書式に沿って、何を変えたか、変えたスプライト・ステージ、確かめ方を書きます。既定ブランチにマージしたときにissueも閉じるには、本文に<code>Closes #12</code>と書きます。関連付けだけなら<code>#12</code>と書きます。</li><li>「Create pull request」を押します。コマンドでは<code>gh pr create --fill</code>で作れます。</li></ol>
 <h3 id="check-project">検査結果とSB3を確認する</h3>
-<p>Project Starterのワークフローを含むリポジトリでプルリクエストを作ると、Actionsの「Check project」が作品フォルダを検査し、SB3を作ります。プルリクエストの「Checks」→「Check project」→「Summary」の「Artifacts」からSB3をダウンロードし、TurboWarpかエディターで開いて、書いた確かめ方のとおりに動くかを試せます。</p>
+<p>Project Folder Starterのワークフローを含むリポジトリでプルリクエストを作ると、Actionsの「Check project」が作品フォルダを検査し、SB3を作ります。プルリクエストの「Checks」→「Check project」→「Summary」の「Artifacts」からSB3をダウンロードし、TurboWarpかエディターで開いて、書いた確かめ方のとおりに動くかを試せます。</p>
 
 </section>
 

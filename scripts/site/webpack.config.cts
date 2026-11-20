@@ -40,7 +40,7 @@ const projectUnpackHashSource = projectUnpackEntry && path.dirname(
     createRequire(projectUnpackEntry).resolve('@noble/hashes/legacy.js'));
 const saveCommitEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/task-queue', true);
 const initialCommitEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-git/initial-commit');
-const repositorySeedEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-editor-project-starter/seed');
+const repositorySeedEntry = optionalProjectSaveEntry('@kubohiroya/turbowarp-plus-project-folder-starter/seed');
 const authPackage = '@kubohiroya/turbowarp-plus-editor-auth';
 const authEntry = optionalProjectSaveEntry(authPackage) ?? rootRequire.resolve(authPackage);
 const creationAuth = initialCommitEntry && repositorySeedEntry && projectUnpackEntry && rootRequire(authEntry);

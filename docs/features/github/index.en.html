@@ -63,14 +63,14 @@
 └── .github/workflows/       checks and releases for this project</code></pre>
 <p>To start from a project repository that is already on GitHub, choose "File" → "Open Remote Git Repository…" in an editor with a GitHub connection. Even in the browser version, the editor downloads the repository without a local clone, opens it, and binds Git (see <a href="../git/index.en.html#open-remote">Open a remote Git repository</a>). In the public build without a connection, clone it with GitHub Desktop or Git, then choose "File" → "Open Folder…" and select the repository root.</p>
 
-<h3 id="starter">Move a Scratch project with Project Starter</h3>
+<h3 id="starter">Move a Scratch project with Project Folder Starter</h3>
 
-<p>You can move a project you have been making on scratch.mit.edu into a GitHub repository with <code>turbowarp-plus-editor-project-starter</code>. It unpacks the project into an sb3-toolchain project folder and creates a repository with GitHub Actions for checks and releases, plus forms for issues and pull requests. You need Node.js 24 or later, Git, and the GitHub CLI (<code>gh</code>).</p>
+<p>You can move a project you have been making on scratch.mit.edu into a GitHub repository with <code>turbowarp-plus-project-folder-starter</code>. It unpacks the project into an sb3-toolchain project folder and creates a repository with GitHub Actions for checks and releases, plus forms for issues and pull requests. You need Node.js 24 or later, Git, and the GitHub CLI (<code>gh</code>).</p>
 <p>The following example assumes <code>cat.sb3</code> is in your working folder. <code>--lang en</code> makes the README and the forms English; without it, they are in Japanese.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-project-folder-starter@0.4.0 init ./cat.sb3 --dir cat-adventure --lang en</code></pre>
 <p><code>init</code> creates the repository locally and, if Git author information is set, makes the first commit. If author information is not set, <a href="#commit-author">set the author in the repository</a> and run <code>git -C cat-adventure commit -m "Import cat"</code>. For a Scratch project you have shared, you can pass the project page URL instead of the SB3 path.</p>
 <p>In the editor, choose "File" → "Open Folder…" and select the generated repository root <code>cat-adventure</code>; the project opens and Git is bound too. When you are ready to put it on GitHub, authenticate with <code>gh auth login</code> and then run <code>publish</code>. By default it creates a private repository and pushes <code>main</code>.</p>
-<pre><code>npx @kubohiroya/turbowarp-plus-editor-project-starter@0.3.1 publish cat-adventure</code></pre>
+<pre><code>npx @kubohiroya/turbowarp-plus-project-folder-starter@0.4.0 publish cat-adventure</code></pre>
 <div class="table-scroll" role="region" aria-label="The repository that is created" tabindex="0">
 <table><caption>The repository that is created</caption><thead><tr><th scope="col">Location</th><th scope="col">Contents</th></tr></thead><tbody>
 <tr><th scope="row"><code>project.source.json</code>, <code>assets/</code>, and others</th><td>The project files. Open the repository root in the editor as the project folder, then edit and save</td></tr>
@@ -80,9 +80,9 @@
 <tr><th scope="row"><code>.github/ISSUE_TEMPLATE/</code> and others</th><td>Issue forms for "Bug" and "Idea or improvement", and a checklist for pull requests</td></tr>
 <tr><th scope="row"><code>AGENTS.md</code>, <code>CLAUDE.md</code></th><td>Working rules for coding agents. <code>CLAUDE.md</code> has Claude Code read <code>AGENTS.md</code> (<a href="#agent">Leave it to an agent</a>)</td></tr>
 </tbody></table></div>
-<p>From Project Starter 0.3.0, the project is at the repository root. For a repository made with an earlier version, where the project is in <code>project/</code>, move the contents of <code>project/</code> to the repository root before opening it. The <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.md">Project Starter README</a> explains the steps.</p>
-<p>If you keep editing on Scratch during the move, and for what to do with the project page on Scratch, see the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.md">migration steps</a>.</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter">turbowarp-plus-editor-project-starter</a> · <a href="../git/index.en.html#sb3-toolchain">sb3-toolchain project folders</a></p>
+<p>From Project Starter 0.3.0, the project is at the repository root. For a repository made with an earlier version, where the project is in <code>project/</code>, move the contents of <code>project/</code> to the repository root before opening it. The <a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter/blob/main/README.md">Project Folder Starter README</a> explains the steps.</p>
+<p>If you keep editing on Scratch during the move, and for what to do with the project page on Scratch, see the <a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter/blob/main/README.md">migration steps</a>.</p>
+<p><a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter">turbowarp-plus-project-folder-starter</a> · <a href="../git/index.en.html#sb3-toolchain">sb3-toolchain project folders</a></p>
 
 </section>
 
@@ -111,7 +111,7 @@
 <li>When the agent switches branches or pulls and the project folder changes, "External changes detected." appears at the bottom right of the editor and the changes are loaded (<a href="../git/index.en.html#external-changes">When the folder changes outside the editor</a>).</li>
 <li>When the pull request is ready, compare it block by block in the editor's "Merge" as in <a href="#merge">12.9</a>, or check it on GitHub, and a person merges it.</li>
 </ol>
-<p>Tell the agent in the repository's <code>AGENTS.md</code> not to rewrite the working tree before you save, to run <code>sb3-toolchain check</code> after changing <code>project.source.json</code>, and to merge or release only when asked. Project Starter 0.2.0 and later create <code>AGENTS.md</code> and a <code>CLAUDE.md</code> that has Claude Code read it. For a repository made earlier, copy the <a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/templates/en/AGENTS.md">AGENTS.md template</a> and replace <code>__TOOLCHAIN_VERSION__</code> and the other placeholders with your sb3-toolchain version.</p>
+<p>Tell the agent in the repository's <code>AGENTS.md</code> not to rewrite the working tree before you save, to run <code>sb3-toolchain check</code> after changing <code>project.source.json</code>, and to merge or release only when asked. Project Starter 0.2.0 and later create <code>AGENTS.md</code> and a <code>CLAUDE.md</code> that has Claude Code read it. For a repository made earlier, copy the <a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter/blob/main/templates/en/AGENTS.md">AGENTS.md template</a> and replace <code>__TOOLCHAIN_VERSION__</code> and the other placeholders with your sb3-toolchain version.</p>
 
 </section>
 
@@ -201,7 +201,7 @@ git config --local user.email "you@example.com"</code></pre>
 
 <ol><li>When you open the repository on GitHub, "Compare &amp; pull request" appears for the branch you sent. Click it and check that it reads "base: main ← compare: 12-cat-walk".</li><li>Following the form, write what you changed, the sprites and stage you changed, and how to check it. To close the issue when the PR is merged into the default branch, write <code>Closes #12</code> in the description. To only link it, write <code>#12</code>.</li><li>Click "Create pull request". From the command line, you can create it with <code>gh pr create --fill</code>.</li></ol>
 <h3 id="check-project">Check the results and the SB3</h3>
-<p>When you create a pull request in a repository that has the Project Starter workflows, the "Check project" action checks the project folder and builds an SB3. Download the SB3 from "Artifacts" in the pull request's "Checks" → "Check project" → "Summary", open it in TurboWarp or the editor, and check that it works as described in the checks you wrote.</p>
+<p>When you create a pull request in a repository that has the Project Folder Starter workflows, the "Check project" action checks the project folder and builds an SB3. Download the SB3 from "Artifacts" in the pull request's "Checks" → "Check project" → "Summary", open it in TurboWarp or the editor, and check that it works as described in the checks you wrote.</p>
 
 </section>
 
