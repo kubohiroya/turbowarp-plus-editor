@@ -132,7 +132,7 @@
 <a href="../images/current-project-file-external.png"><img src="../images/current-project-file-external.png" width="1440" height="960" alt="VSCodeで編集中の覆い表示。「終了して取り込む」「取り込まずに終了」を選べ、背後のファイルタブ全体は無効になっている。" loading="lazy"></a>
 <figcaption>外部編集中はタブをロックします。VSCodeで保存した内容を取り込んだ後、元のファイルへ保存します。</figcaption>
 </figure>
-<p>SB3を作品フォルダに展開するコマンドProject Starterも使えます（<a href="../github/#starter">Project StarterでScratch作品を移す</a>）。</p>
+<p>SB3を作品フォルダに展開するコマンドProject Folder Starterも使えます（<a href="../github/#starter">Project Folder StarterでScratch作品を移す</a>）。</p>
 
 </section>
 
@@ -145,7 +145,7 @@
 <ol><li>「接続方式…」：GitHubに接続するときの既定の方式を選びます。GitHub接続付きのエディターだけに表示されます（<a href="#github-sync">GitHubと同期する</a>）。</li><li>「フォルダを開く…」または「ブラウザーに保存したフォルダを開く…」：ファイルメニューと同じ操作で、リポジトリのフォルダを開きます。</li></ol>
 <p>リポジトリが結び付くと、メニューバー右側の「ステージを開く」の左に、現在のブランチ名のボタン（例：「main ▾」）が表示されます。ここからブランチの切り替え、「新しいブランチ…」、「ローカル Git を開く」を選べます。リポジトリが結び付く前は、このボタンは表示されません。</p>
 <p>「ファイル」→「リリース…」の使い方は<a href="../github/#release">リリースして配る</a>で説明しています。</p>
-<p><strong>1リポジトリに1作品</strong>です。作品のファイル（<code>project.source.json</code>、<code>sb3-source.json</code>、<code>embedded-extensions.json</code>、<code>assets/</code>、<code>extensions/</code>など）はリポジトリのルートに置きます。作品が<code>project/</code>にある以前の構成のリポジトリは、<code>project/</code>の中身をリポジトリのルートに移してから開きます（Project Starterで作ったリポジトリの手順は<a href="https://github.com/kubohiroya/turbowarp-plus-editor-project-starter/blob/main/README.ja.md">そのREADME</a>で説明しています）。作品を開くと、ステージやスプライトごとに変更を確認できます。<a href="../github/#migrate">リポジトリの構成</a></p>
+<p><strong>1リポジトリに1作品</strong>です。作品のファイル（<code>project.source.json</code>、<code>sb3-source.json</code>、<code>embedded-extensions.json</code>、<code>assets/</code>、<code>extensions/</code>など）はリポジトリのルートに置きます。作品が<code>project/</code>にある以前の構成のリポジトリは、<code>project/</code>の中身をリポジトリのルートに移してから開きます（Project Folder Starterで作ったリポジトリの手順は<a href="https://github.com/kubohiroya/turbowarp-plus-project-folder-starter/blob/main/README.ja.md">そのREADME</a>で説明しています）。作品を開くと、ステージやスプライトごとに変更を確認できます。<a href="../github/#migrate">リポジトリの構成</a></p>
 <p>ローカルGitの先頭行には「リポジトリ: 名前」が表示されます。その横の「ローカル状態を更新」はGitの状態を読み直します。エディターの外でGitを操作したら、これを押します。GitHub接続付きのエディターでは、ここに「GitHub に接続…」も表示されます。エディターでブランチを切り替えたりpullしたりすると、結果の表示に「作品を再読込」が出ます。これを押すと、その版の作品を開き直します。左に「作品フォルダ」パネルを表示している間は、フォルダのアイコンが付いた「ローカル Git」タブがタブ列の左端に固定されます。</p>
 <p>その下の「ファイルの保存」「保存のコミット」「PRを作成」「マージ」で表示を切り替えます。「ファイルの保存」と「保存のコミット」には対象のファイル数が表示されます。</p>
 <ul>

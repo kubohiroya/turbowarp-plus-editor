@@ -255,7 +255,7 @@ const html = renderEditButton({size: 'small', language: 'ja', projectURL: 'https
 | 分野 | パッケージ |
 | --- | --- |
 | エディターの作業台 | `turbowarp-plus-editor-workbench`（配置・スプライトのタブ・ステージとその操作・メニュー・作品のダイアログ・バックパック）、`-windows`（ページ内ウィンドウ・メニュー・ダイアログの操作ボタン・外部の表示先と転送）、`-code-views`（タブや別窓のコード・切り離したパレット・スクリプトの配置・ブロックの入力欄の編集）、`-sprite-panes`（素材・変数・メッセージ・関数と呼び出し図・プロパティ）、`-fonts`（Web フォント）、`-host`（ファミリーが前提にするホストの契約）、`-project-model`（UI に依存しない作品の読み取りと編集、作品全体の検索と置換） |
-| 作品フォルダと Git | `turbowarp-plus-editor-project-folder`、`-project-starter`（作品を GitHub リポジトリへ移す）、`-git`（ローカル Git パネル・公開・リポジトリの作成）、`-auth`（Git プロキシのセッション）、`sb3-toolchain` |
+| 作品フォルダと Git | `turbowarp-plus-editor-project-folder`、`turbowarp-plus-project-folder-starter`（作品を GitHub リポジトリへ移す）、`-git`（ローカル Git パネル・公開・リポジトリの作成）、`-auth`（Git プロキシのセッション）、`sb3-toolchain` |
 | 機能拡張 | `turbowarp-extension-loader`（検証付きの読み込み）、`turbowarp-extension-security-dialog`（実行前の確認）、`turbowarp-extension-data-editor`（拡張データのフォーム編集）、`turbowarp-sb3-save-format`（保存形式の語彙） |
 | 文書 | `turbowarp-document-editor`、`turbowarp-document-data`、`turbowarp-document-source`、`turbowarp-structured-data`、`turbowarp-named-data`、`turbowarp-yaml-json` |
 | 再利用 | `turbowarp-script-transfer`（`.blocks3` / `.stage3`） |
@@ -305,7 +305,7 @@ GitHub App が求める権限は、インストールしたリポジトリの Me
 node --test --test-concurrency=1 test/project-folder-save.browser.ts test/project-repository-creation.browser.ts test/project-publication.browser.ts
 ```
 
-未公開の依存で確かめるときは、ローカル webpack の `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` に、ビルド済みの `sb3-toolchain`・`turbowarp-plus-editor-project-folder`・`turbowarp-plus-editor-project-starter`・`turbowarp-plus-editor-git`・`turbowarp-plus-editor-auth` を `node_modules/@kubohiroya/` に置いたディレクトリの絶対パスを指定します。
+未公開の依存で確かめるときは、ローカル webpack の `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` に、ビルド済みの `sb3-toolchain`・`turbowarp-plus-editor-project-folder`・`turbowarp-plus-project-folder-starter`・`turbowarp-plus-editor-git`・`turbowarp-plus-editor-auth` を `node_modules/@kubohiroya/` に置いたディレクトリの絶対パスを指定します。
 
 ### 組み込み文書
 

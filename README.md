@@ -253,7 +253,7 @@ This repository holds no editor fork of its own. It builds the Editor from pinne
 | Area | Packages |
 | --- | --- |
 | Editor workbench | `turbowarp-plus-editor-workbench` (layout, sprite tabs, stage and its controls, menus, project dialogs, the backpack), `-windows` (in-page windows, menus, dialog actions, external surfaces and transfers), `-code-views` (code in tabs and windows, the detached palette, script layout, block field editing), `-sprite-panes` (assets, variables, messages, functions and the call graph, properties), `-fonts` (web fonts), `-host` (the host contract the family is written against), `-project-model` (UI-free project reads and edits, project-wide search and replace) |
-| Project folders and Git | `turbowarp-plus-editor-project-folder`, `-project-starter` (move a project into a GitHub repository), `-git` (Local Git panel, publishing and repository creation), `-auth` (Git proxy sessions), and `sb3-toolchain` |
+| Project folders and Git | `turbowarp-plus-editor-project-folder`, `turbowarp-plus-project-folder-starter` (move a project into a GitHub repository), `-git` (Local Git panel, publishing and repository creation), `-auth` (Git proxy sessions), and `sb3-toolchain` |
 | Extensions | `turbowarp-extension-loader` (verified loading), `turbowarp-extension-security-dialog` (review before running), `turbowarp-extension-data-editor` (form editing of extension data), `turbowarp-sb3-save-format` (storage-format vocabulary) |
 | Documents | `turbowarp-document-editor`, `turbowarp-document-data`, `turbowarp-document-source`, `turbowarp-structured-data`, `turbowarp-named-data`, `turbowarp-yaml-json` |
 | Reuse | `turbowarp-script-transfer` (`.blocks3` / `.stage3`) |
@@ -303,7 +303,7 @@ To check repository creation and pull-request registration headlessly, build wit
 node --test --test-concurrency=1 test/project-folder-save.browser.ts test/project-repository-creation.browser.ts test/project-publication.browser.ts
 ```
 
-To try unpublished dependencies, set the local webpack's `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` to the absolute path of a directory whose `node_modules/@kubohiroya/` holds built `sb3-toolchain`, `turbowarp-plus-editor-project-folder`, `turbowarp-plus-editor-project-starter`, `turbowarp-plus-editor-git` and `turbowarp-plus-editor-auth`.
+To try unpublished dependencies, set the local webpack's `TW_PLUS_PROJECT_SAVE_PREVIEW_ROOT` to the absolute path of a directory whose `node_modules/@kubohiroya/` holds built `sb3-toolchain`, `turbowarp-plus-editor-project-folder`, `turbowarp-plus-project-folder-starter`, `turbowarp-plus-editor-git` and `turbowarp-plus-editor-auth`.
 
 ### Embedded documents
 
