@@ -18,6 +18,7 @@ import {plusBlockEditor} from './block-editor/editor.ts';
 import blockEditorTranslations from './block-editor/translations.json' with {type: 'json'};
 import {installProjectToolsHost, projectScreenState, projectToolsOwnKeyEvent} from './project-tools/index.ts';
 import {plusSecurityReview} from './extension-host/review.ts';
+import {stoppedProjectLoadState} from '@kubohiroya/turbowarp-plus-editor-workbench/project-load-failure';
 import {extensionLoadErrors} from './extension-host/load-errors.ts';
 import {plusLibraryTab} from './extension-library/tab.ts';
 import {plusProjectPackager} from './packager/handoff.ts';
@@ -108,6 +109,8 @@ export const createPlusIntegration = ({
      * its lock and the extensions it already trusts, and hands all of that in.
      */
     securityReview,
+    createCancelSecurityLoad: (initial, _defaultProjectId, states, current) =>
+        stoppedProjectLoadState(initial, states, current),
     extensionLoadErrors,
     /**
      * Whether the editor should leave a key event alone because it happened inside this

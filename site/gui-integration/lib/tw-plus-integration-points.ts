@@ -98,9 +98,9 @@ const defaultCancelSecurityLoad = (initialState, defaultProjectId, loadingStates
  * @param {object} [integration] The host's integration.
  * @returns {object} The next project state.
  */
-export const createCancelSecurityLoad = (initialState, defaultProjectId, loadingStates, integration) =>
+export const createCancelSecurityLoad = (initialState, defaultProjectId, loadingStates, integration, currentState = undefined) =>
     (integration?.createCancelSecurityLoad || defaultCancelSecurityLoad)(
-        initialState, defaultProjectId, loadingStates);
+        initialState, defaultProjectId, loadingStates, currentState);
 
 /**
  * The stage controls an extension registered, as a service the host owns per VM.

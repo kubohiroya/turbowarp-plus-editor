@@ -9,12 +9,13 @@ import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/contex
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
-import {projectCatalog, projectCreation, projectFileActions, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
+import {projectCatalog, projectCreation, projectFileActions, projectFileOpened, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
 export {projectFileOpened} from '../project-tools/index.ts';
 import {projectFolderOpenRemote, projectFolderWorkflows} from '../project-folder-host.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-menu';
+import {openNewProjectDialog} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
 import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import '@kubohiroya/turbowarp-plus-editor-code-views/styles.css';
 import '@kubohiroya/turbowarp-plus-editor-fonts/styles.css';
@@ -42,6 +43,8 @@ import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
     renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-workbench/edit-menu';
 import {renderMenuIcon} from '../context-menu-icons/index.ts';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
+import {bindProjectOpenTabActions, openProjectInNewTab} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
+export {openProjectInNewTab} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
 
 export * from './lib/tw-plus-integration-points.ts';
 // Desktop and the GUI call this before saving, leaving the normal layout or quitting.
@@ -193,6 +196,20 @@ export const renderProjectSaveMenu = ({vm, locale = 'en', storage: gui}) => {
     return React.createElement(ProjectSaveMenu, {locale, entries: {storage, folder, saveAs, saveNew, saveCommit}});
 };
 
+export const bindProjectOpenTabStorage = ({vm, locale = 'en', storage, create, defaultTitle}) => {
+    const createNew = () => {
+        const {createIn, newProject} = projectCreation(vm, locale, create, projectFolderWorkflows(vm), defaultTitle);
+        return openNewProjectDialog(document, locale, {...newProject, create, createIn});
+    };
+    bindProjectOpenTabActions(vm, {storage, fileOpened: file => projectFileOpened(vm, file), commands: {
+        folder: () => projectFolderActions(vm, locale)?.open(),
+        'browser-folder': () => projectFolderActions(vm, locale)?.openBrowser?.(),
+        remote: () => projectFolderOpenRemote(vm)?.(locale),
+        catalog: () => projectCatalog(vm, locale, storage, createNew)
+    }});
+    return null;
+};
+
 export const renderProjectFileWorkflow = ({
     vm, locale = 'en', MenuItem, MenuSection, close, storage: gui, create, newWindow, open, restore, exportProject, addExtension, defaultTitle
 }) => {
@@ -203,11 +220,22 @@ export const renderProjectFileWorkflow = ({
     const inline = {vm, locale, MenuItem, MenuSection: React.Fragment, onRequestClose: close};
     const openExport = exportProject && (actions.exportProject ? () => actions.exportProject(exportProject) : exportProject);
     const openRemote = projectFolderOpenRemote(vm);
+    bindProjectOpenTabActions(vm, {storage: gui, fileOpened: file => projectFileOpened(vm, file), commands: {
+        folder: folder?.open, 'browser-folder': folder?.openBrowser,
+        remote: openRemote && (() => openRemote(locale)),
+        catalog: () => projectCatalog(vm, locale, gui, () =>
+            openNewProjectDialog(document, locale, {...newProject, create, createIn}))
+    }});
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
-        ...actions, create, createIn, newProject, newWindow, open, storage, folder, restore,
-        catalog: createProject => projectCatalog(vm, locale, gui, createProject),
+        ...actions, create, createIn, newProject, newWindow, open, storage,
+        folder: folder && {...folder,
+            open: () => openProjectInNewTab(vm, {kind: 'command', command: 'folder'}) || folder.open(),
+            openBrowser: folder.openBrowser && (() => openProjectInNewTab(vm, {kind: 'command', command: 'browser-folder'}) || folder.openBrowser())},
+        restore,
+        catalog: createProject => openProjectInNewTab(vm, {kind: 'command', command: 'catalog'}) ||
+            projectCatalog(vm, locale, gui, createProject),
         exportProject: openExport,
-        openRemote: openRemote && (() => openRemote(locale)),
+        openRemote: openRemote && (() => openProjectInNewTab(vm, {kind: 'command', command: 'remote'}) || openRemote(locale)),
         // Releases… keeps the GUI's MenuSection, so a divider sets it apart from the open commands above it.
         git: React.createElement(GitFileMenu, {...inline, MenuSection, exportProject: openExport}), externalYaml: renderExternalYamlMenu(inline)
     }, workspace: getDocumentWorkspace(vm)});

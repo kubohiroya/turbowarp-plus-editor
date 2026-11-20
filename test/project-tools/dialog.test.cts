@@ -47,16 +47,19 @@ test('diagnostics shows empty state, literal errors and earlier attempts with a 
     f.diagnostics.begin('Failure');
     f.diagnostics.record({type: 'project-error', code: 'LOAD_FAILED', message: '<img onerror=bad>'});
     f.diagnostics.finish({phase: 'failed'}, 'Failure');
-    assert.ok(f.document.querySelector('aside button'));
+    const outcome = f.document.querySelector('[data-testid="project-load-failure"]');
+    assert.ok(outcome);
+    assert.equal(outcome.querySelector('h1').textContent, 'The project could not be opened');
+    assert.equal(f.document.querySelector('aside'), null);
     f.diagnostics.begin('Current'); f.diagnostics.finish({phase: 'loaded'}, 'Current');
     // A notice for a failed attempt must open that attempt even after a different project loads.
-    [...f.document.querySelectorAll('aside button')].find(button => button.textContent === 'View detailed log').click();
+    [...outcome.querySelectorAll('button')].find(button => button.textContent === 'View detailed log').click();
     assert.equal(f.document.querySelector('dialog select').value, '1');
     const select = f.document.querySelector('dialog select');
     select.value = '1'; select.dispatchEvent(new f.dom.window.Event('change'));
-    assert.match(f.document.querySelector('dialog').textContent, /LOAD_FAILED/);
+    assert.match(f.document.querySelector('[data-testid="project-diagnostics"]').textContent, /LOAD_FAILED/);
     assert.equal(f.document.querySelector('dialog img'), null);
-    [...f.document.querySelectorAll('dialog button')].find(button => button.textContent === 'Copy diagnostics').click();
+    [...f.document.querySelectorAll('[data-testid="project-diagnostics"] button')].find(button => button.textContent === 'Copy diagnostics').click();
     await new Promise(resolve => setImmediate(resolve));
     const text = f.document.querySelector('dialog textarea');
     assert.equal(JSON.parse(text.value).title, 'Failure');
@@ -86,7 +89,7 @@ test('a failure snackbar uses the host locale, preserves focus and leaves the se
 });
 test('dismissing a snackbar does not clear diagnostics or announce the same failure again', () => {
     const f = fixture();
-    f.diagnostics.record({type: 'project-error', code: 'LOAD_FAILED'});
+    f.diagnostics.record({type: 'error', code: 'LOAD_FAILED'});
     const dismiss = [...f.document.querySelectorAll('aside button')].find(button => button.textContent === 'Dismiss');
     dismiss.focus(); dismiss.click();
     assert.equal(f.document.activeElement.id, 'origin');

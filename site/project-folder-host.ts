@@ -19,6 +19,7 @@ import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-edit
 import {bindProjectCatalogFolder, loadedProjectTitle, projectSaveName, projectScreenState, setProjectSaveName} from './project-tools/index.ts';
 import {followProjectTitleCommits, reflectProjectTitle} from '@kubohiroya/turbowarp-plus-editor-workbench/project-title';
 import {showNotice} from '@kubohiroya/turbowarp-plus-editor-workbench/project-notice';
+import {bindProjectOpenTabActions, openProjectInNewTab} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
@@ -270,6 +271,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             }
         },
         async openProject(project, root) {
+            if (openProjectInNewTab(vm, {kind: 'folder', directory: project, root})) return false;
             if (await folder.openDirectory(project, () => view.confirm(locale.startsWith('ja') ?
                 '現在の作品に未保存の変更があります。保存済みの作品フォルダを開きますか？' :
                 'The current project has unsaved changes. Open the saved project folder?')) !== 'opened') return false;
@@ -397,6 +399,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     } : undefined;
     folders.set(vm, {folder, workflows, openRemote});
     bindProjectCatalogFolder(vm, {folder, openRemote, readRemote: readProjectRemote});
+    bindProjectOpenTabActions(vm, {openDirectory: (directory, root) => folder.openDirectory(directory, () => true, root)});
     // A title the person committed in the menu bar renames what the browser can rename, and says what it cannot (#679).
     const stopTitleWatch = followProjectTitleCommits(document, {
         readTitle: () => store.getState().scratchGui.projectTitle,
@@ -429,13 +432,15 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         localWrite: {author: () => author},
         ...browserFolders && {chooseRoot: browserFolders.choose},
         // Git is set up by opening a folder, with the File menu's own commands; the panel no longer chooses a repository.
-        openFolder: language => projectFolderActions(vm, language)?.open(),
-        ...folder.browserProjects && {openBrowserFolder: (language: string) => projectFolderActions(vm, language)?.openBrowser?.()},
+        openFolder: language => openProjectInNewTab(vm, {kind: 'command', command: 'folder'}) || projectFolderActions(vm, language)?.open(),
+        ...folder.browserProjects && {openBrowserFolder: (language: string) =>
+            openProjectInNewTab(vm, {kind: 'command', command: 'browser-folder'}) || projectFolderActions(vm, language)?.openBrowser?.()},
         deviceFolders: typeof view.showDirectoryPicker === 'function',
         renderReviewBlock,
         // A folder that is not a project shows project-folder's own dialog; the panel hears that nothing opened.
         openProject: async (directory, confirmReplace) =>
-            await folder.openDirectory(directory, confirmReplace) === 'opened' ? 'opened' : 'cancelled',
+            openProjectInNewTab(vm, {kind: 'folder', directory}) ? 'cancelled' :
+                await folder.openDirectory(directory, confirmReplace) === 'opened' ? 'opened' : 'cancelled',
         projectDirectory: () => folder.directory,
         ...hasProjectVersionValidator() && {
             restoreProjectVersions: gitRestoreVersion,

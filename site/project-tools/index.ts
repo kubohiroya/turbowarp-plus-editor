@@ -5,10 +5,11 @@ import {installEditorExtensionHost} from '../extension-host/editor-host.ts';
 import {editorProjectArchives} from '../extension-host/shared-project-archive.ts';
 import {MANUAL_PROJECT_URI_ENABLED, PROJECT_TOOLS_ENABLED} from './config.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {installProjectOpenTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
+import {extensionLoadErrors} from '../extension-host/load-errors.ts';
 import '@kubohiroya/turbowarp-plus-editor-workbench/project-catalog.css';
 
-export const {installProjectToolsHost, projectScreenState, loadedProjectTitle, restoreProjectTitle, isProjectLoading, subscribeProjectLoad, projectSaveName, setProjectSaveName, createFolderFromCurrentProject, projectFileActions, projectCreation, renderFileMenu, projectToolsOwnKeyEvent,
-    bindProjectCatalogFolder, projectCatalog, projectFileOpened} = createProjectTools({
+const tools = createProjectTools({
     installEditorExtensionHost, installProjectProperties, createProjectDialogs, editorProjectArchives,
     projectToolsEnabled: PROJECT_TOOLS_ENABLED, manualProjectURIEnabled: MANUAL_PROJECT_URI_ENABLED,
     readStartupFlags: readWebStartupFeatureFlags,
@@ -33,3 +34,17 @@ export const {installProjectToolsHost, projectScreenState, loadedProjectTitle, r
         };
     }
 });
+
+export const {projectScreenState, loadedProjectTitle, restoreProjectTitle, isProjectLoading, subscribeProjectLoad,
+    projectSaveName, setProjectSaveName, createFolderFromCurrentProject, projectFileActions, projectCreation,
+    renderFileMenu, projectToolsOwnKeyEvent, bindProjectCatalogFolder, projectCatalog, projectFileOpened} = tools;
+export const installProjectToolsHost: typeof tools.installProjectToolsHost = (vm, settings = {}, ...args) => {
+    const host = tools.installProjectToolsHost(vm, settings, ...args);
+    const document = settings.document ?? globalThis.document;
+    const store = document?.defaultView?.ReduxStore;
+    const dispose = store && installProjectOpenTabs(vm, {document,
+        locale: () => settings.getLocale?.() ?? settings.locale ?? 'en',
+        ready: () => store.getState().scratchGui.projectState.loadingState.startsWith('SHOWING_'),
+        subscribe: listener => store.subscribe(listener), isCancelled: error => extensionLoadErrors.isCancelled(error)});
+    return {...host, dispose() {dispose?.(); return host.dispose();}};
+};
