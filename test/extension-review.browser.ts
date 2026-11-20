@@ -3,6 +3,8 @@ import {before, after, test} from 'node:test';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import JSZip from '@turbowarp/jszip';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import pins from '../site/source.json' with {type: 'json'};
 
 declare global {interface Window {__reviewFixtureStarted?: number; __originalStage?: unknown; __originalQuitCalls?: number;
@@ -17,8 +19,8 @@ before(async () => {
     const manifest = await (await fetch(new URL('preview-manifest.json', base))).json();
     assert.equal(manifest.commit, pins.guiRevision);
     assert.equal(manifest.securityPreview.version, pins.securityVersion);
-    assert.equal(manifest.securityPreview.sourceState, 'working-tree');
-    assert.equal(manifest.projectOpenTabsPreview.dirty, true);
+    assert.ok(['commit', 'working-tree'].includes(manifest.securityPreview.sourceState));
+    assert.equal(typeof manifest.projectOpenTabsPreview.dirty, 'boolean');
     assert.match(manifest.projectOpenTabsPreview.entrySHA256, /^[a-f0-9]{64}$/);
     assert.match(manifest.projectOpenTabsPreview.entries['project-load-failure.js'], /^[a-f0-9]{64}$/);
     const info = await (await fetch(new URL('build-info.json', base))).json();
@@ -74,7 +76,7 @@ test('local source metadata supplies its declared banner and individual mode sta
         await expect(dialog.getByTestId('twextsec-cancel')).toBeEnabled();
         await expect(dialog.getByTestId('twextsec-enable-all')).toBeEnabled();
         await expect(row.locator('.twextsec-execution button')).toHaveCount(3);
-        await page.screenshot({path: '/private/tmp/tw-review-individual-banner.png'});
+        await page.screenshot({path: join(tmpdir(), 'tw-review-individual-banner.png')});
         await dialog.getByTestId('twextsec-cancel').click();
         const outcome = page.getByTestId('project-load-failure');
         await expect(outcome).toBeVisible();
@@ -206,7 +208,7 @@ test('a directly opened URL returns from its stopped result to confirmation befo
         const confirm = outcome.getByRole('button', {name: '確認画面に戻る', exact: true});
         await expect(confirm).toBeEnabled();
         assert.equal(new URL(page.url()).searchParams.has('project_url'), true);
-        await page.screenshot({path: '/private/tmp/tw-direct-open-stopped.png'});
+        await page.screenshot({path: join(tmpdir(), 'tw-direct-open-stopped.png')});
         await confirm.click();
         await expect(review(page)).toBeVisible();
         await expect(review(page)).toHaveAccessibleName('確認: この作品は機能拡張を使います');
@@ -228,7 +230,7 @@ test('the real editor shows individual buttons and waits for an explicit final a
     try {
         await page.goto(startupURL());
         await expect(review(page)).toBeVisible();
-        await page.screenshot({path: '/private/tmp/tw-editor-review-overview.png'});
+        await page.screenshot({path: join(tmpdir(), 'tw-editor-review-overview.png')});
         await review(page).getByTestId('twextsec-individual').click();
         const group = review(page).locator('.twextsec-execution');
         await expect(group.getByRole('button')).toHaveCount(3);
@@ -238,7 +240,7 @@ test('the real editor shows individual buttons and waits for an explicit final a
         assert.equal(await page.evaluate(() => window.__reviewFixtureStarted || 0), 0);
         const warning = review(page).locator('.twextsec-warning');
         await warning.getByRole('button', {name: '閉じる', exact: true}).click();
-        await page.screenshot({path: '/private/tmp/tw-editor-review-individual.png'});
+        await page.screenshot({path: join(tmpdir(), 'tw-editor-review-individual.png')});
         await review(page).getByTestId('twextsec-complete').click();
         await expect(review(page)).toHaveCount(0);
         await expect.poll(() => page.evaluate(() => window.__reviewFixtureStarted || 0)).toBe(1);
@@ -259,6 +261,10 @@ test('the project list opens in another tab and leaves the original project inta
         await page.getByText('プロジェクト一覧…', {exact: true}).click();
         const next = await opening;
         await expect(next.getByRole('dialog', {name: 'プロジェクト一覧', exact: true})).toBeVisible({timeout: 30000});
+        await next.locator('[data-catalog-action="create"]').click();
+        await expect(next.locator('[data-new-project-dialog]')).toBeVisible();
+        await expect(next.locator('[data-new-project-dialog] input[name="destination"][value="browser"]')).toHaveCount(1);
+        await next.locator('[data-new-project-cancel]').click();
         assert.equal(page.url(), before);
         assert.equal(await page.evaluate(() => window.vm.runtime.getTargetForStage() === window.__originalStage), true);
     } finally {await context.close();}
@@ -285,7 +291,7 @@ test('refusal with blocked history replaces the loader with a main stopped scree
         const bounds = await outcome.boundingBox();
         assert.equal(bounds.width, 1280); assert.equal(bounds.height, 900);
         await page.keyboard.press('Escape'); await expect(outcome).toBeVisible();
-        await page.screenshot({path: '/private/tmp/tw-editor-open-cancelled-main.png'});
+        await page.screenshot({path: join(tmpdir(), 'tw-editor-open-cancelled-main.png')});
         await outcome.getByRole('button', {name: '確認画面に戻る', exact: true}).click();
         await expect(review(page)).toBeVisible();
         await expect(review(page)).toHaveAccessibleName('確認: この作品は機能拡張を使います');

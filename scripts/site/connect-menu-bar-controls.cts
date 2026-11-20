@@ -42,7 +42,9 @@ ${original}                                    </React.Fragment>}
                 {host?.bindProjectOpenTabStorage && (
                     <SB3Downloader showSaveFilePicker={this.props.showSaveFilePicker}>
                         {(_className, _download, {projectFileStorage}) => host.bindProjectOpenTabStorage({
-                            vm: this.props.vm, locale: this.props.locale, storage: projectFileStorage
+                            vm: this.props.vm, locale: this.props.locale, storage: projectFileStorage,
+                            create: this.handleClickNew,
+                            defaultTitle: this.props.intl.formatMessage({id: 'tw.gui.defaultProjectTitle', defaultMessage: 'Project'})
                         })}
                     </SB3Downloader>
                 )}

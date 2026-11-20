@@ -15,6 +15,7 @@ import {projectFolderOpenRemote, projectFolderWorkflows} from '../project-folder
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 import ProjectFileMenu, {ProjectSaveMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-menu';
+import {openNewProjectDialog} from '@kubohiroya/turbowarp-plus-editor-workbench/project-file-dialogs';
 import '@kubohiroya/turbowarp-plus-editor-windows/styles.css';
 import '@kubohiroya/turbowarp-plus-editor-code-views/styles.css';
 import '@kubohiroya/turbowarp-plus-editor-fonts/styles.css';
@@ -195,12 +196,16 @@ export const renderProjectSaveMenu = ({vm, locale = 'en', storage: gui}) => {
     return React.createElement(ProjectSaveMenu, {locale, entries: {storage, folder, saveAs, saveNew, saveCommit}});
 };
 
-export const bindProjectOpenTabStorage = ({vm, locale = 'en', storage}) => {
+export const bindProjectOpenTabStorage = ({vm, locale = 'en', storage, create, defaultTitle}) => {
+    const createNew = () => {
+        const {createIn, newProject} = projectCreation(vm, locale, create, projectFolderWorkflows(vm), defaultTitle);
+        return openNewProjectDialog(document, locale, {...newProject, create, createIn});
+    };
     bindProjectOpenTabActions(vm, {storage, fileOpened: file => projectFileOpened(vm, file), commands: {
         folder: () => projectFolderActions(vm, locale)?.open(),
         'browser-folder': () => projectFolderActions(vm, locale)?.openBrowser?.(),
         remote: () => projectFolderOpenRemote(vm)?.(locale),
-        catalog: () => projectCatalog(vm, locale, storage)
+        catalog: () => projectCatalog(vm, locale, storage, createNew)
     }});
     return null;
 };
@@ -217,7 +222,9 @@ export const renderProjectFileWorkflow = ({
     const openRemote = projectFolderOpenRemote(vm);
     bindProjectOpenTabActions(vm, {storage: gui, fileOpened: file => projectFileOpened(vm, file), commands: {
         folder: folder?.open, 'browser-folder': folder?.openBrowser,
-        remote: openRemote && (() => openRemote(locale)), catalog: () => projectCatalog(vm, locale, gui)
+        remote: openRemote && (() => openRemote(locale)),
+        catalog: () => projectCatalog(vm, locale, gui, () =>
+            openNewProjectDialog(document, locale, {...newProject, create, createIn}))
     }});
     return React.createElement(ProjectFileMenu, {locale, MenuItem, MenuSection, close, entries: {
         ...actions, create, createIn, newProject, newWindow, open, storage,
