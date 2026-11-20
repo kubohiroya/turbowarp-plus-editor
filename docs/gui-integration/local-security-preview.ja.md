@@ -34,6 +34,13 @@ TW_PLUS_SECURITY_PREVIEW_ROOT=/absolute/path/to/turbowarp-extension-security-dia
 
 ## 停止・再起動・状態確認
 
+別作品を新しいタブへ開く接続をローカル候補で確認する場合は、Workbenchの
+`dist/project-open-tabs.js`をビルドし、`TW_PLUS_WORKBENCH_PREVIEW_ROOT`にそのパッケージの
+絶対パスを渡します。既存のWorkbenchのうち、この公開エントリーだけを差し替えます。
+`preview-manifest.json`の`projectOpenTabsPreview`にソースのリビジョン・変更の有無・実行コードのSHA-256を記録します。
+元作品の保存・自動退避・再読み込みは行いません。ポップアップが止められた場合は、
+新しいタブを開く明示操作を提示します。この環境変数を外して再ビルドすると固定依存へ戻ります。
+
 停止は配信ターミナルで **Ctrl+C** です。同じビルドを再利用するときは次を実行します。欠落・変更されたファイルがあれば起動を拒否します。
 
 ```sh

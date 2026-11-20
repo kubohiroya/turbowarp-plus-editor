@@ -39,6 +39,13 @@ ${original}                                    </React.Fragment>}
         const useTitleSaveMenu = host?.renderProjectSaveMenu && this.props.canEditTitle && this.props.canManageFiles &&
             !(this.props.canSave || this.props.canCreateCopy || this.props.canRemix);`)
         .replace(title, `</MenuBarItemTooltip>
+                {host?.bindProjectOpenTabStorage && (
+                    <SB3Downloader showSaveFilePicker={this.props.showSaveFilePicker}>
+                        {(_className, _download, {projectFileStorage}) => host.bindProjectOpenTabStorage({
+                            vm: this.props.vm, locale: this.props.locale, storage: projectFileStorage
+                        })}
+                    </SB3Downloader>
+                )}
                 {useTitleSaveMenu && this.props.projectChanged && (
                     <SB3Downloader showSaveFilePicker={this.props.showSaveFilePicker}>
                         {(_className, _download, {projectFileStorage}) => host.renderProjectSaveMenu({

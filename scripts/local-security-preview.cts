@@ -87,6 +87,7 @@ interface PreviewManifest {
     files: Record<string, string>;
     iframeWorkerAsset?: string;
     securityPreview?: Record<string, unknown>;
+    projectOpenTabsPreview?: Record<string, unknown>;
     commit?: string;
     dirty?: boolean;
     hostCommit?: string;
@@ -149,14 +150,35 @@ async function buildSnapshot (port) {
         if (!path.isAbsolute(securityRoot)) throw new Error('TW_PLUS_SECURITY_PREVIEW_ROOTは絶対パスで指定してください。');
         const pkg = JSON.parse(await fs.readFile(path.join(securityRoot, 'package.json'), 'utf8'));
         if (pkg.name !== '@kubohiroya/turbowarp-extension-security-dialog') throw new Error('確認用パッケージが一致しません。');
-        for (const [subpath, file] of [['', 'dist/index.mjs'], ['/react', 'dist/react.mjs'],
-            ['/turbowarp', 'dist/turbowarp.mjs'], ['/webpack4.css', 'webpack4.css']]) {
+        for (const [entry, value] of Object.entries(pkg.exports)) {
+            const subpath = entry === '.' ? '' : entry.slice(1);
+            const file = typeof value === 'string' ? value : (value as {import?: string}).import;
+            if (!file) continue;
             const target = path.join(securityRoot, file);
             if (!(await fs.stat(target)).isFile()) throw new Error(`確認用ビルドがありません: ${target}`);
             config.resolve.alias[pkg.name + subpath + '$'] = target;
         }
         securityPreview = {root: securityRoot,
             ...JSON.parse(await fs.readFile(path.join(securityRoot, 'dist/build-info.json'), 'utf8'))};
+    }
+    const workbenchRoot = process.env.TW_PLUS_WORKBENCH_PREVIEW_ROOT;
+    let projectOpenTabsPreview;
+    if (workbenchRoot) {
+        if (!path.isAbsolute(workbenchRoot)) throw new Error('TW_PLUS_WORKBENCH_PREVIEW_ROOTは絶対パスで指定してください。');
+        const pkg = JSON.parse(await fs.readFile(path.join(workbenchRoot, 'package.json'), 'utf8'));
+        if (pkg.name !== '@kubohiroya/turbowarp-plus-editor-workbench') throw new Error('確認用パッケージが一致しません。');
+        const entry = path.join(workbenchRoot, 'dist/project-open-tabs.js');
+        config.resolve.alias['@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs$'] = entry;
+        config.resolve.alias['@kubohiroya/turbowarp-plus-editor-workbench/project-load-failure$'] = path.join(workbenchRoot, 'dist/project-load-failure.js');
+        config.resolve.alias['@kubohiroya/turbowarp-plus-editor-workbench/project-dialogs$'] = path.join(workbenchRoot, 'dist/project-tools/dialog.js');
+        config.module.rules.push({test: /\.js$/, include: path.join(workbenchRoot, 'dist'),
+            loader: guiRequire.resolve('babel-loader'), options: {babelrc: false, configFile: false,
+                presets: [[guiRequire.resolve('@babel/preset-env'), {targets: {chrome: '75'}}]]}});
+        projectOpenTabsPreview = {root: workbenchRoot, entrySHA256: digest(await fs.readFile(entry)),
+            entries: Object.fromEntries(await Promise.all(['project-open-tabs.js', 'project-load-failure.js', 'project-tools/dialog.js']
+                .map(async name => [name, digest(await fs.readFile(path.join(workbenchRoot, 'dist', name)))]))),
+            revision: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: workbenchRoot, encoding: 'utf8'}).trim(),
+            dirty: Boolean(execFileSync('git', ['status', '--porcelain'], {cwd: workbenchRoot, encoding: 'utf8'}).trim())};
     }
     // Keep the site's companion pages and entries so editor windows can complete their handshake.
     config.output.path = directory;
@@ -178,6 +200,7 @@ async function buildSnapshot (port) {
     const workerAsset = workerChunk?.files.find(name => name.endsWith('.js'));
     if (workerAsset) manifest.iframeWorkerAsset = workerAsset;
     if (securityPreview) manifest.securityPreview = securityPreview;
+    if (projectOpenTabsPreview) manifest.projectOpenTabsPreview = projectOpenTabsPreview;
     manifest.commit = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: repo, encoding: 'utf8'}).trim();
     manifest.dirty = Boolean(execFileSync('git', ['status', '--porcelain'], {cwd: repo, encoding: 'utf8'}).trim());
     manifest.hostCommit = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: hostRoot, encoding: 'utf8'}).trim();
