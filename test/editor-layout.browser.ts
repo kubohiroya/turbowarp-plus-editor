@@ -476,7 +476,7 @@ test('classic startup hides Plus additions while preserving the original File co
                 definition('classic-jump', 'jump', 40, call) +
                 definition('classic-land', 'land', 380, '<block type="looks_show"></block>') +
                 '<block type="event_whenbroadcastreceived" id="classic-receiver" x="380" y="230">' +
-                '<field name="BROADCAST_OPTION" id="classic-ready">ready</field></block></xml>'), blocks.getMainWorkspace());
+                '<field name="BROADCAST_OPTION" id="classic-ready" variabletype="broadcast_msg">ready</field></block></xml>'), blocks.getMainWorkspace());
             blocks.Events.fireNow_();
             vm.refreshWorkspace();
         });
