@@ -39,7 +39,7 @@ import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu 
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-code-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
-import {attachDockedScriptLayout, getDockedScriptLayout} from '@kubohiroya/turbowarp-plus-editor-code-views/script-layout';
+import {attachDockedScriptLayout, getDockedScriptLayout, setDockedRelationVisibility} from '@kubohiroya/turbowarp-plus-editor-code-views/script-layout';
 import {ProjectSearch} from '@kubohiroya/turbowarp-plus-editor-workbench/project-search';
 import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
     renderEditMenuRestore as renderRestoreLabel} from '@kubohiroya/turbowarp-plus-editor-workbench/edit-menu';
@@ -126,12 +126,14 @@ const presentationElements = (injection: HTMLElement) => {
 };
 
 export const attachHostScriptTransfer = (context, integration) => {
+    if (!startup.standardLayout) setDockedRelationVisibility(context.vm, {function: false, message: false});
     const transfer = attachScriptTransfer(context, integration, attachBackpackDrop);
     const code = attachDesktopCode({...context, receiveBackpackDrop});
     const extensions = attachDockedCodeExtensions(context);
     const prewarm = startup.stageCodePrewarm ? attachStageCodePrewarm(context) : undefined;
     const editMenu = attachEditMenuWorkspace(context);
     const scriptLayout = attachDockedScriptLayout({...context, presentationElements});
+    scriptLayout.view.relations?.setEnabled(startup.standardLayout);
     return {dispose() {
         scriptLayout.dispose();
         editMenu.dispose();

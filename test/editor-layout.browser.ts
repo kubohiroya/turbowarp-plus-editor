@@ -453,13 +453,42 @@ test('the Plus File menu groups project settings and opens the extension library
     await expect(add).toHaveCount(0);
 });
 
-test('classic startup hides Plus menus and the minimap while preserving the original File commands', {timeout: 90_000}, async t => {
+test('classic startup hides Plus additions while preserving the original File commands', {timeout: 90_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    const installRelations = async () => {
+        await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage &&
+            window.ScratchBlocks?.getMainWorkspace());
+        await page.evaluate(() => {
+            const blocks = window.ScratchBlocks;
+            vm.runtime.getTargetForStage().createVariable('classic-ready', 'ready', 'broadcast_msg', false);
+            const definition = (id, name, x, body) =>
+                `<block type="procedures_definition" id="${id}" x="${x}" y="40"><value name="custom_block">` +
+                `<shadow type="procedures_prototype"><mutation proccode="${name}" argumentids="[]" argumentnames="[]" ` +
+                `argumentdefaults="[]" warp="false"></mutation></shadow></value><next>${body}</next></block>`;
+            const send = '<block type="event_broadcast"><value name="BROADCAST_INPUT">' +
+                '<shadow type="event_broadcast_menu"><field name="BROADCAST_OPTION" id="classic-ready" variabletype="broadcast_msg">' +
+                'ready</field></shadow></value></block>';
+            const call = '<block type="procedures_call"><mutation proccode="land" argumentids="[]" warp="false"></mutation>' +
+                `<next>${send}</next></block>`;
+            blocks.Xml.domToWorkspace(blocks.Xml.textToDom('<xml>' +
+                definition('classic-jump', 'jump', 40, call) +
+                definition('classic-land', 'land', 380, '<block type="looks_show"></block>') +
+                '<block type="event_whenbroadcastreceived" id="classic-receiver" x="380" y="230">' +
+                '<field name="BROADCAST_OPTION" id="classic-ready">ready</field></block></xml>'), blocks.getMainWorkspace());
+            blocks.Events.fireNow_();
+            vm.refreshWorkspace();
+        });
+        await expect(page.locator('[data-id="classic-land"]')).toBeVisible();
+        await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    };
     for (const extra of ['', '&twPlusHorizontalBlockPalette=1&twPlusWorkspaceMinimap=1&twPlusExtensionFileMenu=1']) {
         await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusStandardLayout=0' + extra);
         await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
+        await installRelations();
+        await expect(page.locator('[data-script-relation="function"]')).toHaveCount(0);
+        await expect(page.locator('[data-script-relation="message"]')).toHaveCount(0);
         await expect(page.getByRole('button', {name: 'Palette menu', exact: true})).toHaveCount(0);
         await expect(page.locator('[data-workspace-minimap]')).toHaveCount(0);
         await page.getByText('File', {exact: true}).click();
@@ -470,6 +499,9 @@ test('classic startup hides Plus menus and the minimap while preserving the orig
         await expect(page.getByRole('button', {name: /AI agent settings/i})).toHaveCount(0);
     }
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await installRelations();
+    await expect(page.locator('[data-script-relation="function"]')).toHaveCount(1);
+    await expect(page.locator('[data-script-relation="message"]')).toHaveCount(1);
     await expect(page.getByRole('button', {name: 'Palette menu', exact: true})).toBeVisible();
     await expect(page.locator('[data-workspace-minimap]')).toHaveCount(1);
     await page.getByText('File', {exact: true}).click();
