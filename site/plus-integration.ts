@@ -19,6 +19,7 @@ import blockEditorTranslations from './block-editor/translations.json' with {typ
 import {installProjectToolsHost, projectScreenState, projectToolsOwnKeyEvent} from './project-tools/index.ts';
 import {plusSecurityReview} from './extension-host/review.ts';
 import {stoppedProjectLoadState} from '@kubohiroya/turbowarp-plus-editor-workbench/project-load-failure';
+import {extensionLibraryTranslations} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
 import {extensionLoadErrors} from './extension-host/load-errors.ts';
 import {plusLibraryTab} from './extension-library/tab.ts';
 import {plusProjectPackager} from './packager/handoff.ts';
@@ -133,9 +134,9 @@ export const createPlusIntegration = ({
         }) : undefined,
     modals: blockEditor ? [BLOCK_EDITOR_MODAL] : [],
     translations: {
-        en: {...blockEditorTranslations.en, 'gui.extensionLibrary.chooseAnExtension': 'Add Extensions to the Project'},
-        ja: {...blockEditorTranslations.ja, 'gui.extensionLibrary.chooseAnExtension': '機能拡張を作品に追加する'},
-        'ja-hira': {'gui.extensionLibrary.chooseAnExtension': 'かくちょうきのうをさくひんについかする'}
+        en: {...blockEditorTranslations.en, ...extensionLibraryTranslations.en},
+        ja: {...blockEditorTranslations.ja, ...extensionLibraryTranslations.ja},
+        'ja-hira': extensionLibraryTranslations['ja-hira']
     },
     /**
      * Register the block shapes this distribution's own blocks need, once ScratchBlocks exists.

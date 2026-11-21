@@ -8,7 +8,7 @@
  */
 
 import {createFetchPort} from '@kubohiroya/turbowarp-extension-loader';
-import {prepareOfflinePackage} from '@kubohiroya/turbowarp-extension-loader/packager';
+import {packagerPageMessages, prepareOfflinePackage} from '@kubohiroya/turbowarp-extension-loader/packager';
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
 import JSZip from '@turbowarp/jszip';
@@ -23,7 +23,10 @@ import {packagePlusHTML} from './html.ts';
 
 const bundledAssets = __TW_PLUS_PACKAGER_ASSETS__;
 const bundledRuntime = __TW_PLUS_EXTENSION_RUNTIME__;
-const ui = createPlusPermissionUI(document, 'ja');
+// The page has been Japanese only; its words come from the packager.
+const locale = 'ja';
+const text = packagerPageMessages(locale);
+const ui = createPlusPermissionUI(document, locale);
 const status = document.querySelector('[data-testid="plus-package-status"]');
 const file = document.querySelector<HTMLInputElement>('[data-testid="plus-package-file"]');
 const generate = document.querySelector<HTMLButtonElement>('[data-testid="plus-package-generate"]');
@@ -38,7 +41,7 @@ const setInput = (bytes, name) => {
     if (pending) return;
     input = bytes;
     title = String(name || 'TurboWarp-Plus').replace(/\.sb3$/i, '');
-    status.textContent = `${title}: 外部依存がないことを確認してからHTMLを生成してください。`;
+    status.textContent = text.selected(title);
     generate.disabled = false;
     download.hidden = true;
 };
@@ -54,7 +57,7 @@ file.addEventListener('change', async () => {
     } catch (error) {
         if (file.files[0] !== selected) return;
         input = null;
-        status.textContent = `作品を読み込めませんでした: ${error.code || ''} ${error.message}`;
+        status.textContent = text.readFailed(error);
     }
 });
 window.addEventListener('message', event => {
@@ -67,7 +70,7 @@ if (window.opener) window.opener.postMessage({twPlusPackage: {type: 'ready'}}, l
 
 generate.addEventListener('click', async () => {
     if (!input || pending || !resources.checked) {
-        status.textContent = '作品を選び、外部依存がないことを確認してください。';
+        status.textContent = text.chooseProject;
         return;
     }
     pending = true;
@@ -89,16 +92,16 @@ async function generateHTML() {
     const trustProvider = createSessionTrustProvider({requestApproval: async (code, options) =>
         await trusted.isTrustedCode(code) || withoutWaitCursor(document, () => ui.requestApproval(code, options))});
     try {
-        status.textContent = '作品と拡張のバイト列を検証しています…';
+        status.textContent = text.verifying;
         const io = createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions});
         const prepared = await io.prepare(input);
-        if (!prepared.manifest) throw new Error('Plus Manifestがありません。通常の作品には標準Packagerを使用してください。');
+        if (!prepared.manifest) throw new Error(text.noManifest);
         const resourceDependencies = Object.fromEntries(prepared.manifest.extensions.map(spec => [spec.id, [] as never[]]));
         // A transient failure is retried for a few seconds; say so instead of looking stuck. How
         // many attempts there are in all comes from the Loader, so this page does not have to know
         // the retry settings to say "2 of 3".
         const onRetry = ({url, attempt, attempts, delayMs}) => {
-            status.textContent = `接続できませんでした。再試行しています（${attempt + 1}/${attempts}）: ${url}`;
+            status.textContent = text.retrying(url, attempt + 1, attempts);
             ui.diagnostics({
                 type: 'retry',
                 attempt: attempt + 1,
@@ -124,11 +127,9 @@ async function generateHTML() {
         download.href = currentURL;
         download.download = `${title}.html`;
         download.hidden = false;
-        status.textContent = trustedDigests.length === compiled.manifest.extensions.length ?
-            'HTMLを生成しました。拡張はすべてカタログに載っているので、このHTMLを開いても許可の確認は出ません。' :
-            'HTMLを生成しました。カタログにない拡張があるので、このHTMLを開くたびに、その拡張を許可するか確認します。';
+        status.textContent = text.generated(trustedDigests.length === compiled.manifest.extensions.length);
     } catch (error) {
-        status.textContent = `生成を拒否しました: ${error.code || ''} ${error.message}`;
+        status.textContent = text.refused(error);
         ui.diagnostics({type: 'error', code: error.code, message: error.message});
     } finally {
         trustProvider.revokeAll();

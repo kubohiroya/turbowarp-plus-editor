@@ -32,3 +32,27 @@ test('migrated feature adapters contain wiring without local UI or feature state
         inspect(source);
     }
 });
+
+test('the wiring under site/ shows no words of its own; the packages that own the features word them', () => {
+    // Japanese text is the sign of user-facing wording: every feature offers it next to English.
+    const japanese = /[぀-ヿ一-鿿]/;
+    const sources = (directory: string): string[] => fs.readdirSync(directory, {withFileTypes: true}).flatMap(entry => {
+        const file = `${directory}/${entry.name}`;
+        if (entry.isDirectory()) return sources(file);
+        return /\.(?:[cm]?ts|tsx|jsx?)$/.test(entry.name) ? [file] : [];
+    });
+    const found: string[] = [];
+    for (const filename of sources('site')) {
+        const source = ts.createSourceFile(filename, fs.readFileSync(filename, 'utf8'), ts.ScriptTarget.Latest, true,
+            filename.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+        const inspect = (node: ts.Node) => {
+            if ((ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateHead(node) ||
+                ts.isTemplateMiddle(node) || ts.isTemplateTail(node) || ts.isJsxText(node)) && japanese.test(node.text)) {
+                found.push(`${filename}:${source.getLineAndCharacterOfPosition(node.getStart()).line + 1}`);
+            }
+            ts.forEachChild(node, inspect);
+        };
+        inspect(source);
+    }
+    assert.deepEqual(found, [], 'Move these words to the package that owns the feature');
+});

@@ -28,7 +28,7 @@ import {gateProjectSize} from './project-size-gate.ts';
 import dialogStyles from '@kubohiroya/turbowarp-plus-editor-workbench/project-dialog.css';
 import type {ExtensionHostOptions} from './host.ts';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
-import {approveProjectPayloads} from '../project-payloads/approval.ts';
+import {approveProjectPayloads} from '@kubohiroya/turbowarp-plus-editor-workbench/project-payload-approval';
 import {createProjectPayloadHost} from '../project-payloads/host.ts';
 
 /**
@@ -67,7 +67,7 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
     const payloadsEnabled = readWebStartupFeatureFlags(settings.search ?? globalThis.location?.search).payloadFormats;
     const approvePayloads = (urls, cacheable, signal) => {
         const ask = () => approveProjectPayloads(
-            settings.document || globalThis.document, settings.getLocale?.() ?? settings.locale, urls, cacheable, signal);
+            settings.document || globalThis.document, settings.getLocale?.() ?? settings.locale, urls, cacheable, {className: dialogStyles.dialog, signal});
         return settings.waitForUser ? settings.waitForUser(ask) : ask();
     };
     // A project over the standard limits opens only after the person sees its size and agrees
