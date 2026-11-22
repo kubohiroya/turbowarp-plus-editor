@@ -19,6 +19,7 @@ import * as sharedUI from '@kubohiroya/turbowarp-extension-data-editor/react';
 import {createBlockEditorErrorSession} from '@kubohiroya/turbowarp-extension-data-editor/turbowarp';
 
 import {createPlusBlockEditor, plusBlockEditorClassNames} from '@kubohiroya/turbowarp-extension-data-editor/plus';
+import blockEditorStyles from '@kubohiroya/turbowarp-extension-data-editor/react/styles.css';
 import {guiRequire, guiRoot} from '../extension-host/pinned-host.ts';
 
 import {JSDOM} from 'jsdom';
@@ -60,7 +61,8 @@ const imports = {
     // The wrapper reaches the dialog through the integration: the host supplies it, and what this
     // file is about is the wrapper's own messages and props.
     '../lib/tw-plus-integration-points.ts': {
-        hostIntegration: () => ({blockEditor: createPlusBlockEditor({dialog: sharedUI.BlockEditorDialog})}),
+        // As in plus-integration: the host hands the data editor the dialog stylesheet it bundles.
+        hostIntegration: () => ({blockEditor: createPlusBlockEditor({styles: blockEditorStyles, dialog: sharedUI.BlockEditorDialog})}),
         hostBlockEditor: integration => integration?.blockEditor || null
     },
     './modal.jsx': props => React.createElement(ReactModal, {
