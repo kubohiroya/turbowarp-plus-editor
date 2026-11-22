@@ -8,8 +8,8 @@ const gui = process.env.E2E_GUI_ROOT;
 if (!gui || !path.isAbsolute(gui)) throw new Error('An absolute E2E_GUI_ROOT is required');
 // The Loader and the HTML writer are both this repository's now; only the GUI checkout's own
 // build assets below still come from there.
-const {prepareOfflinePackage} = await import('@kubohiroya/turbowarp-extension-loader/packager');
-const {packagePlusHTML} = await import('../../../site/packager/html.ts');
+const {packagePlusHTML, prepareOfflinePackage} = await import('@kubohiroya/turbowarp-extension-loader/packager');
+const {extensionProjectArchiveOptions} = await import('../../../site/extension-host/config.ts');
 const output = path.resolve('.host/issue-4-artifacts');
 await mkdir(output, {recursive: true});
 const require = createRequire(import.meta.url);
@@ -31,7 +31,8 @@ for (const [name, file] of Object.entries<any>({scaffolding: 'scaffolding-full.j
     scaffoldingAssets[name] = source;
 }
 const runtimeBundle = await readFile(path.resolve(process.env.TW_PLUS_RUNTIME_OUTPUT || path.join(output, 'extension-runtime.js')), 'utf8');
-const result = await packagePlusHTML(new Packager(), prepared, {runtimeBundle, scaffoldingAssets});
+const result = await packagePlusHTML(new Packager(), prepared, {runtimeBundle, scaffoldingAssets,
+    archiveOptions: extensionProjectArchiveOptions});
 await writeFile(path.join(output, 'plus-offline.html'), result.data);
 await writeFile(path.join(output, 'plus-offline.sb3'), prepared.projectBytes);
 await writeFile(path.join(output, 'plus-offline-fixture.json'), JSON.stringify({sha256, source, manifest: prepared.manifest}, null, 2));
