@@ -1,6 +1,5 @@
-import {createSurface} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
+import {createBrowserHost, createSurface} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {createTransferSession, transferMime} from '@kubohiroya/turbowarp-plus-editor-windows/transfer';
-import {createBrowserHost} from '../../site/editor-backpack/browser-host.ts';
 
 const sessionId = crypto.randomUUID();
 const transfer = createTransferSession<string>(sessionId);
