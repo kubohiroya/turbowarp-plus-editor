@@ -8,7 +8,7 @@ const {sha} = require('./public-target.cts');
 
 test('integration pins require exact GUI/core identities and an exact security version', async () => {
     const {validatePins} = await import('../../../scripts/site/source.ts');
-    const pins = require('../../../site/source.json');
+    const pins = require('../../../scripts/site/locked-pins.cts').readPinsSync();
     assert.deepEqual(validatePins({...pins}), pins);
     for (const patch of [{guiRevision:'main'}, {coreRevision:'abc123'}, {coreVersion:'^0.6.0'},
         {coreVersion:undefined}, {securityVersion:'^0.3.3'},
@@ -69,7 +69,7 @@ test('a canonical site source resolves expected metadata without reading the ser
             cwd:directory,env:{...process.env,GITHUB_REPOSITORY:'kubohiroya/turbowarp-plus-editor',EXPECTED_REVISION:'b'.repeat(40),GITHUB_OUTPUT:output},encoding:'utf8'});
         assert.equal(result.status,0,result.stderr);
         const identity=JSON.parse(fs.readFileSync(path.join(directory,'test-results/block-editor-deployment/deployment-target.json'),'utf8'));
-        const pins=require('../../../site/source.json');
+        const pins=require('../../../scripts/site/locked-pins.cts').readPinsSync();
         assert.equal(identity.gui_revision,pins.guiRevision);assert.equal(identity.core_revision,pins.coreRevision);
         assert.equal(identity.security_version,pins.securityVersion);assert.equal(identity.site_revision,'b'.repeat(40));
         assert.equal(identity.base_url,'https://kubohiroya.github.io/turbowarp-plus-editor/');

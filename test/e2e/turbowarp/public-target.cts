@@ -5,7 +5,8 @@ const main = () => {
     if (process.env.GITHUB_REPOSITORY !== 'kubohiroya/turbowarp-plus-editor' || !sha(process.env.EXPECTED_REVISION)) {
         throw new Error('Use the TurboWarp-Plus-Editor repository and an explicit full site revision.');
     }
-    const pins = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../site/source.json'), 'utf8'));
+    // The npm pins, including the core's revision from its installed build-info, come from the lockfile.
+    const pins = require('../../../scripts/site/locked-pins.cts').readPinsSync();
     if (pins.guiRepository !== 'kubohiroya/scratch-gui' || !sha(pins.guiRevision) || !sha(pins.coreRevision) ||
         pins.securityPackage !== '@kubohiroya/turbowarp-extension-security-dialog' || !pins.securityVersion) {
         throw new Error('Invalid source pins in the selected site commit.');

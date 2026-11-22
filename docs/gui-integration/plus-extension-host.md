@@ -23,4 +23,4 @@ Plus一覧のチェックボックスは左端に置き、その右にアイコ�
 概要は改行を保持し、HTTP(S)・mailto・メールアドレスをリンク表示します。製作者の右横には
 登録済みの連絡先を表示します。リンクを開いても選択や実行許可は変更しません。
 
-共通画面はnpmの完全一致版で固定します。package.jsonと `site/source.json` の `securityVersion` を一致させ、lockfileにはnpmアーカイブのURLとintegrityを記録します。Git指定用の `securityRevision` は設定せず、通常の `npm ci` でビルド済み配布物を取得します。取り込むときは、配布物の `build-info.json` のversion・revision・`sourceState: "commit"` を照合します。公開済みのnpm版は削除・上書きしません。
+共通画面はnpmの完全一致版で固定します。package.jsonに完全一致版を書き、lockfileにはnpmアーカイブのURLとintegrityを記録します。この2つが固定値で、`site/source.json` には写しません。通常の `npm ci` でビルド済み配布物を取得します。取り込むときは、配布物の `build-info.json` のversion・revision・`sourceState: "commit"` を照合します。公開済みのnpm版は削除・上書きしません。

@@ -66,7 +66,7 @@ jobs:
           version: 11.28.8
       - if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.npm == 'true'
         run: |
-          TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
+          npm ci
       - run: npm run typecheck
         id: typecheck
         if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|typecheck|')
