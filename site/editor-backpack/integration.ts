@@ -2,7 +2,7 @@ import {importScript, importScriptWithReceipt} from '@kubohiroya/turbowarp-scrip
 import {createBackpackIntegration} from '@kubohiroya/turbowarp-plus-editor-workbench/backpack';
 import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
 import {decorateSurface} from './surface-styles.ts';
-import {createBrowserHost} from './browser-host.ts';
+import {createBrowserHost} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {surfaceRecovery} from '../editor-layout/desktop-panel-host.ts';
 import {detachBackpackOpener, openBackpackWindow} from '@tw-plus/backpack-window-host';
 

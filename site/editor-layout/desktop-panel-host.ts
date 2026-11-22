@@ -1,5 +1,4 @@
-import {createSurfaceRecovery} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
-import {createBrowserHost} from '../editor-backpack/browser-host.ts';
+import {createBrowserHost, createSurfaceRecovery} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 
 const storage = () => {
     try {
