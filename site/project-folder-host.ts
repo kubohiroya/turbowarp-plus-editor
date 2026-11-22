@@ -24,8 +24,32 @@ import {bindProjectOpenTabActions, openProjectInNewTab} from '@kubohiroya/turbow
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
-import {bindProjectRepositoryCreation} from './project-repository-host.ts';
-import type {BrowserRepositoryFolders, DesktopRepositoryCreation} from './project-repository-host.ts';
+import {bindProjectRepositoryCreation} from '@kubohiroya/turbowarp-plus-editor-git/project-repository-host';
+import type {BrowserRepositoryFolders, DesktopRepositoryCreation, ProjectRepositoryHostServices}
+    from '@kubohiroya/turbowarp-plus-editor-git/project-repository-host';
+
+// The build supplies these (scripts/site/webpack.config.cts); repository creation is in the Git package.
+declare const __TW_PLUS_CREATE_REPOSITORY_CLIENT__: ProjectRepositoryHostServices['createRepositoryClient'];
+declare const __TW_PLUS_CREATE_CLOUDFLARE_REPOSITORY_AUTH__: ProjectRepositoryHostServices['createCloudflareRepositoryAuth'];
+declare const __TW_PLUS_CREATE_CLOUDFLARE_GIT_AUTH__: ProjectRepositoryHostServices['createCloudflareGitAuth'];
+declare const __TW_PLUS_COMPOSE_REPOSITORY_SEED__: ProjectRepositoryHostServices['composeRepositorySeed'];
+declare const __TW_PLUS_PREPARE_INITIAL_REPOSITORY__: ProjectRepositoryHostServices['prepareInitialRepository'];
+declare const __TW_PLUS_PUSH_INITIAL_REPOSITORY__: ProjectRepositoryHostServices['pushInitialRepository'];
+declare const __TW_PLUS_SB3_TOOLCHAIN_VERSION__: string | null;
+declare const __TW_PLUS_REPOSITORY_LICENSES__: ProjectRepositoryHostServices['licenses'];
+
+/** What this build bundled for repository creation; a build without it leaves creation unavailable. */
+const repositoryHostServices = (): ProjectRepositoryHostServices => ({
+    createRepositoryClient: typeof __TW_PLUS_CREATE_REPOSITORY_CLIENT__ === 'function' ? __TW_PLUS_CREATE_REPOSITORY_CLIENT__ : undefined!,
+    createCloudflareRepositoryAuth: typeof __TW_PLUS_CREATE_CLOUDFLARE_REPOSITORY_AUTH__ === 'function' ?
+        __TW_PLUS_CREATE_CLOUDFLARE_REPOSITORY_AUTH__ : undefined,
+    createCloudflareGitAuth: typeof __TW_PLUS_CREATE_CLOUDFLARE_GIT_AUTH__ === 'function' ? __TW_PLUS_CREATE_CLOUDFLARE_GIT_AUTH__ : undefined,
+    composeRepositorySeed: typeof __TW_PLUS_COMPOSE_REPOSITORY_SEED__ === 'function' ? __TW_PLUS_COMPOSE_REPOSITORY_SEED__ : undefined!,
+    prepareInitialRepository: typeof __TW_PLUS_PREPARE_INITIAL_REPOSITORY__ === 'function' ? __TW_PLUS_PREPARE_INITIAL_REPOSITORY__ : undefined!,
+    pushInitialRepository: typeof __TW_PLUS_PUSH_INITIAL_REPOSITORY__ === 'function' ? __TW_PLUS_PUSH_INITIAL_REPOSITORY__ : undefined!,
+    sb3ToolchainVersion: typeof __TW_PLUS_SB3_TOOLCHAIN_VERSION__ === 'string' ? __TW_PLUS_SB3_TOOLCHAIN_VERSION__ : null,
+    licenses: typeof __TW_PLUS_REPOSITORY_LICENSES__ === 'undefined' ? [] : __TW_PLUS_REPOSITORY_LICENSES__
+});
 import {withProjectFolderTitle} from './project-tools/properties.ts';
 
 type RuntimeThread = {updateMonitor?: boolean};
@@ -247,7 +271,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         }
     } : undefined;
     const repositoryCreation = localGit && createFolder ? bindProjectRepositoryCreation({
-        view, locale, desktop: view.EditorPreload?.localGitCreation,
+        view, locale, desktop: view.EditorPreload?.localGitCreation, services: repositoryHostServices(),
         cloudflare,
         browserFolders,
         createBrowserFolder: browserStorage ? async title => (await browserStorage.create(title, {projectPath: ''})).root : undefined,
