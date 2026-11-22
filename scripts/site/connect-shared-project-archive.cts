@@ -1,5 +1,5 @@
-const path = require('node:path');
-const port = JSON.stringify(path.resolve(__dirname, '../../site/extension-host/shared-project-archive.ts'));
+// The Loader shares the SB3 read it verified; the pinned Scratch parser reuses it instead of unpacking again.
+const port = JSON.stringify('@kubohiroya/turbowarp-extension-loader/shared-project-archive');
 
 module.exports = (source: string) => {
     const unpack = '    unpack(input, isSprite)';

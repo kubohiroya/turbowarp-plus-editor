@@ -8,7 +8,7 @@
  */
 
 import {createFetchPort} from '@kubohiroya/turbowarp-extension-loader';
-import {packagerPageMessages, prepareOfflinePackage} from '@kubohiroya/turbowarp-extension-loader/packager';
+import {packagePlusHTML, packagerPageMessages, prepareOfflinePackage} from '@kubohiroya/turbowarp-extension-loader/packager';
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
 import JSZip from '@turbowarp/jszip';
@@ -19,7 +19,6 @@ import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {createPlusPermissionUI} from '../extension-host/permission-ui.ts';
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
 import {embedPackagedProjectData} from '../project-payloads/codec.ts';
-import {packagePlusHTML} from './html.ts';
 
 const bundledAssets = __TW_PLUS_PACKAGER_ASSETS__;
 const bundledRuntime = __TW_PLUS_EXTENSION_RUNTIME__;
@@ -121,7 +120,8 @@ async function generateHTML() {
         const packager = new Packager();
         packager.options.app.windowTitle = title;
         const result = await packagePlusHTML(packager, {...compiled, projectBytes},
-            {runtimeBundle, scaffoldingAssets: bundledAssets, trustedDigests, embeddedProjectData});
+            {runtimeBundle, scaffoldingAssets: bundledAssets, trustedDigests, embeddedProjectData,
+                archiveOptions: extensionProjectArchiveOptions});
         if (currentURL) URL.revokeObjectURL(currentURL);
         currentURL = URL.createObjectURL(new Blob([result.data], {type: 'text/html'}));
         download.href = currentURL;
