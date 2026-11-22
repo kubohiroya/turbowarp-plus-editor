@@ -1,7 +1,6 @@
 import React from 'react';
 import {render} from 'react-dom';
-import {PROJECT_VERSION_PREVIEW_PROJECT, PROJECT_VERSION_PREVIEW_READY, projectVersionPreviewMessages}
-    from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
+import {receiveProjectVersionPreview} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 
 type PreviewVM = {loadProject(archive: ArrayBuffer): Promise<void>; renderer: {draw(): void}};
 type ProjectState = {loadingState: string};
@@ -22,28 +21,24 @@ __TW_PLUS_REVISION_GUI__.setAppElement(app);
 document.body.style.margin = '0';
 const Player = __TW_PLUS_REVISION_APP_STATE__(__TW_PLUS_REVISION_GUI__);
 
+// The handshake and its checks are the Git package's; this page supplies the pinned GUI's player.
 function connect(vm: PreviewVM) {
-    const origin = location.origin;
-    window.addEventListener('message', async function load(event) {
-        if (event.source !== parent || event.origin !== origin || event.data?.kind !== PROJECT_VERSION_PREVIEW_PROJECT ||
-            !(event.data.archive instanceof ArrayBuffer)) return;
-        window.removeEventListener('message', load);
-        const loadingState = () => ReduxStore.getState().scratchGui.projectState.loadingState;
-        const {requestProjectUpload, onLoadedProject} = __TW_PLUS_REVISION_PROJECT_STATE__;
-        ReduxStore.dispatch(requestProjectUpload(loadingState()));
-        try {
-            await vm.loadProject(event.data.archive);
-            ReduxStore.dispatch(onLoadedProject(loadingState(), false, true));
+    const loadingState = () => ReduxStore.getState().scratchGui.projectState.loadingState;
+    const {requestProjectUpload, onLoadedProject} = __TW_PLUS_REVISION_PROJECT_STATE__;
+    receiveProjectVersionPreview(window, {
+        loading: () => ReduxStore.dispatch(requestProjectUpload(loadingState())),
+        async load(archive) {
+            await vm.loadProject(archive);
             requestAnimationFrame(() => vm.renderer.draw());
-        } catch {
-            ReduxStore.dispatch(onLoadedProject(loadingState(), false, false));
+        },
+        loaded: success => ReduxStore.dispatch(onLoadedProject(loadingState(), false, success)),
+        showError(message) {
             const error = document.createElement('p');
             error.role = 'alert';
-            error.textContent = projectVersionPreviewMessages(new URLSearchParams(location.search).get('lang')).loadFailed;
+            error.textContent = message;
             app.prepend(error);
         }
     });
-    parent.postMessage(PROJECT_VERSION_PREVIEW_READY, origin);
 }
 
 if (parent !== window) {
