@@ -48,7 +48,7 @@ import {attachSpriteRestoreHistory} from '@kubohiroya/turbowarp-plus-editor-code
 import {attachTargetUndoHistory} from '@kubohiroya/turbowarp-plus-editor-code-views/target-undo-history';
 import {attachVariableMerge} from '@kubohiroya/turbowarp-plus-editor-code-views/variable-merge';
 import {installBlockNumberInput} from '@kubohiroya/turbowarp-plus-editor-code-views/block-number-input';
-import {attachReviewNavigation, attachWorkspaceNavigation} from './workspace-minimap/index.ts';
+import {attachReviewNavigation, attachWorkspaceNavigation} from '@kubohiroya/turbowarp-plus-editor-workbench/workspace-navigation';
 
 const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap, localGit, gitRestoreVersion} =
     readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);

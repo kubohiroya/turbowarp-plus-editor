@@ -18,7 +18,7 @@ import {plusCatalog} from '../plus-catalog.ts';
 import loadPlusExtensions from '../extension-library/load-extensions.ts';
 import {beginPlusReview, canLoadPlusExtension} from '../gui-integration/lib/tw-plus-extension-permissions.ts';
 import {attachBackpackDrop} from '../editor-backpack/integration.ts';
-import {attachCodePreviewMinimap} from '../workspace-minimap/index.ts';
+import {attachCodePreviewMinimap} from '@kubohiroya/turbowarp-plus-editor-workbench/workspace-navigation';
 import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points.ts';
 import {createEditorTabLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/editor-tabs';
 
