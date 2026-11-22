@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import exposeBlockEditorAPI from '../../site/block-editor/capabilities.ts';
+import {exposeBlockEditorAPI} from '@kubohiroya/turbowarp-extension-data-editor/plus';
 const {default: getBlockEditorService} = await import('../../site/gui-integration/lib/tw-block-editor-service.ts');
 // The editor itself is the host's. What this file is about is this fork's side: one service per VM,
 // and the strings it supplies, so the host's part is a stub that answers with the real shape.

@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import exposeBlockEditorAPI from '../../site/block-editor/capabilities.ts';
-import {readFileSync} from 'node:fs';
-import {fixedMessages} from '../../site/block-editor/messages.ts';
+import {exposeBlockEditorAPI, fixedMessages, plusBlockEditorTranslations} from '@kubohiroya/turbowarp-extension-data-editor/plus';
 import {guiRequire} from '../extension-host/pinned-host.ts';
 const {default: getBlockEditorService} = await import('../../site/gui-integration/lib/tw-block-editor-service.ts');
 // The editor itself is the host's. What this file is about is this fork's side: one service per VM,
@@ -20,7 +18,7 @@ const integration = {blockEditor: {createService: ({getIntl}) => {
 
 test('fixed labels use the actual GUI Intl locale and preserve one service per VM', () => {
     const {IntlProvider} = guiRequire('react-intl');
-    const translations = JSON.parse(readFileSync(new URL('../../site/block-editor/translations.json', import.meta.url), 'utf8'));
+    const translations = plusBlockEditorTranslations;
     const vm = {};
     let previous;
     for (const locale of ['en', 'ja']) {

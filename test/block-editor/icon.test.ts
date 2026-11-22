@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {bindBlockEditorIcon} from '@kubohiroya/turbowarp-extension-data-editor/turbowarp';
 
-import {plusBlockEditor} from '../../site/block-editor/editor.ts';
+import {createPlusBlockEditor} from '@kubohiroya/turbowarp-extension-data-editor/plus';
+
+const plusBlockEditor = createPlusBlockEditor();
 
 import {guiRequire} from '../extension-host/pinned-host.ts';
 

@@ -18,7 +18,7 @@ import * as core from '@kubohiroya/turbowarp-extension-data-editor';
 import * as sharedUI from '@kubohiroya/turbowarp-extension-data-editor/react';
 import {createBlockEditorErrorSession} from '@kubohiroya/turbowarp-extension-data-editor/turbowarp';
 
-import {createPlusBlockEditor} from '../../site/block-editor/editor.ts';
+import {createPlusBlockEditor, plusBlockEditorClassNames} from '@kubohiroya/turbowarp-extension-data-editor/plus';
 import {guiRequire, guiRoot} from '../extension-host/pinned-host.ts';
 
 import {JSDOM} from 'jsdom';
@@ -56,7 +56,7 @@ const {code} = babel.transformSync(fs.readFileSync(filename, 'utf8'), {
 const imports = {
     'prop-types': guiRequire('prop-types'), react: React, 'react-intl': intl,
     'react-redux': {connect: () => component => component},
-    '../../block-editor/theme.css': {dark: 'dark'},
+    '@kubohiroya/turbowarp-extension-data-editor/plus': {plusBlockEditorClassNames},
     // The wrapper reaches the dialog through the integration: the host supplies it, and what this
     // file is about is the wrapper's own messages and props.
     '../lib/tw-plus-integration-points.ts': {
