@@ -14,8 +14,12 @@ import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/
 
 import {attachScriptTransfer, createProjectJSONTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
 
-import {plusBlockEditor} from './block-editor/editor.ts';
-import blockEditorTranslations from './block-editor/translations.json' with {type: 'json'};
+import {createPlusBlockEditor, plusBlockEditorTranslations as blockEditorTranslations} from '@kubohiroya/turbowarp-extension-data-editor/plus';
+import blockEditorStyles from '@kubohiroya/turbowarp-extension-data-editor/react/styles.css';
+import '@kubohiroya/turbowarp-extension-data-editor/plus.css';
+
+// The block editor's strings, capabilities and theme are the data editor's; this only hands it the stylesheet the GUI bundles.
+const plusBlockEditor = createPlusBlockEditor({styles: blockEditorStyles});
 import {installProjectToolsHost, projectScreenState, projectToolsOwnKeyEvent} from './project-tools/index.ts';
 import {plusSecurityReview} from './extension-host/review.ts';
 import {stoppedProjectLoadState} from '@kubohiroya/turbowarp-plus-editor-workbench/project-load-failure';
