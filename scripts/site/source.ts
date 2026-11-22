@@ -9,188 +9,69 @@ export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const sha = value => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
 export const exactVersion = value => typeof value === 'string' && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(value);
 export const corePackage = '@kubohiroya/turbowarp-extension-data-editor';
+const require = createRequire(import.meta.url);
+const {readPinsSync, npmPackages} = require('./locked-pins.cts') as {
+    readPinsSync: (directory?: string) => Record<string, any>;
+    npmPackages: Record<string, {name: string; repository: string}>;
+};
+const integrity = value => typeof value === 'string' && /^sha512-[A-Za-z0-9+/]{86}==$/.test(value);
+/**
+ * Check the merged pins: the git inputs of `site/source.json` and the npm pins read from the lockfile.
+ * The npm packages carry no revision of their own; the core's comes from its installed build-info.
+ */
 export function validatePins(pins) {
     assert.equal(pins.guiRepository, 'kubohiroya/scratch-gui');
-    assert.equal(pins.coreRepository, 'kubohiroya/turbowarp-extension-data-editor');
-    assert.ok(sha(pins.guiRevision) && sha(pins.coreRevision), 'Full GUI/core revisions are required');
-    assert.ok(exactVersion(pins.coreVersion), 'An exact core version is required');
-    assert.equal(pins.securityPackage, '@kubohiroya/turbowarp-extension-security-dialog');
-    assert.match(pins.securityVersion, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
-    if (['documentEditorRepository', 'documentEditorRevision', 'documentEditorVersion'].some(key => pins[key] !== undefined)) {
-        assert.equal(pins.documentEditorRepository, 'kubohiroya/turbowarp-document-editor');
-        assert.ok(sha(pins.documentEditorRevision), 'A full document editor revision is required');
-        assert.ok(exactVersion(pins.documentEditorVersion), 'An exact document editor version is required');
-        assert.ok(pins.documentEditorSource === undefined || ['git', 'npm'].includes(pins.documentEditorSource),
-            'Document editor source must be git or npm');
-        if (pins.documentEditorSource === 'npm') {
-            assert.match(pins.documentEditorIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
-                'The published document editor integrity is required');
-        }
+    assert.ok(sha(pins.guiRevision), 'A full GUI revision is required');
+    assert.equal(pins.vmRepository, 'kubohiroya/scratch-vm');
+    assert.equal(pins.packagerRepository, 'TurboWarp/packager');
+    for (const key of ['vmRevision', 'vmBaseRevision', 'packagerRevision']) assert.ok(sha(pins[key]), `Full ${key} is required`);
+    for (const [key, {name, repository}] of Object.entries(npmPackages)) {
+        assert.equal(pins[`${key}Repository`], repository, `${name} comes from another repository`);
+        assert.ok(exactVersion(pins[`${key}Version`]), `An exact ${name} version is required`);
+        assert.ok(integrity(pins[`${key}Integrity`]), `The published ${name} integrity is required`);
+        assert.equal(pins[`${key}Source`], 'npm', `${name} must be installed from npm`);
     }
-    if (pins.securityRevision !== undefined) assert.ok(sha(pins.securityRevision), 'A full security revision is required');
-    if (['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'vmBaseRevision',
-        'packagerRepository', 'packagerRevision'].some(key => pins[key] !== undefined)) {
-        assert.equal(pins.loaderRepository, 'kubohiroya/turbowarp-extension-loader');
-        assert.equal(pins.vmRepository, 'kubohiroya/scratch-vm');
-        assert.equal(pins.packagerRepository, 'TurboWarp/packager');
-        for (const key of ['loaderRevision', 'vmRevision', 'vmBaseRevision', 'packagerRevision']) {
-            assert.ok(sha(pins[key]), `Full ${key} is required`);
-        }
-        // An npm loader keeps loaderRevision as the commit it was published from.
-        assert.ok(pins.loaderSource === undefined || ['git', 'npm'].includes(pins.loaderSource),
-            'Loader source must be git or npm');
-        if (pins.loaderSource === 'npm') {
-            assert.ok(exactVersion(pins.loaderVersion), 'An exact npm loader version is required');
-            assert.match(pins.loaderIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
-                'The published loader integrity is required');
-        }
-    }
-    if (['scriptTransferRepository', 'scriptTransferRevision', 'scriptTransferVersion'].some(key => pins[key] !== undefined)) {
-        assert.equal(pins.scriptTransferRepository, 'kubohiroya/turbowarp-script-transfer');
-        assert.ok(sha(pins.scriptTransferRevision), 'A full script transfer revision is required');
-        assert.ok(exactVersion(pins.scriptTransferVersion), 'An exact script transfer version is required');
-        // An npm script transfer keeps scriptTransferRevision as the commit it was published from.
-        assert.ok(pins.scriptTransferSource === undefined || ['git', 'npm'].includes(pins.scriptTransferSource),
-            'Script transfer source must be git or npm');
-        if (pins.scriptTransferSource === 'npm') {
-            assert.match(pins.scriptTransferIntegrity, /^sha512-[A-Za-z0-9+/]{86}==$/,
-                'The published script transfer integrity is required');
-        }
-    }
+    assert.equal(pins.securityPackage, npmPackages.security.name);
+    if (pins.coreRevision !== undefined) assert.ok(sha(pins.coreRevision), 'A full core revision is required');
     return pins;
 }
-export async function readPins() {
-    return validatePins(JSON.parse(await fs.readFile(path.join(root, 'site/source.json'), 'utf8')));
+export async function readPins(directory = root) {
+    return validatePins(readPinsSync(directory));
+}
+/** The installed copy of one family package. Several export no package.json, so read it by path. */
+async function installedManifest(directory, name) {
+    return JSON.parse(await fs.readFile(path.join(directory, 'node_modules', name, 'package.json'), 'utf8'));
+}
+/**
+ * Check that `directory` declares, locks and installed the npm version the pins name. The version and
+ * integrity are the lockfile's own, so this is what catches a manifest or an install that drifted.
+ */
+async function verifyNpmDependency(directory, pins, key) {
+    const {name} = npmPackages[key];
+    const version = pins[`${key}Version`];
+    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
+    const declared = {...manifest.dependencies, ...manifest.devDependencies};
+    assert.equal(declared[name], version, `Host must pin the exact npm version of ${name}`);
+    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
+    const entry = lock.packages[`node_modules/${name}`];
+    assert.equal(entry?.version, version, `Locked ${name} version differs from the pin`);
+    assert.equal(entry.integrity, pins[`${key}Integrity`], `${name} tarball integrity differs from the pin`);
+    assert.equal((await installedManifest(directory, name)).version, version, `Installed ${name} differs from the pin`);
+    return {version};
 }
 export async function verifyInstalledCore(directory, pins) {
-    const require = createRequire(path.join(directory, 'package.json'));
+    await verifyNpmDependency(directory, pins, 'core');
+    const resolve = createRequire(path.join(directory, 'package.json')).resolve;
     // Read the bytes instead of importing them, so a second check in one process is not cached.
-    const info = JSON.parse(await fs.readFile(require.resolve(`${corePackage}/build-info`), 'utf8'));
-    assert.equal(info.version, pins.coreVersion, 'Installed core version differs from the source pin');
-    assert.equal(info.revision, pins.coreRevision, 'Installed core differs from the source pin');
+    const info = JSON.parse(await fs.readFile(resolve(`${corePackage}/build-info`), 'utf8'));
+    assert.equal(info.version, pins.coreVersion, 'Installed core version differs from the lock');
+    assert.ok(sha(info.revision), 'The installed core must record its full revision');
     return {coreRevision: info.revision, coreVersion: info.version};
 }
-/**
- * Check one install's document editor against the pins: the manifest, the lockfile and the bytes
- * that were installed. Only this repository has that dependency now.
- */
-export async function verifyDocumentEditorDependency(directory, pins) {
-    const name = '@kubohiroya/turbowarp-document-editor';
-    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
-    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
-    const entry = lock.packages[`node_modules/${name}`];
-    if (pins.documentEditorSource === 'npm') {
-        assert.equal(manifest.dependencies[name], pins.documentEditorVersion,
-            'Host must pin the exact npm document editor version');
-        assert.equal(lock.packages[''].dependencies[name], pins.documentEditorVersion,
-            'Root lock differs from the npm document editor pin');
-        assert.equal(entry.version, pins.documentEditorVersion, 'Locked document editor version differs from the pin');
-        assert.equal(entry.resolved,
-            `https://registry.npmjs.org/${name}/-/turbowarp-document-editor-${pins.documentEditorVersion}.tgz`,
-            'Document editor must resolve to the published npm tarball');
-        assert.equal(entry.integrity, pins.documentEditorIntegrity,
-            'Document editor tarball integrity differs from the source pin');
-    } else {
-        assert.equal(manifest.dependencies[name],
-            `git+https://github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`,
-            'GUI must pin the shared document editor');
-        assert.equal(entry.resolved,
-            `git+ssh://git@github.com/${pins.documentEditorRepository}.git#${pins.documentEditorRevision}`,
-            'GUI lock differs from the shared document editor pin');
-    }
-    const require = createRequire(path.join(directory, 'package.json'));
-    const ui = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
-    assert.equal(ui.version, pins.documentEditorVersion, 'Installed document editor differs from the pin');
-}
-/**
- * Check one install's Loader against the pins: the manifest, the lockfile and the installed bytes.
- *
- * The GUI does not depend on the Loader any more — the side that imports it is this repository — so
- * this is pointed at whichever install owns it, the way the document editor's check is.
- */
-export async function verifySecurityDependency(directory, pins) {
-    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
-    const dependencies = {...manifest.dependencies, ...manifest.devDependencies};
-    const expected = pins.securityRevision ?
-        `github:kubohiroya/turbowarp-extension-security-dialog#${pins.securityRevision}` : pins.securityVersion;
-    assert.equal(dependencies[pins.securityPackage], expected, 'Host must pin the exact security package');
-    if (pins.securityRevision) {
-        const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
-        assert.equal(lock.packages[`node_modules/${pins.securityPackage}`].resolved,
-            `git+ssh://git@github.com/kubohiroya/turbowarp-extension-security-dialog.git#${pins.securityRevision}`,
-            'Installed security source differs from the source pin');
-    }
-    // The package does not export its own package.json either, so read the one beside its entry.
-    const require = createRequire(path.join(directory, 'package.json'));
-    const installed = JSON.parse(await fs.readFile(
-        path.resolve(path.dirname(require.resolve(pins.securityPackage)), '../package.json'), 'utf8'));
-    assert.equal(installed.version, pins.securityVersion, 'Installed security package differs from the source pin');
-    if (pins.securityRevision) {
-        const info = JSON.parse(await fs.readFile(
-            path.join(path.dirname(require.resolve(pins.securityPackage)), 'build-info.json'), 'utf8'));
-        assert.equal(info.name, pins.securityPackage, 'Security build info identifies another package');
-        assert.equal(info.version, pins.securityVersion, 'Security build version differs from the pin');
-        assert.equal(info.revision, pins.securityRevision, 'Security build revision differs from the pin');
-        assert.ok(['commit', 'git-archive'].includes(info.sourceState),
-            'Security build must come from a committed checkout or pinned archive');
-    }
-    return {version: installed.version};
-}
-
-export async function verifyLoaderDependency(directory, pins) {
-    const name = '@kubohiroya/turbowarp-extension-loader';
-    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
-    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
-    const entry = lock.packages[`node_modules/${name}`];
-    const dependencies = {...manifest.dependencies, ...manifest.devDependencies};
-    const rootLock = {...lock.packages[''].dependencies, ...lock.packages[''].devDependencies};
-    if (pins.loaderSource === 'npm') {
-        assert.equal(dependencies[name], pins.loaderVersion, 'Host must pin the exact npm loader version');
-        assert.equal(rootLock[name], pins.loaderVersion, 'Root lock differs from the npm loader pin');
-        assert.equal(entry.version, pins.loaderVersion, 'Locked loader version differs from the pin');
-        assert.equal(entry.resolved,
-            `https://registry.npmjs.org/${name}/-/turbowarp-extension-loader-${pins.loaderVersion}.tgz`,
-            'Loader must resolve to the published npm tarball');
-        assert.equal(entry.integrity, pins.loaderIntegrity, 'Loader tarball integrity differs from the source pin');
-        // The loader does not export its package.json, so read the one beside its built entry.
-        const require = createRequire(path.join(directory, 'package.json'));
-        const installed = JSON.parse(await fs.readFile(
-            path.resolve(path.dirname(require.resolve(name)), '../package.json'), 'utf8'));
-        assert.equal(installed.version, pins.loaderVersion, 'Installed loader differs from the pin');
-    } else {
-        assert.equal(dependencies[name],
-            `git+https://github.com/${pins.loaderRepository}.git#${pins.loaderRevision}`,
-            'Host must pin the shared Loader');
-        assert.equal(entry.resolved,
-            `git+ssh://git@github.com/${pins.loaderRepository}.git#${pins.loaderRevision}`,
-            `Lockfile differs for ${name}`);
-    }
-}
-export async function verifyScriptTransferDependency(directory, pins) {
-    const name = '@kubohiroya/turbowarp-script-transfer';
-    const manifest = JSON.parse(await fs.readFile(path.join(directory, 'package.json'), 'utf8'));
-    const lock = JSON.parse(await fs.readFile(path.join(directory, 'package-lock.json'), 'utf8'));
-    const entry = lock.packages[`node_modules/${name}`];
-    if (pins.scriptTransferSource === 'npm') {
-        assert.equal(manifest.dependencies[name], pins.scriptTransferVersion, 'Script transfer source differs from the pin');
-        assert.equal(lock.packages[''].dependencies[name], pins.scriptTransferVersion,
-            'Script transfer root lock differs from the pin');
-        assert.equal(entry.resolved,
-            `https://registry.npmjs.org/${name}/-/turbowarp-script-transfer-${pins.scriptTransferVersion}.tgz`,
-            'Script transfer must resolve to the published npm tarball');
-        assert.equal(entry.integrity, pins.scriptTransferIntegrity, 'Script transfer tarball integrity differs from the pin');
-    } else {
-        const source = `git+https://github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`;
-        assert.equal(manifest.dependencies[name], source, 'Script transfer source differs from the pin');
-        assert.equal(lock.packages[''].dependencies[name], source, 'Script transfer root lock differs from the pin');
-        assert.equal(entry.resolved, `git+ssh://git@github.com/${pins.scriptTransferRepository}.git#${pins.scriptTransferRevision}`,
-            'Script transfer lock differs from the pin');
-    }
-    assert.equal(entry.version, pins.scriptTransferVersion, 'Script transfer lock version differs from the pin');
-    const require = createRequire(path.join(directory, 'package.json'));
-    const installed = JSON.parse(await fs.readFile(require.resolve(`${name}/package.json`), 'utf8'));
-    assert.equal(installed.version, pins.scriptTransferVersion, 'Installed script transfer differs from the pin');
-}
+export const verifyDocumentEditorDependency = (directory, pins) => verifyNpmDependency(directory, pins, 'documentEditor');
+export const verifySecurityDependency = (directory, pins) => verifyNpmDependency(directory, pins, 'security');
+export const verifyLoaderDependency = (directory, pins) => verifyNpmDependency(directory, pins, 'loader');
+export const verifyScriptTransferDependency = (directory, pins) => verifyNpmDependency(directory, pins, 'scriptTransfer');
 
 export async function verifyHost(gui, pins) {
     validatePins(pins);

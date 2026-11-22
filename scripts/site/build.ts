@@ -54,16 +54,15 @@ export async function buildPages(pins = undefined) {
     }
     const documents = await buildDocumentEditorMetadata(output, prefix);
     info.documentEditor = {repository: `https://github.com/${pins.documentEditorRepository}`,
-        revision: pins.documentEditorRevision, version: pins.documentEditorVersion,
-        metadata: 'document-editor/build-info.json', source: pins.documentEditorSource || 'git',
-        integrity: pins.documentEditorIntegrity};
+        version: pins.documentEditorVersion, metadata: 'document-editor/build-info.json',
+        source: pins.documentEditorSource, integrity: pins.documentEditorIntegrity};
     assert.equal(documents.packages[0].version, pins.documentEditorVersion);
     // The GUI install supplies the VM and its own tooling; this repository's install supplies every
     // family package the site bundles. Its dev entries count: the Loader and the review dialog are
     // devDependencies here and are bundled all the same, so their licenses have to be recorded.
     if (pins.scriptTransferRepository) info.scriptTransfer = {
         repository: `https://github.com/${pins.scriptTransferRepository}`,
-        revision: pins.scriptTransferRevision, version: pins.scriptTransferVersion, featureDefault: true
+        version: pins.scriptTransferVersion, integrity: pins.scriptTransferIntegrity, featureDefault: true
     };
     info.previewReloadStyles = pins.previewReloadStyles;
     info.familyNotices = await buildFamilyNotices(output, [

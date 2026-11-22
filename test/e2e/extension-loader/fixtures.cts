@@ -1,5 +1,6 @@
 const {test: base, expect} = require('@playwright/test');
-const pins = require('../../../site/source.json');
+const {readPinsSync} = require('../../../scripts/site/locked-pins.cts');
+const pins = readPinsSync();
 
 async function identity(request, baseURL) {
     const url = new URL('build-info.json', baseURL);
@@ -15,7 +16,7 @@ async function identity(request, baseURL) {
     expect(info.securityRevision).toBe(pins.securityRevision);
     if (process.env.E2E_EXPECT_SITE_REVISION) expect(info.siteRevision).toBe(process.env.E2E_EXPECT_SITE_REVISION);
     expect(info.extensionIntegration).toBeTruthy();
-    for (const key of ['loaderRepository', 'loaderRevision', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) {
+    for (const key of ['loaderRepository', 'loaderVersion', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) {
         expect(info.extensionIntegration[key], key).toBe(pins[key]);
     }
     expect(info.extensionIntegration.featureDefault).toBe(true);

@@ -15,7 +15,7 @@ const buildInfo = async (request, baseURL, onRead = undefined) => {
     expect(info.siteRevision).toMatch(/^[a-f0-9]{40}$/);
     expect(info.siteRepository).toBe('https://github.com/kubohiroya/turbowarp-plus-editor');
     expect(info.securityPackage).toBe('@kubohiroya/turbowarp-extension-security-dialog');
-    expect(info.securityRevision).toBe(require('../../../site/source.json').securityRevision);
+    expect(info.securityRevision).toBe(require('../../../scripts/site/locked-pins.cts').readPinsSync().securityRevision);
     if (process.env.E2E_EXPECT_SECURITY_VERSION) expect(info.securityVersion).toBe(process.env.E2E_EXPECT_SECURITY_VERSION);
     if (process.env.E2E_EXPECT_GUI_REVISION) expect(info.revision).toBe(process.env.E2E_EXPECT_GUI_REVISION);
     if (process.env.E2E_EXPECT_CORE_REVISION) expect(info.coreRevision).toBe(process.env.E2E_EXPECT_CORE_REVISION);
