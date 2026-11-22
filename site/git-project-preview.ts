@@ -1,4 +1,4 @@
-import {dialogAction, dialogActions} from '@kubohiroya/turbowarp-plus-editor-windows';
+import {openProjectVersionPreview as openVersionPreview} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import JSZip from '@turbowarp/jszip';
 import type {EmbeddedExtensionManifest, ProjectJson, Sb3SourceManifest} from '@kubohiroya/sb3-toolchain';
 
@@ -46,39 +46,8 @@ export async function packProjectVersion(files: ReadonlyMap<string, Uint8Array<A
     return zip.generateAsync({type: 'arraybuffer'});
 }
 
-export function openProjectVersionPreview(document: Document, oid: string, archive: ArrayBuffer, locale: string) {
-    const preview = document.createElement('dialog');
-    const heading = document.createElement('h2');
-    const japanese = locale.startsWith('ja');
-    heading.textContent = `${japanese ? '作品の過去版' : 'Project version'} · ${oid.slice(0, 12)}`;
-    preview.setAttribute('aria-label', heading.textContent);
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.textContent = japanese ? '閉じる' : 'Close';
-    close.onclick = () => preview.close();
-    const frame = document.createElement('iframe');
-    const view = document.defaultView!;
-    const url = new URL('git-project-preview.html', view.location.href);
-    url.searchParams.set('lang', locale);
-    url.searchParams.set('twPlusLocalGit', '0');
-    url.searchParams.set('twPlusStandardLayout', '0');
-    frame.src = url.href;
-    frame.title = heading.textContent;
-    frame.allow = 'autoplay; fullscreen';
-    frame.style.cssText = 'width: min(850px, 85vw); height: min(630px, 75vh); border: 0; display: block';
-    preview.append(heading, frame, dialogActions(document, dialogAction(close, 'close')));
-    const dispose = () => {
-        view.removeEventListener('message', send);
-        preview.remove();
-    };
-    const send = (event: MessageEvent) => {
-        if (event.source !== frame.contentWindow || event.origin !== url.origin ||
-            event.data !== 'tw-plus/git-preview-ready') return;
-        view.removeEventListener('message', send);
-        frame.contentWindow!.postMessage({kind: 'tw-plus/git-preview-project', archive}, url.origin, [archive]);
-    };
-    preview.addEventListener('close', dispose, {once: true});
-    view.addEventListener('message', send);
-    document.body.append(preview);
-    preview.showModal();
-}
+/** Opens the player page this distribution builds, without the Editor features a past version must not use. */
+export const openProjectVersionPreview = (document: Document, oid: string, archive: ArrayBuffer, locale: string) =>
+    openVersionPreview(document, oid, archive, locale, {
+        page: 'git-project-preview.html', params: {twPlusLocalGit: '0', twPlusStandardLayout: '0'}
+    });

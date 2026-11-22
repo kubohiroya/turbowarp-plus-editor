@@ -1,5 +1,7 @@
 import React from 'react';
 import {render} from 'react-dom';
+import {PROJECT_VERSION_PREVIEW_PROJECT, PROJECT_VERSION_PREVIEW_READY, projectVersionPreviewMessages}
+    from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 
 type PreviewVM = {loadProject(archive: ArrayBuffer): Promise<void>; renderer: {draw(): void}};
 type ProjectState = {loadingState: string};
@@ -23,7 +25,7 @@ const Player = __TW_PLUS_REVISION_APP_STATE__(__TW_PLUS_REVISION_GUI__);
 function connect(vm: PreviewVM) {
     const origin = location.origin;
     window.addEventListener('message', async function load(event) {
-        if (event.source !== parent || event.origin !== origin || event.data?.kind !== 'tw-plus/git-preview-project' ||
+        if (event.source !== parent || event.origin !== origin || event.data?.kind !== PROJECT_VERSION_PREVIEW_PROJECT ||
             !(event.data.archive instanceof ArrayBuffer)) return;
         window.removeEventListener('message', load);
         const loadingState = () => ReduxStore.getState().scratchGui.projectState.loadingState;
@@ -37,12 +39,11 @@ function connect(vm: PreviewVM) {
             ReduxStore.dispatch(onLoadedProject(loadingState(), false, false));
             const error = document.createElement('p');
             error.role = 'alert';
-            error.textContent = new URLSearchParams(location.search).get('lang')?.startsWith('ja') ?
-                'この版の作品を読み込めませんでした。' : 'This version could not be loaded.';
+            error.textContent = projectVersionPreviewMessages(new URLSearchParams(location.search).get('lang')).loadFailed;
             app.prepend(error);
         }
     });
-    parent.postMessage('tw-plus/git-preview-ready', origin);
+    parent.postMessage(PROJECT_VERSION_PREVIEW_READY, origin);
 }
 
 if (parent !== window) {

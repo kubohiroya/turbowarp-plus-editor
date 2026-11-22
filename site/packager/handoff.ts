@@ -13,6 +13,7 @@
  */
 
 import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
+import {packagerPageMessages} from '@kubohiroya/turbowarp-extension-loader/packager';
 import JSZip from '@turbowarp/jszip';
 import {withWaitCursor} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 import {withPackagerFontFallbacks} from '@kubohiroya/turbowarp-plus-editor-fonts/web-fonts';
@@ -78,7 +79,7 @@ export const createProjectPackager = ({
                 popup.close();
                 console.error(error);
                 // eslint-disable-next-line no-alert
-                window.alert(`Plus HTML出力を開始できませんでした: ${error.message}`);
+                window.alert(packagerPageMessages('ja').handoffFailed(error));
             }
         },
         /**

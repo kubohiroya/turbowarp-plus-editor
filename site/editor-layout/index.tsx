@@ -12,9 +12,9 @@ import {decorateSurface} from '../editor-backpack/surface-styles.ts';
 import {EditorTabLayout} from './editor-tabs.tsx';
 import {stageLauncherSlot, StageDisplayMenuContext, TargetSwitchContext, WindowLayoutContext} from './context.ts';
 import {setHorizontalBlockPalette} from '../horizontal-block-palette/index.ts';
-import {renderProjectFolderExplorer} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
+import {explorerSearchLabel, renderProjectFolderExplorer} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
 import type {FollowExplorerGit, FollowFileStatuses} from '@kubohiroya/turbowarp-plus-editor-project-folder/explorer';
-import {followExplorerGit, followFileStatuses, readProjectHeadFile, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
+import {followExplorerGit, followFileStatuses, historySearchLabel, readProjectHeadFile, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
 import {aiAgents} from '../project-tools/info-menu.tsx';
 import {projectFolderWorkflows} from '../project-folder-host.ts';
 import {createFolderFromCurrentProject, projectScreenState} from '../project-tools/index.ts';
@@ -94,12 +94,12 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
         const onSelectionChange = view => workspace.setSaveScope(view === 'project' ? 'tab' : 'project');
         const createFolder = () => createFolderFromCurrentProject(vm, projectFolderWorkflows(vm)?.createFolder);
         return {onSelectionChange, views: [
-            {id: 'project' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? '作品のファイルを検索' : 'Search project files',
+            {id: 'project' as const, searchLabel: explorerSearchLabel,
                 render: ({locale, query}) =>
                     renderProjectFolderExplorer(React.createElement, {vm, locale, query, createFolder, fileStatuses, git,
                         openFile: workspace.open, readBaseline, followFileEdits})},
             ...(layoutFlags.localGit ? [
-                {id: 'git-history' as const, searchLabel: locale => /^ja(?:-|$)/i.test(locale) ? 'コミットを検索' : 'Search commits',
+                {id: 'git-history' as const, searchLabel: historySearchLabel,
                     render: ({locale, query}) => renderHistoryView(React.createElement, {vm, locale, query})}
             ] : []),
             agents

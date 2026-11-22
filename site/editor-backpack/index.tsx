@@ -5,6 +5,7 @@ import {getBackpackOpenLabel} from '@tw-plus/backpack-window-host';
 import {feature} from './integration.ts';
 import {PopupLayout} from '../editor-layout/popup-layout.tsx';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
+import {backpackRevealLabel} from '@kubohiroya/turbowarp-plus-editor-workbench/backpack';
 
 function WebBackpackSurface({setExpanded, ...props}: Pick<
     React.ComponentProps<NonNullable<typeof feature>['BackpackSurface']>, 'vm' | 'children'
@@ -30,7 +31,7 @@ function WebBackpackSurface({setExpanded, ...props}: Pick<
             renderLaunchButton={button => <span className={styles.openWindowAction}><OpenWindowButton {...button} /></span>} />
     </div>;
     return plusLayout ? <layoutViews.EdgeDrawer edge="bottom" onOpenChange={setOpen} holdOpenSelector={undefined}
-        label={/^ja(?:-|$)/i.test(locale) ? 'バックパックを展開' : 'Reveal Backpack'}>{content}</layoutViews.EdgeDrawer> : content;
+        label={backpackRevealLabel(locale)}>{content}</layoutViews.EdgeDrawer> : content;
 }
 
 export const BackpackSurface = feature ? WebBackpackSurface : undefined;

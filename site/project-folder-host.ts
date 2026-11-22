@@ -1,7 +1,8 @@
 import type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
 export type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
 import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
-import {chooseBrowserProject, followProjectFolder, mountProjectFolder, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
+import {chooseBrowserProject, folderNotEmptyMessage, followProjectFolder, mountProjectFolder, omittedFilesQuestion, openRepositoryProjectQuestion,
+    openSavedFolderQuestion, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {EditorHost, EditorTarget} from '@kubohiroya/turbowarp-plus-editor-host';
 import {refreshExternalBlockViews} from '@kubohiroya/turbowarp-plus-editor-code-views';
@@ -201,13 +202,8 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         async (serialize: () => Promise<Uint8Array>, current: () => boolean) => {
             const {files, warnings} = __TW_PLUS_UNPACK_PROJECT_FOLDER__(await serialize());
             if (!current()) throw new DOMException('Cancelled', 'AbortError');
-            if (warnings.length) {
-                const paths = warnings.slice(0, 6).map(warning => warning.path).join('\n') +
-                    (warnings.length > 6 ? '\n…' : '');
-                const notice = locale.startsWith('ja') ?
-                    '作品から参照されていないファイルは新しいフォルダに入りません。保存しますか？' :
-                    'Unreferenced files will be omitted from the new project folder. Save the folder?';
-                if (!view.confirm(notice + '\n\n' + paths)) throw new DOMException('Cancelled', 'AbortError');
+            if (warnings.length && !view.confirm(omittedFilesQuestion(locale, warnings.map(warning => warning.path)))) {
+                throw new DOMException('Cancelled', 'AbortError');
             }
             return files;
         } : undefined;
@@ -272,9 +268,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         },
         async openProject(project, root) {
             if (openProjectInNewTab(vm, {kind: 'folder', directory: project, root})) return false;
-            if (await folder.openDirectory(project, () => view.confirm(locale.startsWith('ja') ?
-                '現在の作品に未保存の変更があります。保存済みの作品フォルダを開きますか？' :
-                'The current project has unsaved changes. Open the saved project folder?')) !== 'opened') return false;
+            if (await folder.openDirectory(project, () => view.confirm(openSavedFolderQuestion(locale))) !== 'opened') return false;
             await gitPanel?.selectRepository?.(root, project);
             return true;
         }
@@ -376,7 +370,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
                     throw error;
                 }
                 for await (const _entry of (directory as unknown as {values(): AsyncIterable<unknown>}).values()) {
-                    view.alert(language.startsWith('ja') ? '空のフォルダを選んでください。' : 'Choose an empty folder.');
+                    view.alert(folderNotEmptyMessage(language));
                     return null;
                 }
                 return directory;
@@ -393,8 +387,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
                 }
             },
             openProject: (root: FileSystemDirectoryHandle) => folder.openDirectory(root, () => view.confirm(
-                language.startsWith('ja') ? '現在の作品に未保存の変更があります。リポジトリの作品を開きますか？' :
-                    'The current project has unsaved changes. Open the repository\'s project?'), root, {locale: language})
+                openRepositoryProjectQuestion(language)), root, {locale: language})
         });
     } : undefined;
     folders.set(vm, {folder, workflows, openRemote});
