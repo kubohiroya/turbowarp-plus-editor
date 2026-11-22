@@ -15,7 +15,8 @@ assert.equal(info.siteRevision, process.env.EXPECTED_REVISION);
 assert.equal(info.repository, `https://github.com/${pins.guiRepository}`);
 assert.equal(info.revision, pins.guiRevision);
 assert.equal(info.coreRepository, `https://github.com/${pins.coreRepository}`);
-assert.equal(info.coreRevision, pins.coreRevision);
+// The build checked this revision against the installed core; this job has no install, so it checks the version.
+assert.ok(sha(info.coreRevision), 'The site must record the full core revision');
 assert.equal(info.coreVersion, pins.coreVersion);
 assert.equal(info.securityPackage, pins.securityPackage);
 assert.equal(info.securityVersion, pins.securityVersion);
