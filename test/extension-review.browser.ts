@@ -5,7 +5,8 @@ import {createRequire} from 'node:module';
 import JSZip from '@turbowarp/jszip';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import pins from '../site/source.json' with {type: 'json'};
+
+const pins = createRequire(import.meta.url)('../scripts/site/locked-pins.cts').readPinsSync();
 
 declare global {interface Window {__reviewFixtureStarted?: number; __originalStage?: unknown; __originalQuitCalls?: number;
     __originalSaveCalls?: number;}}

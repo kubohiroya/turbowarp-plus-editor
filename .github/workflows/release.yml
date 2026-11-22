@@ -42,7 +42,7 @@ jobs:
         with:
           version: 11.28.8
       - run: |
-          TWEXTSEC_SOURCE_REVISION=$(node -p "require('./site/source.json').securityRevision || ''") npm ci
+          npm ci
       - run: npm test
       - run: npm run test:e2e:infrastructure
       - name: Require a matching release tag on main

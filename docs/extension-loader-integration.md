@@ -4,7 +4,7 @@
 
 Manifest、取得、SHA-256、認可、依存順、診断、キャッシュ、SB3保持、VM登録・復元とロード/保存処理は独立した [`turbowarp-extension-loader`](https://github.com/kubohiroya/turbowarp-extension-loader) が持つ。拡張一覧・許可・再試行と作品を開く前のレビューは `turbowarp-extension-security-dialog`、作品データの調査・保存形式の変換は `turbowarp-sb3-save-format` が持つ。本リポジトリの `site/extension-host/` は起動設定・信頼方針・IndexedDBキャッシュの選択と、GUI・Packagerの値やコールバックを各パッケージへ渡す接続を担当する（[責務の一覧](upstream-feature-ownership.md)）。`scratch-gui` フォークは差し込み口（[差し込み口の設計](plus-integration-sockets.md)）を持つ。VMは拡張を所有サービスとして登録するportを持つ（差分は `scripts/site/patches/scratch-vm-host-extension-service-port.patch` にも保持）。
 
-Loaderはnpmの完全一致版（`site/source.json` の `loaderVersion` と `loaderIntegrity`、公開元コミットは `loaderRevision`）で、GUI・VM・Packagerは完全SHAで固定する。通常ビルドがLoader入りのscaffolding・runtime・ローカルPackager画面を生成し、artifact gateが依存の固定値・既定ON・資産hashを検証する。
+Loaderはnpmの完全一致版（`package.json` と `package-lock.json` の版・integrity。公開元コミットはnpmのprovenanceと `v<版>` タグでたどる）で、GUI・VM・Packagerは完全SHAで固定する。通常ビルドがLoader入りのscaffolding・runtime・ローカルPackager画面を生成し、artifact gateが依存の固定値・既定ON・資産hashを検証する。
 
 ## 起動と信頼境界
 

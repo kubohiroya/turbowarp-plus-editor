@@ -23,7 +23,7 @@ const vmSource = await fs.realpath(path.join(path.dirname(hostRequire.resolve('s
 // The preview builds the same Editor through the same webpack config, so it reads the pins the
 // normal build ships rather than a copy that drifts whenever only one of them is updated.
 const pins = await readPins();
-for (const name of ['loaderRevision', 'vmRevision', 'vmBaseRevision', 'packagerRevision']) {
+for (const name of ['vmRevision', 'vmBaseRevision', 'packagerRevision']) {
     if (!sha(pins[name])) throw new Error(`A full ${name} is required`);
 }
 async function treeDigest(directory) {
@@ -68,7 +68,7 @@ info.localExtensionIntegration = {
     vmSourceSha256: await treeDigest(vmSource),
     siteWorkingTreeSha256: await treeDigest(root),
     loaderRepository: pins.loaderRepository,
-    loaderRevision: pins.loaderRevision,
+    loaderVersion: pins.loaderVersion,
     vmSourceRevision: pins.vmRevision,
     vmBaseRevision: pins.vmBaseRevision,
     scaffolding: JSON.parse(await fs.readFile(path.join(path.resolve(process.env.TW_PLUS_SCAFFOLDING_ROOT ||

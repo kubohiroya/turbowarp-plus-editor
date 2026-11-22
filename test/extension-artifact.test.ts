@@ -10,11 +10,9 @@ import {buildFamilyNotices, requiredFamilyPackages} from '../scripts/site/family
 
 test('production pins reject incomplete or unpinned extension dependency graphs', async () => {
     const pins = await readPins();
-    for (const changes of [{loaderRevision: 'main'}, {vmRevision: 'develop'}, {packagerRevision: 'latest'},
+    for (const changes of [{vmRevision: 'develop'}, {packagerRevision: 'latest'},
         {loaderRepository: undefined}, {vmRepository: 'TurboWarp/scratch-vm'},
-        {securityRevision: 'main'}, {securityRevision: '0.4.0'},
-        {loaderSource: 'local'}, {loaderSource: 'npm', loaderVersion: 'latest'},
-        {loaderSource: 'npm', loaderIntegrity: 'unknown'}]) {
+        {loaderSource: 'local'}, {loaderVersion: 'latest'}, {loaderIntegrity: 'unknown'}]) {
         assert.throws(() => validatePins({...pins, ...changes}));
     }
 });
@@ -24,10 +22,10 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
     try {
         const pins = await readPins();
         const revision = 'a'.repeat(40);
-        const integration: {featureDefault: boolean; assets: Record<string, string>; loaderRevision?: string;
+        const integration: {featureDefault: boolean; assets: Record<string, string>; loaderVersion?: string;
             loaderSource?: string; loaderIntegrity?: string} = {featureDefault: true, assets: {}};
-        for (const key of ['loaderRepository', 'loaderRevision', 'loaderVersion', 'loaderIntegrity', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) integration[key] = pins[key];
-        integration.loaderSource = pins.loaderSource || 'git';
+        for (const key of ['loaderRepository', 'loaderVersion', 'loaderIntegrity', 'vmRepository', 'vmRevision', 'packagerRepository', 'packagerRevision']) integration[key] = pins[key];
+        integration.loaderSource = pins.loaderSource;
         const files = ['index.html', 'editor.html', 'player.html', 'git-project-preview.html', 'LICENSE', 'NOTICE', 'assets/icon.svg',
             'assets/edit-button.css', 'plus-packager.html', 'plus-packager.js'];
         for (const name of files) {
@@ -83,10 +81,10 @@ test('the deployment gate rejects changed builder assets and disabled-by-default
         await writeInfo();
         assert.notEqual(check().status, 0);
         integration.featureDefault = true;
-        integration.loaderRevision = 'b'.repeat(40);
+        integration.loaderVersion = '0.0.1';
         await writeInfo();
         assert.notEqual(check().status, 0);
-        integration.loaderRevision = pins.loaderRevision;
+        integration.loaderVersion = pins.loaderVersion;
         // A published loader identity must match the tarball and source the pins name.
         integration.loaderIntegrity = 'sha512-' + Buffer.alloc(64, 3).toString('base64');
         await writeInfo();

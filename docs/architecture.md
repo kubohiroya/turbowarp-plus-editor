@@ -14,7 +14,7 @@
 
 ## 固定ソースと成果物
 
-`site/source.json` はGUI・VM・Packagerの40桁SHAと、データエディター・拡張ローダー・文書エディター・スクリプト転送・セキュリティUIのnpm完全版（必要に応じてintegrityと公開元コミット）を持ちます。ビルド前に、GUI checkoutとインストール済みパッケージを固定値と照合します。
+`site/source.json` は、npmでは表せないGUI・VM・Packagerの40桁SHAとプレビューCSSだけを持ちます。データエディター・拡張ローダー・文書エディター・スクリプト転送・セキュリティUIは、`package.json` の完全一致版と `package-lock.json` の版・integrityが固定値です（`scripts/site/locked-pins.cts` が読みます）。同じ値を `site/source.json` に写すと、依存を更新するたびに手で直す必要があり、直し忘れでビルドが止まるためです。ビルド前に、GUI checkoutと、宣言・lockfile・インストール済みの版が一致することを照合します。
 
 セキュリティUIをGitソースで固定する場合は、任意の `securityRevision` に40桁SHAを指定し、インストール時に `TWEXTSEC_SOURCE_REVISION` へ同じ値を渡します。省略した場合はnpm完全版を使用します。
 
