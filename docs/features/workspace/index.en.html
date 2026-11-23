@@ -18,8 +18,8 @@
 <ul>
 <li><a href="../open/index.en.html">Open projects</a></li>
 <li><a href="../screen/index.en.html">Menus and screen</a></li>
-<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
-<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../sprites/index.en.html">Sprites and the Stage</a></li>
+<li><a href="../stage/index.en.html">Run view</a></li>
 <li><a href="../workspace/index.en.html" aria-current="page">Workspace</a></li>
 <li><a href="../blocks/index.en.html">Blocks</a></li>
 <li><a href="../search/index.en.html">Search and replace</a></li>
@@ -45,9 +45,9 @@
 
 <h2>5.1 Resize the work areas by dragging the dividers</h2>
 
-<p>Drag the three-dot grip on a divider to change the size of the areas on either side. In the <a href="../screen/index.en.html#layout">Plus layout</a>, you can adjust the width of the left drawer (the sprite list and so on). In the <a href="../screen/index.en.html#layout">Scratch layout</a>, you can adjust the width of the code area against the stage side, and the height of the stage against the sprite list.</p>
+<p>Drag the three-dot grip on a divider to change the size of the areas on either side. In the <a href="../screen/index.en.html#layout">Plus layout</a>, you can adjust the width of the left drawer (the sprite list and so on). In the <a href="../screen/index.en.html#layout">Scratch layout</a>, you can adjust the width of the code area against the Run view side, and the height of the Run view against the sprite list.</p>
 <figure class="guide-detail"><a href="../images/en/sprite-divider.png"><img src="../images/en/sprite-divider.png" width="700" height="560" alt="The divider between the sprite list in the left drawer and the code area. The focused divider is highlighted in red, and the list has been widened." loading="lazy"></a><figcaption>Focus moved to the divider between the sprite list and the code area, and the list widened with the Right Arrow key.</figcaption></figure>
-<p>When a divider has focus, you can also adjust it with the arrow keys. Enter returns it to its initial position. Ratios adjusted in the Scratch layout are saved in the browser. If you reopen the editor with <code>twPlusSplitter=0</code> added to the URL, the dividers covered in this section are removed. Even then, you can still resize the stage itself and <a href="#split-panes">split editing panels</a>.</p>
+<p>When a divider has focus, you can also adjust it with the arrow keys. Enter returns it to its initial position. Ratios adjusted in the Scratch layout are saved in the browser. If you reopen the editor with <code>twPlusSplitter=0</code> added to the URL, the dividers covered in this section are removed. Even then, you can still resize the Run view itself and <a href="#split-panes">split editing panels</a>.</p>
 
 </section>
 
@@ -60,7 +60,7 @@
 <p>To move an open tab, drag it to the area where you want it and release it when the drop target changes color. A preview of the tab is shown while you drag. Dropping it on another tab row adds it to that row. Drag a divider to adjust sizes; "Close this split" closes a split panel and merges its tabs back.</p>
 <p>Choose "Show tabs vertically" to stack the tab row down the left side of the panel. This helps when there are many tabs or when you want long sprite names to be easier to read. To return to normal, choose "Show tabs horizontally" in the same menu.</p>
 <p>The last two items each show a part of the panel while they are checked. Uncheck "Show panel switch buttons" to hide the column of buttons from "Free layout" to "Messages" on the left of the editing panel, which widens the code area. Uncheck "Show thumbnail" to hide the sprite thumbnail at the bottom right of the code area. Choose either again to show it; both are saved with the workspace layout.</p>
-<p>For example, you can put code on the left and the stage on the right (<a href="../stage/index.en.html#dock">Move the stage into the workspace or a separate window</a>). YAML documents opened by a supporting extension can also be placed as tabs.</p>
+<p>For example, you can put code on the left and the Run view on the right (<a href="../stage/index.en.html#dock">Move the Run view into the workspace or a separate window</a>). YAML documents opened by a supporting extension can also be placed as tabs.</p>
 <p>Picking a function or a hat in "Hats and functions" or "Calls" also splits the panel to the right of the sprite and opens a code area that shows only that script. If you delete the script being shown, this split closes (<a href="../sprites/index.en.html#functions">List hats and functions and see their calls</a>).</p>
 <p>To work in the classic editing layout without split panels (where documents in the project open in dialogs instead of tabs), save the project and reopen the editor with <code>twPlusDockview=0</code> added to the URL.</p>
 
@@ -92,7 +92,7 @@
 
 <p>In the Plus layout, the sprite list is pinned in the left drawer from startup. Press "Undock sprite list" at the top of the list to move it to a separate browser window; a "Return here" button remains in the original place. You can select, add and delete sprites in the separate window too. Choose "Return to the editor (dock)" from "Window layout" at the top right of the separate window, or press "Return here" in the original place, to put it back in the left drawer. The maximize and minimize items cannot be chosen in a browser.</p>
 <figure class="guide-detail"><a href="../images/en/sprite-list-window.png"><img src="../images/en/sprite-list-window.png" width="540" height="420" alt="The sprite list moved to a separate window, with Cat and Ball tiles, a Backdrops tile and the button for adding a sprite. In the menu opened from Window layout at the top right, only Return to the editor (dock) can be chosen." loading="lazy"></a><figcaption>The sprite list moved to a separate window, with "Window layout" at the top right opened.</figcaption></figure>
-<p><span class="badge planned">In development</span> In the Desktop development build for macOS, moving the stage, sprite settings and the list to separate app windows and back has also been checked.</p>
+<p><span class="badge planned">In development</span> In the Desktop development build for macOS, moving the Run view, sprite settings and the list to separate app windows and back has also been checked.</p>
 
 </section>
 
@@ -110,11 +110,11 @@
 <tr><th scope="row">Blocks, assets and confirmed documents in the project</th><td>The project's SB3 or project folder</td><td>Apply your edits and save from the File menu</td></tr>
 </tbody></table></div>
 <p>The browser keeps only the most recent layout for each project. Tabs for external YAML files opened directly in the Desktop development build are not restored.</p>
-<p>Screen state also includes the <a href="../blocks/index.en.html#palette-groups">visible block groups</a> for each sprite and backdrop, the order of categories and items within groups, and which groups are pinned open. Function-call and message-arrow visibility in Free layout is saved per pane. Opening another project switches to that project's settings.</p>
+<p>Screen state also includes the <a href="../blocks/index.en.html#palette-groups">visible block groups</a> for each sprite and the Stage, the order of categories and items within groups, and which groups are pinned open. Function-call and message-arrow visibility in Free layout is saved per pane. Opening another project switches to that project's settings.</p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">
-<a class="prev" href="../stage/index.en.html"><small>Previous</small>4. Open the stage and run your project</a>
+<a class="prev" href="../stage/index.en.html"><small>Previous</small>4. Open the Run view and run your project</a>
 <a class="next" href="../blocks/index.en.html"><small>Next</small>6. Find, place and organize blocks</a>
 </nav>
 </main>

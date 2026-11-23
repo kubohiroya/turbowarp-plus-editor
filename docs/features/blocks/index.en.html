@@ -18,8 +18,8 @@
 <ul>
 <li><a href="../open/index.en.html">Open projects</a></li>
 <li><a href="../screen/index.en.html">Menus and screen</a></li>
-<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
-<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../sprites/index.en.html">Sprites and the Stage</a></li>
+<li><a href="../stage/index.en.html">Run view</a></li>
 <li><a href="../workspace/index.en.html">Workspace</a></li>
 <li><a href="../blocks/index.en.html" aria-current="page">Blocks</a></li>
 <li><a href="../search/index.en.html">Search and replace</a></li>
@@ -51,7 +51,7 @@
 <p>In the <a href="../screen/index.en.html#layout">Plus layout</a>, the categories are lined up horizontally at the top of the code area, in this order: "Motion", "Looks", "Sound", "Events", "Control", "Sensing", "Operators", "Variables", "Lists", and "My Blocks". Adding an extension adds its category as well. Variable and list blocks are split into "Variables" and "Lists".</p>
 <p>Click a category to open a flyout of its blocks below it. Drag the block you want into the code area. To close the flyout, press Esc or click outside it. Each category remembers its flyout's scroll position.</p>
 <h3 id="palette-groups">Choose which block groups to show</h3>
-<p>Open the ▼ menu at the end of the category strip and choose the block-group visibility settings to select groups for the sprite or backdrop you are editing. Use a settings shortcut to choose a set, or change the individual checkboxes, then confirm. Hiding a group does not delete placed blocks or unload an extension. Adding an extension shows its groups for the target being edited.</p>
+<p>Open the ▼ menu at the end of the category strip and choose the block-group visibility settings to select groups for the sprite or the Stage you are editing. Use a settings shortcut to choose a set, or change the individual checkboxes, then confirm. Hiding a group does not delete placed blocks or unload an extension. Adding an extension shows its groups for the target being edited.</p>
 <p>When you add a sprite, the settings dialog may also open, depending on the extensions and existing visibility settings. Select an existing sprite as the copy source and press Copy to transfer its selection to the checkboxes. Adjust the checkboxes before confirming.</p>
 <figure class="guide-detail"><a href="../images/en/palette-groups-current.png"><img src="../images/en/palette-groups-current.png" width="576" height="446" alt="Block-group visibility settings with shortcuts, checkboxes for standard groups, Cancel and Confirm." loading="lazy"></a><figcaption>Visibility settings opened from the palette’s ▼ menu. Select groups, then confirm.</figcaption></figure>
 <h3>Open a group or pin it open</h3>
@@ -67,7 +67,7 @@
 
 <h2>6.2 Search across the block palette</h2>
 
-<p>Type in "Search blocks" at the top of the flyout to search block labels across all categories shown in the palette, regardless of group depth. Groups hidden for the current sprite or backdrop are excluded. Matching a category name shows all of that category's blocks.</p>
+<p>Type in "Search blocks" at the top of the flyout to search block labels across all categories shown in the palette, regardless of group depth. Groups hidden for the current sprite or the Stage are excluded. Matching a category name shows all of that category's blocks.</p>
 <p>Search works with IME input too, and you can drag filtered blocks straight into the code area. When nothing matches, "No matching blocks" is shown. Clearing the search restores the category and scroll position you had before searching.</p>
 <figure class="guide-detail"><a href="../images/en/palette-search.png"><img src="../images/en/palette-search.png" width="660" height="560" alt="Searching for if with Motion open shows matching Motion and Control blocks together." loading="lazy"></a><figcaption>Searching for “if” while Motion is open also finds the condition blocks in Control.</figcaption></figure>
 <p>To find blocks used in the project, use the <a href="../search/index.en.html#project-search">project-wide search</a> in the menu bar.</p>
@@ -138,12 +138,12 @@
 <tr><th scope="row">Hat block with blocks below it (including definition blocks)</th><td>The block items plus Fold. A folded script shows only its hat, with a "▸ Folded" mark below it. To restore it, click the mark or choose "Unfold" from the context menu</td></tr>
 <tr><th scope="row">Empty space in the code area</th><td>Undo, Redo, Clean up Blocks, Add Comment, Delete Blocks, Load from File…, Paste, Change code layout view</td></tr>
 <tr><th scope="row">Sprite tile</th><td>Open, duplicate, export, Rename sprite, delete, create folder</td></tr>
-<tr><th scope="row">Backdrops tile</th><td>Open, Export Stage</td></tr>
+<tr><th scope="row">"Backdrops" tile (the Stage)</th><td>Open, Export Stage</td></tr>
 <tr><th scope="row">Costume or sound</th><td>duplicate, export, delete</td></tr>
 </tbody></table></div>
 <p>"Edit this script in a separate view" opens Hats and functions on the left and an editing area for the entire script containing the chosen block on the right. "Open relationships for this script" centers that script in Calls on the left and opens it for editing on the right. These two items are available in Free layout; they are not added in Z/N views or while individually editing a script (<a href="../sprites/index.en.html#functions">List hats and functions and see their calls</a>).</p>
 <p>With the debugger enabled, command blocks also have an action to set a breakpoint. A marked block has a red outline and dot; execution pauses just before it runs. Use the same menu to remove the breakpoint. These marks last only for the current editing session and are not saved in the project. Adding one during compiled execution takes effect from the next start (<a href="../screen/index.en.html#extension-controls">Open the debugger</a>).</p>
-<p>Items added by addons (exporting a block as an image, switching between local and global variables, moving to the front or back, and so on) also have icons. How to export and import scripts and how to copy and paste them is explained in <a href="../reuse/index.en.html#transfer">Transfer scripts and the stage to another project</a>.</p>
+<p>Items added by addons (exporting a block as an image, switching between local and global variables, moving to the front or back, and so on) also have icons. How to export and import scripts and how to copy and paste them is explained in <a href="../reuse/index.en.html#transfer">Transfer scripts and the Stage to another project</a>.</p>
 <p>Switching the code layout view and copying code to another sprite are covered in <a href="#arrange">Rearrange code and copy it to another sprite</a>.</p>
 
 </section>

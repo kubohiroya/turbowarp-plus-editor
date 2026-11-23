@@ -30,26 +30,26 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 | [2.5 Extension buttons and the debugger at the top right](screen/index.en.html#extension-controls) | No | No | Shown when a supported extension (unsandboxed) that registers buttons is loaded. The debugger is a TurboWarp feature. |
 | [2.6 Choose between the Plus layout and the Scratch layout](screen/index.en.html#layout) | Yes | Yes | The public editor starts in the Plus layout with the sprite list pinned on the left. `twPlusStandardLayout=0` switches to the Scratch layout. |
 
-## 3. [Edit sprites and the backdrop](sprites/index.en.html)
+## 3. [Edit sprites and the Stage](sprites/index.en.html)
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
 | [3.1 Find and pin sprites in the sprite list](sprites/index.en.html#sprite-drawer) | Yes | Yes | Search by name in the Plus layout's list and drag the divider to change its width. When unpinned, the list opens from the left edge. |
-| [3.2 Sprite tabs and the editor panel icons](sprites/index.en.html#sprite-tabs) | Yes | Yes | Plus layout. Switch with the sprite tabs at the top and the seven icons down the left edge of the editor panel, in three groups (Free layout, Hats and functions, Calls / Costumes, Sounds / Variables, Messages). The backdrop shows "Backdrops" instead of "Costumes". Opening the same sprite in several tabs gives numbered tabs such as "Cat(2)". |
+| [3.2 Sprite tabs and the editor panel icons](sprites/index.en.html#sprite-tabs) | Yes | Yes | Plus layout. Switch with the sprite tabs at the top and the seven icons down the left edge of the editor panel, in three groups (Free layout, Hats and functions, Calls / Costumes, Sounds / Variables, Messages). The Stage shows "Backdrops" instead of "Costumes". Opening the same sprite in several tabs gives numbered tabs such as "Cat(2)". |
 | [3.3 List hats and functions and see their calls](sprites/index.en.html#functions) | Yes | Yes | Plus layout. Lists hats and functions (custom blocks and named functions) and shows a picked script alone, for editing, in a code area split to the right. Shows the calls between functions as a diagram. Adding a named function loads the "TurboWarp-Named-Functions" extension. |
 | [3.4 Edit costumes and sounds](sprites/index.en.html#media-panes) | Yes | Yes | Select costumes and sounds in the project; each pane keeps its own selection. Sounds can be played. The height limit on the costume preview is in the local integration build. |
-| [3.5 Edit properties, variables and lists](sprites/index.en.html#variable-pane) | Yes | Yes | Show, create, rename and delete variables and lists: the sprite's own for a sprite, project-wide ones for the backdrop. "Edit list" edits list items. Variables used by blocks cannot be deleted. Projects that use the Temporary Variables extension also get tables of thread and runtime variables (values while paused with the debugger). |
-| [3.6 Check who sends and receives messages](sprites/index.en.html#messages) | Yes | Yes | Lists what each sprite and the backdrop sends and receives; the backdrop also shows the project-wide relation diagram. Renaming applies to the whole project. |
-| [3.7 Edit the backdrop](sprites/index.en.html#backdrop) | Yes | Yes | From the backdrop tile, edit the stage's code, backdrops and sounds. |
+| [3.5 Edit properties, variables and lists](sprites/index.en.html#variable-pane) | Yes | Yes | Show, create, rename and delete variables and lists: the sprite's own for a sprite, project-wide ones for the Stage. "Edit list" edits list items. Variables used by blocks cannot be deleted. Projects that use the Temporary Variables extension also get tables of thread and runtime variables (values while paused with the debugger). |
+| [3.6 Check who sends and receives messages](sprites/index.en.html#messages) | Yes | Yes | Lists what each sprite and the Stage sends and receives; the Stage also shows the project-wide relation diagram. Renaming applies to the whole project. |
+| [3.7 Edit the Stage](sprites/index.en.html#backdrop) | Yes | Yes | From the "Backdrops" tile, edit the Stage's code, backdrops and sounds. |
 
-## 4. [Open the stage and run your project](stage/index.en.html)
+## 4. [Open the Run view and run your project](stage/index.en.html)
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
-| [4.1 Open the stage from the menu bar](stage/index.en.html#stage-open) | Yes | Yes | "Open stage" in the menu bar opens it. The "▾" next to it (stage opening options) chooses a separate window, a tab or the drawer. |
+| [4.1 Open the Run view from the menu bar](stage/index.en.html#stage-open) | Yes | Yes | "Open stage" in the menu bar opens it. The "▾" next to it ("Stage opening options") chooses a separate window, a tab or the drawer. |
 | [4.2 Run your project from the drawer on the right edge](stage/index.en.html#stage-controls) | Yes | Yes | "Show in the drawer" opens the drawer on the right edge. Use the green flag, pause and stop to control the run. "Stage display" switches between hiding automatically and always showing, and the drawer state is restored per project. |
-| [4.3 The stage display menu](stage/index.en.html#stage-menu) | Yes | Yes | The open stage's "Stage display" moves it to a separate window, a tab or the drawer, and turns on full screen. The items depend on where the stage is open. |
-| [4.4 Move the stage into the workspace or a separate window](stage/index.en.html#dock) | Yes | Yes | From "Stage display", choose "Show in a tab" or "Show in a separate window". In a tab, the stage scales to the pane width. From a separate window, "Return to the editor" brings it back. |
+| [4.3 The Run view display menu](stage/index.en.html#stage-menu) | Yes | Yes | The open Run view's "Stage display" moves it to a separate window, a tab or the drawer, and turns on full screen. The items depend on where the Run view is open. |
+| [4.4 Move the Run view into the workspace or a separate window](stage/index.en.html#dock) | Yes | Yes | From "Stage display", choose "Show in a tab" or "Show in a separate window". In a tab, the Run view scales to the pane width. From a separate window, "Return to the editor" brings it back. |
 
 ## 5. [Split the workspace and open panels separately](workspace/index.en.html)
 
@@ -80,7 +80,7 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
-| [7.1 Search the whole project](search/index.en.html#project-search) | Yes | Yes | Searches across all sprites and the stage. The search field and "Find and Replace" share one panel, opened with ⌘F (Ctrl+F on Windows) and ⇧⌘F (Ctrl+Shift+F on Windows). |
+| [7.1 Search the whole project](search/index.en.html#project-search) | Yes | Yes | Searches across all sprites and the Stage. The search field and "Find and Replace" share one panel, opened with ⌘F (Ctrl+F on Windows) and ⇧⌘F (Ctrl+Shift+F on Windows). |
 | [7.2 Choose what to search (including YAML in the project)](search/index.en.html#search-scope) | Yes | Yes | Choose block names, variables, messages, arguments, extension names, comments and asset names. "YAML text" only finds something when a supported extension's documents are present. |
 | [7.3 Replace the selected match](search/index.en.html#replace) | Yes | Yes | Replaces one selected match at a time. "YAML text" results are checked in a preview and saved only if it passes validation. |
 
@@ -98,7 +98,7 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
-| [9.1 Transfer scripts and the stage to another project](reuse/index.en.html#transfer) | Yes | Yes | There is no Backpack at the bottom of the Scratch editor. Transfer scripts as `.blocks3` or by copy and paste, the stage as `.stage3`, and whole sprites as `.sprite3`. Scripts that use extensions need the same extensions and permissions in the destination. Pasting between different sites depends on browser support and permissions. |
+| [9.1 Transfer scripts and the Stage to another project](reuse/index.en.html#transfer) | Yes | Yes | There is no Backpack at the bottom of the Scratch editor. Transfer scripts as `.blocks3` or by copy and paste, the Stage as `.stage3`, and whole sprites as `.sprite3`. Scripts that use extensions need the same extensions and permissions in the destination. Pasting between different sites depends on browser support and permissions. |
 | [9.2 Add bundled assets as backdrops, costumes and sounds](reuse/index.en.html#bundle-assets) | No | No | Bundled assets are files stored separately in the project for extensions such as Kamishibai. In an SB3 that contains such a bundle, "Project Data…" → "Add Bundle Material to Project…" copies images and sounds into the project. The originals stay in the bundle. |
 
 ## 10. [Save and distribute](save/index.en.html)
