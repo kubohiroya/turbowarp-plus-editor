@@ -303,9 +303,9 @@ test('the hovered code panel owns its controls in a split editor', async ({page}
     await expectLayoutSelection(active.submenu, 'Normal layout view');
     await page.keyboard.press('Escape');
 
-    await page.getByRole('button', {name: 'Stage opening options', exact: true}).click();
+    await page.getByRole('button', {name: 'Run view opening options', exact: true}).click();
     await page.getByRole('menuitem', {name: 'Show in a tab', exact: true}).click();
-    await page.getByRole('tab', {name: 'Stage', exact: true}).click();
+    await page.getByRole('tab', {name: 'Run view', exact: true}).click();
     await page.getByText('Edit', {exact: true}).click();
     await expect(page.getByRole('button', {name: 'Rearrange Code Blocks'})).toBeDisabled();
 });

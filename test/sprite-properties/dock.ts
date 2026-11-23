@@ -88,8 +88,8 @@ try {
     await page.evaluate(id => window.vm.setEditingTarget(id), ids.first);
     assert.equal(await input('Sprite name').inputValue(), 'Updated cat');
     await toggleUndockButtons(page);
-    await page.getByRole('separator', {name: 'Editor and stage column width'}).press('End');
-    await page.getByRole('separator', {name: 'Stage and target pane height'}).press('End');
+    await page.getByRole('separator', {name: 'Editor and run view column width'}).press('End');
+    await page.getByRole('separator', {name: 'Run view and target pane height'}).press('End');
     const compactDock = await panel.evaluate(element => {
         const list = element.nextElementSibling.getBoundingClientRect();
         return {

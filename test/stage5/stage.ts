@@ -35,9 +35,9 @@ try {
     const action = page.locator('[class*="stage-action-slot_"]').getByRole('button', {
         name: 'Open in another window', exact: true
     });
-    const stage = page.getByRole('region', {name: 'Stage', exact: true});
+    const stage = page.getByRole('region', {name: 'Run view (Stage)', exact: true});
     const canvas = page.locator('[data-gui-stage] canvas').first();
-    const display = page.getByRole('button', {name: 'Stage display', exact: true});
+    const display = page.getByRole('button', {name: 'Run view display', exact: true});
     await start('');
     assert.equal(await display.count(), 0);
     await toggleUndockButtons(page);
@@ -116,9 +116,9 @@ try {
     await stage.waitFor({state: 'hidden'});
     assert.equal(await action.count(), 0);
     assert.ok(await canvas.evaluate(node => node === window.stage5Canvas));
-    const menu = page.getByRole('menu', {name: 'Stage display', exact: true});
-    const undock = menu.getByRole('menuitem', {name: 'Undock stage'});
-    const dock = menu.getByRole('menuitem', {name: 'Dock stage'});
+    const menu = page.getByRole('menu', {name: 'Run view display', exact: true});
+    const undock = menu.getByRole('menuitem', {name: 'Undock run view'});
+    const dock = menu.getByRole('menuitem', {name: 'Dock run view'});
     await start('&twPlusStageDisplayMenu=1');
     await display.click();
     assert.equal(await undock.getAttribute('aria-disabled'), 'true');

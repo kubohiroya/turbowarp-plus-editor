@@ -96,9 +96,9 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     await page.evaluate(({id, name}) => window.vm.renameSprite(id, name), sprite);
     await expect(unsaved(workspace(page).getByRole('tab', {name: sprite.name, exact: true}))).toBeHidden();
 
-    await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
-    const stageDisplay = page.getByRole('menuitem', {name: 'ステージをタブで開く', exact: true});
-    const stageMenu = page.getByRole('button', {name: 'ステージの表示', exact: true});
+    await page.getByRole('button', {name: '実行画面を展開', exact: true}).hover();
+    const stageDisplay = page.getByRole('menuitem', {name: '実行画面をタブで開く', exact: true});
+    const stageMenu = page.getByRole('button', {name: '実行画面の表示', exact: true});
     await stageMenu.click();
     await stageDisplay.click();
     const stage = workspace(page).locator('.tw-plus-dockview-stage-slot [data-gui-stage] canvas').first();

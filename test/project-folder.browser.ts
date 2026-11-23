@@ -570,7 +570,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     const noRepository = page.getByRole('button', {name: 'Local Git', exact: true});
     await expect(noRepository).toHaveText('Git▾');
     assert.ok(await noRepository.evaluate(button => {
-        const launcher = [...document.querySelectorAll('button')].find(item => item.textContent === 'Open stage');
+        const launcher = [...document.querySelectorAll('button')].find(item => item.textContent === 'Open run view');
         return !launcher || Boolean(button.compareDocumentPosition(launcher) & Node.DOCUMENT_POSITION_FOLLOWING);
     }), 'The branch button comes before the stage launcher.');
     await noRepository.click();
