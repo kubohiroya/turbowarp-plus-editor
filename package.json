@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-plus-editor",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Distribution, brand assets and the project edit button for TurboWarp-Plus-Editor",
   "type": "module",
   "license": "(GPL-3.0-or-later AND MPL-2.0)",
