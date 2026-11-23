@@ -10,7 +10,8 @@ import VirtualMachine from 'scratch-vm';
 import ScratchRender from 'scratch-render';
 import ScratchStorage from '@turbowarp/scratch-storage';
 import {serveTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
-import {installPlusExtensionHost} from '../extension-host/runtime.ts';
+import {installPlusExtensionHost} from '../extension-host/host.ts';
+import * as vmModules from '../extension-host/vm-modules.ts';
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
 
 let allowedURLs: string[] = [];
@@ -28,7 +29,7 @@ const createVm = () => {
     vm.securityManager.canLoadExtensionFromProject = (url: string) => Promise.resolve(allowedURLs.includes(url));
     vm.securityManager.getSandboxMode = () => Promise.resolve('iframe');
     installPlusExtensionHost(vm, {
-        enabled: true, document, locale: document.documentElement.lang || 'en',
+        enabled: true, document, locale: document.documentElement.lang || 'en', vmModules,
         trustedCatalog: plusTrustedExtensions.catalog,
         requestApproval: async () => false,
         showDiagnostics: false

@@ -209,7 +209,10 @@ if (!process.env.TW_PLUS_DESKTOP_SOURCE) {
 // second copy would be the same code with its own module state. Neither the Loader nor the review
 // dialog is in this list any more — the GUI depends on neither, so this repository's copies are the
 // only ones.
-for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip', 'scratch-vm', 'react-intl', 'react-redux']) {
+// The renderer and storage are the GUI's too: the test run view's frame page (issue #774) builds a VM of its
+// own with them, which must be the same code the editor's VM runs with.
+for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turbowarp/jszip', 'scratch-vm', 'react-intl', 'react-redux',
+    'scratch-render', '@turbowarp/scratch-storage']) {
     const copy = path.join(gui, 'node_modules', name);
     if (!fs.existsSync(copy)) throw new Error(`The pinned GUI has no ${name} to resolve against`);
     config.resolve.alias[name] = copy;
