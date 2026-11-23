@@ -13,13 +13,13 @@
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 9. Reuse scripts and assets · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
 <p class="eyebrow">Feature guide 9/12 · Updated November 14, 2026</p>
 <h1>Reuse scripts and assets</h1>
-<p class="lead">Move scripts and the stage to another project with files or copy and paste, and use an extension's bundled assets as ordinary assets.</p>
+<p class="lead">Move scripts and the Stage to another project with files or copy and paste, and use an extension's bundled assets as ordinary assets.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
 <ul>
 <li><a href="../open/index.en.html">Open projects</a></li>
 <li><a href="../screen/index.en.html">Menus and screen</a></li>
-<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
-<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../sprites/index.en.html">Sprites and the Stage</a></li>
+<li><a href="../stage/index.en.html">Run view</a></li>
 <li><a href="../workspace/index.en.html">Workspace</a></li>
 <li><a href="../blocks/index.en.html">Blocks</a></li>
 <li><a href="../search/index.en.html">Search and replace</a></li>
@@ -32,7 +32,7 @@
 </nav>
 <nav class="page-toc" aria-label="On this page">
 <ol>
-<li><a href="#transfer">9.1 Transfer scripts and the stage to another project</a></li>
+<li><a href="#transfer">9.1 Transfer scripts and the Stage to another project</a></li>
 <li><a href="#bundle-assets">9.2 Add bundled assets as backdrops, costumes and sounds</a></li>
 </ol>
 </nav>
@@ -40,13 +40,13 @@
 
 <section id="transfer">
 
-<h2>9.1 Transfer scripts and the stage to another project</h2>
+<h2>9.1 Transfer scripts and the Stage to another project</h2>
 
 <p>TurboWarp Plus Editor does not have the Backpack found at the bottom of the Scratch editor. To reuse scripts, copy and paste them or export and import them as .blocks3 files. You can move the stage to another project as .stage3, and a whole sprite as .sprite3.</p>
 <p>Right-click a block in the script you want to move and choose "Save Stack to File…" or "Copy Whole Stack". Both act on the whole connected group of blocks that contains the block you right-clicked. In the destination, right-click empty space in the code area and choose "Load from File…" for a file or "Paste" for copied content. You can also copy and paste with the <a href="../screen/index.en.html#edit-menu">"Edit" menu</a> or ⌘C / ⌘V (Ctrl+C / Ctrl+V on Windows).</p>
 <p>If you only need to move a script to another sprite in the same project, you can also put two code tabs side by side and drag the blocks into the other code area to copy them (<a href="../blocks/index.en.html#arrange">Rearrange code and copy it to another sprite</a>).</p>
 <figure class="guide-detail"><a href="../images/en/block-context-menu.png"><img src="../images/en/block-context-menu.png" width="640" height="480" alt="The context menu for a hat block: Add Comment, Cut This Block Only, Duplicate, Copy This Block Only, Copy From Here Down, Copy Whole Stack, Save Stack to File…, Tidy Up, Leaving Room Below This Stack, Fold, and Delete Block, grouped by kind of operation." loading="lazy"></a><figcaption>The context menu for a block. "Save Stack to File…" has a downward arrow and "Delete Block" a trash can icon.</figcaption></figure>
-<ul><li><strong>.blocks3</strong> contains the script along with the custom blocks, variables, lists, messages, and extensions it uses.</li><li>Between editor windows opened from the same site (the same origin), you can copy and paste without granting access to the OS clipboard. To paste into an editor opened from a different site, you need a supported browser and permission to read the clipboard.</li><li><strong>.stage3</strong>: In the <a href="../screen/index.en.html#layout">Plus layout</a>, right-click the backdrop tile and choose "Export Stage"; in the Scratch layout, right-click the stage to export it. Import it in the Scratch layout by choosing "Import Stage (add)" from the backdrop's "Choose a Backdrop" menu. The context menu of the backdrop tile in the Plus layout has no import item. The backdrops, sounds, and scripts are added to the current stage.</li><li>If the destination has a variable or list with the same name, scope, and type, the destination's item and its value are used. Custom blocks and assets whose names collide are renamed as needed. Backdrop and sound names given to a block argument through an operator or a variable are not rewritten to match the destination.</li><li>Whether an extension can run depends on the destination's settings and approvals.</li></ul>
+<ul><li><strong>.blocks3</strong> contains the script along with the custom blocks, variables, lists, messages, and extensions it uses.</li><li>Between editor windows opened from the same site (the same origin), you can copy and paste without granting access to the OS clipboard. To paste into an editor opened from a different site, you need a supported browser and permission to read the clipboard.</li><li><strong>.stage3</strong>: In the <a href="../screen/index.en.html#layout">Plus layout</a>, right-click the "Backdrops" tile and choose "Export Stage"; in the Scratch layout, right-click the stage to export it. Import it in the Scratch layout by choosing "Import Stage (add)" from the backdrop's "Choose a Backdrop" menu. The context menu of the "Backdrops" tile in the Plus layout has no import item. The backdrops, sounds, and scripts are added to the current stage.</li><li>If the destination has a variable or list with the same name, scope, and type, the destination's item and its value are used. Custom blocks and assets whose names collide are renamed as needed. Backdrop and sound names given to a block argument through an operator or a variable are not rewritten to match the destination.</li><li>Whether an extension can run depends on the destination's settings and approvals.</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/script-stage-transfer.md">Transfer specification</a></p>
 
 </section>

@@ -13,13 +13,13 @@
 <p class="breadcrumb"><a href="../index.en.html">Feature guide</a> › 2. Screen layout and menus · <a href="index.html" hreflang="ja" lang="ja">日本語</a></p>
 <p class="eyebrow">Feature guide 2/12 · Updated November 19, 2026</p>
 <h1>Screen layout and menus</h1>
-<p class="lead">In the menu bar at the very top, project operations are grouped in the "File" and "Edit" menus, and the stage, Git, recording, debugging and extension controls are gathered on the right.</p>
+<p class="lead">In the menu bar at the very top, project operations are grouped in the "File" and "Edit" menus, and the Run view, Git, recording, debugging and extension controls are gathered on the right.</p>
 <nav class="topic-nav" aria-label="Feature guide topics">
 <ul>
 <li><a href="../open/index.en.html">Open projects</a></li>
 <li><a href="../screen/index.en.html" aria-current="page">Menus and screen</a></li>
-<li><a href="../sprites/index.en.html">Sprites and backdrop</a></li>
-<li><a href="../stage/index.en.html">Stage</a></li>
+<li><a href="../sprites/index.en.html">Sprites and the Stage</a></li>
+<li><a href="../stage/index.en.html">Run view</a></li>
 <li><a href="../workspace/index.en.html">Workspace</a></li>
 <li><a href="../blocks/index.en.html">Blocks</a></li>
 <li><a href="../search/index.en.html">Search and replace</a></li>
@@ -53,12 +53,12 @@
 <tr><th scope="row">Left</th><td>"File ▾" and "Edit ▾"</td><td><a href="#file-menu">Project operations</a> and <a href="#edit-menu">editing operations</a></td></tr>
 <tr><th scope="row">Center</th><td>"Search" field</td><td><a href="../search/index.en.html#project-search">Search and replace across the whole project</a></td></tr>
 <tr><th scope="row">Right</th><td>"Git ▾" (appears once a folder with a repository is open, and shows the current branch name, for example "main ▾")</td><td>"Open Local Git" and <a href="../git/index.en.html#local-git">switching branches</a></td></tr>
-<tr><th scope="row">Right</th><td>"Open stage" and "▾"</td><td><a href="../stage/index.en.html#stage-open">Open the stage and choose where it opens</a></td></tr>
-<tr><th scope="row">Right</th><td>🎥 (Record)</td><td>Records the stage. While recording, the state, such as a countdown or "Stop recording", appears beside it</td></tr>
+<tr><th scope="row">Right</th><td>"Open stage" and "▾"</td><td><a href="../stage/index.en.html#stage-open">Open the Run view and choose where it opens</a></td></tr>
+<tr><th scope="row">Right</th><td>🎥 (Record)</td><td>Records the Run view. While recording, the state, such as a countdown or "Stop recording", appears beside it</td></tr>
 <tr><th scope="row">Right</th><td>Ladybug icon (Debugger)</td><td><a href="#extension-controls">Opens the debugger</a></td></tr>
 <tr><th scope="row">Far right</th><td>Extension button area</td><td><a href="#extension-controls">Extension settings and controls</a></td></tr>
 </tbody></table></div>
-<p>Below the menu bar, at the left edge of the screen, are four switches stacked in a column (the activity bar). They choose what the left drawer shows: "Sprites", "Project folder", "Git history" or "AI agents". Above the sprite list are the "Search sprites", "Pin sprite list" and "Undock sprite list" buttons, and below it are "Backdrops" and the button for adding a sprite (<a href="../sprites/index.en.html">Edit sprites and the backdrop</a>, <a href="../git/index.en.html">Manage projects with project folders and Git</a>).</p>
+<p>Below the menu bar, at the left edge of the screen, are four switches stacked in a column (the activity bar). They choose what the left drawer shows: "Sprites", "Project folder", "Git history" or "AI agents". Above the sprite list are the "Search sprites", "Pin sprite list" and "Undock sprite list" buttons, and below it are "Backdrops" and the button for adding a sprite (<a href="../sprites/index.en.html">Edit sprites and the Stage</a>, <a href="../git/index.en.html">Manage projects with project folders and Git</a>).</p>
 <figure><a href="../images/en/plus-workspace-current.png"><img src="../images/en/plus-workspace-current.png" width="1440" height="1000" alt="The screen right after startup. The top row has the logo, the project title Project, File, Edit and the search field, and on the right the Git, Open stage and Record buttons. The activity bar and sprite list are at the left edge; in the middle are the Sprite1 tab, the code area and the horizontal palette, with the minimap and zoom buttons at the bottom right." loading="lazy"></a><figcaption>The screen right after startup. The minimap appears at the bottom right when the pointer is over the code area.</figcaption></figure>
 <p>During long operations, the mouse pointer changes to a busy cursor.</p>
 
@@ -141,13 +141,13 @@
 
 <h2>2.6 Choose between the Plus layout and the Scratch layout</h2>
 
-<p>The Plus layout opens with the activity bar at the left edge and the sprite list pinned. You edit code and assets in the tabs in the middle, and use "Open stage" in the menu bar to open the stage in a separate window, a tab or the drawer (<a href="../stage/index.en.html">Open the stage and run your project</a>).</p>
-<p>To work in the classic Scratch layout, reopen the editor with <code>twPlusStandardLayout=0</code> added to its URL. The stage and sprite list sit to the right of the code area, and the button for adding extensions appears at the bottom left.</p>
+<p>The Plus layout opens with the activity bar at the left edge and the sprite list pinned. You edit code and assets in the tabs in the middle, and use "Open stage" in the menu bar to open the Run view (Stage) in a separate window, a tab or the drawer (<a href="../stage/index.en.html">Open the Run view and run your project</a>).</p>
+<p>To work in the classic Scratch layout, reopen the editor with <code>twPlusStandardLayout=0</code> added to its URL. The Run view and sprite list sit to the right of the code area, and the button for adding extensions appears at the bottom left.</p>
 
 </section>
 <nav class="pager" aria-label="Previous and next pages">
 <a class="prev" href="../open/index.en.html"><small>Previous</small>1. Open projects and prepare extensions</a>
-<a class="next" href="../sprites/index.en.html"><small>Next</small>3. Edit sprites and the backdrop</a>
+<a class="next" href="../sprites/index.en.html"><small>Next</small>3. Edit sprites and the Stage</a>
 </nav>
 </main>
 <footer><a href="../../">Home</a> · <a href="../../editor.html?lang=en">Open the editor</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/tree/main/docs/features">Source of this guide</a><p>An independent TurboWarp fork. Screens and behavior are as of the time of capture. The current build is listed in <a href="../../build-info.json">build-info.json</a>.</p></footer>

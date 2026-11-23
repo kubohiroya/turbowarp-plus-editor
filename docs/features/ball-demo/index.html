@@ -42,22 +42,22 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <body><main>
 <p><a href="../">機能ガイド</a></p>
 <h1>Scratchから使い始めるTurboWarp Plus Editor</h1>
-<p>いつものSB3ファイルを開いて、コードの横でステージを動かしてみましょう。このガイドでは「ボールのデモ」を使い、慣れたブロックで作品を編集しながら、TurboWarp Plus Editorのどこに何があるか、スプライトが増えたときの探し方、作業しやすい画面の整え方を順に試します。</p>
+<p>いつものSB3ファイルを開いて、コードの横の実行画面（ステージ）で動かしてみましょう。このガイドでは「ボールのデモ」を使い、慣れたブロックで作品を編集しながら、TurboWarp Plus Editorのどこに何があるか、スプライトが増えたときの探し方、作業しやすい画面の整え方を順に試します。</p>
 <p><a href="../../editor.html?lang=ja">日本語でエディターを開く</a> · <a href="index.en.html" lang="en" hreflang="en">English guide</a></p>
 <ul>
 <li><a href="Ball%20Demo.sb3">Ball Demo.sb3</a>は1.1〜1.2で使います。緑の旗を押すと、ボールが20歩進むだけのデモです。</li>
 <li><a href="Ball%20Demo%20Plus.sb3">Ball Demo Plus.sb3</a>は1.3以降で使います。同じデモに、変数・リスト・メッセージ・クローンを加えたものです。</li>
 </ul>
-<nav aria-label="目次"><strong>目次</strong><ul><li><a href="#section-1">1. Scratchで使っていた画面はどこにある？</a><ul><li><a href="#section-1-1">1.1 SB3を開く</a></li><li><a href="#section-1-2">1.2 ステージを開く</a></li><li><a href="#section-1-3">1.3 画面左端のスプライト一覧を使う</a></li><li><a href="#section-1-4">1.4 スプライトや背景をタブで開く</a></li><li><a href="#section-1-5">1.5 左端のボタンで編集画面を切り替える</a></li></ul></li><li><a href="#section-2">2. スプライトのプロパティと変数を使う</a><ul><li><a href="#section-2-1">2.1 プロパティで位置・表示・向きを変える</a></li><li><a href="#section-2-2">2.2 変数の値を変え、その変数を使うブロックを表示する</a></li><li><a href="#section-2-3">2.3 リストの中身をまとめて編集する</a><ul><li><a href="#create-sprite-list">新しいリストを作り、項目を追加する</a></li></ul></li><li><a href="#section-2-4">2.4 クローンを選んで個体ごとの値を見る</a></li></ul></li><li><a href="#section-3">3. メッセージの流れをたどる</a><ul><li><a href="#section-3-1">3.1 送ったメッセージを受け取るブロックを表示する</a></li><li><a href="#section-3-2">3.2 関係図で送信元と受信先をたどる</a></li><li><a href="#section-3-3">3.3 メッセージ名を作品全体で変える</a></li></ul></li><li><a href="#section-4">4. コードを探す、広げる、使い回す</a><ul><li><a href="#section-4-1">4.1 パレットと検索でブロックを探す</a></li><li><a href="#section-4-2">4.2 ミニマップで離れたコードへ移動する</a></li><li><a href="#section-4-3">4.3 Z配置・N配置でコードを順に読む</a></li><li><a href="#section-4-4">4.4 パネルを横に分割して並べて編集する</a></li><li><a href="#section-4-5">4.5 右クリックでスクリプトを別のタブにコピーする</a></li><li><a href="#section-4-6">4.6 ドラッグでスクリプトを別のスプライトにコピーする</a></li><li><a href="#section-4-7">4.7 編集した作品をSB3で保存する</a></li></ul></li><li><a href="#next">次に進む</a></li></ul></nav>
+<nav aria-label="目次"><strong>目次</strong><ul><li><a href="#section-1">1. Scratchで使っていた画面はどこにある？</a><ul><li><a href="#section-1-1">1.1 SB3を開く</a></li><li><a href="#section-1-2">1.2 実行画面を開く</a></li><li><a href="#section-1-3">1.3 画面左端のスプライト一覧を使う</a></li><li><a href="#section-1-4">1.4 スプライトやステージをタブで開く</a></li><li><a href="#section-1-5">1.5 左端のボタンで編集画面を切り替える</a></li></ul></li><li><a href="#section-2">2. スプライトのプロパティと変数を使う</a><ul><li><a href="#section-2-1">2.1 プロパティで位置・表示・向きを変える</a></li><li><a href="#section-2-2">2.2 変数の値を変え、その変数を使うブロックを表示する</a></li><li><a href="#section-2-3">2.3 リストの中身をまとめて編集する</a><ul><li><a href="#create-sprite-list">新しいリストを作り、項目を追加する</a></li></ul></li><li><a href="#section-2-4">2.4 クローンを選んで個体ごとの値を見る</a></li></ul></li><li><a href="#section-3">3. メッセージの流れをたどる</a><ul><li><a href="#section-3-1">3.1 送ったメッセージを受け取るブロックを表示する</a></li><li><a href="#section-3-2">3.2 関係図で送信元と受信先をたどる</a></li><li><a href="#section-3-3">3.3 メッセージ名を作品全体で変える</a></li></ul></li><li><a href="#section-4">4. コードを探す、広げる、使い回す</a><ul><li><a href="#section-4-1">4.1 パレットと検索でブロックを探す</a></li><li><a href="#section-4-2">4.2 ミニマップで離れたコードへ移動する</a></li><li><a href="#section-4-3">4.3 Z配置・N配置でコードを順に読む</a></li><li><a href="#section-4-4">4.4 パネルを横に分割して並べて編集する</a></li><li><a href="#section-4-5">4.5 右クリックでスクリプトを別のタブにコピーする</a></li><li><a href="#section-4-6">4.6 ドラッグでスクリプトを別のスプライトにコピーする</a></li><li><a href="#section-4-7">4.7 編集した作品をSB3で保存する</a></li></ul></li><li><a href="#next">次に進む</a></li></ul></nav>
 <h2 id="section-1">1. Scratchで使っていた画面はどこにある？</h2>
 <h3 id="section-1-1">1.1 SB3を開く</h3>
 <p>ふだんは自分の作品のSB3ファイルを開きますが、ここでは<a href="Ball%20Demo.sb3">Ball Demo.sb3</a>をダウンロードして使います。</p>
 <p><strong>「ファイル」→「SB3ファイルを開く…」</strong>を選び、ダウンロードしたファイルを開きます。画面左端のスプライト一覧で<strong>「ボール」</strong>を選ぶと、中央の編集パネルにそのスプライトのタブが開きます。</p>
 <figure><a href="images/ja-open.png"><img loading="lazy" src="images/ja-open.png" width="1320" height="535" alt="ファイルメニューで「SB3ファイルを開く…」を選ぶ"></a><figcaption>図1 · ファイルメニューで「SB3ファイルを開く…」を選ぶ</figcaption></figure>
-<h3 id="section-1-2">1.2 ステージを開く</h3>
-<p>右上の<strong>「ステージを開く」の横の▾</strong>を押し、<strong>「引出しで表示」</strong>を選びます。右側に開いたステージで緑の旗を押すと、コードを見ながらボールの動きを確かめられます。「20 歩動かす」ブロックの<strong>20</strong>を<strong>40</strong>に変えると、旗を一度押したときに進む距離が2倍になります。ステージを大きく表示したいときは、同じメニューの<strong>「別ウィンドウで表示」</strong>を選びます。</p>
-<figure><a href="images/ja-stage-menu.png"><img loading="lazy" src="images/ja-stage-menu.png" alt="ステージを別ウィンドウ、タブ、引出しで表示するメニュー"></a><figcaption>図2 · ステージを別ウィンドウ、タブ、引出しで表示するメニュー</figcaption></figure>
-<figure><a href="images/ja-run.png"><img loading="lazy" src="images/ja-run.png" alt="コードの横に開いたステージで緑の旗を押したところ"></a><figcaption>図3 · コードの横に開いたステージで緑の旗を押したところ</figcaption></figure>
+<h3 id="section-1-2">1.2 実行画面を開く</h3>
+<p>右上の<strong>「ステージを開く」の横の▾</strong>を押し、<strong>「引出しで表示」</strong>を選びます。右側に開いた実行画面で緑の旗を押すと、コードを見ながらボールの動きを確かめられます。「20 歩動かす」ブロックの<strong>20</strong>を<strong>40</strong>に変えると、旗を一度押したときに進む距離が2倍になります。実行画面を大きく表示したいときは、同じメニューの<strong>「別ウィンドウで表示」</strong>を選びます。</p>
+<figure><a href="images/ja-stage-menu.png"><img loading="lazy" src="images/ja-stage-menu.png" alt="実行画面を別ウィンドウ、タブ、引出しで表示するメニュー"></a><figcaption>図2 · 実行画面を別ウィンドウ、タブ、引出しで表示するメニュー</figcaption></figure>
+<figure><a href="images/ja-run.png"><img loading="lazy" src="images/ja-run.png" alt="コードの横に開いた実行画面で緑の旗を押したところ"></a><figcaption>図3 · コードの横に開いた実行画面で緑の旗を押したところ</figcaption></figure>
 <h3 id="section-1-3">1.3 画面左端のスプライト一覧を使う</h3>
 <p>ここからは<code>Ball Demo Plus.sb3</code>を開いて使います。Scratchでは画面右下にあった<strong>スプライト一覧</strong>が、このエディターでは<strong>画面左端</strong>にあります。左上のアイコンで別の表示（「プロジェクトフォルダ」など）に切り替わっているときは、いちばん左の<strong>「スプライト一覧」</strong>アイコンを押して戻します。</p>
 <p>一覧とコードの間の<strong>境界を左右にドラッグ</strong>すると、一覧の幅を変えられます。スプライトが多い作品では、幅を広げるとタイルが複数列に並びます。一覧の上部にある<strong>ピン（「スプライト一覧を固定表示」）</strong>を押すと、一覧が固定されます。固定を外すと、ポインターが一覧から離れたときに一覧が畳まれ、ポインターを画面の左端に戻すと再び開きます。</p>
@@ -65,17 +65,17 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <figure><a href="images/ja-sprite-unpinned.png"><img loading="lazy" src="images/ja-sprite-unpinned.png" alt="ピンを外した一覧。ピンに斜線が付き、一覧がコードに重なって開いている"></a><figcaption>図5 · ピンを外した一覧。ピンに斜線が付き、一覧がコードに重なって開いている</figcaption></figure>
 <p>一覧を別のウィンドウに出したいときは、ピンの横の<strong>「アンドック」</strong>を押します。別ウィンドウの一覧からもスプライトを選べます。一覧を元の位置に戻すには、別ウィンドウ右上のボタンを押します。別ウィンドウに出していた一覧のウィンドウが見つからないときは、同じボタンが<strong>「別画面で開き直す」</strong>になり、押すと別ウィンドウを開き直せます。</p>
 <figure><a href="images/ja-sprite-window.png"><img loading="lazy" src="images/ja-sprite-window.png" alt="スプライト一覧を別のウィンドウに出した例"></a><figcaption>図6 · スプライト一覧を別のウィンドウに出した例</figcaption></figure>
-<h3 id="section-1-4">1.4 スプライトや背景をタブで開く</h3>
-<p>左端の一覧でスプライトや背景を選ぶと、編集パネルの上部にそれぞれのタブが開きます。「ボール」を開いたまま、一覧の下にある<strong>「背景」</strong>を選んでみましょう。上部の<strong>「ボール」</strong>と<strong>「背景」</strong>のタブを押すだけで、編集する対象を切り替えられます。パネルを分割すれば、2つのタブを横に並べて編集することもできます（<a href="#section-4-4">4.4</a>）。</p>
-<figure><a href="images/ja-sprite-tabs.png"><img loading="lazy" src="images/ja-sprite-tabs.png" alt="左のスプライト一覧から開いた「ボール」と「背景」のタブ。今は「ボール」のコードを表示している"></a><figcaption>図7 · 左のスプライト一覧から開いた「ボール」と「背景」のタブ。今は「ボール」のコードを表示している</figcaption></figure>
+<h3 id="section-1-4">1.4 スプライトやステージをタブで開く</h3>
+<p>左端の一覧でスプライトやステージを選ぶと、編集パネルの上部にそれぞれのタブが開きます。「ボール」を開いたまま、一覧の下にある<strong>「背景」</strong>のタイルでステージを開いてみましょう。上部の<strong>「ボール」</strong>と<strong>「背景」</strong>のタブを押すだけで、編集する対象を切り替えられます。パネルを分割すれば、2つのタブを横に並べて編集することもできます（<a href="#section-4-4">4.4</a>）。</p>
+<figure><a href="images/ja-sprite-tabs.png"><img loading="lazy" src="images/ja-sprite-tabs.png" alt="左のスプライト一覧から開いた「ボール」とステージ（「背景」）のタブ。今は「ボール」のコードを表示している"></a><figcaption>図7 · 左のスプライト一覧から開いた「ボール」とステージ（「背景」）のタブ。今は「ボール」のコードを表示している</figcaption></figure>
 <h3 id="section-1-5">1.5 左端のボタンで編集画面を切り替える</h3>
-<p>編集パネルの左端には、上から<strong>「自由配置」「ハット・関数一覧」「呼び出し関係」「コスチューム」「音」「変数」「メッセージ」</strong>のボタンが、線で3つのまとまりに分かれて並びます。「自由配置」がブロックを並べるコードの画面です。背景のタブでは、「コスチューム」が<strong>「背景」</strong>に、「変数」が<strong>「グローバル変数」</strong>に変わります。どのボタンか分からないときは、ポインターを重ねると名前が表示されます。コスチュームや音の画面では、パネル上部の見出しにも画面の名前が表示されます。</p>
+<p>編集パネルの左端には、上から<strong>「自由配置」「ハット・関数一覧」「呼び出し関係」「コスチューム」「音」「変数」「メッセージ」</strong>のボタンが、線で3つのまとまりに分かれて並びます。「自由配置」がブロックを並べるコードの画面です。ステージのタブでは、「コスチューム」が<strong>「背景」</strong>に、「変数」が<strong>「グローバル変数」</strong>に変わります。どのボタンか分からないときは、ポインターを重ねると名前が表示されます。コスチュームや音の画面では、パネル上部の見出しにも画面の名前が表示されます。</p>
 <p>「ボール」のタブで筆のアイコン（「コスチューム」）を押すと、紫のボールのコスチュームを編集できます。スピーカーのアイコン（「音」）を押すと、同じスプライトの音の画面に切り替わります。このデモには音が入っていません。ブロックに戻るには、左端の<strong>「自由配置」</strong>を押します。</p>
 <figure><a href="images/ja-costumes.png"><img loading="lazy" src="images/ja-costumes.png" alt="左端の筆アイコンを選び、ボールのコスチュームを開いた画面"></a><figcaption>図8 · 左端の筆アイコンを選び、ボールのコスチュームを開いた画面</figcaption></figure>
 <figure><a href="images/ja-sounds.png"><img loading="lazy" src="images/ja-sounds.png" alt="同じスプライトで左端の音アイコンを選んだ画面"></a><figcaption>図9 · 同じスプライトで左端の音アイコンを選んだ画面</figcaption></figure>
 <h2 id="section-2">2. スプライトのプロパティと変数を使う</h2>
 <h3 id="section-2-1">2.1 プロパティで位置・表示・向きを変える</h3>
-<p>「ボール」のタブで、左端の<strong>[x]のアイコン「変数」</strong>を押すと、<strong>「スプライトのプロパティと変数」</strong>が開きます。上部では、スプライト名、位置（x・y）、大きさ、向きを編集できます。「表示」の<strong>目のアイコン</strong>で表示、<strong>斜線付きの目のアイコン</strong>で非表示に切り替えます。変更の結果はステージで確かめられます。ステージの引出しが右側の操作に重なるときは、いったん右端に畳んでください。</p>
+<p>「ボール」のタブで、左端の<strong>[x]のアイコン「変数」</strong>を押すと、<strong>「スプライトのプロパティと変数」</strong>が開きます。上部では、スプライト名、位置（x・y）、大きさ、向きを編集できます。「表示」の<strong>目のアイコン</strong>で表示、<strong>斜線付きの目のアイコン</strong>で非表示に切り替えます。変更の結果は実行画面で確かめられます。実行画面の引出しが右側の操作に重なるときは、いったん右端に畳んでください。</p>
 <figure><a href="images/ja-variables.png"><img loading="lazy" src="images/ja-variables.png" alt="ボールのプロパティと変数。名前、位置、表示、大きさ、向きが上部に並ぶ"></a><figcaption>図10 · ボールのプロパティと変数。名前、位置、表示、大きさ、向きが上部に並ぶ</figcaption></figure>
 <p>右端の<strong>向きのダイヤル</strong>で、円周上の矢印を右（90°）から上（0°）へドラッグします。ボールは丸いので見た目は変わりませんが、緑の旗を押すと、右に進んでいたボールが上に進むようになります。向きは「向き」の数値欄に入力しても変えられます。その下の3つのアイコンでは、回転方法を<strong>「自由に回転」「左右のみ」「回転しない」</strong>から選びます。次の練習の前に、向きを<strong>90</strong>、位置を<strong>x = −60、y = 0</strong>に戻しておきます。</p>
 <figure><a href="images/ja-direction.png"><img loading="lazy" src="images/ja-direction.png" alt="矢印を上へドラッグすると、向きの欄が0に変わる。数値欄の下に3つの回転方法が並ぶ"></a><figcaption>図11 · 矢印を上へドラッグすると、向きの欄が0に変わる。数値欄の下に3つの回転方法が並ぶ</figcaption></figure>
@@ -83,8 +83,8 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <p>同じパネルの<strong>「スプライト変数」</strong>には、ボールだけが使う変数やリストが並びます。ボールの進む距離を決める<code>speed</code>を<strong>20から40</strong>に書き換え、Enterキーで確定します。緑の旗を押して進む距離を比べたら、次の練習に備えて<code>speed</code>を<strong>20</strong>に戻しておきます。</p>
 <p><strong>「読み取り」列</strong>の数字を押すと、その変数の値を読み取るブロックだけが、メニューバーの検索結果に表示されます。<code>speed</code>の「読み取り」の<strong>1</strong>を押して結果を選ぶと、緑の旗のスクリプトで「歩動かす」ブロックに入っている<code>speed</code>が表示されます。<strong>「変更」列</strong>の<strong>1</strong>からは、クローンの<code>speed</code>を変えるブロックへ移動できます。行にポインターを重ねると、<strong>「変数名を変更」</strong>と<strong>「変数を削除」</strong>のボタンが現れます。</p>
 <figure><a href="images/ja-variable-reads.png"><img loading="lazy" src="images/ja-variable-reads.png" alt="speedの「読み取り」から、その値を使うブロックだけに絞った作品検索"></a><figcaption>図12 · speedの「読み取り」から、その値を使うブロックだけに絞った作品検索</figcaption></figure>
-<p>作品全体で共有する変数を見るには、スプライト一覧の下にある<strong>「背景」</strong>を選び、<strong>「グローバル変数」</strong>を開きます。<code>rounds</code>の行の<strong>「ステージ」列</strong>にチェックを入れると、実行中の値がステージに表示されます。</p>
-<figure><a href="images/ja-global-variables.png"><img loading="lazy" src="images/ja-global-variables.png" alt="背景のグローバル変数でroundsのステージ表示をオンにしたところ"></a><figcaption>図13 · 背景のグローバル変数でroundsのステージ表示をオンにしたところ</figcaption></figure>
+<p>作品全体で共有する変数を見るには、スプライト一覧の下にある<strong>「背景」</strong>のタイルでステージを開き、<strong>「グローバル変数」</strong>を開きます。<code>rounds</code>の行の<strong>「実行画面」列</strong>にチェックを入れると、実行中の値が実行画面に表示されます。</p>
+<figure><a href="images/ja-global-variables.png"><img loading="lazy" src="images/ja-global-variables.png" alt="ステージのグローバル変数でroundsの「実行画面」列をオンにしたところ"></a><figcaption>図13 · ステージのグローバル変数でroundsの「実行画面」列をオンにしたところ</figcaption></figure>
 <h3 id="section-2-3">2.3 リストの中身をまとめて編集する</h3>
 <p>「ボール」のタブに戻り、左端の「変数」を開きます。</p>
 <p>表の<strong>「種類」</strong>列では、変数は箱のアイコン、リストは表のアイコンで示されます。「種類」や「読み取り」などの見出しを押すと、その列で表を並べ替えられます。<code>route</code>は、クローンが吹き出しで言う言葉を入れたリストです。表には先頭の5項目が並び、<strong>+1</strong>は残りがあと1項目あることを示します。</p>
@@ -107,22 +107,22 @@ code { color: #40316b; overflow-wrap: anywhere; }
 <li><p><strong>表で確かめる</strong>。「チェックポイント」の行に、3つの項目が入力した順に表示されます。作品をファイルに残すには、<a href="#section-4-7">SB3で保存</a>します。</p>
 <figure><a href="images/ja-list-create-05-saved-list.png"><img src="images/ja-list-create-05-saved-list.png" loading="lazy" width="2216" height="328" alt="保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる"></a><figcaption>図21 · 保存後の「チェックポイント」の行に「スタート」「橋」「ゴール」が並んでいる</figcaption></figure></li>
 </ol>
-<p>作品全体で共有するリストは、背景のタブの「グローバル変数」から同じ手順で作れます。</p>
+<p>作品全体で共有するリストは、ステージのタブの「グローバル変数」から同じ手順で作れます。</p>
 <h3 id="section-2-4">2.4 クローンを選んで個体ごとの値を見る</h3>
-<p>「ボール」のタブを開いたまま、1.2と同じ手順でステージを右側の引出しに表示します。ステージの白い部分を一度クリックしてから<strong>Cキー</strong>を押すと、右にもう1つボールが現れます。これがクローン（実行中に作られるスプライトのコピー）です。このクローンは、作られると自分の<code>speed</code>を10増やし、<code>route</code>の1番目の言葉を2秒間言います。2.3でリストを編集していれば、吹き出しには<code>checkpoint</code>と表示されます。</p>
+<p>「ボール」のタブを開いたまま、1.2と同じ手順で実行画面を右側の引出しに表示します。実行画面の白い部分を一度クリックしてから<strong>Cキー</strong>を押すと、右にもう1つボールが現れます。これがクローン（実行中に作られるスプライトのコピー）です。このクローンは、作られると自分の<code>speed</code>を10増やし、<code>route</code>の1番目の言葉を2秒間言います。2.3でリストを編集していれば、吹き出しには<code>checkpoint</code>と表示されます。</p>
 <p><strong>「変数」</strong>を開き、見出しの右にある<strong>「1」</strong>を押します。パネルに「クローン 1 を編集中」と表示され、<code>speed</code>は<strong>30</strong>になっています。値を<strong>35</strong>に変えてから<strong>「元のスプライト」</strong>に戻ると、元のスプライトの<code>speed</code>は<strong>20</strong>のままです。クローンの位置やリストも同じように確かめたり編集したりできますが、クローンへの変更はその実行の間だけ有効です。クローンが6体以上になると、番号の選択リストと左右の矢印で切り替えます。</p>
-<figure><a href="images/ja-clone.png"><img loading="lazy" src="images/ja-clone.png" width="1360" height="665" alt="クローン1を編集中で、speedは30。右のステージには元のボールとクローンが並んでいる"></a><figcaption>図22 · クローン1を編集中で、speedは30。右のステージには元のボールとクローンが並んでいる</figcaption></figure>
+<figure><a href="images/ja-clone.png"><img loading="lazy" src="images/ja-clone.png" width="1360" height="665" alt="クローン1を編集中で、speedは30。右の実行画面には元のボールとクローンが並んでいる"></a><figcaption>図22 · クローン1を編集中で、speedは30。右の実行画面には元のボールとクローンが並んでいる</figcaption></figure>
 <h2 id="section-3">3. メッセージの流れをたどる</h2>
 <h3 id="section-3-1">3.1 送ったメッセージを受け取るブロックを表示する</h3>
-<p>「ボール」のタブで、左端の吹き出しのアイコン<strong>「メッセージ」</strong>を押します。このスプライトが送るメッセージと受け取るメッセージが、<strong>「送信」</strong>と<strong>「受信」</strong>の2つのタブに分かれ、それぞれ関係図で表示されます。ボールは緑の旗で動いた直後に<code>ball started</code>を送るので、「送信」タブに、左の送信元「ボール」から右の受信先「背景」への矢印が描かれます。送信元には、送るスクリプトのハットが小さく描かれ、「緑の旗が押されたとき」と添えられています。これを押すと、コード画面に切り替わり、その送るブロックが表示されます。</p>
-<figure><a href="images/ja-messages.png"><img loading="lazy" src="images/ja-messages.png" width="1360" height="575" alt="ボールの「メッセージ」の「送信」タブ。送信元のボールに緑の旗のハットが添えられ、ball startedの矢印が受信先の背景へ伸びている"></a><figcaption>図23 · ボールの「送信」タブ。送信元に、送るスクリプトのハットが添えられる</figcaption></figure>
-<p>受け取る側のブロックを見るには、もう一度「ボール」の<strong>「メッセージ」</strong>を開き、矢印の先にある<strong>「背景」</strong>を押します。背景のコードが開き、<code>ball started</code>を受け取って<code>rounds</code>を1ずつ変えるスクリプトが表示されます。</p>
+<p>「ボール」のタブで、左端の吹き出しのアイコン<strong>「メッセージ」</strong>を押します。このスプライトが送るメッセージと受け取るメッセージが、<strong>「送信」</strong>と<strong>「受信」</strong>の2つのタブに分かれ、それぞれ関係図で表示されます。ボールは緑の旗で動いた直後に<code>ball started</code>を送るので、「送信」タブに、左の送信元「ボール」から右の受信先「ステージ」への矢印が描かれます。送信元には、送るスクリプトのハットが小さく描かれ、「緑の旗が押されたとき」と添えられています。これを押すと、コード画面に切り替わり、その送るブロックが表示されます。</p>
+<figure><a href="images/ja-messages.png"><img loading="lazy" src="images/ja-messages.png" width="1360" height="575" alt="ボールの「メッセージ」の「送信」タブ。送信元のボールに緑の旗のハットが添えられ、ball startedの矢印が受信先のステージへ伸びている"></a><figcaption>図23 · ボールの「送信」タブ。送信元に、送るスクリプトのハットが添えられる</figcaption></figure>
+<p>受け取る側のブロックを見るには、もう一度「ボール」の<strong>「メッセージ」</strong>を開き、矢印の先にある<strong>「ステージ」</strong>を押します。ステージのコードが開き、<code>ball started</code>を受け取って<code>rounds</code>を1ずつ変えるスクリプトが表示されます。</p>
 <h3 id="section-3-2">3.2 関係図で送信元と受信先をたどる</h3>
 <p>関係図では、<strong>矢印が送信元から受信先</strong>へ向かい、矢印の上にメッセージ名が表示されます。今開いている対象には太い枠が付きます。タブの数字は、それぞれのメッセージの数です。</p>
-<p>背景のタブで<strong>「メッセージ」</strong>を開くと、背景はメッセージを送らないので、はじめから「受信」タブが開きます。ボールから背景へ<code>ball started</code>が届いていることが分かります。</p>
-<figure><a href="images/ja-messages-stage.png"><img loading="lazy" src="images/ja-messages-stage.png" width="1360" height="575" alt="背景の「メッセージ」の「受信」タブ。ボールからball startedの矢印が、太い枠の付いた背景へ伸びている"></a><figcaption>図24 · 背景の「受信」タブ。矢印の先の背景に太い枠が付く</figcaption></figure>
+<p>ステージのタブで<strong>「メッセージ」</strong>を開くと、ステージはメッセージを送らないので、はじめから「受信」タブが開きます。ボールからステージへ<code>ball started</code>が届いていることが分かります。</p>
+<figure><a href="images/ja-messages-stage.png"><img loading="lazy" src="images/ja-messages-stage.png" width="1360" height="575" alt="ステージの「メッセージ」の「受信」タブ。ボールからball startedの矢印が、太い枠の付いたステージへ伸びている"></a><figcaption>図24 · ステージの「受信」タブ。矢印の先のステージに太い枠が付く</figcaption></figure>
 <h3 id="section-3-3">3.3 メッセージ名を作品全体で変える</h3>
-<p>関係図の<code>ball started</code>の右にある<strong>▼</strong>を押し、<strong>「メッセージ名を変更」</strong>を選びます。ダイアログの「新しいメッセージ名:」に<code>ball moved</code>などと入力し、<strong>「変更」</strong>を押して確定します。メッセージ名は作品全体で共通なので、ボールの送るブロックと背景の受け取るブロックの名前がそろって変わります。関係図に新しい名前を反映するには、いったん「自由配置」に切り替えてから「メッセージ」を開き直します。名前を変えずにやめるときは<strong>「キャンセル」</strong>を押します。</p>
+<p>関係図の<code>ball started</code>の右にある<strong>▼</strong>を押し、<strong>「メッセージ名を変更」</strong>を選びます。ダイアログの「新しいメッセージ名:」に<code>ball moved</code>などと入力し、<strong>「変更」</strong>を押して確定します。メッセージ名は作品全体で共通なので、ボールの送るブロックとステージの受け取るブロックの名前がそろって変わります。関係図に新しい名前を反映するには、いったん「自由配置」に切り替えてから「メッセージ」を開き直します。名前を変えずにやめるときは<strong>「キャンセル」</strong>を押します。</p>
 <figure><a href="images/ja-message-rename.png"><img loading="lazy" src="images/ja-message-rename.png" width="1360" height="575" alt="「メッセージ名を変更」のダイアログで、新しいメッセージ名にball movedを入力したところ"></a><figcaption>図25 · ▼から開いた「メッセージ名を変更」のダイアログ</figcaption></figure>
 <h2 id="section-4">4. コードを探す、広げる、使い回す</h2>
 <h3 id="section-4-1">4.1 パレットと検索でブロックを探す</h3>
