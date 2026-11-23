@@ -97,7 +97,7 @@
 <h2>8.4 素材を見たり再生したりして選ぶ <span class="badge">一部の拡張で利用可能</span></h2>
 
 <p>公開されている紙芝居拡張rc.87では、編集用の作品（台本のYAMLから作った、素材ブロックなどを含む編集用のSB3）にある素材ブロック（Asset）のアイコンを押すと、フォームと一緒に素材のプレビューが開きます。素材の指定を変えると、保存する前に新しい画像を見たり、音声や動画を再生したりできます。画像や動画の寸法、ファイルサイズ、素材の保持形態も確かめられます。対応するTeachable Machineの認識モデルなら、カメラやマイクを起動して認識結果を試せます。</p>
-<figure class="guide-detail"><a href="../images/asset-preview-development.png"><img src="../images/asset-preview-development.png" width="374" height="319" alt="公開前の紙芝居開発版で撮影した画像素材のプレビュー。画像、ピクセル寸法、バイト数、保持形態が表示されている。" loading="lazy"></a><figcaption>公開前の開発版で撮影した例。外部画像の見た目と保持形態を確認できます。</figcaption></figure>
+<figure class="guide-detail"><a href="../images/asset-preview-development.png"><img src="../images/asset-preview-development.png" width="374" height="319" alt="公開されている紙芝居拡張4.0.5で開いた画像素材のプレビュー。画像、ピクセル寸法、バイト数、保持形態が表示されている。" loading="lazy"></a><figcaption>公開されている紙芝居拡張4.0.5で、参照だけを作品に持つ外部画像（保持形態 remote-non-cacheable）を開いた例。外部画像の見た目と保持形態を確認できます。</figcaption></figure>
 <p>rc.87のプレビューは、エディターの起動URLに付ける <code>twPlusBlockPreview</code> で次のように切り替わります。設定は起動時に一度だけ読まれるので、変えたときはエディターを開き直します。</p>
 <ul><li>指定しない場合：素材のプレビューだけが有効です。</li><li><code>twPlusBlockPreview=1</code>：素材に加えて、<a href="#runtime">場面や動作のプレビュー</a>も有効になります。</li><li><code>twPlusBlockPreview=0</code>：プレビューを使わず、素材ブロックのアイコンからはフォームだけが開きます。</li></ul>
 <p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/tag/v4.0.0-rc.87">紙芝居拡張rc.87の公開情報</a> · <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">プレビューの対象と設定</a></p>

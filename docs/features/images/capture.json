@@ -246,30 +246,10 @@
     }
   },
   "retained": {
-    "current-git-create-pr.png": {
-      "size": "1440x1220",
-      "captured": "2026-11-13",
-      "description": "PR creation with a simulated GitHub connection (headless Editor integration test). Taken before the GitHub に接続… button was added to the Local Git header (#571); cannot be retaken on the public site."
-    },
-    "current-git-merge-ready.png": {
-      "size": "1440x1220",
-      "captured": "2026-11-13",
-      "description": "Overview tab with the squash-merge button, simulated GitHub connection. Same limitation as current-git-create-pr.png."
-    },
-    "github-files-changed.png": {
-      "size": "1440x960",
-      "description": "GitHub Files changed for public PR #219, signed out (GitHub screen, not the Editor)."
-    },
-    "asset-preview-development.png": {
-      "date": "2026-11-04",
-      "baseRevision": "b1677c5c693f4270994b6d70d6d102c18815572c",
-      "image": "asset-preview-development.png",
-      "note": "Local Kamishibai development build with additional working changes. Remote-cacheable test image served by a test response. Crop of the real preview."
-    },
     "local-media-panes.png": {
       "size": "1440x575",
       "captured": "2026-11-06",
-      "description": "Local integrated build comparison (development badge): the inactive pane caps the costume preview height. Not yet in the public Editor."
+      "description": "Local integrated build comparison (development badge): the inactive pane caps the costume preview height. Not yet in the public Editor. Checked again on 2026-11-23 against siteRevision 40dc4c6 (sprite-panes 0.11.3, the latest on npm): the public Editor still does not cap the inactive pane's costume preview, so the figure is kept."
     }
   },
   "images": {
@@ -1038,6 +1018,35 @@
       ],
       "method": "Same steps and element screenshot as the previous review-dialog retake (individual review mode, 信頼してサンドボックスなしで動かす / Trust and run without the sandbox chosen, nothing run).",
       "note": "Retaken after windows 0.2.3 (#768) changed the dialog backdrop from the solid accent color to translucent black; the dark red at the corners is the loading screen seen through the backdrop."
+    },
+    {
+      "date": "2026-11-23",
+      "editorRevision": "40dc4c60d7a4e67993751a87687940fe57dcd362",
+      "editorVersion": "0.3.6",
+      "guiRevision": "b2e75a129546db48e6563f72c80a3d3d46d86fb5",
+      "browser": "Playwright 1.64.1 Chromium, headless, ja-JP and en-US, deviceScaleFactor 1",
+      "images": [
+        "current-project-file.png",
+        "en/current-project-file.png",
+        "current-project-file-states.png",
+        "en/current-project-file-states.png",
+        "project-folder-detail.png",
+        "en/project-folder-detail.png",
+        "current-git-create-pr.png",
+        "en/current-git-create-pr.png",
+        "current-git-merge-ready.png",
+        "en/current-git-merge-ready.png",
+        "github-files-changed.png",
+        "asset-preview-development.png"
+      ],
+      "sources": {
+        "current-project-file*, project-folder-detail": "local build of main 40dc4c6 (npm run build:pages, then build:yaml-tools; the scaffolding step after build-info was skipped for lack of a pinned Packager checkout) served by npm run editor:yaml with the local companion, so Edit in VSCode is enabled. VS Code was never launched. ネコのさんぽ / Cat Walk fixture with .gitignore, old-notes.txt (deleted) and todo.txt (untracked), opened through Open Folder… in a new tab with a CDP Input.dispatchDragEvent drop.",
+        "current-git-create-pr, current-git-merge-ready": "published Editor at siteRevision 40dc4c6 with the GitHub connection simulated as in test/git-pull-request.browser.ts (Desktop-mode connection, routed GitHub API answers, Git traffic to the Git package's test/smart-http-fixture.js on 127.0.0.1); test repository client, PR #42. Every other external request was aborted; nothing reached GitHub. The English versions are new.",
+        "github-files-changed": "GitHub Files changed of public PR kubohiroya/turbowarp-kamishibai-app#219, signed out, viewport screenshot.",
+        "asset-preview-development": "published Editor at siteRevision 40dc4c6 with the published Kamishibai extension 4.0.5 (npm); an authoring SB3 made with turbowarp-kamishibai author-block-dsl holding one remote image asset served by a routed test response; clip of the asset preview opened from the asset block's icon. The extension's labels are Japanese only, so there is no English version. The storage form is now remote-non-cacheable because the CLI does not write a retained copy."
+      },
+      "method": "Native viewport screenshots and clips at the original sizes; no UI text or image pixels altered; no OS input.",
+      "note": "Retake of the figures that could not be taken from the public site before. current-project-file-external.png is not retaken because reaching it launches VS Code. local-media-panes.png stays retained because the behaviour it shows is still not in the public Editor."
     }
   ]
 }
