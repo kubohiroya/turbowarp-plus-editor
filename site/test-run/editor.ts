@@ -44,6 +44,8 @@ const viewOptions = (vm: EditorVM, locale: string, doc: Document) => ({
     document: doc,
     locale,
     getProject: () => projectForTests(vm),
+    // The archive above cannot be read by the view; the same project.json lists the tests before they run.
+    listProject: () => vm.toJSON(undefined, {allowOptimization: false}),
     createRunner(stage: HTMLElement) {
         const frame = doc.createElement('iframe');
         frame.src = frameURL();
