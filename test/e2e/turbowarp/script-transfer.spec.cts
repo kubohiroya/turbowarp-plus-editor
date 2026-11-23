@@ -117,7 +117,7 @@ test('the stage menus round-trip backdrops, sounds and scripts into another proj
             topLevel: true, shadow: false, parent: null, next: null, x: 40, y: 40});
         vm.emitTargetsUpdate();
     });
-    await page.getByRole('button', {name: 'Backdrops', exact: true}).click({button: 'right'});
+    await page.getByRole('button', {name: 'Stage', exact: true}).click({button: 'right'});
     await expect(page.getByText('Import Stage (add)', {exact: true})).toHaveCount(0);
     const pending = page.waitForEvent('download');
     await page.getByText('Export Stage', {exact: true}).click();

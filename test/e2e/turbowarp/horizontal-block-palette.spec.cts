@@ -115,7 +115,7 @@ test('横パレットは拡張と動的カテゴリを表示し、フラグOFF�
     expect(Math.abs(horizontalButton.y - categories.y)).toBeLessThanOrEqual(1);
     expect(Math.abs(horizontalButton.x + horizontalButton.width - categories.x)).toBeLessThanOrEqual(2);
     expect(horizontalButton.y).toBeLessThan(verticalButton.y);
-    const divider = page.getByRole('separator', {name: 'Editor and stage column width'});
+    const divider = page.getByRole('separator', {name: 'Editor and run view column width'});
     await divider.press('Home');
     const fixedButton = await addExtension.boundingBox();
     const scroll = await toolbox.evaluate(node => {

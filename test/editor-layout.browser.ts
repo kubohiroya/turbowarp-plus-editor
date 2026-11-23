@@ -166,8 +166,8 @@ test('the real editor resizes both dividers and preserves editing and stage inpu
     const menu = layoutMenu(page);
     const checkbox = undockButtons(page);
     const stage = page.locator('[data-gui-stage] canvas').first();
-    const columns = page.getByRole('separator', {name: 'Editor and stage column width'});
-    const rows = page.getByRole('separator', {name: 'Stage and target pane height'});
+    const columns = page.getByRole('separator', {name: 'Editor and run view column width'});
+    const rows = page.getByRole('separator', {name: 'Run view and target pane height'});
     const position = divider => divider.getAttribute('aria-valuenow').then(Number);
     const grip = divider => divider.evaluate(element => {
         const style = getComputedStyle(element, '::after');
@@ -396,7 +396,7 @@ test('the paint toolbar opens the project font list from costumes and backdrops'
     await checkOpenAndClose();
     await addFont('Tahoma');
 
-    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await page.getByRole('button', {name: 'Stage', exact: true}).click();
     await selectSection('Backdrops');
     await checkOpenAndClose();
     await addFont('Verdana');
@@ -647,12 +647,12 @@ test('extension controls sit at the end of the menu bar and the stage can still 
     await expect(panel).toHaveCount(0);
     await expect(camera).toBeFocused();
 
-    await stage.getByRole('button', {name: 'Stage display', exact: true}).click();
+    await stage.getByRole('button', {name: 'Run view display', exact: true}).click();
     await stage.getByRole('menuitem', {name: 'Enter full screen mode', exact: true}).click();
     await expect(controls).toHaveCount(0);
     await expect(page.getByRole('button', {name: 'Camera', exact: true})).toBeVisible();
     await expect(page.getByAltText('Exit full screen mode', {exact: true})).toBeHidden();
-    await page.getByRole('button', {name: 'Stage display', exact: true}).click();
+    await page.getByRole('button', {name: 'Run view display', exact: true}).click();
     await page.getByRole('menuitem', {name: 'Exit full screen mode', exact: true}).click();
     await expect(camera).toBeVisible();
 });
@@ -705,7 +705,7 @@ test('the enabled debugger opens from its own menu bar button, outside the exten
     });
     await expect(group).toBeVisible();
     await expect(group.locator('.sa-debugger-container')).toHaveCount(0);
-    const launcher = await page.getByRole('button', {name: 'Stage opening options'}).boundingBox();
+    const launcher = await page.getByRole('button', {name: 'Run view opening options'}).boundingBox();
     const tray = await group.boundingBox();
     const debuggerBounds = await open.boundingBox();
     const recordBounds = await record.boundingBox();
@@ -885,7 +885,7 @@ test('the Plus project menu and previous stage layout remain available', {timeou
 
     const frame = page.locator('[data-plus-stage-frame]');
     const canvas = frame.locator('[data-gui-stage] canvas').first();
-    const display = frame.getByRole('button', {name: 'Stage display', exact: true});
+    const display = frame.getByRole('button', {name: 'Run view display', exact: true});
     await expect(canvas).toBeVisible();
     const tabs = await page.getByRole('tablist').first().boundingBox();
     const stage = await frame.boundingBox();
@@ -904,10 +904,10 @@ test('the Plus project menu and previous stage layout remain available', {timeou
         }
     });
     await display.click();
-    await frame.getByRole('menuitem', {name: 'Undock stage', exact: true}).click();
-    const floating = page.getByRole('region', {name: 'Stage', exact: true});
+    await frame.getByRole('menuitem', {name: 'Undock run view', exact: true}).click();
+    const floating = page.getByRole('region', {name: 'Run view (Stage)', exact: true});
     await expect(floating.locator('[data-plus-stage-frame] canvas').first()).toBeVisible();
-    await expect(floating.getByRole('button', {name: 'Stage display', exact: true})).toBeVisible();
+    await expect(floating.getByRole('button', {name: 'Run view display', exact: true})).toBeVisible();
     assert.ok(await frame.evaluate(node => node === window.initialStagePanel &&
         node.querySelector('[data-gui-stage] canvas') === window.initialStageCanvas &&
         window.initialStageControls && node.contains(window.initialStageControls)));
@@ -915,7 +915,7 @@ test('the Plus project menu and previous stage layout remain available', {timeou
     await floating.getByTitle('Stop', {exact: true}).click();
     await expect.poll(() => page.evaluate(() => window.stageControlCalls)).toEqual(['go', 'stop']);
     await display.click();
-    await floating.getByRole('menuitem', {name: 'Dock stage', exact: true}).click();
+    await floating.getByRole('menuitem', {name: 'Dock run view', exact: true}).click();
     await expect(floating).toHaveCount(0);
     await expect(canvas).toBeVisible();
     assert.ok(await frame.evaluate(node => node === window.initialStagePanel &&
@@ -936,9 +936,9 @@ test('a separate stage window releases keyboard input on blur and restores the e
             original(device, data);
         };
     });
-    await frame.getByRole('button', {name: 'Stage display', exact: true}).click();
-    await frame.getByRole('menuitem', {name: 'Undock stage', exact: true}).click();
-    const stageWindow = page.getByRole('region', {name: 'Stage', exact: true});
+    await frame.getByRole('button', {name: 'Run view display', exact: true}).click();
+    await frame.getByRole('menuitem', {name: 'Undock run view', exact: true}).click();
+    const stageWindow = page.getByRole('region', {name: 'Run view (Stage)', exact: true});
     await stageWindow.getByRole('button', {name: 'Window layout', exact: true}).click();
     const [child] = await Promise.all([
         page.waitForEvent('popup'),
@@ -961,9 +961,9 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     page.on('pageerror', error => errors.push(error.message));
     const start = query => page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=0&twPlusStageDrawer=0' + query);
     const anchor = page.getByRole('button', {name: 'TurboWarp Plus layout'});
-    const hideStage = page.getByRole('menuitem', {name: 'Hide stage', exact: true});
-    const showStage = page.getByRole('menuitem', {name: 'Show stage', exact: true});
-    const displayMenu = page.getByRole('button', {name: 'Stage display', exact: true});
+    const hideStage = page.getByRole('menuitem', {name: 'Hide run view', exact: true});
+    const showStage = page.getByRole('menuitem', {name: 'Show run view', exact: true});
+    const displayMenu = page.getByRole('button', {name: 'Run view display', exact: true});
     const stage = page.locator('[data-gui-stage] canvas').first();
     const grid = page.locator('[data-standard-target-grid]');
     const toolbox = page.locator('.blocklyToolboxDiv').first();
@@ -1007,7 +1007,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
         return divider.x + divider.width <= panel.x + 1 && Math.abs(panel.width - editor.width) <= 1;
     }).toBe(true);
     const editorBounds = await workspace.boundingBox();
-    const backdrop = grid.getByRole('button', {name: 'Backdrops', exact: true});
+    const backdrop = grid.getByRole('button', {name: 'Stage', exact: true});
     await expect(grid).toHaveAttribute('data-backdrop-placement', 'bottom-right');
     const assertBackdropPosition = async () => {
         const tile = await backdrop.boundingBox();
@@ -1200,7 +1200,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 1);
 
     await backdrop.click();
-    const backdropEditor = page.getByRole('tabpanel', {name: 'Backdrops', exact: true});
+    const backdropEditor = page.getByRole('tabpanel', {name: 'Stage', exact: true});
     await backdropEditor.getByRole('tab', {name: 'Backdrops', exact: true}).click();
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
@@ -1228,8 +1228,8 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await japaneseSettings.press('Enter');
     await expect(japaneseName).toBeHidden();
     await expect(japaneseTools).toBeVisible();
-    await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
-    await expect(page.getByRole('menuitem', {name: 'ステージを隠す', exact: true})).toBeVisible();
+    await page.getByRole('button', {name: '実行画面の表示', exact: true}).click();
+    await expect(page.getByRole('menuitem', {name: '実行画面を隠す', exact: true})).toBeVisible();
     assert.deepEqual(errors, []);
 });
 
@@ -1237,12 +1237,12 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     const editorUrl = secureOrigin + buildPrefix + 'editor.html?lang=ja';
-    const open = page.getByRole('button', {name: 'ステージを開く', exact: true});
-    const options = page.getByRole('button', {name: 'ステージの開き方'});
+    const open = page.getByRole('button', {name: '実行画面を開く', exact: true});
+    const options = page.getByRole('button', {name: '実行画面の開き方'});
     const labels = ['別ウィンドウで表示', 'タブで表示', '引出しで表示'];
     const item = (index: number) => page.getByRole('menuitem', {name: labels[index], exact: true});
     const stage = (target: Page) => target.locator('[data-gui-stage] canvas').first();
-    const openingMenu = page.getByRole('menu', {name: 'ステージの開き方', exact: true});
+    const openingMenu = page.getByRole('menu', {name: '実行画面の開き方', exact: true});
     const checkOptions = async () => {
         await expect(open).toBeEnabled();
         await expect(options).toBeEnabled();
@@ -1299,26 +1299,26 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
         await expect(stage(target)).toBeVisible();
         assert.equal(await page.evaluate(() => vm.renderer.canvas === window.initialStageCanvas), true);
     };
-    const display = (target: Page) => target.getByRole('button', {name: 'ステージの表示', exact: true});
+    const display = (target: Page) => target.getByRole('button', {name: '実行画面の表示', exact: true});
     const displayIcon = (target: Page) => display(target).locator('svg');
     const popupMenuItem = (target: Page, label: string) => target.getByRole('menuitem', {name: label, exact: true});
     const popupFull = (target: Page) => target.evaluate(() => Boolean(document.fullscreenElement));
     const popupMenu = async (target: Page, fullscreen: boolean) => {
         await display(target).click();
-        const menu = target.getByRole('menu', {name: 'ステージの表示', exact: true});
+        const menu = target.getByRole('menu', {name: '実行画面の表示', exact: true});
         await expect(menu.getByRole('menuitem')).toHaveText([
             fullscreen ? '全画面表示を終了' : '全画面表示にする', 'エディターに戻る'
         ]);
     };
     await checkOptions();
     await options.click();
-    const placementIcons = await page.getByRole('menu', {name: 'ステージの開き方', exact: true}).locator('svg path')
+    const placementIcons = await page.getByRole('menu', {name: '実行画面の開き方', exact: true}).locator('svg path')
         .evaluateAll(paths => paths.map(path => path.getAttribute('d')));
     assert.equal(placementIcons.length, labels.length);
     await page.keyboard.press('Escape');
     const checkStagePlacementMenu = async (active: number) => {
         await display(page).click();
-        const menu = page.getByRole('menu', {name: 'ステージの表示', exact: true});
+        const menu = page.getByRole('menu', {name: '実行画面の表示', exact: true});
         const entries = labels.map((_, index) => menu.getByRole('menuitem').nth(index));
         for (const [index, entry] of entries.entries()) {
             if (active === 2 && index === active) {
@@ -1418,7 +1418,7 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
     await expect(options).toBeEnabled();
 
     await page.goto(editorUrl + '&twPlusStageLauncher=0');
-    await expect(page.getByRole('button', {name: 'ステージを展開'})).toBeVisible();
+    await expect(page.getByRole('button', {name: '実行画面を展開'})).toBeVisible();
     await expect(options).toHaveCount(0);
 });
 
@@ -1428,15 +1428,15 @@ test('the stage drawer starts pinned and remembers the pin menu choice', {timeou
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=ja');
     const drawer = page.locator('[data-movable-stage]');
     const canvas = drawer.locator('[data-gui-stage] canvas');
-    const handle = page.getByRole('button', {name: 'ステージを展開', exact: true});
+    const handle = page.getByRole('button', {name: '実行画面を展開', exact: true});
     const title = page.locator('input[maxlength="100"]');
-    const menuButton = drawer.getByRole('button', {name: 'ステージの表示', exact: true});
+    const menuButton = drawer.getByRole('button', {name: '実行画面の表示', exact: true});
     const autoHide = drawer.getByRole('menuitem', {name: '引出しを自動的に隠す', exact: true});
     const pin = drawer.getByRole('menuitem', {name: '引出しを常時表示する', exact: true});
     const slash = (item: typeof pin) => item.locator('svg path[d="M2 2l12 12"]');
 
     await layoutSettled(page);
-    await page.getByRole('button', {name: 'ステージの開き方', exact: true}).click();
+    await page.getByRole('button', {name: '実行画面の開き方', exact: true}).click();
     await page.getByRole('menuitem', {name: '引出しで表示', exact: true}).click();
     await expect(canvas).toBeVisible();
     await title.click();
@@ -1476,12 +1476,12 @@ test('the stage drawer moves, resizes and folds into its attached editor edge', 
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
-    const options = page.getByRole('button', {name: 'Stage opening options', exact: true});
+    const options = page.getByRole('button', {name: 'Run view opening options', exact: true});
     const openDrawer = async () => {
         await options.click();
         await page.getByRole('menuitem', {name: 'Show in the drawer', exact: true}).click();
     };
-    const handle = page.getByRole('button', {name: 'Reveal stage', exact: true});
+    const handle = page.getByRole('button', {name: 'Reveal run view', exact: true});
     const palette = page.locator('[data-horizontal-block-palette]:visible').first();
     await expect(handle).toBeHidden();
     await expect(palette).toBeVisible();
@@ -1493,14 +1493,14 @@ test('the stage drawer moves, resizes and folds into its attached editor edge', 
     const stage = drawer.locator('..');
     const header = drawer.locator('[data-stage-drawer-handle]');
     const canvas = drawer.locator('[data-gui-stage] canvas');
-    const display = header.getByRole('button', {name: 'Stage display', exact: true});
+    const display = header.getByRole('button', {name: 'Run view display', exact: true});
     const resize = (edge: string) => drawer.locator(`[data-stage-drawer-resize][data-stage-resize="${edge}"]`);
     await expect(canvas).toBeVisible();
     await expect(panel).toHaveCSS('translate', 'none');
     await expect(palette).toHaveCSS('right', '0px');
     assert.equal((await palette.boundingBox()).width, paletteWidth);
     await display.click();
-    await expect(header.getByRole('menu', {name: 'Stage display', exact: true})).toBeVisible();
+    await expect(header.getByRole('menu', {name: 'Run view display', exact: true})).toBeVisible();
     await page.keyboard.press('Escape');
     const initial = await stage.boundingBox();
     const control = await display.boundingBox();
@@ -1627,14 +1627,14 @@ test('the stage drawer restores its geometry and visibility with the project lay
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.addInitScript(() => {delete window.showOpenFilePicker;});
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
-    const options = page.getByRole('button', {name: 'Stage opening options', exact: true});
-    const open = page.getByRole('button', {name: 'Open stage', exact: true});
-    const handle = page.getByRole('button', {name: 'Reveal stage', exact: true});
+    const options = page.getByRole('button', {name: 'Run view opening options', exact: true});
+    const open = page.getByRole('button', {name: 'Open run view', exact: true});
+    const handle = page.getByRole('button', {name: 'Reveal run view', exact: true});
     const drawer = page.locator('[data-movable-stage]');
     const stage = drawer.locator('..');
     const canvas = drawer.locator('[data-gui-stage] canvas');
     const selectDisplay = async (label: string) => {
-        await drawer.getByRole('button', {name: 'Stage display', exact: true}).click();
+        await drawer.getByRole('button', {name: 'Run view display', exact: true}).click();
         await page.getByRole('menuitem', {name: label, exact: true}).click();
     };
     const openDrawer = async () => {
@@ -1870,7 +1870,7 @@ test('the default editor pins the sprite list and supports the drawer and detach
         return child;
     };
     const child = await openSpriteList();
-    await child.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await child.getByRole('button', {name: 'Stage', exact: true}).click();
     await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
     const popupMenu = child.getByRole('button', {name: 'Window layout', exact: true});
     const commands = child.getByRole('menu', {name: 'Window layout', exact: true});
@@ -2323,7 +2323,7 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     const dockMenu = page.locator('.dv-context-menu');
     const rename = 'スプライト名の変更';
     const open = '開く';
-    const backdrop = page.getByRole('button', {name: '背景', exact: true});
+    const backdrop = page.getByRole('button', {name: 'ステージ', exact: true});
     const section = (name: string) => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
         .getByRole('tab', {name, exact: true});
     async function clone(name: string) {
@@ -2379,10 +2379,10 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
 
     await backdrop.click({button: 'right'});
     await listMenu.getByRole('menuitem', {name: open, exact: true}).click();
-    await expect(tab('背景')).toHaveAttribute('aria-selected', 'true');
-    await clone('背景');
-    await expect(tab('背景(2)')).toHaveAttribute('aria-selected', 'true');
-    await chooseView(backdrop, '背景');
+    await expect(tab('ステージ')).toHaveAttribute('aria-selected', 'true');
+    await clone('ステージ');
+    await expect(tab('ステージ(2)')).toHaveAttribute('aria-selected', 'true');
+    await chooseView(backdrop, 'ステージ');
     await layoutSettled(page);
     const saved = JSON.parse(await readSavedLayout(page) ?? 'null');
     assert.equal(Object.values<{number?: number}>(saved?.panels ?? {}).filter(panel => panel.number !== undefined).length, 3);
@@ -2390,7 +2390,7 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     project = await saveProject();
     await openProject();
     await expect(tab('Pane sprite(4)')).toBeVisible();
-    await expect(tab('背景(2)')).toBeVisible();
+    await expect(tab('ステージ(2)')).toBeVisible();
 });
 
 test('the Dockview asset connection restores the native costume and sound selection per pane', {timeout: 45_000}, async t => {
@@ -2614,7 +2614,7 @@ test('the Dockview variables pane lists only data owned by the selected target',
     await expect(pane.getByRole('heading', {name: 'スプライト変数', exact: true})).toBeVisible();
     await expect(pane.getByText('このスプライト専用の変数です。')).toBeVisible();
     await expect.poll(variableIds).toEqual(['local-score']);
-    await page.getByRole('button', {name: 'ステージの開き方'}).click();
+    await page.getByRole('button', {name: '実行画面の開き方'}).click();
     await page.getByRole('menuitem', {name: '引出しで表示', exact: true}).click();
     const monitor = pane.getByRole('checkbox', {name: '「得点」をステージに表示'});
     const stageMonitor = page.locator('.monitor-overlay [data-id="local-score"]');
@@ -2631,7 +2631,7 @@ test('the Dockview variables pane lists only data owned by the selected target',
     });
     await expect(monitor).not.toBeChecked();
     await expect(stageMonitor).toBeHidden();
-    await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
+    await page.getByRole('button', {name: '実行画面の表示', exact: true}).click();
     await page.getByRole('menuitem', {name: '引出しを閉じる', exact: true}).click();
     await expect(scope).toHaveCount(0);
     await expect(cloud).toHaveCount(0);
@@ -2703,7 +2703,7 @@ test('the Dockview variables pane lists only data owned by the selected target',
         return [list?.type, list?.value];
     }), ['list', []]);
 
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await page.getByRole('button', {name: 'ステージ', exact: true}).click();
     await showVariables(true);
     await expect(pane.getByText('この背景とすべてのスプライトで参照・利用できる変数です。')).toBeVisible();
     await expect.poll(variableIds).toEqual(['project-score', 'cloud-score', 'legacy-cloud', 'plain-cloud-name']);
@@ -2873,7 +2873,7 @@ test('the variables table sorts mixed rows and saves list items for the selected
     assert.deepEqual(await page.evaluate(id => vm.runtime.getTargetById(id).variables['list-colors'].value, spriteId),
         [25, '赤', '緑', '黒', '白', '紫']);
 
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await page.getByRole('button', {name: 'ステージ', exact: true}).click();
     await toolbar.getByRole('tab', {name: 'グローバル変数', exact: true}).click();
     const global = page.getByRole('region', {name: 'グローバル変数', exact: true});
     await expect(global.getByRole('rowheader', {name: 'Colors', exact: true})).toHaveCount(0);
@@ -2918,7 +2918,7 @@ test('variable counts open the project search at the selected kind of access', {
             center(id);
         };
     });
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await page.getByRole('button', {name: 'ステージ', exact: true}).click();
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
     await toolbar.getByRole('tab', {name: 'グローバル変数', exact: true}).click();
     const pane = page.getByRole('region', {name: 'グローバル変数', exact: true});
@@ -3210,10 +3210,10 @@ test('editor pane headings and message diagrams follow the active target', {time
     const edge = diagram.locator('.tw-sprite-messages__edge');
     const nodes = diagram.locator('.tw-sprite-messages__node');
     const sprite = diagram.getByRole('button', {name: spriteName, exact: true});
-    const stage = diagram.getByRole('button', {name: '背景', exact: true});
+    const stage = diagram.getByRole('button', {name: 'ステージ', exact: true});
     await expect(edge).toHaveText('準備できた');
     await expect(edge.locator('.tw-sprite-messages__icon')).toBeVisible();
-    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, '背景']);
+    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, 'ステージ']);
     await expect.poll(() => nodes.locator('img').evaluateAll(images =>
         images.map(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)))
         .toEqual([true, true]);
@@ -3238,7 +3238,7 @@ test('editor pane headings and message diagrams follow the active target', {time
     // The stage only receives the message, so the pane opens on what it receives.
     await expect(sides).toHaveText(['送信0', '受信1']);
     await expect(sides.last()).toHaveAttribute('aria-selected', 'true');
-    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, '背景']);
+    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, 'ステージ']);
     await expect(nodes.last()).toHaveAttribute('aria-current', 'true');
     await expect(nodes.last()).toHaveCSS('border-top-width', '3px');
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
@@ -3809,7 +3809,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await page.goto(origin + buildPrefix + 'editor.html?lang=en&twPlusDockview=1&twPlusStageLauncher=0');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && window.vm.renderer);
     const canvas = page.locator('[data-gui-stage] canvas').first();
-    const reveal = page.getByRole('button', {name: 'Reveal stage', exact: true});
+    const reveal = page.getByRole('button', {name: 'Reveal run view', exact: true});
     const revealStage = async () => {
         await reveal.click();
         await expect(reveal).toHaveAttribute('aria-expanded', 'true');
@@ -3836,11 +3836,11 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     const workspace = page.locator('[data-multi-view] .dockview-theme-light');
     const groups = workspace.locator('.dv-groupview');
     const dockedStage = page.locator('.tw-plus-dockview-stage-slot');
-    const stageTab = workspace.getByRole('tab', {name: 'Stage', exact: true});
+    const stageTab = workspace.getByRole('tab', {name: 'Run view', exact: true});
     const codeTab = workspace.getByRole('tab', {name: spriteName, exact: true});
-    const stageGroup = groups.filter({has: page.getByRole('tab', {name: 'Stage', exact: true})});
+    const stageGroup = groups.filter({has: page.getByRole('tab', {name: 'Run view', exact: true})});
     const codeGroup = groups.filter({has: page.getByRole('tab', {name: spriteName, exact: true})});
-    const display = page.getByRole('button', {name: 'Stage display', exact: true});
+    const display = page.getByRole('button', {name: 'Run view display', exact: true});
     const selectDisplay = async (name: string) => {
         await display.click();
         await page.getByRole('menuitem', {name, exact: true}).click();
@@ -3880,7 +3880,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
         await page.keyboard.up('Space');
     };
 
-    await selectDisplay('Open stage in workspace');
+    await selectDisplay('Open run view in workspace');
     await expect(groups).toHaveCount(2);
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
     assert.ok((await stageGroup.boundingBox()).x > (await codeGroup.boundingBox()).x);
@@ -3915,7 +3915,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     const codeBounds = await codeContent.boundingBox();
     assert.ok(codeBounds);
     await stageTab.dragTo(codeContent, {targetPosition: {x: codeBounds.width / 2, y: codeBounds.height / 2}});
-    await expect(codeGroup.getByRole('tab', {name: 'Stage', exact: true})).toBeVisible();
+    await expect(codeGroup.getByRole('tab', {name: 'Run view', exact: true})).toBeVisible();
     await expect(groups).toHaveCount(1);
     await codeTab.click();
     await expect(canvas).toBeHidden();
@@ -3941,12 +3941,12 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toHaveCount(0);
     await revealStage();
     await assertStage();
-    await selectDisplay('Hide stage');
+    await selectDisplay('Hide run view');
     await expect(canvas).toBeHidden();
-    await selectDisplay('Open stage in workspace');
+    await selectDisplay('Open run view in workspace');
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toBeVisible();
     await assertStage();
-    await selectDisplay('Return stage from workspace');
+    await selectDisplay('Return run view from workspace');
     await expect(stageTab).toHaveCount(0);
     await revealStage();
     await assertStage();

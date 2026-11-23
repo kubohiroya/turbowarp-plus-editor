@@ -123,12 +123,12 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await selectBackdrop(page);
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2);
     const stageName = await page.evaluate(() => window.vm.editingTarget.getName());
-    const backdrop = tab(page, '背景');
+    const backdrop = tab(page, 'ステージ');
     const sprite = await page.evaluate(() => window.vm.runtime.targets.find(target => !target.isStage).getName());
 
-    await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
-    await page.getByRole('button', {name: 'ステージの表示', exact: true}).click();
-    await page.getByRole('menuitem', {name: 'ステージをタブで開く', exact: true}).click();
+    await page.getByRole('button', {name: '実行画面を展開', exact: true}).hover();
+    await page.getByRole('button', {name: '実行画面の表示', exact: true}).click();
+    await page.getByRole('menuitem', {name: '実行画面をタブで開く', exact: true}).click();
     await backdrop.click();
     await open(page, 0, 'settings');
     const workspace = dockview(page);
@@ -209,7 +209,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
         await expect(dockview(fresh).locator('.dv-groupview')).toHaveCount(1);
         await expect(tab(fresh, sprite)).toHaveAttribute('aria-selected', 'true');
         await expect(tab(fresh, title('settings'))).toHaveCount(0);
-        await expect(tab(fresh, 'ステージ')).toHaveCount(0);
+        await expect(tab(fresh, '実行画面')).toHaveCount(0);
         await fresh.close();
     }
 });

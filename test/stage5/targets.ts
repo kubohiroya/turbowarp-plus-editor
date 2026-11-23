@@ -52,7 +52,7 @@ try {
     });
 
     const grid = page.locator('[data-backdrop-placement]');
-    const tile = grid.getByRole('button', {name: 'Backdrops', exact: true});
+    const tile = grid.getByRole('button', {name: 'Stage', exact: true});
     const frame = page.getByRole('region', {name: 'Sprite list', exact: true});
     const open = page.getByRole('heading', {name: 'Sprite list', exact: true}).locator('..')
         .getByRole('button', {name: 'Open in another window', exact: true});
@@ -71,7 +71,7 @@ try {
     await toggleUndockButtons(page);
     await tile.waitFor();
     assert.equal(await legacyStage.count(), 0);
-    assert.equal(await tile.evaluate(node => (node as HTMLElement).innerText.trim()), 'Backdrops');
+    assert.equal(await tile.evaluate(node => (node as HTMLElement).innerText.trim()), 'Stage');
     assert.ok(await tile.locator('img').getAttribute('src'));
     assert.equal(await tile.evaluate(node => getComputedStyle(node).borderTopStyle), 'dashed');
 
@@ -164,7 +164,7 @@ try {
 
     await start('&twPlusTargetList=1', 'ja');
     await toggleUndockButtons(page);
-    await grid.getByRole('button', {name: '背景', exact: true}).waitFor();
+    await grid.getByRole('button', {name: 'ステージ', exact: true}).waitFor();
     assert.deepEqual(errors, []);
     console.log('One sticky backdrop tile, four footer actions, live preview, sprite selection and undock/dock passed.');
 } catch (error) {

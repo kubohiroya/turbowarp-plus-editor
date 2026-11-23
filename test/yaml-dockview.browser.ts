@@ -33,7 +33,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const hats = (page: Page) => page.locator('[data-twpe-yaml-hat-icon]');
     const workspace = (page: Page) => page.locator('[data-multi-view] .dockview-theme-light');
     const backdropTab = (page: Page) =>
-        page.locator('.dv-tab').and(page.getByRole('tab', {name: '背景', exact: true}));
+        page.locator('.dv-tab').and(page.getByRole('tab', {name: 'ステージ', exact: true}));
     const documentTitle = (id: string) => `settings.yml (twpeyamlsettings / ${id})`;
     const docTab = (page: Page, id: string) => workspace(page).getByRole('tab', {name: documentTitle(id), exact: true});
     const unsaved = (tab: Locator) => tab.locator('[data-tw-plus-unsaved-tab]');
@@ -96,9 +96,9 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     await page.evaluate(({id, name}) => window.vm.renameSprite(id, name), sprite);
     await expect(unsaved(workspace(page).getByRole('tab', {name: sprite.name, exact: true}))).toBeHidden();
 
-    await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();
-    const stageDisplay = page.getByRole('menuitem', {name: 'ステージをタブで開く', exact: true});
-    const stageMenu = page.getByRole('button', {name: 'ステージの表示', exact: true});
+    await page.getByRole('button', {name: '実行画面を展開', exact: true}).hover();
+    const stageDisplay = page.getByRole('menuitem', {name: '実行画面をタブで開く', exact: true});
+    const stageMenu = page.getByRole('button', {name: '実行画面の表示', exact: true});
     await stageMenu.click();
     await stageDisplay.click();
     const stage = workspace(page).locator('.tw-plus-dockview-stage-slot [data-gui-stage] canvas').first();
