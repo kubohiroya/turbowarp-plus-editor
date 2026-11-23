@@ -1007,6 +1007,24 @@
       ],
       "method": "Native viewport screenshots, viewport clips and element screenshots at the original sizes and device scale factors; no UI text or image pixels altered, no OS input. The site revision was checked before and after each group. Git and PR figures: the ネコのさんぽ / Cat Walk repository fixture rebuilt as in the 2026-11-18 retake (branch 12-neko-walk / 12-cat-walk, origin kubohiroya/turbowarp-kamishibai-app, nothing pushed) and handed to the real folder picker through a CDP Input.dispatchDragEvent drop; PR figures read public PR #219 signed out. Call graph figures: the 2026-11-18 fictional SB3 (ネコ/ボール/Stage, functions はねる and 背景をゆらす, messages 着地/得点) loaded through vm.loadProject; call-graph-detail.png is the 24 px padded clip of all nodes. Free-layout figures: test/e2e/turbowarp/message-scripts.cts plus 準備する / prepare scene through the VM, project not run. media-panes, form and project-diagnostics*: the ネコ/ボール sample, the block-editor sample extension and the extension-loader fixture opened with project_url. Ball demo figures follow the tutorial steps on Ball Demo.sb3 / Ball Demo Plus.sb3; drags use Playwright synthetic pointer input.",
       "note": "Retake of the figures that still showed 背景 / Backdrops on the stage tile or ステージを開く / Open stage in the menu bar. Checked and left unchanged because they show no old label: project-uri-detail, save-as-dialog, readme-block-diff, current-git-file-window, call-graph-current-detail, top-split-minimap, workspace-context-menu, top-layout-menu, layout-menu, top-search, top-stage-window, sprite-divider, sprite-search, sprite-context-menu, block-context-menu, palette-*, catalog-current, form-dialog, properties-current, project-search, project-data-dialog, edit-menu, plus-menu, export-dialog, extensions-dialog, new-project-dialog, open-remote-dialog, review-dialog, validation-dialog and ball demo layout-z, list-create-02/04, save-dialog, sprite-drawer, sprite-unpinned. Not retaken: current-project-file, current-project-file-states, current-project-file-external and project-folder-detail (taken with a local build and the VSCode companion, which the public site does not have), plus the retained figures. In drag-motion the headless renderer draws Blockly's drag shadow as a pale box. The load failure is now a full page instead of a notice, so project-diagnostics-failure shows that page behind the diagnostics."
+    },
+    {
+      "date": "2026-11-23",
+      "source": "published Editor at https://kubohiroya.github.io/turbowarp-plus-editor/",
+      "siteRevision": "23174d523a82ebfc27d07a93f90b90643489858e",
+      "editorVersion": "0.3.5",
+      "securityVersion": "0.13.1",
+      "browser": "Playwright 1.64.1 Chromium, headless, ja-JP and en-US, deviceScaleFactor 1",
+      "images": [
+        "review-dialog.png",
+        "en/review-dialog.png",
+        "plus-menu.png",
+        "en/plus-menu.png",
+        "../ball-demo/images/ja-save-dialog.png",
+        "../ball-demo/images/en-save-dialog.png"
+      ],
+      "method": "review-dialog: element screenshot of the review dialog (768 px wide; 697 px high in Japanese, 691 px in English) after opening the ネコ/ボール sample with the block-editor sample extension embedded (project_url from a routed test host), pressing 機能拡張を個別に確認 / Review each extension and choosing 信頼してサンドボックスなしで動かす / Trust and run without the sandbox; the warning notice at the bottom of the page is outside the dialog. Nothing was run. plus-menu: viewport clip 720x420 with the logo menu open on a new project. save-dialog: element screenshot 640x296 of File → プロジェクトを保存 / Save Project on Ball Demo.sb3. No UI text or image pixels altered, no OS input.",
+      "note": "The extension review screen was redesigned (title 確認: この作品は機能拡張を使います, buttons 実行しない / 機能拡張を個別に確認 / すべて有効にして実行, individual review mode), so review-dialog.png changes height. The review dialog was captured while the site moved from b177684 to 23174d5; both ship security-dialog 0.13.1. plus-menu now shows 0.3.5 and the renamed source and license items. The ball demo save dialog is now titled プロジェクトを保存 / Save Project."
     }
   ]
 }
