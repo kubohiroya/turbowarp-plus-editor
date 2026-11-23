@@ -23,7 +23,7 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
-| [2.1 The menu bar](screen/index.en.html#menu-bar) | Yes | Yes | On the left: the logo, the project title, "File", "Edit" and the search field. On the right: "Git", "Open stage", record (🎥), "…" (debugger) and extension buttons. |
+| [2.1 The menu bar](screen/index.en.html#menu-bar) | Yes | Yes | On the left: the logo, the project title, "File", "Edit" and the search field. On the right: "Git", "Open run view", record (🎥), "…" (debugger) and extension buttons. |
 | [2.2 The TurboWarp Plus menu](screen/index.en.html#plus-menu) | Yes | Yes | From the logo: appearance, behavior, addons, advanced settings, GitHub connection settings, AI agent settings, and editor information. |
 | [2.3 The File menu](screen/index.en.html#file-menu) | Yes | Yes | Creating and opening (SB3, project folder, repository), releases, saving and exporting, and project settings. |
 | [2.4 The Edit menu and shortcuts](screen/index.en.html#edit-menu) | Yes | Yes | Restore, Undo, Redo, Cut, Copy, Paste, Find and Replace, Rearrange Code Blocks. |
@@ -40,16 +40,16 @@ Section numbers match the "page.section" numbers of the [feature guide](index.en
 | [3.4 Edit costumes and sounds](sprites/index.en.html#media-panes) | Yes | Yes | Select costumes and sounds in the project; each pane keeps its own selection. Sounds can be played. The height limit on the costume preview is in the local integration build. |
 | [3.5 Edit properties, variables and lists](sprites/index.en.html#variable-pane) | Yes | Yes | Show, create, rename and delete variables and lists: the sprite's own for a sprite, project-wide ones for the Stage. "Edit list" edits list items. Variables used by blocks cannot be deleted. Projects that use the Temporary Variables extension also get tables of thread and runtime variables (values while paused with the debugger). |
 | [3.6 Check who sends and receives messages](sprites/index.en.html#messages) | Yes | Yes | Lists what each sprite and the Stage sends and receives; the Stage also shows the project-wide relation diagram. Renaming applies to the whole project. |
-| [3.7 Edit the Stage](sprites/index.en.html#backdrop) | Yes | Yes | From the "Backdrops" tile, edit the Stage's code, backdrops and sounds. |
+| [3.7 Edit the Stage](sprites/index.en.html#backdrop) | Yes | Yes | From the "Stage" tile, edit the Stage's code, backdrops and sounds. |
 
 ## 4. [Open the Run view and run your project](stage/index.en.html)
 
 | Guide section | Scratch 3 SB3 | TurboWarp SB3 | Conditions and scope |
 | --- | --- | --- | --- |
-| [4.1 Open the Run view from the menu bar](stage/index.en.html#stage-open) | Yes | Yes | "Open stage" in the menu bar opens it. The "▾" next to it ("Stage opening options") chooses a separate window, a tab or the drawer. |
-| [4.2 Run your project from the drawer on the right edge](stage/index.en.html#stage-controls) | Yes | Yes | "Show in the drawer" opens the drawer on the right edge. Use the green flag, pause and stop to control the run. "Stage display" switches between hiding automatically and always showing, and the drawer state is restored per project. |
-| [4.3 The Run view display menu](stage/index.en.html#stage-menu) | Yes | Yes | The open Run view's "Stage display" moves it to a separate window, a tab or the drawer, and turns on full screen. The items depend on where the Run view is open. |
-| [4.4 Move the Run view into the workspace or a separate window](stage/index.en.html#dock) | Yes | Yes | From "Stage display", choose "Show in a tab" or "Show in a separate window". In a tab, the Run view scales to the pane width. From a separate window, "Return to the editor" brings it back. |
+| [4.1 Open the Run view from the menu bar](stage/index.en.html#stage-open) | Yes | Yes | "Open run view" in the menu bar opens it. The "▾" next to it ("Run view opening options") chooses a separate window, a tab or the drawer. |
+| [4.2 Run your project from the drawer on the right edge](stage/index.en.html#stage-controls) | Yes | Yes | "Show in the drawer" opens the drawer on the right edge. Use the green flag, pause and stop to control the run. "Run view display" switches between hiding automatically and always showing, and the drawer state is restored per project. |
+| [4.3 The Run view display menu](stage/index.en.html#stage-menu) | Yes | Yes | The open Run view's "Run view display" moves it to a separate window, a tab or the drawer, and turns on full screen. The items depend on where the Run view is open. |
+| [4.4 Move the Run view into the workspace or a separate window](stage/index.en.html#dock) | Yes | Yes | From "Run view display", choose "Show in a tab" or "Show in a separate window". In a tab, the Run view scales to the pane width. From a separate window, "Return to the editor" brings it back. |
 
 ## 5. [Split the workspace and open panels separately](workspace/index.en.html)
 
