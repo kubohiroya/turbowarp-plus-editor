@@ -7,9 +7,11 @@ import exitFullscreenIcon from '@tw-plus/gui-stage-exit-fullscreen-icon';
 import {setFullScreen} from '@tw-plus/gui-mode';
 import {StageDisplayMenuContext, WindowLayoutContext} from './context.ts';
 import {layoutFlags} from './config.ts';
+import {testRunMenuItems} from '../test-run/editor.ts';
 
 export const {EditorStageFullscreenMenu, StageDisplayMenu} = createStageDisplayMenu({
     WindowLayoutContext, StageDisplayMenuContext, layoutFlags, styles, workbenchStyles, fullscreenIcon, exitFullscreenIcon,
     connectFullscreen: component => connect(null, dispatch => ({onExit: () => dispatch(setFullScreen(false))}))(component),
-    fullscreenMount: header => header.querySelector('[class*="stage-header_fullscreen-buttons-row_"]')
+    fullscreenMount: header => header.querySelector('[class*="stage-header_fullscreen-buttons-row_"]'),
+    menuItems: testRunMenuItems
 });

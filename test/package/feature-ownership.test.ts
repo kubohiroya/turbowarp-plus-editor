@@ -15,7 +15,8 @@ test('migrated feature adapters contain wiring without local UI or feature state
         'site/extension-host/host.ts', 'site/extension-host/project-size-gate.ts',
         'site/extension-host/review.ts', 'site/extension-host/review-channel.ts',
         'site/extension-host/permission-ui.ts', 'site/extension-library/plus-library.tsx',
-        'site/extension-library/catalog-settings.ts', 'site/extension-library/load-extensions.ts'
+        'site/extension-library/catalog-settings.ts', 'site/extension-library/load-extensions.ts',
+        'site/test-run/editor.ts', 'site/test-run/frame.ts'
     ];
     for (const filename of adapters) {
         const text = fs.readFileSync(filename, 'utf8');

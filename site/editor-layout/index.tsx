@@ -17,6 +17,7 @@ import type {FollowExplorerGit, FollowFileStatuses} from '@kubohiroya/turbowarp-
 import {followExplorerGit, followFileStatuses, historySearchLabel, readProjectHeadFile, renderHistoryView} from '@kubohiroya/turbowarp-plus-editor-git';
 import {aiAgents} from '../project-tools/info-menu.tsx';
 import {projectFolderWorkflows} from '../project-folder-host.ts';
+import {testRunMenuItems} from '../test-run/editor.ts';
 import {createFolderFromCurrentProject, projectScreenState} from '../project-tools/index.ts';
 
 export {WindowLayoutContext} from './context.ts';
@@ -74,7 +75,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
     React.useLayoutEffect(() => targetSwitch.cancel, [targetSwitch]);
     const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
     const launcher = React.useMemo(() => stageLauncherEnabled ?
-        {mount: stageLauncherSlot(vm), styles, MenuButton: IconMenuButton} : undefined, [vm]);
+        {mount: stageLauncherSlot(vm), styles, MenuButton: IconMenuButton, menuItems: testRunMenuItems} : undefined, [vm]);
     // The project folder and the local Git panel need a folder picker, or the browser's own storage (OPFS) where there is
     // none, as in Safari and Firefox (#660); both views show what those already hold. The AI agent menu needs neither.
     const drawerViews = React.useMemo(() => {
