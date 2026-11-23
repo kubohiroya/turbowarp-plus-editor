@@ -193,8 +193,8 @@ git config --local user.email "you@example.com"</code></pre>
 
 <p>If you connected to GitHub with "Allow sending to GitHub (push)" checked, choose the "Base branch" in "Create PR" in Local Git and check the commits under "Commits to include". Fill in "PR title" and "PR description", review the content with "Prepare PR", and then click "Create PR". The editor applies the selected commits to the base branch and sends a branch for the PR to GitHub. If a selected commit depends on another commit and cannot be applied, select the commits it needs as well. Without a connection, "This GitHub connection does not support creating PRs." is shown, so create the PR on GitHub.</p>
 <figure>
-<a href="../images/current-git-create-pr.png"><img src="../images/current-git-create-pr.png" width="1440" height="1220" alt="The PR creation screen of Local Git in the Japanese UI. Two of three commits are selected, and a title and description are filled in." loading="lazy"></a>
-<figcaption>(Japanese UI) Just before creating a PR from two of three commits, with a test repository and a simulated GitHub connection. Captured before "Connect to GitHub…" was added at the top.</figcaption>
+<a href="../images/en/current-git-create-pr.png"><img src="../images/en/current-git-create-pr.png" width="1440" height="1220" alt="The PR creation screen of Local Git. Two of three commits are selected, and a title and description are filled in." loading="lazy"></a>
+<figcaption>Just before creating a PR from two of three commits, with a test repository and a simulated GitHub connection.</figcaption>
 </figure>
 <h3>Create a PR on GitHub</h3>
 <p>Send the working branch to GitHub, then create the PR on GitHub. <a href="#push">Steps to send to GitHub</a></p>
@@ -227,8 +227,8 @@ git config --local user.email "you@example.com"</code></pre>
 <h3>Merge in the editor</h3>
 <p>Check the CI results in the "Merge" list and select the PR. With a GitHub connection that has "Allow sending to GitHub (push)" checked, once the required checks and reviews pass, a green "Squash and merge" appears at the top right of the merge status card in "Overview". Clicking it opens a dialog to confirm the base branch and the commits. The editor merges only with squash merge. To read the PR's diff, CI, and mergeability again, click "Reload PR information from GitHub" next to the PR title.</p>
 <figure>
-<a href="../images/current-git-merge-ready.png"><img src="../images/current-git-merge-ready.png" width="1440" height="1220" alt="Merge in Local Git (Japanese UI). The project folder and a PR that passed CI are on the left, the Overview tab and merge status are on the right, and a green merge button is at the top right of the card." loading="lazy"></a>
-<figcaption>(Japanese UI) A test PR whose CI succeeded, with a simulated GitHub connection. The merge status card in "Overview" shows the CI and review status, and you can merge with the button at the top right. Captured before "Connect to GitHub…" was added at the top.</figcaption>
+<a href="../images/en/current-git-merge-ready.png"><img src="../images/en/current-git-merge-ready.png" width="1440" height="1220" alt="Merge in Local Git. The project folder and a PR that passed CI are on the left, the Overview tab and merge status are on the right, and a green merge button is at the top right of the card." loading="lazy"></a>
+<figcaption>A test PR whose CI succeeded, with a simulated GitHub connection. The merge status card in "Overview" shows the CI and review status, and you can merge with the button at the top right.</figcaption>
 </figure>
 <h3>Merge on GitHub</h3>
 <p>When the required checks such as "Check project" and the review are done, confirm the target branch and the latest diff, and merge with a method GitHub offers. "Squash and merge" combines the changes into one commit. After merging, you can delete the working branch you no longer need with "Delete branch" on the PR page.</p>

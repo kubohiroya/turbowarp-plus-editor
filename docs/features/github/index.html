@@ -194,7 +194,7 @@ git config --local user.email "you@example.com"</code></pre>
 <p>「GitHub に送ることを許可する（push）」を付けてGitHubに接続している場合は、ローカルGitの「PRを作成」で「反映先のブランチ」を選び、「PRに含めるコミット」にチェックを付けます。「PRのタイトル」と「PRの説明」を記入し、「PRの内容を確認」で内容を確かめてから「PRを作成」を押します。エディターは選んだコミットを反映先に適用し、PR用のブランチをGitHubに送ります。選んだコミットが別のコミットに依存していて適用できない場合は、必要なコミットも選びます。接続がない場合は「このGitHub接続ではPRを作成できません。」と表示されるので、GitHubの画面で作ります。</p>
 <figure>
 <a href="../images/current-git-create-pr.png"><img src="../images/current-git-create-pr.png" width="1440" height="1220" alt="ローカルGitのPR作成画面。3件のコミットから2件を選び、タイトルと説明を記入している。" loading="lazy"></a>
-<figcaption>検証用リポジトリと模擬GitHub接続で、3件のコミットから2件を選んでPRを作る直前の画面。上部に「GitHub に接続…」が加わる前の撮影です。</figcaption>
+<figcaption>検証用リポジトリと模擬GitHub接続で、3件のコミットから2件を選んでPRを作る直前の画面。</figcaption>
 </figure>
 <h3>GitHubの画面でPRを作る</h3>
 <p>作業ブランチをGitHubに送ってから、GitHubの画面でPRを作ります。<a href="#push">GitHubに送る手順</a></p>
@@ -228,7 +228,7 @@ git config --local user.email "you@example.com"</code></pre>
 <p>「マージ」の一覧でCIの結果を確かめ、対象のPRを選びます。「GitHub に送ることを許可する（push）」を付けたGitHub接続で、必要なチェックとレビューを通過すると、「概要」のマージ状況カードの右上に緑色の「スカッシュしてマージ」が表示されます。押すと、反映先と対象のコミットを確かめるダイアログが開きます。エディターでのマージはスカッシュマージだけです。PRの差分・CI・マージ可否を読み直すには、PRタイトルの横の「GitHubからPR情報を読み直す」を押します。</p>
 <figure>
 <a href="../images/current-git-merge-ready.png"><img src="../images/current-git-merge-ready.png" width="1440" height="1220" alt="ローカルGitの「マージ」。左に作品フォルダとCIを通過したPR、右に「概要」タブとマージ状況が表示され、カードの右上に緑色のマージボタンがある。" loading="lazy"></a>
-<figcaption>模擬GitHub接続で、検証用PRのCIが成功した状態。「概要」のマージ状況カードでCIとレビューの状態を確認でき、右上のボタンからマージできます。上部に「GitHub に接続…」が加わる前の撮影です。</figcaption>
+<figcaption>模擬GitHub接続で、検証用PRのCIが成功した状態。「概要」のマージ状況カードでCIとレビューの状態を確認でき、右上のボタンからマージできます。</figcaption>
 </figure>
 <h3>GitHubの画面でマージする</h3>
 <p>「Check project」など必要な検査とレビューが済んだら、対象ブランチと最新の差分を確かめ、GitHubで選べる方式でマージします。「Squash and merge」は変更を1つのコミットにまとめます。マージ後、不要になった作業ブランチはPR画面の「Delete branch」で削除できます。</p>
