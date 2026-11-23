@@ -123,7 +123,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await selectBackdrop(page);
     await expect(page.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2);
     const stageName = await page.evaluate(() => window.vm.editingTarget.getName());
-    const backdrop = tab(page, '背景');
+    const backdrop = tab(page, 'ステージ');
     const sprite = await page.evaluate(() => window.vm.runtime.targets.find(target => !target.isStage).getName());
 
     await page.getByRole('button', {name: 'ステージを展開', exact: true}).hover();

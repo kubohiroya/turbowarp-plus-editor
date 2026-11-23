@@ -33,7 +33,7 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const hats = (page: Page) => page.locator('[data-twpe-yaml-hat-icon]');
     const workspace = (page: Page) => page.locator('[data-multi-view] .dockview-theme-light');
     const backdropTab = (page: Page) =>
-        page.locator('.dv-tab').and(page.getByRole('tab', {name: '背景', exact: true}));
+        page.locator('.dv-tab').and(page.getByRole('tab', {name: 'ステージ', exact: true}));
     const documentTitle = (id: string) => `settings.yml (twpeyamlsettings / ${id})`;
     const docTab = (page: Page, id: string) => workspace(page).getByRole('tab', {name: documentTitle(id), exact: true});
     const unsaved = (tab: Locator) => tab.locator('[data-tw-plus-unsaved-tab]');

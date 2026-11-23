@@ -217,7 +217,7 @@ test('the workspace minimap follows blocks, viewport and code tab visibility', a
     await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();
     await expect(paths).toHaveCount(2);
-    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await page.getByRole('button', {name: 'Stage', exact: true}).click();
     await expect(paths).toHaveCount(0);
     await minimap.locator('..').hover({position: {x: 220, y: 150}});
     await expect(minimap).toBeVisible();

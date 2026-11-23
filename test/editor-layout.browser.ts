@@ -396,7 +396,7 @@ test('the paint toolbar opens the project font list from costumes and backdrops'
     await checkOpenAndClose();
     await addFont('Tahoma');
 
-    await page.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await page.getByRole('button', {name: 'Stage', exact: true}).click();
     await selectSection('Backdrops');
     await checkOpenAndClose();
     await addFont('Verdana');
@@ -1007,7 +1007,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
         return divider.x + divider.width <= panel.x + 1 && Math.abs(panel.width - editor.width) <= 1;
     }).toBe(true);
     const editorBounds = await workspace.boundingBox();
-    const backdrop = grid.getByRole('button', {name: 'Backdrops', exact: true});
+    const backdrop = grid.getByRole('button', {name: 'Stage', exact: true});
     await expect(grid).toHaveAttribute('data-backdrop-placement', 'bottom-right');
     const assertBackdropPosition = async () => {
         const tile = await backdrop.boundingBox();
@@ -1200,7 +1200,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     assert.equal(await grid.evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length), 1);
 
     await backdrop.click();
-    const backdropEditor = page.getByRole('tabpanel', {name: 'Backdrops', exact: true});
+    const backdropEditor = page.getByRole('tabpanel', {name: 'Stage', exact: true});
     await backdropEditor.getByRole('tab', {name: 'Backdrops', exact: true}).click();
     const backdropActions = page.getByRole('group', {name: 'Add a backdrop', exact: true});
     await expect(backdropActions).toBeVisible();
@@ -1870,7 +1870,7 @@ test('the default editor pins the sprite list and supports the drawer and detach
         return child;
     };
     const child = await openSpriteList();
-    await child.getByRole('button', {name: 'Backdrops', exact: true}).click();
+    await child.getByRole('button', {name: 'Stage', exact: true}).click();
     await expect.poll(() => page.evaluate(() => vm.editingTarget.isStage)).toBe(true);
     const popupMenu = child.getByRole('button', {name: 'Window layout', exact: true});
     const commands = child.getByRole('menu', {name: 'Window layout', exact: true});
@@ -2323,7 +2323,7 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     const dockMenu = page.locator('.dv-context-menu');
     const rename = 'スプライト名の変更';
     const open = '開く';
-    const backdrop = page.getByRole('button', {name: '背景', exact: true});
+    const backdrop = page.getByRole('button', {name: 'ステージ', exact: true});
     const section = (name: string) => page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]')
         .getByRole('tab', {name, exact: true});
     async function clone(name: string) {
@@ -2379,10 +2379,10 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
 
     await backdrop.click({button: 'right'});
     await listMenu.getByRole('menuitem', {name: open, exact: true}).click();
-    await expect(tab('背景')).toHaveAttribute('aria-selected', 'true');
-    await clone('背景');
-    await expect(tab('背景(2)')).toHaveAttribute('aria-selected', 'true');
-    await chooseView(backdrop, '背景');
+    await expect(tab('ステージ')).toHaveAttribute('aria-selected', 'true');
+    await clone('ステージ');
+    await expect(tab('ステージ(2)')).toHaveAttribute('aria-selected', 'true');
+    await chooseView(backdrop, 'ステージ');
     await layoutSettled(page);
     const saved = JSON.parse(await readSavedLayout(page) ?? 'null');
     assert.equal(Object.values<{number?: number}>(saved?.panels ?? {}).filter(panel => panel.number !== undefined).length, 3);
@@ -2390,7 +2390,7 @@ test('sprite and backdrop menus open and select numbered Dockview tabs', {timeou
     project = await saveProject();
     await openProject();
     await expect(tab('Pane sprite(4)')).toBeVisible();
-    await expect(tab('背景(2)')).toBeVisible();
+    await expect(tab('ステージ(2)')).toBeVisible();
 });
 
 test('the Dockview asset connection restores the native costume and sound selection per pane', {timeout: 45_000}, async t => {
@@ -2703,7 +2703,7 @@ test('the Dockview variables pane lists only data owned by the selected target',
         return [list?.type, list?.value];
     }), ['list', []]);
 
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await page.getByRole('button', {name: 'ステージ', exact: true}).click();
     await showVariables(true);
     await expect(pane.getByText('この背景とすべてのスプライトで参照・利用できる変数です。')).toBeVisible();
     await expect.poll(variableIds).toEqual(['project-score', 'cloud-score', 'legacy-cloud', 'plain-cloud-name']);
@@ -2873,7 +2873,7 @@ test('the variables table sorts mixed rows and saves list items for the selected
     assert.deepEqual(await page.evaluate(id => vm.runtime.getTargetById(id).variables['list-colors'].value, spriteId),
         [25, '赤', '緑', '黒', '白', '紫']);
 
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await page.getByRole('button', {name: 'ステージ', exact: true}).click();
     await toolbar.getByRole('tab', {name: 'グローバル変数', exact: true}).click();
     const global = page.getByRole('region', {name: 'グローバル変数', exact: true});
     await expect(global.getByRole('rowheader', {name: 'Colors', exact: true})).toHaveCount(0);
@@ -2918,7 +2918,7 @@ test('variable counts open the project search at the selected kind of access', {
             center(id);
         };
     });
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await page.getByRole('button', {name: 'ステージ', exact: true}).click();
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
     await toolbar.getByRole('tab', {name: 'グローバル変数', exact: true}).click();
     const pane = page.getByRole('region', {name: 'グローバル変数', exact: true});
@@ -3210,10 +3210,10 @@ test('editor pane headings and message diagrams follow the active target', {time
     const edge = diagram.locator('.tw-sprite-messages__edge');
     const nodes = diagram.locator('.tw-sprite-messages__node');
     const sprite = diagram.getByRole('button', {name: spriteName, exact: true});
-    const stage = diagram.getByRole('button', {name: '背景', exact: true});
+    const stage = diagram.getByRole('button', {name: 'ステージ', exact: true});
     await expect(edge).toHaveText('準備できた');
     await expect(edge.locator('.tw-sprite-messages__icon')).toBeVisible();
-    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, '背景']);
+    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, 'ステージ']);
     await expect.poll(() => nodes.locator('img').evaluateAll(images =>
         images.map(image => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)))
         .toEqual([true, true]);
@@ -3238,7 +3238,7 @@ test('editor pane headings and message diagrams follow the active target', {time
     // The stage only receives the message, so the pane opens on what it receives.
     await expect(sides).toHaveText(['送信0', '受信1']);
     await expect(sides.last()).toHaveAttribute('aria-selected', 'true');
-    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, '背景']);
+    await expect(nodes.locator('.tw-sprite-messages__node-name')).toHaveText([spriteName, 'ステージ']);
     await expect(nodes.last()).toHaveAttribute('aria-current', 'true');
     await expect(nodes.last()).toHaveCSS('border-top-width', '3px');
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');

@@ -6,5 +6,5 @@ export default async function selectBackdrop(page: Page) {
         await page.getByRole('button', {name: 'スプライト一覧を展開', exact: true}).hover();
     }
     if (await pin.getAttribute('aria-pressed') === 'false') await pin.click();
-    await page.getByRole('button', {name: '背景', exact: true}).click();
+    await page.getByRole('button', {name: 'ステージ', exact: true}).click();
 }
