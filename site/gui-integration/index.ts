@@ -32,6 +32,7 @@ import {GitFileMenu} from '@kubohiroya/turbowarp-plus-editor-git';
 import {projectFolderActions, renderProjectFolderMenu} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import StageControlsView from '@kubohiroya/turbowarp-plus-editor-workbench/stage-controls-view';
 import {attachBackpackDrop, receiveBackpackDrop} from '../editor-backpack/index.tsx';
+import {connectTestRun} from '../test-run/editor.ts';
 import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-code.ts';
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
@@ -134,7 +135,9 @@ export const attachHostScriptTransfer = (context, integration) => {
     const editMenu = attachEditMenuWorkspace(context);
     const scriptLayout = attachDockedScriptLayout({...context, presentationElements});
     scriptLayout.view.relations?.setEnabled(startup.standardLayout);
+    const testRun = connectTestRun(context.vm);
     return {dispose() {
+        testRun.dispose();
         scriptLayout.dispose();
         editMenu.dispose();
         prewarm?.dispose();

@@ -272,6 +272,13 @@ for (const entry of Object.keys(rootRequire('@kubohiroya/turbowarp-plus-editor-f
     config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
 }
 const fontsSource = path.dirname(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-fonts$']);
+// The test run view and its runner (issue #774), split out in the same way.
+for (const entry of Object.keys(JSON.parse(fs.readFileSync(path.join(path.dirname(
+    rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-test')), '..', 'package.json'), 'utf8')).exports)) {
+    const specifier = `@kubohiroya/turbowarp-plus-editor-test${entry.slice(1)}`;
+    config.resolve.alias[`${specifier}$`] = rootRequire.resolve(specifier);
+}
+const testRunSource = path.dirname(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-test$']);
 const fontsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-fonts/styles.css$'];
 const codeViewsStyles = config.resolve.alias['@kubohiroya/turbowarp-plus-editor-code-views/styles.css$'];
 // editor.css and targets.css are CSS modules the host passes in; the others are global.
@@ -354,6 +361,11 @@ config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     filename: 'git-project-preview.html',
     title: 'Project Version'
 }));
+// The test run view's tests run in this page, with a VM of its own (issue #774).
+config.entry['test-frame'] = path.join(siteSource, 'test-run', 'frame.ts');
+config.plugins.push(new (hostRequire('html-webpack-plugin'))({
+    chunks: ['test-frame'], filename: 'test-frame.html', title: 'Test'
+}));
 config.entry['backpack-popout'] = path.join(backpackSurface, 'child.ts');
 config.plugins.push(new (hostRequire('html-webpack-plugin'))({
     chunks: ['backpack-popout'], filename: 'backpack-popout.html',
@@ -393,7 +405,7 @@ config.resolve.alias['@kubohiroya/turbowarp-document-source/protocol$'] = path.r
 config.module.rules.push({test: /\.jsx?$/, include: [
     siteSource, path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-sb3-save-format/package.json')),
     documentSourceRoot, transferSource, workbenchSource, codeViewsSource, fontsSource,
-    projectModelSource, windowsSource, spritePanesSource,
+    projectModelSource, windowsSource, spritePanesSource, testRunSource,
     ...(projectUnpackEntry ? [path.dirname(projectUnpackEntry), projectUnpackHashSource] : []),
     ...(repositoryCreation ? [path.dirname(repositorySeedEntry)] : [])
 ],
