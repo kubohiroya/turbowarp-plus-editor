@@ -1047,6 +1047,17 @@
       },
       "method": "Native viewport screenshots and clips at the original sizes; no UI text or image pixels altered; no OS input.",
       "note": "Retake of the figures that could not be taken from the public site before. current-project-file-external.png is not retaken because reaching it launches VS Code. local-media-panes.png stays retained because the behaviour it shows is still not in the public Editor."
+    },
+    {
+      "date": "2026-11-24",
+      "source": "published Editor at https://kubohiroya.github.io/turbowarp-plus-editor/",
+      "siteRevision": "aa4f4b391cf43fb926260057a3bab8258dd90edf",
+      "browser": "Playwright 1.64.1 Chromium, headless, ja-JP, deviceScaleFactor 1",
+      "images": [
+        "asset-preview-development.png"
+      ],
+      "method": "Same as the 2026-11-23 asset preview retake, with the Kamishibai extension 4.0.13 from npm: an authoring SB3 made with turbowarp-kamishibai author-block-dsl on the v4.0.13 release kamishibai-4.0.13.sb3, holding one remote image asset served by a routed test response; clip of the asset preview opened from the asset block's icon, 374x319.",
+      "note": "Retaken after the guide moved from Kamishibai rc.87 to 4.0.13, where scene and behavior previews are on by default and twPlusBlockPreview=0 turns all previews off."
     }
   ]
 }
