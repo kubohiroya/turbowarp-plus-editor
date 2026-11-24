@@ -78,6 +78,20 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 最新 GUI の lockfile に合わせて依存を導入し、型チェック、Editor の単体テスト 123 件、結合テスト 116 件、GUI 接続テスト 73 件が成功した。
 公開版を使った製品ビルド・成果物検証と、変更範囲のヘッドレス E2E を実施してから Editor をマージ・配信する。
 
+## 既存テストの移管（#741）
+
+機能パッケージの API だけで成立するテストは、そのパッケージで実行する。
+移管先への追加・CI の成功を確認してから、Editor の重複を削除する。
+
+| Editor から削除するテスト | 移管先 | Editor に残す接続確認 |
+| --- | --- | --- |
+| `test/project-catalog.browser.ts` | workbench の `test/project-catalog-host.browser.ts`（[PR #128](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/128)） | `test/project-catalog-editor.browser.ts`（実 GUI のファイルメニュー・作品読込・保存との接続） |
+
+作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
+workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
+Editor 側では削除前から CI の実行対象でなかったため、この1件の削除による CI の時間短縮は見込まない。
+切り戻す場合は Editor 側のテスト削除を revert する。製品コード・依存の固定・作品の保存形式は変更しない。
+
 ## 切り戻し
 
 Editor のこの変更を revert し、接続コードと依存の固定を公開直前の main の組み合わせへ戻して再ビルドする。
