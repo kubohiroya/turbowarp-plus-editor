@@ -85,7 +85,7 @@
     "@kubohiroya/turbowarp-extension-security-dialog": "0.13.1",
     "@kubohiroya/turbowarp-named-data": "0.9.0",
     "@kubohiroya/turbowarp-plus-editor-auth": "0.5.0",
-    "@kubohiroya/turbowarp-plus-editor-code-views": "0.26.4",
+    "@kubohiroya/turbowarp-plus-editor-code-views": "0.26.5",
     "@kubohiroya/turbowarp-plus-editor-fonts": "0.1.1",
     "@kubohiroya/turbowarp-plus-editor-git": "0.28.0",
     "@kubohiroya/turbowarp-plus-editor-host": "0.1.1",
@@ -131,6 +131,7 @@
   },
   "types": "./dist/src/index.d.ts",
   "overrides": {
+    "@kubohiroya/turbowarp-plus-editor-code-views": "$@kubohiroya/turbowarp-plus-editor-code-views",
     "@kubohiroya/turbowarp-extension-security-dialog": "$@kubohiroya/turbowarp-extension-security-dialog",
     "@kubohiroya/turbowarp-extension-loader": "$@kubohiroya/turbowarp-extension-loader",
     "@kubohiroya/turbowarp-plus-editor-sprite-panes": "$@kubohiroya/turbowarp-plus-editor-sprite-panes",
