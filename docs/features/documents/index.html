@@ -96,11 +96,11 @@
 
 <h2>8.4 素材を見たり再生したりして選ぶ <span class="badge">一部の拡張で利用可能</span></h2>
 
-<p>公開されている紙芝居拡張rc.87では、編集用の作品（台本のYAMLから作った、素材ブロックなどを含む編集用のSB3）にある素材ブロック（Asset）のアイコンを押すと、フォームと一緒に素材のプレビューが開きます。素材の指定を変えると、保存する前に新しい画像を見たり、音声や動画を再生したりできます。画像や動画の寸法、ファイルサイズ、素材の保持形態も確かめられます。対応するTeachable Machineの認識モデルなら、カメラやマイクを起動して認識結果を試せます。</p>
-<figure class="guide-detail"><a href="../images/asset-preview-development.png"><img src="../images/asset-preview-development.png" width="374" height="319" alt="公開されている紙芝居拡張4.0.5で開いた画像素材のプレビュー。画像、ピクセル寸法、バイト数、保持形態が表示されている。" loading="lazy"></a><figcaption>公開されている紙芝居拡張4.0.5で、参照だけを作品に持つ外部画像（保持形態 remote-non-cacheable）を開いた例。外部画像の見た目と保持形態を確認できます。</figcaption></figure>
-<p>rc.87のプレビューは、エディターの起動URLに付ける <code>twPlusBlockPreview</code> で次のように切り替わります。設定は起動時に一度だけ読まれるので、変えたときはエディターを開き直します。</p>
-<ul><li>指定しない場合：素材のプレビューだけが有効です。</li><li><code>twPlusBlockPreview=1</code>：素材に加えて、<a href="#runtime">場面や動作のプレビュー</a>も有効になります。</li><li><code>twPlusBlockPreview=0</code>：プレビューを使わず、素材ブロックのアイコンからはフォームだけが開きます。</li></ul>
-<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/tag/v4.0.0-rc.87">紙芝居拡張rc.87の公開情報</a> · <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">プレビューの対象と設定</a></p>
+<p>公開されている紙芝居拡張4.0.13では、編集用の作品（台本のYAMLから作った、素材ブロックなどを含む編集用のSB3）にある素材ブロック（Asset）のアイコンを押すと、フォームと一緒に素材のプレビューが開きます。素材の指定を変えると、保存する前に新しい画像を見たり、音声や動画を再生したりできます。画像や動画の寸法、ファイルサイズ、素材の保持形態も確かめられます。対応するTeachable Machineの認識モデルなら、カメラやマイクを起動して認識結果を試せます。</p>
+<figure class="guide-detail"><a href="../images/asset-preview-development.png"><img src="../images/asset-preview-development.png" width="374" height="319" alt="公開されている紙芝居拡張4.0.13で開いた画像素材のプレビュー。画像、ピクセル寸法、バイト数、保持形態が表示されている。" loading="lazy"></a><figcaption>公開されている紙芝居拡張4.0.13で、参照だけを作品に持つ外部画像（保持形態 remote-non-cacheable）を開いた例。外部画像の見た目と保持形態を確認できます。</figcaption></figure>
+<p>4.0.13のプレビューは、エディターの起動URLに付ける <code>twPlusBlockPreview</code> で次のように切り替わります。設定は起動時に一度だけ読まれるので、変えたときはエディターを開き直します。</p>
+<ul><li>指定しない場合：素材のプレビューと、<a href="#runtime">場面や動作のプレビュー</a>がどちらも有効です。</li><li><code>twPlusBlockPreview=0</code>：プレビューを使わず、素材・場面・動作のブロックのアイコンからはフォームだけが開きます。素材と、場面・動作を分けて切ることはできません。</li></ul>
+<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/releases/tag/v4.0.13">紙芝居拡張4.0.13の公開情報</a> · <a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.13/docs/design/dsl-4-block-icon-preview.md">プレビューの対象と設定</a></p>
 
 </section>
 
@@ -109,10 +109,10 @@
 <h2>8.5 場面や動作をプレビューしてから反映する <span class="badge">一部の拡張で利用可能</span></h2>
 
 <p>拡張がプレビューを登録したブロックでは、フォームの下書きのまま表示や動作を確かめられます。たとえば紙芝居の吹き出しブロックなら、せりふや表示時間を変えて見え方を確認できます。</p>
-<p>紙芝居拡張rc.87で場面や動作を試すには、エディターの起動URLに <code>twPlusBlockPreview=1</code> を指定し（<a href="#asset-preview">8.4</a>）、対応する場面・動作ブロックを含む編集用の作品を開きます。</p>
+<p>紙芝居拡張4.0.13では、対応する場面・動作ブロックを含む編集用の作品を開けば、そのまま場面や動作を試せます。プレビューを使わないときは、エディターの起動URLに <code>twPlusBlockPreview=0</code> を指定します（<a href="#asset-preview">8.4</a>）。</p>
 <figure class="guide-flow"><div class="flow" role="img" aria-label="フォームで下書き。文と表示時間を調整。次に、場面を再生。読める長さかを確認。次に、すべて保存。確定した値をブロックに反映"><div>フォームで下書き<br><small>文と表示時間を調整</small></div><span aria-hidden="true">→</span><div>場面を再生<br><small>読める長さかを確認</small></div><span aria-hidden="true">→</span><div>すべて保存<br><small>確定した値をブロックに反映</small></div></div><figcaption>例。吹き出しの表示を確かめてから、ブロックへ反映する。</figcaption></figure>
 <p>気に入った設定は、フォームの「すべて保存」でブロックに反映します。拡張が追加する操作ボタンは、メニューバー右端の<a href="../screen/#extension-controls">機能拡張のボタン領域</a>に表示されます。表示される条件と動作は拡張ごとに異なります。たとえば紙芝居の制作中に出るリロードのボタンは、紙芝居拡張が提供しています。</p>
-<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.0-rc.87/docs/design/dsl-4-block-icon-preview.md">紙芝居拡張の場面・動作プレビュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張が追加する操作ボタン</a></p>
+<p><a href="https://github.com/kubohiroya/turbowarp-kamishibai-app/blob/v4.0.13/docs/design/dsl-4-block-icon-preview.md">紙芝居拡張の場面・動作プレビュー</a> · <a href="https://github.com/kubohiroya/turbowarp-plus-editor/blob/main/docs/gui-integration/extension-stage-controls.md">拡張が追加する操作ボタン</a></p>
 
 </section>
 <nav class="pager" aria-label="前後のページ">
