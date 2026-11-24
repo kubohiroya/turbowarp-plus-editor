@@ -21,8 +21,12 @@ import {attachBackpackDrop} from '../editor-backpack/integration.ts';
 import {attachCodePreviewMinimap} from '@kubohiroya/turbowarp-plus-editor-workbench/workspace-navigation';
 import {hostIntegration} from '../gui-integration/lib/tw-plus-integration-points.ts';
 import {createEditorTabLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/editor-tabs';
+import logo from '../../assets/icon.svg';
+
+declare const __TW_PLUS_EDITOR_VERSION__: string;
 
 export const {EditorTabLayout} = createEditorTabLayout({
+    welcomeBrand: {logo, version: __TW_PLUS_EDITOR_VERSION__},
     desktopCodeEnabled,
     openDesktopCode,
     styles,
