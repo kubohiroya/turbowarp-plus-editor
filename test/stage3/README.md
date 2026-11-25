@@ -18,11 +18,11 @@ Editor の `feat/backpack/product-integration` と、`site/source.json` が参�
 
 各作業ツリーで依存と scratch-gui の生成済みソースを用意する。実ドラッグの試験には macOS の Chrome と、CoreGraphics からマウス入力を送信できる GUI セッションが必要。
 
+バックパックのスクリプトと作品プロパティの単体テストは [workbench パッケージ](https://github.com/kubohiroya/turbowarp-plus-editor-workbench) に移管済み（`test/backpack-script.test.ts`、`test/project-properties.test.ts`）。表示先と転送の契約テストは[段階2](../stage2/README.md#再現)を参照。いずれも所有リポジトリで `npm test` を実行する。
+
 ```sh
 # Editor 作業ツリー
-node --test --import ./test/asset-hooks.ts test/extension-loader.test.ts \
-  test/project-tools/properties.test.ts test/stage2/contracts.test.ts
-# バックパックのスクリプトの単体テストは turbowarp-plus-editor-workbench に移った（test/backpack-script.test.ts）
+node --test --import ./test/asset-hooks.ts test/extension-loader.test.ts
 
 # scratch-gui 作業ツリー
 CI=1 NODE_ENV=production ROOT=/turbowarp-plus-editor/ E2E_GUI_ROOT="$PWD" \

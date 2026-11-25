@@ -15,10 +15,11 @@
 
 ## 再現
 
+surfaces・transfer・ブラウザー別窓ホストの契約テストは [windows パッケージ](https://github.com/kubohiroya/turbowarp-plus-editor-windows) の `test/contracts.test.ts` などに移管済みです。所有リポジトリで `npm test` を実行します（Editor にあった旧 `test/stage2/contracts.test.ts` は [#753](https://github.com/kubohiroya/turbowarp-plus-editor/pull/753) で削除）。下の手順は契約テストでは代替できない、試験ページと実入力による確認です。
+
 Editor作業ツリーから実行する。macOSのGUIセッションとOSマウスイベントを送信する権限が必要。ドラッグの自動操作はCoreGraphicsのHIDイベントを使い、CDPはページの観測・配置・ライフサイクル検証に使う。
 
 ```sh
-node --test test/stage2/contracts.test.ts
 node test/stage2/build.ts
 TW_PLUS_NATIVE_INPUT=1 node test/stage2/check-browser.ts
 
