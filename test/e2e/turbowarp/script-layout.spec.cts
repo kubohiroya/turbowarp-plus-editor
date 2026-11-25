@@ -22,21 +22,18 @@ test('message styles and script editing survive Z/N projection without moving fr
     const surface = page.locator('.tw-script-view-surface');
     const workspace = page.locator('.injectionDiv').filter({has: surface});
     const original = await messageScriptPositions(page);
-    const expectMessageStyles = async scope => {
-        const messages = scope.locator('[data-script-relation="message"]');
-        await expect(messages).toHaveCount(2);
-        await expect.poll(() => messages.evaluateAll(groups => groups.map(group => ({
-            wait: group.getAttribute('data-wait'),
-            dash: getComputedStyle(group.querySelector('.tw-script-relation-line')).strokeDasharray
-                .split(/[ ,]+/).map(parseFloat)
-        })).sort((a, b) => a.wait.localeCompare(b.wait)))).toEqual([
-            {wait: 'false', dash: [3.5, 2.5]}, {wait: 'true', dash: [7, 5]}
-        ]);
-        await expect(scope.locator('.tw-script-relation-wait')).toHaveCount(0);
-        expect(await scope.locator('[data-script-relation-guide]').evaluateAll(
-            nodes => nodes.some(node => node.textContent.includes('⏳')))).toBe(false);
+    // Code Views checks exact dash patterns and marker rendering in its browser suite.
+    // Here the deployed Editor must supply both message kinds to each workspace view.
+    const expectMessages = async scope => {
+        await expect(scope.locator('[data-script-relation="message"][data-wait="false"]')).toHaveCount(1);
+        await expect(scope.locator('[data-script-relation="message"][data-wait="true"]')).toHaveCount(1);
     };
-    await expectMessageStyles(workspace);
+    await expectMessages(workspace);
+    const messageLines = workspace.locator('[data-script-relation="message"] .tw-script-relation-line');
+    await expect.poll(() => messageLines.evaluateAll(lines => {
+        const dashes = lines.map(line => getComputedStyle(line).strokeDasharray);
+        return dashes.length === 2 && !dashes.includes('none') && dashes[0] !== dashes[1];
+    })).toBe(true);
     for (const layout of ['Z', 'N']) {
         const background = layout === 'Z' ? workspace.locator('.blocklyMainBackground') : surface;
         const position = await emptyLayoutPosition(background);
@@ -44,12 +41,12 @@ test('message styles and script editing survive Z/N projection without moving fr
         await menu.trigger.hover();
         await menu.submenu.getByRole('menuitemradio', {name: `${layout} layout view`, exact: true}).click();
         await expect(surface).toBeVisible();
-        await expectMessageStyles(surface);
+        await expectMessages(surface);
 
         const fold = page.locator('[data-script-fold-toggle="message-receiver"]');
         await fold.click();
         await expect(fold).toHaveAttribute('aria-expanded', 'false');
-        await expectMessageStyles(surface);
+        await expectMessages(surface);
         await fold.click();
         await expect(fold).toHaveAttribute('aria-expanded', 'true');
 
@@ -65,14 +62,14 @@ test('message styles and script editing survive Z/N projection without moving fr
             .getBlock('message-key').fields.KEY_OPTION.value)).toBe(key);
         expect(await messageScriptPositions(page)).toEqual(original);
         await expect(surface).toBeVisible();
-        await expectMessageStyles(surface);
+        await expectMessages(surface);
     }
     const menu = await openLayoutMenu(page, surface, 'Change code layout view', await emptyLayoutPosition(surface));
     await menu.trigger.hover();
     await menu.submenu.getByRole('menuitemradio', {name: 'Normal layout view', exact: true}).click();
     await expect(surface).toBeHidden();
     expect(await messageScriptPositions(page)).toEqual(original);
-    await expectMessageStyles(workspace);
+    await expectMessages(workspace);
 });
 
 // Block sizes depend on the current locale and zoom; open menus on a visible blank point.

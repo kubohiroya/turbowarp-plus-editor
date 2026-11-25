@@ -114,10 +114,11 @@ const approveProjectExtensions = async (page, sources, locale = 'ja') => {
     const rows = security.locator('.twextsec-row');
     await expect(rows).toHaveCount(sources.length);
     await expect(security.locator('textarea')).toHaveCount(0);
-    // Every row runs without the sandbox, chosen once for all of them.
-    await security.locator('.twextsec-bulk').getByRole('radio',
-        {name:locale === 'ja' ? 'サンドボックスなしで' : 'Without the sandbox',exact:true}).click();
-    await security.getByRole('button', {name:'OK',exact:true}).click();
+    // These non-security scenarios open a fixture whose execution modes are already required.
+    // Use the current review overview's approval, rather than opening the individual settings.
+    await security.getByRole('button', {
+        name: locale === 'ja' ? 'すべて有効にして実行' : 'Enable all and run', exact: true
+    }).click();
     await expect(security).toHaveCount(0);
     // Verify the actual loaded sources through project serialization after approval.
     await expect.poll(() => page.evaluate(async () => {

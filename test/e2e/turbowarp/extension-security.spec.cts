@@ -13,10 +13,9 @@ test.beforeEach(async ({context}) => { await useFixtureCatalog(context); });
 /**
  * The review a project's extensions go through before any of them runs, on the real editor.
  *
- * The screen is security-dialog 0.7.0's `ExtensionReview` in its `open` mode, framed by the GUI's
- * own modal. What it guarantees: nothing runs until the person answers; an extension's own claims
- * are shown as claims; an all-required batch presets the sole required mode; saying no, or
- * cancelling, runs nothing; and the answer is remembered for the same project.
+ * The shared review's open mode is framed by the GUI modal. No code runs before an explicit answer;
+ * author metadata remains a claim; the overview can enable all, or the user can review choices
+ * separately; denial and cancellation are distinct; reopening requires a fresh confirmation.
  */
 
 const name = 'Security bundle fixture';
@@ -27,6 +26,7 @@ const source = `// Name: ${name}\n// ID: securityfixture\n// Description: ${desc
     '// Bundled extensions:\n// - Name: Nested fixture\n//   Description: Nested description\n' +
     '//   By: Nested author\n//   License: Nested license\n' +
     'globalThis.__securityFixtureStarted = (globalThis.__securityFixtureStarted || 0) + 1;\n' +
+    'console.log("security-fixture:start");\n' +
     'Scratch.extensions.register({getInfo(){return {id:"securityfixture",name:"Security fixture",' +
     'color1:"#5B67A5",color2:"#4D588C",color3:"#404874",' +
     'blocks:[{opcode:"value",blockType:Scratch.BlockType.REPORTER,text:"security fixture"}]};},value(){return 1;}});';
@@ -58,15 +58,16 @@ const dialog = page => page.getByRole('dialog').filter({has: page.locator('.twex
 const rows = page => dialog(page).locator('.twextsec-row');
 const executions = page => page.evaluate(() => globalThis.__securityFixtureStarted || 0);
 const labels = {
-    ja:{title:'この作品は機能拡張を使います',deny:'動かさない',sandboxed:'サンドボックスの中で',
-        unsandboxed:'サンドボックスなしで',cancel:'キャンセル',required:'⚠️ サンドボックスなしが必要',
-        creator:'製作者（未検証の申告）'},
-    en:{title:'This project wants to run extensions',deny:'Do not run',sandboxed:'In the sandbox',
-        unsandboxed:'Without the sandbox',cancel:'Cancel',required:'⚠️ Needs to run without the sandbox',
-        creator:'Creator (unverified claim)'}
+    ja:{title:'確認: この作品は機能拡張を使います',deny:'動かさない',sandboxed:'様子を見るためにサンドボックス内で動かす',
+        unsandboxed:'信頼してサンドボックスなしで動かす',cancel:'実行しない',required:'⚠️ サンドボックスなしが必要',
+        creator:'製作者（未検証の申告）', individual:'機能拡張を個別に確認', run:'選んだ内容で実行', enableAll:'すべて有効にして実行'},
+    en:{title:'Confirmation: This project wants to run extensions',deny:'Do not run',sandboxed:'Run in the sandbox to try it out',
+        unsandboxed:'Trust and run without the sandbox',cancel:'Do not run',required:'⚠️ Needs to run without the sandbox',
+        creator:'Creator (unverified claim)', individual:'Review each extension', run:'Run with these choices', enableAll:'Enable all and run'}
 };
-const choice = (page, row, language, execution) =>
-    row.getByRole('radio', {name: labels[language][execution], exact: true});
+const choice = (row, language, execution) => row.getByRole('button', {name: labels[language][execution], exact: true});
+const action = (page, language, key) => dialog(page).getByRole('button', {name: labels[language][key], exact: true});
+const individual = (page, language) => action(page, language, 'individual').click();
 const open = async (page, language, options = undefined) => {
     await page.goto(`?lang=${language}`);
     const href = await page.locator('a[data-editor][href*="editor.html"]').first().getAttribute('href');
@@ -82,9 +83,9 @@ const expectInside = async (page, width, height) => {
     const box = await dialog(page).boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
-    const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
-    await ok.scrollIntoViewIfNeeded();
-    const button = await ok.boundingBox();
+    const run = action(page, 'ja', 'run');
+    await run.scrollIntoViewIfNeeded();
+    const button = await run.boundingBox();
     expect(button.y + button.height).toBeLessThanOrEqual(height);
 };
 
@@ -109,41 +110,41 @@ for (const language of ['ja','en']) {
         await expect(row.locator('.twextsec-claim')).toContainText(`${labels[language].creator}: Fixture Author`);
         await expect(row).not.toContainText('Nested description');
         await expect(dialog(page).locator('textarea')).toHaveCount(0);
-        // A complete all-required batch presets its sole execution choice, but still awaits OK.
         await expect(row.locator('.twextsec-requirement')).toHaveText(labels[language].required);
-        await expect(row.locator('input[name^="execution-"]')).toHaveCount(1);
-        await expect(choice(page,row,language,'unsandboxed')).toBeChecked();
-        await expect(choice(page,row,language,'deny')).toHaveCount(0);
-        await expect(choice(page,row,language,'sandboxed')).toHaveCount(0);
-        await expect(dialog(page).locator('input[name="execution-all"]')).toHaveCount(0);
-        await expect(dialog(page).locator('.twextsec-bulk')).toHaveCount(0);
-        await expect(dialog(page).locator('.twextsec-intro')).toContainText(
-            language==='ja'?'選択済み':'already selected');
-        await expect(dialog(page).locator('.twextsec-warning')).toBeVisible();
+        // The overview must never imply that displaying the mode grants consent.
+        await expect(row.locator('[data-execution]')).toHaveCount(0);
         expect(await executions(page)).toBe(0);
-        const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
-        await expect(ok).toBeEnabled();
-        await ok.click();
+        await action(page, language, 'enableAll').click();
         await expect(dialog(page)).toHaveCount(0);
         await expect.poll(() => executions(page)).toBe(1);
-        // The answer is remembered for this project, and still has to be confirmed again.
+        // A reload shows the review again. The same project still requires an explicit answer.
         await page.reload();
         await expect(dialog(page)).toBeVisible();
-        await expect(choice(page,rows(page).first(),language,'unsandboxed')).toBeChecked();
+        await individual(page, language);
+        await expect(choice(rows(page).first(), language, 'unsandboxed')).toHaveAttribute('aria-pressed', 'true');
         expect(await executions(page)).toBe(0);
-        await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
+        await action(page, language, 'run').click();
         await expect(dialog(page)).toHaveCount(0);
         await expect.poll(() => executions(page)).toBe(1);
     });
 
     test(`shared security from ${language} entry cancels without executing extensions`, async ({page,evidence}) => {
         evidence.stage('shared-security-cancel');
+        const starts = [];
+        page.on('console', message => {
+            if (message.text() === 'security-fixture:start') starts.push(message.text());
+        });
         await open(page,language);
-        await dialog(page).getByRole('button',{name:labels[language].cancel,exact:true}).click();
+        await action(page, language, 'cancel').click();
         await expect(dialog(page)).toHaveCount(0);
         await expect.poll(() => new URL(page.url()).searchParams.has('project_url')).toBe(false);
         expect(new URL(page.url()).searchParams.has('extensionSecurityBatch')).toBe(false);
-        await expect.poll(() => page.evaluate(() => vm.runtime.targets.length)).toBeGreaterThan(0);
+        // Starting from the landing page returns there, rather than loading the rejected project.
+        const freshEditor = page.locator('a[data-editor][href*="editor.html"]').first();
+        await expect(freshEditor).toBeVisible();
+        await freshEditor.click();
+        await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
+        expect(starts).toEqual([]);
         expect(await executions(page)).toBe(0);
         expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('securityfixture'))).toBe(false);
     });
@@ -155,15 +156,17 @@ for (const language of ['ja','en']) {
         await expect(rows(page).nth(1).locator('.twextsec-id')).toHaveText('securityordinary');
         // An extension that says nothing about the sandbox runs inside it by default, so it carries no warning.
         await expect(rows(page).nth(1).locator('.twextsec-requirement')).toHaveCount(0);
-        // Both start in the sandbox; nothing is chosen outside it for the person.
-        for (const index of [0,1]) await expect(choice(page,rows(page).nth(index),language,'sandboxed')).toBeChecked();
-        const bulk = dialog(page).locator('.twextsec-bulk');
-        await bulk.getByRole('radio',{name:labels[language].unsandboxed,exact:true}).click();
-        for (const index of [0,1]) await expect(choice(page,rows(page).nth(index),language,'unsandboxed')).toBeChecked();
-        await choice(page,rows(page).nth(1),language,'sandboxed').check();
-        await expect(choice(page,rows(page).nth(0),language,'unsandboxed')).toBeChecked();
+        await individual(page, language);
+        await expect(rows(page).first().locator('.twextsec-execution')).toBeVisible();
+        // Mixed batches default to sandboxed and present each extension's controls separately.
+        for (const index of [0, 1]) {
+            await expect(choice(rows(page).nth(index), language, 'sandboxed')).toHaveAttribute('aria-pressed', 'true');
+        }
+        await choice(rows(page).nth(0), language, 'unsandboxed').click();
+        await expect(choice(rows(page).nth(0), language, 'unsandboxed')).toHaveAttribute('aria-pressed', 'true');
+        await expect(choice(rows(page).nth(1), language, 'sandboxed')).toHaveAttribute('aria-pressed', 'true');
         expect(await executions(page)).toBe(0);
-        await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
+        await action(page, language, 'run').click();
         await expect(dialog(page)).toHaveCount(0);
         await expect.poll(()=>executions(page)).toBe(1);
         await expect.poll(()=>page.evaluate(()=>vm.extensionManager.isExtensionLoaded('securityordinary'))).toBe(true);
@@ -177,8 +180,9 @@ test('extensions without a required mode can still run sandboxed', async ({page,
     await page.goto(target.href);
     await expect(rows(page).first().locator('strong')).toHaveText(name);
     const row = rows(page).first();
-    await expect(choice(page,row,'ja','sandboxed')).toBeChecked();
-    await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
+    await individual(page, 'ja');
+    await expect(choice(row, 'ja', 'sandboxed')).toHaveAttribute('aria-pressed', 'true');
+    await action(page, 'ja', 'run').click();
     await expect(dialog(page)).toHaveCount(0);
     await expect.poll(()=>page.evaluate(()=>vm.extensionManager.isExtensionLoaded('securityfixture'))).toBe(true);
 });
@@ -186,8 +190,9 @@ test('extensions without a required mode can still run sandboxed', async ({page,
 test('denying an extension opens the project and never executes it', async ({page,evidence}) => {
     evidence.stage('shared-security-ordinary-denial');
     await open(page,'ja',{required:false});
-    await choice(page,rows(page).first(),'ja','deny').check();
-    await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
+    await individual(page, 'ja');
+    await choice(rows(page).first(), 'ja', 'deny').click();
+    await action(page, 'ja', 'run').click();
     await expect(dialog(page)).toHaveCount(0);
     // Declining is not losing the project: it opens, with its blocks and the extension's address.
     await expect.poll(() => page.evaluate(() => {
@@ -202,16 +207,16 @@ test('narrow security dialog keeps the choices and a reachable confirmation butt
     evidence.stage('shared-security-narrow-modes');
     await page.setViewportSize({width:390,height:600});await open(page,'ja');
     const row = rows(page).first();
-    expect(await row.locator('input[name^="execution-"]').evaluateAll(items=>items.map(item=>item.value)))
-        .toEqual(['unsandboxed']);
-    await expectInside(page,390,600);
-    const unsandboxed = choice(page,row,'ja','unsandboxed');
-    await expect(unsandboxed).toBeChecked();
+    await individual(page, 'ja');
+    await expect(choice(row, 'ja', 'unsandboxed')).toBeVisible();
+    await expectInside(page, 390, 600);
+    await choice(row, 'ja', 'unsandboxed').click();
+    await expect(choice(row, 'ja', 'unsandboxed')).toHaveAttribute('aria-pressed', 'true');
     await page.setViewportSize({width:320,height:568});
     await expectInside(page,320,568);
     expect(await executions(page)).toBe(0);
-    const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
-    await ok.focus();await ok.press('Enter');
+    const run = action(page, 'ja', 'run');
+    await run.focus();await run.press('Enter');
     await expect(dialog(page)).toHaveCount(0);
     await expect.poll(()=>executions(page)).toBe(1);
 });
@@ -234,8 +239,9 @@ test('real mobile context keeps the shared review inside the visual viewport', a
         });
         expect(rect.left).toBeGreaterThanOrEqual(0);
         expect(rect.right).toBeLessThanOrEqual(rect.width);
-        await dialog(page).locator('.twextsec-bulk').getByRole('radio',{name:labels.ja.unsandboxed,exact:true}).click();
-        await expect(dialog(page).locator('.twextsec-row input[value="unsandboxed"]:checked')).toHaveCount(2);
+        await individual(page, 'ja');
+        for (const row of await rows(page).all()) await choice(row, 'ja', 'unsandboxed').click();
+        await expect(dialog(page).locator('.twextsec-row [data-execution="unsandboxed"][aria-pressed="true"]')).toHaveCount(2);
         const warning = dialog(page).locator('.twextsec-warning');
         const notice = await warning.evaluate(node => {
             const r=node.getBoundingClientRect(),v=window.visualViewport;
@@ -248,8 +254,8 @@ test('real mobile context keeps the shared review inside the visual viewport', a
         expect(Math.abs(notice.bottom-notice.height)).toBeLessThanOrEqual(1);
         await warning.getByRole('button',{name:'閉じる',exact:true}).click();
         await expect(warning).toHaveCount(0);
-        await expect(dialog(page).locator('.twextsec-row input[value="unsandboxed"]:checked')).toHaveCount(2);
-        await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeEnabled();
+        await expect(dialog(page).locator('.twextsec-row [data-execution="unsandboxed"][aria-pressed="true"]')).toHaveCount(2);
+        await expect(action(page, 'ja', 'run')).toBeEnabled();
         expect(await executions(page)).toBe(0);
     } finally { await context.close(); }
 });
