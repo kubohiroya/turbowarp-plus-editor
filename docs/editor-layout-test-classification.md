@@ -12,7 +12,7 @@
 | 2 | [107–146](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L107-L146) | the unsaved marker stays by the project name and its hint fits in the viewport | workbench | 一部分離 | VM 変更・タイトル幅と隣接・保存メニューを保持。hint の hover/focus・狭幅表示は単独 host へ |
 | 3 | [147–334](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L147-L334) | the real editor resizes both dividers and preserves editing and stage input | workbench / windows | 一部分離 | grip の幾何・keyboard の詳細を workbench へ。GUI テーマ・Blockly resize/edit・stage input・SB3 往復を保持 |
 | 4 | [335–349](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L335-L349) | the GUI keeps its original editor without a host connection | Editor / GUI | 接続保持 | 接続口を使わない GUI の従来動作 |
-| 5 | [350–421](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L350-L421) | the paint toolbar opens the project font list from costumes and backdrops | fonts / GUI | 分離候補 | costume/backdrop のフォント接続を保持し、追加・選択の詳細を分ける |
+| 5 | [350–421](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L350-L421) | the paint toolbar opens the project font list from costumes and backdrops | fonts / GUI | 一部分離 | native GUIのシステムフォント追加・選択をGUIへ。costume/backdrop・classic起動の実ボタン結線を保持 |
 | 6 | [422–455](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L422-L455) | the Plus File menu groups project settings and opens the extension library | workbench / security-dialog | 接続保持 | File メニューから作品設定・拡張ライブラリーへ |
 | 7 | [456–514](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L456-L514) | classic startup hides Plus additions while preserving the original File commands | Editor / GUI / workbench | 接続保持 | classic 起動フラグと既存 GUI メニュー |
 | 8 | [515–566](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L515-L566) | the first menu row orders the Plus logo, project title, File, Edit, and search | workbench / GUI | 一部分離・候補あり | ロゴの表示・リンクはWorkbenchへ。native title/File/Edit/searchを含む実行・座標関係はEditor。幾何のさらなる分離可否は追跡。 |
@@ -170,3 +170,9 @@ sprite-panes の実 SpriteAssetPane とCSSで、所有範囲の説明、変数/�
 ## スクリプト個別ビュー（#823・分類35）
 
 呼び出しグラフの方向別配置、孤立した関数の配置、フォーカス時の中央寄せ、一覧/グラフ単独表示の詳細は、sprite-panes の単体・ブラウザーテストが所有する。[上流CI](https://github.com/kubohiroya/turbowarp-plus-editor-sprite-panes/actions/runs/45713170162) で該当5ケースの成功・skip 0を確認した。Editor では実ブロックが関係図へ渡り、選択・方向変更が実ビューに反映されること、および分割画面での編集・折りたたみ・作成・削除が VM と同期することを保持する。上流と重複した表示詳細を戻すには、この変更を revert する。通常 Editor CI の対象外のため時短は計上しない。
+
+## システムフォントの詳細（#823・分類5）
+
+「Add a system font」は scratch-gui の通常のシステムフォント画面と実paint editorが所有し、fontsパッケージのWebフォントとは異なる。上流ではPlusホストを使わず、native paintのメニューからフォントを追加し、別assetのドロップダウンで選択できることをヘッドレスで確認する。[scratch-gui #186](https://github.com/kubohiroya/scratch-gui/pull/186) の [上流CI](https://github.com/kubohiroya/scratch-gui/actions/runs/45714621589) で新ケースの実行・成功（skip 0）を確認し、developへマージ済み。
+
+EditorではPlusボタンから costume/backdrop の各フォント画面が開き、編集対象や未保存状態が変わらないこと、および日本語classic起動で既存paint画面に接続できることを保持する。切り戻しはEditorの追加・選択シナリオを先に復元する。元ファイルは通常のEditor CI対象外のため時短は計上しない。
