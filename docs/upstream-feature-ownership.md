@@ -94,6 +94,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/block-editor/icon.test.ts` の機能テスト2件 | data-editor の `test/editor-icon-service.test.ts` | 同ファイルの VM ごとのサービス共有・登録解除通知の結線確認1件 |
 | `test/extension-host/permission-ui.test.ts`（8件） | security-dialog の `test/permission-ui.test.cts` | `test/extension-host/host.test.ts` の実 VM・DOM 承認と `security-review.test.ts`、GUI のホスト接続確認 |
 | `test/extension-host/batch-review.test.ts` の機能テスト3件 | security-dialog の `test/editor-batch-review.test.cts` | 同ファイルの実 VM による拒否後のブロック・URL 保持と GUI モーダルの結線確認2件 |
+| `test/extension-host/project-size-gate.test.ts` の機能テスト3件 | Loader の `test/editor-project-size-gate.test.ts`（計測・同意2件）、workbench の `test/project-size-approval.test.cts`（画面1件） | 同ファイルの実 VM と Editor の64 MiB上限・同意を接続する1件 |
 
 作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
 workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
@@ -127,6 +128,9 @@ Editor では `host.test.ts` の実 VM が DOM 承認を待ってから拡張を
 
 一括レビューの機能テスト3件（キャンセル判定 API の基本契約、作品識別、信頼済み行の判定）は security-dialog の `./project-review` へ移管する。ホストの注入ポートを GUI・VM なしで渡し、`identifyProject` の取得先1行以外の検証本体と元の GPL-3.0-or-later を維持する。移管先の既存 `pnpm test` と CI が実行し、上流 CI の成功とマージを Editor 側の削除の公開条件とする。
 Editor の `batch-review.test.ts` には、実 VM で拒否後も作品のブロック・URL が残る確認と、GUI モーダルの prop・CSS・コンポーネント同一性を確認する2件を内容不変で残す。製品コード・依存固定・GUI・既存 CI と npm コマンドは変更しない。CI 時間の短縮量は未測定。切り戻しは今回のテスト整理を revert し、上流側も戻す場合は Editor の復元を先に行う。
+
+作品サイズゲートの計測・同意2件を Loader、確認画面1件を workbench へ移管する。元の検証本体・fixture データ・GPL-3.0-or-later を維持し、Loader では既存のテスト型検査に合わせて型専用記法だけを追加する。両方の既存 `npm test` と CI が実行し、両移管先の CI 成功とマージを Editor 側の削除の公開条件とする。
+Editor は `project-size-gate.test.ts` に実 VM と Editor の64 MiB上限・同意の結線確認1件を内容不変で残す。製品コード・依存固定・GUI・既存 CI と npm コマンドは変更しない。CI 時間の短縮量は未測定。切り戻しは元の4件を復元し、上流側も戻す場合は Editor の復元を先に行う。
 
 ## 切り戻し
 
