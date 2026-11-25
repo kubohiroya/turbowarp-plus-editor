@@ -190,3 +190,7 @@ Editor のこの変更を revert し、接続コードと依存の固定を公�
 ### 実 Editor ホスト契約の実行（#823）
 
 `TW_PLUS_TEST_EDITOR_HOST=1` で、固定 Scratch GUI と組み合わせてサイトをビルドする。ビルドに含まれる `siteRevision` を `E2E_EXPECT_SITE_REVISION`、絶対パスのビルド先を `E2E_PROJECT_FOLDER_BUILD` に指定して `npm run test:editor-host` を実行する。通常 CI では実行しない。Editor `53a5300` と Scratch GUI `60b87e2` でヘッドレス実行し1件成功、skip 0。
+
+### Git レビュー印の版更新（#823）
+
+担当パッケージの [Git #84](https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/84) で、2件のスクリプトの確認済み印を再読込後に保持し、版更新で変更された側だけを外す。単独 Chromium ケースは [上流CI](https://github.com/kubohiroya/turbowarp-plus-editor-git/actions/runs/45721385184) で実行・成功。Editor は実ファイル起点の別タブ・Blocklyのプレビュー・前後のスクリプト・実タブ再オープン後の印・作業ツリー不変を保持。切り戻しは Editor の当該差分を先に revert。通常 Editor CI はこのブラウザーケースを実行しないため時間短縮には含めない。
