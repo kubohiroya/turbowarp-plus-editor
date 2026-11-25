@@ -1119,15 +1119,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     await expect(removedName).toHaveCSS('text-decoration-line', 'none');
     await expect(removed).not.toHaveAttribute('aria-disabled');
 
-    await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusLocalGit=0`);
-    await expect(page.locator('[data-project-folder-status]')).toHaveCount(1);
-    await page.getByText('File', {exact: true}).click();
-    await expect(page.getByRole('list').getByRole('button', {name: 'Open Project Folder…', exact: true})).toBeVisible();
-    await expect(page.getByText('Local Git…', {exact: true})).toHaveCount(0);
-    await expect(page.locator('.twgit-branch-button')).toHaveCount(0);
-    await page.keyboard.press('Escape');
-    await expect(drawerBar.getByRole('button', {name: 'Project folder', exact: true})).toBeAttached();
-    await expect(drawerBar.getByRole('button', {name: 'Git history', exact: true})).toHaveCount(0);
     assert.deepEqual(errors, []);
 });
 
@@ -1268,10 +1259,12 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     const {folder, project} = await createDiskProject(t, 'tw-project-device-');
     const source = path.join(folder, projectFile);
 
-    const {original, originalProject, editor, errors} = await openDeviceFolder(t, build, folder);
+    const {original, originalProject, editor, errors} = await openDeviceFolder(t, build, folder, '&twPlusLocalGit=0');
     const status = editor.locator('[data-project-folder-status]');
     await expect(status).toHaveText('Project folder opened.');
     const drawer = editor.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    await expect(editor.locator('.twgit-branch-button')).toHaveCount(0);
+    await expect(drawer.getByRole('button', {name: 'Git history', exact: true})).toHaveCount(0);
     await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(editor.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
 
