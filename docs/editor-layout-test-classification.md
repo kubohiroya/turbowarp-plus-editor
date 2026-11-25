@@ -41,7 +41,7 @@
 | 31 | [2944–3080](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2944-L3080) | clone pages edit the selected runtime instance and fall back when it disappears | sprite-panes / VM | 分離候補 | clone の値更新と消滅時 fallback を保持し、表示行列を分ける |
 | 32 | [3081–3151](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3081-L3151) | clone variables keep the original sprite reference counts and definition actions | sprite-panes / code-views | 接続保持 | clone から original sprite の参照・定義へ |
 | 33 | [3152–3246](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3152-L3246) | editor pane headings and message diagrams follow the active target | sprite-panes / code-views | 接続保持 | active target と見出し・message diagram |
-| 34 | [3247–3323](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3247-L3323) | the calls section independently toggles function calls and messages and opens a receiver in another target | workbench / code-views | 要照合 | 旧セレクターと現行パッケージの DOM が異なるため元ケースを保持。下記の照合待ちを参照 |
+| 34 | [3247–3323](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3247-L3323) | the calls section independently toggles function calls and messages and opens a receiver in another target | sprite-panes / workbench / code-views | 一部分離 | 現行 DOM を実 Editor で照合済み。表示行列は sprite-panes の2件へ集約し、VM・図・別 target への接続を保持 |
 | 35 | [3324–3508](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3324-L3508) | the hats and functions list and the calls section show each script alone in a code view beside the sprite | workbench / code-views | 分離候補 | script ごとの view 接続を保持し、表示・操作行列を分ける |
 | 36 | [3509–3539](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3509-L3539) | Save a Copy of the Project keeps the labelled dialog actions at the right edge | workbench / windows | 今回分離 | 保存 form の action 配置・アイコン13行を単独 browser test へ。File メニュー・cancel・SB3 download を保持 |
 | 37 | [3540–3669](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3540-L3669) | a block stack can be copied to a split code tab and back from its popout | workbench / code-views / GUI | 接続保持 | split code tab・popout・実 Blockly stack の往復 |
@@ -68,6 +68,16 @@ Editor は VM の変更で表示されるマーカー、native title field の�
 
 依存順は workbench の CI 成功・マージ → Editor の縮小。ローカルは移管 browser case 1件・関連 file-menu 18件、workbench ビルド・対象型検査と Editor 型検査・責務境界2件を確認する。実 Editor の保持した browser case は今回再実行していない。元ファイルは通常 CI 対象外なので、この11行削減による通常 CI の時間短縮は見込まない。製品コード・依存固定・GUI・CI コマンドは変更しない。切り戻しは Editor の元11行とケース名を先に復元し、必要なら上流の追加テスト・文書を revert する。
 
-## 呼び出し図のセレクターの照合待ち
+## 呼び出し図の照合結果と検証分担
 
-34番は `Function calls` と `[data-relation="call"]` / `[data-relation="message"]` を使う。固定 sprite-panes `0.11.3` の `src/sprite-function-pane.tsx` のソースでは、関数のフィルター名は `Functions`、矢印の属性は `data-script-relation="function"` / `data-script-relation="message"` である。実 Editor での再現確認は未実施。単純な移管で検証を失わないよう、現行の公開 entry・実際の DOM と照合するまで、フィルター行列・VM 不変・他 target の script を開く元ケースは変更しない。この照合は残件。
+34番を Editor main `fbd709f3f4a50abb8c3071487bd46b953c165e34` の新しい固定ビルドで再現した。元ケースは図の内側の `Function calls` を見つけられず失敗した。現在のフィルターは active toolbar の `Functions` / `Messages`、方向ボタンは `Flow: Top to bottom (TD)`、矢印は `data-script-relation="function"` / `"message"`。メッセージの表示ラベルは SVG の `text` を対象に `💬 ready` と照合し、補足の `title` と分ける。
+
+セレクターを更新した元の行列全体は実 Editor で成功した。sprite-panes の `relationGraph` が描画前に種類別の候補を絞るため、表示切替は正常に働いていた。sprite-panes `0.11.3` の製品 src 全16ファイルは固定版と一致し、製品修正や版更新は要らない。
+
+詳細の4状態・hidden label・同じ図ノードでの更新・再マウント後の保持を、sprite-panes の既存 `test/sprite-function-pane.browser.ts` に2件追加する。既存の scanned message 形式と、Editor と同じ `scriptRelations` 形式を両方確認する。追加テストは sprite-panes の既存 MPL-2.0 fixture を拡張したもの。Editor の GPL の VM fixture は Editor に保持する。workbench の既存 `test/section-controls.test.ts` 2件が分割ペインと section 変更後の状態を検証しており、今回も成功を確認した。
+
+Editor は初期の実グラフ、操作欄からの関数矢印の非表示・復元と VM JSON の内容不変、Hats and functions / Calls の往復と方向変更、他 target の受信 script を開く接続を残す。表示行列・詳細の保持確認を除いて77行から68行へ縮小し、ケース名を接続確認の役割に合わせた。他38件と共通 fixture は内容不変。
+
+検証は sprite-panes のビルド・追加2件を含む図の関連 browser 11件、workbench の既存2件、Editor 型検査・責務境界2件と実 Editor の対象ケース1件。Editor の対象は元の行列の DOM 修正後と縮小後の両方をヘッドレスで実行し、fail/skip 0 だった。Editor `fbd709f`・GUI `14477c5`・VM `f3d3811`・Packager `d690225` を完成済み build-info と照合した。
+
+依存順は sprite-panes の追加テストの CI 成功・マージ → Editor の縮小。製品コード・依存固定・GUI・起動フラグ・CI コマンドは変更しない。元 browser ファイルは通常 CI の対象外のため、この縮小による通常 CI の時間短縮は見込まない。切り戻しは Editor の元ケースの確認範囲を先に戻す。旧 DOM セレクターには戻さず、必要なら上流の追加テストと文書を revert する。
