@@ -1,6 +1,8 @@
 const fs = require('node:fs/promises');
 const {createHash} = require('node:crypto');
 const JSZip = require('@turbowarp/jszip');
+const {project: buildProject} = require('../extension-loader/project.cts');
+const selectBackdrop = require('../../fixtures/select-backdrop.ts').default;
 const {selectNativeProject} = require('./native-picker.cts');
 const {test, expect, editorDialog} = require('./fixtures.cts');
 
@@ -13,7 +15,6 @@ const save = page => modal(page).locator('[data-block-editor-save]');
 const cancel = page => modal(page).getByRole('button', {name: 'キャンセル', exact: true});
 
 const start = async page => {
-    await page.addInitScript(() => {window.showSaveFilePicker = undefined;});
     await page.goto('editor.html?lang=ja');
     await expect(page.locator('.blocklyToolboxDiv')).toBeVisible();
 };
@@ -35,66 +36,41 @@ const approveSample = async (page, source) => {
     await expect(row.locator('.twextsec-head strong')).toHaveText('Block editor demo');
     await expect(row.locator('.twextsec-id')).toHaveText('blockeditordemo');
     await expect(row.locator('.twextsec-digest')).toContainText(createHash('sha256').update(source).digest('hex'));
-    await row.locator('input[name="execution-blockeditordemo"][value="unsandboxed"]').check();
-    await review.getByRole('button', {name: 'OK', exact: true}).click();
+    await review.getByTestId('twextsec-enable-all').click();
     await expect(review).toHaveCount(0);
     // No second, per-extension prompt follows the review.
     await expect(page.getByTestId('tw-plus-permission')).toHaveCount(0);
     await expectSampleLoaded(page);
 };
 
-const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensions-v1.json';
-const sampleURL = 'https://block-editor-sample.invalid/block-editor.js';
+const openProjectURL = (page, baseURL, bytes) => {
+    const url = new URL('editor.html', baseURL);
+    url.search = new URLSearchParams({
+        lang: 'ja',
+        project_url: `data:application/octet-stream;base64,${bytes.toString('base64')}`
+    }).toString();
+    return page.goto(url.href);
+};
 
-// The TurboWarp Plus catalog is the only Loader entry, so serve the bundled sample as a catalog item.
+// Start with an actual SB3 containing the published editor example, not a palette drag.
+// The catalog route has its own E2E suite; this one tests extension-backed block data and
+// the Editor's standard save/reopen routes.
 const loadSample = async (page, baseURL) => {
     const response = await page.request.get(new URL('static/extensions/block-editor.js', baseURL).href);
     expect(response.ok()).toBeTruthy();
-    const source = await response.text();
-    await page.context().route(catalogURL, route => route.fulfill({json: {schemaVersion: 1, extensions: [{
-        id: 'blockeditordemo', name: 'Block editor demo', version: '1.0.0', url: sampleURL,
-        sha256: createHash('sha256').update(source).digest('hex'),
-        dependencies: [], unsandboxed: 'required'}]}, headers: {'access-control-allow-origin': '*'}}));
-    await page.context().route(sampleURL, route => route.fulfill({body: source,
-        headers: {'content-type': 'application/javascript', 'access-control-allow-origin': '*'}}));
-    await page.getByText('ファイル', {exact: true}).click();
-    await page.getByRole('button', {name: '機能拡張…', exact: true}).click();
-    await page.getByRole('button', {name: '機能拡張の追加', exact: true}).click();
-    await page.getByText('TurboWarp Plus', {exact: true}).click();
-    const selection = page.locator('.twextsec-review');
-    const row = selection.locator('.twextsec-row[data-key="blockeditordemo"]');
-    await row.getByRole('checkbox').check();
-    // A catalog row is trusted, so how it runs is stated rather than asked; how it loads is chosen.
-    await expect(row.locator('.twextsec-trusted')).toBeVisible();
-    await row.locator('input[name="loading-blockeditordemo"][value="embedded-file"]').check();
-    await selection.getByRole('button', {name: '追加', exact: true}).click();
-    // A catalog-listed extension is trusted like TurboWarp's official gallery: no separate approval.
-    await expectSampleLoaded(page);
-    await expect(page.getByTestId('tw-plus-permission')).toHaveCount(0);
-    await expect(selection).toHaveCount(0);
-    await page.locator('.scratchCategoryMenuItemLabel').filter({hasText: 'Block editor demo'})
-        .click();
-    const block = page.locator('.blocklyFlyout .blocklyDraggable').filter({hasText: 'scene properties'});
-    await expect(block).toHaveCount(1);
-    // Hover waits for the flyout animation before measuring the drag origin.
-    await block.hover();
-    const from = await block.boundingBox();
-    const workspace = await page.locator('.blocklySvg').first()
-        .boundingBox();
-    const palette = await page.locator('.blocklyFlyout').boundingBox();
-    expect(from).not.toBeNull();
-    expect(workspace).not.toBeNull();
-    expect(palette).not.toBeNull();
-    await page.mouse.move(from.x + 100, from.y + 20);
-    await page.mouse.down();
-    // Drop below the open palette: a drag that stays inside it keeps the palette open over the block,
-    // and where the palette opens depends on which categories come before this one.
-    await page.mouse.move(workspace.x + (workspace.width * 0.65),
-        Math.max(workspace.y + 200, palette.y + palette.height + 40), {steps: 20});
-    await page.mouse.up();
-    await expect(page.locator('.blocklySvg > .blocklyWorkspace > .blocklyBlockCanvas > .blocklyDraggable').filter({
-        hasText: 'scene properties'
-    })).toHaveCount(1);
+    const code = await response.body();
+    const source = code.toString('utf8');
+    const bytes = await buildProject({
+        id: 'blockeditordemo', code, sha256: createHash('sha256').update(code).digest('hex'),
+        embeddedPath: 'extensions/block-editor.js',
+        stageBlocks: {scene: {opcode: 'blockeditordemo_scene', next: null, parent: null,
+            inputs: {PROPERTIES: [1, [10, JSON.stringify({label: 'Opening', duration: 2})]]},
+            fields: {}, shadow: false, topLevel: true, x: 40, y: 40}}
+    });
+    await page.addInitScript(() => {window.showSaveFilePicker = undefined;});
+    await openProjectURL(page, baseURL, bytes);
+    await approveSample(page, source);
+    await selectBackdrop(page);
     return source;
 };
 
@@ -115,7 +91,6 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
     page, baseURL, browser, contextOptions, userAgent, viewport, locale, evidence
 }, testInfo) => {
     evidence.stage('sample-ui');
-    await start(page);
     const source = await loadSample(page, baseURL);
     await expect(page.locator(iconSelector)).toHaveCount(1);
     await openEditor(page);
@@ -188,7 +163,7 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
     const reloadedContext = await browser.newContext({...contextOptions, baseURL, userAgent, viewport, locale});
     let reloadSucceeded = false;
     try {
-        const reloaded = await reloadedContext.newPage();
+        let reloaded = await reloadedContext.newPage();
         evidence.observe(reloaded);
         if (testInfo.project.name === 'chromium-file-input') {
             await start(reloaded);
@@ -196,8 +171,12 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
             expect(await reloaded.evaluate(() => navigator.userAgent)).toContain('Android');
             await reloaded.getByText('ファイル', {exact: true}).click();
             const chooserPending = reloaded.waitForEvent('filechooser');
+            const newProjectPending = reloadedContext.waitForEvent('page');
             await reloaded.getByText('SB3ファイルを開く…', {exact: true}).click();
             await (await chooserPending).setFiles(filename);
+            // File opens in a separate Editor tab, so check approval and restored data there.
+            reloaded = await newProjectPending;
+            evidence.observe(reloaded);
         } else if (testInfo.project.name === 'chrome-macos-native') {
             await start(reloaded);
             expect(await reloaded.evaluate(() => typeof window.showOpenFilePicker)).toBe('function');
@@ -216,15 +195,11 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
             }),
             contentType: 'application/json'});
         } else {
-            const url = new URL('editor.html', baseURL);
-            url.search = new URLSearchParams({
-                lang: 'ja',
-                project_url: `data:application/octet-stream;base64,${bytes.toString('base64')}`
-            }).toString();
-            await reloaded.goto(url.href);
+            await openProjectURL(reloaded, baseURL, bytes);
         }
         evidence.stage('extension-security');
         await approveSample(reloaded, source);
+        await selectBackdrop(reloaded);
         await expect(reloaded.locator(iconSelector)).toHaveCount(1);
         evidence.stage('restored-form');
         await openEditor(reloaded);
@@ -264,7 +239,6 @@ test('専用エディターの検証・保存・キャンセルと実sb3の保�
 
 test('通常起動で専用エディターを利用できる', async ({page, baseURL, evidence}) => {
     evidence.stage('standard-default');
-    await start(page);
     await loadSample(page, baseURL);
     await expect(page.locator(iconSelector)).toHaveCount(1);
     await openEditor(page);

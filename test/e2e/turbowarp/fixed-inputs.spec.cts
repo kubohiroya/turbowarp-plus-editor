@@ -2,18 +2,18 @@ const {test, expect, editorDialog, approveProjectExtensions} = require('./fixtur
 const fixture = require('./fixed-project.cts');
 
 const wording = {
-    en: {title: 'Edit block', security: 'Extension Security', checkbox: 'Run without sandbox', allow: 'Allow', save: 'Save', cancel: 'Cancel',
+    en: {title: 'Edit block', update: 'Update', cancel: 'Cancel',
         error: 'Check this value before saving.', readOnly: 'This input cannot be edited safely.',
         unverified: 'The expression is retained without evaluation. Its runtime validity has not been checked.',
         inactive: 'Hidden edits are retained in this dialog and will not be saved while hidden.', picker: 'COLOR color picker'},
-    ja: {title: 'ブロックを編集', security: '拡張機能のセキュリティ', checkbox: 'サンドボックスなしで実行する', allow: '許可する', save: '保存', cancel: 'キャンセル',
+    ja: {title: 'ブロックを編集', update: '更新', cancel: 'キャンセル',
         error: '保存する前に値を確認してください。', readOnly: 'この入力は編集できません。', unverified: '式の実行時の有効性は未検証です。',
         inactive: '非表示の編集内容はこの画面で保持されます。非表示のまま保存しても反映されません。', picker: 'COLOR 色を選択'}
 };
 const dialog = editorDialog;
 const load = async (page, baseURL, lang) => {
     const url = new URL('editor.html', baseURL);
-    url.search = new URLSearchParams({lang, project_url: await fixture.project()}).toString().toString();
+    url.search = new URLSearchParams({lang, project_url: await fixture.project()}).toString();
     await page.goto(url.href);
     await approveProjectExtensions(page, [fixture.source], lang);
     await expect(page.locator('.blocklyBlockCanvas [data-id="fixed-root"]')).toHaveCount(1);
@@ -47,7 +47,7 @@ for (const lang of ['en', 'ja']) test(`fixed native fields speak the GUI's ${lan
     await number.fill('1e');await expect(number).toHaveAttribute('aria-invalid', 'true');
     const describedBy = await number.getAttribute('aria-describedby');
     expect(describedBy).toBeTruthy();await expect(view.locator(`[id="${describedBy.split(/\s+/).find(id => id.endsWith('-error'))}"]`)).toHaveText(text.error);
-    await expect(view.getByRole('button', {name: text.save, exact: true})).toBeDisabled();
+    await expect(view.getByRole('button', {name: text.update, exact: true})).toBeDisabled();
     await number.fill('10');
     await view.getByRole('textbox', {name: 'TIMEOUT', exact: true}).fill('20');
     await view.getByRole('combobox', {name: 'MODE', exact: true}).selectOption('"forever"');
@@ -64,7 +64,7 @@ test('ordinary GUI startup exposes source and fixed editors without URL feature 
     expect(Array.from(new URL(page.url()).searchParams.keys()).sort()).toEqual(['lang', 'project_url']);
     await expect(page.locator('[data-block-editor-icon]')).toHaveCount(1);
     await open(page, 'en');
-    await expect(dialog(page, 'en').getByRole('button', {name: 'Save', exact: true})).toBeVisible();
+    await expect(dialog(page, 'en').getByRole('button', {name: wording.en.update, exact: true})).toBeVisible();
     await dialog(page, 'en').getByRole('button', {name: 'Cancel', exact: true}).click();
     expect((await raw(page)).evaluations).toBe(0);
 });
