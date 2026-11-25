@@ -35,7 +35,7 @@
 | 25 | [2193–2295](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2193-L2295) | the default Dockview splits one sprite editor and restores each view section | workbench / sprite-panes | 接続保持 | 同一 sprite の編集 section を分割し復元する |
 | 26 | [2296–2395](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2296-L2395) | sprite and backdrop menus open and select numbered Dockview tabs | workbench / GUI | 接続保持 | sprite/backdrop メニューと target・番号付き tab の選択 |
 | 27 | [2396–2575](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2396-L2575) | the Dockview asset connection restores the native costume and sound selection per pane | sprite-panes / workbench / GUI | 接続保持 | native costume/sound 選択を pane ごとに戻す |
-| 28 | [2576–2783](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2576-L2783) | the Dockview variables pane lists only data owned by the selected target | sprite-panes / code-views | 分離候補 | VM target の切替を保持し、所有データの表示行列を分ける |
+| 28 | [2576–2783](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2576-L2783) | the Dockview variables pane lists only data owned by the selected target | sprite-panes / code-views | 一部分離・候補あり | 作成ダイアログの詳細を単独 browser 2件へ。実 VM の結線を保持し、所有対象・種類・cloud 状態の表示行列は #823 で引き続き分類 |
 | 29 | [2784–2896](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2784-L2896) | the variables table sorts mixed rows and saves list items for the selected target | sprite-panes | 一部分離 | sort/list editor の詳細を単独browser2件へ。実 VM の参照数・スプライト/クローン/グローバルリスト更新・monitor接続を保持 |
 | 30 | [2897–2943](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2897-L2943) | variable counts open the project search at the selected kind of access | sprite-panes / code-views | 接続保持 | 変数アクセス種別から実 project search へ |
 | 31 | [2944–3080](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2944-L3080) | clone pages edit the selected runtime instance and fall back when it disappears | sprite-panes / VM | 一部分離 | pagination の境界・配置・選択保持を単独browser2件へ。実VMのclone編集・定義追加・monitor・消滅と停止を保持 |
@@ -133,3 +133,14 @@ Editorは149行から66行へ縮小し、実run-viewの表示menu、実canvasと
 workbenchのビルド、新1件+関連既存5件のbrowser6件、対象型検査、Editor型検査・責務境界2件が成功。workbench製品ソース85ファイルは固定0.39.0と一致し、npm archive230ファイルにtest/テスト用ライセンス/node_modulesが含まれないことを確認した。
 
 依存順とDoDはworkbenchの公開・既存browser CIで新1件をskipなしに実行/成功・Squash Merge → Editorの縮小を公開・CI成功・Squash Merge → 作業環境整理・#741への記録。製品・依存固定・GUI・起動フラグ・CI設定は変更しない。元browserファイルは通常CI対象外なので、この83行削減による通常CI時間短縮は見込まない。#741全体の時間比較は未実施。切り戻しはEditorの元149行とケース名の復元を先に行い、必要なら上流の追加テストと文書をrevertする。
+
+
+## 変数作成ダイアログの詳細の切り出し（#823）
+
+28番の見た目、ローカルのリストタブのキー操作、グローバルのエラー表示とクラウド選択の初期化を、sprite-panes の `test/editor-variable-dialogs.browser.ts` の2件で検証する。GPL-3.0-or-later と既存のテスト用ライセンスを保持し、公開 Windows 0.2.3 の CSS はテスト専用依存とする。リストの種類アイコンは上流の既存 `editor-variable-details.browser.ts` でも確認する。
+
+Editor は現行のモニター名・ステージ説明を使い、対象切り替え、ローカル・グローバル・クラウド変数とリストの作成、重複エラー、実 VM の定義とモニターの結線を残す。207行から175行に縮小し、他38件と共通 fixture、製品コード・GUI・Editor の固定依存・通常 CI 設定は変えない。所有対象・種類・cloud 状態の表示行列の分類は別途残る。
+
+引き継ぎ時、両 repo の main が作業ベース（Editor `6e8767a`、sprite-panes `1ce1abd`）と一致することを照合。上流の build と関連ブラウザーテスト6件、Editor の固定ビルド（site `6e8767a`）の縮小後ケース1件、型検査・責務境界2件をローカルで再確認した。公開 CI ではまだ検証していない。元 browser ファイルは通常 CI 対象外で、この差分による通常 CI 時間短縮は計上しない。
+
+上流の既存 CI で新2件の実行・成功（skip なし）を確認してから上流をマージし、その後 Editor 側を公開・検証する。切り戻す場合はまず Editor の元の検証範囲とケース名を復元し、現行 DOM に合わせた名称は維持する。必要なら上流の追加テスト・テスト専用依存を戻す。
