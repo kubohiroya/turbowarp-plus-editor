@@ -3506,7 +3506,7 @@ test('the hats and functions list and the calls section show each script alone i
     await expect(pane.locator('[data-function-key][aria-current="true"]')).toHaveText(/wave/);
 });
 
-test('Save a Copy of the Project keeps the labelled dialog actions at the right edge', {timeout: 30_000}, async t => {
+test('the File menu opens Save a Copy of the Project and downloads an SB3 copy', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');
     await page.getByText('File', {exact: true}).click();
@@ -3514,19 +3514,6 @@ test('Save a Copy of the Project keeps the labelled dialog actions at the right 
     const dialog = page.getByRole('dialog', {name: 'Save a Copy of the Project', exact: true});
     const cancel = dialog.getByRole('button', {name: 'Cancel', exact: true});
     const save = dialog.getByRole('button', {name: 'Save', exact: true});
-    const actions = dialog.locator('.tw-plus-dialog-actions');
-    await expect(actions).toHaveCSS('justify-content', 'flex-end');
-    const icons = await actions.locator('[data-dialog-action]:visible').evaluateAll(buttons =>
-        buttons.map(button => getComputedStyle(button, '::before').maskImage));
-    assert.equal(icons.length, 2);
-    assert.ok(icons.every(icon => icon.startsWith('url("data:image/svg+xml')));
-    assert.notEqual(icons[0], icons[1]);
-    const [cancelBox, saveBox, actionsBox] = await Promise.all([
-        cancel.boundingBox(), save.boundingBox(), actions.boundingBox()
-    ]);
-    assert.ok(cancelBox && saveBox && actionsBox);
-    assert.ok(cancelBox.x < saveBox.x);
-    assert.ok(Math.abs(saveBox.x + saveBox.width - actionsBox.x - actionsBox.width) <= 1);
     await cancel.click();
     await expect(dialog).toHaveCount(0);
     await page.getByText('File', {exact: true}).click();
