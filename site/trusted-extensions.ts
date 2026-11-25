@@ -16,7 +16,6 @@ import {parseExtensionCatalog} from '@kubohiroya/turbowarp-extension-security-di
 
 import {plusCatalog} from './plus-catalog.ts';
 
-const SHA256 = /^[0-9a-f]{64}$/;
 const empty = Object.freeze({urls: new Set(), digests: new Map(), listedDigests: new Set()});
 
 // The catalog this distribution ships. A read that fails reaches the same place as a catalog that
@@ -50,26 +49,14 @@ export const createPlusTrustedCatalog = ({
             pending = Promise.resolve()
                 .then(() => readCatalog(controller.signal))
                 .then(data => {
-                    const urls = new Set(parseExtensionCatalog(data).map(entry => entry.url));
-                    const digests = new Map();
-                    for (const item of data.extensions) {
-                        if (typeof item.sha256 === 'string' && SHA256.test(item.sha256)) {
-                            digests.set(new URL(item.url).href, item.sha256);
-                        }
-                        // One release may ship an extension as several builds (authoring and
-                        // playback, say); the catalog lists the others as variants, each pinned to
-                        // its own bytes. A variant without a valid HTTPS address and digest is not one.
-                        for (const variant of Array.isArray(item.variants) ? item.variants : []) {
-                            if (typeof variant?.sha256 !== 'string' || !SHA256.test(variant.sha256)) continue;
-                            let url;
-                            try {
-                                url = new URL(variant.url);
-                            } catch {
-                                continue;
-                            }
-                            if (url.protocol !== 'https:' || url.username || url.password || url.hash) continue;
+                    const urls = new Set<string>();
+                    const digests = new Map<string, string>();
+                    for (const item of parseExtensionCatalog(data)) {
+                        urls.add(item.url);
+                        if (item.sha256) digests.set(item.url, item.sha256);
+                        for (const variant of item.variants ?? []) {
                             urls.add(variant.url);
-                            digests.set(url.href, variant.sha256);
+                            digests.set(variant.url, variant.sha256);
                         }
                     }
                     listedDigests.clear();
