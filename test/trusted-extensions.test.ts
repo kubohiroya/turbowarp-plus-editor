@@ -75,15 +75,24 @@ test('every build a catalog item lists as a variant is trusted by its own addres
     const playback = 'https://cdn.example.test/npm/@owner/listed@1.0.0/dist/listed-playback.js';
     const variantDigest = 'd'.repeat(64);
     const trusted = createPlusTrustedCatalog({readCatalog: async () => catalog({sha256: digest, variants: [
-        {url: playback, sha256: variantDigest},
-        {url: 'http://cdn.example.test/insecure.js', sha256: 'e'.repeat(64)},
-        {url: 'https://cdn.example.test/short.js', sha256: 'f'}
+        {url: playback, sha256: variantDigest}
     ]})});
     assert.equal(await trusted.isTrustedCode(code({type: 'embedded-file', path: 'extensions/listed.js'}, variantDigest)), true);
     assert.equal(await trusted.isTrustedCode(code({type: 'remote-cacheable', url: playback}, variantDigest)), true);
     assert.equal(await trusted.isTrustedCode(code({type: 'remote-cacheable', url: playback}, digest)), false);
     assert.equal(await trusted.isTrustedURL(playback), true);
-    assert.equal(await trusted.isTrustedURL('http://cdn.example.test/insecure.js'), false);
-    assert.equal(await trusted.isTrustedCode(code({type: 'embedded-file', path: 'x.js'}, 'e'.repeat(64))), false);
     assert.equal(trusted.listedDigests.has(variantDigest), true);
+});
+
+test('a malformed variant prevents a catalog from granting trust', async () => {
+    for (const invalid of [
+        {url: 'http://cdn.example.test/insecure.js', sha256: 'e'.repeat(64)},
+        {url: 'https://cdn.example.test/short.js', sha256: 'f'}
+    ]) {
+        const trusted = createPlusTrustedCatalog({readCatalog: async () => catalog({sha256: digest, variants: [invalid]})});
+        assert.equal(await trusted.isTrustedURL(listed), false);
+        assert.equal(await trusted.isTrustedURL(invalid.url), false);
+        assert.equal(await trusted.isTrustedCode(code({type: 'embedded-file', path: 'extensions/listed.js'}, digest)), false);
+        assert.equal(trusted.listedDigests.size, 0);
+    }
 });
