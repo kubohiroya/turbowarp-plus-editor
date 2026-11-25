@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|
 | 1 | [71–106](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L71-L106) | the browser tab follows the current project title | workbench | 接続保持 | 入力・ファイルを開く・新規作成からブラウザー題名へ |
 | 2 | [107–146](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L107-L146) | the unsaved marker stays by the project name and its hint fits in the viewport | workbench | 一部分離 | VM 変更・タイトル幅と隣接・保存メニューを保持。hint の hover/focus・狭幅表示は単独 host へ |
-| 3 | [147–334](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L147-L334) | the real editor resizes both dividers and preserves editing and stage input | workbench / windows | 分離候補 | GUI 編集・stage input を保持し、divider の幾何・テーマ・復元の詳細を分ける |
+| 3 | [147–334](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L147-L334) | the real editor resizes both dividers and preserves editing and stage input | workbench / windows | 一部分離 | grip の幾何・keyboard の詳細を workbench へ。GUI テーマ・Blockly resize/edit・stage input・SB3 往復を保持 |
 | 4 | [335–349](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L335-L349) | the GUI keeps its original editor without a host connection | Editor / GUI | 接続保持 | 接続口を使わない GUI の従来動作 |
 | 5 | [350–421](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L350-L421) | the paint toolbar opens the project font list from costumes and backdrops | fonts / GUI | 分離候補 | costume/backdrop のフォント接続を保持し、追加・選択の詳細を分ける |
 | 6 | [422–455](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L422-L455) | the Plus File menu groups project settings and opens the extension library | workbench / security-dialog | 接続保持 | File メニューから作品設定・拡張ライブラリーへ |
@@ -81,3 +81,17 @@ Editor は初期の実グラフ、操作欄からの関数矢印の非表示・�
 検証は sprite-panes のビルド・追加2件を含む図の関連 browser 11件、workbench の既存2件、Editor 型検査・責務境界2件と実 Editor の対象ケース1件。Editor の対象は元の行列の DOM 修正後と縮小後の両方をヘッドレスで実行し、fail/skip 0 だった。Editor `fbd709f`・GUI `14477c5`・VM `f3d3811`・Packager `d690225` を完成済み build-info と照合した。
 
 依存順は sprite-panes の追加テストの CI 成功・マージ → Editor の縮小。製品コード・依存固定・GUI・起動フラグ・CI コマンドは変更しない。元 browser ファイルは通常 CI の対象外のため、この縮小による通常 CI の時間短縮は見込まない。切り戻しは Editor の元ケースの確認範囲を先に戻す。旧 DOM セレクターには戻さず、必要なら上流の追加テストと文書を revert する。
+
+## divider の grip と keyboard 詳細の切り出し
+
+3番の grip の縦横寸法・radial-gradient、keyboard の16px移動と行の最小値・Enter 復元を、workbench の `test/editor-splitter-details.browser.ts` の2件へ移す。元の期待値を保持し、host のアクセント変更と両軸の Home/End 境界・Enter 復元も検証する。既存の公開 `createLayout`・`editor.css` を使う example と browser host を再利用し、既存5件の本文は内容不変で host だけを共通ファイルへ抽出する。example の任意 `stageHeight` query は復元点を最小値より大きくするための設定で、従来の既定180pxは保持する。GPL-3.0-or-later と既存のテスト用ライセンスを保持し、既存 browser CI が GUI checkout・VM・Editor ビルド・環境変数なしで実行する。
+
+Editor は元の操作と前提を保持し、使わなくなった grip helper と詳細の assertion だけ計13行を除く。GUI の Accent 設定から divider への反映、pointer/keyboard resize から Blockly への反映、stage の縦横比と入力、block drag/scroll/undo/redo、Costumes/Code の往復、SB3 の保存・再読込と splitter 無効時の確認を残す。残る38件と共通 fixture は内容不変。
+
+調査開始時の Editor main `8f530447f30ca4d40ad54e5560678e05d2aa4399` の完成済み固定ビルドで元ケースを実行すると、従来レイアウト `twPlusStandardLayout=0` に存在しない Plus 専用の「Save a Copy」を探して失敗した。実際の File メニューの「Save to your computer」に保存操作を合わせると、詳細削減前の全検証と削減後のケースの両方が、実ダウンロード・ZIP 内容・再読込まで成功した。保存処理・成果物・共通 route は変更していない。GUI `14477c5`・VM `f3d3811`・Packager `d690225` と Editor revision を `build-info.json` に照合した。
+
+公開前に main が `cd135d8a668a5843d59ed84707419e20c4f7d630`（#818）へ進んだため、承認済み差分を内容不変で rebase した。GUI `60b87e2`・VM `88a2c06`・Packager `d690225` で build/build:pages を再実行し、完成済み build-info の site revision `486e790221da09e5f78849066fd059234e833e57` と照合した。新しい固定ビルドでも削減前の全検証と削減後の対象ケースはそれぞれ1 pass / fail・skip 0だった。後続の文書追記だけでは成果物を再ビルドしない。
+
+ローカル検証は workbench ビルド、新2件と既存5件の browser テスト、追加ファイルの型検査、Editor 型検査と責務境界2件、実 Editor の対象1件。workbench 製品 src 85ファイルは Editor 固定0.39.0と一致し、npm archive 230ファイルにテスト・helper・テスト用ライセンス・node_modules が含まれないことを確認した。
+
+依存順と DoD は workbench の push・PR・既存 CI 成功・Squash Merge → Editor の縮小を公開・既存 CI 成功・Squash Merge → 作業環境整理・#741への記録。製品コード・依存固定・GUI・起動フラグ・CI コマンドは変更しない。この browser ファイルは通常 CI の対象外なので、この13行削減による通常 CI の時間短縮は見込まない。#741全体の CI 所要時間比較は未実施。切り戻しは Editor の詳細13行を先に復元し、必要なら workbench の追加テスト・host 抽出・example 設定・文書を revert する。従来レイアウトに合わせた保存操作は保持する。
