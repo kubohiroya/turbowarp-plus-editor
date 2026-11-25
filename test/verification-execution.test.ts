@@ -112,6 +112,13 @@ test('the stable release publisher is gated by a full check of the tagged commit
     assert.equal(jobs['verify-stable'].with.release_revision, '${{ github.sha }}');
     assert.equal(jobs.release.needs, 'verify-stable');
     assert.match(jobs.release.if, /needs\.verify-stable\.result == 'success'/);
+    assert.match(jobs.release.if, /needs\.verify-stable\.result == 'skipped'/);
+    for (const [command, check] of [['npm test', 'unit-tests'], ['npm run test:e2e:infrastructure', 'infrastructure-tests']]) {
+        assert.equal(ci.jobs.check.steps.find(step => step.id === check)?.run, command);
+        const repeated = jobs.release.steps.filter(step => step.run === command);
+        assert.equal(repeated.length, 1);
+        assert.equal(repeated[0].if, "needs.verify-stable.result == 'skipped'");
+    }
     const preflight = jobs.release.steps.findIndex(step => step.run?.includes('release-verification.ts'));
     const pack = jobs.release.steps.findIndex(step => step.id === 'pack');
     assert.ok(preflight >= 0 && preflight < pack);

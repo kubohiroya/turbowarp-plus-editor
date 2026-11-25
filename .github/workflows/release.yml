@@ -43,8 +43,12 @@ jobs:
           version: 11.28.8
       - run: |
           npm ci
+      # Stable tags already passed both suites in verify-stable on this exact commit.
+      # Prerelease tags skip that job, so the publisher still runs both suites for them.
       - run: npm test
+        if: needs.verify-stable.result == 'skipped'
       - run: npm run test:e2e:infrastructure
+        if: needs.verify-stable.result == 'skipped'
       - name: Require a matching release tag on main
         env:
           FULL_VERIFICATION_RESULT: ${{ needs.verify-stable.result }}
