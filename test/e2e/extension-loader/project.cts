@@ -11,7 +11,10 @@ const bytes = Buffer.from(source);
 const digest = createHash('sha256').update(bytes).digest('hex');
 const remoteURL = 'https://plus-fixture.invalid/extension.js';
 async function project({type = 'embedded-file', code = bytes, sha256 = digest, id = 'plusfixture', url = remoteURL,
-    schemaVersion = 1, extraManifest = {}, extensionURLs = {}, source = undefined} = {}) {
+    schemaVersion = 1, extraManifest = {}, extensionURLs = {}, source = undefined, execution = 'unsandboxed',
+    embeddedPath = 'extensions/plusfixture.js',
+    stageVariables = {}, stageBlocks = {fixture: {opcode: `${id}_value`, next: null, parent: null, inputs: {}, fields: {},
+        shadow: false, topLevel: true, x: 40, y: 40}}} = {}) {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"></svg>';
     const assetId = createHash('md5').update(svg).digest('hex');
     // `embedded-data` carries its bytes as the address a standard TurboWarp host loads; `source`
@@ -19,18 +22,17 @@ async function project({type = 'embedded-file', code = bytes, sha256 = digest, i
     if (type === 'embedded-data' && !extensionURLs[id]) {
         extensionURLs = {...extensionURLs, [id]: `data:text/javascript;base64,${code.toString('base64')}`};
     }
-    const spec = {id, execution: 'unsandboxed', sha256,
+    const spec = {id, execution, sha256,
         source: source || (type.startsWith('remote-') ? {type, url} :
-            type === 'embedded-data' ? {type} : {type, path: 'extensions/plusfixture.js'})};
-    const json = {targets: [{isStage: true, name: 'Stage', variables: {}, lists: {}, broadcasts: {}, comments: {},
-        blocks: {fixture: {opcode: `${id}_value`, next: null, parent: null, inputs: {}, fields: {},
-            shadow: false, topLevel: true, x: 40, y: 40}}, currentCostume: 0,
+            type === 'embedded-data' ? {type} : {type, path: embeddedPath})};
+    const json = {targets: [{isStage: true, name: 'Stage', variables: stageVariables, lists: {}, broadcasts: {}, comments: {},
+        blocks: stageBlocks, currentCostume: 0,
         costumes: [{name: 'Blank', assetId, dataFormat: 'svg', md5ext: `${assetId}.svg`, rotationCenterX: 240, rotationCenterY: 180}],
         sounds: [], volume: 100, layerOrder: 0, tempo: 60, videoTransparency: 50, videoState: 'off', textToSpeechLanguage: null}],
         monitors: [], extensions: [id], extensionURLs, meta: {semver: '3.0.0', vm: '2.0.0', agent: 'Plus loader E2E'},
         turboWarpPlus: {schemaVersion, extensions: [spec], ...extraManifest}};
     const zip = new Zip().file('project.json', JSON.stringify(json)).file(`${assetId}.svg`, svg);
-    if (type === 'embedded-file') zip.file('extensions/plusfixture.js', code);
+    if (type === 'embedded-file') zip.file(embeddedPath, code);
     return zip.generateAsync({type: 'nodebuffer', compression: 'DEFLATE'});
 }
 module.exports = {project, source, bytes, digest, remoteURL};
