@@ -15,7 +15,7 @@
 | 5 | [350–421](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L350-L421) | the paint toolbar opens the project font list from costumes and backdrops | fonts / GUI | 一部分離 | native GUIのシステムフォント追加・選択をGUIへ。costume/backdrop・classic起動の実ボタン結線を保持 |
 | 6 | [422–455](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L422-L455) | the Plus File menu groups project settings and opens the extension library | workbench / security-dialog | 接続保持 | File メニューから作品設定・拡張ライブラリーへ |
 | 7 | [456–514](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L456-L514) | classic startup hides Plus additions while preserving the original File commands | Editor / GUI / workbench | 接続保持 | classic 起動フラグと既存 GUI メニュー |
-| 8 | [515–566](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L515-L566) | the first menu row orders the Plus logo, project title, File, Edit, and search | workbench / GUI | 一部分離・候補あり | ロゴの表示・リンクはWorkbenchへ。native title/File/Edit/searchを含む実行・座標関係はEditor。幾何のさらなる分離可否は追跡。 |
+| 8 | [515–566](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L515-L566) | the first menu row orders the Plus logo, project title, File, Edit, and search | workbench / GUI | 一部分離 | Workbench 内部の情報メニューは移管済み。先頭行は GUI と実検索の接続として保持 |
 | 9 | [567–659](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L567-L659) | extension controls sit at the end of the menu bar and the stage can still shrink | workbench / Editor controls-dock | 接続保持 | 拡張 controls API と GUI メニューバー・stage sizing |
 | 10 | [660–729](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L660-L729) | the enabled debugger opens from its own menu bar button, outside the extension controls | workbench / GUI addons | 接続保持 | debugger addon と専用メニューボタン |
 | 11 | [730–872](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L730-L872) | the Plus project menu relocates display settings, runtime actions, and settings dialogs | workbench / GUI | 一部分離 | 日英の項目順とhost port操作はWorkbench。実GUIの設定・言語/テーマ、VM切替・dialog・別タブはEditor |
@@ -180,3 +180,9 @@ EditorではPlusボタンから costume/backdrop の各フォント画面が開�
 ## 起動時の実行画面メニュー（#823・分類14）
 
 サイズ指定がない場合のコマンド一覧、表示・非表示それぞれの操作と日英文言は [Workbench #155](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/155) が所有する。[上流CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45715128082) で4ケースが実行・成功（skip 0）。Editor は起動フラグの選択、実 Blockly・sprite grid・canvas の配置と操作、実行を止めず同じ VM/画面に戻る接続を保つ。残した幾何条件は各パーツの単独の見た目ではなく、実 GUI の配置・入力と組み合わせた条件であり、別途最終監査の対象とする。この変更の切り戻しは Editor の同差分を先に revert。通常 Editor CI の対象外なので時短の計上なし。
+
+## メニュー先頭行（#823・分類8）
+
+Scratch GUI の menu-bar は作品名、File、Edit の項目と行の配置を所有し、同じ行に Workbench の作品情報と検索コンポーネントをホスト経由で挿入する。検索入力の高さは Workbench の CSS が決める。5要素の一列配置・非重複・中央揃えは個々の部品の見た目ではなく、異なる責務を併せたときの接続条件である。ダミーの入力に置き換えた GUI 単独テストでは、実検索の高さ・挿入位置・ショートカットの到達先を検出できない。
+
+情報メニューの中身は [Workbench #153](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/153) に分けた。Editor には実際の行の相対位置、検索欄を二重に出さないこと、作品タイトルと検索へのキーボード経路、情報メニューを開けることを保持する。製品コードとテスト定義はこの判断で変更しない。
