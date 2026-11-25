@@ -3233,7 +3233,7 @@ test('editor pane headings and message diagrams follow the active target', {time
     await expect(nodes.first()).toHaveCSS('border-top-width', '1px');
 });
 
-test('the calls section independently toggles function calls and messages and opens a receiver in another target', {timeout: 60_000}, async t => {
+test('the real VM call graph connects its filters and opens a receiver in another target', {timeout: 60_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=en');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage &&
@@ -3266,10 +3266,10 @@ test('the calls section independently toggles function calls and messages and op
     const section = (name: string) => toolbar.getByRole('tab', {name, exact: true});
     await section('Calls').click();
     const graph = page.getByRole('region', {name: 'Calls', exact: true}).locator('figure');
-    const calls = graph.getByRole('button', {name: 'Function calls', exact: true});
-    const messages = graph.getByRole('button', {name: 'Messages', exact: true});
-    const callEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-relation="call"]');
-    const messageEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-relation="message"]');
+    const calls = toolbar.getByRole('button', {name: 'Functions', exact: true});
+    const messages = toolbar.getByRole('button', {name: 'Messages', exact: true});
+    const callEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-script-relation="function"]');
+    const messageEdges = graph.locator('.tw-sprite-functions__edges path[data-edge][data-script-relation="message"]');
     const both = async () => {
         await expect(callEdges).toHaveCount(1);
         await expect(messageEdges).toHaveCount(1);
@@ -3277,27 +3277,18 @@ test('the calls section independently toggles function calls and messages and op
     await expect(calls).toHaveAttribute('aria-pressed', 'true');
     await expect(messages).toHaveAttribute('aria-pressed', 'true');
     await both();
-    await expect(graph.locator('.tw-sprite-functions__edge-label')).toHaveText('ready');
+    await expect(graph.locator('.tw-sprite-functions__edge-label[data-script-relation="message"] text')).toHaveText('💬 ready');
     const before = await page.evaluate(() => vm.toJSON());
     await calls.click();
     await expect(callEdges).toHaveCount(0);
     await expect(messageEdges).toHaveCount(1);
-    await messages.click();
-    await expect(messageEdges).toHaveCount(0);
     await calls.click();
-    await expect(callEdges).toHaveCount(1);
-    await expect(messageEdges).toHaveCount(0);
-    await messages.click();
     await both();
     assert.equal(await page.evaluate(() => vm.toJSON()), before, 'arrow visibility does not edit the project');
 
-    await messages.click();
     await section('Hats and functions').click();
     await section('Calls').click();
-    await expect(messages).toHaveAttribute('aria-pressed', 'false');
-    await expect(messageEdges).toHaveCount(0);
-    await messages.click();
-    await graph.getByRole('button', {name: 'Top to bottom (TD)', exact: true}).click();
+    await toolbar.getByRole('button', {name: 'Flow: Top to bottom (TD)', exact: true}).click();
     await both();
     const receiver = graph.locator('[data-script-key]');
     await expect(receiver).toHaveCount(1);
