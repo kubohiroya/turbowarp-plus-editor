@@ -100,6 +100,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/extension-host/project-uri.test.ts` の機能テスト5件 | Loader の `test/scratch-vm/editor-project-uri.test.ts` | 同ファイルの実 VM での URI 付与・保持と開く際のレビューの結線確認1件 |
 | `test/extension-host/project-cache.test.ts` の保存時 URI 機能テスト5件 | Loader の `test/scratch-vm/editor-save-address.test.ts` | 同ファイルの実 VM・HTTPS と URI、作品別キャッシュ、カタログ、fallback、単一 HTML の接続確認5件 |
 | `test/extension-host/retry-classification.test.ts` の判定行列1件（成功＋失敗9種類） | Loader の `test/scratch-vm/editor-retry-classification.test.ts` | `authoring.test.ts` の実 VM と authoring の接続、`host.test.ts` の再試行通知と404の接続確認 |
+| `test/stage-controls.test.ts` の機能テスト3件 | workbench の `test/stage-controls.test.ts` | 同ファイルのサービスを GUI に渡す接続確認1件 |
 | `test/extension-host/babel-rollback.test.ts`（native/webpack4 の6件） | Loader の `test/scratch-vm/editor-babel-rollback.test.ts` | `authoring.test.ts` の実 VM と登録失敗の結線、GUI の host 接続確認と既存 Editor ビルド |
 | `test/extension-host/unified-review.test.ts` の表示名詳細4パターン | security-dialog の `test/editor-verified-review-names.test.cts` | 同ファイルに表示名接続1パターンを含む統合確認8件を保持 |
 
@@ -157,6 +158,8 @@ Editor の `project-cache.test.ts` には実 VM・HTTPS・URI の往復、作品
 
 native/webpack4 変換後の登録拒否・cleanup 失敗・実 VM registrar の再試行6件を Loader へ移管する。検証本体・fixture と IE11/modules:false の Babel 変換設定を維持し、core と registrar を同じ公開 built entry から解決する。Babel core `7.29.7`・preset-env `7.14.8` は固定 GUI `14477c5` の lockfile と同じ版をテスト専用依存に固定する。VM は Loader の既存固定を利用する。移管先の既存 `npm test` と CI が GUI checkout なしで実行し、元の GPL-3.0-or-later を保持する。上流 CI 成功とマージを Editor の削除の公開条件とする。
 Editor の `authoring.test.ts`・`host.test.ts` と GUI の host 接続確認、既存の `test:extension-host`・ビルドの検証を保持する。製品コード・依存固定・GUI・CI コマンドは変更しない。CI 時間短縮量は未測定。切り戻しは Editor の元テストを復元し、必要なら Loader の追加テスト・Babel devDependencies・lockfile・文書も revert する。
+
+ステージ操作サービスの登録・更新・破棄と VM ごとの共有・作品変更時の消去を確認する3件は workbench の公開 `./stage-controls` へ移管する。検証本体・fixture と元の GPL-3.0-or-later を保持し、既存の `npm test` と CI が GUI checkout なしで実行する。上流 CI 成功とマージを Editor の重複削除の公開条件とし、Editor にはサービスを GUI へ渡す接続確認1件を残す。製品コード・依存固定・GUI・CI コマンドは変更しない。CI 時間短縮量は未測定。切り戻しは Editor の元3件を先に復元し、必要なら上流の追加テスト・文書を revert する。
 
 ## 切り戻し
 
