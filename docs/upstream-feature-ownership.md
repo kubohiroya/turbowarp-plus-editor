@@ -85,6 +85,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 
 | Editor から削除するテスト | 移管先 | Editor に残す接続確認 |
 | --- | --- | --- |
+| `test/editor-host.browser.ts` | [editor-host の契約検証](https://github.com/kubohiroya/turbowarp-plus-editor-host#checking-a-host) | 実 GUI のホストが同じ VM を保ち、変更通知と保存状態を契約どおり伝えることだけを確認する。契約アサーション本体はホストパッケージを呼ぶ。 |
 | `test/project-catalog.browser.ts` | workbench の `test/project-catalog-host.browser.ts`（[PR #128](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/128)） | `test/project-catalog-editor.browser.ts`（実 GUI のファイルメニュー・作品読込・保存との接続） |
 | `test/script-transfer/format.test.ts`・`stage.test.ts`（計12件） | script-transfer の `test/format.test.mjs`・`stage.test.mjs`（[PR #6](https://github.com/kubohiroya/turbowarp-script-transfer/pull/6)） | `test/plus-integration.test.ts` の転送接続確認と `test/gui-integration/unit/plus/transfer.test.ts`、ブラウザー E2E |
 | `test/extension-library/catalog-settings.test.ts`（12件） | extension-loader の `test/scratch-vm/catalog-settings.test.ts`（[PR #35](https://github.com/kubohiroya/turbowarp-extension-loader/pull/35)） | `test/extension-library/plus-library.test.cts`（画面の回答から設定 API への接続） |
@@ -185,3 +186,7 @@ Editor のこの変更を revert し、接続コードと依存の固定を公�
 
 ブランチは `refactor/editor/upstream-feature-ownership`。各上流 PR に責務・依存順・検証・受け入れ条件・切り戻しを記録した。
 2026-11-19 にローカル実装を検証し、ユーザーの「マージして公開して」の指示で上流から順に公開する。
+
+### 実 Editor ホスト契約の実行（#823）
+
+`TW_PLUS_TEST_EDITOR_HOST=1` で、固定 Scratch GUI と組み合わせてサイトをビルドする。ビルドに含まれる `siteRevision` を `E2E_EXPECT_SITE_REVISION`、絶対パスのビルド先を `E2E_PROJECT_FOLDER_BUILD` に指定して `npm run test:editor-host` を実行する。通常 CI では実行しない。Editor `53a5300` と Scratch GUI `60b87e2` でヘッドレス実行し1件成功、skip 0。
