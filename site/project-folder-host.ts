@@ -462,8 +462,13 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         ...hasProjectVersionValidator() && {
             restoreProjectVersions: gitRestoreVersion,
             validateProjectVersion,
-            async previewProjectVersion({oid, files}) {
-                openProjectVersionPreview(document, oid, await packProjectVersion(files), locale);
+            async previewProjectVersion({oid, files, title, guard}: {
+                oid: string; files: ReadonlyMap<string, Uint8Array>;
+                title?: string; guard?: () => void;
+            }) {
+                const archive = await packProjectVersion(files);
+                guard?.();
+                openProjectVersionPreview(document, oid, archive, locale, title);
             }
         },
         unsavedProjectPaths() {

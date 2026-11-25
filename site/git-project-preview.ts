@@ -21,7 +21,7 @@ export const packProjectVersion = (files: ReadonlyMap<string, Uint8Array>, valid
     packVersion(files, {validate, zip: JSZip});
 
 /** Opens the player page this distribution builds, without the Editor features a past version must not use. */
-export const openProjectVersionPreview = (document: Document, oid: string, archive: ArrayBuffer, locale: string) =>
-    openVersionPreview(document, oid, archive, locale, {
-        page: 'git-project-preview.html', params: {twPlusLocalGit: '0', twPlusStandardLayout: '0'}
-    });
+export const openProjectVersionPreview = (document: Document, oid: string, archive: ArrayBuffer, locale: string, title?: string) => {
+    const options = {page: 'git-project-preview.html', params: {twPlusLocalGit: '0', twPlusStandardLayout: '0'}, title};
+    return openVersionPreview(document, oid, archive, locale, options);
+};
