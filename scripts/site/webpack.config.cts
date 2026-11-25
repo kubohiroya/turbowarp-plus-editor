@@ -469,7 +469,17 @@ const {withBlockEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-d
 const {installPackageExports} = require('./package-exports.cts');
 installPackageExports(config, rootRequire, [
     '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog',
-    '@kubohiroya/turbowarp-sb3-save-format'
+    '@kubohiroya/turbowarp-sb3-save-format', '@kubohiroya/turbowarp-extension-manifest'
 ]);
+const distributionEntry = rootRequire.resolve('@kubohiroya/sb3-toolchain/web-distribution');
+config.resolve.alias['@kubohiroya/sb3-toolchain/web-distribution$'] = distributionEntry;
+const distributionManifest = rootRequire.resolve('@kubohiroya/turbowarp-extension-manifest/distribution');
+config.module.rules.push({
+    include: [distributionEntry, path.join(path.dirname(distributionEntry), 'distribution-archive.js'),
+        distributionManifest, path.join(path.dirname(distributionManifest), 'resources.js')],
+    loader: hostRequire.resolve('babel-loader'),
+    options: {babelrc: false, configFile: false,
+        presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}
+});
 module.exports = withBlockEditorWebpack4(
     withExtensionLoaderWebpack4(withDocumentEditorWebpack4(config), {hostRoot: gui}), {hostRoot: gui});
