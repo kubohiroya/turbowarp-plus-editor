@@ -1409,7 +1409,6 @@ test('the stage drawer starts pinned and remembers the pin menu choice', {timeou
     const menuButton = drawer.getByRole('button', {name: '実行画面の表示', exact: true});
     const autoHide = drawer.getByRole('menuitem', {name: '引出しを自動的に隠す', exact: true});
     const pin = drawer.getByRole('menuitem', {name: '引出しを常時表示する', exact: true});
-    const slash = (item: typeof pin) => item.locator('svg path[d="M2 2l12 12"]');
 
     await layoutSettled(page);
     await page.getByRole('button', {name: '実行画面の開き方', exact: true}).click();
@@ -1418,13 +1417,7 @@ test('the stage drawer starts pinned and remembers the pin menu choice', {timeou
     await title.click();
     await expect(canvas).toBeVisible();
     await menuButton.click();
-    await expect(autoHide).toBeEnabled();
-    await expect(slash(autoHide)).toHaveCount(1);
-    await expect(autoHide).not.toHaveAttribute('aria-current');
     await autoHide.click();
-    await menuButton.click();
-    await expect(pin).toBeEnabled();
-    await expect(slash(pin)).toHaveCount(0);
     await title.click();
     await expect(canvas).toBeHidden();
     await expect(handle).toBeVisible();
@@ -1434,7 +1427,6 @@ test('the stage drawer starts pinned and remembers the pin menu choice', {timeou
     await layoutSettled(page);
     await handle.click();
     await menuButton.click();
-    await expect(pin).toBeEnabled();
     await pin.click();
     await title.click();
     await expect(canvas).toBeVisible();
@@ -1444,8 +1436,6 @@ test('the stage drawer starts pinned and remembers the pin menu choice', {timeou
     await expect(canvas).toBeVisible();
     await title.click();
     await expect(canvas).toBeVisible();
-    await menuButton.click();
-    await expect(autoHide).toBeEnabled();
 });
 
 test('the stage drawer connects movement, resize and reopening to the live canvas', {timeout: 30_000}, async t => {

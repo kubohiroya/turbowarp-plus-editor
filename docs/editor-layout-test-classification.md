@@ -23,7 +23,7 @@
 | 13 | [925–957](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L925-L957) | a separate stage window releases keyboard input on blur and restores the editor canvas | windows / workbench / VM | 接続保持 | 別窓の blur から VM 入力解放と元 canvas へ |
 | 14 | [958–1235](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L958-L1235) | startup chooses the layout and the stage menu hides the stage without stopping the project | Editor / workbench / windows | 分離候補 | 起動フラグと継続実行を保持し、表示モード行列を分ける |
 | 15 | [1236–1424](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1236-L1424) | the menu bar disables both stage buttons while a stage is open | workbench / windows | 接続保持 | stage を開いた間の既存 GUI ボタンと同一 renderer |
-| 16 | [1425–1474](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1425-L1474) | the stage drawer starts pinned and remembers the pin menu choice | workbench / windows | 分離候補 | 実 stage の表示と復元を保持し、pin menu の状態行列を分ける |
+| 16 | [1425–1474](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1425-L1474) | the stage drawer starts pinned and remembers the pin menu choice | workbench / windows | 一部分離 | pin actionの表示・反転はWorkbench。実canvasの開閉とリロードでの復元はEditorに保持 |
 | 17 | [1475–1624](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1475-L1624) | the stage drawer moves, resizes and folds into its attached editor edge | workbench / windows | 一部分離 | geometry の一連の操作をworkbench単独hostへ。実canvas・palette・表示menu・移動/resize/再表示の接続を保持 |
 | 18 | [1625–1743](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1625-L1743) | the stage drawer restores its geometry and visibility with the project layout | workbench / project-model / windows | 接続保持 | IndexedDB・SB3・project layout と stage geometry の往復 |
 | 19 | [1744–1902](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1744-L1902) | the default editor pins the sprite list and supports the drawer and detached window layout | workbench / sprite-panes / windows | 分離候補 | sprite list の接続を保持し、drawer と窓配置の詳細を分ける |
@@ -144,3 +144,10 @@ Editor は現行のモニター名・ステージ説明を使い、対象切り�
 引き継ぎ時、両 repo の main が作業ベース（Editor `6e8767a`、sprite-panes `1ce1abd`）と一致することを照合。上流の build と関連ブラウザーテスト6件、Editor の固定ビルド（site `6e8767a`）の縮小後ケース1件、型検査・責務境界2件をローカルで再確認した。公開 CI ではまだ検証していない。元 browser ファイルは通常 CI 対象外で、この差分による通常 CI 時間短縮は計上しない。
 
 上流の既存 CI で新2件の実行・成功（skip なし）を確認してから上流をマージし、その後 Editor 側を公開・検証する。切り戻す場合はまず Editor の元の検証範囲とケース名を復元し、現行 DOM に合わせた名称は維持する。必要なら上流の追加テスト・テスト専用依存を戻す。
+
+
+## Stage drawer の pin メニュー（#823・分類16）
+
+Workbench の stage display menu テストで、pinの両状態の表示名、enabled/current属性、アイコンの斜線、クリック時の反転を検証する。上流の既存CIでこの2件を実行・成功させてからEditorの重複を削減する。
+
+Editorには実canvasが既定のpinで表示され、auto-hideでは外側クリックで閉じ、リロード後も状態が復元され、再pin時は外側クリックで閉じないことを残す。製品コード・固定依存・CI設定は変更しない。元ケースは通常のEditor CI対象外のため時短を計上しない。切り戻しはEditor側の元のpinメニュー検証を先に復元する。
