@@ -1,4 +1,4 @@
-import {test} from 'node:test';
+import {test, type TestContext} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
@@ -1293,6 +1293,62 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.deepEqual(errors, []);
 });
 
+async function openDeviceFolder(t: TestContext, build: string, folder: string, query = '') {
+    const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
+    if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
+    const browser = await chromium.launch({headless: true, args});
+    t.after(() => browser.close());
+    const context = await browser.newContext({viewport: {width: 1280, height: 920}});
+    await context.route('**/*', async route => {
+        const url = new URL(route.request().url());
+        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+        const filename = path.resolve(build, decodeURIComponent(url.pathname.slice(prefix.length)));
+        if (!filename.startsWith(build + path.sep)) return route.abort();
+        const body = await readFile(filename).catch(() => null);
+        if (body === null) return route.fulfill({status: 404});
+        return route.fulfill({body, contentType: mime[path.extname(filename)] || 'application/octet-stream'});
+    });
+    await context.addInitScript(() => {
+        if (window.parent !== window) return;
+        const state = window as Window & {testDirectory?: FileSystemDirectoryHandle};
+        Object.assign(state, {showDirectoryPicker: async () => state.testDirectory});
+        // CDP grants the real directory handle without opening a native picker.
+        for (const type of ['dragenter', 'dragover', 'drop']) {
+            window.addEventListener(type, async event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (type === 'drop') {
+                    const item = (event as DragEvent).dataTransfer!.items[0] as DataTransferItem & {
+                        getAsFileSystemHandle(): Promise<FileSystemDirectoryHandle>;
+                    };
+                    state.testDirectory = await item.getAsFileSystemHandle();
+                }
+            }, {capture: true});
+        }
+    });
+    const original = await context.newPage();
+    const errors: string[] = [];
+    context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
+    original.on('pageerror', error => errors.push(error.message));
+    await original.goto(`${origin}${prefix}editor.html?lang=en${query}`);
+    await original.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()));
+    await original.getByText('File', {exact: true}).click();
+    const popup = context.waitForEvent('page');
+    await original.getByRole('button', {name: 'Open Folder…', exact: true}).click();
+    const editor = await popup;
+    const choose = editor.getByRole('dialog').getByRole('button', {name: 'Choose a folder', exact: true});
+    await expect(choose).toBeVisible({timeout: 10000});
+    const cdp = await context.newCDPSession(editor);
+    for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+        await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
+            data: {items: [], files: [folder], dragOperationsMask: 1}});
+    }
+    await editor.waitForFunction(() => (window as Window & {testDirectory?: FileSystemDirectoryHandle})
+        .testDirectory?.kind === 'directory');
+    await choose.click();
+    return {original, editor, errors};
+}
+
 test('opens a past version in its own player and restores it from the history', {timeout: 90000}, async t => {
     const root = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(root && path.isAbsolute(root), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
@@ -1322,54 +1378,8 @@ test('opens a past version in its own player and restores it from the history', 
     git('add', '.'); git('commit', '-qm', 'Current project');
     const current = git('rev-parse', 'HEAD');
 
-    const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
-    if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
-    const browser = await chromium.launch({headless: true, args});
-    t.after(() => browser.close());
-    const page = await browser.newPage({viewport: {width: 1280, height: 920}});
-    const errors: string[] = [];
-    page.on('pageerror', error => errors.push(error.message));
-    await page.context().route('**/*', async route => {
-        const url = new URL(route.request().url());
-        if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
-        const filename = path.resolve(root, decodeURIComponent(url.pathname.slice(prefix.length)));
-        if (!filename.startsWith(root + path.sep)) return route.abort();
-        const body = await readFile(filename).catch(() => null);
-        if (body === null) return route.fulfill({status: 404});
-        return route.fulfill({body, contentType: mime[path.extname(filename)] || 'application/octet-stream'});
-    });
-    await page.addInitScript(() => {
-        if (window.parent !== window) return;
-        const testWindow = window as Window & {historyFolder?: FileSystemDirectoryHandle};
-        const picker = async () => testWindow.historyFolder;
-        Object.assign(testWindow, {showDirectoryPicker: picker});
-        for (const type of ['dragenter', 'dragover', 'drop']) {
-            window.addEventListener(type, async event => {
-                if (testWindow.historyFolder) return;
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                if (type === 'drop') {
-                    const item = (event as DragEvent).dataTransfer.items[0] as DataTransferItem & {
-                        getAsFileSystemHandle(): Promise<FileSystemHandle>;
-                    };
-                    testWindow.historyFolder = await item.getAsFileSystemHandle() as FileSystemDirectoryHandle;
-                }
-            }, {capture: true});
-        }
-    });
-    await page.goto(`${origin}${prefix}editor.html?lang=en&twPlusGitRestoreVersion=1`);
-    await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
-    const cdp = await page.context().newCDPSession(page);
-    for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
-        await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
-            data: {items: [], files: [folder], dragOperationsMask: 1}});
-    }
-    await page.waitForFunction(() => (window as Window & {historyFolder?: FileSystemDirectoryHandle}).historyFolder?.kind === 'directory');
-    await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Open Project Folder…', exact: true}).click();
+    const {editor: page, errors} = await openDeviceFolder(t, root, folder, '&twPlusGitRestoreVersion=1');
     await page.waitForFunction(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Current Cat'));
-    await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Choose Repository…', exact: true}).click();
     const views = page.getByRole('toolbar', {name: 'Drawer views'});
     await views.getByRole('button', {name: 'Git history', exact: true}).click();
     const history = page.locator('.twgit-history-view');
@@ -1420,7 +1430,52 @@ test('opens a past version in its own player and restores it from the history', 
     await confirmation.getByRole('button', {name: 'Restore and Record', exact: true}).click();
     await expect.poll(() => git('rev-parse', 'HEAD^')).toBe(current);
     assert.equal(git('diff', past, 'HEAD'), '');
-    await expect(page.getByText('Restored the project in a local commit.', {exact: false})).toBeVisible();
-    await page.getByRole('button', {name: 'Reload Project', exact: true}).first().click();
+    await expect(history.getByRole('button', {name: new RegExp(`^Restore project from ${past},`)})).toBeVisible();
+    await page.getByRole('button', {name: 'Reload Whole Project', exact: true}).click();
     await page.waitForFunction(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Cat'));
+});
+
+test('opens a device folder in a new Editor tab and saves a block edit to that folder', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const folder = await mkdtemp(path.join(process.platform === 'darwin' ? '/private/tmp' : tmpdir(), 'tw-project-device-'));
+    t.after(() => rm(folder, {recursive: true, force: true}));
+    const {project, costume, sound, svg, wav} = fixture();
+    const source = path.join(folder, projectFile);
+    await mkdir(path.join(folder, 'assets'));
+    await Promise.all([
+        writeFile(source, stringify(project)),
+        writeFile(path.join(folder, 'assets', costume.md5ext), svg),
+        writeFile(path.join(folder, 'assets', sound.md5ext), wav),
+        writeFile(path.join(folder, 'embedded-extensions.json'), stringify({formatVersion: 1, extensions: []})),
+        writeFile(path.join(folder, 'sb3-source.json'), stringify({formatVersion: 1, project: projectFile,
+            embeddedExtensions: 'embedded-extensions.json', assetsDirectory: 'assets',
+            archiveEntries: ['project.json', costume.md5ext, sound.md5ext]}))
+    ]);
+
+    const {original, editor, errors} = await openDeviceFolder(t, build, folder);
+    assert.ok(!(await original.evaluate(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Cat'))));
+    const originalProject = await original.evaluate(() => window.vm.toJSON());
+    const status = editor.locator('[data-project-folder-status]');
+    await expect(status).toHaveText('Project folder opened.');
+    const drawer = editor.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
+    await expect(editor.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
+
+    await editor.evaluate(() => {
+        const vm = window.vm;
+        vm.setEditingTarget(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id);
+        const id = vm.editingTarget.blocks.getBlock('move_B').inputs.STEPS.block;
+        vm.blockListener({type: 'change', blockId: id, element: 'field', name: 'NUM', newValue: '20'});
+    });
+    await editor.getByText('File', {exact: true}).click();
+    await editor.getByRole('button', {name: 'Save Project', exact: true}).click();
+    await expect(status).toHaveText('Project folder saved.');
+    const saved = JSON.parse(await readFile(source, 'utf8'));
+    assert.equal(saved.targets[1].blocks.move_B.inputs.STEPS[1][1], '20');
+    assert.deepEqual(saved.targets[1].blocks.move_B.retainedData, {author: 'owner'});
+    assert.deepEqual(saved.retainedTopLevel, project.retainedTopLevel);
+    assert.equal(await original.evaluate(() => window.vm.toJSON()), originalProject);
+    assert.deepEqual(errors, []);
 });
