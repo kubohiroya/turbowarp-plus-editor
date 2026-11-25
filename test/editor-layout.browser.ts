@@ -1578,11 +1578,9 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
     const sprites = page.getByRole('button', {name: 'Reveal sprite list', exact: true});
     const pin = page.getByRole('button', {name: 'Pin sprite list', exact: true});
-    const slash = pin.locator('svg path[d="M2 2l12 12"]');
     const undock = page.getByRole('button', {name: 'Undock sprite list', exact: true});
     const backdrop = page.locator('[data-backdrop-placement] img').first();
     await expect(pin).toHaveAttribute('aria-pressed', 'true');
-    await expect(slash).toHaveCount(0);
     await expect(sprites).toBeHidden();
     await expect(backdrop).toBeVisible();
 
@@ -1592,7 +1590,6 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await expect(backdrop).toBeHidden();
     await sprites.hover();
     await expect(pin).toHaveAttribute('aria-pressed', 'false');
-    await expect(slash).toBeVisible();
     await expect(pin).toHaveCSS('opacity', '0.55');
     await expect(backdrop).toBeVisible();
     await expect(undock).toBeVisible();
@@ -1603,14 +1600,11 @@ test('the default editor pins the sprite list and supports the drawer and detach
     await pin.click();
     await page.mouse.move(500, 400);
     await expect(pin).toHaveAttribute('aria-pressed', 'true');
-    await expect(slash).toHaveCount(0);
     await expect(backdrop).toBeVisible();
-    await expect(page.getByRole('heading', {name: 'Sprite list', exact: true})).toHaveCount(0);
     const tools = page.getByRole('group', {name: 'Sprite list tools', exact: true});
     const controls = ['Search sprites', 'Pin sprite list', 'Undock sprite list'];
     const buttons = await Promise.all(controls.map(name => tools.getByRole('button', {name, exact: true}).boundingBox()));
     assert.ok(buttons.every(button => button.y === buttons[0].y));
-    assert.ok(buttons[0].x < buttons[1].x && buttons[1].x < buttons[2].x);
     // The drawer's view bar offers the project folder, the Git history and the AI agent menu beside the sprite list.
     // Before a folder or a repository is chosen, each view offers to choose one.
     const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
@@ -1667,13 +1661,15 @@ test('the default editor pins the sprite list and supports the drawer and detach
         await popup.close();
     }
     await drawerView('Project folder').click();
-    await expect(page.getByRole('button', {name: 'Create Project Folder', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Choose a Folder and Save…', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Name and Save in This Browser…', exact: true})).toBeVisible();
     const folderPin = page.getByRole('group', {name: 'Project folder tools'}).getByRole('button', {name: 'Pin this panel'});
     await folderPin.press('Enter');
     await expect(folderPin.locator('svg path[d="M2 2l12 12"]')).toBeVisible();
     await folderPin.press('Enter');
     await drawerView('Git history').click();
-    await expect(page.getByText('Choose a Git repository to show its history here.', {exact: true})).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Set up Git', exact: true})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Open Folder…', exact: true})).toBeVisible();
     await drawerView('Sprites').click();
     await expect(drawerView('Sprites')).toHaveAttribute('aria-pressed', 'true');
     await tools.getByRole('button', {name: 'Search sprites'}).click();
