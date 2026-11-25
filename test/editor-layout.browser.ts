@@ -69,9 +69,12 @@ async function openBrowser(t, root, prefix = '/', routeOrigin = origin, bareGui 
 }
 
 test('the browser tab follows the current project title', {timeout: 30_000}, async t => {
-    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const secureOrigin = 'https://layout.test';
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
+    page.context().on('page', tab => tab.on('dialog', dialog => dialog.accept()));
     page.on('dialog', dialog => dialog.accept());
-    await page.goto(origin + buildPrefix + 'editor.html?lang=en');
+    await page.addInitScript(() => {delete window.showOpenFilePicker;});
+    await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
     const title = page.getByPlaceholder('Project title here');
     await expect(title).toHaveValue('Project');
     await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
@@ -85,23 +88,27 @@ test('the browser tab follows the current project title', {timeout: 30_000}, asy
     await expect(page).toHaveTitle('TurboWarp Plus Editor');
 
     const bytes = await page.evaluate(async () => Array.from(await vm.saveProjectSb3('uint8array') as Uint8Array));
-    const openFileMenu = () => page.getByText('File', {exact: true}).click();
+    const openFileMenu = (target = page) => target.getByText('File', {exact: true}).click();
     await openFileMenu();
     const chooser = page.waitForEvent('filechooser');
+    const opening = page.context().waitForEvent('page');
     await page.getByText('Open SB3 File…', {exact: true}).click();
     await (await chooser).setFiles({
         name: '読み込んだ作品.sb3',
         mimeType: 'application/octet-stream',
         buffer: Buffer.from(bytes)
     });
-    await expect(title).toHaveValue('読み込んだ作品');
-    await expect(page).toHaveTitle('読み込んだ作品 - TurboWarp Plus Editor');
+    const loaded = await opening;
+    const loadedTitle = loaded.getByPlaceholder('Project title here');
+    await expect(loadedTitle).toHaveValue('読み込んだ作品');
+    await expect(loaded).toHaveTitle('読み込んだ作品 - TurboWarp Plus Editor');
+    await expect(page).toHaveTitle('TurboWarp Plus Editor');
 
-    await openFileMenu();
-    await page.getByText('Create New Project…', {exact: true}).click();
-    await page.getByRole('dialog', {name: 'Create New Project'}).getByRole('button', {name: 'Create', exact: true}).click();
-    await expect(title).toHaveValue('Project');
-    await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
+    await openFileMenu(loaded);
+    await loaded.getByText('Create New Project…', {exact: true}).click();
+    await loaded.getByRole('dialog', {name: 'Create New Project'}).getByRole('button', {name: 'Create', exact: true}).click();
+    await expect(loadedTitle).toHaveValue('Project');
+    await expect(loaded).toHaveTitle('Project - TurboWarp Plus Editor');
 });
 
 test('unsaved VM changes reach the project title marker and its save menu', {timeout: 30_000}, async t => {
@@ -1157,7 +1164,7 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     assert.deepEqual(errors, []);
 });
 
-test('the menu bar disables both stage buttons while a stage is open', {timeout: 60_000}, async t => {
+test('the menu bar prevents duplicate run views and keeps the test-run action', {timeout: 60_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     const editorUrl = secureOrigin + buildPrefix + 'editor.html?lang=ja';
@@ -1171,7 +1178,7 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
         await expect(open).toBeEnabled();
         await expect(options).toBeEnabled();
         await options.press('ArrowDown');
-        await expect(openingMenu.getByRole('menuitem')).toHaveText(labels);
+        await expect(openingMenu.getByRole('menuitem')).toHaveText([...labels, 'テスト実行画面を開く']);
         for (let index = 0; index < labels.length; index++) {
             await expect(item(index)).toBeEnabled();
         }
@@ -1179,8 +1186,11 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
     };
     const checkDisabled = async () => {
         await expect(open).toBeDisabled();
-        await expect(options).toBeDisabled();
-        await expect(options).toHaveAttribute('aria-expanded', 'false');
+        await expect(options).toBeEnabled();
+        await options.press('ArrowDown');
+        for (let index = 0; index < labels.length; index++) await expect(item(index)).toBeDisabled();
+        await expect(openingMenu.getByRole('menuitem', {name: 'テスト実行画面を開く', exact: true})).toBeEnabled();
+        await page.keyboard.press('Escape');
         await expect(openingMenu).toBeHidden();
     };
     await page.setViewportSize({width: 1024, height: 800});
@@ -1236,8 +1246,8 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
     };
     await checkOptions();
     await options.click();
-    const placementIcons = await page.getByRole('menu', {name: '実行画面の開き方', exact: true}).locator('svg path')
-        .evaluateAll(paths => paths.map(path => path.getAttribute('d')));
+    const placementIcons = await Promise.all(labels.map((_, index) =>
+        item(index).locator('svg path').getAttribute('d')));
     assert.equal(placementIcons.length, labels.length);
     await page.keyboard.press('Escape');
     const checkStagePlacementMenu = async (active: number) => {
@@ -1294,7 +1304,7 @@ test('the menu bar disables both stage buttons while a stage is open', {timeout:
     await item(1).click();
     await checkCanvas(page);
     assert.equal(await displayIcon(page).evaluate(node => node.outerHTML), icon);
-    const stageTab = page.locator('.dv-tab').filter({hasText: /^ステージ$/});
+    const stageTab = page.getByRole('tab', {name: '実行画面', exact: true});
     await expect(stageTab).toHaveCount(1);
     await checkDisabled();
     await checkStagePlacementMenu(1);
@@ -1515,7 +1525,10 @@ test('the stage drawer restores its geometry and visibility with the project lay
     await reload();
     await checkGeometry();
     await expect(open).toBeDisabled();
-    await expect(options).toBeDisabled();
+    await expect(options).toBeEnabled();
+    await options.press('ArrowDown');
+    await expect(page.getByRole('menuitem', {name: 'Show in the drawer', exact: true})).toBeDisabled();
+    await page.keyboard.press('Escape');
     await selectDisplay('Close the drawer');
     await reload();
     await expect(canvas).toBeHidden();
@@ -1557,18 +1570,24 @@ test('the stage drawer restores its geometry and visibility with the project lay
     page.on('dialog', dialog => dialog.accept());
     await page.getByText('File', {exact: true}).click();
     const chooser = page.waitForEvent('filechooser');
+    const opening = page.context().waitForEvent('page');
     await page.getByText('Open SB3 File…', {exact: true}).click();
     await (await chooser).setFiles({
         name: 'Another project.sb3', mimeType: 'application/octet-stream', buffer
     });
-    await expect.poll(() => page.evaluate(() => vm.runtime.targets.some(target => target.getName() === 'Another sprite')))
-        .toBe(true);
-    await layoutSettled(page);
+    const another = await opening;
+    const containsNewSprite = () => window.vm?.runtime.targets.some(target => target.getName() === 'Another sprite') ?? false;
+    await expect.poll(() => another.evaluate(containsNewSprite)).toBe(true);
+    await layoutSettled(another);
+    await expect(another.locator('[data-movable-stage] [data-gui-stage] canvas')).toBeHidden();
+    await expect(another.getByRole('button', {name: 'Reveal run view', exact: true})).toBeHidden();
+    assert.equal(await page.evaluate(containsNewSprite), false);
+    // Opening the other project must not change the arrangement in the original live tab.
     await expect(canvas).toBeHidden();
-    await expect(handle).toBeHidden();
-    await reload();
     await expect(handle).toBeVisible();
     await open.click();
+    await checkGeometry();
+    await reload();
     await checkGeometry();
 });
 
@@ -2921,7 +2940,7 @@ test('editor pane headings and message diagrams follow the active target', {time
     const sides = pane.getByRole('tablist', {name: 'メッセージ', exact: true}).getByRole('tab');
     await expect(sides).toHaveText(['送信1', '受信0']);
     await expect(sides.first()).toHaveAttribute('aria-selected', 'true');
-    const diagram = pane.getByRole('tabpanel').getByRole('figure', {name: 'スプライト・背景とメッセージの関係', exact: true});
+    const diagram = pane.getByRole('tabpanel').getByRole('figure', {name: 'スプライト・ステージとメッセージの関係', exact: true});
     const headings = diagram.locator('.tw-sprite-messages__headings > span');
     await expect(headings).toHaveText(['送信元', '受信先']);
     const sendScript = diagram.locator('[data-script-id="layout-message-send"]').getByRole('button');
@@ -3626,7 +3645,7 @@ test('the Dockview stage keeps its renderer, controls and input through split an
     await expect.poll(async () => (await canvas.boundingBox()).width).toBe(stageWidth);
     await assertStage();
 
-    await stageTab.getByRole('button', {name: 'Close Stage', exact: true}).click();
+    await stageTab.getByRole('button', {name: 'Close Run view', exact: true}).click();
     await expect(stageTab).toHaveCount(0);
     await expect(dockedStage.locator('[data-gui-stage] canvas')).toHaveCount(0);
     await revealStage();

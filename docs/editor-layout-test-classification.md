@@ -190,3 +190,9 @@ Scratch GUI の menu-bar は作品名、File、Edit の項目と行の配置を�
 ## スプライト一覧の引出し・別窓（#823・分類19）
 
 [Workbench #156](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/156) の [browser CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45716441830) で、pin の斜線、開閉/再 pin、ツールの左右順、見出しなしを確認する。この新規ケースはCIで実行・成功（既存8つの固定GUIケースのskipとは別）。実 GUI には本物の sprite tile と undock ボタンがあるため、縦位置、別窓への移動、Stage を選ぶと元の VM が切り替わること、閉じて元へ戻ることを保つ。別ウィンドウ化した実パネルの内容と各フォルダー/Git の始点も境界検証。現在のボタン名に更新したが、経路は省いていない。通常 CI 対象外なので時短を計上しない。切り戻しは Editor を先に revert。
+
+## 全39件の最終監査（#823）
+
+分類表の保持理由を変更後の実 GUI の経路に照合した。接続条件（実 VM・ターゲットやレンダラ・Blockly、別画面、作業状態の往復）は持ち主の単体UIに置き換えない。5件の古い前提を修正した。分類1と18は作品を別タブで開き、元の VM と表示を保つことも確認する。分類15と18では実行画面を二重に開く操作だけが無効であり、独立したテスト実行画面のショートカットは残す。分類33と39は現行の項目名を使う。分類18で再読込の復元を調べる前には元タブのレイアウトを更新し、無名の開始画面がブラウザーの最近のレイアウトを選ぶ条件とは分ける。
+
+通常CIでは実行しない。Editor main `6aaafd77` の [CI成果物](https://github.com/kubohiroya/turbowarp-plus-editor/actions/runs/45718035310) をメタデータと照合し、固定GUI `60b87e2` と同じ製品ソースの bare GUI ビルドも指定して Chromium で全39ケースを実行し、39成功・skip 0。画面付き操作やOS入力は行っていない。
