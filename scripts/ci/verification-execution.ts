@@ -51,9 +51,10 @@ async function recordExecution() {
     const canInspect = (exactMain && plan.exactMainReuse === true) || (enabled && plan.mode === 'scoped');
     const evidence = !release && main && canInspect ? await inspectCurrentEvidence(env) : undefined;
     const execution = selectExecution({enabled, release, main, plan, evidence, exactMain});
-    console.log(JSON.stringify({execution, source: evidence}));
+    console.log(JSON.stringify({execution, source: evidence, plan}));
     if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, [
         '## Verification execution', '', `- Mode: ${execution.mode}`, `- Reason: ${execution.reason}`,
+        `- Proposed checks: ${plan.checks.join(', ')}`,
         ...('checks' in execution ? [
             `- Run: ${execution.checks.join(', ') || 'none'}`,
             `- Reused: ${execution.reused.join(', ') || 'none'}`
