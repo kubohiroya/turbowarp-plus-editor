@@ -44,9 +44,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - name: Record proposed verification plan
-        continue-on-error: true
-        run: node scripts/ci/verification-plan.ts
       - name: Select verification to execute
         id: scope
         if: >-
@@ -57,6 +54,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/ci/verification-execution.ts
+      - name: Record proposed verification plan
+        if: steps.scope.outcome != 'success'
+        continue-on-error: true
+        run: node scripts/ci/verification-plan.ts
       - name: Check documentation diff
         id: documentation
         if: steps.scope.outputs.mode == 'scoped' && contains(steps.scope.outputs.checks, '|documentation|')
@@ -140,9 +141,14 @@ jobs:
           # prepublish writes static/microbit and src/generated, which are outside node_modules,
           # so it runs whether or not the modules came from the cache.
           node scripts/prepublish.mjs
-          # test:gui-integration compares the pinned GUI's files with the upstream revision it was
-          # moved from (docs/gui-integration/relocation.json), so that commit must be in the checkout.
-          git fetch --no-tags --depth=1 https://github.com/TurboWarp/scratch-gui.git 7738389afee319d2c6293550a2f7cb13004b928c
+      - name: Fetch upstream GUI history for the relocation check
+        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|gui-integration|')
+        working-directory: .host/scratch-gui
+        run: |
+          # Only test:gui-integration consumes this historical commit, not the site build.
+          upstream="$(node -p "JSON.parse(require('node:fs').readFileSync('../../docs/gui-integration/relocation.json')).upstream")"
+          [[ "$upstream" =~ ^[a-f0-9]{40}$ ]]
+          git fetch --no-tags --depth=1 https://github.com/TurboWarp/scratch-gui.git "$upstream"
       # The extension host is supplied from here, but what it installs on is the pinned GUI's VM,
       # and the registration it drives must use that VM's own modules. So these run against the
       # checkout above rather than this repository's dependencies, and only once it is prepared.
@@ -195,8 +201,11 @@ jobs:
           overwrite: true
           retention-days: 7
           if-no-files-found: error
+      # Pages downloads this only from normal main pushes; PRs and tag checks still build locally.
       - uses: actions/upload-artifact@v4
-        if: success() && steps.site-build.outcome == 'success'
+        if: >-
+          success() && steps.site-build.outcome == 'success' && inputs.release_revision == '' &&
+          github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: editor-site-${{ github.sha }}-${{ github.run_attempt }}
           path: .host/scratch-gui/build/

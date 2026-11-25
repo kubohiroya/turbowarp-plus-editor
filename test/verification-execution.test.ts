@@ -132,6 +132,28 @@ test('the stable release publisher is gated by a full check of the tagged commit
     assert.match(outcomes.if, /steps\.scope\.outputs\.mode == 'scoped'/);
 });
 
+test('only normal main publishes a site archive and only GUI integration fetches its baseline', () => {
+    const read = (name: string) => parse(readFileSync(new URL(`../.github/workflows/${name}.yml`, import.meta.url), 'utf8'));
+    const steps = read('ci').jobs.check.steps;
+    const proposed = steps.find(step => step.run === 'node scripts/ci/verification-plan.ts');
+    assert.equal(proposed.if, "steps.scope.outcome != 'success'");
+    assert.ok(steps.indexOf(proposed) > steps.findIndex(step => step.id === 'scope'));
+    const archive = steps.find(step => step.with?.name?.startsWith('editor-site-'));
+    const receipt = steps.find(step => step.with?.name?.includes('steps.verification-evidence.outputs.artifact'));
+    assert.match(archive.if, /steps\.site-build\.outcome == 'success'/);
+    assert.match(archive.if, /inputs\.release_revision == ''/);
+    assert.match(archive.if, /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
+    assert.match(receipt.if, /steps\.verification-evidence\.outcome == 'success'/);
+    const pages = read('pages').jobs.prepare.steps.find(step => step.uses?.startsWith('actions/download-artifact'));
+    assert.match(pages.with.name, /^editor-site-/);
+
+    const fetch = steps.find(step => step.run?.includes('git fetch --no-tags'));
+    assert.equal(fetch.if, steps.find(step => step.id === 'gui-integration').if);
+    assert.match(fetch.run, /relocation\.json/);
+    assert.ok(steps.indexOf(fetch) < steps.findIndex(step => step.id === 'gui-integration'));
+    assert.doesNotMatch(steps.find(step => step.name === 'Install the pinned host dependencies').run, /git fetch/);
+});
+
 test('no workflow installs a browser or runs browser tests: those run locally during development', () => {
     const directory = new URL('../.github/workflows/', import.meta.url);
     for (const name of ['ci', 'pages', 'release']) {
