@@ -1598,3 +1598,68 @@ test('switches branches of the open project folder and refuses to discard unsave
     await expect(branchButton('from-another-tool')).toBeVisible();
     assert.deepEqual(errors, []);
 });
+
+test('tracks native Git status in the project explorer with the Git panel closed', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder} = await createDiskProject(t, 'tw-project-status-', true);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('config', 'user.name', 'Editor status fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    git('add', '.');
+    git('commit', '-qm', 'Initial project');
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder);
+    const status = page.locator('[data-project-folder-status]');
+    await expect(status).toHaveText('Project folder opened.');
+    const drawer = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
+    await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
+    const panelClose = page.getByRole('button', {name: 'Close Local Git', exact: true});
+    if (await panelClose.isVisible()) await panelClose.click();
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    await expect(page.locator('.twgit-panel:visible')).toHaveCount(0);
+    const explorerRow = (name: string) => page.locator(`.twpf-explorer-item[data-path="${name}"]`);
+    const row = explorerRow(projectFile);
+    const star = row.locator('.twpf-explorer-name + [data-tw-plus-unsaved-marker]');
+    const save = async () => {
+        await page.getByText('File', {exact: true}).click();
+        await page.getByRole('button', {name: 'Save Project', exact: true}).click();
+        await expect(status).toHaveText('Project folder saved.');
+    };
+    await expect(row).toHaveAttribute('data-revision', 'committed');
+    await editFolderBlock(page, 'value', '26');
+    await expect(star).toHaveText('*');
+    await expect(row).toHaveAccessibleName(/Unsaved changes/);
+    await save();
+    await expect(star).toHaveCount(0);
+    await expect(row).toHaveAccessibleName(/Saved, not committed/);
+
+    git('add', projectFile);
+    await expect(row).toHaveAttribute('data-staged', '');
+    await editFolderBlock(page, 'value', '27');
+    await expect(star).toHaveText('*');
+    await expect(row).toHaveAttribute('data-staged', '');
+    git('reset', '-q', 'HEAD', '--', projectFile);
+    await expect(row).not.toHaveAttribute('data-staged');
+    await expect(star).toHaveText('*');
+    await save();
+    await expect(star).toHaveCount(0);
+    git('add', projectFile);
+    git('commit', '-qm', 'Record the edit');
+    await expect(row).toHaveAttribute('data-revision', 'committed');
+    await expect(row).toHaveAccessibleName(/Committed/);
+
+    await rm(path.join(folder, noteFile));
+    const removed = explorerRow(noteFile);
+    const removedName = removed.locator('.twpf-explorer-name');
+    await expect(removedName).toHaveCSS('text-decoration-line', 'line-through');
+    await expect(removed).toHaveAttribute('aria-disabled', 'true');
+    git('restore', '--', noteFile);
+    await expect(removedName).toHaveCSS('text-decoration-line', 'none');
+    await expect(removed).not.toHaveAttribute('aria-disabled');
+    assert.deepEqual(errors, []);
+});
