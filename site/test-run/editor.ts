@@ -4,9 +4,10 @@
  * `@kubohiroya/turbowarp-plus-editor-test`'s; this module only connects them to this editor.
  */
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
-import {connectTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
+import {connectTestFrame, type TestRunRequest} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
 import {createTestRunView, testRunMenuItem, testRunPanelRequest, testRunText} from '@kubohiroya/turbowarp-plus-editor-test/test-run-view';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
+import {getEditorExtensionIdentities} from '../extension-host/editor-host.ts';
 
 type EditorVM = {
     runtime: {targets: Array<{id: string; isOriginal: boolean; getName(): string}>};
@@ -21,15 +22,12 @@ let editorVm: EditorVM | null = null;
 /** The frame page this build carries, under whatever prefix the site was built for. */
 const frameURL = () => new URL(`${process.env.ROOT || './'}test-frame.html`, location.href).href;
 
-/**
- * The project for one run: the archive the editor would save, with assets and the Plus manifest, but with the
- * block IDs the editor shows. The default serialization renumbers them, and a failed check could not be found.
- */
-const projectForTests = async (vm: EditorVM) => {
-    const zip = vm._saveProjectZip();
-    zip.file('project.json', vm.toJSON(undefined, {allowOptimization: false}));
-    return zip.generateAsync({type: 'arraybuffer'});
-};
+const contextFor = (vm: EditorVM) => ({
+    extensionURLs: Object.values(vm.extensionManager.getExtensionURLs?.() ?? {}),
+    sandboxedExtensions: getEditorExtensionIdentities(vm)
+        .filter(extension => extension.execution === 'sandboxed')
+        .map(({id, sha256}) => ({id, sha256}))
+});
 
 /** The way project search reveals a block: the sprite's code view, then the block at its center. */
 const showBlock = (vm: EditorVM, targetName: string, blockId: string) => {
@@ -40,27 +38,40 @@ const showBlock = (vm: EditorVM, targetName: string, blockId: string) => {
     requestAnimationFrame(() => navigation?.centerBlock(blockId));
 };
 
-const viewOptions = (vm: EditorVM, locale: string, doc: Document) => ({
-    document: doc,
-    locale,
-    getProject: () => projectForTests(vm),
-    // The archive above cannot be read by the view; the same project.json lists the tests before they run.
-    listProject: () => vm.toJSON(undefined, {allowOptimization: false}),
-    createRunner(stage: HTMLElement) {
-        const frame = doc.createElement('iframe');
-        frame.src = frameURL();
-        frame.title = testRunText(locale).stage;
-        frame.style.cssText = 'width: 100%; height: 100%; border: 0; display: block;';
-        stage.append(frame);
-        return connectTestFrame(frame, {
-            origin: location.origin,
-            // The standard extensions the editor runs now, which the frame may load as well. Plus extensions are
-            // trusted in the frame as in the editor: by the distributed catalog.
-            context: () => ({extensionURLs: Object.values(vm.extensionManager.getExtensionURLs?.() ?? {})})
-        });
-    },
-    showBlock: (target: string, blockId: string) => showBlock(vm, target, blockId)
-});
+const viewOptions = (vm: EditorVM, locale: string, doc: Document) => {
+    const snapshotContexts = new WeakMap<ArrayBuffer, ReturnType<typeof contextFor>>();
+    return {
+        document: doc,
+        locale,
+        async getProject() {
+            const context = contextFor(vm);
+            const zip = vm._saveProjectZip();
+            // Keep the archive's assets and Plus manifest, but use the editor's block IDs for failure navigation.
+            zip.file('project.json', vm.toJSON(undefined, {allowOptimization: false}));
+            const project = await zip.generateAsync({type: 'arraybuffer'});
+            snapshotContexts.set(project, context);
+            return project;
+        },
+        // The archive above cannot be read by the view; the same project.json lists the tests before they run.
+        listProject: () => vm.toJSON(undefined, {allowOptimization: false}),
+        createRunner(stage: HTMLElement) {
+            const frame = doc.createElement('iframe');
+            frame.src = frameURL();
+            frame.title = testRunText(locale).stage;
+            frame.style.cssText = 'width: 100%; height: 100%; border: 0; display: block;';
+            stage.append(frame);
+            return connectTestFrame(frame, {
+                origin: location.origin,
+                context: (request?: TestRunRequest) => {
+                    // Older test-frame clients only support the standard extension URL list.
+                    if (!request) return {extensionURLs: Object.values(vm.extensionManager.getExtensionURLs?.() ?? {})};
+                    return request.project instanceof ArrayBuffer ? snapshotContexts.get(request.project) : undefined;
+                }
+            });
+        },
+        showBlock: (target: string, blockId: string) => showBlock(vm, target, blockId)
+    };
+};
 
 /** Opens the view as a workspace tab, or in a window of its own when the workspace takes no tabs. */
 const openTestRun = (vm: EditorVM, locale: string) => {
