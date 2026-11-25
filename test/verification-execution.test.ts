@@ -54,6 +54,26 @@ test('missing, mismatched or unavailable evidence returns main to full verificat
     }
 });
 
+test('an allowlisted main push can reuse every non-build check from the exact successful PR tree', () => {
+    const plan = {...scoped(['documentation', 'site-build']), mode: 'full', exactMainReuse: true};
+    const reusable = ['typecheck', 'package', 'unit', 'infrastructure', 'extension-host', 'gui-integration', 'project-tools'];
+    const evidence = {reason: 'verified-items', reusable};
+    const options = {enabled: false, main: true, exactMain: true, evidence};
+    assert.deepEqual(select(plan, options), {
+        mode: 'scoped', reason: 'exact-main-tree', base, checks: ['documentation', 'site-build'],
+        reused: reusable, needsNpm: true, needsGui: true
+    });
+    assert.equal(select(plan, {...options, main: false}).mode, 'legacy');
+    assert.equal(select(plan, {...options, exactMain: false}).mode, 'legacy');
+    assert.equal(select({...plan, exactMainReuse: false}, options).mode, 'legacy');
+    assert.equal(select(plan, {...options, release: true}).reason, 'stable-release');
+    assert.deepEqual(select(plan, {...options, evidence: undefined}), {mode: 'full', reason: 'missing-evidence'});
+    assert.deepEqual(select(plan, {...options, evidence: {reason: 'verified-items', reusable: reusable.slice(1)}}),
+        {mode: 'full', reason: 'incomplete-exact-tree-evidence'});
+    assert.deepEqual(select(plan, {...options, evidence: {reason: 'invalid-evidence', reusable}}),
+        {mode: 'full', reason: 'invalid-evidence'});
+});
+
 test('the final check rejects a skipped or missing selected step and incomplete release results', () => {
     const script = fileURLToPath(new URL('../scripts/ci/verification-execution.ts', import.meta.url));
     const run = (env: Record<string, string>) => spawnSync(process.execPath, [script, 'verify'], {
@@ -97,7 +117,12 @@ test('the stable release publisher is gated by a full check of the tagged commit
     assert.ok(preflight >= 0 && preflight < pack);
     assert.equal(ci.on.workflow_call.inputs.release_revision.required, true);
     const scope = ci.jobs.check.steps.find(step => step.id === 'scope');
-    assert.match(scope.if, /TW_PLUS_CI_SCOPED == '1' && inputs\.release_revision == ''/);
+    assert.match(scope.if, /inputs\.release_revision == ''/);
+    assert.match(scope.if, /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
+    assert.match(scope.if, /TW_PLUS_CI_EXACT_MAIN_REUSE != '0'/);
+    const outcomes = ci.jobs.check.steps.find(step => step.name === 'Require all selected verification to pass');
+    assert.match(outcomes.if, /inputs\.release_revision != ''/);
+    assert.match(outcomes.if, /steps\.scope\.outputs\.mode == 'scoped'/);
 });
 
 test('no workflow installs a browser or runs browser tests: those run locally during development', () => {

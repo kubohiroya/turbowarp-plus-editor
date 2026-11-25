@@ -1,0 +1,9 @@
+# Editor CI: exact-tree reuse on main
+
+A PR with the same code, dependency locks, workflow and environment already exercises the normal checks. For example, [Editor #828's PR run](https://github.com/kubohiroya/turbowarp-plus-editor/actions/runs/45713475975) and [its main run](https://github.com/kubohiroya/turbowarp-plus-editor/actions/runs/45714687223) used the same verified Git tree. The main run recognized all seven non-build checks as reusable but repeated them (29 seconds in the seven named steps of that run). Setup, publication build and artifact upload are separate. That figure is a baseline, not a measured end-to-end saving.
+
+Only a push to main consisting of regular Markdown documentation files and/or `test/editor-layout.browser.ts` may use this path. The successful PR run must come from this repository, must be the current successful attempt, and its evidence must match the exact Git tree and verification contract (including workflow, Node and runner identity). All seven non-build checks must appear in the evidence. If a check or any of that evidence is absent, mismatched or unavailable, the workflow runs the full suite. Production, dependency, workflow and unclassified paths are unaffected. Release verification still runs in full.
+
+Main still checks the diff, builds an artifact with its own revision, and requires the selected checks to succeed before deploying. The PR suite and publication gate are unchanged. The normal run summary records which checks ran or were reused, along with the proving PR run and attempt.
+
+To disable only this reuse path, set the repository Actions variable `TW_PLUS_CI_EXACT_MAIN_REUSE=0`; it is independent of the existing opt-in path-scoping variable `TW_PLUS_CI_SCOPED`. Reverting the change restores the previous workflow. Measure post-change performance using matched PR/main trees and runner/cache conditions, comparing individual check time separately from build time and queue time.

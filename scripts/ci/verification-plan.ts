@@ -9,10 +9,14 @@ const allChecks = [
 ] as const;
 type Check = typeof allChecks[number];
 
+const documentationPath = /^(?:README(?:\.ja)?\.md|docs\/.+\.md)$/;
 const rules: {area: string; path: RegExp; checks: readonly Check[]}[] = [
-    {area: 'documentation', path: /^(?:README(?:\.ja)?\.md|docs\/.+\.md)$/, checks: ['documentation']},
+    {area: 'documentation', path: documentationPath, checks: ['documentation']},
     {area: 'project-tools-tests', path: /^test\/project-tools\/.+\.test\.(?:ts|cts|[cm]js)$/, checks: ['project-tools']}
 ];
+
+const canReuseExactMainChecks = (paths: readonly string[]) => paths.length > 0 && paths.every(path =>
+    path === 'test/editor-layout.browser.ts' || documentationPath.test(path));
 
 function fullPlan(reason: string, paths: readonly string[] = []) {
     return {mode: 'full', reason, areas: [], checks: allChecks, paths} as const;
@@ -59,7 +63,8 @@ type Event = {ref?: string; before?: string; after?: string;
     pull_request?: {base?: {sha?: string}; head?: {sha?: string}}};
 type Git = (args: string[]) => Buffer;
 
-export function planForEvent(eventName: string | undefined, event: Event, revision: string | undefined, git: Git) {
+export function planForEvent(eventName: string | undefined, event: Event, revision: string | undefined, git: Git):
+    ReturnType<typeof selectVerification> & {base?: string; exactMainReuse?: true} {
     const mainPush = eventName === 'push' && event.ref === 'refs/heads/main';
     if (eventName !== 'pull_request' && !mainPush) return fullPlan('unsupported-event');
     const base = mainPush ? event.before : event.pull_request?.base?.sha;
@@ -86,13 +91,15 @@ export function planForEvent(eventName: string | undefined, event: Event, revisi
         }
         const diff = git(['diff', '--raw', '--no-renames', '--no-ext-diff', '--ignore-submodules=none',
             '-z', base, revision, '--']);
-        return {...selectVerification(readChangedPaths(diff), mainPush), base};
+        const paths = readChangedPaths(diff);
+        const exactMainReuse = mainPush && canReuseExactMainChecks(paths);
+        return {...selectVerification(paths, mainPush), base, ...(exactMainReuse ? {exactMainReuse: true} : {})};
     } catch {
         return fullPlan('diff-unavailable');
     }
 }
 
-export function readVerificationPlan(env = process.env) {
+export function readVerificationPlan(env = process.env): ReturnType<typeof planForEvent> {
     const {GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_SHA} = env;
     try {
         const event = JSON.parse(readFileSync(GITHUB_EVENT_PATH ?? '', 'utf8')) as Event;
