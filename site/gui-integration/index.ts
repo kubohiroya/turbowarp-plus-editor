@@ -47,6 +47,8 @@ import {attachEditMenuWorkspace, renderEditMenu as renderEditCommands,
 import {renderMenuIcon} from '../context-menu-icons/index.ts';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {bindProjectOpenTabActions, openProjectInNewTab} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
+import {isObservedProjectVersion, registerPlaytestDebugger, type PlaytestDebugger}
+    from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 export {openProjectInNewTab} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
 
 export * from './lib/tw-plus-integration-points.ts';
@@ -91,6 +93,7 @@ const ExtensionControls = connect(({scratchGui: {mode}}) => ({
 export const renderStageControls = props => React.createElement(ExtensionControls, props);
 
 export const setDebuggerMenuButton = (vm: object, element: HTMLElement | null) => {
+    if (isObservedProjectVersion(window)) return false;
     const service = hostStageControls(vm, hostIntegration());
     if (!service) return false;
     // The workbench styles and drives the add-on's button by these marks, not by the GUI's class names.
@@ -111,7 +114,11 @@ export const setRecordMenuButton = (vm: object, element: HTMLElement | null, idl
 };
 
 // The add-on builds one debugger per VM, so it is attached once and lives as long as the page.
-export const setDebuggerInterface = (vm: object, debuggerInterface: DebuggerInterface) => {
+export const setDebuggerInterface = (vm: object, debuggerInterface: DebuggerInterface & {observe?: PlaytestDebugger}) => {
+    if (isObservedProjectVersion(window) && debuggerInterface.observe) {
+        registerPlaytestDebugger(vm, debuggerInterface.observe);
+        return false;
+    }
     attachDebuggerPanel(debuggerInterface, {document, vm});
     return true;
 };
@@ -246,7 +253,8 @@ export const renderProjectFileWorkflow = startup.standardLayout ? ({
         ...actions, create, createIn, newProject, newWindow, open, storage,
         openURL: () => openProjectInNewTab(vm, {kind: 'command', command: 'url'}) || openProjectURLFromMenu(vm, locale, gui),
         folder: folder && {...folder,
-            open: () => openProjectInNewTab(vm, {kind: 'command', command: 'folder'}) || folder.open(),
+            open: () => (typeof EditorPreload === 'undefined' &&
+                openProjectInNewTab(vm, {kind: 'command', command: 'folder'})) || folder.open(),
             openBrowser: folder.openBrowser && (() => openProjectInNewTab(vm, {kind: 'command', command: 'browser-folder'}) || folder.openBrowser())},
         restore,
         catalog: createProject => openProjectInNewTab(vm, {kind: 'command', command: 'catalog'}) ||

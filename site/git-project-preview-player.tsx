@@ -1,8 +1,8 @@
 import React from 'react';
 import {render} from 'react-dom';
 import JSZip from '@turbowarp/jszip';
-import {connectMergePlaytest, focusPlaytestStop, isProjectVersionEditor, receiveProjectVersionEditor, receiveProjectVersionPreview,
-    type MergePlaytestRequest, type PlaytestVM, type PlaytestStop}
+import {connectMergePlaytest, focusPlaytestStop, isObservedProjectVersion, isProjectVersionEditor, receiveProjectVersionEditor,
+    receiveProjectVersionPreview, type MergePlaytestRequest, type PlaytestVM, type PlaytestStop, type PlaytestReadRequest}
     from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 
@@ -10,6 +10,7 @@ type PreviewVM = PlaytestVM & {loadProject(archive: ArrayBuffer): Promise<void>;
 type ProjectState = {loadingState: string};
 declare const __TW_PLUS_REVISION_GUI__: React.ComponentType<Record<string, unknown>> & {setAppElement(element: HTMLElement): void};
 declare const __TW_PLUS_REVISION_APP_STATE__: (gui: typeof __TW_PLUS_REVISION_GUI__) => typeof __TW_PLUS_REVISION_GUI__;
+declare const __TW_PLUS_REVISION_RUN_ADDONS__: () => void;
 declare const __TW_PLUS_REVISION_BLOCKLY__: {
     isLoaded(): boolean;
     get(): {getMainWorkspace(): ReturnType<Parameters<typeof focusPlaytestStop>[3]>};
@@ -30,21 +31,24 @@ __TW_PLUS_REVISION_GUI__.setAppElement(app);
 document.body.style.margin = '0';
 const Player = __TW_PLUS_REVISION_APP_STATE__(__TW_PLUS_REVISION_GUI__);
 const editing = isProjectVersionEditor(window);
+const observing = isObservedProjectVersion(window);
 
 // The handshake and its checks are the Git package's; this page supplies the pinned GUI's player.
 function connect(vm: PreviewVM) {
+    let inspect: ReturnType<typeof connectMergePlaytest> | undefined;
     const loadingState = () => ReduxStore.getState().scratchGui.projectState.loadingState;
     const {requestProjectUpload, onLoadedProject} = __TW_PLUS_REVISION_PROJECT_STATE__;
     const ports = {
         loading: () => ReduxStore.dispatch(requestProjectUpload(loadingState())),
         async load(archive: ArrayBuffer, playtest?: MergePlaytestRequest) {
             await vm.loadProject(archive);
-            if (playtest) connectMergePlaytest(window, vm, playtest, {
-                player: app, zip: JSZip, deserialize: __TW_PLUS_REVISION_DESERIALIZE_BLOCKS__
+            if (playtest) inspect = connectMergePlaytest(window, vm, playtest, {
+                player: app, zip: JSZip, deserialize: __TW_PLUS_REVISION_DESERIALIZE_BLOCKS__, trackEdits: observing
             });
             requestAnimationFrame(() => vm.renderer.draw());
         },
         loaded: (success: boolean) => ReduxStore.dispatch(onLoadedProject(loadingState(), false, success)),
+        inspect: (query: PlaytestReadRequest) => inspect?.(query),
         showError(message: string) {
             const error = document.createElement('p');
             error.role = 'alert';
@@ -66,6 +70,7 @@ function connect(vm: PreviewVM) {
 }
 
 if (parent !== window) {
-    render(<Player isPlayerOnly={!editing} canManageFiles={false} canSave={false} canUseCloud={false} hasCloudPermission={false}
+    render(<Player isPlayerOnly={!editing && !observing} canManageFiles={false} canSave={false} canUseCloud={false} hasCloudPermission={false}
         basePath={process.env.ROOT} onVmInit={connect}/>, app);
+    if (observing) __TW_PLUS_REVISION_RUN_ADDONS__();
 }

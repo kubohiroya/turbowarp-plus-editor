@@ -2,7 +2,8 @@ import type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-wor
 export type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
 import {hasProjectVersionValidator, openProjectVersionEditor, openProjectVersionPreview, packProjectVersion,
     validateProjectVersion} from './git-project-preview.ts';
-import {isProjectVersionEditor, type MergePlaytestRequest} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
+import {isObservedProjectVersion, isProjectVersionEditor, type MergePlanSharePort}
+    from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import {chooseBrowserProject, folderNotEmptyMessage, followProjectFolder, mountProjectFolder, omittedFilesQuestion, openRepositoryProjectQuestion,
     openSavedFolderQuestion, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
@@ -105,6 +106,7 @@ type PickerWindow = Window & {
         localGitCreation?: DesktopRepositoryCreation | null;
         localGitPublication?: PublicationBridge | null;
         localGitAuthor?(): Promise<GitAuthor | null>;
+        mergePlanShare?: MergePlanSharePort;
     };
     ReduxStore?: GuiStore;
     showDirectoryPicker?(options: {id: string; mode: 'readwrite'}): Promise<FileSystemDirectoryHandle>;
@@ -127,7 +129,8 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     blocks: Pick<EditorHost, 'deserializeBlocks' | 'createBlockContainer'>,
     attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
     const view = document?.defaultView as PickerWindow;
-    if (!view || isProjectVersionEditor(view) || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
+    if (!view || isProjectVersionEditor(view) || isObservedProjectVersion(view) ||
+        typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
     const cloudflare = gitCloudflare();
     const connectionSettings = localGit ? createGitConnectionSettings({
         desktop: gitDesktop(view),
@@ -451,26 +454,25 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         localWrite: {author: () => author},
         ...browserFolders && {chooseRoot: browserFolders.choose},
         // Git is set up by opening a folder, with the File menu's own commands; the panel no longer chooses a repository.
-        openFolder: language => openProjectInNewTab(vm, {kind: 'command', command: 'folder'}) || projectFolderActions(vm, language)?.open(),
+        openFolder: language => (!view.EditorPreload && openProjectInNewTab(vm, {kind: 'command', command: 'folder'})) ||
+            projectFolderActions(vm, language)?.open(),
         ...folder.browserProjects && {openBrowserFolder: (language: string) =>
             openProjectInNewTab(vm, {kind: 'command', command: 'browser-folder'}) || projectFolderActions(vm, language)?.openBrowser?.()},
         deviceFolders: typeof view.showDirectoryPicker === 'function',
         renderReviewBlock,
         // A folder that is not a project shows project-folder's own dialog; the panel hears that nothing opened.
         openProject: async (directory, confirmReplace) =>
-            openProjectInNewTab(vm, {kind: 'folder', directory}) ? 'cancelled' :
+            !view.EditorPreload && openProjectInNewTab(vm, {kind: 'folder', directory}) ? 'cancelled' :
                 await folder.openDirectory(directory, confirmReplace) === 'opened' ? 'opened' : 'cancelled',
         projectDirectory: () => folder.directory,
         ...hasProjectVersionValidator() && {
             restoreProjectVersions: gitRestoreVersion,
+            shareMergePlans: view.EditorPreload?.mergePlanShare,
             validateProjectVersion,
-            async previewProjectVersion({oid, files, title, guard, playtest}: {
-                oid: string; files: ReadonlyMap<string, Uint8Array>;
-                title?: string; guard?: () => void; playtest?: MergePlaytestRequest;
-            }) {
+            async previewProjectVersion({oid, files, title, guard, playtest, observe}) {
                 const archive = playtest?.blocking.length ? new ArrayBuffer(0) : await packProjectVersion(files);
                 guard?.();
-                openProjectVersionPreview(document, oid, archive, locale, title, playtest);
+                openProjectVersionPreview(document, oid, archive, locale, title, playtest, observe);
             },
             async editProjectVersion({title, files, guard, save}) {
                 const archive = await packProjectVersion(files);

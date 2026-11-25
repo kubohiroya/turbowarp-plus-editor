@@ -14,16 +14,34 @@ const connectDebugger = (source: string) => {
         throw new Error('The pinned GUI debugger placement has changed');
     }
     return `import {getHostIntegration} from '../../hooks.js';
+import {getRunningThread} from './module.js';
 ${source.replace(append, `if (!getHostIntegration()?.setDebuggerMenuButton?.(vm, debuggerButtonOuter)) {
         ${append}
       }`).replace(remove, `getHostIntegration()?.setDebuggerMenuButton?.(vm, null);
       ${remove}`).replace(mount, `if (!getHostIntegration()?.setDebuggerInterface?.(vm, {
     element: interfaceContainer,
     setVisible: setInterfaceVisible,
-    getLocale: () => addon.tab.redux.state?.locales?.locale
+    getLocale: () => addon.tab.redux.state?.locales?.locale,
+    observe: {paused: isPaused, thread: getRunningThread, logs: limit => logsTab?.readLogs(limit)}
   })) {
     ${mount}
   }`)}`;
+};
+
+// Connect to the debugger's own buffer and keep it enabled in the isolated shared player.
+const connectDebuggerLogs = (source: string) => {
+    const hook = '    addLog,\n    clearLogs,';
+    if (!source.includes(hook)) throw new Error('The pinned debugger log interface has changed');
+    return source.replace(hook, `${hook}
+    readLogs: limit => logView.rows.slice(-limit),`);
+};
+
+const connectDebuggerSettings = (source: string) => {
+    const hook = '    getAddonEnabled (addonId) {';
+    if (!source.includes(hook)) throw new Error('The pinned add-on settings interface has changed');
+    return `import {isObservedProjectVersion} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
+${source.replace(hook, `${hook}
+        if (isObservedProjectVersion(window)) return addonId === 'debugger';`)}`;
 };
 
 const connectRecorder = (source: string) => {
@@ -41,6 +59,8 @@ ${source.replace(append, `    // Each pass may follow a language change, so an i
 
 module.exports = function (this: {resourcePath: string}, source: string) {
     const addon = this.resourcePath.split(/[\\/]/).at(-2);
+    if (this.resourcePath.endsWith('settings-store.js')) return connectDebuggerSettings(source);
+    if (addon === 'debugger' && this.resourcePath.endsWith('logs.js')) return connectDebuggerLogs(source);
     if (addon === 'debugger') return connectDebugger(source);
     if (addon === 'mediarecorder') return connectRecorder(source);
     throw new Error(`No menu button connection for the ${addon} add-on`);
