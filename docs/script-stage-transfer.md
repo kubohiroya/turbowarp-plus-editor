@@ -31,7 +31,9 @@ GUI内部の値を実装パッケージからimportせず、すべて引数で�
 
 ## 検証
 
-パッケージの `npm test` と、Editorの `npm run test:script-transfer` がそれぞれの境界を検査します。Editorのテストには `E2E_GUI_ROOT` で固定したGUI checkoutを渡します。
+転送の機能テスト12件は [script-transfer PR #6](https://github.com/kubohiroya/turbowarp-script-transfer/pull/6) の `test/format.test.mjs` と `test/stage.test.mjs` へ移管します。パッケージの `npm test` が、Editor と同じリビジョンに固定した VM で検証します。移管先の CI 成功とマージを確認してから Editor 側の重複テストと `test:script-transfer` の CI 項目を削除します。テストだけの移管なので、製品パッケージの版の更新と npm 公開は不要です。
+
+Editor には `test/plus-integration.test.ts` の転送接続確認と `test/gui-integration/unit/plus/transfer.test.ts` を残します。前者は通常の `npm test`、後者は `npm run test:gui-integration` で、GUI に渡す接続口とその破棄を確認します。
 
 統合E2Eは `script-transfer.spec.cts` です。クエリなしの通常起動でのメニュー表示、`.blocks3`の往復、2ウィンドウのメニュー/キーボード操作、権限拒否時のフォールバック、OSのJSONとテキスト、別オリジンからの読み取り、`.stage3`の背景・音・スクリプトを実ブラウザで検証します。
 

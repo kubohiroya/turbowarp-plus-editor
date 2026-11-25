@@ -3,7 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {fullChecks, inspectCurrentEvidence, requireCompletedChecks, verificationOutcomes} from './verification-evidence.ts';
 import {readVerificationPlan} from './verification-plan.ts';
 
-const guiChecks = ['extension-host', 'gui-integration', 'script-transfer', 'project-tools',
+const guiChecks = ['extension-host', 'gui-integration', 'project-tools',
     'site-build'];
 
 export function selectExecution({enabled, release, main, plan, evidence}: {

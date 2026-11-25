@@ -86,11 +86,16 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | Editor から削除するテスト | 移管先 | Editor に残す接続確認 |
 | --- | --- | --- |
 | `test/project-catalog.browser.ts` | workbench の `test/project-catalog-host.browser.ts`（[PR #128](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/128)） | `test/project-catalog-editor.browser.ts`（実 GUI のファイルメニュー・作品読込・保存との接続） |
+| `test/script-transfer/format.test.ts`・`stage.test.ts`（計12件） | script-transfer の `test/format.test.mjs`・`stage.test.mjs`（[PR #6](https://github.com/kubohiroya/turbowarp-script-transfer/pull/6)） | `test/plus-integration.test.ts` の転送接続確認と `test/gui-integration/unit/plus/transfer.test.ts`、ブラウザー E2E |
 
 作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
 workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
 Editor 側では削除前から CI の実行対象でなかったため、この1件の削除による CI の時間短縮は見込まない。
 切り戻す場合は Editor 側のテスト削除を revert する。製品コード・依存の固定・作品の保存形式は変更しない。
+
+転送12件は [移管先の CI](https://github.com/kubohiroya/turbowarp-script-transfer/actions/runs/45526571441) で既存15件とともに成功した（Node.js 24、2026-11-25）。上流 PR #6 のマージ確認を Editor 側の削除の公開条件とする。
+Editor の `test:script-transfer` と CI の同名ステップ・検証計画・結果再利用の対応表を外し、機能のテストは上流 CI へ任せる。CI 契約のハッシュは対応表と workflow から生成するため、変更前の証跡をそのまま再利用しない。
+今回の CI 所要時間の削減量は未測定。切り戻す場合はテスト2ファイル、npm コマンド、CI ステップと3つの検証スクリプトをまとめて revert する。
 
 ## 切り戻し
 

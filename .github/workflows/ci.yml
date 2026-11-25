@@ -150,11 +150,6 @@ jobs:
         if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|gui-integration|')
         env:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
-      - run: npm run test:script-transfer
-        id: script-transfer
-        if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|script-transfer|')
-        env:
-          E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
       - run: npm run test:project-tools
         id: project-tools
         if: steps.scope.outputs.mode != 'scoped' || contains(steps.scope.outputs.checks, '|project-tools|')
