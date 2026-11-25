@@ -1729,3 +1729,66 @@ test('reviews and saves an unsaved block diff from Local Git in the current proj
     assert.deepEqual(await readFile(path.join(folder, '.git', 'index')), index);
     assert.deepEqual(errors, []);
 });
+
+test('applies external project-file changes to the real workspace and preserves unsaved edits until chosen', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder, project} = await createDiskProject(t, 'tw-project-watch-');
+    const source = path.join(folder, projectFile);
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder, '&twPlusLocalGit=0', true);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    const notice = page.locator('[data-project-folder-external]');
+    const workspaceValue = () => page.evaluate(() => window.ScratchBlocks?.getMainWorkspace()
+        ?.getBlockById('move_B')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM'));
+    await expect.poll(workspaceValue).toBe('10');
+    const diskEdit = async () => {
+        await writeFile(source, stringify(project));
+        await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    };
+    const catBlocks = project.targets[1].blocks;
+    catBlocks.move_B.inputs.STEPS[1][1] = '71';
+    Object.assign(catBlocks.flag_A, {x: 180, y: 130});
+    await diskEdit();
+    await expect.poll(workspaceValue).toBe('71');
+    const coordinates = await page.evaluate(() => {
+        const {x, y} = window.ScratchBlocks.getMainWorkspace().getBlockById('flag_A').getRelativeToSurfaceXY();
+        return {x, y};
+    });
+    assert.deepEqual(coordinates, {x: 180, y: 130});
+    await expect(notice).toBeHidden();
+    const loads = () => page.evaluate(() => (window as any).folderIO.loads);
+    assert.deepEqual(await loads(), ['string'], 'automatic safe updates do not reload the project');
+
+    await editFolderBlock(page, 'value', '73');
+    catBlocks.move_B.inputs.STEPS[1][1] = '74';
+    await diskEdit();
+    const compare = notice.getByRole('button', {name: 'Compare and Choose…'});
+    await expect(notice).toContainText('unsaved edits');
+    await compare.click();
+    const comparison = page.getByRole('dialog', {name: 'External changes and your unsaved edits'});
+    await expect(comparison.getByRole('region', {name: 'Your unsaved edits'})).toBeVisible();
+    await expect(comparison.getByRole('region', {name: 'Changes in the folder'})).toBeVisible();
+    const keep = comparison.getByRole('button', {name: 'Keep My Edits'});
+    await expect(keep).toBeFocused();
+    await keep.click();
+    await expect(comparison).toHaveCount(0);
+    const localValue = () => page.evaluate(() => {
+        const blocks = window.vm.editingTarget.blocks;
+        const id = blocks.getBlock('move_B').inputs.STEPS.block;
+        return blocks.getBlock(id).fields.NUM.value;
+    });
+    assert.equal(await localValue(), '73');
+    assert.equal(await readFile(source, 'utf8'), stringify(project));
+    await compare.click();
+    await comparison.getByRole('button', {name: 'Discard Edits and Load from Folder'}).click();
+    await expect(comparison).toHaveCount(0);
+    await expect(notice).toBeHidden();
+    await expect.poll(workspaceValue).toBe('74');
+    assert.equal(await localValue(), '74');
+    const io = await page.evaluate(() => (window as any).folderIO);
+    assert.equal(io.writes, 0);
+    assert.deepEqual(io.loads, ['string', 'string'], 'explicit discard reloads directly from the folder');
+    assert.deepEqual(errors, []);
+});
