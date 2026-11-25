@@ -361,36 +361,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.deepEqual(git('status', '--short').split('\n').map(line => line.slice(3)), [projectFile], 'only the project file differs');
     assert.equal((await observe()).writes, 8);
 
-    await edit('value', '35');
-    const external = '\uFEFF' + await read();
-    await writeFile(path.join(folder, projectFile), external);
-    await save('The project folder changed outside the editor or is no longer open. Your edits are still in the editor.');
-    assert.equal(await read(), external);
-    assert.equal(await page.evaluate(() => JSON.parse(window.vm.toJSON(undefined, {allowOptimization: false}))
-        .targets.find(entry => entry.name === 'Cat').blocks.move_B.inputs.STEPS[1][1]), '35');
-    assert.deepEqual(await observe(), {
-        writes: 8, loads: ['string', 'string', 'string'], options: {id: 'turbowarp-plus-project-folder', mode: 'readwrite'}, zipSaves: 0
-    });
-
-    // Also change the actual file while the browser has a writable stream open.
-    await writeFile(path.join(folder, projectFile), external.slice(1));
-    const concurrent = external + '\n';
-    await page.exposeFunction('changeFolderFileDuringWrite', () => writeFile(path.join(folder, projectFile), concurrent));
-    await page.evaluate(() => {
-        const write = FileSystemWritableFileStream.prototype.write;
-        (window as any).folderTest.originalWrite = write;
-        FileSystemWritableFileStream.prototype.write = async function(data) {
-            await write.call(this, data);
-            await (window as any).changeFolderFileDuringWrite();
-        };
-    });
-    await save('The project folder changed outside the editor or is no longer open. Your edits are still in the editor.');
-    assert.equal(await read(), concurrent);
-    assert.equal((await observe()).writes, 9);
-    await page.evaluate(() => {
-        FileSystemWritableFileStream.prototype.write = (window as any).folderTest.originalWrite;
-    });
-
     // The Git panel reuses one granted repository handle to open a nested project.
     const nested = path.join(folder, 'projects', 'demo');
     await mkdir(nested, {recursive: true});
@@ -1291,7 +1261,7 @@ test('opens a past version in its own player and restores it from the history', 
     await page.waitForFunction(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Cat'));
 });
 
-test('opens a device folder in a new Editor tab and saves a block edit to that folder', {timeout: 45000}, async t => {
+test('opens a device folder in a new Editor tab and saves a block edit without clobbering external changes', {timeout: 45000}, async t => {
     const build = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
     await verifyWebEditor(build);
@@ -1305,20 +1275,49 @@ test('opens a device folder in a new Editor tab and saves a block edit to that f
     await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(editor.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
 
-    await editor.evaluate(() => {
+    const edit = (value: string) => editor.evaluate(value => {
         const vm = window.vm;
         vm.setEditingTarget(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id);
         const id = vm.editingTarget.blocks.getBlock('move_B').inputs.STEPS.block;
-        vm.blockListener({type: 'change', blockId: id, element: 'field', name: 'NUM', newValue: '20'});
-    });
-    await editor.getByText('File', {exact: true}).click();
-    await editor.getByRole('button', {name: 'Save Project', exact: true}).click();
-    await expect(status).toHaveText('Project folder saved.');
-    const saved = JSON.parse(await readFile(source, 'utf8'));
-    assert.equal(saved.targets[1].blocks.move_B.inputs.STEPS[1][1], '20');
-    assert.deepEqual(saved.targets[1].blocks.move_B.retainedData, {author: 'owner'});
-    assert.deepEqual(saved.retainedTopLevel, project.retainedTopLevel);
+        vm.blockListener({type: 'change', blockId: id, element: 'field', name: 'NUM', newValue: value});
+    }, value);
+    const save = async (message: string) => {
+        await editor.getByText('File', {exact: true}).click();
+        await editor.getByRole('button', {name: 'Save Project', exact: true}).click();
+        await expect(status).toHaveText(message);
+    };
+    await save('No changes to save.');
+    assert.equal(await readFile(source, 'utf8'), stringify(project));
+    await edit('20');
+    await save('Project folder saved.');
+    const snapshot = await readFile(source, 'utf8');
+    const expected = structuredClone(project);
+    expected.targets[1].blocks.move_B.inputs.STEPS[1][1] = '20';
+    assert.deepEqual(JSON.parse(snapshot), expected);
     assert.equal(await original.evaluate(() => window.vm.toJSON()), originalProject);
+
+    // Refuse edits made just before saving, or after a writable stream has opened.
+    const conflict = 'The project folder changed outside the editor or is no longer open. Your edits are still in the editor.';
+    await edit('35');
+    const external = '\uFEFF' + snapshot;
+    await writeFile(source, external);
+    await save(conflict);
+    assert.equal(await readFile(source, 'utf8'), external);
+    assert.equal(await editor.evaluate(() => JSON.parse(window.vm.toJSON(undefined, {allowOptimization: false}))
+        .targets.find(entry => entry.name === 'Cat').blocks.move_B.inputs.STEPS[1][1]), '35');
+
+    await writeFile(source, snapshot);
+    const concurrent = external + '\n';
+    await editor.exposeFunction('changeFolderFileDuringWrite', () => writeFile(source, concurrent));
+    await editor.evaluate(() => {
+        const write = FileSystemWritableFileStream.prototype.write;
+        FileSystemWritableFileStream.prototype.write = async function(data) {
+            await write.call(this, data);
+            await (window as Window & {changeFolderFileDuringWrite(): Promise<void>}).changeFolderFileDuringWrite();
+        };
+    });
+    await save(conflict);
+    await expect.poll(() => readFile(source, 'utf8')).toBe(concurrent);
     assert.deepEqual(errors, []);
 });
 
