@@ -1,3 +1,4 @@
+import {approveDocumentProjectFixture} from './fixtures/document-project-review.ts';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {test} from 'node:test';
@@ -37,9 +38,7 @@ test('four real packages keep YAML/JSON sources across stop, external edits, sta
     let stage = 'load';
     async function load(p, filename) {
         await p.goto(`${base}editor.html?lang=ja&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
-        const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')}); await security.waitFor({timeout: 60000});
-        await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
-        await security.getByRole('button', {name: 'OK', exact: true}).click(); await security.waitFor({state: 'hidden', timeout: 60000});
+        await approveDocumentProjectFixture(p);
         await selectBackdrop(p);
         await expect(p.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2, {timeout: 60000});
     }

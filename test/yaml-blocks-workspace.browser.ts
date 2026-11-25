@@ -1,3 +1,4 @@
+import {approveDocumentProjectFixture} from './fixtures/document-project-review.ts';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import type {FixtureYamlMapping} from './helpers/fixture-types.ts';
@@ -150,11 +151,7 @@ test(
                     'editor.html?lang=ja&project_url=' +
                     encodeURIComponent(base + 'static/' + name)
             );
-            const security = page.locator('.twextsec-modal');
-            await security.waitFor({ timeout: 60000 });
-            await security.getByRole('button', { name: 'サンドボックスなし', exact: true }).click();
-            await security.getByRole('button', { name: 'OK', exact: true }).click();
-            await security.waitFor({ state: 'hidden', timeout: 60000 });
+            await approveDocumentProjectFixture(page);
             await selectBackdrop(page);
             await page.waitForFunction(
                 () => window.vm?.editingTarget?.isStage && window.Scratch?.gui?.getBlockly

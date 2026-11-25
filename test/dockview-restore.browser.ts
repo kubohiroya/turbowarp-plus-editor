@@ -1,3 +1,4 @@
+import {approveDocumentProjectFixture} from './fixtures/document-project-review.ts';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import {test, type TestContext} from 'node:test';
 import assert from 'node:assert/strict';
@@ -74,7 +75,7 @@ async function restartableEditor(t: TestContext, prefix: string) {
     assert(site && fixture);
     await verifyWebEditor(site);
     const directory = await mkdtemp(path.join(tmpdir(), prefix));
-    const host = await startYamlEditorHost({siteDirectory: site, dataDirectory: path.join(directory, 'work')});
+    const host = await startYamlEditorHost({siteDirectory: site, dataDirectory: path.join(directory, 'work'), launchEditor: async () => { throw new Error('Layout restore must not launch a native editor'); }});
     const bytes = await readFile(fixture);
     const projectUrl = host.apiOrigin + '/turbowarp-plus-editor/static/dockview-restore.sb3';
     const url = new URL('/turbowarp-plus-editor/editor.html', host.apiOrigin);
@@ -85,7 +86,7 @@ async function restartableEditor(t: TestContext, prefix: string) {
     const session = {context: undefined as Awaited<ReturnType<typeof chromium.launchPersistentContext>> | undefined,
         async start() {
             session.context = await chromium.launchPersistentContext(path.join(directory, 'profile'), {
-                executablePath: process.env.TWPE_CHROME_EXECUTABLE, viewport: {width: 1440, height: 1000}, locale: 'ja-JP'
+                headless: true, executablePath: process.env.TWPE_CHROME_EXECUTABLE, viewport: {width: 1440, height: 1000}, locale: 'ja-JP'
             });
             await session.context.route(projectUrl, route => route.fulfill({body: bytes, contentType: 'application/octet-stream'}));
             return session.context.pages()[0];
@@ -94,11 +95,7 @@ async function restartableEditor(t: TestContext, prefix: string) {
             const target = new URL(url);
             if (rollback) target.searchParams.set('twPlusDockview', '0');
             await page.goto(target.href);
-            const security = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
-            await security.waitFor({timeout: 60000});
-            await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
-            await security.getByRole('button', {name: 'OK', exact: true}).click();
-            await security.waitFor({state: 'hidden'});
+            await approveDocumentProjectFixture(page);
         }};
     t.after(async () => {
         await session.context?.close();
@@ -163,7 +160,7 @@ test('Dockview restores reordered tabs, split geometry and selected panels from 
     await expect.poll(() => readGroups(page)).not.toEqual(beforeResize);
     await expect(panel(page, 'settings').locator('textarea')).toHaveValue('volume: 50\nmode: rehearsal\n');
     const savedGroups = await readGroups(page);
-    assert.deepEqual(savedGroups.map(group => group.selected).sort(), ['ステージ', title('labels'), title('settings')].sort());
+    assert.deepEqual(savedGroups.map(group => group.selected).sort(), ['実行画面', title('labels'), title('settings')].sort());
     await layoutSettled(page);
     const saved = JSON.parse(await readStorage(page));
     assert.equal(Object.values(saved.panels).filter((panel: any) => panel.kind === 'document').length, 2);
