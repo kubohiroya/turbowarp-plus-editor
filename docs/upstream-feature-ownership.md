@@ -169,6 +169,8 @@ Editor の `authoring.test.ts`・`host.test.ts` と GUI の host 接続確認、
 
 divider の grip 寸法・radial-gradient と keyboard の16px移動・行の最小値/復元は workbench の standalone browser テスト2件へ移す。host accent と両軸の境界/復元も確認し、既存5件の本文を保持して host を共通化する。Editor は詳細13行だけを除き、GUI テーマ・Blockly resize/edit・stage input・SB3 保存/再読込を保持する。従来レイアウトを指定する元ケースに合わせ、保存操作を存在する「Save to your computer」へ修正した。修正した元の全検証と縮小後の実ケースは初回の固定ビルドで成功し、公開前に進んだ main `cd135d8` の GUI `60b87e2`・VM `88a2c06` の固定ビルドでも両方が成功した。他38件・共通 fixture・製品・依存固定・GUI・CI コマンドは内容不変。上流 CI 成功・マージ後に Editor を公開する。切り戻しは Editor の詳細13行を先に復元し、従来レイアウトに合わせた保存操作を保持する。通常 CI の時間短縮は見込まない。
 
+変数テーブル29番のmixed-row表示/並べ替えとlist dialogの詳細をsprite-panesの単独browser2件へ移す。元の操作・期待値・GPL-3.0-or-laterを保持し、キャンセル時0回/保存時1回のコールバックも確認する。Editorは112行から78行へ縮小し、実VMの参照数、スプライト/clone/global listの更新とmonitor接続を残す。残る38件と共通fixture、製品・固定依存・GUI・CI設定は内容不変。製品・テスト入力がmainと一致する既存固定ビルドで削減前後の実ケースが成功した。上流CI成功・マージ後にEditorを公開する。切り戻しは元のEditorケースと名前を先に復元する。通常CIの時間短縮は見込まない。
+
 ## 切り戻し
 
 Editor のこの変更を revert し、接続コードと依存の固定を公開直前の main の組み合わせへ戻して再ビルドする。

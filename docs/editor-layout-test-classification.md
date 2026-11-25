@@ -36,7 +36,7 @@
 | 26 | [2296–2395](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2296-L2395) | sprite and backdrop menus open and select numbered Dockview tabs | workbench / GUI | 接続保持 | sprite/backdrop メニューと target・番号付き tab の選択 |
 | 27 | [2396–2575](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2396-L2575) | the Dockview asset connection restores the native costume and sound selection per pane | sprite-panes / workbench / GUI | 接続保持 | native costume/sound 選択を pane ごとに戻す |
 | 28 | [2576–2783](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2576-L2783) | the Dockview variables pane lists only data owned by the selected target | sprite-panes / code-views | 分離候補 | VM target の切替を保持し、所有データの表示行列を分ける |
-| 29 | [2784–2896](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2784-L2896) | the variables table sorts mixed rows and saves list items for the selected target | sprite-panes | 分離候補 | 実 VM の値・monitor 接続を保持し、sort/list editor の詳細を分ける |
+| 29 | [2784–2896](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2784-L2896) | the variables table sorts mixed rows and saves list items for the selected target | sprite-panes | 一部分離 | sort/list editor の詳細を単独browser2件へ。実 VM の参照数・スプライト/クローン/グローバルリスト更新・monitor接続を保持 |
 | 30 | [2897–2943](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2897-L2943) | variable counts open the project search at the selected kind of access | sprite-panes / code-views | 接続保持 | 変数アクセス種別から実 project search へ |
 | 31 | [2944–3080](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2944-L3080) | clone pages edit the selected runtime instance and fall back when it disappears | sprite-panes / VM | 分離候補 | clone の値更新と消滅時 fallback を保持し、表示行列を分ける |
 | 32 | [3081–3151](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3081-L3151) | clone variables keep the original sprite reference counts and definition actions | sprite-panes / code-views | 接続保持 | clone から original sprite の参照・定義へ |
@@ -95,3 +95,15 @@ Editor は元の操作と前提を保持し、使わなくなった grip helper 
 ローカル検証は workbench ビルド、新2件と既存5件の browser テスト、追加ファイルの型検査、Editor 型検査と責務境界2件、実 Editor の対象1件。workbench 製品 src 85ファイルは Editor 固定0.39.0と一致し、npm archive 230ファイルにテスト・helper・テスト用ライセンス・node_modules が含まれないことを確認した。
 
 依存順と DoD は workbench の push・PR・既存 CI 成功・Squash Merge → Editor の縮小を公開・既存 CI 成功・Squash Merge → 作業環境整理・#741への記録。製品コード・依存固定・GUI・起動フラグ・CI コマンドは変更しない。この browser ファイルは通常 CI の対象外なので、この13行削減による通常 CI の時間短縮は見込まない。#741全体の CI 所要時間比較は未実施。切り戻しは Editor の詳細13行を先に復元し、必要なら workbench の追加テスト・host 抽出・example 設定・文書を revert する。従来レイアウトに合わせた保存操作は保持する。
+
+## 変数テーブルとリスト編集の詳細の切り出し
+
+29番の種類アイコン・リストプレビュー・参照数の表示と並べ替え、編集ボタンのhover・list dialogの背景・キャンセル・項目の移動/削除/追加とフォーカスを、sprite-panes の `test/editor-variable-details.browser.ts` の2件へ移す。元の操作と期待値を保持し、単独hostが渡す `onWrite` についてキャンセル時0回、保存時1回と数値/文字列の配列も確認する。公開 `SpriteAssetPane`・`sprite-asset-pane.css` を使い、既存のasset pane browser hostだけを共通化する。既存2件の本文とHTMLは内容不変。移管テストのGPL-3.0-or-laterとテスト用ライセンス、抽出hostのMPL-2.0を保持する。
+
+Editorは112行から78行へ縮小し、実VMのリスト読み取り/変更blockからの参照数、編集配列の保存、cloneだけの変更とoriginalの内容不変、stageのglobal list更新とmonitorのon/offを保持する。他38件と共通fixtureは内容不変。製品・依存固定・GUI・起動フラグ・CIコマンドは変更しない。
+
+開始時のリモートmainは `07ce8cb8c6f2e57d8f218b3fe507ad6ddbdcb38f`。完成済みビルドのsite revision `486e790221da09e5f78849066fd059234e833e57` との差分は文書2ファイルだけで、製品とテストの入力は一致している。そのためビルドを再利用し、実際のsite revisionを `E2E_EXPECT_SITE_REVISION` に指定して元ケースと縮小後のケースをそれぞれheadless実行した。両方1 pass / fail・skip 0。GUI `60b87e2`・VM `88a2c06`・Packager `d690225` と完成済みbuild-infoも照合済み。main自体から新しくビルドした結果とは区別する。
+
+移管先ではビルド、新2件と既存2件のbrowserテスト（4 pass / fail・skip 0）、追加test/helperの型検査を実行した。Editorの型検査・責務境界2件も成功。sprite-panes製品ソース16ファイルはEditor固定0.11.3と一致し、npm archive 47ファイルにtest/helper/テスト用ライセンス/node_modulesが含まれないことを確認した。
+
+依存順とDoDは sprite-panes の公開・既存browser CIで新2件をskipなしに成功・Squash Merge → Editorの縮小を公開・CI成功・Squash Merge → 作業環境整理・#741への記録。元browserファイルは通常CI対象外のため、この34行削減による通常CI時間短縮は見込まない。#741全体の時間比較は未実施。切り戻しはEditorの元112行とケース名を先に復元し、必要なら上流の追加テスト・host抽出・テスト用ライセンス・文書をrevertする。
