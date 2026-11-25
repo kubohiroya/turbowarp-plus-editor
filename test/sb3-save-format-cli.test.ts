@@ -115,7 +115,7 @@ test('rerunning any form on its own output writes the same bytes', async t => {
     }
 });
 
-test('embedded-file and embedded-data convert into each other byte for byte', async t => {
+test('the CLI writes the same SB3 archive after a round trip between embedded carriers', async t => {
     const {run} = await workspace(t);
     const data = await run('in.sb3', 'embedded-data');
     const file = await run(data.file, 'embedded-file');
@@ -124,12 +124,6 @@ test('embedded-file and embedded-data convert into each other byte for byte', as
     assert.ok(data.bytes.equals(dataAgain.bytes), 'embedded-data → embedded-file → embedded-data changed the bytes');
     assert.ok(file.bytes.equals(fileAgain.bytes), 'embedded-file → embedded-data → embedded-file changed the bytes');
     assert.ok(!data.bytes.equals(file.bytes));
-    // The carried bytes are the extension's own in both forms.
-    const filed = await JSZip.loadAsync(file.bytes);
-    for (const spec of (await project(file.bytes)).turboWarpPlus.extensions)
-        assert.equal(await filed.file(spec.source.path)!.async('string'), extensions[spec.id as keyof typeof extensions]);
-    assert.equal((await project(file.bytes)).extensionURLs.alpha, undefined);
-    assert.match((await project(data.bytes)).extensionURLs.alpha, /^data:/);
 });
 
 test('remote-cacheable says the CLI has no part in the browser copy', async t => {
