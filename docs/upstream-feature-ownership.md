@@ -171,6 +171,8 @@ divider の grip 寸法・radial-gradient と keyboard の16px移動・行の最
 
 変数テーブル29番のmixed-row表示/並べ替えとlist dialogの詳細をsprite-panesの単独browser2件へ移す。元の操作・期待値・GPL-3.0-or-laterを保持し、キャンセル時0回/保存時1回のコールバックも確認する。Editorは112行から78行へ縮小し、実VMの参照数、スプライト/clone/global listの更新とmonitor接続を残す。残る38件と共通fixture、製品・固定依存・GUI・CI設定は内容不変。製品・テスト入力がmainと一致する既存固定ビルドで削減前後の実ケースが成功した。上流CI成功・マージ後にEditorを公開する。切り戻しは元のEditorケースと名前を先に復元する。通常CIの時間短縮は見込まない。
 
+クローン切替31番のpagination境界・矢印geometry・選択保持/復帰をsprite-panesの単独browser2件へ移す。公開部品へtargetデータとlifecycle通知だけを渡し、元の期待値・GPL-3.0-or-laterを保持する。Editorはmonitorの旧アクセシブル名を現行DOMへ合わせて元の全検証の成功を確認し、136行から115行へ縮小する。実VMのclone編集・定義追加・monitor・実行中だけの変更・消滅と停止の接続を保持し、縮小後も成功した。残る38件と共通fixture、製品・固定依存・GUI・CI設定は内容不変。上流CI成功・マージ後にEditorを公開する。切り戻しはEditorの元の確認範囲とケース名を先に復元し、現行monitor名は保持する。通常CIの時間短縮は見込まない。
+
 ## 切り戻し
 
 Editor のこの変更を revert し、接続コードと依存の固定を公開直前の main の組み合わせへ戻して再ビルドする。
