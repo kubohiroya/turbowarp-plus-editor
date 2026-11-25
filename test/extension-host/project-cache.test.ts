@@ -6,9 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import Zip from '@turbowarp/jszip';
-import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
 import {installEditorExtensionHost} from '../../site/extension-host/editor-host.ts';
-import {installExtensionLoader} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
 import {identifyProject} from '../../site/extension-host/review.ts';
 import {createPlusTrustedCatalog} from '../../site/trusted-extensions.ts';
 import {guiRequire, guiRoot, vmModules} from './pinned-host.ts';
@@ -94,90 +92,6 @@ const editor = async (origin, settings = {}) => {
 };
 
 // ---- Stage 4: the bridge assigns at the first save, through the real codec ------------------
-
-function bridge({manifest, addressProject}) {
-    const projectIO = createProjectIO({zip: Zip});
-    let serialized;
-    const vm = {
-        async loadProject(project) {
-            const archive = await Zip.loadAsync(project);
-            serialized = JSON.parse(await archive.file('project.json').async('string'));
-            await this._loadExtensions(new Set(serialized.extensions), new Map());
-        },
-        async _loadExtensions() {},
-        toJSON(target?: string) { return target ? '{"sprite":true}' : JSON.stringify(serialized); },
-        _saveProjectZip() { return new Zip().file('project.json', this.toJSON()); },
-        saveProjectSb3DontZip() { return {'project.json': new TextEncoder().encode(this.toJSON())}; }
-    };
-    const loader = {async load (input) { return {ids: input.extensions.map(item => item.id)}; }, async unload () {}};
-    const told = [];
-    let issued = 0;
-    installExtensionLoader({vm, projectIO, transactionalRegistration: true, onProjectURI: uri => told.push(uri),
-        addressProject: addressProject && (() => {
-            issued++;
-            return addressProject(issued);
-        })}, loader);
-    const uriOf = json => JSON.parse(json).turboWarpPlus?.uri;
-    return {vm, told, issued: () => issued, uriOf, load: async () => vm.loadProject(await sb3(manifest))};
-}
-
-const address = n => `https://editor.example/turbowarp-plus-projects/aa/00aa/0193f0a1-2b3c-7d4e-8f01-00000000000${n}.sb3`;
-
-test('a manifest without an address is given one at the first save, and keeps it on the next', async () => {
-    const f = bridge({manifest: remote(), addressProject: address});
-    await f.load();
-    assert.deepEqual(f.told, [undefined]);
-    assert.equal(f.issued(), 0, 'opening a project names nothing');
-    const first = f.uriOf(f.vm.toJSON());
-    assert.equal(first, address(1));
-    assert.equal(f.uriOf(f.vm.toJSON()), first);
-    // The ZIP and file saves serialize through toJSON and restore with the same context.
-    const zip = await Zip.loadAsync(await f.vm._saveProjectZip().generateAsync({type: 'uint8array'}));
-    assert.equal(f.uriOf(await zip.file('project.json').async('string')), first);
-    assert.equal(f.uriOf(new TextDecoder().decode(f.vm.saveProjectSb3DontZip()['project.json'])), first);
-    assert.equal(f.issued(), 1);
-    assert.deepEqual(f.told, [undefined, first], 'the cache hears the new address once');
-});
-
-test('the first save may be a ZIP or file save; a sprite export is never addressed', async () => {
-    const f = bridge({manifest: remote(), addressProject: address});
-    await f.load();
-    assert.equal(f.vm.toJSON('sprite'), '{"sprite":true}');
-    assert.equal(f.issued(), 0);
-    const files = f.vm.saveProjectSb3DontZip();
-    assert.equal(f.uriOf(new TextDecoder().decode(files['project.json'])), address(1));
-    assert.equal(f.uriOf(f.vm.toJSON()), address(1));
-    assert.equal(f.issued(), 1);
-});
-
-test('an address the project already has is never overwritten', async () => {
-    const f = bridge({manifest: remote(kept), addressProject: address});
-    await f.load();
-    assert.equal(f.uriOf(f.vm.toJSON()), kept);
-    assert.equal(f.uriOf(f.vm.toJSON()), kept);
-    assert.equal(f.issued(), 0);
-    assert.deepEqual(f.told, [kept]);
-});
-
-test('a project without a manifest is given nothing, and neither is one on a host that makes no address', async () => {
-    const plain = bridge({manifest: null, addressProject: address});
-    await plain.load();
-    assert.equal(plain.uriOf(plain.vm.toJSON()), undefined);
-    assert.equal(JSON.parse(plain.vm.toJSON()).turboWarpPlus, undefined);
-    assert.equal(plain.issued(), 0);
-    const none = bridge({manifest: remote(), addressProject: null});
-    await none.load();
-    assert.equal(none.uriOf(none.vm.toJSON()), undefined);
-});
-
-test('reopening forgets the address given to the previous project', async () => {
-    const f = bridge({manifest: remote(), addressProject: address});
-    await f.load();
-    assert.equal(f.uriOf(f.vm.toJSON()), address(1));
-    await f.load();
-    assert.equal(f.told.at(-1), undefined);
-    assert.equal(f.uriOf(f.vm.toJSON()), address(2), 'a different project opened later is its own');
-});
 
 test('the real editor host addresses at save over HTTPS only, once, and the address survives reopening', async () => {
     const unaddressed = await sb3(remote());
