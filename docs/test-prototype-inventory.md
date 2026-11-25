@@ -57,7 +57,7 @@
 | 所有パッケージ | GitHub Actionsでの実行 |
 | --- | --- |
 | windows 0.2.3 | [CI: b0b510c](https://github.com/kubohiroya/turbowarp-plus-editor-windows/actions/runs/45184961682)。Node 27件成功、skipなし |
-| workbench 0.39.0 | [CI: 694a58e](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45715128082)。Node 250件成功、skipなし。ブラウザーテスト28件中20件成功、8件skip |
+| workbench 0.39.0 | [固定版 d935ae5 のCI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45503360028)。Node 238件成功、skipなし。ブラウザーテスト21件中13件成功、8件skip。ローカル表の250件は同じ版名の後続試験ツリー |
 | sprite-panes 0.11.3 | [CI: 7f0e65c](https://github.com/kubohiroya/turbowarp-plus-editor-sprite-panes/actions/runs/45131755031)。Node 89件、ブラウザー18件成功、skipなし |
 | code-views 0.26.5 | [CI: 57084d8](https://github.com/kubohiroya/turbowarp-plus-editor-code-views/actions/runs/45495163888)。Node 178件、ブラウザー87件成功、skipなし |
 

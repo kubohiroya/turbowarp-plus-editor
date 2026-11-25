@@ -27,14 +27,14 @@ browser、E2E、試作補助、および `test/package/` はこの表の対象�
 | gui-integration/unit/extension-loader/load-failure | Loader が判定、Editor bridge が error identity／empty or broken formatter を保つ。契約のため保持。 |
 | gui-integration/unit/extension-security/{cancel,keyboard,local-preview,plus-library,runtime-disposed,helpers} | GUI native route/error/modal/keyup と footer/library category+query＋props、Editor の snapshot preview script の integrity と exact serving、VM 破棄で取消/権限解除を守る。dialog 側 wording/mode 行列のみ別。helpers は pinned checkout を require hook で解決する試験基盤。 |
 | gui-integration/unit/plus/{extension-host,integration-points,transfer} | GUI の無 host fallback、注入ネイティブ資材/起動 snapshot、cancel and trust port、host declaration、locale remount、stage/Backdrop menu と workspace dispose。機能所有 Loader/Workbench/script-transfer とは別の seam。 |
-| gui-integration/unit/plus/web-fonts | Fonts owner の catalog/download/fallback matrix は分割候補。Editor の固定 GUI font serialization（font face -> stored system ref）と GUI fallback は独自。§1 #5 の font dialog/test 行列を重複計上せず、この service/serialization テストは保留。 |
+| gui-integration/unit/plus/web-fonts | Fonts 所有の未知参照・拒否・重複追加の分岐を分離。固定 GUI の FontManager、レンダラー、保存と Packager の組合せは独自の結線。§1 #5 の font dialog 行列を重複計上しない。 |
 | project-tools/{dialog,flags,host} | Workbench 側の dialog/form/history・diagnostics 表示詳細、Loader/codec の保存機能、SB3 save format は機能所有候補。Editor には dialog stylesheet と shared cancel classifier、既定 ON、失敗時 popup＋native corner log suppression、real VM⇆Loader⇆project props による bytes/metadata/authoring ownership を残す。 |
 | controls-dock,stage-controls,plus-integration (test/直下) | Editor の App Shell symbol と Workbench service、document mount/ownership/dispose、VM locale/host points を守る。service の一般状態は Workbench、App Shell 浮動 dock と Editor の toolbar adapter は実装/仕様が異なる。 |
 | editor-revision,extension-artifact,family-notices,layout-package,npm-pins,pinned-gui,yaml-build,yaml-cli | pin/metadata/distribution/license/source/default/publisher/CLI 配布エントリ。機能移管対象にしない。layout-package の Desktop vs project layout の一例は Desktop 契約。 |
 | extension-loader (test/直下) | Site bootstrap の OFF、loader trust、引き渡し/後片付けと startup flags 全般。cleanup failure の細い行列は Adapter 本体の ownership と上流契約比較後にのみ分割可能。 |
 | package (test/直下) | 本配布物の embed/編集 URL 契約、署名クエリ・HTML escape・アクセシブル名・配布元 pin。独立の feature 所有が確認できるまでは保持（単一の URL helper upstream 候補）。 |
 | plus-catalog,trusted-extensions | 公開 catalog URL、preview/production source/credentials、digest variant parsing、packaged trusted digests は本配布の trust policy。共有 API/複数形式 fallback などの純機能は Plus Packages/catalog owner と比較が必要。 |
-| sb3-save-format-cli | CLI 引数/4形式の名称互換/実変換の programmatic entry/access safety は Editor CLI→security-dialog→SB3 codec 契約。反復の byte equality と形式組合せは SB3 codec の実行証拠で分割可能、今は維持。 |
+| sb3-save-format-cli | CLI 引数/4形式の名称互換/実変換の programmatic entry/access safety は Editor CLI→security-dialog→SB3 codec 契約。CLI が生成する ZIP 全体の往復と4形式の再変換を維持。ZIP 内のペイロードと搬送用 URL の反復だけを writer に委ねる。 |
 | reuse-pr-verification,verification-{evidence,execution,plan} | Editor CI の tree binding、artifact/判定・Docs selective、未実行時 fallback、release gate。機能パッケージへ移さない。 |
 
 ## 既存上流テストと照合して削減した重複
@@ -44,6 +44,8 @@ browser、E2E、試作補助、および `test/package/` はこの表の対象�
 | `extension-host/host.test.ts`: 固定 VM で作品を開く途中に、再試行の次の番号・上限・対象 URL が Editor の診断コールバックに届く。 | Loader 0.16.1 (`e4b784d7e5269659b014ddbb01250e9d6da538bd`) の [CI 実行結果](https://github.com/kubohiroya/turbowarp-extension-loader/actions/runs/45591120258)。[HTTP 状態の行列](https://github.com/kubohiroya/turbowarp-extension-loader/blob/e4b784d7e5269659b014ddbb01250e9d6da538bd/test/fetch-retry.test.ts) は 404 を 1 回で打ち切り、`FETCH_FAILED` となることを検証。再試行レポートの番号・上限と、実 VM を使う再試行可否の行列も実行済み。 |
 | `extension-host/project-uri.test.ts`: Editor のオリジンを使う初回追加から、固定 VM の SB3 保存、Editor のレビューで同じ URI を読むところまでを確認する。 | 同じ Loader CI で拡張変更後にも URI が維持されるケースと、[URI 付与の行列](https://github.com/kubohiroya/turbowarp-extension-loader/pull/44) を実行。Editor 固有の初回保存・キャッシュ接続は別テストに保持。 |
 | `extension-library/plus-library.test.cts`: 失敗情報と再試行コールバックをレビューに渡し、そのコールバックで元の選択を再送し、成功時に正しい画面へ戻る。 | Security Dialog 0.14.0 (`f161f0f4c3cf4d623fcfcd16f0586fd52a88d19f`) の [CI 実行結果](https://github.com/kubohiroya/turbowarp-extension-security-dialog/actions/runs/45555301122)。[レビュー表示](https://github.com/kubohiroya/turbowarp-extension-security-dialog/blob/f161f0f4c3cf4d623fcfcd16f0586fd52a88d19f/test/review.test.cts) は日本語の再試行文言、再試行不可時のエラーのコードと本文・ボタン非表示、追加モードの言語別行列を実行。 |
+| `gui-integration/unit/plus/web-fonts.test.ts`: 固定 VM でフォント用の参照を保存し、Packager では参照だけを除く。失敗時に代替フォントで描画し、利用不能なフォントを renderer に登録しない。 | [Fonts #2 の CI](https://github.com/kubohiroya/turbowarp-plus-editor-fonts/actions/runs/45724298634) で未知・不一致、拒否、オフライン、重複・追加を確認。8 件成功、スキップなし。 |
+| `sb3-save-format-cli.test.ts`: CLI の両方向と各形式で ZIP 全体のバイト同一性を確認し、引数、出力先と安全性の検証を維持。 | [SB3 Save Format 0.5.1 の CI](https://github.com/kubohiroya/turbowarp-sb3-save-format/actions/runs/45039887803) で writer の搬送ペイロードの完全一致と旧 URL の消去を確認。全 53 件成功。 |
 
 上記の CI ログで、Loader は単体 230 件・ブラウザー 5 件、Security Dialog は単体 151 件・
 ブラウザー 28 件が成功し、いずれもスキップ 0 件だった。今回の差分は既存の上流検証を
