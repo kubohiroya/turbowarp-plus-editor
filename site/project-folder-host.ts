@@ -1,6 +1,8 @@
 import type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
 export type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
-import {hasProjectVersionValidator, openProjectVersionPreview, packProjectVersion, validateProjectVersion} from './git-project-preview.ts';
+import {hasProjectVersionValidator, openProjectVersionEditor, openProjectVersionPreview, packProjectVersion,
+    validateProjectVersion} from './git-project-preview.ts';
+import {isProjectVersionEditor} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import {chooseBrowserProject, folderNotEmptyMessage, followProjectFolder, mountProjectFolder, omittedFilesQuestion, openRepositoryProjectQuestion,
     openSavedFolderQuestion, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
@@ -125,7 +127,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     blocks: Pick<EditorHost, 'deserializeBlocks' | 'createBlockContainer'>,
     attachNavigation?: ScratchBlockDiffRendererOptions['attachNavigation']) {
     const view = document?.defaultView as PickerWindow;
-    if (!view || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
+    if (!view || isProjectVersionEditor(view) || typeof __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__ === 'undefined') return null;
     const cloudflare = gitCloudflare();
     const connectionSettings = localGit ? createGitConnectionSettings({
         desktop: gitDesktop(view),
@@ -469,6 +471,14 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
                 const archive = await packProjectVersion(files);
                 guard?.();
                 openProjectVersionPreview(document, oid, archive, locale, title);
+            },
+            async editProjectVersion({title, files, guard, save}) {
+                const archive = await packProjectVersion(files);
+                guard();
+                return openProjectVersionEditor(document, archive, locale, title, edits => {
+                    guard();
+                    return save(edits);
+                });
             }
         },
         unsavedProjectPaths() {

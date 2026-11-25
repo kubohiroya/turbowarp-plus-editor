@@ -1,4 +1,5 @@
-import {openProjectVersionPreview as openVersionPreview, packProjectVersion as packVersion}
+import {openProjectVersionEditor as openVersionEditor, openProjectVersionPreview as openVersionPreview,
+    packProjectVersion as packVersion, type MergePlanCodeEdit}
     from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import JSZip from '@turbowarp/jszip';
 
@@ -25,3 +26,10 @@ export const openProjectVersionPreview = (document: Document, oid: string, archi
     const options = {page: 'git-project-preview.html', params: {twPlusLocalGit: '0', twPlusStandardLayout: '0'}, title};
     return openVersionPreview(document, oid, archive, locale, options);
 };
+
+export const openProjectVersionEditor = (document: Document, archive: ArrayBuffer, locale: string, title: string,
+    save: (edit: MergePlanCodeEdit) => Promise<string>) => openVersionEditor(document, archive, locale, {
+    page: 'git-project-preview.html', title, params: {
+        twPlusLocalGit: '0', twPlusStandardLayout: '0', twPlusProjectTools: '0', twPlusSaveWorkspace: '0'
+    }
+}, save);

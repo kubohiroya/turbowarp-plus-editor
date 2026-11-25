@@ -1,8 +1,10 @@
 import React from 'react';
 import {render} from 'react-dom';
-import {receiveProjectVersionPreview} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
+import {isProjectVersionEditor, receiveProjectVersionEditor, receiveProjectVersionPreview}
+    from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 
-type PreviewVM = {loadProject(archive: ArrayBuffer): Promise<void>; renderer: {draw(): void}};
+type PreviewVM = {loadProject(archive: ArrayBuffer): Promise<void>; renderer: {draw(): void};
+    toJSON(): string; stopAll(): void};
 type ProjectState = {loadingState: string};
 declare const __TW_PLUS_REVISION_GUI__: React.ComponentType<Record<string, unknown>> & {setAppElement(element: HTMLElement): void};
 declare const __TW_PLUS_REVISION_APP_STATE__: (gui: typeof __TW_PLUS_REVISION_GUI__) => typeof __TW_PLUS_REVISION_GUI__;
@@ -20,28 +22,34 @@ document.body.append(app);
 __TW_PLUS_REVISION_GUI__.setAppElement(app);
 document.body.style.margin = '0';
 const Player = __TW_PLUS_REVISION_APP_STATE__(__TW_PLUS_REVISION_GUI__);
+const editing = isProjectVersionEditor(window);
 
 // The handshake and its checks are the Git package's; this page supplies the pinned GUI's player.
 function connect(vm: PreviewVM) {
     const loadingState = () => ReduxStore.getState().scratchGui.projectState.loadingState;
     const {requestProjectUpload, onLoadedProject} = __TW_PLUS_REVISION_PROJECT_STATE__;
-    receiveProjectVersionPreview(window, {
+    const ports = {
         loading: () => ReduxStore.dispatch(requestProjectUpload(loadingState())),
         async load(archive) {
             await vm.loadProject(archive);
             requestAnimationFrame(() => vm.renderer.draw());
         },
-        loaded: success => ReduxStore.dispatch(onLoadedProject(loadingState(), false, success)),
-        showError(message) {
+        loaded: (success: boolean) => ReduxStore.dispatch(onLoadedProject(loadingState(), false, success)),
+        showError(message: string) {
             const error = document.createElement('p');
             error.role = 'alert';
             error.textContent = message;
             app.prepend(error);
         }
-    });
+    };
+    if (editing) receiveProjectVersionEditor(window, {...ports, snapshot() {
+        vm.stopAll();
+        return vm.toJSON();
+    }});
+    else receiveProjectVersionPreview(window, ports);
 }
 
 if (parent !== window) {
-    render(<Player isPlayerOnly canSave={false} canUseCloud={false} hasCloudPermission={false}
+    render(<Player isPlayerOnly={!editing} canManageFiles={false} canSave={false} canUseCloud={false} hasCloudPermission={false}
         basePath={process.env.ROOT} onVmInit={connect}/>, app);
 }
