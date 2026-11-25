@@ -1448,7 +1448,7 @@ test('the stage drawer starts pinned and remembers the pin menu choice', {timeou
     await expect(autoHide).toBeEnabled();
 });
 
-test('the stage drawer moves, resizes and folds into its attached editor edge', {timeout: 30_000}, async t => {
+test('the stage drawer connects movement, resize and reopening to the live canvas', {timeout: 30_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);
     await page.goto(secureOrigin + buildPrefix + 'editor.html?lang=en');
@@ -1479,123 +1479,40 @@ test('the stage drawer moves, resizes and folds into its attached editor edge', 
     await expect(header.getByRole('menu', {name: 'Run view display', exact: true})).toBeVisible();
     await page.keyboard.press('Escape');
     const initial = await stage.boundingBox();
-    const control = await display.boundingBox();
-    assert.ok(initial && control);
-    await page.mouse.move(control.x + control.width / 2, control.y + control.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(control.x - 60, control.y + 90);
-    await page.mouse.up();
-    await expect(canvas).toBeVisible();
-    assert.deepEqual(await stage.boundingBox(), initial);
-
     const grip = await header.boundingBox();
     const area = await stage.evaluate(node => {
-        const {left, top, right, bottom} = (node as HTMLElement).offsetParent.getBoundingClientRect();
-        return {left, top, right: Math.min(right, innerWidth), bottom: Math.min(bottom, innerHeight)};
+        const {bottom} = (node as HTMLElement).offsetParent.getBoundingClientRect();
+        return {bottom: Math.min(bottom, innerHeight)};
     });
-    assert.ok(grip);
-    const x = grip.x + grip.width * 0.75;
-    const y = grip.y + grip.height / 2;
-    const offsetX = x - initial.x;
-    const offsetY = y - initial.y;
-    const left = area.left;
-    const right = area.right - initial.width;
-    const top = area.top;
-    const bottom = area.bottom - initial.height;
-    const middleX = (left + right) / 2;
-    const middleY = (top + bottom) / 2;
-    const at = async (x, y) => {
-        await expect.poll(async () => {
-            const position = await stage.boundingBox();
-            return position && Math.hypot(position.x - x, position.y - y) < 2;
-        }).toBe(true);
-    };
-    await page.mouse.move(x, y);
+    assert.ok(initial && grip);
+    const grab = {x: grip.x + grip.width * 0.75, y: grip.y + grip.height / 2};
+    await page.mouse.move(grab.x, grab.y);
     await page.mouse.down();
-    for (const [x, y] of [[right, middleY], [right, bottom], [middleX, bottom], [left, bottom], [left, middleY],
-        [left, top], [middleX, top], [right, top], [right, bottom]]) {
-        await page.mouse.move(x + offsetX, y + offsetY, {steps: 6});
-        await at(x, y);
-    }
+    await page.mouse.move(grab.x, grab.y + area.bottom - initial.y - initial.height, {steps: 8});
     await page.mouse.up();
+    await expect.poll(async () => (await stage.boundingBox()).y).toBeGreaterThan(initial.y);
     await expect(canvas).toBeVisible();
 
-    await expect(resize('left')).toBeVisible();
-    await expect(resize('top')).toBeVisible();
-    await expect(resize('right')).toBeHidden();
-    await expect(resize('bottom')).toBeHidden();
-    const gripLeft = await resize('left').boundingBox();
     const beforeResize = await stage.boundingBox();
-    assert.ok(gripLeft && beforeResize);
+    const canvasWidth = (await canvas.boundingBox()).width;
+    const gripLeft = await resize('left').boundingBox();
+    assert.ok(beforeResize && gripLeft);
     await page.mouse.move(gripLeft.x + gripLeft.width / 2, gripLeft.y + gripLeft.height / 2);
     await page.mouse.down();
     await page.mouse.move(gripLeft.x + gripLeft.width / 2 - 40, gripLeft.y + gripLeft.height / 2, {steps: 8});
     await page.mouse.up();
     await expect.poll(async () => (await stage.boundingBox()).width).toBe(beforeResize.width + 40);
-    const afterResize = await stage.boundingBox();
-    assert.ok(Math.abs(afterResize.x + afterResize.width - area.right) < 2);
-    assert.ok(Math.abs(afterResize.y + afterResize.height - area.bottom) < 2);
+    await expect.poll(async () => (await canvas.boundingBox()).width).toBeGreaterThan(canvasWidth);
+    await expect(canvas).toBeVisible();
 
-    await page.setViewportSize({width: 640, height: 700});
-    await expect.poll(async () => {
-        const position = await stage.boundingBox();
-        return position && Math.abs(position.x + position.width - 640) < 2 &&
-            Math.abs(position.y + position.height - 700) < 2;
-    }).toBe(true);
-    const moved = await stage.boundingBox();
     await display.click();
     await header.getByRole('menuitem', {name: 'Close the drawer', exact: true}).click();
     await expect(canvas).toBeHidden();
     await expect(handle).toBeVisible();
-    const closedRight = await handle.boundingBox();
-    assert.equal(closedRight.width, 8);
-    assert.ok(Math.abs(closedRight.height - moved.height) < 2);
-    assert.ok(Math.abs(closedRight.x + closedRight.width - 640) < 2);
-    await expect.poll(() => handle.evaluate(node => getComputedStyle(node, '::before').rotate)).toBe('135deg');
     await handle.click();
     await expect(canvas).toBeVisible();
-    await at(moved.x, moved.y);
     await expect(handle).toBeHidden();
     await expect(panel).toHaveCSS('translate', 'none');
-
-    const resizedHeader = await header.boundingBox();
-    const grab = {x: resizedHeader.x + resizedHeader.width * 0.75, y: resizedHeader.y + resizedHeader.height / 2};
-    const targetX = (640 - moved.width) / 2;
-    await page.mouse.move(grab.x, grab.y);
-    await page.mouse.down();
-    await page.mouse.move(grab.x + targetX - moved.x, grab.y, {steps: 8});
-    await page.mouse.up();
-    await at(targetX, moved.y);
-    await expect(resize('bottom')).toBeHidden();
-    await expect(resize('right')).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(canvas).toBeHidden();
-    const closedBottom = await handle.boundingBox();
-    assert.equal(closedBottom.height, 8);
-    assert.ok(Math.abs(closedBottom.width - moved.width) < 2);
-    assert.ok(Math.abs(closedBottom.y + closedBottom.height - 700) < 2);
-    await expect.poll(() => handle.evaluate(node => getComputedStyle(node, '::before').rotate)).toBe('-135deg');
-    await handle.press('Enter');
-    await expect(canvas).toBeVisible();
-    await at(targetX, moved.y);
-    await expect(panel).toHaveCSS('translate', 'none');
-
-    const bottomHeader = await header.boundingBox();
-    const from = {x: bottomHeader.x + bottomHeader.width * 0.75, y: bottomHeader.y + bottomHeader.height / 2};
-    await page.mouse.move(from.x, from.y);
-    await page.mouse.down();
-    await page.mouse.move(from.x, from.y + top - moved.y, {steps: 12});
-    await page.mouse.up();
-    await at(targetX, top);
-    await expect(resize('top')).toBeHidden();
-    await expect(resize('bottom')).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(canvas).toBeHidden();
-    const closedTop = await handle.boundingBox();
-    assert.equal(closedTop.height, 8);
-    assert.ok(Math.abs(closedTop.width - moved.width) < 2);
-    assert.ok(Math.abs(closedTop.y - top) < 2);
-    await expect.poll(() => handle.evaluate(node => getComputedStyle(node, '::before').rotate)).toBe('45deg');
 });
 
 test('the stage drawer restores its geometry and visibility with the project layout', {timeout: 60_000}, async t => {

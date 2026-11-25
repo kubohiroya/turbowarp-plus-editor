@@ -24,7 +24,7 @@
 | 14 | [958–1235](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L958-L1235) | startup chooses the layout and the stage menu hides the stage without stopping the project | Editor / workbench / windows | 分離候補 | 起動フラグと継続実行を保持し、表示モード行列を分ける |
 | 15 | [1236–1424](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1236-L1424) | the menu bar disables both stage buttons while a stage is open | workbench / windows | 接続保持 | stage を開いた間の既存 GUI ボタンと同一 renderer |
 | 16 | [1425–1474](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1425-L1474) | the stage drawer starts pinned and remembers the pin menu choice | workbench / windows | 分離候補 | 実 stage の表示と復元を保持し、pin menu の状態行列を分ける |
-| 17 | [1475–1624](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1475-L1624) | the stage drawer moves, resizes and folds into its attached editor edge | workbench / windows | 分離候補 | 実 stage 接続を保持し、drag/resize/edge の幾何を単独 host へ |
+| 17 | [1475–1624](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1475-L1624) | the stage drawer moves, resizes and folds into its attached editor edge | workbench / windows | 一部分離 | geometry の一連の操作をworkbench単独hostへ。実canvas・palette・表示menu・移動/resize/再表示の接続を保持 |
 | 18 | [1625–1743](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1625-L1743) | the stage drawer restores its geometry and visibility with the project layout | workbench / project-model / windows | 接続保持 | IndexedDB・SB3・project layout と stage geometry の往復 |
 | 19 | [1744–1902](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1744-L1902) | the default editor pins the sprite list and supports the drawer and detached window layout | workbench / sprite-panes / windows | 分離候補 | sprite list の接続を保持し、drawer と窓配置の詳細を分ける |
 | 20 | [1903–1953](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L1903-L1953) | a background code view retains its layout, pan and zoom | code-views / workbench | 接続保持 | 背景 view 切替後の layout・pan・zoom |
@@ -119,3 +119,17 @@ Editorは112行から78行へ縮小し、実VMのリスト読み取り/変更blo
 移管先はビルド、追加2件+既存4件のbrowser6件、関連unit4件、対象test/helperの型検査が成功した。Editor型検査・責務境界2件も成功。sprite-panes製品ソース16ファイルは固定0.11.3と一致し、npm archive47ファイルにtest/helper/テスト用ライセンス/node_modulesが含まれないことを確認した。
 
 依存順とDoDはsprite-panesの公開・既存browser CIで新2件をskipなしに実行/成功・Squash Merge → Editorの縮小を公開・CI成功・Squash Merge → 作業環境整理・#741への記録。製品・依存固定・GUI・起動フラグ・CI設定は変更しない。元browserファイルは通常CI対象外なので、この21行削減による通常CI時間短縮は見込まない。#741全体の時間比較は未実施。切り戻しはEditorの元の確認範囲とケース名を先に復元し、monitorの現行アクセシブル名は保持する。必要なら上流の追加テスト・hostの2経路・文書をrevertする。
+
+## ステージ引き出しのgeometryの切り出し
+
+17番の操作部からdragしないこと、9か所の周辺位置、resize可能な辺、40pxのresizeと反対側の角の保持、viewport変更後の位置、右/下/上の折り畳んだ取っ手の寸法・向きを、workbenchの `test/editor-stage-drawer-geometry.browser.ts` 1件へ移す。元のgeometry操作・期待値は、hostのcloseボタン・bounding boxの存在確認・型注釈に適応した上で内容不変と照合した。GPL-3.0-or-laterと既存のテスト用ライセンスを保持する。
+
+単独hostは公開 `createStandardLayout` が返す `EdgeDrawer`、`stage-surface` の `StageResizeHandle` と `editor.css` を使う。GUI rendererの代わりにnative canvasを渡し、寸法とopen/position stateを公開portで接続する。既存esbuildで公開entryをメモリ内にbundleする。製品のdrag/resize/折り畳み処理・CSSは複製しない。既存browser command/CIがGUI checkout・VM・Editorビルド・環境変数なしで実行する。
+
+Editorは149行から66行へ縮小し、実run-viewの表示menu、実canvasとpaletteの併存、dragと40px resizeから実canvasへの接続、閉じる/取っ手からの再表示を保持する。元ケースと縮小後はいずれもheadlessで1 pass / fail・skip 0。他38件と共通fixtureは内容不変。
+
+開始時のリモートmainは `d17cb8e0aeb8ca38c7faf6a65cb1e89f1e3e9482`。完成済み固定ビルドのsite revision `486e790221da09e5f78849066fd059234e833e57` との差分は文書と他ケースのテスト整理だけで、製品入力・対象元ケース・共通fixtureは一致している。そのため実site revisionを期待値に指定してビルドを再利用した。GUI `60b87e2`・VM `88a2c06`・Packager `d690225` とbuild-infoを照合し、main自体の新規ビルドとは区別する。
+
+workbenchのビルド、新1件+関連既存5件のbrowser6件、対象型検査、Editor型検査・責務境界2件が成功。workbench製品ソース85ファイルは固定0.39.0と一致し、npm archive230ファイルにtest/テスト用ライセンス/node_modulesが含まれないことを確認した。
+
+依存順とDoDはworkbenchの公開・既存browser CIで新1件をskipなしに実行/成功・Squash Merge → Editorの縮小を公開・CI成功・Squash Merge → 作業環境整理・#741への記録。製品・依存固定・GUI・起動フラグ・CI設定は変更しない。元browserファイルは通常CI対象外なので、この83行削減による通常CI時間短縮は見込まない。#741全体の時間比較は未実施。切り戻しはEditorの元149行とケース名の復元を先に行い、必要なら上流の追加テストと文書をrevertする。
