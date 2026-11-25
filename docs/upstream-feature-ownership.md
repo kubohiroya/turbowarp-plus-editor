@@ -194,3 +194,7 @@ Editor のこの変更を revert し、接続コードと依存の固定を公�
 ### Git レビュー印の版更新（#823）
 
 担当パッケージの [Git #84](https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/84) で、2件のスクリプトの確認済み印を再読込後に保持し、版更新で変更された側だけを外す。単独 Chromium ケースは [上流CI](https://github.com/kubohiroya/turbowarp-plus-editor-git/actions/runs/45721385184) で実行・成功。Editor は実ファイル起点の別タブ・Blocklyのプレビュー・前後のスクリプト・実タブ再オープン後の印・作業ツリー不変を保持。切り戻しは Editor の当該差分を先に revert。通常 Editor CI はこのブラウザーケースを実行しないため時間短縮には含めない。
+
+### 拡張ホストの再試行と作品URI（#823）
+
+[Loader 0.16.1 のCI](https://github.com/kubohiroya/turbowarp-extension-loader/actions/runs/45591120258) で、再試行の対象となる応答の判定、次の試行番号、拡張を変更しても既存URIが変わらないことを実行・確認（単体230件、ブラウザー5件、skip 0）。Editor は実際の固定VMで開く際に診断が届くこと、Editor の origin を用いた最初の保存、その作品URIが後の確認画面へ渡ることを保持する。配布元のサイズ制限やその実VM境界は維持。切り戻しは、Editor側の該当テスト変更を revert する。

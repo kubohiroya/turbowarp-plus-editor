@@ -8,7 +8,7 @@ import {guiRequire, vmModules} from './pinned-host.ts';
 
 const SHAPE = /^https:\/\/editor\.example\/turbowarp-plus-projects\/([0-9a-f]{2})\/([0-9a-f]{4})\/([0-9a-f-]{36})\.sb3$/;
 
-test('the real editor host addresses a project once, keeps it, and the open review names the project by it', async () => {
+test('the Editor passes its origin to project authoring and the review reads the saved address', async () => {
     const VM = guiRequire('scratch-vm');
     const Storage = guiRequire('@turbowarp/scratch-storage');
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'location');
@@ -28,13 +28,12 @@ test('the real editor host addresses a project once, keeps it, and the open revi
         monitors: [], extensions: [], meta: {semver: '3.0.0', vm: '2.0.0', agent: 'URI fixture'}};
         await vm.loadProject(await new Zip().file('project.json', JSON.stringify(project)).file(`${assetId}.svg`, svg)
             .generateAsync({type: 'uint8array'}));
-        const bytes = id => new TextEncoder().encode(`Scratch.extensions.register({getInfo(){return {id:'${id}',name:'Sample',blocks:[]}}});`);
-        await host.authoring.add({id: 'example', source: {type: 'embedded-file'}, bytes: bytes('example')});
+        const bytes = new TextEncoder().encode(
+            "Scratch.extensions.register({getInfo(){return {id:'example',name:'Sample',blocks:[]}}});");
+        await host.authoring.add({id: 'example', source: {type: 'embedded-file'}, bytes});
         const first = (await host.authoring.inspect()).uri;
         assert.match(first, SHAPE);
         assert.equal(await identifyProject(await vm.saveProjectSb3('arraybuffer')), first);
-        await host.authoring.add({id: 'second', source: {type: 'embedded-file'}, bytes: bytes('second')});
-        assert.equal((await host.authoring.inspect()).uri, first);
     } finally {
         if (descriptor) Object.defineProperty(globalThis, 'location', descriptor);
         else delete globalThis.location;
