@@ -1528,3 +1528,73 @@ test('routes project and active-file saves from the current Editor folder drawer
     await closeFile('clip.webm');
     assert.deepEqual(errors, []);
 });
+
+test('switches branches of the open project folder and refuses to discard unsaved block edits', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder, project} = await createDiskProject(t, 'tw-project-branch-', true);
+    const source = path.join(folder, projectFile);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('config', 'user.name', 'Editor branch fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    git('add', '.');
+    git('commit', '-qm', 'Main project');
+    git('checkout', '-q', '-b', 'variant');
+    project.targets[1].blocks.move_B.inputs.STEPS[1][1] = '88';
+    await writeFile(source, stringify(project));
+    git('add', projectFile);
+    git('commit', '-qm', 'Variant project');
+    git('checkout', '-q', 'main');
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder);
+    const branchButton = (name: string) => page.getByRole('button', {name: `Branch: ${name}`, exact: true});
+    const menu = page.getByRole('menu', {name: 'Branches'});
+    const select = async (from: string, to: string) => {
+        await branchButton(from).click();
+        await expect(menu.getByRole('menuitemradio', {name: from, exact: true})).toHaveAttribute('aria-checked', 'true');
+        await menu.getByRole('menuitemradio', {name: to, exact: true}).click();
+    };
+    const valueOnDisk = async () => JSON.parse(await readFile(source, 'utf8')).targets[1].blocks.move_B.inputs.STEPS[1][1];
+    const valueInEditor = () => page.evaluate(() => {
+        const target = window.vm?.runtime.targets.find(entry => entry.sprite?.name === 'Cat');
+        const id = target?.blocks.getBlock('move_B')?.inputs.STEPS.block;
+        return id ? String(target?.blocks.getBlock(id)?.fields.NUM.value) : null;
+    });
+    await expect.poll(valueInEditor).toBe('10');
+    await select('main', 'variant');
+    const snackbar = page.locator('[data-git-snackbar]');
+    await expect(branchButton('variant')).toBeVisible();
+    await expect(snackbar.getByRole('status')).toHaveText('Switched branches.');
+    assert.equal(git('branch', '--show-current'), 'variant');
+    assert.equal(await valueOnDisk(), '88');
+    await snackbar.getByRole('button', {name: 'Reload Project'}).click();
+    await expect.poll(valueInEditor).toBe('88');
+
+    await editFolderBlock(page, 'value', '90');
+    await select('variant', 'main');
+    const refusal = 'Stop the project, and save or record (or undo) every change, before switching branches.';
+    await expect(snackbar.getByRole('alert')).toHaveText(refusal);
+    assert.equal(git('branch', '--show-current'), 'variant');
+    assert.equal(await valueOnDisk(), '88');
+    assert.equal(await valueInEditor(), '90');
+    await snackbar.getByRole('button', {name: 'Open Local Git'}).focus();
+    await page.keyboard.press('Escape');
+    await expect(snackbar).toHaveCount(0);
+    await select('variant', 'main');
+    await snackbar.getByRole('button', {name: 'Open Local Git'}).click();
+    const panel = page.locator('.twgit-panel');
+    await expect(panel.getByText(refusal)).toBeVisible();
+    await page.getByRole('button', {name: 'Close Local Git', exact: true}).click();
+
+    git('branch', 'from-another-tool');
+    await branchButton('variant').click();
+    await expect(menu.getByRole('menuitemradio', {name: 'from-another-tool', exact: true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    git('symbolic-ref', 'HEAD', 'refs/heads/from-another-tool');
+    await expect(branchButton('from-another-tool')).toBeVisible();
+    assert.deepEqual(errors, []);
+});
