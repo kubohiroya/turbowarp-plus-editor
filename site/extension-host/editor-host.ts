@@ -18,7 +18,7 @@
  */
 
 import {createIndexedDBContentCache} from '@kubohiroya/turbowarp-extension-loader/indexeddb-cache';
-import type {ExecutionMode} from '@kubohiroya/turbowarp-extension-loader';
+import type {ExtensionLoader} from '@kubohiroya/turbowarp-extension-loader';
 
 import {readPlusFlags} from '../extension-library/flags.ts';
 import {createExtensionAuthoringController, createProjectAddresser, setExtensionAuthoringHost} from '@kubohiroya/turbowarp-extension-loader/scratch-vm';
@@ -32,13 +32,11 @@ import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags
 import {approveProjectPayloads} from '@kubohiroya/turbowarp-plus-editor-workbench/project-payload-approval';
 import {createProjectPayloadHost} from '../project-payloads/host.ts';
 
-type LoadedIdentity = Readonly<{id: string; sha256: string; execution: ExecutionMode}>;
-type IdentityReader = {getLoadedExtensionIdentities?(): readonly LoadedIdentity[]};
-const editorLoaders = new WeakMap<object, IdentityReader>();
+const editorLoaders = new WeakMap<object, Pick<ExtensionLoader, 'getLoadedExtensionIdentities'>>();
 
 /** Only extensions whose registration has committed in this editor VM. */
 export const getEditorExtensionIdentities = (vm: object) =>
-    editorLoaders.get(vm)?.getLoadedExtensionIdentities?.() ?? [];
+    editorLoaders.get(vm)?.getLoadedExtensionIdentities() ?? [];
 
 /**
  * The editor's persistent cache, or undefined where the browser offers no IndexedDB, in which case
@@ -127,7 +125,7 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
         onProjectURI: uri => { projectURI = uri; }
     });
     if (!('loader' in host)) return host;
-    const loader = host.loader as IdentityReader;
+    const {loader} = host;
     editorLoaders.set(vm, loader);
     // Nothing is released here: a project's copies stay until the person removes them, and closing
     // the editor only closes the connection.

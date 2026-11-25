@@ -4,7 +4,7 @@
  * `@kubohiroya/turbowarp-plus-editor-test`'s; this module only connects them to this editor.
  */
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
-import {connectTestFrame, type TestRunRequest} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
+import {connectTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
 import {createTestRunView, testRunMenuItem, testRunPanelRequest, testRunText} from '@kubohiroya/turbowarp-plus-editor-test/test-run-view';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {getEditorExtensionIdentities} from '../extension-host/editor-host.ts';
@@ -62,11 +62,7 @@ const viewOptions = (vm: EditorVM, locale: string, doc: Document) => {
             stage.append(frame);
             return connectTestFrame(frame, {
                 origin: location.origin,
-                context: (request?: TestRunRequest) => {
-                    // Older test-frame clients only support the standard extension URL list.
-                    if (!request) return {extensionURLs: Object.values(vm.extensionManager.getExtensionURLs?.() ?? {})};
-                    return request.project instanceof ArrayBuffer ? snapshotContexts.get(request.project) : undefined;
-                }
+                context: ({project}) => project instanceof ArrayBuffer ? snapshotContexts.get(project) : undefined
             });
         },
         showBlock: (target: string, blockId: string) => showBlock(vm, target, blockId)

@@ -33,18 +33,14 @@ const createVm = () => {
     // Sounds stay silent: there is no audio engine.
     vm.securityManager.canLoadExtensionFromProject = (url: string) => Promise.resolve(allowedURLs.includes(url));
     vm.securityManager.getSandboxMode = () => Promise.resolve('iframe');
-    let hasRunPolicy = false;
-    const options = {
+    installPlusExtensionHost(vm, {
         enabled: true, document, locale: document.documentElement.lang || 'en', vmModules,
         trustedCatalog: plusTrustedExtensions.catalog,
         canLoadVerifiedCode: async (code: ResolvedCode) =>
             isApprovedSandboxed(code) || await plusTrustedExtensions.catalog.isTrustedCode(code),
-        requestApproval: async (code: ResolvedCode) => hasRunPolicy && isApprovedSandboxed(code),
+        requestApproval: async code => isApprovedSandboxed(code),
         showDiagnostics: false
-    };
-    const host = installPlusExtensionHost(vm, options);
-    // Earlier Loader releases cannot recheck the run's policy before using a remembered approval.
-    hasRunPolicy = 'loader' in host && 'getLoadedExtensionIdentities' in host.loader;
+    });
     return vm;
 };
 
