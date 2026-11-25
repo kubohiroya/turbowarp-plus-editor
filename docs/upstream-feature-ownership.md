@@ -93,6 +93,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/extension-host/load-errors.test.ts`（3件） | security-dialog の `test/load-errors.test.cts` | `test/gui-integration/unit/extension-loader/load-failure.test.ts`、`test/gui-integration/unit/plus/extension-host.test.ts` とレビュー内のキー入力確認 |
 | `test/block-editor/icon.test.ts` の機能テスト2件 | data-editor の `test/editor-icon-service.test.ts` | 同ファイルの VM ごとのサービス共有・登録解除通知の結線確認1件 |
 | `test/block-editor/{host,source-host,descendant-host,bridge,appearance}.test.ts`（38件） | data-editor の `test/editor-block-*.test.ts` と共通 fixture | `modal.test.ts` の実 GUI モーダル、`icon.test.ts` のサービス共有、`fixed-inputs.test.ts`・`source-forms.test.ts` と `test/gui-integration/unit/block-editor/` の GUI 接続確認 |
+| `test/block-editor/modal.test.ts` の機能テスト17件 | data-editor の `test/editor-block-modal.test.ts` | 同ファイルの実 GUI ラッパー・ReactModal portal 内への mount の接続確認1件 |
 | `test/extension-host/permission-ui.test.ts`（8件） | security-dialog の `test/permission-ui.test.cts` | `test/extension-host/host.test.ts` の実 VM・DOM 承認と `security-review.test.ts`、GUI のホスト接続確認 |
 | `test/extension-host/batch-review.test.ts` の機能テスト3件 | security-dialog の `test/editor-batch-review.test.cts` | 同ファイルの実 VM による拒否後のブロック・URL 保持と GUI モーダルの結線確認2件 |
 | `test/extension-host/project-size-gate.test.ts` の機能テスト3件 | Loader の `test/editor-project-size-gate.test.ts`（計測・同意2件）、workbench の `test/project-size-approval.test.cts`（画面1件） | 同ファイルの実 VM と Editor の64 MiB上限・同意を接続する1件 |
@@ -138,7 +139,10 @@ Editor は `project-size-gate.test.ts` に実 VM と Editor の64 MiB上限・�
 Editor は `project-uri.test.ts` に実 VM で URI を一度だけ付与・保持し、その URI を開く際のレビューが作品名に使う結線確認1件を内容不変で残す。製品コード・依存固定・GUI・既存 CI と npm コマンドは変更しない。CI 時間の短縮量は未測定。切り戻しは元の6件を復元し、上流側も戻す場合は Editor の復元を先に行う。
 
 ブロック編集の host・Source・子孫編集・bridge・見た目の38件は data-editor の公開 API を検証するテストとして移管する。検証本体と元の GPL-3.0-or-later を保持し、実 VM と Scratch Blocks の共通 fixture の解決先を GUI checkout からテスト専用の固定依存へ変更する。VM は Editor 固定の `f3d3811`、Scratch Blocks は固定 GUI が参照するブランチの調査時の先端 `a07fa8f`、parser は `f0d650c` に固定する。移管先の既存 `pnpm test` と CI が38件を skip せず実行し、CI 成功とマージを Editor 側の削除の公開条件とする。
-Editor のモーダル用 `helpers.ts` と上表の GUI 接続確認、既存の `test:extension-host` コマンド・CI ステップを保持する。製品コード・依存固定・GUI は変更しない。CI 時間の短縮量は未測定。切り戻しはこの5ファイルの削除を revert し、移管先も戻す場合は Editor の元テストを先に復元する。
+Editor のモーダルと上表の GUI 接続確認、既存の `test:extension-host` コマンド・CI ステップを保持する。製品コード・依存固定・GUI は変更しない。CI 時間の短縮量は未測定。切り戻しはこの5ファイルの削除を revert し、移管先も戻す場合は Editor の元テストを先に復元する。
+
+モーダルの保存・非同期検証・IME・階層表示・RJSF エラー表示の17件は data-editor へ移管する。実 ReactModal portal と RJSF、検証本体・セッション fixture・元の GPL-3.0-or-later を保持し、GUI ラッパーのコンパイルだけを `createPlusBlockEditor().render()` の公開 API 呼び出しへ置き換える。テスト専用の ReactModal `3.9.1`・Intl `2.9.0` は固定 GUI と同じ版を使う。移管先の既存 `pnpm test` と CI の成功・マージを Editor 側の重複除去の公開条件とする。
+Editor の `modal.test.ts` には、実 GUI ラッパーが ReactModal の portal 内に本体を1回だけ mount する接続確認1件と必要な fixture を残す。参照のない旧 `test/block-editor/helpers.ts` は削除する。製品コード・依存固定・GUI・既存 CI コマンドは変更しない。CI 時間の短縮量は未測定。切り戻しはこの整理を revert して元テストと helpers を復元し、上流側も戻す場合は Editor の復元を先に行う。
 
 ## 切り戻し
 
