@@ -6,6 +6,7 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 import {chromium, expect} from '@playwright/test';
+import type {TestResult} from '@kubohiroya/turbowarp-plus-editor-test/test-runner';
 import JSZip from '@turbowarp/jszip';
 import {build} from 'esbuild';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
@@ -104,17 +105,29 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
             }
         });
         await context.route(catalogURL, route => route.fulfill({json: {schemaVersion: 1, extensions: [
-            {...testExtension, name: 'Test', version: '0.1.0', unsandboxed: true, dependencies: [],
+            {...testExtension, name: 'Test', version: '0.1.0', unsandboxed: 'required', dependencies: [],
                 description: 'Scratch test hats and assertions', license: 'MPL-2.0'}
         ]}, headers: {'access-control-allow-origin': '*'}}));
         const page = await context.newPage();
+        const reported: TestResult[] = [];
+        await page.exposeFunction('recordScratchTestResult', (result: TestResult) => { reported.push(result); });
+        await page.addInitScript(() => {
+            window.addEventListener('message', event => {
+                if (event.origin !== location.origin || event.data?.type !== 'twpe-test:end') return;
+                const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Test stage"]');
+                if (frame && event.source === frame.contentWindow && 'recordScratchTestResult' in window &&
+                    typeof window.recordScratchTestResult === 'function') {
+                    window.recordScratchTestResult(event.data.result);
+                }
+            });
+        });
 
         await page.goto(`${origin}${prefix}editor.html?lang=en`);
         await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()));
 
         const runView = page.locator('.twpe-test-run');
         const result = runView.locator('.twpe-test-run__test').filter({hasText: testName});
-        for (const [candidate, status] of [[faulty, 'failed'], [corrected, 'passed']] as const) {
+        for (const [candidate, status, actual] of [[faulty, 'failed', 15], [corrected, 'passed', 10]] as const) {
             const loading = page.evaluate(async archive => {
                 await window.vm.loadProject(new Uint8Array(archive));
             }, [...candidate.sb3]);
@@ -131,10 +144,14 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
             await expect(runView.getByRole('status')).toHaveText(status === 'failed' ?
                 '1 tests: 0 passed, 1 failed, 0 timed out, 0 errors' : '1 tests: 1 passed, 0 failed, 0 timed out, 0 errors');
             await expect(result).toHaveAttribute('data-status', status);
+            await expect.poll(() => reported.at(-1)).toMatchObject({name: testName, status, assertions: [
+                {kind: 'strict-equals', blockId: assertId, passed: status === 'passed', expected: 10, actual}
+            ]});
             if (status === 'failed') {
                 await expect(result.locator('code')).toHaveText(['10', '15']);
                 await expect(result.getByRole('button', {name: 'Show block'})).toHaveAttribute('data-block-id', assertId);
             }
+            t.diagnostic(`${status}: ${assertId}, expected 10, actual ${actual}`);
         }
 
         // The reused VM cannot carry an approval over to another run whose own snapshot did not authorize that code.
