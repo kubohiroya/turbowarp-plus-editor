@@ -9,20 +9,33 @@ import VirtualMachine from 'scratch-vm';
 import ScratchRender from 'scratch-render';
 import ScratchStorage from '@turbowarp/scratch-storage';
 import {serveTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
+import {TEST_EXTENSION_ID} from '@kubohiroya/turbowarp-plus-editor-test';
 import type {ResolvedCode} from '@kubohiroya/turbowarp-extension-loader';
 import {installPlusExtensionHost} from '../extension-host/host.ts';
 import * as vmModules from '../extension-host/vm-modules.ts';
-import {plusTrustedExtensions} from '../trusted-extensions.ts';
+import {plusTrustedExtensions, readTrustedExtensionBytes} from '../trusted-extensions.ts';
 
 type SandboxedExtension = {id: string; sha256: string};
-let extensionContext: {extensionURLs: string[]; sandboxedExtensions: SandboxedExtension[]} = {
-    extensionURLs: [], sandboxedExtensions: []
+const testCatalogURL = 'https://kubohiroya.github.io/turbowarp-test/dist/turbowarp-test.js';
+let extensionContext: {extensionURLs: string[]; sandboxedExtensions: SandboxedExtension[]; savedGeneration: boolean} = {
+    extensionURLs: [], sandboxedExtensions: [], savedGeneration: false
 };
+let legacyTest: {url: string; verifiedUrl: string} | undefined;
 
-const isApprovedSandboxed = (code: ResolvedCode) => code.execution === 'sandboxed' &&
+const isEmbeddedSandboxed = (code: ResolvedCode) => code.execution === 'sandboxed' &&
     (code.source.type === 'embedded-file' || code.source.type === 'embedded-data') &&
-    code.sha256 === code.actualSHA256 && extensionContext.sandboxedExtensions.some(entry =>
+    code.sha256 === code.actualSHA256;
+const isApprovedSandboxed = (code: ResolvedCode) => isEmbeddedSandboxed(code) && extensionContext.sandboxedExtensions.some(entry =>
         entry.id === code.id && entry.sha256 === code.actualSHA256);
+// Only the catalog-verified test extension needs direct VM access for a saved generation.
+const canLoadCode = async (code: ResolvedCode) => {
+    if (!extensionContext.savedGeneration)
+        return isApprovedSandboxed(code) || await plusTrustedExtensions.catalog.isTrustedCode(code);
+    if (code.id === TEST_EXTENSION_ID)
+        return code.execution === 'unsandboxed' &&
+            await plusTrustedExtensions.catalog.isTrustedURLDigest(testCatalogURL, code.actualSHA256);
+    return isEmbeddedSandboxed(code);
+};
 
 const createVm = () => {
     document.documentElement.style.cssText = 'height: 100%;';
@@ -36,13 +49,16 @@ const createVm = () => {
     // Sounds stay silent: there is no audio engine.
     vm.securityManager.canLoadExtensionFromProject = (url: string) =>
         Promise.resolve(extensionContext.extensionURLs.includes(url));
-    vm.securityManager.getSandboxMode = () => Promise.resolve('iframe');
+    vm.securityManager.getSandboxMode = (url: string) =>
+        Promise.resolve(legacyTest?.url === url ? 'unsandboxed' : 'iframe');
+    const rewrite = vm.securityManager.rewriteExtensionURL.bind(vm.securityManager);
+    vm.securityManager.rewriteExtensionURL = (url: string) =>
+        legacyTest?.url === url ? Promise.resolve(legacyTest.verifiedUrl) : rewrite(url);
     installPlusExtensionHost(vm, {
         enabled: true, document, locale: document.documentElement.lang || 'en', vmModules,
         trustedCatalog: plusTrustedExtensions.catalog,
-        canLoadVerifiedCode: async (code: ResolvedCode) =>
-            isApprovedSandboxed(code) || await plusTrustedExtensions.catalog.isTrustedCode(code),
-        requestApproval: async code => isApprovedSandboxed(code),
+        canLoadVerifiedCode: canLoadCode,
+        requestApproval: async code => extensionContext.savedGeneration ? isEmbeddedSandboxed(code) : isApprovedSandboxed(code),
         showDiagnostics: false
     });
     return vm;
@@ -52,13 +68,24 @@ serveTestFrame({
     window,
     origin: location.origin,
     getVm: createVm,
-    prepare(context: {extensionURLs?: unknown; sandboxedExtensions?: unknown} | undefined) {
+    async prepare(context: {extensionURLs?: unknown; sandboxedExtensions?: unknown; savedGeneration?: unknown; testExtensionURL?: unknown}
+        | undefined) {
         const urls = Array.isArray(context?.extensionURLs) ? context.extensionURLs : [];
         const extensions = Array.isArray(context?.sandboxedExtensions) ? context.sandboxedExtensions : [];
         extensionContext = {
             extensionURLs: urls.filter((url): url is string => typeof url === 'string'),
+            savedGeneration: context?.savedGeneration === true,
             sandboxedExtensions: extensions.filter((entry): entry is SandboxedExtension =>
                 typeof entry?.id === 'string' && typeof entry.sha256 === 'string' && /^[0-9a-f]{64}$/.test(entry.sha256))
         };
+        if (legacyTest) URL.revokeObjectURL(legacyTest.verifiedUrl);
+        legacyTest = undefined;
+        const url = context?.testExtensionURL;
+        if (extensionContext.savedGeneration && url !== undefined) {
+            if (typeof url !== 'string' || (url !== testCatalogURL && !url.startsWith('data:')))
+                throw new Error('The saved test extension does not match the trusted catalog.');
+            const bytes = await readTrustedExtensionBytes(testCatalogURL, url);
+            legacyTest = {url, verifiedUrl: URL.createObjectURL(new Blob([bytes], {type: 'text/javascript'}))};
+        }
     }
 });

@@ -18,6 +18,7 @@ if (!template.includes(oldEntry)) throw new Error('Desktop editor template has c
 config.entry = {editor: path.join(editor, 'index.jsx'), 'backpack-popout': config.entry['backpack-popout'],
     'stage-popout': config.entry['stage-popout'],
     'git-project-preview': config.entry['git-project-preview'],
+    'test-frame': config.entry['test-frame'],
     'code-popout': path.join(__dirname, '../../site/editor-views/code-popout.tsx')};
 config.resolve.modules = [path.join(E2E_GUI_ROOT, 'node_modules'), 'node_modules'];
 config.resolve.alias['scratch-gui$'] = path.join(E2E_GUI_ROOT, 'src/index.js');
@@ -34,7 +35,8 @@ config.module.rules.push({
     }
 });
 config.plugins = config.plugins.filter(plugin =>
-    !(plugin instanceof HtmlWebpackPlugin) || ['backpack-popout.html', 'stage-popout.html', 'git-project-preview.html'].includes(plugin.options.filename)
+    !(plugin instanceof HtmlWebpackPlugin) || ['backpack-popout.html', 'stage-popout.html', 'git-project-preview.html', 'test-frame.html']
+        .includes(plugin.options.filename)
 );
 for (const [id, title] of [['sprite-properties', 'Sprite properties'], ['sprite-list', 'Sprite list']]) {
     config.plugins.push(new HtmlWebpackPlugin({

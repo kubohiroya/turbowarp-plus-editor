@@ -120,6 +120,7 @@ if (projectUnpackEntry) {
 }
 injections.__TW_PLUS_REVISION_GUI__ = [path.join(gui, 'src/containers/gui.jsx'), 'default'];
 injections.__TW_PLUS_REVISION_APP_STATE__ = [path.join(gui, 'src/lib/app-state-hoc.jsx'), 'default'];
+injections.__TW_PLUS_REVISION_RUN_ADDONS__ = [path.join(gui, 'src/addons/entry.js'), 'default'];
 injections.__TW_PLUS_REVISION_PROJECT_STATE__ = path.join(gui, 'src/reducers/project-state.js');
 injections.__TW_PLUS_REVISION_BLOCKLY__ = [path.join(gui, 'src/lib/tw-lazy-scratch-blocks.js'), 'default'];
 injections.__TW_PLUS_REVISION_DESERIALIZE_BLOCKS__ = [hostRequire.resolve('scratch-vm/src/serialization/sb3.js'), 'deserializeBlocks'];
@@ -164,8 +165,8 @@ config.module.rules.push({
     use: path.join(__dirname, 'connect-save-status.cts')
 });
 config.module.rules.push({
-    include: ['debugger', 'mediarecorder'].map(addon =>
-        fs.realpathSync(path.join(gui, 'src/addons/addons', addon, 'userscript.js'))),
+    include: ['addons/debugger/userscript.js', 'addons/debugger/logs.js', 'addons/mediarecorder/userscript.js',
+        'settings-store.js'].map(file => fs.realpathSync(path.join(gui, 'src/addons', file))),
     enforce: 'pre',
     use: path.join(__dirname, 'connect-addon-menu-buttons.cts')
 });
