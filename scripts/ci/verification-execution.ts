@@ -6,12 +6,24 @@ import {readVerificationPlan} from './verification-plan.ts';
 const guiChecks = ['extension-host', 'gui-integration', 'project-tools',
     'site-build'];
 
-export function selectExecution({enabled, release, main, plan, evidence}: {
-    enabled: boolean; release: boolean; main: boolean;
-    plan: {mode: string; reason: string; checks: readonly string[]; base?: string};
+export function selectExecution({enabled, release, main, plan, evidence, exactMain = false}: {
+    enabled: boolean; release: boolean; main: boolean; exactMain?: boolean;
+    plan: {mode: string; reason: string; checks: readonly string[]; base?: string; exactMainReuse?: boolean};
     evidence?: {reason: string; reusable: readonly string[]};
 }) {
     if (release) return {mode: 'full', reason: 'stable-release'};
+    if (exactMain && main && plan.exactMainReuse && plan.base) {
+        if (evidence?.reason !== 'verified-items') return {mode: 'full', reason: evidence?.reason ?? 'missing-evidence'};
+        const reused = fullChecks.filter(check => check !== 'site-build');
+        if (reused.some(check => !evidence.reusable.includes(check))) {
+            return {mode: 'full', reason: 'incomplete-exact-tree-evidence'};
+        }
+        return {
+            mode: 'scoped', reason: 'exact-main-tree', base: plan.base, checks: ['documentation', 'site-build'],
+            reused, needsNpm: true, needsGui: true
+        };
+    }
+
     if (!enabled) return {mode: 'legacy', reason: 'disabled'};
     if (plan.mode !== 'scoped' || !plan.base) return {mode: 'full', reason: plan.reason};
     if (main && evidence?.reason !== 'verified-items') {
@@ -35,8 +47,10 @@ async function recordExecution() {
     const main = env.GITHUB_EVENT_NAME === 'push' && env.GITHUB_REF === 'refs/heads/main';
     const enabled = env.TW_PLUS_CI_SCOPED === '1';
     const release = Boolean(env.CI_RELEASE_REVISION);
-    const evidence = enabled && !release && main && plan.mode === 'scoped' ? await inspectCurrentEvidence(env) : undefined;
-    const execution = selectExecution({enabled, release, main, plan, evidence});
+    const exactMain = env.TW_PLUS_CI_EXACT_MAIN_REUSE !== '0';
+    const canInspect = (exactMain && plan.exactMainReuse === true) || (enabled && plan.mode === 'scoped');
+    const evidence = !release && main && canInspect ? await inspectCurrentEvidence(env) : undefined;
+    const execution = selectExecution({enabled, release, main, plan, evidence, exactMain});
     console.log(JSON.stringify({execution, source: evidence}));
     if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, [
         '## Verification execution', '', `- Mode: ${execution.mode}`, `- Reason: ${execution.reason}`,

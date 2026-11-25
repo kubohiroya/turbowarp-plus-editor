@@ -102,6 +102,30 @@ test('the PR merge candidate is compared to its exact base and a rename covers b
     assert.match(readFileSync(summary, 'utf8'), /observation only[\s\S]*Checks: documentation, project-tools/);
 });
 
+test('only known test and documentation paths can reuse an exact successful tree on main', () => {
+    const revision = 'a'.repeat(40);
+    const base = 'b'.repeat(40);
+    const event = {ref: 'refs/heads/main', before: base, after: revision};
+    const read = (paths: string[]) => planForEvent('push', event, revision, args => {
+        if (args[0] === 'rev-parse') return Buffer.from(revision);
+        if (args[0] !== 'diff') return Buffer.alloc(0);
+        return Buffer.from(paths.map(path => `:100644 100644 abcd ef01 M\0${path}\0`).join(''));
+    });
+    const browserTest = 'test/editor-layout.browser.ts';
+    const ledger = 'docs/editor-layout-test-classification.md';
+    const safe = read([browserTest, ledger]);
+    assert.equal(safe.mode, 'full', 'does not make a path-only plan skip the full PR check');
+    assert.equal(safe.exactMainReuse, true);
+    const docsOnly = read([ledger]);
+    assert.equal(docsOnly.mode, 'scoped');
+    assert.equal(docsOnly.exactMainReuse, true);
+    for (const other of ['src/index.ts', 'site/source.json', '.github/workflows/ci.yml', 'package-lock.json',
+        'test/project-tools/project-save.test.ts', 'scripts/ci/verification-evidence.ts']) {
+        assert.equal(read([browserTest, other]).exactMainReuse, undefined, other);
+    }
+    assert.equal(read([]).exactMainReuse, undefined);
+});
+
 test('stale checkout, missing commits and unavailable diffs fall back to full', () => {
     const revision = 'a'.repeat(40);
     const base = 'b'.repeat(40);
