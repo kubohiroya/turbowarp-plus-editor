@@ -88,6 +88,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/project-catalog.browser.ts` | workbench の `test/project-catalog-host.browser.ts`（[PR #128](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/128)） | `test/project-catalog-editor.browser.ts`（実 GUI のファイルメニュー・作品読込・保存との接続） |
 | `test/script-transfer/format.test.ts`・`stage.test.ts`（計12件） | script-transfer の `test/format.test.mjs`・`stage.test.mjs`（[PR #6](https://github.com/kubohiroya/turbowarp-script-transfer/pull/6)） | `test/plus-integration.test.ts` の転送接続確認と `test/gui-integration/unit/plus/transfer.test.ts`、ブラウザー E2E |
 | `test/extension-library/catalog-settings.test.ts`（12件） | extension-loader の `test/scratch-vm/catalog-settings.test.ts`（[PR #35](https://github.com/kubohiroya/turbowarp-extension-loader/pull/35)） | `test/extension-library/plus-library.test.cts`（画面の回答から設定 API への接続） |
+| `test/project-tools/diagnostics.test.ts`（2件）と `properties.test.ts` の機能テスト13件 | workbench の `test/project-diagnostics.test.ts`・`project-properties.test.ts`（[PR #113](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/113)） | 起動フラグ確認を `test/project-tools/flags.test.ts` に保持。`host.test.cts`・`dialog.test.cts` も保持 |
 
 作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
 workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
@@ -101,6 +102,10 @@ Editor の `test:script-transfer` と CI の同名ステップ・検証計画・
 カタログ設定12件は Loader PR #35 で移管済みで、[移管先 CI](https://github.com/kubohiroya/turbowarp-extension-loader/actions/runs/44413986006) の `npm run check` が成功している。Editor に残っていたテストと import 先・ライセンス表記以外が一致することを照合し、固定版 `0.13.1` のソースでもビルド・scratch-vm テスト群の型チェック・対象12件が成功した（2026-11-25）。
 Editor の `test:extension-host` は同じ glob で残る結線テストを実行するため、npm コマンドと CI ステップは保持する。既存の `plus-library.test.cts` が、画面で選択した行・読み込み形式・依存順を設定 API へ渡す接続を確認する。
 CI の時間短縮量は未測定。切り戻しは Editor のテスト1ファイルの削除を revert する。機能の実装と依存の固定は変更しない。
+
+作品診断・プロパティの機能テスト15件は workbench PR #113 で移管済みで、[移管先 CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/44413407708) が成功している。診断2件は import 先・ライセンス表記だけが異なり、プロパティ13件も検証本体は同じで、上流ではホストの注入ポートを代役で渡す。固定版 `0.39.0` のソースでもビルドと対象15件が成功した（2026-11-25）。
+Editor に残す `host.test.cts` は実 VM と拡張コーデックで保存・再読込・作品プロパティ・拡張追加の結線を、`dialog.test.cts` は実際に接続したダイアログを確認する。Editor 独自の起動フラグ確認1件は内容を変えず `flags.test.ts` へ移し、`test:project-tools` と CI の実行設定を維持する。
+CI の時間短縮量は未測定。切り戻しはこの15件の整理を revert し、旧テスト2ファイルと元の起動フラグ確認の配置を戻す。製品コード・依存固定は変更しない。
 
 ## 切り戻し
 
