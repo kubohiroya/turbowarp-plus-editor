@@ -9,7 +9,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {chromium, expect} from '@playwright/test';
-import type {Page, Route} from '@playwright/test';
+import type {BrowserContext, Page, Route} from '@playwright/test';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 
 const origin = 'http://localhost:41015';
@@ -82,7 +82,7 @@ async function serveEditor(route: Route, url: URL, build: string) {
     return route.fulfill(await readEditorFile(url.pathname, build) ?? {status: 404});
 }
 
-async function prepareDirectoryPicker(page: Page) {
+async function prepareDirectoryPicker(page: Page | BrowserContext) {
     await page.addInitScript(() => {
         let directory: FileSystemHandle;
         for (const type of ['dragenter', 'dragover', 'drop']) {
@@ -102,8 +102,7 @@ async function prepareDirectoryPicker(page: Page) {
     });
 }
 
-async function openRepository(page: Page, directory: string, editorOrigin = origin) {
-    await page.goto(editorOrigin + prefix + 'editor.html?lang=en');
+async function supplyDirectory(page: Page, directory: string) {
     await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()), null, {timeout: 45000});
     const cdp = await page.context().newCDPSession(page);
     try {
@@ -114,15 +113,38 @@ async function openRepository(page: Page, directory: string, editorOrigin = orig
         await cdp.detach();
     }
     await page.waitForFunction(() => Reflect.get(window, 'gitReviewDirectoryReady'));
-    // The repository is a project folder: opening it opens its project and connects Git, and the branch menu then
-    // opens the Git panel.
-    await page.getByText('File', {exact: true}).click();
-    await page.getByRole('button', {name: 'Open Folder…', exact: true}).click();
-    await page.getByRole('button', {name: /^Branch: /u}).click();
+}
+
+async function openGitPanel(page: Page, directory: string) {
+    await page.getByRole('button', {name: /^Branch: /u}).click({timeout: 8000});
     await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
     const panel = page.locator('.twgit-panel:not(.twgit-connection-dialog)');
     await expect(panel.locator('header strong')).toHaveText(path.basename(directory));
     return panel;
+}
+
+async function openRepository(page: Page, directory: string, editorOrigin = origin) {
+    await page.goto(editorOrigin + prefix + 'editor.html?lang=en');
+    await supplyDirectory(page, directory);
+    await page.getByText('File', {exact: true}).click();
+    await page.getByRole('button', {name: 'Open Folder…', exact: true}).click();
+    return openGitPanel(page, directory);
+}
+
+async function openBrowserRepository(context: BrowserContext, directory: string) {
+    const source = await context.newPage();
+    await source.goto(origin + prefix + 'editor.html?lang=en');
+    const opening = context.waitForEvent('page', {timeout: 8000});
+    await source.getByText('File', {exact: true}).click();
+    await source.getByRole('button', {name: 'Open Folder…', exact: true}).click();
+    const page = await opening;
+    const choose = page.getByRole('button', {name: 'Choose a folder', exact: true});
+    await expect(choose).toBeVisible();
+    await supplyDirectory(page, directory);
+    await choose.click();
+    const panel = await openGitPanel(page, directory);
+    await source.close();
+    return {page, panel};
 }
 
 test('the Editor Git panel opens a pull request overview and renders its changed script', {timeout: 120000}, async t => {
@@ -144,10 +166,10 @@ test('the Editor Git panel opens a pull request overview and renders its changed
 
     const browser = await launchBrowser();
     t.after(() => browser.close());
-    const page = await browser.newPage({viewport: {width: 1330, height: 940}});
+    const context = await browser.newContext({viewport: {width: 1330, height: 940}});
     const requests: string[] = [], errors: string[] = [];
-    page.on('pageerror', error => errors.push(error.message));
-    await page.route('**/*', async route => {
+    context.on('page', tab => tab.on('pageerror', error => errors.push(error.message)));
+    await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin === api) {
             requests.push(url.pathname + url.search);
@@ -183,8 +205,8 @@ test('the Editor Git panel opens a pull request overview and renders its changed
         }
         return serveEditor(route, url, build);
     });
-    await prepareDirectoryPicker(page);
-    const panel = await openRepository(page, directory);
+    await prepareDirectoryPicker(context);
+    let {page, panel} = await openBrowserRepository(context, directory);
     assert.deepEqual(requests, []);
     await page.getByText('File', {exact: true}).click();
     const releaseCommand = page.getByRole('button', {name: 'Releases…', exact: true});
@@ -202,8 +224,8 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await expect(release.getByRole('button', {name: 'Export HTML with Packager'})).toBeVisible();
     await release.getByRole('button', {name: 'Close', exact: true}).click();
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
-    const picker = panel.getByRole('complementary', {name: 'Pull requests'});
-    const selected = picker.getByRole('button', {name: /^#42 Start together/});
+    let picker = panel.getByRole('complementary', {name: 'Pull requests'});
+    let selected = picker.getByRole('button', {name: /^#42 Start together/});
     await expect(picker.getByRole('spinbutton')).toHaveCount(0);
     await expect(picker.getByRole('button', {name: 'Open pull request', exact: true})).toHaveCount(0);
     await expect(selected).toHaveAttribute('data-status', 'mergeable');
@@ -218,7 +240,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await selected.focus();
     await selected.press('Enter');
     await expect(selected).toHaveAttribute('aria-pressed', 'true');
-    const review = panel.getByRole('region', {name: 'Change review'});
+    let review = panel.getByRole('region', {name: 'Change review'});
     await expect(panel.getByRole('button', {name: 'Open PR project to run'})).toHaveCount(0);
     const title = panel.getByRole('heading', {name: '#42 Start together'});
     await expect(title.getByRole('link')).toHaveAttribute('href', 'https://github.com/owner/game/pull/42');
@@ -232,7 +254,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await panel.getByRole('tab', {name: 'Files changed', exact: true}).click();
     await expect(review.getByText('game/assets/start.svg')).toBeVisible();
     await expect(review.locator('dt').getByText('Changed files', {exact: true})).toHaveCount(0);
-    const script = review.locator('details').filter({hasText: 'When green flag clicked'});
+    let script = review.locator('details').filter({hasText: 'When green flag clicked'});
     await script.locator('summary').click();
     await expect(script.locator('svg.blocklySvg').first()).toContainText('10');
     await expect(script.locator('svg.blocklySvg').last()).toContainText('25');
@@ -287,8 +309,18 @@ test('the Editor Git panel opens a pull request overview and renders its changed
         frame.style.height = '';
         frame.scrollIntoView({block: 'center'});
     });
-    // Reviewed marks stay when the review opens again and after a reload, until the script itself changes.
-    const clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
+    const reopen = async () => {
+        await page.close();
+        ({page, panel} = await openBrowserRepository(context, directory));
+        picker = panel.getByRole('complementary', {name: 'Pull requests'});
+        selected = picker.getByRole('button', {name: /^#42 Start together/});
+        review = panel.getByRole('region', {name: 'Change review'});
+        script = review.locator('details').filter({hasText: 'When green flag clicked'});
+        clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
+    };
+    // Reviewed marks stay when the review opens again and in a new tab, until the script itself changes.
+
+    let clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
     await expect(review.getByText('0 / 2', {exact: true})).toBeVisible();
     const reviewed = script.locator('footer').getByRole('checkbox', {name: 'Reviewed'});
     await expect(reviewed).toHaveCSS('width', '20px');
@@ -301,14 +333,14 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await selected.click();
     await panel.getByRole('tab', {name: 'Files changed', exact: true}).click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
-    await openRepository(page, directory);
+    await reopen();
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
     await selected.click();
     await panel.getByRole('tab', {name: 'Files changed', exact: true}).click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     // The head moves on and changes only the green flag script: only its mark is dropped.
     pr.head.sha = laterHead;
-    await openRepository(page, directory);
+    await reopen();
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
     await selected.click();
     await panel.getByRole('tab', {name: 'Files changed', exact: true}).click();
