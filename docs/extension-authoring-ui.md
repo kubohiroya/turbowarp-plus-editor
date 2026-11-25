@@ -2,6 +2,14 @@
 
 [拡張ローダー](extension-loader-integration.md)の許可UI・SB3保存・単一HTML出力を、機能拡張の選択画面へ接続しています。URLフラグなしの通常起動で利用できます。
 
+## npm または GitHub Release から公開済みの拡張を追加する
+
+1. 「ファイル」→「機能拡張…」→「機能拡張の追加」から「TurboWarp Plus」を開きます。
+2. 「npm パッケージまたは GitHub Release」に正確な版の `@scope/package@1.2.3`、または `https://github.com/owner/repo/releases/tag/v1.2.3` を入力し、「確認」を押します。
+3. 拡張の版・実行方式・作者が申告したリソースを確認し、「公開拡張を追加」を押します。実行許可が表示された場合は、検証済みの内容と実行方式を確認して許可します。
+
+Web 版は配布 descriptor がある公開済みのビルドを対象とし、検証した JavaScript を作品に埋め込みます。GitHub Release では、タグが指すコミットの `dist/` と Release の添付物が一致している必要があります。
+
 ## 一覧からの操作
 
 1. Editorを `editor.html?lang=ja` で起動します。
