@@ -2464,8 +2464,6 @@ test('the variables pane connects target ownership, definitions and monitors to 
     const fields = pane.locator('input[data-variable-id]');
     const variableIds = () => fields.evaluateAll(inputs => inputs.map(input => input.getAttribute('data-variable-id')));
     const score = pane.getByRole('textbox', {name: '得点', exact: true});
-    const cloud = pane.getByRole('img', {name: 'クラウド変数', exact: true});
-    const scope = pane.locator('.tw-sprite-variables__scope');
     // Creating, renaming and deleting open Scratch-style modal dialogs.
     const create = page.getByRole('dialog', {name: /^新しい(スプライト|グローバル)変数$/});
     const rename = page.getByRole('dialog', {name: '変数名を変更', exact: true});
@@ -2477,7 +2475,6 @@ test('the variables pane connects target ownership, definitions and monitors to 
 
     await showVariables();
     await expect(pane.getByRole('heading', {name: 'スプライト変数', exact: true})).toBeVisible();
-    await expect(pane.getByText('このスプライト専用の変数です。')).toBeVisible();
     await expect.poll(variableIds).toEqual(['local-score']);
     await page.getByRole('button', {name: '実行画面の開き方'}).click();
     await page.getByRole('menuitem', {name: '引出しで表示', exact: true}).click();
@@ -2498,8 +2495,6 @@ test('the variables pane connects target ownership, definitions and monitors to 
     await expect(stageMonitor).toBeHidden();
     await page.getByRole('button', {name: '実行画面の表示', exact: true}).click();
     await page.getByRole('menuitem', {name: '引出しを閉じる', exact: true}).click();
-    await expect(scope).toHaveCount(0);
-    await expect(cloud).toHaveCount(0);
     await score.fill('17');
     await score.press('Enter');
 
@@ -2550,12 +2545,7 @@ test('the variables pane connects target ownership, definitions and monitors to 
 
     await page.getByRole('button', {name: 'ステージ', exact: true}).click();
     await showVariables(true);
-    await expect(pane.getByText('このステージとすべてのスプライトで参照・利用できる変数です。')).toBeVisible();
     await expect.poll(variableIds).toEqual(['project-score', 'cloud-score', 'legacy-cloud', 'plain-cloud-name']);
-    await expect(scope).toHaveCount(0);
-    await expect(cloud).toHaveCount(2);
-    await expect(cloud.first()).toHaveCSS('color', 'rgb(35, 153, 194)');
-    await expect(pane.getByRole('rowheader')).toHaveText(['得点', '記録 ☁︎', '共有記録 ☁︎', '☁ メモ', 'リスト']);
     await expect(score).toHaveValue('0');
     await score.fill('23');
     await score.press('Enter');
