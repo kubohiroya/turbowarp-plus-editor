@@ -99,6 +99,8 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/extension-host/project-size-gate.test.ts` の機能テスト3件 | Loader の `test/editor-project-size-gate.test.ts`（計測・同意2件）、workbench の `test/project-size-approval.test.cts`（画面1件） | 同ファイルの実 VM と Editor の64 MiB上限・同意を接続する1件 |
 | `test/extension-host/project-uri.test.ts` の機能テスト5件 | Loader の `test/scratch-vm/editor-project-uri.test.ts` | 同ファイルの実 VM での URI 付与・保持と開く際のレビューの結線確認1件 |
 | `test/extension-host/project-cache.test.ts` の保存時 URI 機能テスト5件 | Loader の `test/scratch-vm/editor-save-address.test.ts` | 同ファイルの実 VM・HTTPS と URI、作品別キャッシュ、カタログ、fallback、単一 HTML の接続確認5件 |
+| `test/extension-host/retry-classification.test.ts` の判定行列1件（成功＋失敗9種類） | Loader の `test/scratch-vm/editor-retry-classification.test.ts` | `authoring.test.ts` の実 VM と authoring の接続、`host.test.ts` の再試行通知と404の接続確認 |
+| `test/extension-host/unified-review.test.ts` の表示名詳細4パターン | security-dialog の `test/editor-verified-review-names.test.cts` | 同ファイルに表示名接続1パターンを含む統合確認8件を保持 |
 
 作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
 workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
@@ -147,6 +149,10 @@ Editor の `modal.test.ts` には、実 GUI ラッパーが ReactModal の porta
 
 保存時 URI の機能テスト5件は Loader の公開 `createProjectIO`・`installExtensionLoader` を VM の代役で検証するテストとして移管する。初回保存時の付与と保持、保存経路と sprite 書き出しの区別、既存 URI・manifest 不在・付与ポート不在・再読込を扱う。検証本体・fixture と元の GPL-3.0-or-later を維持し、移管先の既存 `npm test` と CI が実行する。移管先のソース全27ファイルは Editor 固定の Loader `0.16.0` と一致する。上流 CI の成功とマージを Editor 側の重複除去の公開条件とする。
 Editor の `project-cache.test.ts` には実 VM・HTTPS・URI の往復、作品別キャッシュ・カタログとの結線、IndexedDB 不在時の接続、単一 HTML への除外を確認する5件を内容不変で残す。既存の `test:extension-host` と CI ステップを保持する。製品コード・依存固定・GUI は変更しない。CI 時間短縮量は未測定。切り戻しは元の10件と bridge fixture を復元し、上流も戻す場合は Editor の復元を先に行う。
+
+再試行の判定行列（成功時と失敗9種類）は Loader の公開 host/authoring API と既存の実 VM fixture へ移管する。検証本体と SB3 fixture を維持し、Editor の薄い接続に代えて host factory の UI/review ポートと authoring 接続をテスト fixture で渡す。Loader には Storage のテスト専用依存を追加する。Editor の `authoring.test.ts` と `host.test.ts` の現行固定 VM による接続確認を保持する。
+統合レビュー8件は Plus/legacy の承認・拒否・キャッシュ・キャンセルをパッケージ間で接続する確認として Editor に保持する。表示名の詳細4パターンだけを security-dialog の公開 `plusReviewRows` へ切り出し、元の source fixture と期待値を維持する。ZIP reader と正規化済みの依存配列を注入し、コードが実行されないことも確認する。Editor の表示名確認は4パターンから1パターンへ縮小する。
+両移管先の既存テストコマンド・CI が新しいテストを実行し、元の GPL-3.0-or-later を保持する。Loader `0.16.0` のソース27ファイルと security-dialog `0.14.0` の32ファイルは Editor の固定版と一致する。両移管先の CI 成功とマージを Editor の整理の公開条件とする。製品コード・依存固定・GUI・既存 CI コマンドは変更しない。CI 時間短縮量は未測定。切り戻しは Editor の判定行列と表示名詳細ケースを復元してから、必要なら両上流の追加テスト・テスト専用依存・文書も revert する。
 
 ## 切り戻し
 

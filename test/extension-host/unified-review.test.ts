@@ -83,16 +83,8 @@ function install (answer) {
 const keyed = (entries, decide) => new Map(entries.map(entry => [entry.key, decide(entry)]));
 
 test('the open review names ZIP extensions from verified source before any extension runs', async () => {
-    const sources = [
-        {id: 'headerfixture', source: '// Name: Header name\nScratch.vm.unifiedExecuted = 1;'},
-        {id: 'literalfixture', source: `Scratch.vm.unifiedExecuted = 1;
-            class Other {getInfo() {return {id: 'other', name: 'Wrong name'};}}
-            Scratch.extensions.register({getInfo() {return {id: 'literalfixture', name: 'Literal name'};}});`},
-        {id: 'dynamicfixture', source: `Scratch.extensions.register({
-            getInfo() {return {id: 'dynamicfixture', name: unknownName()};}
-        });`},
-        {id: 'tamperedfixture', source: '// Name: Unverified name\nScratch.vm.unifiedExecuted = 1;',
-            sha256: '0'.repeat(64)}
+    const sources: {id: string; source: string; sha256?: string}[] = [
+        {id: 'headerfixture', source: '// Name: Header name\nScratch.vm.unifiedExecuted = 1;'}
     ];
     const zip = new JSZip();
     const extensions = sources.map(({id, source, sha256}) => {
@@ -109,10 +101,7 @@ test('the open review names ZIP extensions from verified source before any exten
         assert.equal(fixture.vm.unifiedExecuted, undefined);
         const rows = entries.filter(entry => entry.source.kind === 'embedded-file');
         assert.deepEqual(rows.map(entry => [entry.key, entry.metadata.name]), [
-            ['headerfixture', 'Header name'],
-            ['literalfixture', 'Literal name'],
-            ['dynamicfixture', undefined],
-            ['tamperedfixture', undefined]
+            ['headerfixture', 'Header name']
         ]);
         return keyed(entries, () => ({execution: 'deny'}));
     });
