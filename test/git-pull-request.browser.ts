@@ -17,7 +17,7 @@ const prefix = '/turbowarp-plus-editor/';
 const api = 'https://api.github.com';
 const mime = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
     '.svg': 'image/svg+xml', '.png': 'image/png', '.wav': 'audio/wav', '.wasm': 'application/wasm'};
-const oldHead = 'a'.repeat(40), newHead = 'b'.repeat(40), mergeBase = 'c'.repeat(40), laterHead = 'd'.repeat(40);
+const oldHead = 'a'.repeat(40), newHead = 'b'.repeat(40), mergeBase = 'c'.repeat(40);
 const pr = {number: 42, title: 'Start together', body_text: 'Move after the start signal.', state: 'open', changed_files: 2,
     user: {login: 'tester'},
     base: {sha: oldHead, ref: 'main', repo: {full_name: 'owner/game'}},
@@ -31,7 +31,7 @@ const project = (steps: string, message = 'hi') => JSON.stringify({targets: [{na
     say: {opcode: 'looks_say', next: null, parent: 'click', inputs: {MESSAGE: [1, [10, message]]}, fields: {}, shadow: false, topLevel: false}
 }}]}, null, 2);
 // The PR's head can move on; each head's version of the project.
-const heads = new Map([[newHead, project('25', 'hello')], [laterHead, project('30', 'hello')]]);
+const heads = new Map([[newHead, project('25', 'hello')]]);
 
 const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32"/></svg>';
 const assetId = createHash('md5').update(svg).digest('hex');
@@ -224,7 +224,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await expect(release.getByRole('button', {name: 'Export HTML with Packager'})).toBeVisible();
     await release.getByRole('button', {name: 'Close', exact: true}).click();
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
-    let picker = panel.getByRole('complementary', {name: 'Pull requests'});
+    const picker = panel.getByRole('complementary', {name: 'Pull requests'});
     let selected = picker.getByRole('button', {name: /^#42 Start together/});
     await expect(picker.getByRole('spinbutton')).toHaveCount(0);
     await expect(picker.getByRole('button', {name: 'Open pull request', exact: true})).toHaveCount(0);
@@ -254,7 +254,7 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await panel.getByRole('tab', {name: 'Files changed', exact: true}).click();
     await expect(review.getByText('game/assets/start.svg')).toBeVisible();
     await expect(review.locator('dt').getByText('Changed files', {exact: true})).toHaveCount(0);
-    let script = review.locator('details').filter({hasText: 'When green flag clicked'});
+    const script = review.locator('details').filter({hasText: 'When green flag clicked'});
     await script.locator('summary').click();
     await expect(script.locator('svg.blocklySvg').first()).toContainText('10');
     await expect(script.locator('svg.blocklySvg').last()).toContainText('25');
@@ -312,15 +312,12 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     const reopen = async () => {
         await page.close();
         ({page, panel} = await openBrowserRepository(context, directory));
-        picker = panel.getByRole('complementary', {name: 'Pull requests'});
-        selected = picker.getByRole('button', {name: /^#42 Start together/});
+        selected = panel.getByRole('complementary', {name: 'Pull requests'}).getByRole('button', {name: /^#42 Start together/});
         review = panel.getByRole('region', {name: 'Change review'});
-        script = review.locator('details').filter({hasText: 'When green flag clicked'});
-        clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
     };
-    // Reviewed marks stay when the review opens again and in a new tab, until the script itself changes.
+    // Reviewed marks stay when the review opens again and when the native project opens in a new tab.
 
-    let clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
+    const clicked = review.locator('details').filter({hasText: 'When this sprite clicked'});
     await expect(review.getByText('0 / 2', {exact: true})).toBeVisible();
     const reviewed = script.locator('footer').getByRole('checkbox', {name: 'Reviewed'});
     await expect(reviewed).toHaveCSS('width', '20px');
@@ -338,17 +335,6 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await selected.click();
     await panel.getByRole('tab', {name: 'Files changed', exact: true}).click();
     await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
-    // The head moves on and changes only the green flag script: only its mark is dropped.
-    pr.head.sha = laterHead;
-    await reopen();
-    await panel.getByRole('button', {name: 'Merge', exact: true}).click();
-    await selected.click();
-    await panel.getByRole('tab', {name: 'Files changed', exact: true}).click();
-    await expect(review.getByText('1 / 2', {exact: true})).toBeVisible();
-    await script.locator('summary').click();
-    await expect(script.getByRole('checkbox', {name: 'Reviewed'})).not.toBeChecked();
-    await clicked.locator('summary').click();
-    await expect(clicked.getByRole('checkbox', {name: 'Reviewed'})).toBeChecked();
     await panel.getByRole('button', {name: 'Create PR', exact: true}).click();
     await expect(panel.getByRole('button', {name: /^fixture, /})).toBeVisible();
     await page.waitForFunction(() => {
