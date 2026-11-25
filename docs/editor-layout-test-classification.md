@@ -18,7 +18,7 @@
 | 8 | [515–566](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L515-L566) | the first menu row orders the Plus logo, project title, File, Edit, and search | workbench / GUI | 一部分離・候補あり | ロゴの表示・リンクはWorkbenchへ。native title/File/Edit/searchを含む実行・座標関係はEditor。幾何のさらなる分離可否は追跡。 |
 | 9 | [567–659](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L567-L659) | extension controls sit at the end of the menu bar and the stage can still shrink | workbench / Editor controls-dock | 接続保持 | 拡張 controls API と GUI メニューバー・stage sizing |
 | 10 | [660–729](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L660-L729) | the enabled debugger opens from its own menu bar button, outside the extension controls | workbench / GUI addons | 接続保持 | debugger addon と専用メニューボタン |
-| 11 | [730–872](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L730-L872) | the Plus project menu relocates display settings, runtime actions, and settings dialogs | workbench / GUI | 分離候補 | 本家の表示設定・runtime・dialog の結線を保持し、配置の詳細を分ける |
+| 11 | [730–872](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L730-L872) | the Plus project menu relocates display settings, runtime actions, and settings dialogs | workbench / GUI | 一部分離 | 日英の項目順とhost port操作はWorkbench。実GUIの設定・言語/テーマ、VM切替・dialog・別タブはEditor |
 | 12 | [873–924](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L873-L924) | the Plus project menu and previous stage layout remain available | workbench / windows | 接続保持 | 作品メニューと以前の stage layout の併存 |
 | 13 | [925–957](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L925-L957) | a separate stage window releases keyboard input on blur and restores the editor canvas | windows / workbench / VM | 接続保持 | 別窓の blur から VM 入力解放と元 canvas へ |
 | 14 | [958–1235](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L958-L1235) | startup chooses the layout and the stage menu hides the stage without stopping the project | Editor / workbench / windows | 分離候補 | 起動フラグと継続実行を保持し、表示モード行列を分ける |
@@ -156,3 +156,8 @@ Editorには実canvasが既定のpinで表示され、auto-hideでは外側ク�
 ## 作品情報メニュー（#823・分類8/23）
 
 ロゴの透明な状態、リンク・区切り・アイコン・ピン操作なしと、ホストの別レイヤーに重ねた時のヒット判定をWorkbenchの単独ブラウザー2件で検証する。旧Editorの「ソースコード」期待値は現行固定ビルドの名称と不一致だったため、上流側では現在の名称と実リンク先を確認する。Editorには実メニューバーの五要素の順序・位置・検索接続、ロゴからの表示、別のケースで実Blockly paletteとの重なりを保持する。分類8の幾何は引き続き分離可否を追う。通常CI時間の短縮は計上しない。切り戻しはEditorの元のメニュー確認を現在の文言に合わせて復元する。
+
+
+## 作品情報メニューの設定ポート（#823・分類11）
+
+同じWorkbenchコンポーネントを使う日英単体テストで項目順と条件付きの接続項目、表示・実行サブメニューの排他、Enterによるホスト項目操作と設定コールバックを検証する。上流CIの実行確認・マージ後のみ下流を公開する。Editorは実GUIの設定メニューとテーマ・日本語切替、VMの実run設定、各dialog/別タブの到達を保持する。項目順を二度確認せず、現行の未接続構成でも言語変更と実接続を検証できるようにする。切り戻しは元の項目確認を現行ラベルと機能有効化状態に合わせて復元する。
