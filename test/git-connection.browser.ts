@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {chromium, expect, type Page} from '@playwright/test';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
+import {writeNativeGitProject} from './fixtures/git-native-project.ts';
 
 const origin = 'http://localhost:41015';
 const prefix = '/turbowarp-plus-editor/';
@@ -25,15 +26,15 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await verifyWebEditor(build);
     const folder = await mkdtemp(path.join(process.platform === 'darwin' ? '/private/tmp' : tmpdir(), 'tw-git-connection-'));
     t.after(() => rm(folder, {recursive: true, force: true}));
-    const project = path.join(folder, 'project.source.json');
+    const {filename: projectPath, project} = await writeNativeGitProject(folder);
     const git = (...args: string[]) => execFileSync('git', args, {cwd: folder, encoding: 'utf8'}).trim();
-    await writeFile(project, '{"committed":true}\n');
     git('init', '-q');
     git('add', '.');
     git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture');
     git('remote', 'add', 'origin', remote);
-    await writeFile(project, '{"localEdit":true}\n');
-    const files = [project, path.join(folder, '.git/config'), path.join(folder, '.git/index'), path.join(folder, '.git/HEAD')];
+    project.targets[0].volume = 71;
+    await writeFile(projectPath, JSON.stringify(project, null, 2) + '\n');
+    const files = [projectPath, path.join(folder, '.git/config'), path.join(folder, '.git/index'), path.join(folder, '.git/HEAD')];
     const before = await Promise.all(files.map(file => readFile(file)));
 
     const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
@@ -144,21 +145,24 @@ test('GitHub connection settings isolate the selected provider and keep the work
     const choose = async (target: Page) => {
         await target.getByText('File', {exact: true}).click();
         await expect(target.getByRole('button', {name: 'GitHub Connection Settings…', exact: true})).toHaveCount(0);
-        await target.getByRole('button', {name: 'Choose Repository…', exact: true}).click();
+        await target.locator('[class*="menu-bar_menu-bar_"]').getByRole('button', {name: 'Open Folder…', exact: true}).click({timeout: 8000});
+    };
+    const showHistory = async (target: Page) => {
+        const history = target.getByRole('toolbar', {name: 'Drawer views', exact: true})
+            .getByRole('button', {name: 'Git history', exact: true});
+        if (await history.getAttribute('aria-pressed') !== 'true') await history.click();
     };
     const showSettings = async (target: Page) => {
-        await target.getByRole('button', {name: 'Connect to GitHub…', exact: true}).click();
+        await showHistory(target);
+        await target.locator('[data-drawer-content]').getByRole('button', {name: 'Connect to GitHub…', exact: true}).click({timeout: 8000});
         const dialog = target.getByRole('dialog', {name: 'Repository GitHub connection'});
         await expect(dialog).toBeVisible();
         return dialog;
     };
+    const connectionMode = (target: Page) => target.getByRole('button', {name: 'Connection Mode…', exact: true});
     const showPreferences = async (target: Page) => {
-        const label = 'TurboWarp Plus project information';
-        await target.getByLabel(label, {exact: true}).first().click();
-        const nav = target.getByRole('navigation', {name: label});
-        const settings = nav.getByRole('button', {name: 'GitHub Connection Settings…'});
-        await expect(settings.locator('xpath=following-sibling::*[1]')).toHaveText('AI agent settings…');
-        await settings.click();
+        await showHistory(target);
+        await connectionMode(target).click();
         return target.getByRole('dialog', {name: 'GitHub connection settings'});
     };
     const close = (dialog: ReturnType<Page['getByRole']>) => dialog.getByRole('button', {name: 'Close', exact: true}).click();
@@ -171,7 +175,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await expect(preferences.getByRole('button', {name: 'Connect to GitHub'})).toHaveCount(0);
     await defaultMode.selectOption('cloudflare');
     await close(preferences);
-    await expect(page.getByLabel('TurboWarp Plus project information', {exact: true}).first()).toBeFocused();
+    await expect(connectionMode(page)).toBeFocused();
     await page.reload();
     await expect(await showPreferences(page)).toBeVisible();
     await expect(defaultMode).toHaveValue('cloudflare');
@@ -205,10 +209,17 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await expect(panel.getByText('http://127.0.0.1:49152')).toBeVisible();
     assert.equal(requests.length, 0);
 
+    const setNextConnectionMode = async (next: string) => {
+        const preferencesTab = await context.newPage();
+        await installDesktopFixture(preferencesTab);
+        await preferencesTab.goto(editor);
+        const nextPreferences = await showPreferences(preferencesTab);
+        await nextPreferences.getByRole('combobox', {name: 'Default connection mode'}).selectOption(next);
+        await close(nextPreferences);
+        await preferencesTab.close();
+    };
     await close(panel);
-    await showPreferences(page);
-    await defaultMode.selectOption('cloudflare');
-    await close(preferences);
+    await setNextConnectionMode('cloudflare');
     await showSettings(page);
     await expect(status).toHaveText('Connected');
     await expect(mode).toHaveText('Connection mode · Desktop local');
@@ -238,9 +249,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await disconnect.click();
     await expect(status).toHaveText('Disconnected');
     await close(panel);
-    await showPreferences(page);
-    await defaultMode.selectOption('desktop');
-    await close(preferences);
+    await setNextConnectionMode('desktop');
 
     assert.deepEqual(await page.evaluate(() => (window as any).gitConnectionFixture.calls), [
         ['begin', false], ['disconnect'], ['begin', false], ['finish'], ['authorize', remote, false], ['disconnect'], ['disconnect']

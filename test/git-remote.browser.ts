@@ -7,6 +7,7 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {chromium, expect} from '@playwright/test';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
+import {writeNativeGitProject} from './fixtures/git-native-project.ts';
 
 const prefix = '/turbowarp-plus-editor/';
 const mime = new Map([['.html', 'text/html'], ['.js', 'text/javascript'], ['.css', 'text/css'],
@@ -23,6 +24,13 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const {startFixture, git, commit} = await import(pathToFileURL(fixtureFile).href);
     const fixture = await startFixture(t);
     const {client, seed, bare} = fixture;
+    await writeNativeGitProject(seed);
+    git(seed, 'add', '.');
+    const fixtureCommit = commit(seed, 'Add Editor project fixture');
+    git(seed, 'push', bare, 'main');
+    git(client, 'fetch', bare, 'main');
+    git(client, 'merge', '--ff-only', 'FETCH_HEAD');
+    git(client, 'update-ref', 'refs/remotes/origin/main', fixtureCommit);
     const source = path.join(client, 'project.txt');
     const config = path.join(client, '.git/config');
     const initial = git(client, 'rev-parse', 'HEAD');
@@ -53,14 +61,15 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const browser = await chromium.launch({headless: true, args});
     t.after(() => browser.close());
     t.diagnostic('Chromium ' + browser.version());
-    const page = await browser.newPage({viewport: {width: 1280, height: 920}});
+    const context = await browser.newContext({viewport: {width: 1280, height: 920}});
+    const page = await context.newPage();
     let browserPushes = 0;
     page.on('request', request => {
         if (request.method() === 'POST' && request.url().endsWith('/git-receive-pack')) browserPushes++;
     });
-    await page.route('**/*', route => [origin, fixture.origin].includes(new URL(route.request().url()).origin) ?
+    await page.context().route('**/*', route => [origin, fixture.origin].includes(new URL(route.request().url()).origin) ?
         route.continue() : route.abort());
-    await page.addInitScript(({proxyOrigin, writeBearer, readBearer}) => {
+    await page.context().addInitScript(({proxyOrigin, writeBearer, readBearer}) => {
         const view = window as any;
         let directory: FileSystemHandle | undefined;
         let write = false;
@@ -109,9 +118,11 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         type, x: 100, y: 100, data: {items: [], files: [client], dragOperationsMask: 1}
     });
     await page.waitForFunction(() => (window as any).gitDirectoryReady);
-    // Before a repository is chosen, the branch button reads "Git" and chooses one, then opens the panel on it.
-    await page.getByRole('button', {name: 'Local Git', exact: true}).click();
-    await page.getByRole('menuitem', {name: 'Choose Repository…'}).click();
+    // Opening the actual project folder connects its repository before opening the full Git panel.
+    await page.getByText('File', {exact: true}).click();
+    await page.getByRole('button', {name: 'Open Folder…', exact: true}).click();
+    await page.getByRole('button', {name: 'Branch: main', exact: true}).click({timeout: 8000});
+    await page.getByRole('menuitem', {name: 'Open Local Git', exact: true}).click();
     const panel = page.locator('.twgit-panel:not(.twgit-connection-dialog)');
     const button = (name: string) => panel.getByRole('button', {name, exact: true});
     const runRemote = async (name: string) => {
@@ -169,9 +180,9 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     assert.equal(await readFile(source, 'utf8'), 'external edit\n');
     await writeFile(source, 'initial\n');
     await runRemote('Update local branch and files (pull)');
-    await expect(notice).toBeVisible();
-    assert.equal(git(client, 'rev-parse', 'HEAD'), incoming);
-    assert.equal(await readFile(source, 'utf8'), 'browser incoming\n');
+    // Reloading the Editor project can replace the panel and its notice. Verify the actual pull instead.
+    await expect.poll(() => git(client, 'rev-parse', 'HEAD')).toBe(incoming);
+    await expect.poll(() => readFile(source, 'utf8')).toBe('browser incoming\n');
 
     await openSettings();
     await settingsButton('Disconnect').click();
@@ -275,11 +286,16 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
         }
         return route.fulfill({response});
     });
-    await page.getByLabel('TurboWarp Plus project information', {exact: true}).first().click();
-    await page.getByRole('button', {name: 'GitHub Connection Settings…', exact: true}).click();
-    const preferences = page.getByRole('dialog', {name: 'GitHub connection settings'});
+    const preferencesPage = await page.context().newPage();
+    await preferencesPage.goto(origin + prefix + 'editor.html?lang=en');
+    const history = preferencesPage.getByRole('toolbar', {name: 'Drawer views', exact: true})
+        .getByRole('button', {name: 'Git history', exact: true});
+    if (await history.getAttribute('aria-pressed') !== 'true') await history.click();
+    await preferencesPage.getByRole('button', {name: 'Connection Mode…', exact: true}).click();
+    const preferences = preferencesPage.getByRole('dialog', {name: 'GitHub connection settings'});
     await preferences.getByRole('combobox', {name: 'Default connection mode'}).selectOption('cloudflare');
     await preferences.getByRole('button', {name: 'Close', exact: true}).click();
+    await preferencesPage.close();
     await openSettings();
     await settingsButton('Disconnect').click();
     await expect(status).toHaveText('Disconnected');
@@ -297,9 +313,8 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const cloudIncoming = commit(seed, 'cloud incoming');
     git(seed, 'push', bare, 'main');
     await runRemote('Update local branch and files (pull)');
-    await expect(notice).toBeVisible();
-    assert.equal(git(client, 'rev-parse', 'HEAD'), cloudIncoming);
-    assert.equal(await readFile(source, 'utf8'), 'cloud incoming\n');
+    await expect.poll(() => git(client, 'rev-parse', 'HEAD')).toBe(cloudIncoming);
+    await expect.poll(() => readFile(source, 'utf8')).toBe('cloud incoming\n');
     await writeFile(source, 'cloud outgoing\n');
     const cloudOutgoing = commit(client, 'cloud outgoing');
     page.once('dialog', dialog => dialog.accept());
@@ -326,13 +341,17 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
 
     git(seed, 'pull', '--ff-only', bare, 'main');
     await writeFile(path.join(seed, 'project.txt'), 'remote diverged\n');
-    commit(seed, 'remote diverged');
+    const remoteDiverged = commit(seed, 'remote diverged');
     git(seed, 'push', bare, 'main');
     await writeFile(source, 'local diverged\n');
     const diverged = commit(client, 'local diverged');
     const index = await readFile(path.join(client, '.git/index'));
     await runRemote('Update local branch and files (pull)');
-    await expect(panel.getByRole('alert')).toContainText('cannot be combined here');
+    await expect.poll(() => git(client, 'rev-parse', 'refs/remotes/origin/main')).toBe(remoteDiverged);
+    const mergePlan = page.getByRole('dialog', {name: 'Merge plans', exact: true});
+    await expect(mergePlan).toBeVisible();
+    await expect(mergePlan.getByRole('button', {name: 'Create candidate', exact: true})).toBeVisible();
+    await expect(panel.getByText('Diverged from GitHub: +1 / −1', {exact: true})).toBeVisible();
     assert.equal(git(client, 'rev-parse', 'HEAD'), diverged);
     assert.equal(await readFile(source, 'utf8'), 'local diverged\n');
     assert.deepEqual(await readFile(path.join(client, '.git/index')), index);
