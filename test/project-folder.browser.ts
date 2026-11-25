@@ -1666,7 +1666,7 @@ test('tracks native Git status in the project explorer with the Git panel closed
     assert.deepEqual(errors, []);
 });
 
-test('reviews and saves an unsaved block diff from Local Git in the current project', {timeout: 45000}, async t => {
+test('reviews, saves and commits only the selected block diff from Local Git', {timeout: 45000}, async t => {
     const build = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
     await verifyWebEditor(build);
@@ -1727,6 +1727,24 @@ test('reviews and saves an unsaved block diff from Local Git in the current proj
     await savedPane.getByRole('button', {name: 'Text', exact: true}).click();
     await expect(savedPane.locator('.twgit-diff .diff')).toContainText('26');
     assert.deepEqual(await readFile(path.join(folder, '.git', 'index')), index);
+
+    await writeFile(path.join(folder, noteFile), 'Unrelated staged edit\n');
+    git('add', noteFile);
+    const stagedBefore = await readFile(path.join(folder, '.git', 'index'));
+    const select = savedPane.getByRole('checkbox', {name: 'Include in commit: ' + projectFile, exact: true});
+    await select.check();
+    assert.deepEqual(await readFile(path.join(folder, '.git', 'index')), stagedBefore);
+    await select.uncheck();
+    const commit = savedPane.getByRole('button', {name: 'Commit', exact: true});
+    await expect(commit).toBeDisabled();
+    await select.check();
+    await savedPane.getByLabel('Commit message').fill('Record only the project edit');
+    await commit.click();
+    await expect(panel.getByText('Recorded the changes (commit).')).toBeVisible();
+    assert.equal(git('log', '-1', '--format=%s|%an'), 'Record only the project edit|Editor review fixture');
+    assert.equal(git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), projectFile);
+    assert.equal(git('show', ':' + noteFile), 'Unrelated staged edit');
+    git('fsck', '--no-progress');
     assert.deepEqual(errors, []);
 });
 
