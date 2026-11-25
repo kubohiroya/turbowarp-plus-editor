@@ -60,14 +60,14 @@ test('a regular project saves an explicitly chosen URI and shows it after reopen
     expect(project.turboWarpPlusProject.author).toBe('テスト作者');
 
     await openEditor(page);
-    await reopenSB3(page, saved, 'uri-project.sb3');
+    page = await reopenSB3(page, saved, 'uri-project.sb3');
     await page.waitForFunction(uri => {
         try { return JSON.parse(vm.toJSON()).turboWarpPlus?.uri === uri; }
         catch { return false; }
     }, firstURI);
     await openProperties(page);
     await expect(uriField(page)).toHaveValue(firstURI);
-    await expect(author).toHaveValue('テスト作者');
+    await expect(uriDialog(page).getByRole('combobox', {name: '作者名'})).toHaveValue('テスト作者');
     await uriField(page).fill(nextURI);
     await uriDialog(page).getByRole('button', {name: 'キャンセル', exact: true}).click();
     await expect(uriDialog(page)).toHaveCount(0);
@@ -101,8 +101,8 @@ test('changing the URI preserves the embedded extension and its contents when sa
     expect(await zip.file(extension.source.path).async('nodebuffer')).toEqual(spec.bytes);
 
     await openEditor(page);
-    await reopenSB3(page, saved, 'embedded-uri-project.sb3');
-    await expect.poll(() => page.evaluate(id => vm.extensionManager.isExtensionLoaded(id), spec.id)).toBe(true);
+    page = await reopenSB3(page, saved, 'embedded-uri-project.sb3');
+    await expect.poll(() => page.evaluate(id => Boolean(globalThis.vm?.extensionManager?.isExtensionLoaded(id)), spec.id)).toBe(true);
     await openProperties(page);
     await expect(uriField(page)).toHaveValue(nextURI);
 });

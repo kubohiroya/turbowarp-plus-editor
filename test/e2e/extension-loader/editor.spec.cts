@@ -1,8 +1,9 @@
-const {test, expect, showProjectDiagnostics} = require('./fixtures.cts');
+const {test, expect, review, individualReview, executionChoice, completeReview, trackExecutionFetches, provideReviewMetadata, showLoadFailureDetails, showProjectDiagnostics} = require('./fixtures.cts');
 const Zip = require('@turbowarp/jszip');
 const fs = require('node:fs');
 const path = require('node:path');
 const {project, bytes, digest, remoteURL} = require('./project.cts');
+const {reopenSB3} = require('./catalog.cts');
 const {createHTTPSFixture} = require('./https-fixture.cts');
 const {createHash} = require('node:crypto');
 const {createRequire} = require('node:module');
@@ -38,15 +39,14 @@ function load(page, buffer) {
 }
 // A project's extensions are asked about on one review when it opens, before the Loader fetches or
 // registers anything, and the Loader acts on that answer: no per-extension prompt follows it.
-const review = page => page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
 async function answer(page, execution = 'unsandboxed', {key = 'plusfixture', sha256 = digest, ran = 0} = {}) {
-    await expect(review(page)).toBeVisible();
+    await individualReview(page);
     // Nothing of this load has run while the person is still being asked.
     expect(await executions(page)).toBe(ran);
     const row = review(page).locator(`.twextsec-row[data-key="${key}"]`);
     if (sha256) await expect(row.locator('.twextsec-digest')).toContainText(sha256);
-    await row.locator(`input[name="execution-${key}"][value="${execution}"]`).check();
-    await review(page).getByRole('button', {name: 'OK', exact: true}).click();
+    await executionChoice(row, execution).click();
+    await completeReview(page);
     await expect(review(page)).toHaveCount(0);
 }
 async function allowed(page, loading) {
@@ -119,9 +119,7 @@ test('digest mismatch, unknown schema and a forged trust field fail before evalu
         expect(await executions(page)).toBe(0);
         await expect(permission(page)).toHaveCount(0);
         await expect(page.getByTestId('tw-plus-extension-status')).toHaveCount(0);
-        await page.getByTestId('project-diagnostics-snackbar')
-            .getByRole('button', {name: '詳細ログを表示', exact: true}).click();
-        await expect(page.getByTestId('project-diagnostics')).toContainText(expected);
+        await expect(await showLoadFailureDetails(page)).toContainText(expected);
         await page.keyboard.press('Escape');
     }
 });
@@ -132,17 +130,13 @@ throw new Error('Fixture must run unsandboxed.');`);
 const failingProject = () => project({code: failingCode, sha256: createHash('sha256').update(failingCode).digest('hex')});
 async function expectFailureReported(page) {
     await answer(page, 'unsandboxed', {sha256: null});
-    const dialog = page.getByRole('dialog').filter({hasText: 'プロジェクトを読み込めませんでした'});
-    await expect(dialog).toBeVisible();
-    const message = await dialog.locator('textarea').inputValue();
-    expect(message).toContain('Extension plusfixture could not be loaded, so the project was not opened.');
-    expect(message).toContain('Fixture must run unsandboxed.');
+    const diagnostics = await showLoadFailureDetails(page);
+    // The terminal diagnostics expose a stable error code, not arbitrary exception text from code.
+    await expect(diagnostics).toContainText('LOAD_FAILED');
+    await expect(diagnostics).toContainText('plusfixture');
     expect(await executions(page)).toBe(1);
-    // The Editor stays usable: it returns to the default project, as when approval is cancelled.
+    // The editor reports a stopped load instead of crashing or silently opening a different project.
     await expect(page.getByText(/うわっ|Oops/)).toHaveCount(0);
-    await expect.poll(() => page.evaluate(() => vm.runtime.targets.some(target => target.isOriginal && !target.isStage)))
-        .toBe(true);
-    expect(new URL(page.url()).searchParams.has('project_url')).toBe(false);
     expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(false);
 }
 
@@ -152,21 +146,22 @@ test('an extension that fails while registering is reported without crashing the
 });
 
 test('remote cache reopens offline after approval; an uncached digest never executes offline', async ({page, context}) => {
-    let fetched = 0;
-    await page.route(remoteURL, route => { fetched++; return route.fulfill({body: bytes,
-        headers: {'access-control-allow-origin': '*'}}); });
+    const fetched = await trackExecutionFetches(page, remoteURL);
+    await page.route(remoteURL, route => route.fulfill({body: bytes,
+        headers: {'access-control-allow-origin': '*'}}));
     await open(page);
     const input = await project({type: 'remote-cacheable'});
     await allow(page, load(page, input));
-    expect(fetched).toBe(1);
+    expect(fetched()).toBe(1);
     await context.setOffline(true);
     const reopening = load(page, input);
     // The same project is recognised, so the answer it was given is already chosen.
-    await expect(review(page).locator('input[name="execution-plusfixture"][value="unsandboxed"]')).toBeChecked();
+    await individualReview(page);
+    await expect(executionChoice(entry(page), 'unsandboxed')).toHaveAttribute('aria-pressed', 'true');
     await answer(page, 'unsandboxed', {ran: 1});
     expect(await reopening).toEqual({ok: true});
     expect(await executions(page)).toBe(2);
-    expect(fetched).toBe(1);
+    expect(fetched()).toBe(1);
     const missing = load(page, await project({type: 'remote-cacheable', sha256: 'a'.repeat(64), url: 'https://offline.invalid/new.js'}));
     await answer(page, 'unsandboxed', {sha256: 'a'.repeat(64), ran: 2});
     const missed = await missing;
@@ -181,27 +176,28 @@ const entry = page => review(page).locator('.twextsec-row[data-key="plusfixture"
 const keep = page => entry(page).locator('input[name="loading-plusfixture"]');
 
 test('the opener may decline the copy of a remote-cacheable extension, and then nothing is kept', async ({page}) => {
-    let fetched = 0;
-    await page.route(remoteURL, route => { fetched++; return route.fulfill({body: bytes,
-        headers: {'access-control-allow-origin': '*'}}); });
+    const fetched = await trackExecutionFetches(page, remoteURL);
+    await page.route(remoteURL, route => route.fulfill({body: bytes,
+        headers: {'access-control-allow-origin': '*'}}));
     await open(page);
     const input = await project({type: 'remote-cacheable'});
     let loading = load(page, input);
-    await expect(review(page)).toBeVisible();
+    await individualReview(page);
     await expect(keep(page)).toHaveCount(2);
     await expect(keep(page).and(page.locator('[value="remote-cacheable"]'))).toBeChecked();
     await entry(page).getByRole('radio', {name: '毎回取得する', exact: true}).check();
     await answer(page);
     await allowed(page, loading);
-    expect(fetched).toBe(1);
+    expect(fetched()).toBe(1);
 
     // The same project is recognised, so the copy it was refused is still refused, and the code is
     // fetched again rather than read from this browser.
     loading = load(page, input);
+    await individualReview(page);
     await expect(keep(page).and(page.locator('[value="remote-non-cacheable"]'))).toBeChecked();
     await answer(page, 'unsandboxed', {ran: 1});
     expect(await loading).toEqual({ok: true});
-    expect(fetched).toBe(2);
+    expect(fetched()).toBe(2);
 
     // With the address no longer answering, there is no copy in this browser to fall back on.
     await page.unroute(remoteURL);
@@ -213,43 +209,45 @@ test('the opener may decline the copy of a remote-cacheable extension, and then 
 
 for (const type of ['remote-non-cacheable', 'embedded-file', 'embedded-data']) {
     test(`a ${type} extension opens as its author recorded it, with no copy to decline`, async ({page}) => {
-        let fetched = 0;
-        await page.route(remoteURL, route => { fetched++; return route.fulfill({body: bytes,
-            headers: {'access-control-allow-origin': '*'}}); });
+        const fetched = await trackExecutionFetches(page, remoteURL);
+        await page.route(remoteURL, route => route.fulfill({body: bytes,
+            headers: {'access-control-allow-origin': '*'}}));
         await open(page);
         const loading = load(page, await project({type}));
-        await expect(review(page)).toBeVisible();
+        await individualReview(page);
         await expect(keep(page)).toHaveCount(0);
         await answer(page);
         await allowed(page, loading);
-        expect(fetched).toBe(type === 'remote-non-cacheable' ? 1 : 0);
+        expect(fetched()).toBe(type === 'remote-non-cacheable' ? 1 : 0);
         const json = await page.evaluate(() => JSON.parse(vm.toJSON()));
         expect(json.turboWarpPlus.extensions[0].source.type).toBe(type);
     });
 }
 
 for (const [lang, words] of Object.entries({
-    ja: {title: 'この作品は機能拡張を使います', keep: 'キャッシュを残す（既定）', fetch: '毎回取得する', ok: 'OK', cancel: 'キャンセル'},
-    en: {title: 'This project wants to run extensions', keep: 'Keep a copy (default)', fetch: 'Fetch each time', ok: 'OK', cancel: 'Cancel'}
+    ja: {title: 'この作品は機能拡張を使います', keep: 'キャッシュを残す（既定）', fetch: '毎回取得する', run: '選んだ内容で実行', stop: '実行しない'},
+    en: {title: 'This project wants to run extensions', keep: 'Keep a copy (default)', fetch: 'Fetch each time', run: 'Run with these choices', stop: 'Do not run'}
 })) {
     test(`the open review is worded in ${lang === 'ja' ? 'Japanese' : 'English'}`, async ({page}) => {
         await page.goto(`editor.html?lang=${lang}`);
         await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
         const loading = load(page, await project({type: 'remote-cacheable'}));
-        await expect(review(page)).toBeVisible();
-        await expect(review(page)).toContainText(words.title);
+        await individualReview(page);
+        await expect(review(page)).toHaveAccessibleName(new RegExp(words.title));
         await expect(entry(page).getByRole('radio', {name: words.keep, exact: true})).toBeChecked();
         await expect(entry(page).getByRole('radio', {name: words.fetch, exact: true})).toBeVisible();
-        await expect(review(page).getByRole('button', {name: words.ok, exact: true})).toBeVisible();
-        await review(page).getByRole('button', {name: words.cancel, exact: true}).click();
+        await expect(review(page).getByRole('button', {name: words.run, exact: true})).toBeVisible();
+        const stop = review(page).getByTestId('twextsec-cancel');
+        await expect(stop).toHaveAccessibleName(words.stop);
+        await stop.click();
         expect((await loading).code).toBe('EXTENSION_SECURITY_CANCELLED');
         expect(await executions(page)).toBe(0);
     });
 }
 
 test('HTTPS redirects and CORS refusal never execute JavaScript, even once the review allowed it', async ({page, baseURL}) => {
-    await open(page);
     if (process.env.E2E_BASE_URL) {
+        await open(page);
         for (const [pathname, status, headers] of [
             ['/redirect', 302, {'access-control-allow-origin': '*', location: 'https://other.invalid/changed.js'}],
             ['/nocors', 200, {'access-control-allow-origin': 'https://different-origin.invalid'}]
@@ -261,7 +259,7 @@ test('HTTPS redirects and CORS refusal never execute JavaScript, even once the r
             expect((await loading).code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
-            const diagnostics = await showProjectDiagnostics(page);
+            const diagnostics = await showLoadFailureDetails(page);
             await expect(diagnostics.locator('li').filter({hasText: '"type": "review"'})).toHaveCount(0);
             await page.keyboard.press('Escape');
         }
@@ -269,28 +267,32 @@ test('HTTPS redirects and CORS refusal never execute JavaScript, even once the r
     }
     const fixture = await createHTTPSFixture(bytes);
     try {
-        for (const pathname of ['/redirect', '/nocors']) {
-            const loading = load(page, await project({type: 'remote-cacheable', url: fixture.url + pathname}));
+        const urls = ['/redirect', '/nocors'].map(name => fixture.url + name);
+        const executedFetches = await trackExecutionFetches(page, urls);
+        await open(page);
+        for (const url of urls) {
+            const loading = load(page, await project({type: 'remote-cacheable', url}));
             await answer(page);
             const result = await loading;
             expect(result.code).toBe('LOAD_FAILED');
             expect(await executions(page)).toBe(0);
             await expect(permission(page)).toHaveCount(0);
-            const diagnostics = await showProjectDiagnostics(page);
+            const diagnostics = await showLoadFailureDetails(page);
             await expect(diagnostics.locator('li').filter({hasText: '"type": "review"'})).toHaveCount(0);
             await page.keyboard.press('Escape');
         }
         // Chromium rejects a redirect and a CORS refusal with the same TypeError it raises when
         // it could not connect, so the port cannot tell them apart and asks the full count.
         const attempts = await fetchAttempts();
-        expect(fixture.seen).toEqual([
-            ...Array(attempts).fill('/redirect'), ...Array(attempts).fill('/nocors')
-        ]);
+        expect(urls.map(executedFetches)).toEqual([attempts, attempts]);
+        // The review may itself follow a redirect to read claims, without evaluating any JS.
+        for (const pathname of ['/redirect', '/nocors']) {
+            expect(fixture.seen.filter(item => item === pathname).length).toBeGreaterThanOrEqual(attempts);
+        }
     } finally { await fixture.close(); }
 });
 
 test('a transient failure shows the current attempt and remains in Project Diagnostics', async ({page}) => {
-    await open(page);
     // One failure shows the behaviour whatever the Loader's retry count is: any policy that
     // retries at all recovers from a single transient one. The sentence around it belongs to the
     // GUI, so assert only what the person needs — which fetch is being repeated, and that the
@@ -332,6 +334,8 @@ test('a transient failure shows the current attempt and remains in Project Diagn
     if (process.env.E2E_BASE_URL) {
         // A published run has no GUI checkout and would reject the fixture's own certificate.
         const url = 'https://plus-fixture.invalid/flaky.js';
+        await provideReviewMetadata(page, url, bytes.toString('utf8'));
+        await open(page);
         let served = 0;
         await page.route(url, async route => {
             // The retry has to be in flight long enough to be seen: the attempt that succeeds
@@ -356,6 +360,8 @@ test('a transient failure shows the current attempt and remains in Project Diagn
         // resolves, so the attempt that succeeds is the one that has to answer slowly.
         fixture.failNext(1, {delayMs: 200, thenSlowMs: 1500});
         const url = `${fixture.url}/flaky`;
+        await provideReviewMetadata(page, url, bytes.toString('utf8'));
+        await open(page);
         const loading = load(page, await project({type: 'remote-cacheable', url}));
         await answer(page);
         await expectRetryShown(url);
@@ -411,20 +417,14 @@ test.describe('local file input', () => {
     test.use({userAgent: require('@playwright/test').devices['Pixel 7'].userAgent});
     test('local SB3 import reaches the same permission and real VM registration path', async ({page}) => {
         await open(page);
-        await page.getByText('ファイル', {exact: true}).click();
-        const choosing = page.waitForEvent('filechooser');
-        await page.getByText('SB3ファイルを開く…', {exact: true}).click();
-        await (await choosing).setFiles({name: 'plus-fixture.sb3', mimeType: 'application/octet-stream', buffer: await project()});
+        page = await reopenSB3(page, await project(), 'plus-fixture.sb3');
         await answer(page);
         await expect.poll(() => page.evaluate(() => vm.extensionManager.isExtensionLoaded('plusfixture'))).toBe(true);
         expect(await executions(page)).toBe(1);
     });
     test('a local SB3 whose extension fails while registering is reported without crashing the Editor', async ({page}) => {
         await open(page);
-        await page.getByText('ファイル', {exact: true}).click();
-        const choosing = page.waitForEvent('filechooser');
-        await page.getByText('SB3ファイルを開く…', {exact: true}).click();
-        await (await choosing).setFiles({name: 'failing.sb3', mimeType: 'application/octet-stream', buffer: await failingProject()});
+        page = await reopenSB3(page, await failingProject(), 'failing.sb3');
         await expectFailureReported(page);
     });
 });

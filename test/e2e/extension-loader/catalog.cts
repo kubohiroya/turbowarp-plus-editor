@@ -87,9 +87,13 @@ async function saveSB3(page) {
 
 async function reopenSB3(page, bytes, name = 'catalog-authored.sb3') {
     await page.getByText('ファイル', {exact: true}).click();
+    // The editor keeps the original project open and sends the picked file to another tab.
+    // The child deliberately drops window.opener, so wait on the browser context.
+    const opened = page.context().waitForEvent('page');
     const choosing = page.waitForEvent('filechooser');
     await page.getByText('SB3ファイルを開く…', {exact: true}).click();
     await (await choosing).setFiles({name, mimeType: 'application/octet-stream', buffer: bytes});
+    return opened;
 }
 
 module.exports = {catalogURL, fixture, specifications, installFixtures, selection, row, form, openExtensionLibrary, openCatalog,

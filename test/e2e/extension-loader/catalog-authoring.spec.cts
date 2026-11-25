@@ -117,8 +117,10 @@ test('catalog writes all four loading forms, restores them, and packages one off
             } else expect(stored.source.url).toBe(spec.url);
         }
         await testInfo.attach('catalog-authored-manifest.json', {body: JSON.stringify(json.turboWarpPlus, null, 2), contentType: 'application/json'});
-        await reopenSB3(page, saved);
-        await expect.poll(() => page.evaluate(id => globalThis.__catalogAuthoringRuns?.[id] || 0, specifications[0].id)).toBe(2);
+        const original = page;
+        page = await reopenSB3(page, saved);
+        await expect.poll(() => page.evaluate(id => globalThis.__catalogAuthoringRuns?.[id] || 0, specifications[0].id)).toBe(1);
+        expect(await original.evaluate(id => globalThis.__catalogAuthoringRuns?.[id] || 0, specifications[0].id)).toBe(1);
         await assertModes(page);
         await openCatalog(page);
         for (const spec of specifications) {

@@ -94,23 +94,32 @@ test('downloads produce an editable SB3 and leave the project without a writable
 });
 
 for (const filename of ['single_sound.sb', 'unknown-opcode.sb2']) {
-    test(`opens legacy ${filename} through the SB3 picker without making it an overwrite target`, async ({page}) => {
+    test(`opens legacy ${filename} through the SB3 picker without making it an overwrite target`, async ({page, context}) => {
         const root = process.env.E2E_LEGACY_PROJECT_FIXTURES;
         test.skip(!root, 'Set E2E_LEGACY_PROJECT_FIXTURES to the pinned Scratch VM test/fixtures directory');
         const bytes = await readFile(path.join(root, filename));
+        await context.addInitScript(() => { window.showSaveFilePicker = undefined; });
         await page.addInitScript(({bytes, filename}) => {
-            window.showSaveFilePicker = undefined;
             window.showOpenFilePicker = async options => {
                 globalThis.projectPickerOptions = options;
-                return [{name: filename, getFile: () => new File([new Uint8Array(bytes)], filename)}];
+                // A real origin-private handle can cross the Editor tabs via structured clone.
+                // No OS picker or user file is involved.
+                const directory = await navigator.storage.getDirectory();
+                const handle = await directory.getFileHandle(filename, {create: true});
+                const writer = await handle.createWritable();
+                await writer.write(new Uint8Array(bytes));
+                await writer.close();
+                return [handle];
             };
         }, {bytes: [...bytes], filename});
         await openEditor(page);
         await fileMenu(page).click();
+        const opened = context.waitForEvent('page');
         await menuItem(page, 'SB3ファイルを開く…').click();
+        expect(await page.evaluate(() => globalThis.projectPickerOptions.types.flatMap(type => type.accept['*/*']).sort()))
+            .toEqual(['.sb', '.sb2', '.sb3']);
+        page = await opened;
         await expect(page.getByPlaceholder('プロジェクトのタイトルを入力')).toHaveValue(filename.replace(/\.sb2?$/, ''));
-        expect(await page.evaluate(() => globalThis.projectPickerOptions.types.map(type => type.accept['*/*'])))
-            .toEqual([['.sb3'], ['.sb', '.sb2']]);
         // The legacy file is not an overwrite target, so Save Project asks where to save.
         await fileMenu(page).click();
         await menuItem(page, 'プロジェクトを保存').click();
