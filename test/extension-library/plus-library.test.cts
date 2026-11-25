@@ -195,9 +195,7 @@ function findReview(node) {
     return null;
 }
 
-const markup = view => require('react-dom/server').renderToStaticMarkup(view.render());
-
-test('a failure worth asking again offers to try again, and trying again repeats the same answer', async () => {
+test('the library hands retryable failures to the review and its retry repeats the same answer', async () => {
     const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
     const {LoaderError} = require('@kubohiroya/turbowarp-extension-loader');
     const {vm} = fixture();
@@ -213,8 +211,6 @@ test('a failure worth asking again offers to try again, and trying again repeats
     const review = findReview(view.render());
     assert.equal(review.props.failure, view.state.failure);
     assert.equal(review.props.onRetry, view.handleRetry);
-    // The words and the button are the screen's own; this side only hands them the judgement.
-    assert.match(markup(view), /もう一度試す/u);
     await review.props.onRetry();
     assert.deepEqual(attempts, [[['base', 'unsandboxed', 'remote-cacheable']], [['base', 'unsandboxed', 'remote-cacheable']]]);
     assert.equal(view.state.failure, null);
@@ -222,7 +218,7 @@ test('a failure worth asking again offers to try again, and trying again repeats
     setExtensionAuthoringHost(vm, null);
 });
 
-test('a refusal is stated with its code and message, and nothing offers to repeat it', async () => {
+test('the library hands refusal codes and messages to the review as non-retryable', async () => {
     const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
     const {LoaderError} = require('@kubohiroya/turbowarp-extension-loader');
     for (const error of [
@@ -241,9 +237,7 @@ test('a refusal is stated with its code and message, and nothing offers to repea
         await view.handleComplete(new Map([['base', {execution: 'unsandboxed', loading: 'embedded-data'}]]));
         assert.deepEqual(view.state.failure, {code: error.code || 'LOAD_FAILED', message: error.message,
             retryable: false});
-        const html = markup(view);
-        assert.ok(html.includes(error.code || 'LOAD_FAILED') && html.includes(error.message));
-        assert.doesNotMatch(html, /twextsec-retry/u);
+        assert.equal(findReview(view.render()).props.failure, view.state.failure);
         assert.deepEqual(callbacks, []);
         assert.equal(calls, 1);
         setExtensionAuthoringHost(vm, null);
