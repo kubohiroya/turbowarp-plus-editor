@@ -1,4 +1,5 @@
-import {openProjectVersionPreview as openVersionPreview, packProjectVersion as packVersion}
+import {openProjectVersionEditor as openVersionEditor, openProjectVersionPreview as openVersionPreview,
+    packProjectVersion as packVersion, type MergePlanCodeEdit, type MergePlaytestRequest}
     from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import JSZip from '@turbowarp/jszip';
 
@@ -21,7 +22,18 @@ export const packProjectVersion = (files: ReadonlyMap<string, Uint8Array>, valid
     packVersion(files, {validate, zip: JSZip});
 
 /** Opens the player page this distribution builds, without the Editor features a past version must not use. */
-export const openProjectVersionPreview = (document: Document, oid: string, archive: ArrayBuffer, locale: string) =>
-    openVersionPreview(document, oid, archive, locale, {
-        page: 'git-project-preview.html', params: {twPlusLocalGit: '0', twPlusStandardLayout: '0'}
-    });
+export const openProjectVersionPreview = (document: Document, oid: string, archive: ArrayBuffer, locale: string,
+    title?: string, playtest?: MergePlaytestRequest) => {
+    const options = {page: 'git-project-preview.html', params: {
+        twPlusLocalGit: '0', twPlusStandardLayout: '0',
+        ...playtest?.conflicts.length && {twPlusProjectTools: '0', twPlusSaveWorkspace: '0'}
+    }, title, playtest};
+    return openVersionPreview(document, oid, archive, locale, options);
+};
+
+export const openProjectVersionEditor = (document: Document, archive: ArrayBuffer, locale: string, title: string,
+    save: (edit: MergePlanCodeEdit) => Promise<string>) => openVersionEditor(document, archive, locale, {
+    page: 'git-project-preview.html', title, params: {
+        twPlusLocalGit: '0', twPlusStandardLayout: '0', twPlusProjectTools: '0', twPlusSaveWorkspace: '0'
+    }
+}, save);
