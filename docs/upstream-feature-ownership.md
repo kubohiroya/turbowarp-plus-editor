@@ -89,6 +89,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/script-transfer/format.test.ts`・`stage.test.ts`（計12件） | script-transfer の `test/format.test.mjs`・`stage.test.mjs`（[PR #6](https://github.com/kubohiroya/turbowarp-script-transfer/pull/6)） | `test/plus-integration.test.ts` の転送接続確認と `test/gui-integration/unit/plus/transfer.test.ts`、ブラウザー E2E |
 | `test/extension-library/catalog-settings.test.ts`（12件） | extension-loader の `test/scratch-vm/catalog-settings.test.ts`（[PR #35](https://github.com/kubohiroya/turbowarp-extension-loader/pull/35)） | `test/extension-library/plus-library.test.cts`（画面の回答から設定 API への接続） |
 | `test/project-tools/diagnostics.test.ts`（2件）と `properties.test.ts` の機能テスト13件 | workbench の `test/project-diagnostics.test.ts`・`project-properties.test.ts`（[PR #113](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/113)） | 起動フラグ確認を `test/project-tools/flags.test.ts` に保持。`host.test.cts`・`dialog.test.cts` も保持 |
+| `test/project-tools/dialog.test.cts` の機能テスト5件 | workbench の `test/project-dialogs.test.cts`（元の5件に加え、キャンセル画面等の3件を実行） | 同ファイルを CSS とキャンセル判定の結線確認1件へ縮小 |
 
 作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
 workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
@@ -106,6 +107,10 @@ CI の時間短縮量は未測定。切り戻しは Editor のテスト1ファ�
 作品診断・プロパティの機能テスト15件は workbench PR #113 で移管済みで、[移管先 CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/44413407708) が成功している。診断2件は import 先・ライセンス表記だけが異なり、プロパティ13件も検証本体は同じで、上流ではホストの注入ポートを代役で渡す。固定版 `0.39.0` のソースでもビルドと対象15件が成功した（2026-11-25）。
 Editor に残す `host.test.cts` は実 VM と拡張コーデックで保存・再読込・作品プロパティ・拡張追加の結線を、`dialog.test.cts` は実際に接続したダイアログを確認する。Editor 独自の起動フラグ確認1件は内容を変えず `flags.test.ts` へ移し、`test:project-tools` と CI の実行設定を維持する。
 CI の時間短縮量は未測定。切り戻しはこの15件の整理を revert し、旧テスト2ファイルと元の起動フラグ確認の配置を戻す。製品コード・依存固定は変更しない。
+
+作品ダイアログの機能テスト5件は workbench 側で実行済み。4件は検証本体が同じで、診断画面の1件も同じ経路を検証する。上流版で省かれていた英語の失敗見出しの確認は Editor の結線テストに保持する。固定版 workbench `0.39.0` の対象8件が成功した（2026-11-25）。
+Editor の `dialog.test.cts` は、ホストが渡すダイアログ・通知の CSS と共有キャンセル判定が実際の画面へ接続されることだけを確認する1件へ縮小した。固定 GUI `b2e75a129546db48e6563f72c80a3d3d46d86fb5` の依存で成功し、CSS またはキャンセル判定を意図的に外すと失敗することも確認した。検証用の変更は元に戻し、製品コードと依存固定は変更していない。
+`host.test.cts` と起動フラグ確認、既存の npm コマンド・CI 設定は保持する。短縮量は未測定。切り戻しはこの縮小を revert し、元の5件を復元する。
 
 ## 切り戻し
 
