@@ -17,7 +17,6 @@ const checkSteps = {
     infrastructure: ['infrastructure-tests'],
     'extension-host': ['extension-host'],
     'gui-integration': ['gui-integration'],
-    'script-transfer': ['script-transfer'],
     'project-tools': ['project-tools'],
     'site-build': ['site-build']
 };

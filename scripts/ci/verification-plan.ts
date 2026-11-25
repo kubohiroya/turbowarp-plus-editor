@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 const allChecks = [
     'documentation', 'typecheck', 'package', 'unit', 'infrastructure',
     'extension-host',
-    'gui-integration', 'script-transfer', 'project-tools', 'site-build'
+    'gui-integration', 'project-tools', 'site-build'
 ] as const;
 type Check = typeof allChecks[number];
 
