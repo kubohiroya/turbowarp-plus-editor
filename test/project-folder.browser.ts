@@ -14,6 +14,7 @@ const block = (opcode, next, parent, inputs = {}, position = {}) =>
     ({opcode, next, parent, inputs, fields: {}, shadow: false, topLevel: 'x' in position, ...position});
 const target = (name, isStage, blocks, costumes, sounds = []) =>
     ({isStage, name, variables: {}, lists: {}, broadcasts: {}, blocks, comments: {}, costumes, sounds, currentCostume: 0, volume: 100});
+type FolderPickerOptions = {id?: string; mode?: 'read' | 'readwrite'};
 const projectFile = 'project.source.json';
 const noteFile = 'notes.js';
 const note = (value: string) => ['// Header', `export const note = "${value}";`, '// Footer', ''].join('\n');
@@ -365,6 +366,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.equal((await observe()).writes, 8);
 
     // The Git panel reuses one granted repository handle to open a nested project.
+    const rootBeforeNested = await read();
     const nested = path.join(folder, 'projects', 'demo');
     await mkdir(nested, {recursive: true});
     for (const name of [projectFile, 'sb3-source.json', 'embedded-extensions.json', 'assets', 'extensions']) {
@@ -640,7 +642,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     await edit('value', '45');
     await save();
     assert.equal(await nestedSteps(), '45');
-    assert.equal(await read(), concurrent);
+    assert.equal(await read(), rootBeforeNested);
 
     // The open panel follows an external Git command without Refresh.
     await showGit();
@@ -1143,7 +1145,7 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
     await context.addInitScript(observe => {
         if (window.parent !== window || typeof FileSystemFileHandle === 'undefined') return;
         const state = window as Window & {testDirectory?: FileSystemDirectoryHandle;
-            folderIO?: {loads: string[]; picker?: DirectoryPickerOptions; writes: number}};
+            folderIO?: {loads: string[]; picker?: FolderPickerOptions; writes: number}};
         if (observe) {
             const io = state.folderIO = {loads: [], writes: 0};
             const writable = FileSystemFileHandle.prototype.createWritable;
@@ -1152,7 +1154,7 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
                 return writable.apply(this, args);
             };
         }
-        Object.assign(state, {showDirectoryPicker: async (options: DirectoryPickerOptions) => {
+        Object.assign(state, {showDirectoryPicker: async (options: FolderPickerOptions) => {
             if (state.folderIO) state.folderIO.picker = options;
             return state.testDirectory;
         }});
@@ -1361,7 +1363,7 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
         const write = FileSystemWritableFileStream.prototype.write;
         FileSystemWritableFileStream.prototype.write = async function(data) {
             await write.call(this, data);
-            await (window as Window & {changeFolderFileDuringWrite(): Promise<void>}).changeFolderFileDuringWrite();
+            await (window as unknown as {changeFolderFileDuringWrite(): Promise<void>}).changeFolderFileDuringWrite();
         };
     });
     await save(conflict);
