@@ -163,6 +163,8 @@ Editor の `authoring.test.ts`・`host.test.ts` と GUI の host 接続確認、
 
 `test/editor-layout.browser.ts` の39件は[ケース別の分類](./editor-layout-test-classification.md)に記録した。「コピーを保存」の action 配置・アイコン13行を workbench の `test/editor-save-dialog-actions.browser.ts` へ切り出し、公開 dialog API と windows の CSS で GUI checkout なしに確認する。元の期待値・検証処理と GPL-3.0-or-later を保持し、上流 CI 成功とマージを Editor の縮小の公開条件にする。Editor は File メニュー・Cancel・SB3 ダウンロードの接続確認を残す。他38件と共通 fixture は変更しない。通常 CI の実行対象外のため、この削除による通常 CI の時間短縮は見込まない。切り戻しは Editor の元13行とケース名を先に復元する。
 
+未保存マーカーの hover・キーボード focus・狭幅 hint の詳細は workbench の `test/editor-unsaved-marker.browser.ts` へ移し、既存 browser CI が単独 host で実行する。Editor は VM の変更・native title の幅と隣接・保存メニューの接続を保持し、上流成功・マージ後に詳細11行を除く。元の操作・期待値と GPL-3.0-or-later を保持する。切り戻しは Editor の元11行とケース名を先に復元する。分類表の呼び出し図34番は旧セレクターと現行ソースの差を記録し、実 DOM の照合まで元テストを保持する。製品・固定依存・CI コマンドは変更しない。通常 CI の時間短縮は見込まない。
+
 ## 切り戻し
 
 Editor のこの変更を revert し、接続コードと依存の固定を公開直前の main の組み合わせへ戻して再ビルドする。
