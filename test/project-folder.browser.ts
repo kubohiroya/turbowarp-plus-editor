@@ -1122,7 +1122,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     assert.deepEqual(errors, []);
 });
 
-async function openDeviceFolder(t: TestContext, build: string, folder: string, query = '') {
+async function openDeviceFolder(t: TestContext, build: string, folder: string, query = '', observe = false) {
     const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
     if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
     const browser = await chromium.launch({headless: true, args});
@@ -1137,10 +1137,22 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
         if (body === null) return route.fulfill({status: 404});
         return route.fulfill({body, contentType: mime[path.extname(filename)] || 'application/octet-stream'});
     });
-    await context.addInitScript(() => {
-        if (window.parent !== window) return;
-        const state = window as Window & {testDirectory?: FileSystemDirectoryHandle};
-        Object.assign(state, {showDirectoryPicker: async () => state.testDirectory});
+    await context.addInitScript(observe => {
+        if (window.parent !== window || typeof FileSystemFileHandle === 'undefined') return;
+        const state = window as Window & {testDirectory?: FileSystemDirectoryHandle;
+            folderIO?: {loads: string[]; picker?: DirectoryPickerOptions; writes: number}};
+        if (observe) {
+            const io = state.folderIO = {loads: [], writes: 0};
+            const writable = FileSystemFileHandle.prototype.createWritable;
+            FileSystemFileHandle.prototype.createWritable = function(...args) {
+                if (this.name === 'project.source.json') io.writes++;
+                return writable.apply(this, args);
+            };
+        }
+        Object.assign(state, {showDirectoryPicker: async (options: DirectoryPickerOptions) => {
+            if (state.folderIO) state.folderIO.picker = options;
+            return state.testDirectory;
+        }});
         // CDP grants the real directory handle without opening a native picker.
         for (const type of ['dragenter', 'dragover', 'drop']) {
             window.addEventListener(type, async event => {
@@ -1154,7 +1166,7 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
                 }
             }, {capture: true});
         }
-    });
+    }, observe);
     const errors: string[] = [];
     context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
     const original = await context.newPage();
@@ -1174,6 +1186,18 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
     }
     await editor.waitForFunction(() => (window as Window & {testDirectory?: FileSystemDirectoryHandle})
         .testDirectory?.kind === 'directory');
+    if (observe) {
+        await editor.evaluate(() => {
+            const state = window as any;
+            const load = window.vm.loadProject;
+            window.vm.loadProject = function(input, ...args) {
+                state.folderIO.loads.push(typeof input);
+                return load.call(this, input, ...args);
+            };
+            window.vm._saveProjectZip = () => {throw new Error('Folder editing attempted to create a ZIP');};
+        });
+        editor.on('download', () => errors.push('Unexpected download'));
+    }
     await choose.click();
     return {original, originalProject, editor, errors};
 }
@@ -1259,7 +1283,7 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     const {folder, project} = await createDiskProject(t, 'tw-project-device-');
     const source = path.join(folder, projectFile);
 
-    const {original, originalProject, editor, errors} = await openDeviceFolder(t, build, folder, '&twPlusLocalGit=0');
+    const {original, originalProject, editor, errors} = await openDeviceFolder(t, build, folder, '&twPlusLocalGit=0', true);
     const status = editor.locator('[data-project-folder-status]');
     await expect(status).toHaveText('Project folder opened.');
     const drawer = editor.getByRole('toolbar', {name: 'Drawer views', exact: true});
@@ -1281,6 +1305,9 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     };
     await save('No changes to save.');
     assert.equal(await readFile(source, 'utf8'), stringify(project));
+    const io = () => editor.evaluate(() => (window as any).folderIO);
+    assert.deepEqual(await io(), {loads: ['string'], writes: 0,
+        picker: {id: 'turbowarp-plus-project-folder', mode: 'readwrite'}});
     await edit('20');
     await save('Project folder saved.');
     const snapshot = await readFile(source, 'utf8');
@@ -1311,6 +1338,7 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     });
     await save(conflict);
     await expect.poll(() => readFile(source, 'utf8')).toBe(concurrent);
+    assert.equal((await io()).writes, 2);
     assert.deepEqual(errors, []);
 });
 
