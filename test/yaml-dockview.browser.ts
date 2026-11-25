@@ -1,3 +1,4 @@
+import {approveDocumentProjectFixture} from './fixtures/document-project-review.ts';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,9 +16,11 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     await verifyWebEditor(site);
     const dataDirectory = await mkdtemp(path.join(tmpdir(), 'twpe-dockview-yaml-'));
     t.after(() => rm(dataDirectory, {recursive: true, force: true}));
-    const host = await startYamlEditorHost({siteDirectory: site, dataDirectory});
+    const host = await startYamlEditorHost({siteDirectory: site, dataDirectory, launchEditor: async () => {
+        throw new Error('Dockview drafts must not launch a native editor');
+    }});
     t.after(() => host.close());
-    const browser = await chromium.launch({executablePath: process.env.TWPE_CHROME_EXECUTABLE});
+    const browser = await chromium.launch({headless: true, executablePath: process.env.TWPE_CHROME_EXECUTABLE});
     t.after(() => browser.close());
     const context = await browser.newContext({viewport: {width: 1440, height: 1000}, locale: 'ja-JP', acceptDownloads: true});
     context.setDefaultTimeout(8000);
@@ -51,12 +54,10 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
         url.searchParams.set('twPlusStageLauncher', '0');
         if (rollback) url.searchParams.set('twPlusDockview', '0');
         await page.goto(url.href);
-        const security = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
-        await security.waitFor({timeout: 60000});
-        await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
-        await security.getByRole('button', {name: 'OK', exact: true}).click();
-        await security.waitFor({state: 'hidden'});
+        await approveDocumentProjectFixture(page);
         await selectBackdrop(page);
+        // A restored split can keep the backdrop selected in the VM but not as its group's visible tab.
+        if (!rollback) await backdropTab(page).click();
         await expect(hats(page)).toHaveCount(2, {timeout: 60000});
     }
     async function open(page: Page, index: number, id: string) {
@@ -180,9 +181,12 @@ test('same-named project YAML documents retain drafts across Dockview moves and 
     const saveMarker = page.getByRole('button', {name: '未保存の変更があります。保存メニューを開く'});
     await saveMarker.press('Enter');
     await expect(saveMarker).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.getByRole('button', {name: 'プロジェクトを保存', exact: true})).toHaveCount(0);
+    // Save the current project; a separately downloaded copy intentionally keeps the unsaved marker.
+    const saveProject = page.getByRole('button', {name: 'プロジェクトを保存', exact: true});
+    await expect(saveProject).toBeEnabled();
     const pending = page.waitForEvent('download');
-    await page.getByRole('button', {name: 'プロジェクトのコピーを保存…', exact: true}).click(); await page.getByRole('dialog', {name: 'プロジェクトのコピーを保存'}).getByRole('button', {name: '保存', exact: true}).click();
+    await saveProject.click();
+    await page.getByRole('dialog', {name: 'プロジェクトを保存', exact: true}).getByRole('button', {name: '保存', exact: true}).click();
     archive = await readFile(await (await pending).path());
     await expect(saveMarker).toHaveCount(0);
     await expect(unsaved(docTab(page, 'settings'))).toBeHidden();

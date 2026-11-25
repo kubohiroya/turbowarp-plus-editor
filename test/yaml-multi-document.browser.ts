@@ -1,3 +1,4 @@
+import {approveDocumentProjectFixture} from './fixtures/document-project-review.ts';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import selectBackdrop from './fixtures/select-backdrop.ts';
 import {test} from 'node:test';
@@ -42,11 +43,7 @@ test('real SB3 edits two same-named test-owner YAML documents with independent s
     async function load(p, filename) {
         await p.goto(`${base}editor.html?lang=ja&twPlusDockview=0&project_url=${encodeURIComponent(`${base}static/${filename}`)}`);
         await expect(p.locator('[data-multi-view]')).toHaveCount(0);
-        // The shared review (security-dialog 0.7) offers one choice for every row.
-        const security = p.getByRole('dialog').filter({has: p.locator('.twextsec-review')}); await security.waitFor({timeout: 60000});
-        await security.locator('.twextsec-bulk').getByRole('radio', {name: 'サンドボックスなしで', exact: true}).click();
-        await security.getByRole('button', {name: 'OK', exact: true}).click();
-        await security.waitFor({state: 'hidden'});
+        await approveDocumentProjectFixture(p);
         await selectBackdrop(p);
         await expect(p.locator('[data-twpe-yaml-hat-icon]')).toHaveCount(2, {timeout: 60000});
     }
