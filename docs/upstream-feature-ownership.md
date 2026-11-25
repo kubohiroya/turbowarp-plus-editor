@@ -91,6 +91,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/project-tools/diagnostics.test.ts`（2件）と `properties.test.ts` の機能テスト13件 | workbench の `test/project-diagnostics.test.ts`・`project-properties.test.ts`（[PR #113](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/113)） | 起動フラグ確認を `test/project-tools/flags.test.ts` に保持。`host.test.cts`・`dialog.test.cts` も保持 |
 | `test/project-tools/dialog.test.cts` の機能テスト5件 | workbench の `test/project-dialogs.test.cts`（元の5件に加え、キャンセル画面等の3件を実行） | 同ファイルを CSS とキャンセル判定の結線確認1件へ縮小 |
 | `test/extension-host/load-errors.test.ts`（3件） | security-dialog の `test/load-errors.test.cts` | `test/gui-integration/unit/extension-loader/load-failure.test.ts`、`test/gui-integration/unit/plus/extension-host.test.ts` とレビュー内のキー入力確認 |
+| `test/block-editor/icon.test.ts` の機能テスト2件 | data-editor の `test/editor-icon-service.test.ts` | 同ファイルの VM ごとのサービス共有・登録解除通知の結線確認1件 |
 
 作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
 workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
@@ -115,6 +116,9 @@ Editor の `dialog.test.cts` は、ホストが渡すダイアログ・通知の
 
 エラー説明・キャンセル分類3件は、実装を所有する security-dialog のビルド済み `./load-errors` を検証する。入れ子の原因、循環を含む集約エラー、拒否とキャンセルの分類の検証本体は維持し、元の GPL-3.0-or-later もテストに保持する。移管先の既存 `pnpm test` と CI が実行する。移管先の CI 成功とマージを Editor 側の削除の公開条件とする。
 Editor では GUI のエラー受け渡し・分類の委譲、レビュー内のキー入力、作品ダイアログへのキャンセル判定の結線を引き続き確認する。`test:extension-host` と既存 CI 設定・依存固定・製品コードは変更しない。短縮量は未測定。切り戻しはテスト1ファイルの削除を revert する。
+
+ブロック編集アイコンの入力処理とスキーマ検証・直列化の2件は、data-editor の既存 `pnpm test` と CI で検証する。移管先の CI 成功とマージを確認してから Editor の重複を削除する。検証本体は維持し、スキーマ検証でサービスを得る1行だけを同じ上流の `createPlusBlockEditor().createService()` へ接続する。元の GPL-3.0-or-later は移管先テストに保持する。
+Editor は `icon.test.ts` に VM ごとのサービス共有と登録・解除通知の結線確認1件を内容不変で残す。製品コード・依存固定・GUI と既存 CI は変更しない。CI 時間の短縮量は未測定。切り戻しはこのテスト整理を revert し、移管先も戻す場合は Editor の元テストを先に復元する。
 
 ## 切り戻し
 
