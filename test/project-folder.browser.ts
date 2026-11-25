@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {cp, mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {chromium, expect} from '@playwright/test';
+import {chromium, expect, type Page} from '@playwright/test';
 import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 import pins from '../site/source.json' with {type: 'json'};
 
@@ -95,6 +95,23 @@ async function createDiskProject(t: TestContext, name: string, includeNotes = fa
     }
     return {folder, project, costume, sound, svg, wav};
 }
+
+const editFolderBlock = (page: Page, kind: 'value' | 'position' | 'append', value = '20') =>
+    page.evaluate(({kind, value}) => {
+        const vm = window.vm;
+        vm.setEditingTarget(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id);
+        if (kind === 'value') {
+            const id = vm.editingTarget.blocks.getBlock('move_B').inputs.STEPS.block;
+            vm.blockListener({type: 'change', blockId: id, element: 'field', name: 'NUM', newValue: value});
+        } else if (kind === 'position') {
+            vm.blockListener({type: 'move', blockId: 'flag_A', newCoordinate: {x: 160, y: 110}});
+        } else {
+            vm.blockListener({type: 'create', blockId: 'say_C', xml: {
+                outerHTML: '<block type="looks_say" id="say_C"><value name="MESSAGE"><shadow type="text" id="say_shadow"><field name="TEXT">こんにちは</field></shadow></value></block>'
+            }});
+            vm.blockListener({type: 'move', blockId: 'say_C', newParentId: 'move_B'});
+        }
+    }, {kind, value});
 
 test('the browser folder commands save localized Git diffs to the original working tree', {timeout: 120000}, async t => {
     const root = process.env.E2E_PROJECT_FOLDER_BUILD;
@@ -212,21 +229,7 @@ test('the browser folder commands save localized Git diffs to the original worki
         const {writes, loads, options, zipSaves} = (window as any).folderTest;
         return {writes, loads, options, zipSaves};
     });
-    const edit = (kind: 'value' | 'position' | 'append', value = '20') => page.evaluate(({kind, value}) => {
-        const vm = window.vm;
-        vm.setEditingTarget(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id);
-        if (kind === 'value') {
-            const id = vm.editingTarget.blocks.getBlock('move_B').inputs.STEPS.block;
-            vm.blockListener({type: 'change', blockId: id, element: 'field', name: 'NUM', newValue: value});
-        } else if (kind === 'position') {
-            vm.blockListener({type: 'move', blockId: 'flag_A', newCoordinate: {x: 160, y: 110}});
-        } else {
-            vm.blockListener({type: 'create', blockId: 'say_C', xml: {
-                outerHTML: '<block type="looks_say" id="say_C"><value name="MESSAGE"><shadow type="text" id="say_shadow"><field name="TEXT">こんにちは</field></shadow></value></block>'
-            }});
-            vm.blockListener({type: 'move', blockId: 'say_C', newParentId: 'move_B'});
-        }
-    }, {kind, value});
+    const edit = (kind: 'value' | 'position' | 'append', value = '20') => editFolderBlock(page, kind, value);
 
     await open();
     const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
@@ -1173,33 +1176,37 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
     await original.goto(`${origin}${prefix}editor.html?lang=en${query}`);
     await original.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()));
     const originalProject = await original.evaluate(() => window.vm.toJSON());
-    await original.getByText('File', {exact: true}).click();
-    const popup = context.waitForEvent('page');
-    await original.getByRole('button', {name: 'Open Folder…', exact: true}).click();
-    const editor = await popup;
-    const choose = editor.getByRole('dialog').getByRole('button', {name: 'Choose a folder', exact: true});
-    await expect(choose).toBeVisible({timeout: 10000});
-    const cdp = await context.newCDPSession(editor);
-    for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
-        await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
-            data: {items: [], files: [folder], dragOperationsMask: 1}});
-    }
-    await editor.waitForFunction(() => (window as Window & {testDirectory?: FileSystemDirectoryHandle})
-        .testDirectory?.kind === 'directory');
-    if (observe) {
-        await editor.evaluate(() => {
-            const state = window as any;
-            const load = window.vm.loadProject;
-            window.vm.loadProject = function(input, ...args) {
-                state.folderIO.loads.push(typeof input);
-                return load.call(this, input, ...args);
-            };
-            window.vm._saveProjectZip = () => {throw new Error('Folder editing attempted to create a ZIP');};
-        });
-        editor.on('download', () => errors.push('Unexpected download'));
-    }
-    await choose.click();
-    return {original, originalProject, editor, errors};
+    const openAgain = async () => {
+        await original.getByText('File', {exact: true}).click();
+        const popup = context.waitForEvent('page');
+        await original.getByRole('button', {name: 'Open Folder…', exact: true}).click();
+        const editor = await popup;
+        const choose = editor.getByRole('dialog').getByRole('button', {name: 'Choose a folder', exact: true});
+        await expect(choose).toBeVisible({timeout: 10000});
+        const cdp = await context.newCDPSession(editor);
+        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+            await cdp.send('Input.dispatchDragEvent', {type, x: 100, y: 100,
+                data: {items: [], files: [folder], dragOperationsMask: 1}});
+        }
+        await editor.waitForFunction(() => (window as Window & {testDirectory?: FileSystemDirectoryHandle})
+            .testDirectory?.kind === 'directory');
+        if (observe) {
+            await editor.evaluate(() => {
+                const state = window as any;
+                const load = window.vm.loadProject;
+                window.vm.loadProject = function(input, ...args) {
+                    state.folderIO.loads.push(typeof input);
+                    return load.call(this, input, ...args);
+                };
+                window.vm._saveProjectZip = () => {throw new Error('Folder editing attempted to create a ZIP');};
+            });
+            editor.on('download', () => errors.push('Unexpected download'));
+        }
+        await choose.click();
+        return editor;
+    };
+    const editor = await openAgain();
+    return {original, originalProject, editor, openAgain, errors};
 }
 
 test('opens a past version in its own player and restores it from the history', {timeout: 90000}, async t => {
@@ -1283,7 +1290,7 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     const {folder, project} = await createDiskProject(t, 'tw-project-device-');
     const source = path.join(folder, projectFile);
 
-    const {original, originalProject, editor, errors} = await openDeviceFolder(t, build, folder, '&twPlusLocalGit=0', true);
+    const {original, originalProject, editor, openAgain, errors} = await openDeviceFolder(t, build, folder, '&twPlusLocalGit=0', true);
     const status = editor.locator('[data-project-folder-status]');
     await expect(status).toHaveText('Project folder opened.');
     const drawer = editor.getByRole('toolbar', {name: 'Drawer views', exact: true});
@@ -1292,12 +1299,6 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(editor.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
 
-    const edit = (value: string) => editor.evaluate(value => {
-        const vm = window.vm;
-        vm.setEditingTarget(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id);
-        const id = vm.editingTarget.blocks.getBlock('move_B').inputs.STEPS.block;
-        vm.blockListener({type: 'change', blockId: id, element: 'field', name: 'NUM', newValue: value});
-    }, value);
     const save = async (message: string) => {
         await editor.getByText('File', {exact: true}).click();
         await editor.getByRole('button', {name: 'Save Project', exact: true}).click();
@@ -1308,17 +1309,44 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     const io = () => editor.evaluate(() => (window as any).folderIO);
     assert.deepEqual(await io(), {loads: ['string'], writes: 0,
         picker: {id: 'turbowarp-plus-project-folder', mode: 'readwrite'}});
-    await edit('20');
+    await editFolderBlock(editor, 'value');
     await save('Project folder saved.');
-    const snapshot = await readFile(source, 'utf8');
     const expected = structuredClone(project);
-    expected.targets[1].blocks.move_B.inputs.STEPS[1][1] = '20';
-    assert.deepEqual(JSON.parse(snapshot), expected);
+    const blocks = expected.targets[1].blocks;
+    blocks.move_B.inputs.STEPS[1][1] = '20';
+    assert.equal(await readFile(source, 'utf8'), stringify(expected));
     assert.equal(await original.evaluate(() => window.vm.toJSON()), originalProject);
+
+    await editFolderBlock(editor, 'position');
+    await save('Project folder saved.');
+    Object.assign(blocks.flag_A, {x: 160, y: 110});
+    await expect.poll(() => readFile(source, 'utf8')).toBe(stringify(expected));
+
+    await editFolderBlock(editor, 'append');
+    await save('Project folder saved.');
+    await expect.poll(async () => JSON.parse(await readFile(source, 'utf8')).targets[1].blocks.say_C?.parent)
+        .toBe('move_B');
+    const snapshot = await readFile(source, 'utf8');
+    const saved = JSON.parse(snapshot);
+    assert.deepEqual(Object.keys(saved.targets[1].blocks), ['flag_A', 'move_B', 'say_C']);
+    assert.equal(saved.targets[1].blocks.say_C.opcode, 'looks_say');
+    assert.equal(saved.targets[1].blocks.move_B.next, 'say_C');
+    delete saved.targets[1].blocks.say_C;
+    saved.targets[1].blocks.move_B.next = null;
+    assert.deepEqual(saved, expected, 'all unrelated project data stays unchanged');
+
+    const reopened = await openAgain();
+    await expect(reopened.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    assert.deepEqual(await reopened.evaluate(() => {
+        const cat = JSON.parse(window.vm.toJSON(undefined, {allowOptimization: false}))
+            .targets.find(entry => entry.name === 'Cat');
+        return [cat.blocks.move_B.inputs.STEPS[1][1], cat.blocks.flag_A.x, cat.blocks.say_C.parent];
+    }), ['20', 160, 'move_B']);
+    await reopened.close();
 
     // Refuse edits made just before saving, or after a writable stream has opened.
     const conflict = 'The project folder changed outside the editor or is no longer open. Your edits are still in the editor.';
-    await edit('35');
+    await editFolderBlock(editor, 'value', '35');
     const external = '\uFEFF' + snapshot;
     await writeFile(source, external);
     await save(conflict);
@@ -1338,7 +1366,7 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     });
     await save(conflict);
     await expect.poll(() => readFile(source, 'utf8')).toBe(concurrent);
-    assert.equal((await io()).writes, 2);
+    assert.equal((await io()).writes, 4);
     assert.deepEqual(errors, []);
 });
 
