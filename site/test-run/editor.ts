@@ -5,6 +5,8 @@
  */
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {connectTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
+import {TEST_EXTENSION_ID} from '@kubohiroya/turbowarp-plus-editor-test';
+import JSZip from '@turbowarp/jszip';
 import {createTestRunView, testRunMenuItem, testRunPanelRequest, testRunText} from '@kubohiroya/turbowarp-plus-editor-test/test-run-view';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {getEditorExtensionIdentities} from '../extension-host/editor-host.ts';
@@ -20,7 +22,39 @@ type EditorVM = {
 let editorVm: EditorVM | null = null;
 
 /** The frame page this build carries, under whatever prefix the site was built for. */
-const frameURL = () => new URL(`${process.env.ROOT || './'}test-frame.html`, location.href).href;
+const frameURL = (view: Window = window) => new URL(`${process.env.ROOT || './'}test-frame.html`, view.location.href).href;
+
+/** A one-use runner for a saved archive. It receives no handle or state from the live Editor. */
+export const runSavedGenerationTests = async (document: Document, archive: ArrayBuffer, signal: AbortSignal) => {
+    const view = document.defaultView!;
+    const zip = await JSZip.loadAsync(archive);
+    const project = JSON.parse(await zip.file('project.json')!.async('string'));
+    const extensionURLs = Object.values(project.extensionURLs ?? {}).filter((url): url is string => typeof url === 'string');
+    const declared = project.turboWarpPlus?.extensions;
+    const managed = Array.isArray(declared) && declared.some(extension => extension?.id === TEST_EXTENSION_ID);
+    const testExtensionURL = managed ? undefined : project.extensionURLs?.[TEST_EXTENSION_ID];
+    signal.throwIfAborted();
+    const frame = document.createElement('iframe');
+    frame.src = frameURL(view);
+    frame.setAttribute('aria-hidden', 'true');
+    frame.tabIndex = -1;
+    frame.style.cssText = 'position:absolute;left:-10000px;width:480px;height:360px;border:0;';
+    const runner = connectTestFrame(frame, {origin: view.location.origin,
+        context: () => ({savedGeneration: true, extensionURLs, testExtensionURL})});
+    let abort: (() => void) | undefined;
+    try {
+        document.body.append(frame);
+        const cancelled = new Promise<never>((_, reject) => {
+            abort = () => reject(signal.reason);
+            signal.addEventListener('abort', abort, {once: true});
+        });
+        return await Promise.race([runner.run({project: archive, signal}), cancelled]);
+    } finally {
+        if (abort) signal.removeEventListener('abort', abort);
+        runner.dispose?.();
+        frame.remove();
+    }
+};
 
 const contextFor = (vm: EditorVM) => ({
     extensionURLs: Object.values(vm.extensionManager.getExtensionURLs?.() ?? {}),

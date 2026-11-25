@@ -54,6 +54,7 @@ const repositoryHostServices = (): ProjectRepositoryHostServices => ({
     licenses: typeof __TW_PLUS_REPOSITORY_LICENSES__ === 'undefined' ? [] : __TW_PLUS_REPOSITORY_LICENSES__
 });
 import {withProjectFolderTitle} from './project-tools/properties.ts';
+import {runSavedGenerationTests} from './test-run/editor.ts';
 
 type RuntimeThread = {updateMonitor?: boolean};
 type ProjectFolderVM = FolderVM & EditorHost['vm'] & {
@@ -469,6 +470,9 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
             restoreProjectVersions: gitRestoreVersion,
             shareMergePlans: view.EditorPreload?.mergePlanShare,
             validateProjectVersion,
+            async runMergePlanTests(files, signal) {
+                return runSavedGenerationTests(document, await packProjectVersion(files), signal);
+            },
             async previewProjectVersion({oid, files, title, guard, playtest, observe}) {
                 const archive = playtest?.blocking.length ? new ArrayBuffer(0) : await packProjectVersion(files);
                 guard?.();

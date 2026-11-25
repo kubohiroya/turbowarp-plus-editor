@@ -92,6 +92,9 @@ export const createPlusTrustedCatalog = ({
         async isTrustedURL (url) {
             return (await load()).urls.has(url);
         },
+        async isTrustedURLDigest (url: string, digest: string) {
+            return (await load()).digests.get(url) === digest;
+        },
         /**
          * @param {object} code Loader code whose bytes were already checked against its SHA-256.
          * @returns {Promise<boolean>} True when the code is the catalog's listed code.
@@ -110,6 +113,18 @@ export const createPlusTrustedCatalog = ({
 };
 
 export const plusTrustedCatalog = createPlusTrustedCatalog();
+
+/** Read a legacy extension source and verify it against the catalog entry before executing the bytes. */
+export const readTrustedExtensionBytes = async (catalogURL: string, sourceURL: string) => {
+    const response = await fetch(sourceURL, {signal: AbortSignal.timeout(15000), credentials: 'omit'});
+    if (!response.ok) throw new Error('Could not load the test extension.');
+    const bytes = await response.arrayBuffer();
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+        byte => byte.toString(16).padStart(2, '0')).join('');
+    if (!await plusTrustedCatalog.isTrustedURLDigest(catalogURL, digest))
+        throw new Error('The saved test extension does not match the trusted catalog.');
+    return bytes;
+};
 
 /**
  * @param {object} catalog Trust checks from createPlusTrustedCatalog.
