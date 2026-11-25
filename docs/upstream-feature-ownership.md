@@ -161,6 +161,8 @@ Editor の `authoring.test.ts`・`host.test.ts` と GUI の host 接続確認、
 
 ステージ操作サービスの登録・更新・破棄と VM ごとの共有・作品変更時の消去を確認する3件は workbench の公開 `./stage-controls` へ移管する。検証本体・fixture と元の GPL-3.0-or-later を保持し、既存の `npm test` と CI が GUI checkout なしで実行する。上流 CI 成功とマージを Editor の重複削除の公開条件とし、Editor にはサービスを GUI へ渡す接続確認1件を残す。製品コード・依存固定・GUI・CI コマンドは変更しない。CI 時間短縮量は未測定。切り戻しは Editor の元3件を先に復元し、必要なら上流の追加テスト・文書を revert する。
 
+`test/editor-layout.browser.ts` の39件は[ケース別の分類](./editor-layout-test-classification.md)に記録した。「コピーを保存」の action 配置・アイコン13行を workbench の `test/editor-save-dialog-actions.browser.ts` へ切り出し、公開 dialog API と windows の CSS で GUI checkout なしに確認する。元の期待値・検証処理と GPL-3.0-or-later を保持し、上流 CI 成功とマージを Editor の縮小の公開条件にする。Editor は File メニュー・Cancel・SB3 ダウンロードの接続確認を残す。他38件と共通 fixture は変更しない。通常 CI の実行対象外のため、この削除による通常 CI の時間短縮は見込まない。切り戻しは Editor の元13行とケース名を先に復元する。
+
 ## 切り戻し
 
 Editor のこの変更を revert し、接続コードと依存の固定を公開直前の main の組み合わせへ戻して再ビルドする。
