@@ -1,12 +1,12 @@
 import React from 'react';
 import {render} from 'react-dom';
+import JSZip from '@turbowarp/jszip';
 import {connectMergePlaytest, focusPlaytestStop, isProjectVersionEditor, receiveProjectVersionEditor, receiveProjectVersionPreview,
     type MergePlaytestRequest, type PlaytestVM, type PlaytestStop}
     from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
 
-type PreviewVM = PlaytestVM & {loadProject(archive: ArrayBuffer): Promise<void>; renderer: {draw(): void};
-    toJSON(target?: string, options?: {allowOptimization: boolean}): string; stopAll(): void};
+type PreviewVM = PlaytestVM & {loadProject(archive: ArrayBuffer): Promise<void>; renderer: {draw(): void}; stopAll(): void};
 type ProjectState = {loadingState: string};
 declare const __TW_PLUS_REVISION_GUI__: React.ComponentType<Record<string, unknown>> & {setAppElement(element: HTMLElement): void};
 declare const __TW_PLUS_REVISION_APP_STATE__: (gui: typeof __TW_PLUS_REVISION_GUI__) => typeof __TW_PLUS_REVISION_GUI__;
@@ -14,7 +14,7 @@ declare const __TW_PLUS_REVISION_BLOCKLY__: {
     isLoaded(): boolean;
     get(): {getMainWorkspace(): ReturnType<Parameters<typeof focusPlaytestStop>[3]>};
 };
-declare const __TW_PLUS_REVISION_DESERIALIZE_BLOCKS__: Parameters<typeof connectMergePlaytest>[3];
+declare const __TW_PLUS_REVISION_DESERIALIZE_BLOCKS__: Parameters<typeof connectMergePlaytest>[3]['deserialize'];
 declare const __TW_PLUS_REVISION_PROJECT_STATE__: {
     requestProjectUpload(state: string): unknown;
     onLoadedProject(state: string, canSave: boolean, success: boolean): unknown;
@@ -39,7 +39,9 @@ function connect(vm: PreviewVM) {
         loading: () => ReduxStore.dispatch(requestProjectUpload(loadingState())),
         async load(archive: ArrayBuffer, playtest?: MergePlaytestRequest) {
             await vm.loadProject(archive);
-            if (playtest) connectMergePlaytest(window, vm, playtest, __TW_PLUS_REVISION_DESERIALIZE_BLOCKS__);
+            if (playtest) connectMergePlaytest(window, vm, playtest, {
+                player: app, zip: JSZip, deserialize: __TW_PLUS_REVISION_DESERIALIZE_BLOCKS__
+            });
             requestAnimationFrame(() => vm.renderer.draw());
         },
         loaded: (success: boolean) => ReduxStore.dispatch(onLoadedProject(loadingState(), false, success)),
