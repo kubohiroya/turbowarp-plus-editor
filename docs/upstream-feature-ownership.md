@@ -98,6 +98,7 @@ Loader の追加移管が影響する承認画面と作品の入出力 16 件は
 | `test/extension-host/batch-review.test.ts` の機能テスト3件 | security-dialog の `test/editor-batch-review.test.cts` | 同ファイルの実 VM による拒否後のブロック・URL 保持と GUI モーダルの結線確認2件 |
 | `test/extension-host/project-size-gate.test.ts` の機能テスト3件 | Loader の `test/editor-project-size-gate.test.ts`（計測・同意2件）、workbench の `test/project-size-approval.test.cts`（画面1件） | 同ファイルの実 VM と Editor の64 MiB上限・同意を接続する1件 |
 | `test/extension-host/project-uri.test.ts` の機能テスト5件 | Loader の `test/scratch-vm/editor-project-uri.test.ts` | 同ファイルの実 VM での URI 付与・保持と開く際のレビューの結線確認1件 |
+| `test/extension-host/project-cache.test.ts` の保存時 URI 機能テスト5件 | Loader の `test/scratch-vm/editor-save-address.test.ts` | 同ファイルの実 VM・HTTPS と URI、作品別キャッシュ、カタログ、fallback、単一 HTML の接続確認5件 |
 
 作品一覧の移管先は import の接続先だけを変更した同じテストで、[移管 PR の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45017749451) が成功している。
 workbench の CI は `npm run test:browser` でこのテストを実行する。Editor が固定する workbench `0.39.0` のソースでも、ビルドと対象テスト1件がヘッドレス Chromium で成功した（2026-11-25）。
@@ -143,6 +144,9 @@ Editor のモーダルと上表の GUI 接続確認、既存の `test:extension-
 
 モーダルの保存・非同期検証・IME・階層表示・RJSF エラー表示の17件は data-editor へ移管する。実 ReactModal portal と RJSF、検証本体・セッション fixture・元の GPL-3.0-or-later を保持し、GUI ラッパーのコンパイルだけを `createPlusBlockEditor().render()` の公開 API 呼び出しへ置き換える。テスト専用の ReactModal `3.9.1`・Intl `2.9.0` は固定 GUI と同じ版を使う。移管先の既存 `pnpm test` と CI の成功・マージを Editor 側の重複除去の公開条件とする。
 Editor の `modal.test.ts` には、実 GUI ラッパーが ReactModal の portal 内に本体を1回だけ mount する接続確認1件と必要な fixture を残す。参照のない旧 `test/block-editor/helpers.ts` は削除する。製品コード・依存固定・GUI・既存 CI コマンドは変更しない。CI 時間の短縮量は未測定。切り戻しはこの整理を revert して元テストと helpers を復元し、上流側も戻す場合は Editor の復元を先に行う。
+
+保存時 URI の機能テスト5件は Loader の公開 `createProjectIO`・`installExtensionLoader` を VM の代役で検証するテストとして移管する。初回保存時の付与と保持、保存経路と sprite 書き出しの区別、既存 URI・manifest 不在・付与ポート不在・再読込を扱う。検証本体・fixture と元の GPL-3.0-or-later を維持し、移管先の既存 `npm test` と CI が実行する。移管先のソース全27ファイルは Editor 固定の Loader `0.16.0` と一致する。上流 CI の成功とマージを Editor 側の重複除去の公開条件とする。
+Editor の `project-cache.test.ts` には実 VM・HTTPS・URI の往復、作品別キャッシュ・カタログとの結線、IndexedDB 不在時の接続、単一 HTML への除外を確認する5件を内容不変で残す。既存の `test:extension-host` と CI ステップを保持する。製品コード・依存固定・GUI は変更しない。CI 時間短縮量は未測定。切り戻しは元の10件と bridge fixture を復元し、上流も戻す場合は Editor の復元を先に行う。
 
 ## 切り戻し
 
