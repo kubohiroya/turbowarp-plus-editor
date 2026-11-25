@@ -38,7 +38,7 @@
 | 28 | [2576–2783](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2576-L2783) | the Dockview variables pane lists only data owned by the selected target | sprite-panes / code-views | 分離候補 | VM target の切替を保持し、所有データの表示行列を分ける |
 | 29 | [2784–2896](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2784-L2896) | the variables table sorts mixed rows and saves list items for the selected target | sprite-panes | 一部分離 | sort/list editor の詳細を単独browser2件へ。実 VM の参照数・スプライト/クローン/グローバルリスト更新・monitor接続を保持 |
 | 30 | [2897–2943](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2897-L2943) | variable counts open the project search at the selected kind of access | sprite-panes / code-views | 接続保持 | 変数アクセス種別から実 project search へ |
-| 31 | [2944–3080](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2944-L3080) | clone pages edit the selected runtime instance and fall back when it disappears | sprite-panes / VM | 分離候補 | clone の値更新と消滅時 fallback を保持し、表示行列を分ける |
+| 31 | [2944–3080](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2944-L3080) | clone pages edit the selected runtime instance and fall back when it disappears | sprite-panes / VM | 一部分離 | pagination の境界・配置・選択保持を単独browser2件へ。実VMのclone編集・定義追加・monitor・消滅と停止を保持 |
 | 32 | [3081–3151](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3081-L3151) | clone variables keep the original sprite reference counts and definition actions | sprite-panes / code-views | 接続保持 | clone から original sprite の参照・定義へ |
 | 33 | [3152–3246](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3152-L3246) | editor pane headings and message diagrams follow the active target | sprite-panes / code-views | 接続保持 | active target と見出し・message diagram |
 | 34 | [3247–3323](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3247-L3323) | the calls section independently toggles function calls and messages and opens a receiver in another target | sprite-panes / workbench / code-views | 一部分離 | 現行 DOM を実 Editor で照合済み。表示行列は sprite-panes の2件へ集約し、VM・図・別 target への接続を保持 |
@@ -107,3 +107,15 @@ Editorは112行から78行へ縮小し、実VMのリスト読み取り/変更blo
 移管先ではビルド、新2件と既存2件のbrowserテスト（4 pass / fail・skip 0）、追加test/helperの型検査を実行した。Editorの型検査・責務境界2件も成功。sprite-panes製品ソース16ファイルはEditor固定0.11.3と一致し、npm archive 47ファイルにtest/helper/テスト用ライセンス/node_modulesが含まれないことを確認した。
 
 依存順とDoDは sprite-panes の公開・既存browser CIで新2件をskipなしに成功・Squash Merge → Editorの縮小を公開・CI成功・Squash Merge → 作業環境整理・#741への記録。元browserファイルは通常CI対象外のため、この34行削減による通常CI時間短縮は見込まない。#741全体の時間比較は未実施。切り戻しはEditorの元112行とケース名を先に復元し、必要なら上流の追加テスト・host抽出・テスト用ライセンス・文書をrevertする。
+
+## クローン切替のページング詳細の切り出し
+
+31番の0/5/6体での表示切替、8体までの追加での選択保持、前/次の移動と端の無効化、矢印の丸形・枠・SVG寸法・幅と間隔、削除後のID保持と番号更新・選択消滅時の復帰をsprite-panesの `test/editor-clone-pagination.browser.ts` 2件へ切り出す。停止と再生成も単独hostで確認する。公開 `SpriteCloneInspector`・`SpriteClonePagination`・`sprite-editor-toolbar.css` を使い、hostはtargetのデータとlifecycle通知だけを渡す。元のpagination期待値とgeometryを保持し、型検査のためbounding boxの存在確認を補う。GPL-3.0-or-laterと既存のテスト用ライセンスを保持し、既存browser4件とunit4件の本文は内容不変。
+
+元ケースはmonitorの旧アクセシブル名「元のスプライトの「体力」をステージに表示」を探して失敗した。現行DOMの「元のスプライトの「体力」を実行画面（ステージ）に表示」に更新すると、詳細削減前の136行全体が成功した。製品は修正しない。Editorは136行から115行へ縮小し、実VMのcloneを選んだ際の属性/値の編集、全cloneへの定義追加、monitor、実行中だけの変更、別cloneの消滅後の値保持、選択cloneの消滅時の元への復帰、停止を保持する。他38件と共通fixtureは内容不変。
+
+開始時のリモートmainは `56d8a419ea98b6f3926c0c3d82fde9653625fc0b`。完成済み固定ビルドのsite revision `486e790221da09e5f78849066fd059234e833e57` との差分は文書と他ケースのテスト整理だけで、製品入力・対象元ケース・共通fixtureは一致している。そのためビルドを再利用し、実際のsite revisionを期待値に指定した。GUI `60b87e2`・VM `88a2c06`・Packager `d690225` とbuild-infoを照合し、名称修正後の元ケースと縮小後をheadlessで各1 pass / fail・skip 0と確認した。main自体から新しくビルドした結果とは区別する。
+
+移管先はビルド、追加2件+既存4件のbrowser6件、関連unit4件、対象test/helperの型検査が成功した。Editor型検査・責務境界2件も成功。sprite-panes製品ソース16ファイルは固定0.11.3と一致し、npm archive47ファイルにtest/helper/テスト用ライセンス/node_modulesが含まれないことを確認した。
+
+依存順とDoDはsprite-panesの公開・既存browser CIで新2件をskipなしに実行/成功・Squash Merge → Editorの縮小を公開・CI成功・Squash Merge → 作業環境整理・#741への記録。製品・依存固定・GUI・起動フラグ・CI設定は変更しない。元browserファイルは通常CI対象外なので、この21行削減による通常CI時間短縮は見込まない。#741全体の時間比較は未実施。切り戻しはEditorの元の確認範囲とケース名を先に復元し、monitorの現行アクセシブル名は保持する。必要なら上流の追加テスト・hostの2経路・文書をrevertする。

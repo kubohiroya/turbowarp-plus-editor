@@ -2883,7 +2883,7 @@ test('variable counts open the project search at the selected kind of access', {
     await expect(page.locator('html')).toHaveAttribute('data-test-centered-block', 'access-read');
 });
 
-test('clone pages edit the selected runtime instance and fall back when it disappears', {timeout: 45_000}, async t => {
+test('clone selection writes the live VM instance and falls back when it disappears', {timeout: 45_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
     await page.waitForFunction(() => window.vm?.editingTarget?.isOriginal && !window.vm.editingTarget.isStage);
@@ -2895,7 +2895,6 @@ test('clone pages edit the selected runtime instance and fall back when it disap
     const toolbar = page.locator('.tw-plus-sprite-toolbar[data-active-group="true"]');
     await toolbar.getByRole('tab', {name: '変数', exact: true}).click();
     const pages = toolbar.getByRole('navigation', {name: 'クローンを切り替える'});
-    await expect(pages).toHaveCount(0);
     const createClones = (start: number, count: number) => page.evaluate(([start, count]) => {
         const original = vm.editingTarget;
         return Array.from({length: count}, (_, offset) => {
@@ -2914,8 +2913,6 @@ test('clone pages edit the selected runtime instance and fall back when it disap
     const x = page.getByRole('spinbutton', {name: 'x', exact: true});
     const hidden = page.getByRole('radio', {name: '表示しない', exact: true});
     const choose = (number: number) => pages.getByRole('button', {name: 'クローン ' + number, exact: true}).click();
-    await expect(original).toHaveAttribute('aria-current', 'true');
-    await expect(pages.getByText('クローン 5 体')).toBeVisible();
     await choose(3);
     await expect(name).not.toBeEditable();
     await expect(page.getByText('クローン 3 を編集中')).toBeVisible();
@@ -2937,7 +2934,7 @@ test('clone pages edit the selected runtime instance and fall back when it disap
         const list = variables.find(variable => variable.name === 'クローンの記録');
         return list && sprite.sprite.clones.map(clone => [clone.variables[list.id].type, clone.variables[list.id].value]);
     }), Array.from({length: 6}, () => ['list', []]));
-    const monitor = page.getByRole('checkbox', {name: '元のスプライトの「体力」をステージに表示'});
+    const monitor = page.getByRole('checkbox', {name: '元のスプライトの「体力」を実行画面（ステージ）に表示'});
     await expect(monitor).not.toBeChecked();
     await monitor.click();
     await expect(monitor).toBeChecked();
@@ -2980,27 +2977,9 @@ test('clone pages edit the selected runtime instance and fall back when it disap
 
     const extra = await createClones(6, 3);
     const instance = pages.getByRole('combobox', {name: 'クローン番号を選ぶ'});
-    const next = pages.getByRole('button', {name: '次のクローン'});
-    const previous = pages.getByRole('button', {name: '前のクローン'});
-    await expect(instance).toHaveValue(ids[2]);
-    await expect(instance.locator('option:checked')).toHaveText('3 / 8');
-    for (const arrow of [previous, next]) {
-        await expect(arrow).toHaveCSS('border-radius', '50%');
-        await expect(arrow).toHaveCSS('border-top-width', '1px');
-        await expect(arrow.locator('svg')).toHaveCSS('width', '20px');
-    }
-    const [left, middle, right] = await Promise.all([previous.boundingBox(), instance.boundingBox(), next.boundingBox()]);
-    assert.ok(left?.width >= 40 && right?.width >= 40 && middle);
-    assert.ok(middle.x - left.x - left.width >= 8 && right.x - middle.x - middle.width >= 8);
-    await next.click();
-    await expect(health).toHaveValue('4');
-    await previous.click();
-    await expect(health).toHaveValue('12');
     await page.evaluate(id => vm.runtime.disposeTarget(vm.runtime.getTargetById(id)), ids[0]);
-    await expect(instance.locator('option:checked')).toHaveText('2 / 7');
     await expect(health).toHaveValue('12');
     await instance.selectOption(extra[2]);
-    await expect(next).toBeDisabled();
     await expect(health).toHaveValue('8');
     await page.evaluate(id => {
         vm.runtime.getTargetById(id).variables['clone-health'].value = 42;
