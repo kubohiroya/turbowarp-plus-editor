@@ -1,8 +1,8 @@
 {
   "guiRepository": "kubohiroya/scratch-gui",
-  "guiRevision": "b2e75a129546db48e6563f72c80a3d3d46d86fb5",
+  "guiRevision": "14477c5844a5ddf5906aa703154e0d3532271f0f",
   "vmRepository": "kubohiroya/scratch-vm",
-  "vmRevision": "e623546e0e173d70e0314d06d8a17bf84c72afeb",
+  "vmRevision": "f3d38110106e5d22277b7585ccf24fc51e035531",
   "vmBaseRevision": "0cb82afe62506f3d9f2ff849c95593f0473b5d2c",
   "packagerRepository": "TurboWarp/packager",
   "packagerRevision": "d690225b9f326c98be617a51c7c65f76758048ee",
