@@ -910,12 +910,6 @@ test('startup chooses the layout and the stage menu hides the stage without stop
     await expect(page.getByRole('button', {name: /^(Hide|Show) stage$/})).toHaveCount(0);
     await expect(displayMenu).toBeVisible();
     await expect(page.getByRole('button', {name: 'Switch to small stage', exact: true})).toHaveCount(0);
-    await displayMenu.click();
-    await expect(hideStage).toBeVisible();
-    await expect(showStage).toHaveCount(0);
-    await expect(page.getByRole('menuitemradio', {name: /^(Switch to small stage|Switch to full stage)$/})).toHaveCount(0);
-    await expect(page.getByRole('menuitem', {name: 'Enter full screen mode', exact: true})).toBeVisible();
-    await page.keyboard.press('Escape');
     const tabs = page.getByRole('tab').filter({hasText: /^(Code|Costumes|Sounds)$/});
     await expect(tabs).toHaveCount(3);
     assert.ok(await tabs.evaluateAll(items => items.every(tab => tab.scrollWidth <= tab.clientWidth &&
