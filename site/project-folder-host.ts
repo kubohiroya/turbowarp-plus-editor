@@ -2,7 +2,7 @@ import type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-wor
 export type {ProjectFolderWorkflows} from '@kubohiroya/turbowarp-plus-editor-workbench/project-folder-workflows';
 import {hasProjectVersionValidator, openProjectVersionEditor, openProjectVersionPreview, packProjectVersion,
     validateProjectVersion} from './git-project-preview.ts';
-import {isProjectVersionEditor} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
+import {isProjectVersionEditor, type MergePlaytestRequest} from '@kubohiroya/turbowarp-plus-editor-git/project-version-preview';
 import {chooseBrowserProject, folderNotEmptyMessage, followProjectFolder, mountProjectFolder, omittedFilesQuestion, openRepositoryProjectQuestion,
     openSavedFolderQuestion, projectFolderActions} from '@kubohiroya/turbowarp-plus-editor-project-folder';
 import type {FolderHost, FolderVM, ReloadTarget} from '@kubohiroya/turbowarp-plus-editor-project-folder';
@@ -464,13 +464,13 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         ...hasProjectVersionValidator() && {
             restoreProjectVersions: gitRestoreVersion,
             validateProjectVersion,
-            async previewProjectVersion({oid, files, title, guard}: {
+            async previewProjectVersion({oid, files, title, guard, playtest}: {
                 oid: string; files: ReadonlyMap<string, Uint8Array>;
-                title?: string; guard?: () => void;
+                title?: string; guard?: () => void; playtest?: MergePlaytestRequest;
             }) {
-                const archive = await packProjectVersion(files);
+                const archive = playtest?.blocking.length ? new ArrayBuffer(0) : await packProjectVersion(files);
                 guard?.();
-                openProjectVersionPreview(document, oid, archive, locale, title);
+                openProjectVersionPreview(document, oid, archive, locale, title, playtest);
             },
             async editProjectVersion({title, files, guard, save}) {
                 const archive = await packProjectVersion(files);

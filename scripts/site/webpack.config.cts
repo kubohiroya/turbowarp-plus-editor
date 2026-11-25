@@ -121,6 +121,8 @@ if (projectUnpackEntry) {
 injections.__TW_PLUS_REVISION_GUI__ = [path.join(gui, 'src/containers/gui.jsx'), 'default'];
 injections.__TW_PLUS_REVISION_APP_STATE__ = [path.join(gui, 'src/lib/app-state-hoc.jsx'), 'default'];
 injections.__TW_PLUS_REVISION_PROJECT_STATE__ = path.join(gui, 'src/reducers/project-state.js');
+injections.__TW_PLUS_REVISION_BLOCKLY__ = [path.join(gui, 'src/lib/tw-lazy-scratch-blocks.js'), 'default'];
+injections.__TW_PLUS_REVISION_DESERIALIZE_BLOCKS__ = [hostRequire.resolve('scratch-vm/src/serialization/sb3.js'), 'deserializeBlocks'];
 if (saveCommitEntry) {
     injections.__TW_PLUS_CREATE_SAVE_COMMIT_QUEUE__ = [saveCommitEntry, 'createSaveCommitQueue'];
     injections.__TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__ = [saveCommitEntry, 'createIndexedDbSaveCommitJournal'];
