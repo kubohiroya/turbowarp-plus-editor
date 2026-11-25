@@ -1665,3 +1665,67 @@ test('tracks native Git status in the project explorer with the Git panel closed
     await expect(removed).not.toHaveAttribute('aria-disabled');
     assert.deepEqual(errors, []);
 });
+
+test('reviews and saves an unsaved block diff from Local Git in the current project', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder, project} = await createDiskProject(t, 'tw-project-review-', true);
+    const source = path.join(folder, projectFile);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('config', 'user.name', 'Editor review fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    git('add', '.');
+    git('commit', '-qm', 'Initial project');
+    const revision = git('rev-parse', 'HEAD');
+    const index = await readFile(path.join(folder, '.git', 'index'));
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await editFolderBlock(page, 'value', '26');
+    await page.getByRole('button', {name: 'Branch: main', exact: true}).click();
+    await page.getByRole('menu', {name: 'Branches'}).getByRole('menuitem', {name: 'Open Local Git'}).click();
+    const panel = page.locator('.twgit-panel');
+    await expect(panel).toBeVisible();
+
+    const saveTask = panel.getByRole('button', {name: 'Save files', exact: true});
+    const savedTask = panel.getByRole('button', {name: 'Commit saved changes', exact: true});
+    const unsavedPane = panel.getByRole('region', {name: 'Save files', exact: true});
+    await expect(saveTask.locator('.twgit-count')).toHaveText('1');
+    await saveTask.click();
+    await unsavedPane.getByRole('button', {name: projectFile, exact: true}).click();
+    const unsavedDiff = unsavedPane.locator('.twgit-save-diff');
+    await expect(unsavedDiff).toContainText('HEAD → Unsaved edits');
+    await unsavedDiff.locator('.twgit-review-script summary').first().click();
+    await expect(unsavedDiff.locator('svg.blocklySvg').last()).toBeVisible();
+    assert.equal(await readFile(source, 'utf8'), stringify(project));
+    assert.deepEqual(await readFile(path.join(folder, '.git', 'index')), index);
+    await unsavedPane.getByRole('button', {name: 'Save unsaved files', exact: true}).click();
+    await expect(saveTask.locator('.twgit-count')).toHaveText('0');
+    await expect(savedTask.locator('.twgit-count')).toHaveText('1');
+    project.targets[1].blocks.move_B.inputs.STEPS[1][1] = '26';
+    assert.equal(await readFile(source, 'utf8'), stringify(project));
+    assert.equal(git('rev-parse', 'HEAD'), revision);
+    assert.equal(git('diff', '--cached', '--name-only'), '');
+
+    if (await savedTask.getAttribute('aria-expanded') !== 'true') await savedTask.click();
+    const changed = panel.getByRole('region', {name: 'Changes by project element'});
+    await expect(changed).toContainText('Cat');
+    await changed.getByText('List by file', {exact: true}).click();
+    const savedPane = panel.getByRole('region', {name: 'Commit saved changes', exact: true});
+    await savedPane.getByRole('button', {name: /^project\.source\.json/}).click();
+    const savedDiff = savedPane.getByRole('region', {name: 'Project changes', exact: true});
+    await savedDiff.locator('.twgit-review-script summary').first().click();
+    await expect(savedDiff.locator('svg.blocklySvg').last()).toBeVisible();
+    await savedDiff.getByRole('button', {name: 'After · Highlight in Editor', exact: true}).click();
+    await expect.poll(() => page.evaluate(() => (window as any).ScratchBlocks.getMainWorkspace().getAllBlocks(false)
+        .some(block => block.getSvgRoot()?.classList.contains('twgit-changed-block')))).toBe(true);
+    await page.getByRole('tab', {name: 'Local Git', exact: true}).click();
+    await savedPane.getByRole('button', {name: 'Text', exact: true}).click();
+    await expect(savedPane.locator('.twgit-diff .diff')).toContainText('26');
+    assert.deepEqual(await readFile(path.join(folder, '.git', 'index')), index);
+    assert.deepEqual(errors, []);
+});
