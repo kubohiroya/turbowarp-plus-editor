@@ -104,7 +104,7 @@ test('the browser tab follows the current project title', {timeout: 30_000}, asy
     await expect(page).toHaveTitle('Project - TurboWarp Plus Editor');
 });
 
-test('the unsaved marker stays by the project name and its hint fits in the viewport', {timeout: 30_000}, async t => {
+test('unsaved VM changes reach the project title marker and its save menu', {timeout: 30_000}, async t => {
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
     await page.goto(origin + buildPrefix + 'editor.html?lang=ja');
     await expect.poll(() => page.evaluate(() => Boolean(window.vm?.editingTarget))).toBe(true);
@@ -116,12 +116,8 @@ test('the unsaved marker stays by the project name and its hint fits in the view
     const title = page.locator('input[maxlength="100"]');
     const label = '未保存の変更があります。保存メニューを開く';
     const marker = page.getByRole('button', {name: label});
-    const hint = page.getByText(label, {exact: true});
     await title.fill('プロジェクト');
     await title.press('Enter');
-    await expect(marker).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await marker.hover();
-    await expect(hint).toBeVisible();
     const shortTitle = await title.boundingBox();
     const mark = await marker.boundingBox();
     assert(shortTitle && mark);
@@ -129,13 +125,6 @@ test('the unsaved marker stays by the project name and its hint fits in the view
     assert.ok(mark.x - (shortTitle.x + shortTitle.width) <= 8, 'The marker should follow the title field');
 
     await page.setViewportSize({width: 300, height: 900});
-    await page.mouse.move(0, 0);
-    await title.press('Tab');
-    await expect(marker).toBeFocused();
-    await expect(hint).toBeVisible();
-    const message = await hint.boundingBox();
-    assert(message && message.x >= 0 && message.x + message.width <= page.viewportSize().width);
-
     await title.fill('とても長いプロジェクト名'.repeat(5));
     await title.press('Enter');
     const longTitle = await title.boundingBox();

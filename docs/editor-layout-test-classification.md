@@ -9,7 +9,7 @@
 | # | 固定コミットの行 | 元のケース | 主な所有先・接続先 | 判定 | 残す接続・次の切り分け |
 |---|---|---|---|---|---|
 | 1 | [71–106](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L71-L106) | the browser tab follows the current project title | workbench | 接続保持 | 入力・ファイルを開く・新規作成からブラウザー題名へ |
-| 2 | [107–146](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L107-L146) | the unsaved marker stays by the project name and its hint fits in the viewport | workbench | 分離候補 | 未保存通知と保存メニューの接続を保持し、幅・hint の幾何を別検証へ |
+| 2 | [107–146](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L107-L146) | the unsaved marker stays by the project name and its hint fits in the viewport | workbench | 一部分離 | VM 変更・タイトル幅と隣接・保存メニューを保持。hint の hover/focus・狭幅表示は単独 host へ |
 | 3 | [147–334](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L147-L334) | the real editor resizes both dividers and preserves editing and stage input | workbench / windows | 分離候補 | GUI 編集・stage input を保持し、divider の幾何・テーマ・復元の詳細を分ける |
 | 4 | [335–349](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L335-L349) | the GUI keeps its original editor without a host connection | Editor / GUI | 接続保持 | 接続口を使わない GUI の従来動作 |
 | 5 | [350–421](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L350-L421) | the paint toolbar opens the project font list from costumes and backdrops | fonts / GUI | 分離候補 | costume/backdrop のフォント接続を保持し、追加・選択の詳細を分ける |
@@ -41,14 +41,14 @@
 | 31 | [2944–3080](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L2944-L3080) | clone pages edit the selected runtime instance and fall back when it disappears | sprite-panes / VM | 分離候補 | clone の値更新と消滅時 fallback を保持し、表示行列を分ける |
 | 32 | [3081–3151](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3081-L3151) | clone variables keep the original sprite reference counts and definition actions | sprite-panes / code-views | 接続保持 | clone から original sprite の参照・定義へ |
 | 33 | [3152–3246](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3152-L3246) | editor pane headings and message diagrams follow the active target | sprite-panes / code-views | 接続保持 | active target と見出し・message diagram |
-| 34 | [3247–3323](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3247-L3323) | the calls section independently toggles function calls and messages and opens a receiver in another target | workbench / code-views | 分離候補 | 他 target への移動を保持し、function/message filter 行列を分ける |
+| 34 | [3247–3323](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3247-L3323) | the calls section independently toggles function calls and messages and opens a receiver in another target | workbench / code-views | 要照合 | 旧セレクターと現行パッケージの DOM が異なるため元ケースを保持。下記の照合待ちを参照 |
 | 35 | [3324–3508](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3324-L3508) | the hats and functions list and the calls section show each script alone in a code view beside the sprite | workbench / code-views | 分離候補 | script ごとの view 接続を保持し、表示・操作行列を分ける |
 | 36 | [3509–3539](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3509-L3539) | Save a Copy of the Project keeps the labelled dialog actions at the right edge | workbench / windows | 今回分離 | 保存 form の action 配置・アイコン13行を単独 browser test へ。File メニュー・cancel・SB3 download を保持 |
 | 37 | [3540–3669](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3540-L3669) | a block stack can be copied to a split code tab and back from its popout | workbench / code-views / GUI | 接続保持 | split code tab・popout・実 Blockly stack の往復 |
 | 38 | [3670–3802](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3670-L3802) | two Dockview code panes keep independent positions and zoom for the same sprite | code-views / workbench | 接続保持 | 同一 sprite の複数 pane と独立 viewport |
 | 39 | [3803–3955](https://github.com/kubohiroya/turbowarp-plus-editor/blob/8fc1e701088c007ba0180f4961f7d8911e82ca1e/test/editor-layout.browser.ts#L3803-L3955) | the Dockview stage keeps its renderer, controls and input through split and tab moves | workbench / windows / VM | 接続保持 | split/tab move 前後の同一 renderer・controls・input |
 
-## 今回の切り出しと依存順
+## 保存画面の action 配置（#815）
 
 36番の action bar の `justify-content`、異なる cancel/confirm アイコン、並び順、右端の位置を workbench の `test/editor-save-dialog-actions.browser.ts` へ移す。元の13行の期待値・検証処理と GPL-3.0-or-later を保持し、追加の host fixture だけを書き換える。workbench の公開 `project-dialogs`・`project-file-dialogs` と windows の公開 `styles.css` を使い、GUI checkout・VM・Editor ビルド・外部ネットワークなしで実行する。windows の既存 API・CSS を利用し、windows 本体の変更は要らない。
 
@@ -59,3 +59,15 @@ Editor は同じケースで、File メニューからの起動、Cancel と再�
 製品コード・依存固定・GUI・起動フラグ・CI コマンドは変更しない。この browser ファイルは現在の通常 CI の実行対象ではないため、今回の13行削除による通常 CI の時間短縮は見込まない。#741 全体の CI 所要時間比較は未実施。
 
 切り戻しは Editor の元13行とケース名を先に復元し、必要なら上流の追加テストと文書を revert する。その他38件の分離・最小化は継続する。特に VM に依存しない menu の状態行列や geometry の詳細は単独 host が作れるかを次に調べる。
+
+## 未保存マーカーの詳細の切り出し
+
+2番の背景色、hover と Tab フォーカス時のヒント表示、300px 幅の viewport 内にヒントが収まることを workbench の `test/editor-unsaved-marker.browser.ts` へ移す。元の操作・期待値を維持し、viewport の既知の存在を表す TypeScript の non-null 注釈だけを補う。公開 `ProjectSaveMenu` と `project-file-menu.css` を直接使い、host は native input と配置だけを用意する。GUI checkout・VM・Editor ビルド・起動フラグは要らない。既存 browser CI が環境変数の指定なし・skip なしで実行する。GPL-3.0-or-later と既存テスト用ライセンスを保持する。
+
+Editor は VM の変更で表示されるマーカー、native title field の短い/長い名前の幅と隣接、保存メニューへの接続を残す。300px 幅での長いタイトルの確認も保持する。詳細11行（ヒント用 locator と空行を含む）を除き、ケース名を接続確認に合わせる。元のそれ以外の本文と、他38件・共通 fixture は内容不変。
+
+依存順は workbench の CI 成功・マージ → Editor の縮小。ローカルは移管 browser case 1件・関連 file-menu 18件、workbench ビルド・対象型検査と Editor 型検査・責務境界2件を確認する。実 Editor の保持した browser case は今回再実行していない。元ファイルは通常 CI 対象外なので、この11行削減による通常 CI の時間短縮は見込まない。製品コード・依存固定・GUI・CI コマンドは変更しない。切り戻しは Editor の元11行とケース名を先に復元し、必要なら上流の追加テスト・文書を revert する。
+
+## 呼び出し図のセレクターの照合待ち
+
+34番は `Function calls` と `[data-relation="call"]` / `[data-relation="message"]` を使う。固定 sprite-panes `0.11.3` の `src/sprite-function-pane.tsx` のソースでは、関数のフィルター名は `Functions`、矢印の属性は `data-script-relation="function"` / `data-script-relation="message"` である。実 Editor での再現確認は未実施。単純な移管で検証を失わないよう、現行の公開 entry・実際の DOM と照合するまで、フィルター行列・VM 不変・他 target の script を開く元ケースは変更しない。この照合は残件。
