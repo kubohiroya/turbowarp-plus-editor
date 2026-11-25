@@ -14,12 +14,15 @@ import {installPlusExtensionHost} from '../extension-host/host.ts';
 import * as vmModules from '../extension-host/vm-modules.ts';
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
 
-let allowedURLs: string[] = [];
-let allowedSandboxed = new Map<string, string>();
+type SandboxedExtension = {id: string; sha256: string};
+let extensionContext: {extensionURLs: string[]; sandboxedExtensions: SandboxedExtension[]} = {
+    extensionURLs: [], sandboxedExtensions: []
+};
 
 const isApprovedSandboxed = (code: ResolvedCode) => code.execution === 'sandboxed' &&
     (code.source.type === 'embedded-file' || code.source.type === 'embedded-data') &&
-    allowedSandboxed.get(code.id) === code.actualSHA256 && code.sha256 === code.actualSHA256;
+    code.sha256 === code.actualSHA256 && extensionContext.sandboxedExtensions.some(entry =>
+        entry.id === code.id && entry.sha256 === code.actualSHA256);
 
 const createVm = () => {
     document.documentElement.style.cssText = 'height: 100%;';
@@ -31,7 +34,8 @@ const createVm = () => {
     vm.attachStorage(new ScratchStorage());
     vm.attachRenderer(new ScratchRender(canvas));
     // Sounds stay silent: there is no audio engine.
-    vm.securityManager.canLoadExtensionFromProject = (url: string) => Promise.resolve(allowedURLs.includes(url));
+    vm.securityManager.canLoadExtensionFromProject = (url: string) =>
+        Promise.resolve(extensionContext.extensionURLs.includes(url));
     vm.securityManager.getSandboxMode = () => Promise.resolve('iframe');
     installPlusExtensionHost(vm, {
         enabled: true, document, locale: document.documentElement.lang || 'en', vmModules,
@@ -50,13 +54,11 @@ serveTestFrame({
     getVm: createVm,
     prepare(context: {extensionURLs?: unknown; sandboxedExtensions?: unknown} | undefined) {
         const urls = Array.isArray(context?.extensionURLs) ? context.extensionURLs : [];
-        allowedURLs = urls.filter((url): url is string => typeof url === 'string');
-        allowedSandboxed = new Map();
-        if (!Array.isArray(context?.sandboxedExtensions)) return;
-        for (const entry of context.sandboxedExtensions) {
-            if (typeof entry?.id === 'string' && typeof entry.sha256 === 'string' && /^[0-9a-f]{64}$/.test(entry.sha256)) {
-                allowedSandboxed.set(entry.id, entry.sha256);
-            }
-        }
+        const extensions = Array.isArray(context?.sandboxedExtensions) ? context.sandboxedExtensions : [];
+        extensionContext = {
+            extensionURLs: urls.filter((url): url is string => typeof url === 'string'),
+            sandboxedExtensions: extensions.filter((entry): entry is SandboxedExtension =>
+                typeof entry?.id === 'string' && typeof entry.sha256 === 'string' && /^[0-9a-f]{64}$/.test(entry.sha256))
+        };
     }
 });

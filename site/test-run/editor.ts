@@ -29,6 +29,8 @@ const contextFor = (vm: EditorVM) => ({
         .map(({id, sha256}) => ({id, sha256}))
 });
 
+type TestProjectSnapshot = {archive: ArrayBuffer; extensionContext: ReturnType<typeof contextFor>};
+
 /** The way project search reveals a block: the sprite's code view, then the block at its center. */
 const showBlock = (vm: EditorVM, targetName: string, blockId: string) => {
     const target = vm.runtime.targets.find(candidate => candidate.isOriginal && candidate.getName() === targetName);
@@ -38,36 +40,40 @@ const showBlock = (vm: EditorVM, targetName: string, blockId: string) => {
     requestAnimationFrame(() => navigation?.centerBlock(blockId));
 };
 
-const viewOptions = (vm: EditorVM, locale: string, doc: Document) => {
-    const snapshotContexts = new WeakMap<ArrayBuffer, ReturnType<typeof contextFor>>();
-    return {
-        document: doc,
-        locale,
-        async getProject() {
-            const context = contextFor(vm);
-            const zip = vm._saveProjectZip();
-            // Keep the archive's assets and Plus manifest, but use the editor's block IDs for failure navigation.
-            zip.file('project.json', vm.toJSON(undefined, {allowOptimization: false}));
-            const project = await zip.generateAsync({type: 'arraybuffer'});
-            snapshotContexts.set(project, context);
-            return project;
-        },
-        // The archive above cannot be read by the view; the same project.json lists the tests before they run.
-        listProject: () => vm.toJSON(undefined, {allowOptimization: false}),
-        createRunner(stage: HTMLElement) {
-            const frame = doc.createElement('iframe');
-            frame.src = frameURL();
-            frame.title = testRunText(locale).stage;
-            frame.style.cssText = 'width: 100%; height: 100%; border: 0; display: block;';
-            stage.append(frame);
-            return connectTestFrame(frame, {
-                origin: location.origin,
-                context: ({project}) => project instanceof ArrayBuffer ? snapshotContexts.get(project) : undefined
-            });
-        },
-        showBlock: (target: string, blockId: string) => showBlock(vm, target, blockId)
-    };
-};
+const viewOptions = (vm: EditorVM, locale: string, doc: Document) => ({
+    document: doc,
+    locale,
+    async getProject(): Promise<TestProjectSnapshot> {
+        const extensionContext = contextFor(vm);
+        const zip = vm._saveProjectZip();
+        // Keep the archive's assets and Plus manifest, but use the editor's block IDs for failure navigation.
+        zip.file('project.json', vm.toJSON(undefined, {allowOptimization: false}));
+        const archive = await zip.generateAsync({type: 'arraybuffer'});
+        return {archive, extensionContext};
+    },
+    // The view lists tests from project.json and passes the snapshot to the runner unchanged.
+    listProject: () => vm.toJSON(undefined, {allowOptimization: false}),
+    createRunner(stage: HTMLElement) {
+        const frame = doc.createElement('iframe');
+        frame.src = frameURL();
+        frame.title = testRunText(locale).stage;
+        frame.style.cssText = 'width: 100%; height: 100%; border: 0; display: block;';
+        stage.append(frame);
+        const runner = connectTestFrame(frame, {
+            origin: location.origin,
+            context: request => 'extensionContext' in request ? request.extensionContext : undefined
+        });
+        return {
+            ...runner,
+            run(request: Parameters<typeof runner.run>[0]) {
+                const {archive, extensionContext} = request.project as TestProjectSnapshot;
+                const frameRequest = {...request, project: archive, extensionContext};
+                return runner.run(frameRequest);
+            }
+        };
+    },
+    showBlock: (target: string, blockId: string) => showBlock(vm, target, blockId)
+});
 
 /** Opens the view as a workspace tab, or in a window of its own when the workspace takes no tabs. */
 const openTestRun = (vm: EditorVM, locale: string) => {
