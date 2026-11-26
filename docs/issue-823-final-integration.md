@@ -16,7 +16,7 @@ Editorのmanifest/lockはSecurity Dialog 0.14.2とWorkbench 0.40.1の正規npm U
 
 ## 正式依存の検証
 
-通常成果物とローカルカタログプレビューは別のGUI checkoutへ出力した。両方のsite revisionは `2ff574e6865d9b55d6d06b078fcd36907cf65d6a`、GUI `60b87e2f`、VM `88a2c06e`、Packager `d690225b`。ビルド後は文書だけを更新し、製品入力・対象テストは維持している。通常成果物のhost契約検証にはテスト用の観測接続 `TW_PLUS_TEST_EDITOR_HOST=1` を使った。プレビューの `localExtensionIntegration.published` はfalseで、ローカルカタログを通常の配布物へ混ぜない。
+通常成果物とローカルカタログプレビューは別のGUI checkoutへ出力した。最新main #863を保持した最終確認のsite revisionは両方とも `3ef36875a7749e95f9ec0c75e7279d82878e8aa0`、GUI `60b87e2f`、VM `88a2c06e`、Packager `d690225b`。ビルド後は文書だけを更新し、製品入力・対象テストは維持している。通常成果物のhost契約検証にはテスト用の観測接続 `TW_PLUS_TEST_EDITOR_HOST=1` を使った。プレビューの `localExtensionIntegration.published` はfalseで、ローカルカタログを通常の配布物へ混ぜない。
 
 | 検証 | 結果 |
 | --- | --- |
@@ -28,7 +28,7 @@ Editorのmanifest/lockはSecurity Dialog 0.14.2とWorkbench 0.40.1の正規npm U
 | Workbench既存CI | main `45807751068` は単体262件・browser34件成功、既存8件skip。新しい日英2件の履歴・時刻・hover/focus・承認フェーズは実行・成功し、skipを根拠にしない。移管元GPL-3.0-or-laterを保持 |
 | Runtime CI | PR `45807478118` はbuild3件・browser5件成功、fail/skip 0。main・Releaseも成功 |
 
-元のEditorケースは元タブを調べ、旧UIやロード順序を前提にしていたため、実際の受信タブと現行の確認・取消操作に合わせた。承認画面がアクセシビリティの対象を所有する間、背面のGUIロード表示はDOMのphaseとRedux状態で確認する。履歴や時刻の表示詳細はWorkbenchの実行済みテストへ委ねる。
+#863で修正された既存2ケースをそのまま使い、実際の受信タブの解析・承認・完了／取消と元タブの内容不変を確認した。履歴や時刻の表示詳細はWorkbenchの実行済みテストへ委ねる。
 
 ## 最小runtimeの能力と保持する境界
 
