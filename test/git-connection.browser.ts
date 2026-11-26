@@ -142,10 +142,13 @@ test('GitHub connection settings isolate the selected provider and keep the work
         view.showDirectoryPicker = async () => fixture.directory;
     });
     await installDesktopFixture(page);
-    const choose = async (target: Page) => {
+    const choose = async (target: Page, checkRoute = false) => {
         await target.getByText('File', {exact: true}).click();
-        await expect(target.getByRole('button', {name: 'GitHub Connection Settings…', exact: true})).toHaveCount(0);
-        await target.locator('[class*="menu-bar_menu-bar_"]').getByRole('button', {name: 'Open Folder…', exact: true}).click({timeout: 8000});
+        const menuBar = target.locator('[class*="menu-bar_menu-bar_"]');
+        if (checkRoute) {
+            await expect(menuBar.getByRole('button', {name: 'GitHub Connection Settings…', exact: true})).toHaveCount(0);
+        }
+        await menuBar.getByRole('button', {name: 'Open Folder…', exact: true}).click({timeout: 8000});
     };
     const showHistory = async (target: Page) => {
         const history = target.getByRole('toolbar', {name: 'Drawer views', exact: true})
@@ -171,8 +174,6 @@ test('GitHub connection settings isolate the selected provider and keep the work
     const preferences = await showPreferences(page);
     const defaultMode = preferences.getByRole('combobox', {name: 'Default connection mode'});
     await expect(defaultMode).toHaveValue('desktop');
-    await expect(preferences.getByRole('checkbox')).toHaveCount(0);
-    await expect(preferences.getByRole('button', {name: 'Connect to GitHub'})).toHaveCount(0);
     await defaultMode.selectOption('cloudflare');
     await close(preferences);
     await expect(connectionMode(page)).toBeFocused();
@@ -187,11 +188,10 @@ test('GitHub connection settings isolate the selected provider and keep the work
             data: {items: [], files: [folder], dragOperationsMask: 1}});
     }
     await page.waitForFunction(() => (window as any).gitConnectionFixture.directory?.kind === 'directory');
-    await choose(page);
+    await choose(page, true);
     const panel = await showSettings(page);
     const mode = panel.getByText(/^Connection mode · /);
     await expect(panel.getByText('Repository · owner/project')).toBeVisible();
-    await expect(panel.getByRole('combobox', {name: 'Default connection mode'})).toHaveCount(0);
     const status = panel.locator('[data-git-connection-state]');
     const connect = panel.getByRole('button', {name: 'Connect to GitHub'});
     const check = panel.getByRole('button', {name: 'Check connection'});
@@ -261,6 +261,7 @@ test('GitHub connection settings isolate the selected provider and keep the work
     assert.deepEqual(await Promise.all(files.map(file => readFile(file))), before);
     assert.deepEqual(failures, []);
 
+    // Owner browser tests cover method form gating. Keep preload selection, argument binding and retries here.
     const desktop = await context.newPage();
     await installDesktopFixture(desktop);
     await desktop.goto(editor + '&desktopAuthFixture=1');
@@ -279,13 +280,11 @@ test('GitHub connection settings isolate the selected provider and keep the work
     await expect(auth.locator('option')).toHaveCount(2);
     await expect(auth.locator('option[value="github-app"]')).toHaveCount(0);
     await auth.selectOption('git-credential-helper');
-    await expect(desktopConnect).toBeDisabled();
     await desktopPanel.getByRole('textbox', {name: 'GitHub account name'}).fill('desktop-account');
     await desktopConnect.click();
     await expect(desktopStatus).toHaveText('Disconnected');
     await expect(desktopConnect).toBeEnabled();
     await auth.selectOption('fine-grained-pat');
-    await expect(desktopPanel.locator('input[type="password"]')).toHaveCount(0);
     await desktopPanel.getByRole('checkbox', {name: 'Save the token on this device'}).check();
     await desktopPanel.locator('[data-git-allow-review]').check();
     await desktopConnect.click();

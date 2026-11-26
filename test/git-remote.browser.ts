@@ -168,17 +168,13 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const editorDirty = (changed: boolean) => page.evaluate(changed => (window as any).ReduxStore.dispatch({
         type: 'scratch-gui/project-changed/SET_PROJECT_CHANGED', changed
     }), changed);
+    // The Git owner covers dirty disk files; the Editor must also reject unsaved VM changes.
     await editorDirty(true);
     const priorRequests = fixture.upstream.length;
     await runRemote('Update local branch and files (pull)');
     await expect(panel.getByRole('alert')).toContainText('before getting changes from GitHub');
     assert.equal(fixture.upstream.length, priorRequests);
     await editorDirty(false);
-    await writeFile(source, 'external edit\n');
-    await runRemote('Update local branch and files (pull)');
-    await expect(panel.getByRole('alert')).toContainText('before getting changes from GitHub');
-    assert.equal(await readFile(source, 'utf8'), 'external edit\n');
-    await writeFile(source, 'initial\n');
     await runRemote('Update local branch and files (pull)');
     // Reloading the Editor project can replace the panel and its notice. Verify the actual pull instead.
     await expect.poll(() => git(client, 'rev-parse', 'HEAD')).toBe(incoming);

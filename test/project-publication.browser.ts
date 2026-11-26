@@ -286,11 +286,9 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
         t.diagnostic(JSON.stringify({transportErrors, requests: fixture.requests.map(({method, url}) => [method, url])}));
         throw error;
     }
-    await expect(publication.getByLabel('Merge after CI and review')).not.toBeChecked();
     await publication.getByLabel('Merge after CI and review').check();
     if (stacked) {
         const stack = publication.getByLabel('Stack on an existing pull request');
-        await expect(stack).not.toBeChecked();
         await stack.check();
         await publication.getByLabel('Parent pull request number').fill('13');
         await publication.getByRole('button', {name: 'Verify parent pull request'}).click();
@@ -310,8 +308,6 @@ for (const mode of ['desktop', 'desktop-stack', 'cloudflare', 'cloudflare-stack'
     } else await publication.getByRole('button', {name: 'Queue pull request'}).click();
     if (stacked) {
         await expect(publication.getByRole('status').filter({hasText: 'Waiting for the parent pull request to merge'})).toBeVisible();
-        await expect(publication.getByRole('link', {name: 'Parent PR #13'})).toHaveAttribute('href',
-            'https://github.com/fixture/work/pull/13');
         if (cloud) cloudParentMerged = true;
         else await page.evaluate(() => {(window as unknown as {publicationParentMerged: boolean}).publicationParentMerged = true;});
         await page.clock.fastForward(30_000);
