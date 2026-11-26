@@ -1810,3 +1810,52 @@ test('applies external project-file changes to the real workspace and preserves 
     assert.deepEqual(io.loads, ['string', 'string'], 'explicit discard reloads directly from the folder');
     assert.deepEqual(errors, []);
 });
+
+test('stages and unstages an ordinary file through the project explorer', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder} = await createDiskProject(t, 'tw-project-explorer-stage-', true);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('config', 'user.name', 'Editor explorer fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    git('add', '.');
+    git('commit', '-qm', 'Initial project');
+    const head = git('rev-parse', 'HEAD');
+    const original = git('show', `HEAD:${noteFile}`);
+    const source = path.join(folder, noteFile);
+    const draft = note('a worktree edit');
+    await writeFile(source, draft);
+    await writeFile(path.join(folder, 'other.txt'), 'Previously staged\n');
+    git('add', 'other.txt');
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await page.getByRole('toolbar', {name: 'Drawer views'}).getByRole('button', {name: 'Project folder', exact: true}).click();
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    await expect(page.locator('.twgit-panel:visible')).toHaveCount(0);
+    const row = page.getByRole('tree', {name: 'Project folder'}).getByRole('treeitem', {name: new RegExp(`^${noteFile}`)});
+    const context = page.getByRole('menu', {name: 'File and folder actions'});
+    const stagedFiles = () => git('diff', '--cached', '--name-only').split('\n').sort();
+
+    await row.focus();
+    await page.keyboard.press('Shift+F10');
+    await context.getByRole('menuitem', {name: 'Stage in Git', exact: true}).click();
+    await expect.poll(stagedFiles).toEqual([noteFile, 'other.txt']);
+    await expect(row).toHaveAttribute('data-staged', '');
+    assert.equal(git('show', `:${noteFile}`), draft.trim());
+    assert.equal(git('rev-parse', 'HEAD'), head);
+
+    await row.click({button: 'right'});
+    await context.getByRole('menuitem', {name: 'Unstage in Git', exact: true}).click();
+    await expect.poll(stagedFiles).toEqual(['other.txt']);
+    await expect(row).not.toHaveAttribute('data-staged');
+    assert.equal(git('show', `:${noteFile}`), original);
+    assert.equal(git('show', ':other.txt'), 'Previously staged');
+    assert.equal(await readFile(source, 'utf8'), draft);
+    assert.equal(git('rev-parse', 'HEAD'), head);
+    assert.deepEqual(errors, []);
+});
