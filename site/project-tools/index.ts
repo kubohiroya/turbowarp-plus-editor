@@ -48,6 +48,8 @@ export const installProjectToolsHost: typeof tools.installProjectToolsHost = (vm
     const dispose = store && installProjectOpenTabs(vm, {document,
         locale: () => settings.getLocale?.() ?? settings.locale ?? 'en',
         ready: () => store.getState().scratchGui.projectState.loadingState.startsWith('SHOWING_'),
-        subscribe: listener => store.subscribe(listener), isCancelled: error => extensionLoadErrors.isCancelled(error)});
+        subscribe: listener => store.subscribe(listener), isCancelled: error => extensionLoadErrors.isCancelled(error),
+        setLoading: visible => store.dispatch({type: `scratch-gui/modals/${visible ? 'OPEN_MODAL' : 'CLOSE_MODAL'}`,
+            modal: 'loadingProject'})});
     return {...host, dispose() {dispose?.(); return host.dispose();}};
 };

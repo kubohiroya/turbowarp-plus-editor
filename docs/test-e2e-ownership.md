@@ -46,11 +46,23 @@ Desktop（アプリ起動）、macOS の実ファイルピッカー、OS クリ�
 
 ### 最小化と残件
 
+#### 別タブ SB3 の進捗表示（#823、2026-11-26）
+
+現行 Editor `aeeb21e` と Workbench 0.40.0 の固定ビルドでは、受信タブの進捗要素が現れず完了・取消の2件が失敗した。Workbench の `project-open-tabs` が既存ホストの読み込み画面を開閉する任意の `setLoading` 接続口を提供し、Editor は既存 Redux の `loadingProject` modal に結線する。ファイル読み取りから VM のロードが確定するまで表示し、成功・取消・読み取り失敗・ロード失敗で解除する。Scratch GUI のソース変更はない。
+
+[Workbench #162](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/162) は [PR CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45807378218) で新規単体4件と進捗 UI の日英2件の実行成功を確認してから Squash Merge（`c9b683b803fd66cc39724b2a661e621b8a983a9d`）。単体262件成功、ブラウザーは42件登録・34件成功・8件skipで、新規6件はskipではない。8件の未実行は今回の移管の証拠にしない。[main CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45807751068) と[公開workflow](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45807751092) が成功した。
+
+正式 npm 版0.40.1のgitHeadは同マージコミットに一致し、公式SHA-512とsha1を照合した。圧縮アーカイブのintegrityは候補と異なるが、全239ファイルの内容は一致する。Editorは公式integrityで固定する。表示の履歴・時刻・hover/focus・承認中の状態・終了は所有パッケージへ移管し、上流CIの実行成功後にEditorの重複20行だけを除いた。移植したテストの由来はEditorのGPL-3.0-or-laterであり、Workbenchの製品コードのライセンスと分けて明記した。
+
+ローカルでは、表示ライフサイクルを含むWorkbench単体10件、実タブの受け渡しをChromium・WebKit各10件、進捗UIの日英ブラウザー2件が成功した。Editorの候補ビルドでは、受信タブでの進捗・実承認・拡張実行・完了と、取消後の子タブ終了を2件とも確認し、削減後の2件も成功した。どちらも元タブのVMの作品JSONと拡張未実行を維持する。旧テストの元タブ参照、元タブだけのロード待機、旧承認UIの操作を現行経路へ修正した。OS入力や公開サービスへの書き込みは行わない。
+
+正式npm依存のEditor `e79f5018eaafacd87e9366a9abbd80adce8a7c04` で対象2件が成功（fail/skip 0）。型検査・責務境界2件・Pagesビルドと固定成果物のリビジョン照合も成功した。PR/main CI・配信リビジョンの最終結果はIssue #823へ記録し、Issue全体の完了と区別する。切り戻しはEditorの依存固定と結線をまとめて直前の検証済み版へ戻し、必要ならEditorの詳細検証を先に復元する。作品・承認データを削除しない。
+
 - セレクタと操作を、通常の承認／個別確認、ファイルを受け取る別タブ、日英の「更新」、現行の読み込み失敗画面に合わせた。承認前に説明を表示するための通信と、承認後の実行用フェッチを区別し、後者の回数と VM の実行を検証した。ケース数は減らしていない。
 - `test/e2e/turbowarp/wait-public.cts` は #515 以後に呼び出しも出力の参照もなく、現行の配布確認は `verify-remote-editor.cts` が担当する。未使用の43行は [Editor #844](https://github.com/kubohiroya/turbowarp-plus-editor/pull/844) で削除し、前後で基盤33件と Playwright の列挙が維持されたことを確認した。固定ビルド照合、共通サーバー、事前・事後の配布物確認、報告、SB3やTLSのフィクスチャは保持する。
 - 開始ページの署名付き作品 URL は、転送先 HTML の代替ではなく、実際の Editor・VM が同じ URL のクエリを使い、クリック後一度だけ読み込むことまで確認する。作品はローカル生成の拡張なし SB3 で、外部作品は実行しない。
 - キャッシュ不可の規則は [Loader 0.16.1 の CI](https://github.com/kubohiroya/turbowarp-extension-loader/actions/runs/45591120258) でキャッシュの読み書きがなく取得は一度だけと確認済み。Editor の2ケースを1件にまとめ、実承認画面の選択肢と VM の実行を保持した。変更した2ファイルは統合後29件実行・成功、スキップなし。
-- **未完: ローカル SB3 の進捗表示2件（完了／取消）。** 実ファイルを受け取る別タブで、拡張の承認画面までは表示されるが、`[data-project-load-progress]` が現れない。固定版の [Workbench の別タブ経路](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/blob/d935ae50683cbfc55ab55a41529c00cc7c497914/src/project-open-tabs.ts) は受信したファイルを直接 `vm.loadProject` に渡す。一方、[Editor の組み込み](https://github.com/kubohiroya/turbowarp-plus-editor/blob/6c09ab4e8eada248b0cb5ba9bdcddca1009dd57d/scripts/site/connect-project-load-progress.cts) は既存 GUI のロード画面に `ProjectLoadProgress` を載せる。実際の受信タブのみを測る切り分けでも、承認画面まで到達した2件で進捗と承認フェーズ要素はともに0件だった。承認後の拡張実行と、取消後に受信タブを閉じる動作は確認でき、元のタブは変わらなかった。別タブ経路にも同画面を結線するか、表示仕様を決め直す必要がある。既存2件は削除しない。
+- **解消: ローカル SB3 の進捗表示2件（完了／取消）。** 上記Workbench 0.40.1の接続口で既存GUIのロード画面を開く。URL起動で代用せず、受信タブの解析・承認・完了と取消を検証し、元タブの作品を保つ。履歴表示などの詳細は所有先CIの実行成功後にだけ削減し、Editorの統合2件を保持する。
 - **未完: 移管後の削減。** 同じ版の所有先 CI の実行を確認したが、コンポーネント内部の検証だけでは、実 Editor での入口、別タブ、配布物、VM 接続を代替できない。下記の結果は移管先の候補を選ぶ根拠であり、Editor の既存カバレッジを減らす根拠ではない。
 
 ### 所有先 CI の固定版対応
