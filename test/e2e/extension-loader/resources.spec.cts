@@ -73,8 +73,12 @@ for (const locale of ['ja', 'en']) {
         await expect(row.locator('details')).toHaveAttribute('open', '');
         await expect(row.locator('details')).toContainText(locale === 'ja' ? '音声トラックは取得直後に停止' : 'audio tracks are immediately stopped');
         await expect(row.getByRole('checkbox')).not.toBeChecked();
-        await expect(page.getByText(locale === 'ja' ? 'リソース利用の申告：なし' : 'Resource use: none declared', {exact: true})).toBeVisible();
-        await expect(page.getByText(locale === 'ja' ? 'リソース利用：未申告' : 'Resource use: not declared', {exact: true})).toBeVisible();
+        // The Security Dialog's Japanese add-mode test owns these exact labels.
+        // Check both catalog entries through the real Editor once, in English.
+        if (locale === 'en') {
+            await expect(page.getByText('Resource use: none declared', {exact: true})).toBeVisible();
+            await expect(page.getByText('Resource use: not declared', {exact: true})).toBeVisible();
+        }
         await page.setViewportSize({width: 390, height: 844});
         await row.scrollIntoViewIfNeeded();
         const box = await row.boundingBox();
