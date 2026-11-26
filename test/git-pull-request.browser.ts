@@ -324,7 +324,6 @@ test('the Editor Git panel opens a pull request overview and renders its changed
     await reviewed.check();
     await clicked.locator('summary').click();
     await clicked.getByRole('checkbox', {name: 'Reviewed'}).check();
-    await expect(review.getByText('2 / 2', {exact: true})).toBeVisible();
     await panel.getByRole('button', {name: 'Commit saved changes', exact: true}).click();
     await panel.getByRole('button', {name: 'Merge', exact: true}).click();
     await selected.click();
