@@ -22,6 +22,8 @@ Project Folder 0.22.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp
 
 Project Folder の [改名・削除確認 CI](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/actions/runs/45726319919) は、ブラウザー内保存のファイルとフォルダーを使い、改名時の内容保持、取り消し時の無変更、確認後の削除を実行した。Editor には、実デバイスフォルダーの改名後もファイル内容と無関係な Git index を保持する接続、および一覧から実際に Stage / Unstage する経路を残す。フォルダー削除は上流のファイル削除で代替せず、現行の実デバイス経路で取り消し時の子ファイルと、確定後の対象・無関係な作品／ファイルを確認する。
 
+現行の実デバイスフォルダーでは、Git パネルを閉じた状態で作品ファイルを外部編集した際、作品ペイロードの読み込みは一度だけで、他には Git 参照しか読まないことを確認する。既知の外部変更は対象スクリプトだけを更新し、他の対象・Blockly の選択や VM を維持する。未知の変数があれば自動適用せず、全体の再読み込みを案内する。いずれも HEAD・index や作業ファイルを書き換えない。旧い入れ子作品を選んだときの読み込み範囲はこの証拠では代替しない。
+
 Stage Controls は [Workbench #157 の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45724799230) で単体252件成功、skip 0。実 GUI での停止ボタン横のスロット、VM と表示サイズ、録画ボタンの操作・状態連携は Editor に残す。
 
 切り戻しは該当する Editor のテスト PR の revert。製品コードや通常の CI コマンドは変更しない。
