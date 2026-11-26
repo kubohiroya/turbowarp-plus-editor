@@ -2056,3 +2056,61 @@ test('splices a device-folder script in Blockly but refuses a disk edit with an 
     assert.equal(git('rev-parse', 'HEAD'), head);
     assert.deepEqual(errors, []);
 });
+
+test('stages and unstages a project subfolder recursively without touching other paths', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder} = await createDiskProject(t, 'tw-project-recursive-stage-', true);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('config', 'user.name', 'Editor recursive stage fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    await mkdir(path.join(folder, 'imports', '教材'), {recursive: true});
+    await mkdir(path.join(folder, 'imports-other'));
+    await writeFile(path.join(folder, 'imports', 'reference.txt'), 'Original reference\n');
+    await writeFile(path.join(folder, 'imports-other', 'outside.txt'), 'Original sibling\n');
+    git('add', '.');
+    git('commit', '-qm', 'Initial project');
+    const head = git('rev-parse', 'HEAD');
+    const nested = 'imports/教材/data.bin';
+    const binary = Buffer.from([0, 1, 127, 255]);
+    await writeFile(path.join(folder, 'imports', 'reference.txt'), 'Updated reference\n');
+    await writeFile(path.join(folder, nested), binary);
+    await writeFile(path.join(folder, 'imports-other', 'outside.txt'), 'Unstaged sibling\n');
+    await writeFile(path.join(folder, noteFile), note('Previously staged'));
+    git('add', noteFile);
+    const otherOid = git('rev-parse', ':' + noteFile);
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await page.getByRole('toolbar', {name: 'Drawer views'}).getByRole('button', {name: 'Project folder', exact: true}).click();
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    await expect(page.locator('.twgit-panel:visible')).toHaveCount(0);
+    const tree = page.getByRole('tree', {name: 'Project folder'});
+    const row = tree.getByRole('treeitem', {name: /^imports(?:,|$)/});
+    const menu = page.getByRole('menu', {name: 'File and folder actions'});
+    const action = async (name: string) => {
+        await row.click({button: 'right'});
+        await menu.getByRole('menuitem', {name, exact: true}).click();
+    };
+    const staged = () => git('diff', '--cached', '--name-only', '-z').split('\0').filter(Boolean).sort();
+    assert.deepEqual(staged(), [noteFile]);
+    await action('Stage in Git');
+    await expect.poll(staged).toEqual(['imports/reference.txt', nested, noteFile].sort());
+    assert.equal(git('show', ':imports/reference.txt'), 'Updated reference');
+    const indexBinary = execFileSync('git', ['--no-optional-locks', 'show', ':' + nested], {cwd: folder});
+    assert.deepEqual(indexBinary, binary);
+
+    await action('Unstage in Git');
+    await expect.poll(staged).toEqual([noteFile]);
+    assert.equal(git('show', ':imports/reference.txt'), 'Original reference');
+    assert.equal(git('rev-parse', ':' + noteFile), otherOid);
+    assert.equal(git('rev-parse', 'HEAD'), head);
+    assert.equal(await readFile(path.join(folder, 'imports', 'reference.txt'), 'utf8'), 'Updated reference\n');
+    assert.equal(await readFile(path.join(folder, 'imports-other', 'outside.txt'), 'utf8'), 'Unstaged sibling\n');
+    assert.deepEqual(await readFile(path.join(folder, nested)), binary);
+    assert.deepEqual(errors, []);
+});

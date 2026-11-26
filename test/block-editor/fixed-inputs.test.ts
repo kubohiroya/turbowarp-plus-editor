@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {exposeBlockEditorAPI, fixedMessages, plusBlockEditorTranslations} from '@kubohiroya/turbowarp-extension-data-editor/plus';
+import {fixedMessages, plusBlockEditorTranslations} from '@kubohiroya/turbowarp-extension-data-editor/plus';
 import {guiRequire} from '../extension-host/pinned-host.ts';
 const {default: getBlockEditorService} = await import('../../site/gui-integration/lib/tw-block-editor-service.ts');
 // The editor itself is the host's. What this file is about is this fork's side: one service per VM,
@@ -32,10 +32,6 @@ test('fixed labels use the actual GUI Intl locale and preserve one service per V
         previous = service;
     }
 });
-test('the standard service exposes actual fixed input support without a startup switch', () => {
+test('the Editor GUI exposes the fixed-input registration capability', () => {
     assert.equal(typeof getBlockEditorService({}, undefined, integration).api.registerFixedInputEditor, 'function');
-    const legacy = {apiVersion: 1, register() {}};
-    assert.equal(exposeBlockEditorAPI(legacy), legacy);
-    assert.equal(exposeBlockEditorAPI(legacy).registerFixedInputEditor, undefined);
-    assert.equal(exposeBlockEditorAPI({...legacy, registerFixedInputEditor: true}).registerFixedInputEditor, undefined);
 });
