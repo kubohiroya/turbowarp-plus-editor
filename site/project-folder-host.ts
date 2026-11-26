@@ -23,7 +23,7 @@ import {createCloudflarePublicationBridge} from '@kubohiroya/turbowarp-plus-edit
 import {bindProjectCatalogFolder, loadedProjectTitle, projectSaveName, projectScreenState, setProjectSaveName} from './project-tools/index.ts';
 import {followProjectTitleCommits, reflectProjectTitle} from '@kubohiroya/turbowarp-plus-editor-workbench/project-title';
 import {showNotice} from '@kubohiroya/turbowarp-plus-editor-workbench/project-notice';
-import {bindProjectOpenTabActions, openProjectInNewTab} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
+import {bindProjectOpenTabActions, openBrowserProjectInNewTab, openProjectInNewTab} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
 import {flushPendingSurfaceEdits} from '@kubohiroya/turbowarp-plus-editor-windows/surfaces';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
@@ -265,12 +265,14 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         }
     } : undefined;
     // Without the folder picker, repositories live in the browser's storage, with the project folder inside (#660).
-    const browserProjects = folderLocation === 'browser' ? folder.browserProjects : null;
-    const browserFolders: BrowserRepositoryFolders | undefined = browserProjects ? {
-        async create(title) {
-            // One repository holds one project at its root; the initial commit is written into the empty folder.
-            return (await browserProjects.create(title, {projectPath: ''})).root;
-        },
+    const browserProjects = folderLocation === 'browser' ? browserStorage : null;
+    const createBrowserFolder = browserStorage ? async (title: string) => {
+        // One repository holds one project at its root; the initial commit is written into the empty folder.
+        const entry = await browserStorage.create(title, {projectPath: ''});
+        return {directory: entry.root, browserProjectId: entry.id};
+    } : undefined;
+    const browserFolders: BrowserRepositoryFolders | undefined = browserProjects && createBrowserFolder ? {
+        create: createBrowserFolder,
         async choose() {
             const choice = await chooseBrowserProject({document, projects: browserProjects, locale, purpose: 'open'});
             return choice && browserProjects.root(choice.project.id);
@@ -280,7 +282,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         view, locale, desktop: view.EditorPreload?.localGitCreation, services: repositoryHostServices(),
         cloudflare,
         browserFolders,
-        createBrowserFolder: browserStorage ? async title => (await browserStorage.create(title, {projectPath: ''})).root : undefined,
+        createBrowserFolder,
         author: readAuthor,
         async prepareSource(serialize, current, title) {
             await flushPendingSurfaceEdits();
@@ -296,11 +298,25 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
                 vm.off('PROJECT_CHANGED', changed);
             }
         },
-        async openProject(project, root) {
+        async openProject(project, root, browserProjectId) {
+            if (typeof browserProjectId === 'string') {
+                if (!await browserStorage?.lookup(browserProjectId)) throw new DOMException('Unknown browser project', 'NotFoundError');
+                return openBrowserProjectInNewTab(vm, browserProjectId);
+            }
             if (openProjectInNewTab(vm, {kind: 'folder', directory: project, root})) return false;
             if (await folder.openDirectory(project, () => view.confirm(openSavedFolderQuestion(locale))) !== 'opened') return false;
             await gitPanel?.selectRepository?.(root, project);
             return true;
+        },
+        async openLegacyProject() {
+            // Older journals lack destination provenance. Ask explicitly without inspecting or transferring their handle.
+            const command = browserStorage ? 'browser-folder' : 'folder';
+            if (!openProjectInNewTab(vm, {kind: 'command', command})) {
+                const actions = projectFolderActions(vm, locale);
+                if (browserStorage) actions?.openBrowser?.();
+                else actions?.open();
+            }
+            return false;
         }
     }) : undefined;
     let journal: CommitJournal;
@@ -352,7 +368,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         let queue: Promise<CommitQueue>;
         const getQueue = () => queue ??= (async () => {
             guard();
-            const relative = await repository.root.resolve(directory);
+            const relative = repository.root === directory ? [] : await repository.root.resolve(directory);
             guard();
             if (!relative) throw Object.assign(new Error('Select the repository containing the open project folder'), {code: 'outsideRepository'});
             journal ??= __TW_PLUS_CREATE_SAVE_COMMIT_JOURNAL__(view.indexedDB);
@@ -422,7 +438,11 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
     } : undefined;
     folders.set(vm, {folder, workflows, openRemote});
     bindProjectCatalogFolder(vm, {folder, openRemote, readRemote: readProjectRemote});
-    bindProjectOpenTabActions(vm, {openDirectory: (directory, root) => folder.openDirectory(directory, () => true, root)});
+    bindProjectOpenTabActions(vm, {
+        openDirectory: (directory, root) => folder.openDirectory(directory, () => true, root),
+        openBrowserProject: async id =>
+            await folder.openBrowserProject(id, () => true, {notProjectDialog: false}) === 'opened'
+    });
     // A title the person committed in the menu bar renames what the browser can rename, and says what it cannot (#679).
     const stopTitleWatch = followProjectTitleCommits(document, {
         readTitle: () => store.getState().scratchGui.projectTitle,
