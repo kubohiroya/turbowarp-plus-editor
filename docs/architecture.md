@@ -96,7 +96,7 @@ curl -fsS -H 'Cache-Control: no-cache' \
 
 npmパッケージはブランド資産・編集ボタン用のAPI・固定ソースの記録を提供します。GUIの巨大なビルド一式をnpmへ同梱せず、実行するEditorはGitHub Pagesで配信します。
 
-`v<package version>` タグをmainに含まれるコミットへ付けると、release workflowが単体/基盤チェックと同じSHAの正常な統合CIを確認してからpackします。同一の検証済みアーカイブをGitHub Releaseとnpmへ公開し、既存版が異なるバイト列の場合は停止します。
+`v<package version>` タグを main に含まれるコミットへ付けると、安定版はタグ対象の同一 SHA を `verify-stable` で一度フル検証し、公開ジョブで単体・基盤チェックを繰り返しません。プレリリースは公開ジョブで単体・基盤を実行し、同一 SHA の通常統合 CI 成功を照合してから pack します。同一の検証済みアーカイブをGitHub Releaseとnpmへ公開し、既存版が異なるバイト列の場合は停止します。
 
 npm Trusted Publisherは `kubohiroya/turbowarp-plus-editor` / `release.yml` / environment未指定を設定します。workflowはOIDCを使用し、npm tokenを保持しません。初回公開でTrusted Publisher設定を利用できない場合は、ユーザーがnpm CLIのWeb認証を行う手順が必要です。
 
