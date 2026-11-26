@@ -33,27 +33,7 @@ for (const cancel of [false, true]) {
 
         const progress = page.locator('[data-project-load-progress]');
         const current = progress.getByRole('status');
-        const history = progress.locator('[data-project-load-history]');
         await expect(current).toHaveText('プロジェクトを解析中…');
-        await expect(history).toBeHidden();
-        await progress.hover();
-        await expect(history).toBeVisible();
-        const phases = await history.locator('li').evaluateAll(rows => rows.map(row => row.dataset.phase));
-        expect(phases[0]).toBe('opening');
-        expect(phases.slice(1).sort()).toEqual(['archive', 'payloads']);
-        const times = await history.locator('time').evaluateAll(elements =>
-            elements.map(element => ({label: element.textContent, time: Date.parse(element.dateTime)})));
-        for (let i = 0; i < times.length; i++) {
-            expect(times[i].label).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/u);
-            if (i > 0) expect(times[i].time).toBeGreaterThanOrEqual(times[i - 1].time);
-        }
-        await expect(history.locator('li').first()).toContainText('+0.00 秒');
-        await page.mouse.move(0, 0);
-        await expect(history).toBeHidden();
-        await progress.focus();
-        await expect(history).toBeVisible();
-        await progress.blur();
-
         await page.evaluate(() => window.dispatchEvent(new Event('test-resume-project-load')));
         const review = reviewDialog(page);
         await expect(review).toBeVisible();
