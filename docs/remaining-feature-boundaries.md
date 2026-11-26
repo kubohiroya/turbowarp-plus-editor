@@ -14,7 +14,7 @@ Editor `6d2c73199de2b9ff76e27c516f7d2354605a9ed8` を調査元とし、残って
 
 Editorの対象7ファイルは配布URL、カタログと制限値、共有するVM/Renderer/Packager、GUIのRedux/Desktop preloadから読む値とコールバックを渡します。GUIの固定 `60b87e2f2503206847f509285aa4de3cee3670c7` とVMの `88a2c06e9deb3dd652c52c20daf4f728b387d41d` は変えず、GUIソースの差分はありません。新しいパッケージやEditor内のworkspaceパッケージ、既定OFFの新フラグは作りません。既定値と保存形式を維持します。
 
-統合中にmainへ入ったProject Folderの画面状態保存とWorkbenchの外部更新APIは保持し、そのcallbackも分離先から渡します。WorkbenchはGit >=0.32.2 / Project Folder >=0.22.3を要求します。開発用の共有LoaderはEditorと同じnpm overrideで一つに固定し、公開版だけのクリーンinstallで確認します。
+統合中にmainへ入ったProject Folderの画面状態保存とWorkbenchの外部更新APIは保持し、そのcallbackも分離先から渡します。WorkbenchはGit >=0.32.2 / Project Folder >=0.22.3を要求します。開発用の共有LoaderはEditorと同じnpm overrideで一つに固定し、npmの公開版4件と固定したTestコミットでクリーンインストールを確認します。
 
 ## 由来とライセンス
 
@@ -24,7 +24,7 @@ Editorの対象7ファイルは配布URL、カタログと制限値、共有す�
 
 `config/site-ownership.json` で `site/` 全ファイルを棚卸しし、新しいhelperファイルによる検査の迂回を検出します。今回の6つの機能ファサードは、従来のclass/Map/Set/JSX検査に加え、矢印関数の中も含むlet/var・代入・ループ・async制御・DOM操作・コレクションによる照合・JSON/crypto処理を検出します。HTML出力のshellにはUI要素・文言・CSS・inline scriptを置きません。
 
-nativeの読み取り、引数の投影、subscribe/dispatch、共有コンストラクターの生成は接続として許可します。native-gui-adapter分類には既存のGUI内部依存やGPL由来のアダプターを含みます。構文検査だけで全ファイルの責務を証明するものではなく、変更時の所有者レビューも必要です。過去の26ファイルの検査や、本番用の公開版・ライセンス・完全固定の検査は維持します。
+nativeの読み取り、引数の投影、subscribe/dispatch、共有コンストラクターの生成は接続として許可します。native-gui-adapter分類には既存のGUI内部依存やGPL由来のアダプターを含みます。構文検査だけで全ファイルの責務を証明するものではなく、変更時の所有者レビューも必要です。過去の26ファイルの検査、本番用の配布元・ライセンス・完全固定を確認します。
 
 ## 検証と反映の条件
 
@@ -33,9 +33,9 @@ nativeの読み取り、引数の投影、subscribe/dispatch、共有コンス�
 - 最新main統合後、Project Folderは画面状態保存を含む13件、Workbenchは画面状態13件とheadlessの接続・破棄1件を確認。
 - 上流5件はCI成功後、最新base/headと公開差分を確認してSquash Merge。
 - npmアーカイブはSHA-512、MPL-2.0、同梱srcとマージ済みソースの一致を照合する。
-- Editorは5件のnpm公開を確認してから完全版とintegrityを固定し、クリーンinstall・build・変更範囲のヘッドレス結合と配信リビジョンを確認する。
+- EditorはLoader、Project Folder、Git、Workbenchを公開済みnpm版に固定する。Test 0.4.1はnpm公開が再開するまで、CIが成功したGitHubのマージコミット `d62812b77c6fb1d897705706fe82a4bf27349b7b` に一時固定する。クリーンインストールとビルド、変更範囲のヘッドレス結合、配信リビジョンとライセンス情報のソースを確認する。
 
-上流のマージとEditorへの本番反映は別です。Test 0.4.1のnpm公開はCLIのChrome認証待ちであり、Editorの正式な固定・PR・配信確認は未完了です。未公開版のintegrityやURLを作って固定せず、検証用アーカイブも追跡しません。公開状態の更新はIssue #875に記録します。Desktopの実ウィンドウやOSの入力による検証は行いません。
+Test 0.4.1のnpm公開後は、公式npmの配布物とGitソースの対応を確認し、依存指定とlockfileをnpmの `0.4.1` へ戻します。検証と配信の状況はIssue #875に記録します。
 
 移管元を基準とする対象7ファイルは1,283行から191行へ減りました。行数は補助情報であり、責務は上の所有APIと接続内容に基づいて判断します。
 
