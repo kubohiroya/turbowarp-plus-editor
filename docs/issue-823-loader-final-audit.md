@@ -113,7 +113,7 @@ RuntimeのGUI pin `60b87e2f`、VM `88a2c06e`、Blocks `4113c534`、renderer `655
 
 [既存の同条件3回ずつの測定](https://github.com/kubohiroya/turbowarp-plus-editor/issues/823#issuecomment-7177184281)を保持する。ubuntu image・Node26・npm/GUI cache hitを揃えた適格mainジョブの中央値は131→109秒。これは成功済みPRの7工程を再利用できた変更に限る観測で、全PR・製品変更への一律短縮ではない。手動browser/E2Eの削減は通常CIの追加短縮へ計上しない。
 
-Loaderの実行・所有先・保持理由と、Git/WebKit・最小runtime・配布HTML・CI比較の引き継ぎ条件を照合した。旧文書の「未完」はその時点の履歴として区別する。本監査の公開前に残るのは、このテスト/文書だけのPRのCI・マージ・通常配信の結果記録と、Issue #823の最終チェック更新・close。これらはユーザー承認後に実行し、実際のURLとSHAをIssueへ記録する。
+Loaderの実行・所有先・保持理由と、Git/WebKit・最小runtime・配布HTML・CI比較の引き継ぎ条件を照合した。旧文書の「未完」はその時点の履歴として区別する。公開直前の確認で、Issue #823は[既存の完了記録](https://github.com/kubohiroya/turbowarp-plus-editor/issues/823#issuecomment-7192151938)によりcompletedでcloseされていた。本追補のPR CI・マージ・通常配信を確認し、実際のURLとSHAをIssueへ記録して、既存の完了状態を維持する。
 
 Workbenchの重複候補[#163](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/163)はclosed・未マージであることを確認した。採用済み#162・0.40.1の証拠へ集約する。
 
