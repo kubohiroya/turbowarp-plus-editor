@@ -20,6 +20,8 @@ Project Folder 0.22.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp
 
 **未完:** 旧 `Open Project Folder…` と独立したリポジトリ選択が前提の大きな統合テストは、現在の入口では初期操作で失敗する。実ルートで別々に検証したものだけを分離し、任意の入れ子作品フォルダーを別の親リポジトリに結び付ける旧 UI は、[リポジトリルートに作品を置く現行仕様](../features/git/index.html) に置き換わった。従来の `project/` を扱う互換・移行テスト、作品だけに限定する読み込み、一部のファイル操作、ステージ済みファイルの保護、PR バッジなどは別の責務であり、未移行の検証は削除しない。WebKit はブラウザー保管の受け渡し後、実作品を読む前の `FileSystemDirectoryHandle.resolve()` でレンダラーが終了する。正常な別タブ起動と通常の SB3 の受け渡しを確認しても、この失敗の代替にはならない。
 
+Project Folder の [改名・削除確認 CI](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/actions/runs/45726319919) は、ブラウザー内保存のファイルとフォルダーを使い、改名時の内容保持、取り消し時の無変更、確認後の削除を実行した。Editor には、実デバイスフォルダーの改名後もファイル内容と無関係な Git index を保持する接続、および一覧から実際に Stage / Unstage する経路を残す。旧ケースにあるフォルダー削除は、上流のファイル削除だけでは代替しない。
+
 Stage Controls は [Workbench #157 の CI](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/actions/runs/45724799230) で単体252件成功、skip 0。実 GUI での停止ボタン横のスロット、VM と表示サイズ、録画ボタンの操作・状態連携は Editor に残す。
 
 切り戻しは該当する Editor のテスト PR の revert。製品コードや通常の CI コマンドは変更しない。

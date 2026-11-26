@@ -614,8 +614,6 @@ test('the browser folder commands save localized Git diffs to the original worki
         await idle();
         await expect(explorerRow(file)).toHaveCount(0);
     };
-    await rename('root-note.txt', 'root-note-renamed.txt');
-    assert.equal(await readFile(path.join(nested, 'root-note-renamed.txt'), 'utf8'), 'root');
     await rename('imports', 'references');
     await explorerRow('references').click();
     await expect(explorerRow('references/資料.txt')).toBeVisible();
@@ -624,7 +622,7 @@ test('the browser folder commands save localized Git diffs to the original worki
     const remove = page.getByRole('dialog', {name: 'Delete'});
     await remove.getByRole('button', {name: 'Cancel'}).click();
     await expect(explorerRow('references')).toBeVisible();
-    for (const file of ['references', 'root-note-renamed.txt']) {
+    for (const file of ['references', 'root-note.txt']) {
         await contextAction(file, 'Delete…');
         await remove.getByRole('button', {name: 'Delete', exact: true}).click();
         await expect(explorerRow(file)).toHaveCount(0);
@@ -1856,6 +1854,18 @@ test('stages and unstages an ordinary file through the project explorer', {timeo
     assert.equal(git('show', `:${noteFile}`), original);
     assert.equal(git('show', ':other.txt'), 'Previously staged');
     assert.equal(await readFile(source, 'utf8'), draft);
+    assert.equal(git('rev-parse', 'HEAD'), head);
+
+    // The package owns dialog variations; keep one real device-folder mutation at the Editor boundary.
+    await row.click({button: 'right'});
+    await context.getByRole('menuitem', {name: 'Rename…', exact: true}).click();
+    const rename = page.getByRole('dialog', {name: 'Rename'});
+    await rename.getByRole('textbox', {name: 'New name'}).fill('renamed-notes.js');
+    await rename.getByRole('button', {name: 'Rename', exact: true}).click();
+    await expect(page.getByRole('treeitem', {name: /^renamed-notes\.js/u})).toBeVisible();
+    assert.equal(await readFile(path.join(folder, 'renamed-notes.js'), 'utf8'), draft);
+    await assert.rejects(readFile(source), {code: 'ENOENT'});
+    assert.deepEqual(stagedFiles(), ['other.txt']);
     assert.equal(git('rev-parse', 'HEAD'), head);
     assert.deepEqual(errors, []);
 });
