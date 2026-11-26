@@ -1,137 +1,18 @@
-/**
- * The page that builds a single HTML out of a project.
- *
- * Moved from the fork's `src/playground/plus-packager.js`. Its markup (`site/plus-packager.html`)
- * and its bundle (`scripts/site/build-plus-packager.cts`) were already this repository's; only the
- * entry was still over there. Nothing of the GUI is left in it: the catalog, the trust it implies,
- * the dialog that asks and the limits it accepts are all read from this side.
- */
-
-import {createFetchPort} from '@kubohiroya/turbowarp-extension-loader';
-import {packagePlusHTML, packagerPageMessages, prepareOfflinePackage} from '@kubohiroya/turbowarp-extension-loader/packager';
-import {createProjectIO} from '@kubohiroya/turbowarp-extension-loader/project-codec';
-import {createSessionTrustProvider} from '@kubohiroya/turbowarp-extension-loader/session-trust';
+import {mountPackagerPage} from '@kubohiroya/turbowarp-extension-loader/packager-page';
 import JSZip from '@turbowarp/jszip';
 import Packager from '@turbowarp/packager-web';
 import {withWaitCursor, withoutWaitCursor} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
-
 import {extensionProjectArchiveOptions} from '../extension-host/config.ts';
 import {createPlusPermissionUI} from '../extension-host/permission-ui.ts';
 import {plusTrustedExtensions} from '../trusted-extensions.ts';
 import {embedPackagedProjectData} from '../project-payloads/codec.ts';
 
-const bundledAssets = __TW_PLUS_PACKAGER_ASSETS__;
-const bundledRuntime = __TW_PLUS_EXTENSION_RUNTIME__;
-// The page has been Japanese only; its words come from the packager.
-const locale = 'ja';
-const text = packagerPageMessages(locale);
-const ui = createPlusPermissionUI(document, locale);
-const status = document.querySelector('[data-testid="plus-package-status"]');
-const file = document.querySelector<HTMLInputElement>('[data-testid="plus-package-file"]');
-const generate = document.querySelector<HTMLButtonElement>('[data-testid="plus-package-generate"]');
-const storage = document.querySelector<HTMLSelectElement>('[data-testid="plus-package-storage"]');
-const resources = document.querySelector<HTMLInputElement>('[data-testid="plus-package-resources"]');
-const download = document.querySelector<HTMLAnchorElement>('[data-testid="plus-package-download"]');
-let input;
-let title = 'TurboWarp-Plus';
-let currentURL;
-let pending = false;
-const setInput = (bytes, name) => {
-    if (pending) return;
-    input = bytes;
-    title = String(name || 'TurboWarp-Plus').replace(/\.sb3$/i, '');
-    status.textContent = text.selected(title);
-    generate.disabled = false;
-    download.hidden = true;
-};
-file.addEventListener('change', async () => {
-    const selected = file.files[0];
-    if (!selected || pending) return;
-    generate.disabled = true;
-    download.hidden = true;
-    try {
-        // The core checks Blob.size before reading or inflating the selected file.
-        await withWaitCursor([document], () => createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions}).prepare(selected));
-        if (file.files[0] === selected) setInput(selected, selected.name);
-    } catch (error) {
-        if (file.files[0] !== selected) return;
-        input = null;
-        status.textContent = text.readFailed(error);
-    }
+mountPackagerPage({
+    document, editorURL: 'editor.html', zip: JSZip, archiveOptions: extensionProjectArchiveOptions,
+    createPackager: () => new Packager(),
+    runtimeBundle: __TW_PLUS_EXTENSION_RUNTIME__, scaffoldingAssets: __TW_PLUS_PACKAGER_ASSETS__,
+    ui: createPlusPermissionUI(document, 'ja'), trusted: plusTrustedExtensions,
+    embedProjectData: embedPackagedProjectData,
+    withBusy: operation => withWaitCursor([document], operation),
+    withoutBusy: operation => withoutWaitCursor(document, operation)
 });
-window.addEventListener('message', event => {
-    if (event.origin !== location.origin || event.source !== window.opener) return;
-    const data = event.data && event.data.twPlusPackage;
-    if (!data || data.type !== 'project' || !(data.bytes instanceof ArrayBuffer)) return;
-    setInput(new Uint8Array(data.bytes), data.name);
-});
-if (window.opener) window.opener.postMessage({twPlusPackage: {type: 'ready'}}, location.origin);
-
-generate.addEventListener('click', async () => {
-    if (!input || pending || !resources.checked) {
-        status.textContent = text.chooseProject;
-        return;
-    }
-    pending = true;
-    generate.disabled = true;
-    storage.disabled = true;
-    download.hidden = true;
-    try {
-        await withWaitCursor([document], generateHTML);
-    } finally {
-        pending = false;
-        storage.disabled = false;
-        generate.disabled = false;
-    }
-});
-
-async function generateHTML() {
-    // What the host's catalog lists is trusted like TurboWarp's official gallery, as in the Editor.
-    const trusted = plusTrustedExtensions.catalog;
-    const trustProvider = createSessionTrustProvider({requestApproval: async (code, options) =>
-        await trusted.isTrustedCode(code) || withoutWaitCursor(document, () => ui.requestApproval(code, options))});
-    try {
-        status.textContent = text.verifying;
-        const io = createProjectIO({zip: JSZip, ...extensionProjectArchiveOptions});
-        const prepared = await io.prepare(input);
-        if (!prepared.manifest) throw new Error(text.noManifest);
-        const resourceDependencies = Object.fromEntries(prepared.manifest.extensions.map(spec => [spec.id, [] as never[]]));
-        // A transient failure is retried for a few seconds; say so instead of looking stuck. How
-        // many attempts there are in all comes from the Loader, so this page does not have to know
-        // the retry settings to say "2 of 3".
-        const onRetry = ({url, attempt, attempts, delayMs}) => {
-            status.textContent = text.retrying(url, attempt + 1, attempts);
-            ui.diagnostics({
-                type: 'retry',
-                attempt: attempt + 1,
-                attempts,
-                delayMs,
-                message: url
-            });
-        };
-        const compiled = await prepareOfflinePackage(input, {
-            fetcher: createFetchPort(fetch, {onRetry}), trustProvider, diagnostics: ui.diagnostics
-        }, {zip: JSZip, archiveOptions: extensionProjectArchiveOptions, resourceDependencies});
-        const embeddedProjectData = storage.value === 'embedded-data';
-        const projectBytes = embeddedProjectData ?
-            await embedPackagedProjectData(compiled.projectBytes, compiled.project) : compiled.projectBytes;
-        const runtimeBundle = bundledRuntime;
-        const trustedDigests = await plusTrustedExtensions.listDigests(compiled.manifest);
-        const packager = new Packager();
-        packager.options.app.windowTitle = title;
-        const result = await packagePlusHTML(packager, {...compiled, projectBytes},
-            {runtimeBundle, scaffoldingAssets: bundledAssets, trustedDigests, embeddedProjectData,
-                archiveOptions: extensionProjectArchiveOptions});
-        if (currentURL) URL.revokeObjectURL(currentURL);
-        currentURL = URL.createObjectURL(new Blob([result.data], {type: 'text/html'}));
-        download.href = currentURL;
-        download.download = `${title}.html`;
-        download.hidden = false;
-        status.textContent = text.generated(trustedDigests.length === compiled.manifest.extensions.length);
-    } catch (error) {
-        status.textContent = text.refused(error);
-        ui.diagnostics({type: 'error', code: error.code, message: error.message});
-    } finally {
-        trustProvider.revokeAll();
-    }
-}
