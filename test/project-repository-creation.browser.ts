@@ -173,6 +173,21 @@ for (const {mode, storage, engine} of cases) {
                 // Authorization is simulated; only the real same-origin Editor popup may open.
                 return {opener: view, closed: false, location: {replace() {}}, close() {}};
             };
+            view.projectTabRequests = [];
+            const post = BroadcastChannel.prototype.postMessage;
+            BroadcastChannel.prototype.postMessage = function(message) {
+                if (this.name.startsWith('tw-plus-project-open-') && message?.type === 'open') {
+                    const request = message.request;
+                    view.projectTabRequests.push({keys: Object.keys(request).sort(), kind: request.kind, id: request.id});
+                }
+                return post.call(this, message);
+            };
+            if (storage === 'browser' && new URLSearchParams(location.search).has('twPlusOpenTab')) {
+                // Clip any regression to handle-based rediscovery in the real receiving tab.
+                FileSystemDirectoryHandle.prototype.resolve = async () => {
+                    throw new Error('The browser project must reopen by its known ID without resolving a handle');
+                };
+            }
             if (mode === 'desktop') {
                 let connected = false;
                 view.EditorPreload = {localGitCreation: {
@@ -294,6 +309,45 @@ for (const {mode, storage, engine} of cases) {
         } else checkCommit(fixture.bare, 'main');
         assert.equal(fixture.upstream.filter(request => request.method === 'POST').length, 1);
         if (mode === 'cloudflare') await expect.poll(() => cloudflareRevoke).toBe(1);
+        const creationRequestsBeforeOpening = creationRequests;
+        if (storage === 'browser' && engine === 'chromium') {
+            // Hide only metadata in this isolated fixture, leaving the already committed/pushed working copy in place.
+            const stored = await page.evaluate(async () => {
+                const origin = await navigator.storage.getDirectory();
+                const base = await origin.getDirectoryHandle('turbowarp-plus');
+                const info = await base.getDirectoryHandle('project-info');
+                const names: string[] = [];
+                for await (const name of (info as unknown as {keys(): AsyncIterable<string>}).keys()) names.push(name);
+                if (names.length !== 1) throw new Error('Expected one saved working copy');
+                const [name] = names;
+                const json = await (await (await info.getFileHandle(name)).getFile()).text();
+                await info.removeEntry(name);
+                return {name, json};
+            });
+            const tabCount = page.context().pages().length;
+            const remoteHead = git(fixture.bare, 'rev-parse', 'main');
+            await button('Open the Local Project').click();
+            await expect(dialog.getByText('Could not complete repository setup.')).toBeVisible();
+            assert.equal(page.context().pages().length, tabCount);
+            assert.equal(await page.evaluate(() => (window as any).projectTabRequests.length), 0);
+            assert.equal(creationRequests, creationRequestsBeforeOpening);
+            assert.equal(fixture.upstream.filter(request => request.method === 'POST').length, 1);
+            assert.equal(git(fixture.bare, 'rev-parse', 'main'), remoteHead);
+            await page.evaluate(async ({name, json}) => {
+                const origin = await navigator.storage.getDirectory();
+                const base = await origin.getDirectoryHandle('turbowarp-plus');
+                const info = await base.getDirectoryHandle('project-info');
+                try {
+                    await info.getFileHandle(name);
+                    throw new Error('Open unexpectedly recreated missing project metadata');
+                } catch (error) {
+                    if ((error as DOMException).name !== 'NotFoundError') throw error;
+                }
+                const file = await (await info.getFileHandle(name, {create: true})).createWritable();
+                await file.write(json);
+                await file.close();
+            }, stored);
+        }
         const opened = page.context().waitForEvent('page', {timeout: 20000});
         const retry = page.getByRole('button', {name: 'Open in a new tab', exact: true});
         await button('Open the Local Project').click();
@@ -301,12 +355,36 @@ for (const {mode, storage, engine} of cases) {
             await retry.click();
         }
         const projectTab = await opened;
+        projectTab.on('pageerror', error => errors.push(error.stack || error.message));
         await expect(projectTab.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
         await expect(projectTab.getByRole('textbox', {name: 'Project title here'})).toHaveValue('First GitHub project');
-        await expect(dialog).toBeVisible();
-        await button('Cancel').click();
-        await expect(dialog).toBeHidden();
+        assert.equal(await projectTab.evaluate(() => (window as any).vm.runtime.getTargetForStage().volume), 72);
+        if (storage === 'browser') await expect(dialog).toBeHidden();
+        else {
+            await expect(dialog).toBeVisible();
+            await button('Cancel').click();
+            await expect(dialog).toBeHidden();
+        }
+        const transmitted = await page.evaluate(() => (window as any).projectTabRequests);
+        assert.equal(transmitted.length, 1);
+        if (storage === 'device') assert.deepEqual(transmitted[0].keys, ['directory', 'kind', 'root']);
         if (storage === 'browser') {
+            assert.deepEqual(transmitted[0].keys, ['id', 'kind']);
+            assert.equal(transmitted[0].kind, 'browser-project');
+            assert.match(transmitted[0].id, /^[a-z0-9-]{1,64}$/u);
+            const id = transmitted[0].id;
+            const reopened = await projectTab.evaluate(async id => {
+                const originStorage = await navigator.storage.getDirectory();
+                const app = await originStorage.getDirectoryHandle('turbowarp-plus');
+                const stored = await app.getDirectoryHandle('projects');
+                const folder = await stored.getDirectoryHandle(id);
+                const metadata = await folder.getDirectoryHandle('.git');
+                const refs = await (await metadata.getDirectoryHandle('refs')).getDirectoryHandle('heads');
+                return {id: folder.name,
+                    head: (await (await (await metadata.getFileHandle('HEAD')).getFile()).text()).trim(),
+                    commit: (await (await (await refs.getFileHandle('main')).getFile()).text()).trim()};
+            }, id);
+            assert.deepEqual(reopened, {id, head: 'ref: refs/heads/main', commit: git(fixture.bare, 'rev-parse', 'main')});
             // Without the folder picker, the drawer still shows the project folder and the Git history kept in the browser.
             const drawerView = (name: string) => projectTab.getByRole('toolbar', {name: 'Drawer views', exact: true})
                 .getByRole('button', {name, exact: true});
@@ -316,6 +394,8 @@ for (const {mode, storage, engine} of cases) {
             await expect(projectTab.locator('[data-drawer-content]').getByText('Import project from TurboWarp Plus Editor').first())
                 .toBeVisible();
         }
+        assert.equal(creationRequests, creationRequestsBeforeOpening);
+        assert.equal(fixture.upstream.filter(request => request.method === 'POST').length, 1);
         assert.deepEqual(errors, []);
     });
 }
