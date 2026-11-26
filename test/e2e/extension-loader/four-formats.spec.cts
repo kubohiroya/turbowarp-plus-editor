@@ -179,6 +179,7 @@ test('an SB3 whose Manifest uses a retired spelling fails to open with INVALID_S
     await expect(await showLoadFailureDetails(page)).toContainText('INVALID_SOURCE');
 });
 
+// Keep one real Editor scenario per locale for both the catalog and the subsequent open review.
 for (const lang of ['ja', 'en']) {
     test(`the add screen and the open review are worded in ${lang === 'ja' ? 'Japanese' : 'English'}`, async ({page, context}) => {
         const words = labels[lang];

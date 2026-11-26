@@ -230,27 +230,6 @@ for (const type of ['remote-non-cacheable', 'embedded-file', 'embedded-data']) {
     });
 }
 
-for (const [lang, words] of Object.entries({
-    ja: {title: 'この作品は機能拡張を使います', keep: 'キャッシュを残す（既定）', fetch: '毎回取得する', run: '選んだ内容で実行', stop: '実行しない'},
-    en: {title: 'This project wants to run extensions', keep: 'Keep a copy (default)', fetch: 'Fetch each time', run: 'Run with these choices', stop: 'Do not run'}
-})) {
-    test(`the open review is worded in ${lang === 'ja' ? 'Japanese' : 'English'}`, async ({page}) => {
-        await page.goto(`editor.html?lang=${lang}`);
-        await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
-        const loading = load(page, await project({type: 'remote-cacheable'}));
-        await individualReview(page);
-        await expect(review(page)).toHaveAccessibleName(new RegExp(words.title));
-        await expect(entry(page).getByRole('radio', {name: words.keep, exact: true})).toBeChecked();
-        await expect(entry(page).getByRole('radio', {name: words.fetch, exact: true})).toBeVisible();
-        await expect(review(page).getByRole('button', {name: words.run, exact: true})).toBeVisible();
-        const stop = review(page).getByTestId('twextsec-cancel');
-        await expect(stop).toHaveAccessibleName(words.stop);
-        await stop.click();
-        expect((await loading).code).toBe('EXTENSION_SECURITY_CANCELLED');
-        expect(await executions(page)).toBe(0);
-    });
-}
-
 test('HTTPS redirects and CORS refusal never execute JavaScript, even once the review allowed it', async ({page, baseURL}) => {
     if (process.env.E2E_BASE_URL) {
         await open(page);

@@ -1808,6 +1808,68 @@ test('applies external project-file changes to the real workspace and preserves 
     assert.deepEqual(errors, []);
 });
 
+test('a clean device-folder update reads only the changed project payload', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder, project} = await createDiskProject(t, 'tw-project-scoped-read-', true);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('add', '.');
+    git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Fixture');
+    const index = path.join(folder, '.git', 'index');
+    const indexBefore = await readFile(index);
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder, '', true);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', 'main');
+    await expect(page.locator('.twgit-panel:visible')).toHaveCount(0);
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    const workspaceValue = () => page.evaluate(() => window.ScratchBlocks?.getMainWorkspace()
+        ?.getBlockById('move_B')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM'));
+    await expect.poll(workspaceValue).toBe('10');
+    await page.evaluate(() => {
+        const state = (window as any).folderIO;
+        state.reads = [];
+        state.lastRead = performance.now();
+        const names = new WeakMap<Blob, string>();
+        const getFile = FileSystemFileHandle.prototype.getFile;
+        FileSystemFileHandle.prototype.getFile = async function() {
+            const file = await getFile.call(this);
+            names.set(file, this.name);
+            return file;
+        };
+        const record = (blob: Blob) => {
+            const name = names.get(blob);
+            if (name) state.reads.push(name);
+            state.lastRead = performance.now();
+        };
+        const arrayBuffer = Blob.prototype.arrayBuffer;
+        Blob.prototype.arrayBuffer = function() {record(this); return arrayBuffer.call(this);};
+        const text = Blob.prototype.text;
+        Blob.prototype.text = function() {record(this); return text.call(this);};
+    });
+    // Exclude opening work and report settled reads from the subsequent disk update separately.
+    const settleReads = () => page.waitForFunction(() => performance.now() - (window as any).folderIO.lastRead > 1000);
+    await settleReads();
+    await page.evaluate(() => {(window as any).folderIO.reads = [];});
+    project.targets[1].blocks.move_B.inputs.STEPS[1][1] = '71';
+    await writeFile(path.join(folder, projectFile), stringify(project));
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect.poll(workspaceValue).toBe('71');
+    await settleReads();
+    const io = await page.evaluate(() => (window as any).folderIO as {reads: string[]; writes: number; loads: string[]});
+    const refNames = new Set(['HEAD', 'packed-refs', ...git('for-each-ref', '--format=%(refname:short)').split('\n')]);
+    t.diagnostic('Settled device payload reads: ' + JSON.stringify(io.reads));
+    assert.deepEqual(io.reads.filter(name => !refNames.has(name)), [projectFile], JSON.stringify(io.reads));
+    assert.deepEqual(io.loads, ['string']);
+    assert.equal(io.writes, 0);
+    assert.deepEqual(await readFile(index), indexBefore);
+    assert.deepEqual(errors, []);
+});
+
 test('stages and unstages an ordinary file through the project explorer', {timeout: 45000}, async t => {
     const build = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
@@ -1905,5 +1967,92 @@ test('deletes a device folder recursively only after confirmation', {timeout: 45
     await assert.rejects(stat(removedDirectory), {code: 'ENOENT'});
     assert.deepEqual(await readFile(sideFile), keep);
     assert.deepEqual(await readFile(projectSource), before);
+    assert.deepEqual(errors, []);
+});
+
+test('splices a device-folder script in Blockly but refuses a disk edit with an unknown variable', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder, project} = await createDiskProject(t, 'tw-project-script-watch-', true);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('config', 'user.name', 'Editor watcher fixture');
+    git('config', 'user.email', 'fixture@example.invalid');
+    git('add', '.');
+    git('commit', '-qm', 'Initial project');
+    const head = git('rev-parse', 'HEAD');
+    await writeFile(path.join(folder, noteFile), note('staged independently'));
+    git('add', noteFile);
+    const index = path.join(folder, '.git', 'index');
+    const originalIndex = await readFile(index);
+    const source = path.join(folder, projectFile);
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder, '', true);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    await expect(page.locator('.twgit-panel:visible')).toHaveCount(0);
+    const existsInWorkspace = (id: string) => page.evaluate(id =>
+        Boolean(window.ScratchBlocks.getMainWorkspace()?.getBlockById(id)), id);
+    await expect.poll(() => existsInWorkspace('move_B')).toBe(true);
+    await page.evaluate(() => {
+        const vm = window.vm;
+        const cat = vm.editingTarget;
+        const bird = vm.runtime.targets.find(target => target.sprite.name === 'Bird');
+        (window as any).scriptWatch = {
+            stage: vm.runtime.getTargetForStage(), cat, bird,
+            move: cat.blocks.getBlock('move_B'), birdFlag: bird.blocks.getBlock('bird_flag')
+        };
+    });
+    const notifyFile = async (text: string) => {
+        await writeFile(source, text);
+        await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    };
+
+    const blocks = project.targets[1].blocks;
+    blocks.move_B.next = 'turn_C';
+    Object.assign(blocks, {
+        turn_C: block('motion_turnright', null, 'move_B', {DEGREES: [1, [4, '15']]})
+    });
+    const compatible = stringify(project);
+    await notifyFile(compatible);
+    await expect.poll(() => existsInWorkspace('turn_C')).toBe(true);
+    const notice = page.locator('[data-project-folder-external]');
+    await expect(notice).toBeHidden();
+    assert.deepEqual(await page.evaluate(() => {
+        const old = (window as any).scriptWatch;
+        const vm = window.vm;
+        const cat = vm.editingTarget;
+        const bird = vm.runtime.targets.find(target => target.sprite.name === 'Bird');
+        const move = cat.blocks.getBlock('move_B');
+        const turn = cat.blocks.getBlock('turn_C');
+        return {stageSame: old.stage === vm.runtime.getTargetForStage(), catSame: old.cat === cat,
+            birdSame: old.bird === bird && old.birdFlag === bird.blocks.getBlock('bird_flag'),
+            scriptReplaced: old.move !== move, next: move.next, parent: turn.parent,
+            degrees: cat.blocks.getBlock(turn.inputs.DEGREES.shadow).fields.NUM.value};
+    }), {stageSame: true, catSame: true, birdSame: true, scriptReplaced: true, next: 'turn_C', parent: 'move_B', degrees: '15'});
+
+    const unsafe = structuredClone(project);
+    Object.assign(unsafe.targets[1].blocks, {
+        set_D: {...block('data_setvariableto', null, null, {VALUE: [1, [10, '0']]}, {x: 400, y: 400}),
+            fields: {VARIABLE: ['missing', 'missing-variable-id']}}
+    });
+    await notifyFile(stringify(unsafe));
+    await expect(notice).toContainText('need the whole project to be reloaded');
+    await expect(notice.getByRole('button', {name: 'Reload Whole Project'})).toBeEnabled();
+    assert.equal(await existsInWorkspace('set_D'), false);
+    assert.equal(await page.evaluate(() => Boolean(window.vm.editingTarget.blocks.getBlock('set_D'))), false);
+    assert.equal(await existsInWorkspace('turn_C'), true);
+    await notifyFile(compatible);
+    await expect(notice).toBeHidden();
+
+    assert.deepEqual(await page.evaluate(() => (window as any).folderIO.loads), ['string']);
+    assert.equal(await page.evaluate(() => (window as any).ReduxStore.getState().scratchGui.projectChanged), false);
+    assert.equal(await readFile(source, 'utf8'), compatible);
+    assert.deepEqual(await readFile(index), originalIndex);
+    assert.equal(git('rev-parse', 'HEAD'), head);
     assert.deepEqual(errors, []);
 });
