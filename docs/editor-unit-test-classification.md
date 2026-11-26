@@ -41,6 +41,7 @@ browser、E2E、試作補助、および `test/package/` はこの表の対象�
 
 | Editor で保持する接続口 | ピン留めした上流で実行された検証 |
 | --- | --- |
+| `block-editor/icon.test.ts`: 実パッケージの登録が同じ VM の GUI まで届き、別 VM には届かない。 | [Data Editor 0.11.5 の CI](https://github.com/kubohiroya/turbowarp-extension-data-editor/actions/runs/45286526377) で登録ごとの通知と、登録解除を繰り返しても状態が変わらないケースが実行・成功。 |
 | `extension-host/host.test.ts`: 固定 VM で作品を開く途中に、再試行の次の番号・上限・対象 URL が Editor の診断コールバックに届く。 | Loader 0.16.1 (`e4b784d7e5269659b014ddbb01250e9d6da538bd`) の [CI 実行結果](https://github.com/kubohiroya/turbowarp-extension-loader/actions/runs/45591120258)。[HTTP 状態の行列](https://github.com/kubohiroya/turbowarp-extension-loader/blob/e4b784d7e5269659b014ddbb01250e9d6da538bd/test/fetch-retry.test.ts) は 404 を 1 回で打ち切り、`FETCH_FAILED` となることを検証。再試行レポートの番号・上限と、実 VM を使う再試行可否の行列も実行済み。 |
 | `extension-host/project-uri.test.ts`: Editor のオリジンを使う初回追加から、固定 VM の SB3 保存、Editor のレビューで同じ URI を読むところまでを確認する。 | 同じ Loader CI で拡張変更後にも URI が維持されるケースと、[URI 付与の行列](https://github.com/kubohiroya/turbowarp-extension-loader/pull/44) を実行。Editor 固有の初回保存・キャッシュ接続は別テストに保持。 |
 | `extension-library/plus-library.test.cts`: 失敗情報と再試行コールバックをレビューに渡し、そのコールバックで元の選択を再送し、成功時に正しい画面へ戻る。 | Security Dialog 0.14.0 (`f161f0f4c3cf4d623fcfcd16f0586fd52a88d19f`) の [CI 実行結果](https://github.com/kubohiroya/turbowarp-extension-security-dialog/actions/runs/45555301122)。[レビュー表示](https://github.com/kubohiroya/turbowarp-extension-security-dialog/blob/f161f0f4c3cf4d623fcfcd16f0586fd52a88d19f/test/review.test.cts) は日本語の再試行文言、再試行不可時のエラーのコードと本文・ボタン非表示、追加モードの言語別行列を実行。 |

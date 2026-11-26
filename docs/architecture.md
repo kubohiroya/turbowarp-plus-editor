@@ -53,14 +53,14 @@ E2E_PROJECT_FOLDER_BUILD="$E2E_GUI_ROOT/build" \
 ## CIとPages
 
 1. 通常CIがnpmの単体テスト、統合基盤、固定GUIの接続テスト、ビルドを実行します。ブラウザーE2E（Playwright、`*.browser.ts`、YAMLの往復テストなど）はCIでは実行せず、開発時にローカルで実行します。CIはブラウザーをインストールしません。
-2. 全件成功後だけ `editor-site-<site SHA>-<attempt>` を保存します。
+2. 最新 `main` の通常 push CI で全件が成功し、サイトをビルドした場合だけ `editor-site-<site SHA>-<attempt>` を保存します。PR/tagの検証では配信用サイトを保存しません。
 3. mainのpush CI成功を受けたPages workflowが、そのmainの最新性と同一SHAの通常CI全体の最新attempt成功を照合します。
 4. 検証済みCI run/attemptのartifactを取得してGUI/core/site/securityの各識別子と必須ファイルを照合し、再ビルドせず配信します。
 5. deploy直前にもmain鮮度とCI結果を確認します。公開後のサイトを対象にしたE2EはCIでは実行しません。必要なときは、ローカルで `E2E_BASE_URL` に公開URLを指定して実行します。
 
 PRやfork、失敗CI、古いmain、API確認不能、未完了/失敗した最新attemptは配信しません。Pagesのwrite権限とOIDCはdeploy jobに限定します。失敗をskipや無条件retryで成功扱いにしません。
 
-通常E2Eは19件です。実SB3の保存/再読込の2経路、明暗テーマ、セキュリティ確認10件、プレビュー再読込、案内画面のボタンとフォームの遷移2件を含みます。固定入力profileの5件を含めると24件です。いずれも開発時にローカルで実行します。macOSのOSファイル選択は対話可能なMacで手動実行する別経路です。
+TurboWarp の Playwright 列挙は標準49件、固定入力プロファイル込みで52件です。この数はテストの登録数で、実行・成功数ではありません。実SB3の保存・再読込の2経路を含みます。実機のmacOSファイル選択などは別プロファイルで、当該操作を明示的に依頼された場合だけ実行します。所有先、実行実績、環境条件は [E2E 台帳](test-e2e-ownership.md) を参照してください。
 
 案内画面の遷移2件は、案内HTML/CSS/JSを実配信から取得し、遷移先のEditor HTMLだけをfixtureへ差し替えてURLを確認します。Editorの機能自体は他の統合シナリオで実アプリを使って検証します。
 
