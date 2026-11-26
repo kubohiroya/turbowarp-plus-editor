@@ -41,4 +41,52 @@ async function showProjectDiagnostics(page) {
     return dialog;
 }
 
-module.exports = {test, expect, showProjectDiagnostics};
+const review = page => page.getByRole('dialog').filter({has: page.locator('.twextsec-review[data-mode="open"]')});
+async function individualReview(page) {
+    const dialog = review(page);
+    await expect(dialog).toBeVisible();
+    const button = dialog.getByTestId('twextsec-individual');
+    if ((await button.getAttribute('aria-expanded')) === 'false') await button.click();
+    return dialog;
+}
+const executionChoice = (row, execution) => row.locator(`button[data-execution="${execution}"]`);
+const completeReview = page => review(page).getByTestId('twextsec-complete').click();
+// Review can read an extension's metadata before consent. The verified Loader read
+// separately sets redirect:"error"; observe that request without changing the URL or response.
+async function trackExecutionFetches(page, urls) {
+    const sources = typeof urls === 'string' ? [urls] : urls;
+    const counts = new Map();
+    await page.exposeFunction('noteE2EExecutionFetch', url => counts.set(url, (counts.get(url) || 0) + 1));
+    await page.addInitScript(addresses => {
+        const fetch = window.fetch;
+        window.fetch = function (input, options) {
+            const url = String(input);
+            if (addresses.includes(url) && options?.redirect === 'error') void globalThis.noteE2EExecutionFetch(url);
+            return Reflect.apply(fetch, this, [input, options]);
+        };
+    }, sources);
+    return (url = sources[0]) => counts.get(url) || 0;
+}
+// A retry fixture gives the review static metadata so it does not consume the injected
+// first transport failure. The Loader still goes to the actual controlled HTTPS endpoint.
+async function provideReviewMetadata(page, url, source) {
+    await page.addInitScript(({url, source}) => {
+        const fetch = window.fetch;
+        window.fetch = function (input, options) {
+            if (String(input) === url && options?.redirect !== 'error') {
+                return Promise.resolve(new Response(source, {headers: {'content-type': 'application/javascript'}}));
+            }
+            return Reflect.apply(fetch, this, [input, options]);
+        };
+    }, {url, source});
+}
+async function showLoadFailureDetails(page) {
+    const failure = page.getByTestId('project-load-failure');
+    await expect(failure).toHaveAttribute('data-outcome', 'failed');
+    await failure.getByRole('button', {name: '詳細ログを表示', exact: true}).click();
+    const diagnostics = page.getByTestId('project-diagnostics');
+    await expect(diagnostics).toBeVisible();
+    return diagnostics;
+}
+module.exports = {test, expect, showProjectDiagnostics, review, individualReview, executionChoice, completeReview,
+    trackExecutionFetches, provideReviewMetadata, showLoadFailureDetails};

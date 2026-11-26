@@ -1,4 +1,4 @@
-const {test, expect} = require('./fixtures.cts');
+const {test, expect, review, individualReview, executionChoice, completeReview, trackExecutionFetches} = require('./fixtures.cts');
 const Zip = require('@turbowarp/jszip');
 const {project, digest, bytes, remoteURL} = require('./project.cts');
 
@@ -8,7 +8,6 @@ const {project, digest, bytes, remoteURL} = require('./project.cts');
 // carries one already — as an SB3 saved from the published editor would.
 const address = 'https://kubohiroya.github.io/turbowarp-plus-projects/aa/00aa/0193f0a1-2b3c-7d4e-8f01-0000000000aa.sb3';
 
-const review = page => page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
 const reviewRow = page => review(page).locator('.twextsec-row[data-key="plusfixture"]');
 const executions = page => page.evaluate(() => globalThis.__plusFixtureStarted || 0);
 
@@ -24,10 +23,10 @@ function load(page, buffer) {
 }
 // The loading choice is the opener's: keep the copy (the author's default) or fetch every time.
 async function answer(page, loading) {
-    await expect(review(page)).toBeVisible();
+    await individualReview(page);
     await reviewRow(page).locator(`input[name="loading-plusfixture"][value="${loading}"]`).check();
-    await review(page).locator('input[name="execution-plusfixture"][value="unsandboxed"]').check();
-    await review(page).getByRole('button', {name: 'OK', exact: true}).click();
+    await executionChoice(reviewRow(page), 'unsandboxed').click();
+    await completeReview(page);
     await expect(review(page)).toHaveCount(0);
 }
 // Every claim the cache recorded, read from the browser's own store rather than from the host.
@@ -50,10 +49,10 @@ const usage = page => page.evaluate(async () => {
     }
 });
 async function serve(page) {
-    const counter = {fetched: 0};
-    await page.route(remoteURL, route => { counter.fetched++; return route.fulfill({body: bytes,
-        headers: {'access-control-allow-origin': '*', 'content-type': 'application/javascript'}}); });
-    return counter;
+    const fetched = await trackExecutionFetches(page, remoteURL);
+    await page.route(remoteURL, route => route.fulfill({body: bytes,
+        headers: {'access-control-allow-origin': '*', 'content-type': 'application/javascript'}}));
+    return fetched;
 }
 // A route still answers while the context is offline, so the URL is made to refuse instead.
 async function refuse(page) {
@@ -74,18 +73,18 @@ test('a kept copy survives a reload under the project address, and saving and re
     let loading = load(page, await project({type: 'remote-cacheable', extraManifest: {uri: address}}));
     await answer(page, 'remote-cacheable');
     expect(await loading).toEqual({ok: true});
-    expect(network.fetched).toBe(1);
+    expect(network()).toBe(1);
     await expect.poll(() => usage(page)).toEqual([{bucket: address, key: digest}]);
     const first = await savedURI(page);
     expect(first.uri).toBe(address);
 
     // A fresh page holds nothing of the first one but what the browser stored.
     await openEditor(page);
-    const offline = await refuse(page);
+    await refuse(page);
     loading = load(page, first.saved);
     await answer(page, 'remote-cacheable');
     expect(await loading).toEqual({ok: true});
-    expect(offline.refused).toBe(0);
+    expect(network()).toBe(1);
     expect(await executions(page)).toBe(1);
     expect((await savedURI(page)).uri).toBe(address);
     expect(await usage(page)).toEqual([{bucket: address, key: digest}]);

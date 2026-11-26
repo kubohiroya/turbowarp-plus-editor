@@ -1,7 +1,8 @@
 const path = require('node:path');
 const {defineConfig} = require('@playwright/test');
 const root = path.resolve(__dirname, '../../..');
-const baseURL = process.env.E2E_BASE_URL || 'http://127.0.0.1:8744/turbowarp-plus-editor/';
+const port = process.env.E2E_PORT || '8744';
+const baseURL = process.env.E2E_BASE_URL || `http://127.0.0.1:${port}/turbowarp-plus-editor/`;
 const target = new URL(baseURL);
 if (!['http:', 'https:'].includes(target.protocol) || !baseURL.endsWith('/') || target.search || target.hash) {
     throw new Error('E2E_BASE_URL must be an HTTP(S) application root ending with /.');
@@ -27,6 +28,6 @@ module.exports = defineConfig({
         headless: true, ignoreHTTPSErrors: !process.env.E2E_BASE_URL,
         viewport: {width: 1280, height: 900}, locale: 'ja-JP', trace: 'retain-on-failure'},
     ...(process.env.E2E_BASE_URL ? {globalSetup: require.resolve('../turbowarp/verify-remote-editor.cts')} : {webServer: {command: 'node test/e2e/turbowarp/serve.cts', cwd: root,
-        url: 'http://127.0.0.1:8744/turbowarp-plus-editor/build-info.json', reuseExistingServer: false,
-        env: {E2E_PORT: '8744', E2E_PATH_PREFIX: '/turbowarp-plus-editor/'}}})
+        url: `${baseURL}build-info.json`, reuseExistingServer: false,
+        env: {E2E_PORT: port, E2E_PATH_PREFIX: '/turbowarp-plus-editor/'}}})
 });

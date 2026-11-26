@@ -1,4 +1,4 @@
-const {test, expect} = require('./fixtures.cts');
+const {test, expect, review, individualReview, executionChoice, completeReview, trackExecutionFetches, showLoadFailureDetails} = require('./fixtures.cts');
 const {devices} = require('@playwright/test');
 const Zip = require('@turbowarp/jszip');
 const {specifications, installFixtures, selection, row, form, openCatalog, saveSB3, reopenSB3} =
@@ -14,11 +14,11 @@ test.use({userAgent: devices['Pixel 7'].userAgent});
 const forms = ['remote-non-cacheable', 'remote-cacheable', 'embedded-file', 'embedded-data'];
 const labels = {
     ja: {file: 'ファイル', add: '機能拡張の追加', addButton: '追加', loading: '読み込み元', openTitle: 'この作品は機能拡張を使います',
-        ok: 'OK', cancel: 'キャンセル', forms: {
+        run: '選んだ内容で実行', stop: '実行しない', cancel: 'キャンセル', forms: {
             'remote-cacheable': 'キャッシュを残す（既定）', 'remote-non-cacheable': '毎回取得する',
             'embedded-file': '作品の中から', 'embedded-data': '作品の中の data: アドレスから'}},
     en: {file: 'File', add: 'Add Extension', addButton: 'Add', loading: 'Where it loads from', openTitle: 'This project wants to run extensions',
-        ok: 'OK', cancel: 'Cancel', forms: {
+        run: 'Run with these choices', stop: 'Do not run', cancel: 'Cancel', forms: {
             'remote-cacheable': 'Keep a copy (default)', 'remote-non-cacheable': 'Fetch each time',
             'embedded-file': 'In the project', 'embedded-data': 'In the project, as a data address'}}
 };
@@ -27,7 +27,7 @@ async function openEditor(page, lang = 'ja') {
     await page.goto(`editor.html?lang=${lang}`);
     await page.waitForFunction(() => globalThis.vm?.runtime?.targets?.length > 0);
 }
-const loaded = (page, id) => page.evaluate(name => vm.extensionManager.isExtensionLoaded(name), id);
+const loaded = (page, id) => page.evaluate(name => Boolean(globalThis.vm?.extensionManager?.isExtensionLoaded(name)), id);
 const projectFiles = zip => Object.keys(zip.files).filter(name => name.startsWith('extensions/'));
 
 for (const distribution of forms) {
@@ -71,7 +71,7 @@ for (const distribution of forms) {
         // A fresh page holds nothing of the first one, so what comes back comes from the file.
         await openEditor(page);
         const before = fetched.get(spec.id);
-        await reopenSB3(page, saved, `${distribution}.sb3`);
+        page = await reopenSB3(page, saved, `${distribution}.sb3`);
         await expect.poll(() => loaded(page, spec.id)).toBe(true);
         // The embedded forms open without the network, and so does the remote-cacheable one: the
         // copy the first page kept is in this browser's IndexedDB (issue #55). Only the form that
@@ -88,7 +88,6 @@ for (const distribution of forms) {
 
 // A project that is not in the catalog is asked about when it opens, and that is the only place the
 // opener sees how it loads.
-const review = page => page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
 // The review also offers the same labels for all rows at once, so a row's own choice is read in its row.
 const reviewRow = page => review(page).locator('.twextsec-row[data-key="plusfixture"]');
 const loadingChoices = page => reviewRow(page).locator('input[name="loading-plusfixture"]');
@@ -100,15 +99,16 @@ function load(page, buffer) {
     }, [...buffer]);
 }
 async function allowAndConfirm(page) {
-    await review(page).locator('input[name="execution-plusfixture"][value="unsandboxed"]').check();
-    await review(page).getByRole('button', {name: 'OK', exact: true}).click();
+    await individualReview(page);
+    await executionChoice(reviewRow(page), 'unsandboxed').click();
+    await completeReview(page);
     await expect(review(page)).toHaveCount(0);
 }
 async function serveFixture(page) {
-    const counter = {fetched: 0};
-    await page.route(remoteURL, route => { counter.fetched++; return route.fulfill({body: bytes,
-        headers: {'access-control-allow-origin': '*', 'content-type': 'application/javascript'}}); });
-    return counter;
+    const fetched = await trackExecutionFetches(page, remoteURL);
+    await page.route(remoteURL, route => route.fulfill({body: bytes,
+        headers: {'access-control-allow-origin': '*', 'content-type': 'application/javascript'}}));
+    return fetched;
 }
 
 // Whether a copy was written is read from what a second load needs: with the code's URL refusing
@@ -122,7 +122,7 @@ for (const declined of [true, false]) {
         await openEditor(page);
         const input = await project({type: 'remote-cacheable'});
         let loading = load(page, input);
-        await expect(review(page)).toBeVisible();
+        await individualReview(page);
         // Keeping a copy is the author's default; declining it is the opener's only loading choice.
         await expect(loadingChoices(page)).toHaveCount(2);
         await expect(loadingChoices(page).and(page.locator('[value="remote-cacheable"]'))).toBeChecked();
@@ -130,7 +130,7 @@ for (const declined of [true, false]) {
         await allowAndConfirm(page);
         expect(await loading).toEqual({ok: true});
         expect(await executions(page)).toBe(1);
-        expect(counter.fetched).toBe(1);
+        expect(counter()).toBe(1);
         // The opener's answer does not rewrite the author's form.
         expect((await page.evaluate(() => JSON.parse(vm.toJSON()))).turboWarpPlus.extensions[0].source.type)
             .toBe('remote-cacheable');
@@ -139,7 +139,7 @@ for (const declined of [true, false]) {
         await page.unroute(remoteURL);
         await page.route(remoteURL, route => { refused++; return route.abort('internetdisconnected'); });
         loading = load(page, input);
-        await expect(review(page)).toBeVisible();
+        await individualReview(page);
         await reviewRow(page).getByRole('radio', {name: labels.ja.forms['remote-cacheable'], exact: true}).check();
         await allowAndConfirm(page);
         if (declined) {
@@ -148,7 +148,7 @@ for (const declined of [true, false]) {
             expect(await executions(page)).toBe(1);
         } else {
             expect(await loading).toEqual({ok: true});
-            expect(refused).toBe(0);
+            expect(counter()).toBe(1);
             expect(await executions(page)).toBe(2);
         }
     });
@@ -158,13 +158,13 @@ test('a remote-non-cacheable project offers no copy to keep or decline', async (
     const counter = await serveFixture(page);
     await openEditor(page);
     const loading = load(page, await project({type: 'remote-non-cacheable'}));
-    await expect(review(page)).toBeVisible();
+    await individualReview(page);
     await expect(loadingChoices(page)).toHaveCount(0);
     await expect(review(page).getByRole('radio', {name: labels.ja.forms['remote-non-cacheable'], exact: true})).toHaveCount(0);
     await expect(review(page).getByRole('radio', {name: labels.ja.forms['remote-cacheable'], exact: true})).toHaveCount(0);
     await allowAndConfirm(page);
     expect(await loading).toEqual({ok: true});
-    expect(counter.fetched).toBe(1);
+    expect(counter()).toBe(1);
 });
 
 // The Manifest is rewritten after the helper builds it, so each retired spelling is exactly what
@@ -189,9 +189,7 @@ test('an SB3 whose Manifest uses a retired spelling fails to open with INVALID_S
         expect(await loaded(page, 'plusfixture')).toBe(false);
     }
     await expect(page.getByTestId('tw-plus-extension-status')).toHaveCount(0);
-    await page.getByTestId('project-diagnostics-snackbar')
-        .getByRole('button', {name: '詳細ログを表示', exact: true}).click();
-    await expect(page.getByTestId('project-diagnostics')).toContainText('INVALID_SOURCE');
+    await expect(await showLoadFailureDetails(page)).toContainText('INVALID_SOURCE');
 });
 
 for (const lang of ['ja', 'en']) {
@@ -210,13 +208,15 @@ for (const lang of ['ja', 'en']) {
         await expect(selection(page)).toHaveCount(0);
 
         const loading = load(page, await project({type: 'remote-cacheable'}));
-        await expect(review(page)).toBeVisible();
-        await expect(review(page)).toContainText(words.openTitle);
+        await individualReview(page);
+        await expect(review(page)).toHaveAccessibleName(new RegExp(words.openTitle));
         await expect(review(page).locator('.twextsec-digest')).toContainText(digest);
         await expect(reviewRow(page).getByRole('radio', {name: words.forms['remote-cacheable'], exact: true})).toBeChecked();
         await expect(reviewRow(page).getByRole('radio', {name: words.forms['remote-non-cacheable'], exact: true})).toBeVisible();
-        await expect(review(page).getByRole('button', {name: words.ok, exact: true})).toBeVisible();
-        await review(page).getByRole('button', {name: words.cancel, exact: true}).click();
+        await expect(review(page).getByRole('button', {name: words.run, exact: true})).toBeVisible();
+        const stop = review(page).getByTestId('twextsec-cancel');
+        await expect(stop).toHaveAccessibleName(words.stop);
+        await stop.click();
         expect((await loading).code).toBe('EXTENSION_SECURITY_CANCELLED');
         expect(await executions(page)).toBe(0);
     });

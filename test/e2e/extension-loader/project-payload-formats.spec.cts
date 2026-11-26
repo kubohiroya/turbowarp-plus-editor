@@ -67,13 +67,14 @@ const selections = [
 ];
 async function reopenRemote(page, sb3, cacheable, disableFormatEditing = false, useCache = true) {
     await start(page, disableFormatEditing);
-    await reopenSB3(page, sb3, 'payload-formats.sb3');
+    page = await reopenSB3(page, sb3, 'payload-formats.sb3');
     const permission = page.getByRole('dialog', {name: /作品のデータを取得する|Load Project Data/u});
     await expect(permission).toBeVisible();
     for (const url of Object.values(endpoints)) await expect(permission).toContainText(url);
     const answer = cacheable ? (useCache ? /キャッシュを許可して開く|Allow caching and open/u :
         /キャッシュせずに開く|Open without caching/u) : /^(開く|Open)$/u;
     await permission.getByRole('button', {name: answer}).click();
+    return page;
 }
 
 for (const format of ['embedded-file', 'embedded-data', 'remote-non-cacheable', 'remote-cacheable']) {
@@ -89,7 +90,7 @@ for (const format of ['embedded-file', 'embedded-data', 'remote-non-cacheable', 
             });
         }
         await start(page);
-        await reopenSB3(page, sb3);
+        page = await reopenSB3(page, sb3);
         await waitForOwner(page);
         await openSettings(page);
         const remote = format.startsWith('remote-');
@@ -132,10 +133,10 @@ for (const format of ['embedded-file', 'embedded-data', 'remote-non-cacheable', 
         }
 
         if (remote) {
-            await reopenRemote(page, saved, format === 'remote-cacheable');
+            page = await reopenRemote(page, saved, format === 'remote-cacheable');
         } else {
             await start(page);
-            await reopenSB3(page, saved);
+            page = await reopenSB3(page, saved);
         }
         await waitForOwner(page);
         await openSettings(page);
@@ -165,11 +166,11 @@ for (const format of ['embedded-file', 'embedded-data', 'remote-non-cacheable', 
         }
         if (remote) {
             expect(Object.values(requests)).toEqual([2, 2, 2, 2]);
-            await reopenRemote(page, saved, format === 'remote-cacheable');
+            page = await reopenRemote(page, saved, format === 'remote-cacheable');
             await waitForOwner(page);
             expect(Object.values(requests)).toEqual(format === 'remote-cacheable' ? [2, 2, 2, 2] : [3, 3, 3, 3]);
             if (format === 'remote-cacheable') {
-                await reopenRemote(page, saved, true, true, false);
+                page = await reopenRemote(page, saved, true, true, false);
                 await waitForOwner(page);
                 await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
                 await expect(page.getByRole('button', {name: '組み込みデータ…'})).toHaveCount(0);
@@ -199,7 +200,7 @@ test('adds bundled images and sound as native project assets that work after reo
     input.file('project.json', JSON.stringify(json));
 
     await start(page);
-    await reopenSB3(page, await input.generateAsync({type: 'nodebuffer'}));
+    page = await reopenSB3(page, await input.generateAsync({type: 'nodebuffer'}));
     await waitForOwner(page);
     await page.getByText('ファイル', {exact: true}).locator('xpath=ancestor::div[1]').click();
     await page.getByRole('button', {name: '組み込みデータ…'}).click();
@@ -243,7 +244,7 @@ test('adds bundled images and sound as native project assets that work after reo
     expect(output.extensionStorage[owner].assets).toEqual(originalBundle);
 
     await start(page);
-    await reopenSB3(page, saved, 'native-materials.sb3');
+    page = await reopenSB3(page, saved, 'native-materials.sb3');
     await waitForOwner(page);
     const used = await page.evaluate(() => {
         const stage = vm.runtime.getTargetForStage();
