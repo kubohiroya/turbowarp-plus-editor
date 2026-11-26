@@ -14,7 +14,7 @@ const costume = (name, data, rotationCenterX, rotationCenterY) => {
     return {entry: {name, assetId, dataFormat: 'svg', md5ext: `${assetId}.svg`, rotationCenterX, rotationCenterY}, data};
 };
 
-export async function buildBaseProject(output) {
+async function buildBaseProject(output) {
     const backdrop = costume('Backdrop', svg(480, 360, '#f4f1ea'), 240, 180);
     const sprite = costume('Square', svg(40, 40, '#087f8c'), 20, 20);
     const common = {variables: {}, lists: {}, broadcasts: {}, blocks: {}, comments: {}, currentCostume: 0, sounds: [], volume: 100};
