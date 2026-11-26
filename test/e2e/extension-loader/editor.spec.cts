@@ -216,6 +216,12 @@ for (const type of ['remote-non-cacheable', 'embedded-file', 'embedded-data']) {
         const loading = load(page, await project({type}));
         await individualReview(page);
         await expect(keep(page)).toHaveCount(0);
+        if (type === 'remote-non-cacheable') {
+            // No per-row or bulk action can override the author's prohibition.
+            for (const name of ['毎回取得する', 'キャッシュを残す（既定）']) {
+                await expect(review(page).getByRole('radio', {name, exact: true})).toHaveCount(0);
+            }
+        }
         await answer(page);
         await allowed(page, loading);
         expect(fetched()).toBe(type === 'remote-non-cacheable' ? 1 : 0);
