@@ -1,11 +1,33 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {mkdtemp, mkdir, readFile, rm, writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 
 import {CATALOG_URL, createPlusCatalog} from '../site/plus-catalog.ts';
 import {createPlusIntegration} from '../site/plus-integration.ts';
+import {prepareLocalCatalogPreview} from '../scripts/site/local-catalog-preview.ts';
 
 const document = {extensions: [{id: 'alpha', url: 'https://example.test/alpha.js'}]};
 const svg = 'data:image/svg+xml;base64,PHN2Zy8+';
+
+test('the preview uses the Editor catalog dependency with a clean GUI checkout', async t => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'plus-catalog-wiring-'));
+    t.after(() => rm(directory, {recursive: true, force: true}));
+    const gui = path.join(directory, 'gui');
+    const catalog = path.join(directory, 'catalog');
+    await mkdir(gui);
+    await writeFile(path.join(gui, 'package.json'), '{"private":true}');
+    await mkdir(path.join(catalog, 'site'), {recursive: true});
+    const input = {schemaVersion: 1, extensions: [{id: 'fixture', version: '1.0.0',
+        name: 'Fixture', url: 'https://example.test/fixture.js', sha256: 'a'.repeat(64),
+        dependencies: [], unsandboxed: 'optional'}]};
+    await writeFile(path.join(catalog, 'site/extensions-v1.json'), JSON.stringify(input));
+    const output = path.join(directory, 'artifacts/catalog.json');
+    const info = await prepareLocalCatalogPreview(catalog, gui, output);
+    assert.deepEqual(JSON.parse(await readFile(output, 'utf8')), {catalog: input, icons: {}});
+    assert.equal(info.published, false);
+});
 
 test('a normal distribution reads the published catalog without credentials', async () => {
     const asked: unknown[] = [];
