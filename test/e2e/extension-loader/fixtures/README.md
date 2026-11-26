@@ -9,7 +9,7 @@ E2Eではネットワーク上の最新版へ追従せず、この固定した�
 
 ## TypeScript拡張をScratchから呼び出す検証
 
-[`typed-clamp.ts`](typed-clamp.ts) を、上限を無視する版と上限を守る版にビルドします。同じScratchのテスト用ハットと厳密一致ブロックを両方のSB3に入れ、Editorのテスト実行ビューから実行します。期待値 `10` に対して、修正前は実測値 `15` と失敗箇所のブロックIDが表示され、修正後は同じテストが成功します。テスト用VMを再利用しても、その実行のスナップショットに承認がない拡張は拒否されることも確認します。ローカルビルドの自動再反映は [Editor #788](https://github.com/kubohiroya/turbowarp-plus-editor/issues/788) で追跡します。
+[`typed-clamp.ts`](typed-clamp.ts) を、上限を無視する版と上限を守る版にビルドします。同じScratchのテスト用ハットと厳密一致ブロックを両方のSB3に入れ、Editorのテスト実行ビューから実行します。期待値 `10` に対して、修正前は実測値 `15` と失敗箇所のブロックIDが表示され、修正後は同じテストが成功します。修正版をEditorのVMでSB3に保存し、ブロックの接続と同梱したコードのSHA-256が保たれることを確認します。別のブラウザーコンテキストで保存したSB3を開き直し、作品に残ったテストを個別実行します。テスト用VMを再利用しても、その実行のスナップショットに承認がない拡張は拒否されることも確認します。ローカルビルドの自動再反映は [Editor #788](https://github.com/kubohiroya/turbowarp-plus-editor/issues/788) で追跡します。
 
 `npm ci` でロックファイルが固定する公開版をインストールし、`npm run build:pages` でビルドしたEditorの完全なコミットSHAを指定します。テスト用拡張には `turbowarp-test` の `fc707c50a56b970db20c80081d0be9384517d120` に含まれる `dist/turbowarp-test.js` を使います。検証はヘッドレスで、ローカル成果物とテスト専用カタログへのリクエストはPlaywrightのルーティングで処理します。
 
@@ -19,3 +19,9 @@ E2E_EXPECT_SITE_REVISION=REPLACE_WITH_FULL_EDITOR_SHA \
 E2E_TEST_EXTENSION_JS=/absolute/path/to/turbowarp-test.js \
   node --test test/typescript-block-test-loop.browser.ts
 ```
+
+
+公開済みの同一コミットを確認する場合は、`E2E_EXTENSION_TEST_BUILD` の代わりに
+`E2E_EXTENSION_TEST_USE_PUBLISHED=1` を指定できます。公開ビルドの完全なSHAは従来どおり必須です。
+既定ではPlaywrightのChromiumを使い、既に導入済みの互換Chromiumを利用する場合は
+`E2E_EXTENSION_TEST_CHROMIUM` に実行ファイルのパスを指定します。

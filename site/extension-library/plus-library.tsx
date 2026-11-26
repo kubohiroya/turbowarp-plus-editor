@@ -13,6 +13,7 @@ export {reviewRows} from '@kubohiroya/turbowarp-extension-security-dialog/catalo
 export default createCatalogLibrary({catalog: plusCatalog, readSettings: readPlusCatalogSettings,
     applySettings: applyPlusCatalogSettings, loadExtensions: loadPlusExtensions,
     published: {
+        allowReferenceAliases: true,
         resolve: resolvePublishedExtension,
         async add(vm, {distribution, bytes, sourceURL}, options) {
             const host = getExtensionAuthoringHost(vm);

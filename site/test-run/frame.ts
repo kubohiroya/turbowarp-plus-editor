@@ -12,6 +12,7 @@ import {serveTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame'
 import {TEST_EXTENSION_ID} from '@kubohiroya/turbowarp-plus-editor-test';
 import type {ResolvedCode} from '@kubohiroya/turbowarp-extension-loader';
 import {installPlusExtensionHost} from '../extension-host/host.ts';
+import {connectExtensionIdentities, getExtensionIdentities} from '../extension-host/loader-connections.ts';
 import * as vmModules from '../extension-host/vm-modules.ts';
 import {plusTrustedExtensions, readTrustedExtensionBytes} from '../trusted-extensions.ts';
 
@@ -54,13 +55,14 @@ const createVm = () => {
     const rewrite = vm.securityManager.rewriteExtensionURL.bind(vm.securityManager);
     vm.securityManager.rewriteExtensionURL = (url: string) =>
         legacyTest?.url === url ? Promise.resolve(legacyTest.verifiedUrl) : rewrite(url);
-    installPlusExtensionHost(vm, {
+    const host = installPlusExtensionHost(vm, {
         enabled: true, document, locale: document.documentElement.lang || 'en', vmModules,
         trustedCatalog: plusTrustedExtensions.catalog,
         canLoadVerifiedCode: canLoadCode,
         requestApproval: async code => extensionContext.savedGeneration ? isEmbeddedSandboxed(code) : isApprovedSandboxed(code),
         showDiagnostics: false
     });
+    if ('loader' in host) connectExtensionIdentities(vm, host.loader);
     return vm;
 };
 
@@ -68,6 +70,10 @@ serveTestFrame({
     window,
     origin: location.origin,
     getVm: createVm,
+    // Read the build identities committed by the test VM, not the Editor's currently loaded version.
+    getLoadedBuilds: vm => getExtensionIdentities(vm)
+        .filter(({execution}) => execution === 'sandboxed')
+        .map(({id, sha256}) => ({extensionId: id, sha256})),
     async prepare(context: {extensionURLs?: unknown; sandboxedExtensions?: unknown; savedGeneration?: unknown; testExtensionURL?: unknown}
         | undefined) {
         const urls = Array.isArray(context?.extensionURLs) ? context.extensionURLs : [];
