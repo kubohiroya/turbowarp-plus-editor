@@ -200,6 +200,7 @@ for (const {mode, storage, engine} of cases) {
             if (storage === 'browser' && engine === 'chromium') {
                 // Exercise the same fallback through Chromium while preserving the real WebKit test.
                 Object.defineProperty(view, 'showDirectoryPicker', {value: undefined, configurable: true});
+                return;
             }
             if (engine === 'webkit') {
                 // Playwright's WebKit hands a Blob body to page.route as empty, so the push is sent as bytes here.
