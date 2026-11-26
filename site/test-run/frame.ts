@@ -10,8 +10,9 @@ import ScratchRender from 'scratch-render';
 import ScratchStorage from '@turbowarp/scratch-storage';
 import {serveTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
 import {TEST_EXTENSION_ID} from '@kubohiroya/turbowarp-plus-editor-test';
-import type {ExtensionLoader, ResolvedCode} from '@kubohiroya/turbowarp-extension-loader';
+import type {ResolvedCode} from '@kubohiroya/turbowarp-extension-loader';
 import {installPlusExtensionHost} from '../extension-host/host.ts';
+import {connectExtensionIdentities, getExtensionIdentities} from '../extension-host/loader-connections.ts';
 import * as vmModules from '../extension-host/vm-modules.ts';
 import {plusTrustedExtensions, readTrustedExtensionBytes} from '../trusted-extensions.ts';
 
@@ -20,7 +21,6 @@ const testCatalogURL = 'https://kubohiroya.github.io/turbowarp-test/dist/turbowa
 let extensionContext: {extensionURLs: string[]; sandboxedExtensions: SandboxedExtension[]; savedGeneration: boolean} = {
     extensionURLs: [], sandboxedExtensions: [], savedGeneration: false
 };
-const frameLoaders = new WeakMap<object, Pick<ExtensionLoader, 'getLoadedExtensionIdentities'>>();
 let legacyTest: {url: string; verifiedUrl: string} | undefined;
 
 const isEmbeddedSandboxed = (code: ResolvedCode) => code.execution === 'sandboxed' &&
@@ -62,7 +62,7 @@ const createVm = () => {
         requestApproval: async code => extensionContext.savedGeneration ? isEmbeddedSandboxed(code) : isApprovedSandboxed(code),
         showDiagnostics: false
     });
-    if ('loader' in host) frameLoaders.set(vm, host.loader);
+    if ('loader' in host) connectExtensionIdentities(vm, host.loader);
     return vm;
 };
 
@@ -71,7 +71,7 @@ serveTestFrame({
     origin: location.origin,
     getVm: createVm,
     // Read the build identities committed by the test VM, not the Editor's currently loaded version.
-    getLoadedBuilds: vm => frameLoaders.get(vm)?.getLoadedExtensionIdentities()
+    getLoadedBuilds: vm => getExtensionIdentities(vm)
         .filter(({execution}) => execution === 'sandboxed')
         .map(({id, sha256}) => ({extensionId: id, sha256})),
     async prepare(context: {extensionURLs?: unknown; sandboxedExtensions?: unknown; savedGeneration?: unknown; testExtensionURL?: unknown}

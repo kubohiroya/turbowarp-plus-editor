@@ -9,7 +9,7 @@ import {TEST_EXTENSION_ID} from '@kubohiroya/turbowarp-plus-editor-test';
 import JSZip from '@turbowarp/jszip';
 import {createTestRunView, testRunMenuItem, testRunPanelRequest, testRunText} from '@kubohiroya/turbowarp-plus-editor-test/test-run-view';
 import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
-import {getEditorExtensionIdentities} from '../extension-host/editor-host.ts';
+import {getExtensionIdentities} from '../extension-host/loader-connections.ts';
 
 type EditorVM = {
     runtime: {targets: Array<{id: string; isOriginal: boolean; getName(): string}>};
@@ -58,7 +58,7 @@ export const runSavedGenerationTests = async (document: Document, archive: Array
 
 const contextFor = (vm: EditorVM) => ({
     extensionURLs: Object.values(vm.extensionManager.getExtensionURLs?.() ?? {}),
-    sandboxedExtensions: getEditorExtensionIdentities(vm)
+    sandboxedExtensions: getExtensionIdentities(vm)
         .filter(extension => extension.execution === 'sandboxed')
         .map(({id, sha256}) => ({id, sha256}))
 });
