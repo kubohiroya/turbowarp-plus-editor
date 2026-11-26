@@ -212,6 +212,7 @@ export function attachProjectFolder(vm: ProjectFolderVM, document: Document, loc
         screenState: {
             serialize: () => projectScreenState(vm)?.serialize(),
             prepareLoad: text => projectScreenState(vm)?.prepareLoad(text),
+            applyFolderUpdate: (previous, text) => projectScreenState(vm)?.applyFolderUpdate(previous, text) ?? false,
             register: (key, slice) => projectScreenState(vm)?.register(key, slice) ?? (() => {})
         },
         beforeLoad: () => store.dispatch(__TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__(null)),
