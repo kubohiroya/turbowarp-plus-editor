@@ -287,24 +287,9 @@ test('a transient failure shows the current attempt and remains in Project Diagn
         await expect(waiting).toBeVisible();
         await expect(waiting).toContainText(url);
         await expect(waiting).toContainText(/\b2\s*\/\s*\d+/);
-        // Closing would not stop the fetch and stopping it has no rollback, so neither is offered.
-        await expect(waiting.locator('button')).toHaveCount(0);
-        // The dialog carries its own styles because the single-HTML runtime and the packager page
-        // build JavaScript only: 0.5.0 shipped it unstyled here, and the fix is what 0.5.2 adds.
-        // Being visible is not enough — an unstyled box sits in the flow and takes the page with
-        // it, so this checks it actually lands in the middle, above everything.
+        // Verify the deployed bundle includes the dialog's styles. Security Dialog's browser tests
+        // own centering, style deduplication and the absence of controls.
         await expect(waiting).toHaveCSS('position', 'fixed');
-        const centred = await waiting.evaluate(element => {
-            const box = element.getBoundingClientRect();
-            return {
-                dx: Math.abs(box.left + box.width / 2 - window.innerWidth / 2),
-                dy: Math.abs(box.top + box.height / 2 - window.innerHeight / 2),
-                styles: document.querySelectorAll('[data-twextsec-wait-style]').length
-            };
-        });
-        expect(centred.dx).toBeLessThan(2);
-        expect(centred.dy).toBeLessThan(2);
-        expect(centred.styles).toBe(1);
     };
     const expectRetryRecorded = async url => {
         await expect(page.getByTestId('twextsec-wait')).toHaveCount(0);

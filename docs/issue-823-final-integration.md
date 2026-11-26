@@ -1,5 +1,7 @@
 # #823 の最終結線候補と検証
 
+**公開後の追記:** 本候補は[Editor #864](https://github.com/kubohiroya/turbowarp-plus-editor/pull/864)でSquash Mergeされ、main `70d4aefb6292b3ee2a9a7488aeb14bb6a804fbd6` の[CI](https://github.com/kubohiroya/turbowarp-plus-editor/actions/runs/45811987935)・[通常Pages配信](https://github.com/kubohiroya/turbowarp-plus-editor/actions/runs/45812344821)が成功した。公開固定値とLoader全体60件、移管後の最小化・最小runtime・Desktopの既存結果の扱いは[最終監査](issue-823-loader-final-audit.md)へ集約する。以下は公開前に実行した証拠として保持する。
+
 2026-11-26、着手時のEditor mainは `4c2f291`。作業中にWebKit修正 #862と進捗修正 #863が公開されたため、`947017a7431370618ceb77c5122622c992a30ccc` に既にある進捗の結線・統合テストを保持した。本差分はカタログの依存解決、Security Dialogの正式固定、検証記録に限定する。WebKitの完了根拠は [既存記録](https://github.com/kubohiroya/turbowarp-plus-editor/issues/823#issuecomment-7189266559) を保持する。以下はEditor側の公開前のローカル検証で、main・配信先の成功とは区別する。
 
 ## 最終の所有先と結線

@@ -1,5 +1,7 @@
 # #823 §4 E2E 棚卸し・検証記録
 
+**最終照合（2026-11-26）:** [Loaderの現行60ケースと保持理由](issue-823-loader-final-audit.md)を正本とする。配信済みmain `70d4aef` で60成功・失敗/skip 0、上流と重なる表示詳細を縮小した2件も成功。以下の件数・未実行の記載は、それぞれの固定版を実行した時点の履歴であり、現在の60件へ加算しない。Desktopは[既存の承認済み1回の記録](issue-823-final-integration.md#desktopの承認された1回の検証)を再利用し、今回新しく起動していない。
+
 ### 対象と結果
 
 Editor の棚卸し基点は `6c09ab4e8eada248b0cb5ba9bdcddca1009dd57d`。実行対象は Editor `07b7ccb50fa796997dff2ad10ce41fb12d68b0f2` の固定ビルド。両者の差分に製品コード、依存の固定値、§4 の E2E 定義の変更がないことを確認した。ビルドの固定値は GUI `60b87e2f2503206847f509285aa4de3cee3670c7`、VM `88a2c06e9deb3dd652c52c20daf4f728b387d41d`、Packager `d690225b9f326c98be617a51c7c65f76758048ee`、Loader 0.16.1、Security Dialog 0.14.0、Document Editor 0.2.1、Script Transfer 0.1.5。
@@ -27,7 +29,7 @@ Desktop（アプリ起動）、macOS の実ファイルピッカー、OS クリ�
 | `file-menu`、`manual-project-uri` | Project Folder／Workbench（保存先・メニュー）、Loader（URI）、VM（旧形式） | 実メニュー、別タブへの引き継ぎ、保存先を勝手に付けないこと、URI の SB3 往復 |
 | `four-formats`、`project-payload-formats`、`resources` | Loader／Manifest（保存形式・宣言の照合）、Security Dialog（表示・選択）、VM（画像・音声） | 実 GUI の追加→保存→再読込、承認と素材が利用可能になるまでの接続 |
 | `persistent-cache` | Loader（IndexedDB・設計方針） | 実ブラウザーの保存・再読込、作品 URI による分類、取得し直す場合とキャッシュ利用の区別 |
-| `project-load-progress` | Workbench（進捗データ、履歴、表示）、GUI（ロード画面との接続） | 実ファイル入力での進捗の表示・完了・取消。後述の未完2件を保持 |
+| `project-load-progress` | Workbench（進捗データ、履歴、表示）、GUI（ロード画面との接続） | 実受信タブでの進捗表示・完了・取消。#863で解消し、現行60件の中でも実行・成功 |
 | `packaged`、`packager-builder` | Loader／Packager（生成、同梱、配布時承認） | 固定 Web／CLI の実成果物、オフライン実行、生成時承認と配布後承認の分離 |
 | `published-distribution` | Extension Template（公開方法） | バージョンを固定した2種類の成果物を、Editor が実際に読み込み実行すること |
 
@@ -63,7 +65,7 @@ Desktop（アプリ起動）、macOS の実ファイルピッカー、OS クリ�
 - 開始ページの署名付き作品 URL は、転送先 HTML の代替ではなく、実際の Editor・VM が同じ URL のクエリを使い、クリック後一度だけ読み込むことまで確認する。作品はローカル生成の拡張なし SB3 で、外部作品は実行しない。
 - キャッシュ不可の規則は [Loader 0.16.1 の CI](https://github.com/kubohiroya/turbowarp-extension-loader/actions/runs/45591120258) でキャッシュの読み書きがなく取得は一度だけと確認済み。Editor の2ケースを1件にまとめ、実承認画面の選択肢と VM の実行を保持した。変更した2ファイルは統合後29件実行・成功、スキップなし。
 - **解消: ローカル SB3 の進捗表示2件（完了／取消）。** 上記Workbench 0.40.1の接続口で既存GUIのロード画面を開く。URL起動で代用せず、受信タブの解析・承認・完了と取消を検証し、元タブの作品を保つ。履歴表示などの詳細は所有先CIの実行成功後にだけ削減し、Editorの統合2件を保持する。
-- **未完: 移管後の削減。** 同じ版の所有先 CI の実行を確認したが、コンポーネント内部の検証だけでは、実 Editor での入口、別タブ、配布物、VM 接続を代替できない。下記の結果は移管先の候補を選ぶ根拠であり、Editor の既存カバレッジを減らす根拠ではない。
+- **最終照合済み: 移管後の削減。** [現行60件の台帳](issue-823-loader-final-audit.md)で各ケースの所有先と保持理由を確認した。上流CIで実行済みの依存行・待機画面の表示詳細のみを縮小し、実Editorの入口、別タブ、配布物、VM接続の60ケースは保持する。未実行の所有先候補を削除根拠にしない。
 
 ### 所有先 CI の固定版対応
 
