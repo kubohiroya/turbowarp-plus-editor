@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "issue": 868,
-  "status": "local-candidate-not-released",
+  "status": "local-measurement-with-published-package-content-verified",
   "baseline": {
     "schemaVersion": 1,
     "startedAt": "2026-11-26T13:24:29.454Z",
@@ -1885,7 +1885,7 @@
     "headed": false
   },
   "provenance": {
-    "note": "Baseline uses the published Code Views 0.26.5; candidate uses an unpublished 0.26.7 tarball. Candidate lock integrity is provisional until the registry release is verified; localOverlay and build-info notices identify the measured bytes. Runtime source hashes below identify the measured optimization.",
+    "note": "Baseline uses published Code Views 0.26.5. Candidate timings used an unpublished 0.26.7 tarball; all 200 distributed files were subsequently confirmed identical to the official npm 0.26.7 archive. Raw candidate metadata and localOverlay retain the historical measurement provenance. The final Editor lock uses the official registry integrity.",
     "runtimeHashes": {
       "script-outline": "abcbeb81f1f939df72f23c16c4c36cd8ca8d294b207f1b2e9c50e9507d32d660",
       "script-arrows": "9945e4cadf6ccf4dc4feecdfa3949912dcc710652b271fa9d3dd311ff5358571",
@@ -2034,6 +2034,51 @@
       "guiTrackedDiff": "empty"
     },
     "packageLockSha256": "bac23ea6467608bef639a2bf5e153b19e6b77ce11d0635fed5b66a75d8322980",
-    "registryVerification": "pending authorization and owner release"
+    "registryVerification": {
+      "name": "@kubohiroya/turbowarp-plus-editor-code-views",
+      "version": "0.26.7",
+      "gitHead": "49855c62c96a8f77ef95493ad76f1c07463c2cc3",
+      "checkedAt": "2026-11-26T14:11:47.447697+00:00",
+      "tarball": "https://registry.npmjs.org/@kubohiroya/turbowarp-plus-editor-code-views/-/turbowarp-plus-editor-code-views-0.26.7.tgz",
+      "integrity": "sha512-fVApAa02UsOmuF9dlJduJOugu6/3fbq36rWWEUZs/WIreuDCNylLp8K81ByWcQ0Xh3CKxYIzzYXAvBtHmcJdyQ==",
+      "sha256": "b2ba48c04e5c6eb1f614d6720e51a024223bba41b7ac0439b99e2f1a04c0f2d7",
+      "localArchiveSha256": "ca68800c9d948fbb9557f6e7e6275ba41c448b86ab9fd795c6126930c8071ede",
+      "identicalArchive": false,
+      "comparedFiles": 200,
+      "differentFiles": [],
+      "sourceFiles": 69,
+      "distFiles": 124,
+      "noticeIdentical": true,
+      "ownerPullRequest": "https://github.com/kubohiroya/turbowarp-plus-editor-code-views/pull/60",
+      "prCI": "https://github.com/kubohiroya/turbowarp-plus-editor-code-views/actions/runs/45835614461",
+      "release": "https://github.com/kubohiroya/turbowarp-plus-editor-code-views/actions/runs/45835934094"
+    },
+    "testedPackageLockSha256": "bac23ea6467608bef639a2bf5e153b19e6b77ce11d0635fed5b66a75d8322980",
+    "publishedPackageLockSha256": "45e15d9cbcadb97f62dcc02ebd131fcc37025a5ed64fd30291faa7a27a89240a",
+    "publishedInstall": {
+      "npmCi": "passed",
+      "dependencyTree": "npm ls --all passed",
+      "installedFilesMatchOfficialArchive": 200,
+      "validationReuse": "All 200 package files are identical to the headless-tested candidate; runtime validation results are retained."
+    }
+  },
+  "publishedPackageVerification": {
+    "name": "@kubohiroya/turbowarp-plus-editor-code-views",
+    "version": "0.26.7",
+    "gitHead": "49855c62c96a8f77ef95493ad76f1c07463c2cc3",
+    "checkedAt": "2026-11-26T14:11:47.447697+00:00",
+    "tarball": "https://registry.npmjs.org/@kubohiroya/turbowarp-plus-editor-code-views/-/turbowarp-plus-editor-code-views-0.26.7.tgz",
+    "integrity": "sha512-fVApAa02UsOmuF9dlJduJOugu6/3fbq36rWWEUZs/WIreuDCNylLp8K81ByWcQ0Xh3CKxYIzzYXAvBtHmcJdyQ==",
+    "sha256": "b2ba48c04e5c6eb1f614d6720e51a024223bba41b7ac0439b99e2f1a04c0f2d7",
+    "localArchiveSha256": "ca68800c9d948fbb9557f6e7e6275ba41c448b86ab9fd795c6126930c8071ede",
+    "identicalArchive": false,
+    "comparedFiles": 200,
+    "differentFiles": [],
+    "sourceFiles": 69,
+    "distFiles": 124,
+    "noticeIdentical": true,
+    "ownerPullRequest": "https://github.com/kubohiroya/turbowarp-plus-editor-code-views/pull/60",
+    "prCI": "https://github.com/kubohiroya/turbowarp-plus-editor-code-views/actions/runs/45835614461",
+    "release": "https://github.com/kubohiroya/turbowarp-plus-editor-code-views/actions/runs/45835934094"
   }
 }

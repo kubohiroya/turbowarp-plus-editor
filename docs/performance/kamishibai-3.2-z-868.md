@@ -49,7 +49,7 @@ DOM APIとtimelineの時間は重なるため、合計しない。
 
 ## 最新mainへの統合
 
-性能比較の前提を保った後、Editorの最新main `6a08e38815c07af14331217dd06fd3137f12c762` を取り込み、Code Views 0.26.7の候補を統合した。Workbenchはmainの正式版0.40.2を使い、既存のoverridesによる単一版の固定を維持する。統合結果は隣接JSONの `latestIntegration` を参照する。正式なnpm公開後にregistryの内容・integrityを確認してEditorの固定を確定する。Scratch GUIのソース差分はない。
+性能比較の前提を保った後、Editorの最新main `6a08e38815c07af14331217dd06fd3137f12c762` を取り込み、Code Views 0.26.7の候補を統合した。Workbenchはmainの正式版0.40.2を使い、既存のoverridesによる単一版の固定を維持する。統合結果は隣接JSONの `latestIntegration` を参照する。正式npm 0.26.7（gitHead `49855c62c96a8f77ef95493ad76f1c07463c2cc3`）の配布物200ファイルと測定済み候補の内容がすべて一致した。圧縮アーカイブのハッシュは異なるため、Editorは正式registryのintegrityで固定した。Scratch GUIのソース差分はない。
 
 ## 再現と切り戻し
 
