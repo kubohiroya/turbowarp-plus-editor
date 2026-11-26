@@ -7,6 +7,7 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {chromium, expect} from '@playwright/test';
 import JSZip from '@turbowarp/jszip';
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 
 const origin = 'http://localhost:41016';
 const prefix = '/turbowarp-plus-editor/';
@@ -19,7 +20,7 @@ test('Editor confirms project folder overwrite and commits only project files', 
     const info = JSON.parse(await readFile(path.join(build, 'build-info.json'), 'utf8'));
     const pins = JSON.parse(await readFile(new URL('../site/source.json', import.meta.url), 'utf8'));
     assert.equal(info.revision, pins.guiRevision);
-    assert.equal(info.siteRevision, execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim());
+    await verifyWebEditor(build);
 
     const root = await mkdtemp(path.join(process.platform === 'darwin' ? '/private/tmp' : tmpdir(), 'tw-save-commit-'));
     t.after(() => rm(root, {recursive: true, force: true}));

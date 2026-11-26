@@ -8,6 +8,7 @@ import {once} from 'node:events';
 import {test} from 'node:test';
 import {chromium, expect, webkit} from '@playwright/test';
 import type {Page} from '@playwright/test';
+import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
 
 const bffOrigin = 'https://github-create.example.invalid';
 const proxyOrigin = 'https://github-git.example.invalid';
@@ -36,6 +37,7 @@ for (const {mode, storage, engine} of cases) {
         const info = JSON.parse(await readFile(path.join(build, 'build-info.json'), 'utf8'));
         const pins = JSON.parse(await readFile(new URL('../site/source.json', import.meta.url), 'utf8'));
         assert.equal(info.revision, pins.guiRevision);
+        await verifyWebEditor(build);
         const server = createServer(async (req, res) => {
             try {
                 const url = new URL(req.url ?? '', 'http://127.0.0.1');
