@@ -13,6 +13,8 @@ const output = path.join(root, '.host/issue-4-artifacts/desktop-result.json');
 const runtimeHTML = process.env.TW_PLUS_DESKTOP_HTML || path.join(root, '.host/issue-4-artifacts/plus-offline.html');
 
 async function main() {
+    // The externally supplied HTML may not create the result directory in a clean checkout.
+    await fs.mkdir(path.dirname(output), {recursive: true});
     const profiles = path.join(root, '.host/desktop-issue4-profile');
     await fs.mkdir(profiles, {recursive: true});
     const profile = await fs.mkdtemp(path.join(profiles, 'run-'));
@@ -141,7 +143,6 @@ async function main() {
         result.error = error.message;
         process.exitCode = 1;
     } finally {
-        await fs.mkdir(path.dirname(output), {recursive: true});
         await fs.writeFile(output, JSON.stringify(result, null, 2));
         console.log(JSON.stringify(result, null, 2));
         if (browser) await browser.close().catch(() => {});
