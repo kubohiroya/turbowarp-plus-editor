@@ -1808,6 +1808,68 @@ test('applies external project-file changes to the real workspace and preserves 
     assert.deepEqual(errors, []);
 });
 
+test('a clean device-folder update reads only the changed project payload', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder, project} = await createDiskProject(t, 'tw-project-scoped-read-', true);
+    const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
+        {cwd: folder, encoding: 'utf8'}).trim();
+    git('init', '-q', '-b', 'main');
+    git('config', 'core.autocrlf', 'false');
+    git('add', '.');
+    git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Fixture');
+    const index = path.join(folder, '.git', 'index');
+    const indexBefore = await readFile(index);
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder, '', true);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await expect(page.locator('.twgit-branch-button')).toHaveAttribute('data-git-branch', 'main');
+    await expect(page.locator('.twgit-panel:visible')).toHaveCount(0);
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    const workspaceValue = () => page.evaluate(() => window.ScratchBlocks?.getMainWorkspace()
+        ?.getBlockById('move_B')?.getInputTargetBlock('STEPS')?.getFieldValue('NUM'));
+    await expect.poll(workspaceValue).toBe('10');
+    await page.evaluate(() => {
+        const state = (window as any).folderIO;
+        state.reads = [];
+        state.lastRead = performance.now();
+        const names = new WeakMap<Blob, string>();
+        const getFile = FileSystemFileHandle.prototype.getFile;
+        FileSystemFileHandle.prototype.getFile = async function() {
+            const file = await getFile.call(this);
+            names.set(file, this.name);
+            return file;
+        };
+        const record = (blob: Blob) => {
+            const name = names.get(blob);
+            if (name) state.reads.push(name);
+            state.lastRead = performance.now();
+        };
+        const arrayBuffer = Blob.prototype.arrayBuffer;
+        Blob.prototype.arrayBuffer = function() {record(this); return arrayBuffer.call(this);};
+        const text = Blob.prototype.text;
+        Blob.prototype.text = function() {record(this); return text.call(this);};
+    });
+    // Exclude opening work and report settled reads from the subsequent disk update separately.
+    const settleReads = () => page.waitForFunction(() => performance.now() - (window as any).folderIO.lastRead > 1000);
+    await settleReads();
+    await page.evaluate(() => {(window as any).folderIO.reads = [];});
+    project.targets[1].blocks.move_B.inputs.STEPS[1][1] = '71';
+    await writeFile(path.join(folder, projectFile), stringify(project));
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect.poll(workspaceValue).toBe('71');
+    await settleReads();
+    const io = await page.evaluate(() => (window as any).folderIO as {reads: string[]; writes: number; loads: string[]});
+    const refNames = new Set(['HEAD', 'packed-refs', ...git('for-each-ref', '--format=%(refname:short)').split('\n')]);
+    t.diagnostic('Settled device payload reads: ' + JSON.stringify(io.reads));
+    assert.deepEqual(io.reads.filter(name => !refNames.has(name)), [projectFile], JSON.stringify(io.reads));
+    assert.deepEqual(io.loads, ['string']);
+    assert.equal(io.writes, 0);
+    assert.deepEqual(await readFile(index), indexBefore);
+    assert.deepEqual(errors, []);
+});
+
 test('stages and unstages an ordinary file through the project explorer', {timeout: 45000}, async t => {
     const build = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
