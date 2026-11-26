@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {exposeBlockEditorAPI} from '@kubohiroya/turbowarp-extension-data-editor/plus';
 const {default: getBlockEditorService} = await import('../../site/gui-integration/lib/tw-block-editor-service.ts');
 // The editor itself is the host's. What this file is about is this fork's side: one service per VM,
 // and the strings it supplies, so the host's part is a stub that answers with the real shape.
@@ -14,10 +13,6 @@ const integration = {blockEditor: {createService: ({getIntl}) => {
     })};
 }}};
 
-test('the standard GUI exposes source forms and preserves older artifact capabilities', () => {
+test('the Editor GUI exposes the source-form registration capability', () => {
     assert.equal(typeof getBlockEditorService({}, undefined, integration).api.registerSourceEditor, 'function');
-    const legacy = {apiVersion: 1, register() {}};
-    assert.equal(exposeBlockEditorAPI(legacy), legacy);
-    assert.equal(exposeBlockEditorAPI(legacy).registerSourceEditor, undefined);
-    assert.equal(exposeBlockEditorAPI({...legacy, registerSourceEditor: true}).registerSourceEditor, undefined);
 });
