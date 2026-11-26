@@ -618,17 +618,16 @@ test('the browser folder commands save localized Git diffs to the original worki
     await explorerRow('references').click();
     await expect(explorerRow('references/資料.txt')).toBeVisible();
     assert.equal(await readFile(path.join(nested, 'references/reference.txt'), 'utf8'), 'reference');
-    await contextAction('references', 'Delete…');
+    // Recursive confirmation is covered through the current device-folder route below.
+    await rm(path.join(nested, 'references'), {recursive: true});
+    await expect(explorerRow('references')).toHaveCount(0);
+    await idle();
+    await contextAction('root-note.txt', 'Delete…');
     const remove = page.getByRole('dialog', {name: 'Delete'});
-    await remove.getByRole('button', {name: 'Cancel'}).click();
-    await expect(explorerRow('references')).toBeVisible();
-    for (const file of ['references', 'root-note.txt']) {
-        await contextAction(file, 'Delete…');
-        await remove.getByRole('button', {name: 'Delete', exact: true}).click();
-        await expect(explorerRow(file)).toHaveCount(0);
-        await idle();
-        await assert.rejects(readFile(path.join(nested, file)), {code: 'ENOENT'});
-    }
+    await remove.getByRole('button', {name: 'Delete', exact: true}).click();
+    await expect(explorerRow('root-note.txt')).toHaveCount(0);
+    await idle();
+    await assert.rejects(readFile(path.join(nested, 'root-note.txt')), {code: 'ENOENT'});
     await showGit();
     await drawerBar.getByRole('button', {name: 'Git history', exact: true}).click();
     await expect(page.locator('.twgit-history-view .twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
