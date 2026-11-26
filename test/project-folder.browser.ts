@@ -1155,9 +1155,10 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
             if (state.folderIO) state.folderIO.picker = options;
             return state.testDirectory;
         }});
-        // CDP grants the real directory handle without opening a native picker.
+        // Capture only the fixture directory for the picker. Later drops reach the real Explorer.
         for (const type of ['dragenter', 'dragover', 'drop']) {
             window.addEventListener(type, async event => {
+                if (state.testDirectory) return;
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (type === 'drop') {
@@ -1928,6 +1929,51 @@ test('stages and unstages an ordinary file through the project explorer', {timeo
     await assert.rejects(readFile(source), {code: 'ENOENT'});
     assert.deepEqual(stagedFiles(), ['other.txt']);
     assert.equal(git('rev-parse', 'HEAD'), head);
+    assert.deepEqual(errors, []);
+});
+
+test('drops a device file into a project subfolder without overwriting an existing entry', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder} = await createDiskProject(t, 'tw-project-device-drop-');
+    const incoming = await mkdtemp(path.join(path.dirname(folder), 'tw-project-incoming-'));
+    t.after(() => rm(incoming, {recursive: true, force: true}));
+    const child = 'imports';
+    const name = '資料.bin';
+    const bytes = Buffer.from([0, 1, 127, 255, 0]);
+    const source = path.join(incoming, name);
+    const destination = path.join(folder, child, name);
+    await mkdir(path.join(folder, child));
+    await writeFile(source, bytes);
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await page.getByRole('toolbar', {name: 'Drawer views'}).getByRole('button', {name: 'Project folder', exact: true}).click();
+    const tree = page.getByRole('tree', {name: 'Project folder'});
+    const row = tree.getByRole('treeitem', {name: child, exact: true});
+    const cdp = await page.context().newCDPSession(page);
+    const drop = async () => {
+        const box = await row.boundingBox();
+        assert.ok(box);
+        for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+            await cdp.send('Input.dispatchDragEvent', {type, x: box.x + box.width / 2, y: box.y + box.height / 2,
+                data: {items: [], files: [source], dragOperationsMask: 1}});
+        }
+    };
+
+    await drop();
+    await expect(tree.getByRole('treeitem', {name, exact: true})).toBeVisible();
+    assert.deepEqual(await readFile(destination), bytes);
+    assert.deepEqual(await readFile(source), bytes);
+    await assert.rejects(readFile(path.join(folder, name)), {code: 'ENOENT'});
+
+    await writeFile(source, Buffer.from([8, 9]));
+    await drop();
+    await expect(page.locator('.twpf-explorer').getByRole('alert'))
+        .toContainText('A file or folder with this name already exists.');
+    assert.deepEqual(await readFile(destination), bytes);
+    assert.deepEqual(await readFile(source), Buffer.from([8, 9]));
     assert.deepEqual(errors, []);
 });
 
