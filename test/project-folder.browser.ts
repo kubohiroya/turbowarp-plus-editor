@@ -440,17 +440,10 @@ test('the browser folder commands save localized Git diffs to the original worki
     await closeGit();
     await drawerBar.getByRole('button', {name: 'Git history', exact: true}).click();
     const drawerCommit = page.locator('.twgit-history-view').getByRole('button', {name: /^fixture, /});
-    const committedProject = panel.getByRole('region', {name: 'Changes by project element'})
-        .getByRole('button', {name: 'Code: 1 change Added Committed'}).first();
+    // Selection and viewport assertions use the rooted historical version case below.
     await drawerCommit.click();
-    await expect(gitTab).toHaveAttribute('aria-selected', 'true');
-    await expect(recordStep).toHaveAttribute('aria-expanded', 'true');
-    await expect(panel.getByRole('button', {name: /^fixture, /})).toHaveAttribute('aria-pressed', 'true');
-    await expect(committedProject).toBeInViewport();
     await reviewStep.click();
     await drawerCommit.press('Enter');
-    await expect(recordStep).toHaveAttribute('aria-expanded', 'true');
-    await expect(committedProject).toBeInViewport();
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
     await reviewStep.click();
     await expect(panel.getByRole('button', {name: 'Open Project', exact: true})).toHaveCount(0);
@@ -483,14 +476,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     await commitSearch.press('Escape');
     await sideBar.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(panel.getByRole('button', {name: 'Show File List', exact: true})).toHaveCount(0);
-    const folderTools = page.getByRole('group', {name: 'Project folder tools'});
-    const [folderPopup] = await Promise.all([page.waitForEvent('popup', {timeout: 7000}),
-        folderTools.getByRole('button', {name: 'Open in another window'}).click()]);
-    await expect(folderPopup.getByRole('tree', {name: 'Project folder'})).toBeVisible();
-    await folderPopup.close();
-    await expect(sideBar.getByRole('button', {name: 'Project folder', exact: true})).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-drawer-content="project"]').getByRole('tree', {name: 'Project folder'})).toBeVisible();
-
     await expect(panel.locator('header').getByRole('button', {name: 'Reload Project', exact: true})).toHaveCount(0);
     await expect(reviewStep.locator('.twgit-count')).toHaveText('5');
     // A selected project lists its changes by stage, sprite and element; the list by file stays one click away.
@@ -669,7 +654,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     await openNestedProject();
     await closeGit();
     const notice = page.locator('[data-project-folder-external]');
-    const reload = notice.getByRole('button', {name: 'Reload from Disk'});
     await expect(notice).toBeHidden();
     await page.evaluate(() => {
         const state = (window as any).folderTest;
@@ -795,14 +779,12 @@ test('the browser folder commands save localized Git diffs to the original worki
     await page.evaluate(() => window.vm.runtime.startHats('event_whenflagclicked', undefined,
         window.vm.runtime.getTargetForStage()));
     await page.waitForFunction(() => (window as any).ReduxStore.getState().scratchGui.vmStatus.running);
-    const runningDisk = await diskEdit('72');
-    await expect(notice).toContainText('The changes load when the project stops.');
-    await expect(reload).toBeDisabled();
+    // The rooted payload test below checks the deferred notice, disabled reload and unchanged disk bytes.
+    await diskEdit('72');
     assert.equal((await memory()).value, '71');
     await page.evaluate(() => window.vm.stopAll());
     await expect(notice).toBeHidden();
     assert.deepEqual(await memory(), {value: '72', x: 180, y: 130, same: true});
-    assert.equal(await readFile(nestedFile, 'utf8'), runningDisk);
 
     await edit('value', '73');
     const dirtyDisk = await diskEdit('74');
@@ -1228,9 +1210,27 @@ test('opens a past version in its own player and restores it from the history', 
 
     const {editor: page, errors} = await openDeviceFolder(t, root, folder, '&twPlusGitRestoreVersion=1');
     await page.waitForFunction(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Current Cat'));
+    await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
     const views = page.getByRole('toolbar', {name: 'Drawer views'});
     await views.getByRole('button', {name: 'Git history', exact: true}).click();
     const history = page.locator('.twgit-history-view');
+    // The History drawer opens the same commit in Local Git, not just in its own list.
+    const pastCommit = history.getByRole('button', {name: /^Past project, /});
+    const localGit = page.getByRole('tab', {name: 'Local Git', exact: true});
+    const panel = page.locator('.twgit-panel');
+    const historyView = panel.getByRole('button', {name: 'Create PR', exact: true});
+    const panelCommit = panel.getByRole('button', {name: /^Past project, /});
+    const addedScript = panel.getByRole('region', {name: 'Changes by project element'})
+        .getByRole('button', {name: 'Code: 1 change Added Committed', exact: true}).first();
+    await pastCommit.click();
+    await expect(localGit).toHaveAttribute('aria-selected', 'true');
+    await expect(historyView).toHaveAttribute('aria-expanded', 'true');
+    await expect(panelCommit).toHaveAttribute('aria-pressed', 'true');
+    await expect(addedScript).toBeInViewport();
+    await panel.getByRole('button', {name: 'Commit saved changes', exact: true}).click();
+    await pastCommit.press('Enter');
+    await expect(historyView).toHaveAttribute('aria-expanded', 'true');
+    await expect(addedScript).toBeInViewport();
     const pastActions = history.getByRole('button', {name: 'Actions: Past project'});
     await page.evaluate(() => {
         const vm = window.vm;
@@ -1378,7 +1378,7 @@ test('routes project and active-file saves from the current Editor folder drawer
     // Keep inspection commands such as status from refreshing the index behind the open Git panel.
     const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
         {cwd: folder, encoding: 'utf8'}).trim();
-    git('init', '-q');
+    git('init', '-q', '-b', 'main');
     git('config', 'core.autocrlf', 'false');
     git('add', '.');
     git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture');
@@ -1387,10 +1387,18 @@ test('routes project and active-file saves from the current Editor folder drawer
     const {editor: page, errors} = await openDeviceFolder(t, root, folder);
     const status = page.locator('[data-project-folder-status]');
     await expect(status).toHaveText('Project folder opened.');
+    await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
     const drawerBar = page.getByRole('toolbar', {name: 'Drawer views', exact: true});
     await drawerBar.getByRole('button', {name: 'Project folder', exact: true}).click();
     const sourceRow = page.locator(`.twpf-explorer-item[data-path="${projectFile}"]`);
     await expect(sourceRow.locator('.twpf-explorer-description')).toHaveText('Project data');
+    const folderTools = page.getByRole('group', {name: 'Project folder tools'});
+    const [folderPopup] = await Promise.all([page.waitForEvent('popup', {timeout: 7000}),
+        folderTools.getByRole('button', {name: 'Open in another window'}).click()]);
+    await expect(folderPopup.getByRole('tree', {name: 'Project folder'})).toBeVisible();
+    await folderPopup.close();
+    await expect(drawerBar.getByRole('button', {name: 'Project folder', exact: true})).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-drawer-content="project"]').getByRole('tree', {name: 'Project folder'})).toBeVisible();
     const fileTab = (name: string) => page.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}));
     const preview = page.locator('.twpf-preview:visible');
     const openFile = (name: string) => page.locator(`[data-path="${name}"]`).click();
@@ -1814,6 +1822,10 @@ test('a clean device-folder update reads only the changed project payload', {tim
     assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
     await verifyWebEditor(build);
     const {folder, project} = await createDiskProject(t, 'tw-project-scoped-read-', true);
+    // Leave only the stage's loop on the flag: it keeps running without dirtying a sprite's saved state.
+    project.targets[1].blocks.flag_A.opcode = 'event_whenthisspriteclicked';
+    project.targets[2].blocks.bird_flag.opcode = 'event_whenthisspriteclicked';
+    await writeFile(path.join(folder, projectFile), stringify(project));
     const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
         {cwd: folder, encoding: 'utf8'}).trim();
     git('init', '-q', '-b', 'main');
@@ -1868,6 +1880,37 @@ test('a clean device-folder update reads only the changed project payload', {tim
     assert.deepEqual(io.loads, ['string']);
     assert.equal(io.writes, 0);
     assert.deepEqual(await readFile(index), indexBefore);
+
+    // A running stage defers the same safe update until Stop, without loading or saving the whole project.
+    const openedStage = page.waitForEvent('popup', {timeout: 10000});
+    await page.getByRole('button', {name: 'Open run view', exact: true}).click();
+    const runView = await openedStage;
+    await runView.getByTitle('Go', {exact: true}).click();
+    await page.waitForFunction(() => window.ReduxStore.getState().scratchGui.vmStatus.running);
+    project.targets[1].blocks.move_B.inputs.STEPS[1][1] = '72';
+    const runningDisk = stringify(project);
+    await writeFile(path.join(folder, projectFile), runningDisk);
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    const notice = page.locator('[data-project-folder-external]');
+    await expect(notice).toContainText('The changes load when the project stops.');
+    await expect(notice.getByRole('button', {name: 'Reload from Disk'})).toBeDisabled();
+    const catValue = () => page.evaluate(() => {
+        const cat = window.vm.runtime.targets.find(target => target.sprite.name === 'Cat');
+        const input = cat.blocks.getBlock('move_B').inputs.STEPS.block;
+        return cat.blocks.getBlock(input).fields.NUM.value;
+    });
+    assert.equal(await catValue(), '71');
+    await runView.getByTitle('Stop', {exact: true}).click();
+    await expect(notice).toBeHidden();
+    await runView.close();
+    await expect.poll(catValue).toBe('72');
+    await page.getByRole('tab', {name: 'Cat', exact: true}).click();
+    await expect.poll(workspaceValue).toBe('72');
+    assert.equal(await readFile(path.join(folder, projectFile), 'utf8'), runningDisk);
+    assert.deepEqual(await page.evaluate(() => {
+        const {loads, writes} = (window as any).folderIO;
+        return {loads, writes};
+    }), {loads: ['string'], writes: 0});
     assert.deepEqual(errors, []);
 });
 
