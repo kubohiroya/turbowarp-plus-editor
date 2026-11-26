@@ -114,13 +114,19 @@ const editFolderBlock = (page: Page, kind: 'value' | 'position' | 'append', valu
         }
     }, {kind, value});
 
+// Exact source representation of the block created by editFolderBlock's append event.
+const appendSayToSource = (blocks: ReturnType<typeof fixture>['project']['targets'][number]['blocks']) => {
+    Object.assign(blocks.move_B, {next: 'say_C'});
+    Object.assign(blocks, {say_C: block('looks_say', null, 'move_B', {MESSAGE: [1, [10, 'こんにちは']]})});
+};
+
 test('the browser folder commands save localized Git diffs to the original working tree', {timeout: 120000}, async t => {
     const root = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(root && path.isAbsolute(root), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
     await verifyWebEditor(root);
     const build = JSON.parse(await readFile(path.join(root, 'build-info.json'), 'utf8'));
     assert.equal(build.revision, pins.guiRevision);
-    const {folder, project, costume, sound, svg, wav} = await createDiskProject(t, 'tw-project-folder-', true);
+    const {folder, project} = await createDiskProject(t, 'tw-project-folder-', true);
     // Keep inspection commands such as status from refreshing the index behind the open Git panel.
     const git = (...args: string[]) => execFileSync('git', ['--no-optional-locks', ...args],
         {cwd: folder, encoding: 'utf8'}).trim();
@@ -128,6 +134,18 @@ test('the browser folder commands save localized Git diffs to the original worki
     git('config', 'core.autocrlf', 'false');
     git('add', '.');
     git('-c', 'user.name=Editor folder fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture');
+
+    // The later nested-project checks need this split index/working-tree baseline, not prior UI saves.
+    const cat = project.targets[1];
+    cat.blocks.move_B.inputs.STEPS[1][1] = '20';
+    Object.assign(cat.blocks.flag_A, {x: 160, y: 110});
+    appendSayToSource(cat.blocks);
+    const sourcePath = path.join(folder, projectFile);
+    await writeFile(sourcePath, stringify(project));
+    git('add', projectFile);
+    Object.assign(cat, {x: 30, y: -20, size: 150});
+    Object.assign(project.targets[0].variables, {score_id: ['score', 7]});
+    await writeFile(sourcePath, stringify(project));
 
     const args = ['--enable-experimental-web-platform-features', '--enable-unsafe-swiftshader'];
     if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
@@ -224,8 +242,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     const open = () => command('Open Project Folder…', 'Project folder opened.');
     const save = (message = 'Project folder saved.') => command('Save Project', message);
     const read = () => readFile(path.join(folder, projectFile), 'utf8');
-    const changes = () => git('diff', '--no-color', '--unified=0', '--', projectFile)
-        .split('\n').filter(line => /^[+-](?![+-])/u.test(line)).map(line => line[0] + line.slice(1).trim());
     const observe = () => page.evaluate(() => {
         const {writes, loads, options, zipSaves} = (window as any).folderTest;
         return {writes, loads, options, zipSaves};
@@ -239,132 +255,6 @@ test('the browser folder commands save localized Git diffs to the original worki
     const openFile = (name: string) => page.locator(`[data-path="${name}"]`).click();
     const closeFile = (name: string) => fileTab(name).locator('.dv-default-tab-action').click();
     const fileMenu = page.getByText('File', {exact: true});
-    await drawerBar.getByRole('button', {name: 'Sprites', exact: true}).click();
-    assert.deepEqual(await page.evaluate(() => {
-        const cat = window.vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
-        return [cat.sprite.costumes[0].asset.assetId, cat.sprite.sounds[0].asset.assetId];
-    }), [costume.assetId, sound.assetId]);
-    await save('No changes to save.');
-    assert.equal((await observe()).writes, 0);
-    assert.equal(git('status', '--short'), '');
-
-    await edit('value');
-    const marker = page.getByRole('button', {name: 'Unsaved changes. Open the save menu'});
-    const tabMarker = (name: string) => page.locator('.dv-tab').and(page.getByRole('tab', {name, exact: true}))
-        .locator('[data-tw-plus-unsaved-tab]');
-    await expect(tabMarker('Cat')).toBeVisible();
-    await expect(tabMarker('Bird')).toBeHidden();
-    await marker.click();
-    await page.getByRole('button', {name: 'Save Project', exact: true}).click();
-    await expect(status).toHaveText('Project folder saved.');
-    await expect(marker).toHaveCount(0);
-    await expect(tabMarker('Cat')).toBeHidden();
-    assert.deepEqual(changes(), ['-"10"', '+"20"']);
-    git('add', projectFile);
-
-    await edit('position');
-    await save();
-    assert.deepEqual(changes(), ['-"x": 120,', '-"y": 80', '+"x": 160,', '+"y": 110']);
-    git('add', projectFile);
-
-    await edit('append');
-    await save();
-    const additions = changes();
-    for (const line of ['-"next": null,', '+"next": "say_C",', '+"say_C": {', '+"parent": "move_B",']) {
-        assert.ok(additions.includes(line), line);
-    }
-    assert.equal(additions.filter(line => line.startsWith('-')).length, 1);
-    assert.equal(git('diff', '--name-only'), projectFile);
-    const saved = JSON.parse(await read());
-    assert.deepEqual(Object.keys(saved.targets[1].blocks), ['flag_A', 'move_B', 'say_C']);
-    assert.deepEqual(saved.targets[1].blocks.move_B.retainedData, {author: 'owner'});
-    assert.deepEqual(saved.targets[2], project.targets[2]);
-    assert.deepEqual(saved.retainedTopLevel, project.retainedTopLevel);
-    assert.deepEqual(await readFile(path.join(folder, 'assets', costume.md5ext)), svg);
-    assert.deepEqual(await readFile(path.join(folder, 'assets', sound.md5ext)), wav);
-
-    await open();
-    const reopened = await page.evaluate(() => JSON.parse(window.vm.toJSON(undefined, {allowOptimization: false}))
-        .targets.find(entry => entry.name === 'Cat').blocks);
-    assert.equal(reopened.move_B.inputs.STEPS[1][1], '20');
-    assert.equal(reopened.flag_A.x, 160);
-    assert.equal(reopened.say_C.parent, 'move_B');
-    await save('No changes to save.');
-    assert.equal((await observe()).writes, 3);
-    git('add', projectFile);
-
-    // Edits beyond blocks, including state a running project changes, save to the project file alone.
-    const beforeOther = JSON.parse(await read());
-    await page.evaluate(() => {
-        const vm = window.vm;
-        const cat = vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
-        cat.setXY(30, -20);
-        cat.setSize(150);
-        const stage = vm.runtime.getTargetForStage();
-        stage.createVariable('score_id', 'score', '');
-        stage.variables.score_id.value = 7;
-    });
-    await save();
-    assert.equal(git('diff', '--name-only'), projectFile);
-    const other = JSON.parse(await read());
-    assert.deepEqual({x: other.targets[1].x, y: other.targets[1].y, size: other.targets[1].size}, {x: 30, y: -20, size: 150});
-    assert.deepEqual(other.targets[0].variables.score_id, ['score', 7]);
-    for (const key of ['x', 'y', 'size']) beforeOther.targets[1][key] = other.targets[1][key];
-    beforeOther.targets[0].variables = other.targets[0].variables;
-    assert.deepEqual(other, beforeOther, 'nothing else in the project file changes');
-    git('add', projectFile);
-    // A renamed sprite keeps its folder entry, including fields the Editor does not know.
-    await page.evaluate(() => {
-        const vm = window.vm;
-        vm.renameSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id, 'Kitten');
-    });
-    await save();
-    assert.deepEqual(changes(), ['-"name": "Cat",', '+"name": "Kitten",']);
-    assert.deepEqual(JSON.parse(await read()).targets[1].blocks.move_B.retainedData, {author: 'owner'});
-    await page.evaluate(() => {
-        const vm = window.vm;
-        vm.renameSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Kitten').id, 'Cat');
-    });
-    await save();
-    assert.equal(git('status', '--short'), 'M  project.source.json');
-
-    // A new sprite with a new costume writes the asset and the manifest; deleting it removes them again.
-    const manifestPath = path.join(folder, 'sb3-source.json');
-    const manifestBefore = await readFile(manifestPath, 'utf8');
-    const green = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#2a9d4b"/></svg>';
-    const added = await page.evaluate(async svg => {
-        const vm = window.vm;
-        await vm.duplicateSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id);
-        const copy = vm.runtime.targets.find(entry => entry.isOriginal && entry.sprite.name === 'Cat2');
-        const storage = vm.runtime.storage;
-        const asset = storage.createAsset(storage.AssetType.ImageVector, 'svg', new TextEncoder().encode(svg), null, true);
-        const md5ext = `${asset.assetId}.svg`;
-        await vm.addCostume(md5ext, {name: 'Green', asset, dataFormat: 'svg', assetId: asset.assetId, md5: md5ext,
-            rotationCenterX: 16, rotationCenterY: 16, bitmapResolution: 1}, copy.id);
-        return md5ext;
-    }, green);
-    await save();
-    assert.equal(await readFile(path.join(folder, 'assets', added), 'utf8'), green);
-    assert.ok(JSON.parse(await readFile(manifestPath, 'utf8')).archiveEntries.includes(added));
-    const withCopy = JSON.parse(await read());
-    assert.deepEqual(withCopy.targets.map(target => target.name), ['Stage', 'Cat', 'Bird', 'Cat2']);
-    assert.ok(withCopy.targets[3].costumes.some(entry => entry.md5ext === added));
-    // The saved folder opens again as it was saved.
-    await open();
-    assert.ok(await page.evaluate(name => window.vm.runtime.targets.some(entry => entry.sprite.name === name), 'Cat2'));
-    // Sprite deletion confirmation is on by default and asks before deleting.
-    page.once('dialog', dialog => dialog.accept());
-    await page.evaluate(() => {
-        const vm = window.vm;
-        vm.deleteSprite(vm.runtime.targets.find(entry => entry.isOriginal && entry.sprite.name === 'Cat2').id);
-    });
-    await save();
-    await expect.poll(() => readFile(path.join(folder, 'assets', added)).then(() => true, () => false)).toBe(false);
-    assert.equal(await readFile(manifestPath, 'utf8'), manifestBefore);
-    assert.deepEqual(JSON.parse(await read()).targets.map(target => target.name), ['Stage', 'Cat', 'Bird']);
-    assert.deepEqual(git('status', '--short').split('\n').map(line => line.slice(3)), [projectFile], 'only the project file differs');
-    assert.equal((await observe()).writes, 8);
-
     // The Git panel reuses one granted repository handle to open a nested project.
     const rootBeforeNested = await read();
     const nested = path.join(folder, 'projects', 'demo');
@@ -1271,18 +1161,28 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     await drawer.getByRole('button', {name: 'Project folder', exact: true}).click();
     await expect(editor.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
 
-    const save = async (message: string) => {
-        await editor.getByText('File', {exact: true}).click();
-        await editor.getByRole('button', {name: 'Save Project', exact: true}).click();
-        await expect(status).toHaveText(message);
+    const save = async (message: string, tab = editor) => {
+        await tab.getByText('File', {exact: true}).click();
+        await tab.getByRole('button', {name: 'Save Project', exact: true}).click();
+        await expect(tab.locator('[data-project-folder-status]')).toHaveText(message);
     };
     await save('No changes to save.');
     assert.equal(await readFile(source, 'utf8'), stringify(project));
     const io = () => editor.evaluate(() => (window as any).folderIO);
     assert.deepEqual(await io(), {loads: ['string'], writes: 0,
         picker: {id: 'turbowarp-plus-project-folder', mode: 'readwrite'}});
+    await drawer.getByRole('button', {name: 'Sprites', exact: true}).click();
     await editFolderBlock(editor, 'value');
-    await save('Project folder saved.');
+    const marker = editor.getByRole('button', {name: 'Unsaved changes. Open the save menu'});
+    const tabMarker = (name: string) => editor.locator('.dv-tab')
+        .and(editor.getByRole('tab', {name, exact: true})).locator('[data-tw-plus-unsaved-tab]');
+    await expect(tabMarker('Cat')).toBeVisible();
+    await expect(tabMarker('Bird')).toBeHidden();
+    await marker.click();
+    await editor.getByRole('button', {name: 'Save Project', exact: true}).click();
+    await expect(status).toHaveText('Project folder saved.');
+    await expect(marker).toHaveCount(0);
+    await expect(tabMarker('Cat')).toBeHidden();
     const expected = structuredClone(project);
     const blocks = expected.targets[1].blocks;
     blocks.move_B.inputs.STEPS[1][1] = '20';
@@ -1296,16 +1196,9 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
 
     await editFolderBlock(editor, 'append');
     await save('Project folder saved.');
-    await expect.poll(async () => JSON.parse(await readFile(source, 'utf8')).targets[1].blocks.say_C?.parent)
-        .toBe('move_B');
-    const snapshot = await readFile(source, 'utf8');
-    const saved = JSON.parse(snapshot);
-    assert.deepEqual(Object.keys(saved.targets[1].blocks), ['flag_A', 'move_B', 'say_C']);
-    assert.equal(saved.targets[1].blocks.say_C.opcode, 'looks_say');
-    assert.equal(saved.targets[1].blocks.move_B.next, 'say_C');
-    delete saved.targets[1].blocks.say_C;
-    saved.targets[1].blocks.move_B.next = null;
-    assert.deepEqual(saved, expected, 'all unrelated project data stays unchanged');
+    appendSayToSource(blocks);
+    const snapshot = stringify(expected);
+    await expect.poll(() => readFile(source, 'utf8')).toBe(snapshot);
 
     const reopened = await openAgain();
     await expect(reopened.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
@@ -1314,6 +1207,8 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
             .targets.find(entry => entry.name === 'Cat');
         return [cat.blocks.move_B.inputs.STEPS[1][1], cat.blocks.flag_A.x, cat.blocks.say_C.parent];
     }), ['20', 160, 'move_B']);
+    await save('No changes to save.', reopened);
+    assert.equal(await readFile(source, 'utf8'), snapshot);
     await reopened.close();
 
     // Refuse edits made just before saving, or after a writable stream has opened.
@@ -1341,6 +1236,117 @@ test('opens a device folder in a new Editor tab and saves a block edit without c
     assert.equal((await io()).writes, 4);
     assert.deepEqual(errors, []);
 });
+
+test('saves real Editor sprite state and costume assets back to the device folder', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder, project, costume, sound, svg, wav} = await createDiskProject(t, 'tw-project-assets-');
+    const source = path.join(folder, projectFile);
+    const manifest = path.join(folder, 'sb3-source.json');
+    // Keep the existing stacking order explicit, so a duplicate/delete round trip can be compared exactly.
+    for (const [index, sprite] of project.targets.entries()) {
+        if (!sprite.isStage) Object.assign(sprite, {layerOrder: index});
+    }
+    await writeFile(source, stringify(project));
+    const read = async () => JSON.parse(await readFile(source, 'utf8'));
+    const manifestBefore = await readFile(manifest, 'utf8');
+    const {original, originalProject, editor, openAgain, errors} = await openDeviceFolder(t, build, folder, '', true);
+    const status = editor.locator('[data-project-folder-status]');
+    await expect(status).toHaveText('Project folder opened.');
+    assert.deepEqual(await editor.evaluate(() => {
+        const cat = window.vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
+        return [cat.sprite.costumes[0].asset.assetId, cat.sprite.sounds[0].asset.assetId];
+    }), [costume.assetId, sound.assetId]);
+    const save = async () => {
+        const writes = await editor.evaluate(() => (window as any).folderIO.writes);
+        await editor.getByText('File', {exact: true}).click();
+        await editor.getByRole('button', {name: 'Save Project', exact: true}).click();
+        await expect.poll(() => editor.evaluate(() => (window as any).folderIO.writes)).toBe(writes + 1);
+        await expect(status).toHaveText('Project folder saved.');
+    };
+
+    const expected = await read();
+    await editor.evaluate(() => {
+        const vm = window.vm;
+        const cat = vm.runtime.targets.find(entry => entry.sprite.name === 'Cat');
+        cat.setXY(30, -20);
+        cat.setSize(150);
+        const stage = vm.runtime.getTargetForStage();
+        stage.createVariable('score_id', 'score', '');
+        stage.variables.score_id.value = 7;
+    });
+    await save();
+    Object.assign(expected.targets[1], {x: 30, y: -20, size: 150});
+    expected.targets[0].variables.score_id = ['score', 7];
+    await expect.poll(read).toEqual(expected);
+    assert.equal(await readFile(manifest, 'utf8'), manifestBefore);
+
+    await editor.evaluate(() => {
+        const vm = window.vm;
+        vm.renameSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Cat').id, 'Kitten');
+    });
+    await save();
+    expected.targets[1].name = 'Kitten';
+    assert.equal(await readFile(source, 'utf8'), stringify(expected));
+
+    const newCostume = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#2a9d4b"/></svg>';
+    const assetFile = await editor.evaluate(async svg => {
+        const vm = window.vm;
+        await vm.duplicateSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Kitten').id);
+        const duplicate = vm.runtime.targets.find(entry => entry.isOriginal && entry.sprite.name === 'Kitten2');
+        const storage = vm.runtime.storage;
+        const asset = storage.createAsset(storage.AssetType.ImageVector, 'svg', new TextEncoder().encode(svg), null, true);
+        const md5ext = `${asset.assetId}.svg`;
+        await vm.addCostume(md5ext, {name: 'Green', asset, dataFormat: 'svg', assetId: asset.assetId, md5: md5ext,
+            rotationCenterX: 16, rotationCenterY: 16, bitmapResolution: 1}, duplicate.id);
+        return md5ext;
+    }, newCostume);
+    await save();
+    const costumePath = path.join(folder, 'assets', assetFile);
+    await expect.poll(() => readFile(costumePath, 'utf8')).toBe(newCostume);
+    assert.ok(JSON.parse(await readFile(manifest, 'utf8')).archiveEntries.includes(assetFile));
+    const withCopy = await read();
+    assert.deepEqual(withCopy.targets.map(target => target.name), ['Stage', 'Kitten', 'Bird', 'Kitten2']);
+    assert.ok(withCopy.targets[3].costumes.some(entry => entry.md5ext === assetFile));
+
+    const reopened = await openAgain();
+    await expect(reopened.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    const reloadedAsset = await reopened.evaluate(() => window.vm.runtime.targets.find(entry => entry.sprite.name === 'Kitten2')
+        .sprite.costumes.find(entry => entry.name === 'Green').asset.assetId);
+    assert.equal(reloadedAsset, assetFile.replace(/\.svg$/u, ''));
+    await reopened.close();
+
+    editor.once('dialog', dialog => dialog.accept());
+    await editor.evaluate(() => {
+        const vm = window.vm;
+        vm.deleteSprite(vm.runtime.targets.find(entry => entry.isOriginal && entry.sprite.name === 'Kitten2').id);
+    });
+    await save();
+    await expect.poll(async () => {
+        try {
+            await readFile(costumePath);
+            return true;
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+            return false;
+        }
+    }).toBe(false);
+    assert.equal(await readFile(manifest, 'utf8'), manifestBefore);
+    assert.equal(await readFile(source, 'utf8'), stringify(expected));
+    await editor.evaluate(() => {
+        const vm = window.vm;
+        vm.renameSprite(vm.runtime.targets.find(entry => entry.sprite.name === 'Kitten').id, 'Cat');
+    });
+    await save();
+    expected.targets[1].name = 'Cat';
+    assert.equal(await readFile(source, 'utf8'), stringify(expected));
+    assert.deepEqual(await readFile(path.join(folder, 'assets', costume.md5ext)), svg);
+    assert.deepEqual(await readFile(path.join(folder, 'assets', sound.md5ext)), wav);
+    assert.equal(await original.evaluate(() => window.vm.toJSON()), originalProject);
+    assert.deepEqual(errors, []);
+});
+
 
 test('routes project and active-file saves from the current Editor folder drawer', {timeout: 60000}, async t => {
     const root = process.env.E2E_PROJECT_FOLDER_BUILD;
