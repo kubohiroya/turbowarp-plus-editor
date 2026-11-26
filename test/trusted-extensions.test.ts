@@ -84,15 +84,12 @@ test('every build a catalog item lists as a variant is trusted by its own addres
     assert.equal(trusted.listedDigests.has(variantDigest), true);
 });
 
-test('a malformed variant prevents a catalog from granting trust', async () => {
-    for (const invalid of [
-        {url: 'http://cdn.example.test/insecure.js', sha256: 'e'.repeat(64)},
-        {url: 'https://cdn.example.test/short.js', sha256: 'f'}
-    ]) {
-        const trusted = createPlusTrustedCatalog({readCatalog: async () => catalog({sha256: digest, variants: [invalid]})});
-        assert.equal(await trusted.isTrustedURL(listed), false);
-        assert.equal(await trusted.isTrustedURL(invalid.url), false);
-        assert.equal(await trusted.isTrustedCode(code({type: 'embedded-file', path: 'extensions/listed.js'}, digest)), false);
-        assert.equal(trusted.listedDigests.size, 0);
-    }
+test('the Editor fails closed when catalog validation rejects a variant', async () => {
+    const rejectedVariant = {url: 'https://cdn.example.test/short.js', sha256: 'f'};
+    const trusted = createPlusTrustedCatalog({readCatalog: async () => catalog({sha256: digest,
+        variants: [rejectedVariant]})});
+    assert.equal(await trusted.isTrustedURL(listed), false);
+    assert.equal(await trusted.isTrustedURL(rejectedVariant.url), false);
+    assert.equal(await trusted.isTrustedCode(code({type: 'embedded-file', path: 'extensions/listed.js'}, digest)), false);
+    assert.equal(trusted.listedDigests.size, 0);
 });

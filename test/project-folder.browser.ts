@@ -2,7 +2,7 @@ import {test, type TestContext} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {cp, mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
+import {cp, mkdir, mkdtemp, readFile, rm, stat, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {chromium, expect, type Page} from '@playwright/test';
@@ -618,17 +618,16 @@ test('the browser folder commands save localized Git diffs to the original worki
     await explorerRow('references').click();
     await expect(explorerRow('references/資料.txt')).toBeVisible();
     assert.equal(await readFile(path.join(nested, 'references/reference.txt'), 'utf8'), 'reference');
-    await contextAction('references', 'Delete…');
+    // Recursive confirmation is covered through the current device-folder route below.
+    await rm(path.join(nested, 'references'), {recursive: true});
+    await expect(explorerRow('references')).toHaveCount(0);
+    await idle();
+    await contextAction('root-note.txt', 'Delete…');
     const remove = page.getByRole('dialog', {name: 'Delete'});
-    await remove.getByRole('button', {name: 'Cancel'}).click();
-    await expect(explorerRow('references')).toBeVisible();
-    for (const file of ['references', 'root-note.txt']) {
-        await contextAction(file, 'Delete…');
-        await remove.getByRole('button', {name: 'Delete', exact: true}).click();
-        await expect(explorerRow(file)).toHaveCount(0);
-        await idle();
-        await assert.rejects(readFile(path.join(nested, file)), {code: 'ENOENT'});
-    }
+    await remove.getByRole('button', {name: 'Delete', exact: true}).click();
+    await expect(explorerRow('root-note.txt')).toHaveCount(0);
+    await idle();
+    await assert.rejects(readFile(path.join(nested, 'root-note.txt')), {code: 'ENOENT'});
     await showGit();
     await drawerBar.getByRole('button', {name: 'Git history', exact: true}).click();
     await expect(page.locator('.twgit-history-view .twgit-graph-commit').filter({hasText: 'fixture'})).toBeVisible();
@@ -1867,5 +1866,44 @@ test('stages and unstages an ordinary file through the project explorer', {timeo
     await assert.rejects(readFile(source), {code: 'ENOENT'});
     assert.deepEqual(stagedFiles(), ['other.txt']);
     assert.equal(git('rev-parse', 'HEAD'), head);
+    assert.deepEqual(errors, []);
+});
+
+test('deletes a device folder recursively only after confirmation', {timeout: 45000}, async t => {
+    const build = process.env.E2E_PROJECT_FOLDER_BUILD;
+    assert.ok(build && path.isAbsolute(build), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
+    await verifyWebEditor(build);
+    const {folder} = await createDiskProject(t, 'tw-project-explorer-delete-');
+    const removedDirectory = path.join(folder, 'references');
+    const nestedFile = path.join(removedDirectory, 'examples', '資料.bin');
+    const sideFile = path.join(folder, 'keep.bin');
+    const original = Buffer.from([0, 127, 255]);
+    const keep = Buffer.from([255, 0, 127]);
+    await mkdir(path.dirname(nestedFile), {recursive: true});
+    await writeFile(nestedFile, original);
+    await writeFile(sideFile, keep);
+    const projectSource = path.join(folder, projectFile);
+    const before = await readFile(projectSource);
+
+    const {editor: page, errors} = await openDeviceFolder(t, build, folder);
+    await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await page.getByRole('toolbar', {name: 'Drawer views'}).getByRole('button', {name: 'Project folder', exact: true}).click();
+    const row = page.getByRole('tree', {name: 'Project folder'}).locator('[data-path="references"]');
+    const openDelete = async () => {
+        await row.click({button: 'right'});
+        await page.getByRole('menu', {name: 'File and folder actions'}).getByRole('menuitem', {name: 'Delete…', exact: true}).click();
+    };
+    const dialog = page.getByRole('dialog', {name: 'Delete', exact: true});
+    await openDelete();
+    await dialog.getByRole('button', {name: 'Cancel', exact: true}).click();
+    await expect(row).toBeVisible();
+    assert.deepEqual(await readFile(nestedFile), original);
+
+    await openDelete();
+    await dialog.getByRole('button', {name: 'Delete', exact: true}).click();
+    await expect(row).toHaveCount(0);
+    await assert.rejects(stat(removedDirectory), {code: 'ENOENT'});
+    assert.deepEqual(await readFile(sideFile), keep);
+    assert.deepEqual(await readFile(projectSource), before);
     assert.deepEqual(errors, []);
 });
