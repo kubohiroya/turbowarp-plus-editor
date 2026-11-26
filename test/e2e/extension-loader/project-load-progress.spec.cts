@@ -60,7 +60,7 @@ for (const cancel of [false, true]) {
         await expect(progress.locator('[data-phase="approval"]').first()).toHaveText('ユーザーの確認待ち…');
         if (cancel) {
             const closed = page.waitForEvent('close');
-            await review.getByRole('button', {name: 'キャンセル', exact: true}).click();
+            await review.getByTestId('twextsec-cancel').click();
             await closed;
         } else {
             await individualReview(page);
