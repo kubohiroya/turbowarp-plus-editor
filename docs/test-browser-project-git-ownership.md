@@ -14,7 +14,7 @@
 | `project-publication` | Editor が現在のソース・ブランチをダイアログへ渡す。各公開モードの規則、既定選択やリンク文言は Git。 |
 | `project-repository-creation` | 実 VM の最初の保存と Git コミット、作成結果から別タブを開く。Chromium で Desktop 接続と Cloudflare 接続のデバイス保存、Cloudflare 接続のブラウザー保存の3経路を確認。WebKit の完了は未検証。 |
 
-Project Folder 0.22.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/actions/runs/44949433556/job/136983876411) は単体82件とブラウザー24件成功。明示 skip 1件は根拠にしない。Git 0.32.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp-plus-editor-git/actions/runs/45581094320) で公開ポリシーと実 Smart HTTP の物理ファイル変更時の保護を、[Git #85 の CI](https://github.com/kubohiroya/turbowarp-plus-editor-git/actions/runs/45724587063) では設定の復元、接続先固定と認証フォームの3件を確認した。
+Project Folder 0.22.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/actions/runs/44949433556/job/136983876411) は単体82件とブラウザー24件成功。明示 skip 1件は根拠にしない。Git 0.32.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp-plus-editor-git/actions/runs/45581094320) で公開ポリシーと実 Smart HTTP の物理ファイル変更時の保護を、[Git #85 の CI](https://github.com/kubohiroya/turbowarp-plus-editor-git/actions/runs/45724587063) では設定の復元、接続先固定と認証フォームの3件を確認した。 [Git #84 の CI](https://github.com/kubohiroya/turbowarp-plus-editor-git/actions/runs/45721385184) が実行した確認済み件数の即時反映は繰り返さず、Editor では画面切り替えと別タブ再開でも件数が保持されることを確認する。
 
 固定ビルドのヘッドレス実行は、現行フォルダー7件、フォルダー保存1件、Git の接続・同期2件、公開4件、リポジトリ作成の Chromium 3件が成功、スキップなし。個別の対象別に実行し、通常CIの時間短縮には計上しない。
 
