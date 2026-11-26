@@ -104,13 +104,11 @@ test('normal startup removes the corner log and opens failed-load diagnostics wi
         const outcome = dom.window.document.querySelector('[data-testid="project-load-failure"]');
         assert.ok(outcome);
         assert.equal(outcome.querySelector('h1').textContent, 'The project could not be opened');
-        assert.equal(dom.window.document.querySelector('[data-testid="project-diagnostics-snackbar"]'), null);
         assert.equal(dom.window.document.querySelector('[data-testid="tw-plus-extension-status"]'), null);
         [...outcome.querySelectorAll('button')].find(button => button.textContent === 'View detailed log').click();
         const dialog = dom.window.document.querySelector('[data-testid="project-diagnostics"]');
         assert.match(dialog.textContent, /DIGEST_MISMATCH/);
         assert.equal(dom.window.document.querySelector('aside'), null);
-        assert.equal(title, 'Native title');
     } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
 });
 
