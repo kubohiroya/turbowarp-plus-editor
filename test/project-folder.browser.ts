@@ -819,48 +819,20 @@ test('the browser folder commands save localized Git diffs to the original worki
     const untouchedPath = 'new.txt';
     await writeFile(path.join(folder, untouchedPath), 'Unrelated change\n');
     git('add', untouchedPath);
-    const otherIndex = git('show', ':' + untouchedPath);
-    const indexBeforeSelection = await readFile(indexPath);
     await reviewStep.click();
-    const commitForm = commitTaskPanel.getByRole('form');
-    await expect(commitForm).toBeVisible();
-    await saveTask.press('Enter');
-    await expect(saveTask).toBeFocused();
-    await expect(saveTaskPanel).toBeVisible();
-    await expect(commitForm).toBeHidden();
-    await reviewStep.press('Enter');
-    await expect(reviewStep).toBeFocused();
-    await expect(commitForm).toBeVisible();
     const listByFile = commitTaskPanel.locator('.twgit-file-list');
     if (await listByFile.isVisible() && !await listByFile.evaluate(node => (node as HTMLDetailsElement).open))
         await listByFile.locator('summary').click();
     const selectedFile = panel.getByRole('checkbox', {name: 'Include in commit: ' + commitPath, exact: true});
-    await selectedFile.check();
-    assert.deepEqual(await readFile(indexPath), indexBeforeSelection);
-    await selectedFile.uncheck();
-    await expect(panel.getByRole('button', {name: 'Commit', exact: true})).toBeDisabled();
+    // Keyboard switching, non-mutating selection and commit protection are checked in the rooted case below.
     await selectedFile.check();
     await panel.getByLabel('Commit message').fill('Update the demo from the Editor');
     await panel.getByRole('button', {name: 'Commit', exact: true}).click();
     await expect(panel.getByText('Recorded the changes (commit).')).toBeVisible();
-    assert.equal(git('log', '-1', '--format=%s|%an'), 'Update the demo from the Editor|Editor folder fixture');
-    assert.equal(git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), commitPath);
-    assert.equal(git('show', 'HEAD:' + commitPath), dirtyDisk.trim());
-    assert.equal(git('status', '--porcelain', '--', commitPath), '');
-    assert.equal(git('show', ':' + untouchedPath), otherIndex);
-    git('fsck', '--no-progress');
     await recordStep.click();
-    // The commit already refreshes local status. Another refresh clears the selected record.
     const record = panel.locator(`button.twgit-graph-commit[data-oid="${git('rev-parse', 'HEAD')}"]`);
     await record.click();
-    await expect(record).toHaveAttribute('aria-pressed', 'true');
-    // The file list can move into the collapsed project-element view when its asynchronous read completes.
     await expect(panel.getByText('Reading the project changes…', {exact: true})).toHaveCount(0);
-    const fileList = panel.locator('details.twgit-file-list');
-    if (await fileList.isVisible() && !await fileList.evaluate(details => (details as HTMLDetailsElement).open)) {
-        await fileList.locator('summary').click();
-    }
-    await expect(panel.locator('[data-git-group="commit"]').filter({hasText: commitPath})).toBeVisible();
 
     // Unsaved text edits in an open file tab can be saved from the same Git view.
     const draftPath = 'draft.txt';
@@ -1691,6 +1663,7 @@ test('reviews, saves and commits only the selected block diff from Local Git', {
 
     const {editor: page, errors} = await openDeviceFolder(t, build, folder);
     await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder opened.');
+    await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
     await editFolderBlock(page, 'value', '26');
     await page.getByRole('button', {name: 'Branch: main', exact: true}).click();
     await page.getByRole('menu', {name: 'Branches'}).getByRole('menuitem', {name: 'Open Local Git'}).click();
@@ -1720,8 +1693,16 @@ test('reviews, saves and commits only the selected block diff from Local Git', {
     if (await savedTask.getAttribute('aria-expanded') !== 'true') await savedTask.click();
     const changed = panel.getByRole('region', {name: 'Changes by project element'});
     await expect(changed).toContainText('Cat');
-    await changed.getByText('List by file', {exact: true}).click();
     const savedPane = panel.getByRole('region', {name: 'Commit saved changes', exact: true});
+    const commitForm = savedPane.getByRole('form', {name: 'Commit selected files'});
+    await saveTask.press('Enter');
+    await expect(saveTask).toBeFocused();
+    await expect(unsavedPane).toBeVisible();
+    await expect(commitForm).toBeHidden();
+    await savedTask.press('Enter');
+    await expect(savedTask).toBeFocused();
+    await expect(commitForm).toBeVisible();
+    await changed.getByText('List by file', {exact: true}).click();
     await savedPane.getByRole('button', {name: /^project\.source\.json/}).click();
     const savedDiff = savedPane.getByRole('region', {name: 'Project changes', exact: true});
     await savedDiff.locator('.twgit-review-script summary').first().click();
@@ -1749,8 +1730,23 @@ test('reviews, saves and commits only the selected block diff from Local Git', {
     await expect(panel.getByText('Recorded the changes (commit).')).toBeVisible();
     assert.equal(git('log', '-1', '--format=%s|%an'), 'Record only the project edit|Editor review fixture');
     assert.equal(git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), projectFile);
+    assert.equal(git('show', 'HEAD:' + projectFile), stringify(project).trimEnd());
+    assert.equal(git('status', '--porcelain', '--', projectFile), '');
+    assert.equal(git('diff', '--cached', '--name-only'), noteFile);
     assert.equal(git('show', ':' + noteFile), 'Unrelated staged edit');
     git('fsck', '--no-progress');
+
+    // The successful commit has already refreshed the Record history; don't click Refresh to find it.
+    await panel.getByRole('button', {name: 'Create PR', exact: true}).click();
+    const record = panel.getByRole('button', {name: /^Record only the project edit, /});
+    await record.click();
+    await expect(record).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel.getByRole('region', {name: 'Changes by project element'})).toContainText('Cat');
+    const commitFiles = panel.locator('details.twgit-file-list:visible').first();
+    if (await commitFiles.isVisible() && !await commitFiles.evaluate(details => (details as HTMLDetailsElement).open)) {
+        await commitFiles.locator('summary').click();
+    }
+    await expect(panel.locator('[data-git-group="commit"]').filter({hasText: projectFile})).toBeVisible();
     assert.deepEqual(errors, []);
 });
 
@@ -2193,6 +2189,8 @@ test('stages and unstages a project subfolder recursively without touching other
     const indexBinary = execFileSync('git', ['--no-optional-locks', 'show', ':' + nested], {cwd: folder});
     assert.deepEqual(indexBinary, binary);
 
+    // The index becomes visible on disk before Explorer finishes refreshing the row and accepts another action.
+    await expect(row).toHaveAttribute('draggable', 'true');
     await action('Unstage in Git');
     await expect.poll(staged).toEqual([noteFile]);
     assert.equal(git('show', ':imports/reference.txt'), 'Original reference');
