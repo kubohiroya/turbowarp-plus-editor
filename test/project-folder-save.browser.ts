@@ -154,6 +154,11 @@ test('Editor confirms project folder overwrite and commits only project files', 
     await expect(page.getByRole('treeitem', {name: /^project\.source\.json/})).toBeVisible();
     assert.equal(await readFile(path.join(projectFolder, 'assets', md5ext), 'utf8'), svg);
     assert.equal(await readFile(path.join(projectFolder, 'notes.txt'), 'utf8'), 'Existing repository file\n');
+    // Wait for the automatic repository read to finish before changing the files it is reading.
+    const gitPanel = page.locator('.twgit-panel');
+    await expect(gitPanel.locator('.twgit-repository-heading strong')).toHaveText(path.basename(projectFolder));
+    await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
+
     const volume = async () => JSON.parse(await readFile(path.join(projectFolder, 'project.source.json'), 'utf8')).targets[0].volume;
     const edit = (volume: number) => page.evaluate(value => {
         window.vm.runtime.getTargetForStage().volume = value;
@@ -166,10 +171,6 @@ test('Editor confirms project folder overwrite and commits only project files', 
     await expect(page.locator('[data-project-folder-status]')).toHaveText('Project folder saved.');
     assert.equal(await volume(), 42);
 
-    // The folder has a .git directory, so saving there connects its repository without another step.
-    const gitPanel = page.locator('.twgit-panel');
-    await expect(gitPanel.locator('.twgit-repository-heading strong')).toHaveText(path.basename(projectFolder));
-    await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
     await writeFile(path.join(projectFolder, 'notes.txt'), 'Unrelated private notes\n');
     await edit(31);
     await command('Save and Commit…');

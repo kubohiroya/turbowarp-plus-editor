@@ -24,7 +24,9 @@ Project Folder 0.22.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp
 
 **旧統合経路の廃止:** 旧 `Open Project Folder…` と独立したリポジトリ選択から、任意の入れ子作品フォルダーを親リポジトリに結び付ける経路は、[リポジトリルートに作品を置く現行仕様](../features/git/index.html) に置き換わった。現行の入口で、履歴検索、既存の差分を保つ外部 Git 更新、通常のテキストタブを Local Git から保存してもステージしないこと、Explorer の PR バッジが更新・解除されることを検証する。旧ケースだけを削除し、ブラウザー保存の旧 `project/` 配置は別の互換要件として残す。[Project Folder 0.22.0 の Chromium / WebKit テスト](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/blob/301fe686fe0ef7b7a6dfd7cc36c8998ae755edcb/test/browser-projects.browser.js#L124-L156) が、作品をルートへ移すことと、名前が衝突したときに移動しないことを検証する。
 
-**未完:** WebKit は、この棚卸しで使った固定ビルドではブラウザー保管の受け渡し後、実作品を読む前の `FileSystemDirectoryHandle.resolve()` でレンダラーが終了する。正常な別タブ起動と通常の SB3 の受け渡しは代替の証拠にならない。また、今回の固定ビルドでは隣接する `project-folder-save` が既存の Git リポジトリへ作品を保存した後、Local Git の見出しが `—` のままで止まる。同じ停止を変更前でも確認しており、その後のコミット保護は今回の再検証に含めない。
+**未完:** WebKit は、この棚卸しで使った固定ビルドではブラウザー保管の受け渡し後、実作品を読む前の `FileSystemDirectoryHandle.resolve()` でレンダラーが終了する。正常な別タブ起動と通常の SB3 の受け渡しは代替の証拠にならない。
+
+`project-folder-save` は、既存リポジトリへの保存後、同じタブの Git 接続完了を待ってから次の編集・保存へ進む。固定ビルドで、上書き確認と作品ファイルだけのコミット、無関係なファイルの保持を含む全経路をヘッドレスで3回実行し、すべて成功・skip 0。初回接続中に同時保存した場合の製品の復旧動作を修正・検証したものではない。
 
 Project Folder の [改名・削除確認 CI](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/actions/runs/45726319919) は、ブラウザー内保存のファイルとフォルダーを使い、改名時の内容保持、取り消し時の無変更、確認後の削除を実行した。Editor には、実デバイスフォルダーの改名後もファイル内容と無関係な Git index を保持する接続、および一覧から実際に Stage / Unstage する経路を残す。フォルダーを選んだ場合も、その配下だけが対象となり、同じ接頭辞の兄弟フォルダーや、別ファイルの既存ステージを変えない。フォルダー削除は上流のファイル削除で代替せず、現行の実デバイス経路で取り消し時の子ファイルと、確定後の対象・無関係な作品／ファイルを確認する。
 
