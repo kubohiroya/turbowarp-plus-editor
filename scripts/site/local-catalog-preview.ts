@@ -16,7 +16,8 @@ export async function prepareLocalCatalogPreview(directory, gui, output) {
     assert.ok((await fs.stat(source)).size <= 2 * 1024 * 1024, 'Local catalog exceeds its preview size limit');
     const bytes = await fs.readFile(source);
     const catalog = JSON.parse(bytes.toString('utf8'));
-    const require = createRequire(path.join(gui, 'package.json'));
+    // The Editor owns the catalog parser dependency; a clean GUI install does not provide it.
+    const require = createRequire(import.meta.url);
     const entries = require('@kubohiroya/turbowarp-extension-security-dialog').parseExtensionCatalog(catalog);
     const icons = {};
     const assets = {};
