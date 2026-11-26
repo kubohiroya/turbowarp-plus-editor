@@ -35,4 +35,4 @@ async function project({type = 'embedded-file', code = bytes, sha256 = digest, i
     if (type === 'embedded-file') zip.file(embeddedPath, code);
     return zip.generateAsync({type: 'nodebuffer', compression: 'DEFLATE'});
 }
-module.exports = {project, source, bytes, digest, remoteURL};
+module.exports = {project, bytes, digest, remoteURL};
