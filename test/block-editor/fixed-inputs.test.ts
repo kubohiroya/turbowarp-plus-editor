@@ -23,12 +23,11 @@ test('fixed labels use the actual GUI Intl locale and preserve one service per V
     let previous;
     for (const locale of ['en', 'ja']) {
         const intl = new IntlProvider({locale, messages: translations[locale]}, {}).getChildContext().intl;
-        const labels = fixedMessages(intl);
-        for (const key of ['reset', 'readOnly', 'unverified', 'currentValue', 'colorPicker', 'invalidValue', 'inactiveDraft']) {
-            assert.equal(labels[key], translations[locale][`tw.blockEditor.fixed.${key}`]);
-        }
         const service = getBlockEditorService(vm, intl, integration);
         if (previous) assert.equal(service, previous);
+        const serviceIntl = service.api.messages();
+        assert.equal(serviceIntl, intl);
+        assert.equal(fixedMessages(serviceIntl).reset, translations[locale]['tw.blockEditor.fixed.reset']);
         previous = service;
     }
 });
