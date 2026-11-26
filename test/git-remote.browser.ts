@@ -24,7 +24,7 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     const {startFixture, git, commit} = await import(pathToFileURL(fixtureFile).href);
     const fixture = await startFixture(t);
     const {client, seed, bare} = fixture;
-    await writeNativeGitProject(seed);
+    const {filename: seedProjectSource, project} = await writeNativeGitProject(seed);
     git(seed, 'add', '.');
     const fixtureCommit = commit(seed, 'Add Editor project fixture');
     git(seed, 'push', bare, 'main');
@@ -153,6 +153,13 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     await connect('fine-grained-pat');
     await closeSettings();
     await expect(button('Send current branch (push)')).toBeDisabled();
+    const spriteX = () => page.evaluate(() => window.vm?.runtime.targets
+        .find(target => target.sprite?.name === 'Sprite')?.x);
+    await expect.poll(spriteX).toBe(0);
+    const incomingX = 37;
+    (project.targets[1] as {x: number}).x = incomingX;
+    await writeFile(seedProjectSource, JSON.stringify(project, null, 2) + '\n');
+    git(seed, 'add', seedProjectSource);
     await writeFile(path.join(seed, 'project.txt'), 'browser incoming\n');
     const incoming = commit(seed, 'browser incoming');
     git(seed, 'push', bare, 'main');
@@ -164,6 +171,7 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     assert.equal(git(client, 'rev-parse', 'refs/remotes/origin/main'), incoming);
     assert.equal(git(client, 'rev-parse', 'HEAD'), initial);
     assert.equal(await readFile(source, 'utf8'), 'initial\n');
+    assert.equal(await spriteX(), 0);
 
     const editorDirty = (changed: boolean) => page.evaluate(changed => (window as any).ReduxStore.dispatch({
         type: 'scratch-gui/project-changed/SET_PROJECT_CHANGED', changed
@@ -176,9 +184,13 @@ test('Git panel fetches, fast-forwards and pushes with scoped authorization', {t
     assert.equal(fixture.upstream.length, priorRequests);
     await editorDirty(false);
     await runRemote('Update local branch and files (pull)');
-    // Reloading the Editor project can replace the panel and its notice. Verify the actual pull instead.
+    // Check the pulled files before explicitly reloading them into the running Editor.
     await expect.poll(() => git(client, 'rev-parse', 'HEAD')).toBe(incoming);
     await expect.poll(() => readFile(source, 'utf8')).toBe('browser incoming\n');
+    const reloadProject = panel.getByRole('button', {name: 'Reload Project', exact: true});
+    await expect(reloadProject).toBeVisible();
+    await reloadProject.click();
+    await expect.poll(spriteX).toBe(incomingX);
 
     await openSettings();
     await settingsButton('Disconnect').click();
