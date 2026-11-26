@@ -1,0 +1,2195 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-11-26T12:57:47.271Z",
+  "input": {
+    "url": "https://kubohiroya.github.io/turbowarp-kamishibai-app/downloads/kamishibai-3.2.sb3",
+    "sha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11",
+    "bytes": 853938,
+    "targets": 8,
+    "blocks": 1811,
+    "extensions": [
+      {
+        "id": "sipcconsole",
+        "url": "https://extensions.turbowarp.org/-SIPC-/consoles.js",
+        "bytes": 20149,
+        "sha256": "6d38fda8af6a60c9ce8ed03a755f5c2a1158a796a11f8cf6b336fc4e5d64640b"
+      },
+      {
+        "id": "lmsTempVars2",
+        "url": "https://extensions.turbowarp.org/Lily/TempVariables2.js",
+        "bytes": 17223,
+        "sha256": "dd6cde954ce276fcf1a4f0f8dc322dd89b64bb04be32a06c36fbff54d514e2f0"
+      },
+      {
+        "id": "strings",
+        "url": "https://extensions.turbowarp.org/text.js",
+        "bytes": 40564,
+        "sha256": "ef38751a0b27b5bd0dfe59a9f44da0c7f3ae20b3cb29859cca36f95ef7e6d7ea"
+      },
+      {
+        "id": "tmposebundle",
+        "url": "embedded-data",
+        "bytes": 598934,
+        "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+      },
+      {
+        "id": "tmpose",
+        "url": "embedded-data",
+        "bytes": 29774,
+        "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+      },
+      {
+        "id": "localstorage",
+        "url": "https://extensions.turbowarp.org/local-storage.js",
+        "bytes": 15029,
+        "sha256": "18dce08ea5c97d5738e30e6e5db5586944c596233d3f9b1afb51c65a3de079be"
+      },
+      {
+        "id": "kubohiroyatextlines",
+        "url": "embedded-data",
+        "bytes": 4147,
+        "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+      },
+      {
+        "id": "kubohiroyaruntimeexpression",
+        "url": "embedded-data",
+        "bytes": 23626,
+        "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+      },
+      {
+        "id": "kubohiroyaasyncinput",
+        "url": "embedded-data",
+        "bytes": 24789,
+        "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+      },
+      {
+        "id": "lmsTimers",
+        "url": "https://extensions.turbowarp.org/Lily/MoreTimers.js",
+        "bytes": 13022,
+        "sha256": "802a3d3b82bec4e8f004106e52ce9b68a84f8baa95850cd9007478a8d9714ff6"
+      },
+      {
+        "id": "files",
+        "url": "https://extensions.turbowarp.org/files.js",
+        "bytes": 22138,
+        "sha256": "27445caffa959c3086b2980c6b25bdba7dcb6e05a2465076c102cbd05229940f"
+      },
+      {
+        "id": "translate",
+        "builtin": true
+      },
+      {
+        "id": "kubohiroyaweblink",
+        "url": "embedded-data",
+        "bytes": 1153,
+        "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+      }
+    ]
+  },
+  "editor": {
+    "repository": "https://github.com/kubohiroya/scratch-gui",
+    "revision": "60b87e2f2503206847f509285aa4de3cee3670c7",
+    "coreRepository": "https://github.com/kubohiroya/turbowarp-extension-data-editor",
+    "coreRevision": "75e1ef4dbe48ea3778ece27975d5055283d600f6",
+    "coreVersion": "0.11.5",
+    "securityPackage": "@kubohiroya/turbowarp-extension-security-dialog",
+    "securityVersion": "0.14.2",
+    "siteRepository": "https://github.com/kubohiroya/turbowarp-plus-editor",
+    "siteRevision": "70d4aefb6292b3ee2a9a7488aeb14bb6a804fbd6",
+    "extensionIntegration": {
+      "loaderRepository": "kubohiroya/turbowarp-extension-loader",
+      "loaderSource": "npm",
+      "loaderVersion": "0.16.1",
+      "loaderIntegrity": "sha512-jDrbc+QDRor1fxOg9CtQde7M9qOltxJj+RsS+mCK0awUWmTTPB2zxExVQaOC/jx7xbkiGGQsC+cQ+ngAjTPKnw==",
+      "vmRepository": "kubohiroya/scratch-vm",
+      "vmRevision": "88a2c06e9deb3dd652c52c20daf4f728b387d41d",
+      "packagerRepository": "TurboWarp/packager",
+      "packagerRevision": "d690225b9f326c98be617a51c7c65f76758048ee",
+      "featureDefault": true,
+      "assets": {
+        "plus-packager.html": "27337964d45f818c66207e5d8ecaa8f9e065065c8eda91dd074bad3a8d334c5f",
+        "plus-packager.js": "32f2c86c9b20f928b9e2e5b51d11406ad6f0f03edde6bb47c645fb97fd6d6919"
+      },
+      "scaffolding": {
+        "packagerRevision": "d690225b9f326c98be617a51c7c65f76758048ee",
+        "vmVersion": "2.1.46",
+        "vmManagerSha256": "40b5720216ea8052514a8f4c0e3eb15f1f9522a461d5684048661f7594685494",
+        "buildId": "e76f95c0e4e942e3a1d18e01c78fa1dcb9551a81d7c610cc78c7ec09d077ae40",
+        "sourceHashes": {
+          "scaffolding-full.js": "b0db9a85c5148c517018d4cd1071c2d719942eb049232c6cb4d32f0f884ea184",
+          "scaffolding-min.js": "b0db9a85c5148c517018d4cd1071c2d719942eb049232c6cb4d32f0f884ea184",
+          "addons.js": "4c1fe02e6c0cdf47f1f8de8c1d92e075644a14cb64cf2175da315ef4398eab8c"
+        }
+      }
+    },
+    "documentEditor": {
+      "repository": "https://github.com/kubohiroya/turbowarp-document-editor",
+      "version": "0.2.1",
+      "metadata": "document-editor/build-info.json",
+      "source": "npm",
+      "integrity": "sha512-L43QJqJceC5/OYqGQ53NZM7m98uR+xpUCrYpe+1/vG9lEEa3n9h8KKSXdM/2hlS3SSM/lS+KGPb6120a1WYs5Q=="
+    },
+    "scriptTransfer": {
+      "repository": "https://github.com/kubohiroya/turbowarp-script-transfer",
+      "version": "0.1.5",
+      "integrity": "sha512-jw+Z0nPWwzUsbb5mUME6UXQohqglT+AHdkIJ5ug3OQN9pJWVJTrlu+HA/9YerNnnjZFCoJCHs7TTttYVcYAkyw==",
+      "featureDefault": true
+    },
+    "previewReloadStyles": {
+      "revision": "c493768e51e4824c5a07094e49b1d307375fdb2d",
+      "sha256": "b577908b996319396249132c5309f5b8639fc70da3212646f47fb920b85c80ec"
+    },
+    "familyNotices": {
+      "index": "notices/family.json",
+      "packages": [
+        "@kubohiroya/sb3-toolchain@0.28.1",
+        "@kubohiroya/sb3-toolchain@0.29.0",
+        "@kubohiroya/turbowarp-document-data@0.8.1",
+        "@kubohiroya/turbowarp-document-editor@0.2.1",
+        "@kubohiroya/turbowarp-document-source@0.4.1",
+        "@kubohiroya/turbowarp-extension-data-editor@0.11.3",
+        "@kubohiroya/turbowarp-extension-data-editor@0.11.5",
+        "@kubohiroya/turbowarp-extension-loader@0.16.1",
+        "@kubohiroya/turbowarp-extension-manifest@0.7.0",
+        "@kubohiroya/turbowarp-extension-manifest@0.8.0",
+        "@kubohiroya/turbowarp-extension-security-dialog@0.14.2",
+        "@kubohiroya/turbowarp-named-data@0.9.0",
+        "@kubohiroya/turbowarp-named-functions@0.6.1",
+        "@kubohiroya/turbowarp-plus-editor-auth@0.5.0",
+        "@kubohiroya/turbowarp-plus-editor-code-views@0.26.5",
+        "@kubohiroya/turbowarp-plus-editor-fonts@0.1.1",
+        "@kubohiroya/turbowarp-plus-editor-git@0.32.1",
+        "@kubohiroya/turbowarp-plus-editor-host@0.1.1",
+        "@kubohiroya/turbowarp-plus-editor-project-folder@0.22.1",
+        "@kubohiroya/turbowarp-plus-editor-project-model@0.2.0",
+        "@kubohiroya/turbowarp-plus-editor-sprite-panes@0.11.3",
+        "@kubohiroya/turbowarp-plus-editor-test@0.3.1",
+        "@kubohiroya/turbowarp-plus-editor-windows@0.2.3",
+        "@kubohiroya/turbowarp-plus-editor-workbench@0.40.1",
+        "@kubohiroya/turbowarp-plus-project-folder-starter@0.4.1",
+        "@kubohiroya/turbowarp-sb3-save-format@0.5.1",
+        "@kubohiroya/turbowarp-script-transfer@0.1.5",
+        "@kubohiroya/turbowarp-structured-data@0.12.1",
+        "@kubohiroya/turbowarp-yaml-json@0.12.1",
+        "scratch-vm@2.1.46"
+      ],
+      "undeclared": []
+    }
+  },
+  "packages": {
+    "@kubohiroya/sb3-toolchain": {
+      "version": "0.29.0",
+      "integrity": "sha512-roeJz7iAXxGedY9b8t9QH+EEep8eRj3IEyM6K71oqXRl2egpfN1egnO82AxVTpiDiSeclrDPcjZxa3TOZOH0fQ=="
+    },
+    "@kubohiroya/turbowarp-document-data": {
+      "version": "0.8.1",
+      "integrity": "sha512-xw0w/aoZQys/wCVK4vDR82meGeUoJjSiF8nyC+qR1BwSoQ6AbnXNvOC/mk++SKxI8Bl6BCOszHJPHW2fdZNxnQ=="
+    },
+    "@kubohiroya/turbowarp-document-editor": {
+      "version": "0.2.1",
+      "integrity": "sha512-L43QJqJceC5/OYqGQ53NZM7m98uR+xpUCrYpe+1/vG9lEEa3n9h8KKSXdM/2hlS3SSM/lS+KGPb6120a1WYs5Q=="
+    },
+    "@kubohiroya/turbowarp-document-editor/node_modules/@kubohiroya/turbowarp-extension-data-editor": {
+      "version": "0.11.3",
+      "integrity": "sha512-RFnG3Aq8RyXRAHDZOvsEVYXjOqns8TWAid23CiQiyFYP659UTU2LvMoqwSNtMVYycTdbcYz4sNuAiqcXJsBg4g=="
+    },
+    "@kubohiroya/turbowarp-document-editor/node_modules/fast-uri": {
+      "version": "4.2.3",
+      "integrity": "sha512-I1PXwP5eAhlNlcdpjt9CgB59op2ZvZfxw+BkqGFVIUOgNpCVTcTqp3HhTX7brxj5vsip+nSY4nTvff+eIA76hg=="
+    },
+    "@kubohiroya/turbowarp-document-source": {
+      "version": "0.4.1",
+      "integrity": "sha512-j8j8EVwJOLMVZ6ngRunNlDEGwifcGcSUiDLGffGrYrigVHF7zQr6hYTtmz4JyB3sno4SiLIdXnXREJ4FkHl8mw=="
+    },
+    "@kubohiroya/turbowarp-extension-data-editor": {
+      "version": "0.11.5",
+      "integrity": "sha512-2lrj3S7axeOFdXClt8f1kJne2LxmZHPXISEumLEztWIvZM4JYhkmoHUSyYT0QxCX+2CkTU+i775Ft1dc4JTzRg=="
+    },
+    "@kubohiroya/turbowarp-extension-data-editor/node_modules/fast-uri": {
+      "version": "4.2.3",
+      "integrity": "sha512-I1PXwP5eAhlNlcdpjt9CgB59op2ZvZfxw+BkqGFVIUOgNpCVTcTqp3HhTX7brxj5vsip+nSY4nTvff+eIA76hg=="
+    },
+    "@kubohiroya/turbowarp-extension-loader": {
+      "version": "0.16.1",
+      "integrity": "sha512-jDrbc+QDRor1fxOg9CtQde7M9qOltxJj+RsS+mCK0awUWmTTPB2zxExVQaOC/jx7xbkiGGQsC+cQ+ngAjTPKnw=="
+    },
+    "@kubohiroya/turbowarp-extension-manifest": {
+      "version": "0.7.0",
+      "integrity": "sha512-bSTjJ5NPMw8rO9v5N7HH05VIYVSkAK3RUpHmmPrR0tyYB0SF6u1tHIrp934xe45pYddW2tM5w+224rbLlh7vgA=="
+    },
+    "@kubohiroya/turbowarp-extension-security-dialog": {
+      "version": "0.14.2",
+      "integrity": "sha512-eoub3fp7EX7qoXXfj8jX2HxkFVMy/i7Xx5DlOTUYSgeS8SBH5E7N7mIVTVhDZSsx4v0uCL3ZPa3TgVn4WMPpMQ=="
+    },
+    "@kubohiroya/turbowarp-extension-security-dialog/node_modules/@kubohiroya/turbowarp-extension-manifest": {
+      "version": "0.8.0",
+      "integrity": "sha512-mSVMD34rgwefDBEjCSVfDXCe0bpT3S0CdSaTSDjUCRLBsvNpDupeznVWYuk6VsoMYJ34iqTYbRnS7TLItJX46A=="
+    },
+    "@kubohiroya/turbowarp-named-data": {
+      "version": "0.9.0",
+      "integrity": "sha512-Kk9wWQd8DORKXAwGNcDcdlvPQNtFKJQFv/ltM9l4CTFUkEXfVrGgrTz+pJuSwLhE3QDXDi8ox+jvMKS+3qCS7w=="
+    },
+    "@kubohiroya/turbowarp-named-functions": {
+      "version": "0.6.1",
+      "integrity": "sha512-9atlbhrlTnTW1nCkdrA3igt/5F4SmJm8AkCzA5ZfV8I6Dxdllt76T7AUyOZ9WmtDAbc5eDW4jrm8yeI1zasVfg=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-auth": {
+      "version": "0.5.0",
+      "integrity": "sha512-kqbMUEQHSLfR4mVVe0R1W8U6h5kiEnbvH0ba3YrtNX63g6wgkfFjH+G6AZACoPGFr5MkB8feyMhg20mfJkGc7A=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-code-views": {
+      "version": "0.26.5",
+      "integrity": "sha512-+NsO+lNMEWyWJcXma9Zp+tAkkfjsKzPTwfL0+zz4Q+bo74gf5C4ZZWw0/IIvoAZcID3CkOQGTG3b64VV8XYDlg=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-fonts": {
+      "version": "0.1.1",
+      "integrity": "sha512-h2bUDNea9hLRYYL1/TAAqY/Si3SbWTGmBrKuq3iPNxdFzBK4UiWc5HSYPgpPRGyVDweJgEEYclIJ25CkG0zaLg=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-git": {
+      "version": "0.32.1",
+      "integrity": "sha512-+pOXZIqwGqzwL02rZrmf4c0FO1Vkjb9Q/608CY3xGWB2/h8stp1cjH7XEvt9dZzFgOveIAXwoAdGmG6YKTQq1A=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-host": {
+      "version": "0.1.1",
+      "integrity": "sha512-s+/6XESre5PdzD/hnbjTMwBoZDZmGmlv/oOhA0dRxH0sm+nthuo9s9/2N1me6upDmV5bj8TUn36ietDUOo2C6g=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-project-folder": {
+      "version": "0.22.1",
+      "integrity": "sha512-E9gPUHh1xuLnRHnOHARyuh29KmwJMb9vMROVN5k/Vhj4sxn9M8dDyYs2utMrUUZnJoO8X4YgikWph1WAyNjjxg=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-project-model": {
+      "version": "0.2.0",
+      "integrity": "sha512-jFsiuJrxg2jpo07otcP08n7/ahoVg9hoRRVwCKA4fmxR3sfXsIskHhhlAr1mPIk1YKdKUsHTrmAtk4TZMOr7VA=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-sprite-panes": {
+      "version": "0.11.3",
+      "integrity": "sha512-eF+4Wc3OsrZte0In08hnq3wPurXQaKbNDZH7G20YaRGKz6znMYa+cIJjdyxCCMPgiIAVe2V76Ny+4Cbpa+0w2A=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-test": {
+      "version": "0.3.1",
+      "integrity": "sha512-/x0Ia+/yLcgSKeb/tiJn3Wlhc8cAscbSY5FZFDoh/D+UumPmbO0fjCpMHUvBgba2QhJVGegc+x9Gbd7ZhC74ww=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-windows": {
+      "version": "0.2.3",
+      "integrity": "sha512-zkmk4dn0j8HX8lqtZuL20upKob+5IYqr2L2DS2SKSnH+6lXfKwdaAV2PTsYKEKyjcnhY0guSgpP7F70rTNkV0w=="
+    },
+    "@kubohiroya/turbowarp-plus-editor-workbench": {
+      "version": "0.40.1",
+      "integrity": "sha512-jQk0I+6WYA0fiBYll7sfXScsMCEx+v3FnCOGwWB/2P5tLbmXeepqcgdP9mFDUXdj85OAT3bcrVGdAlv4G/0kzg=="
+    },
+    "@kubohiroya/turbowarp-plus-project-folder-starter": {
+      "version": "0.4.1",
+      "integrity": "sha512-0A/MU6RbNDtcuqJUQTBhYkBkUQymeGYtMiGpYfbRvuhykPLSDoBiq4IQQ96l+TJwcPshJsR9xZE9WtK7OzVXzA=="
+    },
+    "@kubohiroya/turbowarp-plus-project-folder-starter/node_modules/@kubohiroya/sb3-toolchain": {
+      "version": "0.28.1",
+      "integrity": "sha512-28iSXE4CVL2uF4I/QmHnJg20VGqMDXLXvu2JxPrEuECerUXCiRi1uebm4xWWmN3bOtnNVkYR9aLXxliEfj1gXQ=="
+    },
+    "@kubohiroya/turbowarp-sb3-save-format": {
+      "version": "0.5.1",
+      "integrity": "sha512-c7BYvRNiT3+lssPFJdpJYG0HR5ZF8OTngx47My3ytGkRkQFzRXm9U12eP+5DWuUZcEnK54Qrq8OZf7S2VF+9Jg=="
+    },
+    "@kubohiroya/turbowarp-script-transfer": {
+      "version": "0.1.5",
+      "integrity": "sha512-jw+Z0nPWwzUsbb5mUME6UXQohqglT+AHdkIJ5ug3OQN9pJWVJTrlu+HA/9YerNnnjZFCoJCHs7TTttYVcYAkyw=="
+    },
+    "@kubohiroya/turbowarp-structured-data": {
+      "version": "0.12.1",
+      "integrity": "sha512-pOz79xSY78pyqu099+8u++4/KrZrsZM0uNRKX5QkWLoIiQ72LFQ2jRkFPxRnST51HHUPeK2iva0eiMLxubwSiA=="
+    },
+    "@kubohiroya/turbowarp-yaml-json": {
+      "version": "0.12.1",
+      "integrity": "sha512-YJtas6zJ5SCpwzSLWPaHNCqjncHfytDnNf514fOS4Gogu1HTzasIIrg1ExlUAZAXS4/HhZCWoJr5AU7wWc3DsA=="
+    }
+  },
+  "environment": {
+    "platform": "darwin",
+    "os": "27.3.0",
+    "machine": "MacBookPro18,2",
+    "cpu": "Apple M1 Max",
+    "logicalCpus": 10,
+    "memoryBytes": 68719476736,
+    "node": "v26.7.0",
+    "viewport": {
+      "width": 1360,
+      "height": 900
+    },
+    "headless": true,
+    "chromium": "156.0.8078.4"
+  },
+  "cachePolicy": "Fresh browser context for each cold cycle; warm cycle reuses the same context. HTTP caching disabled by routing; source/network bytes are fixed local mirrors. The browser process is restarted per cold/warm pair; OS filesystem cache is not flushed.",
+  "samples": [
+    {
+      "id": 1,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 1650,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 102.79999995231628,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 261,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 248.19999980926514,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 173.09999990463257,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 46.40000009536743,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 544.1999998092651,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 1525.0999999046326,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 927.5,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 1301.5,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 184.29999995231628,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 147.70000004768372,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 167.79999995231628,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 28.300000190734863,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "cold",
+      "iteration": 0,
+      "ms": 82.9543330000015,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 1537.9000000953674,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 118.59999990463257,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 236.5,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 221,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 181.89999985694885,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 47.200000047683716,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 531,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 1523.3999998569489,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 933.8999998569489,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 1247.9000000953674,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 23.700000047683716,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 147.70000004768372,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 164.59999990463257,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 31.299999952316284,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "warm",
+      "iteration": 0,
+      "ms": 82.34854199999972,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 1595.0999999046326,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 130.39999985694885,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 271.7000000476837,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 220,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 187.60000014305115,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 46.700000047683716,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 537.5,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 1557.2000000476837,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 871.9000000953674,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 1353.5999999046326,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 168,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 147.60000014305115,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 263.89999985694885,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 29,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "cold",
+      "iteration": 1,
+      "ms": 68.46333400000003,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 1518.2000000476837,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 120.39999985694885,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 235.29999995231628,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 208,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 169.5,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 44.10000014305115,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 523.4000000953674,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 1510.5999999046326,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 887.8999998569489,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 1285.7999999523163,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 30,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 144,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 164.29999995231628,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 28.5,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "warm",
+      "iteration": 1,
+      "ms": 61.18912499998987,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 1639,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 132.89999985694885,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 272.2999999523163,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 222.39999985694885,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 173.70000004768372,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 46.59999990463257,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 535.6000001430511,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 1555.0999999046326,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 885.3000001907349,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 1369.2000000476837,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 177.70000004768372,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 147.10000014305115,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 167.09999990463257,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 28.700000047683716,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "cold",
+      "iteration": 2,
+      "ms": 60.4185839999991,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 1536.5999999046326,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 119.20000004768372,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 253.90000009536743,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 225.39999985694885,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 158.59999990463257,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 46,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 651.2999999523163,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 1525.1000001430511,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 900.7000000476837,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 1225.3999998569489,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 24.5,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 147.20000004768372,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 263.90000009536743,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 27.799999952316284,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "warm",
+      "iteration": 2,
+      "ms": 61.61704099999042,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 1594.6000001430511,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 119.59999990463257,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 277.2999999523163,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 223,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 187.70000004768372,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 48.799999952316284,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 565.1000001430511,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 1593.1000001430511,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 874.5,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 1334.7000000476837,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 176.09999990463257,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 148,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 167.30000019073486,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 28.799999952316284,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "cold",
+      "iteration": 3,
+      "ms": 69.93745800000033,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 1567.5,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 103.79999995231628,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 259,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 202.90000009536743,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 169.10000014305115,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 45.5,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 519.0999999046326,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 1511.0999999046326,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 889.2000000476837,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 1239.1000001430511,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 15.700000047683716,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 147,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 150.40000009536743,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 27.299999952316284,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "warm",
+      "iteration": 3,
+      "ms": 62.77137499998207,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 1620.5,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 130,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 276.90000009536743,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 229.89999985694885,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 206.79999995231628,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 50.700000047683716,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 575,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 1638.2000000476837,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 902.1999998092651,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 1387.2999999523163,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 167.5,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 147.5,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 164.40000009536743,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 28,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "cold",
+      "iteration": 4,
+      "ms": 64.3384579999838,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    },
+    {
+      "id": 1,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 1515.9000000953674,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Receiving File.arrayBuffer start → VM with 8 targets and rendered workspace; automated approval included"
+    },
+    {
+      "id": 14,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 119.5,
+      "thresholdMs": 1000,
+      "paths": 2320,
+      "boundary": "Fresh Code Views attachWorkspaceOverview on the real Stage workspace → nonempty map and two animation frames; excludes VM load"
+    },
+    {
+      "id": 3,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 244.70000004768372,
+      "thresholdMs": 1000,
+      "nodes": 74,
+      "edges": 105,
+      "scope": "Stage calls graph, functions + message relations"
+    },
+    {
+      "id": 4,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 213.20000004768372,
+      "thresholdMs": 1000,
+      "edges": 25,
+      "nodes": 75,
+      "scope": "Stage message pane, default send direction"
+    },
+    {
+      "id": 8,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 176.59999990463257,
+      "thresholdMs": 1000,
+      "rows": 18,
+      "references": 36,
+      "scope": "Stage global variables and lists, read/write references"
+    },
+    {
+      "id": 6,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 44.59999990463257,
+      "thresholdMs": 100,
+      "query": "poseIndex",
+      "displayedResults": 10
+    },
+    {
+      "id": 7,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 668.4000000953674,
+      "thresholdMs": 1000,
+      "scope": "Selected global variable match; rename propagates to all references, not a bulk text replacement API"
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 1526,
+      "thresholdMs": 1000,
+      "layout": "Z",
+      "scripts": 59
+    },
+    {
+      "id": 5,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 875,
+      "thresholdMs": 1000,
+      "layout": "N",
+      "scripts": 59
+    },
+    {
+      "id": 2,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 1316.7999999523163,
+      "thresholdMs": 10000,
+      "readyEvidence": {
+        "target": "Actor",
+        "vmScripts": 6,
+        "workspaceScripts": 6
+      },
+      "boundary": "Choose folder activation → 8 VM targets and workspace; CDP directory transfer before timing"
+    },
+    {
+      "id": 10,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 15.799999952316284,
+      "thresholdMs": 1000,
+      "commits": 50,
+      "scope": "Synthetic 50-commit local fixture, all commits refer to the real project"
+    },
+    {
+      "id": 13,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 148.29999995231628,
+      "thresholdMs": 10000,
+      "diskVerified": true
+    },
+    {
+      "id": 9,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 164.59999990463257,
+      "thresholdMs": 1000,
+      "changedBlock": "c@",
+      "boundary": "File row pointerdown → comparison preparation, automated expansion, before/after block SVG and two animation frames"
+    },
+    {
+      "id": 11,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 28.299999952316284,
+      "thresholdMs": 1000,
+      "artifacts": 12,
+      "builtin": 1,
+      "scope": "SHA-256 kernel over 12 fixed source artifacts; excludes fetch, VM registration and policy. Original legacy SB3 has no manifest digest claims."
+    },
+    {
+      "id": 12,
+      "phase": "warm",
+      "iteration": 4,
+      "ms": 62.398374999989755,
+      "thresholdMs": 10000,
+      "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11"
+    }
+  ],
+  "errors": [],
+  "overviewBundleSha256": "7e5bfa7404e89b229db0cbf7ed8d58102c50a175de01c08e7fa0a3295418c159",
+  "measurementSources": {
+    "prepare.mjs": "01822efb555a316066be521d52b06c375a25f649b75f8fb231bca3529f282633",
+    "browser.mjs": "7c4f56a81f333bc188580680433a95180f45166338ca3be46693809503e55a29",
+    "run.mjs": "90b3cffe1bcf2b3f0aa0507c4047948bd65fa10c784a63fe97bfd4b19c2f7bff",
+    "report.mjs": "11f6a6530c9bf2ea374394f03da00b8952a227e5c3b304fe78188ee9968022f9"
+  },
+  "actualEditorDigestObservations": [
+    {
+      "phase": "cold",
+      "iteration": 0,
+      "checks": [
+        {
+          "start": 767,
+          "end": 767.5999999046326,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 767.3999998569489,
+          "end": 767.5999999046326,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 767.3999998569489,
+          "end": 767.5999999046326,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 767.5,
+          "end": 767.5999999046326,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 767.5999999046326,
+          "end": 767.6999998092651,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 767.5999999046326,
+          "end": 767.6999998092651,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "warm",
+      "iteration": 0,
+      "checks": [
+        {
+          "start": 691.9000000953674,
+          "end": 692.5,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 692.2999999523163,
+          "end": 692.5,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 692.2999999523163,
+          "end": 692.5,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 692.4000000953674,
+          "end": 692.5,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 692.5,
+          "end": 692.5,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 692.5,
+          "end": 692.5,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "cold",
+      "iteration": 1,
+      "checks": [
+        {
+          "start": 734.5,
+          "end": 735.1999998092651,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 734.8999998569489,
+          "end": 735.1999998092651,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 734.8999998569489,
+          "end": 735.1999998092651,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 735,
+          "end": 735.1999998092651,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 735.0999999046326,
+          "end": 735.1999998092651,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 735.1999998092651,
+          "end": 735.2999999523163,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "warm",
+      "iteration": 1,
+      "checks": [
+        {
+          "start": 674.2000000476837,
+          "end": 674.9000000953674,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 674.6000001430511,
+          "end": 674.9000000953674,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 674.7000000476837,
+          "end": 674.9000000953674,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 674.7000000476837,
+          "end": 674.9000000953674,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 674.8000001907349,
+          "end": 674.9000000953674,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 674.8000001907349,
+          "end": 674.9000000953674,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "cold",
+      "iteration": 2,
+      "checks": [
+        {
+          "start": 758.2000000476837,
+          "end": 758.9000000953674,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 758.6000001430511,
+          "end": 758.9000000953674,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 758.6000001430511,
+          "end": 758.9000000953674,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 758.7000000476837,
+          "end": 758.9000000953674,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 758.7999999523163,
+          "end": 758.9000000953674,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 758.7999999523163,
+          "end": 758.9000000953674,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "warm",
+      "iteration": 2,
+      "checks": [
+        {
+          "start": 673.3999998569489,
+          "end": 674,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 673.6999998092651,
+          "end": 674,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 673.6999998092651,
+          "end": 674,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 673.7999999523163,
+          "end": 674,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 673.8999998569489,
+          "end": 674,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 673.8999998569489,
+          "end": 674,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "cold",
+      "iteration": 3,
+      "checks": [
+        {
+          "start": 775,
+          "end": 775.7000000476837,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 775.3999998569489,
+          "end": 775.7999999523163,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 775.5,
+          "end": 775.7999999523163,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 775.5,
+          "end": 775.7999999523163,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 775.5999999046326,
+          "end": 775.7999999523163,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 775.7000000476837,
+          "end": 775.7999999523163,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "warm",
+      "iteration": 3,
+      "checks": [
+        {
+          "start": 729.1000001430511,
+          "end": 729.6000001430511,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 729.4000000953674,
+          "end": 729.6000001430511,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 729.4000000953674,
+          "end": 729.6000001430511,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 729.5,
+          "end": 729.6000001430511,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 729.5,
+          "end": 729.6000001430511,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 729.5,
+          "end": 729.6000001430511,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "cold",
+      "iteration": 4,
+      "checks": [
+        {
+          "start": 717.7000000476837,
+          "end": 718.4000000953674,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 718.1000001430511,
+          "end": 718.4000000953674,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 718.2000000476837,
+          "end": 718.4000000953674,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 718.2000000476837,
+          "end": 718.4000000953674,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 718.2999999523163,
+          "end": 718.4000000953674,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 718.2999999523163,
+          "end": 718.4000000953674,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    },
+    {
+      "phase": "warm",
+      "iteration": 4,
+      "checks": [
+        {
+          "start": 674.4000000953674,
+          "end": 675.0999999046326,
+          "bytes": 598934,
+          "sha256": "d9cb88d6746cdb88a916d71b5b2118fd1f56b6a83c620d60720c8e3fef4534a2"
+        },
+        {
+          "start": 674.7999999523163,
+          "end": 675.0999999046326,
+          "bytes": 29774,
+          "sha256": "603f21bd5994c1d8d239a8c657632e1a05847c138b84f3e6320059f7c7ca0478"
+        },
+        {
+          "start": 674.7999999523163,
+          "end": 675.0999999046326,
+          "bytes": 4147,
+          "sha256": "6aee6ef92fb3961777dbf66e72fee235a4d292ccdb6a725f02d292edae588007"
+        },
+        {
+          "start": 675,
+          "end": 675.0999999046326,
+          "bytes": 23626,
+          "sha256": "f633bea64c20f97a9f7f26efb781a2a3416898eb7da3760d461bd50f67ed392a"
+        },
+        {
+          "start": 675,
+          "end": 675.0999999046326,
+          "bytes": 24789,
+          "sha256": "ee88f17c5c259e1ee9a13f37e9ec49ec4d856a449478592064f7c8f3c5bbf4a7"
+        },
+        {
+          "start": 675,
+          "end": 675.0999999046326,
+          "bytes": 1153,
+          "sha256": "0d4d937ec86ab03cebd8c83d63e0fbee0bf4bc29ab2ce6379668ee6c4c39506d"
+        }
+      ]
+    }
+  ],
+  "rebuiltSha256": "9c94368b68297e68c3b37a0e2b15a81c07461dd78a2d0c876b0805ef07ea1d11",
+  "finishedAt": "2026-11-26T13:01:46.944Z"
+}
