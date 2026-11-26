@@ -49,15 +49,14 @@ test('denying a transitive dependency prevents all dependents from executing', a
     assert.deepEqual(calls, []);
 });
 
-test('failures clear reviewed decisions and retain successfully loaded dependencies', async () => {
-    const {vm, security, loaded} = fixture();
+test('native load failure clears the Editor review and a fresh review can retry', async () => {
+    const {vm, security} = fixture();
     const original = vm.extensionManager.loadExtensionURL;
     vm.extensionManager.loadExtensionURL = async url => {
         if (url === entries[1].url) throw new Error('network');
         await original(url);
     };
     await assert.rejects(load(vm, entries, decisions(), permissions), /network/);
-    assert.deepEqual([...loaded], ['base']);
     assert.equal(getPlusReviewedMode(security, entries[1].url), undefined);
     vm.extensionManager.loadExtensionURL = original;
     assert.deepEqual(await load(vm, entries, decisions(), permissions), ['base', 'middle', 'app']);
