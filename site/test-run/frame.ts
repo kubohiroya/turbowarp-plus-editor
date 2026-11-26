@@ -10,7 +10,7 @@ import ScratchRender from 'scratch-render';
 import ScratchStorage from '@turbowarp/scratch-storage';
 import {serveTestFrame} from '@kubohiroya/turbowarp-plus-editor-test/test-frame';
 import {TEST_EXTENSION_ID} from '@kubohiroya/turbowarp-plus-editor-test';
-import type {ResolvedCode} from '@kubohiroya/turbowarp-extension-loader';
+import type {ExtensionLoader, ResolvedCode} from '@kubohiroya/turbowarp-extension-loader';
 import {installPlusExtensionHost} from '../extension-host/host.ts';
 import * as vmModules from '../extension-host/vm-modules.ts';
 import {plusTrustedExtensions, readTrustedExtensionBytes} from '../trusted-extensions.ts';
@@ -20,6 +20,7 @@ const testCatalogURL = 'https://kubohiroya.github.io/turbowarp-test/dist/turbowa
 let extensionContext: {extensionURLs: string[]; sandboxedExtensions: SandboxedExtension[]; savedGeneration: boolean} = {
     extensionURLs: [], sandboxedExtensions: [], savedGeneration: false
 };
+const frameLoaders = new WeakMap<object, Pick<ExtensionLoader, 'getLoadedExtensionIdentities'>>();
 let legacyTest: {url: string; verifiedUrl: string} | undefined;
 
 const isEmbeddedSandboxed = (code: ResolvedCode) => code.execution === 'sandboxed' &&
@@ -54,13 +55,14 @@ const createVm = () => {
     const rewrite = vm.securityManager.rewriteExtensionURL.bind(vm.securityManager);
     vm.securityManager.rewriteExtensionURL = (url: string) =>
         legacyTest?.url === url ? Promise.resolve(legacyTest.verifiedUrl) : rewrite(url);
-    installPlusExtensionHost(vm, {
+    const host = installPlusExtensionHost(vm, {
         enabled: true, document, locale: document.documentElement.lang || 'en', vmModules,
         trustedCatalog: plusTrustedExtensions.catalog,
         canLoadVerifiedCode: canLoadCode,
         requestApproval: async code => extensionContext.savedGeneration ? isEmbeddedSandboxed(code) : isApprovedSandboxed(code),
         showDiagnostics: false
     });
+    if ('loader' in host) frameLoaders.set(vm, host.loader);
     return vm;
 };
 
@@ -68,6 +70,10 @@ serveTestFrame({
     window,
     origin: location.origin,
     getVm: createVm,
+    // Read the build identities committed by the test VM, not the Editor's currently loaded version.
+    getLoadedBuilds: vm => frameLoaders.get(vm)?.getLoadedExtensionIdentities()
+        .filter(({execution}) => execution === 'sandboxed')
+        .map(({id, sha256}) => ({extensionId: id, sha256})),
     async prepare(context: {extensionURLs?: unknown; sandboxedExtensions?: unknown; savedGeneration?: unknown; testExtensionURL?: unknown}
         | undefined) {
         const urls = Array.isArray(context?.extensionURLs) ? context.extensionURLs : [];

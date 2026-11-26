@@ -9,14 +9,15 @@ import {chromium, expect} from '@playwright/test';
 import type {TestResult} from '@kubohiroya/turbowarp-plus-editor-test/test-runner';
 import JSZip from '@turbowarp/jszip';
 import {build} from 'esbuild';
-import {verifyWebEditor} from '../scripts/site/editor-revision.ts';
+import {verifyEditorRevision, verifyWebEditor} from '../scripts/site/editor-revision.ts';
 
 const require = createRequire(import.meta.url);
 const {project} = require('./e2e/extension-loader/project.cts');
 const {readPinsSync} = require('../scripts/site/locked-pins.cts');
 const {catalogURL} = require('./e2e/extension-loader/catalog.cts');
 const clampSource = fileURLToPath(new URL('./e2e/extension-loader/fixtures/typed-clamp.ts', import.meta.url));
-const origin = 'http://localhost:41015';
+const localOrigin = 'http://localhost:41015';
+const publishedOrigin = 'https://kubohiroya.github.io';
 const prefix = '/turbowarp-plus-editor/';
 
 const extensionId = 'typedclamp';
@@ -64,13 +65,24 @@ async function buildProject(includeUpperBound: boolean, testCode: Buffer) {
 }
 
 test('the Editor test VM runs the same Scratch test before and after a TypeScript fix',
-    {timeout: 60_000}, async t => {
+    {timeout: 120_000}, async t => {
         const buildDirectory = process.env.E2E_EXTENSION_TEST_BUILD;
-        assert.ok(buildDirectory && path.isAbsolute(buildDirectory),
-            'Set E2E_EXTENSION_TEST_BUILD to the built Editor directory.');
-        const root = path.resolve(buildDirectory);
-        await verifyWebEditor(root);
-        const info = JSON.parse(await readFile(path.join(root, 'build-info.json'), 'utf8'));
+        const published = process.env.E2E_EXTENSION_TEST_USE_PUBLISHED === '1';
+        assert.ok(published ? !buildDirectory : buildDirectory && path.isAbsolute(buildDirectory),
+            'Set either E2E_EXTENSION_TEST_BUILD to the built Editor directory or E2E_EXTENSION_TEST_USE_PUBLISHED=1.');
+        const origin = published ? publishedOrigin : localOrigin;
+        const metadataURL = `${origin}${prefix}build-info.json`;
+        const readPublishedInfo = async () => {
+            const response = await fetch(metadataURL, {redirect: 'error', cache: 'no-store'});
+            assert.equal(response.status, 200);
+            return response.text();
+        };
+        const readInfo = published ? readPublishedInfo : () => readFile(path.join(buildDirectory, 'build-info.json'), 'utf8');
+        if (published) await verifyEditorRevision(metadataURL, 'siteRevision', readInfo);
+        else await verifyWebEditor(buildDirectory);
+        const metadata = await readInfo();
+        const info = JSON.parse(metadata);
+        assert.equal(info.siteRevision, process.env.E2E_EXPECT_SITE_REVISION);
         const pins = readPinsSync();
         assert.equal(info.revision, pins.guiRevision);
         assert.equal(info.securityVersion, pins.securityVersion);
@@ -89,70 +101,130 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
 
         const args = ['--enable-unsafe-swiftshader'];
         if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
-        const browser = await chromium.launch({headless: true, args});
+        const browser = await chromium.launch({headless: true, args, executablePath: process.env.E2E_EXTENSION_TEST_CHROMIUM});
         t.after(() => browser.close());
-        const context = await browser.newContext({serviceWorkers: 'block'});
-        await context.route('**/*', async route => {
-            const url = new URL(route.request().url());
-            if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
-            const filename = path.resolve(root, decodeURIComponent(url.pathname.slice(prefix.length)));
-            if (!filename.startsWith(root + path.sep)) return route.abort();
-            try {
-                return await route.fulfill({path: filename});
-            } catch (error) {
-                if (error.code !== 'ENOENT') throw error;
-                return route.fulfill({status: 404});
+        const publishedAssets = new Map<string, Promise<{status: number; contentType?: string; body: Buffer}>>();
+        function publishedAsset(url: URL) {
+            let asset = publishedAssets.get(url.href);
+            if (!asset) {
+                // Use Node's proxy/CA transport for real Pages bytes. Repeat requests use
+                // the same bytes across the separated browser contexts.
+                asset = fetch(url, {redirect: 'error'}).then(async response => ({
+                    status: response.status,
+                    contentType: response.headers.get('content-type') ?? undefined,
+                    body: Buffer.from(await response.arrayBuffer())
+                }));
+                publishedAssets.set(url.href, asset);
             }
-        });
-        await context.route(catalogURL, route => route.fulfill({json: {schemaVersion: 1, extensions: [
-            {...testExtension, name: 'Test', version: '0.1.0', unsandboxed: 'required', dependencies: [],
-                description: 'Scratch test hats and assertions', license: 'MPL-2.0'}
-        ]}, headers: {'access-control-allow-origin': '*'}}));
-        const page = await context.newPage();
-        const reported: TestResult[] = [];
-        await page.exposeFunction('recordScratchTestResult', (result: TestResult) => { reported.push(result); });
-        await page.addInitScript(() => {
-            window.addEventListener('message', event => {
-                if (event.origin !== location.origin || event.data?.type !== 'twpe-test:end') return;
-                const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Test stage"]');
-                if (frame && event.source === frame.contentWindow && 'recordScratchTestResult' in window &&
-                    typeof window.recordScratchTestResult === 'function') {
-                    window.recordScratchTestResult(event.data.result);
+            return asset;
+        }
+
+        async function openEditor() {
+            const context = await browser.newContext({serviceWorkers: 'block'});
+            await context.route('**/*', async route => {
+                const url = new URL(route.request().url());
+                if (url.origin !== origin || !url.pathname.startsWith(prefix)) return route.abort();
+                if (published) return route.fulfill(await publishedAsset(url));
+                const root = path.resolve(buildDirectory);
+                const filename = path.resolve(root, decodeURIComponent(url.pathname.slice(prefix.length)));
+                if (!filename.startsWith(root + path.sep)) return route.abort();
+                try {
+                    return await route.fulfill({path: filename});
+                } catch (error) {
+                    if (error.code !== 'ENOENT') throw error;
+                    return route.fulfill({status: 404});
                 }
             });
-        });
+            await context.route(catalogURL, route => route.fulfill({json: {schemaVersion: 1, extensions: [
+                {...testExtension, name: 'Test', version: '0.1.0', unsandboxed: 'required', dependencies: [],
+                    description: 'Scratch test hats and assertions', license: 'MPL-2.0'}
+            ]}, headers: {'access-control-allow-origin': '*'}}));
+            const page = await context.newPage();
+            const reported: TestResult[] = [];
+            await page.exposeFunction('recordScratchTestResult', (result: TestResult) => { reported.push(result); });
+            await page.addInitScript(() => {
+                window.addEventListener('message', event => {
+                    if (event.origin !== location.origin || event.data?.type !== 'twpe-test:end') return;
+                    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Test stage"]');
+                    if (frame && event.source === frame.contentWindow && 'recordScratchTestResult' in window &&
+                        typeof window.recordScratchTestResult === 'function') {
+                        window.recordScratchTestResult(event.data.result);
+                    }
+                });
+            });
 
-        await page.goto(`${origin}${prefix}editor.html?lang=en`);
-        await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()));
+            await page.goto(`${origin}${prefix}editor.html?lang=en`);
+            await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()));
 
-        const runView = page.locator('.twpe-test-run');
-        const result = runView.locator('.twpe-test-run__test').filter({hasText: testName});
-        for (const [candidate, status, actual] of [[faulty, 'failed', 15], [corrected, 'passed', 10]] as const) {
-            const loading = page.evaluate(async archive => {
-                await window.vm.loadProject(new Uint8Array(archive));
-            }, [...candidate.sb3]);
-            const review = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
-            await expect(review.getByTestId('twextsec-enable-all')).toBeVisible();
-            await review.getByTestId('twextsec-enable-all').click();
-            await loading;
-            if (!await runView.isVisible()) {
-                await page.getByRole('button', {name: 'Run view opening options'}).click();
-                await page.getByText('Open the test run view', {exact: true}).click();
+            const runView = page.locator('.twpe-test-run');
+            const result = runView.locator('.twpe-test-run__test').filter({hasText: testName});
+            async function runProject(sb3: Buffer, status: 'failed' | 'passed', actual: number, expectedBuild: string, assertionId = assertId) {
+                const loading = page.evaluate(async archive => {
+                    await window.vm.loadProject(new Uint8Array(archive));
+                }, [...sb3]);
+                const review = page.getByRole('dialog').filter({has: page.locator('.twextsec-review')});
+                await expect(review.getByTestId('twextsec-enable-all')).toBeVisible();
+                await review.getByTestId('twextsec-enable-all').click();
+                await loading;
+                if (!await runView.isVisible()) {
+                    await page.getByRole('button', {name: 'Run view opening options'}).click();
+                    await page.getByText('Open the test run view', {exact: true}).click();
+                }
+                await expect(result).toBeVisible();
+                const before = reported.length;
+                await result.getByRole('button', {name: `Run: ${testName}`, exact: true}).click();
+                await expect(runView.getByRole('status')).toHaveText(status === 'failed' ?
+                    '1 tests: 0 passed, 1 failed, 0 timed out, 0 errors' : '1 tests: 1 passed, 0 failed, 0 timed out, 0 errors',
+                    {timeout: published ? 20_000 : 5_000});
+                await expect(result).toHaveAttribute('data-status', status);
+                await expect.poll(() => reported.length).toBe(before + 1);
+                await expect.poll(() => reported.at(-1)).toMatchObject({name: testName, status,
+                    builds: [{extensionId, sha256: expectedBuild}], assertions: [
+                    {kind: 'strict-equals', blockId: assertionId, passed: status === 'passed', expected: 10, actual}
+                ]});
+                await expect(result.getByRole('list', {name: 'Tested builds'})).toContainText(expectedBuild);
+                if (status === 'failed') {
+                    await expect(result.locator('code').filter({hasText: /^(10|15)$/u})).toHaveText(['10', '15']);
+                    await expect(result.getByRole('button', {name: 'Show block'})).toHaveAttribute('data-block-id', assertionId);
+                }
+                t.diagnostic(`${status}: ${assertionId}, expected 10, actual ${actual}`);
             }
-            await expect(result).toBeVisible();
-            await runView.getByRole('button', {name: 'Run all'}).click();
-            await expect(runView.getByRole('status')).toHaveText(status === 'failed' ?
-                '1 tests: 0 passed, 1 failed, 0 timed out, 0 errors' : '1 tests: 1 passed, 0 failed, 0 timed out, 0 errors');
-            await expect(result).toHaveAttribute('data-status', status);
-            await expect.poll(() => reported.at(-1)).toMatchObject({name: testName, status, assertions: [
-                {kind: 'strict-equals', blockId: assertId, passed: status === 'passed', expected: 10, actual}
-            ]});
-            if (status === 'failed') {
-                await expect(result.locator('code')).toHaveText(['10', '15']);
-                await expect(result.getByRole('button', {name: 'Show block'})).toHaveAttribute('data-block-id', assertId);
-            }
-            t.diagnostic(`${status}: ${assertId}, expected 10, actual ${actual}`);
+
+            return {context, page, runProject};
         }
+
+        const editor = await openEditor();
+        await editor.runProject(faulty.sb3, 'failed', 15, faulty.sha256);
+        await editor.runProject(corrected.sb3, 'passed', 10, corrected.sha256);
+
+        const saved = Buffer.from(await editor.page.evaluate(async () =>
+            [...await window.vm.saveProjectSb3('uint8array')]));
+        const archive = await JSZip.loadAsync(saved);
+        const savedProject = JSON.parse(await archive.file('project.json').async('string'));
+        const stage = savedProject.targets.find(target => target.isStage);
+        // Scratch VM compresses block IDs when it saves to SB3. Follow the saved links rather
+        // than assuming the original workspace IDs survive regular serialization.
+        const hats = Object.entries(stage.blocks).filter(([, block]) =>
+            (block as typeof stageBlocks['clamp-test']).opcode === 'kubohiroyatest_whentest');
+        assert.equal(hats.length, 1);
+        const [savedHatId, savedHat] = hats[0] as [string, typeof stageBlocks['clamp-test']];
+        const savedAssertionId = savedHat.next;
+        const savedAssertion = stage.blocks[savedAssertionId];
+        assert.equal(savedAssertion.opcode, 'kubohiroyatest_assert_strict_equals');
+        assert.equal(savedAssertion.parent, savedHatId);
+        const savedReporter = stage.blocks[savedAssertion.inputs.ACTUAL[1]];
+        assert.equal(savedReporter.opcode, 'typedclamp_clamp');
+        assert.equal(savedReporter.parent, savedAssertionId);
+        for (const [id, digest] of [[extensionId, corrected.sha256], [testExtension.id, testExtension.sha256]]) {
+            const spec = savedProject.turboWarpPlus.extensions.find(entry => entry.id === id);
+            assert.equal(spec?.source.type, 'embedded-file');
+            assert.equal(spec.sha256, digest);
+            assert.equal(createHash('sha256').update(await archive.file(spec.source.path).async('nodebuffer')).digest('hex'),
+                digest);
+        }
+        await editor.context.close();
+        const {page, runProject} = await openEditor();
+        await runProject(saved, 'passed', 10, corrected.sha256, savedAssertionId);
 
         // The reused VM cannot carry an approval over to another run whose own snapshot did not authorize that code.
         const rejected = await page.evaluate(archive => new Promise<string>((resolve, reject) => {
@@ -175,4 +247,5 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
             frame.contentWindow.postMessage({type: 'twpe-test:run', id, project: new Uint8Array(archive).buffer}, location.origin);
         }), [...corrected.sb3]);
         assert.match(rejected, /did not approve this exact extension digest/i);
+        if (published) assert.equal(await readPublishedInfo(), metadata, 'Published Editor changed during the test');
     });
