@@ -52,6 +52,8 @@ test('the real Editor records successful SB3 opens and saves both kinds of renam
         const zip = await JSZip.loadAsync(new Uint8Array(bytes));
         const project = JSON.parse(await zip.file('project.json')!.async('string'));
         project.turboWarpPlusProject = {schemaVersion: 1, title: 'Catalog fixture'};
+        const fixtureMarker = 'catalog-fallback-content';
+        project.targets.find(target => target.isStage).variables['catalog-marker'] = ['Catalog marker', fixtureMarker];
         zip.file('project.json', JSON.stringify(project));
         const fixture = [...await zip.generateAsync({type: 'uint8array'})];
         await page.evaluate(async bytes => {
@@ -142,10 +144,14 @@ test('the real Editor records successful SB3 opens and saves both kinds of renam
         assert.equal(await fallbackList.evaluate(() => typeof window.showOpenFilePicker), 'undefined');
         await expect(fallbackEntry.locator('[data-catalog-action=rename-title]')).toBeDisabled();
         const fallbackId = await fallbackEntry.getAttribute('data-project-id');
+        const restoredMarker = () => fallbackList.evaluate(() =>
+            (window as any).vm?.runtime.getTargetForStage()?.variables['catalog-marker']?.value ?? null);
+        assert.equal(await restoredMarker(), null);
         const reselect = fallbackList.waitForEvent('filechooser');
         await fallbackEntry.locator('[data-catalog-action=open]').click();
         await (await reselect).setFiles(selected);
         await expect(fallbackList.locator('[data-project-catalog]')).toHaveCount(0);
+        await expect.poll(restoredMarker).toBe(fixtureMarker);
 
         const createTab = await openCatalog(fallback);
         await expect(createTab.locator('[data-project-id]')).toHaveAttribute('data-project-id', fallbackId!);
