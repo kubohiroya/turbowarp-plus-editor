@@ -1,4 +1,5 @@
 const {test,expect}=require('./fixtures.cts');
+const JSZip=require('@turbowarp/jszip');
 
 const original='https://example.test/story.sb3?signature=a%2Bb%26c&part=1';
 // Only the navigation destination is stubbed; the landing page and its assets are real.
@@ -18,8 +19,28 @@ const assertTarget=(value,project,language)=>{
     expect(url.searchParams.get('fps')).toBe('60');
 };
 
+async function signedProjectFixture(page) {
+    const requests: string[] = [];
+    const marker = 'signed landing fixture';
+    const project = {targets: [{isStage: true, name: 'Stage', variables: {'signed-marker': ['Signed marker', marker]},
+        lists: {}, broadcasts: {}, blocks: {}, comments: {}, currentCostume: 0, costumes: [], sounds: [],
+        volume: 100, layerOrder: 0, tempo: 60, videoTransparency: 50, videoState: 'off'}],
+        monitors: [], extensions: [], meta: {semver: '3.0.0'}};
+    const bytes = await new JSZip().file('project.json', JSON.stringify(project))
+        .generateAsync({type: 'nodebuffer', compression: 'DEFLATE'});
+    await page.route('https://example.test/**', route => {
+        const url = route.request().url();
+        requests.push(url);
+        if (url !== original) return route.abort();
+        return route.fulfill({body: bytes, headers: {'content-type': 'application/octet-stream',
+            'access-control-allow-origin': '*'}});
+    });
+    return {marker, requests};
+}
+
 test('branded landing preserves signed project URLs, settings and language before the edit button navigates',async({page,evidence},testInfo)=>{
-    evidence.stage('landing-navigation-fixture');
+    evidence.stage('landing-to-real-editor');
+    const {marker, requests} = await signedProjectFixture(page);
     await page.setViewportSize({width:390,height:844});
     await page.goto(`?${new URLSearchParams({lang:'ja',project_url:original,fps:'60'})}`);
     await expect(page).toHaveTitle('TurboWarp-Plus-Editor');
@@ -37,10 +58,16 @@ test('branded landing preserves signed project URLs, settings and language befor
     expect(languageURL.searchParams.get('project_url')).toBe(original);
     await expect(button).toHaveText('Open the linked project');
     assertTarget(await button.getAttribute('href'),original,'en');
-    await destination(page,testInfo);
+    expect(requests).toEqual([]);
     await button.click();
     await page.waitForURL('**/editor.html?**');
     assertTarget(page.url(),original,'en');
+    await expect.poll(() => page.evaluate(() => window.vm?.runtime.getTargetForStage()?.variables['signed-marker']?.value))
+        .toBe(marker);
+    expect(requests).toEqual([original]);
+    await testInfo.attach('navigation-fixture.json', {body: JSON.stringify({
+        editorDocument: 'pinned site build', projectSource: 'extension-free SB3 intercepted locally', requests
+    }), contentType: 'application/json'});
 });
 
 test('landing form rejects HTTP and navigates with the newly entered HTTPS project URL',async({page,evidence},testInfo)=>{
