@@ -154,19 +154,6 @@ for (const declined of [true, false]) {
     });
 }
 
-test('a remote-non-cacheable project offers no copy to keep or decline', async ({page}) => {
-    const counter = await serveFixture(page);
-    await openEditor(page);
-    const loading = load(page, await project({type: 'remote-non-cacheable'}));
-    await individualReview(page);
-    await expect(loadingChoices(page)).toHaveCount(0);
-    await expect(review(page).getByRole('radio', {name: labels.ja.forms['remote-non-cacheable'], exact: true})).toHaveCount(0);
-    await expect(review(page).getByRole('radio', {name: labels.ja.forms['remote-cacheable'], exact: true})).toHaveCount(0);
-    await allowAndConfirm(page);
-    expect(await loading).toEqual({ok: true});
-    expect(counter()).toBe(1);
-});
-
 // The Manifest is rewritten after the helper builds it, so each retired spelling is exactly what
 // the SB3 carries, with the code still in the file and at the URL it names.
 async function withSource(source) {

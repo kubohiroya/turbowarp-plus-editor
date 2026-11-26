@@ -48,6 +48,7 @@ Desktop（アプリ起動）、macOS の実ファイルピッカー、OS クリ�
 
 - セレクタと操作を、通常の承認／個別確認、ファイルを受け取る別タブ、日英の「更新」、現行の読み込み失敗画面に合わせた。承認前に説明を表示するための通信と、承認後の実行用フェッチを区別し、後者の回数と VM の実行を検証した。ケース数は減らしていない。
 - `test/e2e/turbowarp/wait-public.cts` は #515 以後に呼び出しも出力の参照もなく、現行の配布確認は `verify-remote-editor.cts` が担当する。未使用の43行は [Editor #844](https://github.com/kubohiroya/turbowarp-plus-editor/pull/844) で削除し、前後で基盤33件と Playwright の列挙が維持されたことを確認した。固定ビルド照合、共通サーバー、事前・事後の配布物確認、報告、SB3やTLSのフィクスチャは保持する。
+- キャッシュ不可の規則は [Loader 0.16.1 の CI](https://github.com/kubohiroya/turbowarp-extension-loader/actions/runs/45591120258) でキャッシュの読み書きがなく取得は一度だけと確認済み。Editor の2ケースを1件にまとめ、実承認画面の選択肢と VM の実行を保持した。変更した2ファイルは統合後29件実行・成功、スキップなし。
 - **未完: ローカル SB3 の進捗表示2件（完了／取消）。** 実ファイルを受け取る別タブで、拡張の承認画面までは表示されるが、`[data-project-load-progress]` が現れない。固定版の [Workbench の別タブ経路](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/blob/d935ae50683cbfc55ab55a41529c00cc7c497914/src/project-open-tabs.ts) は受信したファイルを直接 `vm.loadProject` に渡す。一方、[Editor の組み込み](https://github.com/kubohiroya/turbowarp-plus-editor/blob/6c09ab4e8eada248b0cb5ba9bdcddca1009dd57d/scripts/site/connect-project-load-progress.cts) は既存 GUI のロード画面に `ProjectLoadProgress` を載せる。別タブ経路にも同画面を結線するか、表示仕様を決め直す必要がある。既存2件は削除しない。
 - **未完: 移管後の削減。** 同じ版の所有先 CI の実行を確認したが、コンポーネント内部の検証だけでは、実 Editor での入口、別タブ、配布物、VM 接続を代替できない。下記の結果は移管先の候補を選ぶ根拠であり、Editor の既存カバレッジを減らす根拠ではない。
 
