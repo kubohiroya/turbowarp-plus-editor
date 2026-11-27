@@ -68,7 +68,9 @@ registerHooks({
         }
     },
     load (url, context, nextLoad) {
-        const source = Object.hasOwn(stub, extensionOf(url)) ? stub[extensionOf(url)] : null;
+        const source = url.endsWith('/site/extension-library/plus-library.tsx') ?
+            `${stub['.tsx']} export const createPlusLibrary = () => TestPlaceholderView;` :
+            Object.hasOwn(stub, extensionOf(url)) ? stub[extensionOf(url)] : null;
         return source === null ? nextLoad(url, context) : {format: 'module', shortCircuit: true, source};
     }
 });
