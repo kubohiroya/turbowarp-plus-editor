@@ -37,7 +37,7 @@ import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-cod
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
 import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu as createStageMenu} from './lib/tw-plus-transfer.ts';
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-code-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
 import {attachDockedScriptLayout, getDockedScriptLayout, setDockedRelationVisibility} from '@kubohiroya/turbowarp-plus-editor-code-views/script-layout';

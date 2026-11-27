@@ -38,7 +38,7 @@ import {attachBreakpointMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/
 import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-project-model/project-search-connections';
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {addonMessages} from './context-menu-icons/index.ts';
-import {readWebStartupFeatureFlags} from '../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from './startup-feature-flags.ts';
 import {connectPaletteVisibility, installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.ts';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';

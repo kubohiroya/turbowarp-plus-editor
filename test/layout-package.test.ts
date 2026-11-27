@@ -73,3 +73,18 @@ test('Desktop reports when a project layout last changed, so a newer one wins ov
     assert.equal(session.saved, true);
     assert.equal(session.savedAt, undefined);
 });
+
+test('the site connects the saved preference without adding browser dependencies to the distributed flags', async t => {
+    const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    Object.defineProperty(globalThis, 'window', {configurable: true, value: {
+        localStorage: {getItem: () => '1'}
+    }});
+    t.after(() => {
+        if (previous) Object.defineProperty(globalThis, 'window', previous);
+        else Reflect.deleteProperty(globalThis, 'window');
+    });
+    const {readWebStartupFeatureFlags: readSiteFlags} = await import('../site/startup-feature-flags.ts');
+    const {readWebStartupFeatureFlags: readDistributedFlags} = await import('../config/web-startup-feature-flags.ts');
+    assert.equal(readSiteFlags().standardLayout, true);
+    assert.equal(readDistributedFlags().standardLayout, false);
+});

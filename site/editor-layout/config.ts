@@ -1,7 +1,7 @@
 import {createLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
 import {connectDesktopWorkspaceLayouts, type DesktopWorkspaceLayouts} from './desktop-workspace-layout.ts';
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startupParams = new URLSearchParams(startupSearch);
