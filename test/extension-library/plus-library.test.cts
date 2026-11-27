@@ -82,12 +82,13 @@ test('missing decisions and incorrect registered IDs fail before a dependent loa
 });
 
 test('a disposed Plus view does not navigate or update its parent after a delayed apply finishes', async () => {
-    const PlusLibrary = require('../../site/extension-library/plus-library.tsx').default;
+    const {createPlusLibrary} = require('../../site/extension-library/plus-library.tsx');
     const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
-    const {vm} = fixture();
+    const {vm, loaded} = fixture();
     let finish;
     setExtensionAuthoringHost(vm, {configure: () => new Promise(resolve => { finish = resolve; })});
     const callbacks = [];
+    const PlusLibrary = createPlusLibrary(() => callbacks.push('suggest'));
     const view = new PlusLibrary({vm, locale: 'en', permissions,
         onCategorySelected: () => callbacks.push('category'),
         onRequestClose: () => callbacks.push('close'),
@@ -99,6 +100,7 @@ test('a disposed Plus view does not navigate or update its parent after a delaye
     const pending = view.handleComplete(new Map([['base', {execution: 'unsandboxed', loading: 'remote-cacheable'}]]));
     await new Promise(resolve => setImmediate(resolve));
     view.componentWillUnmount();
+    loaded.add('base');
     finish();
     await pending;
     // Only the busy flag went up before the view went away; nothing after it reached the parent.
@@ -122,12 +124,20 @@ test('saying no on the screen closes the library and loads nothing', async () =>
 });
 
 test('the screen\'s answer configures exactly the chosen rows, with the form it chose, in dependency order', async () => {
-    const PlusLibrary = require('../../site/extension-library/plus-library.tsx').default;
+    const {createPlusLibrary} = require('../../site/extension-library/plus-library.tsx');
     const {setExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
-    const {vm} = fixture();
+    const {vm, loaded} = fixture();
+    loaded.add('base');
     const requests = [];
-    setExtensionAuthoringHost(vm, {configure: async received => { requests.push(...received); }});
+    setExtensionAuthoringHost(vm, {configure: async received => {
+        requests.push(...received);
+        for (const request of received) loaded.add(request.id);
+    }});
     const callbacks = [];
+    const PlusLibrary = createPlusLibrary((owner, ids) => {
+        assert.equal(owner, vm);
+        callbacks.push(['suggest', ids]);
+    });
     const view = new PlusLibrary({vm, locale: 'en', permissions,
         onCategorySelected: id => callbacks.push(['category', id]),
         onRequestClose: () => callbacks.push('close'),
@@ -141,7 +151,7 @@ test('the screen\'s answer configures exactly the chosen rows, with the form it 
         ['middle', {execution: 'unsandboxed', loading: 'remote-non-cacheable'}]]));
     assert.deepEqual(requests.map(request => [request.id, request.execution, request.distribution]),
         [['base', 'unsandboxed', 'embedded-data'], ['middle', 'unsandboxed', 'remote-non-cacheable']]);
-    assert.deepEqual(callbacks, [['category', 'middle'], 'close']);
+    assert.deepEqual(callbacks, [['suggest', ['middle']], ['category', 'middle'], 'close']);
     setExtensionAuthoringHost(vm, null);
 });
 

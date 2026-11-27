@@ -5,7 +5,7 @@ import './palette.css';
 
 import {getPaletteExtensionLibraryAction} from '../gui-integration/lib/tw-plus-integration-points.ts';
 
-export const {connectPaletteVisibility, setHorizontalBlockPalette, openDetachedBlockPalette, installHorizontalBlockPalette} =
+export const {connectPaletteVisibility, suggestPaletteReplacements, setHorizontalBlockPalette, openDetachedBlockPalette, installHorizontalBlockPalette} =
     createHorizontalBlockPalette({getScratchBlocks: () => window.ScratchBlocks, styles,
         showPaletteMenu: true,
         openExtensionLibrary: document => {
