@@ -26,7 +26,8 @@ import {plusSecurityReview} from './extension-host/review.ts';
 import {stoppedProjectLoadState} from '@kubohiroya/turbowarp-plus-editor-workbench/project-load-failure';
 import {extensionLibraryTranslations} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
 import {extensionLoadErrors} from './extension-host/load-errors.ts';
-import {plusLibraryTab} from './extension-library/tab.ts';
+import {createPlusLibraryTab} from './extension-library/tab.ts';
+import {createPlusLibrary} from './extension-library/plus-library.tsx';
 import {plusProjectPackager} from './packager/handoff.ts';
 
 import {installControlsDock} from './controls-dock.ts';
@@ -39,7 +40,7 @@ import {connectProjectSearchDocuments} from '@kubohiroya/turbowarp-plus-editor-p
 import {plusTrustedExtensions} from './trusted-extensions.ts';
 import {addonMessages} from './context-menu-icons/index.ts';
 import {readWebStartupFeatureFlags} from './startup-feature-flags.ts';
-import {connectPaletteVisibility, installHorizontalBlockPalette} from './horizontal-block-palette/index.ts';
+import {connectPaletteVisibility, installHorizontalBlockPalette, suggestPaletteReplacements} from './horizontal-block-palette/index.ts';
 import {attachAssetContextMenuIcons, installBlockContextMenuIcons} from './context-menu-icons/index.ts';
 import {installPaletteDeletePreview} from './palette-delete-preview/index.ts';
 import {installBlockArgumentText} from '@kubohiroya/turbowarp-plus-editor-code-views/block-argument-text';
@@ -78,7 +79,9 @@ export const createPlusIntegration = ({
     registerGuide = installGuideExtension,
     trustedExtensions = plusTrustedExtensions,
     installExtensionHost = installProjectToolsHost,
-    libraryTab = plusLibraryTab,
+    libraryTab = createPlusLibraryTab({
+        view: createPlusLibrary((vm, extensionIds) => suggestPaletteReplacements(vm, extensionIds))
+    }),
     projectPackager = plusProjectPackager,
     securityReview = plusSecurityReview,
     scriptTransfer = {

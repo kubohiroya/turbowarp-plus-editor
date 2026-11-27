@@ -8,7 +8,8 @@ const catalogURL = 'https://kubohiroya.github.io/turbowarp-plus-packages/extensi
 // A catalog extension is trusted like TurboWarp's own gallery, so it always runs without the
 // sandbox and the screen states that instead of asking. What the author chooses is how it loads,
 // spelled the same way by the screen and the manifest.
-function fixture(id, distribution) {
+function fixture(id, distribution, replacements?: readonly string[]) {
+    const declaration = replacements ? `replacesPaletteGroups: ${JSON.stringify(replacements)}, ` : '';
     const source = `// Name: ${id}\n// ID: ${id}\n// Version: 1.0.0\n// Unsandboxed: optional\n// License: MIT\n
 (function(Scratch) {
  const execution = Scratch.extensions.unsandboxed ? 'unsandboxed' : 'sandboxed';
@@ -18,7 +19,7 @@ function fixture(id, distribution) {
   globalThis.__catalogAuthoringRuns['${id}'] = (globalThis.__catalogAuthoringRuns['${id}'] || 0) + 1;
  }
  Scratch.extensions.register({
-  getInfo() { return {id: '${id}', name: '${id}', blocks: [
+  getInfo() { return {id: '${id}', name: '${id}', ${declaration}blocks: [
    {opcode: 'value', blockType: Scratch.BlockType.REPORTER, text: '${id} mode'}
   ]}; },
   value() { return execution + ':' + (vmAccess ? 'vm' : 'no-vm'); }

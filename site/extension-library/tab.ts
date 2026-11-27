@@ -63,5 +63,3 @@ export const createPlusLibraryTab = ({view = PlusLibrary, enabled = PLUS_LIBRARY
         onRequestClose
     })
 } : null;
-
-export const plusLibraryTab = createPlusLibraryTab();
