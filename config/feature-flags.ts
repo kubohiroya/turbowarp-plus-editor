@@ -23,11 +23,13 @@ export function readStartupFeatureFlags({
     twPlusGitRestoreVersion: gitRestoreVersion = null,
     twPlusWorkspaceMinimap: workspaceMinimap = null,
     twPlusStageCodePrewarm: stageCodePrewarm = null,
-    twPlusSaveWorkspace: saveWorkspace = null
+    twPlusSaveWorkspace: saveWorkspace = null,
+    twPlusNewProjectSb3Format: newProjectSb3Format = null
 } = {}) {
+    const projectToolsEnabled = projectTools === null || projectTools === '1';
     return Object.freeze({
         extensionLoader: loader === null || loader === '1',
-        projectTools: projectTools === null || projectTools === '1',
+        projectTools: projectToolsEnabled,
         manualProjectURI: (manualProjectURI === null || manualProjectURI === '1') && (loader === null || loader === '1'),
         payloadFormats: payloadFormats === null || payloadFormats === '1',
         spriteProperties: spriteProperties === '1',
@@ -50,6 +52,7 @@ export function readStartupFeatureFlags({
         workspaceMinimap: standardLayout === '1' && (workspaceMinimap === null || workspaceMinimap === '1'),
         stageCodePrewarm: stageCodePrewarm === null || stageCodePrewarm === '1',
         // Saving writes the screen of the project into its SB3 or project folder; files saved earlier still open as saved.
-        saveWorkspace: saveWorkspace === null || saveWorkspace === '1'
+        saveWorkspace: saveWorkspace === null || saveWorkspace === '1',
+        newProjectSb3Format: projectToolsEnabled && newProjectSb3Format === '1'
     });
 }
