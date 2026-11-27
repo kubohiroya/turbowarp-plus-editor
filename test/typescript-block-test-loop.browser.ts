@@ -100,7 +100,7 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
         assert.deepEqual(faulty.targets, corrected.targets);
 
         const args = ['--enable-unsafe-swiftshader'];
-        if (process.platform === 'darwin') args.push('--single-process', '--no-zygote', '--disable-crash-reporter');
+        // Keep renderer isolation: this test closes one context and opens another.
         const browser = await chromium.launch({headless: true, args, executablePath: process.env.E2E_EXTENSION_TEST_CHROMIUM});
         t.after(() => browser.close());
         const publishedAssets = new Map<string, Promise<{status: number; contentType?: string; body: Buffer}>>();
