@@ -36,6 +36,7 @@ ${original}                                    </React.Fragment>}
         .replace(titleGroup, 'className={classNames(styles.menuBarItem, (reorganizeMenuBar && ProjectInfoMenu.titleGroupClassName) || styles.growable)}')
         .replace(titleField, 'className={(reorganizeMenuBar && ProjectInfoMenu.titleFieldClassName) || styles.titleFieldGrowable}')
         .replace(host, `${host}
+        host?.bindPaletteExtensionLibrary?.(this.props.onAddExtension);
         const useTitleSaveMenu = host?.renderProjectSaveMenu && this.props.canEditTitle && this.props.canManageFiles &&
             !(this.props.canSave || this.props.canCreateCopy || this.props.canRemix);`)
         .replace(title, `</MenuBarItemTooltip>

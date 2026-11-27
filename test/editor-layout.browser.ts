@@ -1861,6 +1861,18 @@ test('the editor leaves the bottom edge free of Backpack controls', {timeout: 30
     }
 });
 
+test('the palette opens the extension library with the extension File menu enabled or disabled', {timeout: 30_000}, async t => {
+    const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix);
+    const url = origin + buildPrefix + 'editor.html?lang=en';
+    for (const query of ['', '&twPlusExtensionFileMenu=0']) {
+        await page.goto(url + query);
+        const paletteMenu = page.locator('.tw-palette-menu-button:visible').first();
+        await paletteMenu.click();
+        await page.getByText('Add Extension', {exact: true}).click();
+        await expect(page.getByText('Add Extensions to the Project', {exact: true})).toBeVisible();
+    }
+});
+
 test('the project information menu stays above the block palette', {timeout: 45_000}, async t => {
     const secureOrigin = 'https://layout.test';
     const page = await openBrowser(t, path.join(pinnedGui(), 'build'), buildPrefix, secureOrigin);

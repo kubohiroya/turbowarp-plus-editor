@@ -171,6 +171,7 @@ export {StagePanel, attachStageMonitorDrag} from '../editor-layout/stage-panel.t
 export {StageDisplayMenu} from '../editor-layout/stage-display-menu.tsx';
 export {TargetListLayout, TargetListPanel, SpriteGrid, BackdropTile, BackdropListActions} from '../editor-layout/target-list.tsx';
 
+export {bindPaletteExtensionLibrary} from '../horizontal-block-palette/index.ts';
 export const extensionInFileMenu = startup.extensionFileMenu;
 export const createFileMenuItem = extensionInFileMenu ? createIconFileMenuItem : undefined;
 const externalYamlActions = new WeakMap<object, {locale: string; action: ReturnType<typeof createExternalYamlMenuAction>}>();
