@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "第1章のGuide拡張設定の提案形式",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "status", "courseId", "courseVersion", "chapterId", "learning", "requiredCapabilities", "settingsLocation", "hostPolicy", "interactionPolicy", "bindings", "defaults", "activities", "trials", "next"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": 1},
+    "status": {"const": "proposal"},
+    "courseId": {"$ref": "#/$defs/id"},
+    "courseVersion": {"type": "string", "minLength": 1},
+    "chapterId": {"$ref": "#/$defs/id"},
+    "learning": {
+      "type": "object", "additionalProperties": false, "required": ["unitId", "objectives", "prerequisiteUnits", "nextUnitIds"],
+      "properties": {
+        "unitId": {"type": "string", "pattern": "^[A-E][0-9]{2}$"},
+        "objectives": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "description"], "properties": {"id": {"$ref": "#/$defs/id"}, "description": {"type": "string", "minLength": 1}}}},
+        "prerequisiteUnits": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-E][0-9]{2}$"}},
+        "nextUnitIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-E][0-9]{2}$"}}
+      }
+    },
+    "requiredCapabilities": {"$ref": "#/$defs/ids"},
+    "settingsLocation": {"const": "extensionStorage.kubohiroyaeditorguide"},
+    "hostPolicy": {
+      "type": "object", "additionalProperties": false, "required": ["externalWindows", "layoutNamespace"],
+      "properties": {"externalWindows": {"const": false}, "layoutNamespace": {"type": "string", "minLength": 1}}
+    },
+    "interactionPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stageDrag", "spritePropertyWrites", "variableUIWrites", "listUIWrites", "monitorSliders", "directScriptRun"],
+      "properties": {"stageDrag": {"const": false}, "spritePropertyWrites": {"const": false}, "variableUIWrites": {"const": false}, "listUIWrites": {"const": false}, "monitorSliders": {"const": false}, "directScriptRun": {"const": false}}
+    },
+    "bindings": {
+      "type": "object", "additionalProperties": false, "required": ["targets", "scripts", "fields"],
+      "properties": {
+        "targets": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "object", "additionalProperties": false, "required": ["authorKey"], "properties": {"authorKey": {"$ref": "#/$defs/id"}}}},
+        "scripts": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "object", "additionalProperties": false, "required": ["target", "topBlockId", "expectedHatOpcode"], "properties": {"target": {"$ref": "#/$defs/id"}, "topBlockId": {"type": "string", "minLength": 1}, "expectedHatOpcode": {"type": "string", "minLength": 1}}}},
+        "fields": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "object", "additionalProperties": false, "required": ["script", "blockId", "expectedOpcode", "inputName", "shadowOpcode", "shadowField"], "properties": {"script": {"$ref": "#/$defs/id"}, "blockId": {"type": "string", "minLength": 1}, "expectedOpcode": {"type": "string", "minLength": 1}, "inputName": {"type": "string", "minLength": 1}, "shadowOpcode": {"type": "string", "minLength": 1}, "shadowField": {"type": "string", "minLength": 1}}}}
+      }
+    },
+    "defaults": {"type": "object", "additionalProperties": false, "required": ["visibility", "editing"], "properties": {"visibility": {"const": "hidden"}, "editing": {"const": "denied"}}},
+    "activities": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/activity"}},
+    "trials": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "object", "additionalProperties": false, "required": ["handlerId", "resultIds", "resetHandlerId", "protectWhileRunning"], "properties": {"handlerId": {"$ref": "#/$defs/id"}, "resultIds": {"$ref": "#/$defs/ids"}, "resetHandlerId": {"$ref": "#/$defs/id"}, "protectWhileRunning": {"$ref": "#/$defs/ids"}}}},
+    "next": {"type": "object", "additionalProperties": false, "required": ["chapterId", "preset", "saveBeforeNavigate"], "properties": {"chapterId": {"$ref": "#/$defs/id"}, "preset": {"$ref": "#/$defs/id"}, "saveBeforeNavigate": {"const": true}}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-zA-Z0-9.-]*$"},
+    "ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "opcodes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}},
+    "activity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["visibleTargets", "visibleScripts", "editableFields", "editableScripts", "fieldConstraints", "addableOpcodes", "executableOpcodes", "guide", "trial", "completion", "retry", "skipScene", "successScene"],
+      "properties": {
+        "visibleTargets": {"$ref": "#/$defs/ids"},
+        "visibleScripts": {"$ref": "#/$defs/ids"},
+        "editableFields": {"$ref": "#/$defs/ids"},
+        "editableScripts": {"$ref": "#/$defs/ids"},
+        "fieldConstraints": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "required": ["type", "min", "max"], "properties": {"type": {"const": "number"}, "min": {"type": "number"}, "max": {"type": "number"}}}},
+        "addableOpcodes": {"$ref": "#/$defs/opcodes", "description": "パレット、貼付け等から新規追加できるブロック。空配列は追加禁止。構造編集の許可も別途必要。"},
+        "executableOpcodes": {"$ref": "#/$defs/opcodes", "minItems": 1, "description": "学習対象のスクリプトとその呼出し先で実行を許可するopcode。ハットとshadowも含める。編集許可は付与しない。"},
+        "guide": {"type": "object", "additionalProperties": false, "required": ["targetId", "message"], "properties": {"targetId": {"$ref": "#/$defs/id"}, "message": {"type": "string", "minLength": 1, "maxLength": 4096}}},
+        "trial": {"$ref": "#/$defs/id"},
+        "completion": {"type": "object", "additionalProperties": false, "required": ["kind", "reporterTarget", "outcome"], "properties": {"kind": {"const": "project-judge"}, "reporterTarget": {"$ref": "#/$defs/id"}, "outcome": {"const": "cleared"}}},
+        "retry": {"const": "reset-trial-state"},
+        "skipScene": {"$ref": "#/$defs/id"},
+        "successScene": {"$ref": "#/$defs/id"}
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "proposal",
+  "repository": "kubohiroya/turbowarp-kamishibai-docs",
+  "series": "4.0",
+  "resourceIds": {
+    "play": "https://kubohiroya.github.io/turbowarp-kamishibai-docs/4.0/tutorials/play/",
+    "create-blocks": "https://kubohiroya.github.io/turbowarp-kamishibai-docs/4.0/tutorials/create-blocks/",
+    "create-dsl": "https://kubohiroya.github.io/turbowarp-kamishibai-docs/4.0/tutorials/create/",
+    "blocks-manual": "https://kubohiroya.github.io/turbowarp-kamishibai-docs/4.0/block-author-guides/dsl-4.0-block-author-guide/",
+    "dsl-manual": "https://kubohiroya.github.io/turbowarp-kamishibai-docs/4.0/dsl-author-guides/dsl-4.0-author-guide/",
+    "schema": "https://kubohiroya.github.io/turbowarp-kamishibai-docs/4.0/dsl-author-guides/dsl-4.0-schema-reference/",
+    "conversion": "https://kubohiroya.github.io/turbowarp-kamishibai-docs/4.0/dsl-author-guides/dsl-4.0-block-script-conversion-guide/"
+  },
+  "units": [
+    {"unitId": "E01", "references": ["play", "create-blocks"], "task": "練習用台本のせりふ一つを変更する"},
+    {"unitId": "E02", "references": ["blocks-manual", "dsl-manual"], "task": "場面・登場人物・素材・命令の意味を説明する"},
+    {"unitId": "E03", "references": ["create-dsl", "conversion"], "task": "同じ場面のブロックとYAMLの対応を示す"},
+    {"unitId": "E04", "references": ["dsl-manual", "schema"], "task": "練習用台本の参照の間違いを直す"},
+    {"unitId": "E05", "references": ["dsl-manual"], "task": "人物の同一性と衣装・位置の値を区別する"},
+    {"unitId": "E06", "references": ["dsl-manual"], "task": "台本制作・上演・学習進行の仕事を分ける"},
+    {"unitId": "E07", "references": ["dsl-manual", "schema"], "task": "場面名と参照を整合させて変更する"},
+    {"unitId": "E08", "references": ["dsl-manual", "conversion"], "task": "新しい演出の要求と変更の検証方法を説明する"}
+  ],
+  "navigationPolicy": {
+    "saveCheckpointBeforeLeaving": true,
+    "openingReferenceCountsAsCompletion": false,
+    "assumeExternalDocsSupportReturnUrl": false,
+    "assumeExternalEditorInheritsRestrictions": false
+  }
+}
