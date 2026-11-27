@@ -28,6 +28,7 @@ function ProjectInfoMenuView({vm, ...props}: ProjectSettingsMenuProps & {locale:
             beforeLayoutChange={vm ? enabled => prepareLayoutChange(vm, enabled, props.locale) : undefined} version={__TW_PLUS_EDITOR_VERSION__} logo={logo}
             openAbout={desktop ? preload.openAbout : undefined}
             openPrivacy={desktop ? preload.openPrivacy : undefined}
+            coursesUrl="https://kubohiroya.github.io/turbowarp-plus-packages/#category-courses"
             sourceUrl={desktop ? 'https://github.com/kubohiroya/turbowarp-plus-desktop' : undefined}
             aiAgents={standardLayout ? {
                 icon: aiAgents.settingsIcon(),
