@@ -1,7 +1,8 @@
 import React from 'react';
 import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 import {getDocumentWorkspace, useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
-import {createStandardLayout, useLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
+import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
+import {useLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import targetStyles from '@kubohiroya/turbowarp-plus-editor-workbench/targets.css';
 import {EditorFullscreenButton, IconMenuButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-windows';

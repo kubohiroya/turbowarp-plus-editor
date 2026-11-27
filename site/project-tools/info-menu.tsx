@@ -6,7 +6,7 @@ import {ProjectInfoMenu as InfoMenu, projectTitleFieldClassName, projectTitleGro
     type ProjectSettingsMenuProps} from '@kubohiroya/turbowarp-plus-editor-workbench/project-info-menu';
 import logo from '../extension-library/icon.svg';
 import {projectFormatSource} from './index.ts';
-import {useLayoutPreference, prepareLayoutChange} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
+import {useLayoutPreference, prepareLayoutChange} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 import {layoutPreference} from '../editor-layout/config.ts';
 
 declare const __TW_PLUS_EDITOR_VERSION__: string;

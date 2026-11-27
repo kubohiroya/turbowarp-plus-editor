@@ -1,5 +1,5 @@
 import {readStartupFeatureFlags} from './feature-flags.ts';
-import {readNewLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
+import {readNewLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 
 export function readWebStartupFeatureFlags(search = '', newLayout = readNewLayoutPreference(search)) {
     const params = new URLSearchParams(search);
