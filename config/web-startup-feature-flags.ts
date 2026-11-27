@@ -1,8 +1,8 @@
 import {readStartupFeatureFlags} from './feature-flags.ts';
 
-export function readWebStartupFeatureFlags(search = '', newLayout?: boolean) {
+export function readWebStartupFeatureFlags(search = '', newLayout = null) {
     const params = new URLSearchParams(search);
-    const standardLayout = (newLayout ?? params.get('twPlusStandardLayout') === '1') ? '1' : '0';
+    const standardLayout = (newLayout === null ? params.get('twPlusStandardLayout') === '1' : newLayout) ? '1' : '0';
     const stageDisplayMenu = params.get('twPlusStageDisplayMenu');
     return readStartupFeatureFlags({
         twPlusExtensionLoader: params.get('twPlusExtensionLoader'),
