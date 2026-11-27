@@ -9,11 +9,11 @@ const inventory = JSON.parse(fs.readFileSync(new URL('../../docs/gui-integration
 const host = path.resolve(import.meta.dirname, '../..');
 const git = (...args) => execFileSync('git', args, {cwd: guiRoot, encoding: 'utf8'});
 
-test('the pinned GUI adds no files to the upstream inventory', () => {
+test('the pinned GUI adds only inventoried CI tests to the upstream inventory', () => {
     const upstream = new Set(git('ls-tree', '-r', '--name-only', inventory.upstream).trim().split('\n'));
     const actual = git('ls-files', '--cached', '--others', '--exclude-standard').trim().split('\n')
         .filter(file => file && fs.existsSync(path.join(guiRoot, file)));
-    assert.deepEqual(actual.filter(file => !upstream.has(file)).sort(), []);
+    assert.deepEqual(actual.filter(file => !upstream.has(file)).sort(), Object.keys(inventory.guiCiOnlyFiles).sort());
     for (const row of inventory.files) {
         assert.equal(fs.existsSync(path.join(guiRoot, row.from)), false, row.from);
         if (row.disposition === 'moved') assert.ok(fs.existsSync(path.join(host, row.to)), row.to);

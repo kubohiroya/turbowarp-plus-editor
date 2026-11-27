@@ -2,7 +2,7 @@
 
 この文書の移設先・差分件数・検証結果は、各移設時点の記録です。現在の機能実装は独立パッケージが所有し、`site/` はその公開 API と GUI の接続を担当します。[現在の責務](../upstream-feature-ownership.md)と[固定ソース・配信](../architecture.md)を参照してください。
 
-TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。その後に追加する GUI 側の接続契約テストは、用途とパスを記録して例外とする。
+TurboWarp本家に存在しないファイルをscratch-guiフォークからすべて撤去し、実装・文書・確認ツール・テストをこのリポジトリへ移設した。GUI 単体の CI で必要なテストは、用途とパスを [relocation.json](relocation.json) の `guiCiOnlyFiles` に記録する。
 
 比較元は `TurboWarp/scratch-gui:3c017c528c853af3111df9641914704745c1fdf6`、移設前のGUIは `c24b587ec49b871e9cbdc7530d54635a521a5d6e`、公開時の受け側の基準は `121e1eae083d3abdedd03ae19a725eeb3bf95c04`。
 
@@ -42,7 +42,7 @@ UI と読み込みは `@kubohiroya/turbowarp-plus-editor-fonts` が担当しま�
 
 ## 検証
 
-- `test:gui-integration` は固定 GUI に本家への追加ファイルがなく、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。GUI 側にあった `test/sprite-properties-host.test.mjs` は削除済み。
+- `test:gui-integration` は固定 GUI で本家にないファイルが `guiCiOnlyFiles` の記録と一致し、削除したモジュールへの参照と runner が残っていないことを確認する。32ファイルの移設先の存在も照合する。GUI 側にあった `test/sprite-properties-host.test.mjs` は削除済み。
 - CIは固定GUIを用意し、比較元の本家コミットをfetchした後、GUIの標準unitと受け側の接続テストを実行する。
 - GUI標準unit 33件、受け側の既存境界182件、移設分と配置監査54件が成功。受け側の型検査と変更GUIソースのeslintも成功。
 - GUI単体と配信ホストの両方で、production設定のブラウザー6エントリーをビルド。ローカル検証ではminifyのみOFF。micro:bitの通常生成物は同一基準の既存インストールから使用した。
@@ -54,7 +54,7 @@ UI と読み込みは `@kubohiroya/turbowarp-plus-editor-fonts` が担当しま�
 
 ## 結果と受け入れ基準
 
-- [x] 移設時点で本家に存在しない GUI の追跡ファイルは32件から0件になった。以降は上記の接続契約テストを監査で管理する。
+- [x] 移設時点で本家に存在しない GUI の追跡ファイルは32件から0件になった。以降は GUI 単体の CI 用テストを上記の台帳で監査する。
 - [x] 文書・ツール・専用テスト・接続実装の所有先が受け側に統一されている。
 - [x] GUI単体と配信ビルドの両方が起動する。
 - [x] 機能とSB3の互換を対象テストと実ブラウザーで確認した。
