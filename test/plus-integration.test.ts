@@ -62,6 +62,19 @@ test('Guide receives the existing workspace context and is disposed with the att
     assert.equal(disposed, 1);
 });
 
+test('Guide is registered before the extension host can start loading a project', () => {
+    const calls: string[] = [];
+    const vm = {};
+    const host = {dispose() {}};
+    const integration = createPlusIntegration({
+        mountEditor: () => null,
+        registerGuide: received => {assert.equal(received, vm); calls.push('guide'); return true;},
+        installExtensionHost: received => {assert.equal(received, vm); calls.push('host'); return host;}
+    });
+    assert.equal(integration.installExtensionHost(vm, {}), host);
+    assert.deepEqual(calls, ['guide', 'host']);
+});
+
 // There is no startup switch: the editor is always mounted, next to the dock. Whether a hat gets
 // its file icon is decided inside the document editor by whether a registered provider owns its
 // document, so a project without one still looks like upstream TurboWarp.

@@ -11,7 +11,7 @@ import {
     mountDocumentEditor, registerDocumentSourceRootHatShape
 } from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
-import {attachEditorGuide} from '@kubohiroya/turbowarp-plus-editor-guide/host';
+import {attachEditorGuide, installGuideExtension} from '@kubohiroya/turbowarp-plus-editor-guide/host';
 
 import {attachScriptTransfer, createProjectJSONTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
 
@@ -72,6 +72,7 @@ export const createPlusIntegration = ({
     registerBlockShapes = registerDocumentSourceRootHatShape,
     stageControls = getStageControls,
     attachGuide = attachEditorGuide,
+    registerGuide = installGuideExtension,
     trustedExtensions = plusTrustedExtensions,
     installExtensionHost = installProjectToolsHost,
     libraryTab = plusLibraryTab,
@@ -97,7 +98,10 @@ export const createPlusIntegration = ({
      * switch, the archive limits, how a failure is marked and how an authoring controller is made
      * — and disposes of what comes back.
      */
-    installExtensionHost,
+    installExtensionHost: (vm, options) => {
+        registerGuide(vm);
+        return installExtensionHost(vm, options);
+    },
     /**
      * The tab this distribution adds to the extension library: its tag, its icon and what to
      * render when it is selected. The GUI makes room for one tab it does not own and renders what
