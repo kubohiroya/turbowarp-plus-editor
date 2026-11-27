@@ -348,6 +348,7 @@ config.plugins.push(new (hostRequire('copy-webpack-plugin'))({patterns: [
         to: 'notices/dockview-core/LICENCE.md'}
 ]}));
 const globalStyles = layoutGlobalStyleEntries.map(entry => config.resolve.alias[`@kubohiroya/turbowarp-plus-editor-workbench/${entry}$`]);
+globalStyles.push(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-pair-programming/styles.css'));
 // The block editor's Plus theme is global: its class names are the data editor's plusBlockEditorClassNames.
 globalStyles.push(rootRequire.resolve('@kubohiroya/turbowarp-extension-data-editor/plus.css'));
 globalStyles.push(config.resolve.alias['@kubohiroya/turbowarp-plus-editor-git/style.css$'], windowsStyles, codeViewsStyles, fontsStyles,
@@ -471,6 +472,7 @@ config.module.rules.push({
 const {withBlockEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-data-editor/webpack4');
 const {installPackageExports} = require('./package-exports.cts');
 installPackageExports(config, rootRequire, [
+    '@kubohiroya/turbowarp-plus-editor-pair-programming',
     '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog',
     '@kubohiroya/turbowarp-sb3-save-format', '@kubohiroya/turbowarp-extension-manifest'
 ]);
