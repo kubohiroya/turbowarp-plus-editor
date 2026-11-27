@@ -51,7 +51,10 @@ import {attachVariableMerge} from '@kubohiroya/turbowarp-plus-editor-code-views/
 import {installBlockNumberInput} from '@kubohiroya/turbowarp-plus-editor-code-views/block-number-input';
 import {attachReviewNavigation, attachWorkspaceNavigation} from '@kubohiroya/turbowarp-plus-editor-workbench/workspace-navigation';
 
-const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, standardLayout, workspaceMinimap, localGit, gitRestoreVersion} =
+import {layoutFlags, layoutPreference} from './editor-layout/config.ts';
+
+const {standardLayout, workspaceMinimap} = layoutFlags;
+const {paletteDeletePreview, paletteCategoryReorder, horizontalBlockPalette, localGit, gitRestoreVersion} =
     readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 export const BLOCK_EDITOR_MODAL = 'blockEditorModal';
@@ -140,7 +143,7 @@ export const createPlusIntegration = ({
     blockEditor,
     attachWorkspaceMinimap: workspaceMinimap || standardLayout ?
         (workspace, ScratchBlocks) => attachWorkspaceNavigation(workspace, ScratchBlocks, {
-            horizontalZoom: standardLayout, minimap: workspaceMinimap
+            horizontalZoom: standardLayout, minimap: workspaceMinimap, layoutPreference
         }) : undefined,
     modals: blockEditor ? [BLOCK_EDITOR_MODAL] : [],
     translations: {
@@ -209,7 +212,7 @@ export const createPlusIntegration = ({
             attached.push(attachProjectFolder(vm, hostDocument, localGit, gitRestoreVersion, locale, getBlockly, projectFolderBlocks,
                 workspaceMinimap || standardLayout ? (workspace, blocks, watermark) =>
                     attachReviewNavigation(workspace, blocks, watermark, {
-                        horizontalZoom: standardLayout, minimap: workspaceMinimap
+                        horizontalZoom: standardLayout, minimap: workspaceMinimap, layoutPreference
                     }) : undefined));
         }
         const workspace = getDocumentWorkspace(vm);

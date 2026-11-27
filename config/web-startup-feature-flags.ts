@@ -1,8 +1,9 @@
 import {readStartupFeatureFlags} from './feature-flags.ts';
+import {readNewLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
 
-export function readWebStartupFeatureFlags(search = '') {
+export function readWebStartupFeatureFlags(search = '', newLayout = readNewLayoutPreference(search)) {
     const params = new URLSearchParams(search);
-    const standardLayout = params.has('twPlusStandardLayout') ? params.get('twPlusStandardLayout') : '1';
+    const standardLayout = newLayout ? '1' : '0';
     const stageDisplayMenu = params.get('twPlusStageDisplayMenu');
     return readStartupFeatureFlags({
         twPlusExtensionLoader: params.get('twPlusExtensionLoader'),

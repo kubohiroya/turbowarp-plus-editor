@@ -140,7 +140,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: true, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
+        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: false, targetList: false, spriteCodeWindows: false, standardLayout: false, extensionFileMenu: false, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: true, workspaceMinimap: false, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -167,7 +167,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: true, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
+        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: false, targetList: false, spriteCodeWindows: false, standardLayout: false, extensionFileMenu: false, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: true, workspaceMinimap: false, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -180,7 +180,7 @@ test('the stage panel opt-in depends on flexible layout and internal windows', (
 });
 
 test('stage display menu defaults on with Plus layout and supports explicit rollback', () => {
-    assert.equal(readWebStartupFeatureFlags().stageDisplayMenu, true);
+    assert.equal(readWebStartupFeatureFlags().stageDisplayMenu, false);
     assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=0').stageDisplayMenu, false);
     assert.equal(readStartupFeatureFlags().stageDisplayMenu, false);
     for (const query of ['?twPlusStageDisplayMenu=0', '?twPlusStageDisplayMenu=true', '?twPlusStageDisplayMenu=']) {
@@ -214,8 +214,8 @@ test('the palette delete preview defaults on and supports startup rollback', () 
     assert.equal(readWebStartupFeatureFlags('?twPlusPaletteDeletePreview=1').paletteDeletePreview, true);
 });
 
-test('the web editor defaults to Plus layout and supports startup rollback', () => {
-    assert.equal(readWebStartupFeatureFlags().standardLayout, true);
+test('the web editor defaults to Scratch layout and supports startup rollback', () => {
+    assert.equal(readWebStartupFeatureFlags().standardLayout, false);
     assert.equal(readStartupFeatureFlags().standardLayout, false);
     for (const search of ['?twPlusStandardLayout=0', '?twPlusStandardLayout=', '?twPlusStandardLayout=true']) {
         assert.equal(readWebStartupFeatureFlags(search).standardLayout, false);
@@ -228,8 +228,9 @@ test('the File menu change defaults on in Plus layout and supports rollback', ()
         '?twPlusExtensionFileMenu=1&twPlusStandardLayout=0']) {
         assert.equal(readWebStartupFeatureFlags(search).extensionFileMenu, false);
     }
-    assert.equal(readWebStartupFeatureFlags().extensionFileMenu, true);
-    assert.equal(readWebStartupFeatureFlags('?twPlusExtensionFileMenu=1').extensionFileMenu, true);
+    assert.equal(readWebStartupFeatureFlags().extensionFileMenu, false);
+    assert.equal(readWebStartupFeatureFlags('?twPlusExtensionFileMenu=1').extensionFileMenu, false);
+    assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=1&twPlusExtensionFileMenu=1').extensionFileMenu, true);
 });
 
 test('the horizontal block palette is opt-in at startup', () => {
@@ -257,11 +258,12 @@ test('sprite code windows are opt-in and use the internal window layout', () => 
 
 test('the workspace minimap defaults on and supports explicit opt-out', () => {
     assert.equal(readStartupFeatureFlags().workspaceMinimap, false);
-    assert.equal(readWebStartupFeatureFlags().workspaceMinimap, true);
+    assert.equal(readWebStartupFeatureFlags().workspaceMinimap, false);
     for (const query of ['?twPlusWorkspaceMinimap=0', '?twPlusWorkspaceMinimap=true']) {
         assert.equal(readWebStartupFeatureFlags(query).workspaceMinimap, false);
     }
-    assert.equal(readWebStartupFeatureFlags('?twPlusWorkspaceMinimap=1').workspaceMinimap, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusWorkspaceMinimap=1').workspaceMinimap, false);
+    assert.equal(readWebStartupFeatureFlags('?twPlusStandardLayout=1&twPlusWorkspaceMinimap=1').workspaceMinimap, true);
     for (const query of ['?twPlusStandardLayout=0', '?twPlusStandardLayout=0&twPlusWorkspaceMinimap=1']) {
         assert.equal(readWebStartupFeatureFlags(query).workspaceMinimap, false);
     }
