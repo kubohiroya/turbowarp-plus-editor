@@ -2,6 +2,9 @@
   "upstream": "7738389afee319d2c6293550a2f7cb13004b928c",
   "guiBefore": "c24b587ec49b871e9cbdc7530d54635a521a5d6e",
   "hostBefore": "121e1eae083d3abdedd03ae19a725eeb3bf95c04",
+  "guiCiOnlyFiles": {
+    "test/system-font-dialog.browser.mjs": "Scratch GUI 単体の CI でコスチュームと背景のシステムフォント選択を検証する"
+  },
   "files": [
     {
       "from": "docs/extension-preview-vm.md",
