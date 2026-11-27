@@ -235,6 +235,7 @@ for (const name of ['react', 'react-dom', 'prop-types', 'lodash.bindall', '@turb
 const transferSource = path.dirname(rootRequire.resolve('@kubohiroya/turbowarp-script-transfer'));
 config.resolve.alias['@kubohiroya/turbowarp-script-transfer$'] = path.join(transferSource, 'index.js');
 const workbenchEntry = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench');
+config.resolve.alias['@kubohiroya/turbowarp-plus-editor-guide/host$'] = rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-guide/host');
 config.resolve.alias['@kubohiroya/turbowarp-plus-editor-workbench$'] = workbenchEntry;
 const workbenchSource = path.dirname(workbenchEntry);
 // The layout and the project search read projects through this package. Webpack 4 does not read

@@ -119,6 +119,7 @@
   "dependencies": {
     "@kubohiroya/turbowarp-document-data": "0.8.2",
     "@kubohiroya/turbowarp-document-editor": "0.2.3",
+    "@kubohiroya/turbowarp-plus-editor-guide": "file:.host/kubohiroya-turbowarp-plus-editor-guide-0.1.0.tgz",
     "@kubohiroya/turbowarp-sb3-save-format": "0.5.2",
     "@kubohiroya/turbowarp-script-transfer": "0.1.5",
     "@turbowarp/jszip": "^3.12.0"

@@ -11,6 +11,7 @@ import {
     mountDocumentEditor, registerDocumentSourceRootHatShape
 } from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
+import {attachEditorGuide} from '@kubohiroya/turbowarp-plus-editor-guide/host';
 
 import {attachScriptTransfer, createProjectJSONTransfer, stageTransferMenu, finalizeTransferMenu} from '@kubohiroya/turbowarp-script-transfer';
 
@@ -70,6 +71,7 @@ export const createPlusIntegration = ({
     mountEditor,
     registerBlockShapes = registerDocumentSourceRootHatShape,
     stageControls = getStageControls,
+    attachGuide = attachEditorGuide,
     trustedExtensions = plusTrustedExtensions,
     installExtensionHost = installProjectToolsHost,
     libraryTab = plusLibraryTab,
@@ -185,6 +187,7 @@ export const createPlusIntegration = ({
         // app-shell builds a floating one and a control registered through it would hover over the
         // stage instead of sitting in the bar.
         attached.push(installControlsDock(hostDocument, stageControls(vm)));
+        attached.push(attachGuide({vm, document: hostDocument, locale, getBlockly}));
         attached.push(attachAssetContextMenuIcons(hostDocument, getMessages));
         // Breakpoints marked on blocks; the debugger add-on does the pausing.
         attached.push(attachBreakpointMenu({vm, getBlockly, getLocale: () => locale}));

@@ -40,6 +40,28 @@ const context = (vm: object = {}, doc = hostDocument()) => ({
     getMessages: () => ({})
 });
 
+test('Guide receives the existing workspace context and is disposed with the attachment', () => {
+    const received: Record<string, unknown>[] = [];
+    let disposed = 0;
+    const integration = createPlusIntegration({
+        mountEditor: () => ({dispose() {}}),
+        stageControls: () => service(),
+        attachGuide: options => {
+            received.push({...options});
+            return {guide: null, ready: Promise.resolve(false), dispose() {disposed++;}};
+        }
+    });
+    const options = context();
+    const attachment = integration.attachToWorkspace(options);
+    assert.equal(received.length, 1);
+    assert.equal(received[0]!.vm, options.vm);
+    assert.equal(received[0]!.document, options.document);
+    assert.equal(received[0]!.getBlockly, options.getBlockly);
+    assert.equal(received[0]!.locale, options.locale);
+    attachment.dispose();
+    assert.equal(disposed, 1);
+});
+
 // There is no startup switch: the editor is always mounted, next to the dock. Whether a hat gets
 // its file icon is decided inside the document editor by whether a registered provider owns its
 // document, so a project without one still looks like upstream TurboWarp.
