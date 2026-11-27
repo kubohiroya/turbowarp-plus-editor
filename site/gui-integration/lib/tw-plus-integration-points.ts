@@ -13,6 +13,15 @@
 import {plusIntegration} from '../../plus-integration.ts';
 import {connectProjectPackager} from '../../packager/handoff.ts';
 
+let paletteExtensionLibraryAction: (() => void) | null | undefined;
+
+/** The GUI supplies its library command when the File menu replaces the toolbox button. */
+export const bindPaletteExtensionLibrary = (action?: (() => void) | null) => {
+    paletteExtensionLibraryAction = action;
+};
+
+export const getPaletteExtensionLibraryAction = () => paletteExtensionLibraryAction;
+
 /**
  * What the host supplied, or an empty integration.
  * @returns {object} The integration, never null.
