@@ -1,10 +1,14 @@
+import {createLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 import type {ExternalYamlFilePort} from '@kubohiroya/turbowarp-document-editor';
 import {connectDesktopWorkspaceLayouts, type DesktopWorkspaceLayouts} from './desktop-workspace-layout.ts';
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startupParams = new URLSearchParams(startupSearch);
-export const layoutFlags = readWebStartupFeatureFlags(startupSearch);
+export const layoutPreference = createLayoutPreference({search: startupSearch});
+// Keep the optional GUI hooks installed so either layout can be selected without reloading the project.
+// The preference controls presentation; these flags describe the available layout services.
+export const layoutFlags = readWebStartupFeatureFlags(startupSearch, true);
 export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
     startupParams.get('twPlusDockviewSpriteTabs') !== '0';
 const desktopHost = typeof window !== 'undefined' && (window as Window & {

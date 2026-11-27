@@ -5,7 +5,7 @@ import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-edito
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {attachDebuggerPanel, type DebuggerInterface} from '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel';
 import '@kubohiroya/turbowarp-plus-editor-workbench/debugger-panel.css';
-import {dockviewMultiViewEnabled, externalYamlPort, stageLauncherEnabled} from '../editor-layout/index.tsx';
+import {dockviewMultiViewEnabled, externalYamlPort, stageLauncherEnabled, layoutFlags} from '../editor-layout/index.tsx';
 import {stageLauncherSlot, stageLauncherSlotClass} from '../editor-layout/context.ts';
 import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
@@ -37,7 +37,7 @@ import {attachDesktopCode, desktopCodeEnabled} from '../editor-views/desktop-cod
 import {hostIntegration, hostStageControls} from './lib/tw-plus-integration-points.ts';
 import {SpritePropertiesPanel} from './lib/tw-sprite-properties-panel.tsx';
 import {attachHostScriptTransfer as attachScriptTransfer, hostStageTransferMenu as createStageMenu} from './lib/tw-plus-transfer.ts';
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 import {attachDockedCodeExtensions, attachStageCodePrewarm} from '@kubohiroya/turbowarp-plus-editor-code-views';
 import {attachCodeWorkspace} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
 import {attachDockedScriptLayout, getDockedScriptLayout, setDockedRelationVisibility} from '@kubohiroya/turbowarp-plus-editor-code-views/script-layout';
@@ -158,10 +158,10 @@ export {EditorLayout} from '../editor-layout/index.tsx';
 
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startup = readWebStartupFeatureFlags(startupSearch);
-export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || startup.standardLayout) && !desktopCodeEnabled ?
+export const attachSpriteCodeWorkspace = (startup.spriteCodeWindows || layoutFlags.standardLayout) && !desktopCodeEnabled ?
     context => attachCodeWorkspace({...context, presentationElements}) : undefined;
 export {useSpriteCodeWindows} from '@kubohiroya/turbowarp-plus-editor-code-views/sprite-code-windows';
-export const wrapSpriteInfo = (startup.spriteProperties || startup.standardLayout) ?
+export const wrapSpriteInfo = (startup.spriteProperties || layoutFlags.standardLayout) ?
     Fallback => createSpriteInfoAdapter(Fallback, SpritePropertiesPanel) : undefined;
 export {spriteListClasses} from '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties';
 

@@ -1,4 +1,4 @@
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 
 // Snapshot at module startup, before project content is read.
 const startupFlags = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location?.search || '');

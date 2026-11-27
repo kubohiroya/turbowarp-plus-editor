@@ -2,6 +2,7 @@ import React from 'react';
 import {createTargetSwitchFeedback} from '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor';
 import {getDocumentWorkspace, useDockviewStage} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
 import {createStandardLayout} from '@kubohiroya/turbowarp-plus-editor-workbench/standard-layout';
+import {useLayoutPreference} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import targetStyles from '@kubohiroya/turbowarp-plus-editor-workbench/targets.css';
 import {EditorFullscreenButton, IconMenuButton, WindowDesktop, WindowList} from '@kubohiroya/turbowarp-plus-editor-windows';
@@ -24,7 +25,7 @@ export {WindowLayoutContext} from './context.ts';
 export {layoutFlags, dockviewSpriteTabsEnabled, dockviewMultiViewEnabled, externalYamlPort,
     desktopProjectKey, desktopWorkspaceLayoutStore, stageDrawerEnabled, stageLauncherEnabled, stageCanUndock} from './config.ts';
 import {layoutFlags, dockviewSpriteTabsEnabled, dockviewMultiViewEnabled, externalYamlPort,
-    desktopWorkspaceLayoutStore, stageDrawerEnabled, stageLauncherEnabled, stageCanUndock} from './config.ts';
+    desktopWorkspaceLayoutStore, stageDrawerEnabled, stageLauncherEnabled, stageCanUndock, layoutPreference} from './config.ts';
 const layoutMenuIcon = (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <circle cx="6" cy="12" r="1.5" />
@@ -55,7 +56,8 @@ function DrawerPanel({id, title, dockRequest, renderHeading, renderContent}) {
 export const layoutViews = createStandardLayout(React, {styles, targetStyles, context: WindowLayoutContext, LayoutMenu, DrawerPanel});
 
 function LayoutDesktop(props) {
-    return <WindowDesktop {...props} layoutMenu={layoutFlags.standardLayout} />;
+    const {plusLayout} = React.useContext(WindowLayoutContext);
+    return <WindowDesktop {...props} layoutMenu={plusLayout} />;
 }
 
 const getStorage = () => {
@@ -68,14 +70,15 @@ const getStorage = () => {
 
 const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, vm, ...props}) => {
     const {StandardLayout} = layoutViews;
+    const newLayoutEnabled = useLayoutPreference(layoutPreference);
     const [dockAction, setDockAction] = React.useState(null);
     const openDrawer = React.useRef<() => void>(null);
     const closeDrawer = React.useRef<() => void>(null);
     const targetSwitch = React.useMemo(() => createTargetSwitchFeedback(vm, document), [vm]);
     React.useLayoutEffect(() => targetSwitch.cancel, [targetSwitch]);
-    const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale);
-    const launcher = React.useMemo(() => stageLauncherEnabled ?
-        {mount: stageLauncherSlot(vm), styles, MenuButton: IconMenuButton, menuItems: testRunMenuItems} : undefined, [vm]);
+    const stage = useDockviewStage(dockviewMultiViewEnabled && layoutFlags.stageDisplayMenu, props.locale, newLayoutEnabled);
+    const launcher = React.useMemo(() => stageLauncherEnabled && newLayoutEnabled ?
+        {mount: stageLauncherSlot(vm), styles, MenuButton: IconMenuButton, menuItems: testRunMenuItems} : undefined, [vm, newLayoutEnabled]);
     // The project folder and the local Git panel need a folder picker, or the browser's own storage (OPFS) where there is
     // none, as in Safari and Firefox (#660); both views show what those already hold. The AI agent menu needs neither.
     const drawerViews = React.useMemo(() => {
@@ -115,7 +118,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
     const layout = (
         <StandardLayout
             {...props}
-            enabled={layoutFlags.standardLayout}
+            enabled={newLayoutEnabled}
             splitter={layoutFlags.splitter}
             windowLayout={layoutFlags.windowLayout}
             stageDrawer={stageDrawerEnabled}
@@ -137,7 +140,7 @@ const WebLayout = ({activeEditorTab, onActivateEditorTab, editorTargetIsStage, v
                 activeEditorTab={activeEditorTab}
                 onActivateEditorTab={onActivateEditorTab}
                 editorTargetIsStage={editorTargetIsStage}
-                showUndock={layoutFlags.standardLayout || showUndock}
+                showUndock={newLayoutEnabled || showUndock}
                 layout={layout}
                 locale={props.locale}
                 render={props.render}

@@ -4,7 +4,7 @@ import {createProjectDialogs} from './dialog.ts';
 import {installEditorExtensionHost} from '../extension-host/editor-host.ts';
 import {editorProjectArchives} from '@kubohiroya/turbowarp-extension-loader/shared-project-archive';
 import {MANUAL_PROJECT_URI_ENABLED, PROJECT_TOOLS_ENABLED} from './config.ts';
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 import {installProjectOpenTabs} from '@kubohiroya/turbowarp-plus-editor-workbench/project-open-tabs';
 import {extensionLoadErrors} from '../extension-host/load-errors.ts';
 import '@kubohiroya/turbowarp-plus-editor-workbench/project-catalog.css';

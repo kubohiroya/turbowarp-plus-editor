@@ -28,7 +28,7 @@ import {installPlusExtensionHost} from './host.ts';
 import {gateProjectSize} from './project-size-gate.ts';
 import dialogStyles from '@kubohiroya/turbowarp-plus-editor-workbench/project-dialog.css';
 import type {ExtensionHostOptions} from './host.ts';
-import {readWebStartupFeatureFlags} from '../../config/web-startup-feature-flags.ts';
+import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 import {approveProjectPayloads} from '@kubohiroya/turbowarp-plus-editor-workbench/project-payload-approval';
 import {createProjectPayloadHost} from '../project-payloads/host.ts';
 

@@ -92,6 +92,7 @@
     "site/project-tools/config.ts",
     "site/project-tools/dialog.css",
     "site/source.json",
+    "site/startup-feature-flags.ts",
     "site/style.css",
     "site/styles/preview-reload.css",
     "site/styles/snackbar.css"
