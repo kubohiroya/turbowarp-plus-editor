@@ -1,11 +1,14 @@
-const {guiRequire} = require('../extension-library/harness.cts');
+const {guiRequire, root} = require('../extension-library/harness.cts');
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const {createHash} = require('node:crypto');
+const {readFileSync} = require('node:fs');
+const {join} = require('node:path');
 const {JSDOM} = require('jsdom');
+const {transformSync} = require('esbuild');
 const VM = guiRequire('scratch-vm');
 const JSZip = guiRequire('@turbowarp/jszip');
-const {installProjectToolsHost, renderFileMenu, loadedProjectTitle} = require('../../site/project-tools/index.ts');
+const {installProjectToolsHost, prepareProjectSb3Save, renderFileMenu, loadedProjectTitle} = require('../../site/project-tools/index.ts');
 const {PROJECT_INFO_KEY} = require('../../site/project-tools/properties.ts');
 const {getExtensionAuthoringHost} = require('@kubohiroya/turbowarp-extension-loader/scratch-vm');
 const vmModules = {
@@ -67,6 +70,130 @@ test('real VM and extension codec preserve project properties and embedded code 
         assert.equal(renderFileMenu({vm}), null);
     } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
 });
+
+test('real VM streams Standard and Plus saves from a verified snapshot', async () => {
+    const vm = new VM();
+    const url = 'https://example.test/v1/test.js';
+    const inputManifest = {...manifest, extensions: [{...manifest.extensions[0],
+        source: {...manifest.extensions[0].source, url}}]};
+    let served = bytes;
+    let plusOutput;
+    const requests = [];
+    const cached = new Map();
+    const host = installProjectToolsHost(vm, {enabled: true, vmModules,
+        search: '?twPlusNewProjectSb3Format=1',
+        fetchImpl: async address => {
+            requests.push(address);
+            return Object.defineProperty(new Response(served), 'url', {value: address});
+        },
+        cache: {async get(digest) { return cached.get(digest); }, async put(digest, data) { cached.set(digest, data); }},
+        requestApproval: async () => true}, true);
+    const open = async (sb3Format) => {
+        const zip = new JSZip();
+        zip.file('project.json', JSON.stringify({...project, turboWarpPlus: inputManifest,
+            [PROJECT_INFO_KEY]: {...project[PROJECT_INFO_KEY], sb3Format}}));
+        zip.file('extensions/test.js', bytes);
+        await vm.loadProject(await zip.generateAsync({type: 'uint8array'}));
+    };
+    const prepare = () => prepareProjectSb3Save(vm, run => run(), () => true);
+    try {
+        for (const format of ['standard', 'plus']) {
+            await open(format);
+            const prepared = await prepare();
+            const output = await prepared.serialize(() => vm.saveProjectSb3Stream('uint8array')).accumulate();
+            prepared.commit();
+            const zip = await JSZip.loadAsync(output);
+            const saved = JSON.parse(await zip.file('project.json').async('string'));
+            assert.equal(saved[PROJECT_INFO_KEY].sb3Format, format);
+            assert.equal(zip.file('extensions/test.js'), null);
+            if (format === 'standard') {
+                assert.equal(saved.turboWarpPlus, undefined);
+                assert.equal(saved.extensionURLs.propertiestest, 'data:text/javascript;base64,' + Buffer.from(bytes).toString('base64'));
+                assert.deepEqual(requests, []);
+            } else {
+                plusOutput = output;
+                assert.deepEqual(saved.turboWarpPlus.extensions[0].source, {type: 'remote-cacheable', url});
+                assert.equal(saved.turboWarpPlus.extensions[0].sha256, sha256);
+                assert.deepEqual(requests, [url]);
+            }
+            assert.equal(JSON.parse(vm.toJSON()).turboWarpPlus.extensions[0].source.type, 'embedded-file');
+        }
+        const before = JSON.parse(vm.toJSON());
+        served = new TextEncoder().encode('// changed remote bytes');
+        await assert.rejects(prepare(), {code: 'DIGEST_MISMATCH'});
+        assert.deepEqual(JSON.parse(vm.toJSON()), before);
+        served = bytes;
+        const prepared = await prepare();
+        await open('standard');
+        assert.throws(() => prepared.serialize(() => vm.saveProjectSb3Stream()), {name: 'AbortError'});
+        requests.length = 0;
+        await vm.loadProject(plusOutput);
+        assert.deepEqual(requests, [url]);
+        assert.equal(vm.extensionManager.isExtensionLoaded('propertiestest'), true);
+        assert.deepEqual(cached.get(sha256), bytes);
+        served = new TextEncoder().encode('// unavailable original bytes');
+        await vm.loadProject(plusOutput);
+        assert.deepEqual(requests, [url]);
+        assert.equal(vm.extensionManager.isExtensionLoaded('propertiestest'), true);
+    } finally { await host.dispose(); vm.runtime.dispose(); }
+});
+
+test('the pinned GUI prepares a save before opening its writable and honors an explicit save override', async () => {
+    const patch = require('../../scripts/site/connect-project-save.cts');
+    const source = readFileSync(join(root, 'src/containers/sb3-downloader.jsx'), 'utf8');
+    const {code} = transformSync(patch(source), {loader: 'jsx', format: 'cjs'});
+    const steps = [];
+    const digestError = new Error('Extension digest mismatch');
+    let valid = false;
+    const prepare = async () => {
+        steps.push('verify');
+        if (!valid) throw digestError;
+        return {
+            assertCurrent() {},
+            serialize(run) { steps.push('prepared'); return run(); },
+            commit() { steps.push('commit'); }
+        };
+    };
+    const modules = {
+        '../addons/hooks.js': {getHostIntegration: () => ({prepareProjectSb3Save: prepare})},
+        '@kubohiroya/turbowarp-plus-editor-workbench/busy-cursor': {withWaitCursor: (_documents, run) => run()},
+        'react-redux': {connect: () => component => component},
+        '../lib/tw-file-system-access': {getShowSaveFilePicker: () => undefined},
+        '../lib/download-blob': () => { steps.push('download'); }
+    };
+    const module: {exports: {default?: new (props: object) => {render(): any}}} = {exports: {}};
+    new Function('require', 'module', 'exports', 'document', code)(
+        id => modules[id] ?? (id.startsWith('.') ? {} : guiRequire(id)), module, module.exports, {});
+    const Downloader = module.exports.default;
+    const storage = new Downloader({canSaveProject: true,
+        saveProjectSb3Stream: () => {
+            steps.push('stream');
+            return new JSZip().file('project.json', '{}').generateInternalStream({type: 'uint8array'});
+        },
+        saveProjectSb3: async () => { steps.push('blob'); return new Blob(); },
+        onShowSavingAlert() {}, children: (_className, _download, result) => result.projectFileStorage
+    }).render();
+    const handle = {async createWritable() {
+        steps.push('open');
+        return {async write() { steps.push('write'); }, async close() { steps.push('close'); }, async abort() {}};
+    }};
+    const serialize = run => run();
+    const current = () => true;
+    await assert.rejects(storage.write(handle, serialize, current), digestError);
+    await assert.rejects(storage.download('target.sb3', serialize, current), digestError);
+    assert.deepEqual(steps, ['verify', 'verify']);
+    steps.length = 0;
+    await storage.write(handle, serialize, current, false);
+    await storage.download('target.sb3', serialize, current, false);
+    assert.deepEqual(steps, ['open', 'stream', 'write', 'close', 'blob', 'download']);
+    steps.length = 0;
+    valid = true;
+    await storage.write(handle, serialize, current);
+    await storage.download('target.sb3', serialize, current);
+    assert.deepEqual(steps, ['verify', 'open', 'prepared', 'stream', 'write', 'close', 'commit',
+        'verify', 'prepared', 'blob', 'download', 'commit']);
+});
+
 test('normal startup removes the corner log and opens failed-load diagnostics with metadata editing disabled', async () => {
     const vm = new VM();
     const dom = new JSDOM('<html><head></head><body></body></html>');

@@ -119,7 +119,7 @@ test('teardown retains the first unload failure when host recovery also fails', 
 
 test('startup flags carry the extension loader and default-on project tools switches', () => {
     for (const query of ['', '?twPlusExtensionLoader=1', '?twPlusScriptTransfer=0', '?twPlusScriptTransfer=1']) {
-        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'manualProjectURI', 'payloadFormats', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'stageDisplayMenu', 'targetList', 'spriteCodeWindows', 'standardLayout', 'extensionFileMenu', 'paletteDeletePreview', 'paletteCategoryReorder', 'horizontalBlockPalette', 'contextMenuIcons', 'localGit', 'gitRestoreVersion', 'workspaceMinimap', 'stageCodePrewarm', 'saveWorkspace']);
+        assert.deepEqual(Object.keys(readWebStartupFeatureFlags(query)), ['extensionLoader', 'projectTools', 'manualProjectURI', 'payloadFormats', 'spriteProperties', 'splitter', 'windowLayout', 'backpackPopout', 'internalWindows', 'stagePanel', 'stageDisplayMenu', 'targetList', 'spriteCodeWindows', 'standardLayout', 'extensionFileMenu', 'paletteDeletePreview', 'paletteCategoryReorder', 'horizontalBlockPalette', 'contextMenuIcons', 'localGit', 'gitRestoreVersion', 'workspaceMinimap', 'stageCodePrewarm', 'saveWorkspace', 'newProjectSb3Format']);
         assert.equal(readWebStartupFeatureFlags(query).projectTools, true);
     }
 });
@@ -138,7 +138,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: false, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true});
+        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: false, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -165,7 +165,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: false, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true});
+        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: false, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
@@ -294,4 +294,14 @@ test('editing the project URI defaults on with the loader and supports explicit 
 test('Stage code prewarming is enabled by default and can be disabled at startup', () => {
     assert.equal(readWebStartupFeatureFlags().stageCodePrewarm, true);
     assert.equal(readWebStartupFeatureFlags('?twPlusStageCodePrewarm=0').stageCodePrewarm, false);
+});
+
+test('new SB3 format selection is opt-in and requires project tools', () => {
+    assert.equal(readWebStartupFeatureFlags().newProjectSb3Format, false);
+    assert.equal(readWebStartupFeatureFlags('?twPlusNewProjectSb3Format=1').newProjectSb3Format, true);
+    assert.equal(readWebStartupFeatureFlags('?twPlusNewProjectSb3Format=0').newProjectSb3Format, false);
+    for (const value of ['0', '', 'invalid']) {
+        const search = `?twPlusProjectTools=${value}&twPlusNewProjectSb3Format=1`;
+        assert.equal(readWebStartupFeatureFlags(search).newProjectSb3Format, false);
+    }
 });

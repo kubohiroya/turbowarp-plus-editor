@@ -20,7 +20,7 @@ export const aiAgents = createAiAgents(React, {styles, desktop});
 const {standardLayout} = readWebStartupFeatureFlags(typeof window === 'undefined' ? '' : window.location.search);
 
 function ProjectInfoMenuView({vm, ...props}: ProjectSettingsMenuProps & {locale: string; vm?: object}) {
-    const formatProps = vm && projectFormatSource ? {projectFormat: projectFormatSource(vm)} : {};
+    const formatProps = vm ? {projectFormat: projectFormatSource(vm)} : {};
     // The GitHub connection mode is set in the Git panel at the side, where Git is set up.
     return <>
         <InfoMenu {...props} {...formatProps} version={__TW_PLUS_EDITOR_VERSION__} logo={logo}
