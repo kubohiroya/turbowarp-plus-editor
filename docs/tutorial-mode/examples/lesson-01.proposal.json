@@ -1,0 +1,59 @@
+{
+  "$schema": "./lesson.schema.json",
+  "schemaVersion": 1,
+  "status": "proposal",
+  "courseId": "game-land",
+  "courseVersion": "1.0.0-draft",
+  "chapterId": "ch01",
+  "learning": {
+    "unitId": "A01",
+    "objectives": [{"id": "program.values", "description": "数値を変えたときの動作を予想し、試して結果を確かめる"}],
+    "prerequisiteUnits": [],
+    "nextUnitIds": ["A02"]
+  },
+  "requiredCapabilities": [],
+  "settingsLocation": "extensionStorage.kubohiroyaeditorguide",
+  "hostPolicy": {"externalWindows": false, "layoutNamespace": "tutorial.game-land.1.ch01"},
+  "interactionPolicy": {
+    "stageDrag": false,
+    "spritePropertyWrites": false,
+    "variableUIWrites": false,
+    "listUIWrites": false,
+    "monitorSliders": false,
+    "directScriptRun": false
+  },
+  "bindings": {
+    "targets": {
+      "robot": {"authorKey": "lesson.robot"},
+      "judge": {"authorKey": "lesson.judge"}
+    },
+    "scripts": {
+      "robot.move": {"target": "robot", "topBlockId": "fixture-trial-hat", "expectedHatOpcode": "event_whenbroadcastreceived"}
+    },
+    "fields": {
+      "robot.distance": {"script": "robot.move", "blockId": "fixture-move-block", "expectedOpcode": "motion_movesteps", "inputName": "STEPS", "shadowOpcode": "math_number", "shadowField": "NUM"}
+    }
+  },
+  "defaults": {"visibility": "hidden", "editing": "denied"},
+  "activities": {
+    "gate-distance": {
+      "visibleTargets": ["robot"],
+      "visibleScripts": ["robot.move"],
+      "editableFields": ["robot.distance"],
+      "editableScripts": [],
+      "fieldConstraints": {"robot.distance": {"type": "number", "min": 1, "max": 300}},
+      "addableOpcodes": [],
+      "executableOpcodes": ["event_whenbroadcastreceived", "motion_movesteps", "math_number"],
+      "guide": {"targetId": "lesson.robot.distance", "message": "すすむ きょりを かえてみよう"},
+      "trial": "robot.walk",
+      "completion": {"kind": "project-judge", "reporterTarget": "judge", "outcome": "cleared"},
+      "retry": "reset-trial-state",
+      "skipScene": "gate-demo",
+      "successScene": "gate-open"
+    }
+  },
+  "trials": {
+    "robot.walk": {"handlerId": "trial.robot.walk", "resultIds": ["cleared", "retry"], "resetHandlerId": "trial.robot.reset", "protectWhileRunning": ["robot.move"]}
+  },
+  "next": {"chapterId": "ch02", "preset": "quest-02-v1", "saveBeforeNavigate": true}
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "教材用機能レジストリの提案形式",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "registryVersion", "status", "maskHexDigits", "bitOrder", "fullAlias", "infrastructure", "capabilities", "presets"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": 1},
+    "registryVersion": {"type": "string", "minLength": 1},
+    "status": {"const": "proposal"},
+    "maskHexDigits": {"const": 50},
+    "bitOrder": {"const": "least-significant-first"},
+    "fullAlias": {"const": "all-f"},
+    "infrastructure": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/key"}},
+    "capabilities": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"$ref": "#/$defs/capability"}},
+    "presets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/preset"}}
+  },
+  "$defs": {
+    "key": {"type": "string", "pattern": "^[a-z][a-zA-Z0-9.-]*$"},
+    "capability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "key", "bit", "englishName", "japaneseName", "description", "packages", "requires"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CAP[0-9]{3}$"},
+        "key": {"$ref": "#/$defs/key"},
+        "bit": {"type": "integer", "minimum": 0, "maximum": 199},
+        "englishName": {"type": "string", "minLength": 1},
+        "japaneseName": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "packages": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "requires": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/key"}}
+      }
+    },
+    "preset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+        "label": {"type": "string", "minLength": 1},
+        "capabilities": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/key"}},
+        "include": {"const": "all"}
+      },
+      "oneOf": [{"required": ["capabilities"]}, {"required": ["include"]}]
+    }
+  }
+}
