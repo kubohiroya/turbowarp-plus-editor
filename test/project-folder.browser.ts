@@ -204,7 +204,9 @@ async function openDeviceFolder(t: TestContext, build: string, folder: string, q
     return {original, originalProject, editor, openAgain, errors};
 }
 
-test('opens a past version in its own player and restores it from the history', {timeout: 90000}, async t => {
+for (const restoreEnabled of [true, false]) test(restoreEnabled ?
+    'opens a past version in its own player and restores it from the history by default' :
+    'opens a past version in its own player with restore disabled', {timeout: 90000}, async t => {
     const root = process.env.E2E_PROJECT_FOLDER_BUILD;
     assert.ok(root && path.isAbsolute(root), 'Set E2E_PROJECT_FOLDER_BUILD to the built Editor directory');
     await verifyWebEditor(root);
@@ -221,7 +223,8 @@ test('opens a past version in its own player and restores it from the history', 
     git('add', '.'); git('commit', '-qm', 'Current project');
     const current = git('rev-parse', 'HEAD');
 
-    const {editor: page, errors} = await openDeviceFolder(t, root, folder, '&twPlusGitRestoreVersion=1');
+    const {editor: page, errors} = await openDeviceFolder(t, root, folder,
+        restoreEnabled ? '' : '&twPlusGitRestoreVersion=0');
     await page.waitForFunction(() => window.vm.runtime.targets.some(target => target.sprite?.name === 'Current Cat'));
     await expect(page.getByRole('button', {name: 'Branch: main', exact: true})).toBeVisible();
     const views = page.getByRole('toolbar', {name: 'Drawer views'});
@@ -285,6 +288,11 @@ test('opens a past version in its own player and restores it from the history', 
     await preview.getByRole('button', {name: 'Close', exact: true}).click();
 
     await pastActions.click();
+    if (!restoreEnabled) {
+        await expect(history.getByRole('menuitem', {name: 'Restore This Version…'})).toHaveCount(0);
+        assert.deepEqual(errors, []);
+        return;
+    }
     await history.getByRole('menuitem', {name: 'Restore This Version…'}).click();
     await expect(history.getByRole('status')).toContainText('Stop the project');
     assert.equal(git('rev-parse', 'HEAD'), current);

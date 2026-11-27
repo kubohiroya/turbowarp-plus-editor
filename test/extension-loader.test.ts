@@ -124,13 +124,15 @@ test('startup flags carry the extension loader and default-on project tools swit
     }
 });
 
-test('the local Git panel defaults on and supports startup rollback', () => {
+test('the local Git panel and project restore default on and support startup rollback', () => {
     assert.equal(readWebStartupFeatureFlags().localGit, true);
     assert.equal(readWebStartupFeatureFlags('?twPlusLocalGit=0').localGit, false);
-    assert.equal(readWebStartupFeatureFlags().gitRestoreVersion, false);
+    assert.equal(readWebStartupFeatureFlags().gitRestoreVersion, true);
     assert.equal(readWebStartupFeatureFlags('?twPlusGitRestoreVersion=1').gitRestoreVersion, true);
-    assert.equal(readWebStartupFeatureFlags('?twPlusGitRestoreVersion=0').gitRestoreVersion, false);
-    assert.equal(readWebStartupFeatureFlags('?twPlusLocalGit=0&twPlusGitRestoreVersion=1').gitRestoreVersion, false);
+    for (const query of ['?twPlusGitRestoreVersion=0', '?twPlusGitRestoreVersion=', '?twPlusGitRestoreVersion=true',
+        '?twPlusLocalGit=0', '?twPlusLocalGit=0&twPlusGitRestoreVersion=1']) {
+        assert.equal(readWebStartupFeatureFlags(query).gitRestoreVersion, false, query);
+    }
 });
 
 test('splitter opt-in does not change other startup flag defaults', () => {
@@ -138,7 +140,7 @@ test('splitter opt-in does not change other startup flag defaults', () => {
         assert.equal(readWebStartupFeatureFlags(search).windowLayout, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusWindowLayout=1&twPlusExtensionLoader=0'),
-        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: false, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
+        {extensionLoader: false, projectTools: true, manualProjectURI: false, payloadFormats: true, spriteProperties: false, splitter: true, windowLayout: true, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: true, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
     assert.equal(readStartupFeatureFlags({twPlusWindowLayout: '1'}).windowLayout, true);
 });
 
@@ -165,7 +167,7 @@ test('sprite properties requires a separate explicit startup opt-in', () => {
         assert.equal(readWebStartupFeatureFlags(search).spriteProperties, false);
     }
     assert.deepEqual(readWebStartupFeatureFlags('?twPlusSpriteProperties=1'),
-        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: false, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
+        {extensionLoader: true, projectTools: true, manualProjectURI: true, payloadFormats: true, spriteProperties: true, splitter: true, windowLayout: false, backpackPopout: false, internalWindows: false, stagePanel: false, stageDisplayMenu: true, targetList: false, spriteCodeWindows: false, standardLayout: true, extensionFileMenu: true, paletteDeletePreview: true, paletteCategoryReorder: true, horizontalBlockPalette: false, contextMenuIcons: true, localGit: true, gitRestoreVersion: true, workspaceMinimap: true, stageCodePrewarm: true, saveWorkspace: true, newProjectSb3Format: false});
 });
 
 test('the stage panel opt-in depends on flexible layout and internal windows', () => {
