@@ -71,9 +71,7 @@ test('real VM and extension codec preserve project properties and embedded code 
     } finally { await host.dispose(); vm.runtime.dispose(); dom.window.close(); }
 });
 
-test('real VM streams Standard and Plus saves from a verified snapshot', {
-    skip: !prepareProjectSb3Save && 'Requires the Workbench package with project format saves'
-}, async () => {
+test('real VM streams Standard and Plus saves from a verified snapshot', async () => {
     const vm = new VM();
     const url = 'https://example.test/v1/test.js';
     const inputManifest = {...manifest, extensions: [{...manifest.extensions[0],

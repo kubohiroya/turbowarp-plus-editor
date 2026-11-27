@@ -37,12 +37,8 @@ const tools = createProjectTools({
 
 export const {projectScreenState, loadedProjectTitle, restoreProjectTitle, isProjectLoading, subscribeProjectLoad,
     projectSaveName, setProjectSaveName, createFolderFromCurrentProject, projectFileActions, projectCreation,
-    renderFileMenu, projectToolsOwnKeyEvent, bindProjectCatalogFolder, projectCatalog, projectFileOpened} = tools;
-// The pinned Workbench may predate the indicator until the next package release.
-export const projectFormatSource = 'projectFormatSource' in tools && typeof tools.projectFormatSource === 'function' ?
-    tools.projectFormatSource : undefined;
-export const prepareProjectSb3Save = 'prepareProjectSb3Save' in tools && typeof tools.prepareProjectSb3Save === 'function' ?
-    tools.prepareProjectSb3Save : undefined;
+    renderFileMenu, projectToolsOwnKeyEvent, bindProjectCatalogFolder, projectCatalog, projectFileOpened,
+    projectFormatSource, prepareProjectSb3Save} = tools;
 export const installProjectToolsHost: typeof tools.installProjectToolsHost = (vm, settings = {}, ...args) => {
     const host = tools.installProjectToolsHost(vm, settings, ...args);
     const document = settings.document ?? globalThis.document;
