@@ -11,7 +11,7 @@ import {createSpriteInfoAdapter} from '@kubohiroya/turbowarp-plus-editor-sprite-
 import '@kubohiroya/turbowarp-plus-editor-sprite-panes/sprite-properties.css';
 import {createFileMenuItem as createIconFileMenuItem, renderExtensionFileMenu} from '@kubohiroya/turbowarp-plus-editor-workbench/extension-file-menu';
 import {projectCatalog, projectCreation, projectFileActions, projectFileOpened, loadedProjectTitle, renderFileMenu as renderProjectFileMenu} from '../project-tools/index.ts';
-export {projectFileOpened} from '../project-tools/index.ts';
+export {prepareProjectSb3Save, projectFileOpened} from '../project-tools/index.ts';
 import {projectFolderOpenRemote, projectFolderWorkflows} from '../project-folder-host.ts';
 import {renderBranchButton} from '@kubohiroya/turbowarp-plus-editor-git';
 import '@kubohiroya/turbowarp-plus-editor-git/style.css';
