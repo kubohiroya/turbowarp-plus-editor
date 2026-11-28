@@ -492,11 +492,15 @@ config.module.rules.push({test: /\.m?js$/, include: [fs.realpathSync(path.join(t
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}});
 const distributionEntry = rootRequire.resolve('@kubohiroya/sb3-toolchain/web-distribution');
 config.resolve.alias['@kubohiroya/sb3-toolchain/web-distribution$'] = distributionEntry;
+// Workbench 0.49 changes a project's extensions through the toolchain's project-extensions entry.
+const projectExtensionsEntry = rootRequire.resolve('@kubohiroya/sb3-toolchain/project-extensions');
+config.resolve.alias['@kubohiroya/sb3-toolchain/project-extensions$'] = projectExtensionsEntry;
 // The whole manifest dist, not a list of its files: each manifest release can pull in another
 // module of its own (0.9 added build-profile.js and index.js), and a missed one fails the build.
 const distributionManifest = rootRequire.resolve('@kubohiroya/turbowarp-extension-manifest/distribution');
 config.module.rules.push({
-    include: [distributionEntry, path.join(path.dirname(distributionEntry), 'distribution-archive.js'),
+    // The toolchain's whole dist: project-extensions (Workbench 0.49) pulls in several of its modules.
+    include: [path.dirname(distributionEntry), path.dirname(projectExtensionsEntry),
         path.dirname(distributionManifest)],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
