@@ -16,7 +16,7 @@ export function featureFacadeViolations(filename: string, text: string): string[
         'querySelectorAll', 'postMessage', 'dispatchEvent', 'append', 'replaceChildren', 'createObjectURL',
         'revokeObjectURL', 'filter', 'map', 'find', 'some', 'reduce', 'forEach', 'toJSON', 'generateAsync',
         'parse', 'stringify', 'digest', 'race', 'then', 'catch', 'finally', 'defineProperty']);
-    const nativeConstructors = new Set(['URL', 'VirtualMachine', 'ScratchStorage', 'ScratchRender', 'Packager']);
+    const nativeConstructors = new Set(['URL', 'VirtualMachine', 'ScratchStorage', 'ScratchRender', 'BitmapAdapter', 'Packager']);
     const inspect = (node: ts.Node) => {
         if (ts.isClassDeclaration(node) || ts.isFunctionDeclaration(node) || ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node))
             report(node, 'feature presentation or implementation');
