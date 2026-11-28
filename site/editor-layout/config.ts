@@ -6,9 +6,13 @@ import {readWebStartupFeatureFlags} from '../startup-feature-flags.ts';
 const startupSearch = typeof window === 'undefined' ? '' : window.location.search;
 const startupParams = new URLSearchParams(startupSearch);
 export const layoutPreference = createLayoutPreference({search: startupSearch});
+// The Git package's player for past versions and merge candidates opens this page with twPlusStandardLayout=0
+// (site/git-project-preview.ts). It has no layout menu, and the new layout's focusable stage would take the
+// keyboard from the project after the green flag is clicked (Editor #920), so it keeps the flags its URL asks for.
+const projectVersionPlayer = typeof window !== 'undefined' && window.location.pathname.endsWith('/git-project-preview.html');
 // Keep the optional GUI hooks installed so either layout can be selected without reloading the project.
 // The preference controls presentation; these flags describe the available layout services.
-export const layoutFlags = readWebStartupFeatureFlags(startupSearch, true);
+export const layoutFlags = readWebStartupFeatureFlags(startupSearch, projectVersionPlayer ? null : true);
 export const dockviewSpriteTabsEnabled = layoutFlags.standardLayout &&
     startupParams.get('twPlusDockviewSpriteTabs') !== '0';
 const desktopHost = typeof window !== 'undefined' && (window as Window & {
