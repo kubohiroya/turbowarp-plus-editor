@@ -50,6 +50,7 @@ declare module '@tw-plus/backpack-window-host' {
 declare module 'scratch-vm';
 declare module 'scratch-render';
 declare module '@turbowarp/scratch-storage';
+declare module '@turbowarp/scratch-svg-renderer';
 declare module 'scratch-vm/src/*';
 declare module 'scratch-blocks';
 declare module 'react-intl';
