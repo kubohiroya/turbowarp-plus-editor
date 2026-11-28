@@ -4,6 +4,9 @@ import {activateTargetView, connectionFor} from '@kubohiroya/turbowarp-plus-edit
 import JSZip from '@turbowarp/jszip';
 import {getExtensionIdentities} from '../extension-host/loader-connections.ts';
 
+// The code area's workspace when the workbench has no views of its own to navigate.
+const mainWorkspace = () => window.ScratchBlocks?.getMainWorkspace?.();
+
 const testRun = createTestRunEditor({
     document: () => document,
     frameURL: view => new URL(`${process.env.ROOT || './'}test-frame.html`, view.location.href).href,
@@ -12,9 +15,17 @@ const testRun = createTestRunEditor({
     openPanel: (vm, request) => getDocumentWorkspace(vm).open(request),
     navigation: vm => {
         const navigation = connectionFor(vm.runtime as never).navigation;
-        return navigation && {activate: target => Boolean(activateTargetView(navigation, target, 0)),
-            centerBlock: block => navigation.centerBlock(block),
-            workspace: () => navigation.replacementContext?.()?.workspace as never};
+        if (navigation) {
+            return {activate: target => Boolean(activateTargetView(navigation, target, 0)),
+                centerBlock: block => navigation.centerBlock(block),
+                workspace: () => (navigation.replacementContext?.()?.workspace ?? mainWorkspace()) as never};
+        }
+        return {activate: () => false,
+            centerBlock: block => {
+                const workspace = mainWorkspace();
+                if (workspace?.getBlockById(block)) workspace.centerOnBlock(block);
+            },
+            workspace: () => mainWorkspace() as never};
     }
 });
 
