@@ -13,7 +13,8 @@ const testRun = createTestRunEditor({
     navigation: vm => {
         const navigation = connectionFor(vm.runtime as never).navigation;
         return navigation && {activate: target => Boolean(activateTargetView(navigation, target, 0)),
-            centerBlock: block => navigation.centerBlock(block)};
+            centerBlock: block => navigation.centerBlock(block),
+            workspace: () => navigation.replacementContext?.()?.workspace as never};
     }
 });
 
