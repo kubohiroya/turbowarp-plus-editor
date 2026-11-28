@@ -57,10 +57,12 @@ const persistentCache = (create, options) => {
 interface EditorHostOptions extends ExtensionHostOptions {
     search?: string;
     createContentCache?: typeof createIndexedDBContentCache;
+    /** The title cached project data is named with, read from the project being decoded. */
+    projectName?: (project: unknown) => string | undefined;
     trustedCatalog?: ExtensionHostOptions['trustedCatalog'] & {listedDigests?: Set<string>; ready?(): Promise<unknown>};
 }
 export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {}) => {
-    const {createContentCache = createIndexedDBContentCache, ...rest} = settings;
+    const {createContentCache = createIndexedDBContentCache, projectName, ...rest} = settings;
     const enabled = settings.enabled === undefined ? readPlusFlags(settings.search || '').loader : settings.enabled;
     // A project's default address is made from where this editor was opened, never from a
     // constant, so a copy served elsewhere names its projects under its own origin.
@@ -91,7 +93,7 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
         gateProjectIO: io => gateProjectSize(io, {standard: extensionProjectArchiveOptions,
             ceiling: confirmedProjectArchiveOptions, confirm: confirmSize}),
         createPayloads: ports => createProjectPayloadHost(vm, {...ports, canEdit: payloadsEnabled, vmModules: settings.vmModules,
-            approve: approvePayloads, bucket: () => projectURI
+            approve: approvePayloads, bucket: () => projectURI, projectName
         })
     };
     if (enabled !== true) return installPlusExtensionHost(vm, {...base, ...rest, enabled});
