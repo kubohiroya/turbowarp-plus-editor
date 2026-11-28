@@ -10,7 +10,7 @@ Editor `6d2c73199de2b9ff76e27c516f7d2354605a9ed8` を調査元とし、残って
 | turbowarp-plus-editor-project-folder | 0.22.3 / [#59](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/pull/59) | snapshot-workflows: 展開後の作品確認、欠落ファイル確認、フォルダの作成・コピー |
 | turbowarp-plus-editor-git | 0.32.2 / [#90](https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/90) | save-commit-workflows: 保存コミットのキューとジャーナル、作品/リポジトリのガード、公開セッション、Gitフォルダ判定 |
 | turbowarp-plus-editor-workbench | 0.40.5 / [#167](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/167) | project-folder-integration: タイトル・タブ・未保存ファイルとフォルダ/Gitの調整、VM単位の接続と破棄 |
-| turbowarp-plus-editor-test | 0.4.2 / [#9](https://github.com/kubohiroya/turbowarp-plus-editor-test/pull/9) | editor-host / frame-host: スナップショット、対象の照合、iframeと別窓（別窓の通信 origin は Editor の document から取る）の実行、拡張の実行方針、検証済みURLの寿命 |
+| turbowarp-plus-editor-test | 0.5.0 / [#11](https://github.com/kubohiroya/turbowarp-plus-editor-test/pull/11) | editor-host / frame-host: スナップショット、対象の照合、iframeと別窓（別窓の通信 origin は Editor の document から取る）の実行、失敗した確かめるブロックへの印、拡張の実行方針、検証済みURLの寿命 |
 
 Editorの対象7ファイルは配布URL、カタログと制限値、共有するVM/Renderer/Packager、GUIのRedux/Desktop preloadから読む値とコールバックを渡します。GUIの固定 `60b87e2f2503206847f509285aa4de3cee3670c7` とVMの `88a2c06e9deb3dd652c52c20daf4f728b387d41d` は変えず、GUIソースの差分はありません。新しいパッケージやEditor内のworkspaceパッケージ、既定OFFの新フラグは作りません。既定値と保存形式を維持します。
 
