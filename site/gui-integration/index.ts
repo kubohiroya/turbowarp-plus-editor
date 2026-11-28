@@ -1,5 +1,7 @@
 import {extensionLoadErrors} from '../extension-host/load-errors.ts';
 import React from 'react';
+import {mountPairProgrammingControls, mountPairAccountControls} from '@kubohiroya/turbowarp-plus-editor-pair-programming';
+import '@kubohiroya/turbowarp-plus-editor-pair-programming/styles.css';
 import {connect} from 'react-redux';
 import {createExternalYamlMenuAction} from '@kubohiroya/turbowarp-document-editor';
 import {getDocumentWorkspace} from '@kubohiroya/turbowarp-plus-editor-workbench/sprite-tabs';
@@ -75,6 +77,17 @@ export {default as createPreviewVm} from './lib/tw-preview-vm.ts';
 export {default as createBlocksWrapper} from './containers/tw-plus-blocks.tsx';
 export {createWorkspaceAttachment} from './containers/tw-plus-workspace-attachment.tsx';
 
+const PairProgrammingControls = ({vm, locale}: {vm: object; locale: string}) => {
+    const slot = React.useRef<HTMLDivElement>(null);
+    React.useEffect(() => slot.current ? mountPairProgrammingControls(slot.current, vm, locale) : undefined, [vm, locale]);
+    return React.createElement('div', {ref: slot});
+};
+const PairAccountControls = ({vm, locale}: {vm: object; locale: string}) => {
+    const slot = React.useRef<HTMLDivElement>(null);
+    React.useEffect(() => slot.current ? mountPairAccountControls(slot.current, vm, locale) : undefined, [vm, locale]);
+    return React.createElement('div', {ref: slot});
+};
+export const renderAccountControls = props => React.createElement(PairAccountControls, props);
 const ExtensionControls = connect(({scratchGui: {mode}}) => ({
     stageOnly: mode.isPlayerOnly || mode.isFullScreen
 }))(({vm, isSmall, menuLocale, stageOnly}) => {
@@ -88,7 +101,9 @@ const ExtensionControls = connect(({scratchGui: {mode}}) => ({
         menuLocale !== undefined && renderBranchButton(React.createElement, {vm, locale: menuLocale}),
         menuLocale !== undefined && stageLauncherEnabled &&
             React.createElement('div', {className: stageLauncherSlotClass, ref: mountStageLauncher}),
-        service && React.createElement(StageControlsView, {service, isSmall, menuLocale}));
+        service ? React.createElement(StageControlsView, {service, isSmall, menuLocale},
+            menuLocale !== undefined && React.createElement(PairProgrammingControls, {vm, locale: menuLocale})) :
+            menuLocale !== undefined && React.createElement(PairProgrammingControls, {vm, locale: menuLocale}));
 });
 export const renderStageControls = props => React.createElement(ExtensionControls, props);
 
