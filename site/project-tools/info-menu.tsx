@@ -5,7 +5,7 @@ import styles from '@kubohiroya/turbowarp-plus-editor-workbench/editor.css';
 import {ProjectInfoMenu as InfoMenu, projectTitleFieldClassName, projectTitleGroupClassName,
     type ProjectSettingsMenuProps} from '@kubohiroya/turbowarp-plus-editor-workbench/project-info-menu';
 import logo from '../extension-library/icon.svg';
-import {projectFormatSource} from './index.ts';
+import {cacheManagerProject, projectFormatSource} from './index.ts';
 import {useLayoutPreference, prepareLayoutChange} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 import {layoutPreference} from '../editor-layout/config.ts';
 import {createCacheManager} from '@kubohiroya/turbowarp-plus-editor-workbench/cache-manager';
@@ -40,7 +40,8 @@ function ProjectInfoMenuView({vm, dark, ...props}: ProjectSettingsMenuProps & {l
                     returnFocus: event.currentTarget.closest('details')?.querySelector('summary')})
             } : undefined}
             cacheManager={{onClick: event => void cacheManager.open({locale: props.locale, colorScheme: dark ? 'dark' : 'light',
-                returnFocus: event.currentTarget.closest('details')?.querySelector('summary')})}} />
+                returnFocus: event.currentTarget.closest('details')?.querySelector('summary'),
+                project: vm ? cacheManagerProject(vm) : undefined})}} />
     </>;
 }
 

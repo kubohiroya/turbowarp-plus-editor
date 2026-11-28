@@ -66,6 +66,10 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
     // constant, so a copy served elsewhere names its projects under its own origin.
     const origin = globalThis.location?.origin;
     const payloadsEnabled = readWebStartupFeatureFlags(settings.search ?? globalThis.location?.search).payloadFormats;
+    // The project open now, as the bridge reports it on each load and on the save that addresses
+    // it; undefined files a write as shared. Read by the cache at each write, so one cache serves
+    // every project this VM opens, and by the project data host as the bucket it may release.
+    let projectURI;
     const approvePayloads = (urls, cacheable, signal) => {
         const ask = () => approveProjectPayloads(
             settings.document || globalThis.document, settings.getLocale?.() ?? settings.locale, urls, cacheable, {className: dialogStyles.dialog, signal});
@@ -87,14 +91,10 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
         gateProjectIO: io => gateProjectSize(io, {standard: extensionProjectArchiveOptions,
             ceiling: confirmedProjectArchiveOptions, confirm: confirmSize}),
         createPayloads: ports => createProjectPayloadHost(vm, {...ports, canEdit: payloadsEnabled, vmModules: settings.vmModules,
-            approve: approvePayloads
+            approve: approvePayloads, bucket: () => projectURI
         })
     };
     if (enabled !== true) return installPlusExtensionHost(vm, {...base, ...rest, enabled});
-    // The project open now, as the bridge reports it on each load and on the save that addresses
-    // it; undefined files a write as shared. Read by the cache at each write, so one cache serves
-    // every project this VM opens.
-    let projectURI;
     // What the catalog lists belongs to no one project. It is the set the trust check reads, filled
     // as the catalog loads. The Loader writes a fetched copy before it asks whether the code is
     // trusted, so a write waits for the catalog's read — the one that check would make anyway, and
@@ -116,7 +116,7 @@ export const installEditorExtensionHost = (vm, settings: EditorHostOptions = {})
         ...rest,
         enabled,
         ...(cache ? {cache} : {}),
-        onProjectURI: uri => { projectURI = uri; }
+        onProjectURI: uri => { projectURI = uri; settings.onProjectURI?.(uri); }
     });
     if (!('loader' in host)) return host;
     const {loader} = host;
