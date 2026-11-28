@@ -470,12 +470,25 @@ config.module.rules.push({
 });
 // The block editor helper aliases its subpaths to precompiled entries in this repository's install.
 const {withBlockEditorWebpack4} = rootRequire('@kubohiroya/turbowarp-extension-data-editor/webpack4');
-const {installPackageExports} = require('./package-exports.cts');
+const {installPackageExports, packageDirectory} = require('./package-exports.cts');
 installPackageExports(config, rootRequire, [
     '@kubohiroya/turbowarp-plus-editor-pair-programming',
     '@kubohiroya/turbowarp-extension-loader', '@kubohiroya/turbowarp-extension-security-dialog',
     '@kubohiroya/turbowarp-sb3-save-format', '@kubohiroya/turbowarp-extension-manifest'
 ]);
+// The cache management screen the Workbench opens (issue #902), and the menu module its entry re-exports.
+// Both export only `import` entries, so they are found from the Workbench's install and transpiled.
+const workbenchRequire = createRequire(rootRequire.resolve('@kubohiroya/turbowarp-plus-editor-workbench'));
+const titleMenuSource = packageDirectory(workbenchRequire, '@kubohiroya/turbowarp-title-menu');
+const titleMenuRequire = createRequire(path.join(titleMenuSource, 'package.json'));
+const appShellSource = packageDirectory(titleMenuRequire, '@kubohiroya/turbowarp-app-shell');
+installPackageExports(config, workbenchRequire, ['@kubohiroya/turbowarp-title-menu']);
+installPackageExports(config, titleMenuRequire, ['@kubohiroya/turbowarp-app-shell']);
+config.module.rules.push({test: /\.m?js$/, include: [fs.realpathSync(path.join(titleMenuSource, 'dist', 'lib')),
+    fs.realpathSync(path.join(appShellSource, 'dist'))],
+    loader: hostRequire.resolve('babel-loader'),
+    options: {babelrc: false, configFile: false,
+        presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}});
 const distributionEntry = rootRequire.resolve('@kubohiroya/sb3-toolchain/web-distribution');
 config.resolve.alias['@kubohiroya/sb3-toolchain/web-distribution$'] = distributionEntry;
 const distributionManifest = rootRequire.resolve('@kubohiroya/turbowarp-extension-manifest/distribution');
