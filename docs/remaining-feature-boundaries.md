@@ -6,7 +6,7 @@ Editor `6d2c73199de2b9ff76e27c516f7d2354605a9ed8` を調査元とし、残って
 
 | 既存パッケージ | 対応版・PR | 所有する実装 |
 | --- | --- | --- |
-| turbowarp-extension-loader | 0.16.3 / [#53](https://github.com/kubohiroya/turbowarp-extension-loader/pull/53) | packager-page / packager-handoff / catalog-trust: HTML出力の画面・文言・CSS・状態・生成・転送、カタログのキャッシュと照合 |
+| turbowarp-extension-loader | 0.17.0 / [#53](https://github.com/kubohiroya/turbowarp-extension-loader/pull/53) | packager-page / packager-handoff / catalog-trust: HTML出力の画面・文言・CSS・状態・生成・転送、カタログのキャッシュと照合 |
 | turbowarp-plus-editor-project-folder | 0.22.3 / [#59](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/pull/59) | snapshot-workflows: 展開後の作品確認、欠落ファイル確認、フォルダの作成・コピー |
 | turbowarp-plus-editor-git | 0.32.2 / [#90](https://github.com/kubohiroya/turbowarp-plus-editor-git/pull/90) | save-commit-workflows: 保存コミットのキューとジャーナル、作品/リポジトリのガード、公開セッション、Gitフォルダ判定 |
 | turbowarp-plus-editor-workbench | 0.40.5 / [#167](https://github.com/kubohiroya/turbowarp-plus-editor-workbench/pull/167) | project-folder-integration: タイトル・タブ・未保存ファイルとフォルダ/Gitの調整、VM単位の接続と破棄 |

@@ -8,6 +8,7 @@ import logo from '../extension-library/icon.svg';
 import {projectFormatSource} from './index.ts';
 import {useLayoutPreference, prepareLayoutChange} from '@kubohiroya/turbowarp-plus-editor-workbench/layout-preference';
 import {layoutPreference} from '../editor-layout/config.ts';
+import {createCacheManager} from '@kubohiroya/turbowarp-plus-editor-workbench/cache-manager';
 
 declare const __TW_PLUS_EDITOR_VERSION__: string;
 
@@ -18,8 +19,10 @@ const preload = (globalThis as {EditorPreload?: {
 }}).EditorPreload;
 const desktop = preload?.aiAgents;
 export const aiAgents = createAiAgents(React, {styles, desktop});
+// The Loader cache the extension host and the project data paths write to (issue #902).
+const cacheManager = createCacheManager();
 
-function ProjectInfoMenuView({vm, ...props}: ProjectSettingsMenuProps & {locale: string; vm?: object}) {
+function ProjectInfoMenuView({vm, dark, ...props}: ProjectSettingsMenuProps & {locale: string; vm?: object; dark?: boolean}) {
     const standardLayout = useLayoutPreference(layoutPreference);
     const formatProps = vm ? {projectFormat: projectFormatSource(vm)} : {};
     // The GitHub connection mode is set in the Git panel at the side, where Git is set up.
@@ -35,11 +38,14 @@ function ProjectInfoMenuView({vm, ...props}: ProjectSettingsMenuProps & {locale:
                 // Focus returns to the Plus icon, since the menu entry is hidden once the menu closes.
                 onClick: event => aiAgents.openSettings({locale: props.locale,
                     returnFocus: event.currentTarget.closest('details')?.querySelector('summary')})
-            } : undefined} />
+            } : undefined}
+            cacheManager={{onClick: event => void cacheManager.open({locale: props.locale, colorScheme: dark ? 'dark' : 'light',
+                returnFocus: event.currentTarget.closest('details')?.querySelector('summary')})}} />
     </>;
 }
 
-const connectVM = connect((state: {scratchGui: {vm?: object}}) => ({vm: state.scratchGui.vm}));
+const connectVM = connect((state: {scratchGui: {vm?: object; theme?: {theme?: {isDark?(): boolean}}}}) => ({
+    vm: state.scratchGui.vm, dark: state.scratchGui.theme?.theme?.isDark?.() ?? false}));
 export const ProjectInfoMenu = Object.assign(connectVM(ProjectInfoMenuView), {
     reorganizeMenuBar: true,
     titleFieldClassName: projectTitleFieldClassName,
