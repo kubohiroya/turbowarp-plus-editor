@@ -145,8 +145,14 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
             await page.addInitScript(() => {
                 window.addEventListener('message', event => {
                     if (event.origin !== location.origin || event.data?.type !== 'twpe-test:end') return;
-                    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Test stage"]');
-                    if (frame && event.source === frame.contentWindow && 'recordScratchTestResult' in window &&
+                    // The view may be a tab of this page or a window of its own; either way its frame reports here.
+                    let frame: Element | null = null;
+                    try {
+                        frame = (event.source as Window | null)?.frameElement ?? null;
+                    } catch {
+                        // A window of another origin is not the test frame.
+                    }
+                    if (frame?.getAttribute('title') === 'Test stage' && 'recordScratchTestResult' in window &&
                         typeof window.recordScratchTestResult === 'function') {
                         window.recordScratchTestResult(event.data.result);
                     }
@@ -156,8 +162,11 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
             await page.goto(`${origin}${prefix}editor.html?lang=en`);
             await page.waitForFunction(() => Boolean(window.vm?.runtime.getTargetForStage()));
 
-            const runView = page.locator('.twpe-test-run');
-            const result = runView.locator('.twpe-test-run__test').filter({hasText: testName});
+            // The view opens as a workspace tab, or in a window of its own when the layout takes no tabs.
+            let viewPage = page;
+            let runView = page.locator('.twpe-test-run');
+            let result = runView.locator('.twpe-test-run__test').filter({hasText: testName});
+            const marked = page.locator('.blocklyWorkspace g.twpe-test-failure');
             async function runProject(sb3: Buffer, status: 'failed' | 'passed', actual: number, expectedBuild: string, assertionId = assertId) {
                 const loading = page.evaluate(async archive => {
                     await window.vm.loadProject(new Uint8Array(archive));
@@ -167,8 +176,17 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
                 await review.getByTestId('twextsec-enable-all').click();
                 await loading;
                 if (!await runView.isVisible()) {
-                    await page.getByRole('button', {name: 'Run view opening options'}).click();
+                    // The stage launcher's menu in the workbench layout, or the stage display menu otherwise.
+                    await page.getByRole('button', {name: /^Run view (opening options|display)$/u}).click();
+                    const popup = page.context().waitForEvent('page', {timeout: 5_000}).catch(() => null);
                     await page.getByText('Open the test run view', {exact: true}).click();
+                    if (!await runView.isVisible()) {
+                        const opened = await popup;
+                        assert.ok(opened, 'The test run view opened neither as a tab nor as a window');
+                        viewPage = opened;
+                        runView = viewPage.locator('.twpe-test-run');
+                        result = runView.locator('.twpe-test-run__test').filter({hasText: testName});
+                    }
                 }
                 await expect(result).toBeVisible();
                 const before = reported.length;
@@ -186,11 +204,20 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
                 if (status === 'failed') {
                     await expect(result.locator('code').filter({hasText: /^(10|15)$/u})).toHaveText(['10', '15']);
                     await expect(result.getByRole('button', {name: 'Show block'})).toHaveAttribute('data-block-id', assertionId);
+                    // The failed check is marked on its block in the code area, with why it failed.
+                    await result.getByRole('button', {name: 'Show block'}).click();
+                    await expect(marked).toHaveCount(1);
+                    await expect(marked).toHaveAttribute('data-id', assertionId);
+                    await expect(marked.locator(':scope > .twpe-test-failure__badge > title'))
+                        .toHaveText(`Not equal by === / Expected: 10 / Actual: ${actual}`);
+                } else {
+                    // A new run starts over the marks of the last one.
+                    await expect(marked).toHaveCount(0);
                 }
                 t.diagnostic(`${status}: ${assertionId}, expected 10, actual ${actual}`);
             }
 
-            return {context, page, runProject};
+            return {context, page, viewPage: () => viewPage, runProject};
         }
 
         const editor = await openEditor();
@@ -223,12 +250,14 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
                 digest);
         }
         await editor.context.close();
-        const {page, runProject} = await openEditor();
+        const {page, viewPage, runProject} = await openEditor();
         await runProject(saved, 'passed', 10, corrected.sha256, savedAssertionId);
 
         // The reused VM cannot carry an approval over to another run whose own snapshot did not authorize that code.
-        const rejected = await page.evaluate(archive => new Promise<string>((resolve, reject) => {
-            const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Test stage"]');
+        // The frame takes requests only from the Editor window and answers there, even when the view is a window.
+        const rejected = await page.evaluate(([archive, inWindow]) => new Promise<string>((resolve, reject) => {
+            const view = inWindow ? window.open('', 'tw-plus-test-run')?.document : document;
+            const frame = view?.querySelector<HTMLIFrameElement>('iframe[title="Test stage"]');
             if (!frame?.contentWindow) throw new Error('No test frame');
             const id = 'missing-current-grant';
             const timer = setTimeout(() => { cleanup(); reject(new Error('No test-frame response')); }, 5_000);
@@ -244,8 +273,8 @@ test('the Editor test VM runs the same Scratch test before and after a TypeScrip
                 }
             }
             window.addEventListener('message', onMessage);
-            frame.contentWindow.postMessage({type: 'twpe-test:run', id, project: new Uint8Array(archive).buffer}, location.origin);
-        }), [...corrected.sb3]);
+            frame.contentWindow.postMessage({type: 'twpe-test:run', id, project: new Uint8Array(archive as number[]).buffer}, location.origin);
+        }), [[...corrected.sb3], viewPage() !== page] as const);
         assert.match(rejected, /did not approve this exact extension digest/i);
         if (published) assert.equal(await readPublishedInfo(), metadata, 'Published Editor changed during the test');
     });
