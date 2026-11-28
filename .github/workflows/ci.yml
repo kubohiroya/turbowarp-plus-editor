@@ -177,6 +177,9 @@ jobs:
           E2E_GUI_ROOT: ${{ github.workspace }}/.host/scratch-gui
           TW_PLUS_PACKAGER_ROOT: ${{ github.workspace }}/.host/packager
           NODE_OPTIONS: --max-old-space-size=6144
+          # Cloudflare Git host (keybroker). keybroker-dev is the only deployment for now; it allows https://kubohiroya.github.io.
+          TW_PLUS_GIT_BFF_ORIGIN: https://keybroker-dev.kubohiroya.workers.dev
+          TW_PLUS_GIT_PROXY_ORIGIN: https://keybroker-dev.kubohiroya.workers.dev
         run: npm run build:pages
       - name: Require all selected verification to pass
         if: >-
