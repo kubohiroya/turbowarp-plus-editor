@@ -37,7 +37,7 @@ const tools = createProjectTools({
 
 export const {projectScreenState, loadedProjectTitle, restoreProjectTitle, isProjectLoading, subscribeProjectLoad,
     projectSaveName, setProjectSaveName, createFolderFromCurrentProject, projectFileActions, projectCreation,
-    renderFileMenu, projectToolsOwnKeyEvent, bindProjectCatalogFolder, projectCatalog, projectFileOpened,
+    renderFileMenu, projectToolsOwnKeyEvent, bindProjectCatalogFolder, projectCatalog, projectFileOpened, cacheManagerProject,
     projectFormatSource, prepareProjectSb3Save} = tools;
 export const installProjectToolsHost: typeof tools.installProjectToolsHost = (vm, settings = {}, ...args) => {
     const host = tools.installProjectToolsHost(vm, settings, ...args);
