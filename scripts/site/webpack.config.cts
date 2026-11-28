@@ -307,7 +307,8 @@ for (const specifier of ['@kubohiroya/turbowarp-plus-editor-project-folder', '@k
     '@kubohiroya/turbowarp-plus-editor-project-folder/snapshot-workflows',
     '@kubohiroya/turbowarp-plus-editor-git', '@kubohiroya/turbowarp-plus-editor-git/style.css',
     ...['project-publication', 'cloudflare-publication', 'project-commit-dialog', 'project-publication-dialog',
-        'project-repository-creation', 'project-repository-host', 'project-version-preview', 'save-commit-workflows'].map(entry => `@kubohiroya/turbowarp-plus-editor-git/${entry}`)]) {
+        'project-repository-creation', 'project-repository-host', 'project-version-preview', 'repository-rename',
+        'save-commit-workflows'].map(entry => `@kubohiroya/turbowarp-plus-editor-git/${entry}`)]) {
     config.resolve.alias[`${specifier}$`] = projectSaveRequire.resolve(specifier);
 }
 config.resolve.alias[`${authPackage}$`] = authEntry;
