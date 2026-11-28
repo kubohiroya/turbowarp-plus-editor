@@ -491,10 +491,12 @@ config.module.rules.push({test: /\.m?js$/, include: [fs.realpathSync(path.join(t
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}});
 const distributionEntry = rootRequire.resolve('@kubohiroya/sb3-toolchain/web-distribution');
 config.resolve.alias['@kubohiroya/sb3-toolchain/web-distribution$'] = distributionEntry;
+// The whole manifest dist, not a list of its files: each manifest release can pull in another
+// module of its own (0.9 added build-profile.js and index.js), and a missed one fails the build.
 const distributionManifest = rootRequire.resolve('@kubohiroya/turbowarp-extension-manifest/distribution');
 config.module.rules.push({
     include: [distributionEntry, path.join(path.dirname(distributionEntry), 'distribution-archive.js'),
-        distributionManifest, path.join(path.dirname(distributionManifest), 'resources.js')],
+        path.dirname(distributionManifest)],
     loader: hostRequire.resolve('babel-loader'),
     options: {babelrc: false, configFile: false,
         presets: [[hostRequire.resolve('@babel/preset-env'), {targets: {ie: '11'}, modules: false}]]}
