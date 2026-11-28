@@ -58,12 +58,15 @@ jobs:
         if: steps.scope.outcome != 'success'
         continue-on-error: true
         run: node scripts/ci/verification-plan.ts
-      - name: Check documentation diff
+      - name: Check the documentation diff and index
         id: documentation
         if: steps.scope.outputs.mode == 'scoped' && contains(steps.scope.outputs.checks, '|documentation|')
         env:
           BASE: ${{ steps.scope.outputs.base }}
-        run: git diff --check "$BASE" HEAD --
+        # The index test reads only files and Node builtins, so this check still needs no npm install.
+        run: |
+          git diff --check "$BASE" HEAD --
+          node --test test/docs-index.test.ts
       - name: Prepare pnpm for the security package's Git install
         if: steps.scope.outputs.mode != 'scoped' || steps.scope.outputs.npm == 'true'
         uses: pnpm/action-setup@v6

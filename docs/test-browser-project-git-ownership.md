@@ -22,7 +22,7 @@ Project Folder 0.22.0 の [固定版 CI](https://github.com/kubohiroya/turbowarp
 
 ブックマークのファイル再選択は一覧の閉鎖だけでなく、受け取り側タブの VM に実際に SB3 の内容が届くことを、拡張なしの固定フィクスチャで確認する。
 
-**旧統合経路の廃止:** 旧 `Open Project Folder…` と独立したリポジトリ選択から、任意の入れ子作品フォルダーを親リポジトリに結び付ける経路は、[リポジトリルートに作品を置く現行仕様](../features/git/index.html) に置き換わった。現行の入口で、履歴検索、既存の差分を保つ外部 Git 更新、通常のテキストタブを Local Git から保存してもステージしないこと、Explorer の PR バッジが更新・解除されることを検証する。旧ケースだけを削除し、ブラウザー保存の旧 `project/` 配置は別の互換要件として残す。[Project Folder 0.22.0 の Chromium / WebKit テスト](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/blob/301fe686fe0ef7b7a6dfd7cc36c8998ae755edcb/test/browser-projects.browser.js#L124-L156) が、作品をルートへ移すことと、名前が衝突したときに移動しないことを検証する。
+**旧統合経路の廃止:** 旧 `Open Project Folder…` と独立したリポジトリ選択から、任意の入れ子作品フォルダーを親リポジトリに結び付ける経路は、[リポジトリルートに作品を置く現行仕様](features/git/index.html) に置き換わった。現行の入口で、履歴検索、既存の差分を保つ外部 Git 更新、通常のテキストタブを Local Git から保存してもステージしないこと、Explorer の PR バッジが更新・解除されることを検証する。旧ケースだけを削除し、ブラウザー保存の旧 `project/` 配置は別の互換要件として残す。[Project Folder 0.22.0 の Chromium / WebKit テスト](https://github.com/kubohiroya/turbowarp-plus-editor-project-folder/blob/301fe686fe0ef7b7a6dfd7cc36c8998ae755edcb/test/browser-projects.browser.js#L124-L156) が、作品をルートへ移すことと、名前が衝突したときに移動しないことを検証する。
 
 **公開版の未完:** WebKit は、この棚卸しで使った固定ビルドではブラウザー保管の受け渡し後、実作品を読む前にレンダラーが終了する。`FileSystemDirectoryHandle.resolve()` は最後に観測された処理であり、単独の原因とは断定しない。正常な別タブ起動と通常の SB3 の受け渡しは代替の証拠にならない。
 
