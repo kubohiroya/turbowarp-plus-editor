@@ -21,6 +21,7 @@ type NativeWindow = Window & {ReduxStore?: GuiStore; EditorPreload?: {
     localGitAccounts?: Environment['desktop']['accounts'];
     localGitCreation?: Environment['desktop']['creation']; localGitPublication?: Environment['desktop']['publication'];
     localGitAuthor?(): Promise<GitAuthor | null>; mergePlanShare?: Environment['desktop']['mergePlanShare'];
+    projectFolderRename?: Environment['desktop']['projectFolderRename'];
 }};
 declare const __TW_PLUS_PROJECT_FOLDER_SET_FILE_HANDLE__: (handle: null) => GuiAction;
 declare const __TW_PLUS_PROJECT_FOLDER_SET_UNCHANGED__: () => GuiAction;
@@ -79,7 +80,8 @@ const integration = createProjectFolderIntegration({
             setTitle: title => store.dispatch(__TW_PLUS_PROJECT_FOLDER_SET_TITLE__(title)),
             getTitle: () => store.getState().scratchGui.projectTitle,
             desktop: preload && {auth: preload.localGitAuth ?? preload.localGit, accounts: preload.localGitAccounts, creation: preload.localGitCreation,
-                publication: preload.localGitPublication, author: () => preload.localGitAuthor?.(), mergePlanShare: preload.mergePlanShare},
+                publication: preload.localGitPublication, author: () => preload.localGitAuthor?.(), mergePlanShare: preload.mergePlanShare,
+                projectFolderRename: preload.projectFolderRename},
             captureHost: typeof __TW_PLUS_CAPTURE_EDITOR_HOST__ === 'function' ? __TW_PLUS_CAPTURE_EDITOR_HOST__ : undefined
         };
     }

@@ -83,6 +83,17 @@
 <h3>Save name</h3>
 <p>The "Save name" is the name used for the project folder or the GitHub repository. Use letters, digits, "-", "_" and ".", up to 100 characters. ".", ".." and names ending in ".git" cannot be used. When the project title follows these rules, the title is used while the save name is empty.</p>
 <p>When a project saved in a project folder or a repository gets a title in the menu bar that does not follow these rules, a dialog asks for a save name (only while the project has none). The field starts with a name made from the title. If you cancel, the save name stays empty. "Save a Copy of the Project…" and "Save Project" use the save name as the initial name of a new repository. The save name entered in "Create New Project…" is recorded in the new project.</p>
+<h3 id="rename">When you rename the project</h3>
+<p>When you change the project title in the menu bar and commit it (Enter, or leaving the field), the names of where the project is saved change with it. Folders and repositories take the save name (the title when it follows the rules, otherwise the save name).</p>
+<table>
+<thead><tr><th scope="col">Saved in</th><th scope="col">Browser version</th><th scope="col">Desktop</th></tr></thead>
+<tbody>
+<tr><th scope="row">Project folder in this browser</th><td>Renamed</td><td>Renamed</td></tr>
+<tr><th scope="row">Project folder on this device</th><td>Not renamed (a browser cannot rename the folder you chose)</td><td>Renamed when you choose the project folder in the folder dialog. Then open it again with "Open the folder again" on the notice</td></tr>
+<tr><th scope="row">GitHub repository</th><td colspan="2">Renamed on GitHub, and the local repository's <code>origin</code> follows the new name. The GitHub connection keeps working</td></tr>
+</tbody>
+</table>
+<p>To rename the repository, the Git panel needs a connection that can write to it, and you must be an admin of the repository. When the GitHub App's Administration (Read and write) permission has not been approved on its installation, a notice says so; approve it in GitHub's Settings → Applications → Installed GitHub Apps → Configure. When a repository with the same name already exists, the name is not changed; change the save name in the project properties, then change the title again. In Desktop, a folder with unsaved changes is not renamed; save first.</p>
 <h3>Choose the author name and contact from the history</h3>
 <p>The browser remembers up to five recent author names and contacts that you applied. Using a value again moves it to the top of the history, and you can edit a suggestion you pick. Only the values applied this time go into the SB3. If browser storage is unavailable, the history is available only while the editor is open.</p>
 <p>An email address or <code>mailto:</code> address entered as the contact becomes an email link, and an <code>https:</code> address becomes a web page link, shown below the field. Email links open in your mail app, and web page links open in a new tab. Enter the description as plain text. In the preview below the field, HTTPS URLs can be opened as links.</p>
